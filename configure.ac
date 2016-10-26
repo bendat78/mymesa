@@ -2749,6 +2749,7 @@ AC_CONFIG_FILES([Makefile
 		src/Makefile
 		src/amd/Makefile
 		src/amd/vulkan/Makefile
+		src/broadcom/Makefile
 		src/compiler/Makefile
 		src/egl/Makefile
 		src/egl/main/egl.pc
