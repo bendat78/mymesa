@@ -459,7 +459,7 @@ static bool radv_is_storage_image_format_supported(struct radv_physical_device *
 	num_format = radv_translate_tex_numformat(format, desc,
 						  vk_format_get_first_non_void_channel(format));
 
-	if(data_format == ~0 || num_format == ~0)
+	if(data_format == (~0u) || num_format == (~0u))
 		return false;
 
 	/* Extracted from the GCN3 ISA document. */
@@ -513,7 +513,7 @@ static bool radv_is_buffer_format_supported(VkFormat format, bool *scaled)
 
 	*scaled = (num_format == V_008F0C_BUF_NUM_FORMAT_SSCALED) || (num_format == V_008F0C_BUF_NUM_FORMAT_USCALED);
 	return data_format != V_008F0C_BUF_DATA_FORMAT_INVALID &&
-		num_format != ~0;
+		num_format != (~0u);
 }
 
 bool radv_is_colorbuffer_format_supported(VkFormat format, bool *blendable)
@@ -532,8 +532,8 @@ bool radv_is_colorbuffer_format_supported(VkFormat format, bool *blendable)
 	} else
 		*blendable = true;
 	return color_format != V_028C70_COLOR_INVALID &&
-		color_swap != ~0U &&
-		color_num_format != ~0;
+		color_swap != (~0u) &&
+		color_num_format != (~0u);
 }
 
 static bool radv_is_zs_format_supported(VkFormat format)

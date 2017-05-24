@@ -760,11 +760,11 @@ static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_texture *dst = (struct r600_texture*)info->dst.resource;
-	unsigned dst_width = u_minify(info->dst.resource->width0, info->dst.level);
-	unsigned dst_height = u_minify(info->dst.resource->height0, info->dst.level);
+	int dst_width = u_minify(info->dst.resource->width0, info->dst.level);
+	int dst_height = u_minify(info->dst.resource->height0, info->dst.level);
 	enum pipe_format format = info->src.format;
 	unsigned sample_mask =
-		rctx->b.chip_class == CAYMAN ? ~0 :
+		rctx->b.chip_class == CAYMAN ? (~0u) :
 		((1ull << MAX2(1, info->src.resource->nr_samples)) - 1);
 	struct pipe_resource *tmp, templ;
 	struct pipe_blit_info blit;

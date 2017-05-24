@@ -356,7 +356,8 @@ do {								\
 #else
 #define COPY_DWORDS( j, vb, vertsize, v )	\
 do {						\
-   for ( j = 0 ; j < vertsize ; j++ ) {		\
+   unsigned j;					\
+   for (j = 0 ; j < vertsize ; j++ ) {          \
       vb[j] = ((GLuint *)v)[j];			\
    }						\
    vb += vertsize;				\
@@ -907,7 +908,7 @@ intelFastRenderClippedPoly(struct gl_context * ctx, const GLuint * elts, GLuint 
    GLuint *vb = intel_get_prim_space(intel, (n - 2) * 3);
    GLubyte *vertptr = (GLubyte *) intel->verts;
    const GLuint *start = (const GLuint *) V(elts[0]);
-   int i, j;
+   unsigned i, j;
 
    if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION) {
       for (i = 2; i < n; i++) {

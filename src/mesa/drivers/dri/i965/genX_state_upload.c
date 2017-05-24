@@ -988,7 +988,7 @@ genX(get_attr_override)(struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) *attr,
     * Each increment of urb_entry_read_offset represents a 256-bit value, so
     * it counts for two 128-bit VUE slots.
     */
-   int source_attr = slot - 2 * urb_entry_read_offset;
+   unsigned int source_attr = slot - 2 * urb_entry_read_offset;
    assert(source_attr >= 0 && source_attr < 32);
 
    /* If we are doing two-sided color, and the VUE slot following this one

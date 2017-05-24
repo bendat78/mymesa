@@ -284,7 +284,7 @@ _mesa_get_program_resourceiv(struct gl_shader_program *shProg,
 
 /* GL_ARB_tessellation_shader */
 extern void GLAPIENTRY
-_mesa_PatchParameteri(GLenum pname, GLint value);
+_mesa_PatchParameteri(GLenum pname, GLuint value);
 
 extern void GLAPIENTRY
 _mesa_PatchParameterfv(GLenum pname, const GLfloat *values);
@@ -317,11 +317,11 @@ _mesa_GetActiveSubroutineName(GLuint program, GLenum shadertype,
                               GLsizei *length, GLchar *name);
 
 extern GLvoid GLAPIENTRY
-_mesa_UniformSubroutinesuiv(GLenum shadertype, GLsizei count,
+_mesa_UniformSubroutinesuiv(GLenum shadertype, GLuint count,
                             const GLuint *indices);
 
 extern GLvoid GLAPIENTRY
-_mesa_GetUniformSubroutineuiv(GLenum shadertype, GLint location,
+_mesa_GetUniformSubroutineuiv(GLenum shadertype, GLuint location,
                               GLuint *params);
 
 extern GLvoid GLAPIENTRY

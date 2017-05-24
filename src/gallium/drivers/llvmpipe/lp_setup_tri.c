@@ -892,7 +892,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
       for (y = iy0; y <= iy1; y++)
       {
          boolean in = FALSE;  /* are we inside the triangle? */
-         int64_t cx[MAX_PLANES];
+         int64_t cx[MAX_PLANES] = {};
 
          for (i = 0; i < nr_planes; i++)
             cx[i] = c[i];

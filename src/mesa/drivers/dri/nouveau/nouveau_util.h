@@ -135,9 +135,9 @@ get_scissors(struct gl_framebuffer *fb, int *x, int *y, int *w, int *h)
 	*w = fb->_Xmax - fb->_Xmin;
 	*h = fb->_Ymax - fb->_Ymin;
 	*x = fb->_Xmin;
-	*y = (fb->Name ? fb->_Ymin :
+	*y = ((signed)fb->Name ? fb->_Ymin :
 	      /* Window system FBO: Flip the Y coordinate. */
-	      fb->Height - fb->_Ymax);
+	      (signed)fb->Height - fb->_Ymax);
 }
 
 static inline void

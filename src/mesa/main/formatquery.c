@@ -1547,9 +1547,9 @@ _mesa_GetInternalformati64v(GLenum target, GLenum internalformat,
                             GLenum pname, GLsizei bufSize, GLint64 *params)
 {
    GLint params32[16];
-   unsigned i;
    GLsizei realSize = MIN2(bufSize, 16);
    GLsizei callSize;
+   int i;
 
    GET_CURRENT_CONTEXT(ctx);
 

@@ -102,7 +102,8 @@ void si_pm4_add_bo(struct si_pm4_state *state,
 
 void si_pm4_clear_state(struct si_pm4_state *state)
 {
-	for (int i = 0; i < state->nbo; ++i)
+	unsigned i;	
+	for (i = 0; i < state->nbo; ++i)
 		r600_resource_reference(&state->bo[i], NULL);
 	r600_resource_reference(&state->indirect_buffer, NULL);
 	state->nbo = 0;
@@ -116,7 +117,7 @@ void si_pm4_free_state(struct si_context *sctx,
 	if (!state)
 		return;
 
-	if (idx != ~0 && sctx->emitted.array[idx] == state) {
+	if (idx != (~0u) && sctx->emitted.array[idx] == state) {
 		sctx->emitted.array[idx] = NULL;
 	}
 
@@ -127,8 +128,9 @@ void si_pm4_free_state(struct si_context *sctx,
 void si_pm4_emit(struct si_context *sctx, struct si_pm4_state *state)
 {
 	struct radeon_winsys_cs *cs = sctx->b.gfx.cs;
+	unsigned i;
 
-	for (int i = 0; i < state->nbo; ++i) {
+	for (i = 0; i < state->nbo; ++i) {
 		radeon_add_to_buffer_list(&sctx->b, &sctx->b.gfx, state->bo[i],
 				      state->bo_usage[i], state->bo_priority[i]);
 	}
@@ -160,6 +162,7 @@ void si_pm4_upload_indirect_buffer(struct si_context *sctx,
 {
 	struct pipe_screen *screen = sctx->b.b.screen;
 	unsigned aligned_ndw = align(state->ndw, 8);
+	unsigned i;
 
 	/* only supported on CIK and later */
 	if (sctx->b.chip_class < CIK)
@@ -177,10 +180,10 @@ void si_pm4_upload_indirect_buffer(struct si_context *sctx,
 
 	/* Pad the IB to 8 DWs to meet CP fetch alignment requirements. */
 	if (sctx->screen->b.info.gfx_ib_pad_with_type2) {
-		for (int i = state->ndw; i < aligned_ndw; i++)
+		for (i = state->ndw; i < aligned_ndw; i++)
 			state->pm4[i] = 0x80000000; /* type2 nop packet */
 	} else {
-		for (int i = state->ndw; i < aligned_ndw; i++)
+		for (i = state->ndw; i < aligned_ndw; i++)
 			state->pm4[i] = 0xffff1000; /* type3 nop packet */
 	}
 

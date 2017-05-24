@@ -135,7 +135,7 @@ _mesa_init_teximage_fields(struct gl_context *ctx,
 extern mesa_format
 _mesa_choose_texture_format(struct gl_context *ctx,
                             struct gl_texture_object *texObj,
-                            GLenum target, GLint level,
+                            GLenum target, GLuint level,
                             GLenum internalFormat, GLenum format, GLenum type);
 
 extern void
@@ -197,8 +197,8 @@ _mesa_get_tex_max_num_levels(GLenum target, GLsizei width, GLsizei height,
 
 extern GLboolean
 _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
-                               GLint level, GLint width, GLint height,
-                               GLint depth, GLint border);
+                               GLuint level, GLuint width, GLuint height,
+                               GLuint depth, GLuint border);
 
 extern mesa_format
 _mesa_validate_texbuffer_format(const struct gl_context *ctx,

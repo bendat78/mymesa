@@ -73,6 +73,7 @@ symbol_name_cached(unw_cursor_t *cursor, unw_proc_info_t *pip)
 {
    void *addr = (void *)(uintptr_t)pip->start_ip;
    char *name;
+   int i;
 
    mtx_lock(&symbols_mutex);
    if(!symbols_hash)
@@ -90,10 +91,13 @@ symbol_name_cached(unw_cursor_t *cursor, unw_proc_info_t *pip)
          procname[1] = 0;
       }
 
-      asprintf(&name, "%s%s", procname, ret == -UNW_ENOMEM ? "..." : "");
+      i = asprintf(&name, "%s%s", procname, ret == -UNW_ENOMEM ? "..." : "");
+      if(i == -1)
+         goto on_error;
 
       util_hash_table_set(symbols_hash, addr, (void*)name);
    }
+   on_error:
    mtx_unlock(&symbols_mutex);
 
    return name;

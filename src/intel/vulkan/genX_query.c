@@ -601,7 +601,7 @@ shl_gpr0_by_30_bits(struct anv_batch *batch)
    /* We'll emit 5 commands, each shifting GPR0 left by 6 bits, for a total of
     * 30 left shifts.
     */
-   for (int o = 0; o < outer_count; o++) {
+   for (unsigned int o = 0; o < outer_count; o++) {
       /* Submit one MI_MATH to shift left by 6 bits */
       uint32_t *dw = anv_batch_emitn(batch, cmd_len, GENX(MI_MATH));
       if (!dw) {
@@ -610,7 +610,7 @@ shl_gpr0_by_30_bits(struct anv_batch *batch)
       }
 
       dw++;
-      for (int i = 0; i < inner_count; i++, dw += 4) {
+      for (unsigned int i = 0; i < inner_count; i++, dw += 4) {
          dw[0] = mi_alu(MI_ALU_LOAD, MI_ALU_SRCA, MI_ALU_REG0);
          dw[1] = mi_alu(MI_ALU_LOAD, MI_ALU_SRCB, MI_ALU_REG0);
          dw[2] = mi_alu(MI_ALU_ADD, 0, 0);

@@ -214,7 +214,7 @@ static void scan_read_callback(void * data, struct rc_instruction * inst,
 {
 	struct regalloc_state * s = data;
 	struct register_info * reg;
-	unsigned int i;
+	int i;
 
 	if (file != RC_FILE_INPUT)
 		return;
@@ -359,7 +359,7 @@ static enum rc_reg_class variable_get_class(
 			struct rc_variable * var_ptr;
 			for (var_ptr = variable; var_ptr;
 						var_ptr = var_ptr->Friend) {
-				int j;
+				unsigned int j;
 				unsigned int conversion_swizzle =
 						rc_make_conversion_swizzle(
 						writemask, c.Writemasks[i]);

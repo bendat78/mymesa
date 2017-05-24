@@ -156,7 +156,8 @@ dp2_emit(
 
 static struct lp_build_tgsi_action dp2_action = {
    dp2_fetch_args,	 /* fetch_args */
-   dp2_emit	 /* emit */
+   dp2_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_DP2A */
@@ -184,7 +185,8 @@ dp2a_emit(
 
 static struct lp_build_tgsi_action dp2a_action = {
    dp2a_fetch_args,	 /* fetch_args */
-   dp2a_emit	 /* emit */
+   dp2a_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_DP3 */
@@ -219,7 +221,8 @@ dp3_emit(
 
 static struct lp_build_tgsi_action dp3_action = {
    dp3_fetch_args,	 /* fetch_args */
-   dp3_emit	 /* emit */
+   dp3_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODDE_DP4 */
@@ -259,7 +262,8 @@ dp4_emit(
 
 static struct lp_build_tgsi_action dp4_action = {
    dp4_fetch_args,	 /* fetch_args */
-   dp4_emit	 /* emit */
+   dp4_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_DPH */
@@ -275,7 +279,8 @@ dph_fetch_args(
 
 const struct lp_build_tgsi_action dph_action = {
    dph_fetch_args,	 /* fetch_args */
-   dp4_emit	 /* emit */
+   dp4_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_DST */
@@ -321,7 +326,8 @@ dst_emit(
 
 static struct lp_build_tgsi_action dst_action = {
    dst_fetch_args,	 /* fetch_args */
-   dst_emit	 /* emit */
+   dst_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_END */
@@ -365,7 +371,8 @@ exp_emit(
 
 const struct lp_build_tgsi_action exp_action = {
    scalar_unary_fetch_args,	 /* fetch_args */
-   exp_emit	 /* emit */
+   exp_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_FRC */
@@ -469,7 +476,8 @@ lit_emit(
 
 static struct lp_build_tgsi_action lit_action = {
    lit_fetch_args,	 /* fetch_args */
-   lit_emit	 /* emit */
+   lit_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_LOG */
@@ -513,7 +521,8 @@ log_emit(
 
 static struct lp_build_tgsi_action log_action = {
    scalar_unary_fetch_args,	 /* fetch_args */
-   log_emit	 /* emit */
+   log_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_PK2H */
@@ -554,7 +563,8 @@ pk2h_emit(
 
 static struct lp_build_tgsi_action pk2h_action = {
    pk2h_fetch_args, /* fetch_args */
-   pk2h_emit        /* emit */
+   pk2h_emit,        /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_UP2H */
@@ -584,7 +594,8 @@ up2h_emit(
 
 static struct lp_build_tgsi_action up2h_action = {
    scalar_unary_fetch_args, /* fetch_args */
-   up2h_emit                /* emit */
+   up2h_emit,                /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_LRP */
@@ -686,7 +697,8 @@ pow_emit(
 
 static struct lp_build_tgsi_action pow_action = {
    scalar_binary_fetch_args,	 /* fetch_args */
-   pow_emit	 /* emit */
+   pow_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_RSQ */
@@ -706,8 +718,8 @@ rsq_emit(
 
 const struct lp_build_tgsi_action rsq_action = {
    scalar_unary_fetch_args,	 /* fetch_args */
-   rsq_emit	 /* emit */
-
+   rsq_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_SQRT */
@@ -727,7 +739,8 @@ sqrt_emit(
 
 const struct lp_build_tgsi_action sqrt_action = {
    scalar_unary_fetch_args,	 /* fetch_args */
-   sqrt_emit	 /* emit */
+   sqrt_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_SCS */
@@ -752,7 +765,8 @@ scs_emit(
 
 const struct lp_build_tgsi_action scs_action = {
    scalar_unary_fetch_args,	 /* fetch_args */
-   scs_emit	 /* emit */
+   scs_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_F2U */
@@ -954,7 +968,8 @@ xpd_emit(
 
 const struct lp_build_tgsi_action xpd_action = {
    xpd_fetch_args,	 /* fetch_args */
-   xpd_emit	 /* emit */
+   xpd_emit,	 /* emit */
+   NULL
 };
 
 /* TGSI_OPCODE_D2F */

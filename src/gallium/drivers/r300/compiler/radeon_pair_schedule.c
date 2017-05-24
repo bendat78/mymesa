@@ -504,7 +504,7 @@ static int merge_presub_sources(
 	struct rc_pair_sub_instruction src,
 	unsigned int type)
 {
-	unsigned int srcp_src, srcp_regs, is_rgb, is_alpha;
+	int srcp_src, srcp_regs, is_rgb, is_alpha;
 	struct rc_pair_sub_instruction * dst_sub;
 	const struct rc_opcode_info * info;
 
@@ -710,7 +710,9 @@ static int merge_instructions(struct rc_pair_instruction * rgb, struct rc_pair_i
 }
 
 static void presub_nop(struct rc_instruction * emitted) {
-	int prev_rgb_index, prev_alpha_index, i, num_src;
+	
+	int prev_rgb_index, prev_alpha_index;
+	unsigned int i, num_src;
 
 	/* We don't need a nop if the previous instruction is a TEX. */
 	if (emitted->Prev->Type != RC_INSTRUCTION_PAIR) {
@@ -730,7 +732,7 @@ static void presub_nop(struct rc_instruction * emitted) {
 		num_src = rc_presubtract_src_reg_count(
 				emitted->U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Index);
 		for (i = 0; i < num_src; i++) {
-			unsigned int index = emitted->U.P.RGB.Src[i].Index;
+			int index = emitted->U.P.RGB.Src[i].Index;
 			if (emitted->U.P.RGB.Src[i].File == RC_FILE_TEMPORARY
 			    && (index  == prev_rgb_index
 				|| index == prev_alpha_index)) {
@@ -747,7 +749,7 @@ static void presub_nop(struct rc_instruction * emitted) {
 	num_src = rc_presubtract_src_reg_count(
 				emitted->U.P.Alpha.Src[RC_PAIR_PRESUB_SRC].Index);
 	for (i = 0; i < num_src; i++) {
-		unsigned int index = emitted->U.P.Alpha.Src[i].Index;
+		int index = emitted->U.P.Alpha.Src[i].Index;
 		if(emitted->U.P.Alpha.Src[i].File == RC_FILE_TEMPORARY
 		   && (index == prev_rgb_index || index == prev_alpha_index)) {
 			emitted->Prev->U.P.Nop = 1;

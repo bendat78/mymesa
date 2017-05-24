@@ -41,6 +41,7 @@ nvc0_decoder_begin_frame(struct pipe_video_codec *decoder,
    ret = nvc0_decoder_bsp_begin(dec, comm_seq);
 
    assert(ret == 2);
+   (void) ret;
 }
 
 static void
@@ -60,6 +61,7 @@ nvc0_decoder_decode_bitstream(struct pipe_video_codec *decoder,
    ret = nvc0_decoder_bsp_next(dec, comm_seq, num_buffers, data, num_bytes);
 
    assert(ret == 2);
+   (void) ret;
 }
 
 static void
@@ -81,6 +83,7 @@ nvc0_decoder_end_frame(struct pipe_video_codec *decoder,
 
    /* did we decode bitstream correctly? */
    assert(ret == 2);
+   (void) ret;
 
    nvc0_decoder_vp(dec, desc, target, comm_seq, vp_caps, is_ref, refs);
    nvc0_decoder_ppp(dec, desc, target, comm_seq);

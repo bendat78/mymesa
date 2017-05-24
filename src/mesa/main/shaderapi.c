@@ -1137,7 +1137,7 @@ _mesa_link_program(struct gl_context *ctx, struct gl_shader_program *shProg)
 
    /* Capture .shader_test files. */
    const char *capture_path = _mesa_get_shader_capture_path();
-   if (shProg->Name != 0 && shProg->Name != ~0 && capture_path != NULL) {
+   if (shProg->Name != 0 && shProg->Name != (~0u) && capture_path != NULL) {
       FILE *file;
       char *filename = ralloc_asprintf(NULL, "%s/%u.shader_test",
                                        capture_path, shProg->Name);
@@ -2289,7 +2289,7 @@ _mesa_CreateShaderProgramv(GLenum type, GLsizei count,
  * For GL_ARB_tessellation_shader
  */
 extern void GLAPIENTRY
-_mesa_PatchParameteri(GLenum pname, GLint value)
+_mesa_PatchParameteri(GLenum pname, GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -2421,7 +2421,8 @@ _mesa_GetActiveSubroutineUniformiv(GLuint program, GLenum shadertype,
    struct gl_program_resource *res;
    const struct gl_uniform_storage *uni;
    GLenum resource_type;
-   int count, i, j;
+   unsigned int i, count;
+   int j;
 
    if (!_mesa_validate_shader_target(ctx, shadertype)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s", api_name);
@@ -2560,13 +2561,13 @@ _mesa_GetActiveSubroutineName(GLuint program, GLenum shadertype,
 }
 
 GLvoid GLAPIENTRY
-_mesa_UniformSubroutinesuiv(GLenum shadertype, GLsizei count,
+_mesa_UniformSubroutinesuiv(GLenum shadertype, GLuint count,
                             const GLuint *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
    const char *api_name = "glUniformSubroutinesuiv";
    gl_shader_stage stage;
-   int i;
+   unsigned int i;
 
    if (!_mesa_validate_shader_target(ctx, shadertype)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s", api_name);
@@ -2594,7 +2595,8 @@ _mesa_UniformSubroutinesuiv(GLenum shadertype, GLsizei count,
       }
 
       int uni_count = uni->array_elements ? uni->array_elements : 1;
-      int j, k, f;
+      int k;
+      unsigned j, f;
 
       for (j = i; j < i + uni_count; j++) {
          struct gl_subroutine_function *subfn = NULL;
@@ -2604,7 +2606,7 @@ _mesa_UniformSubroutinesuiv(GLenum shadertype, GLsizei count,
          }
 
          for (f = 0; f < p->sh.NumSubroutineFunctions; f++) {
-            if (p->sh.SubroutineFunctions[f].index == indices[j])
+            if ((unsigned)p->sh.SubroutineFunctions[f].index == indices[j])
                subfn = &p->sh.SubroutineFunctions[f];
          }
 
@@ -2631,7 +2633,7 @@ _mesa_UniformSubroutinesuiv(GLenum shadertype, GLsizei count,
 
 
 GLvoid GLAPIENTRY
-_mesa_GetUniformSubroutineuiv(GLenum shadertype, GLint location,
+_mesa_GetUniformSubroutineuiv(GLenum shadertype, GLuint location,
                               GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2763,8 +2765,8 @@ _mesa_GetProgramStageiv(GLuint program, GLenum shadertype,
 static int
 find_compat_subroutine(struct gl_program *p, const struct glsl_type *type)
 {
-   int i, j;
-
+   unsigned i;
+   int j;
    for (i = 0; i < p->sh.NumSubroutineFunctions; i++) {
       struct gl_subroutine_function *fn = &p->sh.SubroutineFunctions[i];
       for (j = 0; j < fn->num_compat_types; j++) {
@@ -2779,7 +2781,8 @@ static void
 _mesa_shader_write_subroutine_index(struct gl_context *ctx,
                                     struct gl_program *p)
 {
-   int i, j;
+   unsigned int i;
+   int j;
 
    if (p->sh.NumSubroutineUniformRemapTable == 0)
       return;
@@ -2820,6 +2823,7 @@ _mesa_program_init_subroutine_defaults(struct gl_context *ctx,
                                        struct gl_program *p)
 {
    assert(p);
+   unsigned i;
 
    struct gl_subroutine_index_binding *binding = &ctx->SubroutineIndex[p->info.stage];
    if (binding->NumIndex != p->sh.NumSubroutineUniformRemapTable) {
@@ -2828,7 +2832,7 @@ _mesa_program_init_subroutine_defaults(struct gl_context *ctx,
       binding->NumIndex = p->sh.NumSubroutineUniformRemapTable;
    }
 
-   for (int i = 0; i < p->sh.NumSubroutineUniformRemapTable; i++) {
+   for (i = 0; i < p->sh.NumSubroutineUniformRemapTable; i++) {
       struct gl_uniform_storage *uni = p->sh.SubroutineUniformRemapTable[i];
 
       if (!uni)

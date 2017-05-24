@@ -289,5 +289,7 @@ int virgl_vtest_busy_wait(struct virgl_vtest_winsys *vws, int handle,
    assert(ret);
    ret = virgl_block_read(vws->sock_fd, result, sizeof(result));
    assert(ret);
+   (void) ret;
+
    return result[0];
 }

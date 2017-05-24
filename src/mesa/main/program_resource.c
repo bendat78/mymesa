@@ -86,7 +86,7 @@ lookup_linked_program(GLuint program, const char *caller)
 
 void GLAPIENTRY
 _mesa_GetProgramInterfaceiv(GLuint program, GLenum programInterface,
-                            GLenum pname, GLint *params)
+                            GLenum pname, GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -161,7 +161,9 @@ _mesa_GetProgramInterfaceiv(GLuint program, GLenum programInterface,
                struct gl_uniform_block *block =
                   (struct gl_uniform_block *)
                   shProg->data->ProgramResourceList[i].Data;
-               GLint block_params = 0;
+
+               GLuint block_params = 0;
+
                for (unsigned j = 0; j < block->NumUniforms; j++) {
                   const char *iname = block->Uniforms[j].IndexName;
                   struct gl_program_resource *uni =

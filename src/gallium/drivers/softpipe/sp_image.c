@@ -390,8 +390,8 @@ handle_op_uint(const struct pipe_image_view *iview,
                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE],
                float rgba2[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   uint c;
-   int nc = util_format_get_nr_components(params->format);
+   unsigned int c;
+   unsigned int nc = util_format_get_nr_components(params->format);
    unsigned sdata[4];
 
    util_format_read_4ui(params->format,
@@ -507,8 +507,8 @@ handle_op_int(const struct pipe_image_view *iview,
               float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE],
               float rgba2[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   uint c;
-   int nc = util_format_get_nr_components(params->format);
+   unsigned int c;
+   unsigned int nc = util_format_get_nr_components(params->format);
    int sdata[4];
    util_format_read_4i(params->format,
                        sdata, 0,
@@ -621,8 +621,8 @@ handle_op_r32f_xchg(const struct pipe_image_view *iview,
                     float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    float sdata[4];
-   uint c;
-   int nc = 1;
+   unsigned int c;
+   unsigned int nc = 1;
    util_format_read_4f(params->format,
                        sdata, 0,
                        data_ptr, stride,
