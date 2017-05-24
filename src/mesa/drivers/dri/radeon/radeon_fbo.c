@@ -357,8 +357,8 @@ radeon_unmap_renderbuffer_s8z24(struct gl_context *ctx,
        
        tiled_s8z24_map = rrb->bo->ptr;
 
-       for (uint32_t pix_y = 0; pix_y < rrb->map_h; pix_y++) {
-	   for (uint32_t pix_x = 0; pix_x < rrb->map_w; pix_x++) {
+       for (long pix_y = 0; pix_y < rrb->map_h; pix_y++) {
+	   for (long pix_x = 0; pix_x < rrb->map_w; pix_x++) {
 	       uint32_t flipped_y = y_flip * (int32_t)(pix_y + rrb->map_y) + y_bias;
 	       uint32_t dst_offset = get_depth_z32(rrb, rrb->map_x + pix_x, flipped_y);
 	       uint32_t src_offset = pix_y * rrb->map_pitch + pix_x * rrb->cpp;
@@ -390,8 +390,8 @@ radeon_unmap_renderbuffer_z16(struct gl_context *ctx,
        
        tiled_z16_map = rrb->bo->ptr;
 
-       for (uint32_t pix_y = 0; pix_y < rrb->map_h; pix_y++) {
-	   for (uint32_t pix_x = 0; pix_x < rrb->map_w; pix_x++) {
+       for (long pix_y = 0; pix_y < rrb->map_h; pix_y++) {
+	   for (long pix_x = 0; pix_x < rrb->map_w; pix_x++) {
 	       uint32_t flipped_y = y_flip * (int32_t)(pix_y + rrb->map_y) + y_bias;
 	       uint32_t dst_offset = get_depth_z16(rrb, rrb->map_x + pix_x, flipped_y);
 	       uint32_t src_offset = pix_y * rrb->map_pitch + pix_x * rrb->cpp;

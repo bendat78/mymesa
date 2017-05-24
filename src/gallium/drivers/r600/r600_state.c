@@ -697,8 +697,8 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 	format = r600_translate_texformat(ctx->screen, state->format,
 					  swizzle,
 					  &word4, &yuv_format, do_endian_swap);
-	assert(format != ~0);
-	if (format == ~0) {
+	assert(format != (~0u));
+	if (format == (~0u)) {
 		FREE(view);
 		return NULL;
 	}

@@ -557,7 +557,7 @@ gen_spec_load(const struct gen_device_info *devinfo)
 {
    struct parser_context ctx;
    void *buf;
-   uint8_t *text_data;
+   uint8_t *text_data = NULL;
    uint32_t text_offset = 0, text_length = 0, total_length;
    uint32_t gen_10 = devinfo_to_gen(devinfo);
 
@@ -591,6 +591,7 @@ gen_spec_load(const struct gen_device_info *devinfo)
                                sizeof(compress_genxmls),
                                (void **) &text_data);
    assert(text_offset + text_length <= total_length);
+   (void) total_length;
 
    buf = XML_GetBuffer(ctx.parser, text_length);
    memcpy(buf, &text_data[text_offset], text_length);

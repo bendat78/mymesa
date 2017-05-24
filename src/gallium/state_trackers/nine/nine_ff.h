@@ -66,7 +66,7 @@ nine_ff_get_projected_key(struct nine_context *context)
 {
     unsigned s, i;
     uint16_t projected = 0;
-    char input_texture_coord[8];
+    unsigned char input_texture_coord[8];
     memset(&input_texture_coord, 0, sizeof(input_texture_coord));
 
     if (context->vdecl) {

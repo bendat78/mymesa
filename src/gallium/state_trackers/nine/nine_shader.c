@@ -554,9 +554,9 @@ nine_record_outputs(struct shader_translator *tx, BYTE Usage, BYTE UsageIndex,
 static boolean
 tx_lconstf(struct shader_translator *tx, struct ureg_src *src, INT index)
 {
-   INT i;
+   unsigned int i;
 
-   if (index < 0 || index >= tx->num_constf_allowed) {
+   if (index < 0 || index >= (signed)tx->num_constf_allowed) {
        tx->failure = TRUE;
        return FALSE;
    }
@@ -571,9 +571,9 @@ tx_lconstf(struct shader_translator *tx, struct ureg_src *src, INT index)
 static boolean
 tx_lconsti(struct shader_translator *tx, struct ureg_src *src, INT index)
 {
-   int i;
+   unsigned int i;
 
-   if (index < 0 || index >= tx->num_consti_allowed) {
+   if (index < 0 || index >= (signed)tx->num_consti_allowed) {
        tx->failure = TRUE;
        return FALSE;
    }
@@ -588,9 +588,9 @@ tx_lconsti(struct shader_translator *tx, struct ureg_src *src, INT index)
 static boolean
 tx_lconstb(struct shader_translator *tx, struct ureg_src *src, INT index)
 {
-   int i;
+   unsigned int i;
 
-   if (index < 0 || index >= tx->num_constb_allowed) {
+   if (index < 0 || index >= (signed)tx->num_constb_allowed) {
        tx->failure = TRUE;
        return FALSE;
    }
@@ -606,9 +606,9 @@ tx_lconstb(struct shader_translator *tx, struct ureg_src *src, INT index)
 static void
 tx_set_lconstf(struct shader_translator *tx, INT index, float f[4])
 {
-    unsigned n;
+    unsigned int n;
 
-    FAILURE_VOID(index < 0 || index >= tx->num_constf_allowed)
+    FAILURE_VOID(index < 0 || index >= (signed)tx->num_constf_allowed)
 
     for (n = 0; n < tx->num_lconstf; ++n)
         if (tx->lconstf[n].idx == index)
@@ -630,9 +630,9 @@ tx_set_lconstf(struct shader_translator *tx, INT index, float f[4])
 static void
 tx_set_lconsti(struct shader_translator *tx, INT index, int i[4])
 {
-    unsigned n;
+    unsigned int n;
 
-    FAILURE_VOID(index < 0 || index >= tx->num_consti_allowed)
+    FAILURE_VOID(index < 0 || index >= (signed)tx->num_consti_allowed)
 
     for (n = 0; n < tx->num_lconsti; ++n)
         if (tx->lconsti[n].idx == index)
@@ -657,7 +657,7 @@ tx_set_lconstb(struct shader_translator *tx, INT index, BOOL b)
 {
     unsigned n;
 
-    FAILURE_VOID(index < 0 || index >= tx->num_constb_allowed)
+    FAILURE_VOID(index < 0 || index >= (signed)tx->num_constb_allowed)
 
     for (n = 0; n < tx->num_lconstb; ++n)
         if (tx->lconstb[n].idx == index)
@@ -710,7 +710,7 @@ static inline void
 tx_temp_alloc(struct shader_translator *tx, INT idx)
 {
     assert(idx >= 0);
-    if (idx >= tx->num_temp) {
+    if (idx >= (signed)tx->num_temp) {
        unsigned k = tx->num_temp;
        unsigned n = idx + 1;
        tx->regs.r = REALLOC(tx->regs.r,
@@ -3479,7 +3479,7 @@ nine_translate_shader(struct NineDevice9 *device, struct nine_shader_info *info,
     const unsigned processor = info->type;
     struct pipe_screen *screen = info->process_vertices ? device->screen_sw : device->screen;
 
-    user_assert(processor != ~0, D3DERR_INVALIDCALL);
+    user_assert(processor != (~0u), D3DERR_INVALIDCALL);
 
     tx = CALLOC_STRUCT(shader_translator);
     if (!tx)

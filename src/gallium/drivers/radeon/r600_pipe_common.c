@@ -1165,7 +1165,7 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 	case PIPE_COMPUTE_CAP_IMAGES_SUPPORTED:
 		if (ret) {
 			uint32_t *images_supported = ret;
-			*images_supported = 0;
+			*images_supported = 1;
 		}
 		return sizeof(uint32_t);
 	case PIPE_COMPUTE_CAP_MAX_PRIVATE_SIZE:

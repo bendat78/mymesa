@@ -1329,7 +1329,8 @@ vtn_handle_variables(struct vtn_builder *b, SpvOp opcode,
       while(glsl_type_is_array(without_array->type))
          without_array = without_array->array_element;
 
-      nir_variable_mode nir_mode;
+      nir_variable_mode nir_mode = 0;
+
       switch ((SpvStorageClass)w[3]) {
       case SpvStorageClassUniform:
       case SpvStorageClassUniformConstant:
@@ -1561,7 +1562,7 @@ vtn_handle_variables(struct vtn_builder *b, SpvOp opcode,
       chain = vtn_access_chain_extend(b, base, count - 4);
 
       unsigned idx = base->length;
-      for (int i = 4; i < count; i++) {
+      for (unsigned i = 4; i < count; i++) {
          struct vtn_value *link_val = vtn_untyped_value(b, w[i]);
          if (link_val->value_type == vtn_value_type_constant) {
             chain->link[idx].mode = vtn_access_mode_literal;

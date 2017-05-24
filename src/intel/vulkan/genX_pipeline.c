@@ -1342,7 +1342,7 @@ has_color_buffer_write_enabled(const struct anv_pipeline *pipeline)
       return false;
 
    const struct anv_pipeline_bind_map *bind_map = &shader_bin->bind_map;
-   for (int i = 0; i < bind_map->surface_count; i++) {
+   for (unsigned int i = 0; i < bind_map->surface_count; i++) {
       if (bind_map->surface_to_descriptor[i].set !=
           ANV_DESCRIPTOR_SET_COLOR_ATTACHMENTS)
          continue;

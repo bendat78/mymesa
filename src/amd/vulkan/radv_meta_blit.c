@@ -426,7 +426,8 @@ meta_emit_blit(struct radv_cmd_buffer *cmd_buffer,
 				                                      .imageView = radv_image_view_to_handle(src_iview),
 				                                      .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                              },
-				                      }
+				                      },
+						      .pBufferInfo = 0,
 				              }
 				      });
 

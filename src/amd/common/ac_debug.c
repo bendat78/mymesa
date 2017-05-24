@@ -78,7 +78,7 @@ static void print_named_value(FILE *file, const char *name, uint32_t value,
 void ac_dump_reg(FILE *file, unsigned offset, uint32_t value,
 		 uint32_t field_mask)
 {
-	int r, f;
+	unsigned int r, f;
 
 	for (r = 0; r < ARRAY_SIZE(sid_reg_table); r++) {
 		const struct si_reg *reg = &sid_reg_table[r];
@@ -134,7 +134,7 @@ static void ac_parse_set_reg_packet(FILE *f, uint32_t *ib, unsigned count,
 {
 	unsigned reg = ((ib[1] & 0xFFFF) << 2) + reg_offset;
 	unsigned index = ib[1] >> 28;
-	int i;
+	unsigned int i;
 
 	if (index != 0) {
 		print_spaces(f, INDENT_PKT);
@@ -146,14 +146,14 @@ static void ac_parse_set_reg_packet(FILE *f, uint32_t *ib, unsigned count,
 }
 
 static uint32_t *ac_parse_packet3(FILE *f, uint32_t *ib, int *num_dw,
-				  int trace_id, enum chip_class chip_class,
+				  unsigned int trace_id, enum chip_class chip_class,
 				  ac_debug_addr_callback addr_callback,
 				  void *addr_callback_data)
 {
 	unsigned count = PKT_COUNT_G(ib[0]);
 	unsigned op = PKT3_IT_OPCODE_G(ib[0]);
 	const char *predicate = PKT3_PREDICATE(ib[0]) ? "(predicate)" : "";
-	int i;
+	unsigned int i;
 
 	/* Print the name first. */
 	for (i = 0; i < ARRAY_SIZE(packet3_table); i++)
@@ -241,7 +241,7 @@ static uint32_t *ac_parse_packet3(FILE *f, uint32_t *ib, int *num_dw,
 		ac_dump_reg(f, R_370_CONTROL, ib[1], ~0);
 		ac_dump_reg(f, R_371_DST_ADDR_LO, ib[2], ~0);
 		ac_dump_reg(f, R_372_DST_ADDR_HI, ib[3], ~0);
-		for (i = 2; i < count; i++) {
+		for (unsigned i = 2; i < count; i++) {
 			print_spaces(f, INDENT_PKT);
 			fprintf(f, "0x%08x\n", ib[2+i]);
 		}

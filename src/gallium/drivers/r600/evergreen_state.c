@@ -740,8 +740,8 @@ static int evergreen_fill_tex_resource_words(struct r600_context *rctx,
 	format = r600_translate_texformat(rctx->b.b.screen, params->pipe_format,
 					  params->swizzle,
 					  &word4, &yuv_format, do_endian_swap);
-	assert(format != ~0);
-	if (format == ~0) {
+	assert(format != (~0u));
+	if (format == (~0u)) {
 		return -1;
 	}
 
@@ -1186,9 +1186,9 @@ static void evergreen_set_color_surface_common(struct r600_context *rctx,
 		do_endian_swap = !rtex->db_compatible;
 
 	format = r600_translate_colorformat(rctx->b.chip_class, pformat, do_endian_swap);
-	assert(format != ~0);
+	assert(format != (~0u));
 	swap = r600_translate_colorswap(pformat, do_endian_swap);
-	assert(swap != ~0);
+	assert(swap != (~0u));
 
 	endian = r600_colorformat_endian_swap(format, do_endian_swap);
 
@@ -1324,7 +1324,7 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 
 
 	format = r600_translate_dbformat(surf->base.format);
-	assert(format != ~0);
+	assert(format != (~0u));
 
 	offset = rtex->resource.gpu_address;
 	offset += rtex->surface.u.legacy.level[level].offset;
@@ -1553,7 +1553,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	rctx->framebuffer.do_update_surf_dirtiness = true;
 }
 
-static void evergreen_set_min_samples(struct pipe_context *ctx, unsigned min_samples)
+static void evergreen_set_min_samples(struct pipe_context *ctx, int min_samples)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
@@ -2548,10 +2548,10 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_0288E8_SQ_LDS_ALLOC */
 	r600_store_value(cb, 0); /* R_0288EC_SQ_LDS_ALLOC_PS */
 
-        r600_store_context_reg(cb, R_0288F0_SQ_VTX_SEMANTIC_CLEAR, ~0);
+        r600_store_context_reg(cb, R_0288F0_SQ_VTX_SEMANTIC_CLEAR, (~0u));
 
         r600_store_context_reg_seq(cb, R_028400_VGT_MAX_VTX_INDX, 2);
-	r600_store_value(cb, ~0); /* R_028400_VGT_MAX_VTX_INDX */
+	r600_store_value(cb, (~0u)); /* R_028400_VGT_MAX_VTX_INDX */
 	r600_store_value(cb, 0); /* R_028404_VGT_MIN_VTX_INDX */
 
 	r600_store_ctl_const(cb, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);
@@ -2958,10 +2958,10 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 
 	r600_store_config_reg(cb, R_008A14_PA_CL_ENHANCE, (3 << 1) | 1);
 
-        r600_store_context_reg(cb, R_0288F0_SQ_VTX_SEMANTIC_CLEAR, ~0);
+        r600_store_context_reg(cb, R_0288F0_SQ_VTX_SEMANTIC_CLEAR, (~0u));
 
         r600_store_context_reg_seq(cb, R_028400_VGT_MAX_VTX_INDX, 2);
-	r600_store_value(cb, ~0); /* R_028400_VGT_MAX_VTX_INDX */
+	r600_store_value(cb, (~0u)); /* R_028400_VGT_MAX_VTX_INDX */
 	r600_store_value(cb, 0); /* R_028404_VGT_MIN_VTX_INDX */
 
 	r600_store_ctl_const(cb, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);

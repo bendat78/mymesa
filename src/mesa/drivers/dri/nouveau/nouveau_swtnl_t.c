@@ -166,7 +166,7 @@ swtnl_bind_vertices(struct gl_context *ctx)
 	struct nouveau_render_state *render = to_render_state(ctx);
 	struct nouveau_swtnl_state *swtnl = &render->swtnl;
 	struct tnl_clipspace *vtx = &TNL_CONTEXT(ctx)->clipspace;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < vtx->attr_count; i++) {
 		struct tnl_clipspace_attr *ta = &vtx->attr[i];
@@ -254,7 +254,7 @@ swtnl_reset_stipple(struct gl_context *ctx)
 
 #define BEGIN_PRIMITIVE(p, n)						\
 	struct nouveau_swtnl_state *swtnl = &to_render_state(ctx)->swtnl; \
-	int vertex_len = TNL_CONTEXT(ctx)->clipspace.vertex_size;	\
+	unsigned int vertex_len = TNL_CONTEXT(ctx)->clipspace.vertex_size;	\
 									\
 	if (swtnl->vertex_count + (n) > SWTNL_VBO_SIZE/vertex_len	\
 	    || (swtnl->vertex_count && swtnl->primitive != p))		\

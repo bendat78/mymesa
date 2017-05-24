@@ -344,7 +344,7 @@ validate_array_format(struct gl_context *ctx, const char *func,
                       GLint sizeMin, GLint sizeMax,
                       GLint size, GLenum type, GLboolean normalized,
                       GLboolean integer, GLboolean doubles,
-                      GLuint relativeOffset, GLenum format)
+                      GLint relativeOffset, GLenum format)
 {
    GLbitfield typeBit;
 
@@ -463,7 +463,7 @@ static void
 validate_array(struct gl_context *ctx, const char *func,
                GLuint attrib, GLbitfield legalTypesMask,
                GLint sizeMin, GLint sizeMax,
-               GLint size, GLenum type, GLsizei stride,
+               GLint size, GLenum type, GLuint stride,
                GLboolean normalized, GLboolean integer, GLboolean doubles,
                const GLvoid *ptr)
 {
@@ -553,7 +553,7 @@ static void
 update_array(struct gl_context *ctx,
              GLuint attrib, GLenum format,
              GLint sizeMax,
-             GLint size, GLenum type, GLsizei stride,
+             GLint size, GLenum type, GLuint stride,
              GLboolean normalized, GLboolean integer, GLboolean doubles,
              const GLvoid *ptr)
 {
@@ -1525,7 +1525,7 @@ _mesa_GetVertexArrayIndexed64iv(GLuint vaobj, GLuint index,
     * limit must be MAX_VERTEX_ATTRIB_BINDINGS.  Both limits are currently
     * required to be the same, so in practice this doesn't matter.
     */
-   if (index >= ctx->Const.MaxVertexAttribBindings) {
+   if (index >= (unsigned)ctx->Const.MaxVertexAttribBindings) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexArrayIndexed64iv(index"
                   "%d >= the value of GL_MAX_VERTEX_ATTRIB_BINDINGS (%d))",
                   index, ctx->Const.MaxVertexAttribBindings);
@@ -1952,8 +1952,9 @@ _mesa_VertexAttribDivisor(GLuint index, GLuint divisor)
 static ALWAYS_INLINE void
 vertex_array_vertex_buffer(struct gl_context *ctx,
                            struct gl_vertex_array_object *vao,
-                           GLuint bindingIndex, GLuint buffer, GLintptr offset,
-                           GLsizei stride, bool no_error, const char *func)
+                           GLint bindingIndex, GLuint buffer, GLintptr offset,
+                           GLuint stride, bool no_error, const char *func)
+
 {
    struct gl_buffer_object *vbo;
    if (buffer ==
@@ -2120,8 +2121,8 @@ _mesa_VertexArrayVertexBuffer(GLuint vaobj, GLuint bindingIndex, GLuint buffer,
 static void
 vertex_array_vertex_buffers(struct gl_context *ctx,
                             struct gl_vertex_array_object *vao,
-                            GLuint first, GLsizei count, const GLuint *buffers,
-                            const GLintptr *offsets, const GLsizei *strides,
+                            GLuint first, GLuint count, const GLuint *buffers,
+                            const GLintptr *offsets, const GLuint *strides,
                             const char *func)
 {
    GLuint i;
@@ -2133,7 +2134,7 @@ vertex_array_vertex_buffers(struct gl_context *ctx,
     *    "An INVALID_OPERATION error is generated if <first> + <count>
     *     is greater than the value of MAX_VERTEX_ATTRIB_BINDINGS."
     */
-   if (first + count > ctx->Const.MaxVertexAttribBindings) {
+   if (first + count > (unsigned)ctx->Const.MaxVertexAttribBindings) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "%s(first=%u + count=%d > the value of "
                   "GL_MAX_VERTEX_ATTRIB_BINDINGS=%u)",
@@ -2474,7 +2475,7 @@ _mesa_VertexArrayAttribLFormat(GLuint vaobj, GLuint attribIndex,
 static void
 vertex_array_attrib_binding(struct gl_context *ctx,
                             struct gl_vertex_array_object *vao,
-                            GLuint attribIndex, GLuint bindingIndex,
+                            GLuint attribIndex, GLint bindingIndex,
                             const char *func)
 {
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -2557,7 +2558,7 @@ _mesa_VertexArrayAttribBinding(GLuint vaobj, GLuint attribIndex, GLuint bindingI
 static void
 vertex_array_binding_divisor(struct gl_context *ctx,
                              struct gl_vertex_array_object *vao,
-                             GLuint bindingIndex, GLuint divisor,
+                             GLint bindingIndex, GLuint divisor,
                              const char *func)
 {
    ASSERT_OUTSIDE_BEGIN_END(ctx);

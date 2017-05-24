@@ -170,7 +170,7 @@ static void vid_dec_h264_EndFrame(vid_dec_PrivateType *priv)
    struct dpb_list *entry;
    struct pipe_video_buffer *tmp;
    bool top_field_first;
-   OMX_TICKS timestamp;
+   OMX_TICKS timestamp = 0;
 
    if (!priv->frame_started)
       return;

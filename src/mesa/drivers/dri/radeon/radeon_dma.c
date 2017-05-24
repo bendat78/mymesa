@@ -214,14 +214,14 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	struct radeon_dma_bo *dma_bo = NULL;
 	/* we set minimum sizes to at least requested size
 	   aligned to next 16 bytes. */
-	if (size > rmesa->dma.minimum_size)
+	if (size > (signed)rmesa->dma.minimum_size)
 		rmesa->dma.minimum_size = (size + 15) & (~15);
 
 	radeon_print(RADEON_DMA, RADEON_NORMAL, "%s size %d minimum_size %Zi\n",
 			__func__, size, rmesa->dma.minimum_size);
 
 	if (is_empty_list(&rmesa->dma.free)
-	      || last_elem(&rmesa->dma.free)->bo->size < size) {
+	      || (signed)last_elem(&rmesa->dma.free)->bo->size < size) {
 		dma_bo = CALLOC_STRUCT(radeon_dma_bo);
 		assert(dma_bo);
 
@@ -494,7 +494,7 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 void radeonReleaseArrays( struct gl_context *ctx, GLuint newinputs )
 {
    radeonContextPtr radeon = RADEON_CONTEXT( ctx );
-   int i;
+   unsigned int i;
 	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s\n", __func__);
 

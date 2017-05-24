@@ -170,7 +170,7 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
    uint64_t max_size;
    int fd = -1;
    struct stat sb;
-   size_t size;
+   long int size;
 
    /* If running as a users other than the real user disable cache */
    if (geteuid() != getuid())
@@ -216,7 +216,7 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
 
    if (path == NULL) {
       char *buf;
-      size_t buf_size;
+      long int buf_size;
       struct passwd pwd, *result;
 
       buf_size = sysconf(_SC_GETPW_R_SIZE_MAX);

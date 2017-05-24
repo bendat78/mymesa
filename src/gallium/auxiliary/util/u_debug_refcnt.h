@@ -58,6 +58,9 @@ static inline void
 debug_reference(const struct pipe_reference* p,
                 debug_reference_descriptor get_desc, int change)
 {
+(void) p;
+(void) get_desc;
+(void) change;
 }
 
 #endif

@@ -179,7 +179,7 @@ _mesa_signed_to_signed(int src, unsigned dst_size)
 static inline unsigned
 _mesa_signed_to_unsigned(int src, unsigned dst_size)
 {
-   return CLAMP(src, 0, MAX_UINT(dst_size));
+   return CLAMP(src, 0, (signed)MAX_INT(dst_size));
 }
 
 static inline unsigned

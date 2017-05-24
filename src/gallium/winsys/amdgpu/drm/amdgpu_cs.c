@@ -962,7 +962,7 @@ static unsigned amdgpu_cs_get_buffer_list(struct radeon_winsys_cs *rcs,
                                           struct radeon_bo_list_item *list)
 {
     struct amdgpu_cs_context *cs = amdgpu_cs(rcs)->csc;
-    int i;
+    unsigned i;
 
     if (list) {
         for (i = 0; i < cs->num_real_buffers; i++) {
@@ -1135,7 +1135,8 @@ void amdgpu_cs_submit_ib(void *job, int thread_index)
    struct amdgpu_cs *acs = (struct amdgpu_cs*)job;
    struct amdgpu_winsys *ws = acs->ctx->ws;
    struct amdgpu_cs_context *cs = acs->cst;
-   int i, r;
+   unsigned i;
+   int r;
 
    cs->request.fence_info.handle = NULL;
    if (amdgpu_cs_has_user_fence(cs)) {
