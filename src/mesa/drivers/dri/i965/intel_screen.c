@@ -1553,7 +1553,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
        GLX_SWAP_UNDEFINED_OML, GLX_NONE,
    };
 
-   static const uint8_t singlesample_samples[1] = {0};
+   static const uint8_t singlesample_samples[1] = {};
    static const uint8_t multisample_samples[2]  = {4, 8};
 
    struct intel_screen *screen = dri_screen->driverPrivate;

@@ -251,7 +251,7 @@ setup_vec4_uniform_value(const union gl_constant_value **params,
                          const union gl_constant_value *values,
                          unsigned n)
 {
-   static const gl_constant_value zero = { 0 };
+   static const gl_constant_value zero = {};
 
    for (unsigned i = 0; i < n; ++i)
       params[i] = &values[i];

@@ -181,7 +181,7 @@ emit_stream_out(struct fd_ringbuffer *ring, const struct ir3_shader_variant *v,
 		struct ir3_shader_linkage *l)
 {
 	const struct pipe_stream_output_info *strmout = &v->shader->stream_output;
-	unsigned ncomp[PIPE_MAX_SO_BUFFERS] = {0};
+	unsigned ncomp[PIPE_MAX_SO_BUFFERS] = {};
 	unsigned prog[align(l->max_loc, 2) / 2];
 
 	memset(prog, 0, sizeof(prog));
@@ -452,14 +452,14 @@ fd5_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
 			A5XX_SP_VS_CTRL_REG0_BRANCHSTACK(0x3) |  // XXX need to figure this out somehow..
 			COND(s[VS].v->has_samp, A5XX_SP_VS_CTRL_REG0_PIXLODENABLE));
 
-	struct ir3_shader_linkage l = {0};
+	struct ir3_shader_linkage l = {};
 	ir3_link_shaders(&l, s[VS].v, s[FS].v);
 
 	if ((s[VS].v->shader->stream_output.num_outputs > 0) &&
 			!emit->key.binning_pass)
 		link_stream_out(&l, s[VS].v);
 
-	BITSET_DECLARE(varbs, 128) = {0};
+	BITSET_DECLARE(varbs, 128) = {};
 	uint32_t *varmask = (uint32_t *)varbs;
 
 	for (i = 0; i < l.cnt; i++)

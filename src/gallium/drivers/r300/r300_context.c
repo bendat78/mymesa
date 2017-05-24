@@ -265,9 +265,9 @@ static boolean r300_setup_atoms(struct r300_context* r300)
 static void r300_init_states(struct pipe_context *pipe)
 {
     struct r300_context *r300 = r300_context(pipe);
-    struct pipe_blend_color bc = {{0}};
-    struct pipe_clip_state cs = {{{0}}};
-    struct pipe_scissor_state ss = {0};
+    struct pipe_blend_color bc = {};
+    struct pipe_clip_state cs = {};
+    struct pipe_scissor_state ss = {};
     struct r300_gpu_flush *gpuflush =
             (struct r300_gpu_flush*)r300->gpu_flush.state;
     struct r300_vap_invariant_state *vap_invariant =
@@ -439,8 +439,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
      * dummy texture there. */
     if (!r300->screen->caps.is_r500) {
         struct pipe_resource *tex;
-        struct pipe_resource rtempl = {{0}};
-        struct pipe_sampler_view vtempl = {{0}};
+        struct pipe_resource rtempl = {};
+        struct pipe_sampler_view vtempl = {};
 
         rtempl.target = PIPE_TEXTURE_2D;
         rtempl.format = PIPE_FORMAT_I8_UNORM;

@@ -888,7 +888,7 @@ void anv_GetPhysicalDeviceProperties(
       .deviceID = pdevice->chipset_id,
       .deviceType = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
       .limits = limits,
-      .sparseProperties = {0}, /* Broadwell doesn't do sparse. */
+      .sparseProperties = {}, /* Broadwell doesn't do sparse. */
    };
 
    strcpy(pProperties->deviceName, pdevice->name);

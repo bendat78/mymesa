@@ -823,7 +823,7 @@ ir_reader::read_constant(s_expression *expr)
       return new(mem_ctx) ir_constant(type, &elements);
    }
 
-   ir_constant_data data = { { 0 } };
+   ir_constant_data data = {};
 
    // Read in list of values (at most 16).
    unsigned k = 0;

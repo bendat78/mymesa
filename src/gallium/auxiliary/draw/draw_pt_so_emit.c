@@ -119,7 +119,7 @@ static void so_emit_prim(struct pt_so_emit *so,
    const struct pipe_stream_output_info *state = draw_so_info(draw);
    float *buffer;
    int buffer_total_bytes[PIPE_MAX_SO_BUFFERS];
-   boolean buffer_written[PIPE_MAX_SO_BUFFERS] = {0};
+   boolean buffer_written[PIPE_MAX_SO_BUFFERS] = {};
 
    input_ptr = so->inputs;
    if (so->use_pre_clip_pos)

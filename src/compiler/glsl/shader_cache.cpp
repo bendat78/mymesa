@@ -1221,7 +1221,7 @@ shader_cache_write_program_metadata(struct gl_context *ctx,
     * TODO: In future we should use another method to generate a key for ff
     * programs.
     */
-   static const char zero[sizeof(prog->data->sha1)] = {0};
+   static const char zero[sizeof(prog->data->sha1)] = {};
    if (memcmp(prog->data->sha1, zero, sizeof(prog->data->sha1)) == 0)
       return;
 

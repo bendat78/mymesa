@@ -191,7 +191,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    Status ret;
    struct vl_screen *vscreen;
    struct pipe_context *pipe;
-   struct pipe_video_codec templat = {0};
+   struct pipe_video_codec templat = {};
    XvMCContextPrivate *context_priv;
    vl_csc_matrix csc;
 

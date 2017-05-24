@@ -1290,7 +1290,7 @@ UINT_64 SiLib::HwlComputeXmaskAddrFromCoord(
 
     if (factor == 2) //CMASK
     {
-        ADDR_CMASK_FLAGS flags = {{0}};
+        ADDR_CMASK_FLAGS flags = {};
 
         tileNumPerPipe = 256;
 
@@ -1309,7 +1309,7 @@ UINT_64 SiLib::HwlComputeXmaskAddrFromCoord(
     }
     else //HTile
     {
-        ADDR_HTILE_FLAGS flags = {{0}};
+        ADDR_HTILE_FLAGS flags = {};
 
         tileNumPerPipe = 512;
 
@@ -1450,7 +1450,7 @@ VOID SiLib::HwlComputeXmaskCoordFromAddr(
 
     if (factor == 2) //CMASK
     {
-        ADDR_CMASK_FLAGS flags = {{0}};
+        ADDR_CMASK_FLAGS flags = {};
 
         tileNumPerPipe = 256;
 
@@ -1468,7 +1468,7 @@ VOID SiLib::HwlComputeXmaskCoordFromAddr(
     }
     else //HTile
     {
-        ADDR_HTILE_FLAGS flags = {{0}};
+        ADDR_HTILE_FLAGS flags = {};
 
         tileNumPerPipe = 512;
 
@@ -2474,7 +2474,7 @@ VOID SiLib::HwlComputeSurfaceCoord2DFromBankPipe(
 
     UINT_32 numPipes = GetPipePerSurf(pTileInfo->pipeConfig);
 
-    CoordFromBankPipe xyBits = {0};
+    CoordFromBankPipe xyBits = {};
     ComputeSurfaceCoord2DFromBankPipe(tileMode, *pX, *pY, slice, bank, pipe,
                                       bankSwizzle, pipeSwizzle, tileSlices, pTileInfo,
                                       &xyBits);
@@ -3592,7 +3592,7 @@ VOID SiLib::InitEquationTable()
 
             TileConfig tileConfig = m_tileTable[tileIndex];
 
-            ADDR_SURFACE_FLAGS flags = {{0}};
+            ADDR_SURFACE_FLAGS flags = {};
 
             // Compute tile info, hardcode numSamples to 1 because MSAA is not supported
             // in swizzle pattern equation
@@ -3601,7 +3601,7 @@ VOID SiLib::InitEquationTable()
             // Check if the input is supported
             if (IsEquationSupported(bpp, tileConfig, tileIndex, log2ElementBytes) == TRUE)
             {
-                ADDR_EQUATION_KEY  key   = {{0}};
+                ADDR_EQUATION_KEY  key = {};
 
                 // Generate swizzle equation key from bpp and tile config
                 key.fields.log2ElementBytes = log2ElementBytes;

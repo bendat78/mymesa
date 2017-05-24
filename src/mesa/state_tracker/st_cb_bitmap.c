@@ -671,7 +671,7 @@ st_DrawAtlasBitmaps(struct gl_context *ctx,
    const unsigned num_verts = count * 4;
    const unsigned num_vert_bytes = num_verts * sizeof(struct st_util_vertex);
    struct st_util_vertex *verts;
-   struct pipe_vertex_buffer vb = {0};
+   struct pipe_vertex_buffer vb = {};
    unsigned i;
 
    if (!st->bitmap.vs) {

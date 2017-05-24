@@ -533,7 +533,7 @@ st_clear_buffer_subdata(struct gl_context *ctx,
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *buf = st_buffer_object(bufObj);
-   static const char zeros[16] = {0};
+   static const char zeros[16] = {};
 
    if (!pipe->clear_buffer) {
       _mesa_ClearBufferSubData_sw(ctx, offset, size,

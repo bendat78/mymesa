@@ -56,7 +56,7 @@ nouveau_get_configs(uint32_t chipset)
 
 	const uint8_t depth_bits[]   = { 0, 16, 24, 24 };
 	const uint8_t stencil_bits[] = { 0,  0,  0,  8 };
-	const uint8_t msaa_samples[] = { 0 };
+	const uint8_t msaa_samples[] = {};
 
 	static const mesa_format formats[3] = {
 		MESA_FORMAT_B5G6R5_UNORM,

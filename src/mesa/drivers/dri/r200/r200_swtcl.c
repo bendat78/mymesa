@@ -477,7 +477,7 @@ do {							\
 
 #define LOCAL_VARS(n)							\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);			\
-   GLuint color[n] = {0}, spec[n] = {0};						\
+   GLuint color[n] = {}, spec[n] = {};						\
    GLuint coloroffset = rmesa->swtcl.coloroffset;	\
    GLuint specoffset = rmesa->swtcl.specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;

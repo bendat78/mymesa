@@ -716,7 +716,7 @@ static VkResult
 radv_device_init_meta_blit_color(struct radv_device *device,
 				 struct radv_shader_module *vs)
 {
-	struct radv_shader_module fs_1d = {0}, fs_2d = {0}, fs_3d = {0};
+	struct radv_shader_module fs_1d = {}, fs_2d = {}, fs_3d = {};
 	VkResult result;
 
 	fs_1d.nir = build_nir_copy_fragment_shader(GLSL_SAMPLER_DIM_1D);
@@ -877,7 +877,7 @@ static VkResult
 radv_device_init_meta_blit_depth(struct radv_device *device,
 				 struct radv_shader_module *vs)
 {
-	struct radv_shader_module fs_1d = {0}, fs_2d = {0}, fs_3d = {0};
+	struct radv_shader_module fs_1d = {}, fs_2d = {}, fs_3d = {};
 	VkResult result;
 
 	fs_1d.nir = build_nir_copy_fragment_shader_depth(GLSL_SAMPLER_DIM_1D);
@@ -1035,7 +1035,7 @@ static VkResult
 radv_device_init_meta_blit_stencil(struct radv_device *device,
 				   struct radv_shader_module *vs)
 {
-	struct radv_shader_module fs_1d = {0}, fs_2d = {0}, fs_3d = {0};
+	struct radv_shader_module fs_1d = {}, fs_2d = {}, fs_3d = {};
 	VkResult result;
 
 	fs_1d.nir = build_nir_copy_fragment_shader_stencil(GLSL_SAMPLER_DIM_1D);
@@ -1210,7 +1210,7 @@ VkResult
 radv_device_init_meta_blit_state(struct radv_device *device)
 {
 	VkResult result;
-	struct radv_shader_module vs = {0};
+	struct radv_shader_module vs = {};
 	zero(device->meta_state.blit);
 
 	VkDescriptorSetLayoutCreateInfo ds_layout_info = {

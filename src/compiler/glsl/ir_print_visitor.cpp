@@ -165,19 +165,19 @@ void ir_print_visitor::visit(ir_variable *ir)
 {
    fprintf(f, "(declare ");
 
-   char binding[32] = {0};
+   char binding[32] = {};
    if (ir->data.binding)
       snprintf(binding, sizeof(binding), "binding=%i ", ir->data.binding);
 
-   char loc[32] = {0};
+   char loc[32] = {};
    if (ir->data.location != -1)
       snprintf(loc, sizeof(loc), "location=%i ", ir->data.location);
 
-   char component[32] = {0};
+   char component[32] = {};
    if (ir->data.explicit_component)
       snprintf(component, sizeof(component), "component=%i ", ir->data.location_frac);
 
-   char stream[32] = {0};
+   char stream[32] = {};
    if (ir->data.stream & (1u << 31)) {
       if (ir->data.stream & ~(1u << 31)) {
          snprintf(stream, sizeof(stream), "stream(%u,%u,%u,%u) ",
@@ -188,7 +188,7 @@ void ir_print_visitor::visit(ir_variable *ir)
       snprintf(stream, sizeof(stream), "stream%u ", ir->data.stream);
    }
 
-   char image_format[32] = {0};
+   char image_format[32] = {};
    if (ir->data.image_format) {
       snprintf(image_format, sizeof(image_format), "format=%x ",
                ir->data.image_format);

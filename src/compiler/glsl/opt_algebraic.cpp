@@ -667,7 +667,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
          if (!op_const[i])
             continue;
 
-         unsigned components[4] = { 0 }, count = 0;
+         unsigned components[4] = {}, count = 0;
 
          for (unsigned c = 0; c < op_const[i]->type->vector_elements; c++) {
             if (op_const[i]->is_zero())

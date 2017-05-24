@@ -824,7 +824,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
     * 0, or 1, or is a component from one source register (possibly with
     * negation).
     */
-   uint8_t components[4] = { 0 };
+   uint8_t components[4] = {};
    bool negate[4] = { false };
    ir_variable *var = NULL;
 
@@ -1891,7 +1891,7 @@ void
 ir_to_mesa_visitor::visit(ir_constant *ir)
 {
    src_reg src;
-   GLfloat stack_vals[4] = { 0 };
+   GLfloat stack_vals[4] = {};
    GLfloat *values = stack_vals;
    unsigned int i;
 

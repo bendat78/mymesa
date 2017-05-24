@@ -608,7 +608,7 @@ drm_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *disp)
       EGL_NATIVE_VISUAL_ID, 0,
       EGL_NONE,
    };
-   unsigned int format_count[ARRAY_SIZE(visuals)] = { 0 };
+   unsigned int format_count[ARRAY_SIZE(visuals)] = {};
    unsigned int count, i, j;
 
    count = 0;

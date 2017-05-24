@@ -326,7 +326,7 @@ static void bind_vs_pos_only(struct blitter_context_priv *ctx,
    if (!ctx->vs_pos_only[index]) {
       struct pipe_stream_output_info so;
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION };
-      const uint semantic_indices[] = { 0 };
+      const uint semantic_indices[] = {};
 
       memset(&so, 0, sizeof(so));
       so.num_outputs = 1;
@@ -1202,7 +1202,7 @@ static void blitter_draw(struct blitter_context_priv *ctx,
                          unsigned num_instances)
 {
    struct pipe_context *pipe = ctx->base.pipe;
-   struct pipe_vertex_buffer vb = {0};
+   struct pipe_vertex_buffer vb = {};
 
    blitter_set_rectangle(ctx, x1, y1, x2, y2, depth);
 
@@ -1261,7 +1261,7 @@ static void *get_clear_blend_state(struct blitter_context_priv *ctx,
 
    /* Create a new one. */
    {
-      struct pipe_blend_state blend = {0};
+      struct pipe_blend_state blend = {};
       unsigned i;
 
       blend.independent_blend_enable = 1;
@@ -1323,7 +1323,7 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
-   struct pipe_stencil_ref sr = { { 0 } };
+   struct pipe_stencil_ref sr = {};
 
    assert(ctx->has_layered || num_layers <= 1);
 
@@ -1550,7 +1550,7 @@ static void do_blits(struct blitter_context_priv *ctx,
    unsigned src_samples = src->texture->nr_samples;
    unsigned dst_samples = dst->texture->nr_samples;
    enum pipe_texture_target src_target = src->texture->target;
-   struct pipe_framebuffer_state fb_state = {0};
+   struct pipe_framebuffer_state fb_state = {};
 
    /* Initialize framebuffer state. */
    fb_state.width = dst->width;
@@ -1917,7 +1917,7 @@ void util_blitter_generate_mipmap(struct blitter_context *blitter,
    blitter_set_common_draw_rect_state(ctx, FALSE, FALSE);
 
    for (src_level = base_level; src_level < last_level; src_level++) {
-      struct pipe_box dstbox = {0}, srcbox = {0};
+      struct pipe_box dstbox = {}, srcbox = {};
       unsigned dst_level = src_level + 1;
 
       dstbox.width = u_minify(tex->width0, dst_level);
@@ -2033,7 +2033,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_framebuffer_state fb_state;
-   struct pipe_stencil_ref sr = { { 0 } };
+   struct pipe_stencil_ref sr = {};
    unsigned num_layers;
 
    assert(dstsurf->texture);
@@ -2169,7 +2169,7 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_vertex_buffer vb;
    struct pipe_stream_output_target *so_target;
-   unsigned offsets[PIPE_MAX_SO_BUFFERS] = {0};
+   unsigned offsets[PIPE_MAX_SO_BUFFERS] = {};
 
    if (srcx >= src->width0 ||
        dstx >= dst->width0) {
@@ -2234,9 +2234,9 @@ void util_blitter_clear_buffer(struct blitter_context *blitter,
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
-   struct pipe_vertex_buffer vb = {0};
+   struct pipe_vertex_buffer vb = {};
    struct pipe_stream_output_target *so_target = NULL;
-   unsigned offsets[PIPE_MAX_SO_BUFFERS] = {0};
+   unsigned offsets[PIPE_MAX_SO_BUFFERS] = {};
 
    assert(num_channels >= 1);
    assert(num_channels <= 4);

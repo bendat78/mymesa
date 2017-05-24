@@ -1158,27 +1158,27 @@ _mesa_PopAttrib(void)
                   _mesa_light(ctx, i, GL_POSITION, l->EyePosition);
                   _mesa_light(ctx, i, GL_SPOT_DIRECTION, l->SpotDirection);
                   {
-                     GLfloat p[4] = { 0 };
+                     GLfloat p[4] = {};
                      p[0] = l->SpotExponent;
                      _mesa_light(ctx, i, GL_SPOT_EXPONENT, p);
                   }
                   {
-                     GLfloat p[4] = { 0 };
+                     GLfloat p[4] = {};
                      p[0] = l->SpotCutoff;
                      _mesa_light(ctx, i, GL_SPOT_CUTOFF, p);
                   }
                   {
-                     GLfloat p[4] = { 0 };
+                     GLfloat p[4] = {};
                      p[0] = l->ConstantAttenuation;
                      _mesa_light(ctx, i, GL_CONSTANT_ATTENUATION, p);
                   }
                   {
-                     GLfloat p[4] = { 0 };
+                     GLfloat p[4] = {};
                      p[0] = l->LinearAttenuation;
                      _mesa_light(ctx, i, GL_LINEAR_ATTENUATION, p);
                   }
                   {
-                     GLfloat p[4] = { 0 };
+                     GLfloat p[4] = {};
                      p[0] = l->QuadraticAttenuation;
                      _mesa_light(ctx, i, GL_QUADRATIC_ATTENUATION, p);
                   }

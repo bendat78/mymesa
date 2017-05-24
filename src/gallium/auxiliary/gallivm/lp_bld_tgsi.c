@@ -129,7 +129,7 @@ lp_build_emit_llvm_unary(
    unsigned tgsi_opcode,
    LLVMValueRef arg0)
 {
-   struct lp_build_emit_data emit_data = {{0}};
+   struct lp_build_emit_data emit_data = {};
    emit_data.info = tgsi_get_opcode_info(tgsi_opcode);
    emit_data.arg_count = 1;
    emit_data.args[0] = arg0;
@@ -143,7 +143,7 @@ lp_build_emit_llvm_binary(
    LLVMValueRef arg0,
    LLVMValueRef arg1)
 {
-   struct lp_build_emit_data emit_data = {{0}};
+   struct lp_build_emit_data emit_data = {};
    emit_data.info = tgsi_get_opcode_info(tgsi_opcode);
    emit_data.arg_count = 2;
    emit_data.args[0] = arg0;
@@ -159,7 +159,7 @@ lp_build_emit_llvm_ternary(
    LLVMValueRef arg1,
    LLVMValueRef arg2)
 {
-   struct lp_build_emit_data emit_data = {{0}};
+   struct lp_build_emit_data emit_data = {};
    emit_data.info = tgsi_get_opcode_info(tgsi_opcode);
    emit_data.arg_count = 3;
    emit_data.args[0] = arg0;

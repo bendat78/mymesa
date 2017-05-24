@@ -1376,7 +1376,7 @@ isl_surf_info_is_z32_float(const struct isl_surf_init_info *info)
 static inline struct isl_extent2d
 isl_extent2d(uint32_t width, uint32_t height)
 {
-   struct isl_extent2d e = { { 0 } };
+   struct isl_extent2d e = {};
 
    e.width = width;
    e.height = height;
@@ -1387,7 +1387,7 @@ isl_extent2d(uint32_t width, uint32_t height)
 static inline struct isl_extent3d
 isl_extent3d(uint32_t width, uint32_t height, uint32_t depth)
 {
-   struct isl_extent3d e = { { 0 } };
+   struct isl_extent3d e = {};
 
    e.width = width;
    e.height = height;
@@ -1400,7 +1400,7 @@ static inline struct isl_extent4d
 isl_extent4d(uint32_t width, uint32_t height, uint32_t depth,
              uint32_t array_len)
 {
-   struct isl_extent4d e = { { 0 } };
+   struct isl_extent4d e = {};
 
    e.width = width;
    e.height = height;

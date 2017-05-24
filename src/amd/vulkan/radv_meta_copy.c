@@ -439,7 +439,7 @@ void radv_blit_to_prime_linear(struct radv_cmd_buffer *cmd_buffer,
 			       struct radv_image *image,
 			       struct radv_image *linear_image)
 {
-	struct VkImageCopy image_copy = { 0 };
+	struct VkImageCopy image_copy = {};
 
 	image_copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	image_copy.srcSubresource.layerCount = 1;

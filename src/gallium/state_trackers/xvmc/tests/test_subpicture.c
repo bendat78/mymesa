@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 	XvMCContext		context;
 	XvImageFormatValues	*subpics;
 	int			num_subpics;
-	XvMCSubpicture		subpicture = {0};
+	XvMCSubpicture		subpicture = {};
 	int			i;
 
 	display = XOpenDisplay(NULL);

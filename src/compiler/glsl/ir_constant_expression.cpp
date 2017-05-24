@@ -712,7 +712,7 @@ ir_swizzle::constant_expression_value(struct hash_table *variable_context)
    ir_constant *v = this->val->constant_expression_value(variable_context);
 
    if (v != NULL) {
-      ir_constant_data data = { { 0 } };
+      ir_constant_data data = {};
 
       const unsigned swiz_idx[4] = {
          this->mask.x, this->mask.y, this->mask.z, this->mask.w
@@ -782,7 +782,7 @@ ir_dereference_array::constant_expression_value(struct hash_table *variable_cont
           */
          const unsigned mat_idx = column * column_type->vector_elements;
 
-         ir_constant_data data = { { 0 } };
+         ir_constant_data data = {};
 
          switch (column_type->base_type) {
          case GLSL_TYPE_UINT:

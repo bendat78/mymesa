@@ -1346,7 +1346,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 					  const struct pipe_resource *templ)
 {
 	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
-	struct radeon_surf surface = {0};
+	struct radeon_surf surface = {};
 	bool is_flushed_depth = templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH;
 	bool tc_compatible_htile =
 		rscreen->chip_class >= VI &&
@@ -2011,7 +2011,7 @@ static void r600_clear_texture(struct pipe_context *pipe,
 {
 	struct pipe_screen *screen = pipe->screen;
 	struct r600_texture *rtex = (struct r600_texture*)tex;
-	struct pipe_surface tmpl = {{0}};
+	struct pipe_surface tmpl = {};
 	struct pipe_surface *sf;
 	const struct util_format_description *desc =
 		util_format_description(tex->format);

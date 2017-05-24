@@ -250,7 +250,7 @@ handleSliceParameterBuffer(vlVaContext *context, vlVaBuffer *buf)
 static unsigned int
 bufHasStartcode(vlVaBuffer *buf, unsigned int code, unsigned int bits)
 {
-   struct vl_vlc vlc = {0};
+   struct vl_vlc vlc = {};
    int i;
 
    /* search the first 64 bytes for a startcode */

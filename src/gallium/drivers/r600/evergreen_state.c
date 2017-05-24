@@ -3438,7 +3438,7 @@ void *evergreen_create_fastclear_blend(struct r600_context *rctx)
 
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx)
 {
-	struct pipe_depth_stencil_alpha_state dsa = {{0}};
+	struct pipe_depth_stencil_alpha_state dsa = {};
 
 	return rctx->b.b.create_depth_stencil_alpha_state(&rctx->b.b, &dsa);
 }
@@ -3824,7 +3824,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
  */
 void evergreen_setup_tess_constants(struct r600_context *rctx, const struct pipe_draw_info *info, unsigned *num_patches)
 {
-	struct pipe_constant_buffer constbuf = {0};
+	struct pipe_constant_buffer constbuf = {};
 	struct r600_pipe_shader_selector *tcs = rctx->tcs_shader ? rctx->tcs_shader : rctx->tes_shader;
 	struct r600_pipe_shader_selector *ls = rctx->vs_shader;
 	unsigned num_tcs_input_cp = info->vertices_per_patch;

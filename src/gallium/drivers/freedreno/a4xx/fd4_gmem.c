@@ -341,7 +341,7 @@ fd4_emit_tile_mem2gmem(struct fd_batch *batch, struct fd_tile *tile)
 			},
 			.no_decode_srgb = true,
 	};
-	unsigned char mrt_comp[A4XX_MAX_RENDER_TARGETS] = {0};
+	unsigned char mrt_comp[A4XX_MAX_RENDER_TARGETS] = {};
 	float x0, y0, x1, y1;
 	unsigned bin_w = tile->bin_w;
 	unsigned bin_h = tile->bin_h;

@@ -791,7 +791,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeFmaskInfo(
 {
     ADDR_E_RETURNCODE retCode = ADDR_OK;
 
-    ADDR_TILEINFO tileInfo = {0};
+    ADDR_TILEINFO tileInfo = {};
     ADDR_COMPUTE_FMASK_INFO_INPUT fmaskIn;
     fmaskIn = *pIn;
 
@@ -814,7 +814,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeFmaskInfo(
 
     // The only valid tile modes for fmask are 2D_THIN1 and 3D_THIN1 plus non-displayable
     INT_32 tileIndex = tileMode == ADDR_TM_2D_TILED_THIN1 ? 14 : 15;
-    ADDR_SURFACE_FLAGS flags = {{0}};
+    ADDR_SURFACE_FLAGS flags = {};
     flags.fmask = 1;
 
     INT_32 macroModeIndex = TileIndexInvalid;
@@ -961,7 +961,7 @@ VOID CiLib::HwlOptimizeTileMode(
                     static const UINT_32 PrtTileBytes = 0x10000;
                     // First prt thick tile index in the tile mode table
                     static const UINT_32 PrtThickTileIndex = 22;
-                    ADDR_TILEINFO tileInfo = {0};
+                    ADDR_TILEINFO tileInfo = {};
 
                     HwlComputeMacroModeIndex(PrtThickTileIndex,
                                              pInOut->flags,
@@ -1491,7 +1491,7 @@ VOID CiLib::HwlSetupTileInfo(
                 (m_tileTable[index + 1].mode == tileMode))
             {
                 static const UINT_32 PrtTileBytes = 0x10000;
-                ADDR_TILEINFO tileInfo = {0};
+                ADDR_TILEINFO tileInfo = {};
 
                 HwlComputeMacroModeIndex(index, flags, bpp, numSamples, &tileInfo);
 
@@ -2228,7 +2228,7 @@ BOOL_32 CiLib::DepthStencilTileCfgMatch(
          stencilTileIndex <= MaxDepth2DThinIndex;
          stencilTileIndex++)
     {
-        ADDR_TILEINFO tileInfo = {0};
+        ADDR_TILEINFO tileInfo = {};
         INT_32 stencilMacroIndex = HwlComputeMacroModeIndex(stencilTileIndex,
                                                             pIn->flags,
                                                             8,
