@@ -259,7 +259,7 @@ create_color_pipeline(struct radv_device *device,
 		.stencilTestEnable = false,
 	};
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state[MAX_RTS] = { 0 };
+	VkPipelineColorBlendAttachmentState blend_attachment_state[MAX_RTS] = {};
 	blend_attachment_state[frag_output] = (VkPipelineColorBlendAttachmentState) {
 		.blendEnable = false,
 		.colorWriteMask = VK_COLOR_COMPONENT_A_BIT |

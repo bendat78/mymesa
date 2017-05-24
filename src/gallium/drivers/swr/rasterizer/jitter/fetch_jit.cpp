@@ -256,7 +256,7 @@ void FetchJit::JitLoadVertices(const FETCH_COMPILE_STATE &fetchState, Value* str
 
     for(uint32_t nelt = 0; nelt < fetchState.numAttribs; ++nelt)
     {
-        Value*    elements[4] = {0};
+        Value*    elements[4] = {};
         const INPUT_ELEMENT_DESC& ied = fetchState.layout[nelt];
         const SWR_FORMAT_INFO &info = GetFormatInfo((SWR_FORMAT)ied.Format);
         SWR_ASSERT((info.bpp != 0), "Unsupported format in JitLoadVertices.");

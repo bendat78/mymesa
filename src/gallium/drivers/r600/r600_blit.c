@@ -203,7 +203,7 @@ static void r600_blit_decompress_depth_in_place(struct r600_context *rctx,
                                                 unsigned first_level, unsigned last_level,
                                                 unsigned first_layer, unsigned last_layer)
 {
-	struct pipe_surface *zsurf, surf_tmpl = {{0}};
+	struct pipe_surface *zsurf, surf_tmpl = {};
 	unsigned layer, max_layer, checked_last_layer, level;
 	unsigned *dirty_level_mask;
 

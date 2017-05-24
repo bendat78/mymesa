@@ -468,7 +468,7 @@ fd5_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 
 	if ((dirty & FD_DIRTY_FRAMEBUFFER) && !emit->key.binning_pass) {
 		struct pipe_framebuffer_state *pfb = &ctx->batch->framebuffer;
-		unsigned char mrt_comp[A5XX_MAX_RENDER_TARGETS] = {0};
+		unsigned char mrt_comp[A5XX_MAX_RENDER_TARGETS] = {};
 
 		for (unsigned i = 0; i < A5XX_MAX_RENDER_TARGETS; i++) {
 			mrt_comp[i] = ((i < pfb->nr_cbufs) && pfb->cbufs[i]) ? 0xf : 0;

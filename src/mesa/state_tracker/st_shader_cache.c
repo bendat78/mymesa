@@ -64,7 +64,7 @@ st_store_tgsi_in_disk_cache(struct st_context *st, struct gl_program *prog,
    /* Exit early when we are dealing with a ff shader with no source file to
     * generate a source from.
     */
-   static const char zero[sizeof(prog->sh.data->sha1)] = {0};
+   static const char zero[sizeof(prog->sh.data->sha1)] = {};
    if (memcmp(prog->sh.data->sha1, zero, sizeof(prog->sh.data->sha1)) == 0)
       return;
 

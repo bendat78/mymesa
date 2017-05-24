@@ -56,7 +56,7 @@ st_bind_atomics(struct st_context *st, struct gl_program *prog,
          &st->ctx->AtomicBufferBindings[atomic->Binding];
       struct st_buffer_object *st_obj =
          st_buffer_object(binding->BufferObject);
-      struct pipe_shader_buffer sb = { 0 };
+      struct pipe_shader_buffer sb = {};
 
       if (st_obj && st_obj->buffer) {
          sb.buffer = st_obj->buffer;

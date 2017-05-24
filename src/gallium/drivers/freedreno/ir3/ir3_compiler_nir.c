@@ -2647,7 +2647,7 @@ fixup_astc_srgb(struct ir3_compile *ctx)
 	 * state tex idx.  Zero is invalid since there is at least one sampler
 	 * if we get here.
 	 */
-	unsigned alt_tex_state[16] = {0};
+	unsigned alt_tex_state[16] = {};
 	unsigned tex_idx = ctx->max_texture_index + 1;
 	unsigned idx = 0;
 

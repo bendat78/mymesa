@@ -106,7 +106,7 @@ void
 st_nir_lower_tex_src_plane(struct nir_shader *shader, unsigned free_slots,
                            unsigned lower_2plane, unsigned lower_3plane)
 {
-   lower_tex_src_state state = {0};
+   lower_tex_src_state state = {};
 
    state.lower_2plane = lower_2plane;
    state.lower_3plane = lower_3plane;

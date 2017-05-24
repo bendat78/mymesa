@@ -178,7 +178,7 @@ util_draw_vbo_without_prim_restart(struct pipe_context *context,
                                    const struct pipe_draw_info *info)
 {
    const void *src_map;
-   struct range_info ranges = {0};
+   struct range_info ranges = {};
    struct pipe_draw_info new_info;
    struct pipe_transfer *src_transfer = NULL;
    unsigned i, start, count;

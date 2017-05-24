@@ -1044,7 +1044,7 @@ static pid_t ExecDeathTestSpawnChild(char* const* argv, int close_fd) {
   GTEST_DEATH_TEST_CHECK_SYSCALL_(fd_flags = fcntl(close_fd, F_GETFD));
   GTEST_DEATH_TEST_CHECK_SYSCALL_(fcntl(close_fd, F_SETFD,
                                         fd_flags | FD_CLOEXEC));
-  struct inheritance inherit = {0};
+  struct inheritance inherit = {};
   // spawn is a system call.
   child_pid = spawn(args.argv[0], 0, NULL, &inherit, args.argv, GetEnviron());
   // Restores the current working directory.

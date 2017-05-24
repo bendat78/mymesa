@@ -154,7 +154,7 @@ try_pbo_readpixels(struct st_context *st, struct st_renderbuffer *strb,
    {
       struct pipe_sampler_view templ;
       struct pipe_sampler_view *sampler_view;
-      struct pipe_sampler_state sampler = {0};
+      struct pipe_sampler_state sampler = {};
       const struct pipe_sampler_state *samplers[1] = {&sampler};
 
       u_sampler_view_default_template(&templ, texture, src_format);

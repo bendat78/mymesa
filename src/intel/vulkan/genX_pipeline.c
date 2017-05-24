@@ -888,7 +888,7 @@ emit_cb_state(struct anv_pipeline *pipeline,
    uint32_t *state_pos = pipeline->blend_state.map;
    state_pos += GENX(BLEND_STATE_length);
 #if GEN_GEN >= 8
-   struct GENX(BLEND_STATE_ENTRY) bs0 = { 0 };
+   struct GENX(BLEND_STATE_ENTRY) bs0 = {};
 #endif
    for (unsigned i = 0; i < surface_count; i++) {
       struct anv_pipeline_binding *binding = &map->surface_to_descriptor[i];

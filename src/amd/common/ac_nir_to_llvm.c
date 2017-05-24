@@ -1988,7 +1988,7 @@ static LLVMValueRef radv_lower_gather4_integer(struct nir_to_llvm_context *ctx,
 
 	//TODO Rect
 	{
-		struct ac_image_args txq_args = { 0 };
+		struct ac_image_args txq_args = {};
 
 		txq_args.da = instr->is_array || instr->sampler_dim == GLSL_SAMPLER_DIM_CUBE;
 		txq_args.opcode = ac_image_get_resinfo;
@@ -3160,7 +3160,7 @@ static LLVMValueRef adjust_sample_index_using_fmask(struct nir_to_llvm_context *
 		fmask_load_address[3] = LLVMGetUndef(ctx->i32);
 	}
 
-	struct ac_image_args args = {0};
+	struct ac_image_args args = {};
 
 	args.opcode = ac_image_load;
 	args.da = coord_z ? true : false;
@@ -3489,7 +3489,7 @@ static LLVMValueRef visit_image_size(struct nir_to_llvm_context *ctx,
 	if (glsl_get_sampler_dim(type) == GLSL_SAMPLER_DIM_BUF)
 		return get_buffer_size(ctx, get_sampler_desc(ctx, instr->variables[0], DESC_BUFFER), true);
 
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 
 	args.da = da;
 	args.dmask = 0xf;
@@ -4237,7 +4237,7 @@ static LLVMValueRef apply_round_slice(struct nir_to_llvm_context *ctx,
 static void visit_tex(struct nir_to_llvm_context *ctx, nir_tex_instr *instr)
 {
 	LLVMValueRef result = NULL;
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 	unsigned dmask = 0xf;
 	LLVMValueRef address[16];
 	LLVMValueRef coords[5];
@@ -4440,7 +4440,7 @@ static void visit_tex(struct nir_to_llvm_context *ctx, nir_tex_instr *instr)
 
 	if (instr->op == nir_texop_samples_identical) {
 		LLVMValueRef txf_address[4];
-		struct ac_image_args txf_args = { 0 };
+		struct ac_image_args txf_args = {};
 		unsigned txf_count = count;
 		memcpy(txf_address, address, sizeof(txf_address));
 
@@ -5889,7 +5889,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
                                        struct ac_shader_variant_info *shader_info,
                                        const struct ac_nir_compiler_options *options)
 {
-	struct nir_to_llvm_context ctx = {0};
+	struct nir_to_llvm_context ctx = {};
 	struct nir_function *func;
 	unsigned i;
 	ctx.options = options;
@@ -6241,7 +6241,7 @@ void ac_create_gs_copy_shader(LLVMTargetMachineRef tm,
 			      const struct ac_nir_compiler_options *options,
 			      bool dump_shader)
 {
-	struct nir_to_llvm_context ctx = {0};
+	struct nir_to_llvm_context ctx = {};
 	ctx.context = LLVMContextCreate();
 	ctx.module = LLVMModuleCreateWithNameInContext("shader", ctx.context);
 	ctx.options = options;

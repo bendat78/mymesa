@@ -61,7 +61,7 @@ convert_to_soa(struct gallivm_state *gallivm,
    aos_channel_type.length >>= 1;
 
    for (j = 0; j < 4; ++j) {
-      LLVMValueRef channel[LP_MAX_VECTOR_LENGTH] = { 0 };
+      LLVMValueRef channel[LP_MAX_VECTOR_LENGTH] = {};
 
       assert(pixels_per_channel <= LP_MAX_VECTOR_LENGTH);
 

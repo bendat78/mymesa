@@ -76,7 +76,7 @@ static void
 st_nir_assign_vs_in_locations(struct gl_program *prog, nir_shader *nir)
 {
    unsigned attr, num_inputs = 0;
-   unsigned input_to_index[VERT_ATTRIB_MAX] = {0};
+   unsigned input_to_index[VERT_ATTRIB_MAX] = {};
 
    /* TODO de-duplicate w/ similar code in st_translate_vertex_program()? */
    for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
@@ -249,7 +249,7 @@ st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
       static const gl_state_index wposTransformState[STATE_LENGTH] = {
          STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM
       };
-      nir_lower_wpos_ytransform_options wpos_options = { { 0 } };
+      nir_lower_wpos_ytransform_options wpos_options = {};
       struct pipe_screen *pscreen = st->pipe->screen;
 
       memcpy(wpos_options.state_tokens, wposTransformState,

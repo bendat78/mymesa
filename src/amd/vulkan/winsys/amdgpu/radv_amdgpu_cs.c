@@ -629,7 +629,7 @@ static int radv_amdgpu_create_bo_list(struct radv_amdgpu_winsys *ws,
 
 static struct amdgpu_cs_fence_info radv_set_cs_fence(struct radv_amdgpu_ctx *ctx, int ip_type, int ring)
 {
-	struct amdgpu_cs_fence_info ret = {0};
+	struct amdgpu_cs_fence_info ret = {};
 	if (ctx->fence_map) {
 		ret.handle = radv_amdgpu_winsys_bo(ctx->fence_bo)->bo;
 		ret.offset = (ip_type * MAX_RINGS_PER_TYPE + ring) * sizeof(uint64_t);
@@ -658,7 +658,7 @@ static int radv_amdgpu_winsys_cs_submit_chained(struct radeon_winsys_ctx *_ctx,
 	struct radv_amdgpu_fence *fence = (struct radv_amdgpu_fence *)_fence;
 	struct radv_amdgpu_cs *cs0 = radv_amdgpu_cs(cs_array[0]);
 	amdgpu_bo_list_handle bo_list;
-	struct amdgpu_cs_request request = {0};
+	struct amdgpu_cs_request request = {};
 	struct amdgpu_cs_ib_info ibs[2];
 
 	for (unsigned i = cs_count; i--;) {
@@ -822,7 +822,7 @@ static int radv_amdgpu_winsys_cs_submit_sysmem(struct radeon_winsys_ctx *_ctx,
 	assert(cs_count);
 
 	for (unsigned i = 0; i < cs_count;) {
-		struct amdgpu_cs_ib_info ib = {0};
+		struct amdgpu_cs_ib_info ib = {};
 		struct radeon_winsys_bo *bo = NULL;
 		struct radeon_winsys_cs *preamble_cs = i ? continue_preamble_cs : initial_preamble_cs;
 		uint32_t *ptr;

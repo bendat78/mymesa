@@ -211,7 +211,7 @@ svga_vbuf_submit_state( struct svga_vbuf_render *svga_render )
    SVGA3dVertexDecl vdecl[PIPE_MAX_ATTRIBS];
    enum pipe_error ret;
    unsigned i;
-   static const unsigned zero[PIPE_MAX_ATTRIBS] = {0};
+   static const unsigned zero[PIPE_MAX_ATTRIBS] = {};
 
    /* if the vdecl or vbuf hasn't changed do nothing */
    if (!svga->swtnl.new_vdecl)

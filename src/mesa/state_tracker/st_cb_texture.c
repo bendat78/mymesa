@@ -1171,7 +1171,7 @@ try_pbo_upload_common(struct gl_context *ctx,
    {
       struct pipe_sampler_view templ;
       struct pipe_sampler_view *sampler_view;
-      struct pipe_sampler_state sampler = {0};
+      struct pipe_sampler_state sampler = {};
       const struct pipe_sampler_state *samplers[1] = {&sampler};
 
       memset(&templ, 0, sizeof(templ));
@@ -2820,7 +2820,7 @@ st_ClearTexSubImage(struct gl_context *ctx,
                     GLsizei width, GLsizei height, GLsizei depth,
                     const void *clearValue)
 {
-   static const char zeros[16] = {0};
+   static const char zeros[16] = {};
    struct st_texture_image *stImage = st_texture_image(texImage);
    struct pipe_resource *pt = stImage->pt;
    struct st_context *st = st_context(ctx);

@@ -232,7 +232,7 @@ static void ConvertPixelFromFloat(
     uint8_t* pDstPixel,
     const float srcPixel[4])
 {
-    uint32_t outColor[4] = { 0 };  // typeless bits
+    uint32_t outColor[4] = {};  // typeless bits
 
     // Store component
     for (UINT comp = 0; comp < FormatTraits<DstFormat>::numComps; ++comp)

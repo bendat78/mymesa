@@ -118,7 +118,7 @@ calculate_tiles(struct fd_batch *batch)
 	uint32_t nbins_x = 1, nbins_y = 1;
 	uint32_t bin_w, bin_h;
 	uint32_t max_width = bin_width(ctx->screen);
-	uint8_t cbuf_cpp[MAX_RENDER_TARGETS] = {0}, zsbuf_cpp[2] = {0};
+	uint8_t cbuf_cpp[MAX_RENDER_TARGETS] = {}, zsbuf_cpp[2] = {};
 	uint32_t i, j, t, xoff, yoff;
 	uint32_t tpp_x, tpp_y;
 	bool has_zs = !!(batch->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL));

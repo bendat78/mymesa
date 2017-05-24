@@ -509,7 +509,7 @@ static void StreamOut(
     // The pPrimData buffer is sparse in that we allocate memory for all 32 attributes for each vertex.
     uint32_t primDataDwordVertexStride = (SWR_VTX_NUM_SLOTS * sizeof(float) * 4) / sizeof(uint32_t);
 
-    SWR_STREAMOUT_CONTEXT soContext = { 0 };
+    SWR_STREAMOUT_CONTEXT soContext = {};
 
     // Setup buffer state pointers.
     for (uint32_t i = 0; i < 4; ++i)
@@ -1224,7 +1224,7 @@ static void TessellationStages(
     for (uint32_t p = 0; p < numPrims; ++p)
     {
         // Run Tessellator
-        SWR_TS_TESSELLATED_DATA tsData = { 0 };
+        SWR_TS_TESSELLATED_DATA tsData = {};
         AR_BEGIN(FETessellation, pDC->drawId);
         TSTessellate(tsCtx, hsContext.pCPout[p].tessFactors, tsData);
         AR_EVENT(TessPrimCount(1));
@@ -1541,7 +1541,7 @@ void ProcessDraw(
     vsContext_lo.AlternateOffset = 0;
     vsContext_hi.AlternateOffset = 1;
 
-    SWR_FETCH_CONTEXT   fetchInfo_lo = { 0 };
+    SWR_FETCH_CONTEXT   fetchInfo_lo = {};
 
     fetchInfo_lo.pStreams = &state.vertexBuffers[0];
     fetchInfo_lo.StartInstance = work.startInstance;
@@ -1755,7 +1755,7 @@ void ProcessDraw(
 
     vsContext.pVin = &vin;
 
-    SWR_FETCH_CONTEXT   fetchInfo = { 0 };
+    SWR_FETCH_CONTEXT   fetchInfo = {};
 
     fetchInfo.pStreams = &state.vertexBuffers[0];
     fetchInfo.StartInstance = work.startInstance;

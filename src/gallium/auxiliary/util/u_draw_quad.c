@@ -78,7 +78,7 @@ void
 util_draw_user_vertex_buffer(struct cso_context *cso, void *buffer,
                              uint prim_type, uint num_verts, uint num_attribs)
 {
-   struct pipe_vertex_buffer vbuffer = {0};
+   struct pipe_vertex_buffer vbuffer = {};
 
    assert(num_attribs <= PIPE_MAX_ATTRIBS);
 

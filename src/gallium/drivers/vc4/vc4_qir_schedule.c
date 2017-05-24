@@ -703,7 +703,7 @@ qir_schedule_instructions_block(struct vc4_compile *c,
                                 struct qblock *block)
 {
         void *mem_ctx = ralloc_context(NULL);
-        struct schedule_state state = { { 0 } };
+        struct schedule_state state = {};
 
         state.temp_writes = rzalloc_array(mem_ctx, uint32_t, c->num_temps);
         state.temp_live = rzalloc_array(mem_ctx, BITSET_WORD,

@@ -458,7 +458,7 @@ setup_interleaved_attribs(struct st_context *st,
                           unsigned num_inputs)
 {
    struct pipe_vertex_buffer vbuffer;
-   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS] = {{0}};
+   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS] = {};
    GLuint attr;
    const GLubyte *low_addr = NULL;
    GLboolean usingVBO;      /* all arrays in a VBO? */
@@ -578,7 +578,7 @@ setup_non_interleaved_attribs(struct st_context *st,
 {
    struct gl_context *ctx = st->ctx;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_ATTRIBS];
-   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS] = {{0}};
+   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS] = {};
    unsigned num_vbuffers = 0;
    unsigned unref_buffers = 0;
    GLuint attr;

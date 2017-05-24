@@ -320,7 +320,7 @@ radv_wsi_create_prime_command_buffers(struct radv_device *device,
 			int idx = (i * num_images) + j;
 
 			swapchain->get_image_and_linear(swapchain, j, &image, &linear_image);
-			VkCommandBufferBeginInfo begin_info = {0};
+			VkCommandBufferBeginInfo begin_info = {};
 
 			begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 

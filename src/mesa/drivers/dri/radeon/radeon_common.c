@@ -692,7 +692,7 @@ GLboolean rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const cha
 void rcommonInitCmdBuf(radeonContextPtr rmesa)
 {
 	GLuint size;
-	struct drm_radeon_gem_info mminfo = { 0 };
+	struct drm_radeon_gem_info mminfo = {};
 	int fd = rmesa->radeonScreen->driScreen->fd;
 
 	/* Initialize command buffer */

@@ -376,9 +376,9 @@ st_translate_vertex_program(struct st_context *st,
    enum pipe_error error;
    unsigned num_outputs = 0;
    unsigned attr;
-   ubyte input_to_index[VERT_ATTRIB_MAX] = {0};
-   ubyte output_semantic_name[VARYING_SLOT_MAX] = {0};
-   ubyte output_semantic_index[VARYING_SLOT_MAX] = {0};
+   ubyte input_to_index[VERT_ATTRIB_MAX] = {};
+   ubyte output_semantic_name[VARYING_SLOT_MAX] = {};
+   ubyte output_semantic_index[VARYING_SLOT_MAX] = {};
 
    stvp->num_inputs = 0;
 
@@ -1084,7 +1084,7 @@ st_create_fp_variant(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct st_fp_variant *variant = CALLOC_STRUCT(st_fp_variant);
-   struct pipe_shader_state tgsi = {0};
+   struct pipe_shader_state tgsi = {};
    struct gl_program_parameter_list *params = stfp->Base.Parameters;
    static const gl_state_index texcoord_state[STATE_LENGTH] =
       { STATE_INTERNAL, STATE_CURRENT_ATTRIB, VERT_ATTRIB_TEX0 };
@@ -1113,7 +1113,7 @@ st_create_fp_variant(struct st_context *st,
 
       /* glBitmap */
       if (key->bitmap) {
-         nir_lower_bitmap_options options = {0};
+         nir_lower_bitmap_options options = {};
 
          variant->bitmap_sampler = ffs(~stfp->Base.SamplersUsed) - 1;
          options.sampler = variant->bitmap_sampler;
@@ -1124,7 +1124,7 @@ st_create_fp_variant(struct st_context *st,
 
       /* glDrawPixels (color only) */
       if (key->drawpixels) {
-         nir_lower_drawpixels_options options = {{0}};
+         nir_lower_drawpixels_options options = {};
          unsigned samplers_used = stfp->Base.SamplersUsed;
 
          /* Find the first unused slot. */
@@ -1156,7 +1156,7 @@ st_create_fp_variant(struct st_context *st,
       }
 
       if (unlikely(key->external.lower_nv12 || key->external.lower_iyuv)) {
-         nir_lower_tex_options options = {0};
+         nir_lower_tex_options options = {};
          options.lower_y_uv_external = key->external.lower_nv12;
          options.lower_y_u_v_external = key->external.lower_iyuv;
          NIR_PASS_V(tgsi.ir.nir, nir_lower_tex, &options);

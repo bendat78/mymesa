@@ -361,7 +361,7 @@ static bool si_switch_compute_shader(struct si_context *sctx,
 				     unsigned offset)
 {
 	struct radeon_winsys_cs *cs = sctx->b.gfx.cs;
-	struct si_shader_config inline_config = {0};
+	struct si_shader_config inline_config = {};
 	struct si_shader_config *config;
 	uint64_t shader_va;
 

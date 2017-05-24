@@ -46,7 +46,7 @@ static struct pipe_resource *
 util_create_texture2d(struct pipe_screen *screen, unsigned width,
                       unsigned height, enum pipe_format format)
 {
-   struct pipe_resource templ = {{0}};
+   struct pipe_resource templ = {};
 
    templ.target = PIPE_TEXTURE_2D;
    templ.width0 = width;
@@ -66,8 +66,8 @@ static void
 util_set_framebuffer_cb0(struct cso_context *cso, struct pipe_context *ctx,
 			 struct pipe_resource *tex)
 {
-   struct pipe_surface templ = {{0}}, *surf;
-   struct pipe_framebuffer_state fb = {0};
+   struct pipe_surface templ = {}, *surf;
+   struct pipe_framebuffer_state fb = {};
 
    templ.format = tex->format;
    surf = ctx->create_surface(ctx, tex, &templ);
@@ -84,7 +84,7 @@ util_set_framebuffer_cb0(struct cso_context *cso, struct pipe_context *ctx,
 static void
 util_set_blend_normal(struct cso_context *cso)
 {
-   struct pipe_blend_state blend = {0};
+   struct pipe_blend_state blend = {};
 
    blend.rt[0].colormask = PIPE_MASK_RGBA;
    cso_set_blend(cso, &blend);
@@ -93,7 +93,7 @@ util_set_blend_normal(struct cso_context *cso)
 static void
 util_set_dsa_disable(struct cso_context *cso)
 {
-   struct pipe_depth_stencil_alpha_state dsa = {{0}};
+   struct pipe_depth_stencil_alpha_state dsa = {};
 
    cso_set_depth_stencil_alpha(cso, &dsa);
 }
@@ -101,7 +101,7 @@ util_set_dsa_disable(struct cso_context *cso)
 static void
 util_set_rasterizer_normal(struct cso_context *cso)
 {
-   struct pipe_rasterizer_state rs = {0};
+   struct pipe_rasterizer_state rs = {};
 
    rs.half_pixel_center = 1;
    rs.bottom_edge_rule = 1;
@@ -459,7 +459,7 @@ null_fragment_shader(struct pipe_context *ctx)
    struct cso_context *cso;
    struct pipe_resource *cb;
    void *vs;
-   struct pipe_rasterizer_state rs = {0};
+   struct pipe_rasterizer_state rs = {};
    struct pipe_query *query;
    union pipe_query_result qresult;
 

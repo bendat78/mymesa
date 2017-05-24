@@ -1061,7 +1061,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
        GLX_SWAP_UNDEFINED_OML, GLX_NONE,
    };
 
-   static const uint8_t singlesample_samples[1] = {0};
+   static const uint8_t singlesample_samples[1] = {};
 
    uint8_t depth_bits[4], stencil_bits[4];
    __DRIconfig **configs = NULL;
