@@ -2056,7 +2056,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef oow = NULL;
    LLVMValueRef lod = NULL;
    LLVMValueRef coords[5];
-   LLVMValueRef offsets[3] = { NULL };
+   LLVMValueRef offsets[3] = {};
    struct lp_derivatives derivs;
    struct lp_sampler_params params;
    enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
@@ -2262,7 +2262,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    unsigned texture_unit, sampler_unit;
    LLVMValueRef lod = NULL;
    LLVMValueRef coords[5];
-   LLVMValueRef offsets[3] = { NULL };
+   LLVMValueRef offsets[3] = {};
    struct lp_derivatives derivs;
    struct lp_sampler_params params;
    enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
@@ -2442,7 +2442,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef coord_undef = LLVMGetUndef(bld->bld_base.base.int_vec_type);
    LLVMValueRef explicit_lod = NULL;
    LLVMValueRef coords[5];
-   LLVMValueRef offsets[3] = { NULL };
+   LLVMValueRef offsets[3] = {};
    struct lp_sampler_params params;
    enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
    unsigned dims, i;

@@ -380,7 +380,7 @@ nv30_render_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct draw_context *draw = nv30->draw;
-   struct pipe_transfer *transfer[PIPE_MAX_ATTRIBS] = {NULL};
+   struct pipe_transfer *transfer[PIPE_MAX_ATTRIBS] = {};
    struct pipe_transfer *transferi = NULL;
    int i;
 

@@ -2978,7 +2978,7 @@ Converter::handleINTERP(Value *dst[4])
    // Check whether the input is linear. All other attributes ignored.
    Instruction *insn;
    Value *offset = NULL, *ptr = NULL, *w = NULL;
-   Symbol *sym[4] = { NULL };
+   Symbol *sym[4] = {};
    bool linear;
    operation op = OP_NOP;
    int c, mode = 0;
