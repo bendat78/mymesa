@@ -1712,7 +1712,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    LLVMValueRef fs_src[4][TGSI_NUM_CHANNELS];
    LLVMValueRef fs_src1[4][TGSI_NUM_CHANNELS];
    LLVMValueRef src_alpha[4 * 4];
-   LLVMValueRef src1_alpha[4 * 4] = { NULL };
+   LLVMValueRef src1_alpha[4 * 4] = {};
    LLVMValueRef src_mask[4 * 4];
    LLVMValueRef src[4 * 4];
    LLVMValueRef src1[4 * 4];

@@ -574,7 +574,7 @@ lower_instructions_visitor::dldexp_to_arith(ir_expression *ir)
     *     floating-point type, the result is undefined."
     */
 
-   ir_rvalue *results[4] = {NULL};
+   ir_rvalue *results[4] = {};
    for (unsigned elem = 0; elem < vec_elem; elem++) {
       ir_variable *unpacked =
          new(ir) ir_variable(glsl_type::uvec2_type, "unpacked", ir_var_temporary);
@@ -627,7 +627,7 @@ lower_instructions_visitor::dfrexp_sig_to_arith(ir_expression *ir)
 
    ir_variable *is_not_zero =
       new(ir) ir_variable(bvec, "is_not_zero", ir_var_temporary);
-   ir_rvalue *results[4] = {NULL};
+   ir_rvalue *results[4] = {};
 
    ir_constant *dzero = new(ir) ir_constant(0.0, vec_elem);
    i.insert_before(is_not_zero);

@@ -1063,7 +1063,7 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    GLboolean write_stencil = GL_FALSE, write_depth = GL_FALSE;
-   struct pipe_sampler_view *sv[2] = { NULL };
+   struct pipe_sampler_view *sv[2] = {};
    int num_sampler_view = 1;
    struct gl_pixelstore_attrib clippedUnpack;
    struct st_fp_variant *fpv = NULL;
@@ -1428,7 +1428,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    struct st_renderbuffer *rbRead;
    void *driver_vp, *driver_fp;
    struct pipe_resource *pt;
-   struct pipe_sampler_view *sv[2] = { NULL };
+   struct pipe_sampler_view *sv[2] = {};
    struct st_fp_variant *fpv = NULL;
    int num_sampler_view = 1;
    enum pipe_format srcFormat;
