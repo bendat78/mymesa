@@ -537,7 +537,8 @@ VdpOutputSurfaceDMABuf vlVdpOutputSurfaceDMABuf;
 #define VDPAU_WARN  2
 #define VDPAU_TRACE 3
 
-static inline void VDPAU_MSG(unsigned int level, const char *fmt, ...)
+static inline void 
+VDPAU_MSG(int level, const char *fmt, ...)
 {
    static int debug_level = -1;
 

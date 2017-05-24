@@ -1751,7 +1751,7 @@ CSMT_ITEM_NO_WAIT(nine_context_set_pixel_shader_constant_i,
                   ARG_VAL(UINT, Vector4iCount))
 {
     struct nine_context *context = &device->context;
-    int i;
+    unsigned int i;
 
     if (device->driver_caps.ps_integer) {
         memcpy(&context->ps_const_i[StartRegister][0],
@@ -1776,7 +1776,7 @@ CSMT_ITEM_NO_WAIT(nine_context_set_pixel_shader_constant_b,
                   ARG_VAL(UINT, BoolCount))
 {
     struct nine_context *context = &device->context;
-    int i;
+    unsigned int i;
     uint32_t bool_true = device->driver_caps.ps_integer ? 0xFFFFFFFF : fui(1.0f);
 
     (void) pConstantData_size;
@@ -2209,7 +2209,7 @@ void
 nine_context_apply_stateblock(struct NineDevice9 *device,
                               const struct nine_state *src)
 {
-    int i;
+    unsigned int i;
 
     /* No need to apply src->changed.group, since all calls do
     * set context->changed.group */
@@ -2458,8 +2458,8 @@ CSMT_ITEM_NO_WAIT(nine_context_clear_fb,
         /* Case we clear depth buffer (and eventually rt too).
          * depth buffer size is always >= rt size. Compare to clear region */
         ((bufs & (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL)) &&
-         rect.x2 >= zsbuf_surf->desc.Width &&
-         rect.y2 >= zsbuf_surf->desc.Height))) {
+         rect.x2 >= (signed)zsbuf_surf->desc.Width &&
+         rect.y2 >= (signed)zsbuf_surf->desc.Height))) {
         DBG("Clear fast path\n");
         pipe->clear(pipe, bufs, &rgba, Z, Stencil);
         return;
@@ -2478,20 +2478,20 @@ CSMT_ITEM_NO_WAIT(nine_context_clear_fb,
         cbuf = NineSurface9_GetSurface(rt, sRGB);
         for (r = 0; r < Count; ++r) {
             /* Don't trust users to pass these in the right order. */
-            unsigned x1 = MIN2(pRects[r].x1, pRects[r].x2);
-            unsigned y1 = MIN2(pRects[r].y1, pRects[r].y2);
-            unsigned x2 = MAX2(pRects[r].x1, pRects[r].x2);
-            unsigned y2 = MAX2(pRects[r].y1, pRects[r].y2);
+            int x1 = MIN2(pRects[r].x1, pRects[r].x2);
+            int y1 = MIN2(pRects[r].y1, pRects[r].y2);
+            int x2 = MAX2(pRects[r].x1, pRects[r].x2);
+            int y2 = MAX2(pRects[r].y1, pRects[r].y2);
 #ifndef NINE_LAX
             /* Drop negative rectangles (like wine expects). */
             if (pRects[r].x1 > pRects[r].x2) continue;
             if (pRects[r].y1 > pRects[r].y2) continue;
 #endif
 
-            x1 = MAX2(x1, rect.x1);
-            y1 = MAX2(y1, rect.y1);
-            x2 = MIN3(x2, rect.x2, rt->desc.Width);
-            y2 = MIN3(y2, rect.y2, rt->desc.Height);
+            x1 = MAX2(x1, (signed)rect.x1);
+            y1 = MAX2(y1, (signed)rect.y1);
+            x2 = MIN3(x2, (signed)rect.x2, (signed)rt->desc.Width);
+            y2 = MIN3(y2, (signed)rect.y2, (signed)rt->desc.Height);
 
             DBG("Clearing (%u..%u)x(%u..%u)\n", x1, x2, y1, y2);
             pipe->clear_render_target(pipe, cbuf, &rgba,
@@ -2504,10 +2504,10 @@ CSMT_ITEM_NO_WAIT(nine_context_clear_fb,
     bufs &= PIPE_CLEAR_DEPTHSTENCIL;
 
     for (r = 0; r < Count; ++r) {
-        unsigned x1 = MIN2(pRects[r].x1, pRects[r].x2);
-        unsigned y1 = MIN2(pRects[r].y1, pRects[r].y2);
-        unsigned x2 = MAX2(pRects[r].x1, pRects[r].x2);
-        unsigned y2 = MAX2(pRects[r].y1, pRects[r].y2);
+        int x1 = MIN2(pRects[r].x1, pRects[r].x2);
+        int y1 = MIN2(pRects[r].y1, pRects[r].y2);
+        int x2 = MAX2(pRects[r].x1, pRects[r].x2);
+        int y2 = MAX2(pRects[r].y1, pRects[r].y2);
 #ifndef NINE_LAX
         /* Drop negative rectangles. */
         if (pRects[r].x1 > pRects[r].x2) continue;
@@ -2516,8 +2516,8 @@ CSMT_ITEM_NO_WAIT(nine_context_clear_fb,
 
         x1 = MIN2(x1, rect.x1);
         y1 = MIN2(y1, rect.y1);
-        x2 = MIN3(x2, rect.x2, zsbuf_surf->desc.Width);
-        y2 = MIN3(y2, rect.y2, zsbuf_surf->desc.Height);
+        x2 = MIN3(x2, rect.x2, (signed)zsbuf_surf->desc.Width);
+        y2 = MIN3(y2, rect.y2, (signed)zsbuf_surf->desc.Height);
 
         zsbuf = NineSurface9_GetSurface(zsbuf_surf, 0);
         assert(zsbuf);

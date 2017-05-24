@@ -53,6 +53,7 @@ nv98_decoder_decode_bitstream(struct pipe_video_codec *decoder,
 
    /* did we decode bitstream correctly? */
    assert(ret == 2);
+   (void) ret;
 
    nv98_decoder_vp(dec, desc, target, comm_seq, vp_caps, is_ref, refs);
    nv98_decoder_ppp(dec, desc, target, comm_seq);

@@ -1324,7 +1324,7 @@ try_pbo_upload(struct gl_context *ctx, GLuint dims,
    /* Set up the surface */
    {
       unsigned level = stObj->pt != stImage->pt ? 0 : texImage->TexObject->MinLevel + texImage->Level;
-      unsigned max_layer = util_max_layer(texture, level);
+      int max_layer = util_max_layer(texture, level);
 
       zoffset += texImage->Face + texImage->TexObject->MinLayer;
 
@@ -1734,7 +1734,7 @@ st_CompressedTexSubImage(struct gl_context *ctx, GLuint dims,
    /* Set up the surface. */
    {
       unsigned level = stObj->pt != stImage->pt ? 0 : texImage->TexObject->MinLevel + texImage->Level;
-      unsigned max_layer = util_max_layer(texture, level);
+      int max_layer = util_max_layer(texture, level);
 
       z += texImage->Face + texImage->TexObject->MinLayer;
 
@@ -1818,7 +1818,7 @@ st_CompressedTexImage(struct gl_context *ctx, GLuint dims,
 static void
 st_GetTexSubImage(struct gl_context * ctx,
                   GLint xoffset, GLint yoffset, GLint zoffset,
-                  GLsizei width, GLsizei height, GLint depth,
+                  GLuint width, GLuint height, GLuint depth,
                   GLenum format, GLenum type, void * pixels,
                   struct gl_texture_image *texImage)
 {

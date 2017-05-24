@@ -81,15 +81,15 @@ void radeonSetCliprects(radeonContextPtr radeon)
 	struct radeon_framebuffer *const draw_rfb = drawable->driverPrivate;
 	struct radeon_framebuffer *const read_rfb = readable->driverPrivate;
 
-	if ((draw_rfb->base.Width != drawable->w) ||
-	    (draw_rfb->base.Height != drawable->h)) {
+	if ((draw_rfb->base.Width != (unsigned)drawable->w) ||
+	    (draw_rfb->base.Height != (unsigned)drawable->h)) {
 		_mesa_resize_framebuffer(&radeon->glCtx, &draw_rfb->base,
 					 drawable->w, drawable->h);
 	}
 
 	if (drawable != readable) {
-		if ((read_rfb->base.Width != readable->w) ||
-		    (read_rfb->base.Height != readable->h)) {
+		if ((read_rfb->base.Width != (unsigned)readable->w) ||
+		    (read_rfb->base.Height != (unsigned)readable->h)) {
 			_mesa_resize_framebuffer(&radeon->glCtx, &read_rfb->base,
 						 readable->w, readable->h);
 		}
@@ -604,7 +604,7 @@ void radeonFinish(struct gl_context * ctx)
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	struct radeon_renderbuffer *rrb;
-	int i;
+	unsigned int i;
 
 	if (ctx->Driver.Flush)
 		ctx->Driver.Flush(ctx); /* +r6/r7 */
@@ -679,7 +679,7 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
  */
 GLboolean rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller)
 {
-   if ((rmesa->cmdbuf.cs->cdw + dwords + 128) > rmesa->cmdbuf.size
+   if (((signed)rmesa->cmdbuf.cs->cdw + dwords + 128) > (signed)rmesa->cmdbuf.size
 	 || radeon_cs_need_flush(rmesa->cmdbuf.cs)) {
       /* If we try to flush empty buffer there is too big rendering operation. */
       assert(rmesa->cmdbuf.cs->cdw);
@@ -691,14 +691,14 @@ GLboolean rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const cha
 
 void rcommonInitCmdBuf(radeonContextPtr rmesa)
 {
-	GLuint size;
+	GLint size;
 	struct drm_radeon_gem_info mminfo = {};
 	int fd = rmesa->radeonScreen->driScreen->fd;
 
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&rmesa->optionCache,
 				     "command_buffer_size");
-	if (size < 2 * rmesa->hw.max_state_size) {
+	if (size < 2 * (signed)rmesa->hw.max_state_size) {
 		size = 2 * rmesa->hw.max_state_size + 65535;
 	}
 	if (size > 64 * 256)

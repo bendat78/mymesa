@@ -189,7 +189,7 @@ convert_ubyte_rgba_to_bgra(size_t width, size_t height,
                            const uint8_t *src, size_t src_stride,
                            uint8_t *dst, size_t dst_stride)
 {
-   int row;
+   unsigned row, i;
 
    if (sizeof(void *) == 8 &&
        src_stride % 8 == 0 &&
@@ -202,7 +202,7 @@ convert_ubyte_rgba_to_bgra(size_t width, size_t height,
       for (row = 0; row < height; row++) {
          const GLuint64 *s = (const GLuint64 *) src;
          GLuint64 *d = (GLuint64 *) dst;
-         int i;
+         
          for (i = 0; i < width/2; i++) {
             d[i] = ( (s[i] & 0xff00ff00ff00ff00) |
                     ((s[i] &       0xff000000ff) << 16) |
@@ -223,7 +223,7 @@ convert_ubyte_rgba_to_bgra(size_t width, size_t height,
       for (row = 0; row < height; row++) {
          const GLuint *s = (const GLuint *) src;
          GLuint *d = (GLuint *) dst;
-         int i;
+         
          for (i = 0; i < width; i++) {
             d[i] = ( (s[i] & 0xff00ff00) |
                     ((s[i] &       0xff) << 16) |

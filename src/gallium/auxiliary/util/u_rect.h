@@ -37,8 +37,8 @@ extern "C" {
 #endif
 
 struct u_rect {
-   int x0, x1;
-   int y0, y1;
+   unsigned int x0, x1;
+   unsigned int y0, y1;
 };
 
 /* Do two rectangles intersect?

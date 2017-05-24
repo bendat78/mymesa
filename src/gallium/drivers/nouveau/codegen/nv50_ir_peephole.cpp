@@ -3241,9 +3241,12 @@ PostRaLoadPropagation::handleMADforNV50(Instruction *i)
          i->setSrc(1, def->getSrc(0));
       } else {
          ImmediateValue val;
-         bool ret = def->src(0).getImmediate(val);
+         
+	 bool ret = def->src(0).getImmediate(val);
          assert(ret);
-         if (i->getSrc(1)->reg.data.id & 1)
+	 (void) ret;
+         
+	 if (i->getSrc(1)->reg.data.id & 1)
             val.reg.data.u32 >>= 16;
          val.reg.data.u32 &= 0xffff;
          i->setSrc(1, new_ImmediateValue(prog, val.reg.data.u32));

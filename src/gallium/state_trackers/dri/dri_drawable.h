@@ -52,9 +52,9 @@ struct dri_drawable
    __DRIscreen *sPriv;
 
    __DRIbuffer old[8];
-   unsigned old_num;
-   unsigned old_w;
-   unsigned old_h;
+   signed old_num;
+   signed old_w;
+   signed old_h;
 
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
    struct pipe_resource *msaa_textures[ST_ATTACHMENT_COUNT];

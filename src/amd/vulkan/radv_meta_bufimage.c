@@ -927,7 +927,9 @@ itob_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                      .imageView = radv_image_view_to_handle(&tmp->src_iview),
 				                                      .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                              },
-				                      }
+									  },
+				                	  .pBufferInfo = 0,
+        
 				              },
 				              {
 				                      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1020,7 +1022,8 @@ btoi_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                      .imageView = radv_image_view_to_handle(&tmp->dst_iview),
 				                                      .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                              },
-				                      }
+				                      },
+									  .pBufferInfo = 0,
 				              }
 				      });
 }
@@ -1097,7 +1100,8 @@ itoi_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                       .imageView = radv_image_view_to_handle(&tmp->src_iview),
 				                                       .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                               },
-				                       }
+				                       },
+									   .pBufferInfo = 0,
 				              },
 				              {
 				                       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1111,7 +1115,8 @@ itoi_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                       .imageView = radv_image_view_to_handle(&tmp->dst_iview),
 				                                       .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                               },
-				                       }
+				                       },
+									   .pBufferInfo = 0,
 				              }
 				      });
 }
@@ -1185,7 +1190,8 @@ cleari_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                      .imageView = radv_image_view_to_handle(dst_iview),
 				                                      .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                               },
-				                      }
+				                      },
+									  .pBufferInfo = 0,
 				               },
 				      });
 }

@@ -210,7 +210,7 @@ i915_surface_copy_blitter(struct pipe_context *pipe,
    struct i915_texture *dst_tex = i915_texture(dst);
    struct i915_texture *src_tex = i915_texture(src);
    struct pipe_resource *dpt = &dst_tex->b.b;
-   struct pipe_resource *spt = &src_tex->b.b;
+   //struct pipe_resource *spt = &src_tex->b.b;
    unsigned dst_offset, src_offset;  /* in bytes */
 
    /* Fallback for buffers. */

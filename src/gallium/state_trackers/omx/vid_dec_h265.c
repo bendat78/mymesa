@@ -293,7 +293,7 @@ static void st_ref_pic_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
    bool inter_rps_pred_flag;
    unsigned delta_idx_minus1;
    int delta_poc;
-   int i;
+   unsigned i;
 
    inter_rps_pred_flag = (idx != 0) ? (vl_rbsp_u(rbsp, 1)) : false;
 
@@ -407,7 +407,7 @@ static void seq_parameter_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp)
 {
    struct pipe_h265_sps *sps;
    int sps_max_sub_layers_minus1;
-   unsigned i;
+   int i;
 
    /* sps_video_parameter_set_id */
    vl_rbsp_u(rbsp, 4);
@@ -679,8 +679,8 @@ static void vid_dec_h265_EndFrame(vid_dec_PrivateType *priv)
    struct dpb_list *entry = NULL;
    struct pipe_video_buffer *tmp;
    struct ref_pic_set *rps;
-   int i;
-   OMX_TICKS timestamp;
+   unsigned i;
+   OMX_TICKS timestamp = 0;
 
    if (!priv->frame_started)
       return;
@@ -705,7 +705,7 @@ static void vid_dec_h265_EndFrame(vid_dec_PrivateType *priv)
             rps->delta_poc[i] + get_poc(priv);
 
          LIST_FOR_EACH_ENTRY(entry, &priv->codec_data.h265.dpb_list, list) {
-            if (entry->poc == priv->picture.h265.PicOrderCntVal[i]) {
+            if (entry->poc == (unsigned)priv->picture.h265.PicOrderCntVal[i]) {
                priv->picture.h265.ref[i] = entry->buffer;
                break;
             }
@@ -763,7 +763,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
    struct ref_pic_set *rps;
    unsigned poc_lsb, poc_msb, slice_prev_poc;
    unsigned max_poc_lsb, prev_poc_lsb, prev_poc_msb;
-   unsigned num_st_rps;
+   int num_st_rps;
    int i;
 
    if (priv->picture.h265.IDRPicFlag != is_idr_picture(nal_unit_type))
@@ -879,7 +879,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       st_ref_pic_set(priv, rbsp, rps, sps, num_st_rps);
 
    } else if (num_st_rps > 1) {
-      int num_bits = 0;
+      unsigned num_bits = 0;
       unsigned idx;
 
       while ((1 << num_bits) < num_st_rps)

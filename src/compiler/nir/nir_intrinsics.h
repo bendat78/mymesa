@@ -41,12 +41,10 @@
 
 #define ARR(...) { __VA_ARGS__ }
 
-INTRINSIC(nop, 0, ARR(0), false, 0, 0, 0, xx, xx, xx,
-          NIR_INTRINSIC_CAN_ELIMINATE)
-
-INTRINSIC(load_var, 0, ARR(0), true, 0, 1, 0, xx, xx, xx, NIR_INTRINSIC_CAN_ELIMINATE)
+INTRINSIC(nop,       0, ARR(0), false, 0, 0, 0, xx, xx, xx, NIR_INTRINSIC_CAN_ELIMINATE)
+INTRINSIC(load_var,  0, ARR(0), true , 0, 1, 0, xx, xx, xx, NIR_INTRINSIC_CAN_ELIMINATE)
 INTRINSIC(store_var, 1, ARR(0), false, 0, 1, 1, WRMASK, xx, xx, 0)
-INTRINSIC(copy_var, 0, ARR(0), false, 0, 2, 0, xx, xx, xx, 0)
+INTRINSIC(copy_var,  0, ARR(0), false, 0, 2, 0, xx, xx, xx, 0)
 
 /*
  * Interpolation of input.  The interp_var_at* intrinsics are similar to the
@@ -304,32 +302,32 @@ INTRINSIC(shared_atomic_comp_swap, 3, ARR(1, 1, 1), true, 1, 0, 1, BASE, xx, xx,
    idx0, idx1, idx2, \
    NIR_INTRINSIC_CAN_ELIMINATE | NIR_INTRINSIC_CAN_REORDER)
 
-SYSTEM_VALUE(front_face, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(vertex_id, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(vertex_id_zero_base, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(base_vertex, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(instance_id, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(base_instance, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(draw_id, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(sample_id, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(sample_pos, 2, 0, xx, xx, xx)
-SYSTEM_VALUE(sample_mask_in, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(primitive_id, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(invocation_id, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(tess_coord, 3, 0, xx, xx, xx)
-SYSTEM_VALUE(tess_level_outer, 4, 0, xx, xx, xx)
-SYSTEM_VALUE(tess_level_inner, 2, 0, xx, xx, xx)
-SYSTEM_VALUE(patch_vertices_in, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(local_invocation_id, 3, 0, xx, xx, xx)
+SYSTEM_VALUE(front_face            , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(vertex_id             , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(vertex_id_zero_base   , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(base_vertex           , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(instance_id           , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(base_instance         , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(draw_id               , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(sample_id             , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(sample_pos            , 2, 0, xx, xx, xx)
+SYSTEM_VALUE(sample_mask_in        , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(primitive_id          , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(invocation_id         , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(tess_coord            , 3, 0, xx, xx, xx)
+SYSTEM_VALUE(tess_level_outer      , 4, 0, xx, xx, xx)
+SYSTEM_VALUE(tess_level_inner      , 2, 0, xx, xx, xx)
+SYSTEM_VALUE(patch_vertices_in     , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(local_invocation_id   , 3, 0, xx, xx, xx)
 SYSTEM_VALUE(local_invocation_index, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(work_group_id, 3, 0, xx, xx, xx)
-SYSTEM_VALUE(user_clip_plane, 4, 1, UCP_ID, xx, xx)
-SYSTEM_VALUE(num_work_groups, 3, 0, xx, xx, xx)
-SYSTEM_VALUE(helper_invocation, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(channel_num, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(alpha_ref_float, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(layer_id, 1, 0, xx, xx, xx)
-SYSTEM_VALUE(view_index, 1, 0, xx, xx, xx)
+SYSTEM_VALUE(work_group_id         , 3, 0, xx, xx, xx)
+SYSTEM_VALUE(user_clip_plane       , 4, 1, UCP_ID, xx, xx)
+SYSTEM_VALUE(num_work_groups       , 3, 0, xx, xx, xx)
+SYSTEM_VALUE(helper_invocation     , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(channel_num           , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(alpha_ref_float       , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(layer_id              , 1, 0, xx, xx, xx)
+SYSTEM_VALUE(view_index            , 1, 0, xx, xx, xx)
 
 /* Blend constant color values.  Float values are clamped. */
 SYSTEM_VALUE(blend_const_color_r_float, 1, 0, xx, xx, xx)

@@ -65,7 +65,7 @@
  * \author Ian Romanick <ian.d.romanick@intel.com>
  */
 
-static void emit_DrawArrays_none(GLenum mode, GLint first, GLsizei count);
+static void emit_DrawArrays_none(GLenum mode, GLint first, GLuint count);
 static void emit_DrawArrays_old(GLenum mode, GLint first, GLsizei count);
 
 static void emit_DrawElements_none(GLenum mode, GLsizei count, GLenum type,
@@ -143,7 +143,8 @@ __glXInitVertexArrayState(struct glx_context * gc)
    struct array_state_vector *arrays;
 
    unsigned array_count;
-   int texture_units = 1, vertex_program_attribs = 0;
+   unsigned int texture_units = 1;
+   unsigned int vertex_program_attribs = 0;
    unsigned i, j;
 
    GLboolean got_fog = GL_FALSE;
@@ -522,7 +523,7 @@ fill_array_info_cache(struct array_state_vector *arrays)
  * vertex state is enabled that is not compatible with that protocol.
  */
 void
-emit_DrawArrays_none(GLenum mode, GLint first, GLsizei count)
+emit_DrawArrays_none(GLenum mode, GLint first, GLuint count)
 {
    struct glx_context *gc = __glXGetCurrentContext();
    const __GLXattribute *state =

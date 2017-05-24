@@ -214,7 +214,7 @@ struct gl_config
 
    GLint numAuxBuffers;
 
-   GLint level;
+   GLuint level;
 
    /* EXT_visual_rating / GLX 1.2 */
    GLint visualRating;
@@ -227,7 +227,7 @@ struct gl_config
 
    /* ARB_multisample / SGIS_multisample */
    GLint sampleBuffers;
-   GLint samples;
+   GLuint samples;
 
    /* SGIX_pbuffer / GLX 1.3 */
    GLint maxPbufferWidth;
@@ -3515,7 +3515,7 @@ struct gl_constants
    GLuint MaxTextureLevels;      /**< Max mipmap levels. */ 
    GLuint Max3DTextureLevels;    /**< Max mipmap levels for 3D textures */
    GLuint MaxCubeTextureLevels;  /**< Max mipmap levels for cube textures */
-   GLuint MaxArrayTextureLayers; /**< Max layers in array textures */
+   GLint MaxArrayTextureLayers;  /**< Max layers in array textures */
    GLuint MaxTextureRectSize;    /**< Max rectangle texture size, in pixes */
    GLuint MaxTextureCoordUnits;
    GLuint MaxCombinedTextureImageUnits;
@@ -3583,10 +3583,10 @@ struct gl_constants
    /**
     * GL_ARB_framebuffer_no_attachments
     */
-   GLuint MaxFramebufferWidth;
-   GLuint MaxFramebufferHeight;
-   GLuint MaxFramebufferLayers;
-   GLuint MaxFramebufferSamples;
+   GLint MaxFramebufferWidth;
+   GLint MaxFramebufferHeight;
+   GLint MaxFramebufferLayers;
+   GLint MaxFramebufferSamples;
 
    /** Number of varying vectors between any two shader stages. */
    GLuint MaxVarying;

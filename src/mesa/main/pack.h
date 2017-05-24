@@ -42,7 +42,7 @@ _mesa_pack_polygon_stipple(const GLuint pattern[32], GLubyte *dest,
 
 
 extern void
-_mesa_pack_bitmap(GLint width, GLint height, const GLubyte *source,
+_mesa_pack_bitmap(GLuint width, GLuint height, const GLubyte *source,
                   GLubyte *dest, const struct gl_pixelstore_attrib *packing);
 
 
@@ -81,7 +81,7 @@ _mesa_pack_depth_stencil_span(struct gl_context *ctx,GLuint n,
 
 extern void *
 _mesa_unpack_image(GLuint dimensions,
-                   GLsizei width, GLsizei height, GLsizei depth,
+                   GLuint width, GLuint height, GLuint depth,
                    GLenum format, GLenum type, const GLvoid *pixels,
                    const struct gl_pixelstore_attrib *unpack);
 

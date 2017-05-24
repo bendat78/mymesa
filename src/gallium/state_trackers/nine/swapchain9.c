@@ -786,7 +786,7 @@ NineSwapChain9_Present( struct NineSwapChain9 *This,
     struct pipe_resource *res = NULL;
     D3DWindowBuffer *handle_temp;
     struct threadpool_task *task_temp;
-    int i;
+    unsigned int i;
     HRESULT hr;
 
     DBG("This=%p pSourceRect=%p pDestRect=%p hDestWindowOverride=%p "

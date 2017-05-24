@@ -29,6 +29,8 @@
 
 #define OPCODE(name) nir_intrinsic_##name
 
+#define NIR_INTRINSIC_xx 0
+
 #define INTRINSIC(_name, _num_srcs, _src_components, _has_dest, \
                   _dest_components, _num_variables, _num_indices, \
                   idx0, idx1, idx2, _flags) \
@@ -47,8 +49,6 @@
    }, \
    .flags = _flags \
 },
-
-#define NIR_INTRINSIC_xx 0
 
 #define LAST_INTRINSIC(name)
 

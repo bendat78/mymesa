@@ -30,7 +30,7 @@
 
 extern void GLAPIENTRY
 _mesa_GetProgramInterfaceiv(GLuint program, GLenum programInterface,
-                            GLenum pname, GLint *params);
+                            GLenum pname, GLuint *params);
 
 extern GLuint GLAPIENTRY
 _mesa_GetProgramResourceIndex(GLuint program, GLenum programInterface,

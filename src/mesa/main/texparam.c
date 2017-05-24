@@ -269,7 +269,7 @@ _mesa_target_allows_setting_sampler_parameters(GLenum target)
 static GLboolean
 set_tex_parameteri(struct gl_context *ctx,
                    struct gl_texture_object *texObj,
-                   GLenum pname, const GLint *params, bool dsa)
+                   GLenum pname, const GLuint *params, bool dsa)
 {
    const char *suffix = dsa ? "ture" : "";
 
@@ -1270,7 +1270,7 @@ static void
 get_tex_level_parameter_image(struct gl_context *ctx,
                               const struct gl_texture_object *texObj,
                               GLenum target, GLint level,
-                              GLenum pname, GLint *params,
+                              GLenum pname, GLuint *params,
                               bool dsa)
 {
    const struct gl_texture_image *img = NULL;
@@ -2238,7 +2238,7 @@ get_tex_parameterIuiv(struct gl_context *ctx,
       break;
    default:
       {
-         GLint ip[4];
+         GLint ip[4] = {};
          get_tex_parameteriv(ctx, obj, pname, ip, dsa);
          params[0] = ip[0];
          if (pname == GL_TEXTURE_SWIZZLE_RGBA_EXT ||

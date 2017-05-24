@@ -125,15 +125,15 @@ typedef struct _PALETTEENTRY {
 } PALETTEENTRY, *LPPALETTEENTRY;
 
 typedef struct _POINT {
-    LONG x;
-    LONG y;
+    ULONG x;
+    ULONG y;
 } POINT, *LPPOINT;
 
 typedef struct _RECT {
-    LONG left;
-    LONG top;
-    LONG right;
-    LONG bottom;
+    ULONG left;
+    ULONG top;
+    ULONG right;
+    ULONG bottom;
 } RECT, *LPRECT;
 
 typedef struct _RGNDATAHEADER {

@@ -43,6 +43,52 @@
 static bool
 do_winsys_init(struct radv_amdgpu_winsys *ws, int fd)
 {
+
+	struct amdgpu_buffer_size_alignments alignment_info = {};
+	struct amdgpu_heap_info vram, visible_vram, gtt;
+	struct drm_amdgpu_info_hw_ip dma = {};
+	struct drm_amdgpu_info_hw_ip compute = {};
+	drmDevicePtr devinfo;
+	int r;
+	unsigned int i, j;
+	/* Get PCI info. */
+	r = drmGetDevice2(fd, 0, &devinfo);
+	if (r) {
+		fprintf(stderr, "amdgpu: drmGetDevice2 failed.\n");
+		goto fail;
+	}
+	ws->info.pci_domain = devinfo->businfo.pci->domain;
+	ws->info.pci_bus = devinfo->businfo.pci->bus;
+	ws->info.pci_dev = devinfo->businfo.pci->dev;
+	ws->info.pci_func = devinfo->businfo.pci->func;
+	drmFreeDevice(&devinfo);
+
+	/* Query hardware and driver information. */
+	r = amdgpu_query_gpu_info(ws->dev, &ws->amdinfo);
+	if (r) {
+		fprintf(stderr, "amdgpu: amdgpu_query_gpu_info failed.\n");
+		goto fail;
+	}
+
+	r = amdgpu_query_buffer_size_alignment(ws->dev, &alignment_info);
+	if (r) {
+		fprintf(stderr, "amdgpu: amdgpu_query_buffer_size_alignment failed.\n");
+		goto fail;
+	}
+
+	r = amdgpu_query_heap_info(ws->dev, AMDGPU_GEM_DOMAIN_VRAM, 0, &vram);
+	if (r) {
+		fprintf(stderr, "amdgpu: amdgpu_query_heap_info(vram) failed.\n");
+		goto fail;
+	}
+
+	r = amdgpu_query_heap_info(ws->dev, AMDGPU_GEM_DOMAIN_VRAM,
+	                           AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED, &visible_vram);
+	if (r) {
+		fprintf(stderr, "amdgpu: amdgpu_query_heap_info(visible_vram) failed.\n");
+		goto fail;
+	}
+
 	if (!ac_query_gpu_info(fd, ws->dev, &ws->info, &ws->amdinfo))
 		return false;
 

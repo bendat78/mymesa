@@ -95,19 +95,19 @@ struct nine_vs_output_info
 };
 
 static inline void
-nine_info_mark_const_f_used(struct nine_shader_info *info, int idx)
+nine_info_mark_const_f_used(struct nine_shader_info *info, unsigned int idx)
 {
     if (info->const_float_slots < (idx + 1))
         info->const_float_slots = idx + 1;
 }
 static inline void
-nine_info_mark_const_i_used(struct nine_shader_info *info, int idx)
+nine_info_mark_const_i_used(struct nine_shader_info *info, unsigned int idx)
 {
     if (info->const_int_slots < (idx + 1))
         info->const_int_slots = idx + 1;
 }
 static inline void
-nine_info_mark_const_b_used(struct nine_shader_info *info, int idx)
+nine_info_mark_const_b_used(struct nine_shader_info *info, unsigned int idx)
 {
     if (info->const_bool_slots < (idx + 1))
         info->const_bool_slots = idx + 1;

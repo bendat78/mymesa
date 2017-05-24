@@ -54,13 +54,13 @@ struct nine_state_behaviour {
 };
 
 #define __NO_LIMIT_RS(o) \
-    [D3DRS_##o] = {NINE_STATE_NO_LIMIT}
+    [D3DRS_##o] = {NINE_STATE_NO_LIMIT, 0}
 
 #define __CLAMP_RS(o, m, M) \
     [D3DRS_##o] = {NINE_STATE_CLAMP, {.clamp = {m, M}}}
 
 #define __BOOLEAN_RS(o) \
-    [D3DRS_##o] = {NINE_STATE_BOOL}
+    [D3DRS_##o] = {NINE_STATE_BOOL, 0}
 
 #define __MASK_RS(o, m) \
     [D3DRS_##o] = {NINE_STATE_MASK, {.mask = m}}

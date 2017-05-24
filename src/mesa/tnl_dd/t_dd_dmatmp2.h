@@ -74,7 +74,7 @@ static ELT_TYPE *TAG(emit_elts)( struct gl_context *ctx,
 			    ELT_TYPE *dest,
 			    GLuint *elts, GLuint nr )
 {
-   GLint i;
+   GLuint i;
    LOCAL_VARS;
 
    for ( i = 0 ; i+1 < nr ; i+=2, elts += 2 ) {
@@ -93,7 +93,7 @@ static ELT_TYPE *TAG(emit_consecutive_elts)( struct gl_context *ctx,
 					ELT_TYPE *dest,
 					GLuint start, GLuint nr )
 {
-   GLint i;
+   GLuint i;
    LOCAL_VARS;
 
    for ( i = 0 ; i+1 < nr ; i+=2, start += 2 ) {
@@ -167,7 +167,7 @@ static void TAG(render_line_strip_verts)( struct gl_context *ctx,
 
    if (PREFER_DISCRETE_ELT_PRIM( count-start, HW_LINES ))
    {   
-      int dmasz = GET_MAX_HW_ELTS();
+      GLuint dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_LINES, HW_LINES );
@@ -179,7 +179,7 @@ static void TAG(render_line_strip_verts)( struct gl_context *ctx,
 
       for (j = start; j + 1 < count; j += nr - 1 ) {
 	 ELT_TYPE *dest;
-	 GLint i;
+	 GLuint i;
 
 	 nr = MIN2( dmasz, count - j );
 	 dest = ALLOC_ELTS( (nr-1)*2 );
@@ -220,7 +220,7 @@ static void TAG(render_line_loop_verts)( struct gl_context *ctx,
 	 return;
 
       if (PREFER_DISCRETE_ELT_PRIM( count-start, HW_LINES )) {
-	 int dmasz = GET_MAX_HW_ELTS();
+	 GLuint dmasz = GET_MAX_HW_ELTS();
 
 	 ELT_INIT( GL_LINES, HW_LINES );
 
@@ -233,7 +233,7 @@ static void TAG(render_line_loop_verts)( struct gl_context *ctx,
 	 dmasz--;
 
 	 for (; j + 1 < count;  ) {
-	    GLint i;
+	    GLuint i;
 	    ELT_TYPE *dest;
 
 	    nr = MIN2( dmasz, count - j );
@@ -257,7 +257,7 @@ static void TAG(render_line_loop_verts)( struct gl_context *ctx,
       }
       else
       {
-	 int dmasz = GET_MAX_HW_ELTS() - 1;
+	 GLuint dmasz = GET_MAX_HW_ELTS() - 1;
 
 	 ELT_INIT( GL_LINE_STRIP, HW_LINE_STRIP );
 
@@ -320,7 +320,7 @@ static void TAG(render_tri_strip_verts)( struct gl_context *ctx,
 
    if (PREFER_DISCRETE_ELT_PRIM( count-start, HW_TRIANGLES ))
    {   
-      int dmasz = GET_MAX_HW_ELTS();
+      GLuint dmasz = GET_MAX_HW_ELTS();
       int parity = 0;
       GLuint j, nr;
 
@@ -333,7 +333,7 @@ static void TAG(render_tri_strip_verts)( struct gl_context *ctx,
 
       for (j = start; j + 2 < count; j += nr - 2 ) {
 	 ELT_TYPE *dest;
-	 GLint i;
+	 GLuint i;
 
 	 nr = MIN2( dmasz, count - j );
 	 dest = ALLOC_ELTS( (nr-2)*3 );
@@ -365,7 +365,7 @@ static void TAG(render_tri_fan_verts)( struct gl_context *ctx,
 
    if (PREFER_DISCRETE_ELT_PRIM( count-start, HW_TRIANGLES ))
    {   
-      int dmasz = GET_MAX_HW_ELTS();
+      GLuint dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
@@ -374,7 +374,7 @@ static void TAG(render_tri_fan_verts)( struct gl_context *ctx,
 
       for (j = start + 1; j + 1 < count; j += nr - 1 ) {
 	 ELT_TYPE *dest;
-	 GLint i;
+	 GLuint i;
 
 	 nr = MIN2( dmasz, count - j );
 	 dest = ALLOC_ELTS( (nr-1)*3 );
@@ -427,7 +427,7 @@ static void TAG(render_quad_strip_verts)( struct gl_context *ctx,
    } 
    else if (ctx->Light.ShadeModel == GL_FLAT) {
       LOCAL_VARS;
-      int dmasz = GET_MAX_HW_ELTS();
+      GLuint dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
@@ -438,8 +438,8 @@ static void TAG(render_quad_strip_verts)( struct gl_context *ctx,
 
       for (j = start; j + 3 < count; j += nr - 2 ) {
 	 ELT_TYPE *dest;
-	 GLint quads, i;
-
+	 GLuint i, quads;
+	 
 	 nr = MIN2( dmasz, count - j );
 	 quads = (nr/2)-1;
 	 dest = ALLOC_ELTS( quads*6 );
@@ -480,7 +480,7 @@ static void TAG(render_quads_verts)( struct gl_context *ctx,
        * using indexed vertices and the triangle primitive: 
        */
       LOCAL_VARS;
-      int dmasz = GET_MAX_HW_ELTS();
+      GLuint dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
@@ -491,7 +491,7 @@ static void TAG(render_quads_verts)( struct gl_context *ctx,
 
       for (j = start; j < count; j += nr ) {
 	 ELT_TYPE *dest;
-	 GLint quads, i;
+	 GLuint quads, i;
 
 	 nr = MIN2( dmasz, count - j );
 	 quads = nr/4;
@@ -545,7 +545,7 @@ static void TAG(render_points_elts)( struct gl_context *ctx,
 				     GLuint flags )
 {
    LOCAL_VARS;
-   int dmasz = GET_MAX_HW_ELTS();
+   GLuint dmasz = GET_MAX_HW_ELTS();
    GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
    ELT_TYPE *dest;
@@ -569,7 +569,7 @@ static void TAG(render_lines_elts)( struct gl_context *ctx,
 				    GLuint flags )
 {
    LOCAL_VARS;
-   int dmasz = GET_MAX_HW_ELTS();
+   GLuint dmasz = GET_MAX_HW_ELTS();
    GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
    ELT_TYPE *dest;
@@ -608,7 +608,7 @@ static void TAG(render_line_strip_elts)( struct gl_context *ctx,
 					 GLuint flags )
 {
    LOCAL_VARS;
-   int dmasz = GET_MAX_HW_ELTS();
+   GLuint dmasz = GET_MAX_HW_ELTS();
    GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
    ELT_TYPE *dest;
@@ -637,7 +637,7 @@ static void TAG(render_line_loop_elts)( struct gl_context *ctx,
 					GLuint flags )
 {
    LOCAL_VARS;
-   int dmasz = GET_MAX_HW_ELTS();
+   GLuint dmasz = GET_MAX_HW_ELTS();
    GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
    ELT_TYPE *dest;
@@ -690,7 +690,7 @@ static void TAG(render_triangles_elts)( struct gl_context *ctx,
 {
    LOCAL_VARS;
    GLuint *elts = GET_MESA_ELTS();
-   int dmasz = GET_MAX_HW_ELTS()/3*3;
+   GLuint dmasz = GET_MAX_HW_ELTS()/3*3;
    GLuint j, nr;
    ELT_TYPE *dest;
 
@@ -724,7 +724,7 @@ static void TAG(render_tri_strip_elts)( struct gl_context *ctx,
    LOCAL_VARS;
    GLuint j, nr;
    GLuint *elts = GET_MESA_ELTS();
-   int dmasz = GET_MAX_HW_ELTS();
+   GLuint dmasz = GET_MAX_HW_ELTS();
    ELT_TYPE *dest;
 
    if (start+2 >= count)
@@ -754,7 +754,7 @@ static void TAG(render_tri_fan_elts)( struct gl_context *ctx,
    LOCAL_VARS;
    GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
-   int dmasz = GET_MAX_HW_ELTS();
+   GLuint dmasz = GET_MAX_HW_ELTS();
    ELT_TYPE *dest;
 
    if (start+2 >= count)
@@ -781,7 +781,7 @@ static void TAG(render_poly_elts)( struct gl_context *ctx,
    LOCAL_VARS;
    GLuint *elts = GET_MESA_ELTS();
    GLuint j, nr;
-   int dmasz = GET_MAX_HW_ELTS();
+   GLuint dmasz = GET_MAX_HW_ELTS();
    ELT_TYPE *dest;
 
    if (start+2 >= count)
@@ -812,7 +812,7 @@ static void TAG(render_quad_strip_elts)( struct gl_context *ctx,
    else {
       LOCAL_VARS;
       GLuint *elts = GET_MESA_ELTS();
-      int dmasz = GET_MAX_HW_ELTS();
+      GLuint dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
       ELT_TYPE *dest;
 
@@ -833,7 +833,7 @@ static void TAG(render_quad_strip_elts)( struct gl_context *ctx,
 	    {
 	       GLint quads = (nr/2)-1;
 	       ELT_TYPE *dest = ALLOC_ELTS( quads*6 );
-	       GLint i;
+	       GLuint i;
 
 	       for ( i = j-start ; i < j-start+quads ; i++, elts += 2 ) {
 		  EMIT_TWO_ELTS( dest, 0, elts[0], elts[1] );
@@ -873,7 +873,7 @@ static void TAG(render_quads_elts)( struct gl_context *ctx,
    } else {
       LOCAL_VARS;
       GLuint *elts = GET_MESA_ELTS();
-      int dmasz = GET_MAX_HW_ELTS();
+      GLuint dmasz = GET_MAX_HW_ELTS();
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
@@ -891,9 +891,9 @@ static void TAG(render_quads_elts)( struct gl_context *ctx,
 	 nr = MIN2( dmasz, count - j );
 
 	 {
-	    GLint quads = nr/4;
+	    GLuint quads = nr/4;
 	    ELT_TYPE *dest = ALLOC_ELTS( quads * 6 );
-	    GLint i;
+	    GLuint i;
 
 	    for ( i = j-start ; i < j-start+quads ; i++, elts += 4 ) {
 	       EMIT_TWO_ELTS( dest, 0, elts[0], elts[1] );

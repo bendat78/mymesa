@@ -628,11 +628,12 @@ CodeEmitterNV50::emitLOAD(const Instruction *i)
       if (progType == Program::TYPE_GEOMETRY && i->src(0).isIndirect(0))
          code[0] = 0x11800001;
       else
-         // use 'mov' where we can
-         code[0] = i->src(0).isIndirect(0) ? 0x00000001 : 0x10000001;
+         code[0] = i->src(0).isIndirect(0) ? 0x00000001 : 0x10000001; // use 'mov' where we can
+      
       code[1] = 0x00200000 | (i->lanes << 14);
       if (typeSizeof(i->dType) == 4)
          code[1] |= 0x04000000;
+
       break;
    case FILE_MEMORY_SHARED:
       if (targ->getChipset() >= 0x84) {
@@ -670,6 +671,8 @@ CodeEmitterNV50::emitLOAD(const Instruction *i)
       assert(!"invalid load source file");
       break;
    }
+   (void) offset; //silence compiler warning about variable not used
+
    if (sf == FILE_MEMORY_LOCAL ||
        sf == FILE_MEMORY_GLOBAL)
       emitLoadStoreSizeLG(i->sType, 21 + 32);

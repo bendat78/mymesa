@@ -50,7 +50,7 @@ static void TAG(emit)( struct gl_context *ctx,
    GLuint rqcoordsnoswap = 0;
    GLuint (*coord)[4];
    GLuint coord_stride; /* object coordinates */
-   int i;
+   GLuint i;
 
    union emit_union *v = (union emit_union *)dest;
 

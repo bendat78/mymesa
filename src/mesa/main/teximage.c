@@ -363,7 +363,7 @@ _mesa_get_tex_image(struct gl_context *ctx, struct gl_texture_object *texObj,
  *         level, or out of memory.
  */
 static struct gl_texture_image *
-get_proxy_tex_image(struct gl_context *ctx, GLenum target, GLint level)
+get_proxy_tex_image(struct gl_context *ctx, GLenum target, GLuint level)
 {
    struct gl_texture_image *texImage;
    GLuint texIndex;
@@ -935,8 +935,8 @@ _mesa_clear_texture_image(struct gl_context *ctx,
  */
 GLboolean
 _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
-                               GLint level, GLint width, GLint height,
-                               GLint depth, GLint border)
+                               GLuint level, GLuint width, GLuint height,
+                               GLuint depth, GLuint border)
 {
    GLint maxSize;
 
@@ -2224,7 +2224,7 @@ texsubimage_error_check(struct gl_context *ctx, GLuint dimensions,
  */
 static GLboolean
 copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
-                         GLenum target, GLint level, GLint internalFormat,
+                         GLenum target, GLint level, GLuint internalFormat,
                          GLint width, GLint height, GLint border )
 {
    GLint baseFormat;
@@ -2740,7 +2740,7 @@ override_internal_format(GLenum internalFormat, GLint width, GLint height)
 mesa_format
 _mesa_choose_texture_format(struct gl_context *ctx,
                             struct gl_texture_object *texObj,
-                            GLenum target, GLint level,
+                            GLenum target, GLuint level,
                             GLenum internalFormat, GLenum format, GLenum type)
 {
    mesa_format f;
@@ -2856,7 +2856,7 @@ strip_texture_border(GLenum target,
  */
 static void
 teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
-         GLenum target, GLint level, GLint internalFormat,
+         GLenum target, GLint level, GLuint internalFormat,
          GLsizei width, GLsizei height, GLsizei depth,
          GLint border, GLenum format, GLenum type,
          GLsizei imageSize, const GLvoid *pixels)
@@ -3562,8 +3562,8 @@ formats_differ_in_component_sizes(mesa_format f1, mesa_format f2)
 static bool
 can_avoid_reallocation(const struct gl_texture_image *texImage,
                        GLenum internalFormat,
-                       mesa_format texFormat, GLint x, GLint y, GLsizei width,
-                       GLsizei height, GLint border)
+                       mesa_format texFormat, GLint x, GLint y, GLuint width,
+                       GLuint height, GLuint border)
 {
    if (texImage->InternalFormat != internalFormat)
       return false;

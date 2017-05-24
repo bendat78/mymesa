@@ -40,13 +40,13 @@
 
 static const VAImageFormat formats[] =
 {
-   {VA_FOURCC('N','V','1','2')},
-   {VA_FOURCC('P','0','1','0')},
-   {VA_FOURCC('P','0','1','6')},
-   {VA_FOURCC('I','4','2','0')},
-   {VA_FOURCC('Y','V','1','2')},
-   {VA_FOURCC('Y','U','Y','V')},
-   {VA_FOURCC('U','Y','V','Y')},
+   {VA_FOURCC('N','V','1','2'), .byte_order = VA_LSB_FIRST},
+   {VA_FOURCC('P','0','1','0'), .byte_order = VA_LSB_FIRST},
+   {VA_FOURCC('P','0','1','6'), .byte_order = VA_LSB_FIRST},
+   {VA_FOURCC('I','4','2','0'), .byte_order = VA_LSB_FIRST},
+   {VA_FOURCC('Y','V','1','2'), .byte_order = VA_LSB_FIRST},
+   {VA_FOURCC('Y','U','Y','V'), .byte_order = VA_LSB_FIRST},
+   {VA_FOURCC('U','Y','V','Y'), .byte_order = VA_LSB_FIRST},
    {.fourcc = VA_FOURCC('B','G','R','A'), .byte_order = VA_LSB_FIRST, 32, 32,
     0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000},
    {.fourcc = VA_FOURCC('R','G','B','A'), .byte_order = VA_LSB_FIRST, 32, 32,

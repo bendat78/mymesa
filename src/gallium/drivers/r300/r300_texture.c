@@ -198,7 +198,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                     else
                         return R300_TX_FORMAT_Y16X16;
                 default:
-                    return ~0; /* Unsupported. */
+                    return (~0u); /* Unsupported. */
             }
 
         /* YUV formats. */
@@ -211,7 +211,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                 case PIPE_FORMAT_YUYV:
                     return R300_EASY_TX_FORMAT(X, Y, Z, ONE, VYUY422) | result;
                 default:
-                    return ~0; /* Unsupported/unknown. */
+                    return (~0u); /* Unsupported/unknown. */
             }
 
         /* Add gamma correction. */
@@ -252,7 +252,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
     /* S3TC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
         if (!util_format_s3tc_enabled) {
-            return ~0; /* Unsupported. */
+            return (~0u); /* Unsupported. */
         }
 
         switch (format) {
@@ -268,7 +268,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             case PIPE_FORMAT_DXT5_SRGBA:
                 return R300_TX_FORMAT_DXT5 | result;
             default:
-                return ~0; /* Unsupported/unknown. */
+                return (~0u); /* Unsupported/unknown. */
         }
     }
 
@@ -290,7 +290,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                 return R400_TX_FORMAT_ATI2N | result;
 
             default:
-                return ~0; /* Unsupported/unknown. */
+                return (~0u); /* Unsupported/unknown. */
         }
     }
 
@@ -308,7 +308,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
               desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED) &&
              (!desc->channel[i].normalized ||
               desc->channel[i].pure_integer))) {
-            return ~0; /* Unsupported/unknown. */
+            return (~0u); /* Unsupported/unknown. */
         }
     }
 
@@ -343,7 +343,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                     desc->channel[2].size == 3) {
                     return R300_TX_FORMAT_Z3Y3X2 | result;
                 }
-                return ~0; /* Unsupported/unknown. */
+                return (~0u); /* Unsupported/unknown. */
 
             case 4:
                 if (desc->channel[0].size == 5 &&
@@ -359,7 +359,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                     return R300_TX_FORMAT_W2Z10Y10X10 | result;
                 }
         }
-        return ~0; /* Unsupported/unknown. */
+        return (~0u); /* Unsupported/unknown. */
     }
 
     /* Find the first non-VOID channel. */
@@ -370,7 +370,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
     }
 
     if (i == 4)
-        return ~0; /* Unsupported/unknown. */
+        return (~0u); /* Unsupported/unknown. */
 
     /* And finally, uniform formats. */
     switch (desc->channel[i].type) {
@@ -378,7 +378,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         case UTIL_FORMAT_TYPE_SIGNED:
             if (!desc->channel[i].normalized &&
                 desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB) {
-                return ~0;
+                return (~0u);
             }
 
             switch (desc->channel[i].size) {
@@ -389,7 +389,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                         case 4:
                             return R300_TX_FORMAT_W4Z4Y4X4 | result;
                     }
-                    return ~0;
+                    return (~0u);
 
                 case 8:
                     switch (desc->nr_channels) {
@@ -400,7 +400,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                         case 4:
                             return R300_TX_FORMAT_W8Z8Y8X8 | result;
                     }
-                    return ~0;
+                    return (~0u);
 
                 case 16:
                     switch (desc->nr_channels) {
@@ -412,7 +412,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                             return R300_TX_FORMAT_W16Z16Y16X16 | result;
                     }
             }
-            return ~0;
+            return (~0u);
 
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (desc->channel[i].size) {
@@ -425,7 +425,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                         case 4:
                             return R300_TX_FORMAT_16F_16F_16F_16F | result;
                     }
-                    return ~0;
+                    return (~0u);
 
                 case 32:
                     switch (desc->nr_channels) {
@@ -439,7 +439,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    return ~0; /* Unsupported/unknown. */
+    return (~0u); /* Unsupported/unknown. */
 }
 
 uint32_t r500_tx_format_msb_bit(enum pipe_format format)
@@ -567,7 +567,7 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_YUYV:
             return R300_COLOR_FORMAT_VYUY;
         default:
-            return ~0; /* Unsupported. */
+            return (~0u); /* Unsupported. */
     }
 }
 
@@ -584,7 +584,7 @@ static uint32_t r300_translate_zsformat(enum pipe_format format)
         case PIPE_FORMAT_S8_UINT_Z24_UNORM:
             return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
         default:
-            return ~0; /* Unsupported. */
+            return (~0u); /* Unsupported. */
     }
 }
 
@@ -610,7 +610,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
     }
 
     if (i == 4)
-        return ~0; /* Unsupported/unknown. */
+        return (~0u); /* Unsupported/unknown. */
 
     /* Specifies how the shader output is written to the fog unit. */
     switch (desc->channel[i].type) {
@@ -790,7 +790,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
                 R300_C0_SEL_R | R300_C1_SEL_A;
 
         default:
-            return ~0; /* Unsupported. */
+            return (~0u); /* Unsupported. */
     }
 }
 
@@ -884,25 +884,25 @@ static uint32_t r300_translate_colormask_swizzle(enum pipe_format format)
         return COLORMASK_RGBA;
 
     default:
-        return ~0; /* Unsupported. */
+        return (~0u); /* Unsupported. */
     }
 }
 
 boolean r300_is_colorbuffer_format_supported(enum pipe_format format)
 {
-    return r300_translate_colorformat(format) != ~0 &&
-           r300_translate_out_fmt(format) != ~0 &&
-           r300_translate_colormask_swizzle(format) != ~0;
+    return r300_translate_colorformat(format) != (~0u) &&
+           r300_translate_out_fmt(format) != (~0u) &&
+           r300_translate_colormask_swizzle(format) != (~0u);
 }
 
 boolean r300_is_zs_format_supported(enum pipe_format format)
 {
-    return r300_translate_zsformat(format) != ~0;
+    return r300_translate_zsformat(format) != (~0u);
 }
 
 boolean r300_is_sampler_format_supported(enum pipe_format format)
 {
-    return r300_translate_texformat(format, 0, TRUE, FALSE) != ~0;
+    return r300_translate_texformat(format, 0, TRUE, FALSE) != (~0u);
 }
 
 void r300_texture_setup_format_state(struct r300_screen *screen,
