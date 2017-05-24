@@ -753,7 +753,7 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 			     struct r600_bytecode_alu *alu_prev)
 {
 	struct r600_bytecode_alu *prev[5];
-	struct r600_bytecode_alu *result[5] = { NULL };
+	struct r600_bytecode_alu *result[5] = {};
 
 	uint32_t literal[4], prev_literal[4];
 	unsigned nliteral = 0, prev_nliteral = 0;

@@ -128,7 +128,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    const struct pipe_shader_state *vs;
    struct pipe_vertex_buffer vbuffers[PIPE_MAX_SHADER_INPUTS];
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
-   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {NULL};
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {};
    struct pipe_transfer *ib_transfer = NULL;
    const struct gl_vertex_array **arrays = ctx->Array._DrawArrays;
    GLuint attr, i;

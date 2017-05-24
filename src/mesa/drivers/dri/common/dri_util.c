@@ -114,7 +114,7 @@ driCreateNewScreen2(int scrn, int fd,
                     const __DRIextension **driver_extensions,
                     const __DRIconfig ***driver_configs, void *data)
 {
-    static const __DRIextension *emptyExtensionList[] = { NULL };
+    static const __DRIextension *emptyExtensionList[] = {};
     __DRIscreen *psp;
 
     psp = calloc(1, sizeof(*psp));
