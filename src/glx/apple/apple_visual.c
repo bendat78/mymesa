@@ -63,7 +63,7 @@ enum
    MAX_ATTR = 60
 };
 
-static char __crashreporter_info_buff__[4096] = { 0 };
+static char __crashreporter_info_buff__[4096] = {};
 static const char *__crashreporter_info__ __attribute__((__used__)) =
     &__crashreporter_info_buff__[0];
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1050

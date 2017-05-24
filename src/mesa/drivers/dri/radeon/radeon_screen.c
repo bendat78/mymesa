@@ -131,7 +131,7 @@ DRI_CONF_END
 static int
 radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 {
-  struct drm_radeon_info info = { 0 };
+  struct drm_radeon_info info = {};
 
   info.value = (uint64_t)(uintptr_t)value;
   switch (param) {

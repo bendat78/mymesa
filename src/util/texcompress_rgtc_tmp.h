@@ -77,7 +77,7 @@ void TAG(encode_rgtc_ubyte)(TYPE *blkaddr, TYPE srccolors[4][4],
                             int numxpixels, int numypixels)
 {
    TYPE alphabase[2], alphause[2];
-   short alphatest[2] = { 0 };
+   short alphatest[2] = {};
    unsigned int alphablockerror1, alphablockerror2, alphablockerror3;
    TYPE i, j, aindex, acutValues[7];
    TYPE alphaenc1[16], alphaenc2[16], alphaenc3[16];

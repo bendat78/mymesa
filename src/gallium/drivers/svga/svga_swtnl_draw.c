@@ -42,9 +42,9 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
                     struct pipe_resource *indexbuf,
                     unsigned index_offset)
 {
-   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = { 0 };
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {};
    struct pipe_transfer *ib_transfer = NULL;
-   struct pipe_transfer *cb_transfer[SVGA_MAX_CONST_BUFS] = { 0 };
+   struct pipe_transfer *cb_transfer[SVGA_MAX_CONST_BUFS] = {};
    struct draw_context *draw = svga->swtnl.draw;
    MAYBE_UNUSED unsigned old_num_vertex_buffers;
    unsigned i;

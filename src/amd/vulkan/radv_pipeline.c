@@ -450,7 +450,7 @@ static struct radv_shader_variant *radv_shader_variant_create(struct radv_device
 	if (!variant)
 		return NULL;
 
-	struct ac_nir_compiler_options options = {0};
+	struct ac_nir_compiler_options options = {};
 	options.layout = layout;
 	if (key)
 		options.key = *key;
@@ -495,7 +495,7 @@ radv_pipeline_create_gs_copy_shader(struct radv_pipeline *pipeline,
 	if (!variant)
 		return NULL;
 
-	struct ac_nir_compiler_options options = {0};
+	struct ac_nir_compiler_options options = {};
 	struct ac_shader_binary binary;
 	options.family = chip_family;
 	options.chip_class = pipeline->device->physical_device->rad_info.chip_class;
@@ -1966,7 +1966,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		   const struct radv_graphics_pipeline_create_info *extra,
 		   const VkAllocationCallbacks *alloc)
 {
-	struct radv_shader_module fs_m = {0};
+	struct radv_shader_module fs_m = {};
 	VkResult result;
 
 	if (alloc == NULL)

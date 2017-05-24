@@ -262,7 +262,7 @@ radv_amdgpu_winsys_bo_create(struct radeon_winsys *_ws,
 {
 	struct radv_amdgpu_winsys *ws = radv_amdgpu_winsys(_ws);
 	struct radv_amdgpu_winsys_bo *bo;
-	struct amdgpu_bo_alloc_request request = {0};
+	struct amdgpu_bo_alloc_request request = {};
 	amdgpu_bo_handle buf_handle;
 	uint64_t va = 0;
 	amdgpu_va_handle va_handle;
@@ -377,8 +377,8 @@ radv_amdgpu_winsys_bo_from_fd(struct radeon_winsys *_ws,
 	uint64_t va;
 	amdgpu_va_handle va_handle;
 	enum amdgpu_bo_handle_type type = amdgpu_bo_handle_type_dma_buf_fd;
-	struct amdgpu_bo_import_result result = {0};
-	struct amdgpu_bo_info info = {0};
+	struct amdgpu_bo_import_result result = {};
+	struct amdgpu_bo_info info = {};
 	enum radeon_bo_domain initial = 0;
 	int r;
 	bo = CALLOC_STRUCT(radv_amdgpu_winsys_bo);
@@ -464,7 +464,7 @@ radv_amdgpu_winsys_bo_set_metadata(struct radeon_winsys_bo *_bo,
 				   struct radeon_bo_metadata *md)
 {
 	struct radv_amdgpu_winsys_bo *bo = radv_amdgpu_winsys_bo(_bo);
-	struct amdgpu_bo_metadata metadata = {0};
+	struct amdgpu_bo_metadata metadata = {};
 	uint32_t tiling_flags = 0;
 
 	if (md->macrotile == RADEON_LAYOUT_TILED)

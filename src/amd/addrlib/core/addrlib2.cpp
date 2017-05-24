@@ -638,8 +638,8 @@ ADDR_E_RETURNCODE Lib::ComputeFmaskInfo(
     }
     else
     {
-        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn = {0};
-        ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {0};
+        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn = {};
+        ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {};
 
         localIn.size = sizeof(ADDR2_COMPUTE_SURFACE_INFO_INPUT);
         localOut.size = sizeof(ADDR2_COMPUTE_SURFACE_INFO_OUTPUT);
@@ -1168,8 +1168,8 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceAddrFromCoordLinear(
 
     if (valid)
     {
-        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn  = {0};
-        ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {0};
+        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn = {};
+        ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {};
         localIn.bpp          = pIn->bpp;
         localIn.flags        = pIn->flags;
         localIn.width        = Max(pIn->unalignedWidth, 1u);
@@ -1268,8 +1268,8 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddrLinear(
 
     if (valid)
     {
-        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn  = {0};
-        ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {0};
+        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn = {};
+        ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {};
         localIn.bpp          = pIn->bpp;
         localIn.flags        = pIn->flags;
         localIn.width        = Max(pIn->unalignedWidth, 1u);

@@ -383,7 +383,7 @@ vec4_visitor::opt_vector_float()
       int last_reg = -1, last_offset = -1;
       enum brw_reg_file last_reg_file = BAD_FILE;
 
-      uint8_t imm[4] = { 0 };
+      uint8_t imm[4] = {};
       int inst_count = 0;
       vec4_instruction *imm_inst[4];
       unsigned writemask = 0;

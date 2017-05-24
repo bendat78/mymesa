@@ -287,7 +287,7 @@ st_GetPerfMonitorResult(struct gl_context *ctx,
    /* Read query results for each active counter. */
    for (i = 0; i < stm->num_active_counters; ++i) {
       struct st_perf_counter_object *cntr = &stm->active_counters[i];
-      union pipe_query_result result = { 0 };
+      union pipe_query_result result = {};
       int gid, cid;
       GLenum type;
 

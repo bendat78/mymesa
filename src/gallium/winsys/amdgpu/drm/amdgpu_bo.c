@@ -374,7 +374,7 @@ static struct amdgpu_winsys_bo *amdgpu_create_bo(struct amdgpu_winsys *ws,
                                                  unsigned flags,
                                                  unsigned pb_cache_bucket)
 {
-   struct amdgpu_bo_alloc_request request = {0};
+   struct amdgpu_bo_alloc_request request = {};
    amdgpu_bo_handle buf_handle;
    uint64_t va = 0;
    struct amdgpu_winsys_bo *bo;
@@ -1068,7 +1068,7 @@ static void amdgpu_buffer_get_metadata(struct pb_buffer *_buf,
                                        struct radeon_bo_metadata *md)
 {
    struct amdgpu_winsys_bo *bo = amdgpu_winsys_bo(_buf);
-   struct amdgpu_bo_info info = {0};
+   struct amdgpu_bo_info info = {};
    uint64_t tiling_flags;
    int r;
 
@@ -1108,7 +1108,7 @@ static void amdgpu_buffer_set_metadata(struct pb_buffer *_buf,
                                        struct radeon_bo_metadata *md)
 {
    struct amdgpu_winsys_bo *bo = amdgpu_winsys_bo(_buf);
-   struct amdgpu_bo_metadata metadata = {0};
+   struct amdgpu_bo_metadata metadata = {};
    uint64_t tiling_flags = 0;
 
    assert(bo->bo && "must not be called for slab entries");
@@ -1271,10 +1271,10 @@ static struct pb_buffer *amdgpu_bo_from_handle(struct radeon_winsys *rws,
    struct amdgpu_winsys *ws = amdgpu_winsys(rws);
    struct amdgpu_winsys_bo *bo;
    enum amdgpu_bo_handle_type type;
-   struct amdgpu_bo_import_result result = {0};
+   struct amdgpu_bo_import_result result = {};
    uint64_t va;
    amdgpu_va_handle va_handle;
-   struct amdgpu_bo_info info = {0};
+   struct amdgpu_bo_info info = {};
    enum radeon_bo_domain initial = 0;
    int r;
 

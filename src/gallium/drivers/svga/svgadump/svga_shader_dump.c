@@ -416,7 +416,7 @@ dump_dstreg(struct sh_dstreg dstreg,
 
 static void dump_srcreg( struct sh_srcreg srcreg, struct sh_srcreg *indreg, const struct dump_info *di )
 {
-   struct sh_reg srcreg_sh = {0};
+   struct sh_reg srcreg_sh = {};
    /* bit-fields carefully aligned, ensure they stay that way. */
    STATIC_ASSERT(sizeof(struct sh_reg) == sizeof(struct sh_srcreg));
    memcpy(&srcreg_sh, &srcreg, sizeof(srcreg_sh));

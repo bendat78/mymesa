@@ -332,7 +332,7 @@ static bool do_winsys_init(struct radeon_drm_winsys *ws)
 
     /* Check for userptr support. */
     {
-        struct drm_radeon_gem_userptr args = {0};
+        struct drm_radeon_gem_userptr args = {};
 
         /* If the ioctl doesn't exist, -EINVAL is returned.
          *

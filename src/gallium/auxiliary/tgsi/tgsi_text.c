@@ -1874,7 +1874,7 @@ tgsi_text_translate(
    struct tgsi_token *tokens,
    uint num_tokens )
 {
-   struct translate_ctx ctx = {0};
+   struct translate_ctx ctx = {};
 
    ctx.text = text;
    ctx.cur = text;

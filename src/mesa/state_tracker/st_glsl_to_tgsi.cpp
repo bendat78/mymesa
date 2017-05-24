@@ -3240,7 +3240,7 @@ void
 glsl_to_tgsi_visitor::visit(ir_constant *ir)
 {
    st_src_reg src;
-   GLdouble stack_vals[4] = { 0 };
+   GLdouble stack_vals[4] = {};
    gl_constant_value *values = (gl_constant_value *) stack_vals;
    GLenum gl_type = GL_NONE;
    unsigned int i;

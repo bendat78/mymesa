@@ -197,7 +197,7 @@ fd5_clear(struct fd_context *ctx, unsigned buffers,
 
 	if (buffers & PIPE_CLEAR_COLOR) {
 		for (int i = 0; i < pfb->nr_cbufs; i++) {
-			union util_color uc = {0};
+			union util_color uc = {};
 
 			if (!pfb->cbufs[i])
 				continue;

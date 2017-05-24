@@ -349,7 +349,7 @@ st_draw_quad(struct st_context *st,
              const float *color,
              unsigned num_instances)
 {
-   struct pipe_vertex_buffer vb = {0};
+   struct pipe_vertex_buffer vb = {};
    struct st_util_vertex *verts;
 
    vb.stride = sizeof(struct st_util_vertex);

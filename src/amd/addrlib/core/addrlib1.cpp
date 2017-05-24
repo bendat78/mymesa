@@ -201,7 +201,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceInfo(
     {
         // Get a local copy of input structure and only reference pIn for unadjusted values
         ADDR_COMPUTE_SURFACE_INFO_INPUT localIn = *pIn;
-        ADDR_TILEINFO tileInfoNull = {0};
+        ADDR_TILEINFO tileInfoNull = {};
 
         if (UseTileInfo())
         {
@@ -469,7 +469,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceAddrFromCoord(
             // Use temp tile info for calcalation
             input.pTileInfo = &tileInfoNull;
 
-            const ADDR_SURFACE_FLAGS flags = {{0}};
+            const ADDR_SURFACE_FLAGS flags = {};
             UINT_32 numSamples = GetNumFragments(pIn->numSamples, pIn->numFrags);
 
             // Try finding a macroModeIndex
@@ -549,7 +549,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddr(
             // Use temp tile info for calcalation
             input.pTileInfo = &tileInfoNull;
 
-            const ADDR_SURFACE_FLAGS flags = {{0}};
+            const ADDR_SURFACE_FLAGS flags = {};
             UINT_32 numSamples = GetNumFragments(pIn->numSamples, pIn->numFrags);
 
             // Try finding a macroModeIndex
@@ -856,7 +856,7 @@ ADDR_E_RETURNCODE Lib::ComputeFmaskInfo(
                 input.pTileInfo = &tileInfoNull;
             }
 
-            ADDR_SURFACE_FLAGS flags = {{0}};
+            ADDR_SURFACE_FLAGS flags = {};
             flags.fmask = 1;
 
             // Try finding a macroModeIndex
@@ -1073,8 +1073,8 @@ ADDR_E_RETURNCODE Lib::ConvertTileIndex(
 
         if (returnCode == ADDR_OK && pIn->tileInfoHw)
         {
-            ADDR_CONVERT_TILEINFOTOHW_INPUT hwInput = {0};
-            ADDR_CONVERT_TILEINFOTOHW_OUTPUT hwOutput = {0};
+            ADDR_CONVERT_TILEINFOTOHW_INPUT hwInput = {};
+            ADDR_CONVERT_TILEINFOTOHW_OUTPUT hwOutput = {};
 
             hwInput.pTileInfo = pOut->pTileInfo;
             hwInput.tileIndex = -1;
@@ -1116,7 +1116,7 @@ ADDR_E_RETURNCODE Lib::GetMacroModeIndex(
 
     if (returnCode == ADDR_OK)
     {
-        ADDR_TILEINFO tileInfo = {0};
+        ADDR_TILEINFO tileInfo = {};
         pOut->macroModeIndex = HwlComputeMacroModeIndex(pIn->tileIndex, pIn->flags, pIn->bpp,
                                                         pIn->numFrags, &tileInfo);
     }
@@ -1153,15 +1153,15 @@ ADDR_E_RETURNCODE Lib::ConvertTileIndex1(
 
     if (returnCode == ADDR_OK)
     {
-        ADDR_SURFACE_FLAGS flags = {{0}};
+        ADDR_SURFACE_FLAGS flags = {};
 
         HwlComputeMacroModeIndex(pIn->tileIndex, flags, pIn->bpp, pIn->numSamples,
                                  pOut->pTileInfo, &pOut->tileMode, &pOut->tileType);
 
         if (pIn->tileInfoHw)
         {
-            ADDR_CONVERT_TILEINFOTOHW_INPUT hwInput = {0};
-            ADDR_CONVERT_TILEINFOTOHW_OUTPUT hwOutput = {0};
+            ADDR_CONVERT_TILEINFOTOHW_INPUT hwInput = {};
+            ADDR_CONVERT_TILEINFOTOHW_OUTPUT hwOutput = {};
 
             hwInput.pTileInfo = pOut->pTileInfo;
             hwInput.tileIndex = -1;
@@ -2215,7 +2215,7 @@ VOID Lib::HwlComputeXmaskCoordFromAddr(
     //
     if (factor == 2) //CMASK
     {
-        ADDR_CMASK_FLAGS flags = {{0}};
+        ADDR_CMASK_FLAGS flags = {};
 
         elemBits = CmaskElemBits;
 
@@ -2233,7 +2233,7 @@ VOID Lib::HwlComputeXmaskCoordFromAddr(
     }
     else  //HTILE
     {
-        ADDR_HTILE_FLAGS flags = {{0}};
+        ADDR_HTILE_FLAGS flags = {};
 
         if (factor != 1)
         {
@@ -2397,7 +2397,7 @@ UINT_64 Lib::HwlComputeXmaskAddrFromCoord(
     //
     if (factor == 2) // CMASK
     {
-        ADDR_CMASK_FLAGS flags = {{0}};
+        ADDR_CMASK_FLAGS flags = {};
 
         ComputeCmaskInfo(flags,
                          pitch,
@@ -2415,7 +2415,7 @@ UINT_64 Lib::HwlComputeXmaskAddrFromCoord(
     }
     else // HTILE
     {
-        ADDR_HTILE_FLAGS flags = {{0}};
+        ADDR_HTILE_FLAGS flags = {};
 
         ComputeHtileInfo(flags,
                          pitch,

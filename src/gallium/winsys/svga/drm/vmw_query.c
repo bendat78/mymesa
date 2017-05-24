@@ -38,7 +38,7 @@ vmw_svga_winsys_query_create(struct svga_winsys_screen *sws,
 {
    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
    struct pb_manager *provider = vws->pools.gmr;
-   struct pb_desc desc = {0};
+   struct pb_desc desc = {};
    struct pb_buffer *pb_buf;
    struct svga_winsys_gb_query *query;
 

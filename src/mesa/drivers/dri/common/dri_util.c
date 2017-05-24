@@ -150,7 +150,7 @@ driCreateNewScreen2(int scrn, int fd,
 	return NULL;
     }
 
-    struct gl_constants consts = { 0 };
+    struct gl_constants consts = {};
     gl_api api;
     unsigned version;
 

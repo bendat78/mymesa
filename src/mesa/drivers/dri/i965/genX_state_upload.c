@@ -1086,7 +1086,7 @@ genX(calculate_attr_overrides)(const struct brw_context *brw,
       }
 
       /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
-      struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attribute = { 0 };
+      struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attribute = {};
 
       if (!point_sprite) {
          genX(get_attr_override)(&attribute,
@@ -2464,11 +2464,11 @@ genX(upload_blend_state)(struct brw_context *brw)
    blend_map = brw_state_batch(brw, size, 64, &brw->cc.blend_state_offset);
 
 #if GEN_GEN >= 8
-   struct GENX(BLEND_STATE) blend = { 0 };
+   struct GENX(BLEND_STATE) blend = {};
    {
 #else
    for (int i = 0; i < nr_draw_buffers; i++) {
-      struct GENX(BLEND_STATE_ENTRY) entry = { 0 };
+      struct GENX(BLEND_STATE_ENTRY) entry = {};
 #define blend entry
 #endif
       /* OpenGL specification 3.3 (page 196), section 4.1.3 says:
@@ -2501,7 +2501,7 @@ genX(upload_blend_state)(struct brw_context *brw)
 
 #if GEN_GEN >= 8
       for (int i = 0; i < nr_draw_buffers; i++) {
-         struct GENX(BLEND_STATE_ENTRY) entry = { 0 };
+         struct GENX(BLEND_STATE_ENTRY) entry = {};
 #else
       {
 #endif
@@ -2941,7 +2941,7 @@ genX(upload_sbe)(struct brw_context *brw)
    const struct brw_wm_prog_data *wm_prog_data =
       brw_wm_prog_data(brw->wm.base.prog_data);
 #if GEN_GEN >= 8
-   struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attr_overrides[16] = { { 0 } };
+   struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attr_overrides[16] = {};
 #else
 #define attr_overrides sbe.Attribute
 #endif
@@ -3076,11 +3076,17 @@ genX(upload_3dstate_so_decl_list)(struct brw_context *brw,
     * command feels strange -- each dword pair contains a SO_DECL per stream.
     */
    for (unsigned i = 0; i < linked_xfb_info->NumOutputs; i++) {
+
       const struct gl_transform_feedback_output *output =
          &linked_xfb_info->Outputs[i];
       const int buffer = output->OutputBuffer;
       const int varying = output->OutputRegister;
       const unsigned stream_id = output->StreamId;
+      struct GENX(SO_DECL) decl = {};
+      const unsigned components = linked_xfb_info->Outputs[i].NumComponents;
+      unsigned component_mask = (1 << components) - 1;
+      unsigned decl_buffer_slot = buffer;
+
       assert(stream_id < MAX_VERTEX_STREAMS);
 
       buffer_mask[stream_id] |= 1 << buffer;

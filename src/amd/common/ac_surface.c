@@ -152,10 +152,10 @@ static ADDR_E_RETURNCODE ADDR_API freeSysMem(const ADDR_FREESYSMEM_INPUT * pInpu
 ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
 			       const struct amdgpu_gpu_info *amdinfo)
 {
-	ADDR_CREATE_INPUT addrCreateInput = {0};
-	ADDR_CREATE_OUTPUT addrCreateOutput = {0};
-	ADDR_REGISTER_VALUE regValue = {0};
-	ADDR_CREATE_FLAGS createFlags = {{0}};
+	ADDR_CREATE_INPUT addrCreateInput = {};
+	ADDR_CREATE_OUTPUT addrCreateOutput = {};
+	ADDR_REGISTER_VALUE regValue = {};
+	ADDR_CREATE_FLAGS createFlags = {};
 	ADDR_E_RETURNCODE addrRet;
 
 	addrCreateInput.size = sizeof(ADDR_CREATE_INPUT);
@@ -425,14 +425,14 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 {
 	unsigned level;
 	bool compressed;
-	ADDR_COMPUTE_SURFACE_INFO_INPUT AddrSurfInfoIn = {0};
-	ADDR_COMPUTE_SURFACE_INFO_OUTPUT AddrSurfInfoOut = {0};
-	ADDR_COMPUTE_DCCINFO_INPUT AddrDccIn = {0};
-	ADDR_COMPUTE_DCCINFO_OUTPUT AddrDccOut = {0};
-	ADDR_COMPUTE_HTILE_INFO_INPUT AddrHtileIn = {0};
-	ADDR_COMPUTE_HTILE_INFO_OUTPUT AddrHtileOut = {0};
-	ADDR_TILEINFO AddrTileInfoIn = {0};
-	ADDR_TILEINFO AddrTileInfoOut = {0};
+	ADDR_COMPUTE_SURFACE_INFO_INPUT AddrSurfInfoIn = {};
+	ADDR_COMPUTE_SURFACE_INFO_OUTPUT AddrSurfInfoOut = {};
+	ADDR_COMPUTE_DCCINFO_INPUT AddrDccIn = {};
+	ADDR_COMPUTE_DCCINFO_OUTPUT AddrDccOut = {};
+	ADDR_COMPUTE_HTILE_INFO_INPUT AddrHtileIn = {};
+	ADDR_COMPUTE_HTILE_INFO_OUTPUT AddrHtileOut = {};
+	ADDR_TILEINFO AddrTileInfoIn = {};
+	ADDR_TILEINFO AddrTileInfoOut = {};
 	int r;
 
 	AddrSurfInfoIn.size = sizeof(ADDR_COMPUTE_SURFACE_INFO_INPUT);
@@ -695,8 +695,8 @@ gfx9_get_preferred_swizzle_mode(ADDR_HANDLE addrlib,
 				bool is_fmask, AddrSwizzleMode *swizzle_mode)
 {
 	ADDR_E_RETURNCODE ret;
-	ADDR2_GET_PREFERRED_SURF_SETTING_INPUT sin = {0};
-	ADDR2_GET_PREFERRED_SURF_SETTING_OUTPUT sout = {0};
+	ADDR2_GET_PREFERRED_SURF_SETTING_INPUT sin = {};
+	ADDR2_GET_PREFERRED_SURF_SETTING_OUTPUT sout = {};
 
 	sin.size = sizeof(ADDR2_GET_PREFERRED_SURF_SETTING_INPUT);
 	sout.size = sizeof(ADDR2_GET_PREFERRED_SURF_SETTING_OUTPUT);
@@ -735,7 +735,7 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 				ADDR2_COMPUTE_SURFACE_INFO_INPUT *in)
 {
 	ADDR2_MIP_INFO mip_info[RADEON_SURF_MAX_LEVELS] = {};
-	ADDR2_COMPUTE_SURFACE_INFO_OUTPUT out = {0};
+	ADDR2_COMPUTE_SURFACE_INFO_OUTPUT out = {};
 	ADDR_E_RETURNCODE ret;
 
 	out.size = sizeof(ADDR2_COMPUTE_SURFACE_INFO_OUTPUT);
@@ -780,8 +780,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		assert(in->swizzleMode != ADDR_SW_LINEAR);
 
 		/* HTILE */
-		ADDR2_COMPUTE_HTILE_INFO_INPUT hin = {0};
-		ADDR2_COMPUTE_HTILE_INFO_OUTPUT hout = {0};
+		ADDR2_COMPUTE_HTILE_INFO_INPUT hin = {};
+		ADDR2_COMPUTE_HTILE_INFO_OUTPUT hout = {};
 
 		hin.size = sizeof(ADDR2_COMPUTE_HTILE_INFO_INPUT);
 		hout.size = sizeof(ADDR2_COMPUTE_HTILE_INFO_OUTPUT);
@@ -812,8 +812,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		    in->swizzleMode != ADDR_SW_LINEAR &&
 		    /* TODO: We could support DCC with MSAA. */
 		    in->numSamples == 1) {
-			ADDR2_COMPUTE_DCCINFO_INPUT din = {0};
-			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {0};
+			ADDR2_COMPUTE_DCCINFO_INPUT din = {};
+			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {};
 
 			din.size = sizeof(ADDR2_COMPUTE_DCCINFO_INPUT);
 			dout.size = sizeof(ADDR2_COMPUTE_DCCINFO_OUTPUT);
@@ -844,8 +844,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 
 		/* FMASK */
 		if (in->numSamples > 1) {
-			ADDR2_COMPUTE_FMASK_INFO_INPUT fin = {0};
-			ADDR2_COMPUTE_FMASK_INFO_OUTPUT fout = {0};
+			ADDR2_COMPUTE_FMASK_INFO_INPUT fin = {};
+			ADDR2_COMPUTE_FMASK_INFO_OUTPUT fout = {};
 
 			fin.size = sizeof(ADDR2_COMPUTE_FMASK_INFO_INPUT);
 			fout.size = sizeof(ADDR2_COMPUTE_FMASK_INFO_OUTPUT);
@@ -872,8 +872,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 
 		/* CMASK */
 		if (in->swizzleMode != ADDR_SW_LINEAR) {
-			ADDR2_COMPUTE_CMASK_INFO_INPUT cin = {0};
-			ADDR2_COMPUTE_CMASK_INFO_OUTPUT cout = {0};
+			ADDR2_COMPUTE_CMASK_INFO_INPUT cin = {};
+			ADDR2_COMPUTE_CMASK_INFO_OUTPUT cout = {};
 
 			cin.size = sizeof(ADDR2_COMPUTE_CMASK_INFO_INPUT);
 			cout.size = sizeof(ADDR2_COMPUTE_CMASK_INFO_OUTPUT);
@@ -911,7 +911,7 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 				struct radeon_surf *surf)
 {
 	bool compressed;
-	ADDR2_COMPUTE_SURFACE_INFO_INPUT AddrSurfInfoIn = {0};
+	ADDR2_COMPUTE_SURFACE_INFO_INPUT AddrSurfInfoIn = {};
 	int r;
 
 	assert(!(surf->flags & RADEON_SURF_FMASK));

@@ -158,7 +158,7 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
     * - All assigments of components from a single variable with the same
     *   unary operator can be assigned at once.
     */
-   ir_constant_data d = { { 0 } };
+   ir_constant_data d = {};
 
    assigned = 0;
    write_mask = 0;

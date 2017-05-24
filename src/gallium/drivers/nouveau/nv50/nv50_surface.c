@@ -456,7 +456,7 @@ nv50_clear_texture(struct pipe_context *pipe,
                    const struct pipe_box *box,
                    const void *data)
 {
-   struct pipe_surface tmpl = {{0}}, *sf;
+   struct pipe_surface tmpl = {}, *sf;
 
    tmpl.format = res->format;
    tmpl.u.tex.first_layer = box->z;

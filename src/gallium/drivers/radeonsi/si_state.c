@@ -419,7 +419,7 @@ static void *si_create_blend_state_mode(struct pipe_context *ctx,
 	struct si_context *sctx = (struct si_context*)ctx;
 	struct si_state_blend *blend = CALLOC_STRUCT(si_state_blend);
 	struct si_pm4_state *pm4 = &blend->pm4;
-	uint32_t sx_mrt_blend_opt[8] = {0};
+	uint32_t sx_mrt_blend_opt[8] = {};
 	uint32_t color_control = 0;
 
 	if (!blend)
@@ -2434,7 +2434,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 				     const struct pipe_framebuffer_state *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct pipe_constant_buffer constbuf = {0};
+	struct pipe_constant_buffer constbuf = {};
 	struct r600_surface *surf = NULL;
 	struct r600_texture *rtex;
 	bool old_any_dst_linear = sctx->framebuffer.any_dst_linear;

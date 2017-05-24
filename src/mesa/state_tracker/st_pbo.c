@@ -215,7 +215,7 @@ st_pbo_draw(struct st_context *st, const struct st_pbo_addresses *addr,
 
    /* Upload vertices */
    {
-      struct pipe_vertex_buffer vbo = {0};
+      struct pipe_vertex_buffer vbo = {};
       struct pipe_vertex_element velem;
 
       float x0 = (float) addr->xoffset / surface_width * 2.0f - 1.0f;

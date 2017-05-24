@@ -253,7 +253,7 @@ nv84_decoder_vp_mpeg12_mb(struct nv84_decoder *dec,
 {
    STATIC_ASSERT(sizeof(struct mpeg12_mb_info) == 32);
 
-   struct mpeg12_mb_info info = {0};
+   struct mpeg12_mb_info info = {};
    int i, sum = 0, mask, block_index, count;
    const int16_t *blocks;
    int intra = macrob->macroblock_type & PIPE_MPEG12_MB_TYPE_INTRA;
@@ -491,7 +491,7 @@ nv84_decoder_vp_mpeg12(struct nv84_decoder *dec,
       { dec->mpeg12_bo, NOUVEAU_BO_RDWR | NOUVEAU_BO_GART },
    };
    int i, num_refs = ARRAY_SIZE(bo_refs);
-   struct mpeg12_header header = {0};
+   struct mpeg12_header header = {};
    struct nv50_miptree *y = nv50_miptree(dest->resources[0]);
    struct nv50_miptree *uv = nv50_miptree(dest->resources[1]);
 

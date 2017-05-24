@@ -114,7 +114,7 @@ st_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct st_transform_feedback_object *sobj =
          st_transform_feedback_object(obj);
    unsigned i, max_num_targets;
-   unsigned offsets[PIPE_MAX_SO_BUFFERS] = {0};
+   unsigned offsets[PIPE_MAX_SO_BUFFERS] = {};
 
    max_num_targets = MIN2(ARRAY_SIZE(sobj->base.Buffers),
                           ARRAY_SIZE(sobj->targets));

@@ -444,7 +444,7 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
     struct ureg_src /*dst_pos, */ src_input, mask_pos;
     struct ureg_dst src, mask;
     struct ureg_dst out;
-    struct ureg_src imm0 = { 0 };
+    struct ureg_src imm0 = {};
     unsigned has_mask = (fs_traits & FS_MASK) != 0;
     unsigned is_fill = (fs_traits & FS_FILL) != 0;
     unsigned is_composite = (fs_traits & FS_COMPOSITE) != 0;
