@@ -2702,7 +2702,7 @@ static LLVMValueRef
 load_tcs_output(struct nir_to_llvm_context *ctx,
 	       nir_intrinsic_instr *instr)
 {
-	LLVMValueRef dw_addr, stride;
+	LLVMValueRef dw_addr, stride = NULL;
 	LLVMValueRef value[4], result;
 	LLVMValueRef vertex_index = NULL;
 	LLVMValueRef indir_index = NULL;

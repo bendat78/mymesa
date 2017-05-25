@@ -290,9 +290,9 @@ if test "x$GCC" = xyes; then
     CFLAGS="$CFLAGS -Wall"
 
     if test "x$USE_GNU99" = xyes; then
-	CFLAGS="$CFLAGS -std=gnu99"
+	CFLAGS="$CFLAGS -std=gnu11"
     else
-	CFLAGS="$CFLAGS -std=c99"
+	CFLAGS="$CFLAGS -std=c11"
     fi
 
     # Enable -Werror=implicit-function-declaration and

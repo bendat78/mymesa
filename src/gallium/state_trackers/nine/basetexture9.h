@@ -131,7 +131,7 @@ NineBaseTexture9_GetSamplerView( struct NineBaseTexture9 *This, const int sRGB )
     return This->view[sRGB];
 }
 
-static void inline
+inline static void
 NineBindTextureToDevice( struct NineDevice9 *device,
                          struct NineBaseTexture9 **slot,
                          struct NineBaseTexture9 *tex )

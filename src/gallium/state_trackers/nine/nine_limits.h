@@ -178,7 +178,7 @@ render_state_limits_table[D3DRS_BLENDOPALPHA + 1] = {
     __CLAMP_RS(BLENDOPALPHA, 1, 5)
 };
 
-static DWORD inline
+static inline DWORD
 nine_fix_render_state_value(D3DRENDERSTATETYPE State,
                             DWORD Value)
 {
@@ -234,7 +234,7 @@ sampler_state_limits_table[D3DRS_BLENDOPALPHA + 1] = {
     __VALUE_SAMP(DMAPOFFSET, 0, 0xFFFFFFFF)
 };
 
-static BOOL inline
+static inline BOOL
 nine_check_sampler_state_value(D3DSAMPLERSTATETYPE State,
                                DWORD Value)
 {
