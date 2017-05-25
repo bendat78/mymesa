@@ -784,7 +784,7 @@ struct anv_device {
     bool                                        lost;
 };
 
-static void inline
+inline static void
 anv_state_flush(struct anv_device *device, struct anv_state state)
 {
    if (device->info.has_llc)
