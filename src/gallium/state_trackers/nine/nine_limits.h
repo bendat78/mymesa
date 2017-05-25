@@ -54,13 +54,13 @@ struct nine_state_behaviour {
 };
 
 #define __NO_LIMIT_RS(o) \
-    [D3DRS_##o] = {NINE_STATE_NO_LIMIT, 0}
+    [D3DRS_##o] = {NINE_STATE_NO_LIMIT, {.mask = 0}}
 
 #define __CLAMP_RS(o, m, M) \
     [D3DRS_##o] = {NINE_STATE_CLAMP, {.clamp = {m, M}}}
 
 #define __BOOLEAN_RS(o) \
-    [D3DRS_##o] = {NINE_STATE_BOOL, 0}
+    [D3DRS_##o] = {NINE_STATE_BOOL, {.mask = 0}}
 
 #define __MASK_RS(o, m) \
     [D3DRS_##o] = {NINE_STATE_MASK, {.mask = m}}
@@ -69,7 +69,7 @@ struct nine_state_behaviour {
     [D3DRS_##o] = {NINE_STATE_RANGE_DEF_VAL, {.range_def_val = {m, M, d}}}
 
 #define __TO_DETERMINE_RS(o, m, M) \
-    [D3DRS_##o] = {NINE_STATE_NO_LIMIT}
+    [D3DRS_##o] = {NINE_STATE_NO_LIMIT, {.clamp = {m, M}}}
 
 static const struct nine_state_behaviour
 render_state_limits_table[D3DRS_BLENDOPALPHA + 1] = {
