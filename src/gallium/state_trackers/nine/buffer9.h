@@ -111,7 +111,7 @@ NineBuffer9_Upload( struct NineBuffer9 *This )
     This->managed.dirty = FALSE;
 }
 
-static void inline
+inline static void
 NineBindBufferToDevice( struct NineDevice9 *device,
                         struct NineBuffer9 **slot,
                         struct NineBuffer9 *buf )

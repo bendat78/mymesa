@@ -113,29 +113,28 @@ __indirect_glInterleavedArrays(GLenum format, GLsizei stride,
     * interleaved array mode.  Each column describes, in the order in which
     * they appear in the interleaved arrays, one of the four possible types
     * of vertex data that can appear in an interleaved array.
-    */
-   struct
+   */
+   struct m_s
    {
-        /**
-	 * The enum describing the GL type, as would be passed to the
-	 * appropriate gl*Pointer function.
-	 */
-      GLushort type;
 
-        /**
-	 * Number of elements in the subarray, as would be passed (as the
-	 * \c size parameter) to the appropriate gl*Pointer function.
-	 */
+	 // The enum describing the GL type, as would be passed to the
+	 // appropriate gl*Pointer function.
+
+      GLushort type;
+ 
+     // Number of elements in the subarray, as would be passed (as the
+	 // \c size parameter) to the appropriate gl*Pointer function.
+
       GLubyte count;
 
-        /**
-	 * True size of a single element in the subarray, as would be passed
-	 * (as the \c stride parameter) to the appropriate gl*Pointer
-	 * function.
-	 */
+	 // True size of a single element in the subarray, as would be passed
+	 // (as the \c stride parameter) to the appropriate gl*Pointer
+	 // function.
+
       GLubyte size;
-   }
-   static const modes[14][4] = {
+   };
+
+   static const struct m_s modes[14][4] = {
       /* texture color normal vertex */
       {NONE, NONE, NONE, F(2)}, /* GL_V2F */
       {NONE, NONE, NONE, F(3)}, /* GL_V3F */

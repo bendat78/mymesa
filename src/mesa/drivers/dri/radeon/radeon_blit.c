@@ -109,7 +109,7 @@ static inline void emit_vtx_state(struct r100_context *r100)
     END_BATCH();
 }
 
-static void inline emit_tx_setup(struct r100_context *r100,
+static inline void emit_tx_setup(struct r100_context *r100,
 				 mesa_format mesa_format,
 				 struct radeon_bo *bo,
 				 intptr_t offset,
