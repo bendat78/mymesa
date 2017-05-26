@@ -269,7 +269,7 @@ _mesa_target_allows_setting_sampler_parameters(GLenum target)
 static GLboolean
 set_tex_parameteri(struct gl_context *ctx,
                    struct gl_texture_object *texObj,
-                   GLenum pname, const GLuint *params, bool dsa)
+                   GLenum pname, const GLint *params, bool dsa)
 {
    const char *suffix = dsa ? "ture" : "";
 
