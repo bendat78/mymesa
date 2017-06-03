@@ -53,3 +53,4 @@ Makefile.in
 /src/git_sha1.h
 TAGS
 patches/*
+src/gallium/drivers/r600/egd_tables.h
