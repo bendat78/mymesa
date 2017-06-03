@@ -270,7 +270,7 @@ struct eg_packet3 {
                         strings.add(field.name), field.s_name,
                         len(values_offsets), strings_offsets.add(values_offsets))
                 else:
-                    print '\t{%s, %s(~0u)},' % (strings.add(field.name), field.s_name)
+                    print '\t{%s, %s(~0u), 0, 0},' % (strings.add(field.name), field.s_name)
                 fields_idx += 1
 
     print '};'
@@ -282,7 +282,7 @@ struct eg_packet3 {
             print '\t{%s, %s, %s, %s},' % (strings.add(reg.name), reg.r_name,
                 len(reg.fields), reg.fields_idx if reg.own_fields else reg.fields_owner.fields_idx)
         else:
-            print '\t{%s, %s},' % (strings.add(reg.name), reg.r_name)
+            print '\t{%s, %s, 0, 0},' % (strings.add(reg.name), reg.r_name)
     print '};'
     print
 
