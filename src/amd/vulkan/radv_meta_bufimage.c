@@ -928,7 +928,7 @@ itob_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                      .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                              },
 									  },
-				                	  .pBufferInfo = 0,
+				                	  .pBufferInfo = NULL,
         
 				              },
 				              {
@@ -1023,7 +1023,7 @@ btoi_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                      .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                              },
 				                      },
-									  .pBufferInfo = 0,
+									  .pBufferInfo = NULL,
 				              }
 				      });
 }
@@ -1101,7 +1101,7 @@ itoi_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                       .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                               },
 				                       },
-									   .pBufferInfo = 0,
+									   .pBufferInfo = NULL,
 				              },
 				              {
 				                       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1116,7 +1116,7 @@ itoi_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                       .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                               },
 				                       },
-									   .pBufferInfo = 0,
+									   .pBufferInfo = NULL,
 				              }
 				      });
 }
@@ -1191,7 +1191,7 @@ cleari_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                                      .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
 				                               },
 				                      },
-									  .pBufferInfo = 0,
+									  .pBufferInfo = NULL,
 				               },
 				      });
 }
