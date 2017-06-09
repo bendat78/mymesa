@@ -55,10 +55,11 @@
 #include "st_glsl_types.h"
 #include "st_nir.h"
 #include "st_shader_cache.h"
-#include "st_glsl_to_tgsi_private.h"
+#include "st_glsl_to_tgsi_temprename.h"
 
 #include "util/hash_table.h"
 #include <algorithm>
+#include <iostream>
 
 #define PROGRAM_ANY_CONST ((1 << PROGRAM_STATE_VAR) |    \
                            (1 << PROGRAM_CONSTANT) |     \
@@ -323,6 +324,7 @@ public:
 
    void merge_two_dsts(void);
    void merge_registers(void);
+   void merge_registers_alternative(void);
    void renumber_registers(void);
 
    void emit_block_mov(ir_assignment *ir, const struct glsl_type *type,
@@ -5042,6 +5044,17 @@ glsl_to_tgsi_visitor::merge_two_dsts(void)
    }
 }
 
+void
+glsl_to_tgsi_visitor::merge_registers_alternative(void)
+{
+   rename_reg_pair proto ={false, 0};
+   std::vector<rename_reg_pair>  renames(this->next_temp, proto);
+   tgsi_temp_lifetime analysis(&this->instructions, this->next_temp);
+   auto lt = analysis.get_lifetimes();
+   evaluate_remapping(lt, renames);
+   rename_temp_registers(&renames[0]);
+}
+
 /* Merges temporary registers together where possible to reduce the number of
  * registers needed to run a program.
  *
@@ -6492,7 +6505,7 @@ get_mesa_program_tgsi(struct gl_context *ctx,
 
    v->merge_two_dsts();
    if (!skip_merge_registers)
-      v->merge_registers();
+      v->merge_registers_alternative();
    v->renumber_registers();
 
    /* Write the END instruction. */
