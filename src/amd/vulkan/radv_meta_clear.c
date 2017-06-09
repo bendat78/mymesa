@@ -672,7 +672,6 @@ emit_fast_htile_clear(struct radv_cmd_buffer *cmd_buffer,
 	VkClearDepthStencilValue clear_value = clear_att->clearValue.depthStencil;
 	VkImageAspectFlags aspects = clear_att->aspectMask;
 	uint32_t clear_word;
-	bool ret;
 
 	if (!iview->image->surface.htile_size)
 		return false;
@@ -913,6 +912,11 @@ emit_fast_color_clear(struct radv_cmd_buffer *cmd_buffer,
 	if (clear_rect->baseArrayLayer != 0)
 		goto fail;
 	if (clear_rect->layerCount != iview->image->info.array_size)
+		goto fail;
+
+	/* RB+ doesn't work with CMASK fast clear on Stoney. */
+	if (!iview->image->surface.dcc_size &&
+	    cmd_buffer->device->physical_device->rad_info.family == CHIP_STONEY)
 		goto fail;
 
 	/* DCC */

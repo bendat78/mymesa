@@ -473,8 +473,6 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
    /* The miptree's buffer. */
    struct brw_bo *bo;
 
-   int error = 0;
-
    uint32_t cpp;
    mem_copy_fn mem_copy = NULL;
 
@@ -524,10 +522,24 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
       return false;
    }
 
+   /* tiled_to_linear() assumes that if the object is swizzled, it is using
+    * I915_BIT6_SWIZZLE_9_10 for X and I915_BIT6_SWIZZLE_9 for Y.  This is only
+    * true on gen5 and above.
+    *
+    * The killer on top is that some gen4 have an L-shaped swizzle mode, where
+    * parts of the memory aren't swizzled at all. Userspace just can't handle
+    * that.
+    */
+   if (brw->gen < 5 && brw->has_swizzling)
+      return false;
+
+   int level = texImage->Level + texImage->TexObject->MinLevel;
+
    /* Since we are going to write raw data to the miptree, we need to resolve
     * any pending fast color clears before we start.
     */
-   intel_miptree_all_slices_resolve_color(brw, image->mt, 0);
+   assert(image->mt->logical_depth0 == 1);
+   intel_miptree_access_raw(brw, image->mt, level, 0, true);
 
    bo = image->mt->bo;
 
@@ -536,8 +548,8 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
       intel_batchbuffer_flush(brw);
    }
 
-   error = brw_bo_map(brw, bo, false /* write enable */);
-   if (error) {
+   void *map = brw_bo_map(brw, bo, MAP_READ | MAP_RAW);
+   if (map == NULL) {
       DBG("%s: failed to map bo\n", __func__);
       return false;
    }
@@ -552,8 +564,6 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
        packing->Alignment, packing->RowLength, packing->SkipPixels,
        packing->SkipRows);
 
-   int level = texImage->Level + texImage->TexObject->MinLevel;
-
    /* Adjust x and y offset based on miplevel */
    xoffset += image->mt->level[level].level_x;
    yoffset += image->mt->level[level].level_y;
@@ -562,7 +572,7 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
       xoffset * cpp, (xoffset + width) * cpp,
       yoffset, yoffset + height,
       pixels - (ptrdiff_t) yoffset * dst_pitch - (ptrdiff_t) xoffset * cpp,
-      bo->virtual,
+      map,
       dst_pitch, image->mt->pitch,
       brw->has_swizzling,
       image->mt->tiling,

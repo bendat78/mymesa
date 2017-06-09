@@ -144,7 +144,8 @@ typedef enum
    BUFFER_COLOR5,
    BUFFER_COLOR6,
    BUFFER_COLOR7,
-   BUFFER_COUNT
+   BUFFER_COUNT,
+   BUFFER_NONE = -1,
 } gl_buffer_index;
 
 /**
@@ -4397,6 +4398,20 @@ struct gl_driver_flags
     * gl_context::IntelConservativeRasterization
     */
    uint64_t NewIntelConservativeRasterization;
+
+   /**
+    * gl_context::Scissor::WindowRects
+    */
+   uint64_t NewWindowRectangles;
+
+   /** gl_context::Color::sRGBEnabled */
+   uint64_t NewFramebufferSRGB;
+
+   /** gl_context::Scissor::EnableFlags */
+   uint64_t NewScissorTest;
+
+   /** gl_context::Scissor::ScissorArray */
+   uint64_t NewScissorRect;
 };
 
 struct gl_uniform_buffer_binding

@@ -35,6 +35,7 @@
 #include <llvm-c/TargetMachine.h>
 
 #include "sid.h"
+#include "gfx9d.h"
 #include "r600d_common.h"
 #include "ac_binary.h"
 #include "ac_llvm_util.h"
@@ -1331,11 +1332,12 @@ radv_pipeline_init_multisample_state(struct radv_pipeline *pipeline,
 		S_028A4C_MULTI_SHADER_ENGINE_PRIM_DISCARD_ENABLE(1) |
 		EG_S_028A4C_FORCE_EOV_CNTDWN_ENABLE(1) |
 		EG_S_028A4C_FORCE_EOV_REZ_ENABLE(1);
+	ms->pa_sc_mode_cntl_0 = S_028A48_ALTERNATE_RBS_PER_TILE(pipeline->device->physical_device->rad_info.chip_class >= GFX9);
 
 	if (ms->num_samples > 1) {
 		unsigned log_samples = util_logbase2(ms->num_samples);
 		unsigned log_ps_iter_samples = util_logbase2(util_next_power_of_two(ps_iter_samples));
-		ms->pa_sc_mode_cntl_0 = S_028A48_MSAA_ENABLE(1);
+		ms->pa_sc_mode_cntl_0 |= S_028A48_MSAA_ENABLE(1);
 		ms->pa_sc_line_cntl |= S_028BDC_EXPAND_LINE_WIDTH(1); /* CM_R_028BDC_PA_SC_LINE_CNTL */
 		ms->db_eqaa |= S_028804_MAX_ANCHOR_SAMPLES(log_samples) |
 			S_028804_PS_ITER_SAMPLES(log_ps_iter_samples) |
@@ -2148,10 +2150,15 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 				S_028B54_VS_EN(V_028B54_VS_STAGE_COPY_SHADER);
 		else
 			stages |= S_028B54_VS_EN(V_028B54_VS_STAGE_DS);
+
 	} else if (radv_pipeline_has_gs(pipeline))
 		stages |= S_028B54_ES_EN(V_028B54_ES_STAGE_REAL) |
 			S_028B54_GS_EN(1) |
 			S_028B54_VS_EN(V_028B54_VS_STAGE_COPY_SHADER);
+
+	if (device->physical_device->rad_info.chip_class >= GFX9)
+		stages |= S_028B54_MAX_PRIMGRP_IN_WAVE(2);
+
 	pipeline->graphics.vgt_shader_stages_en = stages;
 
 	if (radv_pipeline_has_gs(pipeline))
@@ -2199,6 +2206,16 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		pipeline->binding_stride[desc->binding] = desc->stride;
 	}
 
+	struct ac_userdata_info *loc = radv_lookup_user_sgpr(pipeline, MESA_SHADER_VERTEX,
+							     AC_UD_VS_BASE_VERTEX_START_INSTANCE);
+	if (loc->sgpr_idx != -1) {
+		pipeline->graphics.vtx_base_sgpr = radv_shader_stage_to_user_data_0(MESA_SHADER_VERTEX, radv_pipeline_has_gs(pipeline), radv_pipeline_has_tess(pipeline));
+		pipeline->graphics.vtx_base_sgpr += loc->sgpr_idx * 4;
+		if (pipeline->shaders[MESA_SHADER_VERTEX]->info.info.vs.needs_draw_id)
+			pipeline->graphics.vtx_emit_num = 3;
+		else
+			pipeline->graphics.vtx_emit_num = 2;
+	}
 	if (device->debug_flags & RADV_DEBUG_DUMP_SHADER_STATS) {
 		radv_dump_pipeline_stats(device, pipeline);
 	}

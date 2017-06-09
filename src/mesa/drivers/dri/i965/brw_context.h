@@ -47,7 +47,6 @@
 #include "common/gen_debug.h"
 #include "intel_screen.h"
 #include "intel_tex_obj.h"
-#include "intel_resolve_map.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -368,6 +367,7 @@ struct brw_cache {
 
    struct brw_cache_item **items;
    struct brw_bo *bo;
+   void *map;
    GLuint size, n_items;
 
    uint32_t next_offset;
@@ -672,6 +672,7 @@ struct brw_context
 
    struct {
       struct brw_bo *bo;
+      void *map;
       uint32_t next_offset;
    } upload;
 
@@ -749,7 +750,6 @@ struct brw_context
    bool has_pln;
    bool no_simd8;
    bool use_rep_send;
-   bool use_resource_streamer;
 
    /**
     * Some versions of Gen hardware don't do centroid interpolation correctly
@@ -1632,9 +1632,6 @@ gen8_emit_depth_stencil_hiz(struct brw_context *brw,
                             bool hiz, bool separate_stencil,
                             uint32_t width, uint32_t height,
                             uint32_t tile_x, uint32_t tile_y);
-
-void gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
-                   unsigned int level, unsigned int layer, enum blorp_hiz_op op);
 
 uint32_t get_hw_prim_for_gl_prim(int mode);
 

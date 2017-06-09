@@ -67,6 +67,7 @@
 #define SI_CONTEXT_VGT_STREAMOUT_SYNC	(R600_CONTEXT_PRIVATE_FLAG << 13)
 
 #define SI_MAX_BORDER_COLORS	4096
+#define SIX_BITS		0x3F
 
 struct si_compute;
 struct hash_table;
@@ -110,6 +111,9 @@ struct si_screen {
 	/* Shader compiler queue for multithreaded compilation. */
 	struct util_queue		shader_compiler_queue;
 	LLVMTargetMachineRef		tm[4]; /* used by the queue only */
+
+	struct util_queue		shader_compiler_queue_low_priority;
+	LLVMTargetMachineRef		tm_low_priority[4];
 };
 
 struct si_blend_color {
@@ -149,13 +153,13 @@ struct si_cs_shader_state {
 
 struct si_textures_info {
 	struct si_sampler_views		views;
-	uint32_t			depth_texture_mask; /* which textures are depth */
-	uint32_t			compressed_colortex_mask;
+	uint32_t			needs_depth_decompress_mask;
+	uint32_t			needs_color_decompress_mask;
 };
 
 struct si_images_info {
 	struct pipe_image_view		views[SI_NUM_IMAGES];
-	uint32_t			compressed_colortex_mask;
+	uint32_t			needs_color_decompress_mask;
 	unsigned			enabled_mask;
 };
 
@@ -229,8 +233,8 @@ struct si_context {
 	struct blitter_context		*blitter;
 	void				*custom_dsa_flush;
 	void				*custom_blend_resolve;
-	void				*custom_blend_decompress;
-	void				*custom_blend_fastclear;
+	void				*custom_blend_fmask_decompress;
+	void				*custom_blend_eliminate_fastclear;
 	void				*custom_blend_dcc_decompress;
 	struct si_screen		*screen;
 
@@ -367,6 +371,7 @@ struct si_context {
 	struct si_shader_selector *last_tcs;
 	int			last_num_tcs_input_cp;
 	int			last_tes_sh_base;
+	bool			last_tess_uses_primid;
 	unsigned		last_num_patches;
 
 	/* Debug state. */
@@ -380,6 +385,7 @@ struct si_context {
 
 	/* Other state */
 	bool need_check_render_feedback;
+	bool			decompression_enabled;
 
 	/* Precomputed IA_MULTI_VGT_PARAM */
 	union si_vgt_param_key  ia_multi_vgt_param_key;
@@ -487,26 +493,30 @@ si_mark_atom_dirty(struct si_context *sctx,
 	si_set_atom_dirty(sctx, atom, true);
 }
 
-static inline struct tgsi_shader_info *si_get_vs_info(struct si_context *sctx)
+static inline struct si_shader_ctx_state *si_get_vs(struct si_context *sctx)
 {
 	if (sctx->gs_shader.cso)
-		return &sctx->gs_shader.cso->info;
-	else if (sctx->tes_shader.cso)
-		return &sctx->tes_shader.cso->info;
-	else if (sctx->vs_shader.cso)
-		return &sctx->vs_shader.cso->info;
-	else
-		return NULL;
+		return &sctx->gs_shader;
+	if (sctx->tes_shader.cso)
+		return &sctx->tes_shader;
+
+	return &sctx->vs_shader;
+}
+
+static inline struct tgsi_shader_info *si_get_vs_info(struct si_context *sctx)
+{
+	struct si_shader_ctx_state *vs = si_get_vs(sctx);
+
+	return vs->cso ? &vs->cso->info : NULL;
 }
 
 static inline struct si_shader* si_get_vs_state(struct si_context *sctx)
 {
-	if (sctx->gs_shader.current)
+	if (sctx->gs_shader.cso)
 		return sctx->gs_shader.cso->gs_copy_shader;
-	else if (sctx->tes_shader.current)
-		return sctx->tes_shader.current;
-	else
-		return sctx->vs_shader.current;
+
+	struct si_shader_ctx_state *vs = si_get_vs(sctx);
+	return vs->current ? vs->current : NULL;
 }
 
 static inline unsigned

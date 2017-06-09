@@ -326,6 +326,9 @@ struct si_shader_selector {
 	/* PIPE_SHADER_[VERTEX|FRAGMENT|...] */
 	unsigned	type;
 	bool		vs_needs_prolog;
+	unsigned	pa_cl_vs_out_cntl;
+	ubyte		clipdist_mask;
+	ubyte		culldist_mask;
 
 	/* GS parameters. */
 	unsigned	esgs_itemsize;
@@ -336,6 +339,7 @@ struct si_shader_selector {
 	unsigned	max_gs_stream; /* count - 1 */
 	unsigned	gsvs_vertex_size;
 	unsigned	max_gsvs_emit_size;
+	unsigned	enabled_streamout_buffer_mask;
 
 	/* PS parameters. */
 	unsigned	color_attr_index[2];
@@ -486,9 +490,12 @@ struct si_shader_key {
 	struct {
 		/* One byte for every input: SI_FIX_FETCH_* enums. */
 		uint8_t		vs_fix_fetch[SI_MAX_ATTRIBS];
-		uint64_t	ff_tcs_inputs_to_copy; /* for fixed-func TCS */
-		/* When PS needs PrimID and GS is disabled. */
-		unsigned	vs_export_prim_id:1;
+
+		union {
+			uint64_t	ff_tcs_inputs_to_copy; /* for fixed-func TCS */
+			/* When PS needs PrimID and GS is disabled. */
+			unsigned	vs_export_prim_id:1;
+		} u;
 	} mono;
 
 	/* Optimization flags for asynchronous compilation only. */

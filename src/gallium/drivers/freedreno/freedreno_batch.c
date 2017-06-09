@@ -76,14 +76,14 @@ batch_init(struct fd_batch *batch)
 	batch->max_scissor.minx = batch->max_scissor.miny = ~0;
 	batch->max_scissor.maxx = batch->max_scissor.maxy = 0;
 
-	util_dynarray_init(&batch->draw_patches);
+	util_dynarray_init(&batch->draw_patches, NULL);
 
 	if (is_a3xx(ctx->screen))
-		util_dynarray_init(&batch->rbrc_patches);
+		util_dynarray_init(&batch->rbrc_patches, NULL);
 
 	assert(batch->resources->entries == 0);
 
-	util_dynarray_init(&batch->samples);
+	util_dynarray_init(&batch->samples, NULL);
 }
 
 struct fd_batch *
@@ -118,6 +118,10 @@ batch_fini(struct fd_batch *batch)
 	fd_ringbuffer_del(batch->draw);
 	fd_ringbuffer_del(batch->binning);
 	fd_ringbuffer_del(batch->gmem);
+	if (batch->lrz_clear) {
+		fd_ringbuffer_del(batch->lrz_clear);
+		batch->lrz_clear = NULL;
+	}
 
 	util_dynarray_fini(&batch->draw_patches);
 
@@ -272,7 +276,7 @@ batch_flush(struct fd_batch *batch)
 		fd_batch_reference(&tmp, batch);
 
 		if (!util_queue_is_initialized(&batch->ctx->flush_queue))
-			util_queue_init(&batch->ctx->flush_queue, "flush_queue", 16, 1);
+			util_queue_init(&batch->ctx->flush_queue, "flush_queue", 16, 1, 0);
 
 		util_queue_add_job(&batch->ctx->flush_queue,
 				batch, &batch->flush_fence,

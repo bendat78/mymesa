@@ -603,9 +603,27 @@ static void *si_create_blend_state(struct pipe_context *ctx,
 static void si_bind_blend_state(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	si_pm4_bind_state(sctx, blend, (struct si_state_blend *)state);
-	si_mark_atom_dirty(sctx, &sctx->cb_render_state);
-	sctx->do_update_shaders = true;
+	struct si_state_blend *old_blend = sctx->queued.named.blend;
+	struct si_state_blend *blend = (struct si_state_blend *)state;
+
+	if (!state)
+		return;
+
+	if (!old_blend ||
+	     old_blend->cb_target_mask != blend->cb_target_mask ||
+	     old_blend->dual_src_blend != blend->dual_src_blend)
+		si_mark_atom_dirty(sctx, &sctx->cb_render_state);
+
+	si_pm4_bind_state(sctx, blend, state);
+
+	if (!old_blend ||
+	    old_blend->cb_target_mask != blend->cb_target_mask ||
+	    old_blend->alpha_to_coverage != blend->alpha_to_coverage ||
+	    old_blend->alpha_to_one != blend->alpha_to_one ||
+	    old_blend->dual_src_blend != blend->dual_src_blend ||
+	    old_blend->blend_enable_4bit != blend->blend_enable_4bit ||
+	    old_blend->need_src_alpha_4bit != blend->need_src_alpha_4bit)
+		sctx->do_update_shaders = true;
 }
 
 static void si_delete_blend_state(struct pipe_context *ctx, void *state)
@@ -663,22 +681,19 @@ static void si_emit_clip_state(struct si_context *sctx, struct r600_atom *atom)
 	radeon_emit_array(cs, (uint32_t*)sctx->clip_state.state.ucp, 6*4);
 }
 
-#define SIX_BITS 0x3F
-
 static void si_emit_clip_regs(struct si_context *sctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->b.gfx.cs;
 	struct si_shader *vs = si_get_vs_state(sctx);
-	struct tgsi_shader_info *info = si_get_vs_info(sctx);
+	struct si_shader_selector *vs_sel = vs->selector;
+	struct tgsi_shader_info *info = &vs_sel->info;
 	struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
 	unsigned window_space =
 	   info->properties[TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION];
-	unsigned clipdist_mask =
-		info->writes_clipvertex ? SIX_BITS : info->clipdist_writemask;
+	unsigned clipdist_mask = vs_sel->clipdist_mask;
 	unsigned ucp_mask = clipdist_mask ? 0 : rs->clip_plane_enable & SIX_BITS;
-	unsigned culldist_mask = info->culldist_writemask << info->num_written_clipdistance;
+	unsigned culldist_mask = vs_sel->culldist_mask;
 	unsigned total_mask;
-	bool misc_vec_ena;
 
 	if (vs->key.opt.hw_vs.clip_disable) {
 		assert(!info->culldist_writemask);
@@ -696,18 +711,10 @@ static void si_emit_clip_regs(struct si_context *sctx, struct r600_atom *atom)
 	clipdist_mask &= rs->clip_plane_enable;
 	culldist_mask |= clipdist_mask;
 
-	misc_vec_ena = info->writes_psize || info->writes_edgeflag ||
-		       info->writes_layer || info->writes_viewport_index;
-
 	radeon_set_context_reg(cs, R_02881C_PA_CL_VS_OUT_CNTL,
-		S_02881C_USE_VTX_POINT_SIZE(info->writes_psize) |
-		S_02881C_USE_VTX_EDGE_FLAG(info->writes_edgeflag) |
-		S_02881C_USE_VTX_RENDER_TARGET_INDX(info->writes_layer) |
-	        S_02881C_USE_VTX_VIEWPORT_INDX(info->writes_viewport_index) |
+		vs_sel->pa_cl_vs_out_cntl |
 		S_02881C_VS_OUT_CCDIST0_VEC_ENA((total_mask & 0x0F) != 0) |
 		S_02881C_VS_OUT_CCDIST1_VEC_ENA((total_mask & 0xF0) != 0) |
-		S_02881C_VS_OUT_MISC_VEC_ENA(misc_vec_ena) |
-		S_02881C_VS_OUT_MISC_SIDE_BUS_ENA(misc_vec_ena) |
 		clipdist_mask | (culldist_mask << 8));
 	radeon_set_context_reg(cs, R_028810_PA_CL_CLIP_CNTL,
 		rs->pa_cl_clip_cntl |
@@ -932,10 +939,27 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 	si_pm4_bind_state(sctx, rasterizer, rs);
 	si_update_poly_offset_state(sctx);
 
-	si_mark_atom_dirty(sctx, &sctx->clip_regs);
+	if (!old_rs ||
+	    old_rs->clip_plane_enable != rs->clip_plane_enable ||
+	    old_rs->pa_cl_clip_cntl != rs->pa_cl_clip_cntl)
+		si_mark_atom_dirty(sctx, &sctx->clip_regs);
+
 	sctx->ia_multi_vgt_param_key.u.line_stipple_enabled =
 		rs->line_stipple_enable;
-	sctx->do_update_shaders = true;
+
+	if (!old_rs ||
+	    old_rs->clip_plane_enable != rs->clip_plane_enable ||
+	    old_rs->rasterizer_discard != rs->rasterizer_discard ||
+	    old_rs->sprite_coord_enable != rs->sprite_coord_enable ||
+	    old_rs->flatshade != rs->flatshade ||
+	    old_rs->two_side != rs->two_side ||
+	    old_rs->multisample_enable != rs->multisample_enable ||
+	    old_rs->poly_stipple_enable != rs->poly_stipple_enable ||
+	    old_rs->poly_smooth != rs->poly_smooth ||
+	    old_rs->line_smooth != rs->line_smooth ||
+	    old_rs->clamp_fragment_color != rs->clamp_fragment_color ||
+	    old_rs->force_persample_interp != rs->force_persample_interp)
+		sctx->do_update_shaders = true;
 }
 
 static void si_delete_rs_state(struct pipe_context *ctx, void *state)
@@ -1073,6 +1097,7 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 static void si_bind_dsa_state(struct pipe_context *ctx, void *state)
 {
         struct si_context *sctx = (struct si_context *)ctx;
+	struct si_state_dsa *old_dsa = sctx->queued.named.dsa;
         struct si_state_dsa *dsa = state;
 
         if (!state)
@@ -1085,7 +1110,9 @@ static void si_bind_dsa_state(struct pipe_context *ctx, void *state)
 		sctx->stencil_ref.dsa_part = dsa->stencil_ref;
 		si_mark_atom_dirty(sctx, &sctx->stencil_ref.atom);
 	}
-	sctx->do_update_shaders = true;
+
+	if (!old_dsa || old_dsa->alpha_func != dsa->alpha_func)
+		sctx->do_update_shaders = true;
 }
 
 static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
@@ -2289,7 +2316,7 @@ static void si_init_depth_surface(struct si_context *sctx,
 				      S_02801C_Y_MAX(rtex->resource.b.b.height0 - 1);
 
 		/* Only use HTILE for the first level. */
-		if (rtex->htile_buffer && !level) {
+		if (rtex->htile_offset && !level) {
 			z_info |= S_028038_TILE_SURFACE_ENABLE(1) |
 				  S_028038_ALLOW_EXPCLEAR(1);
 
@@ -2315,7 +2342,8 @@ static void si_init_depth_surface(struct si_context *sctx,
 				s_info |= S_02803C_TILE_STENCIL_DISABLE(1);
 			}
 
-			surf->db_htile_data_base = rtex->htile_buffer->gpu_address >> 8;
+			surf->db_htile_data_base = (rtex->resource.gpu_address +
+						    rtex->htile_offset) >> 8;
 			surf->db_htile_surface = S_028ABC_FULL_CACHE(1) |
 						 S_028ABC_PIPE_ALIGNED(rtex->surface.u.gfx9.htile.pipe_aligned) |
 						 S_028ABC_RB_ALIGNED(rtex->surface.u.gfx9.htile.rb_aligned);
@@ -2367,7 +2395,7 @@ static void si_init_depth_surface(struct si_context *sctx,
 								levelinfo->nblk_y) / 64 - 1);
 
 		/* Only use HTILE for the first level. */
-		if (rtex->htile_buffer && !level) {
+		if (rtex->htile_offset && !level) {
 			z_info |= S_028040_TILE_SURFACE_ENABLE(1) |
 				  S_028040_ALLOW_EXPCLEAR(1);
 
@@ -2393,7 +2421,8 @@ static void si_init_depth_surface(struct si_context *sctx,
 				s_info |= S_028044_TILE_STENCIL_DISABLE(1);
 			}
 
-			surf->db_htile_data_base = rtex->htile_buffer->gpu_address >> 8;
+			surf->db_htile_data_base = (rtex->resource.gpu_address +
+						    rtex->htile_offset) >> 8;
 			surf->db_htile_surface = S_028ABC_FULL_CACHE(1);
 
 			if (rtex->tc_compatible_htile) {
@@ -2608,9 +2637,15 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		si_mark_atom_dirty(sctx, &sctx->msaa_sample_locs.atom);
 	}
 
-	sctx->need_check_render_feedback = true;
 	sctx->do_update_shaders = true;
-	sctx->framebuffer.do_update_surf_dirtiness = true;
+
+	if (!sctx->decompression_enabled) {
+		/* Prevent textures decompression when the framebuffer state
+		 * changes come from the decompression passes themselves.
+		 */
+		sctx->need_check_render_feedback = true;
+		sctx->framebuffer.do_update_surf_dirtiness = true;
+	}
 }
 
 static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom *atom)
@@ -2781,12 +2816,6 @@ static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom 
 				      zb->base.texture->nr_samples > 1 ?
 					      RADEON_PRIO_DEPTH_BUFFER_MSAA :
 					      RADEON_PRIO_DEPTH_BUFFER);
-
-		if (zb->db_htile_data_base) {
-			radeon_add_to_buffer_list(&sctx->b, &sctx->b.gfx,
-					      rtex->htile_buffer, RADEON_USAGE_READWRITE,
-					      RADEON_PRIO_HTILE);
-		}
 
 		if (sctx->b.chip_class >= GFX9) {
 			radeon_set_context_reg_seq(cs, R_028014_DB_HTILE_DATA_BASE, 3);
@@ -3698,6 +3727,9 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 			return NULL;
 		}
 
+		if (elements[i].instance_divisor)
+			v->uses_instance_divisors = true;
+
 		if (!used[vbo_index]) {
 			v->first_vb_use_mask |= 1 << i;
 			used[vbo_index] = true;
@@ -3811,11 +3843,19 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 static void si_bind_vertex_elements(struct pipe_context *ctx, void *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_vertex_element *old = sctx->vertex_elements;
 	struct si_vertex_element *v = (struct si_vertex_element*)state;
 
 	sctx->vertex_elements = v;
 	sctx->vertex_buffers_dirty = true;
-	sctx->do_update_shaders = true;
+
+	if (v &&
+	    (!old ||
+	     old->count != v->count ||
+	     old->uses_instance_divisors != v->uses_instance_divisors ||
+	     v->uses_instance_divisors || /* we don't check which divisors changed */
+	     memcmp(old->fix_fetch, v->fix_fetch, sizeof(v->fix_fetch[0]) * v->count)))
+		sctx->do_update_shaders = true;
 }
 
 static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
@@ -3990,8 +4030,8 @@ void si_init_state_functions(struct si_context *sctx)
 
 	sctx->custom_dsa_flush = si_create_db_flush_dsa(sctx);
 	sctx->custom_blend_resolve = si_create_blend_custom(sctx, V_028808_CB_RESOLVE);
-	sctx->custom_blend_decompress = si_create_blend_custom(sctx, V_028808_CB_FMASK_DECOMPRESS);
-	sctx->custom_blend_fastclear = si_create_blend_custom(sctx, V_028808_CB_ELIMINATE_FAST_CLEAR);
+	sctx->custom_blend_fmask_decompress = si_create_blend_custom(sctx, V_028808_CB_FMASK_DECOMPRESS);
+	sctx->custom_blend_eliminate_fastclear = si_create_blend_custom(sctx, V_028808_CB_ELIMINATE_FAST_CLEAR);
 	sctx->custom_blend_dcc_decompress = si_create_blend_custom(sctx, V_028808_CB_DCC_DECOMPRESS);
 
 	sctx->b.b.set_clip_state = si_set_clip_state;
