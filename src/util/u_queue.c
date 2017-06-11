@@ -246,7 +246,7 @@ util_queue_init(struct util_queue *queue,
 
       if (flags & UTIL_QUEUE_INIT_USE_MINIMUM_PRIORITY) {
    #if defined(__linux__)
-         struct sched_param sched_param = {0};
+         struct sched_param sched_param = {};
 
          /* The nice() function can only set a maximum of 19.
           * SCHED_IDLE is the same as nice = 20.
