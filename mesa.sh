@@ -69,3 +69,4 @@ make -j4
 
 sudo make install
 sudo ldconfig -v
+rm -rf ~/.cache/mesa/
