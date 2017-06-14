@@ -130,7 +130,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen,
 		return NULL;
 
 	rctx->b.b.screen = screen;
-	rctx->b.b.priv = priv;
+	assert(!priv);
+	rctx->b.b.priv = NULL; /* for threaded_context_unwrap_sync */
 	rctx->b.b.destroy = r600_destroy_context;
 	rctx->b.set_atom_dirty = (void *)r600_set_atom_dirty;
 
@@ -396,6 +397,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_BALLOT:
 	case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
 	case PIPE_CAP_POST_DEPTH_COVERAGE:
+	case PIPE_CAP_BINDLESS_TEXTURE:
 		return 0;
 
 	case PIPE_CAP_DOUBLES:

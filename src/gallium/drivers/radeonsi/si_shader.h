@@ -492,7 +492,8 @@ struct si_shader_key {
 		uint8_t		vs_fix_fetch[SI_MAX_ATTRIBS];
 
 		union {
-			uint64_t	ff_tcs_inputs_to_copy; /* for fixed-func TCS */
+			/* Don't use "uint64_t" in order to get 32-bit alignment. */
+			uint32_t	ff_tcs_inputs_to_copy[2]; /* for fixed-func TCS */
 			/* When PS needs PrimID and GS is disabled. */
 			unsigned	vs_export_prim_id:1;
 		} u;
@@ -500,10 +501,10 @@ struct si_shader_key {
 
 	/* Optimization flags for asynchronous compilation only. */
 	struct {
-		struct {
-			uint64_t	kill_outputs; /* "get_unique_index" bits */
-			unsigned	clip_disable:1;
-		} hw_vs; /* HW VS (it can be VS, TES, GS) */
+		/* For HW VS (it can be VS, TES, GS) */
+		/* Don't use "uint64_t" in order to get 32-bit alignment. */
+		uint32_t	kill_outputs[2]; /* "get_unique_index" bits */
+		unsigned	clip_disable:1;
 
 		/* For shaders where monolithic variants have better code.
 		 *
@@ -627,6 +628,18 @@ si_get_main_shader_part(struct si_shader_selector *sel,
 	if (key->as_es)
 		return &sel->main_shader_part_es;
 	return &sel->main_shader_part;
+}
+
+static inline bool
+si_shader_uses_bindless_samplers(struct si_shader_selector *selector)
+{
+	return selector ? selector->info.uses_bindless_samplers : false;
+}
+
+static inline bool
+si_shader_uses_bindless_images(struct si_shader_selector *selector)
+{
+	return selector ? selector->info.uses_bindless_images : false;
 }
 
 #endif

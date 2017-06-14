@@ -181,6 +181,10 @@ struct r600_resource {
 
 	/* Whether the resource has been exported via resource_get_handle. */
 	unsigned			external_usage; /* PIPE_HANDLE_USAGE_* */
+
+	/* Whether this resource is referenced by bindless handles. */
+	bool				texture_handle_allocated;
+	bool				image_handle_allocated;
 };
 
 struct r600_transfer {
@@ -842,7 +846,7 @@ void vi_dcc_clear_level(struct r600_common_context *rctx,
 void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
 				   struct pipe_framebuffer_state *fb,
 				   struct r600_atom *fb_state,
-				   unsigned *buffers, unsigned *dirty_cbufs,
+				   unsigned *buffers, ubyte *dirty_cbufs,
 				   const union pipe_color_union *color);
 bool r600_texture_disable_dcc(struct r600_common_context *rctx,
 			      struct r600_texture *rtex);
