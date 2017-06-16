@@ -1,7 +1,4 @@
-# Mesa 3-D graphics library
-#
-# Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
-# Copyright (C) 2010-2011 LunarG Inc.
+# Copyright (C) 2014 Emil Velikov <emil.l.velikov@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -28,29 +25,9 @@ include $(LOCAL_PATH)/Makefile.sources
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(C_SOURCES) $(CXX_SOURCES)
+LOCAL_SRC_FILES := $(C_SOURCES)
 
-LOCAL_C_INCLUDES += $(MESA_TOP)/src/amd/common
-
-LOCAL_SHARED_LIBRARIES := libdrm_radeon
-LOCAL_MODULE := libmesa_pipe_r600
-
-LOCAL_MODULE_CLASS := STATIC_LIBRARIES
-intermediates := $(call local-generated-sources-dir)
-
-LOCAL_GENERATED_SOURCES += $(addprefix $(intermediates)/, $(R600_GENERATED_FILES))
-
-$(intermediates)/egd_tables.h: $(MESA_TOP)/src/gallium/drivers/r600/egd_tables.py $(MESA_TOP)/src/gallium/drivers/r600/evergreend.h
-	@mkdir -p $(dir $@)
-	@echo "Gen Header: $(PRIVATE_MODULE) <= $(notdir $(@))"
-	$(hide) $(MESA_PYTHON2) $(MESA_TOP)/src/gallium/drivers/r600/egd_tables.py $(MESA_TOP)/src/gallium/drivers/r600/evergreend.h > $@
+LOCAL_MODULE := libmesa_winsys_pl111
 
 include $(GALLIUM_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
-
-ifneq ($(HAVE_GALLIUM_R600),)
-$(eval GALLIUM_LIBS += \
-	$(LOCAL_MODULE) \
-	libmesa_winsys_radeon)
-$(eval GALLIUM_SHARED_LIBS += $(LOCAL_SHARED_LIBRARIES))
-endif
