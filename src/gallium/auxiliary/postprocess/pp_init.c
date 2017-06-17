@@ -105,7 +105,7 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
          if (!pp_filters[i].init(ppq, curpos, enabled[i])) {
             pp_debug("Initialization for filter %u failed.\n", i);
             goto error;
-         }           
+         }
 
          curpos++;
       }
@@ -121,7 +121,7 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
       ppq->shaders[i][0] = ppq->p->passvs;
 
    pp_debug("Queue successfully allocated. %u filter(s).\n", curpos);
-   
+
    return ppq;
 
  error:
@@ -161,7 +161,7 @@ pp_free_fbos(struct pp_queue_t *ppq)
    ppq->fbos_init = false;
 }
 
-/** 
+/**
  * Free the pp queue. Called on context termination and failure in
  * pp_init.
  */
@@ -201,7 +201,7 @@ pp_free(struct pp_queue_t *ppq)
                assert(ppq);
                assert(ppq->p);
                assert(ppq->p->pipe);
- 
+
                if (j >= pp_filters[filter].verts) {
                   assert(ppq->p->pipe->delete_fs_state);
                   ppq->p->pipe->delete_fs_state(ppq->p->pipe,
@@ -230,7 +230,7 @@ pp_free(struct pp_queue_t *ppq)
    FREE(ppq->filters);
    FREE(ppq->shaders);
    FREE(ppq->pp_queue);
-  
+
    FREE(ppq);
 
    pp_debug("Queue taken down.\n");

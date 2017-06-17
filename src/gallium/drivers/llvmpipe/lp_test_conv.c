@@ -426,7 +426,7 @@ test_some(unsigned verbose, FILE *fp,
 
    for(i = 0; i < n; ++i) {
       src_type = &conv_types[rand() % num_types];
-      
+
       do {
          dst_type = &conv_types[rand() % num_types];
       } while (src_type == dst_type || src_type->norm != dst_type->norm);

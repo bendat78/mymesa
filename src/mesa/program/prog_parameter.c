@@ -219,7 +219,7 @@ _mesa_reserve_parameter_storage(struct gl_program_parameter_list *paramList,
  * store all the values (in blocks of 4).
  *
  * \param paramList  the list to add the parameter to
- * \param type  type of parameter, such as 
+ * \param type  type of parameter, such as
  * \param name  the parameter name, will be duplicated/copied!
  * \param size  number of elements in 'values' vector (1..4, or more)
  * \param datatype  GL_FLOAT, GL_FLOAT_VECx, GL_INT, GL_INT_VECx or GL_NONE.

@@ -706,7 +706,7 @@ struct SWR_GS_STATE
 
     // maximum number of verts that can be emitted by a single instance of the GS
     uint32_t maxNumVerts;
-    
+
     // instance count
     uint32_t instanceCount;
 
@@ -808,11 +808,11 @@ struct SWR_BLEND_STATE
     float constantColor[4];
 
     // alpha test reference value in unorm8 or float32
-    uint32_t alphaTestReference; 
+    uint32_t alphaTestReference;
     uint32_t sampleMask;
     // all RT's have the same sample count
     ///@todo move this to Output Merger state when we refactor
-    SWR_MULTISAMPLE_COUNT sampleCount;  // @llvm_enum 
+    SWR_MULTISAMPLE_COUNT sampleCount;  // @llvm_enum
 
     SWR_RENDER_TARGET_BLEND_STATE renderTarget[SWR_NUM_RENDERTARGETS];
 };
@@ -830,8 +830,8 @@ typedef void(__cdecl *PFN_CS_FUNC)(HANDLE hPrivateData, SWR_CS_CONTEXT* pCsConte
 typedef void(__cdecl *PFN_SO_FUNC)(SWR_STREAMOUT_CONTEXT& soContext);
 typedef void(__cdecl *PFN_PIXEL_KERNEL)(HANDLE hPrivateData, SWR_PS_CONTEXT *pContext);
 typedef void(__cdecl *PFN_CPIXEL_KERNEL)(HANDLE hPrivateData, SWR_PS_CONTEXT *pContext);
-typedef void(__cdecl *PFN_BLEND_JIT_FUNC)(const SWR_BLEND_STATE*, 
-    simdvector& vSrc, simdvector& vSrc1, simdscalar& vSrc0Alpha, uint32_t sample, 
+typedef void(__cdecl *PFN_BLEND_JIT_FUNC)(const SWR_BLEND_STATE*,
+    simdvector& vSrc, simdvector& vSrc1, simdscalar& vSrc0Alpha, uint32_t sample,
     uint8_t* pDst, simdvector& vResult, simdscalari* vOMask, simdscalari* vCoverageMask);
 typedef simdscalar(*PFN_QUANTIZE_DEPTH)(simdscalar);
 
@@ -858,7 +858,7 @@ struct SWR_FRONTEND_STATE
     } provokingVertex;
     uint32_t topologyProvokingVertex; // provoking vertex for the draw topology
 
-    // Size of a vertex in simdvector units. Should be sized to the 
+    // Size of a vertex in simdvector units. Should be sized to the
     // maximum of the input/output of the vertex shader.
     uint32_t vsVertexSize;
 };
@@ -954,7 +954,7 @@ public:
     INLINE const simdscalar& vY(uint32_t sampleNum) const { return _vY[sampleNum]; }; // @llvm_func
     INLINE const __m128i& TileSampleOffsetsX() const { return tileSampleOffsetsX; }; // @llvm_func
     INLINE const __m128i& TileSampleOffsetsY() const { return tileSampleOffsetsY; }; // @llvm_func
-    
+
     INLINE void PrecalcSampleData(int numSamples); //@llvm_func
 
 private:
@@ -1026,7 +1026,7 @@ enum SWR_CONSTANT_SOURCE
 
 struct SWR_ATTRIB_SWIZZLE
 {
-    uint16_t sourceAttrib : 5;          // source attribute 
+    uint16_t sourceAttrib : 5;          // source attribute
     uint16_t constantSource : 2;        // constant source to apply
     uint16_t componentOverrideMask : 4; // override component with constant source
 };
@@ -1040,7 +1040,7 @@ struct SWR_BACKEND_STATE
     uint8_t numAttributes;                  // total number of attributes to send to backend (up to 32)
     uint8_t numComponents[32];              // number of components to setup per attribute, this reduces some calculations for unneeded components
 
-    bool swizzleEnable;                 // when enabled, core will parse the swizzle map when 
+    bool swizzleEnable;                 // when enabled, core will parse the swizzle map when
                                         // setting up attributes for the backend, otherwise
                                         // all attributes up to numAttributes will be sent
     SWR_ATTRIB_SWIZZLE swizzleMap[32];
@@ -1102,8 +1102,8 @@ enum SWR_INPUT_COVERAGE
 
 enum SWR_PS_POSITION_OFFSET
 {
-    SWR_PS_POSITION_SAMPLE_NONE, 
-    SWR_PS_POSITION_SAMPLE_OFFSET, 
+    SWR_PS_POSITION_SAMPLE_NONE,
+    SWR_PS_POSITION_SAMPLE_OFFSET,
     SWR_PS_POSITION_CENTROID_OFFSET,
     SWR_PS_POSITION_OFFSET_COUNT,
 };
@@ -1130,7 +1130,7 @@ struct SWR_PS_STATE
     uint32_t numRenderTargets       : 4;    // number of render target outputs in use (0-8)
     uint32_t posOffset              : 2;    // type of offset (none, sample, centroid) to add to pixel position
     uint32_t barycentricsMask       : 3;    // which type(s) of barycentric coords does the PS interpolate attributes with
-    uint32_t usesUAV                : 1;    // pixel shader accesses UAV 
+    uint32_t usesUAV                : 1;    // pixel shader accesses UAV
     uint32_t forceEarlyZ            : 1;    // force execution of early depth/stencil test
 };
 

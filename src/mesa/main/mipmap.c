@@ -1595,7 +1595,7 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
       GLubyte *dstImgRow = imgDst;
 
       for (row = 0; row < dstHeightNB; row++) {
-         do_row_3D(datatype, comps, srcWidthNB, 
+         do_row_3D(datatype, comps, srcWidthNB,
                    srcImgARowA, srcImgARowB,
                    srcImgBRowA, srcImgBRowB,
                    dstWidthNB, dstImgRow);
@@ -1775,7 +1775,7 @@ _mesa_next_mipmap_level_size(GLenum target, GLint border,
       *dstWidth = srcWidth; /* can't go smaller */
    }
 
-   if ((srcHeight - 2 * border > 1) && 
+   if ((srcHeight - 2 * border > 1) &&
        target != GL_TEXTURE_1D_ARRAY_EXT &&
        target != GL_PROXY_TEXTURE_1D_ARRAY_EXT) {
       *dstHeight = (srcHeight - 2 * border) / 2 + 2 * border;

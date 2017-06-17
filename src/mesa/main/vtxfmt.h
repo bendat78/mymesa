@@ -1,6 +1,6 @@
 /**
  * \file vtxfmt.h
- * 
+ *
  * \author Keith Whitwell <keithw@vmware.com>
  * \author Gareth Hughes
  */

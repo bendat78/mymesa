@@ -54,7 +54,7 @@ vmw_fence_reference(struct vmw_winsys_screen *vws,
 		    struct pipe_fence_handle *fence);
 
 struct pb_fence_ops *
-vmw_fence_ops_create(struct vmw_winsys_screen *vws); 
+vmw_fence_ops_create(struct vmw_winsys_screen *vws);
 
 
 

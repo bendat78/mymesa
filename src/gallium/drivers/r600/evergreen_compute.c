@@ -74,7 +74,7 @@ we should reserve another one too.=> 10 image binding for writing max.
 
 from Nvidia OpenCL:
   CL_DEVICE_MAX_READ_IMAGE_ARGS:        128
-  CL_DEVICE_MAX_WRITE_IMAGE_ARGS:       8 
+  CL_DEVICE_MAX_WRITE_IMAGE_ARGS:       8
 
 so 10 for writing is enough. 176 is the max for reading according to the docs
 

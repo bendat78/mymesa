@@ -114,7 +114,7 @@
 #define KNOB_TILE_Y_DIM                      8
 #define KNOB_TILE_Y_DIM_SHIFT                3
 
-// fixed macrotile pixel dimension for now, eventually will be 
+// fixed macrotile pixel dimension for now, eventually will be
 // dynamically set based on tile format and pixel size
 #define KNOB_MACROTILE_X_DIM                32
 #define KNOB_MACROTILE_Y_DIM                32

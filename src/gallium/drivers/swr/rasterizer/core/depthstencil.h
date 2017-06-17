@@ -102,7 +102,7 @@ simdscalar QuantizeDepth(simdscalar depth)
     simdscalar result = _simd_mul_ps(depth, _simd_set1_ps(quantize));
     result = _simd_add_ps(result, _simd_set1_ps(0.5f));
     result = _simd_round_ps(result, _MM_FROUND_TO_ZERO);
-    
+
     if (depthBpc > 16)
     {
         result = _simd_div_ps(result, _simd_set1_ps(quantize));
@@ -133,7 +133,7 @@ simdscalar DepthStencilTest(const API_STATE* pState,
     simdscalar vMinZ = _simd_broadcast_ss(&pViewport->minZ);
     simdscalar vMaxZ = _simd_broadcast_ss(&pViewport->maxZ);
     interpZ = _simd_min_ps(vMaxZ, _simd_max_ps(vMinZ, interpZ));
-    
+
     if (pDSState->depthTestEnable)
     {
         switch (pDSState->depthTestFunc)
@@ -184,7 +184,7 @@ simdscalar DepthStencilTest(const API_STATE* pState,
         case ZFUNC_ALWAYS: break;
         default:
             LoadSOA<R8_UINT>(pStencilBase, sbuf);
-            
+
             // apply stencil read mask
             stencilWithMask = _simd_castsi_ps(_simd_and_si(_simd_castps_si(sbuf.v[0]), _simd_set1_epi32(stencilTestMask)));
 
@@ -215,7 +215,7 @@ simdscalar DepthStencilTest(const API_STATE* pState,
 
 INLINE
 void DepthStencilWrite(const SWR_VIEWPORT* pViewport, const SWR_DEPTH_STENCIL_STATE* pDSState,
-        bool frontFacing, simdscalar interpZ, uint8_t* pDepthBase, const simdscalar& depthMask, const simdscalar& coverageMask, 
+        bool frontFacing, simdscalar interpZ, uint8_t* pDepthBase, const simdscalar& depthMask, const simdscalar& coverageMask,
         uint8_t *pStencilBase, const simdscalar& stencilMask)
 {
     if (pDSState->depthWriteEnable)

@@ -219,7 +219,7 @@ vmw_ioctl_gb_surface_create(struct vmw_winsys_screen *vws,
    req->format = (uint32_t) format;
    if (usage & SVGA_SURFACE_USAGE_SHARED)
       req->drm_surface_flags |= drm_vmw_surface_flag_shareable;
-   req->drm_surface_flags |= drm_vmw_surface_flag_create_buffer; 
+   req->drm_surface_flags |= drm_vmw_surface_flag_create_buffer;
    req->base_size.width = size.width;
    req->base_size.height = size.height;
    req->base_size.depth = size.depth;
@@ -660,7 +660,7 @@ vmw_ioctl_fence_unref(struct vmw_winsys_screen *vws,
 {
    struct drm_vmw_fence_arg arg;
    int ret;
-   
+
    memset(&arg, 0, sizeof(arg));
    arg.handle = handle;
 
@@ -731,7 +731,7 @@ vmw_ioctl_fence_finish(struct vmw_winsys_screen *vws,
 
    if (ret != 0)
       vmw_error("%s Failed\n", __FUNCTION__);
-   
+
    return 0;
 }
 
@@ -901,7 +901,7 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
    else
       vws->base.have_gb_objects =
          !!(gp_arg.value & (uint64_t) SVGA_CAP_GBOBJECTS);
-   
+
    if (vws->base.have_gb_objects && !drm_gb_capable)
       goto out_no_3d;
 
@@ -915,7 +915,7 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
          size = SVGA_FIFO_3D_CAPS_SIZE * sizeof(uint32_t);
       else
          size = gp_arg.value;
-   
+
       if (vws->base.have_gb_objects)
          vws->ioctl.num_cap_3d = size / sizeof(uint32_t);
       else
@@ -996,13 +996,13 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
       goto out_no_3d;
    }
 
-   vws->ioctl.cap_3d = calloc(vws->ioctl.num_cap_3d, 
+   vws->ioctl.cap_3d = calloc(vws->ioctl.num_cap_3d,
 			      sizeof(*vws->ioctl.cap_3d));
    if (!vws->ioctl.cap_3d) {
       debug_printf("Failed alloc fifo 3D caps buffer.\n");
       goto out_no_caparray;
    }
-      
+
    memset(&cap_arg, 0, sizeof(cap_arg));
    cap_arg.buffer = (uint64_t) (unsigned long) (cap_buffer);
    cap_arg.max_size = size;

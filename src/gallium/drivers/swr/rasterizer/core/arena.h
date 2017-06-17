@@ -326,7 +326,7 @@ private:
             else
             {
                 // Blocks are sorted by size (biggest first)
-                // So, if we get here, there are no blocks 
+                // So, if we get here, there are no blocks
                 // large enough, fall through to allocation.
                 pBlock = nullptr;
                 break;

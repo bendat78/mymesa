@@ -341,7 +341,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
          exec->vtx.buffer_map =
             (fi_type *)ctx->Driver.MapBufferRange(ctx,
                                                   exec->vtx.buffer_used,
-                                                  (VBO_VERT_BUFFER_SIZE - 
+                                                  (VBO_VERT_BUFFER_SIZE -
                                                    exec->vtx.buffer_used),
                                                   accessRange,
                                                   exec->vtx.bufferobj,

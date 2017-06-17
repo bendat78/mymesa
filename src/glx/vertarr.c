@@ -121,7 +121,7 @@ __indirect_glInterleavedArrays(GLenum format, GLsizei stride,
 	 // appropriate gl*Pointer function.
 
       GLushort type;
- 
+
      // Number of elements in the subarray, as would be passed (as the
 	 // \c size parameter) to the appropriate gl*Pointer function.
 

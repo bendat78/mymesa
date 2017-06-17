@@ -28,7 +28,7 @@
 /**
  * @file
  * Copy/blit pixel rect between surfaces
- *  
+ *
  * @author Brian Paul
  */
 
@@ -234,7 +234,7 @@ get_next_slot( struct blit_state *ctx )
                                      PIPE_USAGE_STREAM,
                                      max_slots * sizeof ctx->vertices);
    }
-   
+
    return ctx->vbuf_slot++ * sizeof ctx->vertices;
 }
 

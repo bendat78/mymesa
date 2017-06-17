@@ -184,7 +184,7 @@ void vTranspose8x8(simdscalar (&vDst)[8], const simdscalar &vMask0, const simdsc
 INLINE
 void vTranspose8x8(simdscalar (&vDst)[8], const simdscalari &vMask0, const simdscalari &vMask1, const simdscalari &vMask2, const simdscalari &vMask3, const simdscalari &vMask4, const simdscalari &vMask5, const simdscalari &vMask6, const simdscalari &vMask7)
 {
-    vTranspose8x8(vDst, _simd_castsi_ps(vMask0), _simd_castsi_ps(vMask1), _simd_castsi_ps(vMask2), _simd_castsi_ps(vMask3), 
+    vTranspose8x8(vDst, _simd_castsi_ps(vMask0), _simd_castsi_ps(vMask1), _simd_castsi_ps(vMask2), _simd_castsi_ps(vMask3),
         _simd_castsi_ps(vMask4), _simd_castsi_ps(vMask5), _simd_castsi_ps(vMask6), _simd_castsi_ps(vMask7));
 }
 #endif

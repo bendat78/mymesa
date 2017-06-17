@@ -161,7 +161,7 @@ void vbo_exec_vtx_map( struct vbo_exec_context *exec );
 
 void vbo_exec_eval_update( struct vbo_exec_context *exec );
 
-void vbo_exec_do_EvalCoord2f( struct vbo_exec_context *exec, 
+void vbo_exec_do_EvalCoord2f( struct vbo_exec_context *exec,
 				     GLfloat u, GLfloat v );
 
 void vbo_exec_do_EvalCoord1f( struct vbo_exec_context *exec,

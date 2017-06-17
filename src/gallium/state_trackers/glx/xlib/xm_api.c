@@ -396,7 +396,7 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
 static GLuint
 choose_pixel_format(XMesaVisual v)
 {
-   boolean native_byte_order = (host_byte_order() == 
+   boolean native_byte_order = (host_byte_order() ==
                                 ImageByteOrder(v->display));
 
    if (   GET_REDMASK(v)   == 0x0000ff
@@ -685,12 +685,12 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
 
 /**
  * Convert an X visual type to a GLX visual type.
- * 
+ *
  * \param visualType X visual type (i.e., \c TrueColor, \c StaticGray, etc.)
  *        to be converted.
  * \return If \c visualType is a valid X visual type, a GLX visual type will
  *         be returned.  Otherwise \c GLX_NONE will be returned.
- * 
+ *
  * \note
  * This code was lifted directly from lib/GL/glx/glcontextmodes.c in the
  * DRI CVS tree.
@@ -1048,9 +1048,9 @@ void XMesaDestroyContext( XMesaContext c )
 
    c->st->destroy(c->st);
 
-   /* FIXME: We should destroy the screen here, but if we do so, surfaces may 
+   /* FIXME: We should destroy the screen here, but if we do so, surfaces may
     * outlive it, causing segfaults
-   struct pipe_screen *screen = c->st->pipe->screen; 
+   struct pipe_screen *screen = c->st->pipe->screen;
    screen->destroy(screen);
    */
 

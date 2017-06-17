@@ -30,7 +30,7 @@
 /**
  * @file
  * Mipmap generation utility
- *  
+ *
  * @author Brian Paul, Marek Olšák
  */
 

@@ -311,7 +311,7 @@ static const __DRIextension *loader_extensions[] = {
 /**
  * Perform the required libGL-side initialization and call the client-side
  * driver's \c __driCreateNewScreen function.
- * 
+ *
  * \param dpy    Display pointer.
  * \param scrn   Screen number on the display.
  * \param psc    DRI screen information.

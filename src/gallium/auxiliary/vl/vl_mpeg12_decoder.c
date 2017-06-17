@@ -273,7 +273,7 @@ static void
 cleanup_idct_buffer(struct vl_mpeg12_buffer *buf)
 {
    unsigned i;
-   
+
    assert(buf);
 
    for (i = 0; i < 3; ++i)
@@ -730,7 +730,7 @@ vl_mpeg12_decode_bitstream(struct pipe_video_codec *decoder,
    struct vl_mpeg12_decoder *dec = (struct vl_mpeg12_decoder *)decoder;
    struct pipe_mpeg12_picture_desc *desc = (struct pipe_mpeg12_picture_desc *)picture;
    struct vl_mpeg12_buffer *buf;
-   
+
    unsigned i;
 
    assert(dec && target && picture);
@@ -968,7 +968,7 @@ init_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_conf
    (
       dec->context->screen, PIPE_CAP_MAX_RENDER_TARGETS
    );
-   
+
    max_inst = dec->context->screen->get_shader_param
    (
       dec->context->screen, PIPE_SHADER_FRAGMENT, PIPE_SHADER_CAP_MAX_INSTRUCTIONS
@@ -1056,7 +1056,7 @@ init_mc_source_widthout_idct(struct vl_mpeg12_decoder *dec, const struct format_
       dec->context, &templat,
       formats, 1, 1, PIPE_USAGE_DEFAULT
    );
-      
+
    return dec->mc_source != NULL;
 }
 

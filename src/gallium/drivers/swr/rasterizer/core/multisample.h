@@ -82,7 +82,7 @@ struct MultisampleTraits<SWR_MULTISAMPLE_1X, true>
     INLINE static float X(uint32_t sampleNum) {return 0.5f;};
     INLINE static float Y(uint32_t sampleNum) {return 0.5f;};
     INLINE static simdscalari FullSampleMask(){return _simd_set1_epi32(0x1);};
-    
+
     static const uint32_t numSamples = 1;
     static const uint32_t numCoverageSamples = 1;
     static const SWR_MULTISAMPLE_COUNT sampleCount = SWR_MULTISAMPLE_1X;

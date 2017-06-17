@@ -222,7 +222,7 @@ static T1* AlignUp(T1* value, T2 alignment)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// Helper structure used to access an array of elements that don't 
+/// Helper structure used to access an array of elements that don't
 /// correspond to a typical word size.
 //////////////////////////////////////////////////////////////////////////
 template<typename T, size_t BitsPerElementT, size_t ArrayLenT>

@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
  /*
@@ -60,7 +60,7 @@ struct translate_generic {
 
       emit_func emit;
       unsigned output_offset;
-      
+
       const uint8_t *input_ptr;
       unsigned input_stride;
       unsigned max_index;
@@ -353,7 +353,7 @@ emit_R10G10B10A2_SSCALED( const void *attrib, void *ptr)
    *(uint32_t *)attrib = util_le32_to_cpu(value);
 }
 
-static void 
+static void
 emit_NULL( const void *attrib, void *ptr )
 {
    /* do nothing is the only sensible option */
@@ -576,7 +576,7 @@ static emit_func get_emit_func( enum pipe_format format )
       return &emit_R10G10B10A2_SSCALED;
 
    default:
-      assert(0); 
+      assert(0);
       return &emit_NULL;
    }
 }
@@ -686,7 +686,7 @@ static void PIPE_CDECL generic_run_elts16( struct translate *translate,
 static void PIPE_CDECL generic_run_elts8( struct translate *translate,
                                          const uint8_t *elts,
                                          unsigned count,
-                                         unsigned start_instance, 
+                                         unsigned start_instance,
                                          unsigned instance_id,
                                          void *output_buffer )
 {
@@ -718,7 +718,7 @@ static void PIPE_CDECL generic_run( struct translate *translate,
 }
 
 
-			       
+
 static void generic_set_buffer( struct translate *translate,
 				unsigned buf,
 				const void *ptr,

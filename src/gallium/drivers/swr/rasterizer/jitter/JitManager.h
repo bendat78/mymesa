@@ -87,7 +87,7 @@ using PassManager = llvm::legacy::PassManager;
 /// JitInstructionSet
 /// @brief Subclass of InstructionSet that allows users to override
 /// the reporting of support for certain ISA features.  This allows capping
-/// the jitted code to a certain feature level, e.g. jit AVX level code on 
+/// the jitted code to a certain feature level, e.g. jit AVX level code on
 /// a platform that supports AVX2.
 //////////////////////////////////////////////////////////////////////////
 class JitInstructionSet : public InstructionSet

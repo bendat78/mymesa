@@ -103,7 +103,7 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
 
    /* Try and go straight to t&l
     */
-   &_r200_tcl_stage,  
+   &_r200_tcl_stage,
 
    /* Catch any t&l fallbacks
     */
@@ -115,7 +115,7 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
    &_tnl_vertex_program_stage,
-   /* Try again to go to tcl? 
+   /* Try again to go to tcl?
     *     - no good for asymmetric-twoside (do with multipass)
     *     - no good for asymmetric-unfilled (do with multipass)
     *     - good for material
@@ -124,7 +124,7 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
     *
     * - worth it/not worth it?
     */
-			
+
    /* Else do them here.
     */
 /*    &_r200_render_stage,  */ /* FIXME: bugs with ut2003 */
@@ -225,7 +225,7 @@ GLboolean r200CreateContext( gl_api api,
 
    if (driQueryOptionb( &rmesa->radeon.optionCache, "hyperz"))
       rmesa->using_hyperz = GL_TRUE;
- 
+
    /* Init default driver functions then plug in our R200-specific functions
     * (the texture functions are especially important)
     */
@@ -269,7 +269,7 @@ GLboolean r200CreateContext( gl_api api,
 
    ctx->Const.StripTextureBorder = GL_TRUE;
 
-   /* FIXME: When no memory manager is available we should set this 
+   /* FIXME: When no memory manager is available we should set this
     * to some reasonable value based on texture memory pool size */
    ctx->Const.MaxTextureLevels = 12;
    ctx->Const.Max3DTextureLevels = 9;
@@ -385,7 +385,7 @@ GLboolean r200CreateContext( gl_api api,
    r200InitState( rmesa );
    r200InitSwtcl( ctx );
 
-   rmesa->prefer_gart_client_texturing = 
+   rmesa->prefer_gart_client_texturing =
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
 
    tcl_mode = driQueryOptioni(&rmesa->radeon.optionCache, "tcl_mode");

@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
  /*
   * Authors:
@@ -211,9 +211,9 @@ st_set_prog_affected_state_flags(struct gl_program *prog)
 static void
 delete_vp_variant(struct st_context *st, struct st_vp_variant *vpv)
 {
-   if (vpv->driver_shader) 
+   if (vpv->driver_shader)
       cso_delete_vertex_shader(st->cso_context, vpv->driver_shader);
-      
+
    if (vpv->draw_shader)
       draw_delete_vertex_shader( st->draw, vpv->draw_shader );
 
@@ -257,7 +257,7 @@ st_release_vp_variants( struct st_context *st,
 static void
 delete_fp_variant(struct st_context *st, struct st_fp_variant *fpv)
 {
-   if (fpv->driver_shader) 
+   if (fpv->driver_shader)
       cso_delete_fragment_shader(st->cso_context, fpv->driver_shader);
    free(fpv);
 }

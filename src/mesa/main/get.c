@@ -147,7 +147,7 @@ enum value_extra {
    EXTRA_API_ES3,
    EXTRA_API_ES31,
    EXTRA_API_ES32,
-   EXTRA_NEW_BUFFERS, 
+   EXTRA_NEW_BUFFERS,
    EXTRA_NEW_FRAG_CLAMP,
    EXTRA_VALID_DRAW_BUFFER,
    EXTRA_VALID_TEXTURE_UNIT,
@@ -805,7 +805,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       v->value_int = _mesa_get_compressed_formats(ctx, NULL);
       break;
    case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-      v->value_int_n.n = 
+      v->value_int_n.n =
 	 _mesa_get_compressed_formats(ctx, v->value_int_n.ints);
       assert(v->value_int_n.n <= (int) ARRAY_SIZE(v->value_int_n.ints));
       break;
@@ -1317,7 +1317,7 @@ static const struct value_desc error_value =
 
 /**
  * Find the struct value_desc corresponding to the enum 'pname'.
- * 
+ *
  * We hash the enum value to get an index into the 'table' array,
  * which holds the index in the 'values' array of struct value_desc.
  * Once we've found the entry, we do the extra checks, if any, then
@@ -1326,7 +1326,7 @@ static const struct value_desc error_value =
  * If the value has to be computed (for example, it's the result of a
  * function call or we need to add 1 to it), we use the tmp 'v' to
  * store the result.
- * 
+ *
  * \param func name of glGet*v() func for error reporting
  * \param pname the enum value we're looking up
  * \param p is were we return the pointer to the value
@@ -1488,7 +1488,7 @@ _mesa_GetBooleanv(GLenum pname, GLboolean *params)
 
    case TYPE_BOOLEAN:
       params[0] = ((GLboolean*) p)[0];
-      break;		
+      break;
 
    case TYPE_MATRIX:
       m = *(GLmatrix **) p;
@@ -1591,7 +1591,7 @@ _mesa_GetFloatv(GLenum pname, GLfloat *params)
 
    case TYPE_BOOLEAN:
       params[0] = BOOLEAN_TO_FLOAT(*(GLboolean*) p);
-      break;		
+      break;
 
    case TYPE_MATRIX:
       m = *(GLmatrix **) p;
@@ -1694,7 +1694,7 @@ _mesa_GetIntegerv(GLenum pname, GLint *params)
 
    case TYPE_BOOLEAN:
       params[0] = BOOLEAN_TO_INT(*(GLboolean*) p);
-      break;		
+      break;
 
    case TYPE_MATRIX:
       m = *(GLmatrix **) p;
@@ -1803,7 +1803,7 @@ _mesa_GetInteger64v(GLenum pname, GLint64 *params)
 
    case TYPE_BOOLEAN:
       params[0] = ((GLboolean*) p)[0];
-      break;		
+      break;
 
    case TYPE_MATRIX:
       m = *(GLmatrix **) p;
@@ -1906,7 +1906,7 @@ _mesa_GetDoublev(GLenum pname, GLdouble *params)
 
    case TYPE_BOOLEAN:
       params[0] = *(GLboolean*) p;
-      break;		
+      break;
 
    case TYPE_MATRIX:
       m = *(GLmatrix **) p;
@@ -2703,7 +2703,7 @@ _mesa_GetFixedv(GLenum pname, GLfixed *params)
 
    case TYPE_BOOLEAN:
       params[0] = BOOLEAN_TO_FIXED(((GLboolean*) p)[0]);
-      break;		
+      break;
 
    case TYPE_MATRIX:
       m = *(GLmatrix **) p;

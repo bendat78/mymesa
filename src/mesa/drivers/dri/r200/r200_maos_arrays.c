@@ -70,7 +70,7 @@ do {						\
 #endif
 
 /* Emit any changed arrays to new GART memory, re-emit a packet to
- * update the arrays.  
+ * update the arrays.
  */
 void r200EmitArrays( struct gl_context *ctx, GLubyte *vimap_rev )
 {

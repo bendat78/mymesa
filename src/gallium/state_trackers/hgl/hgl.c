@@ -181,9 +181,9 @@ hgl_st_framebuffer_validate(struct st_context_iface *stctxi,
 		TRACE("%s: resize event. old:  %d x %d; new: %d x %d\n", __func__,
 			buffer->width, buffer->height, context->width, context->height);
 
-		ret = hgl_st_framebuffer_validate_textures(stfbi, 
+		ret = hgl_st_framebuffer_validate_textures(stfbi,
 			context->width, context->height, stAttachmentMask);
-		
+
 		if (!ret)
 			return ret;
 

@@ -631,7 +631,7 @@ driswBindExtensions(struct drisw_screen *psc, const __DRIextension **extensions)
    }
 
    if (psc->copySubBuffer)
-      __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");      
+      __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");
 
    /* FIXME: Figure out what other extensions can be ported here from dri2. */
    for (i = 0; extensions[i]; i++) {

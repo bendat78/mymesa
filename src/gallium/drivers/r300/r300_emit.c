@@ -761,7 +761,7 @@ void r300_emit_query_end(struct r300_context* r300)
             rv530_emit_query_end_double_z(r300, query);
         else
             rv530_emit_query_end_single_z(r300, query);
-    } else 
+    } else
         r300_emit_query_end_frag_pipes(r300, query);
 
     query->begin_emitted = FALSE;
