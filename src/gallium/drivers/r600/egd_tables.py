@@ -281,12 +281,12 @@ struct eg_packet3 {
     print 'static const struct eg_reg egd_reg_table[] = {'
     for reg in regs:
         if len(reg.fields):
-            print '\t{.name_offset\t= %s,\n\t .offset\t\t= %s,\
+            print '\t{.name_offset\t= %s,\n\t .offset\t= %s,\
                    \n\t .num_fields\t= %s,\n\t .fields_offset\t= %s},'\
                    % (strings.add(reg.name), reg.r_name,
                 len(reg.fields), reg.fields_idx if reg.own_fields else reg.fields_owner.fields_idx)
         else:
-            print '\t{.name_offset\t= %s,\n\t .offset\t\t= %s},'\
+            print '\t{.name_offset\t= %s,\n\t .offset\t= %s},'\
                    % (strings.add(reg.name), reg.r_name)
     print '};'
     print

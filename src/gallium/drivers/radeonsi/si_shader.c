@@ -7371,19 +7371,6 @@ int si_shader_create(struct si_screen *sscreen, LLVMTargetMachineRef tm,
 	return 0;
 }
 
-static void radeon_shader_binary_clean(struct ac_shader_binary *b)
-{
-	if (!b)
-		return;
-	FREE(b->code);
-	FREE(b->config);
-	FREE(b->rodata);
-	FREE(b->global_symbol_offsets);
-	FREE(b->relocs);
-	FREE(b->disasm_string);
-	FREE(b->llvm_ir_string);
-}
-
 void si_shader_destroy(struct si_shader *shader)
 {
 	if (shader->scratch_bo)
