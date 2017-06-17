@@ -34,7 +34,7 @@
 #include <xf86drm.h>
 #include <amdgpu_drm.h>
 
-#include <amdgpu.h>
+//#include <amdgpu.h>
 
 #define CIK_TILE_MODE_COLOR_2D			14
 

@@ -495,6 +495,7 @@ swr_create_vertex_elements_state(struct pipe_context *pipe,
    assert(num_elements <= PIPE_MAX_ATTRIBS);
    velems = new swr_vertex_element_state;
    if (velems) {
+      memset(&velems->fsState, 0, sizeof(velems->fsState));
       velems->fsState.bVertexIDOffsetEnable = true;
       velems->fsState.numAttribs = num_elements;
       for (unsigned i = 0; i < num_elements; i++) {
@@ -1728,9 +1729,24 @@ swr_update_derived(struct pipe_context *pipe,
 
    // set up backend state
    SWR_BACKEND_STATE backendState = {};
-   backendState.numAttributes =
-      ((ctx->gs ? ctx->gs->info.base.num_outputs : ctx->vs->info.base.num_outputs) - 1) +
-      (ctx->rasterizer->sprite_coord_enable ? 1 : 0);
+   if (ctx->gs) {
+      backendState.numAttributes = ctx->gs->info.base.num_outputs - 1;
+   } else {
+      backendState.numAttributes = ctx->vs->info.base.num_outputs - 1;
+      if (ctx->fs->info.base.uses_primid) {
+         backendState.numAttributes++;
+         backendState.swizzleEnable = true;
+         for (unsigned i = 0; i < sizeof(backendState.numComponents); i++) {
+            backendState.swizzleMap[i].sourceAttrib = i;
+         }
+         backendState.swizzleMap[ctx->vs->info.base.num_outputs - 1].constantSource =
+            SWR_CONSTANT_SOURCE_PRIM_ID;
+         backendState.swizzleMap[ctx->vs->info.base.num_outputs - 1].componentOverrideMask = 1;
+      }
+   }
+   if (ctx->rasterizer->sprite_coord_enable)
+      backendState.numAttributes++;
+
    backendState.numAttributes = std::min((size_t)backendState.numAttributes,
                                          sizeof(backendState.numComponents));
    for (unsigned i = 0; i < backendState.numAttributes; i++)
@@ -1738,6 +1754,13 @@ swr_update_derived(struct pipe_context *pipe,
    backendState.constantInterpolationMask = ctx->fs->constantMask |
       (ctx->rasterizer->flatshade ? ctx->fs->flatConstantMask : 0);
    backendState.pointSpriteTexCoordMask = ctx->fs->pointSpriteMask;
+
+   struct tgsi_shader_info *pLastFE =
+      ctx->gs ?
+      &ctx->gs->info.base :
+      &ctx->vs->info.base;
+   backendState.readRenderTargetArrayIndex = pLastFE->writes_layer;
+   backendState.readViewportArrayIndex = pLastFE->writes_viewport_index;
 
    SwrSetBackendState(ctx->swrContext, &backendState);
 
