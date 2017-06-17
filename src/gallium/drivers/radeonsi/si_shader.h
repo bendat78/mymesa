@@ -139,9 +139,8 @@
 #include <llvm-c/TargetMachine.h>
 #include "tgsi/tgsi_scan.h"
 #include "util/u_queue.h"
+#include "ac_binary.h"
 #include "si_state.h"
-
-struct ac_shader_binary;
 
 #define SI_MAX_VS_OUTPUTS	40
 

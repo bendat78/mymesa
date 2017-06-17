@@ -756,6 +756,19 @@ static int si_get_shader_param(struct pipe_screen* pscreen,
 	return 0;
 }
 
+static void radeon_shader_binary_clean(struct ac_shader_binary *b)
+{
+	if (!b)
+		return;
+	FREE(b->code);
+	FREE(b->config);
+	FREE(b->rodata);
+	FREE(b->global_symbol_offsets);
+	FREE(b->relocs);
+	FREE(b->disasm_string);
+	FREE(b->llvm_ir_string);
+}
+
 static void si_destroy_screen(struct pipe_screen* pscreen)
 {
 	struct si_screen *sscreen = (struct si_screen *)pscreen;
