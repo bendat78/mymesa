@@ -88,7 +88,7 @@ struct dd_function_table {
    const GLubyte * (*GetString)( struct gl_context *ctx, GLenum name );
 
    /**
-    * Notify the driver after Mesa has made some internal state changes.
+    * Notify the driver after Mesa has made some internal state changes.  
     *
     * This is in addition to any state change callbacks Mesa may already have
     * made.
@@ -142,14 +142,14 @@ struct dd_function_table {
 		       GLvoid *dest );
 
    /**
-    * Called by glCopyPixels().
+    * Called by glCopyPixels().  
     */
    void (*CopyPixels)( struct gl_context *ctx, GLint srcx, GLint srcy,
                        GLsizei width, GLsizei height,
                        GLint dstx, GLint dsty, GLenum type );
 
    /**
-    * Called by glBitmap().
+    * Called by glBitmap().  
     */
    void (*Bitmap)( struct gl_context *ctx,
 		   GLint x, GLint y, GLsizei width, GLsizei height,
@@ -165,7 +165,7 @@ struct dd_function_table {
                             GLuint count, const GLubyte *ids);
    /*@}*/
 
-
+   
    /**
     * \name Texture image functions
     */
@@ -314,7 +314,7 @@ struct dd_function_table {
                                   GLint depth);
    /*@}*/
 
-
+   
    /**
     * \name Compressed texture functions
     */
@@ -473,7 +473,7 @@ struct dd_function_table {
    struct gl_program * (*NewProgram)(struct gl_context *ctx, GLenum target,
                                      GLuint id, bool is_arb_asm);
    /** Delete a program */
-   void (*DeleteProgram)(struct gl_context *ctx, struct gl_program *prog);
+   void (*DeleteProgram)(struct gl_context *ctx, struct gl_program *prog);   
    /**
     * Allocate a program to associate with the new ATI fragment shader (optional)
     */
@@ -484,7 +484,7 @@ struct dd_function_table {
     * or modified.  Return GL_TRUE or GL_FALSE to indicate if the program is
     * supported by the driver.
     */
-   GLboolean (*ProgramStringNotify)(struct gl_context *ctx, GLenum target,
+   GLboolean (*ProgramStringNotify)(struct gl_context *ctx, GLenum target, 
                                     struct gl_program *prog);
 
    /**
@@ -495,9 +495,9 @@ struct dd_function_table {
                                 struct gl_program *prog);
 
    /** Query if program can be loaded onto hardware */
-   GLboolean (*IsProgramNative)(struct gl_context *ctx, GLenum target,
+   GLboolean (*IsProgramNative)(struct gl_context *ctx, GLenum target, 
 				struct gl_program *prog);
-
+   
    /*@}*/
 
    /**
@@ -621,7 +621,7 @@ struct dd_function_table {
    /*@{*/
    struct gl_buffer_object * (*NewBufferObject)(struct gl_context *ctx,
                                                 GLuint buffer);
-
+   
    void (*DeleteBuffer)( struct gl_context *ctx, struct gl_buffer_object *obj );
 
    GLboolean (*BufferData)(struct gl_context *ctx, GLenum target,
@@ -707,7 +707,7 @@ struct dd_function_table {
    void (*BindFramebuffer)(struct gl_context *ctx, GLenum target,
                            struct gl_framebuffer *drawFb,
                            struct gl_framebuffer *readFb);
-   void (*FramebufferRenderbuffer)(struct gl_context *ctx,
+   void (*FramebufferRenderbuffer)(struct gl_context *ctx, 
                                    struct gl_framebuffer *fb,
                                    GLenum attachment,
                                    struct gl_renderbuffer *rb);
@@ -830,7 +830,7 @@ struct dd_function_table {
    /*@{*/
 
    /**
-    * Set by the driver-supplied T&L engine.
+    * Set by the driver-supplied T&L engine.  
     *
     * Set to PRIM_OUTSIDE_BEGIN_END when outside glBegin()/glEnd().
     */

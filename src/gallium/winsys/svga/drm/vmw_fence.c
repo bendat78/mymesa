@@ -32,7 +32,7 @@
 #include "vmw_screen.h"
 #include "vmw_fence.h"
 
-struct vmw_fence_ops
+struct vmw_fence_ops 
 {
    /*
     * Immutable members.
@@ -413,7 +413,7 @@ vmw_fence_ops_destroy(struct pb_fence_ops *ops)
  * Returns NULL on failure.
  */
 struct pb_fence_ops *
-vmw_fence_ops_create(struct vmw_winsys_screen *vws)
+vmw_fence_ops_create(struct vmw_winsys_screen *vws) 
 {
    struct vmw_fence_ops *ops;
 

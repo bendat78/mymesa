@@ -340,7 +340,7 @@ brw_emit_post_sync_nonzero_flush(struct brw_context *brw)
  *
  *  SW can track the completion of the end-of-pipe-synchronization by
  *  using "Notify Enable" and "PostSync Operation - Write Immediate
- *  Data" in the PIPE_CONTROL command.
+ *  Data" in the PIPE_CONTROL command. 
  */
 void
 brw_emit_end_of_pipe_sync(struct brw_context *brw, uint32_t flags)

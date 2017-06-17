@@ -1194,7 +1194,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
         bo->flink_name = whandle->handle;
     } else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
         size = lseek(whandle->handle, 0, SEEK_END);
-        /*
+        /* 
          * Could check errno to determine whether the kernel is new enough, but
          * it doesn't really matter why this failed, just that it failed.
          */

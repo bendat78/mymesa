@@ -1423,7 +1423,7 @@ dri2CreateDisplay(Display * dpy)
       pdp->loader_extensions[i++] = &dri2LoaderExtension_old.base;
    else
       pdp->loader_extensions[i++] = &dri2LoaderExtension.base;
-
+   
    pdp->loader_extensions[i++] = &dri2UseInvalidate.base;
 
    pdp->loader_extensions[i++] = &driBackgroundCallable.base;

@@ -74,7 +74,7 @@ INLINE void LoadSOA(const uint8_t *pSrc, simdvector &dst)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Clamps the given component based on the requirements on the
+/// @brief Clamps the given component based on the requirements on the 
 ///        Format template arg
 /// @param vComp - SIMD vector of floats
 /// @param Component - component
@@ -242,7 +242,7 @@ INLINE void SIMDAPI LoadSOA(const uint8_t *pSrc, simd16vector &dst)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Clamps the given component based on the requirements on the
+/// @brief Clamps the given component based on the requirements on the 
 ///        Format template arg
 /// @param vComp - SIMD vector of floats
 /// @param Component - component

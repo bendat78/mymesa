@@ -1,8 +1,8 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
  /*
@@ -100,7 +100,7 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
       {
          struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
          st_release_vp_variants( st, stvp );
-
+         
          if (stvp->glsl_to_tgsi)
             free_glsl_to_tgsi_visitor(stvp->glsl_to_tgsi);
       }
@@ -113,7 +113,7 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
 
          st_release_basic_variants(st, p->Base.Target, &p->variants,
                                    &p->tgsi);
-
+         
          if (p->glsl_to_tgsi)
             free_glsl_to_tgsi_visitor(p->glsl_to_tgsi);
       }
@@ -124,7 +124,7 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
             (struct st_fragment_program *) prog;
 
          st_release_fp_variants(st, stfp);
-
+         
          if (stfp->glsl_to_tgsi)
             free_glsl_to_tgsi_visitor(stfp->glsl_to_tgsi);
       }
@@ -276,6 +276,6 @@ st_init_program_functions(struct dd_function_table *functions)
    functions->DeleteProgram = st_delete_program;
    functions->ProgramStringNotify = st_program_string_notify;
    functions->NewATIfs = st_new_ati_fs;
-
+   
    functions->LinkShader = st_link_shader;
 }

@@ -58,7 +58,7 @@ extern int SVGA_DEBUG;
 static inline void
 SVGA_DBG( unsigned flag, const char *fmt, ... )
 {
-#ifdef DEBUG
+#ifdef DEBUG 
     if (SVGA_DEBUG & flag)
     {
         va_list args;

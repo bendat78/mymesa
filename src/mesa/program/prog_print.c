@@ -522,7 +522,7 @@ fprint_dst_reg(FILE * f,
 	   reg_string((gl_register_file) dstReg->File,
 		      dstReg->Index, mode, dstReg->RelAddr, prog),
 	   _mesa_writemask_string(dstReg->WriteMask));
-
+   
 #if 0
    fprintf(f, "%s[%d]%s",
 	   _mesa_register_file_name((gl_register_file) dstReg->File),
@@ -534,7 +534,7 @@ fprint_dst_reg(FILE * f,
 
 static void
 fprint_src_reg(FILE *f,
-               const struct prog_src_register *srcReg,
+               const struct prog_src_register *srcReg, 
                gl_prog_print_mode mode,
                const struct gl_program *prog)
 {
@@ -888,7 +888,7 @@ _mesa_fprint_program_parameters(FILE *f,
       const GLfloat *p = prog->LocalParams[i];
       fprintf(f, "%2d: %f, %f, %f, %f\n", i, p[0], p[1], p[2], p[3]);
    }
-#endif
+#endif	
    _mesa_print_parameter_list(prog->Parameters);
 }
 

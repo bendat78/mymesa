@@ -41,7 +41,7 @@
  * The module captures both immediate mode and display list drawing,
  * and manages the allocation, reference counting and deallocation of
  * vertex buffer objects itself.
- *
+ * 
  * The DrawPrimitives() callback can be either implemented by the
  * driver itself or hooked to the tnl module's _tnl_draw_primitives()
  * function for hardware without tnl capablilties or during fallbacks.
@@ -65,7 +65,7 @@ extern "C" {
 
 struct vbo_context {
    struct gl_vertex_array currval[VBO_ATTRIB_MAX];
-
+   
    /** Map VERT_ATTRIB_x to VBO_ATTRIB_y */
    GLuint map_vp_none[VERT_ATTRIB_MAX];
    GLuint map_vp_arb[VERT_ATTRIB_MAX];
@@ -86,7 +86,7 @@ struct vbo_context {
 };
 
 
-static inline struct vbo_context *vbo_context(struct gl_context *ctx)
+static inline struct vbo_context *vbo_context(struct gl_context *ctx) 
 {
    return ctx->vbo_context;
 }

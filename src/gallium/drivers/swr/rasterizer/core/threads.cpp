@@ -497,7 +497,7 @@ bool WorkOnFifoBE(
 
     // Try to work on each draw in order of the available draws in flight.
     //   1. If we're on curDrawBE, we can work on any macrotile that is available.
-    //   2. If we're trying to work on draws after curDrawBE, we are restricted to
+    //   2. If we're trying to work on draws after curDrawBE, we are restricted to 
     //      working on those macrotiles that are known to be complete in the prior draw to
     //      maintain order. The locked tiles provides the history to ensures this.
     for (uint32_t i = curDrawBE; IDComparesLess(i, drawEnqueued); ++i)
@@ -510,7 +510,7 @@ bool WorkOnFifoBE(
         // but if there are lots of bubbles between draws then serializing FE and BE may
         // need to be revisited.
         if (!pDC->doneFE) return false;
-
+        
         // If this draw is dependent on a previous draw then we need to bail.
         if (CheckDependency(pContext, pDC, lastRetiredDraw))
         {
@@ -777,7 +777,7 @@ DWORD workerThreadMain(LPVOID pData)
 
     // each worker has the ability to work on any of the queued draws as long as certain
     // conditions are met. the data associated
-    // with a draw is guaranteed to be active as long as a worker hasn't signaled that he
+    // with a draw is guaranteed to be active as long as a worker hasn't signaled that he 
     // has moved on to the next draw when he determines there is no more work to do. The api
     // thread will not increment the head of the dc ring until all workers have moved past the
     // current head.

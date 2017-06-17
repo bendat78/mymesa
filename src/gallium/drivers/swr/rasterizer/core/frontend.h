@@ -32,7 +32,7 @@
 #include <type_traits>
 
 // Calculates the A and B coefficients for the 3 edges of the triangle
-//
+// 
 // maths for edge equations:
 //   standard form of a line in 2d
 //   Ax + By + C = 0
@@ -47,7 +47,7 @@ void triangleSetupAB(const __m128 vX, const __m128 vY, __m128 & vA, __m128 & vB)
     // vY =    y0 y1 y2 dc
     vA = _mm_sub_ps(vY, vYsub);
 
-    // Result:
+    // Result: 
     // A[0] = y0 - y1
     // A[1] = y1 - y2
     // A[2] = y2 - y0
@@ -57,7 +57,7 @@ void triangleSetupAB(const __m128 vX, const __m128 vY, __m128 & vA, __m128 & vB)
     // vX =    x0 x1 x2 dc
     vB = _mm_sub_ps(vXsub, vX);
 
-    // Result:
+    // Result: 
     // B[0] = x1 - x0
     // B[1] = x2 - x1
     // B[2] = x0 - x2
@@ -112,7 +112,7 @@ void triangleSetupABIntVertical(const simd16scalari vX[3], const simd16scalari v
 // Px = x0-x2, Py = y0-y2
 // Qx = x1-x2, Qy = y1-y2
 //       |Px Qx|
-// det = |     | = PxQy - PyQx
+// det = |     | = PxQy - PyQx 
 //       |Py Qy|
 // simplifies to : (x0-x2)*(y1-y2) - (y0-y2)*(x1-x2)
 //               try to reuse our A & B coef's already calculated. factor out a -1 from Py and Qx
@@ -228,7 +228,7 @@ void triangleSetupC(const __m128 vX, const __m128 vY, const __m128 vA, const __m
 {
     // C = -Ax - By
     vC  = _mm_mul_ps(vA, vX);
-    __m128 vCy = _mm_mul_ps(vB, vY);
+    __m128 vCy = _mm_mul_ps(vB, vY);    
     vC  = _mm_mul_ps(vC, _mm_set1_ps(-1.0f));
     vC  = _mm_sub_ps(vC, vCy);
 }

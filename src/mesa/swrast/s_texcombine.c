@@ -72,7 +72,7 @@ get_texel_array(SWcontext *swrast, GLuint unit)
  * \param unit         the texture combiner unit
  * \param primary_rgba incoming fragment color array
  * \param texelBuffer  pointer to texel colors for all texture units
- *
+ * 
  * \param span         two fields are used in this function:
  *                       span->end: number of fragments to process
  *                       span->array->rgba: incoming/result fragment colors

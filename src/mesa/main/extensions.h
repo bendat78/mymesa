@@ -1,7 +1,7 @@
 /**
  * \file extensions.h
  * Extension handling.
- *
+ * 
  * \if subset
  * (No-op)
  *
@@ -76,7 +76,7 @@ struct mesa_extension {
     */
    uint8_t version[API_OPENGL_LAST + 1];
 
-   /** Year the extension was proposed or approved.  Used to sort the
+   /** Year the extension was proposed or approved.  Used to sort the 
     * extension string chronologically. */
    uint16_t year;
 };

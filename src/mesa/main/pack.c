@@ -105,7 +105,7 @@ _mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],
        */
       GLubyte *p = ptrn;
       GLuint i;
-
+      
       for (i = 0; i < 32; i++) {
          dest[i] = (p[0] << 24)
                  | (p[1] << 16)
@@ -131,7 +131,7 @@ _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
     */
    GLubyte ptrn[32*4];
    GLuint i;
-
+  
    for (i = 0; i < 32; i++) {
       ptrn[i * 4 + 0] = (GLubyte) ((pattern[i] >> 24) & 0xff);
       ptrn[i * 4 + 1] = (GLubyte) ((pattern[i] >> 16) & 0xff);
@@ -173,7 +173,7 @@ _mesa_pack_bitmap( GLuint width, GLuint height, const GLubyte *source,
       }
       else {
          /* handling SkipPixels is a bit tricky (no pun intended!) */
-
+         
          if (packing->LsbFirst) {
             GLubyte srcMask = 128;
             GLubyte dstMask = 1 << (packing->SkipPixels & 0x7);
@@ -282,7 +282,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
             GLubyte *ubsrc = (GLubyte *) src;
             if (unpack->LsbFirst) {
                GLubyte mask = 1 << (unpack->SkipPixels & 0x7);
-
+               
                for (i = 0; i < n; i++) {
                   indexes[i] = (*ubsrc & mask) ? 1 : 0;
                   if (mask == 128) {
@@ -296,7 +296,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
             }
             else {
                GLubyte mask = 128 >> (unpack->SkipPixels & 0x7);
-
+               
                for (i = 0; i < n; i++) {
                   indexes[i] = (*ubsrc & mask) ? 1 : 0;
                   if (mask == 1) {
@@ -312,7 +312,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_UNSIGNED_BYTE:
          {
-
+            
             const GLubyte *s = (const GLubyte *) src;
             for (i = 0; i < n; i++)
                indexes[i] = s[i];
@@ -320,7 +320,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_BYTE:
          {
-
+            
             const GLbyte *s = (const GLbyte *) src;
             for (i = 0; i < n; i++)
                indexes[i] = s[i];
@@ -328,7 +328,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_UNSIGNED_SHORT:
          {
-
+            
             const GLushort *s = (const GLushort *) src;
             if (unpack->SwapBytes) {
                for (i = 0; i < n; i++) {
@@ -345,7 +345,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_SHORT:
          {
-
+            
             const GLshort *s = (const GLshort *) src;
             if (unpack->SwapBytes) {
                for (i = 0; i < n; i++) {
@@ -362,7 +362,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_UNSIGNED_INT:
          {
-
+            
             const GLuint *s = (const GLuint *) src;
             if (unpack->SwapBytes) {
                for (i = 0; i < n; i++) {
@@ -379,7 +379,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_INT:
          {
-
+            
             const GLint *s = (const GLint *) src;
             if (unpack->SwapBytes) {
                for (i = 0; i < n; i++) {
@@ -396,7 +396,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_FLOAT:
          {
-
+            
             const GLfloat *s = (const GLfloat *) src;
             if (unpack->SwapBytes) {
                for (i = 0; i < n; i++) {
@@ -414,7 +414,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
       case GL_HALF_FLOAT_ARB:
       case GL_HALF_FLOAT_OES:
          {
-
+            
             const GLhalfARB *s = (const GLhalfARB *) src;
             if (unpack->SwapBytes) {
                for (i = 0; i < n; i++) {
@@ -431,7 +431,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_UNSIGNED_INT_24_8_EXT:
          {
-
+            
             const GLuint *s = (const GLuint *) src;
             if (unpack->SwapBytes) {
                for (i = 0; i < n; i++) {
@@ -448,7 +448,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          break;
       case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
          {
-
+            
             const GLuint *s = (const GLuint *) src;
             if (unpack->SwapBytes) {
                for (i = 0; i < n; i++) {
@@ -552,7 +552,7 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
       if (ctx->Pixel.MapStencilFlag) {
          /* Apply stencil lookup table */
          const GLuint mask = ctx->PixelMaps.StoS.Size - 1;
-
+         
          for (i = 0; i < n; i++) {
             indexes[i] = (GLuint)ctx->PixelMaps.StoS.Map[ indexes[i] & mask ];
          }
@@ -563,7 +563,7 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
          case GL_UNSIGNED_BYTE:
             {
                GLubyte *dst = (GLubyte *) dest;
-
+               
                for (i = 0; i < n; i++) {
                   dst[i] = (GLubyte) (indexes[i] & 0xff);
                }
@@ -572,7 +572,7 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
          case GL_UNSIGNED_SHORT:
             {
                GLuint *dst = (GLuint *) dest;
-
+               
                for (i = 0; i < n; i++) {
                   dst[i] = (GLushort) (indexes[i] & 0xffff);
                }
@@ -584,7 +584,7 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
          case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
             {
                GLuint *dst = (GLuint *) dest;
-
+               
                for (i = 0; i < n; i++) {
                   dst[i*2+1] = indexes[i] & 0xff; /* lower 8 bits */
                }
@@ -627,8 +627,8 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
    case GL_BYTE:
       {
          GLbyte *dst = (GLbyte *) dest;
-
-         for (i = 0; i < n; i++) {
+         
+         for (i = 0; i < n; i++) { 
             dst[i] = (GLbyte) (source[i] & 0x7f);
          }
       }
@@ -636,8 +636,8 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
    case GL_UNSIGNED_SHORT:
       {
          GLushort *dst = (GLushort *) dest;
-
-         for (i = 0; i < n; i++) {
+         
+         for (i = 0; i < n; i++) { 
             dst[i] = (GLushort) source[i];
          }
          if (dstPacking->SwapBytes) {
@@ -648,8 +648,8 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
    case GL_SHORT:
       {
          GLshort *dst = (GLshort *) dest;
-
-         for (i = 0; i < n; i++) {
+         
+         for (i = 0; i < n; i++) { 
             dst[i] = (GLshort) source[i];
          }
          if (dstPacking->SwapBytes) {
@@ -660,8 +660,8 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
    case GL_UNSIGNED_INT:
       {
          GLuint *dst = (GLuint *) dest;
-
-         for (i = 0; i < n; i++) {
+         
+         for (i = 0; i < n; i++) { 
             dst[i] = (GLuint) source[i];
          }
          if (dstPacking->SwapBytes) {
@@ -672,8 +672,8 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
    case GL_INT:
       {
          GLint *dst = (GLint *) dest;
-
-         for (i = 0; i < n; i++) {
+         
+         for (i = 0; i < n; i++) { 
             dst[i] = (GLint) source[i];
          }
          if (dstPacking->SwapBytes) {
@@ -684,8 +684,8 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
    case GL_FLOAT:
       {
          GLfloat *dst = (GLfloat *) dest;
-
-         for (i = 0; i < n; i++) {
+         
+         for (i = 0; i < n; i++) { 
             dst[i] = (GLfloat) source[i];
          }
          if (dstPacking->SwapBytes) {
@@ -697,8 +697,8 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
    case GL_HALF_FLOAT_OES:
       {
          GLhalfARB *dst = (GLhalfARB *) dest;
-
-         for (i = 0; i < n; i++) {
+         
+         for (i = 0; i < n; i++) { 
             dst[i] = _mesa_float_to_half( (float) source[i] );
          }
          if (dstPacking->SwapBytes) {
@@ -710,7 +710,7 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
       if (dstPacking->LsbFirst) {
          GLubyte *dst = (GLubyte *) dest;
          GLint shift = 0;
-
+         
          for (i = 0; i < n; i++) {
             if (shift == 0)
                *dst = 0;
@@ -725,7 +725,7 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
       else {
          GLubyte *dst = (GLubyte *) dest;
          GLint shift = 7;
-
+         
          for (i = 0; i < n; i++) {
             if (shift == 7)
                *dst = 0;
@@ -792,7 +792,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
       if (srcType == GL_UNSIGNED_INT && dstType == GL_UNSIGNED_SHORT) {
          const GLuint *src = (const GLuint *) source;
          GLushort *dst = (GLushort *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = src[i] >> 16;
          }
@@ -803,7 +803,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
           && depthMax == 0xffffffff) {
          const GLushort *src = (const GLushort *) source;
          GLuint *dst = (GLuint *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = src[i] | (src[i] << 16);
          }
@@ -814,7 +814,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
           && depthMax == 0xffffff) {
          const GLuint *src = (const GLuint *) source;
          GLuint *dst = (GLuint *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = src[i] >> 8;
          }
@@ -870,7 +870,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
              ctx->Pixel.DepthBias == 0.0F) {
             const GLuint *src = (const GLuint *) source;
             GLuint *zValues = (GLuint *) dest;
-
+            
             for (i = 0; i < n; i++) {
                 GLuint value = src[i];
                 if (srcPacking->SwapBytes) {
@@ -884,7 +884,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
          else {
             const GLuint *src = (const GLuint *) source;
             const GLfloat scale = 1.0f / 0xffffff;
-
+            
             for (i = 0; i < n; i++) {
                 GLuint value = src[i];
                 if (srcPacking->SwapBytes) {
@@ -896,7 +896,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
          break;
       case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
          {
-
+            
             const GLfloat *src = (const GLfloat *)source;
             for (i = 0; i < n; i++) {
                GLfloat value = src[i * 2];
@@ -915,7 +915,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
       case GL_HALF_FLOAT_ARB:
       case GL_HALF_FLOAT_OES:
          {
-
+            
             const GLhalfARB *src = (const GLhalfARB *) source;
             for (i = 0; i < n; i++) {
                GLhalfARB value = src[i];
@@ -938,7 +938,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
       const GLfloat scale = ctx->Pixel.DepthScale;
       const GLfloat bias = ctx->Pixel.DepthBias;
       if (scale != 1.0F || bias != 0.0F) {
-
+         
          for (i = 0; i < n; i++) {
             depthValues[i] = depthValues[i] * scale + bias;
          }
@@ -948,7 +948,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
 
    /* clamp to [0, 1] */
    if (needClamp) {
-
+      
       for (i = 0; i < n; i++) {
          depthValues[i] = CLAMP(depthValues[i], 0.0F, 1.0F);
       }
@@ -959,7 +959,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
     */
    if (dstType == GL_UNSIGNED_INT) {
       GLuint *zValues = (GLuint *) dest;
-
+      
       if (depthMax <= 0xffffff) {
          /* no overflow worries */
          for (i = 0; i < n; i++) {
@@ -979,7 +979,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
    }
    else if (dstType == GL_UNSIGNED_SHORT) {
       GLushort *zValues = (GLushort *) dest;
-
+      
       assert(depthMax <= 0xffff);
       for (i = 0; i < n; i++) {
          zValues[i] = (GLushort) (depthValues[i] * (GLfloat) depthMax);
@@ -990,7 +990,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
    }
    else if (dstType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV) {
       GLfloat *zValues = (GLfloat*) dest;
-
+      
       for (i = 0; i < n; i++) {
          zValues[i*2] = depthValues[i];
       }
@@ -1028,7 +1028,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
    case GL_UNSIGNED_BYTE:
       {
          GLubyte *dst = (GLubyte *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = FLOAT_TO_UBYTE( depthSpan[i] );
          }
@@ -1037,7 +1037,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
    case GL_BYTE:
       {
          GLbyte *dst = (GLbyte *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = FLOAT_TO_BYTE( depthSpan[i] );
          }
@@ -1046,7 +1046,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
    case GL_UNSIGNED_SHORT:
       {
          GLushort *dst = (GLushort *) dest;
-
+         
          for (i = 0; i < n; i++) {
             CLAMPED_FLOAT_TO_USHORT(dst[i], depthSpan[i]);
          }
@@ -1058,7 +1058,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
    case GL_SHORT:
       {
          GLshort *dst = (GLshort *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = FLOAT_TO_SHORT( depthSpan[i] );
          }
@@ -1071,7 +1071,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
       {
          const GLdouble scale = (GLdouble) 0xffffff;
          GLuint *dst = (GLuint *) dest;
-
+         
          for (i = 0; i < n; i++) {
             GLuint z = (GLuint) (depthSpan[i] * scale);
             assert(z <= 0xffffff);
@@ -1085,7 +1085,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
    case GL_UNSIGNED_INT:
       {
          GLuint *dst = (GLuint *) dest;
-
+         
          for (unsigned i = 0; i < n; i++) {
             dst[i] = FLOAT_TO_UINT( depthSpan[i] );
          }
@@ -1097,7 +1097,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
    case GL_INT:
       {
          GLint *dst = (GLint *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = FLOAT_TO_INT( depthSpan[i] );
          }
@@ -1109,7 +1109,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
    case GL_FLOAT:
       {
          GLfloat *dst = (GLfloat *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = depthSpan[i];
          }
@@ -1122,7 +1122,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
    case GL_HALF_FLOAT_OES:
       {
          GLhalfARB *dst = (GLhalfARB *) dest;
-
+         
          for (i = 0; i < n; i++) {
             dst[i] = _mesa_float_to_half(depthSpan[i]);
          }
@@ -1251,7 +1251,7 @@ _mesa_unpack_image( GLuint dimensions,
       GLubyte *destBuffer
          = malloc(bytesPerRow * height * depth);
       GLubyte *dst;
-
+      
       if (!destBuffer)
          return NULL;   /* generate GL_OUT_OF_MEMORY later */
 
@@ -1262,7 +1262,7 @@ _mesa_unpack_image( GLuint dimensions,
                                width, height, format, type, img, row, 0);
 
             if ((type == GL_BITMAP) && (unpack->SkipPixels & 0x7)) {
-
+               
                flipBytes = GL_FALSE;
                if (unpack->LsbFirst) {
                   GLubyte srcMask = 1 << (unpack->SkipPixels & 0x7);
@@ -1273,7 +1273,7 @@ _mesa_unpack_image( GLuint dimensions,
                   for (i = 0; i < width; i++) {
                      if (*s & srcMask) {
                         *d |= dstMask;
-                     }
+                     }      
                      if (srcMask == 128) {
                         srcMask = 1;
                         s++;
@@ -1315,7 +1315,7 @@ _mesa_unpack_image( GLuint dimensions,
                      }
                      else {
                         dstMask = dstMask >> 1;
-                     }
+                     }      
                   }
                }
             }
@@ -1566,7 +1566,7 @@ _mesa_unpack_color_index_to_rgba_float(struct gl_context *ctx, GLuint dims,
    int count, img;
    GLuint *indexes;
    GLfloat *rgba, *dstPtr;
-
+   
    count = srcWidth * srcHeight;
    indexes = malloc(count * sizeof(GLuint));
    if (!indexes) {

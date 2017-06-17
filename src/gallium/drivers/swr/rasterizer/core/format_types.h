@@ -1151,11 +1151,11 @@ union Format1
     {
         TYPE g : x;
     };
-    struct
+    struct 
     {
         TYPE b : x;
     };
-    struct
+    struct  
     {
         TYPE a : x;
     };

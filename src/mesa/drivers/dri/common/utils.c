@@ -43,18 +43,18 @@
 
 /**
  * Create the \c GL_RENDERER string for DRI drivers.
- *
+ * 
  * Almost all DRI drivers use a \c GL_RENDERER string of the form:
  *
  *    "Mesa DRI <chip> <driver date> <AGP speed) <CPU information>"
  *
  * Using the supplied chip name, driver data, and AGP speed, this function
  * creates the string.
- *
+ * 
  * \param buffer         Buffer to hold the \c GL_RENDERER string.
  * \param hardware_name  Name of the hardware.
  * \param agp_mode       AGP mode (speed).
- *
+ * 
  * \returns
  * The length of the string stored in \c buffer.  This does \b not include
  * the terminating \c NUL character.
@@ -77,7 +77,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
    case 8:
       offset += sprintf( & buffer[ offset ], " AGP %ux", agp_mode );
       break;
-
+	
    default:
       break;
    }
@@ -96,11 +96,11 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 /**
  * Creates a set of \c struct gl_config that a driver will expose.
- *
+ * 
  * A set of \c struct gl_config will be created based on the supplied
  * parameters.  The number of modes processed will be 2 *
  * \c num_depth_stencil_bits * \c num_db_modes.
- *
+ * 
  * For the most part, data is just copied from \c depth_bits, \c stencil_bits,
  * \c db_modes, and \c visType into each \c struct gl_config element.
  * However, the meanings of \c fb_format and \c fb_type require further
@@ -112,7 +112,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
  * \c GL_UNSIGNED_SHORT_5_6_5_REV is specified with \c GL_RGB, bits [15:11]
  * are the blue value, bits [10:5] are the green value, and bits [4:0] are
  * the red value.
- *
+ * 
  * One sublte issue is the combination of \c GL_RGB  or \c GL_BGR and either
  * of the \c GL_UNSIGNED_INT_8_8_8_8 modes.  The resulting mask values in the
  * \c struct gl_config structure is \b identical to the \c GL_RGBA or
@@ -121,7 +121,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
  * still uses 32-bits.
  *
  * If in doubt, look at the tables used in the function.
- *
+ * 
  * \param ptr_to_modes  Pointer to a pointer to a linked list of
  *                      \c struct gl_config.  Upon completion, a pointer to
  *                      the next element to be process will be stored here.
@@ -147,7 +147,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
  * \param color_depth_match Whether the color depth must match the zs depth
  *                          This forces 32-bit color to have 24-bit depth, and
  *                          16-bit color to have 16-bit depth.
- *
+ * 
  * \returns
  * Pointer to any array of pointers to the \c __DRIconfig structures created
  * for the specified formats.  If there is an error, \c NULL is returned.
@@ -339,7 +339,7 @@ __DRIconfig **driConcatConfigs(__DRIconfig **a,
     j = 0;
     while (b[j] != NULL)
 	j++;
-
+   
     all = malloc((i + j + 1) * sizeof *all);
     index = 0;
     for (i = 0; a[i] != NULL; i++)
@@ -436,7 +436,7 @@ driGetConfigAttribIndex(const __DRIconfig *config,
         /* any other int-sized field */
 	*value = *(unsigned int *)
 	    ((char *) &config->modes + attribMap[index].offset);
-
+	
 	break;
     }
 

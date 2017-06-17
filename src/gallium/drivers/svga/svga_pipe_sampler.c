@@ -540,7 +540,7 @@ svga_cleanup_sampler_state(struct svga_context *svga)
                                    &svga->state.hw_draw.sampler_views[shader][i]);
       }
    }
-
+   
    /* free polygon stipple state */
    if (svga->polygon_stipple.sampler) {
       svga->pipe.delete_sampler_state(&svga->pipe, svga->polygon_stipple.sampler);

@@ -396,7 +396,7 @@ ac_build_fs_interp(struct ac_llvm_context *ctx,
 {
 	LLVMValueRef args[5];
 	LLVMValueRef p1;
-
+	
 	if (HAVE_LLVM < 0x0400) {
 		LLVMValueRef ij[2];
 		ij[0] = LLVMBuildBitCast(ctx->builder, i, ctx->i32, "");

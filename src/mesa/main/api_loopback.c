@@ -781,14 +781,14 @@ _mesa_MultiTexCoord3sv(GLenum target, const GLshort *v)
 void GLAPIENTRY
 _mesa_MultiTexCoord4d(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
 {
-   MULTI_TEXCOORD4( target, (GLfloat) s, (GLfloat) t,
+   MULTI_TEXCOORD4( target, (GLfloat) s, (GLfloat) t, 
 		    (GLfloat) r, (GLfloat) q );
 }
 
 void GLAPIENTRY
 _mesa_MultiTexCoord4dv(GLenum target, const GLdouble *v)
 {
-   MULTI_TEXCOORD4( target, (GLfloat) v[0], (GLfloat) v[1],
+   MULTI_TEXCOORD4( target, (GLfloat) v[0], (GLfloat) v[1], 
 		    (GLfloat) v[2], (GLfloat) v[3] );
 }
 
@@ -1152,7 +1152,7 @@ _mesa_VertexAttrib3dvNV(GLuint index, const GLdouble *v)
 void GLAPIENTRY
 _mesa_VertexAttrib4svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB4NV(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2],
+   ATTRIB4NV(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 
 	  (GLfloat)v[3]);
 }
 
@@ -1368,7 +1368,7 @@ _mesa_VertexAttrib3dv(GLuint index, const GLdouble *v)
 void GLAPIENTRY
 _mesa_VertexAttrib4sv(GLuint index, const GLshort *v)
 {
-   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2],
+   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 
 	  (GLfloat)v[3]);
 }
 
@@ -1615,7 +1615,7 @@ _mesa_loopback_init_api_table(const struct gl_context *ctx,
       SET_SecondaryColor3uiv(dest, _mesa_SecondaryColor3uiv);
       SET_SecondaryColor3usv(dest, _mesa_SecondaryColor3usv);
       SET_SecondaryColor3ubv(dest, _mesa_SecondaryColor3ubv);
-
+      
       SET_EdgeFlagv(dest, _mesa_EdgeFlagv);
 
       SET_Indexd(dest, _mesa_Indexd);

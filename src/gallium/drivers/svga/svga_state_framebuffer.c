@@ -261,7 +261,7 @@ emit_fb_vgpu10(struct svga_context *svga)
       svga->state.hw_clear.num_rendertargets = last_rtv + 1;
       svga->state.hw_clear.dsv = dsv;
       memcpy(svga->state.hw_clear.rtv, rtv, num_color * sizeof(rtv[0]));
-
+    
       for (i = 0; i < ss->max_color_buffers; i++) {
          if (hw->cbufs[i] != curr->cbufs[i]) {
             /* propagate the backed view surface before unbinding it */

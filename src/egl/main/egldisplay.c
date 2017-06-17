@@ -271,7 +271,7 @@ _eglFindDisplay(_EGLPlatformType plat, void *plat_dpy)
          dpy->Platform = plat;
          dpy->PlatformDisplay = plat_dpy;
 
-         /* add to the display list */
+         /* add to the display list */ 
          dpy->Next = _eglGlobal.DisplayList;
          _eglGlobal.DisplayList = dpy;
       }
@@ -377,7 +377,7 @@ EGLBoolean
 _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
 {
    _EGLResource *list = dpy->ResourceLists[type];
-
+   
    if (!res)
       return EGL_FALSE;
 

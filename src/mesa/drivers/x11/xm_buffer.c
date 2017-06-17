@@ -41,7 +41,7 @@
 #define XMESA_RENDERBUFFER 0x1234
 
 
-#if defined(USE_XSHM)
+#if defined(USE_XSHM) 
 static volatile int mesaXErrorFlag = 0;
 
 /**
@@ -174,7 +174,7 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
    if (b->db_mode == BACK_XIMAGE) {
       /* Deallocate the old backxrb->ximage, if any */
       if (b->backxrb->ximage) {
-#if defined(USE_XSHM)
+#if defined(USE_XSHM) 
 	 if (b->shm) {
 	    XShmDetach(b->xm_visual->display, &b->shminfo);
 	    XDestroyImage(b->backxrb->ximage);
@@ -393,7 +393,7 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
    if (fb->Visual.doubleBufferMode) {
       /* free back ximage/pixmap/shmregion */
       if (b->backxrb->ximage) {
-#if defined(USE_XSHM)
+#if defined(USE_XSHM) 
          if (b->shm) {
             XShmDetach( b->display, &b->shminfo );
             XDestroyImage( b->backxrb->ximage );

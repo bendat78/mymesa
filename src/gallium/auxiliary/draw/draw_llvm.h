@@ -209,7 +209,7 @@ struct draw_gs_jit_context
     * DRAW_JIT_CTX_SAMPLERS positions in the struct */
    struct draw_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    struct draw_jit_sampler samplers[PIPE_MAX_SAMPLERS];
-
+   
    int **prim_lengths;
    int *emitted_vertices;
    int *emitted_prims;

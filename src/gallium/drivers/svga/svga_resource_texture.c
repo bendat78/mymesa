@@ -241,7 +241,7 @@ svga_texture_destroy(struct pipe_screen *screen,
    /* Destroy the backed surface handle if exists */
    if (tex->backed_handle)
       svga_screen_surface_destroy(ss, &tex->backed_key, &tex->backed_handle);
-
+      
    ss->hud.total_resource_bytes -= tex->size;
 
    FREE(tex->defined);
@@ -744,7 +744,7 @@ svga_texture_transfer_unmap_dma(struct svga_context *svga,
 {
    struct svga_winsys_screen *sws = svga_screen(svga->pipe.screen)->sws;
 
-   if (st->hwbuf)
+   if (st->hwbuf) 
       sws->buffer_unmap(sws, st->hwbuf);
 
    if (st->base.usage & PIPE_TRANSFER_WRITE) {
@@ -1327,7 +1327,7 @@ svga_texture_transfer_map_can_upload(const struct svga_screen *svgascreen,
    if (util_format_is_compressed(texture->format)) {
       /* XXX Need to take a closer look to see why texture upload
        * with 3D texture with compressed format fails
-       */
+       */ 
       if (texture->target == PIPE_TEXTURE_3D)
           return FALSE;
    }
@@ -1440,7 +1440,7 @@ svga_texture_transfer_unmap_upload(struct svga_context *svga,
    struct svga_winsys_surface *dstsurf;
    struct pipe_resource *texture = st->base.resource;
    struct svga_texture *tex = svga_texture(texture);
-   enum pipe_error ret;
+   enum pipe_error ret; 
    unsigned subResource;
    unsigned numMipLevels;
    unsigned i, layer;
@@ -1448,7 +1448,7 @@ svga_texture_transfer_unmap_upload(struct svga_context *svga,
 
    assert(svga->tex_upload);
    assert(st->upload.buf);
-
+   
    /* unmap the texture upload buffer */
    u_upload_unmap(svga->tex_upload);
 

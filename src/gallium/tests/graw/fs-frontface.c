@@ -199,7 +199,7 @@ main(int argc, char *argv[])
    init();
 
    printf("Left quad: clock-wise, front-facing, red\n");
-   printf("Right quad: counter clock-wise, back-facing, green\n");
+   printf("Right quad: counter clock-wise, back-facing, green\n");  
 
    graw_set_display_func(draw);
    /*graw_set_reshape_func(resize);*/

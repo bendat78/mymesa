@@ -63,13 +63,13 @@ _playback_copy_to_current(struct gl_context *ctx,
       data = vertex;
 
       if (node->count)
-         offset = (node->buffer_offset +
+         offset = (node->buffer_offset + 
                    (node->count-1) * node->vertex_size * sizeof(GLfloat));
       else
          offset = node->buffer_offset;
 
       ctx->Driver.GetBufferSubData( ctx, offset,
-                                    node->vertex_size * sizeof(GLfloat),
+                                    node->vertex_size * sizeof(GLfloat), 
                                     data, node->vertex_store->bufferobj );
 
       data += node->attrsz[0]; /* skip vertex position */
@@ -90,7 +90,7 @@ _playback_copy_to_current(struct gl_context *ctx,
       if (node->attrtype[i] != vbo->currval[i].Type ||
           memcmp(current, tmp, 4 * sizeof(GLfloat)) != 0) {
          memcpy(current, tmp, 4 * sizeof(GLfloat));
-
+         
          vbo->currval[i].Size = node->attrsz[i];
          vbo->currval[i]._ElementSize = vbo->currval[i].Size * sizeof(GLfloat);
          vbo->currval[i].Type = node->attrtype[i];
@@ -206,7 +206,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
          _mesa_reference_buffer_object(ctx,
                                        &arrays[attr].BufferObj,
                                        node->vertex_store->bufferobj);
-
+	 
 	 assert(arrays[attr].BufferObj->Name);
 
 	 buffer_offset += node_attrsz[src] * sizeof(GLfloat);
@@ -288,7 +288,7 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 
          goto end;
       }
-
+      
       if (ctx->NewState)
 	 _mesa_update_state( ctx );
 
@@ -310,7 +310,7 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 	 _mesa_update_state( ctx );
 
       if (node->count > 0) {
-         vbo_context(ctx)->draw_prims(ctx,
+         vbo_context(ctx)->draw_prims(ctx, 
                                       node->prim,
                                       node->prim_count,
                                       NULL,

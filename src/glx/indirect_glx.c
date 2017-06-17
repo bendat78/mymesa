@@ -160,7 +160,7 @@ indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
 
    if (gc == new)
       return;
-
+   
    /* We are either switching to no context, away from an indirect
     * context to a direct context or from one dpy to another and have
     * to send a request to the dpy to unbind the previous context.
@@ -428,7 +428,7 @@ indirect_create_context(struct glx_screen *psc,
       bufSize = __GLX_MAX_RENDER_CMD_SIZE;
    }
    gc->maxSmallRenderCommandSize = bufSize;
-
+   
 
    return gc;
 }

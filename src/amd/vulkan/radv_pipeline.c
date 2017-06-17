@@ -518,7 +518,7 @@ radv_pipeline_create_gs_copy_shader(struct radv_pipeline *pipeline,
 	free(binary.relocs);
 	free(binary.disasm_string);
 	variant->ref_count = 1;
-	return variant;
+	return variant;	
 }
 
 static struct radv_shader_variant *
@@ -2106,7 +2106,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		    !ps->info.fs.writes_sample_mask)
 			pipeline->graphics.blend.spi_shader_col_format = V_028714_SPI_SHADER_32_R;
 	}
-
+	
 	unsigned z_order;
 	pipeline->graphics.db_shader_control = 0;
 	if (ps->info.fs.early_fragment_test || !ps->info.fs.writes_memory)

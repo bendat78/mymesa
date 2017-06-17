@@ -1349,7 +1349,7 @@ SVGA3D_vgpu10_TransferFromBuffer(struct svga_winsys_context *swc,
                                  SVGA3dBox *dstBox)
 {
    SVGA3dCmdDXTransferFromBuffer *cmd;
-
+ 
    cmd = SVGA3D_FIFOReserve(swc, SVGA_3D_CMD_DX_TRANSFER_FROM_BUFFER,
                             sizeof(SVGA3dCmdDXTransferFromBuffer), 2);
 
@@ -1363,7 +1363,7 @@ SVGA3D_vgpu10_TransferFromBuffer(struct svga_winsys_context *swc,
    cmd->srcSlicePitch = srcSlicePitch;
    cmd->destSubResource = dstSubResource;
    cmd->destBox = *dstBox;
-
+ 
    swc->commit(swc);
    return PIPE_OK;
 }

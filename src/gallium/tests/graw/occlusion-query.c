@@ -47,7 +47,7 @@ static struct vertex obj1_vertices[4] =
    }
 };
 
-static struct vertex obj2_vertices[4] =
+static struct vertex obj2_vertices[4] = 
 {
    {
       { -0.2,  -0.2, z1, 1.0 },
@@ -215,7 +215,7 @@ resize(int w, int h)
 
 
 static void
-init(void)
+init(void)   
 {
    if (!graw_util_create_window(&info, width, height, 1, TRUE))
       exit(1);

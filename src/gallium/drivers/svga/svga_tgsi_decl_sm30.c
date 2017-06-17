@@ -42,11 +42,11 @@ translate_vs_ps_semantic(struct svga_shader_emitter *emit,
                          unsigned *idx)
 {
    switch (semantic.Name) {
-   case TGSI_SEMANTIC_POSITION:
+   case TGSI_SEMANTIC_POSITION:  
       *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_POSITION;
       break;
-   case TGSI_SEMANTIC_COLOR:
+   case TGSI_SEMANTIC_COLOR:     
       *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_COLOR;
       break;
@@ -54,21 +54,21 @@ translate_vs_ps_semantic(struct svga_shader_emitter *emit,
       *idx = semantic.Index + 2; /* sharing with COLOR */
       *usage = SVGA3D_DECLUSAGE_COLOR;
       break;
-   case TGSI_SEMANTIC_FOG:
+   case TGSI_SEMANTIC_FOG:       
       *idx = 0;
       assert(semantic.Index == 0);
       *usage = SVGA3D_DECLUSAGE_TEXCOORD;
       break;
-   case TGSI_SEMANTIC_PSIZE:
+   case TGSI_SEMANTIC_PSIZE:     
       *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_PSIZE;
       break;
-   case TGSI_SEMANTIC_GENERIC:
+   case TGSI_SEMANTIC_GENERIC:   
       *idx = svga_remap_generic_index(emit->key.generic_remap_table,
                                       semantic.Index);
       *usage = SVGA3D_DECLUSAGE_TEXCOORD;
       break;
-   case TGSI_SEMANTIC_NORMAL:
+   case TGSI_SEMANTIC_NORMAL:    
       *idx = semantic.Index;
       *usage = SVGA3D_DECLUSAGE_NORMAL;
       break;
@@ -98,7 +98,7 @@ translate_vs_ps_semantic(struct svga_shader_emitter *emit,
 static boolean
 emit_decl(struct svga_shader_emitter *emit,
           SVGA3dShaderDestToken reg,
-          unsigned usage,
+          unsigned usage, 
           unsigned index)
 {
    SVGA3DOpDclArgs dcl;
@@ -334,7 +334,7 @@ ps30_output(struct svga_shader_emitter *emit,
             emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                                   emit->nr_hw_temp++ );
             emit->temp_color_output[idx] = emit->output_map[idx];
-            emit->true_color_output[idx] = dst_register(SVGA3DREG_COLOROUT,
+            emit->true_color_output[idx] = dst_register(SVGA3DREG_COLOROUT, 
                                                         semantic.Index);
          }
          else if (emit->key.fs.write_color0_to_n_cbufs) {
@@ -359,7 +359,7 @@ ps30_output(struct svga_shader_emitter *emit,
          }
       }
       else {
-         emit->output_map[idx] = dst_register( SVGA3DREG_COLOROUT,
+         emit->output_map[idx] = dst_register( SVGA3DREG_COLOROUT, 
                                                semantic.Index );
       }
       break;
@@ -367,7 +367,7 @@ ps30_output(struct svga_shader_emitter *emit,
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                             emit->nr_hw_temp++ );
       emit->temp_pos = emit->output_map[idx];
-      emit->true_pos = dst_register( SVGA3DREG_DEPTHOUT,
+      emit->true_pos = dst_register( SVGA3DREG_DEPTHOUT, 
                                      semantic.Index );
       break;
    default:
@@ -484,7 +484,7 @@ vs30_output(struct svga_shader_emitter *emit,
                                             emit->nr_hw_temp++ );
       emit->temp_psiz = emit->output_map[idx];
 
-      /* This has the effect of not declaring psiz (below) and not
+      /* This has the effect of not declaring psiz (below) and not 
        * emitting the final MOV to true_psiz in the postamble.
        */
       if (!emit->key.vs.allow_psiz)

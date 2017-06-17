@@ -44,7 +44,7 @@ typedef std::integral_constant<uint32_t, _X_16> Fixed_X_16;
 
 //////////////////////////////////////////////////////////////////////////
 /// @struct FixedPointTraits
-/// @brief holds constants relating to converting between FP and Fixed point
+/// @brief holds constants relating to converting between FP and Fixed point 
 /// @tparam FT: fixed precision type
 template<typename FT>
 struct FixedPointTraits{};
@@ -86,12 +86,12 @@ struct FixedPointTraits<Fixed_X_16>
 };
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief convenience typedefs for conservative rasterization modes
+/// @brief convenience typedefs for conservative rasterization modes  
 typedef std::false_type StandardRastT;
 typedef std::true_type ConservativeRastT;
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief convenience typedefs for Input Coverage rasterization modes
+/// @brief convenience typedefs for Input Coverage rasterization modes  
 typedef std::integral_constant<uint32_t, SWR_INPUT_COVERAGE_NONE> NoInputCoverageT;
 typedef std::integral_constant<uint32_t, SWR_INPUT_COVERAGE_NORMAL> OuterConservativeCoverageT;
 typedef std::integral_constant<uint32_t, SWR_INPUT_COVERAGE_INNER_CONSERVATIVE> InnerConservativeCoverageT;
@@ -121,7 +121,7 @@ struct ConservativeRastFETraits<ConservativeRastT>
 };
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief convenience typedefs for ConservativeRastFETraits
+/// @brief convenience typedefs for ConservativeRastFETraits 
 typedef ConservativeRastFETraits<StandardRastT> FEStandardRastT;
 typedef ConservativeRastFETraits<ConservativeRastT> FEConservativeRastT;
 
@@ -164,8 +164,8 @@ struct ConservativeRastBETraits<ConservativeRastT, NoInputCoverageT>
     typedef FixedPointTraits<Fixed_16_9> ConservativePrecisionT;
 
     /// offset edge away from pixel center by 1/2 pixel + 1/512, in Fixed 16.9 precision
-    /// this allows the rasterizer to do the 3 edge coverage tests against a single point, instead of
-    /// of having to compare individual edges to pixel corners to check if any part of the triangle
+    /// this allows the rasterizer to do the 3 edge coverage tests against a single point, instead of 
+    /// of having to compare individual edges to pixel corners to check if any part of the triangle 
     /// intersects a pixel
     typedef std::integral_constant<int32_t, (ConservativePrecisionT::ScaleT::value/2) + 1> ConservativeEdgeOffsetT;
     typedef std::integral_constant<int32_t, 0> InnerConservativeEdgeOffsetT;
@@ -183,8 +183,8 @@ struct ConservativeRastBETraits<ConservativeRastT, OuterConservativeCoverageT>
     typedef FixedPointTraits<Fixed_16_9> ConservativePrecisionT;
 
     /// offset edge away from pixel center by 1/2 pixel + 1/512, in Fixed 16.9 precision
-    /// this allows the rasterizer to do the 3 edge coverage tests against a single point, instead of
-    /// of having to compare individual edges to pixel corners to check if any part of the triangle
+    /// this allows the rasterizer to do the 3 edge coverage tests against a single point, instead of 
+    /// of having to compare individual edges to pixel corners to check if any part of the triangle 
     /// intersects a pixel
     typedef std::integral_constant<int32_t, (ConservativePrecisionT::ScaleT::value/2) + 1> ConservativeEdgeOffsetT;
     typedef std::integral_constant<int32_t, 0> InnerConservativeEdgeOffsetT;
@@ -203,13 +203,13 @@ struct ConservativeRastBETraits<ConservativeRastT, InnerConservativeCoverageT>
     typedef FixedPointTraits<Fixed_16_9> ConservativePrecisionT;
 
     /// offset edge away from pixel center by 1/2 pixel + 1/512, in Fixed 16.9 precision
-    /// this allows the rasterizer to do the 3 edge coverage tests against a single point, instead of
-    /// of having to compare individual edges to pixel corners to check if any part of the triangle
+    /// this allows the rasterizer to do the 3 edge coverage tests against a single point, instead of 
+    /// of having to compare individual edges to pixel corners to check if any part of the triangle 
     /// intersects a pixel
     typedef std::integral_constant<int32_t, (ConservativePrecisionT::ScaleT::value/2) + 1> ConservativeEdgeOffsetT;
 
     /// undo the outer conservative offset and offset edge towards from pixel center by 1/2 pixel + 1/512, in Fixed 16.9 precision
-    /// this allows the rasterizer to do the 3 edge coverage tests against a single point, instead of
+    /// this allows the rasterizer to do the 3 edge coverage tests against a single point, instead of 
     /// of having to compare individual edges to pixel corners to check if a pixel is fully covered by a triangle
     typedef std::integral_constant<int32_t, static_cast<int32_t>(-((ConservativePrecisionT::ScaleT::value/2) + 1) - ConservativeEdgeOffsetT::value)> InnerConservativeEdgeOffsetT;
 };

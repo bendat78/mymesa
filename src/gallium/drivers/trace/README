@@ -15,8 +15,8 @@ For tracing then do
 
  GALLIUM_TRACE=tri.trace trivial/tri
 
-which should create a tri.trace file, which is an XML file. You can view copying
-trace.xsl to the same directory, and opening with a XSLT capable browser such as
+which should create a tri.trace file, which is an XML file. You can view copying 
+trace.xsl to the same directory, and opening with a XSLT capable browser such as 
 Firefox or Internet Explorer.
 
 For long traces you can use the
@@ -33,13 +33,13 @@ For remote debugging see:
 
 = Integrating =
 
-You can integrate the trace pipe driver either inside the state tracker or the
-target. The procedure on both cases is the same. Let's assume you have a
+You can integrate the trace pipe driver either inside the state tracker or the 
+target. The procedure on both cases is the same. Let's assume you have a 
 pipe_screen obtained by the usual means (variable and function names are just
 for illustration purposes):
 
   real_screen = real_screen_create(...);
-
+  
 The trace screen is then created by doing
 
   trace_screen = trace_screen_create(real_screen);

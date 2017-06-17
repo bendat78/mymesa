@@ -297,7 +297,7 @@ for i in xrange(0, hash_size, 8):
             print "0x%04x," % (map[j] & 0xffff),
     print
 
-print "};"
+print "};"    
 
 # Finally we generate the hash table lookup function.  The hash function and
 # linear probing algorithm matches the hash table generated above.

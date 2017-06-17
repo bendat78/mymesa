@@ -628,7 +628,7 @@ _mesa_RasterPos3sv(const GLshort *v)
 void GLAPIENTRY
 _mesa_RasterPos4dv(const GLdouble *v)
 {
-   rasterpos((GLfloat) v[0], (GLfloat) v[1],
+   rasterpos((GLfloat) v[0], (GLfloat) v[1], 
 		     (GLfloat) v[2], (GLfloat) v[3]);
 }
 
@@ -641,7 +641,7 @@ _mesa_RasterPos4fv(const GLfloat *v)
 void GLAPIENTRY
 _mesa_RasterPos4iv(const GLint *v)
 {
-   rasterpos((GLfloat) v[0], (GLfloat) v[1],
+   rasterpos((GLfloat) v[0], (GLfloat) v[1], 
 		     (GLfloat) v[2], (GLfloat) v[3]);
 }
 
@@ -854,7 +854,7 @@ _mesa_WindowPos3sv(const GLshort *v)
 void GLAPIENTRY
 _mesa_WindowPos4dvMESA(const GLdouble *v)
 {
-   window_pos4f((GLfloat) v[0], (GLfloat) v[1],
+   window_pos4f((GLfloat) v[0], (GLfloat) v[1], 
 			 (GLfloat) v[2], (GLfloat) v[3]);
 }
 
@@ -867,7 +867,7 @@ _mesa_WindowPos4fvMESA(const GLfloat *v)
 void GLAPIENTRY
 _mesa_WindowPos4ivMESA(const GLint *v)
 {
-   window_pos4f((GLfloat) v[0], (GLfloat) v[1],
+   window_pos4f((GLfloat) v[0], (GLfloat) v[1], 
 			 (GLfloat) v[2], (GLfloat) v[3]);
 }
 

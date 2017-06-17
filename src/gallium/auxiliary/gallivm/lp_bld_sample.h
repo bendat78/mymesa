@@ -282,7 +282,7 @@ struct lp_sampler_dynamic_state
                    LLVMValueRef context_ptr,
                    unsigned sampler_unit);
 
-   /**
+   /** 
     * Obtain texture cache (returns ptr to lp_build_format_cache).
     *
     * It's optional: no caching will be done if it's NULL.
@@ -619,7 +619,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                         const struct lp_sampler_size_query_params *params);
 
 void
-lp_build_sample_nop(struct gallivm_state *gallivm,
+lp_build_sample_nop(struct gallivm_state *gallivm, 
                     struct lp_type type,
                     const LLVMValueRef *coords,
                     LLVMValueRef texel_out[4]);

@@ -23,12 +23,12 @@
 * @file ${filename}
 *
 * @brief Definitions for events.  auto-generated file
-*
+* 
 * DO NOT EDIT
 *
 * Generation Command Line:
 *  ${'\n*    '.join(cmdline)}
-*
+* 
 ******************************************************************************/
 #pragma once
 

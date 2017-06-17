@@ -167,7 +167,7 @@ boolean svga_init_swtnl( struct svga_context *svga )
       goto fail;
 
 
-   draw_set_rasterize_stage(svga->swtnl.draw,
+   draw_set_rasterize_stage(svga->swtnl.draw, 
                             draw_vbuf_stage( svga->swtnl.draw, svga->swtnl.backend ));
 
    draw_set_render(svga->swtnl.draw, svga->swtnl.backend);

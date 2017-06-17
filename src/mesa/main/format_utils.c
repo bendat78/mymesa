@@ -202,7 +202,7 @@ convert_ubyte_rgba_to_bgra(size_t width, size_t height,
       for (row = 0; row < height; row++) {
          const GLuint64 *s = (const GLuint64 *) src;
          GLuint64 *d = (GLuint64 *) dst;
-
+         
          for (i = 0; i < width/2; i++) {
             d[i] = ( (s[i] & 0xff00ff00ff00ff00) |
                     ((s[i] &       0xff000000ff) << 16) |
@@ -223,7 +223,7 @@ convert_ubyte_rgba_to_bgra(size_t width, size_t height,
       for (row = 0; row < height; row++) {
          const GLuint *s = (const GLuint *) src;
          GLuint *d = (GLuint *) dst;
-
+         
          for (i = 0; i < width; i++) {
             d[i] = ( (s[i] & 0xff00ff00) |
                     ((s[i] &       0xff) << 16) |
@@ -1181,7 +1181,7 @@ convert_ushort(void *void_dst, int num_dst_channels,
                const uint8_t swizzle[4], bool normalized, int count)
 {
    const uint16_t one = normalized ? UINT16_MAX : 1;
-
+   
    switch (src_type) {
    case MESA_ARRAY_FORMAT_TYPE_FLOAT:
       if (normalized) {

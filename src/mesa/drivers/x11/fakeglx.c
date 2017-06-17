@@ -1206,8 +1206,8 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          stencil_size = 8;
       if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0 ||
           accumAlphaSize > 0) {
-         accumRedSize =
-         accumGreenSize =
+         accumRedSize = 
+         accumGreenSize = 
          accumBlueSize = default_accum_bits();
          accumAlphaSize = alpha_flag ? accumRedSize : 0;
       }
@@ -2774,7 +2774,7 @@ Fake_glXAllocateMemoryNV( GLsizei size,
 }
 
 
-static void
+static void 
 Fake_glXFreeMemoryNV( GLvoid *pointer )
 {
    (void) pointer;

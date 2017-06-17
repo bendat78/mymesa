@@ -54,7 +54,7 @@ struct point_info {
    float (*dady)[4];
 
    boolean frontfacing;
-};
+};   
 
 
 /**
@@ -206,7 +206,7 @@ setup_point_fragcoord_coef(struct lp_setup_context *setup,
 /**
  * Compute the point->coef[] array dadx, dady, a0 values.
  */
-static void
+static void   
 setup_point_coefficients( struct lp_setup_context *setup,
                           struct point_info *info)
 {
@@ -227,7 +227,7 @@ setup_point_coefficients( struct lp_setup_context *setup,
       if (perspective & usage_mask) {
          fragcoord_usage_mask |= TGSI_WRITEMASK_W;
       }
-
+      
       switch (interp) {
       case LP_INTERP_POSITION:
          /*
@@ -479,7 +479,7 @@ try_setup_point( struct lp_setup_context *setup,
    info.dadx = GET_DADX(&point->inputs);
    info.dady = GET_DADY(&point->inputs);
    info.frontfacing = point->inputs.frontfacing;
-
+   
    /* Setup parameter interpolants:
     */
    setup_point_coefficients(setup, &info);
@@ -517,7 +517,7 @@ try_setup_point( struct lp_setup_context *setup,
 }
 
 
-static void
+static void 
 lp_setup_point(struct lp_setup_context *setup,
                const float (*v0)[4])
 {
@@ -532,7 +532,7 @@ lp_setup_point(struct lp_setup_context *setup,
 }
 
 
-void
+void 
 lp_setup_choose_point( struct lp_setup_context *setup )
 {
    setup->point = lp_setup_point;

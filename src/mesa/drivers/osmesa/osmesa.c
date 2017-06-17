@@ -891,7 +891,7 @@ OSMesaCreateContextAttribs(const int *attribList, OSMesaContext sharelist)
             free(osmesa);
             return NULL;
          }
-
+	
 	 _swsetup_Wakeup( ctx );
 
          /* use default TCL pipeline */
@@ -1038,7 +1038,7 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
 
    osmesa->DataType = type;
 
-   /* Set renderbuffer fields.  Set width/height = 0 to force
+   /* Set renderbuffer fields.  Set width/height = 0 to force 
     * osmesa_renderbuffer_storage() being called by _mesa_resize_framebuffer()
     */
    osmesa->srb->Buffer = buffer;

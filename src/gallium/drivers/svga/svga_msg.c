@@ -252,7 +252,7 @@ typedef uint32_t VMW_REG;
          (void) in_cx; (void) bp;                 \
          (void) ax; (void) bx; (void) cx;         \
          (void) dx; (void) si; (void) di;
-
+			
 
 #define VMW_PORT_HB_IN(cmd, in_cx, in_si, in_di,  \
          port_num, magic, bp,                     \

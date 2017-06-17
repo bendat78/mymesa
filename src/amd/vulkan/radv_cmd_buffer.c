@@ -966,7 +966,7 @@ radv_emit_fb_color_state(struct radv_cmd_buffer *cmd_buffer,
 		radeon_set_context_reg_seq(cmd_buffer->cs, R_028C94_CB_COLOR0_DCC_BASE + index * 0x3c, 2);
 		radeon_emit(cmd_buffer->cs, cb->cb_dcc_base);
 		radeon_emit(cmd_buffer->cs, cb->cb_dcc_base >> 32);
-
+		
 		radeon_set_context_reg(cmd_buffer->cs, R_0287A0_CB_MRT0_EPITCH + index * 4,
 				       cb->gfx9_epitch);
 	} else {
@@ -1386,7 +1386,7 @@ radv_flush_indirect_descriptor_sets(struct radv_cmd_buffer *cmd_buffer)
 	uint32_t size = MAX_SETS * 2 * 4;
 	uint32_t offset;
 	void *ptr;
-
+	
 	if (!radv_cmd_buffer_upload_alloc(cmd_buffer, size,
 					  256, &offset, &ptr))
 		return;

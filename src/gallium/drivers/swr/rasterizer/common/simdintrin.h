@@ -310,7 +310,7 @@ SIMD_EMU_EPI(_simdemu_unpackhi_epi16, _mm_unpackhi_epi16)
 #define _simd128_fmadd_ps _mm_fmaddemu_ps
 #define _simd_fmadd_ps _mm_fmaddemu256_ps
 #define _simd_fmsub_ps _mm_fmsubemu256_ps
-#define _simd_shuffle_epi8 _simdemu_shuffle_epi8
+#define _simd_shuffle_epi8 _simdemu_shuffle_epi8 
 SIMD_EMU_EPI(_simdemu_shuffle_epi8, _mm_shuffle_epi8)
 
 INLINE
@@ -384,7 +384,7 @@ __m256i _simd_abs_epi32(__m256i a)
         return result;
 }
 
-INLINE
+INLINE 
 int _simdemu_movemask_epi8(__m256i a)
 {
     __m128i aHi = _mm256_extractf128_si256(a, 1);
@@ -556,7 +556,7 @@ __m256i _simd_packs_epi32(__m256i a, __m256i b)
 #define _simd128_fmadd_ps _mm_fmadd_ps
 #define _simd_fmadd_ps _mm256_fmadd_ps
 #define _simd_fmsub_ps _mm256_fmsub_ps
-#define _simd_shuffle_epi8 _mm256_shuffle_epi8
+#define _simd_shuffle_epi8 _mm256_shuffle_epi8 
 #define _simd_adds_epu8 _mm256_adds_epu8
 #define _simd_subs_epu8 _mm256_subs_epu8
 #define _simd_add_epi8 _mm256_add_epi8
@@ -1133,7 +1133,7 @@ static INLINE simdscalar InterpolateComponent(simdscalar vI, simdscalar vJ, cons
 
     simdscalar vk = _simd_sub_ps(_simd_sub_ps(_simd_set1_ps(1.0f), vI), vJ);
     vC = _simd_mul_ps(vk, vC);
-
+    
     return vplaneps(vA, vB, vC, vI, vJ);
 }
 

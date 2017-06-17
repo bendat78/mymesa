@@ -150,7 +150,7 @@ HANDLE SwrCreateContext(
     pContext->pfnUpdateSoWriteOffset = pCreateInfo->pfnUpdateSoWriteOffset;
     pContext->pfnUpdateStats = pCreateInfo->pfnUpdateStats;
     pContext->pfnUpdateStatsFE = pCreateInfo->pfnUpdateStatsFE;
-
+    
 
     // pass pointer to bucket manager back to caller
 #ifdef KNOB_ENABLE_RDTSC
@@ -807,7 +807,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
         const uint32_t centroid = ((psState.barycentricsMask & SWR_BARYCENTRIC_CENTROID_MASK) > 0) ? 1 : 0;
         const uint32_t canEarlyZ = (psState.forceEarlyZ || (!psState.writesODepth && !psState.usesUAV)) ? 1 : 0;
         SWR_BARYCENTRICS_MASK barycentricsMask = (SWR_BARYCENTRICS_MASK)psState.barycentricsMask;
-
+        
         // select backend function
         switch(psState.shadingRate)
         {
@@ -838,7 +838,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
             break;
         }
     }
-
+    
     PFN_PROCESS_PRIMS pfnBinner;
 #if USE_SIMD16_FRONTEND
     PFN_PROCESS_PRIMS_SIMD16 pfnBinner_simd16;
@@ -943,8 +943,8 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     pState->state.depthHottileEnable = ((!(pState->state.depthStencilState.depthTestEnable &&
                                            !pState->state.depthStencilState.depthWriteEnable &&
                                            !pState->state.depthBoundsState.depthBoundsTestEnable &&
-                                           pState->state.depthStencilState.depthTestFunc == ZFUNC_ALWAYS)) &&
-                                        (pState->state.depthStencilState.depthTestEnable ||
+                                           pState->state.depthStencilState.depthTestFunc == ZFUNC_ALWAYS)) && 
+                                        (pState->state.depthStencilState.depthTestEnable || 
                                          pState->state.depthStencilState.depthWriteEnable ||
                                          pState->state.depthBoundsState.depthBoundsTestEnable)) ? true : false;
 
@@ -954,7 +954,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
                                           // for stencil we have to check the double sided state as well
                                           (!(pState->state.depthStencilState.doubleSidedStencilTestEnable &&
                                              !pState->state.depthStencilState.stencilWriteEnable &&
-                                              pState->state.depthStencilState.backfaceStencilTestFunc == ZFUNC_ALWAYS))) &&
+                                              pState->state.depthStencilState.backfaceStencilTestFunc == ZFUNC_ALWAYS))) && 
                                           (pState->state.depthStencilState.stencilTestEnable  ||
                                            pState->state.depthStencilState.stencilWriteEnable)) ? true : false;
 
@@ -964,7 +964,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     {
         for (uint32_t rt = 0; rt < numRTs; ++rt)
         {
-            pState->state.colorHottileEnable |=
+            pState->state.colorHottileEnable |=  
                 (!pState->state.blendState.renderTarget[rt].writeDisableAlpha ||
                  !pState->state.blendState.renderTarget[rt].writeDisableRed ||
                  !pState->state.blendState.renderTarget[rt].writeDisableGreen ||
@@ -1005,7 +1005,7 @@ void InitDraw(
         SetupMacroTileScissors(pDC);
         SetupPipeline(pDC);
     }
-
+    
 
 }
 
@@ -1319,7 +1319,7 @@ void DrawIndexedInstance(
     // Restore culling state
     pDC = GetDrawContext(pContext);
     pDC->pState->state.rastState.cullMode = oldCullMode;
-
+ 
     AR_API_END(APIDrawIndexed, numIndices * numInstances);
 }
 

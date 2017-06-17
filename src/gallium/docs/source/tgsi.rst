@@ -1748,7 +1748,7 @@ Some require glsl version 1.30 (UIF/BREAKC/SWITCH/CASE/DEFAULT/ENDSWITCH).
 .. note::
 
    Considered for removal as it's quite inconsistent wrt other opcodes
-   (could emulate with UIF/BRK/ENDIF).
+   (could emulate with UIF/BRK/ENDIF). 
 
 
 .. opcode:: IF - Float If

@@ -32,7 +32,7 @@
 #include <immintrin.h>
 #include <xmmintrin.h>
 
-#if KNOB_SIMD_WIDTH == 8
+#if KNOB_SIMD_WIDTH == 8 
 typedef __m256 simdscalar;
 typedef __m256i simdscalari;
 typedef uint8_t simdmask;
@@ -117,7 +117,7 @@ UINT pdep_u32(UINT a, UINT mask)
 #else
     UINT result = 0;
 
-    // copied from http://wm.ite.pl/articles/pdep-soft-emu.html
+    // copied from http://wm.ite.pl/articles/pdep-soft-emu.html 
     // using bsf instead of funky loop
     DWORD maskIndex;
     while (_BitScanForward(&maskIndex, mask))

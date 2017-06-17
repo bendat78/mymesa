@@ -37,7 +37,7 @@ class MakoTemplateWriter:
         See http://docs.makotemplates.org/en/latest/ for
         mako documentation.
    '''
-
+    
     @staticmethod
     def to_string(template_filename, **kwargs):
         '''
@@ -74,17 +74,17 @@ class ArgumentParser(argparse.ArgumentParser):
     Allow parsing from command files that start with @
     Example:
       >bt run @myargs.txt
-
+    
     Contents of myargs.txt:
       -m <machine>
       --target cdv_win7
-
+    
     The below function allows multiple args to be placed on the same text-file line.
     The default is one token per line, which is a little cumbersome.
-
+    
     Also allow all characters after a '#' character to be ignored.
     '''
-
+    
     #==============================================================================
     class _HelpFormatter(argparse.RawTextHelpFormatter):
         ''' Better help formatter for argument parser '''

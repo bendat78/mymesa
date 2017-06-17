@@ -222,14 +222,14 @@ make_fs_key(const struct svga_context *svga,
     * requires that the incoming fragment color be white.  This change
     * achieves that by creating a variant of the current fragment
     * shader that overrides all output colors with 1,1,1,1
-    *
+    *   
     * This will work for most shaders, including those containing
     * TEXKIL and/or depth-write.  However, it will break on the
     * combination of xor-logicop plus alphatest.
     *
     * Ultimately, we could implement alphatest in the shader using
     * texkil prior to overriding the outgoing fragment color.
-    *
+    *   
     * SVGA_NEW_BLEND
     */
    if (svga->curr.blend->need_white_fragments) {
@@ -467,7 +467,7 @@ done:
    return ret;
 }
 
-struct svga_tracked_state svga_hw_fs =
+struct svga_tracked_state svga_hw_fs = 
 {
    "fragment shader (hwtnl)",
    (SVGA_NEW_FS |

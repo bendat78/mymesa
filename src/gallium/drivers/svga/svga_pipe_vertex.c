@@ -317,7 +317,7 @@ svga_delete_vertex_elements_state(struct pipe_context *pipe, void *state)
 void svga_cleanup_vertex_state( struct svga_context *svga )
 {
    unsigned i;
-
+   
    for (i = 0 ; i < svga->curr.num_vertex_buffers; i++)
       pipe_vertex_buffer_unreference(&svga->curr.vb[i]);
 

@@ -615,7 +615,7 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
          return;
       }
    }
-
+   
    depthRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    stencilRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
    assert(depthRb);

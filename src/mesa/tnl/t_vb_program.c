@@ -388,9 +388,9 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
 #endif
 #if 0
       printf("HPOS: %f %f %f %f\n",
-             machine->Outputs[0][0],
-             machine->Outputs[0][1],
-             machine->Outputs[0][2],
+             machine->Outputs[0][0], 
+             machine->Outputs[0][1], 
+             machine->Outputs[0][2], 
              machine->Outputs[0][3]);
 #endif
    }

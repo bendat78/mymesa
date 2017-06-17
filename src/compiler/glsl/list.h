@@ -658,7 +658,7 @@ inline void exec_node::insert_before(exec_list *before)
 
 /**
  * This version is safe even if the current node is removed.
- */
+ */ 
 #define foreach_in_list_safe(__type, __node, __list) \
    for (__type *__node = (__type *)(__list)->head_sentinel.next,   \
                *__next = (__type *)__node->next;     \

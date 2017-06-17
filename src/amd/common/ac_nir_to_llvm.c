@@ -2134,7 +2134,7 @@ static LLVMValueRef visit_vulkan_resource_index(struct nir_to_llvm_context *ctx,
 	offset = LLVMConstInt(ctx->i32, base_offset, false);
 	index = LLVMBuildMul(ctx->builder, index, stride, "");
 	offset = LLVMBuildAdd(ctx->builder, offset, index, "");
-
+	
 	desc_ptr = ac_build_gep0(&ctx->ac, desc_ptr, offset);
 	desc_ptr = cast_ptr(ctx, desc_ptr, ctx->v4i32);
 	LLVMSetMetadata(desc_ptr, ctx->uniform_md_kind, ctx->empty_md);
@@ -5863,7 +5863,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 	memset(shader_info, 0, sizeof(*shader_info));
 
 	ac_nir_shader_info_pass(nir, options, &shader_info->info);
-
+		
 	LLVMSetTarget(ctx.module, options->supports_spill ? "amdgcn-mesa-mesa3d" : "amdgcn--");
 
 	LLVMTargetDataRef data_layout = LLVMCreateTargetDataLayout(tm);

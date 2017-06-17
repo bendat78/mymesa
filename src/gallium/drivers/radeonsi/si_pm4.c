@@ -102,7 +102,7 @@ void si_pm4_add_bo(struct si_pm4_state *state,
 
 void si_pm4_clear_state(struct si_pm4_state *state)
 {
-	unsigned i;
+	unsigned i;	
 	for (i = 0; i < state->nbo; ++i)
 		r600_resource_reference(&state->bo[i], NULL);
 	r600_resource_reference(&state->indirect_buffer, NULL);

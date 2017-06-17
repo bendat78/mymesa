@@ -1,8 +1,8 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
 
@@ -200,7 +200,7 @@ src_vector(struct i915_fp_compile *p,
        * components wide.  Could use a texcoord to pass these
        * attributes if necessary, but that won't work in the general
        * case.
-       *
+       * 
        * We also use a texture coordinate to pass wpos when possible.
        */
 
@@ -541,7 +541,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
-      /*
+      /* 
        * t0.xy = MUL x.xx11, x.x111  ; x^2, x, 1, 1
        * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, 1
        * t0 = MUL t0.xxz1 t0.z111    ; x^6 x^4 x^2 1
@@ -733,10 +733,10 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       /* b*a + c*(1-a)
        *
-       * b*a + c - ca
+       * b*a + c - ca 
        *
-       * tmp = b*a + c,
-       * result = (-c)*a + tmp
+       * tmp = b*a + c, 
+       * result = (-c)*a + tmp 
        */
       i915_emit_arith(p, A0_MAD, tmp,
                       flags & A0_DEST_CHANNEL_ALL, 0, src1, src0, src2);
@@ -818,7 +818,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       src0 = src_vector(p, &inst->Src[0], fs);
       tmp = i915_get_utemp(p);
 
-      /*
+      /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
        * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, x
        * t1 = MUL t0.xyyw t0.yz11    ; x^7 x^5 x^3 x
@@ -921,7 +921,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
-      /*
+      /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
        * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, x
        * t1 = MUL t0.xyyw t0.yz11    ; x^7 x^5 x^3 x
@@ -1262,7 +1262,7 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
       /* patch in the program length */
       p->declarations[0] |= program_size + decl_size - 2;
 
-      /* Copy compilation results to fragment program struct:
+      /* Copy compilation results to fragment program struct: 
        */
       assert(!ifs->decl);
       assert(!ifs->program);
@@ -1289,7 +1289,7 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
       }
    }
 
-   /* Release the compilation struct:
+   /* Release the compilation struct: 
     */
    FREE(p);
 }

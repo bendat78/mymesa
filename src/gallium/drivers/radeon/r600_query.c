@@ -894,7 +894,7 @@ static void r600_emit_query_predication(struct r600_common_context *ctx,
 		op |= PREDICATION_DRAW_VISIBLE; /* Draw if visable/overflow */
 
 	op |= flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW;
-
+	
 	/* emit predicate packets for all data blocks */
 	for (qbuf = &query->buffer; qbuf; qbuf = qbuf->previous) {
 		unsigned results_base = 0;

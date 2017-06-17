@@ -46,7 +46,7 @@ _mesa_vertex_attrib_address(const struct gl_array_attributes *array,
    if (_mesa_is_bufferobj(binding->BufferObj))
       return (const GLubyte *) (binding->Offset + array->RelativeOffset);
    else
-      return array->Ptr;
+      return array->Ptr;       
 }
 
 /**
@@ -459,7 +459,7 @@ _mesa_print_arrays(struct gl_context *ctx);
 extern void
 _mesa_init_varray( struct gl_context * ctx );
 
-extern void
+extern void 
 _mesa_free_varray_data(struct gl_context *ctx);
 
 #endif

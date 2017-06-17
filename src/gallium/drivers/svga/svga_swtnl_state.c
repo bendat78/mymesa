@@ -104,30 +104,30 @@ update_swtnl_draw( struct svga_context *svga,
 
    draw_flush( svga->swtnl.draw );
 
-   if (dirty & SVGA_NEW_VS)
+   if (dirty & SVGA_NEW_VS) 
       draw_bind_vertex_shader(svga->swtnl.draw,
                               svga->curr.vs->draw_shader);
 
-   if (dirty & SVGA_NEW_FS)
+   if (dirty & SVGA_NEW_FS) 
       draw_bind_fragment_shader(svga->swtnl.draw,
                                 svga->curr.fs->draw_shader);
 
    if (dirty & SVGA_NEW_VBUFFER)
       draw_set_vertex_buffers(svga->swtnl.draw, 0,
-                              svga->curr.num_vertex_buffers,
+                              svga->curr.num_vertex_buffers, 
                               svga->curr.vb);
 
    if (dirty & SVGA_NEW_VELEMENT)
-      draw_set_vertex_elements(svga->swtnl.draw,
-                               svga->curr.velems->count,
+      draw_set_vertex_elements(svga->swtnl.draw, 
+                               svga->curr.velems->count, 
                                svga->curr.velems->velem );
 
    if (dirty & SVGA_NEW_CLIP)
-      draw_set_clip_state(svga->swtnl.draw,
+      draw_set_clip_state(svga->swtnl.draw, 
                           &svga->curr.clip);
 
    if (dirty & (SVGA_NEW_VIEWPORT |
-                SVGA_NEW_REDUCED_PRIMITIVE |
+                SVGA_NEW_REDUCED_PRIMITIVE | 
                 SVGA_NEW_RAST))
       set_draw_viewport( svga );
 
@@ -142,7 +142,7 @@ update_swtnl_draw( struct svga_context *svga,
     * format for no bound depth (PIPE_FORMAT_NONE).
     */
    if (dirty & SVGA_NEW_FRAME_BUFFER)
-      draw_set_zs_format(svga->swtnl.draw,
+      draw_set_zs_format(svga->swtnl.draw, 
          (svga->curr.framebuffer.zsbuf) ?
              svga->curr.framebuffer.zsbuf->format : PIPE_FORMAT_NONE);
 
