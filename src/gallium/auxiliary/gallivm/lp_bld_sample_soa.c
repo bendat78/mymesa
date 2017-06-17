@@ -551,7 +551,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
    LLVMValueRef icoord;
-   
+
    switch(wrap_mode) {
    case PIPE_TEX_WRAP_REPEAT:
       if (is_pot) {
@@ -2441,7 +2441,7 @@ lp_build_sample_nop(struct gallivm_state *gallivm,
 
    for (chan = 0; chan < 4; chan++) {
       texel_out[chan] = one;
-   }  
+   }
 }
 
 

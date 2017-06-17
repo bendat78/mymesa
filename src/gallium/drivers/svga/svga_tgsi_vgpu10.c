@@ -2645,7 +2645,7 @@ emit_temporaries_declaration(struct svga_shader_emitter_v10 *emit)
       unsigned arrayID;
 
       arrayID = 1;
-      emit->num_temp_arrays = arrayID + 1; 
+      emit->num_temp_arrays = arrayID + 1;
       emit->temp_arrays[arrayID].start = 0;
       emit->temp_arrays[arrayID].size = total_temps;
 

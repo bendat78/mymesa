@@ -139,7 +139,7 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
    stwfb->texture_mask = mask;
 }
 
-static boolean 
+static boolean
 stw_st_framebuffer_validate(struct st_context_iface *stctx,
                             struct st_framebuffer_iface *stfb,
                             const enum st_attachment_type *statts,

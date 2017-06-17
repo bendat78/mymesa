@@ -934,7 +934,7 @@ _mesa_decompress_image(mesa_format format, GLuint width, GLuint height,
       _mesa_problem(NULL, "Unexpected format in _mesa_decompress_image()");
       return;
    }
- 
+
    stride = srcRowStride * bh / bytes;
 
    for (j = 0; j < height; j++) {

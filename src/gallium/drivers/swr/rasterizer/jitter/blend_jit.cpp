@@ -447,7 +447,7 @@ struct BlendJit : public Builder
     {
         // load uint32_t reference
         Value* pRef = VBROADCAST(LOAD(pBlendState, { 0, SWR_BLEND_STATE_alphaTestReference }));
-        
+
         // load alpha
         Value* pAlpha = LOAD(ppAlpha);
 
@@ -650,7 +650,7 @@ struct BlendJit : public Builder
                 STORE(result[i], pResult, { i });
             }
         }
-        
+
         if(state.blendState.logicOpEnable)
         {
             const SWR_FORMAT_INFO& info = GetFormatInfo(state.format);

@@ -395,7 +395,7 @@ typedef enum
    MESA_FORMAT_BGR_UNORM8,    /* ubyte[i*3] = B, [i*3+1] = G, [i*3+2] = R */
    MESA_FORMAT_RGB_UNORM8,    /* ubyte[i*3] = R, [i*3+1] = G, [i*3+2] = B */
    MESA_FORMAT_RGBA_UNORM16,  /* ushort[i] = R, [1] = G, [2] = B, [3] = A */
-   MESA_FORMAT_RGBX_UNORM16,  
+   MESA_FORMAT_RGBX_UNORM16,
 
    MESA_FORMAT_Z_UNORM16,     /* ushort[i] = Z */
    MESA_FORMAT_Z_UNORM32,     /* uint[i] = Z */

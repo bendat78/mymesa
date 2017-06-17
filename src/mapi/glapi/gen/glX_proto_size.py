@@ -47,7 +47,7 @@ class glx_enum_function(object):
 
         # "count" is indexed by count values.  Each element of count
         # is a list of index to "enums" that have that number of
-        # associated data elements.  For example, [4] = 
+        # associated data elements.  For example, [4] =
         # {GL_AMBIENT, GL_DIFFUSE, GL_SPECULAR, GL_EMISSION,
         # GL_AMBIENT_AND_DIFFUSE} (the enum names are used here,
         # but the actual hexadecimal values would be in the array).
@@ -186,7 +186,7 @@ class glx_enum_function(object):
 
 
     def PrintUsingSwitch(self, name):
-        """Emit the body of the __gl*_size function using a 
+        """Emit the body of the __gl*_size function using a
         switch-statement."""
 
         print '    switch( e ) {'

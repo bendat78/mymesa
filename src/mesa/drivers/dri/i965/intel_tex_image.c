@@ -36,7 +36,7 @@
  * Choose the original base level dimension when shifted dimensions agree.
  * Otherwise assume real resize is intended and use the new shifted value.
  */
-static unsigned 
+static unsigned
 get_base_dim(unsigned old_base_dim, unsigned new_level_dim, unsigned level)
 {
    const unsigned old_level_dim = old_base_dim >> level;

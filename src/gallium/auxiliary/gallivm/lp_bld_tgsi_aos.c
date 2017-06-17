@@ -60,7 +60,7 @@
 
 
 /**
- * Wrapper around lp_build_swizzle_aos which translates swizzles to another 
+ * Wrapper around lp_build_swizzle_aos which translates swizzles to another
  * ordering.
  */
 static LLVMValueRef
@@ -874,7 +874,7 @@ lp_emit_instruction_aos(
    default:
       return FALSE;
    }
-   
+
    if (info->num_dst) {
       lp_emit_store_aos(bld, inst, 0, dst0);
    }

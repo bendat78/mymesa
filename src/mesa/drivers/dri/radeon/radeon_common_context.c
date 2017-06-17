@@ -309,7 +309,7 @@ GLboolean radeonUnbindContext(__DRIcontext * driContextPriv)
 static unsigned
 radeon_bits_per_pixel(const struct radeon_renderbuffer *rb)
 {
-   return _mesa_get_format_bytes(rb->base.Base.Format) * 8; 
+   return _mesa_get_format_bytes(rb->base.Base.Format) * 8;
 }
 
 /*

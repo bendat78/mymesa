@@ -622,7 +622,7 @@ void BinTriangles(
     else
     {
         // degenerate triangles won't be sent to rasterizer; just enable all edges
-        pfnWork = GetRasterizerFunc(rastState.sampleCount, rastState.bIsCenterPattern, (rastState.conservativeRast > 0), 
+        pfnWork = GetRasterizerFunc(rastState.sampleCount, rastState.bIsCenterPattern, (rastState.conservativeRast > 0),
             (SWR_INPUT_COVERAGE)pDC->pState->state.psState.inputCoverage, EdgeValToEdgeState(ALL_EDGES_VALID), (state.scissorsTileAligned == false));
     }
 
@@ -700,7 +700,7 @@ void BinTriangles(
     if (CT::IsConservativeT::value)
     {
         // in the case where a degenerate triangle is on a scissor edge, we need to make sure the primitive bbox has
-        // some area. Bump the xmax/ymax edges out 
+        // some area. Bump the xmax/ymax edges out
         simdscalari topEqualsBottom = _simd_cmpeq_epi32(bbox.ymin, bbox.ymax);
         bbox.ymax = _simd_blendv_epi32(bbox.ymax, _simd_add_epi32(bbox.ymax, _simd_set1_epi32(1)), topEqualsBottom);
         simdscalari leftEqualsRight = _simd_cmpeq_epi32(bbox.xmin, bbox.xmax);
@@ -804,7 +804,7 @@ endBinTriangles:
         {
             // only rasterize valid edges if we have a degenerate primitive
             int32_t triEdgeEnable = (edgeEnable >> (triIndex * 3)) & ALL_EDGES_VALID;
-            work.pfnWork = GetRasterizerFunc(rastState.sampleCount, rastState.bIsCenterPattern, (rastState.conservativeRast > 0), 
+            work.pfnWork = GetRasterizerFunc(rastState.sampleCount, rastState.bIsCenterPattern, (rastState.conservativeRast > 0),
                 (SWR_INPUT_COVERAGE)pDC->pState->state.psState.inputCoverage, EdgeValToEdgeState(triEdgeEnable), (state.scissorsTileAligned == false));
 
             // Degenerate triangles are required to be constant interpolated
@@ -893,7 +893,7 @@ void SIMDAPI BinTriangles_simd16(
     simd16scalar vRecipW0 = _simd16_set1_ps(1.0f);
     simd16scalar vRecipW1 = _simd16_set1_ps(1.0f);
     simd16scalar vRecipW2 = _simd16_set1_ps(1.0f);
-    
+
     simd16scalari viewportIdx = _simd16_set1_epi32(0);
     if (state.backendState.readViewportArrayIndex)
     {
@@ -1153,7 +1153,7 @@ void SIMDAPI BinTriangles_simd16(
     if (CT::IsConservativeT::value)
     {
         // in the case where a degenerate triangle is on a scissor edge, we need to make sure the primitive bbox has
-        // some area. Bump the xmax/ymax edges out 
+        // some area. Bump the xmax/ymax edges out
         simd16scalari topEqualsBottom = _simd16_cmpeq_epi32(bbox.ymin, bbox.ymax);
         bbox.ymax = _simd16_blendv_epi32(bbox.ymax, _simd16_add_epi32(bbox.ymax, _simd16_set1_epi32(1)), topEqualsBottom);
         simd16scalari leftEqualsRight = _simd16_cmpeq_epi32(bbox.xmin, bbox.xmax);
@@ -1416,7 +1416,7 @@ void BinPostSetupPoints(
         primMask &= ~_simd_movemask_ps(_simd_castsi_ps(vXi));
         primMask &= ~_simd_movemask_ps(_simd_castsi_ps(vYi));
 
-        // compute macro tile coordinates 
+        // compute macro tile coordinates
         simdscalari macroX = _simd_srai_epi32(vXi, KNOB_MACROTILE_X_DIM_FIXED_SHIFT);
         simdscalari macroY = _simd_srai_epi32(vYi, KNOB_MACROTILE_Y_DIM_FIXED_SHIFT);
 
@@ -1797,7 +1797,7 @@ void BinPostSetupPoints_simd16(
         primMask &= ~_simd16_movemask_ps(_simd16_castsi_ps(vXi));
         primMask &= ~_simd16_movemask_ps(_simd16_castsi_ps(vYi));
 
-        // compute macro tile coordinates 
+        // compute macro tile coordinates
         simd16scalari macroX = _simd16_srai_epi32(vXi, KNOB_MACROTILE_X_DIM_FIXED_SHIFT);
         simd16scalari macroY = _simd16_srai_epi32(vYi, KNOB_MACROTILE_Y_DIM_FIXED_SHIFT);
 

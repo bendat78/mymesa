@@ -852,7 +852,7 @@ public:
 class ast_type_specifier : public ast_node {
 public:
    /** Construct a type specifier from a type name */
-   ast_type_specifier(const char *name) 
+   ast_type_specifier(const char *name)
       : type_name(name), structure(NULL), array_specifier(NULL),
 	default_precision(ast_precision_none)
    {
@@ -1133,7 +1133,7 @@ public:
       ast_while,
       ast_do_while
    } mode;
-   
+
 
    ast_node *init_statement;
    ast_node *condition;

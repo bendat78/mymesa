@@ -90,9 +90,9 @@ def write_format_table(formats):
     print '#include "u_format_latc.h"'
     print '#include "u_format_etc.h"'
     print
-    
+
     u_format_pack.generate(formats)
-    
+
     def do_channel_array(channels, swizzles):
         print "   {"
         for i in range(4):
@@ -143,40 +143,40 @@ def write_format_table(formats):
         if format.layout == 'etc' and format.short_name() != 'etc1_rgb8':
             access = False
         if format.colorspace != ZS and not format.is_pure_color() and access:
-            print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name() 
-            print "   &util_format_%s_pack_rgba_8unorm," % format.short_name() 
+            print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name()
+            print "   &util_format_%s_pack_rgba_8unorm," % format.short_name()
             if format.layout == 's3tc' or format.layout == 'rgtc':
                 print "   &util_format_%s_fetch_rgba_8unorm," % format.short_name()
             else:
-                print "   NULL, /* fetch_rgba_8unorm */" 
-            print "   &util_format_%s_unpack_rgba_float," % format.short_name() 
-            print "   &util_format_%s_pack_rgba_float," % format.short_name() 
+                print "   NULL, /* fetch_rgba_8unorm */"
+            print "   &util_format_%s_unpack_rgba_float," % format.short_name()
+            print "   &util_format_%s_pack_rgba_float," % format.short_name()
             print "   &util_format_%s_fetch_rgba_float," % format.short_name()
         else:
-            print "   NULL, /* unpack_rgba_8unorm */" 
-            print "   NULL, /* pack_rgba_8unorm */" 
-            print "   NULL, /* fetch_rgba_8unorm */" 
-            print "   NULL, /* unpack_rgba_float */" 
-            print "   NULL, /* pack_rgba_float */" 
-            print "   NULL, /* fetch_rgba_float */" 
+            print "   NULL, /* unpack_rgba_8unorm */"
+            print "   NULL, /* pack_rgba_8unorm */"
+            print "   NULL, /* fetch_rgba_8unorm */"
+            print "   NULL, /* unpack_rgba_float */"
+            print "   NULL, /* pack_rgba_float */"
+            print "   NULL, /* fetch_rgba_float */"
         if format.has_depth():
-            print "   &util_format_%s_unpack_z_32unorm," % format.short_name() 
-            print "   &util_format_%s_pack_z_32unorm," % format.short_name() 
-            print "   &util_format_%s_unpack_z_float," % format.short_name() 
-            print "   &util_format_%s_pack_z_float," % format.short_name() 
+            print "   &util_format_%s_unpack_z_32unorm," % format.short_name()
+            print "   &util_format_%s_pack_z_32unorm," % format.short_name()
+            print "   &util_format_%s_unpack_z_float," % format.short_name()
+            print "   &util_format_%s_pack_z_float," % format.short_name()
         else:
-            print "   NULL, /* unpack_z_32unorm */" 
-            print "   NULL, /* pack_z_32unorm */" 
-            print "   NULL, /* unpack_z_float */" 
-            print "   NULL, /* pack_z_float */" 
+            print "   NULL, /* unpack_z_32unorm */"
+            print "   NULL, /* pack_z_32unorm */"
+            print "   NULL, /* unpack_z_float */"
+            print "   NULL, /* pack_z_float */"
         if format.has_stencil():
-            print "   &util_format_%s_unpack_s_8uint," % format.short_name() 
-            print "   &util_format_%s_pack_s_8uint," % format.short_name() 
+            print "   &util_format_%s_unpack_s_8uint," % format.short_name()
+            print "   &util_format_%s_pack_s_8uint," % format.short_name()
         else:
-            print "   NULL, /* unpack_s_8uint */" 
+            print "   NULL, /* unpack_s_8uint */"
             print "   NULL, /* pack_s_8uint */"
         if format.is_pure_unsigned():
-            print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name() 
+            print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()
             print "   &util_format_%s_pack_signed,  /* pack_rgba_sint */" % format.short_name()
@@ -190,15 +190,15 @@ def write_format_table(formats):
             print "   NULL,  /* fetch_rgba_uint */"
             print "   &util_format_%s_fetch_signed  /* fetch_rgba_sint */" % format.short_name()
         else:
-            print "   NULL, /* unpack_rgba_uint */" 
-            print "   NULL, /* pack_rgba_uint */" 
-            print "   NULL, /* unpack_rgba_sint */" 
+            print "   NULL, /* unpack_rgba_uint */"
+            print "   NULL, /* pack_rgba_uint */"
+            print "   NULL, /* unpack_rgba_sint */"
             print "   NULL, /* pack_rgba_sint */"
             print "   NULL, /* fetch_rgba_uint */"
             print "   NULL  /* fetch_rgba_sint */"
         print "};"
         print
-        
+
     print "const struct util_format_description *"
     print "util_format_description(enum pipe_format format)"
     print "{"

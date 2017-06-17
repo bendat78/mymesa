@@ -67,7 +67,7 @@
 
 #define MAX_GLSL_TEXTURE_OFFSET 4
 
-extern int swizzle_for_size(int size); 
+extern int swizzle_for_size(int size);
 
 class variable_storage {
    DECLARE_RZALLOC_CXX_OPERATORS(variable_storage)
@@ -2095,7 +2095,7 @@ glsl_to_tgsi_visitor::visit_expression(ir_expression* ir, st_src_reg *op)
       st_src_reg temp = get_temp(glsl_type::uvec4_type);
       st_dst_reg temp_dst = st_dst_reg(temp);
       unsigned orig_swz = op[0].swizzle;
-      /* 
+      /*
        * To convert unsigned to 64-bit:
        * zero Y channel, copy X channel.
        */

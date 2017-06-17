@@ -1000,7 +1000,7 @@ bool PaTriStrip1(PA_STATE_OPT& pa, uint32_t slot, simdvector verts[])
         simdvector& v0 = verts[0];
         v0[i] = a0;
 
-        //  s -> 4567891011 
+        //  s -> 4567891011
         s = _simd_permute2f128_ps(a0, b0, 0x21);
         //  s -> 23456789
         s = _simd_shuffle_ps(a0, s, _MM_SHUFFLE(1, 0, 3, 2));
@@ -2265,7 +2265,7 @@ bool PaRectList0(PA_STATE_OPT& pa, uint32_t slot, simdvector verts[])
     SetNextPaState(pa, PaRectList1, PaRectListSingle0);
     return false;
 }
- 
+
 //////////////////////////////////////////////////////////////////////////
 /// @brief State 1 for RECT_LIST topology.
 ///   Rect lists has the following format.
@@ -2274,16 +2274,16 @@ bool PaRectList0(PA_STATE_OPT& pa, uint32_t slot, simdvector verts[])
 ///         | \ |      | \ |      | \ |       | \ |
 ///      v1 o---o   v4 o---o   v7 o---o   v10 o---o
 ///            v0         v3         v6          v9
-/// 
+///
 ///   Only 3 vertices of the rectangle are supplied. The 4th vertex is implied.
-/// 
+///
 ///   tri0 = { v0, v1, v2 }  tri1 = { v0, v2, w } <-- w = v0 - v1 + v2
 ///   tri2 = { v3, v4, v5 }  tri3 = { v3, v5, x } <-- x = v3 - v4 + v5
 ///   etc.
-/// 
+///
 ///   PA outputs 3 simdvectors for each of the triangle vertices v0, v1, v2
 ///   where v0 contains all the first vertices for 8 triangles.
-/// 
+///
 ///     Result:
 ///      verts[0] = { v0, v0, v3, v3, v6, v6, v9, v9 }
 ///      verts[1] = { v1, v2, v4, v5, v7, v8, v10, v11 }
@@ -2402,16 +2402,16 @@ bool PaRectList0_simd16(PA_STATE_OPT& pa, uint32_t slot, simd16vector verts[])
 ///         | \ |      | \ |      | \ |       | \ |
 ///      v1 o---o   v4 o---o   v7 o---o   v10 o---o
 ///            v0         v3         v6          v9
-/// 
+///
 ///   Only 3 vertices of the rectangle are supplied. The 4th vertex is implied.
-/// 
+///
 ///   tri0 = { v0, v1, v2 }  tri1 = { v0, v2, w } <-- w = v0 - v1 + v2
 ///   tri2 = { v3, v4, v5 }  tri3 = { v3, v5, x } <-- x = v3 - v4 + v5
 ///   etc.
-/// 
+///
 ///   PA outputs 3 simdvectors for each of the triangle vertices v0, v1, v2
 ///   where v0 contains all the first vertices for 8 triangles.
-/// 
+///
 ///     Result:
 ///      verts[0] = { v0, v0, v3, v3, v6, v6, v9, v9 }
 ///      verts[1] = { v1, v2, v4, v5, v7, v8, v10, v11 }
@@ -2587,9 +2587,9 @@ void PaRectListSingle0(
     };
 }
 
-PA_STATE_OPT::PA_STATE_OPT(DRAW_CONTEXT *in_pDC, uint32_t in_numPrims, uint8_t* pStream, uint32_t in_streamSizeInVerts, 
-    uint32_t in_vertexStride, bool in_isStreaming, PRIMITIVE_TOPOLOGY topo) : 
-    PA_STATE(in_pDC, pStream, in_streamSizeInVerts, in_vertexStride), numPrims(in_numPrims), numPrimsComplete(0), numSimdPrims(0), 
+PA_STATE_OPT::PA_STATE_OPT(DRAW_CONTEXT *in_pDC, uint32_t in_numPrims, uint8_t* pStream, uint32_t in_streamSizeInVerts,
+    uint32_t in_vertexStride, bool in_isStreaming, PRIMITIVE_TOPOLOGY topo) :
+    PA_STATE(in_pDC, pStream, in_streamSizeInVerts, in_vertexStride), numPrims(in_numPrims), numPrimsComplete(0), numSimdPrims(0),
     cur(0), prev(0), first(0), counter(0), reset(false), pfnPaFunc(nullptr), isStreaming(in_isStreaming)
 {
     const API_STATE& state = GetApiState(pDC);

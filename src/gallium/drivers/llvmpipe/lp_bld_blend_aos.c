@@ -214,8 +214,8 @@ lp_build_blend_factor_swizzle(unsigned factor)
 
 static LLVMValueRef
 lp_build_blend_swizzle(struct lp_build_blend_aos_context *bld,
-                       LLVMValueRef rgb, 
-                       LLVMValueRef alpha, 
+                       LLVMValueRef rgb,
+                       LLVMValueRef alpha,
                        enum lp_build_blend_swizzle rgb_swizzle,
                        unsigned alpha_swizzle,
                        unsigned num_channels)

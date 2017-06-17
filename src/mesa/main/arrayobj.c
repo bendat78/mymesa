@@ -510,7 +510,7 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
          if (ctx->Array.LastLookedUpVAO == obj)
             _mesa_reference_vao(ctx, &ctx->Array.LastLookedUpVAO, NULL);
 
-         /* Unreference the array object. 
+         /* Unreference the array object.
           * If refcount hits zero, the object will be deleted.
           */
          _mesa_reference_vao(ctx, &obj, NULL);

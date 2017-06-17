@@ -39,7 +39,7 @@ static GLuint check_size( const GLfloat *attr )
    if (attr[3] != 1.0F) return 4;
    if (attr[2] != 0.0F) return 3;
    if (attr[1] != 0.0F) return 2;
-   return 1;		
+   return 1;
 }
 
 
@@ -201,7 +201,7 @@ GLboolean _vbo_CreateContext( struct gl_context *ctx )
       GLuint i;
 
       /* identity mapping */
-      for (i = 0; i < ARRAY_SIZE(vbo->map_vp_none); i++) 
+      for (i = 0; i < ARRAY_SIZE(vbo->map_vp_none); i++)
 	 vbo->map_vp_none[i] = i;
       /* map material attribs to generic slots */
       for (i = 0; i < MAT_ATTRIB_MAX; i++)

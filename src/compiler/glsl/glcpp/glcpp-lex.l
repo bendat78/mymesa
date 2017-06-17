@@ -382,7 +382,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 * While in the <DEFINE> state we also need to explicitly
 	 * handle a few other things that may appear before the
 	 * identifier:
-	 * 
+	 *
 	 * 	* Comments, (handled above with the main support for
 	 * 	  comments).
 	 *

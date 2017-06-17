@@ -181,7 +181,7 @@ HASH		^{SPC}#{SPC}
 
 [ \r\t]+		;
 
-    /* Preprocessor tokens. */ 
+    /* Preprocessor tokens. */
 ^[ \t]*#[ \t]*$			;
 ^[ \t]*#[ \t]*version		{ BEGIN PP; return VERSION_TOK; }
 ^[ \t]*#[ \t]*extension		{ BEGIN PP; return EXTENSION; }

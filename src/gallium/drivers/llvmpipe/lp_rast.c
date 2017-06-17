@@ -645,7 +645,7 @@ rasterize_bin(struct lp_rasterizer_task *task,
  * stores them again unchanged.  This typically happens when bins have
  * been flushed for some reason in the middle of a frame, or when
  * incremental updates are being made to a render target.
- * 
+ *
  * Try to avoid doing pointless work in this case.
  */
 static boolean
@@ -726,7 +726,7 @@ lp_rast_queue_scene( struct lp_rasterizer *rast,
       /* no threading */
       unsigned fpstate = util_fpstate_get();
 
-      /* Make sure that denorms are treated like zeros. This is 
+      /* Make sure that denorms are treated like zeros. This is
        * the behavior required by D3D10. OpenGL doesn't care.
        */
       util_fpstate_set_denorms_to_zero(fpstate);
@@ -793,7 +793,7 @@ thread_function(void *init_data)
    util_snprintf(thread_name, sizeof thread_name, "llvmpipe-%u", task->thread_index);
    u_thread_setname(thread_name);
 
-   /* Make sure that denorms are treated like zeros. This is 
+   /* Make sure that denorms are treated like zeros. This is
     * the behavior required by D3D10. OpenGL doesn't care.
     */
    fpstate = util_fpstate_get();
@@ -813,7 +813,7 @@ thread_function(void *init_data)
           *  - get next scene to rasterize
           *  - map the framebuffer surfaces
           */
-         lp_rast_begin( rast, 
+         lp_rast_begin( rast,
                         lp_scene_dequeue( rast->full_scenes, TRUE ) );
       }
 
@@ -828,7 +828,7 @@ thread_function(void *init_data)
 
       rasterize_scene(task,
                       rast->curr_scene);
-      
+
       /* wait for all threads to finish with this scene */
       pipe_barrier_wait( &rast->barrier );
 

@@ -542,7 +542,7 @@ _mesa_is_format_unsigned(mesa_format format)
 GLboolean
 _mesa_is_format_signed(mesa_format format)
 {
-   if (format == MESA_FORMAT_R11G11B10_FLOAT || 
+   if (format == MESA_FORMAT_R11G11B10_FLOAT ||
        format == MESA_FORMAT_R9G9B9E5_FLOAT) {
       /* these packed float formats only store unsigned values */
       return GL_FALSE;

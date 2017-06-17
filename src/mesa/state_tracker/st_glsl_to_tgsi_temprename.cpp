@@ -482,8 +482,8 @@ pair<int, int> tgsi_temp_lifetime::temp_access::get_required_lifetime() const
    }
 
 
-   
-   
+
+
    // same level and same range means it is first
    // written and last read in the same scope
    // ignore the case when first read is before

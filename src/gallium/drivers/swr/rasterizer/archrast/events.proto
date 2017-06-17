@@ -278,7 +278,7 @@ event EarlyZSingleSample
     uint32_t drawId;
     uint64_t passCount;
     uint64_t failCount;
-};	
+};
 
 event LateZSingleSample
 {
@@ -289,14 +289,14 @@ event LateZSingleSample
 
 event EarlyStencilSingleSample
 {
-    uint32_t drawId; 
+    uint32_t drawId;
     uint64_t passCount;
     uint64_t failCount;
 };
 
 event LateStencilSingleSample
 {
-    uint32_t drawId; 
+    uint32_t drawId;
     uint64_t passCount;
     uint64_t failCount;
 };
@@ -306,7 +306,7 @@ event EarlyZSampleRate
     uint32_t drawId;
     uint64_t passCount;
     uint64_t failCount;
-};	
+};
 
 event LateZSampleRate
 {
@@ -317,14 +317,14 @@ event LateZSampleRate
 
 event EarlyStencilSampleRate
 {
-    uint32_t drawId; 
+    uint32_t drawId;
     uint64_t passCount;
     uint64_t failCount;
 };
 
 event LateStencilSampleRate
 {
-    uint32_t drawId; 
+    uint32_t drawId;
     uint64_t passCount;
     uint64_t failCount;
 };
@@ -338,7 +338,7 @@ event EarlyZNullPS
 
 event EarlyStencilNullPS
 {
-    uint32_t drawId; 
+    uint32_t drawId;
     uint64_t passCount;
     uint64_t failCount;
 };

@@ -137,7 +137,7 @@ emit_tex_binding_unit(struct svga_context *svga,
 
 
 static enum pipe_error
-update_tss_binding(struct svga_context *svga, 
+update_tss_binding(struct svga_context *svga,
                    unsigned dirty )
 {
    const enum pipe_shader_type shader = PIPE_SHADER_FRAGMENT;
@@ -152,7 +152,7 @@ update_tss_binding(struct svga_context *svga,
       return PIPE_OK;
 
    queue.bind_count = 0;
-   
+
    for (i = 0; i < count; i++) {
       emit_tex_binding_unit(svga, i,
                             svga->curr.sampler[shader][i],
@@ -200,7 +200,7 @@ update_tss_binding(struct svga_context *svga,
                                        NULL,
                                        handle,
                                        SVGA_RELOC_READ);
-         
+
          queue.bind[i].view->dirty = FALSE;
       }
 
@@ -378,7 +378,7 @@ emit_tss_unit(struct svga_context *svga, unsigned unit,
 }
 
 static enum pipe_error
-update_tss(struct svga_context *svga, 
+update_tss(struct svga_context *svga,
            unsigned dirty )
 {
    const enum pipe_shader_type shader = PIPE_SHADER_FRAGMENT;
@@ -403,7 +403,7 @@ update_tss(struct svga_context *svga,
                     svga->polygon_stipple.sampler,
                     &queue);
    }
- 
+
    if (queue.ts_count) {
       SVGA3dTextureState *ts;
 
@@ -415,7 +415,7 @@ update_tss(struct svga_context *svga,
       memcpy( ts,
               queue.ts,
               queue.ts_count * sizeof queue.ts[0]);
-      
+
       SVGA_FIFOCommitAll( svga->swc );
    }
 

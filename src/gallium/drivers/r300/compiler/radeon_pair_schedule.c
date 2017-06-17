@@ -710,7 +710,7 @@ static int merge_instructions(struct rc_pair_instruction * rgb, struct rc_pair_i
 }
 
 static void presub_nop(struct rc_instruction * emitted) {
-	
+
 	int prev_rgb_index, prev_alpha_index;
 	unsigned int i, num_src;
 

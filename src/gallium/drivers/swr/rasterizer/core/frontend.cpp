@@ -548,7 +548,7 @@ static void StreamOut(
             soMask &= ~(1 << slot);
         }
 
-        // Update pPrimData pointer 
+        // Update pPrimData pointer
         soContext.pPrimData = pPrimData;
 
         // Call SOS

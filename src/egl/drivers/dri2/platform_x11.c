@@ -221,7 +221,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
       _eglError(EGL_BAD_ALLOC, "dri2_create_surface");
       return NULL;
    }
-   
+
    if (!_eglInitSurface(&dri2_surf->base, disp, type, conf, attrib_list))
       goto cleanup_surf;
 
@@ -251,7 +251,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
                                            dri2_surf);
    } else {
       assert(dri2_dpy->swrast);
-      dri2_surf->dri_drawable = 
+      dri2_surf->dri_drawable =
          dri2_dpy->swrast->createNewDrawable(dri2_dpy->dri_screen, config,
                                              dri2_surf);
    }
@@ -379,7 +379,7 @@ dri2_x11_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
    (void) drv;
 
    dri2_dpy->core->destroyDrawable(dri2_surf->dri_drawable);
-   
+
    if (dri2_dpy->dri2) {
       xcb_dri2_destroy_drawable (dri2_dpy->conn, dri2_surf->drawable);
    } else {

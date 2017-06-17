@@ -220,7 +220,7 @@ enum {
    lp_build_struct_get(_gallivm, _ptr, \
                        LP_JIT_THREAD_DATA_RASTER_STATE_VIEWPORT_INDEX, \
                        "raster_state.viewport_index")
- 
+
 /**
  * typedef for fragment shader function
  *

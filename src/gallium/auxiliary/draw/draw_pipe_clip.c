@@ -1,5 +1,5 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -131,7 +131,7 @@ static void copy_flat(struct draw_stage *stage,
    }
 }
 
-/* Interpolate between two vertices to produce a third.  
+/* Interpolate between two vertices to produce a third.
  */
 static void interp(const struct clip_stage *clip,
                    struct vertex_header *dst,
@@ -176,7 +176,7 @@ static void interp(const struct clip_stage *clip,
       dst->data[pos_attr][2] = pos[2] * oow * scale[2] + trans[2];
       dst->data[pos_attr][3] = oow;
    }
-   
+
 
    /* interp perspective attribs */
    for (j = 0; j < clip->num_perspect_attribs; j++) {
@@ -633,7 +633,7 @@ do_clip_line(struct draw_stage *stage,
       if (dp1 < 0.0F) {
          float t = dp1 / (dp1 - dp0);
          t1 = MAX2(t1, t);
-      } 
+      }
 
       if (dp0 < 0.0F) {
          float t = dp0 / (dp0 - dp1);
@@ -730,7 +730,7 @@ clip_first_point(struct draw_stage *stage, struct prim_header *header)
 static void
 clip_line(struct draw_stage *stage, struct prim_header *header)
 {
-   unsigned clipmask = (header->v[0]->clipmask | 
+   unsigned clipmask = (header->v[0]->clipmask |
                         header->v[1]->clipmask);
 
    if (clipmask == 0) {
@@ -748,16 +748,16 @@ clip_line(struct draw_stage *stage, struct prim_header *header)
 static void
 clip_tri(struct draw_stage *stage, struct prim_header *header)
 {
-   unsigned clipmask = (header->v[0]->clipmask | 
-                        header->v[1]->clipmask | 
+   unsigned clipmask = (header->v[0]->clipmask |
+                        header->v[1]->clipmask |
                         header->v[2]->clipmask);
 
    if (clipmask == 0) {
       /* no clipping needed */
       stage->next->tri( stage->next, header );
    }
-   else if ((header->v[0]->clipmask & 
-             header->v[1]->clipmask & 
+   else if ((header->v[0]->clipmask &
+             header->v[1]->clipmask &
              header->v[2]->clipmask) == 0) {
       do_clip_tri(stage, header, clipmask);
    }
@@ -808,7 +808,7 @@ find_interp(const struct draw_fragment_shader *fs, int *indexed_interp,
 /* Update state.  Could further delay this until we hit the first
  * primitive that really requires clipping.
  */
-static void 
+static void
 clip_init_state(struct draw_stage *stage)
 {
    struct clip_stage *clipper = clip_stage(stage);

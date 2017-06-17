@@ -104,7 +104,7 @@ _mesa_geometric_layers(const struct gl_framebuffer *buffer)
       buffer->MaxNumLayers : buffer->DefaultGeometry.Layers;
 }
 
-extern void 
+extern void
 _mesa_update_draw_buffer_bounds(struct gl_context *ctx,
                                 struct gl_framebuffer *drawFb);
 

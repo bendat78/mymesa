@@ -185,7 +185,7 @@ _mesa_parse_arb_vertex_program(struct gl_context *ctx, GLenum target,
 
    ralloc_free(program->String);
 
-   /* Copy the relevant contents of the arb_program struct into the 
+   /* Copy the relevant contents of the arb_program struct into the
     * vertex_program struct.
     */
    program->String          = prog.String;

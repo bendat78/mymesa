@@ -41,7 +41,7 @@ typedef struct expression_value {
 	intmax_t value;
 	char *undefined_macro;
 } expression_value_t;
-   
+
 
 typedef struct string_node {
 	const char *str;

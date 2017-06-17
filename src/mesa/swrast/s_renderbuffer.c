@@ -583,7 +583,7 @@ map_attachment(struct gl_context *ctx,
 
    assert(srb->Map);
 }
- 
+
 
 static void
 unmap_attachment(struct gl_context *ctx,
@@ -665,8 +665,8 @@ _swrast_map_renderbuffers(struct gl_context *ctx)
       }
    }
 }
- 
- 
+
+
 /**
  * Unmap renderbuffers after rendering.
  */

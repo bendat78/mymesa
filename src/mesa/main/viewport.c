@@ -132,7 +132,7 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 /**
  * Set new viewport parameters and update derived state.
  * Usually called from _mesa_Viewport().
- * 
+ *
  * \param ctx GL context.
  * \param idx    Index of the viewport to be updated.
  * \param x, y coordinates of the lower left corner of the viewport rectangle.
@@ -389,7 +389,7 @@ _mesa_DepthRangeIndexedfOES(GLuint index, GLfloat nearval, GLfloat farval)
    _mesa_DepthRangeIndexed(index, nearval, farval);
 }
 
-/** 
+/**
  * Initialize the context viewport attribute group.
  * \param ctx  the GL context.
  */

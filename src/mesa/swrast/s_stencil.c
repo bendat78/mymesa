@@ -435,9 +435,9 @@ _swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span)
       put_s8_values(ctx, rb, count, span->array->x, span->array->y,
                     stencilBuf);
    }
-   
+
    span->writeAll = GL_FALSE;
-   
+
    return GL_TRUE;  /* one or more fragments passed both tests */
 }
 

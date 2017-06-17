@@ -129,7 +129,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
     // SWR_FETCH_CONTEXT::pLastIndex
     Value*    pLastIndex = LOAD(mpFetchInfo,{0, SWR_FETCH_CONTEXT_pLastIndex});
     pLastIndex->setName("pLastIndex");
-    
+
 
     Value* vIndices;
     switch(fetchState.indexType)
@@ -145,8 +145,8 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
                 vIndices = GetSimdValid8bitIndices(indices, pLastIndex);
             }
             break;
-        case R16_UINT: 
-            indices = BITCAST(indices, Type::getInt16PtrTy(JM()->mContext, 0)); 
+        case R16_UINT:
+            indices = BITCAST(indices, Type::getInt16PtrTy(JM()->mContext, 0));
             if(fetchState.bDisableIndexOOBCheck){
                 vIndices = LOAD(BITCAST(indices, PointerType::get(VectorType::get(mInt16Ty, mpJitMgr->mVWidth), 0)), {(uint32_t)0});
                 vIndices = Z_EXT(vIndices, mSimdInt32Ty);
@@ -229,8 +229,8 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Loads attributes from memory using LOADs, shuffling the 
-/// components into SOA form. 
+/// @brief Loads attributes from memory using LOADs, shuffling the
+/// components into SOA form.
 /// *Note* currently does not support component control,
 /// component packing, instancing
 /// @param fetchState - info about attributes to be fetched from memory
@@ -469,10 +469,10 @@ void FetchJit::JitLoadVertices(const FETCH_COMPILE_STATE &fetchState, Value* str
         std::vector<Constant*>        v13Mask(mVWidth);
 
         // Concatenate the vectors together.
-        elements[0] = VUNDEF_F(); 
-        elements[1] = VUNDEF_F(); 
-        elements[2] = VUNDEF_F(); 
-        elements[3] = VUNDEF_F(); 
+        elements[0] = VUNDEF_F();
+        elements[1] = VUNDEF_F();
+        elements[2] = VUNDEF_F();
+        elements[3] = VUNDEF_F();
         for(uint32_t b = 0, num4Wide = mVWidth / 4; b < num4Wide; ++b)
         {
             v01Mask[4 * b + 0] = C(0 + 4 * b);
@@ -748,13 +748,13 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
         }
         else
         {
-            // offset indices by baseVertex            
+            // offset indices by baseVertex
             vCurIndices = ADD(vIndices, vBaseVertex);
 
             startOffset = startVertex;
         }
 
-        // All of the OOB calculations are in vertices, not VB offsets, to prevent having to 
+        // All of the OOB calculations are in vertices, not VB offsets, to prevent having to
         // do 64bit address offset calculations.
 
         // calculate byte offset to the start of the VB
@@ -816,10 +816,10 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
         Value* vOffsets = MUL(vCurIndices, vStride);
         vOffsets = ADD(vOffsets, vAlignmentOffsets);
 
-        // Packing and component control 
+        // Packing and component control
         ComponentEnable compMask = (ComponentEnable)ied.ComponentPacking;
-        const ComponentControl compCtrl[4] { (ComponentControl)ied.ComponentControl0, (ComponentControl)ied.ComponentControl1, 
-                                             (ComponentControl)ied.ComponentControl2, (ComponentControl)ied.ComponentControl3}; 
+        const ComponentControl compCtrl[4] { (ComponentControl)ied.ComponentControl0, (ComponentControl)ied.ComponentControl1,
+                                             (ComponentControl)ied.ComponentControl2, (ComponentControl)ied.ComponentControl3};
 
         // Special gather/conversion for formats without equal component sizes
         if (IsOddFormat((SWR_FORMAT)ied.Format))
@@ -847,7 +847,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
             ///@todo: support 64 bit vb accesses
             Value* gatherSrc = VIMMED1(0.0f);
 
-            SWR_ASSERT(IsUniformFormat((SWR_FORMAT)ied.Format), 
+            SWR_ASSERT(IsUniformFormat((SWR_FORMAT)ied.Format),
                 "Unsupported format for standard gather fetch.");
 
             // Gather components from memory to store in a simdvertex structure
@@ -879,7 +879,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                         vGatherResult[1] = GATHERPS(gatherSrc, pStreamBase, vOffsets, vMask, C((char)1));
                         // e.g. result of second 8x32bit integer gather for 16bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
+                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
                         //
                     }
 
@@ -989,12 +989,12 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
             Instruction::CastOps extendCastType = Instruction::CastOps::CastOpsEnd;
             ConversionType conversionType = CONVERT_NONE;
 
-            SWR_ASSERT(IsUniformFormat((SWR_FORMAT)ied.Format), 
+            SWR_ASSERT(IsUniformFormat((SWR_FORMAT)ied.Format),
                 "Unsupported format for standard gather fetch.");
 
             switch(info.type[0])
             {
-                case SWR_TYPE_UNORM: 
+                case SWR_TYPE_UNORM:
                     conversionType = CONVERT_NORMALIZED;
                 case SWR_TYPE_UINT:
                     extendCastType = Instruction::CastOps::ZExt;
@@ -1034,7 +1034,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                         Value* vGatherResult = GATHERDD(gatherSrc, pStreamBase, vOffsets, vGatherMask, C((char)1));
                         // e.g. result of an 8x32bit integer gather for 8bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw 
+                        //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw
 
                         Shuffle8bpcArgs args = std::forward_as_tuple(vGatherResult, pVtxOut, extendCastType, conversionType,
                             currentVertexElement, outputElt, compMask, compCtrl, vVertexElements, info.swizzle);
@@ -1070,7 +1070,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                         vGatherResult[1] = GATHERDD(gatherSrc, pStreamBase, vOffsets, vMask, C((char)1));
                         // e.g. result of second 8x32bit integer gather for 16bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
+                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
                         //
                     }
 
@@ -1115,7 +1115,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                                 vVertexElements[currentVertexElement++] = pGather;
                                 // e.g. result of a single 8x32bit integer gather for 32bit components
                                 // 256i - 0    1    2    3    4    5    6    7
-                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx 
+                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx
                             }
                             else
                             {
@@ -1167,7 +1167,7 @@ Value* FetchJit::GetSimdValid8bitIndices(Value* pIndices, Value* pLastIndex)
         // Calculate the address of the requested index
         Value *pIndex = GEP(pIndices, C(lane));
 
-        // check if the address is less than the max index, 
+        // check if the address is less than the max index,
         Value* mask = ICMP_ULT(pIndex, pLastIndex);
 
         // if valid, load the index. if not, load 0 from the stack
@@ -1202,7 +1202,7 @@ Value* FetchJit::GetSimdValid16bitIndices(Value* pIndices, Value* pLastIndex)
         // Calculate the address of the requested index
         Value *pIndex = GEP(pIndices, C(lane));
 
-        // check if the address is less than the max index, 
+        // check if the address is less than the max index,
         Value* mask = ICMP_ULT(pIndex, pLastIndex);
 
         // if valid, load the index. if not, load 0 from the stack
@@ -1253,8 +1253,8 @@ Value* FetchJit::GetSimdValid32bitIndices(Value* pIndices, Value* pLastIndex)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Takes a SIMD of gathered 8bpc verts, zero or sign extends, 
-/// denormalizes if needed, converts to F32 if needed, and positions in 
+/// @brief Takes a SIMD of gathered 8bpc verts, zero or sign extends,
+/// denormalizes if needed, converts to F32 if needed, and positions in
 //  the proper SIMD rows to be output to the simdvertex structure
 /// @param args: (tuple of args, listed below)
 ///   @param vGatherResult - 8 gathered 8bpc vertices
@@ -1447,7 +1447,7 @@ void FetchJit::Shuffle8bpcGatherd(Shuffle8bpcArgs &args)
                     vVertexElements[currentVertexElement] = BITCAST(PSHUFB(BITCAST(vGatherResult, v32x8Ty), vConstMask), vGatherTy);
                     // after pshufb for x channel
                     // 256i - 0    1    2    3    4    5    6    7
-                    //        x000 x000 x000 x000 x000 x000 x000 x000 
+                    //        x000 x000 x000 x000 x000 x000 x000 x000
 
                     // denormalize if needed
                     if (conversionType != CONVERT_NONE)
@@ -1477,8 +1477,8 @@ void FetchJit::Shuffle8bpcGatherd(Shuffle8bpcArgs &args)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Takes a SIMD of gathered 16bpc verts, zero or sign extends, 
-/// denormalizes if needed, converts to F32 if needed, and positions in 
+/// @brief Takes a SIMD of gathered 16bpc verts, zero or sign extends,
+/// denormalizes if needed, converts to F32 if needed, and positions in
 //  the proper SIMD rows to be output to the simdvertex structure
 /// @param args: (tuple of args, listed below)
 ///   @param vGatherResult[2] - array of gathered 16bpc vertices, 4 per index
@@ -1615,7 +1615,7 @@ void FetchJit::Shuffle16bpcGather(Shuffle16bpcArgs &args)
             vConstMask[0] = C<char>({0, 1, -1, -1, 4, 5, -1, -1, 8, 9, -1, -1, 12, 13, -1, -1,
                                      0, 1, -1, -1, 4, 5, -1, -1, 8, 9, -1, -1, 12, 13, -1, -1, });
         }
-        
+
         if(isComponentEnabled(compMask, 1) || isComponentEnabled(compMask, 3)){
             // y/w shuffle mask
             vConstMask[1] = C<char>({2, 3, -1, -1, 6, 7, -1, -1, 10, 11, -1, -1, 14, 15, -1, -1,
@@ -1661,7 +1661,7 @@ void FetchJit::Shuffle16bpcGather(Shuffle16bpcArgs &args)
                     vVertexElements[currentVertexElement] = BITCAST(PSHUFB(BITCAST(vGatherResult[selectedGather], v32x8Ty), vConstMask[selectedMask]), vGatherTy);
                     // after pshufb mask for x channel; z uses the same shuffle from the second gather
                     // 256i - 0    1    2    3    4    5    6    7
-                    //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00 
+                    //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00
 
                     // denormalize if needed
                     if (conversionType != CONVERT_NONE)
@@ -1723,7 +1723,7 @@ void FetchJit::StoreVertexElements(Value* pVtxOut, const uint32_t outputElt, con
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Generates a constant vector of values based on the 
+/// @brief Generates a constant vector of values based on the
 /// ComponentControl value
 /// @param ctrl - ComponentControl value
 Value* FetchJit::GenerateCompCtrlVector(const ComponentControl ctrl)

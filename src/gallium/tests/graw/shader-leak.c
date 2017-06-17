@@ -202,7 +202,7 @@ static void init( void )
    templat.nr_samples = 1;
    templat.bind = (PIPE_BIND_RENDER_TARGET |
                    PIPE_BIND_DISPLAY_TARGET);
-   
+
    tex = screen->resource_create(screen, &templat);
    if (tex == NULL) {
       fprintf(stderr, "Unable to create screen texture!\n");
@@ -226,7 +226,7 @@ static void init( void )
    fb.cbufs[0] = surf;
 
    ctx->set_framebuffer_state(ctx, &fb);
-   
+
    {
       struct pipe_blend_state blend;
       void *handle;

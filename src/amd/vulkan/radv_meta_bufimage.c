@@ -929,7 +929,7 @@ itob_bind_descriptors(struct radv_cmd_buffer *cmd_buffer,
 				                              },
 									  },
 				                	  .pBufferInfo = NULL,
-        
+
 				              },
 				              {
 				                      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,

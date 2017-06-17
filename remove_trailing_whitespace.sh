@@ -1,3 +1,3 @@
 #!/bin/bash
-sed -i 's/[[:space:]]*$//' "$1"
+find -not -path '*/\.*' -type f -exec sed -i 's/[[:space:]]*$//' {} \;
 

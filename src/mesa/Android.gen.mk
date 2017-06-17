@@ -74,7 +74,7 @@ matypes_deps := \
 	$(LOCAL_PATH)/main/mtypes.h \
 	$(LOCAL_PATH)/tnl/t_context.h
 
-$(intermediates)/x86/matypes.h: $(matypes_deps) 
+$(intermediates)/x86/matypes.h: $(matypes_deps)
 	@mkdir -p $(dir $@)
 	@echo "MATYPES: $(PRIVATE_MODULE) <= $(notdir $@)"
 	$(hide) $< > $@

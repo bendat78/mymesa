@@ -28,7 +28,7 @@
 /*
  * Gen-specific function declarations.  This header must *not* be included
  * directly.  Instead, it is included multiple times by anv_private.h.
- * 
+ *
  * In this header file, the usual genx() macro is available.
  */
 

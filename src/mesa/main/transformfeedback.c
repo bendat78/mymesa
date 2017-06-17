@@ -580,7 +580,7 @@ _mesa_validate_buffer_range_xfb(struct gl_context *ctx,
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(size=%d must be a multiple of "
                   "four)", gl_methd_name, (int) size);
       return false;
-   }  
+   }
 
    if (offset & 0x3) {
       /* OpenGL 4.5 core profile, 6.7, pdf page 103: multiple of 4 */

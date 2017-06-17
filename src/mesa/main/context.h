@@ -65,7 +65,7 @@ struct _glapi_table;
 
 /** \name Visual-related functions */
 /*@{*/
- 
+
 extern struct gl_config *
 _mesa_create_visual( GLboolean dbFlag,
                      GLboolean stereoFlag,
@@ -245,7 +245,7 @@ do {								\
 /**
  * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair, with return value.
- * 
+ *
  * \param ctx GL context.
  * \param retval value to return in case the assertion fails.
  */
@@ -260,7 +260,7 @@ do {									\
 /**
  * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair.
- * 
+ *
  * \param ctx GL context.
  */
 #define ASSERT_OUTSIDE_BEGIN_END(ctx)					\

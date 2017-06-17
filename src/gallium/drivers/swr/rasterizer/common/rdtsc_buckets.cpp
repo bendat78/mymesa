@@ -19,13 +19,13 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
-* 
+*
 * @file rdtsc_buckets.cpp
-* 
+*
 * @brief implementation of rdtsc buckets.
-* 
+*
 * Notes:
-* 
+*
 ******************************************************************************/
 #include "rdtsc_buckets.h"
 #include <inttypes.h>
@@ -107,14 +107,14 @@ void BucketManager::PrintBucket(FILE* f, UINT level, uint64_t threadCycles, uint
     strcat(hier, desc.name.c_str());
 
     // print out
-    fprintf(f, "%6.2f %6.2f %-10" PRIu64 " %-10" PRIu64 " %-10u %-10lu %-10u %s\n", 
-        percentTotal, 
-        percentParent, 
-        bucket.elapsed, 
-        CPE, 
-        bucket.count, 
-        (unsigned long)0, 
-        (uint32_t)0, 
+    fprintf(f, "%6.2f %6.2f %-10" PRIu64 " %-10" PRIu64 " %-10u %-10lu %-10u %s\n",
+        percentTotal,
+        percentParent,
+        bucket.elapsed,
+        CPE,
+        bucket.count,
+        (unsigned long)0,
+        (uint32_t)0,
         hier
     );
 

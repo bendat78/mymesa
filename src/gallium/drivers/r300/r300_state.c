@@ -1205,7 +1205,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     }
 
     /* Front face */
-    if (state->front_ccw) 
+    if (state->front_ccw)
         cull_mode = R300_FRONT_FACE_CCW;
     else
         cull_mode = R300_FRONT_FACE_CW;

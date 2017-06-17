@@ -629,7 +629,7 @@ CodeEmitterNV50::emitLOAD(const Instruction *i)
          code[0] = 0x11800001;
       else
          code[0] = i->src(0).isIndirect(0) ? 0x00000001 : 0x10000001; // use 'mov' where we can
-      
+
       code[1] = 0x00200000 | (i->lanes << 14);
       if (typeSizeof(i->dType) == 4)
          code[1] |= 0x04000000;

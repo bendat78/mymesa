@@ -82,16 +82,16 @@ static void linear_coef( struct lp_setup_context *setup,
                          unsigned vert_attr,
                          unsigned i)
 {
-   float a1 = info->v1[vert_attr][i]; 
+   float a1 = info->v1[vert_attr][i];
    float a2 = info->v2[vert_attr][i];
-      
-   float da21 = a1 - a2;   
+
+   float da21 = a1 - a2;
    float dadx = da21 * info->dx * info->oneoverarea;
    float dady = da21 * info->dy * info->oneoverarea;
 
    info->dadx[slot][i] = dadx;
-   info->dady[slot][i] = dady;  
-   
+   info->dady[slot][i] = dady;
+
    info->a0[slot][i] = (a1 -
                               (dadx * (info->v1[0][0] - setup->pixel_offset) +
                                dady * (info->v1[0][1] - setup->pixel_offset)));
@@ -117,13 +117,13 @@ static void perspective_coef( struct lp_setup_context *setup,
    float a1 = info->v1[vert_attr][i] * info->v1[0][3];
    float a2 = info->v2[vert_attr][i] * info->v2[0][3];
 
-   float da21 = a1 - a2;   
+   float da21 = a1 - a2;
    float dadx = da21 * info->dx * info->oneoverarea;
    float dady = da21 * info->dy * info->oneoverarea;
 
    info->dadx[slot][i] = dadx;
    info->dady[slot][i] = dady;
-   
+
    info->a0[slot][i] = (a1 -
                         (dadx * (info->v1[0][0] - setup->pixel_offset) +
                          dady * (info->v1[0][1] - setup->pixel_offset)));
@@ -176,7 +176,7 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
       unsigned vert_attr = key->inputs[slot].src_index;
       unsigned usage_mask = key->inputs[slot].usage_mask;
       unsigned i;
-           
+
       switch (key->inputs[slot].interp) {
       case LP_INTERP_CONSTANT:
          if (key->flatshade_first) {
@@ -263,8 +263,8 @@ print_line(struct lp_setup_context *setup,
 
 
 static inline boolean sign(float x){
-   return x >= 0;  
-}  
+   return x >= 0;
+}
 
 
 /* Used on positive floats only:
@@ -290,13 +290,13 @@ try_setup_line( struct lp_setup_context *setup,
    float width = MAX2(1.0, setup->line_width);
    struct u_rect bbox;
    unsigned tri_bytes;
-   int x[4]; 
+   int x[4];
    int y[4];
    int i;
    int nr_planes = 4;
    unsigned viewport_index = 0;
    unsigned layer = 0;
-   
+
    /* linewidth should be interpreted as integer */
    int fixed_width = util_iround(width) * FIXED_ONE;
 
@@ -304,7 +304,7 @@ try_setup_line( struct lp_setup_context *setup,
    float y_offset=0;
    float x_offset_end=0;
    float y_offset_end=0;
-      
+
    float x1diff;
    float y1diff;
    float x2diff;
@@ -350,7 +350,7 @@ try_setup_line( struct lp_setup_context *setup,
    info.v1 = v1;
    info.v2 = v2;
 
-  
+
    /* X-MAJOR LINE */
    if (fabsf(dx) >= fabsf(dy)) {
       float dydx = dy / dx;
@@ -363,10 +363,10 @@ try_setup_line( struct lp_setup_context *setup,
       if (y2diff==-0.5 && dy<0){
          y2diff = 0.5;
       }
-      
-      /* 
-       * Diamond exit rule test for starting point 
-       */    
+
+      /*
+       * Diamond exit rule test for starting point
+       */
       if (fabsf(x1diff) + fabsf(y1diff) < 0.5) {
          draw_start = TRUE;
       }
@@ -383,9 +383,9 @@ try_setup_line( struct lp_setup_context *setup,
       }
 
 
-      /* 
-       * Diamond exit rule test for ending point 
-       */    
+      /*
+       * Diamond exit rule test for ending point
+       */
       if (fabsf(x2diff) + fabsf(y2diff) < 0.5) {
          draw_end = FALSE;
       }
@@ -436,23 +436,23 @@ try_setup_line( struct lp_setup_context *setup,
             y_offset_end = x_offset_end * dydx;
          }
       }
-  
+
       /* x/y positions in fixed point */
       x[0] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset);
       x[1] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset);
       x[2] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset);
       x[3] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset);
-      
+
       y[0] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset) - fixed_width/2;
       y[1] = subpixel_snap(v2[0][1] + y_offset_end - setup->pixel_offset) - fixed_width/2;
       y[2] = subpixel_snap(v2[0][1] + y_offset_end - setup->pixel_offset) + fixed_width/2;
       y[3] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset) + fixed_width/2;
-      
+
    }
    else {
       const float dxdy = dx / dy;
 
-      /* Y-MAJOR LINE */      
+      /* Y-MAJOR LINE */
       x1diff = v1[0][0] - (float) floor(v1[0][0]) - 0.5;
       y1diff = v1[0][1] - (float) floor(v1[0][1]) - 0.5;
       x2diff = v2[0][0] - (float) floor(v2[0][0]) - 0.5;
@@ -462,9 +462,9 @@ try_setup_line( struct lp_setup_context *setup,
          x2diff = 0.5;
       }
 
-      /* 
-       * Diamond exit rule test for starting point 
-       */    
+      /*
+       * Diamond exit rule test for starting point
+       */
       if (fabsf(x1diff) + fabsf(y1diff) < 0.5) {
          draw_start = TRUE;
       }
@@ -480,9 +480,9 @@ try_setup_line( struct lp_setup_context *setup,
          draw_start = (xintersect < 1.0 && xintersect > 0.0);
       }
 
-      /* 
-       * Diamond exit rule test for ending point 
-       */    
+      /*
+       * Diamond exit rule test for ending point
+       */
       if (fabsf(x2diff) + fabsf(y2diff) < 0.5) {
          draw_end = FALSE;
       }
@@ -507,7 +507,7 @@ try_setup_line( struct lp_setup_context *setup,
          /* if v2 is on top of v1, swap pointers */
          const float (*temp)[4] = v1;
          v1 = v2;
-         v2 = temp; 
+         v2 = temp;
          dx = -dx;
          dy = -dy;
 
@@ -526,7 +526,7 @@ try_setup_line( struct lp_setup_context *setup,
          if (will_draw_start != draw_start) {
             y_offset = - y1diff - 0.5;
             x_offset = y_offset * dxdy;
-                     
+
          }
          if (will_draw_end != draw_end) {
             y_offset_end = - y2diff - 0.5;
@@ -539,8 +539,8 @@ try_setup_line( struct lp_setup_context *setup,
       x[1] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset) - fixed_width/2;
       x[2] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset) + fixed_width/2;
       x[3] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset) + fixed_width/2;
-     
-      y[0] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset); 
+
+      y[0] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset);
       y[1] = subpixel_snap(v2[0][1] + y_offset_end - setup->pixel_offset);
       y[2] = subpixel_snap(v2[0][1] + y_offset_end - setup->pixel_offset);
       y[3] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset);
@@ -605,7 +605,7 @@ try_setup_line( struct lp_setup_context *setup,
 
 #ifdef DEBUG
    line->v[0][0] = v1[0][0];
-   line->v[1][0] = v2[0][0];   
+   line->v[1][0] = v2[0][0];
    line->v[0][1] = v1[0][1];
    line->v[1][1] = v2[0][1];
 #endif
@@ -642,7 +642,7 @@ try_setup_line( struct lp_setup_context *setup,
    info.dadx = GET_DADX(&line->inputs);
    info.dady = GET_DADY(&line->inputs);
    info.frontfacing = line->inputs.frontfacing;
-   setup_line_coefficients(setup, &info); 
+   setup_line_coefficients(setup, &info);
 
    line->inputs.disable = FALSE;
    line->inputs.opaque = FALSE;
@@ -696,7 +696,7 @@ try_setup_line( struct lp_setup_context *setup,
    }
 
 
-   /* 
+   /*
     * When rasterizing scissored tris, use the intersection of the
     * triangle bounding box and the scissor rect to generate the
     * scissor planes.
@@ -709,7 +709,7 @@ try_setup_line( struct lp_setup_context *setup,
     * It's not really clear if it's worth worrying about these tails,
     * but since we generate the planes for each scissored tri, it's
     * free to trim them in this case.
-    * 
+    *
     * Note that otherwise, the scissor planes only vary in 'C' value,
     * and even then only on state-changes.  Could alternatively store
     * these planes elsewhere.
@@ -774,8 +774,8 @@ static void lp_setup_line( struct lp_setup_context *setup,
 }
 
 
-void lp_setup_choose_line( struct lp_setup_context *setup ) 
-{ 
+void lp_setup_choose_line( struct lp_setup_context *setup )
+{
    setup->line = lp_setup_line;
 }
 

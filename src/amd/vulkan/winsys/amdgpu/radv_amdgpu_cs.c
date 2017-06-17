@@ -922,7 +922,7 @@ static int radv_amdgpu_winsys_cs_submit(struct radeon_winsys_ctx *_ctx,
 	struct radv_amdgpu_ctx *ctx = radv_amdgpu_ctx(_ctx);
 	int ret;
 	int i;
-	
+
 	for (i = 0; i < wait_sem_count; i++) {
 		amdgpu_semaphore_handle sem = (amdgpu_semaphore_handle)wait_sem[i];
 		amdgpu_cs_wait_semaphore(ctx->ctx, cs->hw_ip, 0, queue_idx,

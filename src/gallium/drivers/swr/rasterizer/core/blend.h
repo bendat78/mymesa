@@ -35,36 +35,36 @@ void GenerateBlendFactor(SWR_BLEND_FACTOR func, simdvector &constantColor, simdv
 
     switch (func)
     {
-    case BLENDFACTOR_ZERO: 
+    case BLENDFACTOR_ZERO:
         result.x = _simd_setzero_ps();
         result.y = _simd_setzero_ps();
         result.z = _simd_setzero_ps();
         result.w = _simd_setzero_ps();
         break;
 
-    case BLENDFACTOR_ONE: 
+    case BLENDFACTOR_ONE:
         result.x = _simd_set1_ps(1.0);
         result.y = _simd_set1_ps(1.0);
         result.z = _simd_set1_ps(1.0);
         result.w = _simd_set1_ps(1.0);
         break;
 
-    case BLENDFACTOR_SRC_COLOR: 
+    case BLENDFACTOR_SRC_COLOR:
         result = src;
         break;
 
-    case BLENDFACTOR_DST_COLOR: 
+    case BLENDFACTOR_DST_COLOR:
         result = dst;
         break;
 
-    case BLENDFACTOR_INV_SRC_COLOR: 
+    case BLENDFACTOR_INV_SRC_COLOR:
         result.x = _simd_sub_ps(_simd_set1_ps(1.0), src.x);
         result.y = _simd_sub_ps(_simd_set1_ps(1.0), src.y);
         result.z = _simd_sub_ps(_simd_set1_ps(1.0), src.z);
         result.w = _simd_sub_ps(_simd_set1_ps(1.0), src.w);
         break;
 
-    case BLENDFACTOR_INV_DST_COLOR: 
+    case BLENDFACTOR_INV_DST_COLOR:
         result.x = _simd_sub_ps(_simd_set1_ps(1.0), dst.x);
         result.y = _simd_sub_ps(_simd_set1_ps(1.0), dst.y);
         result.z = _simd_sub_ps(_simd_set1_ps(1.0), dst.z);
@@ -204,21 +204,21 @@ INLINE void BlendFunc(SWR_BLEND_OP blendOp, simdvector &src, simdvector &srcFact
         result.z = _simd_fmsub_ps(dstFactor.z, dst.z, _simd_mul_ps(srcFactor.z, src.z));
         result.w = _simd_fmsub_ps(dstFactor.w, dst.w, _simd_mul_ps(srcFactor.w, src.w));
         break;
-        
+
     case BLENDOP_MIN:
         result.x = _simd_min_ps(_simd_mul_ps(srcFactor.x, src.x), _simd_mul_ps(dstFactor.x, dst.x));
         result.y = _simd_min_ps(_simd_mul_ps(srcFactor.y, src.y), _simd_mul_ps(dstFactor.y, dst.y));
         result.z = _simd_min_ps(_simd_mul_ps(srcFactor.z, src.z), _simd_mul_ps(dstFactor.z, dst.z));
         result.w = _simd_min_ps(_simd_mul_ps(srcFactor.w, src.w), _simd_mul_ps(dstFactor.w, dst.w));
         break;
-        
+
     case BLENDOP_MAX:
         result.x = _simd_max_ps(_simd_mul_ps(srcFactor.x, src.x), _simd_mul_ps(dstFactor.x, dst.x));
         result.y = _simd_max_ps(_simd_mul_ps(srcFactor.y, src.y), _simd_mul_ps(dstFactor.y, dst.y));
         result.z = _simd_max_ps(_simd_mul_ps(srcFactor.z, src.z), _simd_mul_ps(dstFactor.z, dst.z));
         result.w = _simd_max_ps(_simd_mul_ps(srcFactor.w, src.w), _simd_mul_ps(dstFactor.w, dst.w));
         break;
-        
+
     default:
         SWR_INVALID("Unimplemented blend function: %d", blendOp);
     }

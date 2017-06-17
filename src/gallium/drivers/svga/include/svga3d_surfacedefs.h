@@ -1096,7 +1096,7 @@ svga3dsurface_get_serialized_size(SVGA3dSurfaceFormat format,
 
 	total_size *= num_layers;
 
-	return (total_size > (uint64_t) MAX_UINT32) ? MAX_UINT32 : 
+	return (total_size > (uint64_t) MAX_UINT32) ? MAX_UINT32 :
                                                       (uint32) total_size;
 }
 

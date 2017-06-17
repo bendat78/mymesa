@@ -157,7 +157,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 			<xsl:value-of select="."/>
 		</span>
 	</xsl:template>
-	
+
 	<xsl:template name="break">
 		<xsl:param name="text" select="."/>
 		<xsl:choose>

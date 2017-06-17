@@ -128,7 +128,7 @@ copy_region_vgpu10(struct svga_context *svga, struct pipe_resource *src_tex,
  * Fallback to the copy region utility which uses map/memcpy for the copy
  */
 static void
-copy_region_fallback(struct svga_context *svga, 
+copy_region_fallback(struct svga_context *svga,
                      struct pipe_resource *dst_tex, unsigned dst_level,
                      unsigned dstx, unsigned dsty, unsigned dstz,
                      struct pipe_resource *src_tex, unsigned src_level,
@@ -480,7 +480,7 @@ try_blit(struct svga_context *svga, const struct pipe_blit_info *blit_info)
    struct pipe_blit_info blit = *blit_info;
 
    SVGA_STATS_TIME_PUSH(sws, SVGA_STATS_TIME_BLITBLITTER);
-   
+
    /**
     * If format is srgb and blend is enabled then color values need
     * to be converted into linear format.
@@ -700,7 +700,7 @@ svga_blit(struct pipe_context *pipe,
 
    if (!try_cpu_copy_region(svga, blit))
       debug_printf("svga: Blit failed.\n");
-   
+
 done:
    SVGA_STATS_TIME_POP(sws);  /* SVGA_STATS_TIME_BLIT */
    (void) sws;

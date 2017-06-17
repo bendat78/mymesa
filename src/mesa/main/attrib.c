@@ -975,7 +975,7 @@ _mesa_PopAttrib(void)
                else {
                   GLuint i;
                   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-                     _mesa_ColorMaski(i, 
+                     _mesa_ColorMaski(i,
                                   (GLboolean) (color->ColorMask[i][0] != 0),
                                   (GLboolean) (color->ColorMask[i][1] != 0),
                                   (GLboolean) (color->ColorMask[i][2] != 0),
@@ -1148,7 +1148,7 @@ _mesa_PopAttrib(void)
                /* per-light state */
                if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top))
                   _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
-	       
+
                for (i = 0; i < ctx->Const.MaxLights; i++) {
                   const struct gl_light *l = &light->Light[i];
                   _mesa_set_enable(ctx, GL_LIGHT0 + i, l->Enabled);

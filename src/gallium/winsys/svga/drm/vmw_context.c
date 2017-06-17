@@ -117,7 +117,7 @@ struct vmw_svga_winsys_context
       uint32_t staged;
       uint32_t reserved;
    } surface;
-   
+
    struct {
       struct vmw_buffer_relocation relocs[VMW_REGION_RELOCS];
       uint32_t size;
@@ -211,7 +211,7 @@ vmw_swc_flush(struct svga_winsys_context *swc,
 
    assert(ret == PIPE_OK);
    if(ret == PIPE_OK) {
-   
+
       /* Apply relocations */
       for(i = 0; i < vswc->region.used; ++i) {
          struct vmw_buffer_relocation *reloc = &vswc->region.relocs[i];
@@ -331,7 +331,7 @@ vmw_swc_reserve(struct svga_winsys_context *swc,
    assert(vswc->surface.used + nr_relocs <= vswc->surface.size);
    assert(vswc->shader.used + nr_relocs <= vswc->shader.size);
    assert(vswc->region.used + nr_relocs <= vswc->region.size);
-   
+
    vswc->command.reserved = nr_bytes;
    vswc->surface.reserved = nr_relocs;
    vswc->surface.staged = 0;
@@ -339,7 +339,7 @@ vmw_swc_reserve(struct svga_winsys_context *swc,
    vswc->shader.staged = 0;
    vswc->region.reserved = nr_relocs;
    vswc->region.staged = 0;
-   
+
    return vswc->command.buffer + vswc->command.used;
 }
 
@@ -558,7 +558,7 @@ vmw_swc_surface_relocation(struct svga_winsys_context *swc,
 
       mtx_lock(&vsurf->mutex);
       assert(vsurf->buf != NULL);
-      
+
       vmw_swc_mob_relocation(swc, mobid, NULL, (struct svga_winsys_buffer *)
                              vsurf->buf, 0, flags);
       mtx_unlock(&vsurf->mutex);

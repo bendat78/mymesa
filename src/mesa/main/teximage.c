@@ -126,7 +126,7 @@ adjust_for_oes_float_texture(const struct gl_context *ctx,
 /**
  * Install gl_texture_image in a gl_texture_object according to the target
  * and level parameters.
- * 
+ *
  * \param tObj texture object.
  * \param target texture target.
  * \param level image level.

@@ -73,7 +73,7 @@ enum TriEdgesValues
 };
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief ValidTriEdges convenience typedefs used for templated function 
+/// @brief ValidTriEdges convenience typedefs used for templated function
 /// specialization supported Fixed Point precisions
 typedef std::integral_constant<uint32_t, ALL_EDGES_VALID> AllEdgesValidT;
 typedef std::integral_constant<uint32_t, E0_E1_VALID> E0E1ValidT;
@@ -133,9 +133,9 @@ INLINE uint32_t EdgeValToEdgeState(uint32_t val)
 
 //////////////////////////////////////////////////////////////////////////
 /// @struct RasterScissorEdgesT
-/// @brief Primary RasterScissorEdgesT templated struct that holds compile 
-/// time information about the number of edges needed to be rasterized, 
-/// If either the scissor rect or conservative rast is enabled, 
+/// @brief Primary RasterScissorEdgesT templated struct that holds compile
+/// time information about the number of edges needed to be rasterized,
+/// If either the scissor rect or conservative rast is enabled,
 /// the scissor test is enabled and the rasterizer will test
 /// 3 triangle edges + 4 scissor edges for coverage.
 /// @tparam RasterScissorEdgesT: number of multisamples
@@ -152,7 +152,7 @@ struct RasterEdgeTraits
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief specialization of RasterEdgeTraits. If neither scissor rect
-/// nor conservative rast is enabled, only test 3 triangle edges 
+/// nor conservative rast is enabled, only test 3 triangle edges
 /// for coverage
 template <typename EdgeMaskT>
 struct RasterEdgeTraits<std::false_type, std::false_type, EdgeMaskT>
@@ -165,7 +165,7 @@ struct RasterEdgeTraits<std::false_type, std::false_type, EdgeMaskT>
 
 //////////////////////////////////////////////////////////////////////////
 /// @struct RasterizerTraits
-/// @brief templated struct that holds compile time information used 
+/// @brief templated struct that holds compile time information used
 /// during rasterization. Inherits EdgeTraits and ConservativeRastBETraits.
 /// @tparam NumSamplesT: number of multisamples
 /// @tparam ConservativeT: is this a conservative rasterization
