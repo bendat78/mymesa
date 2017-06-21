@@ -23,30 +23,31 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#ifndef ST_GLSL_TO_TGSI_PRIVATE_H
+#define ST_GLSL_TO_TGSI_PRIVATE_H
+
 #include <mesa/main/mtypes.h>
 #include <compiler/glsl_types.h>
 #include <compiler/glsl/ir.h>
 #include <tgsi/tgsi_info.h>
-#include <stack>
-#include <vector>
+int swizzle_for_size(int size);
 
 class st_dst_reg;
-
 /**
  * This struct is a corresponding struct to TGSI ureg_src.
  */
 class st_src_reg {
 public:
-	st_src_reg(gl_register_file file, int index, const glsl_type *type,
-	           int component = 0, unsigned array_id = 0);
+   st_src_reg(gl_register_file file, int index, const glsl_type *type,
+              int component = 0, unsigned array_id = 0);
 
-	st_src_reg(gl_register_file file, int index, enum glsl_base_type type);
+   st_src_reg(gl_register_file file, int index, enum glsl_base_type type);
 
-	st_src_reg(gl_register_file file, int index, enum glsl_base_type type, int index2D);
+   st_src_reg(gl_register_file file, int index, enum glsl_base_type type, int index2D);
 
-	st_src_reg();
+   st_src_reg();
 
-	explicit st_src_reg(st_dst_reg reg);
+   explicit st_src_reg(st_dst_reg reg);
 
    st_src_reg get_abs();
 
@@ -104,10 +105,11 @@ public:
    st_src_reg resource; /**< sampler or buffer register */
    st_src_reg *tex_offsets;
 
-   /** Pointer to the ir source this tree came from for debugging */
+   /** Pointer to the ir source this tree came fe02549fdrom for debugging */
    ir_instruction *ir;
 
    unsigned op:8; /**< TGSI opcode */
+   unsigned precise:1;
    unsigned saturate:1;
    unsigned is_64bit_expanded:1;
    unsigned sampler_base:5;
@@ -128,8 +130,39 @@ struct rename_reg_pair {
    int new_reg;
 };
 
-extern bool is_resource_instruction(unsigned opcode);
-extern unsigned num_inst_dst_regs(const glsl_to_tgsi_instruction *op);
-extern unsigned num_inst_src_regs(const glsl_to_tgsi_instruction *op);
+inline static bool
+is_resource_instruction(unsigned opcode)
+{
+   switch (opcode) {
+   case TGSI_OPCODE_RESQ:
+   case TGSI_OPCODE_LOAD:
+   case TGSI_OPCODE_ATOMUADD:
+   case TGSI_OPCODE_ATOMXCHG:
+   case TGSI_OPCODE_ATOMCAS:
+   case TGSI_OPCODE_ATOMAND:
+   case TGSI_OPCODE_ATOMOR:
+   case TGSI_OPCODE_ATOMXOR:
+   case TGSI_OPCODE_ATOMUMIN:
+   case TGSI_OPCODE_ATOMUMAX:
+   case TGSI_OPCODE_ATOMIMIN:
+   case TGSI_OPCODE_ATOMIMAX:
+      return true;
+   default:
+      return false;
+   }
+}
 
+inline static unsigned
+num_inst_dst_regs(const glsl_to_tgsi_instruction *op)
+{
+   return op->info->num_dst;
+}
+
+inline static unsigned
+num_inst_src_regs(const glsl_to_tgsi_instruction *op)
+{
+   return op->info->is_tex || is_resource_instruction(op->op) ?
+      op->info->num_src - 1 : op->info->num_src;
+}
+#endif
 

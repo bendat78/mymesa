@@ -27,10 +27,6 @@
 #include <tgsi/tgsi_info.h>
 #include <mesa/program/prog_instruction.h>
 
-using std::vector;
-
-extern int swizzle_for_size(int size);
-
 static int swizzle_for_type(const glsl_type *type, int component = 0)
 {
    unsigned num_elements = 4;
@@ -47,8 +43,6 @@ static int swizzle_for_type(const glsl_type *type, int component = 0)
    swizzle += component * MAKE_SWIZZLE4(1, 1, 1, 1);
    return swizzle;
 }
-
-
 
 st_src_reg::st_src_reg(gl_register_file file, int index, const glsl_type *type,
                        int component, unsigned array_id)
@@ -122,15 +116,6 @@ st_src_reg::st_src_reg()
    this->is_double_vertex_input = false;
 }
 
-
-st_src_reg st_src_reg::get_abs()
-{
-   st_src_reg reg = *this;
-   reg.negate = 0;
-   reg.abs = 1;
-   return reg;
-}
-
 st_src_reg::st_src_reg(st_dst_reg reg)
 {
    this->type = reg.type;
@@ -148,6 +133,14 @@ st_src_reg::st_src_reg(st_dst_reg reg)
    this->is_double_vertex_input = false;
 }
 
+st_src_reg st_src_reg::get_abs()
+{
+   st_src_reg reg = *this;
+   reg.negate = 0;
+   reg.abs = 1;
+   return reg;
+}
+
 st_dst_reg::st_dst_reg(st_src_reg reg)
 {
    this->type = reg.type;
@@ -160,7 +153,6 @@ st_dst_reg::st_dst_reg(st_src_reg reg)
    this->has_index2 = reg.has_index2;
    this->array_id = reg.array_id;
 }
-
 
 st_dst_reg::st_dst_reg(gl_register_file file, int writemask, enum glsl_base_type type, int index)
 {
@@ -175,7 +167,6 @@ st_dst_reg::st_dst_reg(gl_register_file file, int writemask, enum glsl_base_type
    this->type = type;
    this->array_id = 0;
 }
-
 
 st_dst_reg::st_dst_reg(gl_register_file file, int writemask, enum glsl_base_type type)
 {
@@ -202,40 +193,5 @@ st_dst_reg::st_dst_reg()
    this->reladdr2 = NULL;
    this->has_index2 = false;
    this->array_id = 0;
-}
-
-bool
-is_resource_instruction(unsigned opcode)
-{
-   switch (opcode) {
-   case TGSI_OPCODE_RESQ:
-   case TGSI_OPCODE_LOAD:
-   case TGSI_OPCODE_ATOMUADD:
-   case TGSI_OPCODE_ATOMXCHG:
-   case TGSI_OPCODE_ATOMCAS:
-   case TGSI_OPCODE_ATOMAND:
-   case TGSI_OPCODE_ATOMOR:
-   case TGSI_OPCODE_ATOMXOR:
-   case TGSI_OPCODE_ATOMUMIN:
-   case TGSI_OPCODE_ATOMUMAX:
-   case TGSI_OPCODE_ATOMIMIN:
-   case TGSI_OPCODE_ATOMIMAX:
-      return true;
-   default:
-      return false;
-   }
-}
-
-unsigned
-num_inst_dst_regs(const glsl_to_tgsi_instruction *op)
-{
-   return op->info->num_dst;
-}
-
-unsigned
-num_inst_src_regs(const glsl_to_tgsi_instruction *op)
-{
-   return op->info->is_tex || is_resource_instruction(op->op) ?
-      op->info->num_src - 1 : op->info->num_src;
 }
 
