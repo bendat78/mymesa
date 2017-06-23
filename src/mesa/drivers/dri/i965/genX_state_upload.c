@@ -4338,7 +4338,7 @@ genX(upload_default_color)(struct brw_context *brw,
       brw, GENX(SAMPLER_BORDER_COLOR_STATE_length) * sizeof(uint32_t),
       alignment, sdc_offset);
 
-   struct GENX(SAMPLER_BORDER_COLOR_STATE) state = { 0 };
+   struct GENX(SAMPLER_BORDER_COLOR_STATE) state = {};
 
 #define ASSIGN(dst, src) \
    do {                  \
@@ -4515,7 +4515,7 @@ genX(update_sampler_state)(struct brw_context *brw,
                            uint32_t *sampler_state,
                            uint32_t batch_offset_for_sampler_state)
 {
-   struct GENX(SAMPLER_STATE) samp_st = { 0 };
+   struct GENX(SAMPLER_STATE) samp_st = {};
 
    /* Select min and mip filters. */
    switch (sampler->MinFilter) {

@@ -2899,7 +2899,7 @@ st_NewTextureHandle(struct gl_context *ctx, struct gl_texture_object *texObj,
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct pipe_context *pipe = st->pipe;
    struct pipe_sampler_view *view;
-   struct pipe_sampler_state sampler = {0};
+   struct pipe_sampler_state sampler = {};
 
    if (texObj->Target != GL_TEXTURE_BUFFER) {
       if (!st_finalize_texture(ctx, pipe, texObj, 0))

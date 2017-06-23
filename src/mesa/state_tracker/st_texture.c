@@ -510,7 +510,7 @@ st_create_texture_handle_from_unit(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_sampler_view *view;
-   struct pipe_sampler_state sampler = {0};
+   struct pipe_sampler_state sampler = {};
 
    st_update_single_texture(st, &view, texUnit, prog->sh.data->Version >= 130);
    if (!view)
