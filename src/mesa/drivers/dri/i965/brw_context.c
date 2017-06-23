@@ -43,6 +43,8 @@
 #include "main/vtxfmt.h"
 #include "main/texobj.h"
 #include "main/framebuffer.h"
+#include "main/stencil.h"
+#include "main/state.h"
 
 #include "vbo/vbo_context.h"
 
@@ -200,6 +202,19 @@ intel_update_state(struct gl_context * ctx)
    brw->NewGLState |= new_state;
 
    _mesa_unlock_context_textures(ctx);
+
+   if (new_state & (_NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT))
+      _mesa_update_draw_buffer_bounds(ctx, ctx->DrawBuffer);
+
+   if (new_state & (_NEW_STENCIL | _NEW_BUFFERS)) {
+      brw->stencil_enabled = _mesa_stencil_is_enabled(ctx);
+      brw->stencil_two_sided = _mesa_stencil_is_two_sided(ctx);
+      brw->stencil_write_enabled =
+         _mesa_stencil_is_write_enabled(ctx, brw->stencil_two_sided);
+   }
+
+   if (new_state & _NEW_POLYGON)
+      brw->polygon_front_bit = _mesa_polygon_get_front_bit(ctx);
 
    intel_prepare_render(brw);
 
@@ -503,7 +518,7 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.Max3DTextureLevels = 12; /* 2048 */
    ctx->Const.MaxArrayTextureLayers = brw->gen >= 7 ? 2048 : 512;
    ctx->Const.MaxTextureMbytes = 1536;
-   ctx->Const.MaxTextureRectSize = 1 << 12;
+   ctx->Const.MaxTextureRectSize = brw->gen >= 7 ? 16384 : 8192;
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
    ctx->Const.MaxTextureLodBias = 15.0;
    ctx->Const.StripTextureBorder = true;
@@ -945,7 +960,7 @@ brwCreateContext(gl_api api,
    brw->is_baytrail = devinfo->is_baytrail;
    brw->is_haswell = devinfo->is_haswell;
    brw->is_cherryview = devinfo->is_cherryview;
-   brw->is_broxton = devinfo->is_broxton;
+   brw->is_broxton = devinfo->is_broxton || devinfo->is_geminilake;
    brw->has_llc = devinfo->has_llc;
    brw->has_hiz = devinfo->has_hiz_and_separate_stencil;
    brw->has_separate_stencil = devinfo->has_hiz_and_separate_stencil;

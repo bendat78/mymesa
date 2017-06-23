@@ -391,7 +391,7 @@ brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
    }
 
    if (ctx->Extensions.ARB_stencil_texturing &&
-       stencil_irb && ctx->Stencil._WriteEnabled) {
+       stencil_irb && brw->stencil_write_enabled) {
       brw_render_cache_set_add_bo(brw, stencil_irb->mt->bo);
    }
 
@@ -405,6 +405,56 @@ brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
       brw_render_cache_set_add_bo(brw, irb->mt->bo);
       intel_miptree_finish_render(brw, irb->mt, irb->mt_level,
                                   irb->mt_layer, irb->layer_count);
+   }
+}
+
+static void
+intel_renderbuffer_move_temp_back(struct brw_context *brw,
+                                  struct intel_renderbuffer *irb)
+{
+   if (irb->align_wa_mt == NULL)
+      return;
+
+   brw_render_cache_set_check_flush(brw, irb->align_wa_mt->bo);
+
+   intel_miptree_copy_slice(brw, irb->align_wa_mt, 0, 0,
+                            irb->mt,
+                            irb->Base.Base.TexImage->Level, irb->mt_layer);
+
+   intel_miptree_reference(&irb->align_wa_mt, NULL);
+
+   /* Finally restore the x,y to correspond to full miptree. */
+   intel_renderbuffer_set_draw_offset(irb);
+
+   /* Make sure render surface state gets re-emitted with updated miptree. */
+   brw->NewGLState |= _NEW_BUFFERS;
+}
+
+static void
+brw_postdraw_reconcile_align_wa_slices(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+   struct intel_renderbuffer *depth_irb =
+      intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   struct intel_renderbuffer *stencil_irb =
+      intel_get_renderbuffer(fb, BUFFER_STENCIL);
+
+   if (depth_irb && depth_irb->align_wa_mt)
+      intel_renderbuffer_move_temp_back(brw, depth_irb);
+
+   if (stencil_irb && stencil_irb->align_wa_mt)
+      intel_renderbuffer_move_temp_back(brw, stencil_irb);
+
+   for (unsigned i = 0; i < fb->_NumColorDrawBuffers; i++) {
+      struct intel_renderbuffer *irb =
+         intel_renderbuffer(fb->_ColorDrawBuffers[i]);
+
+      if (!irb || irb->align_wa_mt == NULL)
+         continue;
+
+      intel_renderbuffer_move_temp_back(brw, irb);
    }
 }
 
@@ -605,6 +655,7 @@ retry:
       intel_batchbuffer_flush(brw);
 
    brw_program_cache_check_size(brw);
+   brw_postdraw_reconcile_align_wa_slices(brw);
    brw_postdraw_set_buffers_need_resolve(brw);
 
    return;

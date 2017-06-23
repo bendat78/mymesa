@@ -1967,6 +1967,8 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 	unsigned level = templ->u.tex.level;
 	unsigned width = u_minify(tex->width0, level);
 	unsigned height = u_minify(tex->height0, level);
+	unsigned width0 = tex->width0;
+	unsigned height0 = tex->height0;
 
 	if (tex->target != PIPE_BUFFER && templ->format != tex->format) {
 		const struct util_format_description *tex_desc
@@ -1985,11 +1987,14 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 
 			width = nblks_x * templ_desc->block.width;
 			height = nblks_y * templ_desc->block.height;
+
+			width0 = util_format_get_nblocksx(tex->format, width0);
+			height0 = util_format_get_nblocksy(tex->format, height0);
 		}
 	}
 
 	return r600_create_surface_custom(pipe, tex, templ,
-					  tex->width0, tex->height0,
+					  width0, height0,
 					  width, height);
 }
 
@@ -2406,6 +2411,14 @@ static bool vi_get_fast_clear_parameters(enum pipe_format surface_format,
 	bool main_value = false;
 	bool extra_value = false;
 	int extra_channel;
+
+	/* This is needed to get the correct DCC clear value for luminance formats.
+	 * 1) Get the linear format (because the next step can't handle L8_SRGB).
+	 * 2) Convert luminance to red. (the real hw format for luminance)
+	 */
+	surface_format = util_format_linear(surface_format);
+	surface_format = util_format_luminance_to_red(surface_format);
+
 	const struct util_format_description *desc = util_format_description(surface_format);
 
 	if (desc->block.bits == 128 &&
@@ -2424,7 +2437,8 @@ static bool vi_get_fast_clear_parameters(enum pipe_format surface_format,
 
 	if (surface_format == PIPE_FORMAT_R11G11B10_FLOAT ||
 	    surface_format == PIPE_FORMAT_B5G6R5_UNORM ||
-	    surface_format == PIPE_FORMAT_B5G6R5_SRGB) {
+	    surface_format == PIPE_FORMAT_B5G6R5_SRGB ||
+	    util_format_is_alpha(surface_format)) {
 		extra_channel = -1;
 	} else if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
 		if(r600_translate_colorswap(surface_format, false) <= 1)
@@ -2707,10 +2721,6 @@ void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
 		if (vi_dcc_enabled(tex, 0)) {
 			uint32_t reset_value;
 			bool clear_words_needed;
-
-			/* TODO: fix DCC clear */
-			if (rctx->chip_class >= GFX9)
-				continue;
 
 			if (rctx->screen->debug_flags & DBG_NO_DCC_CLEAR)
 				continue;

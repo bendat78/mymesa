@@ -272,7 +272,9 @@ brw_miptree_layout_gen6_hiz_stencil(struct intel_mipmap_tree *mt)
    mt->total_height = 0;
 
    for (unsigned level = mt->first_level; level <= mt->last_level; level++) {
-      intel_miptree_set_level_info(mt, level, x, y, depth);
+      intel_miptree_set_level_info(
+         mt, level, x, y,
+         mt->target == GL_TEXTURE_3D ? minify(depth, level) : depth);
 
       const unsigned img_width = ALIGN(DIV_ROUND_UP(width, bw), mt->halign);
       const unsigned img_height =
@@ -585,7 +587,7 @@ brw_miptree_choose_tiling(struct brw_context *brw,
     * alignment of 4 as often as we can, this shouldn't happen very often.
     */
    if (brw->gen == 7 && mt->valign == 2 &&
-       brw->format_supported_as_render_target[mt->format]) {
+       brw->mesa_format_supports_render[mt->format]) {
       return I915_TILING_X;
    }
 

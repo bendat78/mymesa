@@ -132,7 +132,7 @@ blorp_surf_for_miptree(struct brw_context *brw,
                        uint32_t safe_aux_usage,
                        unsigned *level,
                        unsigned start_layer, unsigned num_layers,
-                       struct isl_surf tmp_surfs[2])
+                       struct isl_surf tmp_surfs[1])
 {
    if (mt->msaa_layout == INTEL_MSAA_LAYOUT_UMS ||
        mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
@@ -148,8 +148,13 @@ blorp_surf_for_miptree(struct brw_context *brw,
          intel_miptree_check_level_layer(mt, *level, start_layer + i);
    }
 
-   intel_miptree_get_isl_surf(brw, mt, &tmp_surfs[0]);
-   surf->surf = &tmp_surfs[0];
+   if (mt->surf.size > 0) {
+      surf->surf = &mt->surf;
+   } else {
+      intel_miptree_get_isl_surf(brw, mt, &tmp_surfs[0]);
+      surf->surf = &tmp_surfs[0];
+   }
+
    surf->addr = (struct blorp_address) {
       .buffer = mt->bo,
       .offset = mt->offset,
@@ -158,8 +163,13 @@ blorp_surf_for_miptree(struct brw_context *brw,
       .write_domain = is_render_target ? I915_GEM_DOMAIN_RENDER : 0,
    };
 
-   struct isl_surf *aux_surf = &tmp_surfs[1];
-   intel_miptree_get_aux_isl_surf(brw, mt, aux_surf, &surf->aux_usage);
+   surf->aux_usage = intel_miptree_get_aux_isl_usage(brw, mt);
+
+   struct isl_surf *aux_surf = NULL;
+   if (mt->mcs_buf)
+      aux_surf = &mt->mcs_buf->surf;
+   else if (mt->hiz_buf)
+      aux_surf = &mt->hiz_buf->surf;
 
    if (wants_resolve) {
       bool supports_aux = surf->aux_usage != ISL_AUX_USAGE_NONE &&
@@ -198,8 +208,8 @@ blorp_surf_for_miptree(struct brw_context *brw,
       } else {
          assert(surf->aux_usage == ISL_AUX_USAGE_HIZ);
 
-         surf->aux_addr.buffer = mt->hiz_buf->aux_base.bo;
-         surf->aux_addr.offset = mt->hiz_buf->aux_base.offset;
+         surf->aux_addr.buffer = mt->hiz_buf->bo;
+         surf->aux_addr.offset = mt->hiz_buf->offset;
       }
    } else {
       surf->aux_addr = (struct blorp_address) {
@@ -233,8 +243,8 @@ brw_blorp_to_isl_format(struct brw_context *brw, mesa_format format,
       return ISL_FORMAT_R16_UNORM;
    default: {
       if (is_render_target) {
-         assert(brw->format_supported_as_render_target[format]);
-         return brw->render_target_format[format];
+         assert(brw->mesa_format_supports_render[format]);
+         return brw->mesa_to_isl_render_format[format];
       } else {
          return brw_isl_format_for_mesa_format(format);
       }
@@ -344,12 +354,12 @@ brw_blorp_blit_miptrees(struct brw_context *brw,
                          (1 << ISL_AUX_USAGE_CCS_D);
    }
 
-   struct isl_surf tmp_surfs[4];
+   struct isl_surf tmp_surfs[2];
    struct blorp_surf src_surf, dst_surf;
    blorp_surf_for_miptree(brw, &src_surf, src_mt, false, true, src_usage_flags,
                           &src_level, src_layer, 1, &tmp_surfs[0]);
    blorp_surf_for_miptree(brw, &dst_surf, dst_mt, true, true, dst_usage_flags,
-                          &dst_level, dst_layer, 1, &tmp_surfs[2]);
+                          &dst_level, dst_layer, 1, &tmp_surfs[1]);
 
    struct isl_swizzle src_isl_swizzle = {
       .r = swizzle_to_scs(GET_SWZ(src_swizzle, 0)),
@@ -389,7 +399,7 @@ brw_blorp_copy_miptrees(struct brw_context *brw,
        dst_mt->num_samples, _mesa_get_format_name(dst_mt->format), dst_mt,
        dst_level, dst_layer, dst_x, dst_y);
 
-   struct isl_surf tmp_surfs[4];
+   struct isl_surf tmp_surfs[2];
    struct blorp_surf src_surf, dst_surf;
    blorp_surf_for_miptree(brw, &src_surf, src_mt, false, true,
                           (1 << ISL_AUX_USAGE_MCS) |
@@ -398,7 +408,7 @@ brw_blorp_copy_miptrees(struct brw_context *brw,
    blorp_surf_for_miptree(brw, &dst_surf, dst_mt, true, true,
                           (1 << ISL_AUX_USAGE_MCS) |
                           (1 << ISL_AUX_USAGE_CCS_E),
-                          &dst_level, dst_layer, 1, &tmp_surfs[2]);
+                          &dst_level, dst_layer, 1, &tmp_surfs[1]);
 
    struct blorp_batch batch;
    blorp_batch_init(&brw->blorp, &batch, brw, 0);
@@ -597,7 +607,7 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
        _mesa_get_format_base_format(dst_mt->format) == GL_DEPTH_STENCIL)
       return false;
 
-   if (!brw->format_supported_as_render_target[dst_image->TexFormat])
+   if (!brw->mesa_format_supports_render[dst_image->TexFormat])
       return false;
 
    /* Source clipping shouldn't be necessary, since copytexsubimage (in
@@ -729,7 +739,7 @@ irb_logical_mt_layer(struct intel_renderbuffer *irb)
    return physical_to_logical_layer(irb->mt, irb->mt_layer);
 }
 
-static bool
+static void
 do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
                       struct gl_renderbuffer *rb, unsigned buf,
                       bool partial_clear, bool encode_srgb)
@@ -754,7 +764,7 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
 
    /* If the clear region is empty, just return. */
    if (x0 == x1 || y0 == y1)
-      return true;
+      return;
 
    bool can_fast_clear = !partial_clear;
 
@@ -779,21 +789,20 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
    unsigned level = irb->mt_level;
    const unsigned num_layers = fb->MaxNumLayers ? irb->layer_count : 1;
 
-   if (can_fast_clear) {
-      /* If the MCS buffer hasn't been allocated yet, we need to allocate
-       * it now.
-       */
-      if (!irb->mt->mcs_buf) {
-         assert(!intel_miptree_is_lossless_compressed(brw, irb->mt));
-         if (!intel_miptree_alloc_non_msrt_mcs(brw, irb->mt, false)) {
-            /* MCS allocation failed--probably this will only happen in
-             * out-of-memory conditions.  But in any case, try to recover
-             * by falling back to a non-blorp clear technique.
-             */
-            return false;
-         }
+   /* If the MCS buffer hasn't been allocated yet, we need to allocate it now.
+    */
+   if (can_fast_clear && !irb->mt->mcs_buf) {
+      assert(!intel_miptree_is_lossless_compressed(brw, irb->mt));
+      if (!intel_miptree_alloc_non_msrt_mcs(brw, irb->mt, false)) {
+         /* There are a few reasons in addition to out-of-memory, that can
+          * cause intel_miptree_alloc_non_msrt_mcs to fail.  Try to recover by
+          * falling back to non-fast clear.
+          */
+         can_fast_clear = false;
       }
+   }
 
+   if (can_fast_clear) {
       const enum isl_aux_state aux_state =
          intel_miptree_get_aux_state(irb->mt, irb->mt_level, logical_layer);
       union isl_color_value clear_color =
@@ -806,7 +815,7 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
       if (aux_state == ISL_AUX_STATE_CLEAR &&
           memcmp(&irb->mt->fast_clear_color,
                  &clear_color, sizeof(clear_color)) == 0)
-         return true;
+         return;
 
       irb->mt->fast_clear_color = clear_color;
 
@@ -836,7 +845,7 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
       struct blorp_batch batch;
       blorp_batch_init(&brw->blorp, &batch, brw, 0);
       blorp_fast_clear(&batch, &surf,
-                       brw->render_target_format[format],
+                       brw->mesa_to_isl_render_format[format],
                        level, logical_layer, num_layers,
                        x0, y0, x1, y1);
       blorp_batch_finish(&batch);
@@ -868,7 +877,7 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
       struct blorp_batch batch;
       blorp_batch_init(&brw->blorp, &batch, brw, 0);
       blorp_clear(&batch, &surf,
-                  brw->render_target_format[format],
+                  brw->mesa_to_isl_render_format[format],
                   ISL_SWIZZLE_IDENTITY,
                   level, irb_logical_mt_layer(irb), num_layers,
                   x0, y0, x1, y1,
@@ -876,10 +885,10 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
       blorp_batch_finish(&batch);
    }
 
-   return true;
+   return;
 }
 
-bool
+void
 brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
                       GLbitfield mask, bool partial_clear, bool encode_srgb)
 {
@@ -898,15 +907,11 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
       if (rb == NULL)
          continue;
 
-      if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear,
-                                 encode_srgb)) {
-         return false;
-      }
-
+      do_single_blorp_clear(brw, fb, rb, buf, partial_clear, encode_srgb);
       irb->need_downsample = true;
    }
 
-   return true;
+   return;
 }
 
 void
@@ -1023,7 +1028,7 @@ brw_blorp_resolve_color(struct brw_context *brw, struct intel_mipmap_tree *mt,
 
    const mesa_format format = _mesa_get_srgb_format_linear(mt->format);
 
-   struct isl_surf isl_tmp[2];
+   struct isl_surf isl_tmp[1];
    struct blorp_surf surf;
    blorp_surf_for_miptree(brw, &surf, mt, true, false, 0,
                           &level, layer, 1 /* num_layers */,

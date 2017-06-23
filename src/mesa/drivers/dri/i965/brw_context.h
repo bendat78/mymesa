@@ -646,6 +646,17 @@ struct brw_context
                                      uint32_t width, uint32_t height,
                                      uint32_t tile_x, uint32_t tile_y);
 
+      /**
+       * Emit an MI_REPORT_PERF_COUNT command packet.
+       *
+       * This asks the GPU to write a report of the current OA counter values
+       * into @bo at the given offset and containing the given @report_id
+       * which we can cross-reference when parsing the report (gen7+ only).
+       */
+      void (*emit_mi_report_perf_count)(struct brw_context *brw,
+                                        struct brw_bo *bo,
+                                        uint32_t offset_in_bytes,
+                                        uint32_t report_id);
    } vtbl;
 
    struct brw_bufmgr *bufmgr;
@@ -762,6 +773,13 @@ struct brw_context
     * fragment shader instructions.
     */
    bool needs_unlit_centroid_workaround;
+
+   /** Derived stencil states. */
+   bool stencil_enabled;
+   bool stencil_two_sided;
+   bool stencil_write_enabled;
+   /** Derived polygon state. */
+   bool polygon_front_bit; /**< 0=GL_CCW, 1=GL_CW */
 
    struct isl_device isl_dev;
 
@@ -1152,8 +1170,8 @@ struct brw_context
    const struct brw_tracked_state render_atoms[76];
    const struct brw_tracked_state compute_atoms[11];
 
-   enum isl_format render_target_format[MESA_FORMAT_COUNT];
-   bool format_supported_as_render_target[MESA_FORMAT_COUNT];
+   const enum isl_format *mesa_to_isl_render_format;
+   const bool *mesa_format_supports_render;
 
    /* PrimitiveRestart */
    struct {
@@ -1409,6 +1427,7 @@ void brw_upload_image_surfaces(struct brw_context *brw,
                                struct brw_stage_prog_data *prog_data);
 
 /* brw_surface_formats.c */
+void intel_screen_init_surface_formats(struct intel_screen *screen);
 void brw_init_surface_formats(struct brw_context *brw);
 bool brw_render_target_supported(struct brw_context *brw,
                                  struct gl_renderbuffer *rb);

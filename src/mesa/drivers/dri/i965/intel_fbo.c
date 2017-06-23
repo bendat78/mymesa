@@ -348,7 +348,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    }
 
    /* __DRIimage is opaque to the core so it has to be checked here */
-   if (!brw->format_supported_as_render_target[image->format]) {
+   if (!brw->mesa_format_supports_render[image->format]) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
             "glEGLImageTargetRenderbufferStorage(unsupported image format)");
       return;
@@ -438,7 +438,8 @@ intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
  * \param num_samples must be quantized.
  */
 struct intel_renderbuffer *
-intel_create_winsys_renderbuffer(mesa_format format, unsigned num_samples)
+intel_create_winsys_renderbuffer(struct intel_screen *screen,
+                                 mesa_format format, unsigned num_samples)
 {
    struct intel_renderbuffer *irb = CALLOC_STRUCT(intel_renderbuffer);
    if (!irb)
@@ -470,11 +471,12 @@ intel_create_winsys_renderbuffer(mesa_format format, unsigned num_samples)
  * \param num_samples must be quantized.
  */
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(mesa_format format, unsigned num_samples)
+intel_create_private_renderbuffer(struct intel_screen *screen,
+                                  mesa_format format, unsigned num_samples)
 {
    struct intel_renderbuffer *irb;
 
-   irb = intel_create_winsys_renderbuffer(format, num_samples);
+   irb = intel_create_winsys_renderbuffer(screen, format, num_samples);
    irb->Base.Base.AllocStorage = intel_alloc_private_renderbuffer_storage;
 
    return irb;
@@ -670,14 +672,41 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 
    if (depth_mt && stencil_mt) {
       if (brw->gen >= 6) {
+         unsigned d_width, d_height, d_depth;
+         unsigned s_width, s_height, s_depth;
+
+         if (depth_mt->surf.size > 0) {
+             d_width = depth_mt->surf.phys_level0_sa.width;
+             d_height = depth_mt->surf.phys_level0_sa.height;
+             d_depth = depth_mt->surf.dim == ISL_SURF_DIM_3D ?
+                          depth_mt->surf.phys_level0_sa.depth :
+                          depth_mt->surf.phys_level0_sa.array_len;
+         } else {
+             d_width = depth_mt->physical_width0;
+             d_height = depth_mt->physical_height0;
+             d_depth = depth_mt->physical_depth0;
+         }
+
+         if (stencil_mt->surf.size > 0) {
+             s_width = stencil_mt->surf.phys_level0_sa.width;
+             s_height = stencil_mt->surf.phys_level0_sa.height;
+             s_depth = stencil_mt->surf.dim == ISL_SURF_DIM_3D ?
+                          stencil_mt->surf.phys_level0_sa.depth :
+                          stencil_mt->surf.phys_level0_sa.array_len;
+         } else {
+             s_width = stencil_mt->physical_width0;
+             s_height = stencil_mt->physical_height0;
+             s_depth = stencil_mt->physical_depth0;
+         }
+
          /* For gen >= 6, we are using the lod/minimum-array-element fields
           * and supporting layered rendering. This means that we must restrict
           * the depth & stencil attachments to match in various more retrictive
           * ways. (width, height, depth, LOD and layer)
           */
-	 if (depth_mt->physical_width0 != stencil_mt->physical_width0 ||
-             depth_mt->physical_height0 != stencil_mt->physical_height0 ||
-             depth_mt->physical_depth0 != stencil_mt->physical_depth0 ||
+	 if (d_width != s_width ||
+             d_height != s_height ||
+             d_depth != s_depth ||
              depthRb->mt_level != stencilRb->mt_level ||
 	     depthRb->mt_layer != stencilRb->mt_layer) {
 	    fbo_incomplete(fb,
@@ -952,11 +981,11 @@ intel_renderbuffer_move_to_temp(struct brw_context *brw,
 
    intel_get_image_dims(rb->TexImage, &width, &height, &depth);
 
-   new_mt = intel_miptree_create(brw, rb->TexImage->TexObject->Target,
+   assert(irb->align_wa_mt == NULL);
+   new_mt = intel_miptree_create(brw, GL_TEXTURE_2D,
                                  intel_image->base.Base.TexFormat,
-                                 intel_image->base.Base.Level,
-                                 intel_image->base.Base.Level,
-                                 width, height, depth,
+                                 0, 0,
+                                 width, height, 1,
                                  irb->mt->num_samples,
                                  layout_flags);
 
@@ -964,11 +993,16 @@ intel_renderbuffer_move_to_temp(struct brw_context *brw,
       intel_miptree_alloc_hiz(brw, new_mt);
    }
 
-   intel_miptree_copy_teximage(brw, intel_image, new_mt, invalidate);
+   if (!invalidate)
+      intel_miptree_copy_slice(brw, intel_image->mt,
+                               intel_image->base.Base.Level, irb->mt_layer,
+                               new_mt, 0, 0);
 
-   intel_miptree_reference(&irb->mt, intel_image->mt);
-   intel_renderbuffer_set_draw_offset(irb);
+   intel_miptree_reference(&irb->align_wa_mt, new_mt);
    intel_miptree_release(&new_mt);
+
+   irb->draw_x = 0;
+   irb->draw_y = 0;
 }
 
 void

@@ -868,7 +868,7 @@ void anv_GetPhysicalDeviceProperties(
       .storageImageSampleCounts                 = VK_SAMPLE_COUNT_1_BIT,
       .maxSampleMaskWords                       = 1,
       .timestampComputeAndGraphics              = false,
-      .timestampPeriod                          = devinfo->timebase_scale,
+      .timestampPeriod                          = 1000000000ull / devinfo->timestamp_frequency,
       .maxClipDistances                         = 8,
       .maxCullDistances                         = 8,
       .maxCombinedClipAndCullDistances          = 8,
@@ -1231,6 +1231,8 @@ VkResult anv_CreateDevice(
       break;
    case 9:
       result = gen9_init_device_state(device);
+   case 10:
+      result = gen10_init_device_state(device);
       break;
    default:
       /* Shouldn't get here as we don't create physical devices for any other

@@ -31,6 +31,7 @@
 #include "jit_api.h"
 #include "gen_state_llvm.h"
 #include "core/multisample.h"
+#include "core/state_funcs.h"
 
 #include "gallivm/lp_bld_tgsi.h"
 #include "util/u_format.h"
@@ -934,6 +935,11 @@ swr_change_rt(struct swr_context *ctx,
        * INVALID so they are reloaded from surface. */
       swr_store_render_target(&ctx->pipe, attachment, SWR_TILE_INVALID);
       need_fence = true;
+   } else {
+      /* if no previous attachment, invalidate tiles that may be marked
+       * RESOLVED because of an old attachment */
+      swr_invalidate_render_target(&ctx->pipe, attachment, sf->width, sf->height);
+      /* no need to set fence here */
    }
 
    /* Make new attachment */

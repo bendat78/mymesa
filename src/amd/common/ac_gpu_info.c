@@ -250,6 +250,7 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 	/* convert the shader clock from KHz to MHz */
 	info->max_shader_clock = amdinfo->max_engine_clk / 1000;
 	info->max_se = amdinfo->num_shader_engines;
+        fprintf(stderr, "max shaders %d", amdinfo->num_shader_engines);
 	info->max_sh_per_se = amdinfo->num_shader_arrays_per_engine;
 	info->has_hw_decode =
 		(uvd.available_rings != 0) || (vcn_dec.available_rings != 0);
@@ -284,6 +285,7 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 		for (j = 0; j < info->max_sh_per_se; j++)
 			info->num_good_compute_units +=
 				util_bitcount(amdinfo->cu_bitmap[i][j]);
+        fprintf(stderr, "good compute units %d", info->num_good_compute_units);
 
 	memcpy(info->si_tile_mode_array, amdinfo->gb_tile_mode,
 		sizeof(amdinfo->gb_tile_mode));
