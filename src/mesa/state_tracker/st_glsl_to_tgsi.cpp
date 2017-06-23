@@ -67,7 +67,259 @@
 
 #define MAX_GLSL_TEXTURE_OFFSET 4
 
-extern int swizzle_for_size(int size); 
+class st_src_reg;
+class st_dst_reg;
+
+static int swizzle_for_size(int size);
+
+static int swizzle_for_type(const glsl_type *type, int component = 0)
+{
+   unsigned num_elements = 4;
+
+   if (type) {
+      type = type->without_array();
+      if (type->is_scalar() || type->is_vector() || type->is_matrix())
+         num_elements = type->vector_elements;
+   }
+
+   int swizzle = swizzle_for_size(num_elements);
+   assert(num_elements + component <= 4);
+
+   swizzle += component * MAKE_SWIZZLE4(1, 1, 1, 1);
+   return swizzle;
+}
+
+static unsigned is_precise(const ir_variable *ir)
+{
+   if (!ir)
+      return 0;
+   return ir->data.precise || ir->data.invariant;
+}
+
+/**
+ * This struct is a corresponding struct to TGSI ureg_src.
+ */
+class st_src_reg {
+public:
+   st_src_reg(gl_register_file file, int index, const glsl_type *type,
+              int component = 0, unsigned array_id = 0)
+   {
+      assert(file != PROGRAM_ARRAY || array_id != 0);
+      this->file = file;
+      this->index = index;
+      this->swizzle = swizzle_for_type(type, component);
+      this->negate = 0;
+      this->abs = 0;
+      this->index2D = 0;
+      this->type = type ? type->base_type : GLSL_TYPE_ERROR;
+      this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
+      this->double_reg2 = false;
+      this->array_id = array_id;
+      this->is_double_vertex_input = false;
+   }
+
+   st_src_reg(gl_register_file file, int index, enum glsl_base_type type)
+   {
+      assert(file != PROGRAM_ARRAY); /* need array_id > 0 */
+      this->type = type;
+      this->file = file;
+      this->index = index;
+      this->index2D = 0;
+      this->swizzle = SWIZZLE_XYZW;
+      this->negate = 0;
+      this->abs = 0;
+      this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
+      this->double_reg2 = false;
+      this->array_id = 0;
+      this->is_double_vertex_input = false;
+   }
+
+   st_src_reg(gl_register_file file, int index, enum glsl_base_type type, int index2D)
+   {
+      assert(file != PROGRAM_ARRAY); /* need array_id > 0 */
+      this->type = type;
+      this->file = file;
+      this->index = index;
+      this->index2D = index2D;
+      this->swizzle = SWIZZLE_XYZW;
+      this->negate = 0;
+      this->abs = 0;
+      this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
+      this->double_reg2 = false;
+      this->array_id = 0;
+      this->is_double_vertex_input = false;
+   }
+
+   st_src_reg()
+   {
+      this->type = GLSL_TYPE_ERROR;
+      this->file = PROGRAM_UNDEFINED;
+      this->index = 0;
+      this->index2D = 0;
+      this->swizzle = 0;
+      this->negate = 0;
+      this->abs = 0;
+      this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
+      this->double_reg2 = false;
+      this->array_id = 0;
+      this->is_double_vertex_input = false;
+   }
+
+   explicit st_src_reg(st_dst_reg reg);
+
+   int32_t index; /**< temporary index, VERT_ATTRIB_*, VARYING_SLOT_*, etc. */
+   int16_t index2D;
+   uint16_t swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
+   int negate:4; /**< NEGATE_XYZW mask from mesa */
+   unsigned abs:1;
+   enum glsl_base_type type:5; /** GLSL_TYPE_* from GLSL IR (enum glsl_base_type) */
+   unsigned has_index2:1;
+   gl_register_file file:5; /**< PROGRAM_* from Mesa */
+   /*
+    * Is this the second half of a double register pair?
+    * currently used for input mapping only.
+    */
+   unsigned double_reg2:1;
+   unsigned is_double_vertex_input:1;
+   unsigned array_id:10;
+
+   /** Register index should be offset by the integer in this reg. */
+   st_src_reg *reladdr;
+   st_src_reg *reladdr2;
+
+   st_src_reg get_abs()
+   {
+      st_src_reg reg = *this;
+      reg.negate = 0;
+      reg.abs = 1;
+      return reg;
+   }
+};
+
+class st_dst_reg {
+public:
+   st_dst_reg(gl_register_file file, int writemask, enum glsl_base_type type, int index)
+   {
+      assert(file != PROGRAM_ARRAY); /* need array_id > 0 */
+      this->file = file;
+      this->index = index;
+      this->index2D = 0;
+      this->writemask = writemask;
+      this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
+      this->type = type;
+      this->array_id = 0;
+   }
+
+   st_dst_reg(gl_register_file file, int writemask, enum glsl_base_type type)
+   {
+      assert(file != PROGRAM_ARRAY); /* need array_id > 0 */
+      this->file = file;
+      this->index = 0;
+      this->index2D = 0;
+      this->writemask = writemask;
+      this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
+      this->type = type;
+      this->array_id = 0;
+   }
+
+   st_dst_reg()
+   {
+      this->type = GLSL_TYPE_ERROR;
+      this->file = PROGRAM_UNDEFINED;
+      this->index = 0;
+      this->index2D = 0;
+      this->writemask = 0;
+      this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
+      this->array_id = 0;
+   }
+
+   explicit st_dst_reg(st_src_reg reg);
+
+   int32_t index; /**< temporary index, VERT_ATTRIB_*, VARYING_SLOT_*, etc. */
+   int16_t index2D;
+   gl_register_file file:5; /**< PROGRAM_* from Mesa */
+   unsigned writemask:4; /**< Bitfield of WRITEMASK_[XYZW] */
+   enum glsl_base_type type:5; /** GLSL_TYPE_* from GLSL IR (enum glsl_base_type) */
+   unsigned has_index2:1;
+   unsigned array_id:10;
+
+   /** Register index should be offset by the integer in this reg. */
+   st_src_reg *reladdr;
+   st_src_reg *reladdr2;
+};
+
+st_src_reg::st_src_reg(st_dst_reg reg)
+{
+   this->type = reg.type;
+   this->file = reg.file;
+   this->index = reg.index;
+   this->swizzle = SWIZZLE_XYZW;
+   this->negate = 0;
+   this->abs = 0;
+   this->reladdr = reg.reladdr;
+   this->index2D = reg.index2D;
+   this->reladdr2 = reg.reladdr2;
+   this->has_index2 = reg.has_index2;
+   this->double_reg2 = false;
+   this->array_id = reg.array_id;
+   this->is_double_vertex_input = false;
+}
+
+st_dst_reg::st_dst_reg(st_src_reg reg)
+{
+   this->type = reg.type;
+   this->file = reg.file;
+   this->index = reg.index;
+   this->writemask = WRITEMASK_XYZW;
+   this->reladdr = reg.reladdr;
+   this->index2D = reg.index2D;
+   this->reladdr2 = reg.reladdr2;
+   this->has_index2 = reg.has_index2;
+   this->array_id = reg.array_id;
+}
+
+class glsl_to_tgsi_instruction : public exec_node {
+public:
+   DECLARE_RALLOC_CXX_OPERATORS(glsl_to_tgsi_instruction)
+
+   st_dst_reg dst[2];
+   st_src_reg src[4];
+   st_src_reg resource; /**< sampler, image or buffer register */
+   st_src_reg *tex_offsets;
+
+   /** Pointer to the ir source this tree came from for debugging */
+   ir_instruction *ir;
+
+   unsigned op:8; /**< TGSI opcode */
+   unsigned precise:1;
+   unsigned saturate:1;
+   unsigned is_64bit_expanded:1;
+   unsigned sampler_base:5;
+   unsigned sampler_array_size:6; /**< 1-based size of sampler array, 1 if not array */
+   unsigned tex_target:4; /**< One of TEXTURE_*_INDEX */
+   glsl_base_type tex_type:5;
+   unsigned tex_shadow:1;
+   unsigned image_format:9;
+   unsigned tex_offset_num_offset:3;
+   unsigned dead_mask:4; /**< Used in dead code elimination */
+   unsigned buffer_access:3; /**< buffer access type */
+
+   const struct tgsi_opcode_info *info;
+};
 
 class variable_storage {
    DECLARE_RZALLOC_CXX_OPERATORS(variable_storage)
@@ -188,6 +440,7 @@ public:
    bool have_fma;
    bool use_shared_memory;
    bool has_tex_txf_lz;
+   bool precise;
 
    variable_storage *find_variable_storage(ir_variable *var);
 
@@ -411,6 +664,7 @@ glsl_to_tgsi_visitor::emit_asm(ir_instruction *ir, unsigned op,
    STATIC_ASSERT(TGSI_OPCODE_LAST <= 255);
 
    inst->op = op;
+   inst->precise = this->precise;
    inst->info = tgsi_get_opcode_info(op);
    inst->dst[0] = dst;
    inst->dst[1] = dst1;
@@ -2867,6 +3121,8 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
    st_dst_reg l;
    st_src_reg r;
 
+   /* all generated instructions need to be flaged as precise */
+   this->precise = is_precise(ir->lhs->variable_referenced());
    ir->rhs->accept(this);
    r = this->result;
 
@@ -2958,6 +3214,7 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
    } else {
       emit_block_mov(ir, ir->rhs->type, &l, &r, NULL, false);
    }
+   this->precise = 0;
 }
 
 
