@@ -802,7 +802,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
            return;
         }
 
-        if (max_count == ~0) {
+        if (max_count == (~0u)) {
            /* There are no per-vertex vertex elements. Use the hardware maximum. */
            max_count = 0xffffff;
         }

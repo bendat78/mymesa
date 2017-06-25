@@ -835,7 +835,7 @@ static LLVMValueRef buffer_load(struct lp_build_tgsi_context *bld_base,
 	LLVMTypeRef llvm_type = tgsi2llvmtype(bld_base, type);
 	LLVMTypeRef vec_type = LLVMVectorType(llvm_type, 4);
 
-	if (swizzle == ~0) {
+	if (swizzle == (~0u)) {
 		value = ac_build_buffer_load(&ctx->ac, buffer, 4, NULL, base, offset,
 					     0, 1, 0, can_speculate, false);
 
@@ -875,7 +875,7 @@ static LLVMValueRef lds_load(struct lp_build_tgsi_context *bld_base,
 	struct gallivm_state *gallivm = &ctx->gallivm;
 	LLVMValueRef value;
 
-	if (swizzle == ~0) {
+	if (swizzle == (~0u)) {
 		LLVMValueRef values[TGSI_NUM_CHANNELS];
 
 		for (unsigned chan = 0; chan < TGSI_NUM_CHANNELS; chan++)
@@ -1132,7 +1132,7 @@ static LLVMValueRef fetch_input_gs(
 	}
 
 	/* GFX6: input load from the ESGS ring in memory. */
-	if (swizzle == ~0) {
+	if (swizzle == (~0u)) {
 		LLVMValueRef values[TGSI_NUM_CHANNELS];
 		unsigned chan;
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {

@@ -519,7 +519,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 	for (unsigned i = 0; i < max_slots; ++i) {
 		alu_node *a = slots[i];
 		if (a) {
-			if (first_slot == ~0)
+			if (first_slot == (~0u))
 				first_slot = i;
 			last_slot = i;
 			save_bs[i] = a->bc.bank_swizzle;
@@ -530,7 +530,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 				if (!gpr.try_reserve(a))
 					assert(!"internal reservation error");
 			} else {
-				if (first_nf == ~0)
+				if (first_nf == (~0u))
 					first_nf = i;
 
 				a->bc.bank_swizzle = 0;
@@ -538,7 +538,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 		}
 	}
 
-	if (first_nf == ~0) {
+	if (first_nf == (~0u)) {
 		assign_slot(slot, n);
 		return true;
 	}

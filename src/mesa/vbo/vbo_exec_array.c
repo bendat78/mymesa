@@ -857,7 +857,7 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
 
    if (!index_bounds_valid) {
       assert(start == 0u);
-      assert(end == ~0u);
+      assert(end == (~0u));
    }
 
    if (skip_draw_elements(ctx, count, indices))

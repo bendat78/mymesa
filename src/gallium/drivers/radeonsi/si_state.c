@@ -3235,7 +3235,7 @@ si_make_texture_descriptor(struct si_screen *screen,
 	}
 
 	data_format = si_translate_texformat(&screen->b.b, pipe_format, desc, first_non_void);
-	if (data_format == ~0) {
+	if (data_format == (~0u)) {
 		data_format = 0;
 	}
 

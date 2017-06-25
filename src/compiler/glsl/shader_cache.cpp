@@ -517,7 +517,7 @@ read_xfb(struct blob_reader *metadata, struct gl_shader_program *shProg)
 {
    unsigned xfb_stage = blob_read_uint32(metadata);
 
-   if (xfb_stage == ~0u)
+   if (xfb_stage == (~0u))
       return;
 
    struct gl_program *prog = shProg->_LinkedShaders[xfb_stage]->Program;

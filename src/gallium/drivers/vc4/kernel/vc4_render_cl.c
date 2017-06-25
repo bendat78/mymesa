@@ -400,7 +400,7 @@ static int vc4_rcl_msaa_surface_setup(struct vc4_exec_info *exec,
 		return -EINVAL;
 	}
 
-	if (surf->hindex == ~0)
+	if (surf->hindex == (~0u))
 		return 0;
 
 	*obj = vc4_use_bo(exec, surf->hindex);
@@ -433,7 +433,7 @@ static int vc4_rcl_surface_setup(struct vc4_exec_info *exec,
 		return -EINVAL;
 	}
 
-	if (surf->hindex == ~0)
+	if (surf->hindex == (~0u))
 		return 0;
 
 	*obj = vc4_use_bo(exec, surf->hindex);
@@ -535,7 +535,7 @@ vc4_rcl_render_config_surface_setup(struct vc4_exec_info *exec,
 		return -EINVAL;
 	}
 
-	if (surf->hindex == ~0)
+	if (surf->hindex == (~0u))
 		return 0;
 
 	*obj = vc4_use_bo(exec, surf->hindex);

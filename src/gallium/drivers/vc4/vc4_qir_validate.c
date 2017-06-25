@@ -122,7 +122,7 @@ void qir_validate(struct vc4_compile *c)
                                 break;
 
                         case QFILE_SMALL_IMM:
-                                if (qpu_encode_small_immediate(src.index) == ~0)
+                                if (qpu_encode_small_immediate(src.index) == (~0u))
                                         fail_instr(c, inst, "bad small immediate");
                                 break;
 

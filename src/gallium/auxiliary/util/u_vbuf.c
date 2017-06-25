@@ -693,8 +693,8 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
             mgr->fallback_velems[i].vertex_buffer_index = mgr->fallback_vbs[type];
 
             /* elem_index[type][i] can only be set for one type. */
-            assert(type > VB_INSTANCE || elem_index[type+1][i] == ~0u);
-            assert(type > VB_VERTEX   || elem_index[type+2][i] == ~0u);
+            assert(type > VB_INSTANCE || elem_index[type+1][i] == (~0u));
+            assert(type > VB_VERTEX   || elem_index[type+2][i] == (~0u));
             break;
          }
       }

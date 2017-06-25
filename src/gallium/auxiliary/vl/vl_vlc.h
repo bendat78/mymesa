@@ -293,7 +293,7 @@ vl_vlc_search_byte(struct vl_vlc *vlc, unsigned num_bits, uint8_t value)
 {
    /* make sure we are on a byte boundary */
    assert((vl_vlc_valid_bits(vlc) % 8) == 0);
-   assert(num_bits == ~0u || (num_bits % 8) == 0);
+   assert(num_bits == (~0u) || (num_bits % 8) == 0);
 
    /* deplete the bit buffer */
    while (vl_vlc_valid_bits(vlc) > 0) {

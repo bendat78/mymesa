@@ -1624,7 +1624,7 @@ r300_create_sampler_view_custom(struct pipe_context *pipe,
                                             is_r500,
                                             dxtc_swizzle);
 
-        if (hwformat == ~0) {
+        if (hwformat == (~0u)) {
             fprintf(stderr, "r300: Ooops. Got unsupported format %s in %s.\n",
                     util_format_short_name(templ->format), __func__);
         }

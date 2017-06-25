@@ -512,7 +512,7 @@ epilog(
 
    /* There must be an END instruction somewhere.
     */
-   if (ctx->index_of_END == ~0) {
+   if (ctx->index_of_END == (~0u)) {
       report_error( ctx, "Missing END instruction" );
    }
 

@@ -1078,7 +1078,7 @@ qpu_set_branch_targets(struct vc4_compile *c)
                 /* If there was no branch instruction, then the successor
                  * block must follow immediately after this one.
                  */
-                if (block->branch_qpu_ip == ~0) {
+                if (block->branch_qpu_ip == (~0u)) {
                         assert(block->end_qpu_ip + 1 ==
                                block->successors[0]->start_qpu_ip);
                         continue;

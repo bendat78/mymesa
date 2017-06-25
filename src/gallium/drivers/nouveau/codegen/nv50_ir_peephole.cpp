@@ -1227,7 +1227,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
          i->setSrc(0, new_ImmediateValue(prog, 0u));
          i->src(0).mod = Modifier(0);
          i->setSrc(1, NULL);
-      } else if (imm0.reg.data.u32 == ~0U) {
+      } else if (imm0.reg.data.u32 == (~0u)) {
          i->op = i->src(t).mod.getOp();
          if (t) {
             i->setSrc(0, i->getSrc(t));

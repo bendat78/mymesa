@@ -618,7 +618,7 @@ LLVMValueRef si_llvm_emit_fetch(struct lp_build_tgsi_context *bld_base,
 	LLVMBuilderRef builder = ctx->gallivm.builder;
 	LLVMValueRef result = NULL, ptr, ptr2;
 
-	if (swizzle == ~0) {
+	if (swizzle == (~0u)) {
 		LLVMValueRef values[TGSI_NUM_CHANNELS];
 		unsigned chan;
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {

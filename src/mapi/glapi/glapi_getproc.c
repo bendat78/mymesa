@@ -427,7 +427,7 @@ _glapi_add_dispatch( const char * const * function_names,
 	  * glXGetProcAddress but never filled in by the driver.
 	  */
 
-	 if (extension_offset == ~0) {
+	 if (extension_offset == (~0u)) {
 	    continue;
 	 }
 
@@ -447,7 +447,7 @@ _glapi_add_dispatch( const char * const * function_names,
     * allocate a new dispatch offset.
     */
 
-   if (offset == ~0) {
+   if (offset == (~0u)) {
       offset = next_dynamic_offset;
       next_dynamic_offset++;
    }
@@ -470,7 +470,7 @@ _glapi_add_dispatch( const char * const * function_names,
 	 }
       }
 
-      if (entry[i]->dispatch_offset == ~0) {
+      if (entry[i]->dispatch_offset == (~0u)) {
 	 set_entry_info( entry[i], real_sig, offset );
       }
    }

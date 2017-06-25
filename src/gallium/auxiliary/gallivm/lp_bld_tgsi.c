@@ -402,7 +402,7 @@ lp_build_emit_fetch_src(
     * Swizzle the argument
     */
 
-   if (swizzle == ~0u) {
+   if (swizzle == (~0u)) {
       res = bld_base->emit_swizzle(bld_base, res,
                      reg->Register.SwizzleX,
                      reg->Register.SwizzleY,
@@ -471,7 +471,7 @@ lp_build_emit_fetch_texoffset(
     * Swizzle the argument
     */
 
-   if (swizzle == ~0u) {
+   if (swizzle == (~0u)) {
       res = bld_base->emit_swizzle(bld_base, res,
                                    off->SwizzleX,
                                    off->SwizzleY,
