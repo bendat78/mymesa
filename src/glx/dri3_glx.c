@@ -334,7 +334,7 @@ dri3_create_context_attribs(struct glx_screen *base,
                                                   error,
                                                   pcp);
 
-   if (pcp->driContext == NULL)
+   if (!pcp->driContext)
       goto error_exit;
 
    pcp->base.vtable = &dri3_context_vtable;
@@ -833,7 +833,7 @@ dri3_create_screen(int screen, struct glx_display * priv)
    }
 
    psc->driver = driOpenDriver(driverName);
-   if (psc->driver == NULL) {
+   if (!psc->driver) {
       ErrorMessageF("driver pointer missing\n");
       goto handle_error;
    }
@@ -850,12 +850,12 @@ dri3_create_screen(int screen, struct glx_display * priv)
    }
 
 
-   if (psc->core == NULL) {
+   if (!psc->core) {
       ErrorMessageF("core dri driver extension not found\n");
       goto handle_error;
    }
 
-   if (psc->image_driver == NULL) {
+   if (!psc->image_driver) {
       ErrorMessageF("image driver extension not found\n");
       goto handle_error;
    }
@@ -866,7 +866,7 @@ dri3_create_screen(int screen, struct glx_display * priv)
                                           extensions,
                                           &driver_configs, psc);
 
-   if (psc->driScreen == NULL) {
+   if (!psc->driScreen) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }

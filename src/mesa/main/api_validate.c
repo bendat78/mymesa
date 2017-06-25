@@ -225,7 +225,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
       }
 
       for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-	 if (prog[i] != NULL)
+	 if (prog[i])
 	    prog[i]->_Used = GL_TRUE;
       }
    }

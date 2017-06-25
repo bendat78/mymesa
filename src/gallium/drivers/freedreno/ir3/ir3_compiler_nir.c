@@ -2658,7 +2658,7 @@ fixup_astc_srgb(struct ir3_compile *ctx)
 
 		compile_assert(ctx, sam->cat5.tex < ARRAY_SIZE(alt_tex_state));
 
-		if (alt_tex_state[sam->cat5.tex] == 0) {
+		if (!alt_tex_state[sam->cat5.tex]) {
 			/* assign new alternate/alpha tex state slot: */
 			alt_tex_state[sam->cat5.tex] = tex_idx++;
 			so->astc_srgb.orig_idx[idx++] = sam->cat5.tex;

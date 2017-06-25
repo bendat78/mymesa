@@ -834,7 +834,7 @@ void anv_CmdClearColorImage(
                                 image->aux_usage, &surf);
 
    for (unsigned r = 0; r < rangeCount; r++) {
-      if (pRanges[r].aspectMask == 0)
+      if (!pRanges[r].aspectMask)
          continue;
 
       assert(pRanges[r].aspectMask == VK_IMAGE_ASPECT_COLOR_BIT);
@@ -897,7 +897,7 @@ void anv_CmdClearDepthStencilImage(
    }
 
    for (unsigned r = 0; r < rangeCount; r++) {
-      if (pRanges[r].aspectMask == 0)
+      if (!pRanges[r].aspectMask)
          continue;
 
       bool clear_depth = pRanges[r].aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -934,7 +934,7 @@ anv_cmd_buffer_alloc_blorp_binding_table(struct anv_cmd_buffer *cmd_buffer,
 {
    *bt_state = anv_cmd_buffer_alloc_binding_table(cmd_buffer, num_entries,
                                                   state_offset);
-   if (bt_state->map == NULL) {
+   if (!bt_state->map) {
       /* We ran out of space.  Grab a new binding table block. */
       VkResult result = anv_cmd_buffer_new_binding_table_block(cmd_buffer);
       if (result != VK_SUCCESS)

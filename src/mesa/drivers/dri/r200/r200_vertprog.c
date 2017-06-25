@@ -409,7 +409,7 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
    vp->translated = GL_TRUE;
    vp->fogmode = ctx->Fog.Mode;
 
-   if (mesa_vp->arb.NumInstructions == 0)
+   if (!mesa_vp->arb.NumInstructions)
       return GL_FALSE;
 
 #if 0

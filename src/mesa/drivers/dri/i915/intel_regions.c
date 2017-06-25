@@ -161,7 +161,7 @@ intel_region_alloc(struct intel_screen *screen,
 bool
 intel_region_flink(struct intel_region *region, uint32_t *name)
 {
-   if (region->name == 0) {
+   if (!region->name) {
       if (drm_intel_bo_flink(region->bo, &region->name))
 	 return false;
    }
@@ -269,7 +269,7 @@ intel_region_release(struct intel_region **region_handle)
    assert(region->refcount > 0);
    region->refcount--;
 
-   if (region->refcount == 0) {
+   if (!region->refcount) {
       drm_intel_bo_unreference(region->bo);
 
       free(region);

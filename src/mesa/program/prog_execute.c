@@ -928,7 +928,7 @@ _mesa_execute_program(struct gl_context * ctx,
             GLfloat a[4], result[4];
             fetch_vector1(&inst->SrcReg[0], machine, a);
             if (DEBUG_PROG) {
-               if (a[0] == 0)
+               if (!a[0])
                   printf("RCP(0)\n");
                else if (IS_INF_OR_NAN(a[0]))
                   printf("RCP(inf)\n");
@@ -938,7 +938,7 @@ _mesa_execute_program(struct gl_context * ctx,
          }
          break;
       case OPCODE_RET:         /* return from subroutine (conditional) */
-         if (machine->StackDepth == 0) {
+         if (!machine->StackDepth) {
             return GL_TRUE;  /* Per GL_NV_vertex_program2 spec */
          }
          /* subtract one because of pc++ in the for loop */

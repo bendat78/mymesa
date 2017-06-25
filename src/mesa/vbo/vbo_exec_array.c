@@ -211,7 +211,7 @@ skip_validated_draw(struct gl_context *ctx)
       return ctx->VertexProgram._Current == NULL;
 
    case API_OPENGL_COMPAT:
-      if (ctx->VertexProgram._Current != NULL) {
+      if (ctx->VertexProgram._Current) {
          /* Draw regardless of whether or not we have any vertex arrays.
           * (Ex: could draw a point using a constant vertex pos)
           */
@@ -1299,7 +1299,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
     * that primitive.
     */
    for (i = 0; i < primcount; i++) {
-      if (count[i] == 0) {
+      if (!count[i]) {
          fallback = GL_TRUE;
          break;
       }
@@ -1344,7 +1344,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
    else {
       /* render one prim at a time */
       for (i = 0; i < primcount; i++) {
-         if (count[i] == 0)
+         if (!count[i])
             continue;
          ib.count = count[i];
          ib.index_size = vbo_sizeof_ib_type(type);

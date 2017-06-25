@@ -114,7 +114,7 @@ ir_reader::ir_read_error(s_expression *expr, const char *fmt, ...)
 
    state->error = true;
 
-   if (state->current_function != NULL)
+   if (state->current_function)
       ralloc_asprintf_append(&state->info_log, "In function %s:\n",
 			     state->current_function->function_name());
    ralloc_strcat(&state->info_log, "error: ");
@@ -745,7 +745,7 @@ ir_reader::read_expression(s_expression *expr)
    ir_rvalue *arg[4] = {};
    for (int i = 0; i < num_operands; i++) {
       arg[i] = read_rvalue(s_arg[i]);
-      if (arg[i] == NULL) {
+      if (!arg[i]) {
          ir_read_error(NULL, "when reading operand #%d of %s", i, s_op->value());
          return NULL;
       }
@@ -1012,7 +1012,7 @@ ir_reader::read_texture(s_expression *expr)
    if (op != ir_txs) {
       // Read coordinate (any rvalue)
       tex->coordinate = read_rvalue(s_coord);
-      if (tex->coordinate == NULL) {
+      if (!tex->coordinate) {
 	 ir_read_error(NULL, "when reading coordinate in (%s ...)",
 		       tex->opcode_string());
 	 return NULL;
@@ -1023,7 +1023,7 @@ ir_reader::read_texture(s_expression *expr)
          s_int *si_offset = SX_AS_INT(s_offset);
          if (si_offset == NULL || si_offset->value() != 0) {
             tex->offset = read_rvalue(s_offset);
-            if (tex->offset == NULL) {
+            if (!tex->offset) {
                ir_read_error(s_offset, "expected 0 or an expression");
                return NULL;
             }
@@ -1039,7 +1039,7 @@ ir_reader::read_texture(s_expression *expr)
 	 tex->projector = NULL;
       } else {
 	 tex->projector = read_rvalue(s_proj);
-	 if (tex->projector == NULL) {
+	 if (!tex->projector) {
 	    ir_read_error(NULL, "when reading projective divide in (%s ..)",
 	                  tex->opcode_string());
 	    return NULL;
@@ -1050,7 +1050,7 @@ ir_reader::read_texture(s_expression *expr)
 	 tex->shadow_comparator = NULL;
       } else {
 	 tex->shadow_comparator = read_rvalue(s_shadow);
-	 if (tex->shadow_comparator == NULL) {
+	 if (!tex->shadow_comparator) {
 	    ir_read_error(NULL, "when reading shadow comparator in (%s ..)",
 			  tex->opcode_string());
 	    return NULL;
@@ -1061,7 +1061,7 @@ ir_reader::read_texture(s_expression *expr)
    switch (op) {
    case ir_txb:
       tex->lod_info.bias = read_rvalue(s_lod);
-      if (tex->lod_info.bias == NULL) {
+      if (!tex->lod_info.bias) {
 	 ir_read_error(NULL, "when reading LOD bias in (txb ...)");
 	 return NULL;
       }
@@ -1070,7 +1070,7 @@ ir_reader::read_texture(s_expression *expr)
    case ir_txf:
    case ir_txs:
       tex->lod_info.lod = read_rvalue(s_lod);
-      if (tex->lod_info.lod == NULL) {
+      if (!tex->lod_info.lod) {
 	 ir_read_error(NULL, "when reading LOD in (%s ...)",
 		       tex->opcode_string());
 	 return NULL;
@@ -1078,7 +1078,7 @@ ir_reader::read_texture(s_expression *expr)
       break;
    case ir_txf_ms:
       tex->lod_info.sample_index = read_rvalue(s_sample_index);
-      if (tex->lod_info.sample_index == NULL) {
+      if (!tex->lod_info.sample_index) {
          ir_read_error(NULL, "when reading sample_index in (txf_ms ...)");
          return NULL;
       }
@@ -1091,12 +1091,12 @@ ir_reader::read_texture(s_expression *expr)
 	 return NULL;
       }
       tex->lod_info.grad.dPdx = read_rvalue(s_dx);
-      if (tex->lod_info.grad.dPdx == NULL) {
+      if (!tex->lod_info.grad.dPdx) {
 	 ir_read_error(NULL, "when reading dPdx in (txd ...)");
 	 return NULL;
       }
       tex->lod_info.grad.dPdy = read_rvalue(s_dy);
-      if (tex->lod_info.grad.dPdy == NULL) {
+      if (!tex->lod_info.grad.dPdy) {
 	 ir_read_error(NULL, "when reading dPdy in (txd ...)");
 	 return NULL;
       }
@@ -1104,7 +1104,7 @@ ir_reader::read_texture(s_expression *expr)
    }
    case ir_tg4:
       tex->lod_info.component = read_rvalue(s_component);
-      if (tex->lod_info.component == NULL) {
+      if (!tex->lod_info.component) {
          ir_read_error(NULL, "when reading component in (tg4 ...)");
          return NULL;
       }

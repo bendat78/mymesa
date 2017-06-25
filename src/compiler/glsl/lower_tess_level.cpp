@@ -219,7 +219,7 @@ lower_tess_level_visitor::lower_tess_level_array(ir_rvalue *ir)
 void
 lower_tess_level_visitor::handle_rvalue(ir_rvalue **rv)
 {
-   if (*rv == NULL)
+   if (!*rv)
       return;
 
    ir_dereference_array *const array_deref = (*rv)->as_dereference_array();

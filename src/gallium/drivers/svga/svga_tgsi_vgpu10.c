@@ -2761,7 +2761,7 @@ emit_temporaries_declaration(struct svga_shader_emitter_v10 *emit)
     */
    reg = 0;
    for (i = 0; i < total_temps; i++) {
-      if (emit->temp_map[i].arrayId == 0) {
+      if (!emit->temp_map[i].arrayId) {
          emit->temp_map[i].index = reg++;
       }
    }
@@ -6177,7 +6177,7 @@ emit_vertex_attrib_instructions(struct svga_shader_emitter_v10 *emit)
          unsigned index = u_bit_scan(&adjust_mask);
 
          /* skip the instruction if this vertex attribute is not being used */
-         if (emit->info.input_usage_mask[index] == 0)
+         if (!emit->info.input_usage_mask[index])
             continue;
 
          unsigned tmp = emit->vs.adjusted_input[index];

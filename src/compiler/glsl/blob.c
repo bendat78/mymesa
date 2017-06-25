@@ -41,7 +41,7 @@ grow_to_fit(struct blob *blob, size_t additional)
    if (blob->size + additional <= blob->allocated)
       return true;
 
-   if (blob->allocated == 0)
+   if (!blob->allocated)
       to_allocate = BLOB_INITIAL_SIZE;
    else
       to_allocate = blob->allocated * 2;

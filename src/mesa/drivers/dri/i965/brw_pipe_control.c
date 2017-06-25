@@ -462,7 +462,7 @@ brw_init_pipe_control(struct brw_context *brw,
    brw->workaround_bo = brw_bo_alloc(brw->bufmgr,
                                      "pipe_control workaround",
                                      4096, 4096);
-   if (brw->workaround_bo == NULL)
+   if (!brw->workaround_bo)
       return -ENOMEM;
 
    brw->pipe_controls_since_last_cs_stall = 0;

@@ -132,7 +132,7 @@ rewrite_alu_instr(nir_alu_instr *alu, struct regs_to_ssa_state *state)
     */
    unsigned num_components;
    unsigned vec_swizzle[4] = { 0, 1, 2, 3 };
-   if (nir_op_infos[alu->op].output_size == 0) {
+   if (!nir_op_infos[alu->op].output_size) {
       /* Figure out the swizzle we need on the vecN operation and compute
        * the number of components in the SSA def at the same time.
        */
@@ -146,7 +146,7 @@ rewrite_alu_instr(nir_alu_instr *alu, struct regs_to_ssa_state *state)
        * the swizzles for per-component inputs too
        */
       for (unsigned i = 0; i < nir_op_infos[alu->op].num_inputs; i++) {
-         if (nir_op_infos[alu->op].input_sizes[i] != 0)
+         if (nir_op_infos[alu->op].input_sizes[i])
             continue;
 
          /*

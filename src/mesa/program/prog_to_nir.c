@@ -830,7 +830,7 @@ ptn_emit_instruction(struct ptn_compile *c, struct prog_instruction *prog_inst)
       break;
 
    default:
-      if (op_trans[op] != 0) {
+      if (op_trans[op]) {
          ptn_alu(b, op_trans[op], dest, src);
       } else {
          fprintf(stderr, "unknown opcode: %s\n", _mesa_opcode_string(op));

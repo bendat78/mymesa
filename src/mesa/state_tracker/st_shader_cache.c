@@ -156,7 +156,7 @@ st_load_tgsi_from_disk_cache(struct gl_context *ctx,
     * cache store pass if we fail to find the cached tgsi.
     */
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
+      if (!prog->_LinkedShaders[i])
          continue;
 
       char *buf = ralloc_strdup(NULL, "tgsi_tokens ");
@@ -232,7 +232,7 @@ st_load_tgsi_from_disk_cache(struct gl_context *ctx,
 
    struct st_context *st = st_context(ctx);
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
+      if (!prog->_LinkedShaders[i])
          continue;
 
       unsigned char *sha1 = stage_sha1[i];

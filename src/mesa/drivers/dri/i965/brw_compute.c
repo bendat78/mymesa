@@ -121,7 +121,7 @@ brw_emit_gpgpu_walker(struct brw_context *brw)
    const GLuint *num_groups = brw->compute.num_work_groups;
    uint32_t indirect_flag;
 
-   if (brw->compute.num_work_groups_bo == NULL) {
+   if (!brw->compute.num_work_groups_bo) {
       indirect_flag = 0;
    } else {
       indirect_flag =

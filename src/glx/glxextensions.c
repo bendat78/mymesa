@@ -727,7 +727,7 @@ __glXCalculateUsableGLExtensions(struct glx_context * gc,
     */
 
    for (i = 0; i < __GL_EXT_BYTES; i++) {
-      if ((known_gl_extensions[i].version_major != 0)
+      if ((known_gl_extensions[i].version_major)
           && ((major_version > known_gl_extensions[i].version_major)
               || ((major_version == known_gl_extensions[i].version_major)
                   && (minor_version >=

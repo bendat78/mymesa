@@ -112,7 +112,7 @@ static struct pipe_resource *noop_resource_create(struct pipe_screen *screen,
    nresource->size = stride * templ->height0 * templ->depth0;
    nresource->data = MALLOC(nresource->size);
    pipe_reference_init(&nresource->base.reference, 1);
-   if (nresource->data == NULL) {
+   if (!nresource->data) {
       FREE(nresource);
       return NULL;
    }

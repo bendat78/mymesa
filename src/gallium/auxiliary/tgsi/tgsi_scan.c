@@ -139,7 +139,7 @@ scan_src_operand(struct tgsi_shader_info *info,
          break;
       case TGSI_SEMANTIC_BLOCK_SIZE:
          /* The block size is translated to IMM with a fixed block size. */
-         if (info->properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH] == 0)
+         if (!info->properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH])
             info->uses_block_size = true;
          break;
       case TGSI_SEMANTIC_GRID_SIZE:

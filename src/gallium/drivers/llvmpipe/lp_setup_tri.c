@@ -609,8 +609,8 @@ do_triangle_ccw(struct lp_setup_context *setup,
             /* both fill conventions want this - adjust for left edges */
             plane[i].c++;
          }
-         else if (plane[i].dcdx == 0) {
-            if (setup->bottom_edge_rule == 0){
+         else if (!plane[i].dcdx) {
+            if (!setup->bottom_edge_rule){
                /* correct for top-left fill convention:
                 */
                if (plane[i].dcdy > 0) plane[i].c++;

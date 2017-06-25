@@ -1237,7 +1237,7 @@ static bool ac_eliminate_const_output(uint8_t *vs_output_param_offset,
 			is_zero[i] = true;
 			is_one[i] = true;
 		} else if (exp->chan[i].type == AC_IR_CONST) {
-			if (exp->chan[i].const_float == 0)
+			if (!exp->chan[i].const_float)
 				is_zero[i] = true;
 			else if (exp->chan[i].const_float == 1)
 				is_one[i] = true;

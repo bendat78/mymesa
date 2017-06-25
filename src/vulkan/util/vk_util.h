@@ -103,7 +103,7 @@ __vk_outarray_init(struct __vk_outarray *a,
    *a->filled_len = 0;
    a->wanted_len = 0;
 
-   if (a->data == NULL)
+   if (!a->data)
       a->cap = UINT32_MAX;
 }
 
@@ -126,7 +126,7 @@ __vk_outarray_next(struct __vk_outarray *a, size_t elem_size)
    if (*a->filled_len >= a->cap)
       return NULL;
 
-   if (a->data != NULL)
+   if (a->data)
       p = a->data + (*a->filled_len) * elem_size;
 
    *a->filled_len += 1;

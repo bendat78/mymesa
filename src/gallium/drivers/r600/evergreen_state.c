@@ -3622,7 +3622,7 @@ static void evergreen_dma_copy(struct pipe_context *ctx,
 	unsigned src_x, src_y;
 	unsigned dst_x = dstx, dst_y = dsty, dst_z = dstz;
 
-	if (rctx->b.dma.cs == NULL) {
+	if (!rctx->b.dma.cs) {
 		goto fallback;
 	}
 

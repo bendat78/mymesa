@@ -1307,7 +1307,7 @@ ast_expression::set_is_lhs(bool new_value)
    /* is_lhs is tracked only to print "variable used uninitialized" warnings,
     * if we lack an identifier we can just skip it.
     */
-   if (this->primary_expression.identifier == NULL)
+   if (!this->primary_expression.identifier)
       return;
 
    this->is_lhs = new_value;
@@ -1315,7 +1315,7 @@ ast_expression::set_is_lhs(bool new_value)
    /* We need to go through the subexpressions tree to cover cases like
     * ast_field_selection
     */
-   if (this->subexpressions[0] != NULL)
+   if (this->subexpressions[0])
       this->subexpressions[0]->set_is_lhs(new_value);
 }
 
@@ -4773,7 +4773,7 @@ ast_declarator_list::hir(exec_list *instructions,
    if (this->invariant) {
       assert(this->type == NULL);
 
-      if (state->current_function != NULL) {
+      if (state->current_function) {
          _mesa_glsl_error(& loc, state,
                           "all uses of `invariant' keyword must be at global "
                           "scope");
@@ -4955,7 +4955,7 @@ ast_declarator_list::hir(exec_list *instructions,
              */
             return NULL;
          } else if (this->type->qualifier.precision != ast_precision_none) {
-            if (this->type->specifier->structure != NULL) {
+            if (this->type->specifier->structure) {
                _mesa_glsl_error(&loc, state,
                                 "precision qualifiers can't be applied "
                                 "to structures");
@@ -4975,7 +4975,7 @@ ast_declarator_list::hir(exec_list *instructions,
                                      qualifier.precision],
                                   type_name);
             }
-         } else if (this->type->specifier->structure == NULL) {
+         } else if (!this->type->specifier->structure) {
             _mesa_glsl_warning(&loc, state, "empty declaration");
          }
       }
@@ -5092,7 +5092,7 @@ ast_declarator_list::hir(exec_list *instructions,
          }
       }
 
-      if (state->current_function != NULL) {
+      if (state->current_function) {
          const char *mode = NULL;
          const char *extra = "";
 
@@ -5465,7 +5465,7 @@ ast_declarator_list::hir(exec_list *instructions,
          declared_var->data.how_declared = ir_var_declared_normally;
       }
 
-      if (decl->initializer != NULL) {
+      if (decl->initializer) {
          result = process_initializer(declared_var,
                                       decl, this->type,
                                       &initializer_instructions, state);
@@ -5627,7 +5627,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * parameters and lookups of an unnamed symbol.
     */
    if (type->is_void()) {
-      if (this->identifier != NULL)
+      if (this->identifier)
          _mesa_glsl_error(& loc, state,
                           "named parameter cannot have type `void'");
 
@@ -5787,7 +5787,7 @@ ast_function::hir(exec_list *instructions,
     *
     * Note that this language does not appear in GLSL 1.10.
     */
-   if ((state->current_function != NULL) &&
+   if ((state->current_function) &&
        state->is_version(120, 100)) {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
@@ -6464,13 +6464,13 @@ ast_switch_statement::hir(exec_list *instructions,
    loop->body_instructions.push_tail(jump);
 
    /* If we are inside loop, check if continue got called inside switch. */
-   if (state->loop_nesting_ast != NULL) {
+   if (state->loop_nesting_ast) {
       ir_dereference_variable *deref_continue_inside =
          new(ctx) ir_dereference_variable(state->switch_state.continue_inside);
       ir_if *irif = new(ctx) ir_if(deref_continue_inside);
       ir_loop_jump *jump = new(ctx) ir_loop_jump(ir_loop_jump::jump_continue);
 
-      if (state->loop_nesting_ast != NULL) {
+      if (state->loop_nesting_ast) {
          if (state->loop_nesting_ast->rest_expression) {
             state->loop_nesting_ast->rest_expression->hir(&irif->then_instructions,
                                                           state);
@@ -6647,7 +6647,7 @@ ast_case_label::hir(exec_list *instructions,
    ir_rvalue *const true_val = new(ctx) ir_constant(true);
 
    /* If not default case, ... */
-   if (this->test_value != NULL) {
+   if (this->test_value) {
       /* Conditionally set fallthru state based on
        * comparison of cached test expression value to case label.
        */
@@ -6917,13 +6917,13 @@ ast_type_specifier::hir(exec_list *instructions,
       if (!state->check_precision_qualifiers_allowed(&loc))
          return NULL;
 
-      if (this->structure != NULL) {
+      if (this->structure) {
          _mesa_glsl_error(&loc, state,
                           "precision qualifiers do not apply to structures");
          return NULL;
       }
 
-      if (this->array_specifier != NULL) {
+      if (this->array_specifier) {
          _mesa_glsl_error(&loc, state,
                           "default precision statements do not apply to "
                           "arrays");
@@ -7595,7 +7595,7 @@ ast_interface_block::hir(exec_list *instructions,
    YYLTYPE loc = this->get_location();
 
    /* Interface blocks must be declared at global scope */
-   if (state->current_function != NULL) {
+   if (state->current_function) {
       _mesa_glsl_error(&loc, state,
                        "Interface block `%s' must be declared "
                        "at global scope",
@@ -7875,7 +7875,7 @@ ast_interface_block::hir(exec_list *instructions,
                                 "gl_out[]");
             }
          } else {
-            if (this->instance_name != NULL) {
+            if (this->instance_name) {
                _mesa_glsl_error(&loc, state,
                                 "gl_PerVertex output may not be redeclared with "
                                 "an instance name");
@@ -8028,7 +8028,7 @@ ast_interface_block::hir(exec_list *instructions,
 
       ir_variable *var;
 
-      if (this->array_specifier != NULL) {
+      if (this->array_specifier) {
          const glsl_type *block_array_type =
             process_array_type(&loc, block_type, this->array_specifier, state);
 
@@ -8222,7 +8222,7 @@ ast_interface_block::hir(exec_list *instructions,
             continue;
          }
 
-         if (state->symbols->get_variable(var->name) != NULL)
+         if (state->symbols->get_variable(var->name))
             _mesa_glsl_error(&loc, state, "`%s' redeclared", var->name);
 
          /* Propagate the "binding" keyword into this UBO/SSBO's fields.
@@ -8443,7 +8443,7 @@ ast_cs_input_layout::hir(exec_list *instructions,
       char *local_size_str = ralloc_asprintf(NULL, "invalid local_size_%c",
                                              'x' + i);
       /* Infer a local_size of 1 for unspecified dimensions */
-      if (this->local_size[i] == NULL) {
+      if (!this->local_size[i]) {
          qual_local_size[i] = 1;
       } else if (!this->local_size[i]->
              process_qualifier_constant(state, local_size_str,

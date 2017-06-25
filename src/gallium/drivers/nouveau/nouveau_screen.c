@@ -96,7 +96,7 @@ nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
    struct nouveau_bo *bo = 0;
    int ret;
 
-   if (whandle->offset != 0) {
+   if (whandle->offset) {
       debug_printf("%s: attempt to import unsupported winsys offset %d\n",
                    __FUNCTION__, whandle->offset);
       return NULL;

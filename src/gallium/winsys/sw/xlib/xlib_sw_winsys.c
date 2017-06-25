@@ -165,7 +165,7 @@ alloc_shm_ximage(struct xlib_displaytarget *xlib_dt,
                                       NULL,
                                       &xlib_dt->shminfo,
                                       width, height);
-   if (xlib_dt->tempImage == NULL) {
+   if (!xlib_dt->tempImage) {
       shmctl(xlib_dt->shminfo.shmid, IPC_RMID, 0);
       xlib_dt->shm = False;
       return;
@@ -324,7 +324,7 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
       xlib_dt->drawable = xlib_drawable->drawable;
    }
 
-   if (xlib_dt->tempImage == NULL) {
+   if (!xlib_dt->tempImage) {
       assert(util_format_get_blockwidth(xlib_dt->format) == 1);
       assert(util_format_get_blockheight(xlib_dt->format) == 1);
       alloc_ximage(xlib_dt, xlib_drawable,
@@ -334,7 +334,7 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
          return;
    }
 
-   if (xlib_dt->gc == NULL) {
+   if (!xlib_dt->gc) {
       xlib_dt->gc = XCreateGC(display, xlib_drawable->drawable, 0, NULL);
       XSetFunction(display, xlib_dt->gc, GXcopy);
    }

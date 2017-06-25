@@ -703,7 +703,7 @@ emit_fast_htile_clear(struct radv_cmd_buffer *cmd_buffer,
 	    clear_rect->rect.extent.height != iview->image->info.height)
 		goto fail;
 
-	if (clear_rect->baseArrayLayer != 0)
+	if (clear_rect->baseArrayLayer)
 		goto fail;
 	if (clear_rect->layerCount != iview->image->info.array_size)
 		goto fail;
@@ -909,7 +909,7 @@ emit_fast_color_clear(struct radv_cmd_buffer *cmd_buffer,
 	    clear_rect->rect.extent.height != iview->image->info.height)
 		goto fail;
 
-	if (clear_rect->baseArrayLayer != 0)
+	if (clear_rect->baseArrayLayer)
 		goto fail;
 	if (clear_rect->layerCount != iview->image->info.array_size)
 		goto fail;

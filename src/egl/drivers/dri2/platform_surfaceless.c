@@ -136,14 +136,14 @@ dri2_surfaceless_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    dri2_surf->dri_drawable =
       dri2_dpy->image_driver->createNewDrawable(dri2_dpy->dri_screen, config,
                                                 dri2_surf);
-   if (dri2_surf->dri_drawable == NULL) {
+   if (!dri2_surf->dri_drawable) {
       _eglError(EGL_BAD_ALLOC, "image->createNewDrawable");
       goto cleanup_surface;
     }
 
    if (conf->RedSize == 5)
       dri2_surf->visual = __DRI_IMAGE_FORMAT_RGB565;
-   else if (conf->AlphaSize == 0)
+   else if (!conf->AlphaSize)
       dri2_surf->visual = __DRI_IMAGE_FORMAT_XRGB8888;
    else
       dri2_surf->visual = __DRI_IMAGE_FORMAT_ARGB8888;

@@ -915,7 +915,7 @@ intel_miptree_map(struct intel_context *intel,
    *out_ptr = map->ptr;
    *out_stride = map->stride;
 
-   if (map->ptr == NULL)
+   if (!map->ptr)
       intel_miptree_release_map(mt, level, slice);
 }
 

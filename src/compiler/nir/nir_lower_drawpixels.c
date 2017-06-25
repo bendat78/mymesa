@@ -41,7 +41,7 @@ typedef struct {
 static nir_ssa_def *
 get_texcoord(lower_drawpixels_state *state)
 {
-   if (state->texcoord == NULL) {
+   if (!state->texcoord) {
       nir_variable *texcoord = NULL;
 
       /* find gl_TexCoord, if it exists: */
@@ -83,7 +83,7 @@ create_uniform(nir_shader *shader, const char *name, const int state_tokens[5])
 static nir_ssa_def *
 get_scale(lower_drawpixels_state *state)
 {
-   if (state->scale == NULL) {
+   if (!state->scale) {
       state->scale = create_uniform(state->shader, "gl_PTscale",
                                     state->options->scale_state_tokens);
    }
@@ -93,7 +93,7 @@ get_scale(lower_drawpixels_state *state)
 static nir_ssa_def *
 get_bias(lower_drawpixels_state *state)
 {
-   if (state->bias == NULL) {
+   if (!state->bias) {
       state->bias = create_uniform(state->shader, "gl_PTbias",
                                    state->options->bias_state_tokens);
    }
@@ -103,7 +103,7 @@ get_bias(lower_drawpixels_state *state)
 static nir_ssa_def *
 get_texcoord_const(lower_drawpixels_state *state)
 {
-   if (state->bias == NULL) {
+   if (!state->bias) {
       state->bias = create_uniform(state->shader, "gl_MultiTexCoord0",
                                    state->options->texcoord_state_tokens);
    }

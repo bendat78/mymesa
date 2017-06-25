@@ -58,7 +58,7 @@ swr_copy_to_scratch_space(struct swr_context *ctx,
          }
 
          if (!space->base) {
-            space->base = (uint8_t *)AlignedMalloc(space->current_size, 
+            space->base = (uint8_t *)AlignedMalloc(space->current_size,
                                                    sizeof(void *));
             space->head = (void *)space->base;
          }

@@ -154,7 +154,7 @@ concatenate_and_mkdir(void *ctx, const char *path, const char *name)
 
    new_path = ralloc_asprintf(ctx, "%s/%s", path, name);
 
-   if (mkdir_if_needed(new_path) == 0)
+   if (!mkdir_if_needed(new_path))
       return new_path;
    else
       return NULL;
@@ -254,7 +254,7 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
       goto fail;
 
    cache->path = ralloc_strdup(cache, path);
-   if (cache->path == NULL)
+   if (!cache->path)
       goto fail;
 
    path = ralloc_asprintf(local, "%s/index", cache->path);

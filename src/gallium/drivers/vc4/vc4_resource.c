@@ -642,7 +642,7 @@ vc4_resource_from_handle(struct pipe_screen *pscreen,
 
         rsc->tiled = false;
 
-        if (whandle->offset != 0) {
+        if (whandle->offset) {
                 fprintf(stderr,
                         "Attempt to import unsupported winsys offset %u\n",
                         whandle->offset);

@@ -52,7 +52,7 @@ _mesa_NewHashTable(void)
    if (table) {
       table->ht = _mesa_hash_table_create(NULL, uint_key_hash,
                                           uint_key_compare);
-      if (table->ht == NULL) {
+      if (!table->ht) {
          free(table);
          _mesa_error_no_memory(__func__);
          return NULL;

@@ -230,7 +230,7 @@ glx_config_create_list(unsigned count)
    next = &base;
    for (i = 0; i < count; i++) {
       *next = malloc(size);
-      if (*next == NULL) {
+      if (!*next) {
 	 glx_config_destroy_list(base);
 	 base = NULL;
 	 break;

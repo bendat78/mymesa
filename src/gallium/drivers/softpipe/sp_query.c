@@ -116,7 +116,7 @@ softpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
       /* reset our cache */
-      if (softpipe->active_statistics_queries == 0) {
+      if (!softpipe->active_statistics_queries) {
          memset(&softpipe->pipeline_statistics, 0,
                 sizeof(softpipe->pipeline_statistics));
       }

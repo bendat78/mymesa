@@ -108,7 +108,7 @@ create_texture_for_pbo(struct gl_context *ctx,
       assert(create_pbo);
 
       *tmp_pbo = ctx->Driver.NewBufferObject(ctx, 0xDEADBEEF);
-      if (*tmp_pbo == NULL)
+      if (!*tmp_pbo)
          return NULL;
 
       /* In case of GL_PIXEL_PACK_BUFFER, pass null pointer for the pixel

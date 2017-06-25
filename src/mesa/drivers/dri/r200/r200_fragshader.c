@@ -75,7 +75,7 @@ static void r200SetFragShaderArg( GLuint *afs_cmd, GLuint opnum, GLuint optype,
    if (index >= GL_REG_0_ATI && index <= GL_REG_5_ATI)
       reg0 |= (((index - GL_REG_0_ATI)*2) + 10 + useOddSrc) << (5*argPos);
    else if (index >= GL_CON_0_ATI && index <= GL_CON_7_ATI) {
-      if ((*tfactor == 0) || (index == *tfactor)) {
+      if (!(*tfactor) || (index == *tfactor)) {
 	 reg0 |= (R200_TXC_ARG_A_TFACTOR_COLOR + useOddSrc) << (5*argPos);
 	 reg2 |= (index - GL_CON_0_ATI) << R200_TXC_TFACTOR_SEL_SHIFT;
 	 *tfactor = index;

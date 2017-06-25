@@ -448,7 +448,7 @@ test_one(unsigned verbose,
    unsigned i, j;
    const unsigned stride = lp_type_width(type)/8;
 
-   if(verbose >= 1)
+   if(verbose)
       dump_blend_type(stdout, blend, type);
 
    context = LLVMContextCreate();

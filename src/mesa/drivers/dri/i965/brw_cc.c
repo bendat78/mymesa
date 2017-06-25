@@ -126,7 +126,7 @@ static void upload_cc_unit(struct brw_context *brw)
        * force the destination alpha to 1.0.  This means replacing GL_DST_ALPHA
        * with GL_ONE and GL_ONE_MINUS_DST_ALPHA with GL_ZERO.
        */
-      if (ctx->DrawBuffer->Visual.alphaBits == 0) {
+      if (!ctx->DrawBuffer->Visual.alphaBits) {
 	 srcRGB = brw_fix_xRGB_alpha(srcRGB);
 	 srcA   = brw_fix_xRGB_alpha(srcA);
 	 dstRGB = brw_fix_xRGB_alpha(dstRGB);

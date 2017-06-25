@@ -1131,7 +1131,7 @@ nvc0_bind_images_range(struct nvc0_context *nvc0, const unsigned s,
          if (img->resource == pimages[p].resource &&
              img->format == pimages[p].format &&
              img->access == pimages[p].access) {
-            if (img->resource == NULL)
+            if (!img->resource)
                continue;
             if (img->resource->target == PIPE_BUFFER &&
                 img->u.buf.offset == pimages[p].u.buf.offset &&

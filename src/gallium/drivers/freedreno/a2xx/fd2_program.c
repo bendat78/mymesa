@@ -115,7 +115,7 @@ emit(struct fd_ringbuffer *ring, struct fd2_shader_stateobj *so)
 {
 	unsigned i;
 
-	if (so->info.sizedwords == 0)
+	if (!so->info.sizedwords)
 		assemble(so);
 
 	OUT_PKT3(ring, CP_IM_LOAD_IMMEDIATE, 2 + so->info.sizedwords);

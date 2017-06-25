@@ -95,7 +95,7 @@ static uint64_t
 __gen_combine_address(struct brw_context *brw, void *location,
                       struct brw_address address, uint32_t delta)
 {
-   if (address.bo == NULL) {
+   if (!address.bo) {
       return address.offset + delta;
    } else {
       return emit_reloc(brw, location, address, delta);
@@ -1355,7 +1355,7 @@ genX(upload_clip_state)(struct brw_context *brw)
       clip.MinimumPointWidth = 0.125;
       clip.MaximumPointWidth = 255.875;
       clip.MaximumVPIndex = viewport_count - 1;
-      if (_mesa_geometric_layers(fb) == 0)
+      if (!_mesa_geometric_layers(fb))
          clip.ForceZeroRTAIndexEnable = true;
    }
 }
@@ -1647,7 +1647,7 @@ genX(upload_wm)(struct brw_context *brw)
     *     "[DevSNB]: This packet must be followed by WM_STATE."
     */
    brw_batch_emit(brw, GENX(3DSTATE_CONSTANT_PS), wmcp) {
-      if (wm_prog_data->base.nr_params != 0) {
+      if (wm_prog_data->base.nr_params) {
          wmcp.Buffer0Valid = true;
          /* Pointer to the WM constant buffer.  Covered by the set of
           * state flags from gen6_upload_wm_push_constants.
@@ -1855,7 +1855,7 @@ genX(upload_vs_state)(struct brw_context *brw)
     * don't need to do another one here.
     */
    brw_batch_emit(brw, GENX(3DSTATE_CONSTANT_VS), cvs) {
-      if (stage_state->push_const_size != 0) {
+      if (stage_state->push_const_size) {
          cvs.Buffer0Valid = true;
          cvs.PointertoVSConstantBuffer0 = stage_state->push_const_offset;
          cvs.VSConstantBuffer0ReadLength = stage_state->push_const_size - 1;

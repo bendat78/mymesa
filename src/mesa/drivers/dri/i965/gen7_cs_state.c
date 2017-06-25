@@ -59,7 +59,7 @@ brw_upload_cs_push_constants(struct brw_context *brw,
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, prog->Parameters);
 
-   if (cs_prog_data->push.total.size == 0) {
+   if (!cs_prog_data->push.total.size) {
       stage_state->push_const_size = 0;
       return;
    }

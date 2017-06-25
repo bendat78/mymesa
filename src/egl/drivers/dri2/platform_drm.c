@@ -48,7 +48,7 @@ lock_front_buffer(struct gbm_surface *_surf)
    struct gbm_dri_device *device = (struct gbm_dri_device *) _surf->gbm;
    struct gbm_bo *bo;
 
-   if (dri2_surf->current == NULL) {
+   if (!dri2_surf->current) {
       _eglError(EGL_BAD_SURFACE, "no front buffer");
       return NULL;
    }
@@ -145,7 +145,7 @@ dri2_drm_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
                                              dri2_surf->gbm_surf);
 
    }
-   if (dri2_surf->dri_drawable == NULL) {
+   if (!dri2_surf->dri_drawable) {
       _eglError(EGL_BAD_ALLOC, "createNewDrawable()");
       goto cleanup_surf;
    }
@@ -214,7 +214,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
    struct gbm_dri_surface *surf = dri2_surf->gbm_surf;
    int age = 0;
 
-   if (dri2_surf->back == NULL) {
+   if (!dri2_surf->back) {
       for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
 	 if (!dri2_surf->color_buffers[i].locked &&
 	      dri2_surf->color_buffers[i].age >= age) {
@@ -224,9 +224,9 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
       }
    }
 
-   if (dri2_surf->back == NULL)
+   if (!dri2_surf->back)
       return -1;
-   if (dri2_surf->back->bo == NULL) {
+   if (!dri2_surf->back->bo) {
       if (surf->base.modifiers)
          dri2_surf->back->bo = gbm_bo_create_with_modifiers(&dri2_dpy->gbm_dri->base,
                                                             surf->base.width, surf->base.height,
@@ -241,7 +241,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
                                              surf->base.flags);
 
    }
-   if (dri2_surf->back->bo == NULL)
+   if (!dri2_surf->back->bo)
       return -1;
 
    return 0;
@@ -254,16 +254,16 @@ get_swrast_front_bo(struct dri2_egl_surface *dri2_surf)
       dri2_egl_display(dri2_surf->base.Resource.Display);
    struct gbm_dri_surface *surf = dri2_surf->gbm_surf;
 
-   if (dri2_surf->current == NULL) {
+   if (!dri2_surf->current) {
       assert(!dri2_surf->color_buffers[0].locked);
       dri2_surf->current = &dri2_surf->color_buffers[0];
    }
 
-   if (dri2_surf->current->bo == NULL)
+   if (!dri2_surf->current->bo)
       dri2_surf->current->bo = gbm_bo_create(&dri2_dpy->gbm_dri->base,
                                              surf->base.width, surf->base.height,
                                              surf->base.format, surf->base.flags);
-   if (dri2_surf->current->bo == NULL)
+   if (!dri2_surf->current->bo)
       return -1;
 
    return 0;
@@ -484,7 +484,7 @@ dri2_drm_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
    }
 
    dri2_img->dri_image = dri2_dpy->image->dupImage(dri_bo->image, dri2_img);
-   if (dri2_img->dri_image == NULL) {
+   if (!dri2_img->dri_image) {
       free(dri2_img);
       _eglError(EGL_BAD_ALLOC, "dri2_create_image_khr_pixmap");
       return NULL;
@@ -539,7 +539,7 @@ swrast_put_image2(__DRIdrawable *driDrawable,
       return;
 
    bo = gbm_dri_bo(dri2_surf->current->bo);
-   if (gbm_dri_bo_map_dumb(bo) == NULL)
+   if (!gbm_dri_bo_map_dumb(bo))
       return;
 
    internal_stride = bo->base.stride;
@@ -569,7 +569,7 @@ swrast_get_image(__DRIdrawable *driDrawable,
       return;
 
    bo = gbm_dri_bo(dri2_surf->current->bo);
-   if (gbm_dri_bo_map_dumb(bo) == NULL)
+   if (!gbm_dri_bo_map_dumb(bo))
       return;
 
    internal_stride = bo->base.stride;

@@ -460,7 +460,7 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
 
    _mesa_compute_version(ctx);
 
-   if (ctx->Version == 0) {
+   if (!ctx->Version) {
       /* This can happen when a core profile was requested, but the driver
        * does not support some features of GL 3.1 or later.
        */

@@ -915,7 +915,7 @@ brw_begin_perf_query(struct gl_context *ctx,
           brw->perfquery.current_oa_metrics_set_id !=
           query->oa_metrics_set_id) {
 
-         if (brw->perfquery.n_oa_users != 0)
+         if (brw->perfquery.n_oa_users)
             return false;
          else
             close_perf(brw);
@@ -1320,7 +1320,7 @@ brw_delete_perf_query(struct gl_context *ctx,
     * longer in use, it's a good time to free our cache of sample
     * buffers and close any current i915-perf stream.
     */
-   if (--brw->perfquery.n_query_instances == 0) {
+   if (!--brw->perfquery.n_query_instances) {
       free_sample_bufs(brw);
       close_perf(brw);
    }

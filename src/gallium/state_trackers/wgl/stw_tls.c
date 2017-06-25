@@ -131,7 +131,7 @@ stw_tls_data_create(DWORD dwThreadId)
                                              stw_call_window_proc,
                                              NULL,
                                              dwThreadId);
-   if (data->hCallWndProcHook == NULL) {
+   if (!data->hCallWndProcHook) {
       goto no_hook;
    }
 

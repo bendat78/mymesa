@@ -1137,7 +1137,7 @@ _mesa_multi_bind_lookup_bufferobj(struct gl_context *ctx,
 {
    struct gl_buffer_object *bufObj;
 
-   if (buffers[index] != 0) {
+   if (buffers[index]) {
       bufObj = _mesa_lookup_bufferobj_locked(ctx, buffers[index]);
 
       /* The multi-bind functions don't create the buffer objects

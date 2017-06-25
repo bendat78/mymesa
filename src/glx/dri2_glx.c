@@ -217,7 +217,7 @@ dri2_create_context(struct glx_screen *base,
       (*psc->dri2->createNewContext) (psc->driScreen,
                                       config->driConfig, shared, pcp);
 
-   if (pcp->driContext == NULL) {
+   if (!pcp->driContext) {
       free(pcp);
       return NULL;
    }
@@ -318,7 +318,7 @@ dri2_create_context_attribs(struct glx_screen *base,
 					  error,
 					  pcp);
 
-   if (pcp->driContext == NULL)
+   if (!pcp->driContext)
       goto error_exit;
 
    pcp->base.vtable = &dri2_context_vtable;
@@ -1239,7 +1239,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    }
 
    psc->driver = driOpenDriver(driverName);
-   if (psc->driver == NULL) {
+   if (!psc->driver) {
       ErrorMessageF("driver pointer missing\n");
       goto handle_error;
    }
@@ -1275,7 +1275,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
                                     &driver_configs, psc);
    }
 
-   if (psc->driScreen == NULL) {
+   if (!psc->driScreen) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }
@@ -1431,7 +1431,7 @@ dri2CreateDisplay(Display * dpy)
    pdp->loader_extensions[i++] = NULL;
 
    pdp->dri2Hash = __glxHashCreate();
-   if (pdp->dri2Hash == NULL) {
+   if (!pdp->dri2Hash) {
       free(pdp);
       return NULL;
    }

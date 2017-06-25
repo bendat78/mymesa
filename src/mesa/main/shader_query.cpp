@@ -123,7 +123,7 @@ _mesa_GetActiveAttrib(GLuint program, GLuint desired_index,
       return;
    }
 
-   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
+   if (!shProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(no vertex shader)");
       return;
    }
@@ -175,7 +175,7 @@ _mesa_GetAttribLocation(GLuint program, const GLchar * name)
 
    /* Not having a vertex shader is not an error.
     */
-   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL)
+   if (!shProg->_LinkedShaders[MESA_SHADER_VERTEX])
       return -1;
 
    unsigned array_index = 0;
@@ -315,7 +315,7 @@ _mesa_GetFragDataIndex(GLuint program, const GLchar *name)
 
    /* Not having a fragment shader is not an error.
     */
-   if (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL)
+   if (!shProg->_LinkedShaders[MESA_SHADER_FRAGMENT])
       return -1;
 
    return _mesa_program_resource_location_index(shProg, GL_PROGRAM_OUTPUT,
@@ -350,7 +350,7 @@ _mesa_GetFragDataLocation(GLuint program, const GLchar *name)
 
    /* Not having a fragment shader is not an error.
     */
-   if (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL)
+   if (!shProg->_LinkedShaders[MESA_SHADER_FRAGMENT])
       return -1;
 
    unsigned array_index = 0;

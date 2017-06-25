@@ -950,7 +950,7 @@ emit_cb_state(struct anv_pipeline *pipeline,
 #endif
       }
 
-      if (a->colorWriteMask != 0)
+      if (a->colorWriteMask)
          has_writeable_rt = true;
 
       /* Our hardware applies the blend factor prior to the blend function

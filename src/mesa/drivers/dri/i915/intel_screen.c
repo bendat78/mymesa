@@ -323,7 +323,7 @@ intel_create_image_from_name(__DRIscreen *screen,
     image->region = intel_region_alloc_for_handle(intelScreen,
 						  cpp, width, height,
 						  pitch * cpp, name, "image");
-    if (image->region == NULL) {
+    if (!image->region) {
        free(image);
        return NULL;
     }
@@ -460,7 +460,7 @@ intel_create_image(__DRIscreen *screen,
    cpp = _mesa_get_format_bytes(image->format);
    image->region =
       intel_region_alloc(intelScreen, tiling, cpp, width, height, true);
-   if (image->region == NULL) {
+   if (!image->region) {
       free(image);
       return NULL;
    }
@@ -492,7 +492,7 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
       *value = image->region->height;
       return true;
    case __DRI_IMAGE_ATTRIB_COMPONENTS:
-      if (image->planar_format == NULL)
+      if (!image->planar_format)
          return false;
       *value = image->planar_format->components;
       return true;
@@ -513,7 +513,7 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
       return NULL;
 
    intel_region_reference(&image->region, orig_image->region);
-   if (image->region == NULL) {
+   if (!image->region) {
       free(image);
       return NULL;
    }
@@ -617,7 +617,7 @@ intel_create_image_from_fds(__DRIscreen *screen,
    image->region = intel_region_alloc_for_fd(intelScreen,
                                              f->planes[0].cpp, width, height, strides[0],
                                              height * strides[0], fds[0], "image");
-   if (image->region == NULL) {
+   if (!image->region) {
       free(image);
       return NULL;
    }
@@ -669,7 +669,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     }
 
     image->region = calloc(sizeof(*image->region), 1);
-    if (image->region == NULL) {
+    if (!image->region) {
        free(image);
        return NULL;
     }
@@ -868,7 +868,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       rgbFormat = MESA_FORMAT_B5G6R5_UNORM;
    else if (mesaVis->sRGBCapable)
       rgbFormat = MESA_FORMAT_B8G8R8A8_SRGB;
-   else if (mesaVis->alphaBits == 0)
+   else if (!mesaVis->alphaBits)
       rgbFormat = MESA_FORMAT_B8G8R8X8_UNORM;
    else
       rgbFormat = MESA_FORMAT_B8G8R8A8_UNORM;
@@ -993,7 +993,7 @@ intelCreateContext(gl_api api,
    if (success)
       return true;
 
-   if (driContextPriv->driverPrivate != NULL)
+   if (driContextPriv->driverPrivate)
       intelDestroyContext(driContextPriv);
 
    return false;
@@ -1007,7 +1007,7 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
 
    intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
-   if (intelScreen->bufmgr == NULL) {
+   if (!intelScreen->bufmgr) {
       fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
 	      __func__, __LINE__);
       return false;
@@ -1240,7 +1240,7 @@ intelAllocateBuffer(__DRIscreen *screen,
                                             height,
                                             true);
 
-   if (intelBuffer->region == NULL) {
+   if (!intelBuffer->region) {
 	   free(intelBuffer);
 	   return NULL;
    }

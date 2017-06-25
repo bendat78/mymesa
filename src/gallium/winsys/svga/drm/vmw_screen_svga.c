@@ -201,7 +201,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
 						 &desc.region);
 
       if (surface->sid == SVGA3D_INVALID_ID) {
-         if (surface->buf == NULL) {
+         if (!surface->buf) {
             goto no_sid;
          } else {
             /*
@@ -225,7 +225,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
        * If the kernel created the buffer for us, wrap it into a
        * vmw_svga_winsys_buffer.
        */
-      if (surface->buf == NULL) {
+      if (!surface->buf) {
          struct pb_buffer *pb_buf;
 
          surface->size = vmw_region_size(desc.region);
@@ -234,7 +234,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
          pb_buf = provider->create_buffer(provider, surface->size,
                                           &desc.pb_desc);
          surface->buf = vmw_svga_winsys_buffer_wrap(pb_buf);
-         if (surface->buf == NULL) {
+         if (!surface->buf) {
             vmw_ioctl_region_destroy(desc.region);
             vmw_ioctl_surface_destroy(vws, surface->sid);
             goto no_sid;

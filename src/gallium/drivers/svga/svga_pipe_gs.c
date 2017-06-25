@@ -94,14 +94,14 @@ svga_delete_gs_state(struct pipe_context *pipe, void *shader)
    svga_hwtnl_flush_retry(svga);
 
    /* Start deletion from the original geometry shader state */
-   if (gs->base.parent != NULL)
+   if (gs->base.parent)
       gs = (struct svga_geometry_shader *)gs->base.parent;
 
    /* Free the list of geometry shaders */
    while (gs) {
       next_gs = (struct svga_geometry_shader *)gs->base.next;
 
-      if (gs->base.stream_output != NULL)
+      if (gs->base.stream_output)
          svga_delete_stream_output(svga, gs->base.stream_output);
 
       draw_delete_geometry_shader(svga->swtnl.draw, gs->draw_shader);

@@ -173,7 +173,7 @@ handlePictureParameterBuffer(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *
       if (!context->target)
          return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-      if (context->templat.max_references == 0)
+      if (!context->templat.max_references)
          return VA_STATUS_ERROR_INVALID_BUFFER;
 
       if (u_reduce_video_profile(context->templat.profile) ==
@@ -414,7 +414,7 @@ handleVAEncPictureParameterBufferType(vlVaDriver *drv, vlVaContext *context, vlV
    context->desc.h264enc.not_referenced = false;
    context->desc.h264enc.is_idr = (h264->pic_fields.bits.idr_pic_flag == 1);
    context->desc.h264enc.pic_order_cnt = h264->CurrPic.TopFieldOrderCnt;
-   if (context->desc.h264enc.gop_cnt == 0)
+   if (!context->desc.h264enc.gop_cnt)
       context->desc.h264enc.i_remain = context->gop_coeff;
    else if (context->desc.h264enc.frame_num == 1)
       context->desc.h264enc.i_remain--;
@@ -465,7 +465,7 @@ handleVAEncSliceParameterBufferType(vlVaDriver *drv, vlVaContext *context, vlVaB
 
    if (h264->slice_type == 1)
       context->desc.h264enc.picture_type = PIPE_H264_ENC_PICTURE_TYPE_B;
-   else if (h264->slice_type == 0)
+   else if (!h264->slice_type)
       context->desc.h264enc.picture_type = PIPE_H264_ENC_PICTURE_TYPE_P;
    else if (h264->slice_type == 2) {
       if (context->desc.h264enc.is_idr){

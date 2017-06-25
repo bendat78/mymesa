@@ -1317,7 +1317,7 @@ boolean
 svga_texture_transfer_map_can_upload(const struct svga_screen *svgascreen,
                                      const struct pipe_resource *texture)
 {
-   if (svgascreen->sws->have_transfer_from_buffer_cmd == FALSE)
+   if (!svgascreen->sws->have_transfer_from_buffer_cmd)
       return FALSE;
 
    /* TransferFromBuffer command is not well supported with multi-samples surface */

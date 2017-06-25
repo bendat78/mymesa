@@ -125,7 +125,7 @@ NineUnknown_Release( struct NineUnknown *This )
 
     if (!r) {
         if (This->device) {
-            if (NineUnknown_Release(NineUnknown(This->device)) == 0)
+            if (!NineUnknown_Release(NineUnknown(This->device)))
                 return r; /* everything's gone */
         }
         /* Containers (here with !forward) take care of item destruction */
@@ -148,7 +148,7 @@ NineUnknown_ReleaseWithDtorLock( struct NineUnknown *This )
 
     if (!r) {
         if (This->device) {
-            if (NineUnknown_ReleaseWithDtorLock(NineUnknown(This->device)) == 0)
+            if (!NineUnknown_ReleaseWithDtorLock(NineUnknown(This->device)))
                 return r; /* everything's gone */
         }
         /* Containers (here with !forward) take care of item destruction */

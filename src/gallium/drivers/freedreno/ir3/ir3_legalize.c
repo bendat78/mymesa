@@ -290,7 +290,7 @@ resolve_dest_block(struct ir3_block *block)
 	 *   (1) successor[1] == NULL &&
 	 *   (2) (block-is-empty || only-instr-is-jump)
 	 */
-	if (block->successors[1] == NULL) {
+	if (!block->successors[1]) {
 		if (list_empty(&block->instr_list)) {
 			return block->successors[0];
 		} else if (list_length(&block->instr_list) == 1) {

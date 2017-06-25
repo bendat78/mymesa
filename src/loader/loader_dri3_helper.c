@@ -753,7 +753,7 @@ loader_dri3_query_buffer_age(struct loader_dri3_drawable *draw)
    if (back_id < 0 || !draw->buffers[back_id])
       return 0;
 
-   if (draw->buffers[back_id]->last_swap != 0)
+   if (draw->buffers[back_id]->last_swap)
       return draw->send_sbc - draw->buffers[back_id]->last_swap + 1;
    else
       return 0;

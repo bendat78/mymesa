@@ -121,7 +121,7 @@ _dump_register_src(
          SID( src->DimIndirect.Index );
          TXT( "]." );
          ENM( src->DimIndirect.Swizzle, tgsi_swizzle_names );
-         if (src->Dimension.Index != 0) {
+         if (src->Dimension.Index) {
             if (src->Dimension.Index > 0)
                CHR( '+' );
             SID( src->Dimension.Index );
@@ -145,7 +145,7 @@ _dump_register_src(
       SID( src->Indirect.Index );
       TXT( "]." );
       ENM( src->Indirect.Swizzle, tgsi_swizzle_names );
-      if (src->Register.Index != 0) {
+      if (src->Register.Index) {
          if (src->Register.Index > 0)
             CHR( '+' );
          SID( src->Register.Index );
@@ -178,7 +178,7 @@ _dump_register_dst(
          SID( dst->DimIndirect.Index );
          TXT( "]." );
          ENM( dst->DimIndirect.Swizzle, tgsi_swizzle_names );
-         if (dst->Dimension.Index != 0) {
+         if (dst->Dimension.Index) {
             if (dst->Dimension.Index > 0)
                CHR( '+' );
             SID( dst->Dimension.Index );
@@ -202,7 +202,7 @@ _dump_register_dst(
       SID( dst->Indirect.Index );
       TXT( "]." );
       ENM( dst->Indirect.Swizzle, tgsi_swizzle_names );
-      if (dst->Register.Index != 0) {
+      if (dst->Register.Index) {
          if (dst->Register.Index > 0)
             CHR( '+' );
          SID( dst->Register.Index );

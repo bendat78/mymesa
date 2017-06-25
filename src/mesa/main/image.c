@@ -300,7 +300,7 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
    assert(packing);
 
    if (type == GL_BITMAP) {
-      if (packing->RowLength == 0) {
+      if (!packing->RowLength) {
          bytesPerRow = (width + 7) / 8;
       }
       else {
@@ -312,7 +312,7 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
       const GLint bytesPerPixel = _mesa_bytes_per_pixel(format, type);
       if (bytesPerPixel <= 0)
          return -1;  /* error */
-      if (packing->RowLength == 0) {
+      if (!packing->RowLength) {
          bytesPerRow = bytesPerPixel * width;
       }
       else {
@@ -348,7 +348,7 @@ _mesa_image_image_stride( const struct gl_pixelstore_attrib *packing,
    assert(packing);
 
    if (type == GL_BITMAP) {
-      if (packing->RowLength == 0) {
+      if (!packing->RowLength) {
          bytesPerRow = (width + 7) / 8;
       }
       else {
@@ -360,7 +360,7 @@ _mesa_image_image_stride( const struct gl_pixelstore_attrib *packing,
 
       if (bytesPerPixel <= 0)
          return -1;  /* error */
-      if (packing->RowLength == 0) {
+      if (!packing->RowLength) {
          bytesPerRow = bytesPerPixel * width;
       }
       else {
@@ -372,7 +372,7 @@ _mesa_image_image_stride( const struct gl_pixelstore_attrib *packing,
    if (remainder > 0)
       bytesPerRow += (packing->Alignment - remainder);
 
-   if (packing->ImageHeight == 0)
+   if (!packing->ImageHeight)
       bytesPerImage = bytesPerRow * height;
    else
       bytesPerImage = bytesPerRow * packing->ImageHeight;
@@ -609,7 +609,7 @@ _mesa_clip_drawpixels(const struct gl_context *ctx,
 {
    const struct gl_framebuffer *buffer = ctx->DrawBuffer;
 
-   if (unpack->RowLength == 0) {
+   if (!unpack->RowLength) {
       unpack->RowLength = *width;
    }
 
@@ -692,7 +692,7 @@ _mesa_clip_readpixels(const struct gl_context *ctx,
    }
 
 
-   if (pack->RowLength == 0) {
+   if (!pack->RowLength) {
       pack->RowLength = *width;
    }
 

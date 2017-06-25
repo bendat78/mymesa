@@ -420,7 +420,7 @@ _glapi_add_dispatch( const char * const * function_names,
       /* search added extension functions */
       entry[i] = get_extension_proc(funcName);
 
-      if (entry[i] != NULL) {
+      if (entry[i]) {
 	 extension_offset = entry[i]->dispatch_offset;
 
 	 /* The offset may be ~0 if the function name was added by
@@ -462,9 +462,9 @@ _glapi_add_dispatch( const char * const * function_names,
       }
 
       /* generate entrypoints for new function names */
-      if (entry[i] == NULL) {
+      if (!entry[i]) {
 	 entry[i] = add_function_name( function_names[i] );
-	 if (entry[i] == NULL) {
+	 if (!entry[i]) {
 	    /* FIXME: Possible memory leak here. */
 	    return -1;
 	 }

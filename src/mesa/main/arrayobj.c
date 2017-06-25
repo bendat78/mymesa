@@ -192,7 +192,7 @@ _mesa_reference_vao_(struct gl_context *ctx,
       assert(oldObj->RefCount > 0);
       oldObj->RefCount--;
 
-      if (oldObj->RefCount == 0)
+      if (!oldObj->RefCount)
          _mesa_delete_vao(ctx, oldObj);
 
       *ptr = NULL;
@@ -370,7 +370,7 @@ _mesa_all_varyings_in_vbos(const struct gl_vertex_array_object *vao)
       assert(!_mesa_is_bufferobj(buffer_binding->BufferObj));
 
       /* Bail out once we find the first non vbo with a non zero stride */
-      if (buffer_binding->Stride != 0)
+      if (buffer_binding->Stride)
          return false;
 
       /* Note that we cannot use the xor variant since the _BoundArray mask

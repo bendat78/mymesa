@@ -128,7 +128,7 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
       /* allocate new buffer storage */
       srb->Buffer = malloc(srb->RowStride * height);
 
-      if (srb->Buffer == NULL) {
+      if (!srb->Buffer) {
          rb->Width = 0;
          rb->Height = 0;
          _mesa_error(ctx, GL_OUT_OF_MEMORY,

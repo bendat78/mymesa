@@ -226,7 +226,7 @@ add_point_sprite_shader(struct svga_context *svga)
     * support vertex point size, then add the new geometry shader
     * to the vertex shader.
     */
-   if (vs->gs == NULL) {
+   if (!vs->gs) {
       vs->gs = new_gs;
    }
 

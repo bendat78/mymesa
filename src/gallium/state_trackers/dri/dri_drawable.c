@@ -316,7 +316,7 @@ swap_fences_pop_front(struct dri_drawable *draw)
    struct pipe_screen *screen = draw->screen->base.screen;
    struct pipe_fence_handle *fence = NULL;
 
-   if (draw->desired_fences == 0)
+   if (!draw->desired_fences)
       return NULL;
 
    if (draw->cur_fences >= draw->desired_fences) {

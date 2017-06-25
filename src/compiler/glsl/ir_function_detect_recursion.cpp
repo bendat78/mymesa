@@ -202,7 +202,7 @@ public:
        * call global scope, it can never be part of a cycle.  Don't bother
        * adding calls from global scope to the graph.
        */
-      if (this->current == NULL)
+      if (!this->current)
 	 return visit_continue;
 
       function *const target = this->get_function(call->callee);

@@ -212,7 +212,7 @@ namespace brw {
          const unsigned size = (src0.file != BAD_FILE) + (src1.file != BAD_FILE);
          const dst_reg srcs = bld.vgrf(BRW_REGISTER_TYPE_UD);
 
-         if (size >= 1)
+         if (size)
             bld.MOV(writemask(srcs, WRITEMASK_X), src0);
          if (size >= 2)
             bld.MOV(writemask(srcs, WRITEMASK_Y), src1);
@@ -315,7 +315,7 @@ namespace brw {
          const unsigned size = (src0.file != BAD_FILE) + (src1.file != BAD_FILE);
          const dst_reg srcs = bld.vgrf(BRW_REGISTER_TYPE_UD);
 
-         if (size >= 1)
+         if (size)
             bld.MOV(writemask(srcs, WRITEMASK_X), src0);
          if (size >= 2)
             bld.MOV(writemask(srcs, WRITEMASK_Y), src1);

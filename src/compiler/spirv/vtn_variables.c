@@ -622,7 +622,7 @@ _vtn_block_load_store(struct vtn_builder *b, nir_intrinsic_op op, bool load,
                }
 
                if (load) {
-                  if (*inout == NULL)
+                  if (!*inout)
                      *inout = vtn_create_ssa_value(b, column_type);
 
                   (*inout)->def = nir_vec(&b->nb, comps, num_comps);

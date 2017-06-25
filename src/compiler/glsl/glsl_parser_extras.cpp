@@ -1003,7 +1003,7 @@ _mesa_ast_process_interface_block(YYLTYPE *locp,
     * the same language versions, we don't have to explicitly
     * version-check both things.
     */
-   if (block->instance_name != NULL) {
+   if (block->instance_name) {
       state->check_version(150, 300, locp, "interface blocks with "
                            "an instance name are not allowed");
    }

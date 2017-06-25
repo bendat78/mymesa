@@ -130,7 +130,7 @@ intel_bufferobj_data(struct gl_context * ctx,
    assert(!obj->Mappings[MAP_USER].Pointer); /* Mesa should have unmapped it */
    assert(!obj->Mappings[MAP_INTERNAL].Pointer);
 
-   if (intel_obj->buffer != NULL)
+   if (intel_obj->buffer)
       release_buffer(intel_obj);
 
    _mesa_align_free(intel_obj->sys_buffer);
@@ -143,7 +143,7 @@ intel_bufferobj_data(struct gl_context * ctx,
       if (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER) {
 	 intel_obj->sys_buffer =
             _mesa_align_malloc(size, ctx->Const.MinMapBufferAlignment);
-	 if (intel_obj->sys_buffer != NULL) {
+	 if (intel_obj->sys_buffer) {
 	    if (data)
 	       memcpy(intel_obj->sys_buffer, data, size);
 	    return true;
@@ -188,7 +188,7 @@ intel_bufferobj_subdata(struct gl_context * ctx,
       if (intel_obj->source)
 	 release_buffer(intel_obj);
 
-      if (intel_obj->buffer == NULL) {
+      if (!intel_obj->buffer) {
 	 memcpy((char *)intel_obj->sys_buffer + offset, data, size);
 	 return;
       }
@@ -305,7 +305,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
       intel_obj->sys_buffer = NULL;
    }
 
-   if (intel_obj->buffer == NULL) {
+   if (!intel_obj->buffer) {
       obj->Mappings[index].Pointer = NULL;
       return NULL;
    }
@@ -400,7 +400,7 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
    /* Unless we're in the range map using a temporary system buffer,
     * there's no work to do.
     */
-   if (intel_obj->range_map_buffer[index] == NULL)
+   if (!intel_obj->range_map_buffer[index])
       return;
 
    if (!length)
@@ -436,9 +436,9 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj,
 
    assert(intel_obj);
    assert(obj->Mappings[index].Pointer);
-   if (intel_obj->sys_buffer != NULL) {
+   if (intel_obj->sys_buffer) {
       /* always keep the mapping around. */
-   } else if (intel_obj->range_map_buffer[index] != NULL) {
+   } else if (intel_obj->range_map_buffer[index]) {
       /* Since we've emitted some blits to buffers that will (likely) be used
        * in rendering operations in other cache domains in this batch, emit a
        * flush.  Once again, we wish for a domain tracker in libdrm to cover
@@ -447,7 +447,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj,
       intel_batchbuffer_emit_mi_flush(intel);
       _mesa_align_free(intel_obj->range_map_buffer[index]);
       intel_obj->range_map_buffer[index] = NULL;
-   } else if (intel_obj->range_map_bo[index] != NULL) {
+   } else if (intel_obj->range_map_bo[index]) {
       const unsigned extra = obj->Mappings[index].Pointer -
                              intel_obj->range_map_bo[index]->virtual;
 
@@ -467,7 +467,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj,
 
       drm_intel_bo_unreference(intel_obj->range_map_bo[index]);
       intel_obj->range_map_bo[index] = NULL;
-   } else if (intel_obj->buffer != NULL) {
+   } else if (intel_obj->buffer) {
       drm_intel_bo_unmap(intel_obj->buffer);
    }
    obj->Mappings[index].Pointer = NULL;
@@ -484,7 +484,7 @@ intel_bufferobj_buffer(struct intel_context *intel,
    if (intel_obj->source)
       release_buffer(intel_obj);
 
-   if (intel_obj->buffer == NULL) {
+   if (!intel_obj->buffer) {
       intel_bufferobj_alloc_buffer(intel, intel_obj);
       drm_intel_bo_subdata(intel_obj->buffer,
 			   0, intel_obj->Base.Size,
@@ -559,7 +559,7 @@ void intel_upload_data(struct intel_context *intel,
 
    if (size < sizeof(intel->upload.buffer))
    {
-      if (intel->upload.buffer_len == 0)
+      if (!intel->upload.buffer_len)
 	 intel->upload.buffer_offset = base;
       else
 	 intel->upload.buffer_len += delta;
@@ -580,7 +580,7 @@ intel_bufferobj_source(struct intel_context *intel,
                        struct intel_buffer_object *intel_obj,
 		       GLuint align, GLuint *offset)
 {
-   if (intel_obj->buffer == NULL) {
+   if (!intel_obj->buffer) {
       intel_upload_data(intel,
 			intel_obj->sys_buffer, intel_obj->Base.Size, align,
 			&intel_obj->buffer, &intel_obj->offset);
@@ -673,7 +673,7 @@ intel_buffer_object_purgeable(struct gl_context * ctx,
 {
    struct intel_buffer_object *intel_obj = intel_buffer_object (obj);
 
-   if (intel_obj->buffer != NULL)
+   if (intel_obj->buffer)
       return intel_buffer_purgeable(intel_obj->buffer);
 
    if (option == GL_RELEASED_APPLE) {
@@ -718,7 +718,7 @@ intel_render_object_purgeable(struct gl_context * ctx,
    (void) option;
 
    intel = intel_renderbuffer(obj);
-   if (intel->mt == NULL)
+   if (!intel->mt)
       return GL_RELEASED_APPLE;
 
    return intel_buffer_purgeable(intel->mt->region->bo);
@@ -775,7 +775,7 @@ intel_render_object_unpurgeable(struct gl_context * ctx,
    (void) option;
 
    intel = intel_renderbuffer(obj);
-   if (intel->mt == NULL)
+   if (!intel->mt)
       return GL_UNDEFINED_APPLE;
 
    return intel_buffer_unpurgeable(intel->mt->region->bo);

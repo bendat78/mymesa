@@ -133,7 +133,7 @@ _mesa_hash_table_create(void *mem_ctx,
    ht->deleted_entries = 0;
    ht->deleted_key = &deleted_key_value;
 
-   if (ht->table == NULL) {
+   if (!ht->table) {
       ralloc_free(ht);
       return NULL;
    }
@@ -177,7 +177,7 @@ _mesa_hash_table_clear(struct hash_table *ht,
    struct hash_entry *entry;
 
    for (entry = ht->table; entry != ht->table + ht->size; entry++) {
-      if (entry->key == NULL)
+      if (!entry->key)
          continue;
 
       if (delete_function != NULL && entry->key != ht->deleted_key)
@@ -437,7 +437,7 @@ _mesa_hash_table_random_entry(struct hash_table *ht,
    struct hash_entry *entry;
    uint32_t i = rand() % ht->size;
 
-   if (ht->entries == 0)
+   if (!ht->entries)
       return NULL;
 
    for (entry = ht->table + i; entry != ht->table + ht->size; entry++) {

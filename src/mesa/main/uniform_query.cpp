@@ -244,7 +244,7 @@ validate_uniform_parameters(GLint location, GLsizei count,
    if (uni->builtin)
       return NULL;
 
-   if (uni->array_elements == 0) {
+   if (!uni->array_elements) {
       if (count > 1) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(count = %u for non-array \"%s\"@%d)",
@@ -714,7 +714,7 @@ static void
 log_program_parameters(const struct gl_shader_program *shProg)
 {
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (shProg->_LinkedShaders[i] == NULL)
+      if (!shProg->_LinkedShaders[i])
 	 continue;
 
       const struct gl_program *const prog = shProg->_LinkedShaders[i]->Program;
@@ -1069,7 +1069,7 @@ _mesa_uniform(GLint location, GLsizei count, const GLvoid *values,
     * Clamp 'count' to a valid value.  Note that for non-arrays a count > 1
     * will have already generated an error.
     */
-   if (uni->array_elements != 0) {
+   if (uni->array_elements) {
       count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
@@ -1285,7 +1285,7 @@ _mesa_uniform_matrix(GLint location, GLsizei count,
     * Clamp 'count' to a valid value.  Note that for non-arrays a count > 1
     * will have already generated an error.
     */
-   if (uni->array_elements != 0) {
+   if (uni->array_elements) {
       count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
@@ -1439,7 +1439,7 @@ _mesa_uniform_handle(GLint location, GLsizei count, const GLvoid *values,
     * Clamp 'count' to a valid value.  Note that for non-arrays a count > 1
     * will have already generated an error.
     */
-   if (uni->array_elements != 0) {
+   if (uni->array_elements) {
       count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
@@ -1504,7 +1504,7 @@ _mesa_sampler_uniforms_are_valid(const struct gl_shader_program *shProg,
 				 char *errMsg, size_t errMsgLength)
 {
    /* Shader does not have samplers. */
-   if (shProg->data->NumUniformStorage == 0)
+   if (!shProg->data->NumUniformStorage)
       return true;
 
    if (!shProg->SamplersValidated) {

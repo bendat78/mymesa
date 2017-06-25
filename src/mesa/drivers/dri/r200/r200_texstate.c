@@ -660,7 +660,7 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 
 	radeon_update_renderbuffers(pDRICtx, dPriv, GL_TRUE);
 	rb = rfb->color_rb[0];
-	if (rb->bo == NULL) {
+	if (!rb->bo) {
 		/* Failed to BO for the buffer */
 		return;
 	}

@@ -776,7 +776,7 @@ build_bitmap_atlas(struct gl_context *ctx, struct gl_bitmap_atlas *atlas,
    /* Now we know the texture height */
    atlas->texHeight = ypos + row_height;
 
-   if (atlas->texHeight == 0) {
+   if (!atlas->texHeight) {
       /* no glyphs found, give up */
       goto fail;
    }
@@ -1325,7 +1325,7 @@ dlist_alloc(struct gl_context *ctx, OpCode opcode, GLuint bytes, bool align8)
    Node *n;
 
    if (opcode < OPCODE_EXT_0) {
-      if (InstSize[opcode] == 0) {
+      if (!InstSize[opcode]) {
          /* save instruction size now */
          InstSize[opcode] = numNodes;
       }
@@ -9342,7 +9342,7 @@ _mesa_NewList(GLuint name, GLenum mode)
 
    ctx->CurrentServerDispatch = ctx->Save;
    _glapi_set_dispatch(ctx->CurrentServerDispatch);
-   if (ctx->MarshalExec == NULL) {
+   if (!ctx->MarshalExec) {
       ctx->CurrentClientDispatch = ctx->CurrentServerDispatch;
    }
 }
@@ -9401,7 +9401,7 @@ _mesa_EndList(void)
 
    ctx->CurrentServerDispatch = ctx->Exec;
    _glapi_set_dispatch(ctx->CurrentServerDispatch);
-   if (ctx->MarshalExec == NULL) {
+   if (!ctx->MarshalExec) {
       ctx->CurrentClientDispatch = ctx->CurrentServerDispatch;
    }
 }
@@ -9440,7 +9440,7 @@ _mesa_CallList(GLuint list)
    if (save_compile_flag) {
       ctx->CurrentServerDispatch = ctx->Save;
        _glapi_set_dispatch(ctx->CurrentServerDispatch);
-      if (ctx->MarshalExec == NULL) {
+      if (!ctx->MarshalExec) {
          ctx->CurrentClientDispatch = ctx->CurrentServerDispatch;
       }
    }
@@ -9482,7 +9482,7 @@ render_bitmap_atlas(struct gl_context *ctx, GLsizei n, GLenum type,
        * If the atlas was created in glGenLists, we'll have recorded the
        * number of lists (bitmaps).  Otherwise, take a guess at 256.
        */
-      if (atlas->numBitmaps == 0)
+      if (!atlas->numBitmaps)
          atlas->numBitmaps = 256;
       build_bitmap_atlas(ctx, atlas, ctx->List.ListBase);
    }
@@ -9566,7 +9566,7 @@ _mesa_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
    if (save_compile_flag) {
       ctx->CurrentServerDispatch = ctx->Save;
       _glapi_set_dispatch(ctx->CurrentServerDispatch);
-      if (ctx->MarshalExec == NULL) {
+      if (!ctx->MarshalExec) {
          ctx->CurrentClientDispatch = ctx->CurrentServerDispatch;
       }
    }

@@ -91,7 +91,7 @@ nine_upload_create_buffer_group(struct nine_buffer_upload *upload,
 
     group->refcount = 0;
     group->resource = screen->resource_create(screen, &resource);
-    if (group->resource == NULL)
+    if (!group->resource)
         return;
 
     group->map = pipe_buffer_map_range(upload->pipe, group->resource,
@@ -100,7 +100,7 @@ nine_upload_create_buffer_group(struct nine_buffer_upload *upload,
                                        PIPE_TRANSFER_PERSISTENT |
                                        PIPE_TRANSFER_COHERENT,
                                        &group->transfer);
-    if (group->map == NULL) {
+    if (!group->map) {
         group->transfer = NULL;
         pipe_resource_reference(&group->resource, NULL);
         return;
@@ -218,7 +218,7 @@ nine_upload_create_buffer(struct nine_buffer_upload *upload,
                          PIPE_RESOURCE_FLAG_MAP_COHERENT;
 
         buf->resource = screen->resource_create(screen, &resource);
-        if (buf->resource == NULL) {
+        if (!buf->resource) {
             slab_free_st(&upload->buffer_pool, buf);
             return NULL;
         }
@@ -229,7 +229,7 @@ nine_upload_create_buffer(struct nine_buffer_upload *upload,
                                          PIPE_TRANSFER_PERSISTENT |
                                          PIPE_TRANSFER_COHERENT,
                                          &buf->transfer);
-        if (buf->map == NULL) {
+        if (!buf->map) {
             pipe_resource_reference(&buf->resource, NULL);
             slab_free_st(&upload->buffer_pool, buf);
             return NULL;
@@ -260,7 +260,7 @@ nine_upload_release_buffer(struct nine_buffer_upload *upload,
     if (buf->parent) {
         pipe_resource_reference(&buf->resource, NULL);
         buf->parent->refcount--;
-        if (buf->parent->refcount == 0) {
+        if (!buf->parent->refcount) {
             /* Allocate new buffer */
             nine_upload_destroy_buffer_group(upload, buf->parent);
             nine_upload_create_buffer_group(upload, buf->parent);

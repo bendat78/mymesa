@@ -132,7 +132,7 @@ megadriver_stub_init(void)
     */
    for (i = 0; i < ARRAY_SIZE(__driDriverExtensions); i++) {
       __driDriverExtensions[i] = extensions[i];
-      if (extensions[i] == NULL)
+      if (!extensions[i])
          break;
    }
 

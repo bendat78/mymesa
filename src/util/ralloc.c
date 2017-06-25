@@ -104,7 +104,7 @@ add_child(ralloc_header *parent, ralloc_header *info)
       info->next = parent->child;
       parent->child = info;
 
-      if (info->next != NULL)
+      if (info->next)
 	 info->next->prev = info;
    }
 }
@@ -175,10 +175,10 @@ resize(void *ptr, size_t size)
       if (info->parent->child == old)
 	 info->parent->child = info;
 
-      if (info->prev != NULL)
+      if (info->prev)
 	 info->prev->next = info;
 
-      if (info->next != NULL)
+      if (info->next)
 	 info->next->prev = info;
    }
 
@@ -243,14 +243,14 @@ static void
 unlink_block(ralloc_header *info)
 {
    /* Unlink from parent & siblings */
-   if (info->parent != NULL) {
+   if (info->parent) {
       if (info->parent->child == info)
 	 info->parent->child = info->next;
 
-      if (info->prev != NULL)
+      if (info->prev)
 	 info->prev->next = info->next;
 
-      if (info->next != NULL)
+      if (info->next)
 	 info->next->prev = info->prev;
    }
    info->parent = NULL;
@@ -270,7 +270,7 @@ unsafe_free(ralloc_header *info)
    }
 
    /* Free the block itself.  Call the destructor first, if any. */
-   if (info->destructor != NULL)
+   if (info->destructor)
       info->destructor(PTR_FROM_HEADER(info));
 
    free(info);
@@ -304,7 +304,7 @@ ralloc_adopt(const void *new_ctx, void *old_ctx)
    new_info = get_header(new_ctx);
 
    /* If there are no children, bail. */
-   if (unlikely(old_info->child == NULL))
+   if (!unlikely(old_info->child))
       return;
 
    /* Set all the children's parent to new_ctx; get a pointer to the last child. */
@@ -495,7 +495,7 @@ ralloc_vasprintf_rewrite_tail(char **str, size_t *start, const char *fmt,
 
    assert(str);
 
-   if (unlikely(*str == NULL)) {
+   if (!unlikely(*str)) {
       // Assuming a NULL context is probably bad, but it's expected behavior.
       *str = ralloc_vasprintf(NULL, fmt, args);
       *start = strlen(*str);
@@ -823,7 +823,7 @@ linear_vasprintf_rewrite_tail(void *parent, char **str, size_t *start,
 
    assert(str);
 
-   if (unlikely(*str == NULL)) {
+   if (!unlikely(*str)) {
       *str = linear_vasprintf(parent, fmt, args);
       *start = strlen(*str);
       return true;

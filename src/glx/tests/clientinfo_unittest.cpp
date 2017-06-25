@@ -56,7 +56,7 @@ public:
    ~fake_glx_display()
    {
       for (int i = 0; i < this->dpy->nscreens; i++) {
-	 if (this->screens[i] != NULL)
+	 if (this->screens[i])
 	    delete this->screens[i];
       }
 
@@ -91,7 +91,7 @@ protected:
 void
 fake_glx_display::init_screen(int i, const char *ext)
 {
-   if (this->screens[i] != NULL)
+   if (this->screens[i])
       delete this->screens[i];
 
    this->screens[i] = new fake_glx_screen(this, i, ext);
@@ -239,8 +239,8 @@ glX_send_client_info_test::~glX_send_client_info_test()
 void
 glX_send_client_info_test::destroy_display()
 {
-   if (this->glx_dpy != NULL) {
-      if (this->glx_dpy->screens != NULL) {
+   if (this->glx_dpy) {
+      if (this->glx_dpy->screens) {
 	 for (int i = 0; i < this->display->nscreens; i++) {
 	    delete [] this->glx_dpy->screens[i]->serverGLXexts;
 	    delete this->glx_dpy->screens[i];

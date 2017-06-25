@@ -145,7 +145,7 @@ driCreateNewScreen2(int scrn, int fd,
     psp->myNum = scrn;
 
     *driver_configs = psp->driver->InitScreen(psp);
-    if (*driver_configs == NULL) {
+    if (!*driver_configs) {
 	free(psp);
 	return NULL;
     }
@@ -598,7 +598,7 @@ static int driUnbindContext(__DRIcontext *pcp)
 	return GL_TRUE;
 
     assert(pdp);
-    if (pdp->refcount == 0) {
+    if (!pdp->refcount) {
 	/* ERROR!!! */
 	return GL_FALSE;
     }
@@ -606,7 +606,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     dri_put_drawable(pdp);
 
     if (prp != pdp) {
-	if (prp->refcount == 0) {
+	if (!prp->refcount) {
 	    /* ERROR!!! */
 	    return GL_FALSE;
 	}

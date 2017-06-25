@@ -478,7 +478,7 @@ standalone_compile_shader(const struct standalone_options *_options,
       shader->Stage = _mesa_shader_enum_to_shader_stage(shader->Type);
 
       shader->Source = load_text_file(whole_program, files[i]);
-      if (shader->Source == NULL) {
+      if (!shader->Source) {
          printf("File \"%s\" does not exist.\n", files[i]);
          exit(EXIT_FAILURE);
       }
@@ -520,7 +520,7 @@ standalone_compile_shader(const struct standalone_options *_options,
          /* Par-linking can fail, for example, if there are undefined external
           * references.
           */
-         if (whole_program->_LinkedShaders[stage] != NULL) {
+         if (whole_program->_LinkedShaders[stage]) {
             assert(whole_program->data->LinkStatus);
 
             struct gl_shader_compiler_options *const compiler_options =

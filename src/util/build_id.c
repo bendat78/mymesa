@@ -58,7 +58,7 @@ build_id_find_nhdr_callback(struct dl_phdr_info *info, size_t size, void *data_)
    /* The first object visited by callback is the main program.
     * Android's libc returns a NULL pointer for the first executable.
     */
-   if (info->dlpi_name == NULL)
+   if (!info->dlpi_name)
       return 0;
 
    char *ptr = strstr(info->dlpi_name, data->filename);

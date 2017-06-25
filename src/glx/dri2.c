@@ -306,7 +306,7 @@ DRI2Connect(Display * dpy, XID window, char **driverName, char **deviceName)
    }
 
    *driverName = malloc(rep.driverNameLength + 1);
-   if (*driverName == NULL) {
+   if (!*driverName) {
       _XEatData(dpy,
                 ((rep.driverNameLength + 3) & ~3) +
                 ((rep.deviceNameLength + 3) & ~3));
@@ -318,7 +318,7 @@ DRI2Connect(Display * dpy, XID window, char **driverName, char **deviceName)
    (*driverName)[rep.driverNameLength] = '\0';
 
    *deviceName = malloc(rep.deviceNameLength + 1);
-   if (*deviceName == NULL) {
+   if (!*deviceName) {
       free(*driverName);
       _XEatData(dpy, ((rep.deviceNameLength + 3) & ~3));
       UnlockDisplay(dpy);

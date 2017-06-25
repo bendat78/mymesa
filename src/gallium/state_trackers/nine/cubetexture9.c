@@ -285,7 +285,7 @@ NineCubeTexture9_AddDirtyRect( struct NineCubeTexture9 *This,
                         This->base.base.info.height0,
                         &This->dirty_rect[FaceType]);
     } else {
-        if (This->dirty_rect[FaceType].width == 0) {
+        if (!This->dirty_rect[FaceType].width) {
             rect_to_pipe_box_clamp(&This->dirty_rect[FaceType], pDirtyRect);
         } else {
             struct pipe_box box;

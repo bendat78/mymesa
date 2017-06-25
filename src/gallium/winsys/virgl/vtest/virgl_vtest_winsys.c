@@ -480,7 +480,7 @@ static int virgl_vtest_winsys_submit_cmd(struct virgl_winsys *vws,
    struct virgl_vtest_cmd_buf *cbuf = virgl_vtest_cmd_buf(_cbuf);
    int ret;
 
-   if (cbuf->base.cdw == 0)
+   if (!cbuf->base.cdw)
       return 0;
 
    ret = virgl_vtest_submit_cmd(vtws, cbuf);

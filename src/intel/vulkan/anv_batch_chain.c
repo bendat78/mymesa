@@ -63,14 +63,14 @@ anv_reloc_list_init_clone(struct anv_reloc_list *list,
       vk_alloc(alloc, list->array_length * sizeof(*list->relocs), 8,
                 VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
 
-   if (list->relocs == NULL)
+   if (!list->relocs)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    list->reloc_bos =
       vk_alloc(alloc, list->array_length * sizeof(*list->reloc_bos), 8,
                 VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
 
-   if (list->reloc_bos == NULL) {
+   if (!list->reloc_bos) {
       vk_free(alloc, list->relocs);
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
    }

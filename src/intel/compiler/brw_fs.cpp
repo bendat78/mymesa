@@ -904,7 +904,7 @@ fs_inst::flags_written() const
 int
 fs_visitor::implied_mrf_writes(fs_inst *inst)
 {
-   if (inst->mlen == 0)
+   if (!inst->mlen)
       return 0;
 
    if (inst->base_mrf == -1)
@@ -3862,7 +3862,7 @@ lower_sampler_logical_send_gen5(const fs_builder &bld, fs_inst *inst, opcode op,
    fs_reg msg_coords = message;
    unsigned header_size = 0;
 
-   if (inst->offset != 0) {
+   if (inst->offset) {
       /* The offsets set up by the visitor are in the m1 header, so we can't
        * go headerless.
        */

@@ -1151,7 +1151,7 @@ trans_endif(const struct instr_translater *t, struct etna_compile *c,
 
    /* assign "endif" or "else" (if no ELSE) label to current position in
     * instruction stream, pop IF */
-   if (f->lbl_endif != NULL)
+   if (f->lbl_endif)
       label_place(c, f->lbl_endif);
    else
       label_place(c, f->lbl_else);

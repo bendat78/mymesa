@@ -60,14 +60,14 @@ graw_create_window_and_screen( int x,
    int scrnum;
 
    graw.display = XOpenDisplay(NULL);
-   if (graw.display == NULL)
+   if (!graw.display)
       return NULL;
 
    scrnum = DefaultScreen( graw.display );
    root = RootWindow( graw.display, scrnum );
 
 
-   if (graw.display == NULL)
+   if (!graw.display)
       goto fail;
 
    xlib_handle = CALLOC_STRUCT(xlib_drawable);

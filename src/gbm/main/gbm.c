@@ -93,7 +93,7 @@ GBM_EXPORT void
 gbm_device_destroy(struct gbm_device *gbm)
 {
    gbm->refcount--;
-   if (gbm->refcount == 0)
+   if (!gbm->refcount)
       gbm->destroy(gbm);
 }
 

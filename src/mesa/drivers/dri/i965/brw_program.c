@@ -521,7 +521,7 @@ brw_report_shader_time(struct brw_context *brw)
       /* Work back from the sorted pointers times to a time to print. */
       int i = sorted[s] - scaled;
 
-      if (scaled[i] == 0)
+      if (!scaled[i])
          continue;
 
       int shader_num = brw->shader_time.ids[i];
@@ -622,7 +622,7 @@ brw_get_shader_time_index(struct brw_context *brw, struct gl_program *prog,
    brw->shader_time.types[shader_time_index] = type;
 
    const char *name;
-   if (prog->Id == 0) {
+   if (!prog->Id) {
       name = "ff";
    } else if (is_glsl_sh) {
       name = prog->info.label ?

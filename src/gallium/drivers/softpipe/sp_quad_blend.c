@@ -1224,14 +1224,14 @@ choose_blend_quad(struct quad_stage *qs,
 
    qs->run = blend_fallback;
 
-   if (softpipe->framebuffer.nr_cbufs == 0) {
+   if (!softpipe->framebuffer.nr_cbufs) {
       qs->run = blend_noop;
    }
    else if (!softpipe->blend->logicop_enable &&
             softpipe->blend->rt[0].colormask == 0xf &&
             softpipe->framebuffer.nr_cbufs == 1)
    {
-      if (softpipe->framebuffer.cbufs[0] == NULL) {
+      if (!softpipe->framebuffer.cbufs[0]) {
          qs->run = blend_noop;
       }
       else if (!blend->rt[0].blend_enable) {

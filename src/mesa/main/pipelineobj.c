@@ -187,7 +187,7 @@ _mesa_reference_pipeline_object_(struct gl_context *ctx,
       assert(oldObj->RefCount > 0);
       oldObj->RefCount--;
 
-      if (oldObj->RefCount == 0) {
+      if (!oldObj->RefCount) {
          _mesa_delete_pipeline_object(ctx, oldObj);
       }
 
@@ -846,7 +846,7 @@ _mesa_validate_program_pipeline(struct gl_context* ctx,
 
    /* Release and reset the info log.
     */
-   if (pipe->InfoLog != NULL)
+   if (pipe->InfoLog)
       ralloc_free(pipe->InfoLog);
 
    pipe->InfoLog = NULL;

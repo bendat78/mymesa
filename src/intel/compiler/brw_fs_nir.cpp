@@ -597,7 +597,7 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
     * and destination registers for that channel and emit the instruction.
     */
    unsigned channel = 0;
-   if (nir_op_infos[instr->op].output_size == 0) {
+   if (!nir_op_infos[instr->op].output_size) {
       /* Since NIR is doing the scalarizing for us, we should only ever see
        * vectorized operations with a single channel.
        */
@@ -1596,7 +1596,7 @@ fs_visitor::emit_gs_end_primitive(const nir_src &vertex_count_nir_src)
 
    struct brw_gs_prog_data *gs_prog_data = brw_gs_prog_data(prog_data);
 
-   if (gs_compile->control_data_header_size_bits == 0)
+   if (!gs_compile->control_data_header_size_bits)
       return;
 
    /* We can only do EndPrimitive() functionality when the control data

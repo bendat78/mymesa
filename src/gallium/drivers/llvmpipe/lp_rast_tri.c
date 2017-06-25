@@ -300,7 +300,7 @@ lp_rast_triangle_32_3_16(struct lp_rasterizer_task *task,
          __m128i rej_masks = _mm_srai_epi32(c4rej, 31);
 
          /* if (is_zero(rej_masks)) */
-         if (_mm_movemask_epi8(rej_masks) == 0) {
+         if (!_mm_movemask_epi8(rej_masks)) {
             __m128i c0_0 = _mm_add_epi32(SCALAR_EPI32(cx, 0), span_0);
             __m128i c1_0 = _mm_add_epi32(SCALAR_EPI32(cx, 1), span_1);
             __m128i c2_0 = _mm_add_epi32(SCALAR_EPI32(cx, 2), span_2);
@@ -598,7 +598,7 @@ lp_rast_triangle_32_3_16(struct lp_rasterizer_task *task,
          __m128i rej_masks = vec_srai_epi32(c4rej, 31);
 
          /* if (is_zero(rej_masks)) */
-         if (vec_movemask_epi8(rej_masks) == 0) {
+         if (!vec_movemask_epi8(rej_masks)) {
             __m128i c0_0 = vec_add_epi32(vec_perm(cx, cx, vshuf_mask0), span_0);
             __m128i c1_0 = vec_add_epi32(vec_perm(cx, cx, vshuf_mask1), span_1);
             __m128i c2_0 = vec_add_epi32(vec_perm(cx, cx, vshuf_mask2), span_2);

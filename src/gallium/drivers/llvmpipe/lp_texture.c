@@ -219,7 +219,7 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
                                           map_front_private,
                                           &lpr->row_stride[0] );
 
-   if (lpr->dt == NULL)
+   if (!lpr->dt)
       return FALSE;
 
    if (!map_front_private) {

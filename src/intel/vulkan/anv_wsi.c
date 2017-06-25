@@ -410,7 +410,7 @@ VkResult anv_QueuePresentKHR(
                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
                .flags = 0,
             }, &swapchain->alloc, &swapchain->fences[0]);
-         if (pPresentInfo->pResults != NULL)
+         if (pPresentInfo->pResults)
             pPresentInfo->pResults[i] = item_result;
          result = result == VK_SUCCESS ? item_result : result;
          if (item_result != VK_SUCCESS)
@@ -426,7 +426,7 @@ VkResult anv_QueuePresentKHR(
                                              pPresentInfo->pImageIndices[i],
                                              region);
       /* TODO: What if one of them returns OUT_OF_DATE? */
-      if (pPresentInfo->pResults != NULL)
+      if (pPresentInfo->pResults)
          pPresentInfo->pResults[i] = item_result;
       result = result == VK_SUCCESS ? item_result : result;
       if (item_result != VK_SUCCESS)

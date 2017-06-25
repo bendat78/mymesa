@@ -88,7 +88,7 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    unsigned int i;
    struct cso_context *cso = ppq->p->cso;
 
-   if (ppq->n_filters == 0)
+   if (!ppq->n_filters)
       return;
 
    assert(ppq->pp_queue);

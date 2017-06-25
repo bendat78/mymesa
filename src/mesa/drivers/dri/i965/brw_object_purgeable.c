@@ -55,7 +55,7 @@ intel_buffer_object_purgeable(struct gl_context * ctx,
 {
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
-   if (intel_obj->buffer != NULL)
+   if (intel_obj->buffer)
       return intel_buffer_purgeable(intel_obj->buffer);
 
    if (option == GL_RELEASED_APPLE) {
@@ -94,7 +94,7 @@ intel_render_object_purgeable(struct gl_context * ctx,
    (void) option;
 
    intel = intel_renderbuffer(obj);
-   if (intel->mt == NULL)
+   if (!intel->mt)
       return GL_RELEASED_APPLE;
 
    return intel_buffer_purgeable(intel->mt->bo);
@@ -164,7 +164,7 @@ intel_render_object_unpurgeable(struct gl_context * ctx,
    (void) ctx;
 
    intel = intel_renderbuffer(obj);
-   if (intel->mt == NULL)
+   if (!intel->mt)
       return GL_UNDEFINED_APPLE;
 
    if (option == GL_UNDEFINED_APPLE || !intel_bo_unpurgeable(intel->mt->bo)) {

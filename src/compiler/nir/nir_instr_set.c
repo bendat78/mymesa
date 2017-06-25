@@ -214,7 +214,7 @@ nir_srcs_equal(nir_src src1, nir_src src2)
       if (src2.is_ssa) {
          return false;
       } else {
-         if ((src1.reg.indirect == NULL) != (src2.reg.indirect == NULL))
+         if (!(src1.reg.indirect) != (src2.reg.indirect == NULL))
             return false;
 
          if (src1.reg.indirect) {

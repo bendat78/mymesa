@@ -82,7 +82,7 @@ CompressedTexImage1D2D(GLenum target, GLint level,
    __GLX_DECLARE_VARIABLES();
 
    __GLX_LOAD_VARIABLES();
-   if (gc->currentDpy == NULL) {
+   if (!gc->currentDpy) {
       return;
    }
 
@@ -143,7 +143,7 @@ CompressedTexSubImage1D2D(GLenum target, GLint level,
    __GLX_DECLARE_VARIABLES();
 
    __GLX_LOAD_VARIABLES();
-   if (gc->currentDpy == NULL) {
+   if (!gc->currentDpy) {
       return;
    }
 
@@ -225,7 +225,7 @@ __indirect_glCompressedTexImage3D(GLenum target, GLint level,
    __GLX_DECLARE_VARIABLES();
 
    __GLX_LOAD_VARIABLES();
-   if (gc->currentDpy == NULL) {
+   if (!gc->currentDpy) {
       return;
    }
 
@@ -300,7 +300,7 @@ __indirect_glCompressedTexSubImage3D(GLenum target, GLint level,
    __GLX_DECLARE_VARIABLES();
 
    __GLX_LOAD_VARIABLES();
-   if (gc->currentDpy == NULL) {
+   if (!gc->currentDpy) {
       return;
    }
 

@@ -607,7 +607,7 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
       ir_dereference *packed_deref =
          this->get_packed_varying_deref(location, unpacked_var, name,
                                         vertex_index);
-      if (unpacked_var->data.stream != 0) {
+      if (unpacked_var->data.stream) {
          assert(unpacked_var->data.stream < 4);
          ir_variable *packed_var = packed_deref->variable_referenced();
          for (unsigned i = 0; i < components; ++i) {
@@ -694,7 +694,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
 {
    unsigned slot = location - VARYING_SLOT_VAR0;
    assert(slot < locations_used);
-   if (this->packed_varyings[slot] == NULL) {
+   if (!this->packed_varyings[slot]) {
       char *packed_name = ralloc_asprintf(this->mem_ctx, "packed:%s", name);
       const glsl_type *packed_type;
       assert(components[slot] != 0);
@@ -702,14 +702,14 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
          packed_type = glsl_type::get_instance(GLSL_TYPE_INT, components[slot], 1);
       else
          packed_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, components[slot], 1);
-      if (this->gs_input_vertices != 0) {
+      if (this->gs_input_vertices) {
          packed_type =
             glsl_type::get_array_instance(packed_type,
                                           this->gs_input_vertices);
       }
       ir_variable *packed_var = new(this->mem_ctx)
          ir_variable(packed_type, packed_name, this->mode);
-      if (this->gs_input_vertices != 0) {
+      if (this->gs_input_vertices) {
          /* Prevent update_array_sizes() from messing with the size of the
           * array.
           */
@@ -743,7 +743,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
 
    ir_dereference *deref = new(this->mem_ctx)
       ir_dereference_variable(this->packed_varyings[slot]);
-   if (this->gs_input_vertices != 0) {
+   if (this->gs_input_vertices) {
       /* When lowering GS inputs, the packed variable is an array, so we need
        * to dereference it using vertex_index.
        */

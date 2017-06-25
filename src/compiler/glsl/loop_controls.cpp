@@ -199,7 +199,7 @@ loop_control_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   if (ls->limiting_terminator != NULL) {
+   if (ls->limiting_terminator) {
       /* If the limiting terminator has an iteration count of zero, then we've
        * proven that the loop cannot run, so delete it.
        */

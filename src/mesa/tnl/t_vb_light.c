@@ -135,7 +135,7 @@ validate_shine_table( struct gl_context *ctx, GLuint side, GLfloat shininess )
       GLfloat *m;
 
       foreach(s, list)
-	 if (s->refcount == 0)
+	 if (!s->refcount)
 	    break;
 
       m = s->tab;

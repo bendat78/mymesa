@@ -226,7 +226,7 @@ int compute_memory_grow_defrag_pool(struct compute_memory_pool *pool,
 
 			compute_memory_shadow(pool, pipe, 1);
 			pool->shadow = realloc(pool->shadow, new_size_in_dw * 4);
-			if (pool->shadow == NULL)
+			if (!pool->shadow)
 				return -1;
 
 			pool->size_in_dw = new_size_in_dw;
@@ -445,7 +445,7 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 
 	/* We check if the intermediate buffer exists, and if it
 	 * doesn't, we create it again */
-	if (item->real_buffer == NULL) {
+	if (!item->real_buffer) {
 		item->real_buffer = r600_compute_buffer_alloc_vram(
 				pool->screen, item->size_in_dw * 4);
 	}

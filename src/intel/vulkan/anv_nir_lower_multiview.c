@@ -46,7 +46,7 @@ build_instance_id(struct lower_multiview_state *state)
 {
    assert(state->builder.shader->stage == MESA_SHADER_VERTEX);
 
-   if (state->instance_id == NULL) {
+   if (!state->instance_id) {
       nir_builder *b = &state->builder;
 
       b->cursor = nir_before_block(nir_start_block(b->impl));
@@ -66,7 +66,7 @@ build_instance_id(struct lower_multiview_state *state)
 static nir_ssa_def *
 build_view_index(struct lower_multiview_state *state)
 {
-   if (state->view_index == NULL) {
+   if (!state->view_index) {
       nir_builder *b = &state->builder;
 
       b->cursor = nir_before_block(nir_start_block(b->impl));

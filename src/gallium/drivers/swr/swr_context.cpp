@@ -482,7 +482,7 @@ swr_create_context(struct pipe_screen *p_screen, void *priv, unsigned flags)
 
    SwrInit();
 
-   if (ctx->swrContext == NULL)
+   if (!ctx->swrContext)
       goto fail;
 
    ctx->pipe.screen = p_screen;

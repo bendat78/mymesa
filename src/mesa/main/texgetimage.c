@@ -1154,7 +1154,7 @@ getteximage_error_check(struct gl_context *ctx,
 
    assert(texObj);
 
-   if (texObj->Target == 0) {
+   if (!texObj->Target) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(invalid texture)", caller);
       return true;
    }
@@ -1529,7 +1529,7 @@ getcompressedteximage_error_check(struct gl_context *ctx,
 
    assert(texObj);
 
-   if (texObj->Target == 0) {
+   if (!texObj->Target) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(invalid texture)", caller);
       return true;
    }

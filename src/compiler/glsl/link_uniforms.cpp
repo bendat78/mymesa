@@ -1312,13 +1312,13 @@ link_assign_uniform_storage(struct gl_context *ctx,
 {
    /* On the outside chance that there were no uniforms, bail out.
     */
-   if (prog->data->NumUniformStorage == 0)
+   if (!prog->data->NumUniformStorage)
       return;
 
    unsigned int boolean_true = ctx->Const.UniformBooleanTrue;
 
    union gl_constant_value *data;
-   if (prog->data->UniformStorage == NULL) {
+   if (!prog->data->UniformStorage) {
       prog->data->UniformStorage = rzalloc_array(prog,
                                                  struct gl_uniform_storage,
                                                  prog->data->NumUniformStorage);
@@ -1422,7 +1422,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog,
       prog->data->NumUniformStorage = 0;
    }
 
-   if (prog->UniformHash != NULL) {
+   if (prog->UniformHash) {
       prog->UniformHash->clear();
    } else {
       prog->UniformHash = new string_to_uint_map;

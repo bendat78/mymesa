@@ -699,7 +699,7 @@ static GLboolean
    psc->serverGLXexts =
       __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 
-   if (psc->serverGLXexts == NULL) {
+   if (!psc->serverGLXexts) {
       return GL_FALSE;
    }
 
@@ -792,7 +792,7 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
 
    priv->serverGLXversion =
       __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
-   if (priv->serverGLXversion == NULL) {
+   if (!priv->serverGLXversion) {
       FreeScreenConfigs(priv);
       return GL_FALSE;
    }

@@ -304,7 +304,7 @@ i915_emit_state(struct intel_context *intel)
                                    INTEL_PRIM_EMIT_SIZE);
    count = 0;
  again:
-   if (intel->batch.bo == NULL) {
+   if (!intel->batch.bo) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "i915 emit state");
       assert(0);
    }
@@ -508,7 +508,7 @@ i915_destroy_context(struct intel_context *intel)
    intel_region_release(&i915->state.depth_region);
 
    for (i = 0; i < I915_TEX_UNITS; i++) {
-      if (i915->state.tex_buffer[i] != NULL) {
+      if (i915->state.tex_buffer[i]) {
 	 drm_intel_bo_unreference(i915->state.tex_buffer[i]);
 	 i915->state.tex_buffer[i] = NULL;
       }

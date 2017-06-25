@@ -185,7 +185,7 @@ radeon_check_front_buffer_rendering(struct gl_context *ctx)
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	const struct gl_framebuffer *fb = ctx->DrawBuffer;
 
-	if (fb->Name == 0) {
+	if (!fb->Name) {
 		/* drawing to window system buffer */
 		if (fb->_NumColorDrawBuffers > 0) {
 			if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
@@ -238,7 +238,7 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
         }
 
 		/* none */
-	if (fb->Name == 0) {
+	if (!fb->Name) {
 		if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
 			rrbColor = radeon_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
 			radeon->front_cliprects = GL_TRUE;
@@ -286,7 +286,7 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 		}
 	} else {
 		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_STENCIL_BUFFER, GL_FALSE);
-		if (ctx->Driver.Enable != NULL)
+		if (ctx->Driver.Enable)
 			ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
 		else
 			ctx->NewState |= _NEW_STENCIL;
@@ -690,7 +690,7 @@ GLboolean rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const cha
 
 void rcommonInitCmdBuf(radeonContextPtr rmesa)
 {
-	GLint size;
+	GLuint size;
 	struct drm_radeon_gem_info mminfo = {};
 	int fd = rmesa->radeonScreen->driScreen->fd;
 
@@ -712,7 +712,7 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 			size * 4, rmesa->hw.max_state_size * 4);
 
 	rmesa->cmdbuf.csm = radeon_cs_manager_gem_ctor(fd);
-	if (rmesa->cmdbuf.csm == NULL) {
+	if (!rmesa->cmdbuf.csm) {
 		/* FIXME: fatal error */
 		return;
 	}

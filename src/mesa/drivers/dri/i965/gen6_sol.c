@@ -120,7 +120,7 @@ brw_gs_upload_binding_table(struct brw_context *brw)
          need_binding_table = linked_xfb_info->NumOutputs > 0;
       }
       if (!need_binding_table) {
-         if (brw->ff_gs.bind_bo_offset != 0) {
+         if (brw->ff_gs.bind_bo_offset) {
             brw->ctx.NewDriverState |= BRW_NEW_BINDING_TABLE_POINTERS;
             brw->ff_gs.bind_bo_offset = 0;
          }
@@ -149,7 +149,7 @@ brw_gs_upload_binding_table(struct brw_context *brw)
                               prog_data->binding_table.size_bytes > 0;
       }
       if (!need_binding_table) {
-         if (brw->gs.base.bind_bo_offset != 0) {
+         if (brw->gs.base.bind_bo_offset) {
             brw->gs.base.bind_bo_offset = 0;
             brw->ctx.NewDriverState |= BRW_NEW_BINDING_TABLE_POINTERS;
          }

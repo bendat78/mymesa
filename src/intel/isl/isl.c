@@ -1248,7 +1248,7 @@ isl_calc_row_pitch(const struct isl_device *dev,
 
    uint32_t row_pitch = min_row_pitch;
 
-   if (surf_info->row_pitch != 0) {
+   if (surf_info->row_pitch) {
       row_pitch = surf_info->row_pitch;
 
       if (row_pitch < min_row_pitch)

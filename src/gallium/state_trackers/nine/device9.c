@@ -268,7 +268,7 @@ NineDevice9_ctor( struct NineDevice9 *This,
     /* Initialize CSMT */
     if (pCTX->csmt_force == 1)
         This->csmt_active = true;
-    else if (pCTX->csmt_force == 0)
+    else if (!pCTX->csmt_force)
         This->csmt_active = false;
     else
         /* r600 and radeonsi are thread safe. */
@@ -1417,7 +1417,7 @@ NineDevice9_UpdateTexture( struct NineDevice9 *This,
         struct NineTexture9 *dst = NineTexture9(dstb);
         struct NineTexture9 *src = NineTexture9(srcb);
 
-        if (src->dirty_rect.width == 0)
+        if (!src->dirty_rect.width)
             return D3D_OK;
 
         pipe_box_to_rect(&rect, &src->dirty_rect);
@@ -1444,7 +1444,7 @@ NineDevice9_UpdateTexture( struct NineDevice9 *This,
 
         /* GPUs usually have them stored as arrays of mip-mapped 2D textures. */
         for (z = 0; z < 6; ++z) {
-            if (src->dirty_rect[z].width == 0)
+            if (!src->dirty_rect[z].width)
                 continue;
 
             pipe_box_to_rect(&rect, &src->dirty_rect[z]);
@@ -1470,7 +1470,7 @@ NineDevice9_UpdateTexture( struct NineDevice9 *This,
         struct NineVolumeTexture9 *dst = NineVolumeTexture9(dstb);
         struct NineVolumeTexture9 *src = NineVolumeTexture9(srcb);
 
-        if (src->dirty_box.width == 0)
+        if (!src->dirty_box.width)
             return D3D_OK;
         for (l = 0; l <= last_dst_level; ++l, ++m)
             NineVolume9_CopyMemToDefault(dst->volumes[l],

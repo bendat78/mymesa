@@ -446,7 +446,7 @@ static int vc4_rcl_surface_setup(struct vc4_exec_info *exec,
 			return -EINVAL;
 		}
 
-		if (surf->bits != 0) {
+		if (surf->bits) {
 			DRM_ERROR("load/store general bits set with "
 				  "full res load/store.\n");
 			return -EINVAL;
@@ -521,7 +521,7 @@ vc4_rcl_render_config_surface_setup(struct vc4_exec_info *exec,
 				       VC4_RENDER_CONFIG_FORMAT);
 	int cpp;
 
-	if (surf->flags != 0) {
+	if (surf->flags) {
 		DRM_ERROR("No flags supported on render config.\n");
 		return -EINVAL;
 	}

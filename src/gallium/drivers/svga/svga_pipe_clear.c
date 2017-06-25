@@ -182,7 +182,7 @@ try_clear(struct svga_context *svga,
 
             /* Issue VGPU10 Clear commands */
             for (i = 0; i < fb->nr_cbufs; i++) {
-               if ((fb->cbufs[i] == NULL) ||
+               if (!(fb->cbufs[i]) ||
                    !(buffers & (PIPE_CLEAR_COLOR0 << i)))
                   continue;
 

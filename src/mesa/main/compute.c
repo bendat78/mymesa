@@ -41,7 +41,7 @@ check_valid_to_compute(struct gl_context *ctx, const char *function)
     * "An INVALID_OPERATION error is generated if there is no active program
     *  for the compute shader stage."
     */
-   if (ctx->_Shader->CurrentProgram[MESA_SHADER_COMPUTE] == NULL) {
+   if (!ctx->_Shader->CurrentProgram[MESA_SHADER_COMPUTE]) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "%s(no active compute shader)",
                   function);

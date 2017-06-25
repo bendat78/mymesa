@@ -551,7 +551,7 @@ vec4_gs_visitor::gs_end_primitive()
       return;
    }
 
-   if (c->control_data_header_size_bits == 0)
+   if (!c->control_data_header_size_bits)
       return;
 
    /* Cut bits use one bit per vertex. */

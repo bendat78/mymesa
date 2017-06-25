@@ -335,7 +335,7 @@ blorp_hiz_op(struct blorp_batch *batch, struct blorp_surf *surf,
       params.x1 = ALIGN(params.x1, 8);
       params.y1 = ALIGN(params.y1, 4);
 
-      if (params.depth.view.base_level == 0) {
+      if (!params.depth.view.base_level) {
          /* TODO: What about MSAA? */
          params.depth.surf.logical_level0_px.width = params.x1;
          params.depth.surf.logical_level0_px.height = params.y1;

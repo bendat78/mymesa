@@ -329,7 +329,7 @@ static bool calc_live_regs( struct i915_fragment_program *p )
 	       return false;
 
             live_components[inst->DstReg.Index] &= ~inst->DstReg.WriteMask;
-            if (live_components[inst->DstReg.Index] == 0)
+            if (!live_components[inst->DstReg.Index])
                 regsUsed &= ~(1 << inst->DstReg.Index);
         }
 

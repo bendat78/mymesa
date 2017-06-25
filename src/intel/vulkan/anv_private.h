@@ -919,7 +919,7 @@ static inline uint64_t
 _anv_combine_address(struct anv_batch *batch, void *location,
                      const struct anv_address address, uint32_t delta)
 {
-   if (address.bo == NULL) {
+   if (!address.bo) {
       return address.offset + delta;
    } else {
       assert(batch->start <= location && location < batch->end);

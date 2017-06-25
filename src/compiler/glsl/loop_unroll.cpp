@@ -315,7 +315,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   if (ls->limiting_terminator == NULL) {
+   if (!ls->limiting_terminator) {
       ir_instruction *last_ir =
          (ir_instruction *) ir->body_instructions.get_tail();
 

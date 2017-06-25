@@ -155,7 +155,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
    /*We need to refcount these. */
 
-   if (i915->state.tex_buffer[unit] != NULL) {
+   if (i915->state.tex_buffer[unit]) {
        drm_intel_bo_unreference(i915->state.tex_buffer[unit]);
        i915->state.tex_buffer[unit] = NULL;
    }
@@ -437,7 +437,7 @@ i915UpdateTextureState(struct intel_context *intel)
          if (i915->state.active & I915_UPLOAD_TEX(i))
             I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(i), false);
 
-         if (i915->state.tex_buffer[i] != NULL) {
+         if (i915->state.tex_buffer[i]) {
             drm_intel_bo_unreference(i915->state.tex_buffer[i]);
             i915->state.tex_buffer[i] = NULL;
          }

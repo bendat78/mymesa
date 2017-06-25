@@ -318,7 +318,7 @@ class GTEST_API_ AssertionResult {
  private:
   // Appends the contents of message to message_.
   void AppendMessage(const Message& a_message) {
-    if (message_.get() == NULL)
+    if (!message_.get())
       message_.reset(new ::std::string);
     message_->append(a_message.GetString().c_str());
   }
@@ -656,7 +656,7 @@ class GTEST_API_ TestInfo {
   // Returns the name of the parameter type, or NULL if this is not a typed
   // or a type-parameterized test.
   const char* type_param() const {
-    if (type_param_.get() != NULL)
+    if (type_param_.get())
       return type_param_->c_str();
     return NULL;
   }
@@ -664,7 +664,7 @@ class GTEST_API_ TestInfo {
   // Returns the text representation of the value parameter, or NULL if this
   // is not a value-parameterized test.
   const char* value_param() const {
-    if (value_param_.get() != NULL)
+    if (value_param_.get())
       return value_param_->c_str();
     return NULL;
   }
@@ -802,7 +802,7 @@ class GTEST_API_ TestCase {
   // Returns the name of the parameter type, or NULL if this is not a
   // type-parameterized test case.
   const char* type_param() const {
-    if (type_param_.get() != NULL)
+    if (type_param_.get())
       return type_param_->c_str();
     return NULL;
   }

@@ -51,7 +51,7 @@ bool rp_kcache_tracker::try_reserve(sel_chan r) {
 	unsigned sel = kc_sel(r);
 
 	for (unsigned i = 0; i < sel_count; ++i) {
-		if (rp[i] == 0) {
+		if (!rp[i]) {
 			rp[i] = sel;
 			++uc[i];
 			return true;
@@ -106,7 +106,7 @@ void rp_kcache_tracker::unreserve(sel_chan r) {
 
 	for (unsigned i = 0; i < sel_count; ++i)
 		if (rp[i] == sel) {
-			if (--uc[i] == 0)
+			if (!--uc[i])
 				rp[i] = 0;
 			return;
 		}
@@ -157,7 +157,7 @@ bool literal_tracker::try_reserve(literal l) {
 	PSC_DUMP( sblog << "literal reserve " << l.u << "  " << l.f << "\n"; );
 
 	for (unsigned i = 0; i < MAX_ALU_LITERALS; ++i) {
-		if (lt[i] == 0) {
+		if (!lt[i]) {
 			lt[i] = l;
 			++uc[i];
 			PSC_DUMP( sblog << "  reserved new uc = " << uc[i] << "\n"; );
@@ -178,7 +178,7 @@ void literal_tracker::unreserve(literal l) {
 
 	for (unsigned i = 0; i < MAX_ALU_LITERALS; ++i) {
 		if (lt[i] == l) {
-			if (--uc[i] == 0)
+			if (!--uc[i])
 				lt[i] = 0;
 			return;
 		}
@@ -215,7 +215,7 @@ static inline unsigned bs_cycle(bool trans, unsigned bs, unsigned src) {
 inline
 bool rp_gpr_tracker::try_reserve(unsigned cycle, unsigned sel, unsigned chan) {
 	++sel;
-	if (rp[cycle][chan] == 0) {
+	if (!rp[cycle][chan]) {
 		rp[cycle][chan] = sel;
 		++uc[cycle][chan];
 		return true;
@@ -250,7 +250,7 @@ inline
 void rp_gpr_tracker::unreserve(unsigned cycle, unsigned sel, unsigned chan) {
 	++sel;
 	assert(rp[cycle][chan] == sel && uc[cycle][chan]);
-	if (--uc[cycle][chan] == 0)
+	if (!--uc[cycle][chan])
 		rp[cycle][chan] = 0;
 }
 
@@ -705,7 +705,7 @@ void alu_group_tracker::update_flags(alu_node* n) {
 	uses_ar |= n->uses_ar();
 
 	if (flags & AF_ANY_PRED) {
-		if (n->dst[2] != NULL)
+		if (n->dst[2])
 			updates_exec_mask = true;
 	}
 }

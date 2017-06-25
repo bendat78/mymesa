@@ -202,7 +202,7 @@ ir_array_refcount_visitor::visit_enter(ir_dereference_array *ir)
          /* An unsized array can occur at the end of an SSBO.  We can't track
           * accesses to such an array, so bail.
           */
-         if (array->type->array_size() == 0)
+         if (!array->type->array_size())
             return visit_continue;
 
          dr->index = dr->size;

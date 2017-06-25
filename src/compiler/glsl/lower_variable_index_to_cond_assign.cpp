@@ -563,7 +563,7 @@ public:
       find_variable_index f;
       ir->lhs->accept(&f);
 
-      if ((f.deref != NULL) && storage_type_needs_lowering(f.deref)) {
+      if ((f.deref) && storage_type_needs_lowering(f.deref)) {
          convert_dereference_array(f.deref, ir, ir->lhs);
          ir->remove();
          this->progress = true;

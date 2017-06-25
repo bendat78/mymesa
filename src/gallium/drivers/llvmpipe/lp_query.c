@@ -220,7 +220,7 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_PIPELINE_STATISTICS:
       /* reset our cache */
-      if (llvmpipe->active_statistics_queries == 0) {
+      if (!llvmpipe->active_statistics_queries) {
          memset(&llvmpipe->pipeline_statistics, 0,
                 sizeof(llvmpipe->pipeline_statistics));
       }

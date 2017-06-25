@@ -151,7 +151,7 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
       COPY_4V(value, ctx->Light.Model.Ambient);
       return;
    case STATE_LIGHTMODEL_SCENECOLOR:
-      if (state[1] == 0) {
+      if (!state[1]) {
          /* front */
          GLint i;
          for (i = 0; i < 3; i++) {
@@ -968,7 +968,7 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
       append(str, "lightmodel.ambient");
       break;
    case STATE_LIGHTMODEL_SCENECOLOR:
-      if (state[1] == 0) {
+      if (!state[1]) {
          append(str, "lightmodel.front.scenecolor");
       }
       else {

@@ -593,7 +593,7 @@ depth_test_quad(struct quad_stage *qs,
    }
 
    quad->inout.mask &= zmask;
-   if (quad->inout.mask == 0)
+   if (!quad->inout.mask)
       return FALSE;
 
    /* Update our internal copy only if writemask set.  Even if

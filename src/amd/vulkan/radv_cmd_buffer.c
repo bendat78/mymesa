@@ -1795,7 +1795,7 @@ radv_cmd_state_setup_attachments(struct radv_cmd_buffer *cmd_buffer,
 {
 	struct radv_cmd_state *state = &cmd_buffer->state;
 
-	if (pass->attachment_count == 0) {
+	if (!pass->attachment_count) {
 		state->attachments = NULL;
 		return;
 	}
@@ -1804,7 +1804,7 @@ radv_cmd_state_setup_attachments(struct radv_cmd_buffer *cmd_buffer,
 					pass->attachment_count *
 					sizeof(state->attachments[0]),
 					8, VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (state->attachments == NULL) {
+	if (!state->attachments) {
 		/* FIXME: Propagate VK_ERROR_OUT_OF_HOST_MEMORY to vkEndCommandBuffer */
 		abort();
 	}

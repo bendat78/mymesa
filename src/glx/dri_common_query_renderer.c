@@ -91,7 +91,7 @@ dri2_query_renderer_integer(struct glx_screen *base, int attribute,
     */
    const int dri_attribute = dri2_convert_glx_query_renderer_attribs(attribute);
 
-   if (psc->rendererQuery == NULL)
+   if (!psc->rendererQuery)
       return -1;
 
    ret = psc->rendererQuery->queryInteger(psc->driScreen, dri_attribute,
@@ -113,7 +113,7 @@ dri2_query_renderer_string(struct glx_screen *base, int attribute,
     */
    const int dri_attribute = dri2_convert_glx_query_renderer_attribs(attribute);
 
-   if (psc->rendererQuery == NULL)
+   if (!psc->rendererQuery)
       return -1;
 
    return psc->rendererQuery->queryString(psc->driScreen, dri_attribute, value);
@@ -134,7 +134,7 @@ dri3_query_renderer_integer(struct glx_screen *base, int attribute,
     */
    const int dri_attribute = dri2_convert_glx_query_renderer_attribs(attribute);
 
-   if (psc->rendererQuery == NULL)
+   if (!psc->rendererQuery)
       return -1;
 
    ret = psc->rendererQuery->queryInteger(psc->driScreen, dri_attribute,
@@ -156,7 +156,7 @@ dri3_query_renderer_string(struct glx_screen *base, int attribute,
     */
    const int dri_attribute = dri2_convert_glx_query_renderer_attribs(attribute);
 
-   if (psc->rendererQuery == NULL)
+   if (!psc->rendererQuery)
       return -1;
 
    return psc->rendererQuery->queryString(psc->driScreen, dri_attribute, value);
@@ -177,7 +177,7 @@ drisw_query_renderer_integer(struct glx_screen *base, int attribute,
     */
    const int dri_attribute = dri2_convert_glx_query_renderer_attribs(attribute);
 
-   if (psc->rendererQuery == NULL)
+   if (!psc->rendererQuery)
       return -1;
 
    ret = psc->rendererQuery->queryInteger(psc->driScreen, dri_attribute,
@@ -199,7 +199,7 @@ drisw_query_renderer_string(struct glx_screen *base, int attribute,
     */
    const int dri_attribute = dri2_convert_glx_query_renderer_attribs(attribute);
 
-   if (psc->rendererQuery == NULL)
+   if (!psc->rendererQuery)
       return -1;
 
    return psc->rendererQuery->queryString(psc->driScreen, dri_attribute, value);

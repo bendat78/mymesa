@@ -660,9 +660,9 @@ max_tf_vtx(struct fd_context *ctx, const struct ir3_shader_variant *v)
 		return 0;
 	if (v->key.binning_pass)
 		return 0;
-	if (v->shader->stream_output.num_outputs == 0)
+	if (!v->shader->stream_output.num_outputs)
 		return 0;
-	if (so->num_targets == 0)
+	if (!so->num_targets)
 		return 0;
 
 	/* offset to write to is:

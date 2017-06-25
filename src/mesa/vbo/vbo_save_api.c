@@ -850,7 +850,7 @@ do {								\
       save->attrtype[A] = T;					\
    }								\
 								\
-   if ((A) == 0) {						\
+   if (!(A)) {						\
       GLuint i;							\
 								\
       for (i = 0; i < save->vertex_size; i++)			\
@@ -1637,10 +1637,10 @@ vbo_destroy_vertex_list(struct gl_context *ctx, void *data)
    struct vbo_save_vertex_list *node = (struct vbo_save_vertex_list *) data;
    (void) ctx;
 
-   if (--node->vertex_store->refcount == 0)
+   if (!--node->vertex_store->refcount)
       free_vertex_store(ctx, node->vertex_store);
 
-   if (--node->prim_store->refcount == 0)
+   if (!--node->prim_store->refcount)
       free(node->prim_store);
 
    free(node->current_data);

@@ -171,7 +171,7 @@ GetGLXPrivScreenConfig(Display * dpy, int scrn, struct glx_display ** ppriv,
    }
 
    *ppriv = __glXInitialize(dpy);
-   if (*ppriv == NULL) {
+   if (!*ppriv) {
       return GLX_NO_EXTENSION;
    }
 
@@ -738,7 +738,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       struct glx_config *config;
 
       psc = priv->screens[vis->screen];
-      if (psc->driScreen == NULL)
+      if (!psc->driScreen)
          return xid;
 
       config = glx_config_find_visual(psc->visuals, vis->visualid);
@@ -1369,7 +1369,7 @@ glXQueryServerString(Display * dpy, int screen, int name)
       return NULL;
    }
 
-   if (*str == NULL) {
+   if (!*str) {
       *str = __glXQueryServerString(dpy, priv->majorOpcode, screen, name);
    }
 
@@ -2383,7 +2383,7 @@ __glXCopySubBufferMESA(Display * dpy, GLXDrawable drawable,
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
    if (pdraw) {
       struct glx_screen *psc = pdraw->psc;
-      if (psc->driScreen->copySubBuffer != NULL) {
+      if (psc->driScreen->copySubBuffer) {
          (*psc->driScreen->copySubBuffer) (pdraw, x, y, width, height, True);
       }
 

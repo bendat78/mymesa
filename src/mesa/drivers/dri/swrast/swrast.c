@@ -559,7 +559,7 @@ dri_create_buffer(__DRIscreen * sPriv,
     drawable->dPriv = dPriv;
 
     drawable->row = malloc(SWRAST_MAX_WIDTH * 4);
-    if (drawable->row == NULL)
+    if (!drawable->row)
 	goto drawable_fail;
 
     fb = &drawable->Base;

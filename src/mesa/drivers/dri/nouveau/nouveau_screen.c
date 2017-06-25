@@ -248,7 +248,7 @@ nouveau_create_buffer(__DRIscreen *dri_screen,
 
 	if (visual->redBits == 5)
 		color_format = GL_RGB5;
-	else if (visual->alphaBits == 0)
+	else if (!visual->alphaBits)
 		color_format = GL_RGB8;
 	else
 		color_format = GL_RGBA8;

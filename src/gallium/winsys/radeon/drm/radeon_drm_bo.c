@@ -382,7 +382,7 @@ void radeon_bo_destroy(struct pb_buffer *_buf)
     else if (bo->initial_domain & RADEON_DOMAIN_GTT)
         rws->allocated_gtt -= align(bo->base.size, rws->info.gart_page_size);
 
-    if (bo->u.real.map_count >= 1) {
+    if (bo->u.real.map_count) {
         if (bo->initial_domain & RADEON_DOMAIN_VRAM)
             bo->rws->mapped_vram -= bo->base.size;
         else

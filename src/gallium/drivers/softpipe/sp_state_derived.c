@@ -64,7 +64,7 @@ softpipe_compute_vertex_info(struct softpipe_context *softpipe)
 {
    struct sp_setup_info *sinfo = &softpipe->setup_info;
 
-   if (sinfo->valid == 0) {
+   if (!sinfo->valid) {
       const struct tgsi_shader_info *fsInfo = &softpipe->fs_variant->info;
       struct vertex_info *vinfo = &softpipe->vertex_info;
       uint i;

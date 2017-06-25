@@ -724,7 +724,7 @@ INLINE void OutputMerger4x2(SWR_PS_CONTEXT &psContext, uint8_t* (&pColorBase)[SW
             blendOut = psContext.shaded[rt];
 
             // Blend outputs and update coverage mask for alpha test
-            if(pfnBlendFunc[rt] != nullptr)
+            if(pfnBlendFunc[rt])
             {
                 pfnBlendFunc[rt](
                     pBlendState,
@@ -804,7 +804,7 @@ INLINE void OutputMerger8x2(SWR_PS_CONTEXT &psContext, uint8_t* (&pColorBase)[SW
             blendOut = psContext.shaded[rt];
 
             // Blend outputs and update coverage mask for alpha test
-            if(pfnBlendFunc[rt] != nullptr)
+            if(pfnBlendFunc[rt])
             {
                 pfnBlendFunc[rt](
                     pBlendState,

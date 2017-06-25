@@ -139,7 +139,7 @@ struct range_info {
 static boolean
 add_range(struct range_info *info, unsigned start, unsigned count)
 {
-   if (info->max == 0) {
+   if (!info->max) {
       info->max = 10;
       info->ranges = MALLOC(info->max * sizeof(struct range));
       if (!info->ranges) {

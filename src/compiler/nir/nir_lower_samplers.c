@@ -40,7 +40,7 @@ calc_sampler_offsets(nir_deref *tail, nir_tex_instr *instr,
                      unsigned *array_elements, nir_ssa_def **indirect,
                      nir_builder *b, unsigned *location)
 {
-   if (tail->child == NULL)
+   if (!tail->child)
       return;
 
    switch (tail->child->deref_type) {
@@ -90,7 +90,7 @@ static bool
 lower_sampler(nir_tex_instr *instr, const struct gl_shader_program *shader_program,
               gl_shader_stage stage, nir_builder *b)
 {
-   if (instr->texture == NULL)
+   if (!instr->texture)
       return false;
 
    /* In GLSL, we only fill out the texture field.  The sampler is inferred */

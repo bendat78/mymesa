@@ -494,7 +494,7 @@ static void evergreen_compute_upload_input(struct pipe_context *ctx,
 	struct pipe_box box;
 	struct pipe_transfer *transfer = NULL;
 
-	if (shader->input_size == 0) {
+	if (!shader->input_size) {
 		return;
 	}
 
@@ -1091,7 +1091,7 @@ static void *r600_compute_global_transfer_map(struct pipe_context *ctx,
 		compute_memory_demote_item(pool, item, ctx);
 	}
 	else {
-		if (item->real_buffer == NULL) {
+		if (!item->real_buffer) {
 			item->real_buffer =
 					r600_compute_buffer_alloc_vram(pool->screen, item->size_in_dw * 4);
 		}
@@ -1202,7 +1202,7 @@ struct pipe_resource *r600_compute_global_buffer_create(struct pipe_screen *scre
 
 	result->chunk = compute_memory_alloc(rscreen->global_pool, size_in_dw);
 
-	if (result->chunk == NULL)
+	if (!result->chunk)
 	{
 		free(result);
 		return NULL;

@@ -203,7 +203,7 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
    }
 
    psc = priv->screens[config->screen];
-   if (psc->driScreen == NULL)
+   if (!psc->driScreen)
       return GL_TRUE;
 
    pdraw = psc->driScreen->createDrawable(psc, drawable,
@@ -338,7 +338,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
 
       psc = pdraw->psc;
 
-      if (psc->driScreen->getBufferAge != NULL)
+      if (psc->driScreen->getBufferAge)
          *value = psc->driScreen->getBufferAge(pdraw);
 
       return 0;

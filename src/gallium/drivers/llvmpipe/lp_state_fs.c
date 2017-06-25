@@ -2834,10 +2834,10 @@ generate_variant(struct llvmpipe_context *lp,
 
    lp_jit_init_types(variant);
 
-   if (variant->jit_function[RAST_EDGE_TEST] == NULL)
+   if (!variant->jit_function[RAST_EDGE_TEST])
       generate_fragment(lp, shader, variant, RAST_EDGE_TEST);
 
-   if (variant->jit_function[RAST_WHOLE] == NULL) {
+   if (!variant->jit_function[RAST_WHOLE]) {
       if (variant->opaque) {
          /* Specialized shader, which doesn't need to read the color buffer. */
          generate_fragment(lp, shader, variant, RAST_WHOLE);
@@ -2896,7 +2896,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
 
    shader->draw_data = draw_create_fragment_shader(llvmpipe->draw, templ);
-   if (shader->draw_data == NULL) {
+   if (!shader->draw_data) {
       FREE((void *) shader->base.tokens);
       FREE(shader);
       return NULL;

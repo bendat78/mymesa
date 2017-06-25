@@ -56,7 +56,7 @@ public:
 void
 ir_vec_index_to_swizzle_visitor::handle_rvalue(ir_rvalue **rv)
 {
-   if (*rv == NULL)
+   if (!*rv)
       return;
 
    ir_expression *const expr = (*rv)->as_expression();

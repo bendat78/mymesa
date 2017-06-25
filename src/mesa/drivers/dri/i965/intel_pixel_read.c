@@ -176,7 +176,7 @@ intel_readpixels_tiled_memcpy(struct gl_context * ctx,
     * tiled_to_linear a negative pitch so that it walks through the
     * client's data backwards as it walks through the renderbufer forwards.
     */
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       yoffset = rb->Height - yoffset - height;
       pixels += (ptrdiff_t) (height - 1) * dst_pitch;
       dst_pitch = -dst_pitch;

@@ -722,7 +722,7 @@ lp_rast_queue_scene( struct lp_rasterizer *rast,
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   if (rast->num_threads == 0) {
+   if (!rast->num_threads) {
       /* no threading */
       unsigned fpstate = util_fpstate_get();
 
@@ -760,7 +760,7 @@ lp_rast_queue_scene( struct lp_rasterizer *rast,
 void
 lp_rast_finish( struct lp_rasterizer *rast )
 {
-   if (rast->num_threads == 0) {
+   if (!rast->num_threads) {
       /* nothing to do */
    }
    else {
@@ -808,7 +808,7 @@ thread_function(void *init_data)
       if (rast->exit_flag)
          break;
 
-      if (task->thread_index == 0) {
+      if (!task->thread_index) {
          /* thread[0]:
           *  - get next scene to rasterize
           *  - map the framebuffer surfaces
@@ -834,7 +834,7 @@ thread_function(void *init_data)
 
       /* XXX: shouldn't be necessary:
        */
-      if (task->thread_index == 0) {
+      if (!task->thread_index) {
          lp_rast_end( rast );
       }
 

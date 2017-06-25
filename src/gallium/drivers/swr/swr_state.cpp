@@ -114,7 +114,7 @@ swr_create_blend_state(struct pipe_context *pipe,
       blendState.writeDisableAlpha =
          (rt_blend->colormask & PIPE_MASK_A) ? 0 : 1;
 
-      if (rt_blend->colormask == 0)
+      if (!rt_blend->colormask)
          compileState.blendEnable = false;
    }
 
@@ -537,7 +537,7 @@ swr_create_vertex_elements_state(struct pipe_context *pipe,
             mesa_to_swr_format(attribs[i].src_format));
          velems->stream_pitch[attribs[i].vertex_buffer_index] += swr_desc.Bpp;
 
-         if (attribs[i].instance_divisor != 0) {
+         if (attribs[i].instance_divisor) {
             velems->instanced_bufs |= 1U << attribs[i].vertex_buffer_index;
             uint32_t *min_instance_div =
                &velems->min_instance_div[attribs[i].vertex_buffer_index];
@@ -1615,7 +1615,7 @@ swr_update_derived(struct pipe_context *pipe,
 
       /* If there are no color buffers bound, disable writes on RT0
        * and skip loop */
-      if (fb->nr_cbufs == 0) {
+      if (!fb->nr_cbufs) {
          blendState.renderTarget[0].writeDisableRed = 1;
          blendState.renderTarget[0].writeDisableGreen = 1;
          blendState.renderTarget[0].writeDisableBlue = 1;
@@ -1675,7 +1675,7 @@ swr_update_derived(struct pipe_context *pipe,
             compileState.alphaTestFormat = ALPHA_TEST_FLOAT32; // xxx
 
             compileState.Canonicalize();
-            
+
             PFN_BLEND_JIT_FUNC func = NULL;
             auto search = ctx->blendJIT->find(compileState);
             if (search != ctx->blendJIT->end()) {

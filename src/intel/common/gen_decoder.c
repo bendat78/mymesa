@@ -188,7 +188,7 @@ get_group_offset_count(const char **atts, uint32_t *offset, uint32_t *count,
    for (i = 0; atts[i]; i += 2) {
       if (strcmp(atts[i], "count") == 0) {
          *count = strtoul(atts[i + 1], &p, 0);
-         if (*count == 0)
+         if (!*count)
             *variable = true;
       } else if (strcmp(atts[i], "start") == 0) {
          *offset = strtoul(atts[i + 1], &p, 0);
@@ -593,7 +593,7 @@ gen_spec_load(const struct gen_device_info *devinfo)
    memset(&ctx, 0, sizeof ctx);
    ctx.parser = XML_ParserCreate(NULL);
    XML_SetUserData(ctx.parser, &ctx);
-   if (ctx.parser == NULL) {
+   if (!ctx.parser) {
       fprintf(stderr, "failed to create parser\n");
       return NULL;
    }
@@ -654,7 +654,7 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
    memset(&ctx, 0, sizeof ctx);
    ctx.parser = XML_ParserCreate(NULL);
    XML_SetUserData(ctx.parser, &ctx);
-   if (ctx.parser == NULL) {
+   if (!ctx.parser) {
       fprintf(stderr, "failed to create parser\n");
       fclose(input);
       free(filename);
@@ -930,7 +930,7 @@ gen_field_iterator_next(struct gen_field_iterator *iter)
    }
    }
 
-   if (strlen(iter->group->name) == 0) {
+   if (!strlen(iter->group->name)) {
       int length = strlen(iter->name);
       snprintf(iter->name + length, sizeof(iter->name) - length,
                "[%i]", iter->group_iter);

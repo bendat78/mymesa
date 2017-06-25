@@ -198,7 +198,7 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
 
    mtx_lock(&pool->mutex);
 
-   if (pool->numFree == 0) {
+   if (!pool->numFree) {
       mtx_unlock(&pool->mutex);
       debug_printf("warning: out of fixed size buffer objects\n");
       return NULL;

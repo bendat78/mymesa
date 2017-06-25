@@ -302,7 +302,7 @@ nir_build_alu(nir_builder *build, nir_op op, nir_ssa_def *src0,
    unsigned num_components = op_info->output_size;
    if (!num_components) {
       for (unsigned i = 0; i < op_info->num_inputs; i++) {
-         if (op_info->input_sizes[i] == 0)
+         if (!op_info->input_sizes[i])
             num_components = MAX2(num_components,
                                   instr->src[i].src.ssa->num_components);
       }
@@ -316,7 +316,7 @@ nir_build_alu(nir_builder *build, nir_op op, nir_ssa_def *src0,
    if (!bit_size) {
       for (unsigned i = 0; i < op_info->num_inputs; i++) {
          unsigned src_bit_size = instr->src[i].src.ssa->bit_size;
-         if (nir_alu_type_get_type_size(op_info->input_types[i]) == 0) {
+         if (!nir_alu_type_get_type_size(op_info->input_types[i])) {
             if (bit_size)
                assert(src_bit_size == bit_size);
             else

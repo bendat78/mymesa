@@ -753,7 +753,7 @@ void r300_emit_query_end(struct r300_context* r300)
     if (!query)
 	return;
 
-    if (query->begin_emitted == FALSE)
+    if (!query->begin_emitted)
         return;
 
     if (caps->family == CHIP_RV530) {

@@ -46,7 +46,7 @@ void rc_list_add(struct rc_list ** list, struct rc_list * new_value)
 {
 	struct rc_list * temp;
 
-	if (*list == NULL) {
+	if (!*list) {
 		*list = new_value;
 		return;
 	}

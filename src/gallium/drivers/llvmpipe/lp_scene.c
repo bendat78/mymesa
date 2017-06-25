@@ -402,7 +402,7 @@ lp_scene_add_resource_reference(struct lp_scene *scene,
    if (!ref) {
       assert(*last == NULL);
       *last = lp_scene_alloc(scene, sizeof *ref);
-      if (*last == NULL)
+      if (!*last)
           return FALSE;
 
       ref = *last;

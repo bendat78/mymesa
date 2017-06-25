@@ -834,7 +834,7 @@ mark_instruction_scheduled(struct list_head *schedule_list,
                 child->unblocked_time = MAX2(child->unblocked_time,
                                              time + latency);
                 child->parent_count--;
-                if (child->parent_count == 0)
+                if (!child->parent_count)
                         list_add(&child->link, schedule_list);
 
                 node->children[i].node = NULL;
@@ -905,7 +905,7 @@ schedule_instructions(struct vc4_compile *c,
 
         /* Remove non-DAG heads from the list. */
         list_for_each_entry_safe(struct schedule_node, n, schedule_list, link) {
-                if (n->parent_count != 0)
+                if (n->parent_count)
                         list_del(&n->link);
         }
 

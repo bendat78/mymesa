@@ -205,7 +205,7 @@ static void split_prims( struct split_context *split)
 	    }
 	 }
       }
-      else if (split->ib == NULL) {
+      else if (!split->ib) {
 	 /* XXX: could at least send the first max_verts off from the
 	  * inplace buffers.
 	  */

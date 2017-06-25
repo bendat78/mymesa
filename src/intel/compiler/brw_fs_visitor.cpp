@@ -493,7 +493,7 @@ void fs_visitor::compute_clip_distance(gl_clip_plane *clip_planes)
       (const struct brw_vs_prog_key *) this->key;
 
    /* Bail unless some sort of legacy clipping is enabled */
-   if (key->nr_userclip_plane_consts == 0)
+   if (!key->nr_userclip_plane_consts)
       return;
 
    /* From the GLSL 1.30 spec, section 7.1 (Vertex Shader Special Variables):
@@ -569,7 +569,7 @@ fs_visitor::emit_urb_writes(const fs_reg &gs_vertex_count)
     *
     *    "The write data payload can be between 1 and 8 message phases long."
     */
-   if (vue_map->slots_valid == 0) {
+   if (!vue_map->slots_valid) {
       /* For GS, just turn EmitVertex() into a no-op.  We don't want it to
        * end the thread, and emit_gs_thread_end() already emits a SEND with
        * EOT at the end of the program for us.

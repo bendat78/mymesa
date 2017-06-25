@@ -463,7 +463,7 @@ cfg_t::calculate_idom()
       changed = false;
 
       foreach_block(block, this) {
-         if (block->num == 0)
+         if (!block->num)
             continue;
 
          bblock_t *new_idom = NULL;
@@ -471,7 +471,7 @@ cfg_t::calculate_idom()
             if (parent->block->idom) {
                if (!new_idom) {
                   new_idom = parent->block;
-               } else if (parent->block->idom != NULL) {
+               } else if (parent->block->idom) {
                   new_idom = intersect(parent->block, new_idom);
                }
             }

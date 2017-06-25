@@ -208,7 +208,7 @@ vc4_emit_gl_shader_state(struct vc4_context *vc4,
                 }
         }
 
-        if (vtx->num_elements == 0) {
+        if (!vtx->num_elements) {
                 assert(num_elements_emit == 1);
                 struct vc4_bo *bo = vc4_bo_alloc(vc4->screen, 4096, "scratch VBO");
                 cl_reloc(job, &job->shader_rec, &shader_rec, bo, 0);

@@ -778,7 +778,7 @@ entry:
          dst[i] = vl_vlc_get_simsbf(&bs->vlc, 8);
          if (dst[i] == -128)
             dst[i] = vl_vlc_get_uimsbf(&bs->vlc, 8) - 256;
-         else if (dst[i] == 0)
+         else if (!dst[i])
             dst[i] = vl_vlc_get_uimsbf(&bs->vlc, 8);
 
          dst[i] *= scale;
@@ -883,7 +883,7 @@ decode_slice(struct vl_mpg12_bs *bs, struct pipe_video_buffer *target)
       mb.macroblock_modes.value = 0;
       if (mb.macroblock_type & (PIPE_MPEG12_MB_TYPE_MOTION_FORWARD | PIPE_MPEG12_MB_TYPE_MOTION_BACKWARD)) {
          if (bs->desc->picture_structure == PIPE_MPEG12_PICTURE_STRUCTURE_FRAME) {
-            if (bs->desc->frame_pred_frame_dct == 0)
+            if (!bs->desc->frame_pred_frame_dct)
                mb.macroblock_modes.bits.frame_motion_type = vl_vlc_get_uimsbf(&bs->vlc, 2);
             else
                mb.macroblock_modes.bits.frame_motion_type = 2;

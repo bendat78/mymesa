@@ -19,13 +19,13 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
-* 
+*
 * @file builder_misc.cpp
-* 
+*
 * @brief Implementation for miscellaneous builder functions
-* 
+*
 * Notes:
-* 
+*
 ******************************************************************************/
 #include "builder.h"
 #include "common/rdtsc_buckets.h"
@@ -377,7 +377,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate an i32 masked load operation in LLVM IR.  If not  
+    /// @brief Generate an i32 masked load operation in LLVM IR.  If not
     /// supported on the underlying platform, emulate it with float masked load
     /// @param src - base address pointer for the load
     /// @param vMask - SIMD wide mask that controls whether to access memory load 0
@@ -523,7 +523,7 @@ namespace SwrJit
         Function *callPrintFn = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("CallPrint", callPrintTy));
 
         // if we haven't yet added the symbol to the symbol table
-        if((sys::DynamicLibrary::SearchForAddressOfSymbol("CallPrint")) == nullptr)
+        if(!(sys::DynamicLibrary::SearchForAddressOfSymbol("CallPrint")))
         {
             sys::DynamicLibrary::AddSymbol("CallPrint", (void *)&CallPrint);
         }
@@ -540,7 +540,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a masked gather operation in LLVM IR.  If not  
+    /// @brief Generate a masked gather operation in LLVM IR.  If not
     /// supported on the underlying platform, emulate it with loads
     /// @param vSrc - SIMD wide value that will be loaded if mask is invalid
     /// @param pBase - Int8* base VB address pointer value
@@ -580,7 +580,7 @@ namespace SwrJit
                 // pointer to the value to load if we're masking off a component
                 Value *maskLoadAddress = GEP(vSrcPtr,{C(0), C(i)});
                 Value *selMask = VEXTRACT(mask,C(i));
-                // switch in a safe address to load if we're trying to access a vertex 
+                // switch in a safe address to load if we're trying to access a vertex
                 Value *validAddress = SELECT(selMask, loadAddress, maskLoadAddress);
                 Value *val = LOAD(validAddress);
                 vGather = VINSERT(vGather,val,C(i));
@@ -592,7 +592,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a masked gather operation in LLVM IR.  If not  
+    /// @brief Generate a masked gather operation in LLVM IR.  If not
     /// supported on the underlying platform, emulate it with loads
     /// @param vSrc - SIMD wide value that will be loaded if mask is invalid
     /// @param pBase - Int8* base VB address pointer value
@@ -630,7 +630,7 @@ namespace SwrJit
                 // pointer to the value to load if we're masking off a component
                 Value *maskLoadAddress = GEP(vSrcPtr, {C(0), C(i)});
                 Value *selMask = VEXTRACT(mask, C(i));
-                // switch in a safe address to load if we're trying to access a vertex 
+                // switch in a safe address to load if we're trying to access a vertex
                 Value *validAddress = SELECT(selMask, loadAddress, maskLoadAddress);
                 Value *val = LOAD(validAddress, C(0));
                 vGather = VINSERT(vGather, val, C(i));
@@ -706,12 +706,12 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a VPSHUFB operation in LLVM IR.  If not  
+    /// @brief Generate a VPSHUFB operation in LLVM IR.  If not
     /// supported on the underlying platform, emulate it
     /// @param a - 256bit SIMD(32x8bit) of 8bit integer values
     /// @param b - 256bit SIMD(32x8bit) of 8bit integer mask values
-    /// Byte masks in lower 128 lane of b selects 8 bit values from lower 
-    /// 128bits of a, and vice versa for the upper lanes.  If the mask 
+    /// Byte masks in lower 128 lane of b selects 8 bit values from lower
+    /// 128bits of a, and vice versa for the upper lanes.  If the mask
     /// value is negative, '0' is inserted.
     Value *Builder::PSHUFB(Value* a, Value* b)
     {
@@ -757,9 +757,9 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a VPSHUFB operation (sign extend 8 8bit values to 32 
+    /// @brief Generate a VPSHUFB operation (sign extend 8 8bit values to 32
     /// bits)in LLVM IR.  If not supported on the underlying platform, emulate it
-    /// @param a - 128bit SIMD lane(16x8bit) of 8bit integer values.  Only 
+    /// @param a - 128bit SIMD lane(16x8bit) of 8bit integer values.  Only
     /// lower 8 values are used.
     Value *Builder::PMOVSXBD(Value* a)
     {
@@ -782,7 +782,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a VPSHUFB operation (sign extend 8 16bit values to 32 
+    /// @brief Generate a VPSHUFB operation (sign extend 8 16bit values to 32
     /// bits)in LLVM IR.  If not supported on the underlying platform, emulate it
     /// @param a - 128bit SIMD lane(8x16bit) of 16bit integer values.
     Value *Builder::PMOVSXWD(Value* a)
@@ -806,8 +806,8 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a VPERMD operation (shuffle 32 bit integer values 
-    /// across 128 bit lanes) in LLVM IR.  If not supported on the underlying 
+    /// @brief Generate a VPERMD operation (shuffle 32 bit integer values
+    /// across 128 bit lanes) in LLVM IR.  If not supported on the underlying
     /// platform, emulate it
     /// @param a - 256bit SIMD lane(8x32bit) of integer values.
     /// @param idx - 256bit SIMD lane(8x32bit) of 3 bit lane index values
@@ -840,8 +840,8 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a VPERMPS operation (shuffle 32 bit float values 
-    /// across 128 bit lanes) in LLVM IR.  If not supported on the underlying 
+    /// @brief Generate a VPERMPS operation (shuffle 32 bit float values
+    /// across 128 bit lanes) in LLVM IR.  If not supported on the underlying
     /// platform, emulate it
     /// @param a - 256bit SIMD lane(8x32bit) of float values.
     /// @param idx - 256bit SIMD lane(8x32bit) of 3 bit lane index values
@@ -890,7 +890,7 @@ namespace SwrJit
             FunctionType* pFuncTy = FunctionType::get(mFP32Ty, mInt16Ty);
             Function* pCvtPh2Ps = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("ConvertSmallFloatTo32", pFuncTy));
 
-            if (sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertSmallFloatTo32") == nullptr)
+            if (!sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertSmallFloatTo32"))
             {
                 sys::DynamicLibrary::AddSymbol("ConvertSmallFloatTo32", (void *)&ConvertSmallFloatTo32);
             }
@@ -923,7 +923,7 @@ namespace SwrJit
             FunctionType* pFuncTy = FunctionType::get(mInt16Ty, mFP32Ty);
             Function* pCvtPs2Ph = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("Convert32To16Float", pFuncTy));
 
-            if (sys::DynamicLibrary::SearchForAddressOfSymbol("Convert32To16Float") == nullptr)
+            if (!sys::DynamicLibrary::SearchForAddressOfSymbol("Convert32To16Float"))
             {
                 sys::DynamicLibrary::AddSymbol("Convert32To16Float", (void *)&Convert32To16Float);
             }
@@ -967,7 +967,7 @@ namespace SwrJit
             Value* bHi = VEXTRACTI128(b, C((uint8_t)1));
             Value* resHi = CALL(pmaxsd, {aHi, bHi});
 
-            // combine 
+            // combine
             Value* result = VINSERTI128(VUNDEF_I(), resLo, C((uint8_t)0));
             result = VINSERTI128(result, resHi, C((uint8_t)1));
 
@@ -1003,7 +1003,7 @@ namespace SwrJit
             Value* bHi = VEXTRACTI128(b, C((uint8_t)1));
             Value* resHi = CALL(pminsd, {aHi, bHi});
 
-            // combine 
+            // combine
             Value* result = VINSERTI128(VUNDEF_I(), resLo, C((uint8_t)0));
             result = VINSERTI128(result, resHi, C((uint8_t)1));
 
@@ -1012,7 +1012,7 @@ namespace SwrJit
     #endif
     }
 
-    void Builder::Gather4(const SWR_FORMAT format, Value* pSrcBase, Value* byteOffsets, 
+    void Builder::Gather4(const SWR_FORMAT format, Value* pSrcBase, Value* byteOffsets,
                           Value* mask, Value* vGatherComponents[], bool bPackedOutput)
     {
         const SWR_FORMAT_INFO &info = GetFormatInfo(format);
@@ -1030,12 +1030,12 @@ namespace SwrJit
         }
     }
 
-    void Builder::GATHER4PS(const SWR_FORMAT_INFO &info, Value* pSrcBase, Value* byteOffsets, 
+    void Builder::GATHER4PS(const SWR_FORMAT_INFO &info, Value* pSrcBase, Value* byteOffsets,
                             Value* mask, Value* vGatherComponents[], bool bPackedOutput)
     {
         switch(info.bpp / info.numComps)
         {
-            case 16: 
+            case 16:
             {
                     Value* vGatherResult[2];
                     Value *vMask;
@@ -1064,7 +1064,7 @@ namespace SwrJit
                         vGatherResult[1] =  GATHERPS(vGatherMaskedVal, pSrcBase, byteOffsets, vMask, C((char)1));
                         // e.g. result of second 8x32bit integer gather for 16bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
+                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
                         //
                     }
                     else
@@ -1073,11 +1073,11 @@ namespace SwrJit
                     }
 
                     // Shuffle gathered components into place, each row is a component
-                    Shuffle16bpcGather4(info, vGatherResult, vGatherComponents, bPackedOutput);  
+                    Shuffle16bpcGather4(info, vGatherResult, vGatherComponents, bPackedOutput);
             }
                 break;
-            case 32: 
-            { 
+            case 32:
+            {
                 // apply defaults
                 for (uint32_t i = 0; i < 4; ++i)
                 {
@@ -1116,9 +1116,9 @@ namespace SwrJit
                 Value* vGatherResult = GATHERDD(vGatherMaskedVal, pSrcBase, byteOffsets, mask, C((char)1));
                 // e.g. result of an 8x32bit integer gather for 8bit components
                 // 256i - 0    1    2    3    4    5    6    7
-                //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw 
+                //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw
 
-                Shuffle8bpcGather4(info, vGatherResult, vGatherComponents, bPackedOutput);  
+                Shuffle8bpcGather4(info, vGatherResult, vGatherComponents, bPackedOutput);
             }
                 break;
             case 16:
@@ -1150,7 +1150,7 @@ namespace SwrJit
                     vGatherResult[1] = GATHERDD(vGatherMaskedVal, pSrcBase, byteOffsets, vMask, C((char)1));
                     // e.g. result of second 8x32bit integer gather for 16bit components
                     // 256i - 0    1    2    3    4    5    6    7
-                    //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
+                    //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
                     //
                 }
                 else
@@ -1202,7 +1202,7 @@ namespace SwrJit
         vGatherInput[0] = BITCAST(vGatherInput[0], mSimdInt32Ty);
         vGatherInput[1] = BITCAST(vGatherInput[1], mSimdInt32Ty);
 
-        if(bPackedOutput) 
+        if(bPackedOutput)
         {
             Type* v128bitTy = VectorType::get(IntegerType::getIntNTy(JM()->mContext, 128), mVWidth / 4); // vwidth is units of 32 bits
 
@@ -1221,7 +1221,7 @@ namespace SwrJit
 
             // do the same for zw components
             Value* vi128ZW = nullptr;
-            if(info.numComps > 2) 
+            if(info.numComps > 2)
             {
                 Value* vShufResult = BITCAST(PSHUFB(BITCAST(vGatherInput[1], v32x8Ty), vConstMask), vGatherTy);
                 vi128ZW = BITCAST(PERMD(vShufResult, C<int32_t>({0, 1, 4, 5, 2, 3, 6, 7})), v128bitTy);
@@ -1244,12 +1244,12 @@ namespace SwrJit
                 // if x or y, use vi128XY permute result, else use vi128ZW
                 Value* selectedPermute = (i < 2) ? vi128XY : vi128ZW;
 
-                // extract packed component 128 bit lanes 
+                // extract packed component 128 bit lanes
                 vGatherOutput[swizzleIndex] = VEXTRACT(selectedPermute, C(lane));
             }
 
         }
-        else 
+        else
         {
             // pshufb masks for each component
             Value* vConstMask[2];
@@ -1281,7 +1281,7 @@ namespace SwrJit
                 vGatherOutput[swizzleIndex] = BITCAST(PSHUFB(BITCAST(vGatherInput[selectedGather], v32x8Ty), vConstMask[selectedMask]), vGatherTy);
                 // after pshufb mask for x channel; z uses the same shuffle from the second gather
                 // 256i - 0    1    2    3    4    5    6    7
-                //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00 
+                //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00
             }
         }
     }
@@ -1310,7 +1310,7 @@ namespace SwrJit
 
             // do the same for zw components
             Value* vi128ZW = nullptr;
-            if(info.numComps > 2) 
+            if(info.numComps > 2)
             {
                 vi128ZW = BITCAST(PERMD(vShufResult, C<int32_t>({2, 6, 0, 0, 3, 7, 0, 0})), v128Ty);
             }
@@ -1332,7 +1332,7 @@ namespace SwrJit
                 uint32_t lane = ((!i) || (i == 2)) ? 0 : 1; 
                 // if x or y, use vi128XY permute result, else use vi128ZW
                 Value* selectedPermute = (i < 2) ? vi128XY : vi128ZW;
-            
+
                 // sign extend
                 vGatherOutput[swizzleIndex] = VEXTRACT(selectedPermute, C(lane));
             }
@@ -1381,7 +1381,7 @@ namespace SwrJit
                     vGatherOutput[swizzleIndex] = BITCAST(PSHUFB(BITCAST(vGatherInput, v32x8Ty), vConstMask), vGatherTy);
                     // after pshufb for x channel
                     // 256i - 0    1    2    3    4    5    6    7
-                    //        x000 x000 x000 x000 x000 x000 x000 x000 
+                    //        x000 x000 x000 x000 x000 x000 x000 x000
             }
         }
     }
@@ -1409,14 +1409,14 @@ namespace SwrJit
 
     //////////////////////////////////////////////////////////////////////////
     /// @brief emulates a scatter operation.
-    /// @param pDst - pointer to destination 
+    /// @param pDst - pointer to destination
     /// @param vSrc - vector of src data to scatter
     /// @param vOffsets - vector of byte offsets from pDst
     /// @param vMask - mask of valid lanes
     void Builder::SCATTERPS(Value* pDst, Value* vSrc, Value* vOffsets, Value* vMask)
     {
         /* Scatter algorithm
-    
+
            while(Index = BitScanForward(mask))
                 srcElem = srcVector[Index]
                 offsetElem = offsetVector[Index]
@@ -1437,7 +1437,7 @@ namespace SwrJit
             pScatterStackSrc = CreateEntryAlloca(pFunc, mSimdInt64Ty);
             pScatterStackOffsets = CreateEntryAlloca(pFunc, mSimdInt32Ty);
         }
-    
+
         Value* pSrcArrayPtr = BITCAST(pScatterStackSrc, PointerType::get(vSrc->getType(), 0));
         Value* pOffsetsArrayPtr = pScatterStackOffsets;
         STORE(vSrc, pSrcArrayPtr);
@@ -1451,7 +1451,7 @@ namespace SwrJit
 
         // Get cttz function
         Function* pfnCttz = Intrinsic::getDeclaration(mpJitMgr->mpCurrentModule, Intrinsic::cttz, { mInt32Ty });
-    
+
         // Setup loop basic block
         BasicBlock* pLoop = BasicBlock::Create(mpJitMgr->mContext, "Scatter Loop", pFunc);
 
@@ -1544,7 +1544,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief save/restore stack, providing ability to push/pop the stack and 
+    /// @brief save/restore stack, providing ability to push/pop the stack and
     ///        reduce overall stack requirements for temporary stack use
     Value* Builder::STACKSAVE()
     {
@@ -1644,7 +1644,7 @@ namespace SwrJit
 
             FunctionType* pFuncTy = FunctionType::get(Type::getVoidTy(JM()->mContext), args, false);
             Function* pFunc = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StartBucket", pFuncTy));
-            if (sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StartBucket") == nullptr)
+            if (!sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StartBucket"))
             {
                 sys::DynamicLibrary::AddSymbol("BucketManager_StartBucket", (void*)&BucketManager_StartBucket);
             }
@@ -1666,7 +1666,7 @@ namespace SwrJit
 
             FunctionType* pFuncTy = FunctionType::get(Type::getVoidTy(JM()->mContext), args, false);
             Function* pFunc = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StopBucket", pFuncTy));
-            if (sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StopBucket") == nullptr)
+            if (!sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StopBucket"))
             {
                 sys::DynamicLibrary::AddSymbol("BucketManager_StopBucket", (void*)&BucketManager_StopBucket);
             }

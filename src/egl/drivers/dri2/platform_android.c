@@ -359,7 +359,7 @@ droid_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    dri2_surf->dri_drawable = (*createNewDrawable)(dri2_dpy->dri_screen, config,
                                                   dri2_surf);
-   if (dri2_surf->dri_drawable == NULL) {
+   if (!dri2_surf->dri_drawable) {
       _eglError(EGL_BAD_ALLOC, "createNewDrawable");
       goto cleanup_surface;
    }
@@ -1191,7 +1191,7 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *dpy)
    }
 
    dri2_dpy->driver_name = loader_get_driver_for_fd(dri2_dpy->fd);
-   if (dri2_dpy->driver_name == NULL) {
+   if (!dri2_dpy->driver_name) {
       err = "DRI2: failed to get driver name";
       goto cleanup;
    }

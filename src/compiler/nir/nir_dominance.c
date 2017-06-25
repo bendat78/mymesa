@@ -101,7 +101,7 @@ calc_dom_frontier(nir_block *block)
          nir_block *runner = (nir_block *) entry->key;
 
          /* Skip unreachable predecessors */
-         if (runner->imm_dom == NULL)
+         if (!runner->imm_dom)
             continue;
 
          while (runner != block->imm_dom) {

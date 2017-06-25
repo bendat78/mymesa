@@ -97,9 +97,9 @@ unlink_blocks(nir_block *pred, nir_block *succ)
 static void
 unlink_block_successors(nir_block *block)
 {
-   if (block->successors[1] != NULL)
+   if (block->successors[1])
       unlink_blocks(block, block->successors[1]);
-   if (block->successors[0] != NULL)
+   if (block->successors[0])
       unlink_blocks(block, block->successors[0]);
 }
 

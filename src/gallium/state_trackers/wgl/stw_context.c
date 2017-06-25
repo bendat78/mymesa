@@ -253,7 +253,7 @@ stw_create_context_attribs(HDC hdc, INT iLayerPlane, DHGLRC hShareContext,
 
    ctx->st = stw_dev->stapi->create_context(stw_dev->stapi,
          stw_dev->smapi, &attribs, &ctx_err, shareCtx ? shareCtx->st : NULL);
-   if (ctx->st == NULL)
+   if (!ctx->st)
       goto no_st_ctx;
 
    ctx->st->st_manager_private = (void *) ctx;

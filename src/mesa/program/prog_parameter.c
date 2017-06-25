@@ -153,7 +153,7 @@ _mesa_new_parameter_list_sized(unsigned size)
          _mesa_align_malloc(size * 4 *sizeof(gl_constant_value), 16);
 
 
-      if ((p->Parameters == NULL) || (p->ParameterValues == NULL)) {
+      if (!(p->Parameters) || (p->ParameterValues == NULL)) {
          free(p->Parameters);
          _mesa_align_free(p->ParameterValues);
          free(p);

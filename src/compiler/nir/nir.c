@@ -905,7 +905,7 @@ reduce_cursor(nir_cursor cursor)
    }
 
    case nir_cursor_after_instr:
-      if (nir_instr_next(cursor.instr) == NULL) {
+      if (!nir_instr_next(cursor.instr)) {
          /* This is the last instruction, switch to after block */
          cursor.option = nir_cursor_after_block;
          cursor.block = cursor.instr->block;
@@ -1256,12 +1256,12 @@ visit_tex_src(nir_tex_instr *instr, nir_foreach_src_cb cb, void *state)
          return false;
    }
 
-   if (instr->texture != NULL) {
+   if (instr->texture) {
       if (!visit_deref_src(instr->texture, cb, state))
          return false;
    }
 
-   if (instr->sampler != NULL) {
+   if (instr->sampler) {
       if (!visit_deref_src(instr->sampler, cb, state))
          return false;
    }

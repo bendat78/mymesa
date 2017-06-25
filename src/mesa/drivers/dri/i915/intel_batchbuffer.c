@@ -47,7 +47,7 @@ intel_batchbuffer_init(struct intel_context *intel)
 static void
 intel_batchbuffer_reset(struct intel_context *intel)
 {
-   if (intel->batch.last_bo != NULL) {
+   if (intel->batch.last_bo) {
       drm_intel_bo_unreference(intel->batch.last_bo);
       intel->batch.last_bo = NULL;
    }
@@ -103,7 +103,7 @@ do_batch_dump(struct intel_context *intel)
    if (!ret) {
       drm_intel_bo_unmap(batch->bo);
 
-      if (intel->vtbl.debug_batch != NULL)
+      if (intel->vtbl.debug_batch)
 	 intel->vtbl.debug_batch(intel);
    }
 }
@@ -145,10 +145,10 @@ _intel_batchbuffer_flush(struct intel_context *intel,
 {
    int ret;
 
-   if (intel->batch.used == 0)
+   if (!intel->batch.used)
       return 0;
 
-   if (intel->first_post_swapbuffers_batch == NULL) {
+   if (!intel->first_post_swapbuffers_batch) {
       intel->first_post_swapbuffers_batch = intel->batch.bo;
       drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
    }

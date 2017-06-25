@@ -77,7 +77,7 @@ static void
 print_register(nir_register *reg, print_state *state)
 {
    FILE *fp = state->fp;
-   if (reg->name != NULL)
+   if (reg->name)
       fprintf(fp, "/* %s */ ", reg->name);
    if (reg->is_global)
       fprintf(fp, "gr%u", reg->index);
@@ -95,7 +95,7 @@ print_register_decl(nir_register *reg, print_state *state)
    if (reg->is_packed)
       fprintf(fp, "(packed) ");
    print_register(reg, state);
-   if (reg->num_array_elems != 0)
+   if (reg->num_array_elems)
       fprintf(fp, "[%u]", reg->num_array_elems);
    fprintf(fp, "\n");
 }
@@ -104,7 +104,7 @@ static void
 print_ssa_def(nir_ssa_def *def, print_state *state)
 {
    FILE *fp = state->fp;
-   if (def->name != NULL)
+   if (def->name)
       fprintf(fp, "/* %s */ ", def->name);
    fprintf(fp, "%s %u ssa_%u", sizes[def->num_components], def->bit_size,
            def->index);
@@ -114,7 +114,7 @@ static void
 print_ssa_use(nir_ssa_def *def, print_state *state)
 {
    FILE *fp = state->fp;
-   if (def->name != NULL)
+   if (def->name)
       fprintf(fp, "/* %s */ ", def->name);
    fprintf(fp, "ssa_%u", def->index);
 }
@@ -126,9 +126,9 @@ print_reg_src(nir_reg_src *src, print_state *state)
 {
    FILE *fp = state->fp;
    print_register(src->reg, state);
-   if (src->reg->num_array_elems != 0) {
+   if (src->reg->num_array_elems) {
       fprintf(fp, "[%u", src->base_offset);
-      if (src->indirect != NULL) {
+      if (src->indirect) {
          fprintf(fp, " + ");
          print_src(src->indirect, state);
       }
@@ -141,9 +141,9 @@ print_reg_dest(nir_reg_dest *dest, print_state *state)
 {
    FILE *fp = state->fp;
    print_register(dest->reg, state);
-   if (dest->reg->num_array_elems != 0) {
+   if (dest->reg->num_array_elems) {
       fprintf(fp, "[%u", dest->base_offset);
-      if (dest->indirect != NULL) {
+      if (dest->indirect) {
          fprintf(fp, " + ");
          print_src(dest->indirect, state);
       }
@@ -256,7 +256,7 @@ print_alu_instr(nir_alu_instr *instr, print_state *state)
 static const char *
 get_var_name(nir_variable *var, print_state *state)
 {
-   if (state->ht == NULL)
+   if (!state->ht)
       return var->name;
 
    assert(state->syms);
@@ -266,7 +266,7 @@ get_var_name(nir_variable *var, print_state *state)
       return entry->data;
 
    char *name;
-   if (var->name == NULL) {
+   if (!var->name) {
       name = ralloc_asprintf(state->syms, "@%u", state->index++);
    } else {
       struct set_entry *set_entry = _mesa_set_search(state->syms, var->name);
@@ -492,7 +492,7 @@ print_deref_array(nir_deref_array *deref, print_state *state)
       fprintf(fp, "%u", deref->base_offset);
       break;
    case nir_deref_array_type_indirect:
-      if (deref->base_offset != 0)
+      if (deref->base_offset)
          fprintf(fp, "%u + ", deref->base_offset);
       print_src(&deref->indirect, state);
       break;
@@ -788,8 +788,8 @@ print_call_instr(nir_call_instr *instr, print_state *state)
       print_deref(instr->params[i], state);
    }
 
-   if (instr->return_deref != NULL) {
-      if (instr->num_params != 0)
+   if (instr->return_deref) {
+      if (instr->num_params)
          fprintf(fp, ", ");
       fprintf(fp, "returning ");
       print_deref(instr->return_deref, state);
@@ -1059,8 +1059,8 @@ print_function_impl(nir_function_impl *impl, print_state *state)
       print_arg(impl->params[i], state);
    }
 
-   if (impl->return_var != NULL) {
-      if (impl->num_params != 0)
+   if (impl->return_var) {
+      if (impl->num_params)
          fprintf(fp, ", ");
       fprintf(fp, "returning ");
       print_arg(impl->return_var, state);
@@ -1115,15 +1115,15 @@ print_function(nir_function *function, print_state *state)
       fprintf(fp, "%s", glsl_get_type_name(function->params[i].type));
    }
 
-   if (function->return_type != NULL) {
-      if (function->num_params != 0)
+   if (function->return_type) {
+      if (function->num_params)
          fprintf(fp, ", ");
       fprintf(fp, "returning %s", glsl_get_type_name(function->return_type));
    }
 
    fprintf(fp, "\n");
 
-   if (function->impl != NULL) {
+   if (function->impl) {
       print_function_impl(function->impl, state);
       return;
    }

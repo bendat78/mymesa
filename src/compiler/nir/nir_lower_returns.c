@@ -183,7 +183,7 @@ lower_returns_in_block(nir_block *block, struct lower_returns_state *state)
    nir_builder *b = &state->builder;
 
    /* Set the return flag */
-   if (state->return_flag == NULL) {
+   if (!state->return_flag) {
       state->return_flag =
          nir_local_variable_create(b->impl, glsl_bool_type(), "return");
 

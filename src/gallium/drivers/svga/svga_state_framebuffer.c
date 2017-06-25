@@ -213,7 +213,7 @@ emit_fb_vgpu10(struct svga_context *svga)
          struct pipe_surface *s = curr->cbufs[i];
 
          rtv[i] = svga_validate_surface_view(svga, svga_surface(s));
-         if (rtv[i] == NULL) {
+         if (!rtv[i]) {
             return PIPE_ERROR_OUT_OF_MEMORY;
          }
 

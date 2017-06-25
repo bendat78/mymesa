@@ -2408,7 +2408,7 @@ copy_image_data_to_texture(struct st_context *st,
       /* Copy potentially with the blitter:
        */
       GLuint src_level;
-      if (stImage->pt->last_level == 0)
+      if (!stImage->pt->last_level)
          src_level = 0;
       else
          src_level = stImage->base.Level;

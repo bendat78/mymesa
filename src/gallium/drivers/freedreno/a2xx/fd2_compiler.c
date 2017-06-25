@@ -572,7 +572,7 @@ push_predicate(struct fd2_compile_context *ctx, struct tgsi_src_register *src)
 	 */
 	ctx->cf = NULL;
 
-	if (ctx->pred_depth == 0) {
+	if (!ctx->pred_depth) {
 		/* assign predicate register: */
 		ctx->pred_reg = ctx->num_regs[TGSI_FILE_TEMPORARY];
 
@@ -615,7 +615,7 @@ pop_predicate(struct fd2_compile_context *ctx)
 	/* restore previous predicate state: */
 	ctx->so->ir->pred = ctx->pred_stack[--ctx->pred_depth];
 
-	if (ctx->pred_depth != 0) {
+	if (ctx->pred_depth) {
 		struct ir2_instruction *alu;
 		struct tgsi_dst_register pred_dst;
 		struct tgsi_src_register pred_src;

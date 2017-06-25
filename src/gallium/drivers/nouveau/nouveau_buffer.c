@@ -436,7 +436,7 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
       }
       return buf->data ? (buf->data + box->x) : tx->map;
    } else
-   if (unlikely(buf->domain == 0)) {
+   if (!unlikely(buf->domain)) {
       return buf->data + box->x;
    }
 

@@ -197,7 +197,7 @@ unsigned si_llvm_compile(LLVMModuleRef M, struct ac_shader_binary *binary,
 	LLVMDisposeMemoryBuffer(out_buffer);
 
 out:
-	if (diag.retval != 0)
+	if (diag.retval)
 		pipe_debug_message(debug, SHADER_INFO, "LLVM compile failed");
 	return diag.retval;
 }

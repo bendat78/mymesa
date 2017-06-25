@@ -49,7 +49,7 @@ nouveau_fence_ref(struct nouveau_fence *fence, struct nouveau_fence **ref)
       ++fence->ref;
 
    if (*ref) {
-      if (--(*ref)->ref == 0)
+      if (!--(*ref)->ref)
          nouveau_fence_del(*ref);
    }
 

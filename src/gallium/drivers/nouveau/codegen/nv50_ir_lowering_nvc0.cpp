@@ -648,9 +648,9 @@ NVC0LegalizePostRA::replaceZero(Instruction *i)
       if (imm) {
          if (i->op == OP_SELP && s == 2) {
             i->setSrc(s, pOne);
-            if (imm->reg.data.u64 == 0)
+            if (!imm->reg.data.u64)
                i->src(s).mod = i->src(s).mod ^ Modifier(NV50_IR_MOD_NOT);
-         } else if (imm->reg.data.u64 == 0) {
+         } else if (!imm->reg.data.u64) {
             i->setSrc(s, rZero);
          }
       }

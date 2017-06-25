@@ -288,7 +288,7 @@ private:
       bb.push(node);
 
       while (bb.getSize() || cross.getSize()) {
-         if (bb.getSize() == 0)
+         if (!bb.getSize())
             cross.moveTo(bb);
 
          node = reinterpret_cast<Graph::Node *>(bb.pop().u.p);
@@ -374,7 +374,7 @@ void Graph::classifyDFS(Node *curr, int& seq)
       if (edge->type == Edge::DUMMY)
          continue;
 
-      if (node->getSequence() == 0) {
+      if (!node->getSequence()) {
          edge->type = Edge::TREE;
          classifyDFS(node, seq);
       } else
@@ -390,7 +390,7 @@ void Graph::classifyDFS(Node *curr, int& seq)
       if (edge->type == Edge::DUMMY)
          continue;
 
-      if (node->getSequence() == 0) {
+      if (!node->getSequence()) {
          edge->type = Edge::TREE;
          classifyDFS(node, seq);
       } else

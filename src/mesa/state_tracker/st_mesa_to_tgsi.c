@@ -361,7 +361,7 @@ static void emit_swz( struct st_translate *t,
    boolean need_add = FALSE;
    boolean need_mul = FALSE;
 
-   if (dst.WriteMask == 0)
+   if (!dst.WriteMask)
       return;
 
    /* Is this just a MOV?
@@ -992,7 +992,7 @@ st_translate_mesa_program(
    if (program->Parameters) {
       t->constants = calloc( program->Parameters->NumParameters,
                              sizeof t->constants[0] );
-      if (t->constants == NULL) {
+      if (!t->constants) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }

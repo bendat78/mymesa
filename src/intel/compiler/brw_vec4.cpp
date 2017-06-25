@@ -2149,7 +2149,7 @@ get_lowered_simd_width(const struct gen_device_info *devinfo,
 static bool
 dst_src_regions_overlap(vec4_instruction *inst)
 {
-   if (inst->size_written == 0)
+   if (!inst->size_written)
       return false;
 
    unsigned dst_start = inst->dst.offset;

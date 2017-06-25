@@ -41,7 +41,7 @@ static void DEST_4F( GLfloat (*t)[4],
    (void) start;
    for (i = DST_START ; i < n ; i++, NEXT_F) {
       NEXT_F2;
-      if (SZ >= 1) t[i][0] = TRX_4F(f, 0);
+      if (SZ) t[i][0] = TRX_4F(f, 0);
       if (SZ >= 2) t[i][1] = TRX_4F(f, 1);
       if (SZ >= 3) t[i][2] = TRX_4F(f, 2);
       if (SZ == 4) t[i][3] = TRX_4F(f, 3); else t[i][3] = 1.0;
@@ -65,7 +65,7 @@ static void DEST_4FN( GLfloat (*t)[4],
    (void) start;
    for (i = DST_START ; i < n ; i++, NEXT_F) {
       NEXT_F2;
-      if (SZ >= 1) t[i][0] = TRX_4FN(f, 0);
+      if (SZ) t[i][0] = TRX_4FN(f, 0);
       if (SZ >= 2) t[i][1] = TRX_4FN(f, 1);
       if (SZ >= 3) t[i][2] = TRX_4FN(f, 2);
       if (SZ == 4) t[i][3] = TRX_4FN(f, 3); else t[i][3] = 1.0;
@@ -125,7 +125,7 @@ static void DEST_4UB( GLubyte (*t)[4],
    (void) first;
    for (i = DST_START ; i < n ; i++, NEXT_F) {
       NEXT_F2;
-      if (SZ >= 1) TRX_UB(t[i][0], f, 0);
+      if (SZ) TRX_UB(t[i][0], f, 0);
       if (SZ >= 2) TRX_UB(t[i][1], f, 1);
       if (SZ >= 3) TRX_UB(t[i][2], f, 2);
       if (SZ == 4) TRX_UB(t[i][3], f, 3); else t[i][3] = 255;
@@ -147,7 +147,7 @@ static void DEST_4US( GLushort (*t)[4],
    (void) first;
    for (i = DST_START ; i < n ; i++, NEXT_F) {
       NEXT_F2;
-      if (SZ >= 1) TRX_US(t[i][0], f, 0);
+      if (SZ) TRX_US(t[i][0], f, 0);
       if (SZ >= 2) TRX_US(t[i][1], f, 1);
       if (SZ >= 3) TRX_US(t[i][2], f, 2);
       if (SZ == 4) TRX_US(t[i][3], f, 3); else t[i][3] = 65535;

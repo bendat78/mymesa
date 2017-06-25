@@ -290,7 +290,7 @@ _mesa_PopMatrix( void )
       _mesa_debug(ctx, "glPopMatrix %s\n",
                   _mesa_enum_to_string(ctx->Transform.MatrixMode));
 
-   if (stack->Depth == 0) {
+   if (!stack->Depth) {
       if (ctx->Transform.MatrixMode == GL_TEXTURE) {
          _mesa_error(ctx,  GL_STACK_UNDERFLOW,
                      "glPopMatrix(mode=GL_TEXTURE, unit=%d)",

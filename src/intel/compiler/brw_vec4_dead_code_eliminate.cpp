@@ -86,7 +86,7 @@ vec4_visitor::dead_code_eliminate()
                   inst->dst.writemask &= ~(1 << c);
                   progress = true;
 
-                  if (inst->dst.writemask == 0) {
+                  if (!inst->dst.writemask) {
                      if (inst->writes_accumulator || inst->writes_flag()) {
                         inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
                      } else {

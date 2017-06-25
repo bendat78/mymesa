@@ -275,7 +275,7 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
    ref2->stride = sizeof(float[4]);
    ref2->flags = 0;
 
-   if ( norm_normalize_types[mtype] == 0 ) {
+   if (!norm_normalize_types[mtype]) {
       ref_norm_transform_rescale( mat, scale, source, NULL, ref );
    } else {
       ref_norm_transform_normalize( mat, scale, source, NULL, ref );
@@ -309,7 +309,7 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
             return 0;
          }
 
-         if ( norm_normalize_types[mtype] != 0 ) {
+         if (norm_normalize_types[mtype]) {
             if ( significand_match( d2[i][j], r2[i][j] ) < REQUIRED_PRECISION ) {
                printf( "------------------- precalculated length case ------\n" );
                printf( "(i = %i, j = %i)\n", i, j );

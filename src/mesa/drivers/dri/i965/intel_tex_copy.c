@@ -63,7 +63,7 @@ intel_copy_texsubimage(struct brw_context *brw,
     * however the hardware blitter can't handle this case, so fall back to
     * meta (which can, since it uses ReadPixels).
     */
-   if (irb->Base.Base.NumSamples != 0)
+   if (irb->Base.Base.NumSamples)
       return false;
 
    /* glCopyTexSubImage() can't be called on a multisampled texture. */

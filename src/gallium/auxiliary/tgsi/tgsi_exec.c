@@ -1362,16 +1362,16 @@ micro_div(
    const union tgsi_exec_channel *src0,
    const union tgsi_exec_channel *src1 )
 {
-   if (src1->f[0] != 0) {
+   if (src1->f[0]) {
       dst->f[0] = src0->f[0] / src1->f[0];
    }
-   if (src1->f[1] != 0) {
+   if (src1->f[1]) {
       dst->f[1] = src0->f[1] / src1->f[1];
    }
-   if (src1->f[2] != 0) {
+   if (src1->f[2]) {
       dst->f[2] = src0->f[2] / src1->f[2];
    }
-   if (src1->f[3] != 0) {
+   if (src1->f[3]) {
       dst->f[3] = src0->f[3] / src1->f[3];
    }
 }
@@ -5398,7 +5398,7 @@ exec_instruction(
       if (mach->FuncMask == 0x0) {
          /* really return now (otherwise, keep executing */
 
-         if (mach->CallStackTop == 0) {
+         if (!mach->CallStackTop) {
             /* returning from main() */
             mach->CondStackTop = 0;
             mach->LoopStackTop = 0;
@@ -6195,7 +6195,7 @@ tgsi_exec_machine_setup_masks(struct tgsi_exec_machine *mach)
       default_mask = 0x1;
    }
 
-   if (mach->NonHelperMask == 0)
+   if (!mach->NonHelperMask)
       mach->NonHelperMask = default_mask;
    mach->CondMask = default_mask;
    mach->LoopMask = default_mask;

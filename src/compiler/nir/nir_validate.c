@@ -542,10 +542,10 @@ validate_tex_instr(nir_tex_instr *instr, validate_state *state)
                    0, nir_tex_instr_src_size(instr, i));
    }
 
-   if (instr->texture != NULL)
+   if (instr->texture)
       validate_deref_var(instr, instr->texture, state);
 
-   if (instr->sampler != NULL)
+   if (instr->sampler)
       validate_deref_var(instr, instr->sampler, state);
 
    validate_dest(&instr->dest, state, 0, nir_tex_instr_dest_size(instr));
@@ -554,7 +554,7 @@ validate_tex_instr(nir_tex_instr *instr, validate_state *state)
 static void
 validate_call_instr(nir_call_instr *instr, validate_state *state)
 {
-   if (instr->return_deref == NULL) {
+   if (!instr->return_deref) {
       validate_assert(state, glsl_type_is_void(instr->callee->return_type));
    } else {
       validate_assert(state, instr->return_deref->deref.type == instr->callee->return_type);
@@ -702,7 +702,7 @@ validate_block(nir_block *block, validate_state *state)
    validate_assert(state, block->successors[0] != block->successors[1]);
 
    for (unsigned i = 0; i < 2; i++) {
-      if (block->successors[i] != NULL) {
+      if (block->successors[i]) {
          struct set_entry *entry =
             _mesa_set_search(block->successors[i]->predecessors, block);
          validate_assert(state, entry);
@@ -918,7 +918,7 @@ postvalidate_reg_decl(nir_register *reg, validate_state *state)
       _mesa_set_remove(reg_state->uses, entry);
    }
 
-   if (reg_state->uses->entries != 0) {
+   if (reg_state->uses->entries) {
       printf("extra entries in register uses:\n");
       struct set_entry *entry;
       set_foreach(reg_state->uses, entry)
@@ -933,7 +933,7 @@ postvalidate_reg_decl(nir_register *reg, validate_state *state)
       _mesa_set_remove(reg_state->if_uses, entry);
    }
 
-   if (reg_state->if_uses->entries != 0) {
+   if (reg_state->if_uses->entries) {
       printf("extra entries in register if_uses:\n");
       struct set_entry *entry;
       set_foreach(reg_state->if_uses, entry)
@@ -948,7 +948,7 @@ postvalidate_reg_decl(nir_register *reg, validate_state *state)
       _mesa_set_remove(reg_state->defs, entry);
    }
 
-   if (reg_state->defs->entries != 0) {
+   if (reg_state->defs->entries) {
       printf("extra entries in register defs:\n");
       struct set_entry *entry;
       set_foreach(reg_state->defs, entry)
@@ -1009,7 +1009,7 @@ postvalidate_ssa_def(nir_ssa_def *def, void *void_state)
       _mesa_set_remove(def_state->uses, entry);
    }
 
-   if (def_state->uses->entries != 0) {
+   if (def_state->uses->entries) {
       printf("extra entries in SSA def uses:\n");
       struct set_entry *entry;
       set_foreach(def_state->uses, entry)
@@ -1024,7 +1024,7 @@ postvalidate_ssa_def(nir_ssa_def *def, void *void_state)
       _mesa_set_remove(def_state->if_uses, entry);
    }
 
-   if (def_state->if_uses->entries != 0) {
+   if (def_state->if_uses->entries) {
       printf("extra entries in SSA def uses:\n");
       struct set_entry *entry;
       set_foreach(def_state->if_uses, entry)
@@ -1104,7 +1104,7 @@ validate_function_impl(nir_function_impl *impl, validate_state *state)
 static void
 validate_function(nir_function *func, validate_state *state)
 {
-   if (func->impl != NULL) {
+   if (func->impl) {
       validate_assert(state, func->impl->function == func);
       validate_function_impl(func->impl, state);
    }

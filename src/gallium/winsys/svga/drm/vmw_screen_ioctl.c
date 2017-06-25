@@ -476,7 +476,7 @@ vmw_ioctl_command(struct vmw_winsys_screen *vws, int32_t cid,
 
 	 *pfence = vmw_fence_create(vws->fence_ops, rep.handle,
 				    rep.seqno, rep.mask);
-	 if (*pfence == NULL) {
+	 if (!*pfence) {
 	    /*
 	     * Fence creation failed. Need to sync.
 	     */
@@ -567,7 +567,7 @@ vmw_ioctl_region_map(struct vmw_region *region)
    vmw_printf("%s: gmrId = %u, offset = %u\n", __FUNCTION__,
               region->ptr.gmrId, region->ptr.offset);
 
-   if (region->data == NULL) {
+   if (!region->data) {
       map = os_mmap(NULL, region->size, PROT_READ | PROT_WRITE, MAP_SHARED,
 		 region->drm_fd, region->map_handle);
       if (map == MAP_FAILED) {

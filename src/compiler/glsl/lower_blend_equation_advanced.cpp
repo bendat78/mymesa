@@ -464,7 +464,7 @@ get_main(gl_linked_shader *sh)
 bool
 lower_blend_equation_advanced(struct gl_linked_shader *sh)
 {
-   if (sh->Program->sh.fs.BlendSupport == 0)
+   if (!sh->Program->sh.fs.BlendSupport)
       return false;
 
    /* Lower early returns in main() so there's a single exit point

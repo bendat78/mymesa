@@ -754,7 +754,7 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
 
    x0 = fb->_Xmin;
    x1 = fb->_Xmax;
-   if (rb->Name != 0) {
+   if (rb->Name) {
       y0 = fb->_Ymin;
       y1 = fb->_Ymax;
    } else {

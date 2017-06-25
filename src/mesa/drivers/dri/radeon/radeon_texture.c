@@ -574,7 +574,7 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 
 	radeon_miptree_reference(t->mt, &radeonImage->mt);
 
-	if (t->mt == NULL)
+	if (!t->mt)
 	{
 		radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
 			     "%s Failed to allocate miptree.\n", __func__);

@@ -51,7 +51,7 @@ public:
          return false;
       }
 
-      if (*dest != NULL) {
+      if (*dest) {
          return false;
       } else {
          *dest = i;
@@ -194,7 +194,7 @@ bool glsl_symbol_table::add_function(ir_function *f)
    if (this->separate_function_namespace && name_declared_this_scope(f->name)) {
       /* In 1.10, functions and variables have separate namespaces. */
       symbol_table_entry *existing = get_entry(f->name);
-      if ((existing->f == NULL) && (existing->t == NULL)) {
+      if (!(existing->f) && (existing->t == NULL)) {
 	 existing->f = f;
 	 return true;
       }

@@ -365,7 +365,7 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
 
    aapoint_fs = *orig_fs; /* copy to init */
    aapoint_fs.tokens = tgsi_alloc_tokens(newLen);
-   if (aapoint_fs.tokens == NULL)
+   if (!aapoint_fs.tokens)
       return FALSE;
 
    memset(&transform, 0, sizeof(transform));
@@ -392,7 +392,7 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
 
    aapoint->fs->aapoint_fs
       = aapoint->driver_create_fs_state(pipe, &aapoint_fs);
-   if (aapoint->fs->aapoint_fs == NULL)
+   if (!aapoint->fs->aapoint_fs)
       goto fail;
 
    aapoint->fs->generic_attrib = transform.maxGeneric + 1;

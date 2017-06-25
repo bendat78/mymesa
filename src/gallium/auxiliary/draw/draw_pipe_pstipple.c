@@ -137,7 +137,7 @@ generate_pstip_fs(struct pstip_stage *pstip)
                                                           &pstip->fs->sampler_unit,
                                                           0,
                                                           wincoord_file);
-   if (pstip_fs.tokens == NULL)
+   if (!pstip_fs.tokens)
       return FALSE;
 
    assert(pstip->fs->sampler_unit < PIPE_MAX_SAMPLERS);

@@ -150,7 +150,7 @@ intel_alloc_texture_storage(struct gl_context *ctx,
                                               num_samples,
                                               MIPTREE_LAYOUT_TILING_ANY);
 
-      if (intel_texobj->mt == NULL) {
+      if (!intel_texobj->mt) {
          return false;
       }
    }

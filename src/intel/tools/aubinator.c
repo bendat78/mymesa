@@ -119,7 +119,7 @@ dump_binding_table(struct gen_spec *spec, uint32_t offset)
    start = surface_state_base + offset;
    pointers = gtt + start;
    for (i = 0; i < 16; i++) {
-      if (pointers[i] == 0)
+      if (!pointers[i])
          continue;
       start = pointers[i] + surface_state_base;
       if (!valid_offset(start)) {
@@ -1076,7 +1076,7 @@ aub_file_data_load(struct aub_file *file)
 {
    size_t r;
 
-   if (file->stream == NULL)
+   if (!file->stream)
       return false;
 
    /* First remove any consumed data */

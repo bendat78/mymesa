@@ -67,7 +67,7 @@ dri_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
 {
    struct gbm_dri_device *dri = data;
 
-   if (dri->lookup_image == NULL)
+   if (!dri->lookup_image)
       return NULL;
 
    return dri->lookup_image(screen, image, dri->lookup_user_data);
@@ -82,7 +82,7 @@ dri_get_buffers(__DRIdrawable * driDrawable,
    struct gbm_dri_surface *surf = data;
    struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
 
-   if (dri->get_buffers == NULL)
+   if (!dri->get_buffers)
       return NULL;
 
    return dri->get_buffers(driDrawable, width, height, attachments,
@@ -95,7 +95,7 @@ dri_flush_front_buffer(__DRIdrawable * driDrawable, void *data)
    struct gbm_dri_surface *surf = data;
    struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
 
-   if (dri->flush_front_buffer != NULL)
+   if (dri->flush_front_buffer)
       dri->flush_front_buffer(driDrawable, surf->dri_private);
 }
 
@@ -108,7 +108,7 @@ dri_get_buffers_with_format(__DRIdrawable * driDrawable,
    struct gbm_dri_surface *surf = data;
    struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
 
-   if (dri->get_buffers_with_format == NULL)
+   if (!dri->get_buffers_with_format)
       return NULL;
 
    return
@@ -127,7 +127,7 @@ image_get_buffers(__DRIdrawable *driDrawable,
    struct gbm_dri_surface *surf = loaderPrivate;
    struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
 
-   if (dri->image_get_buffers == NULL)
+   if (!dri->image_get_buffers)
       return 0;
 
    return dri->image_get_buffers(driDrawable, format, stamp,
@@ -346,26 +346,26 @@ dri_open_driver(struct gbm_dri_device *dri)
                "%.*s/tls/%s_dri.so", len, p, dri->driver_name);
       dri->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 #endif
-      if (dri->driver == NULL) {
+      if (!dri->driver) {
          snprintf(path, sizeof path,
                   "%.*s/%s_dri.so", len, p, dri->driver_name);
          dri->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
       }
       /* not need continue to loop all paths once the driver is found */
-      if (dri->driver != NULL)
+      if (dri->driver)
          break;
 
 #ifdef ANDROID
       snprintf(path, sizeof path, "%.*s/gallium_dri.so", len, p);
       dri->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-      if (dri->driver == NULL)
+      if (!dri->driver)
          sprintf("failed to open %s: %s\n", path, dlerror());
       else
          break;
 #endif
    }
 
-   if (dri->driver == NULL) {
+   if (!dri->driver) {
       fprintf(stderr, "gbm: failed to open any driver (search paths %s)\n",
               search_paths);
       fprintf(stderr, "gbm: Last dlopen error: %s\n", dlerror());
@@ -440,7 +440,7 @@ dri_screen_create_dri2(struct gbm_dri_device *dri, char *driver_name)
    int ret = 0;
 
    dri->driver_name = driver_name;
-   if (dri->driver_name == NULL)
+   if (!dri->driver_name)
       return -1;
 
    ret = dri_load_driver(dri);
@@ -451,7 +451,7 @@ dri_screen_create_dri2(struct gbm_dri_device *dri, char *driver_name)
 
    dri->loader_extensions = gbm_dri_screen_extensions;
 
-   if (dri->dri2 == NULL)
+   if (!dri->dri2)
       return -1;
 
    if (dri->dri2->base.version >= 4) {
@@ -464,7 +464,7 @@ dri_screen_create_dri2(struct gbm_dri_device *dri, char *driver_name)
                                                dri->loader_extensions,
                                                &dri->driver_configs, dri);
    }
-   if (dri->screen == NULL)
+   if (!dri->screen)
       return -1;
 
    extensions = dri->core->getExtensions(dri->screen);
@@ -490,7 +490,7 @@ dri_screen_create_swrast(struct gbm_dri_device *dri)
    int ret;
 
    dri->driver_name = strdup("swrast");
-   if (dri->driver_name == NULL)
+   if (!dri->driver_name)
       return -1;
 
    ret = dri_load_driver_swrast(dri);
@@ -501,7 +501,7 @@ dri_screen_create_swrast(struct gbm_dri_device *dri)
 
    dri->loader_extensions = gbm_dri_screen_extensions;
 
-   if (dri->swrast == NULL)
+   if (!dri->swrast)
       return -1;
 
    if (dri->swrast->base.version >= 4) {
@@ -512,7 +512,7 @@ dri_screen_create_swrast(struct gbm_dri_device *dri)
       dri->screen = dri->swrast->createNewScreen(0, dri->loader_extensions,
                                                  &dri->driver_configs, dri);
    }
-   if (dri->screen == NULL)
+   if (!dri->screen)
       return -1;
 
    dri->lookup_image = NULL;
@@ -581,7 +581,7 @@ gbm_dri_bo_write(struct gbm_bo *_bo, const void *buf, size_t count)
 {
    struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
 
-   if (bo->image != NULL) {
+   if (bo->image) {
       errno = EINVAL;
       return -1;
    }
@@ -598,7 +598,7 @@ gbm_dri_bo_get_fd(struct gbm_bo *_bo)
    struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
    int fd;
 
-   if (bo->image == NULL)
+   if (!bo->image)
       return -1;
 
    if (!dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_FD, &fd))
@@ -692,7 +692,7 @@ gbm_dri_bo_get_stride(struct gbm_bo *_bo, int plane)
       return 0;
    }
 
-   if (bo->image == NULL) {
+   if (!bo->image) {
       assert(!plane);
       return _bo->stride;
    }
@@ -728,7 +728,7 @@ gbm_dri_bo_get_offset(struct gbm_bo *_bo, int plane)
       return 0;
 
     /* Dumb images have no offset */
-   if (bo->image == NULL) {
+   if (!bo->image) {
       assert(!plane);
       return 0;
    }
@@ -783,7 +783,7 @@ gbm_dri_bo_destroy(struct gbm_bo *_bo)
    struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
    struct drm_mode_destroy_dumb arg;
 
-   if (bo->image != NULL) {
+   if (bo->image) {
       dri->image->destroyImage(bo->image);
    } else {
       gbm_dri_bo_unmap_dumb(bo);
@@ -883,7 +883,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
    case GBM_BO_IMPORT_EGL_IMAGE:
    {
       int dri_format;
-      if (dri->lookup_image == NULL) {
+      if (!dri->lookup_image) {
          errno = EINVAL;
          return NULL;
       }
@@ -1100,7 +1100,7 @@ create_dumb(struct gbm_device *gbm,
    bo->handle = create_arg.handle;
    bo->size = create_arg.size;
 
-   if (gbm_dri_bo_map_dumb(bo) == NULL)
+   if (!gbm_dri_bo_map_dumb(bo))
       goto destroy_dumb;
 
    return &bo->base;
@@ -1225,7 +1225,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
                                           dri_format, dri_use, bo);
    }
 
-   if (bo->image == NULL)
+   if (!bo->image)
       goto failed;
 
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_HANDLE,

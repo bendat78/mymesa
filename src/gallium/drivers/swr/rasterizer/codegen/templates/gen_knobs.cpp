@@ -19,7 +19,7 @@
 * @file ${filename}.h
 % else:
 * @file ${filename}.cpp
-% endif 
+% endif
 *
 * @brief Dynamic Knobs for Core.
 *
@@ -205,7 +205,7 @@ std::string GlobalKnobs::ToString(const char* optPerLinePrefix)
 % endif
 
 <%!
-    # Globally available python 
+    # Globally available python
     max_len = 0
     def calc_max_knob_len(knobs):
         global max_len

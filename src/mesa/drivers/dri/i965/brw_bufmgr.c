@@ -718,7 +718,7 @@ brw_bo_map_gtt(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
    pthread_mutex_lock(&bufmgr->lock);
 
    /* Get a mapping of the buffer if we haven't before. */
-   if (bo->map_gtt == NULL) {
+   if (!bo->map_gtt) {
       struct drm_i915_gem_mmap_gtt mmap_arg;
 
       DBG("bo_map_gtt: mmap %d (%s), map_count=%d\n",
@@ -807,7 +807,7 @@ brw_bo_unmap(struct brw_bo *bo)
       return 0;
    }
 
-   if (--bo->map_count == 0) {
+   if (!--bo->map_count) {
       bo_mark_mmaps_incoherent(bo);
    }
    pthread_mutex_unlock(&bufmgr->lock);

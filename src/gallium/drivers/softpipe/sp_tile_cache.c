@@ -530,7 +530,7 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
    if (addr.value != tc->tile_addrs[pos].value) {
 
       layer = tc->tile_addrs[pos].bits.layer;
-      if (tc->tile_addrs[pos].bits.invalid == 0) {
+      if (!tc->tile_addrs[pos].bits.invalid) {
          /* put dirty tile back in framebuffer */
          if (tc->depth_stencil) {
             pipe_put_tile_raw(tc->transfer[layer], tc->transfer_map[layer],

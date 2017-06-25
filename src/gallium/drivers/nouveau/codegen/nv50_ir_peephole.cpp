@@ -270,7 +270,7 @@ LoadPropagation::visit(BasicBlock *bb)
          if (ld->src(0).isIndirect(0))
             i->setIndirect(s, 0, ld->getIndirect(0, 0));
 
-         if (ld->getDef(0)->refCount() == 0)
+         if (!ld->getDef(0)->refCount())
             delete_Instruction(prog, ld);
       }
    }
@@ -557,7 +557,7 @@ ConstantFolding::expr(Instruction *i,
       }
       break;
    case OP_DIV:
-      if (b->data.u32 == 0)
+      if (!b->data.u32)
          break;
       switch (i->dType) {
       case TYPE_F32: res.data.f32 = a->data.f32 / b->data.f32; break;
@@ -1084,7 +1084,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       if (s != 1 || (i->dType != TYPE_S32 && i->dType != TYPE_U32))
          break;
       bld.setPosition(i, false);
-      if (imm0.reg.data.u32 == 0) {
+      if (!imm0.reg.data.u32) {
          break;
       } else
       if (imm0.reg.data.u32 == 1) {
@@ -1223,7 +1223,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
    {
       Instruction *src = i->getSrc(t)->getInsn();
       ImmediateValue imm1;
-      if (imm0.reg.data.u32 == 0) {
+      if (!imm0.reg.data.u32) {
          i->op = OP_MOV;
          i->setSrc(0, new_ImmediateValue(prog, 0u));
          i->src(0).mod = Modifier(0);

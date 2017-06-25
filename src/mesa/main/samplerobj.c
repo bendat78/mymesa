@@ -346,7 +346,7 @@ _mesa_BindSamplers(GLuint first, GLsizei count, const GLuint *samplers)
              ctx->Texture.Unit[unit].Sampler;
          struct gl_sampler_object *sampObj;
 
-         if (samplers[i] != 0) {
+         if (samplers[i]) {
             if (currentSampler && currentSampler->Name == samplers[i])
                sampObj = currentSampler;
             else

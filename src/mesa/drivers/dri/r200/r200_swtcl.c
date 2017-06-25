@@ -86,7 +86,7 @@ static void r200SetVertexFormat( struct gl_context *ctx )
 
    /* Important:
     */
-   if ( VB->NdcPtr != NULL ) {
+   if (VB->NdcPtr) {
       VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
    }
    else {
@@ -246,7 +246,7 @@ void r200ChooseVertexState( struct gl_context *ctx )
     * rasterization fallback.  As this function will be called again when we
     * leave a rasterization fallback, we can just skip it for now.
     */
-   if (rmesa->radeon.Fallback != 0)
+   if (rmesa->radeon.Fallback)
       return;
 
    vte = rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL];

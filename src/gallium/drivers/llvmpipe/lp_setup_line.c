@@ -673,8 +673,8 @@ try_setup_line( struct lp_setup_context *setup,
          /* both fill conventions want this - adjust for left edges */
          plane[i].c++;
       }
-      else if (plane[i].dcdx == 0) {
-         if (setup->pixel_offset == 0) {
+      else if (!plane[i].dcdx) {
+         if (!setup->pixel_offset) {
             /* correct for top-left fill convention:
              */
             if (plane[i].dcdy > 0) plane[i].c++;

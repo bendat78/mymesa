@@ -158,7 +158,7 @@ _mesa_DeleteProgramsARB(GLsizei n, const GLuint *ids)
    }
 
    for (i = 0; i < n; i++) {
-      if (ids[i] != 0) {
+      if (ids[i]) {
          struct gl_program *prog = _mesa_lookup_program(ctx, ids[i]);
          if (prog == &_mesa_DummyProgram) {
             _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
@@ -765,7 +765,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
           * The spec says that even if this query returns true, there's
           * no guarantee that the program will run in hardware.
           */
-         if (prog->Id == 0) {
+         if (!prog->Id) {
             /* default/null program */
             *params = GL_FALSE;
          }

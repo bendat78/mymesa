@@ -183,7 +183,7 @@ void amdgpu_bo_destroy(struct pb_buffer *_buf)
    else if (bo->initial_domain & RADEON_DOMAIN_GTT)
       bo->ws->allocated_gtt -= align64(bo->base.size, bo->ws->info.gart_page_size);
 
-   if (bo->u.real.map_count >= 1) {
+   if (bo->u.real.map_count) {
       if (bo->initial_domain & RADEON_DOMAIN_VRAM)
          bo->ws->mapped_vram -= bo->base.size;
       else if (bo->initial_domain & RADEON_DOMAIN_GTT)

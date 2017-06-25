@@ -335,7 +335,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
       return;
    }
 
-   if (ctx->Texture.CurrentUnit != 0) {
+   if (ctx->Texture.CurrentUnit) {
       /* See OpenGL 1.2.1 spec, section F.2.13 */
       _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE)" );
       return;
@@ -428,7 +428,7 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
       return;
    }
 
-   if (ctx->Texture.CurrentUnit != 0) {
+   if (ctx->Texture.CurrentUnit) {
       /* See OpenGL 1.2.1 spec, section F.2.13 */
       _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE)" );
       return;

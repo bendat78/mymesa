@@ -200,7 +200,7 @@ void ProcessDiscardInvalidateTiles(
     uint32_t macroTileYMin = (pDesc->rect.ymin + KNOB_MACROTILE_Y_DIM - 1) / KNOB_MACROTILE_Y_DIM;
     uint32_t macroTileYMax = (pDesc->rect.ymax / KNOB_MACROTILE_Y_DIM) - 1;
 
-    if (pDesc->fullTilesOnly == false)
+    if (!pDesc->fullTilesOnly)
     {
         // include partial tiles
         macroTileXMin = pDesc->rect.xmin / KNOB_MACROTILE_X_DIM;
@@ -548,7 +548,7 @@ static void StreamOut(
             soMask &= ~(1 << slot);
         }
 
-        // Update pPrimData pointer 
+        // Update pPrimData pointer
         soContext.pPrimData = pPrimData;
 
         // Call SOS
@@ -1169,7 +1169,7 @@ static void TessellationStages(
         AR_EVENT(TessPrimCount(1));
         AR_END(FETessellation, 0);
 
-        if (tsData.NumPrimitives == 0)
+        if (!tsData.NumPrimitives)
         {
             continue;
         }
@@ -1317,7 +1317,7 @@ static void TessellationStages(
     } // for (uint32_t p = 0; p < numPrims; ++p)
 
 #if USE_SIMD16_FRONTEND
-    if (gt_pTessellationThreadData->pDSOutput != nullptr)
+    if (gt_pTessellationThreadData->pDSOutput)
     {
         AlignedFree(gt_pTessellationThreadData->pDSOutput);
         gt_pTessellationThreadData->pDSOutput = nullptr;
@@ -1691,7 +1691,6 @@ void ProcessDraw(
 
 #else
     SWR_VS_CONTEXT      vsContext;
-
     SWR_FETCH_CONTEXT   fetchInfo = {};
 
     fetchInfo.pStreams = &state.vertexBuffers[0];

@@ -234,7 +234,7 @@ color_attachment_compute_aux_usage(struct anv_device *device,
                                    VkRect2D render_area,
                                    union isl_color_value *fast_clear_color)
 {
-   if (iview->image->aux_surface.isl.size == 0) {
+   if (!iview->image->aux_surface.isl.size) {
       att_state->aux_usage = ISL_AUX_USAGE_NONE;
       att_state->input_aux_usage = ISL_AUX_USAGE_NONE;
       att_state->fast_clear = false;
@@ -419,7 +419,7 @@ genX(cmd_buffer_setup_attachments)(struct anv_cmd_buffer *cmd_buffer,
 
    vk_free(&cmd_buffer->pool->alloc, state->attachments);
 
-   if (pass->attachment_count == 0) {
+   if (!pass->attachment_count) {
       state->attachments = NULL;
       return VK_SUCCESS;
    }
@@ -428,7 +428,7 @@ genX(cmd_buffer_setup_attachments)(struct anv_cmd_buffer *cmd_buffer,
                                  pass->attachment_count *
                                       sizeof(state->attachments[0]),
                                  8, VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (state->attachments == NULL) {
+   if (!state->attachments) {
       /* Propagate VK_ERROR_OUT_OF_HOST_MEMORY to vkEndCommandBuffer */
       return anv_batch_set_error(&cmd_buffer->batch,
                                  VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -1110,7 +1110,7 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
                                                   &state_offset);
    uint32_t *bt_map = bt_state->map;
 
-   if (bt_state->map == NULL)
+   if (!bt_state->map)
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 
    if (stage == MESA_SHADER_COMPUTE &&
@@ -1131,7 +1131,7 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
       add_surface_state_reloc(cmd_buffer, surface_state, bo, bo_offset);
    }
 
-   if (map->surface_count == 0)
+   if (!map->surface_count)
       goto out;
 
    if (map->image_count > 0) {
@@ -1323,7 +1323,7 @@ emit_samplers(struct anv_cmd_buffer *cmd_buffer,
    }
 
    struct anv_pipeline_bind_map *map = &pipeline->shaders[stage]->bind_map;
-   if (map->sampler_count == 0) {
+   if (!map->sampler_count) {
       *state = (struct anv_state) { 0, };
       return VK_SUCCESS;
    }
@@ -1331,7 +1331,7 @@ emit_samplers(struct anv_cmd_buffer *cmd_buffer,
    uint32_t size = map->sampler_count * 16;
    *state = anv_cmd_buffer_alloc_dynamic_state(cmd_buffer, size, 32);
 
-   if (state->map == NULL)
+   if (!state->map)
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 
    for (uint32_t s = 0; s < map->sampler_count; s++) {
@@ -1474,7 +1474,7 @@ cmd_buffer_flush_push_constants(struct anv_cmd_buffer *cmd_buffer)
 
       struct anv_state state = anv_cmd_buffer_push_constants(cmd_buffer, stage);
 
-      if (state.offset == 0) {
+      if (!state.offset) {
          anv_batch_emit(&cmd_buffer->batch, GENX(3DSTATE_CONSTANT_VS), c)
             c._3DCommandSubOpcode = push_constant_opcodes[stage];
       } else {

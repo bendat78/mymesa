@@ -427,7 +427,7 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 				continue;
 
 			tex = (struct r600_texture *)fb->cbufs[i]->texture;
-			if (tex->fmask.size == 0)
+			if (!tex->fmask.size)
 				tex->dirty_level_mask &= ~(1 << fb->cbufs[i]->u.tex.level);
 		}
 	}
@@ -547,7 +547,7 @@ static void r600_copy_global_buffer(struct pipe_context *ctx,
 			new_src_box.x += 4 * item->start_in_dw;
 			src = (struct pipe_resource *)pool->bo;
 		} else {
-			if (item->real_buffer == NULL) {
+			if (!item->real_buffer) {
 				item->real_buffer =
 					r600_compute_buffer_alloc_vram(pool->screen,
 								       item->size_in_dw * 4);
@@ -564,7 +564,7 @@ static void r600_copy_global_buffer(struct pipe_context *ctx,
 			dstx += 4 * item->start_in_dw;
 			dst = (struct pipe_resource *)pool->bo;
 		} else {
-			if (item->real_buffer == NULL) {
+			if (!item->real_buffer) {
 				item->real_buffer =
 					r600_compute_buffer_alloc_vram(pool->screen,
 								       item->size_in_dw * 4);

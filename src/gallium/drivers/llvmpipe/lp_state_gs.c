@@ -62,7 +62,7 @@ llvmpipe_create_gs_state(struct pipe_context *pipe,
 
    if (templ->tokens) {
       state->dgs = draw_create_geometry_shader(llvmpipe->draw, templ);
-      if (state->dgs == NULL) {
+      if (!state->dgs) {
          goto no_dgs;
       }
    }

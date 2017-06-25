@@ -199,7 +199,7 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 	context->st->st_manager_private = (void*)context;
 
 	struct st_context *stContext = (struct st_context*)context->st;
-	
+
 	// Init Gallium3D Post Processing
 	// TODO: no pp filters are enabled yet through postProcessEnable
 	context->postProcess = pp_init(stContext->pipe, context->postProcessEnable,
@@ -208,7 +208,7 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 	context_id contextNext = -1;
 	Lock();
 	for (context_id i = 0; i < CONTEXT_MAX; i++) {
-		if (fContext[i] == NULL) {
+		if (!fContext[i]) {
 			fContext[i] = context;
 			contextNext = i;
 			break;
@@ -392,7 +392,7 @@ GalliumContext::Invalidate(uint32 width, uint32 height)
 
 	assert(fContext[fCurrentContext]);
 
-	// Update st_context dimensions 
+	// Update st_context dimensions
 	fContext[fCurrentContext]->width = width;
 	fContext[fCurrentContext]->height = height;
 

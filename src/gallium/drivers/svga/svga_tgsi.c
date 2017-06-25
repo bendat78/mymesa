@@ -179,7 +179,7 @@ svga_tgsi_vgpu9_translate(struct svga_context *svga,
 
    emit.size = 1024;
    emit.buf = MALLOC(emit.size);
-   if (emit.buf == NULL) {
+   if (!emit.buf) {
       goto fail;
    }
 

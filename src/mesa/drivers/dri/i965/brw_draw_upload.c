@@ -498,7 +498,7 @@ brw_prepare_vertices(struct brw_context *brw)
       brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }
 
-   if (brw->vb.nr_enabled == 0)
+   if (!brw->vb.nr_enabled)
       return;
 
    if (brw->vb.nr_buffers)
@@ -664,7 +664,7 @@ brw_prepare_vertices(struct brw_context *brw)
    /* Upload non-interleaved arrays */
    for (i = 0; i < nr_uploads; i++) {
       struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
-      if (upload[i]->glarray->InstanceDivisor == 0) {
+      if (!upload[i]->glarray->InstanceDivisor) {
          copy_array_to_vbo_array(brw, upload[i], min_index, max_index,
                                  buffer, upload[i]->glarray->_ElementSize);
       } else {

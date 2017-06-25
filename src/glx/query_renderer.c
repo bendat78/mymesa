@@ -36,7 +36,7 @@ __glXQueryRendererInteger(struct glx_screen *psc, int attribute,
    /* This probably means the caller is trying to use an extension function
     * that isn't actually supported.
     */
-   if (psc->vtable->query_renderer_integer == NULL)
+   if (!psc->vtable->query_renderer_integer)
       return False;
 
    switch (attribute) {
@@ -121,7 +121,7 @@ __glXQueryRendererString(struct glx_screen *psc, int attribute)
    /* This probably means the caller is trying to use an extension function
     * that isn't actually supported.
     */
-   if (psc->vtable->query_renderer_integer == NULL)
+   if (!psc->vtable->query_renderer_integer)
       return NULL;
 
    switch (attribute) {

@@ -191,7 +191,7 @@ test_one(unsigned verbose,
       return TRUE;
    }
 
-   if(verbose >= 1)
+   if(verbose)
       dump_conv_types(stderr, src_type, dst_type);
 
    if (src_type.length > dst_type.length) {

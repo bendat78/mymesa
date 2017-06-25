@@ -294,7 +294,7 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
    interface_block_definitions buffer_interfaces;
 
    for (unsigned int i = 0; i < num_shaders; i++) {
-      if (shader_list[i] == NULL)
+      if (!shader_list[i])
          continue;
 
       foreach_in_list(ir_instruction, node, shader_list[i]->ir) {
@@ -411,7 +411,7 @@ validate_interstage_uniform_blocks(struct gl_shader_program *prog,
    interface_block_definitions definitions;
 
    for (int i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (stages[i] == NULL)
+      if (!stages[i])
          continue;
 
       const gl_linked_shader *stage = stages[i];

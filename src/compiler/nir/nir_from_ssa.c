@@ -48,7 +48,7 @@ struct from_ssa_state {
 static bool
 ssa_def_dominates(nir_ssa_def *a, nir_ssa_def *b)
 {
-   if (a->live_index == 0) {
+   if (!a->live_index) {
       /* SSA undefs always dominate */
       return true;
    } else if (b->live_index < a->live_index) {
@@ -477,7 +477,7 @@ rewrite_ssa_def(nir_ssa_def *def, void *void_state)
        * the things in the merge set should be the same so it doesn't
        * matter which node's definition we use.
        */
-      if (node->set->reg == NULL)
+      if (!node->set->reg)
          node->set->reg = create_reg_for_ssa_def(def, state->builder.impl);
 
       reg = node->set->reg;

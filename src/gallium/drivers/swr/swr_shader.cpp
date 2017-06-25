@@ -755,7 +755,7 @@ BuilderSWR::CompileVS(struct swr_context *ctx, swr_jit_vs_key &key)
    hPrivateData->setName("hPrivateData");
    Value *pVsCtx = &*argitr++;
    pVsCtx->setName("vsCtx");
-   
+
    Value *consts_ptr = GEP(hPrivateData, {C(0), C(swr_draw_context_constantVS)});
 
    consts_ptr->setName("vs_constants");

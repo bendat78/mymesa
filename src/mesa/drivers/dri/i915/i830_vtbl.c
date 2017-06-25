@@ -572,7 +572,7 @@ i830_destroy_context(struct intel_context *intel)
    intel_region_release(&i830->state.depth_region);
 
    for (i = 0; i < I830_TEX_UNITS; i++) {
-      if (i830->state.tex_buffer[i] != NULL) {
+      if (i830->state.tex_buffer[i]) {
 	 drm_intel_bo_unreference(i830->state.tex_buffer[i]);
 	 i830->state.tex_buffer[i] = NULL;
       }

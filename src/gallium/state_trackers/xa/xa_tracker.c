@@ -197,7 +197,7 @@ xa_tracker_create(int drm_fd)
 
 	    if (xa->screen->is_format_supported(xa->screen, fdesc.format,
 						PIPE_TEXTURE_2D, 0, bind)) {
-		if (xa->format_map[stype][0] == 0)
+		if (!xa->format_map[stype][0])
 		    xa->format_map[stype][0] = num_formats;
 		xa->format_map[stype][1] = num_formats;
 		xa->supported_formats[num_formats++] = xa_format;

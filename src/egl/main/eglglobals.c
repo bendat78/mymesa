@@ -116,12 +116,12 @@ _eglGetClientExtensionString(void)
 
    mtx_lock(_eglGlobal.Mutex);
 
-   if (_eglGlobal.ClientExtensionString == NULL) {
+   if (!_eglGlobal.ClientExtensionString) {
       size_t clientLen = strlen(_eglGlobal.ClientOnlyExtensionString);
       size_t platformLen = strlen(_eglGlobal.PlatformExtensionString);
 
       _eglGlobal.ClientExtensionString = (char *) malloc(clientLen + platformLen + 1);
-      if (_eglGlobal.ClientExtensionString != NULL) {
+      if (_eglGlobal.ClientExtensionString) {
          char *ptr = _eglGlobal.ClientExtensionString;
 
          memcpy(ptr, _eglGlobal.ClientOnlyExtensionString, clientLen);

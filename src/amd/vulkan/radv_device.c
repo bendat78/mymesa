@@ -779,7 +779,7 @@ static void radv_get_physical_device_queue_family_properties(
 		return;
 
 	idx = 0;
-	if (*pCount >= 1) {
+	if (*pCount) {
 		*pQueueFamilyProperties[idx] = (VkQueueFamilyProperties) {
 			.queueFlags = VK_QUEUE_GRAPHICS_BIT |
 			              VK_QUEUE_COMPUTE_BIT |
@@ -2079,7 +2079,7 @@ VkResult radv_AllocateMemory(
 
 	assert(pAllocateInfo->sType == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
 
-	if (pAllocateInfo->allocationSize == 0) {
+	if (!pAllocateInfo->allocationSize) {
 		/* Apparently, this is allowed */
 		*pMem = VK_NULL_HANDLE;
 		return VK_SUCCESS;

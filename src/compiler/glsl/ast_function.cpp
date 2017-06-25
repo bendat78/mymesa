@@ -253,7 +253,7 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
           * is_lvalue() is insufficient because the actual parameter at the
           * IR-level is just a temporary value, which is an l-value.
           */
-         if (actual_ast->non_lvalue_description != NULL) {
+         if (actual_ast->non_lvalue_description) {
             _mesa_glsl_error(&loc, state,
                              "function parameter '%s %s' references a %s",
                              mode, formal->name,

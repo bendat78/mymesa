@@ -323,7 +323,7 @@ radeon_map_renderbuffer(struct gl_context *ctx,
    map = rrb->bo->ptr;
    stride = rrb->map_pitch;
 
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       y = rb->Height - 1 - y;
       flip_stride = -stride;
    } else {

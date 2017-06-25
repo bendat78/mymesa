@@ -605,7 +605,7 @@ nir_visitor::visit(ir_loop_jump *ir)
 void
 nir_visitor::visit(ir_return *ir)
 {
-   if (ir->value != NULL) {
+   if (ir->value) {
       nir_intrinsic_instr *copy =
          nir_intrinsic_instr_create(this->shader, nir_intrinsic_copy_var);
 
@@ -1928,7 +1928,7 @@ nir_visitor::visit(ir_texture *ir)
 
    case ir_txf:
       op = nir_texop_txf;
-      if (ir->lod_info.lod != NULL)
+      if (ir->lod_info.lod)
          num_srcs = 2; /* coordinate, lod */
       else
          num_srcs = 1; /* coordinate */
@@ -1941,7 +1941,7 @@ nir_visitor::visit(ir_texture *ir)
 
    case ir_txs:
       op = nir_texop_txs;
-      if (ir->lod_info.lod != NULL)
+      if (ir->lod_info.lod)
          num_srcs = 1; /* lod */
       else
          num_srcs = 0;
@@ -1976,11 +1976,11 @@ nir_visitor::visit(ir_texture *ir)
       unreachable("not reached");
    }
 
-   if (ir->projector != NULL)
+   if (ir->projector)
       num_srcs++;
-   if (ir->shadow_comparator != NULL)
+   if (ir->shadow_comparator)
       num_srcs++;
-   if (ir->offset != NULL)
+   if (ir->offset)
       num_srcs++;
 
    nir_tex_instr *instr = nir_tex_instr_create(this->shader, num_srcs);
@@ -2011,7 +2011,7 @@ nir_visitor::visit(ir_texture *ir)
 
    unsigned src_number = 0;
 
-   if (ir->coordinate != NULL) {
+   if (ir->coordinate) {
       instr->coord_components = ir->coordinate->type->vector_elements;
       instr->src[src_number].src =
          nir_src_for_ssa(evaluate_rvalue(ir->coordinate));
@@ -2019,21 +2019,21 @@ nir_visitor::visit(ir_texture *ir)
       src_number++;
    }
 
-   if (ir->projector != NULL) {
+   if (ir->projector) {
       instr->src[src_number].src =
          nir_src_for_ssa(evaluate_rvalue(ir->projector));
       instr->src[src_number].src_type = nir_tex_src_projector;
       src_number++;
    }
 
-   if (ir->shadow_comparator != NULL) {
+   if (ir->shadow_comparator) {
       instr->src[src_number].src =
          nir_src_for_ssa(evaluate_rvalue(ir->shadow_comparator));
       instr->src[src_number].src_type = nir_tex_src_comparator;
       src_number++;
    }
 
-   if (ir->offset != NULL) {
+   if (ir->offset) {
       /* we don't support multiple offsets yet */
       assert(ir->offset->type->is_vector() || ir->offset->type->is_scalar());
 
@@ -2054,7 +2054,7 @@ nir_visitor::visit(ir_texture *ir)
    case ir_txl:
    case ir_txf:
    case ir_txs:
-      if (ir->lod_info.lod != NULL) {
+      if (ir->lod_info.lod) {
          instr->src[src_number].src =
             nir_src_for_ssa(evaluate_rvalue(ir->lod_info.lod));
          instr->src[src_number].src_type = nir_tex_src_lod;

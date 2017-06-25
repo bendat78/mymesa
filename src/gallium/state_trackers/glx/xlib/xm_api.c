@@ -1022,7 +1022,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
 
    c->st = stapi->create_context(stapi, xmdpy->smapi, &attribs,
          &ctx_err, (share_list) ? share_list->st : NULL);
-   if (c->st == NULL)
+   if (!c->st)
       goto no_st;
 
    c->st->st_manager_private = (void *) c;

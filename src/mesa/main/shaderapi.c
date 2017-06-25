@@ -135,7 +135,7 @@ _mesa_init_shader_state(struct gl_context *ctx)
 
    ctx->Shader.Flags = _mesa_get_shader_flags();
 
-   if (ctx->Shader.Flags != 0)
+   if (ctx->Shader.Flags)
       ctx->Const.GenerateTemporaryNames = true;
 
    /* Extended for ARB_separate_shader_objects */
@@ -797,7 +797,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
                      "linked)");
          return;
       }
-      if (shProg->_LinkedShaders[MESA_SHADER_COMPUTE] == NULL) {
+      if (!shProg->_LinkedShaders[MESA_SHADER_COMPUTE]) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramiv(no compute "
                      "shaders)");
          return;
@@ -1749,7 +1749,7 @@ _mesa_ShaderSource(GLuint shaderObj, GLsizei count,
    }
 
    for (i = 0; i < count; i++) {
-      if (string[i] == NULL) {
+      if (!string[i]) {
          free((GLvoid *) offsets);
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glShaderSourceARB(null string)");
@@ -2788,7 +2788,7 @@ _mesa_shader_write_subroutine_index(struct gl_context *ctx,
    unsigned int i;
    int j;
 
-   if (p->sh.NumSubroutineUniformRemapTable == 0)
+   if (!p->sh.NumSubroutineUniformRemapTable)
       return;
 
    i = 0;

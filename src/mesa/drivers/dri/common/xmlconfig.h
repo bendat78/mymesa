@@ -137,7 +137,7 @@ driComputeOptionsSha1(const driOptionCache *cache, unsigned char *sha1)
    char *dri_options = ralloc_strdup(ctx, "");
 
    for (int i = 0; i < 1 << cache->tableSize; i++) {
-      if (cache->info[i].name == NULL)
+      if (!cache->info[i].name)
          continue;
 
       bool ret = false;

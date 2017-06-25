@@ -131,7 +131,7 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg)
 {
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (shProg->_LinkedShaders[i] != NULL) {
+      if (shProg->_LinkedShaders[i]) {
          _mesa_delete_linked_shader(ctx, shProg->_LinkedShaders[i]);
          shProg->_LinkedShaders[i] = NULL;
       }

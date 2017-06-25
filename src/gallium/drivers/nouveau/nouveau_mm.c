@@ -54,7 +54,7 @@ mm_slab_alloc(struct mm_slab *slab)
 {
    int i, n, b;
 
-   if (slab->free == 0)
+   if (!slab->free)
       return -1;
 
    for (i = 0; i < (slab->count + 31) / 32; ++i) {
@@ -201,7 +201,7 @@ nouveau_mm_allocate(struct nouveau_mman *cache,
 
    nouveau_bo_ref(slab->bo, bo);
 
-   if (slab->free == 0) {
+   if (!slab->free) {
       LIST_DEL(&slab->head);
       LIST_ADD(&slab->head, &bucket->full);
    }

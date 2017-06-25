@@ -101,9 +101,9 @@ fallback_required(struct gl_context *ctx, GLenum target,
    /*
     * Test that we can actually render in the texture's format.
     */
-   if (mipmap->fb == NULL) {
+   if (!mipmap->fb) {
       mipmap->fb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-      if (mipmap->fb == NULL) {
+      if (!mipmap->fb) {
          _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                           "glGenerateMipmap() ran out of memory\n");
          return true;
@@ -127,7 +127,7 @@ void
 _mesa_meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
                                         struct gen_mipmap_state *mipmap)
 {
-   if (mipmap->VAO == 0)
+   if (!mipmap->VAO)
       return;
    _mesa_DeleteVertexArrays(1, &mipmap->VAO);
    mipmap->VAO = 0;
@@ -206,9 +206,9 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
     */
    _mesa_BindTexture(target, texObj->Name);
 
-   if (mipmap->samp_obj == NULL) {
+   if (!mipmap->samp_obj) {
       mipmap->samp_obj =  ctx->Driver.NewSamplerObject(ctx, 0xDEADBEEF);
-      if (mipmap->samp_obj == NULL) {
+      if (!mipmap->samp_obj) {
          /* This is a bit lazy.  Flag out of memory, and then don't bother to
           * clean up.  Once out of memory is flagged, the only realistic next
           * move is to destroy the context.  That will trigger all the right

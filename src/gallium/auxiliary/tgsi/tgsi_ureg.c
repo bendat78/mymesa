@@ -222,7 +222,7 @@ static void tokens_expand( struct ureg_tokens *tokens,
    tokens->tokens = REALLOC(tokens->tokens,
                             old_size,
                             tokens->size * sizeof(unsigned));
-   if (tokens->tokens == NULL) {
+   if (!tokens->tokens) {
       tokens_error(tokens);
    }
 }
@@ -2107,15 +2107,15 @@ ureg_create_with_screen(unsigned processor, struct pipe_screen *screen)
       ureg->properties[i] = ~0;
 
    ureg->free_temps = util_bitmask_create();
-   if (ureg->free_temps == NULL)
+   if (!ureg->free_temps)
       goto no_free_temps;
 
    ureg->local_temps = util_bitmask_create();
-   if (ureg->local_temps == NULL)
+   if (!ureg->local_temps)
       goto no_local_temps;
 
    ureg->decl_temps = util_bitmask_create();
-   if (ureg->decl_temps == NULL)
+   if (!ureg->decl_temps)
       goto no_decl_temps;
 
    return ureg;

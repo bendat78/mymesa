@@ -130,7 +130,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
    /*We need to refcount these. */
 
-   if (i830->state.tex_buffer[unit] != NULL) {
+   if (i830->state.tex_buffer[unit]) {
        drm_intel_bo_unreference(i830->state.tex_buffer[unit]);
        i830->state.tex_buffer[unit] = NULL;
    }
@@ -351,7 +351,7 @@ i830UpdateTextureState(struct intel_context *intel)
          if (i830->state.active & I830_UPLOAD_TEX(i))
             I830_ACTIVESTATE(i830, I830_UPLOAD_TEX(i), false);
 
-         if (i830->state.tex_buffer[i] != NULL) {
+         if (i830->state.tex_buffer[i]) {
             drm_intel_bo_unreference(i830->state.tex_buffer[i]);
             i830->state.tex_buffer[i] = NULL;
          }

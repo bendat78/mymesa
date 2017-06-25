@@ -253,7 +253,7 @@ validate_indexed_prim_list(VALIDATE_ARGS)
 	struct vc4_shader_state *shader_state;
 
 	/* Check overflow condition */
-	if (exec->shader_state_count == 0) {
+	if (!exec->shader_state_count) {
 		DRM_ERROR("shader state must precede primitives\n");
 		return -EINVAL;
 	}
@@ -287,7 +287,7 @@ validate_gl_array_primitive(VALIDATE_ARGS)
 	struct vc4_shader_state *shader_state;
 
 	/* Check overflow condition */
-	if (exec->shader_state_count == 0) {
+	if (!exec->shader_state_count) {
 		DRM_ERROR("shader state must precede primitives\n");
 		return -EINVAL;
 	}

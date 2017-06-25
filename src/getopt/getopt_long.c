@@ -213,7 +213,7 @@ parse_long_options(char * const *nargv, const char *options,
 			/*
 			 * XXX: GNU sets optopt to val regardless of flag
 			 */
-			if (long_options[match].flag == NULL)
+			if (!long_options[match].flag)
 				optopt = long_options[match].val;
 			else
 				optopt = 0;
@@ -243,7 +243,7 @@ parse_long_options(char * const *nargv, const char *options,
 			/*
 			 * XXX: GNU sets optopt to val regardless of flag
 			 */
-			if (long_options[match].flag == NULL)
+			if (!long_options[match].flag)
 				optopt = long_options[match].val;
 			else
 				optopt = 0;

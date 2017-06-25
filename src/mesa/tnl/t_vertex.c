@@ -94,7 +94,7 @@ void _tnl_register_fastpath( struct tnl_clipspace *vtx,
    fastpath->func = vtx->emit;
    fastpath->attr = malloc(vtx->attr_count * sizeof(fastpath->attr[0]));
 
-   if (fastpath->attr == NULL) {
+   if (!fastpath->attr) {
       free(fastpath);
       _mesa_error_no_memory(__func__);
       return;

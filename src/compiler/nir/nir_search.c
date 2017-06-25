@@ -111,7 +111,7 @@ match_value(const nir_search_value *value, nir_alu_instr *instr, unsigned src,
    /* If the source is an explicitly sized source, then we need to reset
     * both the number of components and the swizzle.
     */
-   if (nir_op_infos[instr->op].input_sizes[src] != 0) {
+   if (nir_op_infos[instr->op].input_sizes[src]) {
       num_components = nir_op_infos[instr->op].input_sizes[src];
       swizzle = identity_swizzle;
    }
@@ -273,7 +273,7 @@ match_expression(const nir_search_expression *expr, nir_alu_instr *instr,
     * swizzle through.  We can only properly propagate swizzles if the
     * instruction is vectorized.
     */
-   if (nir_op_infos[instr->op].output_size != 0) {
+   if (nir_op_infos[instr->op].output_size) {
       for (unsigned i = 0; i < num_components; i++) {
          if (swizzle[i] != i)
             return false;
@@ -387,7 +387,7 @@ bitsize_tree_filter_up(bitsize_tree *tree)
 
       if (tree->is_src_sized[i]) {
          assert(src_size == tree->src_size[i]);
-      } else if (tree->common_size != 0) {
+      } else if (tree->common_size) {
          assert(src_size == tree->common_size);
          tree->src_size[i] = src_size;
       } else {
@@ -397,7 +397,7 @@ bitsize_tree_filter_up(bitsize_tree *tree)
    }
 
    if (tree->num_srcs && tree->common_size) {
-      if (tree->dest_size == 0)
+      if (!tree->dest_size)
          tree->dest_size = tree->common_size;
       else if (!tree->is_dest_sized)
          assert(tree->dest_size == tree->common_size);
@@ -445,7 +445,7 @@ construct_value(const nir_search_value *value,
    case nir_search_value_expression: {
       const nir_search_expression *expr = nir_search_value_as_expression(value);
 
-      if (nir_op_infos[expr->opcode].output_size != 0)
+      if (nir_op_infos[expr->opcode].output_size)
          num_components = nir_op_infos[expr->opcode].output_size;
 
       nir_alu_instr *alu = nir_alu_instr_create(mem_ctx, expr->opcode);
@@ -465,7 +465,7 @@ construct_value(const nir_search_value *value,
          /* If the source is an explicitly sized source, then we need to reset
           * the number of components to match.
           */
-         if (nir_op_infos[alu->op].input_sizes[i] != 0)
+         if (nir_op_infos[alu->op].input_sizes[i])
             num_components = nir_op_infos[alu->op].input_sizes[i];
 
          alu->src[i] = construct_value(expr->srcs[i],

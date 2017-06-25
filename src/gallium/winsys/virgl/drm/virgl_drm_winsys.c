@@ -390,7 +390,7 @@ virgl_drm_winsys_resource_create_handle(struct virgl_winsys *qws,
    struct virgl_hw_res *res;
    uint32_t handle = whandle->handle;
 
-   if (whandle->offset != 0) {
+   if (whandle->offset) {
       fprintf(stderr, "attempt to import unsupported winsys offset %u\n",
               whandle->offset);
       return NULL;
@@ -679,7 +679,7 @@ static int virgl_drm_winsys_submit_cmd(struct virgl_winsys *qws,
    struct drm_virtgpu_execbuffer eb;
    int ret;
 
-   if (cbuf->base.cdw == 0)
+   if (!cbuf->base.cdw)
       return 0;
 
    memset(&eb, 0, sizeof(struct drm_virtgpu_execbuffer));

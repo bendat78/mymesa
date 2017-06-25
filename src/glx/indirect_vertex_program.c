@@ -203,7 +203,7 @@ __indirect_glGetVertexAttribiv(GLuint index, GLenum pname, GLint * params)
 
    get_vertex_attrib(gc, 1303, index, pname, (xReply *) & reply);
 
-   if (reply.size != 0) {
+   if (reply.size) {
       GLintptr data;
 
 
@@ -237,7 +237,7 @@ __indirect_glGetVertexAttribfv(GLuint index, GLenum pname,
 
    get_vertex_attrib(gc, 1302, index, pname, (xReply *) & reply);
 
-   if (reply.size != 0) {
+   if (reply.size) {
       GLintptr data;
 
 
@@ -271,7 +271,7 @@ __indirect_glGetVertexAttribdv(GLuint index, GLenum pname,
 
    get_vertex_attrib(gc, 1301, index, pname, (xReply *) & reply);
 
-   if (reply.size != 0) {
+   if (reply.size) {
       GLintptr data;
 
 

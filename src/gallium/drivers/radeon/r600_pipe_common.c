@@ -1336,7 +1336,7 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 	else
 		chip_name = r600_get_family_name(rscreen);
 
-	if (uname(&uname_data) == 0)
+	if (!uname(&uname_data))
 		snprintf(kernel_version, sizeof(kernel_version),
 			 " / %s", uname_data.release);
 

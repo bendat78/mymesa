@@ -190,7 +190,7 @@ nine_shader_variant_so_add(struct nine_shader_variant_so *list,
                            struct NineVertexDeclaration9 *vdecl,
                            struct pipe_stream_output_info *so, void *cso)
 {
-    if (list->vdecl == NULL) { /* first shader */
+    if (!list->vdecl) { /* first shader */
         list->next = NULL;
         nine_bind(&list->vdecl, vdecl);
         list->so = *so;

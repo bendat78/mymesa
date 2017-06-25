@@ -506,28 +506,28 @@ dri2_open_driver(_EGLDisplay *disp)
                "%.*s/tls/%s_dri.so", len, p, dri2_dpy->driver_name);
       dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 #endif
-      if (dri2_dpy->driver == NULL) {
+      if (!dri2_dpy->driver) {
          snprintf(path, sizeof path,
                   "%.*s/%s_dri.so", len, p, dri2_dpy->driver_name);
          dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-         if (dri2_dpy->driver == NULL)
+         if (!dri2_dpy->driver)
             _eglLog(_EGL_DEBUG, "failed to open %s: %s\n", path, dlerror());
       }
       /* not need continue to loop all paths once the driver is found */
-      if (dri2_dpy->driver != NULL)
+      if (dri2_dpy->driver)
          break;
 
 #ifdef ANDROID
       snprintf(path, sizeof path, "%.*s/gallium_dri.so", len, p);
       dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-      if (dri2_dpy->driver == NULL)
+      if (!dri2_dpy->driver)
          _eglLog(_EGL_DEBUG, "failed to open %s: %s\n", path, dlerror());
       else
          break;
 #endif
    }
 
-   if (dri2_dpy->driver == NULL) {
+   if (!dri2_dpy->driver) {
       _eglLog(_EGL_WARNING,
               "DRI2: failed to open %s (search paths %s)",
               dri2_dpy->driver_name, search_paths);
@@ -772,7 +772,7 @@ dri2_create_screen(_EGLDisplay *disp)
       }
    }
 
-   if (dri2_dpy->dri_screen == NULL) {
+   if (!dri2_dpy->dri_screen) {
       _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");
       return EGL_FALSE;
    }
@@ -1065,7 +1065,7 @@ dri2_fill_context_attribs(struct dri2_egl_context *dri2_ctx,
    ctx_attribs[pos++] = __DRI_CTX_ATTRIB_MINOR_VERSION;
    ctx_attribs[pos++] = dri2_ctx->base.ClientMinorVersion;
 
-   if (dri2_ctx->base.Flags != 0) {
+   if (dri2_ctx->base.Flags) {
       /* If the implementation doesn't support the __DRI2_ROBUSTNESS
        * extension, don't even try to send it the robust-access flag.
        * It may explode.  Instead, generate the required EGL error here.
@@ -1547,7 +1547,7 @@ dri2_wait_client(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
    /* FIXME: If EGL allows frontbuffer rendering for window surfaces,
     * we need to copy fake to real here.*/
 
-   if (dri2_dpy->flush != NULL)
+   if (dri2_dpy->flush)
       dri2_dpy->flush->flush(dri_drawable);
 
    return EGL_TRUE;
@@ -2392,7 +2392,7 @@ dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
       dri2_dpy->image->createImage(dri2_dpy->dri_screen,
                                    attrs.Width, attrs.Height,
                                    format, dri_use, dri2_img);
-   if (dri2_img->dri_image == NULL) {
+   if (!dri2_img->dri_image) {
       err = EGL_BAD_ALLOC;
       goto cleanup_img;
    }
@@ -2586,7 +2586,7 @@ dri2_wl_reference_buffer(void *user_data, uint32_t name, int fd,
       if (wl_drm_components[i].dri_components == dri_components)
          buffer->driver_format = &wl_drm_components[i];
 
-   if (buffer->driver_format == NULL)
+   if (!buffer->driver_format)
       dri2_dpy->image->destroyImage(img);
    else
       buffer->driver_buffer = img;

@@ -715,7 +715,7 @@ static void get_readers_for_single_write(
 		case RC_OPCODE_ENDLOOP:
 			if (d->ReaderData->LoopDepth > 0) {
 				d->ReaderData->LoopDepth--;
-				if (d->ReaderData->LoopDepth == 0) {
+				if (!d->ReaderData->LoopDepth) {
 					d->ReaderData->AbortOnWrite = 0;
 				}
 				pop_branch_mask(d, &branch_depth);

@@ -478,7 +478,7 @@ nv30_miptree_from_handle(struct pipe_screen *pscreen,
       return NULL;
 
    mt->base.bo = nouveau_screen_bo_from_handle(pscreen, handle, &stride);
-   if (mt->base.bo == NULL) {
+   if (!mt->base.bo) {
       FREE(mt);
       return NULL;
    }

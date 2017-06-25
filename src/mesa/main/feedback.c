@@ -305,7 +305,7 @@ _mesa_LoadName( GLuint name )
    if (ctx->RenderMode != GL_SELECT) {
       return;
    }
-   if (ctx->Select.NameStackDepth == 0) {
+   if (!ctx->Select.NameStackDepth) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glLoadName" );
       return;
    }
@@ -378,7 +378,7 @@ _mesa_PopName( void )
    if (ctx->Select.HitFlag) {
       write_hit_record( ctx );
    }
-   if (ctx->Select.NameStackDepth == 0) {
+   if (!ctx->Select.NameStackDepth) {
       _mesa_error( ctx, GL_STACK_UNDERFLOW, "glPopName" );
    }
    else
@@ -460,13 +460,13 @@ _mesa_RenderMode( GLenum mode )
       case GL_RENDER:
          break;
       case GL_SELECT:
-	 if (ctx->Select.BufferSize==0) {
+	 if (!ctx->Select.BufferSize) {
 	    /* haven't called glSelectBuffer yet */
 	    _mesa_error( ctx, GL_INVALID_OPERATION, "glRenderMode" );
 	 }
 	 break;
       case GL_FEEDBACK:
-	 if (ctx->Feedback.BufferSize==0) {
+	 if (!ctx->Feedback.BufferSize) {
 	    /* haven't called glFeedbackBuffer yet */
 	    _mesa_error( ctx, GL_INVALID_OPERATION, "glRenderMode" );
 	 }

@@ -133,7 +133,7 @@ findOption(const driOptionCache *cache, const char *name)
   /* this is just the starting point of the linear search for the option */
     for (i = 0; i < size; ++i, hash = (hash+1) & mask) {
       /* if we hit an empty entry then the option is not defined (yet) */
-        if (cache->info[hash].name == 0)
+        if (!cache->info[hash].name)
             break;
         else if (!strcmp (name, cache->info[hash].name))
             break;
@@ -414,7 +414,7 @@ checkValue(const driOptionValue *v, const driOptionInfo *info)
 {
     uint32_t i;
     assert (info->type != DRI_BOOL); /* should be caught by the parser */
-    if (info->nRanges == 0)
+    if (!info->nRanges)
         return true;
     switch (info->type) {
       case DRI_ENUM: /* enum is just a special integer */
@@ -832,7 +832,7 @@ parseOptConfAttr(struct OptConfData *data, const XML_Char **attr)
     if (name && value) {
         driOptionCache *cache = data->cache;
         uint32_t opt = findOption (cache, name);
-        if (cache->info[opt].name == NULL)
+        if (!cache->info[opt].name)
             /* don't use XML_WARNING, drirc defines options for all drivers,
              * but not all drivers support them */
             return;
@@ -926,7 +926,7 @@ initOptionCache(driOptionCache *cache, const driOptionCache *info)
     cache->info = info->info;
     cache->tableSize = info->tableSize;
     cache->values = malloc((1<<info->tableSize) * sizeof (driOptionValue));
-    if (cache->values == NULL) {
+    if (!cache->values) {
         fprintf (stderr, "%s: %d: out of memory.\n", __FILE__, __LINE__);
         abort();
     }
@@ -1002,7 +1002,7 @@ driParseConfigFiles(driOptionCache *cache, const driOptionCache *info,
     if ((home = getenv ("HOME"))) {
         uint32_t len = strlen (home);
         filenames[1] = malloc(len + 7+1);
-        if (filenames[1] == NULL)
+        if (!filenames[1])
             __driUtilMessage ("Can't allocate memory for %s/.drirc.", home);
         else {
             memcpy (filenames[1], home, len);
@@ -1012,7 +1012,7 @@ driParseConfigFiles(driOptionCache *cache, const driOptionCache *info,
 
     for (i = 0; i < 2; ++i) {
         XML_Parser p;
-        if (filenames[i] == NULL)
+        if (!filenames[i])
             continue;
 
         p = XML_ParserCreate (NULL); /* use encoding specified by file */

@@ -720,7 +720,7 @@ __indirect_glGetString(GLenum name)
                const size_t size = 7 + strlen((char *) s) + 4;
 
                gc->version = malloc(size);
-               if (gc->version == NULL) {
+               if (!gc->version) {
                   /* If we couldn't allocate memory for the new string,
                    * make a best-effort and just copy the client-side version
                    * to the string and use that.  It probably doesn't

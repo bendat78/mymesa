@@ -92,7 +92,7 @@ VOID* Object::ClientAlloc(
 {
     VOID* pObjMem = NULL;
 
-    if (pClient->callbacks.allocSysMem != NULL)
+    if (pClient->callbacks.allocSysMem)
     {
         ADDR_ALLOCSYSMEM_INPUT allocInput = {};
 
@@ -134,7 +134,7 @@ VOID Object::ClientFree(
     VOID*          pObjMem,    ///< [in] User virtual address to free.
     const Client*  pClient)    ///< [in] Client pointer
 {
-    if (pClient->callbacks.freeSysMem != NULL)
+    if (pClient->callbacks.freeSysMem)
     {
         if (pObjMem)
         {
@@ -214,7 +214,7 @@ VOID Object::DebugPrint(
     ) const
 {
 #if DEBUG
-    if (m_client.callbacks.debugPrint != NULL)
+    if (m_client.callbacks.debugPrint)
     {
         va_list ap;
 

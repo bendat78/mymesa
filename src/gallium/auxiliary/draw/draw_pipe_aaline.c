@@ -332,7 +332,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    aaline_fs = *orig_fs; /* copy to init */
    aaline_fs.tokens = tgsi_alloc_tokens(newLen);
-   if (aaline_fs.tokens == NULL)
+   if (!aaline_fs.tokens)
       return FALSE;
 
    memset(&transform, 0, sizeof(transform));
@@ -360,7 +360,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
    aaline->fs->sampler_unit = transform.freeSampler;
 
    aaline->fs->aaline_fs = aaline->driver_create_fs_state(pipe, &aaline_fs);
-   if (aaline->fs->aaline_fs == NULL)
+   if (!aaline->fs->aaline_fs)
       goto fail;
 
    aaline->fs->generic_attrib = transform.maxGeneric + 1;
@@ -485,7 +485,7 @@ aaline_create_sampler(struct aaline_stage *aaline)
    sampler.max_lod = MAX_TEXTURE_LEVEL;
 
    aaline->sampler_cso = pipe->create_sampler_state(pipe, &sampler);
-   if (aaline->sampler_cso == NULL)
+   if (!aaline->sampler_cso)
       return FALSE;
 
    return TRUE;

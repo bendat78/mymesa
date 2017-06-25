@@ -203,7 +203,7 @@ _mesa_unref_sync_object(struct gl_context *ctx, struct gl_sync_object *syncObj,
 
    mtx_lock(&ctx->Shared->Mutex);
    syncObj->RefCount -= amount;
-   if (syncObj->RefCount == 0) {
+   if (!syncObj->RefCount) {
       entry = _mesa_set_search(ctx->Shared->SyncObjects, syncObj);
       assert (entry);
       _mesa_set_remove(ctx->Shared->SyncObjects, entry);

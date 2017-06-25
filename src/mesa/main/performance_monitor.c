@@ -87,7 +87,7 @@ new_performance_monitor(struct gl_context *ctx, GLuint index)
 
       m->ActiveCounters[i] = rzalloc_array(m->ActiveCounters, BITSET_WORD,
                                            BITSET_WORDS(g->NumCounters));
-      if (m->ActiveCounters[i] == NULL)
+      if (!m->ActiveCounters[i])
          goto fail;
    }
 

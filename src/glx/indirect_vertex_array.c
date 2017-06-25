@@ -207,7 +207,7 @@ __glXInitVertexArrayState(struct glx_context * gc)
    arrays->num_arrays = array_count;
    arrays->arrays = calloc(array_count, sizeof(struct array_state));
 
-   if (arrays->arrays == NULL) {
+   if (!arrays->arrays) {
       state->array_state = NULL;
       free(arrays);
       __glXSetError(gc, GL_OUT_OF_MEMORY);
@@ -296,7 +296,7 @@ __glXInitVertexArrayState(struct glx_context * gc)
                           * arrays->num_arrays
                           * __GL_CLIENT_ATTRIB_STACK_DEPTH);
 
-   if (arrays->stack == NULL) {
+   if (!arrays->stack) {
       state->array_state = NULL;
       free(arrays->arrays);
       free(arrays);

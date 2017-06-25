@@ -136,7 +136,7 @@ brw_alloc_reg_set(struct brw_compiler *compiler, int dispatch_width)
 
    /* Fill out the rest of the range markers */
    for (int i = 1; i < 17; ++i) {
-      if (class_to_ra_reg_range[i] == 0)
+      if (!class_to_ra_reg_range[i])
          class_to_ra_reg_range[i] = class_to_ra_reg_range[i-1];
    }
 

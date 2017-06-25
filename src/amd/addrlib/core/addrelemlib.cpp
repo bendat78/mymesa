@@ -183,7 +183,7 @@ VOID ElemLib::Flt32sToInt32s(
             }
             else
             {
-                if (value.f >= 1)
+                if (value.f)
                 {
                      *pResult = (1<<bits) - 1;
                 }
@@ -256,7 +256,7 @@ VOID ElemLib::Flt32sToInt32s(
             sign = (value.i >> 31) & 1;
             if ((value.i&0x7F800000) == 0x7F800000)    // If NaN or INF:
             {
-                if ((value.i&0x007FFFFF) != 0)             // then if NaN
+                if ((value.i&0x007FFFFF))             // then if NaN
                 {
                     *pResult = 0;                       // return 0
                 }
@@ -625,7 +625,7 @@ VOID ElemLib::GetCompType(
             AddrSurfaceNumber cnum;
 
             // First handle default component values
-            if (pInfo->compBit[c] == 0)
+            if (!pInfo->compBit[c])
             {
                 if (c < 3)
                 {
@@ -1685,7 +1685,7 @@ VOID ElemLib::GetCompBits(
     // still needed since component swap may depend on number of components
     for (INT i=0; i<4; i++)
     {
-        if (pInfo->compBit[i] == 0)
+        if (!pInfo->compBit[i])
         {
             pInfo->compStart[i]  = 0;       // all null components start at bit 0
             pInfo->numType[i] = ADDR_NO_NUMBER; // and have no number type

@@ -2259,7 +2259,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
 
    /* Check that the source buffer is complete */
    if (_mesa_is_user_fbo(ctx->ReadBuffer)) {
-      if (ctx->ReadBuffer->_Status == 0) {
+      if (!ctx->ReadBuffer->_Status) {
          _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
       }
       if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
@@ -2508,7 +2508,7 @@ copytexsubimage_error_check(struct gl_context *ctx, GLuint dimensions,
 
    /* Check that the source buffer is complete */
    if (_mesa_is_user_fbo(ctx->ReadBuffer)) {
-      if (ctx->ReadBuffer->_Status == 0) {
+      if (!ctx->ReadBuffer->_Status) {
          _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
       }
       if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
@@ -2832,10 +2832,10 @@ strip_texture_border(GLenum target,
 
    *unpackNew = *unpack;
 
-   if (unpackNew->RowLength == 0)
+   if (!unpackNew->RowLength)
       unpackNew->RowLength = *width;
 
-   if (unpackNew->ImageHeight == 0)
+   if (!unpackNew->ImageHeight)
       unpackNew->ImageHeight = *height;
 
    assert(*width >= 3);
@@ -4144,7 +4144,7 @@ get_tex_obj_for_clear(struct gl_context *ctx,
    if (!texObj)
       return NULL;
 
-   if (texObj->Target == 0) {
+   if (!texObj->Target) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(unbound tex)", function);
       return NULL;
    }
@@ -4172,7 +4172,7 @@ get_tex_images_for_clear(struct gl_context *ctx,
          target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
 
          texImages[i] = _mesa_select_tex_image(texObj, target, level);
-         if (texImages[i] == NULL) {
+         if (!texImages[i]) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "%s(invalid level)", function);
             return 0;
@@ -4184,7 +4184,7 @@ get_tex_images_for_clear(struct gl_context *ctx,
 
    texImages[0] = _mesa_select_tex_image(texObj, texObj->Target, level);
 
-   if (texImages[0] == NULL) {
+   if (!texImages[0]) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(invalid level)", function);
       return 0;
    }

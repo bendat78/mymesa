@@ -174,7 +174,7 @@ uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
       intel_finish_vb(intel);
 
       /* Start a new VB */
-      if (intel->prim.vb == NULL)
+      if (!intel->prim.vb)
 	 intel->prim.vb = malloc(INTEL_VB_SIZE);
       intel->prim.vb_bo = drm_intel_bo_alloc(intel->bufmgr, "vb",
 					     INTEL_VB_SIZE, 4);
@@ -202,7 +202,7 @@ void intel_flush_prim(struct intel_context *intel)
    /* Must be called after an intel_start_prim. */
    assert(intel->prim.primitive != ~0);
 
-   if (intel->prim.count == 0)
+   if (!intel->prim.count)
       return;
 
    /* Clear the current prims out of the context state so that a batch flush
@@ -331,7 +331,7 @@ void intel_flush_prim(struct intel_context *intel)
  */
 void intel_finish_vb(struct intel_context *intel)
 {
-   if (intel->prim.vb_bo == NULL)
+   if (!intel->prim.vb_bo)
       return;
 
    drm_intel_bo_subdata(intel->prim.vb_bo, 0, intel->prim.start_offset,

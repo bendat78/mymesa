@@ -978,7 +978,7 @@ clamp_size(struct pipe_context *pipe, GLsizei *width, GLsizei *height,
                                     PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
 
    if (*width > maxSize) {
-      if (unpack->RowLength == 0)
+      if (!unpack->RowLength)
          unpack->RowLength = *width;
       *width = maxSize;
    }

@@ -494,7 +494,7 @@ _mesa_get_extension_count(struct gl_context *ctx)
    unsigned k;
 
    /* only count once */
-   if (ctx->Extensions.Count != 0)
+   if (ctx->Extensions.Count)
       return ctx->Extensions.Count;
 
    for (k = 0; k < MESA_EXTENSION_COUNT; ++k) {

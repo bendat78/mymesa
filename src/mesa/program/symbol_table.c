@@ -193,7 +193,7 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
       new_sym->name = sym->name;
    } else {
       new_sym->name = strdup(name);
-      if (new_sym->name == NULL) {
+      if (!new_sym->name) {
          free(new_sym);
          _mesa_error_no_memory(__func__);
          return -1;
@@ -235,7 +235,7 @@ _mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
    struct symbol *sym = find_symbol(table, name);
 
    while (sym) {
-      if (sym->depth == 0)
+      if (!sym->depth)
          return -1;
 
       inner_sym = sym;
@@ -265,7 +265,7 @@ _mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
       sym->name = inner_sym->name;
    } else {
       sym->name = strdup(name);
-      if (sym->name == NULL) {
+      if (!sym->name) {
          free(sym);
          _mesa_error_no_memory(__func__);
          return -1;

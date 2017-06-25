@@ -124,7 +124,7 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    dri_fill_st_visual(&attribs.visual, screen, visual);
    ctx->st = stapi->create_context(stapi, &screen->base, &attribs, &ctx_err,
 				   st_share);
-   if (ctx->st == NULL) {
+   if (!ctx->st) {
       switch (ctx_err) {
       case ST_CONTEXT_SUCCESS:
 	 *error = __DRI_CTX_ERROR_SUCCESS;
@@ -217,7 +217,7 @@ dri_unbind_context(__DRIcontext * cPriv)
    struct dri_context *ctx = dri_context(cPriv);
    struct st_api *stapi = screen->st_api;
 
-   if (--ctx->bind_count == 0) {
+   if (!--ctx->bind_count) {
       if (ctx->st == ctx->stapi->get_current(ctx->stapi)) {
          if (ctx->st->thread_finish)
             ctx->st->thread_finish(ctx->st);

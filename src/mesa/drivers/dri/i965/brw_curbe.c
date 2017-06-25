@@ -168,7 +168,7 @@ void brw_upload_cs_urb_state(struct brw_context *brw)
    OUT_BATCH(CMD_CS_URB_STATE << 16 | (2-2));
 
    /* BRW_NEW_URB_FENCE */
-   if (brw->urb.csize == 0) {
+   if (!brw->urb.csize) {
       OUT_BATCH(0);
    } else {
       /* BRW_NEW_URB_FENCE */
@@ -296,7 +296,7 @@ emit:
     *      in the pipeline."
     */
    BEGIN_BATCH(2);
-   if (brw->curbe.total_size == 0) {
+   if (!brw->curbe.total_size) {
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
       OUT_BATCH(0);
    } else {

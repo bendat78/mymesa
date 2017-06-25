@@ -87,7 +87,7 @@ lp_build_action_set_dst_type(
    struct lp_build_tgsi_context *bld_base,
    unsigned tgsi_opcode)
 {
-   if (emit_data->arg_count == 0) {
+   if (!emit_data->arg_count) {
       emit_data->dst_type = LLVMVoidTypeInContext(bld_base->base.gallivm->context);
    } else {
       /* XXX: Not all opcodes have the same src and dst types. */

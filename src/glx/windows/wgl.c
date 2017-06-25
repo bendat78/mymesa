@@ -34,11 +34,11 @@
 
 #define PRERESOLVE(type, symbol) \
     type##proc = (type)wglGetProcAddress(symbol); \
-    if (type##proc == NULL) \
+    if (!type##proc) \
        printf("Can't resolve \"%s\"\n", symbol);
 
 #define CHECK_RESOLVED(type, retval) \
-  if (type##proc == NULL) { \
+  if (!type##proc) { \
     return retval; \
   }
 

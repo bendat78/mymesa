@@ -275,7 +275,7 @@ driwindows_create_context_attribs(struct glx_screen *base,
    pcp->windowsContext = windows_create_context_attribs(config->pxfi,
                                                       shared,
                                                       (const int *)attribs);
-   if (pcp->windowsContext == NULL) {
+   if (!pcp->windowsContext) {
       free(pcp);
       return NULL;
    }
@@ -487,7 +487,7 @@ driwindowsMapConfigs(struct glx_display *priv, int screen, struct glx_config *co
       struct driwindows_config *config = malloc(sizeof(*config));
 
       tail->next = &config->base;
-      if (tail->next == NULL)
+      if (!tail->next)
          continue;
 
       config->base = *m;

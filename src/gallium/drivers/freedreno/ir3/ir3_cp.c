@@ -497,7 +497,7 @@ instr_cp(struct ir3_cp_ctx *ctx, struct ir3_instruction *instr)
 {
 	struct ir3_register *reg;
 
-	if (instr->regs_count == 0)
+	if (!instr->regs_count)
 		return;
 
 	if (ir3_instr_check_mark(instr))

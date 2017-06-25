@@ -51,7 +51,7 @@ gen6_upload_push_constants(struct brw_context *brw,
 {
    struct gl_context *ctx = &brw->ctx;
 
-   if (prog_data->nr_params == 0) {
+   if (!prog_data->nr_params) {
       stage_state->push_const_size = 0;
    } else {
       /* Updates the ParamaterValues[i] pointers for all parameters of the

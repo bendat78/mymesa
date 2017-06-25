@@ -243,7 +243,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
                                       PIPE_BIND_CONSTANT_BUFFER,
                                       PIPE_USAGE_DEFAULT,
                                       sizeof(constants));
-   if (ppq->constbuf == NULL) {
+   if (!ppq->constbuf) {
       pp_debug("Failed to allocate constant buffer\n");
       goto fail;
    }
@@ -269,7 +269,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
 
    ppq->areamaptex = ppq->p->screen->resource_create(ppq->p->screen, &res);
 
-   if (ppq->areamaptex == NULL) {
+   if (!ppq->areamaptex) {
       pp_debug("Failed to allocate area map texture\n");
       goto fail;
    }

@@ -361,7 +361,7 @@ ensure_sanity(const struct util_cache *cache)
    assert(cnt == cache->count);
    assert(cache->size >= cnt);
 
-   if (cache->count == 0) {
+   if (!cache->count) {
       assert (is_empty_list(&cache->lru));
    }
    else {

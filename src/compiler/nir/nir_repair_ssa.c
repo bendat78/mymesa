@@ -40,7 +40,7 @@ prep_build_phi(struct repair_ssa_state *state)
    const unsigned num_words = BITSET_WORDS(state->impl->num_blocks);
 
    /* We create the phi builder on-demand. */
-   if (state->phi_builder == NULL) {
+   if (!state->phi_builder) {
       state->phi_builder = nir_phi_builder_create(state->impl);
       state->def_set = ralloc_array(NULL, BITSET_WORD, num_words);
    }

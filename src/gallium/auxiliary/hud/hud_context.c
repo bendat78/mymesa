@@ -926,7 +926,7 @@ hud_graph_add_value(struct hud_graph *gr, uint64_t value)
       gr->num_vertices++;
    }
 
-   if (gr->pane->dyn_ceiling == true) {
+   if (gr->pane->dyn_ceiling) {
       hud_pane_update_dyn_ceiling(gr, gr->pane);
    }
    if (value > gr->pane->max_value) {
@@ -1362,7 +1362,7 @@ hud_parse_env_var(struct hud_context *hud, const char *env)
          }
       }
 
-      if (*env == 0)
+      if (!*env)
          break;
 
       /* parse a separator */

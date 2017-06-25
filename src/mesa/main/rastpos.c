@@ -390,13 +390,13 @@ _mesa_RasterPos(struct gl_context *ctx, const GLfloat vObj[4])
 
       /* clip to view volume. */
       if (!ctx->Transform.DepthClamp) {
-         if (viewclip_point_z(clip) == 0) {
+         if (!viewclip_point_z(clip)) {
             ctx->Current.RasterPosValid = GL_FALSE;
             return;
          }
       }
       if (!ctx->Transform.RasterPositionUnclipped) {
-         if (viewclip_point_xy(clip) == 0) {
+         if (!viewclip_point_xy(clip)) {
             ctx->Current.RasterPosValid = GL_FALSE;
             return;
          }

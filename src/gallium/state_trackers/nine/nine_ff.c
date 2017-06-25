@@ -1812,7 +1812,7 @@ nine_ff_get_ps(struct NineDevice9 *device)
      * Since we initialize current to diffuse, we have the behaviour. */
 
     /* Last stage always writes to Current */
-    if (s >= 1)
+    if (s)
         key.ts[s-1].resultarg = 0;
 
     key.projected = nine_ff_get_projected_key(context);

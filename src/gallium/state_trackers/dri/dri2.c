@@ -1215,7 +1215,7 @@ dri2_query_image(__DRIimage *image, int attrib, int *value)
       *value = image->texture->height0;
       return GL_TRUE;
    case __DRI_IMAGE_ATTRIB_COMPONENTS:
-      if (image->dri_components == 0)
+      if (!image->dri_components)
          return GL_FALSE;
       *value = image->dri_components;
       return GL_TRUE;
@@ -1317,7 +1317,7 @@ dri2_from_planar(__DRIimage *image, int plane, void *loaderPrivate)
    if (plane)
       return NULL;
 
-   if (image->dri_components == 0)
+   if (!image->dri_components)
       return NULL;
 
    img = dri2_dup_image(image, loaderPrivate);
@@ -1659,7 +1659,7 @@ dri2_interop_query_device_info(__DRIcontext *_ctx,
    struct pipe_screen *screen = dri_context(_ctx)->st->pipe->screen;
 
    /* There is no version 0, thus we do not support it */
-   if (out->version == 0)
+   if (!out->version)
       return MESA_GLINTEROP_INVALID_VERSION;
 
    out->pci_segment_group = screen->get_param(screen, PIPE_CAP_PCI_GROUP);

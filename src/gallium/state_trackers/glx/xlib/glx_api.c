@@ -456,12 +456,12 @@ get_env_visual(Display *dpy, int scr, const char *varname)
 
    sscanf( value, "%s %d", type, &depth );
 
-   if (strcmp(type,"TrueColor")==0)          xclass = TrueColor;
-   else if (strcmp(type,"DirectColor")==0)   xclass = DirectColor;
-   else if (strcmp(type,"PseudoColor")==0)   xclass = PseudoColor;
-   else if (strcmp(type,"StaticColor")==0)   xclass = StaticColor;
-   else if (strcmp(type,"GrayScale")==0)     xclass = GrayScale;
-   else if (strcmp(type,"StaticGray")==0)    xclass = StaticGray;
+   if (!strcmp(type,"TrueColor"))          xclass = TrueColor;
+   else if (!strcmp(type,"DirectColor"))   xclass = DirectColor;
+   else if (!strcmp(type,"PseudoColor"))   xclass = PseudoColor;
+   else if (!strcmp(type,"StaticColor"))   xclass = StaticColor;
+   else if (!strcmp(type,"GrayScale"))     xclass = GrayScale;
+   else if (!strcmp(type,"StaticGray"))    xclass = StaticGray;
 
    if (xclass>-1 && depth>0) {
       vis = get_visual( dpy, scr, depth, xclass );
@@ -930,7 +930,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             else if (*parselist & GLX_COLOR_INDEX_BIT) {
                rgb_flag = GL_FALSE;
             }
-            else if (*parselist == 0) {
+            else if (!*parselist) {
                rgb_flag = GL_TRUE;
             }
             parselist++;

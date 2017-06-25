@@ -65,7 +65,7 @@ context_lost_nop_handler(void)
 void
 _mesa_set_context_lost_dispatch(struct gl_context *ctx)
 {
-   if (ctx->ContextLost == NULL) {
+   if (!ctx->ContextLost) {
       int numEntries = MAX2(_glapi_get_dispatch_table_size(), _gloffset_COUNT);
 
       ctx->ContextLost = malloc(numEntries * sizeof(_glapi_proc));

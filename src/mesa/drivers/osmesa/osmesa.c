@@ -236,7 +236,7 @@ osmesa_choose_line_function( struct gl_context *ctx )
       return flat_rgba_z_line;
    }
 
-   if (swrast->_RasterMask == 0) {
+   if (!swrast->_RasterMask) {
       return flat_rgba_line;
    }
 

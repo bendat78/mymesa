@@ -822,7 +822,7 @@ nvfx_vertprog_parse_decl_output(struct nvfx_vpc *vpc,
       vpc->cvtx_idx = idx;
       return true;
    case TGSI_SEMANTIC_COLOR:
-      if (fdec->Semantic.Index == 0) {
+      if (!fdec->Semantic.Index) {
          hw = NVFX_VP(INST_DEST_COL0);
       } else
       if (fdec->Semantic.Index == 1) {
@@ -833,7 +833,7 @@ nvfx_vertprog_parse_decl_output(struct nvfx_vpc *vpc,
       }
       break;
    case TGSI_SEMANTIC_BCOLOR:
-      if (fdec->Semantic.Index == 0) {
+      if (!fdec->Semantic.Index) {
          hw = NVFX_VP(INST_DEST_BFC0);
       } else
       if (fdec->Semantic.Index == 1) {

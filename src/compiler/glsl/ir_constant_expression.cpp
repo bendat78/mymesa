@@ -644,7 +644,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
          return NULL;
    }
 
-   if (op[1] != NULL)
+   if (op[1])
       switch (this->operation) {
       case ir_binop_lshift:
       case ir_binop_rshift:

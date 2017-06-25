@@ -429,7 +429,7 @@ anv_layout_to_aux_usage(const struct gen_device_info * const devinfo,
    /* If there is no auxiliary surface allocated, we must use the one and only
     * main buffer.
     */
-   if (image->aux_surface.isl.size == 0)
+   if (!image->aux_surface.isl.size)
       return ISL_AUX_USAGE_NONE;
 
    /* All images that use an auxiliary surface are required to be tiled. */

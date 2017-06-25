@@ -300,7 +300,7 @@ cso_create_context(struct pipe_context *pipe, unsigned u_vbuf_flags)
       return NULL;
 
    ctx->cache = cso_cache_create();
-   if (ctx->cache == NULL)
+   if (!ctx->cache)
       goto out;
    cso_cache_set_sanitize_callback(ctx->cache,
                                    sanitize_hash,

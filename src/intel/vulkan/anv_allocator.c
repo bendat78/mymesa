@@ -846,7 +846,7 @@ anv_state_pool_free_no_vg(struct anv_state_pool *pool, struct anv_state state)
 void
 anv_state_pool_free(struct anv_state_pool *pool, struct anv_state state)
 {
-   if (state.alloc_size == 0)
+   if (!state.alloc_size)
       return;
 
    VG(VALGRIND_MEMPOOL_FREE(pool, state.map));

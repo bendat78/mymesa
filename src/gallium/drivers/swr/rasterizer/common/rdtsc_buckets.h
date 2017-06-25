@@ -144,7 +144,7 @@ public:
         SWR_ASSERT(tlsThreadId < mThreads.size());
         BUCKET_THREAD &bt = mThreads[tlsThreadId];
 
-        if (bt.level == 0)
+        if (!bt.level)
         {
             return;
         }
@@ -152,7 +152,7 @@ public:
         uint64_t tsc = __rdtsc();
 
         {
-            if (bt.pCurrent->start == 0) return;
+            if (!bt.pCurrent->start) return;
             SWR_ASSERT(bt.pCurrent->id == id, "Mismatched buckets detected");
 
             bt.pCurrent->elapsed += (tsc - bt.pCurrent->start);

@@ -248,7 +248,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
         // Erase empty cores (first)
         for (auto core_it = node_it->cores.begin(); core_it != node_it->cores.end(); )
         {
-            if (core_it->threadIds.size() == 0)
+            if (!core_it->threadIds.size())
             {
                 core_it = node_it->cores.erase(core_it);
             }
@@ -259,7 +259,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
         }
 
         // Erase empty numa nodes (second)
-        if (node_it->cores.size() == 0)
+        if (!node_it->cores.size())
         {
             node_it = out_nodes.erase(node_it);
         }
@@ -357,7 +357,7 @@ bool CheckDependencyFE(SWR_CONTEXT *pContext, DRAW_CONTEXT *pDC, uint32_t lastRe
 /// @brief Update client stats.
 INLINE void UpdateClientStats(SWR_CONTEXT* pContext, uint32_t workerId, DRAW_CONTEXT* pDC)
 {
-    if ((pContext->pfnUpdateStats == nullptr) || (GetApiState(pDC).enableStatsBE == false))
+    if (!(pContext->pfnUpdateStats) || (GetApiState(pDC).enableStatsBE == false))
     {
         return;
     }
@@ -497,7 +497,7 @@ bool WorkOnFifoBE(
 
     // Try to work on each draw in order of the available draws in flight.
     //   1. If we're on curDrawBE, we can work on any macrotile that is available.
-    //   2. If we're trying to work on draws after curDrawBE, we are restricted to 
+    //   2. If we're trying to work on draws after curDrawBE, we are restricted to
     //      working on those macrotiles that are known to be complete in the prior draw to
     //      maintain order. The locked tiles provides the history to ensures this.
     for (uint32_t i = curDrawBE; IDComparesLess(i, drawEnqueued); ++i)
@@ -510,7 +510,7 @@ bool WorkOnFifoBE(
         // but if there are lots of bubbles between draws then serializing FE and BE may
         // need to be revisited.
         if (!pDC->doneFE) return false;
-        
+
         // If this draw is dependent on a previous draw then we need to bail.
         if (CheckDependency(pContext, pDC, lastRetiredDraw))
         {
@@ -711,7 +711,7 @@ void WorkOnCompute(
     for (uint64_t i = curDrawBE; IDComparesLess(i, drawEnqueued); ++i)
     {
         DRAW_CONTEXT *pDC = &pContext->dcRing[i % KNOB_MAX_DRAWS_IN_FLIGHT];
-        if (pDC->isCompute == false) return;
+        if (!pDC->isCompute) return;
 
         // check dependencies
         if (CheckDependency(pContext, pDC, lastRetiredDraw))
@@ -777,7 +777,7 @@ DWORD workerThreadMain(LPVOID pData)
 
     // each worker has the ability to work on any of the queued draws as long as certain
     // conditions are met. the data associated
-    // with a draw is guaranteed to be active as long as a worker hasn't signaled that he 
+    // with a draw is guaranteed to be active as long as a worker hasn't signaled that he
     // has moved on to the next draw when he determines there is no more work to do. The api
     // thread will not increment the head of the dc ring until all workers have moved past the
     // current head.

@@ -217,7 +217,7 @@ sources_not_null(const struct gen_device_info *devinfo,
    if (num_sources == 3)
       return (struct string){};
 
-   if (num_sources >= 1)
+   if (num_sources)
       ERROR_IF(src0_is_null(devinfo, inst), "src0 is null");
 
    if (num_sources == 2)
@@ -416,7 +416,7 @@ general_restrictions_based_on_operand_types(const struct gen_device_info *devinf
    if (exec_size == 1)
       return (struct string){};
 
-   if (desc->ndst == 0)
+   if (!desc->ndst)
       return (struct string){};
 
    /* The PRMs say:
@@ -516,7 +516,7 @@ general_restrictions_on_region_parameters(const struct gen_device_info *devinfo,
          ERROR_IF(brw_inst_dst_hstride(devinfo, inst) != BRW_HORIZONTAL_STRIDE_1,
                   "Destination Horizontal Stride must be 1");
 
-      if (num_sources >= 1) {
+      if (num_sources) {
          if (devinfo->is_haswell || devinfo->gen >= 8) {
             ERROR_IF(brw_inst_src0_reg_file(devinfo, inst) != BRW_IMMEDIATE_VALUE &&
                      brw_inst_src0_vstride(devinfo, inst) != BRW_VERTICAL_STRIDE_0 &&

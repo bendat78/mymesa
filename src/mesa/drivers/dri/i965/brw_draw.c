@@ -412,7 +412,7 @@ static void
 intel_renderbuffer_move_temp_back(struct brw_context *brw,
                                   struct intel_renderbuffer *irb)
 {
-   if (irb->align_wa_mt == NULL)
+   if (!irb->align_wa_mt)
       return;
 
    brw_render_cache_set_check_flush(brw, irb->align_wa_mt->bo);

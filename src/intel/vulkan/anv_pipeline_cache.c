@@ -310,7 +310,7 @@ anv_pipeline_cache_load(struct anv_pipeline_cache *cache,
    struct anv_physical_device *pdevice = &device->instance->physicalDevice;
    struct cache_header header;
 
-   if (cache->cache == NULL)
+   if (!cache->cache)
       return;
 
    if (size < sizeof(header))

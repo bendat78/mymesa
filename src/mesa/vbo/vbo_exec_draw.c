@@ -110,7 +110,7 @@ vbo_copy_vertices( struct vbo_exec_context *exec )
 	 return 1;
       }
    case GL_LINE_LOOP:
-      if (last_prim->begin == 0) {
+      if (!last_prim->begin) {
          /* We're dealing with the second or later section of a split/wrapped
           * GL_LINE_LOOP.  Since we're converting line loops to line strips,
           * we've already increment the last_prim->start counter by one to

@@ -425,7 +425,7 @@ vec4_visitor::evaluate_spill_costs(float *spill_costs, bool *no_spill)
              * contain 64-bit data that is operated on via 32-bit instructions)
              */
             unsigned type_size = type_sz(inst->src[i].type);
-            if (reg_type_size[inst->src[i].nr] == 0)
+            if (!reg_type_size[inst->src[i].nr])
                reg_type_size[inst->src[i].nr] = type_size;
             else if (reg_type_size[inst->src[i].nr] != type_size)
                no_spill[inst->src[i].nr] = true;
@@ -451,7 +451,7 @@ vec4_visitor::evaluate_spill_costs(float *spill_costs, bool *no_spill)
           * contain 64-bit data that is operated on via 32-bit instructions)
           */
          unsigned type_size = type_sz(inst->dst.type);
-         if (reg_type_size[inst->dst.nr] == 0)
+         if (!reg_type_size[inst->dst.nr])
             reg_type_size[inst->dst.nr] = type_size;
          else if (reg_type_size[inst->dst.nr] != type_size)
             no_spill[inst->dst.nr] = true;

@@ -388,7 +388,7 @@ drisw_create_context(struct glx_screen *base,
    pcp->driContext =
       (*psc->core->createNewContext) (psc->driScreen,
 				      config->driConfig, shared, pcp);
-   if (pcp->driContext == NULL) {
+   if (!pcp->driContext) {
       free(pcp);
       return NULL;
    }
@@ -480,7 +480,7 @@ drisw_create_context_attribs(struct glx_screen *base,
 					    ctx_attribs,
 					    error,
 					    pcp);
-   if (pcp->driContext == NULL) {
+   if (!pcp->driContext) {
       free(pcp);
       return NULL;
    }
@@ -670,7 +670,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
    }
 
    psc->driver = driOpenSwrast();
-   if (psc->driver == NULL)
+   if (!psc->driver)
       goto handle_error;
 
    extensions = driGetDriverExtensions(psc->driver, SWRAST_DRIVER_NAME);
@@ -701,7 +701,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
          psc->swrast->createNewScreen(screen, loader_extensions,
                                       &driver_configs, psc);
    }
-   if (psc->driScreen == NULL) {
+   if (!psc->driScreen) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }

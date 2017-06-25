@@ -143,7 +143,7 @@ nir_phi_builder_add_value(struct nir_phi_builder *pb, unsigned num_components,
          if (next == pb->impl->end_block)
             continue;
 
-         if (val->defs[next->index] == NULL) {
+         if (!val->defs[next->index]) {
             /* Instead of creating a phi node immediately, we simply set the
              * value to the magic value NEEDS_PHI.  Later, we create phi nodes
              * on demand in nir_phi_builder_value_get_block_def().

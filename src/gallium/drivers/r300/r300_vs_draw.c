@@ -321,7 +321,7 @@ void r300_draw_init_vertex_shader(struct r300_context *r300,
     tgsi_scan_shader(vs->state.tokens, &info);
 
     new_vs.tokens = tgsi_alloc_tokens(newLen);
-    if (new_vs.tokens == NULL)
+    if (!new_vs.tokens)
         return;
 
     memset(&transform, 0, sizeof(transform));

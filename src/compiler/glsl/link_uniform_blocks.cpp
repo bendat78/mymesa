@@ -374,7 +374,7 @@ create_buffer_blocks(void *mem_ctx, struct gl_context *ctx,
           (!create_ubo_blocks && b->is_shader_storage)) {
 
          unsigned binding_offset = 0;
-         if (b->array != NULL) {
+         if (b->array) {
             char *name = ralloc_strdup(NULL,
                                        block_type->without_array()->name);
             size_t name_length = strlen(name);
@@ -449,7 +449,7 @@ link_uniform_blocks(void *mem_ctx,
       block_size.num_active_uniforms = 0;
       block_size.process(b->type->without_array(), "");
 
-      if (b->array != NULL) {
+      if (b->array) {
          unsigned aoa_size = b->type->arrays_of_arrays_size();
          if (b->is_shader_storage) {
             *num_ssbo_blocks += aoa_size;

@@ -706,7 +706,7 @@ static GLboolean invert_matrix_perspective( GLmatrix *mat )
    const GLfloat *in = mat->m;
    GLfloat *out = mat->inv;
 
-   if (MAT(in,2,3) == 0)
+   if (!MAT(in,2,3))
       return GL_FALSE;
 
    memcpy( out, Identity, sizeof(Identity) );

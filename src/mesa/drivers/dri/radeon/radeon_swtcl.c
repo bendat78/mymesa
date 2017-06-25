@@ -97,7 +97,7 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
 
    /* Important:
     */
-   if ( VB->NdcPtr != NULL ) {
+   if (VB->NdcPtr) {
       VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
    }
    else {
@@ -286,7 +286,7 @@ void radeonChooseVertexState( struct gl_context *ctx )
     * rasterization fallback.  As this function will be called again when we
     * leave a rasterization fallback, we can just skip it for now.
     */
-   if (rmesa->radeon.Fallback != 0)
+   if (rmesa->radeon.Fallback)
       return;
 
    /* HW perspective divide is a win, but tiny vertex formats are a

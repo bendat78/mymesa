@@ -63,7 +63,7 @@ graw_util_create_window(struct graw_info *info,
    }
 
    info->ctx = info->screen->context_create(info->screen, NULL, 0);
-   if (info->ctx == NULL) {
+   if (!info->ctx) {
       debug_printf("graw: Failed to create context\n");
       return FALSE;
    }
@@ -82,7 +82,7 @@ graw_util_create_window(struct graw_info *info,
                             PIPE_BIND_DISPLAY_TARGET);
       info->color_buf[i] = info->screen->resource_create(info->screen,
                                                          &resource_temp);
-      if (info->color_buf[i] == NULL) {
+      if (!info->color_buf[i]) {
          debug_printf("graw: Failed to create color texture\n");
          return FALSE;
       }
@@ -95,7 +95,7 @@ graw_util_create_window(struct graw_info *info,
       info->color_surf[i] = info->ctx->create_surface(info->ctx,
                                                       info->color_buf[i],
                                                       &surface_temp);
-      if (info->color_surf[i] == NULL) {
+      if (!info->color_surf[i]) {
          debug_printf("graw: Failed to get color surface\n");
          return FALSE;
       }
@@ -125,7 +125,7 @@ graw_util_create_window(struct graw_info *info,
    info->zs_surf = info->ctx->create_surface(info->ctx,
                                              info->zs_buf,
                                              &surface_temp);
-   if (info->zs_surf == NULL) {
+   if (!info->zs_surf) {
       debug_printf("graw: Failed to get Z surface\n");
       return FALSE;
    }

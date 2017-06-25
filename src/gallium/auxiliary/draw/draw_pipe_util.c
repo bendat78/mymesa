@@ -82,7 +82,7 @@ boolean draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr )
          return FALSE;
 
       stage->tmp = (struct vertex_header **) MALLOC( sizeof(struct vertex_header *) * nr );
-      if (stage->tmp == NULL) {
+      if (!stage->tmp) {
          FREE(store);
          return FALSE;
       }

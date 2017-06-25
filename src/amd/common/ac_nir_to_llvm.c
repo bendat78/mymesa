@@ -5238,11 +5238,11 @@ handle_vs_outputs_post(struct nir_to_llvm_context *ctx,
 		pos_args[1].out[2] = ctx->f32zero; /* Z */
 		pos_args[1].out[3] = ctx->f32zero;  /* W */
 
-		if (outinfo->writes_pointsize == true)
+		if (outinfo->writes_pointsize)
 			pos_args[1].out[0] = psize_value;
-		if (outinfo->writes_layer == true)
+		if (outinfo->writes_layer)
 			pos_args[1].out[2] = layer_value;
-		if (outinfo->writes_viewport_index == true)
+		if (outinfo->writes_viewport_index)
 			pos_args[1].out[3] = viewport_index_value;
 	}
 	for (i = 0; i < 4; i++) {

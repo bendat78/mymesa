@@ -135,10 +135,10 @@ static int store_shader(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	uint32_t *ptr, i;
 
-	if (shader->bo == NULL) {
+	if (!shader->bo) {
 		shader->bo = (struct r600_resource*)
 			pipe_buffer_create(ctx->screen, 0, PIPE_USAGE_IMMUTABLE, shader->shader.bc.ndw * 4);
-		if (shader->bo == NULL) {
+		if (!shader->bo) {
 			return -ENOMEM;
 		}
 		ptr = r600_buffer_map_sync_with_rings(&rctx->b, shader->bo, PIPE_TRANSFER_WRITE);
@@ -2278,7 +2278,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 
 		for (j = 0; j < so->num_outputs; j++) {
 			if (so->output[j].register_index == i) {
-				if (so->output[j].stream == 0)
+				if (!so->output[j].stream)
 					break;
 				if (so->output[j].stream > 0)
 					instream0 = false;
@@ -3134,7 +3134,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 			immediate = &ctx.parse.FullToken.FullImmediate;
 			ctx.literals = realloc(ctx.literals, (ctx.nliterals + 1) * 16);
-			if(ctx.literals == NULL) {
+			if(!ctx.literals) {
 				r = -ENOMEM;
 				goto out_err;
 			}
@@ -4129,7 +4129,7 @@ static int egcm_int_to_double(struct r600_shader_ctx *ctx)
 		alu.op = ALU_OP1_FLT32_TO_FLT64;
 
 		alu.src[0].chan = i/2;
-		if (i%2 == 0)
+		if (!i%2)
 			alu.src[0].sel = ctx->temp_reg;
 		else {
 			alu.src[0].sel = V_SQ_ALU_SRC_LITERAL;

@@ -57,7 +57,7 @@ loop_variable::record_reference(bool in_assignee,
          this->conditional_or_nested_assignment = true;
       }
 
-      if (this->first_assignment == NULL) {
+      if (!this->first_assignment) {
          assert(this->num_assignments == 0);
 
          this->first_assignment = current_assignment;
@@ -576,7 +576,7 @@ get_basic_induction_increment(ir_assignment *ir, hash_table *var_hash)
 
    ir_rvalue *inc = (op0 == var) ? rhs->operands[1] : rhs->operands[0];
 
-   if (inc->as_constant() == NULL) {
+   if (!inc->as_constant()) {
       ir_variable *const inc_var = inc->variable_referenced();
       if (inc_var) {
          hash_entry *entry = _mesa_hash_table_search(var_hash, inc_var);

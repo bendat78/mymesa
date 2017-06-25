@@ -442,7 +442,7 @@ static int ascii85_decode(const char *in, uint32_t **out, bool inflate)
    int len = 0, size = 1024;
 
    *out = realloc(*out, sizeof(uint32_t)*size);
-   if (*out == NULL)
+   if (!*out)
       return 0;
 
    while (*in >= '!' && *in <= 'z') {
@@ -451,7 +451,7 @@ static int ascii85_decode(const char *in, uint32_t **out, bool inflate)
       if (len == size) {
          size *= 2;
          *out = realloc(*out, sizeof(uint32_t)*size);
-         if (*out == NULL)
+         if (!*out)
             return 0;
       }
 

@@ -210,7 +210,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 
    if (oldGC != &dummyContext) {
-      if (--oldGC->thread_refcount == 0) {
+      if (!--oldGC->thread_refcount) {
 	 oldGC->vtable->unbind(oldGC, gc);
 	 oldGC->currentDpy = 0;
       }
@@ -232,7 +232,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
          return GL_FALSE;
       }
 
-      if (gc->thread_refcount == 0) {
+      if (!gc->thread_refcount) {
          gc->currentDpy = dpy;
          gc->currentDrawable = draw;
          gc->currentReadable = read;

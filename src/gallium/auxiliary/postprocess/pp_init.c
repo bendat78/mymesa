@@ -64,7 +64,7 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
    }
 
    ppq->pp_queue = CALLOC(num_filters, sizeof(pp_func));
-   if (ppq->pp_queue == NULL) {
+   if (!ppq->pp_queue) {
       pp_debug("Unable to allocate memory for pp_queue.\n");
       goto error;
    }
@@ -72,14 +72,14 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
    ppq->shaders = CALLOC(num_filters, sizeof(void *));
    ppq->filters = CALLOC(num_filters, sizeof(unsigned int));
 
-   if ((ppq->shaders == NULL) ||
+   if (!(ppq->shaders) ||
        (ppq->filters == NULL)) {
       pp_debug("Unable to allocate memory for shaders and filter arrays.\n");
       goto error;
    }
 
    ppq->p = pp_init_prog(ppq, pipe, cso);
-   if (ppq->p == NULL) {
+   if (!ppq->p) {
       pp_debug("pp_init_prog returned NULL.\n");
       goto error;
    }
@@ -180,7 +180,7 @@ pp_free(struct pp_queue_t *ppq)
          for (i = 0; i < ppq->n_filters; i++) {
             unsigned int filter = ppq->filters[i];
 
-            if (ppq->shaders[i] == NULL) {
+            if (!ppq->shaders[i]) {
                continue;
             }
 
@@ -189,7 +189,7 @@ pp_free(struct pp_queue_t *ppq)
              * filters.
              */
             for (j = 0; j < pp_filters[filter].shaders; j++) {
-               if (ppq->shaders[i][j] == NULL) {
+               if (!ppq->shaders[i][j]) {
                   /* We reached the end of initialized shaders. */
                   break;
                }

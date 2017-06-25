@@ -1603,7 +1603,7 @@ static void declare_system_value(struct si_shader_context *ctx,
 		unsigned i;
 		unsigned *properties = ctx->shader->selector->info.properties;
 
-		if (properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH] != 0) {
+		if (properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH]) {
 			unsigned sizes[3] = {
 				properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH],
 				properties[TGSI_PROPERTY_CS_FIXED_BLOCK_HEIGHT],

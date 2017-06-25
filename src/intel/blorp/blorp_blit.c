@@ -1510,7 +1510,7 @@ can_shrink_surface(const struct brw_blorp_surface_info *surf)
     * Currently the cases where we must split the blit are limited to cases
     * where we don't have a aux buffer.
     */
-   if (surf->aux_addr.buffer != NULL)
+   if (surf->aux_addr.buffer)
       return false;
 
    /* We can't support splitting the blit for gen <= 7, because the qpitch

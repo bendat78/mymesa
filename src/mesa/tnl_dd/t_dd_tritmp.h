@@ -635,9 +635,9 @@ static void TAG(points)( struct gl_context *ctx, GLuint first, GLuint last )
    GLuint i;
    LOCAL_VARS(1);
 
-   if (VB->Elts == 0) {
+   if (!VB->Elts) {
       for ( i = first ; i < last ; i++ ) {
-	 if ( VB->ClipMask[i] == 0 ) {
+	 if (!VB->ClipMask[i]) {
 	    VERTEX *v = (VERTEX *)GET_VERTEX(i);
 	    POINT( v );
 	 }
@@ -645,7 +645,7 @@ static void TAG(points)( struct gl_context *ctx, GLuint first, GLuint last )
    } else {
       for ( i = first ; i < last ; i++ ) {
 	 GLuint e = VB->Elts[i];
-	 if ( VB->ClipMask[e] == 0 ) {
+	 if (!VB->ClipMask[e]) {
 	    VERTEX *v = (VERTEX *)GET_VERTEX(e);
 	    POINT( v );
 	 }

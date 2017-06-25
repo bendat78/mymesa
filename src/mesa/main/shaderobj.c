@@ -70,7 +70,7 @@ _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
       assert(old->RefCount > 0);
 
       if (p_atomic_dec_zero(&old->RefCount)) {
-	 if (old->Name != 0)
+	 if (old->Name)
 	    _mesa_HashRemove(ctx->Shared->ShaderObjects, old->Name);
          _mesa_delete_shader(ctx, old);
       }
@@ -244,7 +244,7 @@ _mesa_reference_shader_program_(struct gl_context *ctx,
       assert(old->RefCount > 0);
 
       if (p_atomic_dec_zero(&old->RefCount)) {
-	 if (old->Name != 0)
+	 if (old->Name)
 	    _mesa_HashRemove(ctx->Shared->ShaderObjects, old->Name);
          _mesa_delete_shader_program(ctx, old);
       }
@@ -319,7 +319,7 @@ _mesa_clear_shader_program_data(struct gl_context *ctx,
                                 struct gl_shader_program *shProg)
 {
    for (gl_shader_stage sh = 0; sh < MESA_SHADER_STAGES; sh++) {
-      if (shProg->_LinkedShaders[sh] != NULL) {
+      if (shProg->_LinkedShaders[sh]) {
          _mesa_delete_linked_shader(ctx, shProg->_LinkedShaders[sh]);
          shProg->_LinkedShaders[sh] = NULL;
       }

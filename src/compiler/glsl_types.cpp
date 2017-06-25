@@ -40,7 +40,7 @@ void *glsl_type::mem_ctx = NULL;
 void
 glsl_type::init_ralloc_type_ctx(void)
 {
-   if (glsl_type::mem_ctx == NULL) {
+   if (!glsl_type::mem_ctx) {
       glsl_type::mem_ctx = ralloc_context(NULL);
       assert(glsl_type::mem_ctx != NULL);
    }
@@ -411,27 +411,27 @@ _mesa_glsl_release_types(void)
     * object, or if process terminates), so no mutex-locking should be
     * necessary.
     */
-   if (glsl_type::array_types != NULL) {
+   if (glsl_type::array_types) {
       _mesa_hash_table_destroy(glsl_type::array_types, NULL);
       glsl_type::array_types = NULL;
    }
 
-   if (glsl_type::record_types != NULL) {
+   if (glsl_type::record_types) {
       _mesa_hash_table_destroy(glsl_type::record_types, NULL);
       glsl_type::record_types = NULL;
    }
 
-   if (glsl_type::interface_types != NULL) {
+   if (glsl_type::interface_types) {
       _mesa_hash_table_destroy(glsl_type::interface_types, NULL);
       glsl_type::interface_types = NULL;
    }
 
-   if (glsl_type::function_types != NULL) {
+   if (glsl_type::function_types) {
       _mesa_hash_table_destroy(glsl_type::function_types, NULL);
       glsl_type::function_types = NULL;
    }
 
-   if (glsl_type::subroutine_types != NULL) {
+   if (glsl_type::subroutine_types) {
       _mesa_hash_table_destroy(glsl_type::subroutine_types, NULL);
       glsl_type::subroutine_types = NULL;
    }

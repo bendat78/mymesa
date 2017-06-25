@@ -525,7 +525,7 @@ static int counter_total = 0;
    VALIDATE_ATOM(program, I915_HW_PROGRAM);
 #undef VALIDATE_ATOM
 
-   if (i915->num_validation_buffers == 0)
+   if (!i915->num_validation_buffers)
       return TRUE;
 
    if (!i915_winsys_validate_buffers(i915->batch, i915->validation_buffers,

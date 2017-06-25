@@ -142,7 +142,7 @@ static void do_realloc( struct x86_function *p )
    if (p->store == p->error_overflow) {
       p->csr = p->store;
    }
-   else if (p->size == 0) {
+   else if (!p->size) {
       p->size = 1024;
       p->store = rtasm_exec_malloc(p->size);
       p->csr = p->store;
@@ -164,7 +164,7 @@ static void do_realloc( struct x86_function *p )
       rtasm_exec_free(tmp);
    }
 
-   if (p->store == NULL) {
+   if (!p->store) {
       p->store = p->csr = p->error_overflow;
       p->size = sizeof(p->error_overflow);
    }
@@ -1662,14 +1662,14 @@ static void x87_arith_op( struct x86_function *p, struct x86_reg dst, struct x86
    assert(dst.file == file_x87);
 
    if (arg.file == file_x87) {
-      if (dst.idx == 0)
+      if (!dst.idx)
 	 emit_2ub(p, dst0ub0, dst0ub1+arg.idx);
-      else if (arg.idx == 0)
+      else if (!arg.idx)
 	 emit_2ub(p, arg0ub0, arg0ub1+arg.idx);
       else
 	 assert(0);
    }
-   else if (dst.idx == 0) {
+   else if (!dst.idx) {
       assert(arg.file == file_REG32);
       emit_1ub(p, 0xd8);
       emit_modrm_noreg(p, argmem_noreg, arg);
@@ -2179,7 +2179,7 @@ void x86_init_func_size( struct x86_function *p, unsigned code_size )
 {
    p->size = code_size;
    p->store = rtasm_exec_malloc(code_size);
-   if (p->store == NULL) {
+   if (!p->store) {
       p->store = p->error_overflow;
    }
    x86_init_func_common(p);

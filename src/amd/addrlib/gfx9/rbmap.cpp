@@ -939,7 +939,7 @@ RB_MAP::get_meta_eq( CoordEq& metaaddr,
                     }
                 }
                 // if the rb bit is still empty, then we have to mark all pipe bits as affecting the RB
-                if( cur_rbeq[j].getsize() == 0 ) {
+                if(!cur_rbeq[j].getsize()) {
                     pipe_mask = (1 << num_pipes_log2) - 1;
                 }
             }

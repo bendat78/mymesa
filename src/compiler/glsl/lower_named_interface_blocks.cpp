@@ -241,7 +241,7 @@ flatten_named_interface_blocks_declarations::visit_leave(ir_assignment *ir)
 void
 flatten_named_interface_blocks_declarations::handle_rvalue(ir_rvalue **rvalue)
 {
-   if (*rvalue == NULL)
+   if (!*rvalue)
       return;
 
    ir_dereference_record *ir = (*rvalue)->as_dereference_record();
@@ -262,7 +262,7 @@ flatten_named_interface_blocks_declarations::handle_rvalue(ir_rvalue **rvalue)
    if (var->data.mode == ir_var_uniform || var->data.mode == ir_var_shader_storage)
       return;
 
-   if (var->get_interface_type() != NULL) {
+   if (var->get_interface_type()) {
       char *iface_field_name =
          ralloc_asprintf(mem_ctx, "%s %s.%s.%s",
                          var->data.mode == ir_var_shader_in ? "in" : "out",

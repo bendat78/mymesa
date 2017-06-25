@@ -92,7 +92,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch,
                         struct brw_bufmgr *bufmgr,
                         bool has_llc)
 {
-   if (batch->last_bo != NULL) {
+   if (batch->last_bo) {
       brw_bo_unreference(batch->last_bo);
       batch->last_bo = NULL;
    }
@@ -146,7 +146,7 @@ intel_batchbuffer_reset_to_saved(struct brw_context *brw)
    brw->batch.exec_count = brw->batch.saved.exec_count;
 
    brw->batch.map_next = brw->batch.saved.map_next;
-   if (USED_BATCH(brw->batch) == 0)
+   if (!USED_BATCH(brw->batch))
       brw->batch.ring = UNKNOWN_RING;
 }
 
@@ -403,7 +403,7 @@ brw_new_batch(struct brw_context *brw)
     * would otherwise be stored in the context (which for all intents and
     * purposes means everything).
     */
-   if (brw->hw_ctx == 0)
+   if (!brw->hw_ctx)
       brw->ctx.NewDriverState |= BRW_NEW_CONTEXT;
 
    brw->ctx.NewDriverState |= BRW_NEW_BATCH;
@@ -684,10 +684,10 @@ _intel_batchbuffer_flush_fence(struct brw_context *brw,
 {
    int ret;
 
-   if (USED_BATCH(brw->batch) == 0)
+   if (!USED_BATCH(brw->batch))
       return 0;
 
-   if (brw->throttle_batch[0] == NULL) {
+   if (!brw->throttle_batch[0]) {
       brw->throttle_batch[0] = brw->batch.bo;
       brw_bo_reference(brw->throttle_batch[0]);
    }

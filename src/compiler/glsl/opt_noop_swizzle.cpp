@@ -60,7 +60,7 @@ ir_noop_swizzle_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
 
    int elems = swiz->val->type->vector_elements;
-   if (swiz->mask.x != 0)
+   if (swiz->mask.x)
       return;
    if (elems >= 2 && swiz->mask.y != 1)
       return;

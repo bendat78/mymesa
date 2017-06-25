@@ -664,7 +664,7 @@ radv_prims_for_vertices(struct radv_prim_vertex_count *info, unsigned num)
 	if (!num)
 		return 0;
 
-	if (info->incr == 0)
+	if (!info->incr)
 		return 0;
 
 	if (num < info->min)

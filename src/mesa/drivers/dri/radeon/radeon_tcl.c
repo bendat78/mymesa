@@ -366,7 +366,7 @@ static GLboolean radeon_run_tcl_render( struct gl_context *ctx,
    if (rmesa->radeon.TclFallback)
       return GL_TRUE;	/* fallback to software t&l */
 
-   if (VB->Count == 0)
+   if (!VB->Count)
       return GL_FALSE;
 
    /* NOTE: inputs != tnl->render_inputs - these are the untransformed

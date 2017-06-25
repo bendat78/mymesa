@@ -30,7 +30,7 @@ struct util_ringbuffer *util_ringbuffer_create( unsigned dwords )
    assert(util_is_power_of_two(dwords));
 
    ring->buf = MALLOC( dwords * sizeof(unsigned) );
-   if (ring->buf == NULL)
+   if (!ring->buf)
       goto fail;
 
    ring->mask = dwords - 1;

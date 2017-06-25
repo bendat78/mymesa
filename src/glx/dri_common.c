@@ -340,7 +340,7 @@ createDriMode(const __DRIcoreExtension * core,
          break;
    }
 
-   if (driConfigs[i] == NULL)
+   if (!driConfigs[i])
       return NULL;
 
    driConfig = malloc(sizeof *driConfig);
@@ -363,7 +363,7 @@ driConvertConfigs(const __DRIcoreExtension * core,
    head.next = NULL;
    for (m = configs; m; m = m->next) {
       tail->next = createDriMode(core, m, driConfigs);
-      if (tail->next == NULL) {
+      if (!tail->next) {
          /* no matching dri config for m */
          continue;
       }
@@ -399,7 +399,7 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
       return NULL;
 
    psc = priv->screens[gc->screen];
-   if (priv->drawHash == NULL)
+   if (!priv->drawHash)
       return NULL;
 
    if (__glxHashLookup(priv->drawHash, glxDrawable, (void *) &pdraw) == 0) {
@@ -437,7 +437,7 @@ driReleaseDrawables(struct glx_context *gc)
 		       gc->currentDrawable, (void *) &pdraw) == 0) {
       if (pdraw->drawable == pdraw->xDrawable) {
 	 pdraw->refcount --;
-	 if (pdraw->refcount == 0) {
+	 if (!pdraw->refcount) {
 	    (*pdraw->destroyDrawable)(pdraw);
 	    __glxHashDelete(priv->drawHash, gc->currentDrawable);
 	 }
@@ -448,7 +448,7 @@ driReleaseDrawables(struct glx_context *gc)
 		       gc->currentReadable, (void *) &pdraw) == 0) {
       if (pdraw->drawable == pdraw->xDrawable) {
 	 pdraw->refcount --;
-	 if (pdraw->refcount == 0) {
+	 if (!pdraw->refcount) {
 	    (*pdraw->destroyDrawable)(pdraw);
 	    __glxHashDelete(priv->drawHash, gc->currentReadable);
 	 }

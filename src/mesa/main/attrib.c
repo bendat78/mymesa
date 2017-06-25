@@ -925,7 +925,7 @@ _mesa_PopAttrib(void)
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
 
-   if (ctx->AttribStackDepth == 0) {
+   if (!ctx->AttribStackDepth) {
       _mesa_error( ctx, GL_STACK_UNDERFLOW, "glPopAttrib" );
       return;
    }
@@ -1617,7 +1617,7 @@ init_array_attrib_data(struct gl_context *ctx,
    /* Get a non driver gl_vertex_array_object. */
    attrib->VAO = CALLOC_STRUCT( gl_vertex_array_object );
 
-   if (attrib->VAO == NULL) {
+   if (!attrib->VAO) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
       return false;
    }
@@ -1736,7 +1736,7 @@ _mesa_PopClientAttrib(void)
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
 
-   if (ctx->ClientAttribStackDepth == 0) {
+   if (!ctx->ClientAttribStackDepth) {
       _mesa_error( ctx, GL_STACK_UNDERFLOW, "glPopClientAttrib" );
       return;
    }

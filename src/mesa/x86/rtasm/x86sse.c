@@ -19,7 +19,7 @@ static unsigned char *cptr( void (*label)() )
 
 static void do_realloc( struct x86_function *p )
 {
-   if (p->size == 0) {
+   if (!p->size) {
       p->size = 1024;
       p->store = _mesa_exec_malloc(p->size);
       p->csr = p->store;
@@ -194,7 +194,7 @@ struct x86_reg x86_make_disp( struct x86_reg reg,
    else
       reg.disp += disp;
 
-   if (reg.disp == 0)
+   if (!reg.disp)
       reg.mod = mod_INDIRECT;
    else if (reg.disp <= 127 && reg.disp >= -128)
       reg.mod = mod_DISP8;
@@ -817,14 +817,14 @@ static void x87_arith_op( struct x86_function *p, struct x86_reg dst, struct x86
    assert(dst.file == file_x87);
 
    if (arg.file == file_x87) {
-      if (dst.idx == 0)
+      if (!dst.idx)
 	 emit_2ub(p, dst0ub0, dst0ub1+arg.idx);
-      else if (arg.idx == 0)
+      else if (!arg.idx)
 	 emit_2ub(p, arg0ub0, arg0ub1+arg.idx);
       else
 	 assert(0);
    }
-   else if (dst.idx == 0) {
+   else if (!dst.idx) {
       assert(arg.file == file_REG32);
       emit_1ub(p, 0xd8);
       emit_modrm_noreg(p, argmem_noreg, arg);

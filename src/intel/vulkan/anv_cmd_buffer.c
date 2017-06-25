@@ -121,7 +121,7 @@ anv_cmd_state_reset(struct anv_cmd_buffer *cmd_buffer)
 
    memset(&state->descriptors, 0, sizeof(state->descriptors));
    for (uint32_t i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (state->push_constants[i] != NULL) {
+      if (state->push_constants[i]) {
          vk_free(&cmd_buffer->pool->alloc, state->push_constants[i]);
          state->push_constants[i] = NULL;
       }
@@ -148,7 +148,7 @@ anv_cmd_state_reset(struct anv_cmd_buffer *cmd_buffer)
    state->pma_fix_enabled = false;
    state->hiz_enabled = false;
 
-   if (state->attachments != NULL) {
+   if (state->attachments) {
       vk_free(&cmd_buffer->pool->alloc, state->attachments);
       state->attachments = NULL;
    }
@@ -162,17 +162,17 @@ anv_cmd_buffer_ensure_push_constants_size(struct anv_cmd_buffer *cmd_buffer,
 {
    struct anv_push_constants **ptr = &cmd_buffer->state.push_constants[stage];
 
-   if (*ptr == NULL) {
+   if (!*ptr) {
       *ptr = vk_alloc(&cmd_buffer->pool->alloc, size, 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-      if (*ptr == NULL) {
+      if (!*ptr) {
          anv_batch_set_error(&cmd_buffer->batch, VK_ERROR_OUT_OF_HOST_MEMORY);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
    } else if ((*ptr)->size < size) {
       *ptr = vk_realloc(&cmd_buffer->pool->alloc, *ptr, size, 8,
                          VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-      if (*ptr == NULL) {
+      if (!*ptr) {
          anv_batch_set_error(&cmd_buffer->batch, VK_ERROR_OUT_OF_HOST_MEMORY);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -672,7 +672,7 @@ anv_cmd_buffer_cs_push_constants(struct anv_cmd_buffer *cmd_buffer)
    const struct brw_stage_prog_data *prog_data = &cs_prog_data->base;
 
    /* If we don't actually have any push constants, bail. */
-   if (cs_prog_data->push.total.size == 0)
+   if (!cs_prog_data->push.total.size)
       return (struct anv_state) { .offset = 0 };
 
    const unsigned push_constant_alignment =

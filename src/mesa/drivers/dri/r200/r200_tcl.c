@@ -374,7 +374,7 @@ static GLboolean r200_run_tcl_render( struct gl_context *ctx,
 
    radeon_print(RADEON_RENDER, RADEON_NORMAL, "%s\n", __func__);
 
-   if (VB->Count == 0)
+   if (!VB->Count)
       return GL_FALSE;
 
    /* Validate state:

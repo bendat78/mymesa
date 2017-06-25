@@ -82,7 +82,7 @@ alloc_back_shm_ximage(XMesaBuffer b, GLuint width, GLuint height)
                                         b->xm_visual->visinfo->depth,
                                         ZPixmap, NULL, &b->shminfo,
                                         width, height);
-   if (b->backxrb->ximage == NULL) {
+   if (!b->backxrb->ximage) {
       _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (XShmCreateImage), disabling.\n");
       b->shm = 0;
       return GL_FALSE;

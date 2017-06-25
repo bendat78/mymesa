@@ -364,7 +364,7 @@ i915_emit_const4f(struct i915_fp_compile * p,
           ifs->constants[reg][3] == c3) {
          return UREG(REG_TYPE_CONST, reg);
       }
-      else if (ifs->constant_flags[reg] == 0) {
+      else if (!ifs->constant_flags[reg]) {
 
          ifs->constants[reg][0] = c0;
          ifs->constants[reg][1] = c1;

@@ -523,7 +523,7 @@ svga_validate_surface_view(struct svga_context *svga, struct svga_surface *s)
       SVGA3dRenderTargetViewDesc desc;
       struct svga_texture *stex = svga_texture(s->base.texture);
 
-      if (stex->validated == FALSE) {
+      if (!stex->validated) {
          assert(stex->handle);
 
          /* We are about to render into a surface that has not been validated.

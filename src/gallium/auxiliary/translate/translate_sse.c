@@ -1233,7 +1233,7 @@ incr_inputs(struct translate_sse *p, unsigned index_size)
          x86_make_disp(p->machine_EDI,
                        get_offset(p, &p->buffer[buffer_index].stride));
 
-      if (p->buffer_variant[0].instance_divisor == 0) {
+      if (!p->buffer_variant[0].instance_divisor) {
          x64_rexw(p->func);
          x86_add(p->func, p->idx_ESI, stride);
          sse_prefetchnta(p->func, x86_make_disp(p->idx_ESI, 192));
@@ -1252,7 +1252,7 @@ incr_inputs(struct translate_sse *p, unsigned index_size)
          x86_make_disp(p->machine_EDI,
                        get_offset(p, &p->buffer[variant->buffer_index].stride));
 
-         if (variant->instance_divisor == 0) {
+         if (!variant->instance_divisor) {
             x86_mov(p->func, p->tmp_EAX, buf_stride);
             x64_rexw(p->func);
             x86_add(p->func, p->tmp_EAX, buf_ptr);
@@ -1551,19 +1551,19 @@ translate_sse2_create(const struct translate_key *key)
       goto fail;
 
    p->translate.run = (run_func) x86_get_func(&p->linear_func);
-   if (p->translate.run == NULL)
+   if (!p->translate.run)
       goto fail;
 
    p->translate.run_elts = (run_elts_func) x86_get_func(&p->elt_func);
-   if (p->translate.run_elts == NULL)
+   if (!p->translate.run_elts)
       goto fail;
 
    p->translate.run_elts16 = (run_elts16_func) x86_get_func(&p->elt16_func);
-   if (p->translate.run_elts16 == NULL)
+   if (!p->translate.run_elts16)
       goto fail;
 
    p->translate.run_elts8 = (run_elts8_func) x86_get_func(&p->elt8_func);
-   if (p->translate.run_elts8 == NULL)
+   if (!p->translate.run_elts8)
       goto fail;
 
    return &p->translate;

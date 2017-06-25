@@ -149,7 +149,7 @@ process_xfb_layout_qualifiers(void *mem_ctx, const gl_linked_shader *sh,
       }
    }
 
-   if (*num_tfeedback_decls == 0)
+   if (!*num_tfeedback_decls)
       return has_xfb_qualifiers;
 
    unsigned i = 0;
@@ -409,7 +409,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
          while (idx < slot_limit) {
             unsigned i = var->data.location_frac;
             while (i < last_comp) {
-               if (explicit_locations[idx][i] != NULL) {
+               if (explicit_locations[idx][i]) {
                   linker_error(prog,
                                "%s shader has multiple outputs explicitly "
                                "assigned to location %d and component %d\n",
@@ -640,7 +640,7 @@ tfeedback_decl::init(struct gl_context *ctx, const void *mem_ctx,
    const char *base_name_end;
    long subscript = parse_program_resource_name(input, &base_name_end);
    this->var_name = ralloc_strndup(mem_ctx, input, base_name_end - input);
-   if (this->var_name == NULL) {
+   if (!this->var_name) {
       _mesa_error_no_memory(__func__);
       return;
    }
@@ -1929,7 +1929,7 @@ populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
              */
             consumer_inputs_with_locations[input_var->data.location] =
                input_var;
-         } else if (input_var->get_interface_type() != NULL) {
+         } else if (input_var->get_interface_type()) {
             char *const iface_field_name =
                ralloc_asprintf(mem_ctx, "%s.%s",
                   input_var->get_interface_type()->without_array()->name,
@@ -1962,7 +1962,7 @@ get_matching_input(void *mem_ctx,
 
    if (output_var->data.explicit_location) {
       input_var = consumer_inputs_with_locations[output_var->data.location];
-   } else if (output_var->get_interface_type() != NULL) {
+   } else if (output_var->get_interface_type()) {
       char *const iface_field_name =
          ralloc_asprintf(mem_ctx, "%s.%s",
             output_var->get_interface_type()->without_array()->name,

@@ -93,7 +93,7 @@ wsi_queue_push(struct wsi_queue *queue, uint32_t index)
 
    pthread_mutex_lock(&queue->mutex);
 
-   if (u_vector_length(&queue->vector) == 0)
+   if (!u_vector_length(&queue->vector))
       pthread_cond_signal(&queue->cond);
 
    elem = u_vector_add(&queue->vector);

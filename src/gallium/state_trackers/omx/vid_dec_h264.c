@@ -343,7 +343,7 @@ static void seq_parameter_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp)
 
    sps->pic_order_cnt_type = vl_rbsp_ue(rbsp);
 
-   if (sps->pic_order_cnt_type == 0)
+   if (!sps->pic_order_cnt_type)
       sps->log2_max_pic_order_cnt_lsb_minus4 = vl_rbsp_ue(rbsp);
    else if (sps->pic_order_cnt_type == 1) {
       sps->delta_pic_order_always_zero_flag = vl_rbsp_u(rbsp, 1);
@@ -431,7 +431,7 @@ static void picture_parameter_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbs
    if (pps->num_slice_groups_minus1 > 0) {
       pps->slice_group_map_type = vl_rbsp_ue(rbsp);
 
-      if (pps->slice_group_map_type == 0) {
+      if (!pps->slice_group_map_type) {
 
          for (i = 0; i <= pps->num_slice_groups_minus1; ++i)
             /* run_length_minus1[i] */
@@ -734,7 +734,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       priv->codec_data.h264.idr_pic_id = idr_pic_id;
    }
 
-   if (sps->pic_order_cnt_type == 0) {
+   if (!sps->pic_order_cnt_type) {
       unsigned log2_max_pic_order_cnt_lsb = sps->log2_max_pic_order_cnt_lsb_minus4 + 4;
       unsigned max_pic_order_cnt_lsb = 1 << log2_max_pic_order_cnt_lsb;
       int pic_order_cnt_lsb = vl_rbsp_u(rbsp, log2_max_pic_order_cnt_lsb);
@@ -813,7 +813,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
 
       priv->codec_data.h264.prevFrameNumOffset = FrameNumOffset;
 
-      if (sps->num_ref_frames_in_pic_order_cnt_cycle != 0)
+      if (sps->num_ref_frames_in_pic_order_cnt_cycle)
          absFrameNum = FrameNumOffset + frame_num;
       else
          absFrameNum = 0;

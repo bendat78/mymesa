@@ -99,7 +99,7 @@ process_arrays(void *mem_ctx, ir_dereference_array *ir,
    if (ir) {
       struct uniform_block_array_elements **ub_array_ptr =
          process_arrays(mem_ctx, ir->array->as_dereference_array(), block);
-      if (*ub_array_ptr == NULL) {
+      if (!*ub_array_ptr) {
          *ub_array_ptr = rzalloc(mem_ctx, struct uniform_block_array_elements);
          (*ub_array_ptr)->ir = ir;
       }

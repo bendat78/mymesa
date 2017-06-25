@@ -379,7 +379,7 @@ i915_emit_const4f(struct i915_fragment_program * p,
           p->constant[reg][2] == c2 && p->constant[reg][3] == c3) {
          return UREG(REG_TYPE_CONST, reg);
       }
-      else if (p->constant_flags[reg] == 0) {
+      else if (!p->constant_flags[reg]) {
          p->constant[reg][0] = c0;
          p->constant[reg][1] = c1;
          p->constant[reg][2] = c2;
@@ -416,7 +416,7 @@ i915_emit_param4fv(struct i915_fragment_program * p, const GLfloat * values)
 
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
-      if (p->constant_flags[reg] == 0) {
+      if (!p->constant_flags[reg]) {
          p->constant_flags[reg] = I915_CONSTFLAG_PARAM;
          i = p->nr_params++;
 

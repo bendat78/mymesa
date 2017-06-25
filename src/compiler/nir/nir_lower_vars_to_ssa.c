@@ -147,7 +147,7 @@ get_deref_node(nir_deref_var *deref, struct lower_variables_state *state)
 
          assert(deref_struct->index < glsl_get_length(node->type));
 
-         if (node->children[deref_struct->index] == NULL)
+         if (!node->children[deref_struct->index])
             node->children[deref_struct->index] =
                deref_node_create(node, tail->type, state->dead_ctx);
 
@@ -167,7 +167,7 @@ get_deref_node(nir_deref_var *deref, struct lower_variables_state *state)
             if (arr->base_offset >= glsl_get_length(node->type))
                return NULL;
 
-            if (node->children[arr->base_offset] == NULL)
+            if (!node->children[arr->base_offset])
                node->children[arr->base_offset] =
                   deref_node_create(node, tail->type, state->dead_ctx);
 
@@ -175,7 +175,7 @@ get_deref_node(nir_deref_var *deref, struct lower_variables_state *state)
             break;
 
          case nir_deref_array_type_indirect:
-            if (node->indirect == NULL)
+            if (!node->indirect)
                node->indirect = deref_node_create(node, tail->type,
                                                   state->dead_ctx);
 
@@ -184,7 +184,7 @@ get_deref_node(nir_deref_var *deref, struct lower_variables_state *state)
             break;
 
          case nir_deref_array_type_wildcard:
-            if (node->wildcard == NULL)
+            if (!node->wildcard)
                node->wildcard = deref_node_create(node, tail->type,
                                                   state->dead_ctx);
 
@@ -223,7 +223,7 @@ foreach_deref_node_worker(struct deref_node *node, nir_deref *deref,
                                       struct lower_variables_state *state),
                           struct lower_variables_state *state)
 {
-   if (deref->child == NULL) {
+   if (!deref->child) {
       return cb(node, state);
    } else {
       switch (deref->child->deref_type) {
@@ -288,7 +288,7 @@ static bool
 deref_may_be_aliased_node(struct deref_node *node, nir_deref *deref,
                           struct lower_variables_state *state)
 {
-   if (deref->child == NULL) {
+   if (!deref->child) {
       return false;
    } else {
       switch (deref->child->deref_type) {
@@ -361,7 +361,7 @@ register_load_instr(nir_intrinsic_instr *load_instr,
    if (!node)
       return;
 
-   if (node->loads == NULL)
+   if (!node->loads)
       node->loads = _mesa_set_create(state->dead_ctx, _mesa_hash_pointer,
                                      _mesa_key_pointer_equal);
 
@@ -376,7 +376,7 @@ register_store_instr(nir_intrinsic_instr *store_instr,
    if (!node)
       return;
 
-   if (node->stores == NULL)
+   if (!node->stores)
       node->stores = _mesa_set_create(state->dead_ctx, _mesa_hash_pointer,
                                      _mesa_key_pointer_equal);
 
@@ -394,7 +394,7 @@ register_copy_instr(nir_intrinsic_instr *copy_instr,
       if (!node)
          continue;
 
-      if (node->copies == NULL)
+      if (!node->copies)
          node->copies = _mesa_set_create(state->dead_ctx, _mesa_hash_pointer,
                                          _mesa_key_pointer_equal);
 

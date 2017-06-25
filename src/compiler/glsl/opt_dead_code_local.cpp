@@ -226,7 +226,7 @@ process_assignment(void *lin_ctx, ir_assignment *ir, exec_list *assignments)
 
 	       entry->ir->write_mask &= ~remove;
 	       entry->unused &= ~remove;
-	       if (entry->ir->write_mask == 0) {
+	       if (!entry->ir->write_mask) {
 		  /* Delete the dead assignment. */
 		  entry->ir->remove();
 		  entry->remove();
@@ -258,7 +258,7 @@ process_assignment(void *lin_ctx, ir_assignment *ir, exec_list *assignments)
 	       }
 	    }
 	 }
-      } else if (ir->whole_variable_written() != NULL) {
+      } else if (ir->whole_variable_written()) {
 	 /* We did a whole-variable assignment.  So, any instruction in
 	  * the assignment list with the same LHS is dead.
 	  */

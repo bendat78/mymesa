@@ -72,39 +72,39 @@ OMX_ERRORTYPE vid_dec_LoaderComponent(stLoaderComponentType *comp)
    comp->name_specific_length = 3;
 
    comp->name = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->name == NULL)
+   if (!comp->name)
       goto error;
 
    comp->name_specific = CALLOC(comp->name_specific_length, sizeof(char *));
-   if (comp->name_specific == NULL)
+   if (!comp->name_specific)
       goto error;
 
    comp->role_specific = CALLOC(comp->name_specific_length, sizeof(char *));
-   if (comp->role_specific == NULL)
+   if (!comp->role_specific)
       goto error;
 
    comp->name_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->name_specific[0] == NULL)
+   if (!comp->name_specific[0])
       goto error_specific;
 
    comp->name_specific[1] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->name_specific[1] == NULL)
+   if (!comp->name_specific[1])
       goto error_specific;
 
    comp->name_specific[2] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->name_specific[2] == NULL)
+   if (!comp->name_specific[2])
       goto error_specific;
 
    comp->role_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->role_specific[0] == NULL)
+   if (!comp->role_specific[0])
       goto error_specific;
 
    comp->role_specific[1] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->role_specific[1] == NULL)
+   if (!comp->role_specific[1])
       goto error_specific;
 
    comp->role_specific[2] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->role_specific[2] == NULL)
+   if (!comp->role_specific[2])
       goto error_specific;
 
    strcpy(comp->name, OMX_VID_DEC_BASE_NAME);

@@ -442,7 +442,7 @@ replay_init( struct copy_context *copy )
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       struct gl_buffer_object *vbo = copy->array[i]->BufferObj;
 
-      if (copy->array[i]->StrideB == 0) {
+      if (!copy->array[i]->StrideB) {
 	 copy->dstarray_ptr[i] = copy->array[i];
       }
       else {

@@ -628,7 +628,7 @@ dri_create_context(struct glx_screen *base,
       (*psc->legacy->createNewContext) (psc->driScreen,
                                         config->driConfig,
                                         renderType, shared, hwContext, pcp);
-   if (pcp->driContext == NULL) {
+   if (!pcp->driContext) {
       XF86DRIDestroyContext(psc->base.dpy, psc->base.scr, pcp->hwContextID);
       free(pcp);
       return NULL;
@@ -749,7 +749,7 @@ driSetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
    if (pdraw) {
       struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
-      if (psc->swapControl != NULL) {
+      if (psc->swapControl) {
          psc->swapControl->setSwapInterval(pdp->driDrawable, interval);
          return 0;
       }
@@ -765,7 +765,7 @@ driGetSwapInterval(__GLXDRIdrawable *pdraw)
    if (pdraw) {
       struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
-      if (psc->swapControl != NULL)
+      if (psc->swapControl)
          return psc->swapControl->getSwapInterval(pdp->driDrawable);
    }
    return 0;
@@ -834,7 +834,7 @@ driCreateScreen(int screen, struct glx_display *priv)
    }
 
    psc->driver = driOpenDriver(driverName);
-   if (psc->driver == NULL)
+   if (!psc->driver)
       goto cleanup;
 
    extensions = dlsym(psc->driver, __DRI_DRIVER_EXTENSIONS);
@@ -856,7 +856,7 @@ driCreateScreen(int screen, struct glx_display *priv)
    pdp = (struct dri_display *) priv->driDisplay;
    psc->driScreen =
       CallCreateNewScreen(psc->base.dpy, screen, psc, pdp);
-   if (psc->driScreen == NULL)
+   if (!psc->driScreen)
       goto cleanup;
 
    extensions = psc->core->getExtensions(psc->driScreen);

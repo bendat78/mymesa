@@ -237,7 +237,7 @@ nir_opt_if(nir_shader *shader)
    bool progress = false;
 
    nir_foreach_function(function, shader) {
-      if (function->impl == NULL)
+      if (!function->impl)
          continue;
 
       if (opt_if_cf_list(&function->impl->body)) {

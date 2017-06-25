@@ -176,11 +176,11 @@ svga_delete_vs_state(struct pipe_context *pipe, void *shader)
    /* Check if there is a generated geometry shader to go with this
     * vertex shader. If there is, then delete the geometry shader as well.
     */
-   if (vs->gs != NULL) {
+   if (vs->gs) {
       svga->pipe.delete_gs_state(&svga->pipe, vs->gs);
    }
 
-   if (vs->base.stream_output != NULL)
+   if (vs->base.stream_output)
       svga_delete_stream_output(svga, vs->base.stream_output);
 
    draw_delete_vertex_shader(svga->swtnl.draw, vs->draw_shader);

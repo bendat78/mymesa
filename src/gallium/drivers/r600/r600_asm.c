@@ -1711,7 +1711,7 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 	}
 	free(bc->bytecode);
 	bc->bytecode = calloc(4, bc->ndw);
-	if (bc->bytecode == NULL)
+	if (!bc->bytecode)
 		return -ENOMEM;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		const struct cf_op_info *cfop = r600_isa_cf(cf->op);

@@ -171,7 +171,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceInfo(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_SURFACE_INFO_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_SURFACE_INFO_OUTPUT)))
@@ -274,7 +274,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceInfo(
 
             // Overwrite these parameters if we have a valid format
         }
-        else if (localIn.bpp != 0)
+        else if (localIn.bpp)
         {
             localIn.width  = (localIn.width != 0) ? localIn.width : 1;
             localIn.height = (localIn.height != 0) ? localIn.height : 1;
@@ -449,7 +449,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_SURFACE_ADDRFROMCOORD_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_SURFACE_ADDRFROMCOORD_OUTPUT)))
@@ -529,7 +529,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddr(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_SURFACE_COORDFROMADDR_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_SURFACE_COORDFROMADDR_OUTPUT)))
@@ -604,7 +604,7 @@ ADDR_E_RETURNCODE Lib::ComputeSliceTileSwizzle(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_SLICESWIZZLE_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_SLICESWIZZLE_OUTPUT)))
@@ -657,7 +657,7 @@ ADDR_E_RETURNCODE Lib::ExtractBankPipeSwizzle(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_EXTRACT_BANKPIPE_SWIZZLE_INPUT)) ||
             (pOut->size != sizeof(ADDR_EXTRACT_BANKPIPE_SWIZZLE_OUTPUT)))
@@ -709,7 +709,7 @@ ADDR_E_RETURNCODE Lib::CombineBankPipeSwizzle(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_FMASK_INFO_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_FMASK_INFO_OUTPUT)))
@@ -763,7 +763,7 @@ ADDR_E_RETURNCODE Lib::ComputeBaseSwizzle(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_BASE_SWIZZLE_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT)))
@@ -822,7 +822,7 @@ ADDR_E_RETURNCODE Lib::ComputeFmaskInfo(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_FMASK_INFO_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_FMASK_INFO_OUTPUT)))
@@ -916,7 +916,7 @@ ADDR_E_RETURNCODE Lib::ComputeFmaskAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_FMASK_ADDRFROMCOORD_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_FMASK_ADDRFROMCOORD_OUTPUT)))
@@ -960,7 +960,7 @@ ADDR_E_RETURNCODE Lib::ComputeFmaskCoordFromAddr(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_FMASK_COORDFROMADDR_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_FMASK_COORDFROMADDR_OUTPUT)))
@@ -1004,7 +1004,7 @@ ADDR_E_RETURNCODE Lib::ConvertTileInfoToHW(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_CONVERT_TILEINFOTOHW_INPUT)) ||
             (pOut->size != sizeof(ADDR_CONVERT_TILEINFOTOHW_OUTPUT)))
@@ -1056,7 +1056,7 @@ ADDR_E_RETURNCODE Lib::ConvertTileIndex(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_CONVERT_TILEINDEX_INPUT)) ||
             (pOut->size != sizeof(ADDR_CONVERT_TILEINDEX_OUTPUT)))
@@ -1142,7 +1142,7 @@ ADDR_E_RETURNCODE Lib::ConvertTileIndex1(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_CONVERT_TILEINDEX1_INPUT)) ||
             (pOut->size != sizeof(ADDR_CONVERT_TILEINDEX_OUTPUT)))
@@ -1192,7 +1192,7 @@ ADDR_E_RETURNCODE Lib::GetTileIndex(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_GET_TILEINDEX_INPUT)) ||
             (pOut->size != sizeof(ADDR_GET_TILEINDEX_OUTPUT)))
@@ -1253,7 +1253,7 @@ ADDR_E_RETURNCODE Lib::ComputeHtileInfo(
     BOOL_32 isWidth8  = (pIn->blockWidth == 8) ? TRUE : FALSE;
     BOOL_32 isHeight8 = (pIn->blockHeight == 8) ? TRUE : FALSE;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_HTILE_INFO_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_HTILE_INFO_OUTPUT)))
@@ -1336,7 +1336,7 @@ ADDR_E_RETURNCODE Lib::ComputeCmaskInfo(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_CMASK_INFO_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_CMASK_INFO_OUTPUT)))
@@ -1402,7 +1402,7 @@ ADDR_E_RETURNCODE Lib::ComputeDccInfo(
 {
     ADDR_E_RETURNCODE ret = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_DCCINFO_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_DCCINFO_OUTPUT)))
@@ -1455,7 +1455,7 @@ ADDR_E_RETURNCODE Lib::ComputeHtileAddrFromCoord(
     BOOL_32 isWidth8  = (pIn->blockWidth == 8) ? TRUE : FALSE;
     BOOL_32 isHeight8 = (pIn->blockHeight == 8) ? TRUE : FALSE;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_HTILE_ADDRFROMCOORD_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_HTILE_ADDRFROMCOORD_OUTPUT)))
@@ -1530,7 +1530,7 @@ ADDR_E_RETURNCODE Lib::ComputeHtileCoordFromAddr(
     BOOL_32 isWidth8  = (pIn->blockWidth == 8) ? TRUE : FALSE;
     BOOL_32 isHeight8 = (pIn->blockHeight == 8) ? TRUE : FALSE;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_HTILE_COORDFROMADDR_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_HTILE_COORDFROMADDR_OUTPUT)))
@@ -1595,7 +1595,7 @@ ADDR_E_RETURNCODE Lib::ComputeCmaskAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_CMASK_ADDRFROMCOORD_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_CMASK_ADDRFROMCOORD_OUTPUT)))
@@ -1623,7 +1623,7 @@ ADDR_E_RETURNCODE Lib::ComputeCmaskAddrFromCoord(
 
         if (returnCode == ADDR_OK)
         {
-            if (pIn->flags.tcCompatible == TRUE)
+            if (pIn->flags.tcCompatible)
             {
                 returnCode = HwlComputeCmaskAddrFromCoord(pIn, pOut);
             }
@@ -1667,7 +1667,7 @@ ADDR_E_RETURNCODE Lib::ComputeCmaskCoordFromAddr(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ADDR_COMPUTE_CMASK_COORDFROMADDR_INPUT)) ||
             (pOut->size != sizeof(ADDR_COMPUTE_CMASK_COORDFROMADDR_OUTPUT)))
@@ -3506,7 +3506,7 @@ VOID Lib::ComputeMipLevel(
 {
     if (ElemLib::IsBlockCompressed(pIn->format))
     {
-        if (pIn->mipLevel == 0)
+        if (!pIn->mipLevel)
         {
             // DXTn's level 0 must be multiple of 4
             // But there are exceptions:
@@ -3605,7 +3605,7 @@ VOID Lib::OptimizeTileMode(
 
         if (macroTiledOK)
         {
-            if ((pInOut->flags.display == FALSE) &&
+            if (!(pInOut->flags.display) &&
                 (pInOut->flags.opt4Space == TRUE) &&
                 (pInOut->numSamples <= 1))
             {
@@ -3659,7 +3659,7 @@ VOID Lib::OptimizeTileMode(
 
             if (macroTiledOK)
             {
-                if ((pInOut->flags.minimizeAlignment == TRUE) &&
+                if ((pInOut->flags.minimizeAlignment) &&
                     (pInOut->numSamples <= 1) &&
                     (IsMacroTiled(tileMode) == TRUE))
                 {
@@ -3675,7 +3675,7 @@ VOID Lib::OptimizeTileMode(
                     }
                 }
 
-                if ((pInOut->maxBaseAlign != 0) &&
+                if ((pInOut->maxBaseAlign) &&
                     (IsMacroTiled(tileMode) == TRUE))
                 {
                     if (macroSizeAlign > pInOut->maxBaseAlign)
@@ -3703,7 +3703,7 @@ VOID Lib::OptimizeTileMode(
 
     if (convertToPrt)
     {
-        if ((pInOut->flags.matchStencilTileCfg == TRUE) && (pInOut->numSamples <= 1))
+        if ((pInOut->flags.matchStencilTileCfg) && (pInOut->numSamples <= 1))
         {
             pInOut->tileMode = ADDR_TM_1D_TILED_THIN1;
         }

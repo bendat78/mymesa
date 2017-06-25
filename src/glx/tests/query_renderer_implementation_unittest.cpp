@@ -170,7 +170,7 @@ TEST_F(dri2_query_renderer_string_test, DRI2_RENDERER_QUERY_not_supported)
 
    memset(&dsc, 0, sizeof(dsc));
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       static const char original_value[] = "0xDEADBEEF";
       const char *value = original_value;
       const int success =
@@ -206,7 +206,7 @@ TEST_F(dri2_query_renderer_string_test, valid_attribute_mapping)
    memset(&dsc, 0, sizeof(dsc));
    dsc.rendererQuery = &rendererQueryExt;
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       for (unsigned i = 0; i < ARRAY_SIZE(valid_attributes); i++) {
          static const char original_value[] = "original value";
          const char *value = original_value;
@@ -236,7 +236,7 @@ TEST_F(dri2_query_renderer_integer_test, DRI2_RENDERER_QUERY_not_supported)
 
    memset(&dsc, 0, sizeof(dsc));
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       unsigned int value = 0xDEADBEEF;
       const int success =
          dri2_query_renderer_integer(&dsc.base,
@@ -289,7 +289,7 @@ TEST_F(dri2_query_renderer_integer_test, valid_attribute_mapping)
    memset(&dsc, 0, sizeof(dsc));
    dsc.rendererQuery = &rendererQueryExt;
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       for (unsigned i = 0; i < ARRAY_SIZE(valid_attributes); i++) {
          unsigned int value = 0xDEADBEEF;
          const int success =

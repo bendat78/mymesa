@@ -342,7 +342,7 @@ ps30_output(struct svga_shader_emitter *emit,
              * Prepare all the output registers here, but only when the
              * semantic.Index == 0 so we don't do this more than once.
              */
-            if (semantic.Index == 0) {
+            if (!semantic.Index) {
                unsigned i;
                for (i = 0; i < emit->key.fs.write_color0_to_n_cbufs; i++) {
                   emit->output_map[idx+i] = dst_register(SVGA3DREG_TEMP,

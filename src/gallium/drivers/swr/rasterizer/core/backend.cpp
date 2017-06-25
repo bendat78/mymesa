@@ -60,7 +60,7 @@ void ProcessComputeBE(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t threadGroup
     {
         pSpillFillBuffer = pDC->pArena->AllocAlignedSync(spillFillSize, KNOB_SIMD_BYTES);
     }
-    
+
     size_t scratchSpaceSize = pDC->pState->state.scratchSpaceSize * pDC->pState->state.scratchSpaceNumInstances;
     if (scratchSpaceSize && pScratchSpace == nullptr)
     {
@@ -335,7 +335,7 @@ void ProcessClearBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, vo
     }
 }
 
-void ProcessStoreTileBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, STORE_TILES_DESC* pDesc, 
+void ProcessStoreTileBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, STORE_TILES_DESC* pDesc,
     SWR_RENDERTARGET_ATTACHMENT attachment)
 {
     SWR_CONTEXT *pContext = pDC->pContext;
@@ -382,7 +382,7 @@ void ProcessStoreTileBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile
             pContext->pfnStoreTile(GetPrivateState(pDC), srcFormat,
                 attachment, destX, destY, pHotTile->renderTargetArrayIndex, pHotTile->pBuffer);
         }
-        
+
 
         if (pHotTile->state == HOTTILE_DIRTY || pHotTile->state == HOTTILE_RESOLVED)
         {
@@ -452,7 +452,7 @@ simdmask ComputeUserClipMask(uint8_t clipMask, float* pUserClipBuffer, simdscala
 
         // interpolate
         simdscalar vInterp = vplaneps(vA, vB, vC, vI, vJ);
-        
+
         // clip if interpolated clip distance is < 0 || NAN
         simdscalar vCull = _simd_cmp_ps(_simd_setzero_ps(), vInterp, _CMP_NLE_UQ);
 
@@ -1117,7 +1117,7 @@ void InitBackendSampleFuncTable(PFN_BACKEND_FUNC (&table)[SWR_MULTISAMPLE_TYPE_C
                 for(uint32_t canEarlyZ = 0; canEarlyZ < 2; canEarlyZ++)
                 {
                     table[sampleCount][inputCoverage][centroid][canEarlyZ] =
-                        BEChooser<>::GetFunc((SWR_MULTISAMPLE_COUNT)sampleCount, false, (SWR_INPUT_COVERAGE)inputCoverage, 
+                        BEChooser<>::GetFunc((SWR_MULTISAMPLE_COUNT)sampleCount, false, (SWR_INPUT_COVERAGE)inputCoverage,
                                              (centroid > 0), false, (canEarlyZ > 0), (SWR_BACKEND_FUNCS)SWR_BACKEND_MSAA_SAMPLE_RATE);
                 }
             }
@@ -1127,7 +1127,7 @@ void InitBackendSampleFuncTable(PFN_BACKEND_FUNC (&table)[SWR_MULTISAMPLE_TYPE_C
 
 void InitBackendPixelRate0();
 void InitBackendFuncTables()
-{    
+{
     InitBackendSingleFuncTable(gBackendSingleSample);
     InitBackendPixelRate0();
     InitBackendSampleFuncTable(gBackendSampleRateTable);

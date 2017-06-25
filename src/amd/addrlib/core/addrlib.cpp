@@ -180,7 +180,7 @@ ADDR_E_RETURNCODE Lib::Create(
     Lib* pLib = NULL;
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pCreateIn->createFlags.fillSizeFields == TRUE)
+    if (pCreateIn->createFlags.fillSizeFields)
     {
         if ((pCreateIn->size != sizeof(ADDR_CREATE_INPUT)) ||
             (pCreateOut->size != sizeof(ADDR_CREATE_OUTPUT)))
@@ -257,7 +257,7 @@ ADDR_E_RETURNCODE Lib::Create(
             returnCode = ADDR_INVALIDGBREGVALUES;
         }
 
-        if (pLib->m_pElemLib == NULL)
+        if (!pLib->m_pElemLib)
         {
             delete pLib;
             pLib = NULL;
@@ -361,7 +361,7 @@ ADDR_E_RETURNCODE Lib::GetMaxAlignments(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if (pOut->size != sizeof(ADDR_GET_MAX_ALINGMENTS_OUTPUT))
         {
@@ -433,7 +433,7 @@ ADDR_E_RETURNCODE Lib::Flt32ToDepthPixel(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ELEM_FLT32TODEPTHPIXEL_INPUT)) ||
             (pOut->size != sizeof(ELEM_FLT32TODEPTHPIXEL_OUTPUT)))
@@ -477,7 +477,7 @@ ADDR_E_RETURNCODE Lib::Flt32ToDepthPixel(
         }
 
         // Overwrite base since R800 has no "tileBase"
-        if (GetElemLib()->IsDepthStencilTilePlanar() == FALSE)
+        if (!GetElemLib()->IsDepthStencilTilePlanar())
         {
             depthBase = 0;
             stencilBase = 0;
@@ -511,7 +511,7 @@ ADDR_E_RETURNCODE Lib::Flt32ToColorPixel(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if ((pIn->size != sizeof(ELEM_FLT32TOCOLORPIXEL_INPUT)) ||
             (pOut->size != sizeof(ELEM_FLT32TOCOLORPIXEL_OUTPUT)))
@@ -550,7 +550,7 @@ BOOL_32 Lib::GetExportNorm(
 
     BOOL_32 enabled = FALSE;
 
-    if (GetFillSizeFieldsFlags() == TRUE)
+    if (GetFillSizeFieldsFlags())
     {
         if (pIn->size != sizeof(ELEM_GETEXPORTNORM_INPUT))
         {

@@ -1016,7 +1016,7 @@ x11_image_init(VkDevice device_h, struct x11_swapchain *chain,
       goto fail_pixmap;
 
    image->shm_fence = xshmfence_map_shm(fence_fd);
-   if (image->shm_fence == NULL)
+   if (!image->shm_fence)
       goto fail_shmfence_alloc;
 
    image->sync_fence = xcb_generate_id(chain->conn);

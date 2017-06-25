@@ -164,7 +164,7 @@ brw_buffer_data(struct gl_context *ctx,
    assert(!obj->Mappings[MAP_USER].Pointer); /* Mesa should have unmapped it */
    assert(!obj->Mappings[MAP_INTERNAL].Pointer);
 
-   if (intel_obj->buffer != NULL)
+   if (intel_obj->buffer)
       release_buffer(intel_obj);
 
    if (size) {
@@ -338,7 +338,7 @@ brw_map_buffer_range(struct gl_context *ctx,
    obj->Mappings[index].Length = length;
    obj->Mappings[index].AccessFlags = access;
 
-   if (intel_obj->buffer == NULL) {
+   if (!intel_obj->buffer) {
       obj->Mappings[index].Pointer = NULL;
       return NULL;
    }
@@ -432,7 +432,7 @@ brw_flush_mapped_buffer_range(struct gl_context *ctx,
    /* If we gave a direct mapping of the buffer instead of using a temporary,
     * then there's nothing to do.
     */
-   if (intel_obj->range_map_bo[index] == NULL)
+   if (!intel_obj->range_map_bo[index])
       return;
 
    if (!length)
@@ -488,7 +488,7 @@ brw_unmap_buffer(struct gl_context *ctx,
 
    assert(intel_obj);
    assert(obj->Mappings[index].Pointer);
-   if (intel_obj->range_map_bo[index] != NULL) {
+   if (intel_obj->range_map_bo[index]) {
       brw_bo_unmap(intel_obj->range_map_bo[index]);
 
       if (!(obj->Mappings[index].AccessFlags & GL_MAP_FLUSH_EXPLICIT_BIT)) {
@@ -510,7 +510,7 @@ brw_unmap_buffer(struct gl_context *ctx,
 
       brw_bo_unreference(intel_obj->range_map_bo[index]);
       intel_obj->range_map_bo[index] = NULL;
-   } else if (intel_obj->buffer != NULL) {
+   } else if (intel_obj->buffer) {
       brw_bo_unmap(intel_obj->buffer);
    }
    obj->Mappings[index].Pointer = NULL;
@@ -536,7 +536,7 @@ intel_bufferobj_buffer(struct brw_context *brw,
     * objects that need a BO but don't want to check that they exist for
     * draw-time validation can just always get a BO from a GL buffer object.
     */
-   if (intel_obj->buffer == NULL)
+   if (!intel_obj->buffer)
       alloc_buffer_object(brw, intel_obj);
 
    mark_buffer_gpu_usage(intel_obj, offset, size);

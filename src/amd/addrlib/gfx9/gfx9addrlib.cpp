@@ -237,7 +237,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileInfo(
         pOut->baseAlign = Max(pOut->baseAlign, GetBlockSize(pIn->swizzleMode));
     }
 
-    if ((IsXor(pIn->swizzleMode) == FALSE) && (numPipeTotal > 2))
+    if (!(IsXor(pIn->swizzleMode)) && (numPipeTotal > 2))
     {
         UINT_32 additionalAlign = numPipeTotal * numCompressBlkPerMetaBlk * 2;
 
@@ -2060,7 +2060,7 @@ UINT_32 Gfx9Lib::HwlGetEquationIndex(
         index = m_equationLookupTable[rsrcTypeIdx][swModeIdx][elementBytesLog2];
     }
 
-    if (pOut->pMipInfo != NULL)
+    if (pOut->pMipInfo)
     {
         for (UINT_32 i = 0; i < pIn->numMipLevels; i++)
         {
@@ -2403,7 +2403,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeThinEquation(
                 InitChannel(&pEquation->xor1[bankStart + i], pXor1Src);
             }
 
-            if (IsPrt(swMode) == FALSE)
+            if (!IsPrt(swMode))
             {
                 for (UINT_32 i = 0; i < pipeXorBits; i++)
                 {
@@ -3158,7 +3158,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
             blockSet.value = AddrBlockSetMacro;
 
             // This isn't to be used as texture and caller doesn't allow macro tiled.
-            if ((pIn->flags.texture == FALSE) &&
+            if (!(pIn->flags.texture) &&
                 (pIn->forbiddenBlock.macro4KB && pIn->forbiddenBlock.macro64KB))
             {
                 blockSet.value |= AddrBlockSetLinear;
@@ -3435,7 +3435,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
                 }
             }
 
-            if (blockSet.value == 0)
+            if (!blockSet.value)
             {
                 // Bad things happen, client will not get any useful information from AddrLib.
                 // Maybe we should fill in some output earlier instead of outputing nothing?
@@ -3600,7 +3600,7 @@ ADDR_E_RETURNCODE Gfx9Lib::ComputeStereoInfo(
             {
                 *pHeightAlign = 1u << maxYCoordInPipeBankXor;
 
-                if (pOut->pStereoInfo != NULL)
+                if (pOut->pStereoInfo)
                 {
                     pOut->pStereoInfo->rightSwizzle = 0;
 
@@ -3662,7 +3662,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
     {
         UINT_32 pitchAlignInElement = pOut->blockWidth;
 
-        if ((IsTex2d(pIn->resourceType) == TRUE) &&
+        if ((IsTex2d(pIn->resourceType)) &&
             (pIn->flags.display || pIn->flags.rotated) &&
             (pIn->numMipLevels <= 1) &&
             (pIn->numSamples <= 1) &&
@@ -3721,7 +3721,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                 ADDR2_MIP_INFO *pMipInfo;
                 ADDR2_MIP_INFO mipInfo[4];
 
-                if (pOut->pMipInfo != NULL)
+                if (pOut->pMipInfo)
                 {
                     pMipInfo = pOut->pMipInfo;
                     numMipLevel = pIn->numMipLevels;
@@ -3790,7 +3790,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                     }
                 }
 
-                if (pOut->pMipInfo != NULL)
+                if (pOut->pMipInfo)
                 {
                     UINT_32 elementBytesLog2 = Log2(pIn->bpp >> 3);
 
@@ -3825,7 +3825,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                     }
                 }
             }
-            else if (pOut->pMipInfo != NULL)
+            else if (pOut->pMipInfo)
             {
                 pOut->pMipInfo[0].pitch = pOut->pitch;
                 pOut->pMipInfo[0].height = pOut->height;

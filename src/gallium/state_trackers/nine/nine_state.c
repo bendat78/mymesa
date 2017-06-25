@@ -2408,7 +2408,7 @@ CSMT_ITEM_NO_WAIT(nine_context_clear_fb,
 
     if (Flags & D3DCLEAR_TARGET) bufs |= PIPE_CLEAR_COLOR;
     /* Ignore Z buffer if not bound */
-    if (context->pipe_data.fb.zsbuf != NULL) {
+    if (context->pipe_data.fb.zsbuf) {
         if (Flags & D3DCLEAR_ZBUFFER) bufs |= PIPE_CLEAR_DEPTH;
         if (Flags & D3DCLEAR_STENCIL) bufs |= PIPE_CLEAR_STENCIL;
     }

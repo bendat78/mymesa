@@ -346,10 +346,10 @@ vlVaReleaseBufferHandle(VADriverContextP ctx, VABufferID buf_id)
    if (!buf)
       return VA_STATUS_ERROR_INVALID_BUFFER;
 
-   if (buf->export_refcount == 0)
+   if (!buf->export_refcount)
       return VA_STATUS_ERROR_INVALID_BUFFER;
 
-   if (--buf->export_refcount == 0) {
+   if (!--buf->export_refcount) {
       VABufferInfo * const buf_info = &buf->export_state;
 
       switch (buf_info->mem_type) {

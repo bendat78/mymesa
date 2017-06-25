@@ -682,7 +682,7 @@ intel_create_image_common(__DRIscreen *dri_screen,
    image->bo = brw_bo_alloc_tiled_2d(screen->bufmgr, "image",
                                      width, tiled_height, cpp, tiling,
                                      &image->pitch, 0);
-   if (image->bo == NULL) {
+   if (!image->bo) {
       free(image);
       return NULL;
    }
@@ -736,7 +736,7 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
       *value = image->height;
       return true;
    case __DRI_IMAGE_ATTRIB_COMPONENTS:
-      if (image->planar_format == NULL)
+      if (!image->planar_format)
          return false;
       *value = image->planar_format->components;
       return true;
@@ -880,7 +880,7 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
    image->planar_format = f;
 
    image->bo = brw_bo_gem_create_from_prime(screen->bufmgr, fds[0]);
-   if (image->bo == NULL) {
+   if (!image->bo) {
       free(image);
       return NULL;
    }
@@ -918,7 +918,7 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
 
    /* Check that the requested image actually fits within the BO. 'size'
     * is already relative to the offsets, so we don't need to add that. */
-   if (image->bo->size == 0) {
+   if (!image->bo->size) {
       image->bo->size = size;
    } else if (size > image->bo->size) {
       brw_bo_unreference(image->bo);
@@ -1357,7 +1357,7 @@ intelCreateBuffer(__DRIscreen *dri_screen,
    } else if (mesaVis->sRGBCapable) {
       rgbFormat = mesaVis->redMask == 0xff ? MESA_FORMAT_R8G8B8A8_SRGB
                                            : MESA_FORMAT_B8G8R8A8_SRGB;
-   } else if (mesaVis->alphaBits == 0) {
+   } else if (!mesaVis->alphaBits) {
       rgbFormat = mesaVis->redMask == 0xff ? MESA_FORMAT_R8G8B8X8_UNORM
                                            : MESA_FORMAT_B8G8R8X8_UNORM;
    } else {
@@ -1475,11 +1475,11 @@ intel_init_bufmgr(struct intel_screen *screen)
 {
    __DRIscreen *dri_screen = screen->driScrnPriv;
 
-   if (getenv("INTEL_NO_HW") != NULL)
+   if (getenv("INTEL_NO_HW"))
       screen->no_hw = true;
 
    screen->bufmgr = brw_bufmgr_init(&screen->devinfo, dri_screen->fd, BATCH_SZ);
-   if (screen->bufmgr == NULL) {
+   if (!screen->bufmgr) {
       fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
 	      __func__, __LINE__);
       return false;
@@ -2326,7 +2326,7 @@ intelAllocateBuffer(__DRIscreen *dri_screen,
                                            I915_TILING_X, &pitch,
                                            BO_ALLOC_FOR_RENDER);
 
-   if (intelBuffer->bo == NULL) {
+   if (!intelBuffer->bo) {
 	   free(intelBuffer);
 	   return NULL;
    }

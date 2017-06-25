@@ -236,7 +236,7 @@ radeon_create_image_from_name(__DRIscreen *screen,
                               RADEON_GEM_DOMAIN_VRAM,
                               0);
 
-   if (image->bo == NULL) {
+   if (!image->bo) {
       free(image);
       return NULL;
    }
@@ -336,7 +336,7 @@ radeon_create_image(__DRIscreen *screen,
                               RADEON_GEM_DOMAIN_VRAM,
                               0);
 
-   if (image->bo == NULL) {
+   if (!image->bo) {
       free(image);
       return NULL;
    }
@@ -591,7 +591,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 
    screen->driScreen = sPriv;
    screen->bom = radeon_bo_manager_gem_ctor(sPriv->fd);
-   if (screen->bom == NULL) {
+   if (!screen->bom) {
        free(screen);
        return NULL;
    }
@@ -670,7 +670,7 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
 
     if (mesaVis->redBits == 5)
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B5G6R5_UNORM : MESA_FORMAT_R5G6B5_UNORM;
-    else if (mesaVis->alphaBits == 0)
+    else if (!mesaVis->alphaBits)
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B8G8R8X8_UNORM : MESA_FORMAT_X8R8G8B8_UNORM;
     else
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B8G8R8A8_UNORM : MESA_FORMAT_A8R8G8B8_UNORM;

@@ -484,7 +484,7 @@ _mesa_clear_texture_object(struct gl_context *ctx,
 {
    GLuint i, j;
 
-   if (texObj->Target == 0)
+   if (!texObj->Target)
       return;
 
    for (i = 0; i < MAX_FACES; i++) {
@@ -1344,7 +1344,7 @@ unbind_texobj_from_texunits(struct gl_context *ctx,
    const gl_texture_index index = texObj->TargetIndex;
    GLuint u;
 
-   if (texObj->Target == 0) {
+   if (!texObj->Target) {
       /* texture was never bound */
       return;
    }
@@ -1600,7 +1600,7 @@ bind_texture(struct gl_context *ctx,
    ctx->Texture.NumCurrentTexUsed = MAX2(ctx->Texture.NumCurrentTexUsed,
                                          unit + 1);
 
-   if (texObj->Name != 0)
+   if (texObj->Name)
       texUnit->_BoundTextures |= (1 << targetIndex);
    else
       texUnit->_BoundTextures &= ~(1 << targetIndex);
@@ -1657,7 +1657,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
                          "glBindTexture(target mismatch)" );
             return;
          }
-         if (newTexObj->Target == 0) {
+         if (!newTexObj->Target) {
             finish_texture_init(ctx, target, newTexObj, targetIndex);
          }
       }
@@ -1735,7 +1735,7 @@ _mesa_BindTextureUnit(GLuint unit, GLuint texture)
                   "glBindTextureUnit(non-gen name)");
       return;
    }
-   if (texObj->Target == 0) {
+   if (!texObj->Target) {
       /* Texture object was gen'd but never bound so the target is not set */
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBindTextureUnit(target)");
       return;
@@ -1792,7 +1792,7 @@ _mesa_BindTextures(GLuint first, GLsizei count, const GLuint *textures)
       _mesa_HashLockMutex(ctx->Shared->TexObjects);
 
       for (i = 0; i < count; i++) {
-         if (textures[i] != 0) {
+         if (textures[i]) {
             struct gl_texture_unit *texUnit = &ctx->Texture.Unit[first + i];
             struct gl_texture_object *current = texUnit->_Current;
             struct gl_texture_object *texObj;
@@ -1911,7 +1911,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
    /* We only do error checking on the texture names */
    for (i = 0; i < n; i++) {
       struct gl_texture_object *t;
-      if (texName[i] == 0) {
+      if (!texName[i]) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident");
          return GL_FALSE;
       }

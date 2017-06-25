@@ -200,7 +200,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    if (util_format_is_depth_or_stencil(format)) {
       templ.bind = PIPE_BIND_DEPTH_STENCIL;
    }
-   else if (strb->Base.Name != 0) {
+   else if (strb->Base.Name) {
       /* this is a user-created renderbuffer */
       templ.bind = PIPE_BIND_RENDER_TARGET;
    }

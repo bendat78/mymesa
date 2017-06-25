@@ -147,7 +147,7 @@ static void r300_flush_callback(void *data, unsigned flags,
 #define R300_ALLOC_ATOM(atomname, statetype) \
 do { \
     r300->atomname.state = CALLOC_STRUCT(statetype); \
-    if (r300->atomname.state == NULL) \
+    if (!r300->atomname.state) \
         return FALSE; \
 } while (0)
 
@@ -392,13 +392,13 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         goto fail;
 
     r300->cs = rws->cs_create(r300->ctx, RING_GFX, r300_flush_callback, r300);
-    if (r300->cs == NULL)
+    if (!r300->cs)
         goto fail;
 
     if (!r300screen->caps.has_tcl) {
         /* Create a Draw. This is used for SW TCL. */
         r300->draw = draw_create(&r300->context);
-        if (r300->draw == NULL)
+        if (!r300->draw)
             goto fail;
         /* Enable our renderer. */
         draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
@@ -430,7 +430,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.const_uploader = r300->uploader;
 
     r300->blitter = util_blitter_create(&r300->context);
-    if (r300->blitter == NULL)
+    if (!r300->blitter)
         goto fail;
     r300->blitter->draw_rectangle = r300_blitter_draw_rectangle;
 

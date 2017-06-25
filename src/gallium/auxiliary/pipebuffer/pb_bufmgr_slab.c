@@ -245,7 +245,7 @@ pb_slab_buffer_unmap(struct pb_buffer *_buf)
    struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
 
    --buf->mapCount;
-   if (buf->mapCount == 0)
+   if (!buf->mapCount)
        cnd_broadcast(&buf->event);
 }
 
@@ -412,7 +412,7 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    slab = LIST_ENTRY(struct pb_slab, list, head);
 
    /* If totally full remove from the partial slab list */
-   if (--slab->numFree == 0)
+   if (!--slab->numFree)
       LIST_DELINIT(list);
 
    list = slab->freeBuffers.next;

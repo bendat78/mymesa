@@ -565,7 +565,7 @@ nir_optimize(nir_shader *nir, const struct brw_compiler *compiler,
          OPT(nir_opt_dce);
       }
       OPT(nir_opt_if);
-      if (nir->options->max_unroll_iterations != 0) {
+      if (nir->options->max_unroll_iterations) {
          OPT(nir_opt_loop_unroll, indirect_mask);
       }
       OPT(nir_opt_remove_phis);

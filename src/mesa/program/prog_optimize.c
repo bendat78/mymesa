@@ -316,7 +316,7 @@ _mesa_remove_dead_code_global(struct gl_program *prog, void *mem_ctx)
 	    }
 	 }
 
-	 if (inst->DstReg.WriteMask == 0) {
+	 if (!inst->DstReg.WriteMask) {
 	    /* If we cleared all writes, the instruction can be removed. */
 	    if (dbg)
 	       printf("Remove instruction %u: \n", i);

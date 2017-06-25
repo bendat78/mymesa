@@ -496,7 +496,7 @@ parse_op(struct dump_info *di,
    op->op = *(struct sh_op *)*token;
    *token += sizeof(struct sh_op) / sizeof(uint);
 
-   if (num_dst >= 1) {
+   if (num_dst) {
       op->dst = *(struct sh_dstreg *)*token;
       *token += sizeof(struct sh_dstreg) / sizeof(uint);
       if (op->dst.relative &&

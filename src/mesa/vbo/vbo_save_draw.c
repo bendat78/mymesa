@@ -53,7 +53,7 @@ _playback_copy_to_current(struct gl_context *ctx,
    GLbitfield64 mask;
    GLuint offset;
 
-   if (node->current_size == 0)
+   if (!node->current_size)
       return;
 
    if (node->current_data) {

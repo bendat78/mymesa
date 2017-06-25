@@ -46,7 +46,7 @@ struct StreamOutJit : public Builder
 {
     StreamOutJit(JitManager* pJitMgr) : Builder(pJitMgr){};
 
-    // returns pointer to SWR_STREAMOUT_BUFFER 
+    // returns pointer to SWR_STREAMOUT_BUFFER
     Value* getSOBuffer(Value* pSoCtx, uint32_t buffer)
     {
         return LOAD(pSoCtx, { 0, SWR_STREAMOUT_CONTEXT_pBuffer, buffer });
@@ -68,7 +68,7 @@ struct StreamOutJit : public Builder
 
         // load buffer size
         Value* bufferSize = LOAD(pBuf, { 0, SWR_STREAMOUT_BUFFER_bufferSize });
-        
+
         // load current streamOffset
         Value* streamOffset = LOAD(pBuf, { 0, SWR_STREAMOUT_BUFFER_streamOffset });
 

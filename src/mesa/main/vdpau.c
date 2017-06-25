@@ -163,7 +163,7 @@ register_surface(struct gl_context *ctx, GLboolean isOutput,
          return (GLintptr)NULL;
       }
 
-      if (tex->Target == 0) {
+      if (!tex->Target) {
          tex->Target = target;
          tex->TargetIndex = _mesa_tex_target_to_index(ctx, target);
       } else if (tex->Target != target) {

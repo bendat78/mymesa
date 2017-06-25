@@ -109,14 +109,14 @@ intel_map_renderbuffer(struct gl_context *ctx,
     * upside-down.  So we need to ask for a rectangle on flipped vertically, and
     * we then return a pointer to the bottom of it with a negative stride.
     */
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       y = rb->Height - y - h;
    }
 
    intel_miptree_map(intel, irb->mt, irb->mt_level, irb->mt_layer,
 		     x, y, w, h, mode, &map, &stride);
 
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       map += (h - 1) * stride;
       stride = -stride;
    }

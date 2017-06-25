@@ -92,7 +92,7 @@ static uint64_t
 _blorp_combine_address(struct blorp_batch *batch, void *location,
                        struct blorp_address address, uint32_t delta)
 {
-   if (address.buffer == NULL) {
+   if (!address.buffer) {
       return address.offset + delta;
    } else {
       return blorp_emit_reloc(batch, location, address, delta);

@@ -831,7 +831,7 @@ static void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen
 					   PIPE_USAGE_DEFAULT,
 					   rtex->cmask.size,
 					   rtex->cmask.alignment);
-	if (rtex->cmask_buffer == NULL) {
+	if (!rtex->cmask_buffer) {
 		rtex->cmask.size = 0;
 		return;
 	}
@@ -1506,7 +1506,7 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 		resource.flags |= R600_RESOURCE_FLAG_TRANSFER;
 
 	*flushed_depth_texture = (struct r600_texture *)ctx->screen->resource_create(ctx->screen, &resource);
-	if (*flushed_depth_texture == NULL) {
+	if (!*flushed_depth_texture) {
 		R600_ERR("failed to create temporary texture to hold flushed depth\n");
 		return false;
 	}
@@ -2675,7 +2675,7 @@ void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
 		}
 
 		/* cannot clear mipmapped textures */
-		if (fb->cbufs[i]->texture->last_level != 0) {
+		if (fb->cbufs[i]->texture->last_level) {
 			continue;
 		}
 
@@ -2754,7 +2754,7 @@ void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
 
 			/* ensure CMASK is enabled */
 			r600_texture_alloc_cmask_separate(rctx->screen, tex);
-			if (tex->cmask.size == 0) {
+			if (!tex->cmask.size) {
 				continue;
 			}
 

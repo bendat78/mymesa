@@ -370,7 +370,7 @@ anv_physical_device_init(struct anv_physical_device *device,
    brw_process_intel_debug_variable();
 
    device->compiler = brw_compiler_create(NULL, &device->info);
-   if (device->compiler == NULL) {
+   if (!device->compiler) {
       result = vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       goto fail;
    }
@@ -1177,7 +1177,7 @@ VkResult anv_CreateDevice(
    }
 
    pthread_condattr_t condattr;
-   if (pthread_condattr_init(&condattr) != 0) {
+   if (pthread_condattr_init(&condattr)) {
       result = vk_error(VK_ERROR_INITIALIZATION_FAILED);
       goto fail_mutex;
    }

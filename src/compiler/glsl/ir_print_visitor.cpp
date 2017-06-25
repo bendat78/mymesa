@@ -116,7 +116,7 @@ ir_print_visitor::unique_name(ir_variable *var)
     * string.  Don't worry about tracking the generated name in the printable
     * names hash because this is the only scope where it can ever appear.
     */
-   if (var->name == NULL) {
+   if (!var->name) {
       static unsigned arg = 1;
       return ralloc_asprintf(this->mem_ctx, "parameter@%u", arg++);
    }
@@ -323,7 +323,7 @@ void ir_print_visitor::visit(ir_texture *ir)
 
       fprintf(f, " ");
 
-      if (ir->offset != NULL) {
+      if (ir->offset) {
 	 ir->offset->accept(this);
       } else {
 	 fprintf(f, "0");
@@ -553,7 +553,7 @@ ir_print_visitor::visit(ir_discard *ir)
 {
    fprintf(f, "(discard ");
 
-   if (ir->condition != NULL) {
+   if (ir->condition) {
       fprintf(f, " ");
       ir->condition->accept(this);
    }

@@ -303,7 +303,7 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
       stvis->depth_stencil_format = PIPE_FORMAT_Z16_UNORM;
       break;
    case 24:
-      if (mode->stencilBits == 0) {
+      if (!mode->stencilBits) {
 	 stvis->depth_stencil_format = (screen->d_depth_bits_last) ?
                                           PIPE_FORMAT_Z24X8_UNORM:
                                           PIPE_FORMAT_X8Z24_UNORM;

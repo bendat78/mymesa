@@ -64,7 +64,7 @@ lower_subroutine_visitor::call_clone(ir_call *call, ir_function_signature *calle
 {
    void *mem_ctx = ralloc_parent(call);
    ir_dereference_variable *new_return_ref = NULL;
-   if (call->return_deref != NULL)
+   if (call->return_deref)
       new_return_ref = call->return_deref->clone(mem_ctx, NULL);
 
    exec_list new_parameters;
@@ -101,7 +101,7 @@ lower_subroutine_visitor::visit_leave(ir_call *ir)
       if (!is_compat)
          continue;
 
-      if (ir->array_idx != NULL)
+      if (ir->array_idx)
          var = ir->array_idx->clone(mem_ctx, NULL);
       else
          var = new(mem_ctx) ir_dereference_variable(ir->sub_var);

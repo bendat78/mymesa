@@ -256,7 +256,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
                                              dri2_surf);
    }
 
-   if (dri2_surf->dri_drawable == NULL) {
+   if (!dri2_surf->dri_drawable) {
       _eglError(EGL_BAD_ALLOC, "dri2->createNewDrawable");
       goto cleanup_pixmap;
    }
@@ -697,7 +697,7 @@ dri2_x11_connect(struct dri2_egl_display *dri2_dpy)
                  xcb_dri2_connect_driver_name_length(connect));
    }
 
-   if (dri2_dpy->driver_name == NULL) {
+   if (!dri2_dpy->driver_name) {
       close(dri2_dpy->fd);
       free(dri2_dpy->driver_name);
       free(connect);
@@ -1197,7 +1197,7 @@ dri2_get_xcb_connection(_EGLDriver *drv, _EGLDisplay *disp,
    const char *msg;
 
    disp->DriverData = (void *) dri2_dpy;
-   if (disp->PlatformDisplay == NULL) {
+   if (!disp->PlatformDisplay) {
       dri2_dpy->conn = xcb_connect(NULL, &screen);
       dri2_dpy->own_device = true;
    } else {
@@ -1221,7 +1221,7 @@ dri2_get_xcb_connection(_EGLDriver *drv, _EGLDisplay *disp,
 
    return EGL_TRUE;
 disconnect:
-   if (disp->PlatformDisplay == NULL)
+   if (!disp->PlatformDisplay)
       xcb_disconnect(dri2_dpy->conn);
 
    return _eglError(EGL_BAD_ALLOC, msg);
@@ -1444,7 +1444,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_load_driver(disp))
       goto cleanup;
 
-   if (dri2_dpy->dri2_minor >= 1)
+   if (dri2_dpy->dri2_minor)
       dri2_dpy->loader_extensions = dri2_loader_extensions;
    else
       dri2_dpy->loader_extensions = dri2_loader_extensions_old;

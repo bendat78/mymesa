@@ -255,7 +255,7 @@ make_fs_key(const struct svga_context *svga,
                          svga->curr.num_samplers[shader]);
          }
          for (i = 0; i < n; i++) {
-            if ((svga->curr.sampler_views[shader][i] == NULL) !=
+            if (!(svga->curr.sampler_views[shader][i]) !=
                 (svga->curr.sampler[shader][i] == NULL))
                debug_printf("sampler_view[%u] = %p but sampler[%u] = %p\n",
                             i, svga->curr.sampler_views[shader][i],

@@ -681,7 +681,7 @@ do_clip_line(struct draw_stage *stage,
 static void
 clip_point(struct draw_stage *stage, struct prim_header *header)
 {
-   if (header->v[0]->clipmask == 0)
+   if (!header->v[0]->clipmask)
       stage->next->point( stage->next, header );
 }
 

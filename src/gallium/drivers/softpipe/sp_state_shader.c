@@ -214,11 +214,11 @@ softpipe_create_vs_state(struct pipe_context *pipe,
    /* copy shader tokens, the ones passed in will go away.
     */
    state->shader.tokens = tgsi_dup_tokens(templ->tokens);
-   if (state->shader.tokens == NULL)
+   if (!state->shader.tokens)
       goto fail;
 
    state->draw_data = draw_create_vertex_shader(softpipe->draw, templ);
-   if (state->draw_data == NULL)
+   if (!state->draw_data)
       goto fail;
 
    state->max_sampler = state->draw_data->info.file_max[TGSI_FILE_SAMPLER];
@@ -283,11 +283,11 @@ softpipe_create_gs_state(struct pipe_context *pipe,
       /* copy shader tokens, the ones passed in will go away.
        */
       state->shader.tokens = tgsi_dup_tokens(templ->tokens);
-      if (state->shader.tokens == NULL)
+      if (!state->shader.tokens)
          goto fail;
 
       state->draw_data = draw_create_geometry_shader(softpipe->draw, templ);
-      if (state->draw_data == NULL)
+      if (!state->draw_data)
          goto fail;
 
       state->max_sampler = state->draw_data->info.file_max[TGSI_FILE_SAMPLER];
