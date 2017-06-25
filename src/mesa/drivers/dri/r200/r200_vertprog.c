@@ -234,7 +234,7 @@ static void vp_dump_inputs(struct r200_vertex_program *vp, char *caller)
 {
    int i;
 
-   if(vp == NULL){
+   if(!vp){
       fprintf(stderr, "vp null in call to %s from %s\n", __func__, caller);
       return ;
    }
@@ -263,7 +263,7 @@ static unsigned long t_src_index(struct r200_vertex_program *vp, struct prog_src
 
       vp->inputs[src->Index] = max_reg+1;*/
 
-      //vp_dump_inputs(vp, __func__);	
+      //vp_dump_inputs(vp, __func__);
       assert(vp->inputs[src->Index] != -1);
       return vp->inputs[src->Index];
    } else {
@@ -324,7 +324,7 @@ static unsigned long t_opcode(enum prog_opcode opcode)
    case OPCODE_SGE: return R200_VPI_OUT_OP_SGE;
    case OPCODE_SLT: return R200_VPI_OUT_OP_SLT;
 
-   default: 
+   default:
       fprintf(stderr, "%s: Should not be called with opcode %d!", __func__, opcode);
    }
    exit(-1);
@@ -409,7 +409,7 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
    vp->translated = GL_TRUE;
    vp->fogmode = ctx->Fog.Mode;
 
-   if (mesa_vp->arb.NumInstructions == 0)
+   if (!mesa_vp->arb.NumInstructions)
       return GL_FALSE;
 
 #if 0
@@ -560,7 +560,7 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
 	    if (free_inputs & (1 << j)) {
 	       free_inputs &= ~(1 << j);
 	       vp->inputs[VERT_ATTRIB_GENERIC(i)] = j;
-	       if (j == 0) {
+	       if (!j) {
                   /* mapped to pos */
                   vp->inputmap_rev[j] = VERT_ATTRIB_GENERIC(i);
 	       } else if (j < 12) {
@@ -742,7 +742,7 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
 	 }
 	 goto next;
 
-      case OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
+      case OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
       case OPCODE_SWZ:
 	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_ADD, t_dst(&dst),
 		t_dst_mask(dst.WriteMask));
@@ -788,7 +788,7 @@ else {
 #endif
 	 goto next;
 
-      case OPCODE_DP3://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO} 
+      case OPCODE_DP3://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO}
 	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_DOT, t_dst(&dst),
 		t_dst_mask(dst.WriteMask));
 
@@ -811,7 +811,7 @@ else {
 	 o_inst->src2 = UNUSED_SRC_1;
 	 goto next;
 
-      case OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W} 
+      case OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W}
 	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_DOT, t_dst(&dst),
 		t_dst_mask(dst.WriteMask));
 
@@ -857,7 +857,7 @@ else {
 	 goto next;
 
       case OPCODE_FLR:
-      /* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W} 
+      /* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W}
          ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
 
 	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_FRC,

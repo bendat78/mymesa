@@ -131,7 +131,7 @@ vlVdpDecoderCreate(VdpDevice device,
    }
 
    *decoder = vlAddDataHTAB(vldecoder);
-   if (*decoder == 0) {
+   if (!*decoder) {
       ret = VDP_STATUS_ERROR;
       goto error_handle;
    }

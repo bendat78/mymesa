@@ -116,7 +116,7 @@ static char *drm_construct_id_path_tag(drmDevicePtr device)
 
    if (device->bustype == DRM_BUS_PCI) {
         tag = calloc(PCI_ID_PATH_TAG_LENGTH, sizeof(char));
-        if (tag == NULL)
+        if (!tag)
             return NULL;
 
         snprintf(tag, PCI_ID_PATH_TAG_LENGTH, "pci-%04x_%02x_%02x_%1u",
@@ -131,7 +131,7 @@ static bool drm_device_matches_tag(drmDevicePtr device, const char *prime_tag)
    char *tag = drm_construct_id_path_tag(device);
    int ret;
 
-   if (tag == NULL)
+   if (!tag)
       return false;
 
    ret = strcmp(tag, prime_tag);
@@ -170,13 +170,13 @@ int loader_get_user_preferred_fd(int default_fd, bool *different_device)
       prime = loader_get_dri_config_device_id();
 #endif
 
-   if (prime == NULL) {
+   if (!prime) {
       *different_device = false;
       return default_fd;
    }
 
    default_tag = drm_get_id_path_tag_for_fd(default_fd);
-   if (default_tag == NULL)
+   if (!default_tag)
       goto err;
 
    num_devices = drmGetDevices2(0, devices, MAX_DRM_DEVICES);

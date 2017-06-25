@@ -79,7 +79,7 @@ tree_to_vine(ir_expression *root)
       ir_expression *remainder_left = remainder_temp ?
          remainder_temp->operands[0]->as_expression() : NULL;
 
-      if (remainder_left == NULL) {
+      if (!remainder_left) {
          /* move vine_tail down one */
          vine_tail = remainder;
          remainder = remainder->as_expression() ?

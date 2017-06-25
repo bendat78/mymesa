@@ -1151,7 +1151,7 @@ trans_endif(const struct instr_translater *t, struct etna_compile *c,
 
    /* assign "endif" or "else" (if no ELSE) label to current position in
     * instruction stream, pop IF */
-   if (f->lbl_endif != NULL)
+   if (f->lbl_endif)
       label_place(c, f->lbl_endif);
    else
       label_place(c, f->lbl_else);
@@ -1889,7 +1889,7 @@ etna_compile_add_z_div_if_needed(struct etna_compile *c)
       struct etna_reg_desc *pos_reg =
          find_decl_by_semantic(c, TGSI_FILE_OUTPUT, TGSI_SEMANTIC_POSITION, 0);
 
-      if (pos_reg != NULL) {
+      if (pos_reg) {
          /*
           * ADD tX.__z_, tX.zzzz, void, tX.wwww
           * MUL tX.__z_, tX.zzzz, 0.5, void
@@ -2575,7 +2575,7 @@ etna_link_shader(struct etna_shader_link_info *info,
          continue;
       }
 
-      if (vsio == NULL)
+      if (!vsio)
          return true; /* not found -- link error */
 
       varying->use[0] = VARYING_COMPONENT_USE_USED;

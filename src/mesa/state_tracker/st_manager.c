@@ -922,8 +922,8 @@ static unsigned
 get_version(struct pipe_screen *screen,
             struct st_config_options *options, gl_api api)
 {
-   struct gl_constants consts = {0};
-   struct gl_extensions extensions = {0};
+   struct gl_constants consts = {};
+   struct gl_extensions extensions = {};
    GLuint version;
 
    if (_mesa_override_gl_version_contextless(&consts, &api, &version)) {

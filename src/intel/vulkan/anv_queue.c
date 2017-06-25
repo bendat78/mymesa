@@ -40,7 +40,7 @@ anv_device_execbuf(struct anv_device *device,
                    struct anv_bo **execbuf_bos)
 {
    int ret = anv_gem_execbuffer(device, execbuf);
-   if (ret != 0) {
+   if (ret) {
       /* We don't know the real error. */
       device->lost = true;
       return vk_errorf(VK_ERROR_DEVICE_LOST, "execbuf2 failed: %m");
@@ -167,7 +167,7 @@ VkResult anv_QueueSubmit(
 
          const VkSemaphore *in_semaphores = NULL, *out_semaphores = NULL;
          uint32_t num_in_semaphores = 0, num_out_semaphores = 0;
-         if (j == 0) {
+         if (!j) {
             /* Only the first batch gets the in semaphores */
             in_semaphores = pSubmits[i].pWaitSemaphores;
             num_in_semaphores = pSubmits[i].waitSemaphoreCount;
@@ -525,7 +525,7 @@ VkResult anv_CreateSemaphore(
 
    semaphore = vk_alloc2(&device->alloc, pAllocator, sizeof(*semaphore), 8,
                          VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (semaphore == NULL)
+   if (!semaphore)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    const VkExportSemaphoreCreateInfoKHX *export =
@@ -533,7 +533,7 @@ VkResult anv_CreateSemaphore(
     VkExternalSemaphoreHandleTypeFlagsKHX handleTypes =
       export ? export->handleTypes : 0;
 
-   if (handleTypes == 0) {
+   if (!handleTypes) {
       /* The DRM execbuffer ioctl always execute in-oder so long as you stay
        * on the same ring.  Since we don't expose the blit engine as a DMA
        * queue, a dummy no-op semaphore is a perfectly valid implementation.
@@ -593,7 +593,7 @@ void anv_DestroySemaphore(
    ANV_FROM_HANDLE(anv_device, device, _device);
    ANV_FROM_HANDLE(anv_semaphore, semaphore, _semaphore);
 
-   if (semaphore == NULL)
+   if (!semaphore)
       return;
 
    anv_semaphore_impl_cleanup(device, &semaphore->temporary);

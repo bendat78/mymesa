@@ -137,7 +137,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
 
    assert(brw->gen < 6);
 
-   if (query->bo == NULL)
+   if (!query->bo)
       return;
 
    /* If the application has requested the query result, but this batch is
@@ -432,7 +432,7 @@ ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
 
    if (!query->bo || query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
 
-      if (query->bo != NULL) {
+      if (query->bo) {
          /* The old query BO did not have enough space, so we allocated a new
           * one.  Gather the results so far (adding up the differences) and
           * release the old BO.

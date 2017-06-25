@@ -92,7 +92,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch,
                         struct brw_bufmgr *bufmgr,
                         bool has_llc)
 {
-   if (batch->last_bo != NULL) {
+   if (batch->last_bo) {
       brw_bo_unreference(batch->last_bo);
       batch->last_bo = NULL;
    }
@@ -146,7 +146,7 @@ intel_batchbuffer_reset_to_saved(struct brw_context *brw)
    brw->batch.exec_count = brw->batch.saved.exec_count;
 
    brw->batch.map_next = brw->batch.saved.map_next;
-   if (USED_BATCH(brw->batch) == 0)
+   if (!USED_BATCH(brw->batch))
       brw->batch.ring = UNKNOWN_RING;
 }
 
@@ -240,7 +240,7 @@ do_batch_dump(struct brw_context *brw)
       return;
 
    void *map = brw_bo_map(brw, batch->bo, MAP_READ);
-   if (map == NULL) {
+   if (!map) {
       fprintf(stderr,
 	      "WARNING: failed to map batchbuffer, "
 	      "dumping uploaded data instead.\n");
@@ -260,7 +260,7 @@ do_batch_dump(struct brw_context *brw)
       length = gen_group_get_length(inst, p);
       assert(inst == NULL || length > 0);
       length = MAX2(1, length);
-      if (inst == NULL) {
+      if (!inst) {
          fprintf(stderr, "unknown instruction %08x\n", p[0]);
          continue;
       }
@@ -369,7 +369,7 @@ do_batch_dump(struct brw_context *brw)
       }
    }
 
-   if (map != NULL) {
+   if (map) {
       brw_bo_unmap(batch->bo);
    }
 }
@@ -403,7 +403,7 @@ brw_new_batch(struct brw_context *brw)
     * would otherwise be stored in the context (which for all intents and
     * purposes means everything).
     */
-   if (brw->hw_ctx == 0)
+   if (!brw->hw_ctx)
       brw->ctx.NewDriverState |= BRW_NEW_CONTEXT;
 
    brw->ctx.NewDriverState |= BRW_NEW_BATCH;
@@ -583,14 +583,14 @@ execbuffer(int fd,
       execbuf.flags |= I915_EXEC_FENCE_IN;
    }
 
-   if (out_fence != NULL) {
+   if (out_fence) {
       cmd = DRM_IOCTL_I915_GEM_EXECBUFFER2_WR;
       *out_fence = -1;
       execbuf.flags |= I915_EXEC_FENCE_OUT;
    }
 
    int ret = drmIoctl(fd, cmd, &execbuf);
-   if (ret != 0)
+   if (ret)
       ret = -errno;
 
    for (int i = 0; i < batch->exec_count; i++) {
@@ -642,7 +642,7 @@ do_flush_locked(struct brw_context *brw, int in_fence_fd, int *out_fence_fd)
       if (batch->needs_sol_reset)
 	 flags |= I915_EXEC_GEN7_SOL_RESET;
 
-      if (ret == 0) {
+      if (!ret) {
          uint32_t hw_ctx = batch->ring == RENDER_RING ? brw->hw_ctx : 0;
 
          /* Add the batch itself to the end of the validation list */
@@ -662,7 +662,7 @@ do_flush_locked(struct brw_context *brw, int in_fence_fd, int *out_fence_fd)
    if (brw->ctx.Const.ResetStrategy == GL_LOSE_CONTEXT_ON_RESET_ARB)
       brw_check_for_reset(brw);
 
-   if (ret != 0) {
+   if (ret) {
       fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerror(-ret));
       exit(1);
    }
@@ -684,10 +684,10 @@ _intel_batchbuffer_flush_fence(struct brw_context *brw,
 {
    int ret;
 
-   if (USED_BATCH(brw->batch) == 0)
+   if (!USED_BATCH(brw->batch))
       return 0;
 
-   if (brw->throttle_batch[0] == NULL) {
+   if (!brw->throttle_batch[0]) {
       brw->throttle_batch[0] = brw->batch.bo;
       brw_bo_reference(brw->throttle_batch[0]);
    }

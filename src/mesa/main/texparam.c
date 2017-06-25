@@ -1388,7 +1388,7 @@ get_tex_level_parameter_image(struct gl_context *ctx,
             goto invalid_pname;
          if (_mesa_base_format_has_channel(img->_BaseFormat, pname)) {
             *params = _mesa_get_format_bits(texFormat, pname);
-            if (*params == 0) {
+            if (!*params) {
                /* intensity or luminance is probably stored as RGB[A] */
                *params = MIN2(_mesa_get_format_bits(texFormat,
                                                     GL_TEXTURE_RED_SIZE),
@@ -1566,7 +1566,7 @@ get_tex_level_parameter_buffer(struct gl_context *ctx,
       case GL_TEXTURE_LUMINANCE_SIZE:
          if (_mesa_base_format_has_channel(baseFormat, pname)) {
             *params = _mesa_get_format_bits(texFormat, pname);
-            if (*params == 0) {
+            if (!*params) {
                /* intensity or luminance is probably stored as RGB[A] */
                *params = MIN2(_mesa_get_format_bits(texFormat,
                                                     GL_TEXTURE_RED_SIZE),

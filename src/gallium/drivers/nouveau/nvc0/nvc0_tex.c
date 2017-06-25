@@ -1035,7 +1035,7 @@ nvc0_validate_suf(struct nvc0_context *nvc0, int s)
 
             if (mt->layout_3d) {
                address += nvc0_mt_zslice_offset(mt, view->u.tex.level, z);
-               if (depth >= 1) {
+               if (depth) {
                   pipe_debug_message(&nvc0->base.debug, CONFORMANCE,
                                      "3D images are not supported!");
                   debug_printf("3D images are not supported!\n");

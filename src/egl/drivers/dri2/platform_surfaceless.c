@@ -136,14 +136,14 @@ dri2_surfaceless_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    dri2_surf->dri_drawable =
       dri2_dpy->image_driver->createNewDrawable(dri2_dpy->dri_screen, config,
                                                 dri2_surf);
-   if (dri2_surf->dri_drawable == NULL) {
+   if (!dri2_surf->dri_drawable) {
       _eglError(EGL_BAD_ALLOC, "image->createNewDrawable");
       goto cleanup_surface;
     }
 
    if (conf->RedSize == 5)
       dri2_surf->visual = __DRI_IMAGE_FORMAT_RGB565;
-   else if (conf->AlphaSize == 0)
+   else if (!conf->AlphaSize)
       dri2_surf->visual = __DRI_IMAGE_FORMAT_XRGB8888;
    else
       dri2_surf->visual = __DRI_IMAGE_FORMAT_ARGB8888;
@@ -200,7 +200,7 @@ surfaceless_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
       { "RGB888",   { 0xff0000, 0xff00, 0xff, 0x0 } },
       { "RGB565",   { 0x00f800, 0x07e0, 0x1f, 0x0 } },
    };
-   unsigned int format_count[ARRAY_SIZE(visuals)] = { 0 };
+   unsigned int format_count[ARRAY_SIZE(visuals)] = {};
    unsigned int config_count = 0;
 
    for (unsigned i = 0; dri2_dpy->driver_configs[i] != NULL; i++) {

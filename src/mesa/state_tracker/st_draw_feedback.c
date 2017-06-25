@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "main/imports.h"
@@ -128,7 +128,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    const struct pipe_shader_state *vs;
    struct pipe_vertex_buffer vbuffers[PIPE_MAX_SHADER_INPUTS];
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
-   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {NULL};
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {};
    struct pipe_transfer *ib_transfer = NULL;
    const struct gl_vertex_array **arrays = ctx->Array._DrawArrays;
    GLuint attr, i;
@@ -220,7 +220,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
       vbuffers[attr].stride = arrays[mesaAttr]->StrideB; /* in bytes */
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = attr;
-      velements[attr].src_format = 
+      velements[attr].src_format =
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                arrays[mesaAttr]->Size,
                                arrays[mesaAttr]->Format,
@@ -243,7 +243,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
       struct gl_buffer_object *bufobj = ib->obj;
       unsigned index_size = ib->index_size;
 
-      if (index_size == 0)
+      if (!index_size)
          goto out_unref_vertex;
 
       if (bufobj && bufobj->Name) {

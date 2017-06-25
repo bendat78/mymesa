@@ -183,7 +183,7 @@ ptn_get_src(struct ptn_compile *c, const struct prog_src_register *prog_src)
          if (prog_src->RelAddr) {
             deref_arr->deref_array_type = nir_deref_array_type_indirect;
 
-            nir_alu_src addr_src = { NIR_SRC_INIT };
+            nir_alu_src addr_src = {};
             addr_src.src = nir_src_for_reg(c->addr_reg);
             nir_ssa_def *reladdr = nir_imov_alu(b, addr_src, 1);
 
@@ -830,7 +830,7 @@ ptn_emit_instruction(struct ptn_compile *c, struct prog_instruction *prog_inst)
       break;
 
    default:
-      if (op_trans[op] != 0) {
+      if (op_trans[op]) {
          ptn_alu(b, op_trans[op], dest, src);
       } else {
          fprintf(stderr, "unknown opcode: %s\n", _mesa_opcode_string(op));
@@ -873,7 +873,7 @@ ptn_add_output_stores(struct ptn_compile *c)
           * a vec4 with undefined .xyw components.  We resolve it to a scalar, to
           * match GLSL's gl_FragDepth and the expectations of most backends.
           */
-         nir_alu_src alu_src = { NIR_SRC_INIT };
+         nir_alu_src alu_src = {};
          alu_src.src = nir_src_for_reg(c->output_regs[FRAG_RESULT_DEPTH]);
          alu_src.swizzle[0] = SWIZZLE_Z;
          store->src[0] = nir_src_for_ssa(nir_fmov_alu(b, alu_src, 1));

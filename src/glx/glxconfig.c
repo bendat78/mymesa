@@ -41,7 +41,7 @@
 
 /**
  * Get data from a GLX config
- * 
+ *
  * \param mode         GL context mode whose data is to be returned.
  * \param attribute    Attribute of \c mode that is to be returned.
  * \param value_return Location to store the data member of \c mode.
@@ -210,7 +210,7 @@ glx_config_get(struct glx_config * mode, int attribute, int *value_return)
  * zero or \c GLX_DONT_CARE (which is -1).  As support for additional
  * extensions is added, the new values will be initialized to appropriate
  * values from the extension specification.
- * 
+ *
  * \param count         Number of structures to allocate.
  * \param minimum_size  Minimum size of a structure to allocate.  This allows
  *                      for differences in the version of the
@@ -230,7 +230,7 @@ glx_config_create_list(unsigned count)
    next = &base;
    for (i = 0; i < count; i++) {
       *next = malloc(size);
-      if (*next == NULL) {
+      if (!*next) {
 	 glx_config_destroy_list(base);
 	 base = NULL;
 	 break;

@@ -123,7 +123,7 @@ compile_vs(struct svga_context *svga,
    enum pipe_error ret = PIPE_ERROR;
 
    variant = translate_vertex_program(svga, vs, key);
-   if (variant == NULL) {
+   if (!variant) {
       debug_printf("Failed to compile vertex shader,"
                    " using dummy shader instead.\n");
       variant = get_compiled_dummy_vertex_shader(svga, vs, key);
@@ -408,7 +408,7 @@ done:
    return ret;
 }
 
-struct svga_tracked_state svga_hw_vs = 
+struct svga_tracked_state svga_hw_vs =
 {
    "vertex shader (hwtnl)",
    (SVGA_NEW_VS |

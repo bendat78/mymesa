@@ -111,7 +111,7 @@ dump_binding_table(struct gen_spec *spec, uint32_t offset)
    struct gen_group *surface_state;
 
    surface_state = gen_spec_find_struct(spec, "RENDER_SURFACE_STATE");
-   if (surface_state == NULL) {
+   if (!surface_state) {
       fprintf(outfile, "did not find RENDER_SURFACE_STATE info\n");
       return;
    }
@@ -119,7 +119,7 @@ dump_binding_table(struct gen_spec *spec, uint32_t offset)
    start = surface_state_base + offset;
    pointers = gtt + start;
    for (i = 0; i < 16; i++) {
-      if (pointers[i] == 0)
+      if (!pointers[i])
          continue;
       start = pointers[i] + surface_state_base;
       if (!valid_offset(start)) {
@@ -257,7 +257,7 @@ handle_media_interface_descriptor_load(struct gen_spec *spec, uint32_t *p)
 
    descriptor_structure =
       gen_spec_find_struct(spec, "INTERFACE_DESCRIPTOR_DATA");
-   if (descriptor_structure == NULL) {
+   if (!descriptor_structure) {
       fprintf(outfile, "did not find INTERFACE_DESCRIPTOR_DATA info\n");
       return;
    }
@@ -603,7 +603,7 @@ handle_load_register_imm(struct gen_spec *spec, uint32_t *p)
 {
    struct gen_group *reg = gen_spec_find_register(spec, p[1]);
 
-   if (reg != NULL) {
+   if (reg) {
       fprintf(outfile, "register %s (0x%x): 0x%x\n",
               reg->name, reg->register_offset, p[2]);
       decode_group(reg, &p[2], 0);
@@ -702,7 +702,7 @@ parse_commands(struct gen_spec *spec, uint32_t *cmds, int size, int engine)
       length = gen_group_get_length(inst, p);
       assert(inst == NULL || length > 0);
       length = MAX2(1, length);
-      if (inst == NULL) {
+      if (!inst) {
          fprintf(outfile, "unknown instruction %08x\n", p[0]);
          continue;
       }
@@ -833,7 +833,7 @@ handle_trace_header(uint32_t *p)
    if (end > &p[12] && p[12] > 0)
       sscanf((char *)&p[13], "PCI-ID=%i", &aub_pci_id);
 
-   if (pci_id == 0)
+   if (!pci_id)
       pci_id = aub_pci_id;
 
    struct gen_device_info devinfo;
@@ -842,7 +842,7 @@ handle_trace_header(uint32_t *p)
       exit(EXIT_FAILURE);
    }
 
-   if (xml_path == NULL)
+   if (!xml_path)
       spec = gen_spec_load(&devinfo);
    else
       spec = gen_spec_load_from_path(&devinfo, xml_path);
@@ -1032,7 +1032,7 @@ aub_file_decode_batch(struct aub_file *file)
       fprintf(outfile, "memory write block (dwords %d):\n", h & 0xffff);
       fprintf(outfile, "  address 0x%"PRIx64"\n", *(uint64_t *) &p[1]);
       data_type = (p[3] >> 20) & 0xff;
-      if (data_type != 0)
+      if (data_type)
          fprintf(outfile, "  data type 0x%x\n", data_type);
       fprintf(outfile, "  address space 0x%x\n", (p[3] >> 28) & 0xf);
       break;
@@ -1076,7 +1076,7 @@ aub_file_data_load(struct aub_file *file)
 {
    size_t r;
 
-   if (file->stream == NULL)
+   if (!file->stream)
       return false;
 
    /* First remove any consumed data */
@@ -1113,7 +1113,7 @@ setup_pager(void)
    if (pid == -1)
       return;
 
-   if (pid == 0) {
+   if (!pid) {
       close(fds[1]);
       dup2(fds[0], 0);
       execlp("less", "less", "-FRSi", NULL);
@@ -1227,7 +1227,7 @@ int main(int argc, char *argv[])
    if (isatty(1) && pager)
       setup_pager();
 
-   if (input_file == NULL)
+   if (!input_file)
       file = aub_file_stdin();
    else
       file = aub_file_open(input_file);

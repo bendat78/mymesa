@@ -1579,7 +1579,7 @@ instruction_scheduler::schedule_instructions(bblock_t *block)
 
    /* Remove non-DAG heads from the list. */
    foreach_in_list_safe(schedule_node, n, &instructions) {
-      if (n->parent_count != 0)
+      if (n->parent_count)
          n->remove();
    }
 
@@ -1637,7 +1637,7 @@ instruction_scheduler::schedule_instructions(bblock_t *block)
 
          child->cand_generation = cand_generation;
          child->parent_count--;
-         if (child->parent_count == 0) {
+         if (!child->parent_count) {
             if (debug) {
                fprintf(stderr, "\t\tnow available\n");
             }

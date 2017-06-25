@@ -310,7 +310,7 @@ anv_pipeline_cache_load(struct anv_pipeline_cache *cache,
    struct anv_physical_device *pdevice = &device->instance->physicalDevice;
    struct cache_header header;
 
-   if (cache->cache == NULL)
+   if (!cache->cache)
       return;
 
    if (size < sizeof(header))
@@ -404,7 +404,7 @@ VkResult anv_CreatePipelineCache(
    cache = vk_alloc2(&device->alloc, pAllocator,
                        sizeof(*cache), 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (cache == NULL)
+   if (!cache)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    anv_pipeline_cache_init(cache, device, pipeline_cache_enabled());
@@ -446,7 +446,7 @@ VkResult anv_GetPipelineCacheData(
    struct anv_physical_device *pdevice = &device->instance->physicalDevice;
    struct cache_header *header;
 
-   if (pData == NULL) {
+   if (!pData) {
       size_t size = align_u32(sizeof(*header), 8) +
                     align_u32(sizeof(uint32_t), 8);
 

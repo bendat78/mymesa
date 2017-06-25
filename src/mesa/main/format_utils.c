@@ -1181,7 +1181,7 @@ convert_ushort(void *void_dst, int num_dst_channels,
                const uint8_t swizzle[4], bool normalized, int count)
 {
    const uint16_t one = normalized ? UINT16_MAX : 1;
-   
+
    switch (src_type) {
    case MESA_ARRAY_FORMAT_TYPE_FLOAT:
       if (normalized) {

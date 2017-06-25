@@ -26,7 +26,7 @@
 /**
  * \file state.c
  * State management.
- * 
+ *
  * This file manages recalculation of derived values in struct gl_context.
  */
 
@@ -267,7 +267,7 @@ update_program_constants(struct gl_context *ctx)
  *
  * Calls dd_function_table::UpdateState to perform any internal state
  * management necessary.
- * 
+ *
  * \sa _mesa_update_modelview_project(), _mesa_update_texture(),
  * _mesa_update_buffer_bounds(),
  * _mesa_update_lighting() and _mesa_update_tnl_spaces().
@@ -402,12 +402,12 @@ _mesa_update_state( struct gl_context *ctx )
  * generating vp from fixed function state, basically want to
  * calculate:
  *
- * vp_out_2_fp_in( vp_in_2_vp_out( varying_inputs ) | 
+ * vp_out_2_fp_in( vp_in_2_vp_out( varying_inputs ) |
  *                 potential_vp_outputs )
  *
  * Where potential_vp_outputs is calculated by looking at enabled
  * texgen, etc.
- * 
+ *
  * The generated fragment program should then only declare inputs that
  * may vary or otherwise differ from the ctx->Current values.
  * Otherwise, the fp should track them as state values instead.

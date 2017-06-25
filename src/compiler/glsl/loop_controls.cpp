@@ -97,7 +97,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       new(mem_ctx) ir_expression(ir_binop_div, sub->type, sub, increment);
 
    ir_constant *iter = div->constant_expression_value();
-   if (iter == NULL) {
+   if (!iter) {
       ralloc_free(mem_ctx);
       return -1;
    }
@@ -194,17 +194,17 @@ loop_control_visitor::visit_leave(ir_loop *ir)
    /* If we've entered a loop that hasn't been analyzed, something really,
     * really bad has happened.
     */
-   if (ls == NULL) {
+   if (!ls) {
       assert(ls != NULL);
       return visit_continue;
    }
 
-   if (ls->limiting_terminator != NULL) {
+   if (ls->limiting_terminator) {
       /* If the limiting terminator has an iteration count of zero, then we've
        * proven that the loop cannot run, so delete it.
        */
       int iterations = ls->limiting_terminator->iterations;
-      if (iterations == 0) {
+      if (!iterations) {
          ir->remove();
          this->progress = true;
          return visit_continue;

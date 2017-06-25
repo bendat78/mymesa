@@ -391,7 +391,7 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
                          int min_index, boolean unroll_indices)
 {
    struct translate *tr;
-   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {};
    struct pipe_resource *out_buffer = NULL;
    uint8_t *out_map;
    unsigned out_offset, mask;
@@ -565,7 +565,7 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
                        int start_vertex, unsigned num_vertices,
                        int min_index, boolean unroll_indices)
 {
-   unsigned mask[VB_NUM] = {0};
+   unsigned mask[VB_NUM] = {};
    struct translate_key key[VB_NUM];
    unsigned elem_index[VB_NUM][PIPE_MAX_ATTRIBS]; /* ... into key.elements */
    unsigned i, type;
@@ -693,8 +693,8 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
             mgr->fallback_velems[i].vertex_buffer_index = mgr->fallback_vbs[type];
 
             /* elem_index[type][i] can only be set for one type. */
-            assert(type > VB_INSTANCE || elem_index[type+1][i] == ~0u);
-            assert(type > VB_VERTEX   || elem_index[type+2][i] == ~0u);
+            assert(type > VB_INSTANCE || elem_index[type+1][i] == (~0u));
+            assert(type > VB_VERTEX   || elem_index[type+2][i] == (~0u));
             break;
          }
       }

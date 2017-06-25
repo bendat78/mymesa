@@ -62,7 +62,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents)
 {
    OMX_ERRORTYPE r;
 
-   if (stComponents == NULL)
+   if (!stComponents)
       return 2;
 
    /* component 0 - video decoder */
@@ -126,7 +126,7 @@ error:
 void omx_put_screen(void)
 {
    mtx_lock(&omx_lock);
-   if ((--omx_usecount) == 0) {
+   if (!(--omx_usecount)) {
       omx_screen->destroy(omx_screen);
       omx_screen = NULL;
 

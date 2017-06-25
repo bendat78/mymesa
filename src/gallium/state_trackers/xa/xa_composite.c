@@ -457,7 +457,7 @@ bind_samplers(struct xa_context *ctx,
 	 * If src is a solid color, we have no src view, so set up a
 	 * dummy one that will not be used anyway.
 	 */
-	if (ctx->bound_sampler_views[0] == NULL)
+	if (!ctx->bound_sampler_views[0])
 	    pipe_sampler_view_reference(&ctx->bound_sampler_views[0],
 					src_view);
 
@@ -494,7 +494,7 @@ xa_composite_prepare(struct xa_context *ctx,
 	return ret;
     bind_samplers(ctx, comp);
 
-    if (ctx->num_bound_samplers == 0 ) { /* solid fill */
+    if (!ctx->num_bound_samplers) { /* solid fill */
 	renderer_begin_solid(ctx);
     } else {
 	renderer_begin_textures(ctx);
@@ -510,7 +510,7 @@ xa_composite_rect(struct xa_context *ctx,
 		  int srcX, int srcY, int maskX, int maskY,
 		  int dstX, int dstY, int width, int height)
 {
-    if (ctx->num_bound_samplers == 0 ) { /* solid fill */
+    if (!ctx->num_bound_samplers) { /* solid fill */
 	renderer_solid(ctx, dstX, dstY, dstX + width, dstY + height,
 		       ctx->solid_color);
     } else {

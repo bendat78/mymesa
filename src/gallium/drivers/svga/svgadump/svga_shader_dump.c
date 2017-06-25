@@ -26,7 +26,7 @@
 /**
  * @file
  * SVGA Shader Dump Facilities
- * 
+ *
  * @author Michal Krol <michal@vmware.com>
  */
 
@@ -416,7 +416,7 @@ dump_dstreg(struct sh_dstreg dstreg,
 
 static void dump_srcreg( struct sh_srcreg srcreg, struct sh_srcreg *indreg, const struct dump_info *di )
 {
-   struct sh_reg srcreg_sh = {0};
+   struct sh_reg srcreg_sh = {};
    /* bit-fields carefully aligned, ensure they stay that way. */
    STATIC_ASSERT(sizeof(struct sh_reg) == sizeof(struct sh_srcreg));
    memcpy(&srcreg_sh, &srcreg, sizeof(srcreg_sh));
@@ -496,7 +496,7 @@ parse_op(struct dump_info *di,
    op->op = *(struct sh_op *)*token;
    *token += sizeof(struct sh_op) / sizeof(uint);
 
-   if (num_dst >= 1) {
+   if (num_dst) {
       op->dst = *(struct sh_dstreg *)*token;
       *token += sizeof(struct sh_dstreg) / sizeof(uint);
       if (op->dst.relative &&

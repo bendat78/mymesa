@@ -85,7 +85,7 @@ static /* const */ char *error_list[] = {
 };
 
 #ifdef GLX_USE_APPLEGL
-static char *__glXErrorString(Display *dpy, int code, XExtCodes *codes, 
+static char *__glXErrorString(Display *dpy, int code, XExtCodes *codes,
                               char *buf, int n);
 #endif
 
@@ -107,7 +107,7 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 {
      struct glx_display *glx_dpy = __glXInitialize(dpy);
 
-   if (glx_dpy == NULL)
+   if (!glx_dpy)
       return False;
 
    switch ((wire->u.u.type & 0x7f) - glx_dpy->codes->first_event) {
@@ -173,7 +173,7 @@ __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
 {
      struct glx_display *glx_dpy = __glXInitialize(dpy);
 
-   if (glx_dpy == NULL)
+   if (!glx_dpy)
       return False;
 
    switch (event->type) {
@@ -291,7 +291,7 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
    }
    _XUnlockMutex(_Xglobal_lock);
 
-   if (priv != NULL)
+   if (priv)
       glx_display_free(priv);
 
    return 1;
@@ -325,8 +325,8 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
    return GL_TRUE;
 }
 
-/* 
- * We don't want to enable this GLX_OML_swap_method in glxext.h, 
+/*
+ * We don't want to enable this GLX_OML_swap_method in glxext.h,
  * because we can't support it.  The X server writes it out though,
  * so we should handle it somehow, to avoid false warnings.
  */
@@ -411,7 +411,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
 
    for (i = 0; i < count; i += 2) {
       long int tag = *bp++;
-      
+
       switch (tag) {
       case GLX_RGBA:
          FETCH_OR_SET(rgbMode);
@@ -492,7 +492,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
          config->drawableType = *bp++;
 #ifdef GLX_USE_APPLEGL
          /* AppleSGLX supports pixmap and pbuffers with all config. */
-         config->drawableType |= GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;              
+         config->drawableType |= GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;
 #endif
          break;
       case GLX_RENDER_TYPE: /* fbconfig render type bits */
@@ -611,7 +611,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    struct glx_config *modes, *m;
    int i;
 
-   if (nprops == 0)
+   if (!nprops)
       return NULL;
 
    /* FIXME: Is the __GLX_MIN_CONFIG_PROPS test correct for FBconfigs? */
@@ -639,7 +639,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
        /* Older X servers don't send this so we default it here. */
       m->drawableType = GLX_WINDOW_BIT;
 #else
-      /* 
+      /*
        * The XQuartz 2.3.2.1 X server doesn't set this properly, so
        * set the proper bits here.
        * AppleSGLX supports windows, pixmaps, and pbuffers with all config.
@@ -699,7 +699,7 @@ static GLboolean
    psc->serverGLXexts =
       __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 
-   if (psc->serverGLXexts == NULL) {
+   if (!psc->serverGLXexts) {
       return GL_FALSE;
    }
 
@@ -792,7 +792,7 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
 
    priv->serverGLXversion =
       __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
-   if (priv->serverGLXversion == NULL) {
+   if (!priv->serverGLXversion) {
       FreeScreenConfigs(priv);
       return GL_FALSE;
    }
@@ -821,10 +821,10 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
 #endif /* GLX_DIRECT_RENDERING && !GLX_USE_APPLEGL */
 
 #if defined(GLX_USE_APPLEGL)
-      if (psc == NULL)
+      if (!psc)
          psc = applegl_create_screen(i, priv);
 #else
-      if (psc == NULL)
+      if (!psc)
 	 psc = indirect_create_screen(i, priv);
 #endif
       priv->screens[i] = psc;
@@ -1009,7 +1009,7 @@ __glXFlushRenderBuffer(struct glx_context * ctx, GLubyte * pc)
    xcb_connection_t *c = XGetXCBConnection(dpy);
    const GLint size = pc - ctx->buf;
 
-   if ((dpy != NULL) && (size > 0)) {
+   if ((dpy) && (size > 0)) {
       xcb_glx_render(c, ctx->currentContextTag, size,
                      (const uint8_t *) ctx->buf);
    }

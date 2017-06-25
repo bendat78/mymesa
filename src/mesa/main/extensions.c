@@ -63,7 +63,7 @@ name_to_index(const char* name)
 {
    unsigned i;
 
-   if (name == 0)
+   if (!name)
       return -1;
 
    for (i = 0; i < MESA_EXTENSION_COUNT; ++i) {
@@ -221,7 +221,7 @@ get_extension_override( struct gl_context *ctx )
 {
    override_extensions_in_context(ctx);
 
-   if (extra_extensions == NULL) {
+   if (!extra_extensions) {
       return calloc(1, sizeof(char));
    } else {
       _mesa_problem(ctx, "Trying to enable unknown extensions: %s",
@@ -263,7 +263,7 @@ _mesa_one_time_init_extension_overrides(void)
    memset(&_mesa_extension_override_enables, 0, sizeof(struct gl_extensions));
    memset(&_mesa_extension_override_disables, 0, sizeof(struct gl_extensions));
 
-   if (env_const == NULL) {
+   if (!env_const) {
       return;
    }
 
@@ -320,7 +320,7 @@ _mesa_one_time_init_extension_overrides(void)
 
    /* Remove trailing space, and free if unused. */
    len = strlen(extra_extensions);
-   if (len == 0) {
+   if (!len) {
       free(extra_extensions);
       extra_extensions = NULL;
    } else if (extra_extensions[len - 1] == ' ') {
@@ -387,7 +387,7 @@ extension_compare(const void *p1, const void *p2)
 
    res = (int)e1->year - (int)e2->year;
 
-   if (res == 0) {
+   if (!res) {
       res = strcmp(e1->name, e2->name);
    }
 
@@ -437,17 +437,17 @@ _mesa_make_extension_string(struct gl_context *ctx)
 	 ++count;
       }
    }
-   if (extra_extensions != NULL)
+   if (extra_extensions)
       length += 1 + strlen(extra_extensions); /* +1 for space */
 
    exts = calloc(ALIGN(length + 1, 4), sizeof(char));
-   if (exts == NULL) {
+   if (!exts) {
       free(extra_extensions);
       return NULL;
    }
 
    extension_indices = malloc(count * sizeof(extension_index));
-   if (extension_indices == NULL) {
+   if (!extension_indices) {
       free(exts);
       free(extra_extensions);
       return NULL;
@@ -477,7 +477,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
       strcat(exts, " ");
    }
    free(extension_indices);
-   if (extra_extensions != 0) {
+   if (extra_extensions) {
       strcat(exts, extra_extensions);
       free(extra_extensions);
    }
@@ -494,7 +494,7 @@ _mesa_get_extension_count(struct gl_context *ctx)
    unsigned k;
 
    /* only count once */
-   if (ctx->Extensions.Count != 0)
+   if (ctx->Extensions.Count)
       return ctx->Extensions.Count;
 
    for (k = 0; k < MESA_EXTENSION_COUNT; ++k) {

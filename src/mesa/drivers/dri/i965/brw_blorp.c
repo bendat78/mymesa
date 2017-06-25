@@ -754,7 +754,7 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
 
    x0 = fb->_Xmin;
    x1 = fb->_Xmax;
-   if (rb->Name != 0) {
+   if (rb->Name) {
       y0 = fb->_Ymin;
       y1 = fb->_Ymax;
    } else {
@@ -904,7 +904,7 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
        * the framebuffer can be complete with some attachments missing.  In
        * this case the _ColorDrawBuffers pointer will be NULL.
        */
-      if (rb == NULL)
+      if (!rb)
          continue;
 
       do_single_blorp_clear(brw, fb, rb, buf, partial_clear, encode_srgb);
@@ -950,7 +950,7 @@ brw_blorp_clear_depth_stencil(struct brw_context *brw,
 
    x0 = fb->_Xmin;
    x1 = fb->_Xmax;
-   if (rb_name != 0) {
+   if (rb_name) {
       y0 = fb->_Ymin;
       y1 = fb->_Ymax;
    } else {

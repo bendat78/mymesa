@@ -91,7 +91,7 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
    CARD8 opcode;
    int i;
 
-   if ((priv == NULL) || (dpy == NULL) || (drawable == 0)) {
+   if (!(priv) || (dpy == NULL) || (drawable == 0)) {
       return;
    }
 
@@ -197,18 +197,18 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
    __GLXDRIdrawable *pdraw;
    struct glx_screen *psc;
 
-   if (priv == NULL) {
+   if (!priv) {
       fprintf(stderr, "failed to create drawable\n");
       return GL_FALSE;
    }
 
    psc = priv->screens[config->screen];
-   if (psc->driScreen == NULL)
+   if (!psc->driScreen)
       return GL_TRUE;
 
    pdraw = psc->driScreen->createDrawable(psc, drawable,
 					  glxdrawable, config);
-   if (pdraw == NULL) {
+   if (!pdraw) {
       fprintf(stderr, "failed to create drawable\n");
       return GL_FALSE;
    }
@@ -289,7 +289,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    __GLXDRIdrawable *pdraw;
 #endif
 
-   if (dpy == NULL)
+   if (!dpy)
       return 0;
 
    /* Page 38 (page 52 of the PDF) of glxencode1.3.pdf says:
@@ -297,13 +297,13 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
     *     "If drawable is not a valid GLX drawable, a GLXBadDrawable error is
     *     generated."
     */
-   if (drawable == 0) {
+   if (!drawable) {
       __glXSendError(dpy, GLXBadDrawable, 0, X_GLXGetDrawableAttributes, false);
       return 0;
    }
 
    priv = __glXInitialize(dpy);
-   if (priv == NULL)
+   if (!priv)
       return 0;
 
    use_glx_1_3 = ((priv->majorVersion > 1) || (priv->minorVersion >= 3));
@@ -338,7 +338,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
 
       psc = pdraw->psc;
 
-      if (psc->driScreen->getBufferAge != NULL)
+      if (psc->driScreen->getBufferAge)
          *value = psc->driScreen->getBufferAge(pdraw);
 
       return 0;
@@ -379,7 +379,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    if (length) {
       num_attributes = (use_glx_1_3) ? reply.numAttribs : length / 2;
       data = malloc(length * sizeof(CARD32));
-      if (data == NULL) {
+      if (!data) {
          /* Throw data on the floor */
          _XEatData(dpy, length);
       }
@@ -397,7 +397,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
          }
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-         if (pdraw != NULL) {
+         if (pdraw) {
             if (!pdraw->textureTarget)
                pdraw->textureTarget =
                   determineTextureTarget((const int *) data, num_attributes);
@@ -508,7 +508,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
 static void
 DestroyDrawable(Display * dpy, GLXDrawable drawable, CARD32 glxCode)
 {
-   if ((dpy == NULL) || (drawable == 0)) {
+   if (!(dpy) || (drawable == 0)) {
       return;
    }
 
@@ -544,7 +544,7 @@ CreatePbuffer(Display * dpy, struct glx_config *config,
    Pixmap pixmap;
    GLboolean glx_1_3 = GL_FALSE;
 
-   if (priv == NULL)
+   if (!priv)
       return None;
 
    i = 0;
@@ -636,7 +636,7 @@ DestroyPbuffer(Display * dpy, GLXDrawable drawable)
    struct glx_display *priv = __glXInitialize(dpy);
    CARD8 opcode;
 
-   if ((priv == NULL) || (dpy == NULL) || (drawable == 0)) {
+   if (!(priv) || (dpy == NULL) || (drawable == 0)) {
       return;
    }
 
@@ -738,9 +738,9 @@ glXCreatePbuffer(Display * dpy, GLXFBConfig config, const int *attrib_list)
 
    if (apple_glx_pbuffer_create(dpy, config, width, height, &errorcode,
                                 &result)) {
-      /* 
+      /*
        * apple_glx_pbuffer_create only sets the errorcode to core X11
-       * errors. 
+       * errors.
        */
       __glXSendError(dpy, errorcode, 0, X_GLXCreatePbuffer, true);
 
@@ -807,7 +807,7 @@ glXQueryDrawable(Display * dpy, GLXDrawable drawable,
     * use XSetErrorHandler(), which is known to not be thread safe.
     * If we use a round-trip call to validate the drawable, there could
     * be a race, so instead we just opt in favor of letting the
-    * XGetGeometry request fail with a GetGeometry request X error 
+    * XGetGeometry request fail with a GetGeometry request X error
     * rather than GLXBadDrawable, in what is hoped to be a rare
     * case of an invalid drawable.  In practice most and possibly all
     * X11 apps using GLX shouldn't notice a difference.
@@ -854,7 +854,7 @@ glXSelectEvent(Display * dpy, GLXDrawable drawable, unsigned long mask)
    if (apple_glx_pbuffer_set_event_mask(drawable, mask))
       return;                   /*done */
 
-   /* 
+   /*
     * The spec allows a window, but currently there are no valid
     * events for a window, so do nothing.
     */
@@ -887,7 +887,7 @@ glXGetSelectedEvent(Display * dpy, GLXDrawable drawable, unsigned long *mask)
    if (apple_glx_pbuffer_get_event_mask(drawable, mask))
       return;                   /*done */
 
-   /* 
+   /*
     * The spec allows a window, but currently there are no valid
     * events for a window, so do nothing, but set the mask to 0.
     */

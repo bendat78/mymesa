@@ -400,7 +400,7 @@ static int vc4_rcl_msaa_surface_setup(struct vc4_exec_info *exec,
 		return -EINVAL;
 	}
 
-	if (surf->hindex == ~0)
+	if (surf->hindex == (~0u))
 		return 0;
 
 	*obj = vc4_use_bo(exec, surf->hindex);
@@ -433,7 +433,7 @@ static int vc4_rcl_surface_setup(struct vc4_exec_info *exec,
 		return -EINVAL;
 	}
 
-	if (surf->hindex == ~0)
+	if (surf->hindex == (~0u))
 		return 0;
 
 	*obj = vc4_use_bo(exec, surf->hindex);
@@ -446,7 +446,7 @@ static int vc4_rcl_surface_setup(struct vc4_exec_info *exec,
 			return -EINVAL;
 		}
 
-		if (surf->bits != 0) {
+		if (surf->bits) {
 			DRM_ERROR("load/store general bits set with "
 				  "full res load/store.\n");
 			return -EINVAL;
@@ -473,7 +473,7 @@ static int vc4_rcl_surface_setup(struct vc4_exec_info *exec,
 	}
 
 	if (buffer == VC4_LOADSTORE_TILE_BUFFER_ZS) {
-		if (format != 0) {
+		if (format) {
 			DRM_ERROR("No color format should be set for ZS\n");
 			return -EINVAL;
 		}
@@ -521,7 +521,7 @@ vc4_rcl_render_config_surface_setup(struct vc4_exec_info *exec,
 				       VC4_RENDER_CONFIG_FORMAT);
 	int cpp;
 
-	if (surf->flags != 0) {
+	if (surf->flags) {
 		DRM_ERROR("No flags supported on render config.\n");
 		return -EINVAL;
 	}
@@ -535,7 +535,7 @@ vc4_rcl_render_config_surface_setup(struct vc4_exec_info *exec,
 		return -EINVAL;
 	}
 
-	if (surf->hindex == ~0)
+	if (surf->hindex == (~0u))
 		return 0;
 
 	*obj = vc4_use_bo(exec, surf->hindex);
@@ -570,7 +570,7 @@ vc4_rcl_render_config_surface_setup(struct vc4_exec_info *exec,
 
 int vc4_get_rcl(struct drm_device *dev, struct vc4_exec_info *exec)
 {
-	struct vc4_rcl_setup setup = {0};
+	struct vc4_rcl_setup setup = {};
 	struct drm_vc4_submit_cl *args = exec->args;
 	bool has_bin = args->bin_cl_size != 0;
 	int ret;

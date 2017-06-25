@@ -2978,7 +2978,7 @@ Converter::handleINTERP(Value *dst[4])
    // Check whether the input is linear. All other attributes ignored.
    Instruction *insn;
    Value *offset = NULL, *ptr = NULL, *w = NULL;
-   Symbol *sym[4] = { NULL };
+   Symbol *sym[4] = {};
    bool linear;
    operation op = OP_NOP;
    int c, mode = 0;
@@ -3570,7 +3570,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       break;
    case TGSI_OPCODE_EMIT:
       /* export the saved viewport index */
-      if (viewport != NULL) {
+      if (viewport) {
          Symbol *vpSym = mkSymbol(FILE_SHADER_OUTPUT, 0, TYPE_U32,
                                   info->out[info->io.viewportId].slot[0] * 4);
          mkStore(OP_EXPORT, TYPE_U32, vpSym, NULL, viewport);
@@ -3582,7 +3582,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       unsigned int stream = tgsi.getSrc(0).getValueU32(0, info);
       if (stream && op == OP_RESTART)
          break;
-      if (info->prop.gp.maxVertices == 0)
+      if (!info->prop.gp.maxVertices)
          break;
       src0 = mkImm(stream);
       mkOp1(op, TYPE_U32, NULL, src0)->fixed = 1;
@@ -3668,7 +3668,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       // If the loop never breaks (e.g. only has RET's inside), then there
       // will be no way to get to the break bb. However BGNLOOP will have
       // already made a PREBREAK to it, so it must be in the CFG.
-      if (getBB()->cfg.incidentCount() == 0)
+      if (!getBB()->cfg.incidentCount())
          loopBB->cfg.attach(&getBB()->cfg, Graph::Edge::TREE);
    }
       break;
@@ -4201,7 +4201,7 @@ Converter::handleUserClipPlanes()
          Symbol *sym = mkSymbol(FILE_MEMORY_CONST, info->io.auxCBSlot,
                                 TYPE_F32, info->io.ucpBase + i * 16 + c * 4);
          Value *ucp = mkLoadv(TYPE_F32, sym, NULL);
-         if (c == 0)
+         if (!c)
             res[i] = mkOp2v(OP_MUL, TYPE_F32, getScratch(), clipVtx[c], ucp);
          else
             mkOp3(OP_MAD, TYPE_F32, res[i], clipVtx[c], ucp, res[i]);

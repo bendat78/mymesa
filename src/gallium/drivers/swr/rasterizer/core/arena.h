@@ -326,7 +326,7 @@ private:
             else
             {
                 // Blocks are sorted by size (biggest first)
-                // So, if we get here, there are no blocks 
+                // So, if we get here, there are no blocks
                 // large enough, fall through to allocation.
                 pBlock = nullptr;
                 break;
@@ -409,7 +409,7 @@ public:
         ArenaBlock* pNewBlock = m_allocator.AllocateAligned(blockSize, ARENA_BLOCK_ALIGN);    // Arena blocks are always simd byte aligned.
         SWR_ASSERT(pNewBlock != nullptr);
 
-        if (pNewBlock != nullptr)
+        if (pNewBlock)
         {
             m_offset = ARENA_BLOCK_ALIGN;
             pNewBlock->pNext = m_pCurBlock;

@@ -230,7 +230,7 @@ timestamp_accumulate_result(struct fd_context *ctx,
 		union pipe_query_result *result)
 {
 	/* just return the value from fist tile: */
-	if (result->u64 != 0)
+	if (result->u64)
 		return;
 	uint64_t n = *(uint64_t *)start;
 	/* max_freq is in Hz, convert cycle count to ns: */

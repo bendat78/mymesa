@@ -577,7 +577,7 @@ lp_build_add(struct lp_build_context *bld,
             }
          }
       }
-   
+
       if (intrinsic)
          return lp_build_intrinsic_binary(builder, intrinsic, lp_build_vec_type(bld->gallivm, bld->type), a, b);
    }
@@ -878,7 +878,7 @@ lp_build_sub(struct lp_build_context *bld,
             }
          }
       }
-   
+
       if (intrinsic)
          return lp_build_intrinsic_binary(builder, intrinsic, lp_build_vec_type(bld->gallivm, bld->type), a, b);
    }
@@ -926,11 +926,11 @@ lp_build_sub(struct lp_build_context *bld,
  * - alpha plus one
  *
  *     makes the following approximation to the division (Sree)
- *    
+ *
  *       a*b/255 ~= (a*(b + 1)) >> 256
- *    
+ *
  *     which is the fastest method that satisfies the following OpenGL criteria of
- *    
+ *
  *       0*0 = 0 and 255*255 = 255
  *
  * - geometric series
@@ -958,9 +958,9 @@ lp_build_sub(struct lp_build_context *bld,
  *
  *
  *
- * @sa Alvy Ray Smith, Image Compositing Fundamentals, Tech Memo 4, Aug 15, 1995, 
+ * @sa Alvy Ray Smith, Image Compositing Fundamentals, Tech Memo 4, Aug 15, 1995,
  *     ftp://ftp.alvyray.com/Acrobat/4_Comp.pdf
- * @sa Michael Herf, The "double blend trick", May 2000, 
+ * @sa Michael Herf, The "double blend trick", May 2000,
  *     http://www.stereopsis.com/doubleblend.html
  */
 static LLVMValueRef
@@ -1295,7 +1295,7 @@ lp_build_mul_imm(struct lp_build_context *bld,
 
    assert(lp_check_value(bld->type, a));
 
-   if(b == 0)
+   if(!b)
       return bld->zero;
 
    if(b == 1)
@@ -3485,7 +3485,7 @@ lp_build_log2_approx(struct lp_build_context *bld,
 
       assert(type.floating && type.width == 32);
 
-      /* 
+      /*
        * We don't explicitly handle denormalized numbers. They will yield a
        * result in the neighbourhood of -127, which appears to be adequate
        * enough.

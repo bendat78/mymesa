@@ -95,7 +95,7 @@ static uint64_t
 __gen_combine_address(struct brw_context *brw, void *location,
                       struct brw_address address, uint32_t delta)
 {
-   if (address.bo == NULL) {
+   if (!address.bo) {
       return address.offset + delta;
    } else {
       return emit_reloc(brw, location, address, delta);
@@ -564,7 +564,7 @@ genX(emit_vertices)(struct brw_context *brw)
     * The stale VB state stays in place, but they don't do anything unless
     * a VE loads from them.
     */
-   if (nr_elements == 0) {
+   if (!nr_elements) {
       dw = brw_batch_emitn(brw, GENX(3DSTATE_VERTEX_ELEMENTS),
                            1 + GENX(VERTEX_ELEMENT_STATE_length));
       struct GENX(VERTEX_ELEMENT_STATE) elem = {
@@ -874,7 +874,7 @@ genX(emit_index_buffer)(struct brw_context *brw)
 {
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
 
-   if (index_buffer == NULL)
+   if (!index_buffer)
       return;
 
    brw_batch_emit(brw, GENX(3DSTATE_INDEX_BUFFER), ib) {
@@ -1114,7 +1114,7 @@ genX(calculate_attr_overrides)(const struct brw_context *brw,
       }
 
       /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
-      struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attribute = { 0 };
+      struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attribute = {};
 
       if (!point_sprite) {
          genX(get_attr_override)(&attribute,
@@ -1355,7 +1355,7 @@ genX(upload_clip_state)(struct brw_context *brw)
       clip.MinimumPointWidth = 0.125;
       clip.MaximumPointWidth = 255.875;
       clip.MaximumVPIndex = viewport_count - 1;
-      if (_mesa_geometric_layers(fb) == 0)
+      if (!_mesa_geometric_layers(fb))
          clip.ForceZeroRTAIndexEnable = true;
    }
 }
@@ -1647,7 +1647,7 @@ genX(upload_wm)(struct brw_context *brw)
     *     "[DevSNB]: This packet must be followed by WM_STATE."
     */
    brw_batch_emit(brw, GENX(3DSTATE_CONSTANT_PS), wmcp) {
-      if (wm_prog_data->base.nr_params != 0) {
+      if (wm_prog_data->base.nr_params) {
          wmcp.Buffer0Valid = true;
          /* Pointer to the WM constant buffer.  Covered by the set of
           * state flags from gen6_upload_wm_push_constants.
@@ -1855,7 +1855,7 @@ genX(upload_vs_state)(struct brw_context *brw)
     * don't need to do another one here.
     */
    brw_batch_emit(brw, GENX(3DSTATE_CONSTANT_VS), cvs) {
-      if (stage_state->push_const_size != 0) {
+      if (stage_state->push_const_size) {
          cvs.Buffer0Valid = true;
          cvs.PointertoVSConstantBuffer0 = stage_state->push_const_offset;
          cvs.VSConstantBuffer0ReadLength = stage_state->push_const_size - 1;
@@ -2539,11 +2539,11 @@ genX(upload_blend_state)(struct brw_context *brw)
    blend_map = brw_state_batch(brw, size, 64, &brw->cc.blend_state_offset);
 
 #if GEN_GEN >= 8
-   struct GENX(BLEND_STATE) blend = { 0 };
+   struct GENX(BLEND_STATE) blend = {};
    {
 #else
    for (int i = 0; i < nr_draw_buffers; i++) {
-      struct GENX(BLEND_STATE_ENTRY) entry = { 0 };
+      struct GENX(BLEND_STATE_ENTRY) entry = {};
 #define blend entry
 #endif
       /* OpenGL specification 3.3 (page 196), section 4.1.3 says:
@@ -2576,7 +2576,7 @@ genX(upload_blend_state)(struct brw_context *brw)
 
 #if GEN_GEN >= 8
       for (int i = 0; i < nr_draw_buffers; i++) {
-         struct GENX(BLEND_STATE_ENTRY) entry = { 0 };
+         struct GENX(BLEND_STATE_ENTRY) entry = {};
 #else
       {
 #endif
@@ -3019,7 +3019,7 @@ genX(upload_sbe)(struct brw_context *brw)
    const struct brw_wm_prog_data *wm_prog_data =
       brw_wm_prog_data(brw->wm.base.prog_data);
 #if GEN_GEN >= 8
-   struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attr_overrides[16] = { { 0 } };
+   struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attr_overrides[16] = {};
 #else
 #define attr_overrides sbe.Attribute
 #endif
@@ -4332,7 +4332,7 @@ genX(upload_default_color)(struct brw_context *brw,
       brw, GENX(SAMPLER_BORDER_COLOR_STATE_length) * sizeof(uint32_t),
       alignment, sdc_offset);
 
-   struct GENX(SAMPLER_BORDER_COLOR_STATE) state = { 0 };
+   struct GENX(SAMPLER_BORDER_COLOR_STATE) state = {};
 
 #define ASSIGN(dst, src) \
    do {                  \
@@ -4509,7 +4509,7 @@ genX(update_sampler_state)(struct brw_context *brw,
                            uint32_t *sampler_state,
                            uint32_t batch_offset_for_sampler_state)
 {
-   struct GENX(SAMPLER_STATE) samp_st = { 0 };
+   struct GENX(SAMPLER_STATE) samp_st = {};
 
    /* Select min and mip filters. */
    switch (sampler->MinFilter) {
@@ -4704,7 +4704,7 @@ genX(upload_sampler_state_table)(struct brw_context *brw,
 
    GLbitfield SamplersUsed = prog->SamplersUsed;
 
-   if (sampler_count == 0)
+   if (!sampler_count)
       return;
 
    /* SAMPLER_STATE is 4 DWords on all platforms. */

@@ -191,7 +191,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
          ir_dereference_array *a = (ir_dereference_array *) d;
          size_t new_length;
 
-         if (name_copy == NULL) {
+         if (!name_copy) {
             name_copy = ralloc_strdup(mem_ctx, base_name);
             base_length = strlen(name_copy);
          }

@@ -92,9 +92,9 @@ VOID* Object::ClientAlloc(
 {
     VOID* pObjMem = NULL;
 
-    if (pClient->callbacks.allocSysMem != NULL)
+    if (pClient->callbacks.allocSysMem)
     {
-        ADDR_ALLOCSYSMEM_INPUT allocInput = {0};
+        ADDR_ALLOCSYSMEM_INPUT allocInput = {};
 
         allocInput.size        = sizeof(ADDR_ALLOCSYSMEM_INPUT);
         allocInput.flags.value = 0;
@@ -134,11 +134,11 @@ VOID Object::ClientFree(
     VOID*          pObjMem,    ///< [in] User virtual address to free.
     const Client*  pClient)    ///< [in] Client pointer
 {
-    if (pClient->callbacks.freeSysMem != NULL)
+    if (pClient->callbacks.freeSysMem)
     {
-        if (pObjMem != NULL)
+        if (pObjMem)
         {
-            ADDR_FREESYSMEM_INPUT freeInput = {0};
+            ADDR_FREESYSMEM_INPUT freeInput = {};
 
             freeInput.size      = sizeof(ADDR_FREESYSMEM_INPUT);
             freeInput.hClient   = pClient->handle;
@@ -214,13 +214,13 @@ VOID Object::DebugPrint(
     ) const
 {
 #if DEBUG
-    if (m_client.callbacks.debugPrint != NULL)
+    if (m_client.callbacks.debugPrint)
     {
         va_list ap;
 
         va_start(ap, pDebugString);
 
-        ADDR_DEBUGPRINT_INPUT debugPrintInput = {0};
+        ADDR_DEBUGPRINT_INPUT debugPrintInput = {};
 
         debugPrintInput.size         = sizeof(ADDR_DEBUGPRINT_INPUT);
         debugPrintInput.pDebugString = const_cast<CHAR*>(pDebugString);

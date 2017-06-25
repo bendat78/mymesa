@@ -168,7 +168,7 @@ create_deint_frag_shader(struct vl_deint_filter *filter, unsigned field,
    ureg_ADD(shader, t_comp_bot, ureg_src(t_tex),
             ureg_imm4f(shader, sizes->x * -0.5f, sizes->y * 0.5f, 1.0f, 0));
 
-   if (field == 0) {
+   if (!field) {
       /* interpolating top field -> current field is a bottom field */
       // cur vs prev2
       ureg_TEX(shader, t_a, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_comp_bot), sampler_cur);
@@ -194,7 +194,7 @@ create_deint_frag_shader(struct vl_deint_filter *filter, unsigned field,
    ureg_MAX(shader, ureg_writemask(t_diff, TGSI_WRITEMASK_X), ureg_abs(ureg_src(t_diff)),
             ureg_scalar(ureg_abs(ureg_src(t_diff)), TGSI_SWIZZLE_Y));
 
-   if (field == 0) {
+   if (!field) {
       /* weave with prev top field */
       ureg_TEX(shader, t_weave, TGSI_TEXTURE_2D_ARRAY, ureg_src(t_tex), sampler_prev);
       /* get linear interpolation from current bottom field */

@@ -82,7 +82,7 @@ VkResult radv_CreateShaderModule(
 	module = vk_alloc2(&device->alloc, pAllocator,
 			     sizeof(*module) + pCreateInfo->codeSize, 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (module == NULL)
+	if (!module)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	module->nir = NULL;
@@ -451,7 +451,7 @@ static struct radv_shader_variant *radv_shader_variant_create(struct radv_device
 	if (!variant)
 		return NULL;
 
-	struct ac_nir_compiler_options options = {0};
+	struct ac_nir_compiler_options options = {};
 	options.layout = layout;
 	if (key)
 		options.key = *key;
@@ -496,7 +496,7 @@ radv_pipeline_create_gs_copy_shader(struct radv_pipeline *pipeline,
 	if (!variant)
 		return NULL;
 
-	struct ac_nir_compiler_options options = {0};
+	struct ac_nir_compiler_options options = {};
 	struct ac_shader_binary binary;
 	options.family = chip_family;
 	options.chip_class = pipeline->device->physical_device->rad_info.chip_class;
@@ -518,7 +518,7 @@ radv_pipeline_create_gs_copy_shader(struct radv_pipeline *pipeline,
 	free(binary.relocs);
 	free(binary.disasm_string);
 	variant->ref_count = 1;
-	return variant;	
+	return variant;
 }
 
 static struct radv_shader_variant *
@@ -568,7 +568,7 @@ radv_pipeline_compile(struct radv_pipeline *pipeline,
 	nir = radv_shader_compile_to_nir(pipeline->device,
 				         module, entrypoint, stage,
 					 spec_info, dump);
-	if (nir == NULL)
+	if (!nir)
 		return NULL;
 
 	if (!variant) {
@@ -678,13 +678,13 @@ radv_tess_pipeline_compile(struct radv_pipeline *pipeline,
 	tes_nir = radv_shader_compile_to_nir(pipeline->device,
 					     tes_module, tes_entrypoint, MESA_SHADER_TESS_EVAL,
 					     tes_spec_info, dump);
-	if (tes_nir == NULL)
+	if (!tes_nir)
 		return;
 
 	tcs_nir = radv_shader_compile_to_nir(pipeline->device,
 					     tcs_module, tcs_entrypoint, MESA_SHADER_TESS_CTRL,
 					     tcs_spec_info, dump);
-	if (tcs_nir == NULL)
+	if (!tcs_nir)
 		return;
 
 	nir_lower_tes_patch_vertices(tes_nir,
@@ -1128,7 +1128,7 @@ radv_pipeline_init_blend_state(struct radv_pipeline *pipeline,
 		}
 
 		if (is_dual_src(srcRGB) || is_dual_src(dstRGB) || is_dual_src(srcA) || is_dual_src(dstA))
-			if (i == 0)
+			if (!i)
 				blend_mrt0_is_dual_src = true;
 
 		if (eqRGB == VK_BLEND_OP_MIN || eqRGB == VK_BLEND_OP_MAX) {
@@ -1968,10 +1968,10 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		   const struct radv_graphics_pipeline_create_info *extra,
 		   const VkAllocationCallbacks *alloc)
 {
-	struct radv_shader_module fs_m = {0};
+	struct radv_shader_module fs_m = {};
 	VkResult result;
 
-	if (alloc == NULL)
+	if (!alloc)
 		alloc = &device->alloc;
 
 	pipeline->device = device;
@@ -2106,7 +2106,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		    !ps->info.fs.writes_sample_mask)
 			pipeline->graphics.blend.spi_shader_col_format = V_028714_SPI_SHADER_32_R;
 	}
-	
+
 	unsigned z_order;
 	pipeline->graphics.db_shader_control = 0;
 	if (ps->info.fs.early_fragment_test || !ps->info.fs.writes_memory)
@@ -2240,7 +2240,7 @@ radv_graphics_pipeline_create(
 
 	pipeline = vk_alloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
 			       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (pipeline == NULL)
+	if (!pipeline)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	memset(pipeline, 0, sizeof(*pipeline));
@@ -2297,7 +2297,7 @@ static VkResult radv_compute_pipeline_create(
 
 	pipeline = vk_alloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
 			       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (pipeline == NULL)
+	if (!pipeline)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	memset(pipeline, 0, sizeof(*pipeline));

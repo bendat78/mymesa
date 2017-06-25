@@ -143,7 +143,7 @@ public:
    {
       ir_dereference_variable *const dv = (*rvalue)->as_dereference_variable();
 
-      if ((dv != NULL) && (dv->var == this->variable_to_replace)) {
+      if ((dv) && (dv->var == this->variable_to_replace)) {
 	 this->progress = true;
 	 *rvalue = this->value->clone(ralloc_parent(*rvalue), NULL);
       }
@@ -366,7 +366,7 @@ public:
        * FINISHME: uniforms.  It seems like this should do the same.
        */
       const ir_variable *const var = deref->array->variable_referenced();
-      if (var == NULL)
+      if (!var)
 	 return this->lower_temps;
 
       switch (var->data.mode) {
@@ -519,7 +519,7 @@ public:
        * condition!  This is acomplished by wrapping the new conditional
        * assignments in an if-statement that uses the original condition.
        */
-      if ((orig_assign != NULL) && (orig_assign->condition != NULL)) {
+      if ((orig_assign) && (orig_assign->condition != NULL)) {
 	 /* No need to clone the condition because the IR that it hangs on is
 	  * going to be removed from the instruction sequence.
 	  */
@@ -563,7 +563,7 @@ public:
       find_variable_index f;
       ir->lhs->accept(&f);
 
-      if ((f.deref != NULL) && storage_type_needs_lowering(f.deref)) {
+      if ((f.deref) && storage_type_needs_lowering(f.deref)) {
          convert_dereference_array(f.deref, ir, ir->lhs);
          ir->remove();
          this->progress = true;

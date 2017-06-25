@@ -116,7 +116,7 @@ _eglPointerIsDereferencable(void *p)
    unsigned char valid = 0;
    const long page_size = getpagesize();
 
-   if (p == NULL)
+   if (!p)
       return EGL_FALSE;
 
    /* align addr to page_size */
@@ -271,7 +271,7 @@ _eglFindDisplay(_EGLPlatformType plat, void *plat_dpy)
          dpy->Platform = plat;
          dpy->PlatformDisplay = plat_dpy;
 
-         /* add to the display list */ 
+         /* add to the display list */
          dpy->Next = _eglGlobal.DisplayList;
          _eglGlobal.DisplayList = dpy;
       }
@@ -377,7 +377,7 @@ EGLBoolean
 _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
 {
    _EGLResource *list = dpy->ResourceLists[type];
-   
+
    if (!res)
       return EGL_FALSE;
 
@@ -484,7 +484,7 @@ _eglParseX11DisplayAttribList(_EGLDisplay *display, const EGLint *attrib_list)
 {
    int i;
 
-   if (attrib_list == NULL) {
+   if (!attrib_list) {
       return EGL_TRUE;
    }
 
@@ -562,7 +562,7 @@ _eglGetSurfacelessDisplay(void *native_display,
                           const EGLint *attrib_list)
 {
    /* This platform has no native display. */
-   if (native_display != NULL) {
+   if (native_display) {
       _eglError(EGL_BAD_PARAMETER, "eglGetPlatformDisplay");
       return NULL;
    }

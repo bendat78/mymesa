@@ -144,7 +144,7 @@ static void draw( void )
 
 
 static void init_tex( void )
-{ 
+{
 #define SIZE 64
    ubyte tex2d[SIZE][SIZE][4];
    int s, t;
@@ -158,7 +158,7 @@ static void init_tex( void )
       }
    }
 
-   texture = graw_util_create_tex2d(&info, SIZE, SIZE, 
+   texture = graw_util_create_tex2d(&info, SIZE, SIZE,
                                     PIPE_FORMAT_B8G8R8A8_UNORM, tex2d);
 
    {
@@ -181,7 +181,7 @@ static void init_tex( void )
       sv_temp.swizzle_b = PIPE_SWIZZLE_Z;
       sv_temp.swizzle_a = PIPE_SWIZZLE_W;
       linear_sv = info.ctx->create_sampler_view(info.ctx, texture, &sv_temp);
-      if (linear_sv == NULL)
+      if (!linear_sv)
          exit(0);
    }
 
@@ -196,7 +196,7 @@ static void init_tex( void )
       sv_temp.swizzle_b = PIPE_SWIZZLE_Z;
       sv_temp.swizzle_a = PIPE_SWIZZLE_W;
       srgb_sv = info.ctx->create_sampler_view(info.ctx, texture, &sv_temp);
-      if (srgb_sv == NULL)
+      if (!srgb_sv)
          exit(0);
    }
 #undef SIZE
@@ -208,7 +208,7 @@ static void init( void )
       exit(1);
 
    graw_util_default_state(&info, FALSE);
-   
+
    graw_util_viewport(&info, 0, 0, WIDTH, HEIGHT, 30, 10000);
 
    init_tex();

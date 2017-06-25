@@ -195,7 +195,7 @@ etna_set_framebuffer_state(struct pipe_context *pctx,
          cs->PE_PIPE_COLOR_ADDR[i].bo = NULL;
    }
 
-   if (sv->zsbuf != NULL) {
+   if (sv->zsbuf) {
       struct etna_surface *zsbuf = etna_surface(sv->zsbuf);
       struct etna_resource *res = etna_resource(zsbuf->base.texture);
 

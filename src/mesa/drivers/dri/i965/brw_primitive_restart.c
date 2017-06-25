@@ -135,7 +135,7 @@ brw_handle_primitive_restart(struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
 
    /* We only need to handle cases where there is an index buffer. */
-   if (ib == NULL) {
+   if (!ib) {
       return GL_FALSE;
    }
 

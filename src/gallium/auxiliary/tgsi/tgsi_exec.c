@@ -1,9 +1,9 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007-2008 VMware, Inc.
  * All Rights Reserved.
  * Copyright 2009-2010 VMware, Inc.  All rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,11 +11,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -23,7 +23,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -1090,7 +1090,7 @@ tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst)
  * allocating temporary storage, setting up constants, etc.
  * After this, we can call tgsi_exec_machine_run() many times.
  */
-void 
+void
 tgsi_exec_machine_bind_shader(
    struct tgsi_exec_machine *mach,
    const struct tgsi_token *tokens,
@@ -1226,7 +1226,7 @@ tgsi_exec_machine_bind_shader(
             assert( mach->ImmLimit + 1 <= TGSI_EXEC_NUM_IMMEDIATES );
 
             for( i = 0; i < size; i++ ) {
-               mach->Imms[mach->ImmLimit][i] = 
+               mach->Imms[mach->ImmLimit][i] =
 		  parse.FullToken.FullImmediate.u[i].Float;
             }
             mach->ImmLimit += 1;
@@ -1362,16 +1362,16 @@ micro_div(
    const union tgsi_exec_channel *src0,
    const union tgsi_exec_channel *src1 )
 {
-   if (src1->f[0] != 0) {
+   if (src1->f[0]) {
       dst->f[0] = src0->f[0] / src1->f[0];
    }
-   if (src1->f[1] != 0) {
+   if (src1->f[1]) {
       dst->f[1] = src0->f[1] / src1->f[1];
    }
-   if (src1->f[2] != 0) {
+   if (src1->f[2]) {
       dst->f[2] = src0->f[2] / src1->f[2];
    }
-   if (src1->f[3] != 0) {
+   if (src1->f[3]) {
       dst->f[3] = src0->f[3] / src1->f[3];
    }
 }
@@ -2534,7 +2534,7 @@ exec_txf(struct tgsi_exec_machine *mach,
    default:
       assert(0);
       break;
-   }      
+   }
 
    mach->Sampler->get_texel(mach->Sampler, unit, r[0].i, r[1].i, r[2].i, r[3].i,
                             offsets, rgba);
@@ -4569,7 +4569,7 @@ exec_64_2_t(struct tgsi_exec_machine *mach,
       bit = ffs(wm);
       if (bit) {
          wm &= ~(1 << (bit - 1));
-         if (i == 0)
+         if (!i)
             fetch_double_channel(mach, &src, &inst->Src[0], TGSI_CHAN_X, TGSI_CHAN_Y);
          else
             fetch_double_channel(mach, &src, &inst->Src[0], TGSI_CHAN_Z, TGSI_CHAN_W);
@@ -4991,7 +4991,7 @@ micro_ibfe(union tgsi_exec_channel *dst,
    for (i = 0; i < 4; i++) {
       int width = src2->i[i] & 0x1f;
       int offset = src1->i[i] & 0x1f;
-      if (width == 0)
+      if (!width)
          dst->i[i] = 0;
       else if (width + offset < 32)
          dst->i[i] = (src0->i[i] << (32 - width - offset)) >> (32 - width);
@@ -5013,7 +5013,7 @@ micro_ubfe(union tgsi_exec_channel *dst,
    for (i = 0; i < 4; i++) {
       int width = src2->u[i] & 0x1f;
       int offset = src1->u[i] & 0x1f;
-      if (width == 0)
+      if (!width)
          dst->u[i] = 0;
       else if (width + offset < 32)
          dst->u[i] = (src0->u[i] << (32 - width - offset)) >> (32 - width);
@@ -5398,7 +5398,7 @@ exec_instruction(
       if (mach->FuncMask == 0x0) {
          /* really return now (otherwise, keep executing */
 
-         if (mach->CallStackTop == 0) {
+         if (!mach->CallStackTop) {
             /* returning from main() */
             mach->CondStackTop = 0;
             mach->LoopStackTop = 0;
@@ -6195,7 +6195,7 @@ tgsi_exec_machine_setup_masks(struct tgsi_exec_machine *mach)
       default_mask = 0x1;
    }
 
-   if (mach->NonHelperMask == 0)
+   if (!mach->NonHelperMask)
       mach->NonHelperMask = default_mask;
    mach->CondMask = default_mask;
    mach->LoopMask = default_mask;

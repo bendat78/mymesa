@@ -310,12 +310,12 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    /* If we've entered a loop that hasn't been analyzed, something really,
     * really bad has happened.
     */
-   if (ls == NULL) {
+   if (!ls) {
       assert(ls != NULL);
       return visit_continue;
    }
 
-   if (ls->limiting_terminator == NULL) {
+   if (!ls->limiting_terminator) {
       ir_instruction *last_ir =
          (ir_instruction *) ir->body_instructions.get_tail();
 
@@ -372,7 +372,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    if (predicted_num_loop_jumps > 1)
       return visit_continue;
 
-   if (predicted_num_loop_jumps == 0) {
+   if (!predicted_num_loop_jumps) {
       ls->limiting_terminator->ir->remove();
       simple_unroll(ir, iterations);
       return visit_continue;
@@ -402,7 +402,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
          continue;
 
       ir_if *ir_if = cur_ir->as_if();
-      if (ir_if != NULL) {
+      if (ir_if) {
          /* Determine which if-statement branch, if any, ends with a
           * break.  The branch that did *not* have the break will get a
           * temporary continue inserted in each iteration of the loop

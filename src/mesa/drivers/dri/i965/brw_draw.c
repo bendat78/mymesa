@@ -401,7 +401,7 @@ brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
 
       if (!irb)
          continue;
-     
+
       brw_render_cache_set_add_bo(brw, irb->mt->bo);
       intel_miptree_finish_render(brw, irb->mt, irb->mt_level,
                                   irb->mt_layer, irb->layer_count);
@@ -412,7 +412,7 @@ static void
 intel_renderbuffer_move_temp_back(struct brw_context *brw,
                                   struct intel_renderbuffer *irb)
 {
-   if (irb->align_wa_mt == NULL)
+   if (!irb->align_wa_mt)
       return;
 
    brw_render_cache_set_check_flush(brw, irb->align_wa_mt->bo);

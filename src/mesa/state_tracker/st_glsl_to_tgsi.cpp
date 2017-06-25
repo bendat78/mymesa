@@ -810,7 +810,7 @@ glsl_to_tgsi_visitor::emit_asm(ir_instruction *ir, unsigned op,
          }
 
          /* first time use previous instruction */
-         if (dinst == NULL) {
+         if (!dinst) {
             dinst = inst;
          } else {
             /* create a new instructions for subsequent attempts */
@@ -2375,7 +2375,7 @@ glsl_to_tgsi_visitor::visit_expression(ir_expression* ir, st_src_reg *op)
       st_src_reg temp = get_temp(glsl_type::uvec4_type);
       st_dst_reg temp_dst = st_dst_reg(temp);
       unsigned orig_swz = op[0].swizzle;
-      /* 
+      /*
        * To convert unsigned to 64-bit:
        * zero Y channel, copy X channel.
        */
@@ -2981,7 +2981,7 @@ glsl_to_tgsi_visitor::process_move_condition(ir_rvalue *ir)
    ir_expression *const expr = ir->as_expression();
 
    if (native_integers) {
-      if ((expr != NULL) && (expr->get_num_operands() == 2)) {
+      if ((expr) && (expr->get_num_operands() == 2)) {
          enum glsl_base_type type = expr->operands[0]->type->base_type;
          if (type == GLSL_TYPE_INT || type == GLSL_TYPE_UINT ||
              type == GLSL_TYPE_BOOL) {
@@ -3010,7 +3010,7 @@ glsl_to_tgsi_visitor::process_move_condition(ir_rvalue *ir)
       return switch_order;
    }
 
-   if ((expr != NULL) && (expr->get_num_operands() == 2)) {
+   if ((expr) && (expr->get_num_operands() == 2)) {
       bool zero_on_left = false;
 
       if (expr->operands[0]->is_zero()) {
@@ -3135,7 +3135,7 @@ glsl_to_tgsi_visitor::emit_block_mov(ir_assignment *ir, const struct glsl_type *
    r->index++;
    if (type->is_dual_slot()) {
       l->index++;
-      if (r->is_double_vertex_input == false)
+      if (!r->is_double_vertex_input)
 	 r->index++;
    }
 }
@@ -3171,7 +3171,7 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
             assert(variable->data.location == FRAG_RESULT_STENCIL);
             l.writemask = WRITEMASK_Y;
          }
-      } else if (ir->write_mask == 0) {
+      } else if (!ir->write_mask) {
          assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
 
          unsigned num_elements = ir->lhs->type->without_array()->vector_elements;
@@ -3245,7 +3245,7 @@ void
 glsl_to_tgsi_visitor::visit(ir_constant *ir)
 {
    st_src_reg src;
-   GLdouble stack_vals[4] = { 0 };
+   GLdouble stack_vals[4] = {};
    gl_constant_value *values = (gl_constant_value *) stack_vals;
    GLenum gl_type = GL_NONE;
    unsigned int i;
@@ -4711,7 +4711,7 @@ count_resources(glsl_to_tgsi_visitor *v, gl_program *prog)
    }
    prog->SamplersUsed = v->samplers_used;
 
-   if (v->shader_program != NULL)
+   if (v->shader_program)
       _mesa_update_shader_textures_used(v->shader_program, prog);
 }
 
@@ -4873,10 +4873,10 @@ glsl_to_tgsi_visitor::get_first_temp_write(int *first_writes)
       }
 
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if(depth++ == 0)
+         if(!depth++)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
-         if (--depth == 0)
+         if (!--depth)
             loop_start = -1;
       }
       assert(depth >= 0);
@@ -4905,10 +4905,10 @@ glsl_to_tgsi_visitor::get_first_temp_read(int *first_reads)
          }
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if(depth++ == 0)
+         if(!depth++)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
-         if (--depth == 0)
+         if (!--depth)
             loop_start = -1;
       }
       assert(depth >= 0);
@@ -4940,10 +4940,10 @@ glsl_to_tgsi_visitor::get_last_temp_read_first_temp_write(int *last_reads, int *
             last_reads[inst->tex_offsets[j].index] = (depth == 0) ? i : -2;
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if(depth++ == 0)
+         if(!depth++)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
-         if (--depth == 0) {
+         if (!--depth) {
             loop_start = -1;
             for (k = 0; k < this->next_temp; k++) {
                if (last_reads[k] == -2) {
@@ -4973,7 +4973,7 @@ glsl_to_tgsi_visitor::get_last_temp_write(int *last_writes)
       if (inst->op == TGSI_OPCODE_BGNLOOP)
          depth++;
       else if (inst->op == TGSI_OPCODE_ENDLOOP)
-         if (--depth == 0) {
+         if (!--depth) {
             for (k = 0; k < this->next_temp; k++) {
                if (last_writes[k] == -2) {
                   last_writes[k] = i;
@@ -5838,7 +5838,7 @@ translate_dst(struct st_translate *t,
    if (saturate)
       dst = ureg_saturate(dst);
 
-   if (dst_reg->reladdr != NULL) {
+   if (dst_reg->reladdr) {
       assert(dst_reg->file != PROGRAM_TEMPORARY);
       dst = ureg_dst_indirect(dst, ureg_src(t->address[0]));
    }
@@ -5885,7 +5885,7 @@ translate_src(struct st_translate *t, const st_src_reg *src_reg)
    if ((src_reg->negate & 0xf) == NEGATE_XYZW)
       src = ureg_negate(src);
 
-   if (src_reg->reladdr != NULL) {
+   if (src_reg->reladdr) {
       assert(src_reg->file != PROGRAM_TEMPORARY);
       src = ureg_src_indirect(src, ureg_src(t->address[0]));
    }
@@ -6631,7 +6631,7 @@ st_translate_program(
    if (proginfo->Parameters) {
       t->constants = (struct ureg_src *)
          calloc(proginfo->Parameters->NumParameters, sizeof(t->constants[0]));
-      if (t->constants == NULL) {
+      if (!t->constants) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }
@@ -6679,7 +6679,7 @@ st_translate_program(
     */
    t->immediates = (struct ureg_src *)
       calloc(program->num_immediates, sizeof(struct ureg_src));
-   if (t->immediates == NULL) {
+   if (!t->immediates) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto out;
    }
@@ -7047,7 +7047,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    assert(prog->data->LinkStatus);
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
+      if (!prog->_LinkedShaders[i])
          continue;
 
       struct gl_linked_shader *shader = prog->_LinkedShaders[i];
@@ -7138,7 +7138,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       lower_vector_insert(ir, true);
       lower_quadop_vector(ir, false);
       lower_noise(ir);
-      if (options->MaxIfDepth == 0) {
+      if (!options->MaxIfDepth) {
          lower_discard(ir);
       }
 
@@ -7168,7 +7168,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *shader = prog->_LinkedShaders[i];
-      if (shader == NULL)
+      if (!shader)
          continue;
 
       enum pipe_shader_type ptarget =

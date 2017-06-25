@@ -64,7 +64,7 @@ _mesa_set_scissor(struct gl_context *ctx, unsigned idx,
                   GLint x, GLint y, GLsizei width, GLsizei height);
 
 
-extern void 
+extern void
 _mesa_init_scissor(struct gl_context *ctx);
 
 

@@ -118,7 +118,7 @@ ir3_instr_depth(struct ir3_instruction *instr)
 		ir3_instr_depth(src);
 
 		/* for array writes, no need to delay on previous write: */
-		if (i == 0)
+		if (!i)
 			continue;
 
 		sd = ir3_delayslots(src, instr, i) + src->depth;

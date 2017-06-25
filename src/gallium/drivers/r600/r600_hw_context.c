@@ -296,7 +296,7 @@ void r600_context_gfx_flush(void *context, unsigned flags,
 
 	if (ctx->is_debug) {
 		bool ret = ws->fence_wait(ws, ctx->b.last_gfx_fence, 10000000);
-		if (ret == false) {
+		if (!ret) {
 			const char *fname = getenv("R600_TRACE");
 			if (!fname)
 				exit(-1);

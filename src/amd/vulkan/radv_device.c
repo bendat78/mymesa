@@ -723,7 +723,7 @@ void radv_GetPhysicalDeviceProperties(
 		.deviceID = pdevice->rad_info.pci_id,
 		.deviceType = pdevice->rad_info.has_dedicated_vram ? VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU : VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
 		.limits = limits,
-		.sparseProperties = {0},
+		.sparseProperties = {},
 	};
 
 	strcpy(pProperties->deviceName, pdevice->name);
@@ -770,7 +770,7 @@ static void radv_get_physical_device_queue_family_properties(
 	    !(pdevice->instance->debug_flags & RADV_DEBUG_NO_COMPUTE_QUEUE))
 		num_queue_families++;
 
-	if (pQueueFamilyProperties == NULL) {
+	if (!pQueueFamilyProperties) {
 		*pCount = num_queue_families;
 		return;
 	}
@@ -779,7 +779,7 @@ static void radv_get_physical_device_queue_family_properties(
 		return;
 
 	idx = 0;
-	if (*pCount >= 1) {
+	if (*pCount) {
 		*pQueueFamilyProperties[idx] = (VkQueueFamilyProperties) {
 			.queueFlags = VK_QUEUE_GRAPHICS_BIT |
 			              VK_QUEUE_COMPUTE_BIT |
@@ -1213,7 +1213,7 @@ VkResult radv_EnumerateInstanceExtensionProperties(
 	uint32_t*                                   pPropertyCount,
 	VkExtensionProperties*                      pProperties)
 {
-	if (pProperties == NULL) {
+	if (!pProperties) {
 		*pPropertyCount = ARRAY_SIZE(instance_extensions);
 		return VK_SUCCESS;
 	}
@@ -1235,7 +1235,7 @@ VkResult radv_EnumerateDeviceExtensionProperties(
 {
 	RADV_FROM_HANDLE(radv_physical_device, pdevice, physicalDevice);
 
-	if (pProperties == NULL) {
+	if (!pProperties) {
 		*pPropertyCount = pdevice->extensions.num_ext;
 		return VK_SUCCESS;
 	}
@@ -1253,7 +1253,7 @@ VkResult radv_EnumerateInstanceLayerProperties(
 	uint32_t*                                   pPropertyCount,
 	VkLayerProperties*                          pProperties)
 {
-	if (pProperties == NULL) {
+	if (!pProperties) {
 		*pPropertyCount = 0;
 		return VK_SUCCESS;
 	}
@@ -1267,7 +1267,7 @@ VkResult radv_EnumerateDeviceLayerProperties(
 	uint32_t*                                   pPropertyCount,
 	VkLayerProperties*                          pProperties)
 {
-	if (pProperties == NULL) {
+	if (!pProperties) {
 		*pPropertyCount = 0;
 		return VK_SUCCESS;
 	}
@@ -1514,7 +1514,7 @@ radv_get_preamble_cs(struct radv_queue *queue,
 	struct radeon_winsys_bo *gsvs_ring_bo = NULL;
 	struct radeon_winsys_bo *tess_factor_ring_bo = NULL;
 	struct radeon_winsys_bo *tess_offchip_ring_bo = NULL;
-	struct radeon_winsys_cs *dest_cs[2] = {0};
+	struct radeon_winsys_cs *dest_cs[2] = {};
 	bool add_tess_rings = false, add_sample_positions = false;
 	unsigned tess_factor_ring_size = 0, tess_offchip_ring_size = 0;
 	unsigned max_offchip_buffers;
@@ -2079,7 +2079,7 @@ VkResult radv_AllocateMemory(
 
 	assert(pAllocateInfo->sType == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
 
-	if (pAllocateInfo->allocationSize == 0) {
+	if (!pAllocateInfo->allocationSize) {
 		/* Apparently, this is allowed */
 		*pMem = VK_NULL_HANDLE;
 		return VK_SUCCESS;
@@ -2092,7 +2092,7 @@ VkResult radv_AllocateMemory(
 
 	mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
 			  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (mem == NULL)
+	if (!mem)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	if (dedicate_info) {
@@ -2157,7 +2157,7 @@ void radv_FreeMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _mem);
 
-	if (mem == NULL)
+	if (!mem)
 		return;
 
 	device->ws->buffer_destroy(mem->bo);
@@ -2177,7 +2177,7 @@ VkResult radv_MapMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _memory);
 
-	if (mem == NULL) {
+	if (!mem) {
 		*ppData = NULL;
 		return VK_SUCCESS;
 	}
@@ -2198,7 +2198,7 @@ void radv_UnmapMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _memory);
 
-	if (mem == NULL)
+	if (!mem)
 		return;
 
 	device->ws->buffer_unmap(mem->bo);
@@ -2629,7 +2629,7 @@ VkResult radv_CreateBuffer(
 
 	buffer = vk_alloc2(&device->alloc, pAllocator, sizeof(*buffer), 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (buffer == NULL)
+	if (!buffer)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	buffer->size = pCreateInfo->size;
@@ -2781,7 +2781,7 @@ radv_initialise_color_surface(struct radv_device *device,
 					       desc,
 					       vk_format_get_first_non_void_channel(iview->vk_format));
 	format = radv_translate_colorformat(iview->vk_format);
-	if (format == V_028C70_COLOR_INVALID || ntype == ~0u)
+	if (format == V_028C70_COLOR_INVALID || ntype == (~0u))
 		radv_finishme("Illegal color\n");
 	swap = radv_translate_colorswap(iview->vk_format, FALSE);
 	endian = radv_colorformat_endian_swap(format);
@@ -3027,7 +3027,7 @@ VkResult radv_CreateFramebuffer(
 		sizeof(struct radv_attachment_info) * pCreateInfo->attachmentCount;
 	framebuffer = vk_alloc2(&device->alloc, pAllocator, size, 8,
 				  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (framebuffer == NULL)
+	if (!framebuffer)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	framebuffer->attachment_count = pCreateInfo->attachmentCount;
@@ -3299,7 +3299,7 @@ VkResult radv_GetMemoryFdKHX(VkDevice _device,
 	assert(handleType == VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHX);
 
 	bool ret = radv_get_memory_fd(device, memory, pFD);
-	if (ret == false)
+	if (!ret)
 		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 	return VK_SUCCESS;
 }

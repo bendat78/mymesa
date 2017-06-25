@@ -1129,7 +1129,7 @@ void radv_CmdEndQuery(
 		radeon_check_space(cmd_buffer->device->ws, cs, 14);
 
 		cmd_buffer->state.active_occlusion_queries--;
-		if (cmd_buffer->state.active_occlusion_queries == 0)
+		if (!cmd_buffer->state.active_occlusion_queries)
 			radv_set_db_count_control(cmd_buffer);
 
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));

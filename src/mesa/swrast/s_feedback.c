@@ -80,7 +80,7 @@ _swrast_feedback_line(struct gl_context *ctx, const SWvertex *v0,
    GLenum token = GL_LINE_TOKEN;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (swrast->StippleCounter == 0)
+   if (!swrast->StippleCounter)
       token = GL_LINE_RESET_TOKEN;
 
    _mesa_feedback_token(ctx, (GLfloat) (GLint) token);

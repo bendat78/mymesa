@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -72,7 +72,7 @@ is_clear_flag_set(const uint *bitvec, union tile_address addr, unsigned max)
    bit = bitvec[pos / 32] & (1 << (pos & 31));
    return bit;
 }
-   
+
 
 /**
  * Mark the tile at (x,y) as not cleared.
@@ -85,7 +85,7 @@ clear_clear_flag(uint *bitvec, union tile_address addr, unsigned max)
    assert(pos / 32 < max);
    bitvec[pos / 32] &= ~(1 << (pos & 31));
 }
-   
+
 
 struct softpipe_tile_cache *
 sp_create_tile_cache( struct pipe_context *pipe )
@@ -295,7 +295,7 @@ clear_tile(struct softpipe_cached_tile *tile,
       memset(tile->data.any, (int) clear_value, TILE_SIZE * TILE_SIZE);
       break;
    case 2:
-      if (clear_value == 0) {
+      if (!clear_value) {
          memset(tile->data.any, 0, 2 * TILE_SIZE * TILE_SIZE);
       }
       else {
@@ -307,7 +307,7 @@ clear_tile(struct softpipe_cached_tile *tile,
       }
       break;
    case 4:
-      if (clear_value == 0) {
+      if (!clear_value) {
          memset(tile->data.any, 0, 4 * TILE_SIZE * TILE_SIZE);
       }
       else {
@@ -319,7 +319,7 @@ clear_tile(struct softpipe_cached_tile *tile,
       }
       break;
    case 8:
-      if (clear_value == 0) {
+      if (!clear_value) {
          memset(tile->data.any, 0, 8 * TILE_SIZE * TILE_SIZE);
       }
       else {
@@ -513,7 +513,7 @@ sp_alloc_tile(struct softpipe_tile_cache *tc)
  * \param x, y  position of tile, in pixels
  */
 struct softpipe_cached_tile *
-sp_find_cached_tile(struct softpipe_tile_cache *tc, 
+sp_find_cached_tile(struct softpipe_tile_cache *tc,
                     union tile_address addr )
 {
    struct pipe_transfer *pt;
@@ -530,7 +530,7 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
    if (addr.value != tc->tile_addrs[pos].value) {
 
       layer = tc->tile_addrs[pos].bits.layer;
-      if (tc->tile_addrs[pos].bits.invalid == 0) {
+      if (!tc->tile_addrs[pos].bits.invalid) {
          /* put dirty tile back in framebuffer */
          if (tc->depth_stencil) {
             pipe_put_tile_raw(tc->transfer[layer], tc->transfer_map[layer],

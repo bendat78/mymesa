@@ -303,7 +303,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeCmaskAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_NOTSUPPORTED;
 
-    if ((m_settings.isVolcanicIslands == TRUE) &&
+    if ((m_settings.isVolcanicIslands) &&
         (pIn->flags.tcCompatible == TRUE))
     {
         UINT_32 numOfPipes   = HwlGetPipes(pIn->pTileInfo);
@@ -347,7 +347,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeHtileAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_NOTSUPPORTED;
 
-    if ((m_settings.isVolcanicIslands == TRUE) &&
+    if ((m_settings.isVolcanicIslands) &&
         (pIn->flags.tcCompatible == TRUE))
     {
         UINT_32 numOfPipes   = HwlGetPipes(pIn->pTileInfo);
@@ -630,7 +630,7 @@ ADDR_E_RETURNCODE CiLib::HwlSetupTileCfg(
         {
             const TileConfig* pCfgTable = GetTileSetting(index);
 
-            if (pInfo != NULL)
+            if (pInfo)
             {
                 if (IsMacroTiled(pCfgTable->mode))
                 {
@@ -673,12 +673,12 @@ ADDR_E_RETURNCODE CiLib::HwlSetupTileCfg(
                 }
             }
 
-            if (pMode != NULL)
+            if (pMode)
             {
                 *pMode = pCfgTable->mode;
             }
 
-            if (pType != NULL)
+            if (pType)
             {
                 *pType = pCfgTable->type;
             }
@@ -725,7 +725,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeSurfaceInfo(
         pOut->macroModeIndex = TileIndexInvalid;
     }
 
-    if ((pIn->flags.matchStencilTileCfg == TRUE) &&
+    if ((pIn->flags.matchStencilTileCfg) &&
         (pIn->flags.depth == TRUE))
     {
         pOut->stencilTileIdx = TileIndexInvalid;
@@ -735,7 +735,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeSurfaceInfo(
         {
             BOOL_32 depthStencil2DTileConfigMatch = DepthStencilTileCfgMatch(pIn, pOut);
 
-            if ((depthStencil2DTileConfigMatch == FALSE) &&
+            if (!(depthStencil2DTileConfigMatch) &&
                 (pOut->tcCompatible == TRUE))
             {
                 pOut->macroModeIndex = TileIndexInvalid;
@@ -752,7 +752,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeSurfaceInfo(
                 depthStencil2DTileConfigMatch = DepthStencilTileCfgMatch(pIn, pOut);
             }
 
-            if ((depthStencil2DTileConfigMatch == FALSE) &&
+            if (!(depthStencil2DTileConfigMatch) &&
                 (pIn->numSamples <= 1))
             {
                 pOut->macroModeIndex = TileIndexInvalid;
@@ -791,14 +791,14 @@ ADDR_E_RETURNCODE CiLib::HwlComputeFmaskInfo(
 {
     ADDR_E_RETURNCODE retCode = ADDR_OK;
 
-    ADDR_TILEINFO tileInfo = {0};
+    ADDR_TILEINFO tileInfo = {};
     ADDR_COMPUTE_FMASK_INFO_INPUT fmaskIn;
     fmaskIn = *pIn;
 
     AddrTileMode tileMode = pIn->tileMode;
 
     // Use internal tile info if pOut does not have a valid pTileInfo
-    if (pOut->pTileInfo == NULL)
+    if (!pOut->pTileInfo)
     {
         pOut->pTileInfo = &tileInfo;
     }
@@ -814,7 +814,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeFmaskInfo(
 
     // The only valid tile modes for fmask are 2D_THIN1 and 3D_THIN1 plus non-displayable
     INT_32 tileIndex = tileMode == ADDR_TM_2D_TILED_THIN1 ? 14 : 15;
-    ADDR_SURFACE_FLAGS flags = {{0}};
+    ADDR_SURFACE_FLAGS flags = {};
     flags.fmask = 1;
 
     INT_32 macroModeIndex = TileIndexInvalid;
@@ -942,9 +942,9 @@ VOID CiLib::HwlOptimizeTileMode(
 
     // Override 2D/3D macro tile mode to PRT_* tile mode if
     // client driver requests this surface is equation compatible
-    if (IsMacroTiled(tileMode) == TRUE)
+    if (IsMacroTiled(tileMode))
     {
-        if ((pInOut->flags.needEquation == TRUE) &&
+        if ((pInOut->flags.needEquation) &&
             (pInOut->numSamples <= 1) &&
             (IsPrtTileMode(tileMode) == FALSE))
         {
@@ -961,7 +961,7 @@ VOID CiLib::HwlOptimizeTileMode(
                     static const UINT_32 PrtTileBytes = 0x10000;
                     // First prt thick tile index in the tile mode table
                     static const UINT_32 PrtThickTileIndex = 22;
-                    ADDR_TILEINFO tileInfo = {0};
+                    ADDR_TILEINFO tileInfo = {};
 
                     HwlComputeMacroModeIndex(PrtThickTileIndex,
                                              pInOut->flags,
@@ -986,7 +986,7 @@ VOID CiLib::HwlOptimizeTileMode(
             }
         }
 
-        if (pInOut->maxBaseAlign != 0)
+        if (pInOut->maxBaseAlign)
         {
             pInOut->flags.dccPipeWorkaround = FALSE;
         }
@@ -1198,7 +1198,7 @@ VOID CiLib::HwlSelectTileMode(
     pInOut->tileMode = tileMode;
     pInOut->tileType = tileType;
 
-    if ((pInOut->flags.dccCompatible == FALSE) &&
+    if (!(pInOut->flags.dccCompatible) &&
         (pInOut->flags.tcCompatible == FALSE))
     {
         pInOut->flags.opt4Space = TRUE;
@@ -1272,7 +1272,7 @@ VOID CiLib::HwlSetupTileInfo(
     INT macroModeIndex = TileIndexInvalid;
 
     // Fail-safe code
-    if (IsLinear(tileMode) == FALSE)
+    if (!IsLinear(tileMode))
     {
         // Thick tile modes must use thick micro tile mode but Bonaire does not support due to
         // old derived netlists (UBTS 404321)
@@ -1282,7 +1282,7 @@ VOID CiLib::HwlSetupTileInfo(
             {
                 inTileType = ADDR_NON_DISPLAYABLE;
             }
-            else if ((m_allowNonDispThickModes == FALSE) ||
+            else if (!(m_allowNonDispThickModes) ||
                      (inTileType != ADDR_NON_DISPLAYABLE) ||
                      // There is no PRT_THICK + THIN entry in tile mode table except Bonaire
                      (IsPrtTileMode(tileMode) == TRUE))
@@ -1310,7 +1310,7 @@ VOID CiLib::HwlSetupTileInfo(
     }
 
     // tcCompatible flag is only meaningful for gfx8.
-    if (m_settings.isVolcanicIslands == FALSE)
+    if (!m_settings.isVolcanicIslands)
     {
         flags.tcCompatible = FALSE;
     }
@@ -1491,7 +1491,7 @@ VOID CiLib::HwlSetupTileInfo(
                 (m_tileTable[index + 1].mode == tileMode))
             {
                 static const UINT_32 PrtTileBytes = 0x10000;
-                ADDR_TILEINFO tileInfo = {0};
+                ADDR_TILEINFO tileInfo = {};
 
                 HwlComputeMacroModeIndex(index, flags, bpp, numSamples, &tileInfo);
 
@@ -1673,7 +1673,7 @@ BOOL_32 CiLib::InitTileSettingTable(
 
     memset(m_tileTable, 0, sizeof(m_tileTable));
 
-    if (noOfEntries != 0)
+    if (noOfEntries)
     {
         m_noOfEntries = noOfEntries;
     }
@@ -1699,7 +1699,7 @@ BOOL_32 CiLib::InitTileSettingTable(
     {
         ADDR_ASSERT(m_tileTable[TILEINDEX_LINEAR_ALIGNED].mode == ADDR_TM_LINEAR_ALIGNED);
 
-        if (m_settings.isBonaire == FALSE)
+        if (!m_settings.isBonaire)
         {
             // Check if entry 18 is "thick+thin" combination
             if ((m_tileTable[18].mode == ADDR_TM_1D_TILED_THICK) &&
@@ -1764,7 +1764,7 @@ BOOL_32 CiLib::InitMacroTileCfgTable(
 
     memset(m_macroTileTable, 0, sizeof(m_macroTileTable));
 
-    if (noOfMacroEntries != 0)
+    if (noOfMacroEntries)
     {
         m_noOfMacroEntries = noOfMacroEntries;
     }
@@ -2071,7 +2071,7 @@ VOID CiLib::HwlComputeSurfaceAlignmentsMacroTiled(
     // This is to workaround a H/W limitation that DCC doesn't work when pipe config is switched to
     // P4. In theory, all asics that have such switching should be patched but we now only know what
     // to pad for Fiji.
-    if ((m_settings.isFiji == TRUE) &&
+    if ((m_settings.isFiji) &&
         (flags.dccPipeWorkaround == TRUE) &&
         (flags.prt == FALSE) &&
         (mipLevel == 0) &&
@@ -2106,7 +2106,7 @@ VOID CiLib::HwlPadDimensions(
     UINT_32             heightAlign  ///< [in] height alignment
     ) const
 {
-    if ((m_settings.isVolcanicIslands == TRUE) &&
+    if ((m_settings.isVolcanicIslands) &&
         (flags.dccCompatible == TRUE) &&
         (numSamples > 1) &&
         (mipLevel == 0) &&
@@ -2199,7 +2199,7 @@ ADDR_E_RETURNCODE CiLib::HwlGetMaxAlignments(
         }
     }
 
-    if (pOut != NULL)
+    if (pOut)
     {
         pOut->baseAlign = maxBaseAlign;
     }
@@ -2228,7 +2228,7 @@ BOOL_32 CiLib::DepthStencilTileCfgMatch(
          stencilTileIndex <= MaxDepth2DThinIndex;
          stencilTileIndex++)
     {
-        ADDR_TILEINFO tileInfo = {0};
+        ADDR_TILEINFO tileInfo = {};
         INT_32 stencilMacroIndex = HwlComputeMacroModeIndex(stencilTileIndex,
                                                             pIn->flags,
                                                             8,
@@ -2248,7 +2248,7 @@ BOOL_32 CiLib::DepthStencilTileCfgMatch(
                 (m_macroTileTable[stencilMacroIndex].pipeConfig ==
                  m_macroTileTable[pOut->macroModeIndex].pipeConfig))
             {
-                if ((pOut->tcCompatible == FALSE) ||
+                if (!(pOut->tcCompatible) ||
                     (tileInfo.tileSplitBytes >= MicroTileWidth * MicroTileHeight * pIn->numSamples))
                 {
                     depthStencil2DTileConfigMatch = TRUE;

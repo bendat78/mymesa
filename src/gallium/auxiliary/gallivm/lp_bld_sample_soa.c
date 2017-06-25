@@ -551,7 +551,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
    LLVMValueRef icoord;
-   
+
    switch(wrap_mode) {
    case PIPE_TEX_WRAP_REPEAT:
       if (is_pot) {
@@ -2441,7 +2441,7 @@ lp_build_sample_nop(struct gallivm_state *gallivm,
 
    for (chan = 0; chan < 4; chan++) {
       texel_out[chan] = one;
-   }  
+   }
 }
 
 
@@ -2985,7 +2985,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
             LLVMValueRef s4, t4, r4;
             LLVMValueRef lod_positive4, lod_fpart4 = NULL;
             LLVMValueRef ilevel04, ilevel14 = NULL;
-            LLVMValueRef offsets4[4] = { NULL };
+            LLVMValueRef offsets4[4] = {};
             unsigned num_lods = bld4.num_lods;
 
             s4 = lp_build_extract_range(gallivm, newcoords[0], 4*i, 4);
@@ -3107,7 +3107,7 @@ lp_build_sample_gen_func(struct gallivm_state *gallivm,
    LLVMBuilderRef old_builder;
    LLVMBasicBlockRef block;
    LLVMValueRef coords[5];
-   LLVMValueRef offsets[3] = { NULL };
+   LLVMValueRef offsets[3] = {};
    LLVMValueRef lod = NULL;
    LLVMValueRef context_ptr;
    LLVMValueRef thread_data_ptr = NULL;

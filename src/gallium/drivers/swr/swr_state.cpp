@@ -114,7 +114,7 @@ swr_create_blend_state(struct pipe_context *pipe,
       blendState.writeDisableAlpha =
          (rt_blend->colormask & PIPE_MASK_A) ? 0 : 1;
 
-      if (rt_blend->colormask == 0)
+      if (!rt_blend->colormask)
          compileState.blendEnable = false;
    }
 
@@ -335,7 +335,7 @@ swr_create_vs_state(struct pipe_context *pipe,
 
    lp_build_tgsi_info(vs->tokens, &swr_vs->info);
 
-   swr_vs->soState = {0};
+   swr_vs->soState = {};
 
    if (swr_vs->pipe.stream_output.num_outputs) {
       pipe_stream_output_info *stream_output = &swr_vs->pipe.stream_output;
@@ -537,7 +537,7 @@ swr_create_vertex_elements_state(struct pipe_context *pipe,
             mesa_to_swr_format(attribs[i].src_format));
          velems->stream_pitch[attribs[i].vertex_buffer_index] += swr_desc.Bpp;
 
-         if (attribs[i].instance_divisor != 0) {
+         if (attribs[i].instance_divisor) {
             velems->instanced_bufs |= 1U << attribs[i].vertex_buffer_index;
             uint32_t *min_instance_div =
                &velems->min_instance_div[attribs[i].vertex_buffer_index];
@@ -908,7 +908,7 @@ swr_change_rt(struct swr_context *ctx,
       /* If detaching attachment, mark tiles as RESOLVED so core
        * won't try to load from non-existent target. */
       swr_store_render_target(&ctx->pipe, attachment, SWR_TILE_RESOLVED);
-      *rt = {0};
+      *rt = {};
       return true;
    }
 
@@ -1222,7 +1222,7 @@ swr_update_derived(struct pipe_context *pipe,
       uint8_t *scratch = NULL;
 
       /* If being called by swr_draw_vbo, copy draw details */
-      struct pipe_draw_info info = {0};
+      struct pipe_draw_info info = {};
       if (p_draw_info)
          info = *p_draw_info;
 
@@ -1294,7 +1294,7 @@ swr_update_derived(struct pipe_context *pipe,
             p_data = (const uint8_t *)ptr - base;
          }
 
-         swrVertexBuffers[i] = {0};
+         swrVertexBuffers[i] = {};
          swrVertexBuffers[i].index = i;
          swrVertexBuffers[i].pitch = pitch;
          swrVertexBuffers[i].pData = p_data;
@@ -1388,7 +1388,7 @@ swr_update_derived(struct pipe_context *pipe,
 
          SwrSetGsState(ctx->swrContext, &ctx->gs->gsState);
       } else {
-         SWR_GS_STATE state = { 0 };
+         SWR_GS_STATE state = {};
          SwrSetGsState(ctx->swrContext, &state);
          SwrSetGsFunc(ctx->swrContext, NULL);
       }
@@ -1458,7 +1458,7 @@ swr_update_derived(struct pipe_context *pipe,
       } else {
          func = swr_compile_fs(ctx, key);
       }
-      SWR_PS_STATE psState = {0};
+      SWR_PS_STATE psState = {};
       psState.pfnPixelShader = func;
       psState.killsPixel = ctx->fs->info.base.uses_kill;
       psState.inputCoverage = SWR_INPUT_COVERAGE_NORMAL;
@@ -1539,8 +1539,8 @@ swr_update_derived(struct pipe_context *pipe,
    if (ctx->dirty & (SWR_NEW_DEPTH_STENCIL_ALPHA | SWR_NEW_FRAMEBUFFER)) {
       struct pipe_depth_state *depth = &(ctx->depth_stencil->depth);
       struct pipe_stencil_state *stencil = ctx->depth_stencil->stencil;
-      SWR_DEPTH_STENCIL_STATE depthStencilState = {{0}};
-      SWR_DEPTH_BOUNDS_STATE depthBoundsState = {0};
+      SWR_DEPTH_STENCIL_STATE depthStencilState = {};
+      SWR_DEPTH_BOUNDS_STATE depthBoundsState = {};
 
       /* XXX, incomplete.  Need to flesh out stencil & alpha test state
       struct pipe_stencil_state *front_stencil =
@@ -1615,7 +1615,7 @@ swr_update_derived(struct pipe_context *pipe,
 
       /* If there are no color buffers bound, disable writes on RT0
        * and skip loop */
-      if (fb->nr_cbufs == 0) {
+      if (!fb->nr_cbufs) {
          blendState.renderTarget[0].writeDisableRed = 1;
          blendState.renderTarget[0].writeDisableGreen = 1;
          blendState.renderTarget[0].writeDisableBlue = 1;
@@ -1675,7 +1675,7 @@ swr_update_derived(struct pipe_context *pipe,
             compileState.alphaTestFormat = ALPHA_TEST_FLOAT32; // xxx
 
             compileState.Canonicalize();
-            
+
             PFN_BLEND_JIT_FUNC func = NULL;
             auto search = ctx->blendJIT->find(compileState);
             if (search != ctx->blendJIT->end()) {
@@ -1706,7 +1706,7 @@ swr_update_derived(struct pipe_context *pipe,
       pipe_stream_output_info *stream_output = &ctx->vs->pipe.stream_output;
 
       for (uint32_t i = 0; i < ctx->num_so_targets; i++) {
-         SWR_STREAMOUT_BUFFER buffer = {0};
+         SWR_STREAMOUT_BUFFER buffer = {};
          if (!ctx->so_targets[i])
             continue;
          buffer.enable = true;
@@ -1734,7 +1734,7 @@ swr_update_derived(struct pipe_context *pipe,
    }
 
    // set up backend state
-   SWR_BACKEND_STATE backendState = {0};
+   SWR_BACKEND_STATE backendState = {};
    if (ctx->gs) {
       backendState.numAttributes = ctx->gs->info.base.num_outputs - 1;
    } else {

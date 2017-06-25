@@ -738,7 +738,7 @@ static void store_emit_buffer(
 		}
 
 		offset = base_offset;
-		if (start != 0) {
+		if (start) {
 			offset = LLVMBuildAdd(
 				builder, offset,
 				LLVMConstInt(ctx->i32, start * 4, 0), "");

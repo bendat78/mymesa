@@ -212,7 +212,7 @@ void gcm::td_release_val(value *v) {
 		);
 
 		assert(uses[op] > 0);
-		if (--uses[op] == 0) {
+		if (!--uses[op]) {
 			GCM_DUMP(
 				sblog << "td        released : ";
 				dump::dump_op(op);

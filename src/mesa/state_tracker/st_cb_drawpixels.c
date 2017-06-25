@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
  /*
@@ -134,7 +134,7 @@ get_drawpix_z_stencil_program(struct st_context *st,
    }
 
    ureg = ureg_create(PIPE_SHADER_FRAGMENT);
-   if (ureg == NULL)
+   if (!ureg)
       return NULL;
 
    ureg_property(ureg, TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS, TRUE);
@@ -193,7 +193,7 @@ get_drawpix_z_stencil_program(struct st_context *st,
  * vertex position and texcoord (and optionally, color).
  */
 static void *
-make_passthrough_vertex_shader(struct st_context *st, 
+make_passthrough_vertex_shader(struct st_context *st,
                                GLboolean passColor)
 {
    const unsigned texcoord_semantic = st->needs_texcoord_semantic ?
@@ -202,7 +202,7 @@ make_passthrough_vertex_shader(struct st_context *st,
    if (!st->drawpix.vert_shaders[passColor]) {
       struct ureg_program *ureg = ureg_create( PIPE_SHADER_VERTEX );
 
-      if (ureg == NULL)
+      if (!ureg)
          return NULL;
 
       /* MOV result.pos, vertex.pos; */
@@ -223,8 +223,8 @@ make_passthrough_vertex_shader(struct st_context *st,
                ureg_DECL_vs_input( ureg, 2 ));
 
       ureg_END( ureg );
-      
-      st->drawpix.vert_shaders[passColor] = 
+
+      st->drawpix.vert_shaders[passColor] =
          ureg_create_shader_and_destroy( ureg, st->pipe );
    }
 
@@ -789,7 +789,7 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
       y = ctx->DrawBuffer->Height - y - height;
    }
 
-   if (format == GL_STENCIL_INDEX && 
+   if (format == GL_STENCIL_INDEX &&
        _mesa_is_format_packed_depth_stencil(strb->Base.Format)) {
       /* writing stencil to a combined depth+stencil buffer */
       usage = PIPE_TRANSFER_READ_WRITE;
@@ -978,7 +978,7 @@ clamp_size(struct pipe_context *pipe, GLsizei *width, GLsizei *height,
                                     PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
 
    if (*width > maxSize) {
-      if (unpack->RowLength == 0)
+      if (!unpack->RowLength)
          unpack->RowLength = *width;
       *width = maxSize;
    }
@@ -1064,7 +1064,7 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    GLboolean write_stencil = GL_FALSE, write_depth = GL_FALSE;
-   struct pipe_sampler_view *sv[2] = { NULL };
+   struct pipe_sampler_view *sv[2] = {};
    int num_sampler_view = 1;
    struct gl_pixelstore_attrib clippedUnpack;
    struct st_fp_variant *fpv = NULL;
@@ -1431,7 +1431,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    struct st_renderbuffer *rbRead;
    void *driver_vp, *driver_fp;
    struct pipe_resource *pt;
-   struct pipe_sampler_view *sv[2] = { NULL };
+   struct pipe_sampler_view *sv[2] = {};
    struct st_fp_variant *fpv = NULL;
    int num_sampler_view = 1;
    enum pipe_format srcFormat;
@@ -1626,7 +1626,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                       sv,
                       num_sampler_view,
-                      driver_vp, 
+                      driver_vp,
                       driver_fp, fpv,
                       ctx->Current.Attrib[VERT_ATTRIB_COLOR0],
                       invertTex, GL_FALSE, GL_FALSE);

@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
  /*
   * Authors:
@@ -211,9 +211,9 @@ st_set_prog_affected_state_flags(struct gl_program *prog)
 static void
 delete_vp_variant(struct st_context *st, struct st_vp_variant *vpv)
 {
-   if (vpv->driver_shader) 
+   if (vpv->driver_shader)
       cso_delete_vertex_shader(st->cso_context, vpv->driver_shader);
-      
+
    if (vpv->draw_shader)
       draw_delete_vertex_shader( st->draw, vpv->draw_shader );
 
@@ -257,7 +257,7 @@ st_release_vp_variants( struct st_context *st,
 static void
 delete_fp_variant(struct st_context *st, struct st_fp_variant *fpv)
 {
-   if (fpv->driver_shader) 
+   if (fpv->driver_shader)
       cso_delete_fragment_shader(st->cso_context, fpv->driver_shader);
    free(fpv);
 }
@@ -376,9 +376,9 @@ st_translate_vertex_program(struct st_context *st,
    enum pipe_error error;
    unsigned num_outputs = 0;
    unsigned attr;
-   ubyte input_to_index[VERT_ATTRIB_MAX] = {0};
-   ubyte output_semantic_name[VARYING_SLOT_MAX] = {0};
-   ubyte output_semantic_index[VARYING_SLOT_MAX] = {0};
+   ubyte input_to_index[VERT_ATTRIB_MAX] = {};
+   ubyte output_semantic_name[VARYING_SLOT_MAX] = {};
+   ubyte output_semantic_index[VARYING_SLOT_MAX] = {};
 
    stvp->num_inputs = 0;
 
@@ -540,7 +540,7 @@ st_translate_vertex_program(struct st_context *st,
    }
 
    ureg = ureg_create_with_screen(PIPE_SHADER_VERTEX, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    if (stvp->Base.info.clip_distance_array_size)
@@ -979,7 +979,7 @@ st_translate_fragment_program(struct st_context *st,
    }
 
    ureg = ureg_create_with_screen(PIPE_SHADER_FRAGMENT, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    if (ST_DEBUG & DEBUG_MESA) {
@@ -1084,7 +1084,7 @@ st_create_fp_variant(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct st_fp_variant *variant = CALLOC_STRUCT(st_fp_variant);
-   struct pipe_shader_state tgsi = {0};
+   struct pipe_shader_state tgsi = {};
    struct gl_program_parameter_list *params = stfp->Base.Parameters;
    static const gl_state_index texcoord_state[STATE_LENGTH] =
       { STATE_INTERNAL, STATE_CURRENT_ATTRIB, VERT_ATTRIB_TEX0 };
@@ -1113,7 +1113,7 @@ st_create_fp_variant(struct st_context *st,
 
       /* glBitmap */
       if (key->bitmap) {
-         nir_lower_bitmap_options options = {0};
+         nir_lower_bitmap_options options = {};
 
          variant->bitmap_sampler = ffs(~stfp->Base.SamplersUsed) - 1;
          options.sampler = variant->bitmap_sampler;
@@ -1124,7 +1124,7 @@ st_create_fp_variant(struct st_context *st,
 
       /* glDrawPixels (color only) */
       if (key->drawpixels) {
-         nir_lower_drawpixels_options options = {{0}};
+         nir_lower_drawpixels_options options = {};
          unsigned samplers_used = stfp->Base.SamplersUsed;
 
          /* Find the first unused slot. */
@@ -1156,7 +1156,7 @@ st_create_fp_variant(struct st_context *st,
       }
 
       if (unlikely(key->external.lower_nv12 || key->external.lower_iyuv)) {
-         nir_lower_tex_options options = {0};
+         nir_lower_tex_options options = {};
          options.lower_y_uv_external = key->external.lower_nv12;
          options.lower_y_u_v_external = key->external.lower_iyuv;
          NIR_PASS_V(tgsi.ir.nir, nir_lower_tex, &options);
@@ -1635,7 +1635,7 @@ st_translate_geometry_program(struct st_context *st,
    struct ureg_program *ureg;
 
    ureg = ureg_create_with_screen(PIPE_SHADER_GEOMETRY, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    ureg_property(ureg, TGSI_PROPERTY_GS_INPUT_PRIM,
@@ -1722,7 +1722,7 @@ st_translate_tessctrl_program(struct st_context *st,
    struct ureg_program *ureg;
 
    ureg = ureg_create_with_screen(PIPE_SHADER_TESS_CTRL, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    ureg_property(ureg, TGSI_PROPERTY_TCS_VERTICES_OUT,
@@ -1747,7 +1747,7 @@ st_translate_tesseval_program(struct st_context *st,
    struct ureg_program *ureg;
 
    ureg = ureg_create_with_screen(PIPE_SHADER_TESS_EVAL, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    if (sttep->Base.info.tess.primitive_mode == GL_ISOLINES)
@@ -1803,7 +1803,7 @@ st_translate_compute_program(struct st_context *st,
    }
 
    ureg = ureg_create_with_screen(PIPE_SHADER_COMPUTE, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    st_translate_program_common(st, &stcp->Base, stcp->glsl_to_tgsi, ureg,

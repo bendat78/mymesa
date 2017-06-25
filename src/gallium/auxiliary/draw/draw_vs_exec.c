@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
  /*
@@ -113,7 +113,7 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
 
-      /* Swizzle inputs.  
+      /* Swizzle inputs.
        */
       for (j = 0; j < max_vertices; j++) {
 #if 0
@@ -159,13 +159,13 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
          }
 
          input = (const float (*)[4])((const char *)input + input_stride);
-      } 
+      }
 
       machine->NonHelperMask = (1 << max_vertices) - 1;
       /* run interpreter */
       tgsi_exec_machine_run( machine, 0 );
 
-      /* Unswizzle all output results.  
+      /* Unswizzle all output results.
        */
       for (j = 0; j < max_vertices; j++) {
          for (slot = 0; slot < shader->info.num_outputs; slot++) {
@@ -200,7 +200,7 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
 #endif
 
 	 output = (float (*)[4])((char *)output + output_stride);
-      } 
+      }
 
    }
 }

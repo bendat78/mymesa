@@ -37,7 +37,7 @@ intel_update_max_level(struct intel_texture_object *intelObj,
    }
 }
 
-/*  
+/*
  */
 GLuint
 intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
@@ -55,7 +55,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    if (tObj->Target == GL_TEXTURE_BUFFER)
       return true;
 
-   /* We know/require this is true by now: 
+   /* We know/require this is true by now:
     */
    assert(intelObj->base._BaseComplete);
 
@@ -119,7 +119,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
          struct intel_texture_image *intelImage =
             intel_texture_image(intelObj->base.Image[face][i]);
 	 /* skip too small size mipmap */
- 	 if (intelImage == NULL)
+ 	 if (!intelImage)
 		 break;
 
          if (intelObj->mt != intelImage->mt) {

@@ -148,7 +148,7 @@ hgl_winsys_displaytarget_destroy(struct sw_winsys* winsys,
 	if (!haikuDisplayTarget)
 		return;
 
-	if (haikuDisplayTarget->data != NULL)
+	if (haikuDisplayTarget->data)
 		align_free(haikuDisplayTarget->data);
 
 	FREE(haikuDisplayTarget);
@@ -221,7 +221,7 @@ hgl_create_sw_winsys()
 
 	if (!winsys)
 		return NULL;
-	
+
 	// Attach winsys hooks for Haiku
 	winsys->destroy = hgl_winsys_destroy;
 	winsys->is_displaytarget_format_supported

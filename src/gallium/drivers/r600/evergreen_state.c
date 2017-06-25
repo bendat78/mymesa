@@ -741,7 +741,7 @@ static int evergreen_fill_tex_resource_words(struct r600_context *rctx,
 					  params->swizzle,
 					  &word4, &yuv_format, do_endian_swap);
 	assert(format != ~0);
-	if (format == ~0) {
+	if (format == (~0u)) {
 		return -1;
 	}
 
@@ -920,7 +920,7 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 	ret = evergreen_fill_tex_resource_words(rctx, texture, &params,
 						&view->skip_mip_address_reloc,
 						view->tex_resource_words);
-	if (ret != 0) {
+	if (ret) {
 		FREE(view);
 		return NULL;
 	}
@@ -3186,7 +3186,7 @@ void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader
 		exports_ps = 2;
 	}
 	shader->nr_ps_color_outputs = num_cout;
-	if (ninterp == 0) {
+	if (!ninterp) {
 		ninterp = 1;
 		have_perspective = TRUE;
 	}
@@ -3438,7 +3438,7 @@ void *evergreen_create_fastclear_blend(struct r600_context *rctx)
 
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx)
 {
-	struct pipe_depth_stencil_alpha_state dsa = {{0}};
+	struct pipe_depth_stencil_alpha_state dsa = {};
 
 	return rctx->b.b.create_depth_stencil_alpha_state(&rctx->b.b, &dsa);
 }
@@ -3622,7 +3622,7 @@ static void evergreen_dma_copy(struct pipe_context *ctx,
 	unsigned src_x, src_y;
 	unsigned dst_x = dstx, dst_y = dsty, dst_z = dstz;
 
-	if (rctx->b.dma.cs == NULL) {
+	if (!rctx->b.dma.cs) {
 		goto fallback;
 	}
 
@@ -3824,7 +3824,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
  */
 void evergreen_setup_tess_constants(struct r600_context *rctx, const struct pipe_draw_info *info, unsigned *num_patches)
 {
-	struct pipe_constant_buffer constbuf = {0};
+	struct pipe_constant_buffer constbuf = {};
 	struct r600_pipe_shader_selector *tcs = rctx->tcs_shader ? rctx->tcs_shader : rctx->tes_shader;
 	struct r600_pipe_shader_selector *ls = rctx->vs_shader;
 	unsigned num_tcs_input_cp = info->vertices_per_patch;

@@ -1032,7 +1032,7 @@ svga3dsurface_get_image_buffer_size(const struct svga3d_surface_desc *desc,
 		return total_size;
 	}
 
-	if (pitch == 0)
+	if (!pitch)
 		pitch = svga3dsurface_calculate_pitch(desc, size);
 
 	slice_size = clamped_umul32(image_blocks.height, pitch);
@@ -1096,7 +1096,7 @@ svga3dsurface_get_serialized_size(SVGA3dSurfaceFormat format,
 
 	total_size *= num_layers;
 
-	return (total_size > (uint64_t) MAX_UINT32) ? MAX_UINT32 : 
+	return (total_size > (uint64_t) MAX_UINT32) ? MAX_UINT32 :
                                                       (uint32) total_size;
 }
 

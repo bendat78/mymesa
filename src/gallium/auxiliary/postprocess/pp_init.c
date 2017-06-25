@@ -53,7 +53,7 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
       if (enabled[i])
          num_filters++;
    }
-   if (num_filters == 0)
+   if (!num_filters)
       return NULL;
 
    ppq = CALLOC(1, sizeof(struct pp_queue_t));
@@ -64,7 +64,7 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
    }
 
    ppq->pp_queue = CALLOC(num_filters, sizeof(pp_func));
-   if (ppq->pp_queue == NULL) {
+   if (!ppq->pp_queue) {
       pp_debug("Unable to allocate memory for pp_queue.\n");
       goto error;
    }
@@ -72,14 +72,14 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
    ppq->shaders = CALLOC(num_filters, sizeof(void *));
    ppq->filters = CALLOC(num_filters, sizeof(unsigned int));
 
-   if ((ppq->shaders == NULL) ||
+   if (!(ppq->shaders) ||
        (ppq->filters == NULL)) {
       pp_debug("Unable to allocate memory for shaders and filter arrays.\n");
       goto error;
    }
 
    ppq->p = pp_init_prog(ppq, pipe, cso);
-   if (ppq->p == NULL) {
+   if (!ppq->p) {
       pp_debug("pp_init_prog returned NULL.\n");
       goto error;
    }
@@ -105,7 +105,7 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
          if (!pp_filters[i].init(ppq, curpos, enabled[i])) {
             pp_debug("Initialization for filter %u failed.\n", i);
             goto error;
-         }           
+         }
 
          curpos++;
       }
@@ -121,7 +121,7 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
       ppq->shaders[i][0] = ppq->p->passvs;
 
    pp_debug("Queue successfully allocated. %u filter(s).\n", curpos);
-   
+
    return ppq;
 
  error:
@@ -161,7 +161,7 @@ pp_free_fbos(struct pp_queue_t *ppq)
    ppq->fbos_init = false;
 }
 
-/** 
+/**
  * Free the pp queue. Called on context termination and failure in
  * pp_init.
  */
@@ -180,7 +180,7 @@ pp_free(struct pp_queue_t *ppq)
          for (i = 0; i < ppq->n_filters; i++) {
             unsigned int filter = ppq->filters[i];
 
-            if (ppq->shaders[i] == NULL) {
+            if (!ppq->shaders[i]) {
                continue;
             }
 
@@ -189,7 +189,7 @@ pp_free(struct pp_queue_t *ppq)
              * filters.
              */
             for (j = 0; j < pp_filters[filter].shaders; j++) {
-               if (ppq->shaders[i][j] == NULL) {
+               if (!ppq->shaders[i][j]) {
                   /* We reached the end of initialized shaders. */
                   break;
                }
@@ -201,7 +201,7 @@ pp_free(struct pp_queue_t *ppq)
                assert(ppq);
                assert(ppq->p);
                assert(ppq->p->pipe);
- 
+
                if (j >= pp_filters[filter].verts) {
                   assert(ppq->p->pipe->delete_fs_state);
                   ppq->p->pipe->delete_fs_state(ppq->p->pipe,
@@ -230,7 +230,7 @@ pp_free(struct pp_queue_t *ppq)
    FREE(ppq->filters);
    FREE(ppq->shaders);
    FREE(ppq->pp_queue);
-  
+
    FREE(ppq);
 
    pp_debug("Queue taken down.\n");

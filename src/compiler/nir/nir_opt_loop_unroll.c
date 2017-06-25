@@ -508,7 +508,7 @@ process_loops(nir_shader *sh, nir_cf_node *cf_node, bool *innermost_loop)
        */
       *innermost_loop = false;
 
-      if (loop->info->limiting_terminator == NULL)
+      if (!loop->info->limiting_terminator)
          return progress;
 
       if (!is_loop_small_enough_to_unroll(sh, loop->info))

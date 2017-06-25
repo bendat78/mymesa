@@ -886,7 +886,7 @@ isl_calc_phys_slice0_extent_sa_gen4_2d(
       uint32_t w = isl_align_npot(W, image_align_sa->w);
       uint32_t h = isl_align_npot(H, image_align_sa->h);
 
-      if (l == 0) {
+      if (!l) {
          slice_top_w = w;
          slice_left_h = h;
          slice_right_h = h;
@@ -1027,7 +1027,7 @@ isl_calc_phys_total_extent_el_gen6_stencil_hiz(
       const uint32_t w = isl_align(W, tile_extent_sa.w);
       const uint32_t h = isl_align(H, tile_extent_sa.h);
 
-      if (l == 0) {
+      if (!l) {
          total_top_w = w;
          total_h = h;
       } else if (l == 1) {
@@ -1248,7 +1248,7 @@ isl_calc_row_pitch(const struct isl_device *dev,
 
    uint32_t row_pitch = min_row_pitch;
 
-   if (surf_info->row_pitch != 0) {
+   if (surf_info->row_pitch) {
       row_pitch = surf_info->row_pitch;
 
       if (row_pitch < min_row_pitch)
@@ -1260,7 +1260,7 @@ isl_calc_row_pitch(const struct isl_device *dev,
 
    const uint32_t row_pitch_tiles = row_pitch / tile_info->phys_extent_B.width;
 
-   if (row_pitch == 0)
+   if (!row_pitch)
       return false;
 
    if (dim_layout == ISL_DIM_LAYOUT_GEN9_1D) {
@@ -2057,7 +2057,7 @@ get_image_offset_sa_gen6_stencil_hiz(const struct isl_surf *surf,
       const uint32_t h = isl_align(H * surf->phys_level0_sa.a,
                                    tile_extent_sa.h);
 
-      if (l == 0) {
+      if (!l) {
          y += h;
       } else {
          x += w;

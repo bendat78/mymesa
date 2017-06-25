@@ -89,7 +89,7 @@ public:
 
       wrapper = (struct string_map_iterate_wrapper_closure *)
          malloc(sizeof(struct string_map_iterate_wrapper_closure));
-      if (wrapper == NULL)
+      if (!wrapper)
          return;
 
       wrapper->callback = func;

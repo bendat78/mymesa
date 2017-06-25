@@ -521,7 +521,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
                BEGIN_NVC0(push, NVC0_3D(CB_BIND(s)), 1);
                PUSH_DATA (push, (i << 4) | 0);
             }
-            if (i == 0)
+            if (!i)
                nvc0->state.uniform_buffer_bound[s] = 0;
          }
       }
@@ -743,7 +743,7 @@ nvc0_validate_fbread(struct nvc0_context *nvc0)
          return;
 
       new_view = pipe->create_sampler_view(pipe, sf->texture, &tmpl);
-   } else if (old_view == NULL) {
+   } else if (!old_view) {
       return;
    }
 

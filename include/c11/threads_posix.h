@@ -247,7 +247,7 @@ mtx_timedlock(mtx_t *mtx, const xtime *xt)
     ts.tv_sec = xt->sec;
     ts.tv_nsec = xt->nsec;
     rt = pthread_mutex_timedlock(mtx, &ts);
-    if (rt == 0)
+    if (!rt)
         return thrd_success;
     return (rt == ETIMEDOUT) ? thrd_busy : thrd_error;
 #else

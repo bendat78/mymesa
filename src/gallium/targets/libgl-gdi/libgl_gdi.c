@@ -96,7 +96,7 @@ gdi_screen_create(void)
 #endif
    (void) driver;
 
-   if (screen == NULL) {
+   if (!screen) {
       screen = softpipe_create_screen( winsys );
    }
 
@@ -104,7 +104,7 @@ gdi_screen_create(void)
       goto no_screen;
 
    return screen;
-   
+
 no_screen:
    winsys->destroy(winsys);
 no_winsys:
@@ -184,7 +184,7 @@ DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
       break;
 
    case DLL_PROCESS_DETACH:
-      if (lpvReserved == NULL) {
+      if (!lpvReserved) {
          // We're being unloaded from the process.
          stw_cleanup_thread();
          stw_cleanup();

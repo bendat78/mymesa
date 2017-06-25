@@ -116,7 +116,7 @@ static void TAG(triangle)( struct gl_context *ctx, GLuint e0, GLuint e1, GLuint 
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
    VERTEX *v[3];
    GLfloat offset = 0;
-   GLfloat z[3] = { 0 };
+   GLfloat z[3] = {};
    GLenum mode = GL_FILL;
    GLuint facing = 0;
    LOCAL_VARS(3);
@@ -342,7 +342,7 @@ static void TAG(quadr)( struct gl_context *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
    VERTEX *v[4];
    GLfloat offset = 0;
-   GLfloat z[4] = { 0 };
+   GLfloat z[4] = {};
    GLenum mode = GL_FILL;
    GLuint facing = 0;
    LOCAL_VARS(4);
@@ -635,9 +635,9 @@ static void TAG(points)( struct gl_context *ctx, GLuint first, GLuint last )
    GLuint i;
    LOCAL_VARS(1);
 
-   if (VB->Elts == 0) {
+   if (!VB->Elts) {
       for ( i = first ; i < last ; i++ ) {
-	 if ( VB->ClipMask[i] == 0 ) {
+	 if (!VB->ClipMask[i]) {
 	    VERTEX *v = (VERTEX *)GET_VERTEX(i);
 	    POINT( v );
 	 }
@@ -645,7 +645,7 @@ static void TAG(points)( struct gl_context *ctx, GLuint first, GLuint last )
    } else {
       for ( i = first ; i < last ; i++ ) {
 	 GLuint e = VB->Elts[i];
-	 if ( VB->ClipMask[e] == 0 ) {
+	 if (!VB->ClipMask[e]) {
 	    VERTEX *v = (VERTEX *)GET_VERTEX(e);
 	    POINT( v );
 	 }

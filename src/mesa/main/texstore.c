@@ -78,7 +78,7 @@
 
 
 enum {
-   ZERO = 4, 
+   ZERO = 4,
    ONE = 5
 };
 
@@ -437,7 +437,7 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
       for (row = 0; row < srcHeight; row++) {
 	 GLint i;
 	 GLboolean keepdepth = GL_FALSE, keepstencil = GL_FALSE;
-	 
+
 	 if (srcFormat == GL_DEPTH_COMPONENT) { /* preserve stencil */
 	    keepstencil = GL_TRUE;
 	 }
@@ -451,7 +451,7 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
 				    GL_UNSIGNED_INT, /* dst type */
 				    keepstencil ? depth : dstRow, /* dst addr */
 				    depthScale,
-				    srcType, src, srcPacking);	 
+				    srcType, src, srcPacking);
 
 	 if (keepstencil == GL_FALSE)
 	    /* get the 8-bit stencil values */
@@ -1194,7 +1194,7 @@ _mesa_store_cleartexsubimage(struct gl_context *ctx,
                                   width, height,
                                   GL_MAP_WRITE_BIT,
                                   &dstMap, &dstRowStride);
-      if (dstMap == NULL) {
+      if (!dstMap) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glClearTex*Image");
          return;
       }

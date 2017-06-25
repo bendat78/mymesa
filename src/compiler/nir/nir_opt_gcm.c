@@ -317,7 +317,7 @@ gcm_schedule_late_def(nir_ssa_def *def, void *void_state)
    /* Some instructions may never be used.  We'll just leave them scheduled
     * early and let dead code clean them up.
     */
-   if (lca == NULL)
+   if (!lca)
       return true;
 
    /* We now have the LCA of all of the uses.  If our invariants hold,

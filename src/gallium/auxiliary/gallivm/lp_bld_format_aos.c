@@ -431,7 +431,7 @@ lp_build_pack_rgba_aos(struct gallivm_state *gallivm,
    casted = LLVMBuildFPToSI(builder, scaled, LLVMVectorType(LLVMInt32TypeInContext(gallivm->context), 4), "");
 
    shifted = LLVMBuildShl(builder, casted, LLVMConstVector(shifts, 4), "");
-   
+
    /* Bitwise or all components */
    for (i = 0; i < 4; ++i) {
       if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED) {
@@ -585,7 +585,7 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
          } else {
             rgba[j] = lp_build_swizzle_soa_channel(&bld_conv, chans, swizzle);
          }
-         if (j == 0) {
+         if (!j) {
             res = rgba[j];
          } else {
             rgba[j] = LLVMBuildShl(builder, rgba[j],

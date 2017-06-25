@@ -46,7 +46,7 @@
  */
 
 
-#if !defined(DISPATCH_FUNCTION_SIZE) 
+#if !defined(DISPATCH_FUNCTION_SIZE)
 # define NEED_FUNCTION_POINTER
 #endif
 #include "glapi/glprocs.h"
@@ -79,7 +79,7 @@ static GLint
 get_static_proc_offset(const char *funcName)
 {
    const glprocs_table_t * const f = get_static_proc( funcName );
-   if (f == NULL) {
+   if (!f) {
       return -1;
    }
 
@@ -96,7 +96,7 @@ static _glapi_proc
 get_static_proc_address(const char *funcName)
 {
    const glprocs_table_t * const f = get_static_proc( funcName );
-   if (f == NULL) {
+   if (!f) {
       return NULL;
    }
 
@@ -168,7 +168,7 @@ struct _glapi_function {
 
    /**
     * Pointer to the dispatch stub for the named function.
-    * 
+    *
     * \todo
     * The semantic of this field should be changed slightly.  Currently, it
     * is always expected to be non-\c NULL.  However, it would be better to
@@ -202,7 +202,7 @@ static GLint
 get_extension_proc_offset(const char *funcName)
 {
    const struct _glapi_function * const f = get_extension_proc( funcName );
-   if (f == NULL) {
+   if (!f) {
       return -1;
    }
 
@@ -214,7 +214,7 @@ static _glapi_proc
 get_extension_proc_address(const char *funcName)
 {
    const struct _glapi_function * const f = get_extension_proc( funcName );
-   if (f == NULL) {
+   if (!f) {
       return NULL;
    }
 
@@ -258,9 +258,9 @@ str_dup(const char *str)
  * calls \c _glapi_add_dispatch we'll put in the proper offset.  If that
  * never happens, and the user calls this function, he'll segfault.  That's
  * what you get when you try calling a GL function that doesn't really exist.
- * 
+ *
  * \param funcName  Name of the function to create an entry-point for.
- * 
+ *
  * \sa _glapi_add_entrypoint
  */
 
@@ -274,16 +274,16 @@ add_function_name( const char * funcName )
    if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS)
       return NULL;
 
-   if (funcName == NULL)
+   if (!funcName)
       return NULL;
 
    name_dup = str_dup(funcName);
-   if (name_dup == NULL)
+   if (!name_dup)
       return NULL;
 
    entrypoint = generate_entrypoint(~0);
 
-   if (entrypoint == NULL) {
+   if (!entrypoint) {
       free(name_dup);
       return NULL;
    }
@@ -305,11 +305,11 @@ set_entry_info( struct _glapi_function * entry, const char * signature, unsigned
 {
    char * sig_dup = NULL;
 
-   if (signature == NULL)
+   if (!signature)
       return NULL;
 
    sig_dup = str_dup(signature);
-   if (sig_dup == NULL)
+   if (!sig_dup)
       return NULL;
 
    fill_in_entrypoint_offset(entry->dispatch_stub, offset);
@@ -323,7 +323,7 @@ set_entry_info( struct _glapi_function * entry, const char * signature, unsigned
 
 /**
  * Fill-in the dispatch stub for the named function.
- * 
+ *
  * This function is intended to be called by a hardware driver.  When called,
  * a dispatch stub may be created for the function.  A pointer to this
  * dispatch function will be returned by glXGetProcAddress.
@@ -361,7 +361,7 @@ set_entry_info( struct _glapi_function * entry, const char * signature, unsigned
  * \todo
  * Determine if code should be added to reject function names that start with
  * 'glX'.
- * 
+ *
  * \bug
  * Add code to compare \c parameter_signature with the parameter signature of
  * a static function.  In order to do that, we need to find a way to \b get
@@ -420,14 +420,14 @@ _glapi_add_dispatch( const char * const * function_names,
       /* search added extension functions */
       entry[i] = get_extension_proc(funcName);
 
-      if (entry[i] != NULL) {
+      if (entry[i]) {
 	 extension_offset = entry[i]->dispatch_offset;
 
 	 /* The offset may be ~0 if the function name was added by
 	  * glXGetProcAddress but never filled in by the driver.
 	  */
 
-	 if (extension_offset == ~0) {
+	 if (extension_offset == (~0u)) {
 	    continue;
 	 }
 
@@ -447,7 +447,7 @@ _glapi_add_dispatch( const char * const * function_names,
     * allocate a new dispatch offset.
     */
 
-   if (offset == ~0) {
+   if (offset == (~0u)) {
       offset = next_dynamic_offset;
       next_dynamic_offset++;
    }
@@ -462,15 +462,15 @@ _glapi_add_dispatch( const char * const * function_names,
       }
 
       /* generate entrypoints for new function names */
-      if (entry[i] == NULL) {
+      if (!entry[i]) {
 	 entry[i] = add_function_name( function_names[i] );
-	 if (entry[i] == NULL) {
+	 if (!entry[i]) {
 	    /* FIXME: Possible memory leak here. */
 	    return -1;
 	 }
       }
 
-      if (entry[i]->dispatch_offset == ~0) {
+      if (entry[i]->dispatch_offset == (~0u)) {
 	 set_entry_info( entry[i], real_sig, offset );
       }
    }
@@ -531,7 +531,7 @@ _glapi_get_proc_address(const char *funcName)
 
    /* generate entrypoint, dispatch offset must be filled in by the driver */
    entry = add_function_name(funcName);
-   if (entry == NULL)
+   if (!entry)
       return NULL;
 
    return entry->dispatch_stub;
@@ -550,7 +550,7 @@ _glapi_get_proc_name(GLuint offset)
 
    /* search built-in functions */
    n = get_static_proc_name(offset);
-   if ( n != NULL ) {
+   if (n) {
       return n;
    }
 

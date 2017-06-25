@@ -1153,7 +1153,7 @@ class GTEST_API_ StreamingListener : public EmptyTestEventListener {
 
   void OnTestPartResult(const TestPartResult& test_part_result) {
     const char* file_name = test_part_result.file_name();
-    if (file_name == NULL)
+    if (!file_name)
       file_name = "";
     SendLn("event=TestPartResult&file=" + UrlEncode(file_name) +
            "&line=" + StreamableToString(test_part_result.line_number()) +

@@ -270,7 +270,7 @@ LoadPropagation::visit(BasicBlock *bb)
          if (ld->src(0).isIndirect(0))
             i->setIndirect(s, 0, ld->getIndirect(0, 0));
 
-         if (ld->getDef(0)->refCount() == 0)
+         if (!ld->getDef(0)->refCount())
             delete_Instruction(prog, ld);
       }
    }
@@ -557,7 +557,7 @@ ConstantFolding::expr(Instruction *i,
       }
       break;
    case OP_DIV:
-      if (b->data.u32 == 0)
+      if (!b->data.u32)
          break;
       switch (i->dType) {
       case TYPE_F32: res.data.f32 = a->data.f32 / b->data.f32; break;
@@ -646,7 +646,7 @@ ConstantFolding::expr(Instruction *i,
       int width = (b->data.u32 >> 8) & 0xff;
       int rshift = offset;
       int lshift = 0;
-      if (width == 0) {
+      if (!width) {
          res.data.u32 = 0;
          break;
       }
@@ -996,7 +996,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
          if (imm0.isNegative())
             i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
          i->op = i->src(t).mod.getOp();
-         if (s == 0) {
+         if (!s) {
             i->setSrc(0, i->getSrc(1));
             i->src(0).mod = i->src(1).mod;
             i->src(1).mod = 0;
@@ -1042,7 +1042,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
           (imm0.isInteger(1) || imm0.isInteger(-1))) {
          if (imm0.isNegative())
             i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
-         if (s == 0) {
+         if (!s) {
             i->setSrc(0, i->getSrc(1));
             i->src(0).mod = i->src(1).mod;
          }
@@ -1067,7 +1067,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       if (i->usesFlags())
          break;
       if (imm0.isInteger(0)) {
-         if (s == 0) {
+         if (!s) {
             i->setSrc(0, i->getSrc(1));
             i->src(0).mod = i->src(1).mod;
             if (i->op == OP_SUB)
@@ -1084,7 +1084,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       if (s != 1 || (i->dType != TYPE_S32 && i->dType != TYPE_U32))
          break;
       bld.setPosition(i, false);
-      if (imm0.reg.data.u32 == 0) {
+      if (!imm0.reg.data.u32) {
          break;
       } else
       if (imm0.reg.data.u32 == 1) {
@@ -1182,7 +1182,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       ccZ = (CondCode)((unsigned int)i->asCmp()->setCond & ~CC_U);
       // We do everything assuming var (cmp) 0, reverse the condition if 0 is
       // first.
-      if (s == 0)
+      if (!s)
          ccZ = reverseCondCode(ccZ);
       // If there is a negative modifier, we need to undo that, by flipping
       // the comparison to zero.
@@ -1223,12 +1223,12 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
    {
       Instruction *src = i->getSrc(t)->getInsn();
       ImmediateValue imm1;
-      if (imm0.reg.data.u32 == 0) {
+      if (!imm0.reg.data.u32) {
          i->op = OP_MOV;
          i->setSrc(0, new_ImmediateValue(prog, 0u));
          i->src(0).mod = Modifier(0);
          i->setSrc(1, NULL);
-      } else if (imm0.reg.data.u32 == ~0U) {
+      } else if (imm0.reg.data.u32 == (~0u)) {
          i->op = i->src(t).mod.getOp();
          if (t) {
             i->setSrc(0, i->getSrc(t));

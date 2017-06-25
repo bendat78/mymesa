@@ -1943,7 +1943,7 @@ static LLVMValueRef radv_lower_gather4_integer(struct nir_to_llvm_context *ctx,
 
 	//TODO Rect
 	{
-		struct ac_image_args txq_args = { 0 };
+		struct ac_image_args txq_args = {};
 
 		txq_args.da = instr->is_array || instr->sampler_dim == GLSL_SAMPLER_DIM_CUBE;
 		txq_args.opcode = ac_image_get_resinfo;
@@ -2134,7 +2134,7 @@ static LLVMValueRef visit_vulkan_resource_index(struct nir_to_llvm_context *ctx,
 	offset = LLVMConstInt(ctx->i32, base_offset, false);
 	index = LLVMBuildMul(ctx->builder, index, stride, "");
 	offset = LLVMBuildAdd(ctx->builder, offset, index, "");
-	
+
 	desc_ptr = ac_build_gep0(&ctx->ac, desc_ptr, offset);
 	desc_ptr = cast_ptr(ctx, desc_ptr, ctx->v4i32);
 	LLVMSetMetadata(desc_ptr, ctx->uniform_md_kind, ctx->empty_md);
@@ -2239,7 +2239,7 @@ static void visit_store_ssbo(struct nir_to_llvm_context *ctx,
 		}
 
 		offset = base_offset;
-		if (start != 0) {
+		if (start) {
 			offset = LLVMBuildAdd(ctx->builder, offset, LLVMConstInt(ctx->i32, start * 4, false), "");
 		}
 		params[0] = data;
@@ -3115,7 +3115,7 @@ static LLVMValueRef adjust_sample_index_using_fmask(struct nir_to_llvm_context *
 		fmask_load_address[3] = LLVMGetUndef(ctx->i32);
 	}
 
-	struct ac_image_args args = {0};
+	struct ac_image_args args = {};
 
 	args.opcode = ac_image_load;
 	args.da = coord_z ? true : false;
@@ -3444,7 +3444,7 @@ static LLVMValueRef visit_image_size(struct nir_to_llvm_context *ctx,
 	if (glsl_get_sampler_dim(type) == GLSL_SAMPLER_DIM_BUF)
 		return get_buffer_size(ctx, get_sampler_desc(ctx, instr->variables[0], DESC_BUFFER), true);
 
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 
 	args.da = da;
 	args.dmask = 0xf;
@@ -4193,7 +4193,7 @@ static LLVMValueRef apply_round_slice(struct nir_to_llvm_context *ctx,
 static void visit_tex(struct nir_to_llvm_context *ctx, nir_tex_instr *instr)
 {
 	LLVMValueRef result = NULL;
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 	unsigned dmask = 0xf;
 	LLVMValueRef address[16];
 	LLVMValueRef coords[5];
@@ -4396,7 +4396,7 @@ static void visit_tex(struct nir_to_llvm_context *ctx, nir_tex_instr *instr)
 
 	if (instr->op == nir_texop_samples_identical) {
 		LLVMValueRef txf_address[4];
-		struct ac_image_args txf_args = { 0 };
+		struct ac_image_args txf_args = {};
 		unsigned txf_count = count;
 		memcpy(txf_address, address, sizeof(txf_address));
 
@@ -5238,11 +5238,11 @@ handle_vs_outputs_post(struct nir_to_llvm_context *ctx,
 		pos_args[1].out[2] = ctx->f32zero; /* Z */
 		pos_args[1].out[3] = ctx->f32zero;  /* W */
 
-		if (outinfo->writes_pointsize == true)
+		if (outinfo->writes_pointsize)
 			pos_args[1].out[0] = psize_value;
-		if (outinfo->writes_layer == true)
+		if (outinfo->writes_layer)
 			pos_args[1].out[2] = layer_value;
-		if (outinfo->writes_viewport_index == true)
+		if (outinfo->writes_viewport_index)
 			pos_args[1].out[3] = viewport_index_value;
 	}
 	for (i = 0; i < 4; i++) {
@@ -5847,7 +5847,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
                                        struct ac_shader_variant_info *shader_info,
                                        const struct ac_nir_compiler_options *options)
 {
-	struct nir_to_llvm_context ctx = {0};
+	struct nir_to_llvm_context ctx = {};
 	struct nir_function *func;
 	unsigned i;
 	ctx.options = options;
@@ -5863,7 +5863,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 	memset(shader_info, 0, sizeof(*shader_info));
 
 	ac_nir_shader_info_pass(nir, options, &shader_info->info);
-		
+
 	LLVMSetTarget(ctx.module, options->supports_spill ? "amdgcn-mesa-mesa3d" : "amdgcn--");
 
 	LLVMTargetDataRef data_layout = LLVMCreateTargetDataLayout(tm);
@@ -6199,7 +6199,7 @@ void ac_create_gs_copy_shader(LLVMTargetMachineRef tm,
 			      const struct ac_nir_compiler_options *options,
 			      bool dump_shader)
 {
-	struct nir_to_llvm_context ctx = {0};
+	struct nir_to_llvm_context ctx = {};
 	ctx.context = LLVMContextCreate();
 	ctx.module = LLVMModuleCreateWithNameInContext("shader", ctx.context);
 	ctx.options = options;

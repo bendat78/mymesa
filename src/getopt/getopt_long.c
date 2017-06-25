@@ -213,7 +213,7 @@ parse_long_options(char * const *nargv, const char *options,
 			/*
 			 * XXX: GNU sets optopt to val regardless of flag
 			 */
-			if (long_options[match].flag == NULL)
+			if (!long_options[match].flag)
 				optopt = long_options[match].val;
 			else
 				optopt = 0;
@@ -243,7 +243,7 @@ parse_long_options(char * const *nargv, const char *options,
 			/*
 			 * XXX: GNU sets optopt to val regardless of flag
 			 */
-			if (long_options[match].flag == NULL)
+			if (!long_options[match].flag)
 				optopt = long_options[match].val;
 			else
 				optopt = 0;
@@ -281,7 +281,7 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 	int optchar, short_too;
 	static int posixly_correct = -1;
 
-	if (options == NULL)
+	if (!options)
 		return (-1);
 
 	/*
@@ -301,7 +301,7 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 	 * XXX Some GNU programs (like cvs) set optind to 0 instead of
 	 * XXX using optreset.  Work around this braindamage.
 	 */
-	if (optind == 0)
+	if (!optind)
 		optind = optreset = 1;
 
 	optarg = NULL;

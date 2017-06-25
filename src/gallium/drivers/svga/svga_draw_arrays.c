@@ -132,7 +132,7 @@ retrieve_or_generate_indices(struct svga_hwtnl *hwtnl,
       unsigned smallest_size = ~0;
 
       for (i = 0; i < IDX_CACHE_MAX && smallest_size; i++) {
-         if (hwtnl->index_cache[prim][i].buffer == NULL) {
+         if (!hwtnl->index_cache[prim][i].buffer) {
             smallest = i;
             smallest_size = 0;
          }
@@ -182,7 +182,7 @@ simple_draw_arrays(struct svga_hwtnl *hwtnl,
    unsigned hw_count;
 
    hw_prim = svga_translate_prim(prim, count, &hw_count);
-   if (hw_count == 0)
+   if (!hw_count)
       return PIPE_ERROR_BAD_INPUT;
 
    range.primType = hw_prim;

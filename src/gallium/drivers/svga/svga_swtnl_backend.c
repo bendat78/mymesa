@@ -211,7 +211,7 @@ svga_vbuf_submit_state( struct svga_vbuf_render *svga_render )
    SVGA3dVertexDecl vdecl[PIPE_MAX_ATTRIBS];
    enum pipe_error ret;
    unsigned i;
-   static const unsigned zero[PIPE_MAX_ATTRIBS] = {0};
+   static const unsigned zero[PIPE_MAX_ATTRIBS] = {};
 
    /* if the vdecl or vbuf hasn't changed do nothing */
    if (!svga->swtnl.new_vdecl)
@@ -325,7 +325,7 @@ svga_vbuf_render_draw_elements( struct vbuf_render *render,
    const unsigned instance_count = 1;
 
    assert(( svga_render->vbuf_offset - svga_render->vdecl_offset) % svga_render->vertex_size == 0);
-   
+
    SVGA_STATS_TIME_PUSH(svga_sws(svga), SVGA_STATS_TIME_VBUFDRAWELEMENTS);
 
    if (svga_render->ibuf_size < svga_render->ibuf_offset + size)

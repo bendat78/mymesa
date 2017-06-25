@@ -216,7 +216,7 @@ svga_context_create(struct pipe_screen *screen, void *priv, unsigned flags)
       goto cleanup;
 
    svga->hwtnl = svga_hwtnl_create(svga);
-   if (svga->hwtnl == NULL)
+   if (!svga->hwtnl)
       goto cleanup;
 
    if (!svga_init_swtnl(svga))
@@ -283,7 +283,7 @@ svga_context_create(struct pipe_screen *screen, void *priv, unsigned flags)
     * matching the blend state it is replacing.
     */
    {
-      struct pipe_blend_state noop_tmpl = {0};
+      struct pipe_blend_state noop_tmpl = {};
       unsigned i;
 
       for (i = 0; i < PIPE_MAX_COLOR_BUFS; ++i) {

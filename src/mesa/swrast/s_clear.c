@@ -184,7 +184,7 @@ clear_color_buffers(struct gl_context *ctx)
        * the framebuffer can be complete with some attachments be missing.  In
        * this case the _ColorDrawBuffers pointer will be NULL.
        */
-      if (rb == NULL)
+      if (!rb)
 	 continue;
 
       clear_rgba_buffer(ctx, rb, ctx->Color.ColorMask[buf]);

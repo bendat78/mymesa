@@ -327,7 +327,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		  brw_math_invert(p, c->reg.t, c->reg.t);
 		  brw_MUL(p, c->reg.t, c->reg.t, c->reg.dpPrev);
 
-		  /* If (vtxOut == 0) vtxOut = vtxPrev
+		  /* If (!vtxOut) vtxOut = vtxPrev
 		   */
 		  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ, get_addr_reg(vtxOut), brw_imm_uw(0) );
                   brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtxPrev));
@@ -369,7 +369,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		  brw_math_invert(p, c->reg.t, c->reg.t);
 		  brw_MUL(p, c->reg.t, c->reg.t, c->reg.dp);
 
-		  /* If (vtxOut == 0) vtxOut = vtx
+		  /* If (!vtxOut) vtxOut = vtx
 		   */
 		  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ, get_addr_reg(vtxOut), brw_imm_uw(0) );
                   brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtx));

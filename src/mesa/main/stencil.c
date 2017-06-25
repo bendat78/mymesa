@@ -190,7 +190,7 @@ stencil_func(struct gl_context *ctx, GLenum func, GLint ref, GLuint mask)
 {
    const GLint face = ctx->Stencil.ActiveFace;
 
-   if (face != 0) {
+   if (face) {
       if (ctx->Stencil.Function[face] == func &&
           ctx->Stencil.ValueMask[face] == mask &&
           ctx->Stencil.Ref[face] == ref)
@@ -277,7 +277,7 @@ _mesa_StencilMask( GLuint mask )
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glStencilMask()\n");
 
-   if (face != 0) {
+   if (face) {
       /* Only modify the EXT_stencil_two_side back-face state.
        */
       if (ctx->Stencil.WriteMask[face] == mask)
@@ -318,9 +318,9 @@ _mesa_StencilMask( GLuint mask )
  * \param zfail action to take when stencil test passes, but depth test fails.
  * \param zpass action to take when stencil test passes and the depth test
  * passes (or depth testing is not enabled).
- * 
+ *
  * \sa glStencilOp().
- * 
+ *
  * Verifies the parameters and updates the respective fields in
  * __struct gl_contextRec::Stencil. On change flushes the vertices and notifies
  * the driver via the dd_function_table::StencilOp callback.
@@ -330,7 +330,7 @@ stencil_op(struct gl_context *ctx, GLenum fail, GLenum zfail, GLenum zpass)
 {
    const GLint face = ctx->Stencil.ActiveFace;
 
-   if (face != 0) {
+   if (face) {
       /* only set active face state */
       if (ctx->Stencil.ZFailFunc[face] == zfail &&
           ctx->Stencil.ZPassFunc[face] == zpass &&

@@ -234,7 +234,7 @@ static void scaling_list(struct vl_rbsp *rbsp, uint8_t *scalingList, unsigned si
    list = (sizeOfScalingList == 16) ? vl_zscan_normal_16 : vl_zscan_normal;
    for (i = 0; i < sizeOfScalingList; ++i ) {
 
-      if (nextScale != 0) {
+      if (nextScale) {
          signed delta_scale = vl_rbsp_se(rbsp);
          nextScale = (lastScale + delta_scale + 256) % 256;
          if (i == 0 && nextScale == 0) {
@@ -343,7 +343,7 @@ static void seq_parameter_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp)
 
    sps->pic_order_cnt_type = vl_rbsp_ue(rbsp);
 
-   if (sps->pic_order_cnt_type == 0)
+   if (!sps->pic_order_cnt_type)
       sps->log2_max_pic_order_cnt_lsb_minus4 = vl_rbsp_ue(rbsp);
    else if (sps->pic_order_cnt_type == 1) {
       sps->delta_pic_order_always_zero_flag = vl_rbsp_u(rbsp, 1);
@@ -431,7 +431,7 @@ static void picture_parameter_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbs
    if (pps->num_slice_groups_minus1 > 0) {
       pps->slice_group_map_type = vl_rbsp_ue(rbsp);
 
-      if (pps->slice_group_map_type == 0) {
+      if (!pps->slice_group_map_type) {
 
          for (i = 0; i <= pps->num_slice_groups_minus1; ++i)
             /* run_length_minus1[i] */
@@ -573,7 +573,7 @@ static void pred_weight_table(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
    /* luma_log2_weight_denom */
    vl_rbsp_ue(rbsp);
 
-   if (ChromaArrayType != 0)
+   if (ChromaArrayType)
       /* chroma_log2_weight_denom */
       vl_rbsp_ue(rbsp);
 
@@ -585,7 +585,7 @@ static void pred_weight_table(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
          /* luma_offset_l0[i] */
          vl_rbsp_se(rbsp);
       }
-      if (ChromaArrayType != 0) {
+      if (ChromaArrayType) {
          /* chroma_weight_l0_flag */
          if (vl_rbsp_u(rbsp, 1)) {
             for (j = 0; j < 2; ++j) {
@@ -607,7 +607,7 @@ static void pred_weight_table(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
             /* luma_offset_l1[i] */
             vl_rbsp_se(rbsp);
          }
-         if (ChromaArrayType != 0) {
+         if (ChromaArrayType) {
             /* chroma_weight_l1_flag */
             if (vl_rbsp_u(rbsp, 1)) {
                for (j = 0; j < 2; ++j) {
@@ -734,7 +734,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       priv->codec_data.h264.idr_pic_id = idr_pic_id;
    }
 
-   if (sps->pic_order_cnt_type == 0) {
+   if (!sps->pic_order_cnt_type) {
       unsigned log2_max_pic_order_cnt_lsb = sps->log2_max_pic_order_cnt_lsb_minus4 + 4;
       unsigned max_pic_order_cnt_lsb = 1 << log2_max_pic_order_cnt_lsb;
       int pic_order_cnt_lsb = vl_rbsp_u(rbsp, log2_max_pic_order_cnt_lsb);
@@ -813,7 +813,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
 
       priv->codec_data.h264.prevFrameNumOffset = FrameNumOffset;
 
-      if (sps->num_ref_frames_in_pic_order_cnt_cycle != 0)
+      if (sps->num_ref_frames_in_pic_order_cnt_cycle)
          absFrameNum = FrameNumOffset + frame_num;
       else
          absFrameNum = 0;
@@ -837,7 +837,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       } else
          expectedPicOrderCnt = 0;
 
-      if (nal_ref_idc == 0)
+      if (!nal_ref_idc)
          expectedPicOrderCnt += sps->offset_for_non_ref_pic;
 
       if (!priv->picture.h264.field_pic_flag) {
@@ -866,7 +866,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
 
       if (IdrPicFlag)
          tempPicOrderCnt = 0;
-      else if (nal_ref_idc == 0)
+      else if (!nal_ref_idc)
          tempPicOrderCnt = 2 * (FrameNumOffset + frame_num) - 1;
       else
          tempPicOrderCnt = 2 * (FrameNumOffset + frame_num);
@@ -914,7 +914,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
        (pps->weighted_bipred_idc == 1 && slice_type == PIPE_H264_SLICE_TYPE_B))
       pred_weight_table(priv, rbsp, sps, slice_type);
 
-   if (nal_ref_idc != 0)
+   if (nal_ref_idc)
       dec_ref_pic_marking(priv, rbsp, IdrPicFlag);
 
    if (pps->entropy_coding_mode_flag && slice_type != PIPE_H264_SLICE_TYPE_I && slice_type != PIPE_H264_SLICE_TYPE_SI)

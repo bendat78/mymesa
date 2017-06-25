@@ -87,7 +87,7 @@ _mesa_BindProgramARB(GLenum target, GLuint id)
     * NOTE: binding to a non-existant program is not an error.
     * That's supposed to be caught in glBegin.
     */
-   if (id == 0) {
+   if (!id) {
       /* Bind a default program */
       newProg = NULL;
       if (target == GL_VERTEX_PROGRAM_ARB)
@@ -144,7 +144,7 @@ _mesa_BindProgramARB(GLenum target, GLuint id)
  * \note Not compiled into display lists.
  * \note Called by both glDeleteProgramsNV and glDeleteProgramsARB.
  */
-void GLAPIENTRY 
+void GLAPIENTRY
 _mesa_DeleteProgramsARB(GLsizei n, const GLuint *ids)
 {
    GLint i;
@@ -158,7 +158,7 @@ _mesa_DeleteProgramsARB(GLsizei n, const GLuint *ids)
    }
 
    for (i = 0; i < n; i++) {
-      if (ids[i] != 0) {
+      if (ids[i]) {
          struct gl_program *prog = _mesa_lookup_program(ctx, ids[i]);
          if (prog == &_mesa_DummyProgram) {
             _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
@@ -242,11 +242,11 @@ _mesa_GenProgramsARB(GLsizei n, GLuint *ids)
 GLboolean GLAPIENTRY
 _mesa_IsProgramARB(GLuint id)
 {
-   struct gl_program *prog = NULL; 
+   struct gl_program *prog = NULL;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (id == 0)
+   if (!id)
       return GL_FALSE;
 
    prog = _mesa_lookup_program(ctx, id);
@@ -391,7 +391,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 
    /* Capture vp-*.shader_test/fp-*.shader_test files. */
    const char *capture_path = _mesa_get_shader_capture_path();
-   if (capture_path != NULL) {
+   if (capture_path) {
       FILE *file;
       const char *shader_type =
          target == GL_FRAGMENT_PROGRAM_ARB ? "fragment" : "vertex";
@@ -421,7 +421,7 @@ void GLAPIENTRY
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
                                GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) x, (GLfloat) y, 
+   _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) x, (GLfloat) y,
 		                  (GLfloat) z, (GLfloat) w);
 }
 
@@ -434,8 +434,8 @@ void GLAPIENTRY
 _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                 const GLdouble *params)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) params[0], 
-	                          (GLfloat) params[1], (GLfloat) params[2], 
+   _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) params[0],
+	                          (GLfloat) params[1], (GLfloat) params[2],
 				  (GLfloat) params[3]);
 }
 
@@ -536,7 +536,7 @@ _mesa_GetProgramEnvParameterdvARB(GLenum target, GLuint index,
 
 
 void GLAPIENTRY
-_mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index, 
+_mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
                                   GLfloat *params)
 {
    GLfloat *param;
@@ -611,7 +611,7 @@ _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
                                  GLdouble x, GLdouble y,
                                  GLdouble z, GLdouble w)
 {
-   _mesa_ProgramLocalParameter4fARB(target, index, (GLfloat) x, (GLfloat) y, 
+   _mesa_ProgramLocalParameter4fARB(target, index, (GLfloat) x, (GLfloat) y,
                                     (GLfloat) z, (GLfloat) w);
 }
 
@@ -765,7 +765,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
           * The spec says that even if this query returns true, there's
           * no guarantee that the program will run in hardware.
           */
-         if (prog->Id == 0) {
+         if (!prog->Id) {
             /* default/null program */
             *params = GL_FALSE;
          }

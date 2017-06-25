@@ -339,7 +339,7 @@ lp_scene_new_data_block( struct lp_scene *scene )
       struct data_block *block = MALLOC_STRUCT(data_block);
       if (!block)
          return NULL;
-      
+
       scene->scene_size += sizeof *block;
 
       block->used = 0;
@@ -402,7 +402,7 @@ lp_scene_add_resource_reference(struct lp_scene *scene,
    if (!ref) {
       assert(*last == NULL);
       *last = lp_scene_alloc(scene, sizeof *ref);
-      if (*last == NULL)
+      if (!*last)
           return FALSE;
 
       ref = *last;

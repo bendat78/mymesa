@@ -96,7 +96,7 @@ etna_link_shaders(struct etna_context *ctx, struct compiled_shader_state *cs,
    cs->VS_OUTPUT_COUNT = 1 + link.num_varyings; /* position + varyings */
 
    /* vs outputs (varyings) */
-   DEFINE_ETNA_BITARRAY(vs_output, 16, 8) = {0};
+   DEFINE_ETNA_BITARRAY(vs_output, 16, 8) = {};
    int varid = 0;
    etna_bitarray_set(vs_output, 8, varid++, vs->vs_pos_out_reg);
    for (int idx = 0; idx < link.num_varyings; ++idx)
@@ -143,8 +143,8 @@ etna_link_shaders(struct etna_context *ctx, struct compiled_shader_state *cs,
       VIVS_PS_TEMP_REGISTER_CONTROL_NUM_TEMPS(MAX2(fs->num_temps, link.num_varyings + 2));
 
    uint32_t total_components = 0;
-   DEFINE_ETNA_BITARRAY(num_components, ETNA_NUM_VARYINGS, 4) = {0};
-   DEFINE_ETNA_BITARRAY(component_use, 4 * ETNA_NUM_VARYINGS, 2) = {0};
+   DEFINE_ETNA_BITARRAY(num_components, ETNA_NUM_VARYINGS, 4) = {};
+   DEFINE_ETNA_BITARRAY(component_use, 4 * ETNA_NUM_VARYINGS, 2) = {};
    for (int idx = 0; idx < link.num_varyings; ++idx) {
       const struct etna_varying *varying = &link.varyings[idx];
 
@@ -210,7 +210,7 @@ etna_shader_update_vs_inputs(struct etna_context *ctx,
       VIVS_VS_TEMP_REGISTER_CONTROL_NUM_TEMPS(num_temps);
 
    /* vs inputs (attributes) */
-   DEFINE_ETNA_BITARRAY(vs_input, 16, 8) = {0};
+   DEFINE_ETNA_BITARRAY(vs_input, 16, 8) = {};
    for (int idx = 0; idx < num_vs_inputs; ++idx) {
       if (idx < vs->infile.num_reg)
          etna_bitarray_set(vs_input, 8, idx, vs->infile.reg[idx].reg);

@@ -552,7 +552,7 @@ vc4_has_feature(struct vc4_screen *screen, uint32_t feature)
         };
         int ret = vc4_ioctl(screen->fd, DRM_IOCTL_VC4_GET_PARAM, &p);
 
-        if (ret != 0)
+        if (ret)
                 return false;
 
         return p.value;
@@ -570,7 +570,7 @@ vc4_get_chip_info(struct vc4_screen *screen)
         int ret;
 
         ret = vc4_ioctl(screen->fd, DRM_IOCTL_VC4_GET_PARAM, &ident0);
-        if (ret != 0) {
+        if (ret) {
                 if (errno == EINVAL) {
                         /* Backwards compatibility with 2835 kernels which
                          * only do V3D 2.1.
@@ -584,7 +584,7 @@ vc4_get_chip_info(struct vc4_screen *screen)
                 }
         }
         ret = vc4_ioctl(screen->fd, DRM_IOCTL_VC4_GET_PARAM, &ident1);
-        if (ret != 0) {
+        if (ret) {
                 fprintf(stderr, "Couldn't get V3D IDENT1: %s\n",
                         strerror(errno));
                 return false;

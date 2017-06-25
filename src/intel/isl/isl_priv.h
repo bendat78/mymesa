@@ -124,7 +124,7 @@ isl_round_up_to_power_of_two(uint32_t value)
 static inline uint32_t
 isl_minify(uint32_t n, uint32_t levels)
 {
-   if (unlikely(n == 0))
+   if (!unlikely(n))
       return 0;
    else
       return MAX(n >> levels, 1);

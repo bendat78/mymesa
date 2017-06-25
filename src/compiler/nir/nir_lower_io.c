@@ -95,7 +95,7 @@ get_io_offset(nir_builder *b, nir_deref_var *deref,
    /* For per-vertex input arrays (i.e. geometry shader inputs), keep the
     * outermost array index separate.  Process the rest normally.
     */
-   if (vertex_index != NULL) {
+   if (vertex_index) {
       tail = tail->child;
       nir_deref_array *deref_array = nir_deref_as_array(tail);
 

@@ -138,7 +138,7 @@ _mesa_free_pipeline_data(struct gl_context *ctx)
 struct gl_pipeline_object *
 _mesa_lookup_pipeline_object(struct gl_context *ctx, GLuint id)
 {
-   if (id == 0)
+   if (!id)
       return NULL;
    else
       return (struct gl_pipeline_object *)
@@ -187,7 +187,7 @@ _mesa_reference_pipeline_object_(struct gl_context *ctx,
       assert(oldObj->RefCount > 0);
       oldObj->RefCount--;
 
-      if (oldObj->RefCount == 0) {
+      if (!oldObj->RefCount) {
          _mesa_delete_pipeline_object(ctx, oldObj);
       }
 
@@ -342,7 +342,7 @@ _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program)
    if (program) {
       shProg = _mesa_lookup_shader_program_err(ctx, program,
                                                "glUseProgramStages");
-      if (shProg == NULL)
+      if (!shProg)
          return;
 
       /* Section 2.11.4 (Program Pipeline Objects) of the OpenGL 4.1 spec
@@ -403,10 +403,10 @@ _mesa_ActiveShaderProgram(GLuint pipeline, GLuint program)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glActiveShaderProgram(%u, %u)\n", pipeline, program);
 
-   if (program != 0) {
+   if (program) {
       shProg = _mesa_lookup_shader_program_err(ctx, program,
                                                "glActiveShaderProgram(program)");
-      if (shProg == NULL)
+      if (!shProg)
          return;
    }
 
@@ -420,7 +420,7 @@ _mesa_ActiveShaderProgram(GLuint pipeline, GLuint program)
     */
    pipe->EverBound = GL_TRUE;
 
-   if ((shProg != NULL) && !shProg->data->LinkStatus) {
+   if ((shProg) && !shProg->data->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
             "glActiveShaderProgram(program %u not linked)", shProg->Name);
       return;
@@ -527,7 +527,7 @@ _mesa_bind_pipeline(struct gl_context *ctx,
    if (&ctx->Shader != ctx->_Shader) {
       FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
-      if (pipe != NULL) {
+      if (pipe) {
          /* Bound the pipeline to the current program and
           * restore the pipeline state
           */
@@ -679,7 +679,7 @@ _mesa_IsProgramPipeline(GLuint pipeline)
       _mesa_debug(ctx, "glIsProgramPipeline(%u)\n", pipeline);
 
    struct gl_pipeline_object *obj = _mesa_lookup_pipeline_object(ctx, pipeline);
-   if (obj == NULL)
+   if (!obj)
       return GL_FALSE;
 
    return obj->EverBound;
@@ -846,7 +846,7 @@ _mesa_validate_program_pipeline(struct gl_context* ctx,
 
    /* Release and reset the info log.
     */
-   if (pipe->InfoLog != NULL)
+   if (pipe->InfoLog)
       ralloc_free(pipe->InfoLog);
 
    pipe->InfoLog = NULL;

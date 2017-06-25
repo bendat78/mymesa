@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/** 
+/**
  * \file texenv.c
  *
  * glTexEnv-related functions

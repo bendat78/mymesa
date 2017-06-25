@@ -222,7 +222,7 @@ get_shine(const float p[], float x)
 
 	/* Linear interpolation in f-space (Faster and somewhat more
 	 * accurate than x-space). */
-	if (x == 0)
+	if (!x)
 		return y[0];
 	else if (i > n - 2)
 		return y[n - 1];

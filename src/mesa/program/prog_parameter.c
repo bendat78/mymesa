@@ -142,7 +142,7 @@ _mesa_new_parameter_list_sized(unsigned size)
 {
    struct gl_program_parameter_list *p = _mesa_new_parameter_list();
 
-   if ((p != NULL) && (size != 0)) {
+   if ((p) && (size != 0)) {
       p->Size = size;
 
       /* alloc arrays */
@@ -153,7 +153,7 @@ _mesa_new_parameter_list_sized(unsigned size)
          _mesa_align_malloc(size * 4 *sizeof(gl_constant_value), 16);
 
 
-      if ((p->Parameters == NULL) || (p->ParameterValues == NULL)) {
+      if (!(p->Parameters) || (p->ParameterValues == NULL)) {
          free(p->Parameters);
          _mesa_align_free(p->ParameterValues);
          free(p);
@@ -219,7 +219,7 @@ _mesa_reserve_parameter_storage(struct gl_program_parameter_list *paramList,
  * store all the values (in blocks of 4).
  *
  * \param paramList  the list to add the parameter to
- * \param type  type of parameter, such as 
+ * \param type  type of parameter, such as
  * \param name  the parameter name, will be duplicated/copied!
  * \param size  number of elements in 'values' vector (1..4, or more)
  * \param datatype  GL_FLOAT, GL_FLOAT_VECx, GL_INT, GL_INT_VECx or GL_NONE.

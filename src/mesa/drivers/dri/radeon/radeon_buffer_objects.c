@@ -98,12 +98,12 @@ radeonBufferData(struct gl_context * ctx,
     radeon_obj->Base.Usage = usage;
     radeon_obj->Base.StorageFlags = storageFlags;
 
-    if (radeon_obj->bo != NULL) {
+    if (radeon_obj->bo) {
         radeon_bo_unref(radeon_obj->bo);
         radeon_obj->bo = NULL;
     }
 
-    if (size != 0) {
+    if (size) {
         radeon_obj->bo = radeon_bo_open(radeon->radeonScreen->bom,
                                         0,
                                         size,
@@ -114,7 +114,7 @@ radeonBufferData(struct gl_context * ctx,
         if (!radeon_obj->bo)
             return GL_FALSE;
 
-        if (data != NULL) {
+        if (data) {
             radeon_bo_map(radeon_obj->bo, GL_TRUE);
 
             memcpy(radeon_obj->bo->ptr, data, size);
@@ -188,7 +188,7 @@ radeonMapBufferRange(struct gl_context * ctx,
         ctx->Driver.Flush(ctx);
     }
 
-    if (radeon_obj->bo == NULL) {
+    if (!radeon_obj->bo) {
         obj->Mappings[index].Pointer = NULL;
         return NULL;
     }
@@ -214,7 +214,7 @@ radeonUnmapBuffer(struct gl_context * ctx,
 {
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
 
-    if (radeon_obj->bo != NULL) {
+    if (radeon_obj->bo) {
         radeon_bo_unmap(radeon_obj->bo);
     }
 

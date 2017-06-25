@@ -66,7 +66,7 @@ st_pbo_addresses_setup(struct st_context *st,
    /* Check alignment against texture buffer requirements. */
    {
       unsigned ofs = (buf_offset * addr->bytes_per_pixel) % st->ctx->Const.TextureBufferOffsetAlignment;
-      if (ofs != 0) {
+      if (ofs) {
          if (ofs % addr->bytes_per_pixel != 0)
             return false;
 
@@ -215,7 +215,7 @@ st_pbo_draw(struct st_context *st, const struct st_pbo_addresses *addr,
 
    /* Upload vertices */
    {
-      struct pipe_vertex_buffer vbo = {0};
+      struct pipe_vertex_buffer vbo = {};
       struct pipe_vertex_element velem;
 
       float x0 = (float) addr->xoffset / surface_width * 2.0f - 1.0f;

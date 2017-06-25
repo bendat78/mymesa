@@ -259,7 +259,7 @@ blit(struct pipe_context *pipe,
      unsigned src_level,
      const struct pipe_box *src_box)
 {
-   struct pipe_blit_info blit = {{0}};
+   struct pipe_blit_info blit = {};
 
    blit.src.resource = src;
    blit.dst.resource = dst;

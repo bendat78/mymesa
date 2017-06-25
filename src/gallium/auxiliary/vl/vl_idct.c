@@ -54,7 +54,7 @@ enum VS_OUTPUT
  * The DCT matrix stored as hex representation of floats. Equal to the following equation:
  * for (i = 0; i < 8; ++i)
  *    for (j = 0; j < 8; ++j)
- *       if (i == 0) const_matrix[i][j] = 1.0f / sqrtf(8.0f);
+ *       if (!i) const_matrix[i][j] = 1.0f / sqrtf(8.0f);
  *       else const_matrix[i][j] = sqrtf(2.0f / 8.0f) * cosf((2 * j + 1) * i * M_PI / (2.0f * 8.0f));
  */
 static const uint32_t const_matrix[8][8] = {

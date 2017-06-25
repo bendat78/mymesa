@@ -49,7 +49,7 @@ __indirect_glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
 
    __GLX_LOAD_VARIABLES();
    k = __glMap1d_size(target);
-   if (k == 0) {
+   if (!k) {
       __glXSetError(gc, GL_INVALID_ENUM);
       return;
    }
@@ -116,7 +116,7 @@ __indirect_glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride,
 
    __GLX_LOAD_VARIABLES();
    k = __glMap1f_size(target);
-   if (k == 0) {
+   if (!k) {
       __glXSetError(gc, GL_INVALID_ENUM);
       return;
    }
@@ -180,7 +180,7 @@ __indirect_glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr,
 
    __GLX_LOAD_VARIABLES();
    k = __glMap2d_size(target);
-   if (k == 0) {
+   if (!k) {
       __glXSetError(gc, GL_INVALID_ENUM);
       return;
    }
@@ -258,7 +258,7 @@ __indirect_glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr,
 
    __GLX_LOAD_VARIABLES();
    k = __glMap2f_size(target);
-   if (k == 0) {
+   if (!k) {
       __glXSetError(gc, GL_INVALID_ENUM);
       return;
    }

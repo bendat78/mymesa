@@ -365,7 +365,7 @@ xa_fence_get(struct xa_context *ctx)
 
     fence->xa = ctx->xa;
 
-    if (ctx->last_fence == NULL)
+    if (!ctx->last_fence)
 	fence->pipe_fence = NULL;
     else
 	screen->fence_reference(screen, &fence->pipe_fence, ctx->last_fence);

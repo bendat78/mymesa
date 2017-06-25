@@ -343,7 +343,7 @@ _mesa_ClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint *value)
        *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
        *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
        */
-      if (drawbuffer != 0) {
+      if (drawbuffer) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
                      drawbuffer);
          return;
@@ -511,7 +511,7 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
        *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
        *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
        */
-      if (drawbuffer != 0) {
+      if (drawbuffer) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfv(drawbuffer=%d)",
                      drawbuffer);
          return;
@@ -611,7 +611,7 @@ _mesa_ClearBufferfi(GLenum buffer, GLint drawbuffer,
     *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
     *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
     */
-   if (drawbuffer != 0) {
+   if (drawbuffer) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfi(drawbuffer=%d)",
                   drawbuffer);
       return;

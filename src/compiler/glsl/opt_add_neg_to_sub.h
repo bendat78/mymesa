@@ -46,7 +46,7 @@ public:
             ir->operation = ir_binop_sub;
 
             /* This ensures that -a + b becomes b - a. */
-            if (i == 0)
+            if (!i)
                ir->operands[0] = ir->operands[1];
 
             ir->operands[1] = op->operands[0];

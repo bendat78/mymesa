@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2011 Red Hat Inc.
- * 
+ *
  * block compression parts are:
  * Copyright (C) 2004  Roland Scheidegger   All Rights Reserved.
  *
@@ -42,7 +42,7 @@ void TAG(fetch_texel_rgtc)(unsigned srcRowStride, const TYPE *pixdata,
    const unsigned char code = (acodelow >> (bit_pos & 0x7) |
       (acodehigh  << (8 - (bit_pos & 0x7)))) & 0x7;
 
-   if (code == 0)
+   if (!code)
       decode = alpha0;
    else if (code == 1)
       decode = alpha1;
@@ -77,7 +77,7 @@ void TAG(encode_rgtc_ubyte)(TYPE *blkaddr, TYPE srccolors[4][4],
                             int numxpixels, int numypixels)
 {
    TYPE alphabase[2], alphause[2];
-   short alphatest[2] = { 0 };
+   short alphatest[2] = {};
    unsigned int alphablockerror1, alphablockerror2, alphablockerror3;
    TYPE i, j, aindex, acutValues[7];
    TYPE alphaenc1[16], alphaenc2[16], alphaenc3[16];
@@ -321,8 +321,8 @@ void TAG(encode_rgtc_ubyte)(TYPE *blkaddr, TYPE srccolors[4][4],
             }
          }
          /* shouldn't happen often, needed to avoid div by zero */
-         if (nralphainrangelow == 0) nralphainrangelow = 1;
-         if (nralphainrangehigh == 0) nralphainrangehigh = 1;
+         if (!nralphainrangelow) nralphainrangelow = 1;
+         if (!nralphainrangehigh) nralphainrangehigh = 1;
          alphatest[0] = alphatest[0] + (blockerrlin1 / nralphainrangelow);
 #if RGTC_DEBUG
          fprintf(stderr, "block err lin low %d, nr %d\n", blockerrlin1, nralphainrangelow);

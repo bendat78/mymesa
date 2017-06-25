@@ -274,7 +274,7 @@ swrastFillInModes(__DRIscreen *psp,
 			       depth_buffer_factor, back_buffer_modes,
 			       back_buffer_factor, msaa_samples_array, 1,
 			       GL_TRUE, GL_FALSE);
-    if (configs == NULL) {
+    if (!configs) {
 	fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
 		__LINE__);
 	return NULL;
@@ -552,14 +552,14 @@ dri_create_buffer(__DRIscreen * sPriv,
     (void) isPixmap;
 
     drawable = CALLOC_STRUCT(dri_drawable);
-    if (drawable == NULL)
+    if (!drawable)
 	goto drawable_fail;
 
     dPriv->driverPrivate = drawable;
     drawable->dPriv = dPriv;
 
     drawable->row = malloc(SWRAST_MAX_WIDTH * 4);
-    if (drawable->row == NULL)
+    if (!drawable->row)
 	goto drawable_fail;
 
     fb = &drawable->Base;
@@ -637,7 +637,7 @@ dri_swap_buffers(__DRIdrawable * dPriv)
 	dri_swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 
     /* check for signle-buffered */
-    if (backrb == NULL)
+    if (!backrb)
 	return;
 
     /* check if swapping currently bound buffer */
@@ -770,7 +770,7 @@ dri_create_context(gl_api api,
     (void) flags;
 
     ctx = CALLOC_STRUCT(dri_context);
-    if (ctx == NULL) {
+    if (!ctx) {
 	*error = __DRI_CTX_ERROR_NO_MEMORY;
 	goto context_fail;
     }
@@ -929,7 +929,7 @@ dri_copy_sub_buffer(__DRIdrawable *dPriv, int x, int y,
 	dri_swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 
     /* check for signle-buffered */
-    if (backrb == NULL)
+    if (!backrb)
        return;
 
     iy = frontrb->Base.Base.Height - y - h;

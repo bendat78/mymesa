@@ -145,7 +145,7 @@ static VkResult radv_create_cmd_buffer(
 	unsigned ring;
 	cmd_buffer = vk_alloc(&pool->alloc, sizeof(*cmd_buffer), 8,
 				VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (cmd_buffer == NULL)
+	if (!cmd_buffer)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	memset(cmd_buffer, 0, sizeof(*cmd_buffer));
@@ -966,7 +966,7 @@ radv_emit_fb_color_state(struct radv_cmd_buffer *cmd_buffer,
 		radeon_set_context_reg_seq(cmd_buffer->cs, R_028C94_CB_COLOR0_DCC_BASE + index * 0x3c, 2);
 		radeon_emit(cmd_buffer->cs, cb->cb_dcc_base);
 		radeon_emit(cmd_buffer->cs, cb->cb_dcc_base >> 32);
-		
+
 		radeon_set_context_reg(cmd_buffer->cs, R_0287A0_CB_MRT0_EPITCH + index * 4,
 				       cb->gfx9_epitch);
 	} else {
@@ -1386,7 +1386,7 @@ radv_flush_indirect_descriptor_sets(struct radv_cmd_buffer *cmd_buffer)
 	uint32_t size = MAX_SETS * 2 * 4;
 	uint32_t offset;
 	void *ptr;
-	
+
 	if (!radv_cmd_buffer_upload_alloc(cmd_buffer, size,
 					  256, &offset, &ptr))
 		return;
@@ -1795,7 +1795,7 @@ radv_cmd_state_setup_attachments(struct radv_cmd_buffer *cmd_buffer,
 {
 	struct radv_cmd_state *state = &cmd_buffer->state;
 
-	if (pass->attachment_count == 0) {
+	if (!pass->attachment_count) {
 		state->attachments = NULL;
 		return;
 	}
@@ -1804,7 +1804,7 @@ radv_cmd_state_setup_attachments(struct radv_cmd_buffer *cmd_buffer,
 					pass->attachment_count *
 					sizeof(state->attachments[0]),
 					8, VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (state->attachments == NULL) {
+	if (!state->attachments) {
 		/* FIXME: Propagate VK_ERROR_OUT_OF_HOST_MEMORY to vkEndCommandBuffer */
 		abort();
 	}
@@ -2506,7 +2506,7 @@ VkResult radv_CreateCommandPool(
 
 	pool = vk_alloc2(&device->alloc, pAllocator, sizeof(*pool), 8,
 			   VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (pool == NULL)
+	if (!pool)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	if (pAllocator)

@@ -177,7 +177,7 @@ public:
       threads = info->prop.cp.numThreads[0] *
          info->prop.cp.numThreads[1] *
          info->prop.cp.numThreads[2];
-      if (threads == 0)
+      if (!threads)
          threads = info->target >= NVISA_GK104_CHIPSET ? 1024 : 512;
    }
 

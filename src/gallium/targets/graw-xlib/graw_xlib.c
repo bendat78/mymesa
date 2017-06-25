@@ -30,7 +30,7 @@ graw_create_screen( void )
     * drawables:
     */
    winsys = xlib_create_sw_winsys( graw.display );
-   if (winsys == NULL)
+   if (!winsys)
       return NULL;
 
    screen = sw_screen_create( winsys );
@@ -60,18 +60,18 @@ graw_create_window_and_screen( int x,
    int scrnum;
 
    graw.display = XOpenDisplay(NULL);
-   if (graw.display == NULL)
+   if (!graw.display)
       return NULL;
 
    scrnum = DefaultScreen( graw.display );
    root = RootWindow( graw.display, scrnum );
 
 
-   if (graw.display == NULL)
+   if (!graw.display)
       goto fail;
 
    xlib_handle = CALLOC_STRUCT(xlib_drawable);
-   if (xlib_handle == NULL)
+   if (!xlib_handle)
       goto fail;
 
 
@@ -138,14 +138,14 @@ graw_create_window_and_screen( int x,
 	 break;
       }
    }
-   
+
    xlib_handle->visual = visinfo->visual;
    xlib_handle->drawable = (Drawable)win;
    xlib_handle->depth = visinfo->depth;
    *handle = (void *)xlib_handle;
 
    screen = graw_create_screen();
-   if (screen == NULL)
+   if (!screen)
       goto fail;
 
    free(visinfo);
@@ -166,7 +166,7 @@ fail:
 }
 
 
-void 
+void
 graw_set_display_func( void (*draw)( void ) )
 {
    graw.draw = draw;

@@ -171,7 +171,7 @@ namespace ArchRast
         // Flush cached events for this draw
         virtual void FlushDraw(uint32_t drawId)
         {
-            if (mNeedFlush == false) return;
+            if (!mNeedFlush) return;
 
             //singleSample
             EventHandlerFile::Handle(EarlyZSingleSample(drawId, mDSSingleSample.earlyZTestPassCount, mDSSingleSample.earlyZTestFailCount));

@@ -771,7 +771,7 @@ ast_type_qualifier::validate_flags(YYLTYPE *loc,
 {
    ast_type_qualifier bad;
    bad.flags.i = this->flags.i & ~allowed_flags.flags.i;
-   if (bad.flags.i == 0)
+   if (!bad.flags.i)
       return true;
 
    _mesa_glsl_error(loc, state,
@@ -914,7 +914,7 @@ process_qualifier_constant(struct _mesa_glsl_parse_state *state,
 {
    exec_list dummy_instructions;
 
-   if (const_expression == NULL) {
+   if (!const_expression) {
       *value = 0;
       return true;
    }

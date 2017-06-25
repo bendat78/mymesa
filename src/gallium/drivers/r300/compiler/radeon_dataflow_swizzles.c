@@ -75,7 +75,7 @@ static void rewrite_source(struct radeon_compiler * c,
 		phase_refmask &= RC_MASK_XYZW;
 
 		masked_negate = split.Phase[phase] & mov->U.I.SrcReg[0].Negate;
-		if (masked_negate == 0)
+		if (!masked_negate)
 			mov->U.I.SrcReg[0].Negate = 0;
 		else if (masked_negate == split.Phase[phase])
 			mov->U.I.SrcReg[0].Negate = RC_MASK_XYZW;

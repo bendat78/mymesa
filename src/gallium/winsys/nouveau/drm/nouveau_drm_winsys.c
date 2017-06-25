@@ -30,7 +30,7 @@ bool nouveau_drm_screen_unref(struct nouveau_screen *screen)
 	mtx_lock(&nouveau_screen_mutex);
 	ret = --screen->refcount;
 	assert(ret >= 0);
-	if (ret == 0)
+	if (!ret)
 		util_hash_table_remove(fd_tab, intptr_to_pointer(screen->drm->fd));
 	mtx_unlock(&nouveau_screen_mutex);
 	return ret == 0;

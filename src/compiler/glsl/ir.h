@@ -508,7 +508,7 @@ public:
     */
    void change_interface_type(const struct glsl_type *type)
    {
-      if (this->u.max_ifc_array_access != NULL) {
+      if (this->u.max_ifc_array_access) {
          /* max_ifc_array_access has already been allocated, so make sure the
           * new interface has the same number of fields as the old one.
           */
@@ -525,7 +525,7 @@ public:
     */
    void reinit_interface_type(const struct glsl_type *type)
    {
-      if (this->u.max_ifc_array_access != NULL) {
+      if (this->u.max_ifc_array_access) {
 #ifndef NDEBUG
          /* Redeclaring gl_PerVertex is only allowed if none of the built-ins
           * it defines have been accessed yet; so it's safe to throw away the
@@ -594,7 +594,7 @@ public:
       this->u.state_slots = ralloc_array(this, ir_state_slot, n);
       this->data._num_state_slots = 0;
 
-      if (this->u.state_slots != NULL)
+      if (this->u.state_slots)
          this->data._num_state_slots = n;
 
       return this->u.state_slots;

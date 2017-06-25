@@ -393,9 +393,9 @@ ADDR_E_RETURNCODE SiLib::ComputeBankEquation(
 
     for (UINT_32 i = 0; i < pEquation->numBits; i++)
     {
-        if (pEquation->addr[i].value == 0)
+        if (!pEquation->addr[i].value)
         {
-            if (pEquation->xor1[i].value == 0)
+            if (!pEquation->xor1[i].value)
             {
                 // 00X -> X00
                 pEquation->addr[i].value = pEquation->xor2[i].value;
@@ -405,7 +405,7 @@ ADDR_E_RETURNCODE SiLib::ComputeBankEquation(
             {
                 pEquation->addr[i].value = pEquation->xor1[i].value;
 
-                if (pEquation->xor2[i].value != 0)
+                if (pEquation->xor2[i].value)
                 {
                     // 0XY -> XY0
                     pEquation->xor1[i].value = pEquation->xor2[i].value;
@@ -418,9 +418,9 @@ ADDR_E_RETURNCODE SiLib::ComputeBankEquation(
                 }
             }
         }
-        else if (pEquation->xor1[i].value == 0)
+        else if (!pEquation->xor1[i].value)
         {
-            if (pEquation->xor2[i].value != 0)
+            if (pEquation->xor2[i].value)
             {
                 // X0Y -> XY0
                 pEquation->xor1[i].value = pEquation->xor2[i].value;
@@ -620,9 +620,9 @@ ADDR_E_RETURNCODE SiLib::ComputePipeEquation(
 
     for (UINT_32 i = 0; i < pEquation->numBits; i++)
     {
-        if (pAddr[i].value == 0)
+        if (!pAddr[i].value)
         {
-            if (pXor1[i].value == 0)
+            if (!pXor1[i].value)
             {
                 pAddr[i].value = pXor2[i].value;
             }
@@ -1290,7 +1290,7 @@ UINT_64 SiLib::HwlComputeXmaskAddrFromCoord(
 
     if (factor == 2) //CMASK
     {
-        ADDR_CMASK_FLAGS flags = {{0}};
+        ADDR_CMASK_FLAGS flags = {};
 
         tileNumPerPipe = 256;
 
@@ -1309,7 +1309,7 @@ UINT_64 SiLib::HwlComputeXmaskAddrFromCoord(
     }
     else //HTile
     {
-        ADDR_HTILE_FLAGS flags = {{0}};
+        ADDR_HTILE_FLAGS flags = {};
 
         tileNumPerPipe = 512;
 
@@ -1450,7 +1450,7 @@ VOID SiLib::HwlComputeXmaskCoordFromAddr(
 
     if (factor == 2) //CMASK
     {
-        ADDR_CMASK_FLAGS flags = {{0}};
+        ADDR_CMASK_FLAGS flags = {};
 
         tileNumPerPipe = 256;
 
@@ -1468,7 +1468,7 @@ VOID SiLib::HwlComputeXmaskCoordFromAddr(
     }
     else //HTile
     {
-        ADDR_HTILE_FLAGS flags = {{0}};
+        ADDR_HTILE_FLAGS flags = {};
 
         tileNumPerPipe = 512;
 
@@ -1723,7 +1723,7 @@ UINT_32 SiLib::HwlPreHandleBaseLvl3xPitch(
 
     // From SI, if pow2Pad is 1 the pitch is expanded 3x first, then padded to pow2, so nothing to
     // do here
-    if (pIn->flags.pow2Pad == FALSE)
+    if (!pIn->flags.pow2Pad)
     {
         Addr::V1::Lib::HwlPreHandleBaseLvl3xPitch(pIn, expPitch);
     }
@@ -1756,7 +1756,7 @@ UINT_32 SiLib::HwlPostHandleBaseLvl3xPitch(
      *  be able to compute a correct pitch from it as h/w address library is doing the job.
      */
     // From SI, the pitch is expanded 3x first, then padded to pow2, so no special handler here
-    if (pIn->flags.pow2Pad == FALSE)
+    if (!pIn->flags.pow2Pad)
     {
         Addr::V1::Lib::HwlPostHandleBaseLvl3xPitch(pIn, expPitch);
     }
@@ -1936,7 +1936,7 @@ VOID SiLib::HwlSetupTileInfo(
     INT index = TileIndexInvalid;
 
     // Fail-safe code
-    if (IsLinear(tileMode) == FALSE)
+    if (!IsLinear(tileMode))
     {
         // 128 bpp/thick tiling must be non-displayable.
         // Fmask reuse color buffer's entry but bank-height field can be from another entry
@@ -2392,7 +2392,7 @@ ADDR_E_RETURNCODE SiLib::HwlConvertTileInfoToHW(
 
     if (retCode == ADDR_OK)
     {
-        if (pIn->reverse == FALSE)
+        if (!pIn->reverse)
         {
             if (pIn->pTileInfo->pipeConfig == ADDR_PIPECFG_INVALID)
             {
@@ -2474,7 +2474,7 @@ VOID SiLib::HwlComputeSurfaceCoord2DFromBankPipe(
 
     UINT_32 numPipes = GetPipePerSurf(pTileInfo->pipeConfig);
 
-    CoordFromBankPipe xyBits = {0};
+    CoordFromBankPipe xyBits = {};
     ComputeSurfaceCoord2DFromBankPipe(tileMode, *pX, *pY, slice, bank, pipe,
                                       bankSwizzle, pipeSwizzle, tileSlices, pTileInfo,
                                       &xyBits);
@@ -2655,7 +2655,7 @@ ADDR_E_RETURNCODE SiLib::HwlComputeSurfaceInfo(
 
     UINT_32 tileIndex = static_cast<UINT_32>(pOut->tileIndex);
 
-    if (((pIn->flags.needEquation   == TRUE) ||
+    if (((pIn->flags.needEquation) ||
          (pIn->flags.preferEquation == TRUE)) &&
         (pIn->numSamples <= 1) &&
         (tileIndex < TileTableSize))
@@ -2668,7 +2668,7 @@ ADDR_E_RETURNCODE SiLib::HwlComputeSurfaceInfo(
         {
             pOut->equationIndex = ADDR_INVALID_EQUATION_INDEX;
         }
-        else if ((pIn->flags.prt == FALSE) &&
+        else if (!(pIn->flags.prt) &&
                  (m_uncompressDepthEqIndex != 0) &&
                  (tileIndex == SiUncompressDepthTileIndex))
         {
@@ -2716,7 +2716,7 @@ BOOL_32 SiLib::HwlComputeMipLevel(
         // Note: Don't check expand 3x formats(96 bit) as the basePitch is not pow2 even if
         // we explicity set pow2Pad flag. The 3x base pitch is padded to pow2 but after being
         // divided by expandX factor (3) - to program texture pitch, the basePitch is never pow2.
-        if (ElemLib::IsExpand3x(pIn->format) == FALSE)
+        if (!ElemLib::IsExpand3x(pIn->format))
         {
             // Sublevel pitches are generated from base level pitch instead of width on SI
             // If pow2Pad is 0, we don't assert - as this is not really used for a mip chain
@@ -2724,7 +2724,7 @@ BOOL_32 SiLib::HwlComputeMipLevel(
                         ((pIn->basePitch != 0) && IsPow2(pIn->basePitch)));
         }
 
-        if (pIn->basePitch != 0)
+        if (pIn->basePitch)
         {
             pIn->width = Max(1u, pIn->basePitch >> pIn->mipLevel);
         }
@@ -3094,7 +3094,7 @@ BOOL_32 SiLib::InitTileSettingTable(
 
     memset(m_tileTable, 0, sizeof(m_tileTable));
 
-    if (noOfEntries != 0)
+    if (noOfEntries)
     {
         m_noOfEntries = noOfEntries;
     }
@@ -3206,7 +3206,7 @@ UINT_32 SiLib::HwlComputeFmaskBits(
     {
         ADDR_ASSERT(numFrags <= 8);
 
-        if (pIn->resolved == FALSE)
+        if (!pIn->resolved)
         {
             if (numFrags == 1)
             {
@@ -3267,7 +3267,7 @@ UINT_32 SiLib::HwlComputeFmaskBits(
     }
     else // Normal AA
     {
-        if (pIn->resolved == FALSE)
+        if (!pIn->resolved)
         {
             bpp          = ComputeFmaskNumPlanesFromNumSamples(numSamples);
             numSamples   = numSamples == 2 ? 8 : numSamples;
@@ -3303,7 +3303,7 @@ VOID SiLib::HwlOptimizeTileMode(
 {
     AddrTileMode tileMode = pInOut->tileMode;
 
-    if ((pInOut->flags.needEquation == TRUE) &&
+    if ((pInOut->flags.needEquation) &&
         (IsMacroTiled(tileMode) == TRUE) &&
         (pInOut->numSamples <= 1))
     {
@@ -3493,7 +3493,7 @@ ADDR_E_RETURNCODE SiLib::HwlGetMaxAlignments(
 
     for (UINT_32 i = 0; i < m_noOfEntries; i++)
     {
-        if ((IsMacroTiled(m_tileTable[i].mode) == TRUE) &&
+        if ((IsMacroTiled(m_tileTable[i].mode)) &&
             (IsPrtTileMode(m_tileTable[i].mode) == FALSE))
         {
             // The maximum tile size is 16 byte-per-pixel and either 8-sample or 8-slice.
@@ -3510,7 +3510,7 @@ ADDR_E_RETURNCODE SiLib::HwlGetMaxAlignments(
         }
     }
 
-    if (pOut != NULL)
+    if (pOut)
     {
         pOut->baseAlign = maxBaseAlign;
     }
@@ -3539,7 +3539,7 @@ VOID SiLib::HwlComputeSurfaceAlignmentsMacroTiled(
     ADDR_COMPUTE_SURFACE_INFO_OUTPUT* pOut                ///< [in,out] Surface output
     ) const
 {
-    if ((mipLevel == 0) && (flags.prt))
+    if (!(mipLevel) && (flags.prt))
     {
         UINT_32 macroTileSize = pOut->blockWidth * pOut->blockHeight * numSamples * bpp / 8;
 
@@ -3592,7 +3592,7 @@ VOID SiLib::InitEquationTable()
 
             TileConfig tileConfig = m_tileTable[tileIndex];
 
-            ADDR_SURFACE_FLAGS flags = {{0}};
+            ADDR_SURFACE_FLAGS flags = {};
 
             // Compute tile info, hardcode numSamples to 1 because MSAA is not supported
             // in swizzle pattern equation
@@ -3601,7 +3601,7 @@ VOID SiLib::InitEquationTable()
             // Check if the input is supported
             if (IsEquationSupported(bpp, tileConfig, tileIndex, log2ElementBytes) == TRUE)
             {
-                ADDR_EQUATION_KEY  key   = {{0}};
+                ADDR_EQUATION_KEY  key = {};
 
                 // Generate swizzle equation key from bpp and tile config
                 key.fields.log2ElementBytes = log2ElementBytes;
@@ -3817,7 +3817,7 @@ BOOL_32 SiLib::IsEquationSupported(
             supported = FALSE;
         }
 
-        if ((supported == TRUE) && (m_chipFamily == ADDR_CHIP_FAMILY_SI))
+        if ((supported) && (m_chipFamily == ADDR_CHIP_FAMILY_SI))
         {
             supported = m_EquationSupport[tileIndex][elementBytesLog2];
         }

@@ -187,7 +187,7 @@ vec_slli_epi32 (__m128i vsrc, unsigned int count)
 
    if (count >= 32)
       return (__m128i) vec_splats (0);
-   else if (count == 0)
+   else if (!count)
       return vsrc;
 
    /* In VMX, all shift count fields must contain the same value */
@@ -202,7 +202,7 @@ vec_srli_epi32 (__m128i vsrc, unsigned int count)
 
    if (count >= 32)
       return (__m128i) vec_splats (0);
-   else if (count == 0)
+   else if (!count)
       return vsrc;
 
    /* In VMX, all shift count fields must contain the same value */
@@ -217,7 +217,7 @@ vec_srai_epi32 (__m128i vsrc, unsigned int count)
 
    if (count >= 32)
       return (__m128i) vec_splats (0);
-   else if (count == 0)
+   else if (!count)
       return vsrc;
 
    /* In VMX, all shift count fields must contain the same value */

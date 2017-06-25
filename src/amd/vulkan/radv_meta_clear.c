@@ -259,7 +259,7 @@ create_color_pipeline(struct radv_device *device,
 		.stencilTestEnable = false,
 	};
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state[MAX_RTS] = { 0 };
+	VkPipelineColorBlendAttachmentState blend_attachment_state[MAX_RTS] = {};
 	blend_attachment_state[frag_output] = (VkPipelineColorBlendAttachmentState) {
 		.blendEnable = false,
 		.colorWriteMask = VK_COLOR_COMPONENT_A_BIT |
@@ -703,7 +703,7 @@ emit_fast_htile_clear(struct radv_cmd_buffer *cmd_buffer,
 	    clear_rect->rect.extent.height != iview->image->info.height)
 		goto fail;
 
-	if (clear_rect->baseArrayLayer != 0)
+	if (clear_rect->baseArrayLayer)
 		goto fail;
 	if (clear_rect->layerCount != iview->image->info.array_size)
 		goto fail;
@@ -909,7 +909,7 @@ emit_fast_color_clear(struct radv_cmd_buffer *cmd_buffer,
 	    clear_rect->rect.extent.height != iview->image->info.height)
 		goto fail;
 
-	if (clear_rect->baseArrayLayer != 0)
+	if (clear_rect->baseArrayLayer)
 		goto fail;
 	if (clear_rect->layerCount != iview->image->info.array_size)
 		goto fail;
@@ -922,7 +922,7 @@ emit_fast_color_clear(struct radv_cmd_buffer *cmd_buffer,
 	/* DCC */
 	ret = radv_format_pack_clear_color(iview->image->vk_format,
 					   clear_color, &clear_value);
-	if (ret == false)
+	if (!ret)
 		goto fail;
 
 	if (pre_flush) {

@@ -348,7 +348,7 @@ emit_ssbos(struct fd_context *ctx, struct fd_ringbuffer *ring,
 {
 	unsigned count = util_last_bit(so->enabled_mask);
 
-	if (count == 0)
+	if (!count)
 		return;
 
 	OUT_PKT7(ring, CP_LOAD_STATE4, 3 + (4 * count));
@@ -468,7 +468,7 @@ fd5_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	emit_marker5(ring, 5);
 
 	if ((dirty & FD_DIRTY_FRAMEBUFFER) && !emit->key.binning_pass) {
-		unsigned char mrt_comp[A5XX_MAX_RENDER_TARGETS] = {0};
+		unsigned char mrt_comp[A5XX_MAX_RENDER_TARGETS] = {};
 
 		for (unsigned i = 0; i < A5XX_MAX_RENDER_TARGETS; i++) {
 			mrt_comp[i] = ((i < pfb->nr_cbufs) && pfb->cbufs[i]) ? 0xf : 0;

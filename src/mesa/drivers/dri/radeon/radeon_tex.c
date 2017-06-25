@@ -50,7 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /**
  * Set the texture wrap modes.
- * 
+ *
  * \param t Texture object whose wrap modes are to be set
  * \param swrap Wrap mode for the \a s texture coordinate
  * \param twrap Wrap mode for the \a t texture coordinate
@@ -157,7 +157,7 @@ static void radeonSetTexMaxAnisotropy( radeonTexObjPtr t, GLfloat max )
 
 /**
  * Set the texture magnification and minification modes.
- * 
+ *
  * \param t Texture whose filter modes are to be set
  * \param minf Texture minification mode
  * \param magf Texture magnification mode
@@ -289,7 +289,7 @@ static void radeonTexEnv( struct gl_context *ctx, GLenum target,
       min = driQueryOptionb (&rmesa->radeon.optionCache, "no_neg_lod_bias") ?
 	  0.0 : -1.0;
       bias = CLAMP( *param, min, 4.0 );
-      if ( bias == 0 ) {
+      if (!bias) {
 	 b = 0;
       } else if ( bias > 0 ) {
 	 b = ((GLuint)SCALED_FLOAT_TO_BYTE( bias, 4.0 )) << RADEON_LOD_BIAS_SHIFT;
@@ -376,13 +376,13 @@ static void radeonDeleteTexture( struct gl_context *ctx,
    _mesa_delete_texture_object(ctx, texObj);
 }
 
-/* Need:  
+/* Need:
  *  - Same GEN_MODE for all active bits
  *  - Same EyePlane/ObjPlane for all active bits when using Eye/Obj
  *  - STRQ presumably all supported (matrix means incoming R values
  *    can end up in STQ, this has implications for vertex support,
  *    presumably ok if maos is used, though?)
- *  
+ *
  * Basically impossible to do this on the fly - just collect some
  * basic info & do the checks from ValidateState().
  */
@@ -416,7 +416,7 @@ radeonNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
    t->pp_txfilter = RADEON_BORDER_MODE_OGL;
    t->pp_txformat = (RADEON_TXFORMAT_ENDIAN_NO_SWAP |
 		     RADEON_TXFORMAT_PERSPECTIVE_ENABLE);
-   
+
    radeonSetTexWrap( t, t->base.Sampler.WrapS, t->base.Sampler.WrapT );
    radeonSetTexMaxAnisotropy( t, t->base.Sampler.MaxAnisotropy );
    radeonSetTexFilter( t, t->base.Sampler.MinFilter, t->base.Sampler.MagFilter );

@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include <errno.h>
@@ -162,7 +162,7 @@ intelDRI2Flush(__DRIdrawable *drawable)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct intel_context *intel = intel_context(ctx);
-   if (intel == NULL)
+   if (!intel)
       return;
 
    INTEL_FIREVERTICES(intel);
@@ -246,7 +246,7 @@ intel_allocate_image(int dri_format, void *loaderPrivate)
     __DRIimage *image;
 
     image = calloc(1, sizeof *image);
-    if (image == NULL)
+    if (!image)
 	return NULL;
 
     image->dri_format = dri_format;
@@ -313,7 +313,7 @@ intel_create_image_from_name(__DRIscreen *screen,
     int cpp;
 
     image = intel_allocate_image(format, loaderPrivate);
-    if (image == NULL)
+    if (!image)
        return NULL;
 
     if (image->format == MESA_FORMAT_NONE)
@@ -323,14 +323,14 @@ intel_create_image_from_name(__DRIscreen *screen,
     image->region = intel_region_alloc_for_handle(intelScreen,
 						  cpp, width, height,
 						  pitch * cpp, name, "image");
-    if (image->region == NULL) {
+    if (!image->region) {
        free(image);
        return NULL;
     }
 
     intel_setup_image_from_dimensions(image);
 
-    return image;	
+    return image;
 }
 
 static __DRIimage *
@@ -351,7 +351,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
 
    irb = intel_renderbuffer(rb);
    image = calloc(1, sizeof *image);
-   if (image == NULL)
+   if (!image)
       return NULL;
 
    image->internal_format = rb->InternalFormat;
@@ -405,7 +405,7 @@ intel_create_image_from_texture(__DRIcontext *context, int target,
       return NULL;
    }
    image = calloc(1, sizeof *image);
-   if (image == NULL) {
+   if (!image) {
       *error = __DRI_IMAGE_ERROR_BAD_ALLOC;
       return NULL;
    }
@@ -454,17 +454,17 @@ intel_create_image(__DRIscreen *screen,
       tiling = I915_TILING_NONE;
 
    image = intel_allocate_image(format, loaderPrivate);
-   if (image == NULL)
+   if (!image)
       return NULL;
 
    cpp = _mesa_get_format_bytes(image->format);
    image->region =
       intel_region_alloc(intelScreen, tiling, cpp, width, height, true);
-   if (image->region == NULL) {
+   if (!image->region) {
       free(image);
       return NULL;
    }
-   
+
    intel_setup_image_from_dimensions(image);
 
    return image;
@@ -492,7 +492,7 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
       *value = image->region->height;
       return true;
    case __DRI_IMAGE_ATTRIB_COMPONENTS:
-      if (image->planar_format == NULL)
+      if (!image->planar_format)
          return false;
       *value = image->planar_format->components;
       return true;
@@ -509,11 +509,11 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    __DRIimage *image;
 
    image = calloc(1, sizeof *image);
-   if (image == NULL)
+   if (!image)
       return NULL;
 
    intel_region_reference(&image->region, orig_image->region);
-   if (image->region == NULL) {
+   if (!image->region) {
       free(image);
       return NULL;
    }
@@ -566,7 +566,7 @@ intel_create_image_from_names(__DRIscreen *screen,
         }
     }
 
-    if (f == NULL)
+    if (!f)
         return NULL;
 
     image = intel_create_image_from_name(screen, width, height,
@@ -574,7 +574,7 @@ intel_create_image_from_names(__DRIscreen *screen,
                                          names[0], strides[0],
                                          loaderPrivate);
 
-   if (image == NULL)
+   if (!image)
       return NULL;
 
     image->planar_format = f;
@@ -607,17 +607,17 @@ intel_create_image_from_fds(__DRIscreen *screen,
       }
    }
 
-   if (f == NULL)
+   if (!f)
       return NULL;
 
    image = intel_allocate_image(__DRI_IMAGE_FORMAT_NONE, loaderPrivate);
-   if (image == NULL)
+   if (!image)
       return NULL;
 
    image->region = intel_region_alloc_for_fd(intelScreen,
                                              f->planes[0].cpp, width, height, strides[0],
                                              height * strides[0], fds[0], "image");
-   if (image->region == NULL) {
+   if (!image->region) {
       free(image);
       return NULL;
    }
@@ -659,7 +659,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     stride = parent->strides[index];
 
     image = intel_allocate_image(dri_format, loaderPrivate);
-    if (image == NULL)
+    if (!image)
        return NULL;
 
     if (offset + height * stride > parent->region->bo->size) {
@@ -669,7 +669,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     }
 
     image->region = calloc(sizeof(*image->region), 1);
-    if (image->region == NULL) {
+    if (!image->region) {
        free(image);
        return NULL;
     }
@@ -868,7 +868,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       rgbFormat = MESA_FORMAT_B5G6R5_UNORM;
    else if (mesaVis->sRGBCapable)
       rgbFormat = MESA_FORMAT_B8G8R8A8_SRGB;
-   else if (mesaVis->alphaBits == 0)
+   else if (!mesaVis->alphaBits)
       rgbFormat = MESA_FORMAT_B8G8R8X8_UNORM;
    else
       rgbFormat = MESA_FORMAT_B8G8R8A8_UNORM;
@@ -925,7 +925,7 @@ static void
 intelDestroyBuffer(__DRIdrawable * driDrawPriv)
 {
     struct gl_framebuffer *fb = driDrawPriv->driverPrivate;
-  
+
     _mesa_reference_framebuffer(&fb, NULL);
 }
 
@@ -993,7 +993,7 @@ intelCreateContext(gl_api api,
    if (success)
       return true;
 
-   if (driContextPriv->driverPrivate != NULL)
+   if (driContextPriv->driverPrivate)
       intelDestroyContext(driContextPriv);
 
    return false;
@@ -1007,7 +1007,7 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
 
    intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
-   if (intelScreen->bufmgr == NULL) {
+   if (!intelScreen->bufmgr) {
       fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
 	      __func__, __LINE__);
       return false;
@@ -1035,7 +1035,7 @@ intel_detect_swizzling(struct intel_screen *screen)
    buffer = drm_intel_bo_alloc_tiled(screen->bufmgr, "swizzle test",
 				     64, 64, 4,
 				     &tiling, &aligned_pitch, flags);
-   if (buffer == NULL)
+   if (!buffer)
       return false;
 
    drm_intel_bo_get_tiling(buffer, &tiling, &swizzle_mode);
@@ -1061,7 +1061,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
        GLX_SWAP_UNDEFINED_OML, GLX_NONE,
    };
 
-   static const uint8_t singlesample_samples[1] = {0};
+   static const uint8_t singlesample_samples[1] = {};
 
    uint8_t depth_bits[4], stencil_bits[4];
    __DRIconfig **configs = NULL;
@@ -1118,7 +1118,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
       configs = driConcatConfigs(configs, new_configs);
    }
 
-   if (configs == NULL) {
+   if (!configs) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;
@@ -1229,7 +1229,7 @@ intelAllocateBuffer(__DRIscreen *screen,
           attachment == __DRI_BUFFER_BACK_LEFT);
 
    intelBuffer = calloc(1, sizeof *intelBuffer);
-   if (intelBuffer == NULL)
+   if (!intelBuffer)
       return NULL;
 
    /* The front and back buffers are color buffers, which are X tiled. */
@@ -1239,12 +1239,12 @@ intelAllocateBuffer(__DRIscreen *screen,
                                             width,
                                             height,
                                             true);
-   
-   if (intelBuffer->region == NULL) {
+
+   if (!intelBuffer->region) {
 	   free(intelBuffer);
 	   return NULL;
    }
-   
+
    intel_region_flink(intelBuffer->region, &intelBuffer->base.name);
 
    intelBuffer->base.attachment = attachment;

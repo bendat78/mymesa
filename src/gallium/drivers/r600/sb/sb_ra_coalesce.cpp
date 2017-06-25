@@ -307,7 +307,7 @@ void coalescer::color_chunks() {
 
 			unsigned rs, re;
 
-			if (pass == 0) {
+			if (!pass) {
 				rs = c->pin.sel();
 				re = rs + 1;
 			} else {
@@ -521,7 +521,7 @@ int coalescer::color_reg_constraint(ra_constraint *c) {
 
 		unsigned rs, re;
 
-		if (pass == 0) {
+		if (!pass) {
 			re = pin_reg + 1;
 			rs = pin_reg;
 		} else {

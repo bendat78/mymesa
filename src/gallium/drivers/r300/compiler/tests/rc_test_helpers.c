@@ -190,7 +190,7 @@ int init_rc_normal_src(
 	}
 
 	/* Swizzle */
-	if (tokens.Swizzle.Length == 0) {
+	if (!tokens.Swizzle.Length) {
 		src_reg->Swizzle = RC_SWIZZLE_XYZW;
 	} else {
 		int str_index = 1;
@@ -307,7 +307,7 @@ int init_rc_normal_dst(
 	}
 
 	/* WriteMask */
-	if (tokens.WriteMask.Length == 0) {
+	if (!tokens.WriteMask.Length) {
 		inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
 	} else {
 		inst->U.I.DstReg.WriteMask = 0;

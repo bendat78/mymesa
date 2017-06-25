@@ -112,7 +112,7 @@ gen_disasm_create(int pciid)
    struct gen_disasm *gd;
 
    gd = malloc(sizeof *gd);
-   if (gd == NULL)
+   if (!gd)
       return NULL;
 
    if (!gen_get_device_info(pciid, &gd->devinfo)) {

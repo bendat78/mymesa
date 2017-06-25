@@ -210,7 +210,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen,
 		rctx->b.b.resource_copy_region = rctx->b.dma_copy;
 
 	rctx->blitter = util_blitter_create(&rctx->b.b);
-	if (rctx->blitter == NULL)
+	if (!rctx->blitter)
 		goto fail;
 	util_blitter_set_texture_multisample(rctx->blitter, rscreen->has_msaa);
 	rctx->blitter->draw_rectangle = r600_draw_rectangle;

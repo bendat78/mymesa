@@ -309,7 +309,7 @@ _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
              * every slice of the same texture, since we don't track them
              * separately.
              */
-            if (i == 0)
+            if (!i)
                swImage->RowStride = rowStride;
             else
                assert(swImage->RowStride == rowStride);

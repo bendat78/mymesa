@@ -89,7 +89,7 @@ ir_reader::read(exec_list *instructions, const char *src, bool scan_for_protos)
 {
    void *sx_mem_ctx = ralloc_context(NULL);
    s_expression *expr = s_expression::read_expression(sx_mem_ctx, src);
-   if (expr == NULL) {
+   if (!expr) {
       ir_read_error(NULL, "couldn't parse S-Expression.");
       return;
    }
@@ -114,7 +114,7 @@ ir_reader::ir_read_error(s_expression *expr, const char *fmt, ...)
 
    state->error = true;
 
-   if (state->current_function != NULL)
+   if (state->current_function)
       ralloc_asprintf_append(&state->info_log, "In function %s:\n",
 			     state->current_function->function_name());
    ralloc_strcat(&state->info_log, "error: ");
@@ -124,7 +124,7 @@ ir_reader::ir_read_error(s_expression *expr, const char *fmt, ...)
    va_end(ap);
    ralloc_strcat(&state->info_log, "\n");
 
-   if (expr != NULL) {
+   if (expr) {
       ralloc_strcat(&state->info_log, "...in this context:\n   ");
       expr->print();
       ralloc_strcat(&state->info_log, "\n\n");
@@ -140,7 +140,7 @@ ir_reader::read_type(s_expression *expr)
    s_pattern pat[] = { "array", s_base_type, s_size };
    if (MATCH(expr, pat)) {
       const glsl_type *base_type = read_type(s_base_type);
-      if (base_type == NULL) {
+      if (!base_type) {
 	 ir_read_error(NULL, "when reading base type of array type");
 	 return NULL;
       }
@@ -149,13 +149,13 @@ ir_reader::read_type(s_expression *expr)
    }
 
    s_symbol *type_sym = SX_AS_SYMBOL(expr);
-   if (type_sym == NULL) {
+   if (!type_sym) {
       ir_read_error(expr, "expected <type>");
       return NULL;
    }
 
    const glsl_type *type = state->symbols->get_type(type_sym->value());
-   if (type == NULL)
+   if (!type)
       ir_read_error(expr, "invalid type: %s", type_sym->value());
 
    return type;
@@ -166,7 +166,7 @@ void
 ir_reader::scan_for_prototypes(exec_list *instructions, s_expression *expr)
 {
    s_list *list = SX_AS_LIST(expr);
-   if (list == NULL) {
+   if (!list) {
       ir_read_error(expr, "Expected (<instruction> ...); found an atom.");
       return;
    }
@@ -180,7 +180,7 @@ ir_reader::scan_for_prototypes(exec_list *instructions, s_expression *expr)
 	 continue; // not a (function ...); ignore it.
 
       ir_function *f = read_function(sub, true);
-      if (f == NULL)
+      if (!f)
 	 return;
       instructions->push_tail(f);
    }
@@ -199,7 +199,7 @@ ir_reader::read_function(s_expression *expr, bool skip_body)
    }
 
    ir_function *f = state->symbols->get_function(name->value());
-   if (f == NULL) {
+   if (!f) {
       f = new(mem_ctx) ir_function(name->value());
       added = state->symbols->add_function(f);
       assert(added);
@@ -237,7 +237,7 @@ ir_reader::read_function_sig(ir_function *f, s_expression *expr, bool skip_body)
    }
 
    const glsl_type *return_type = read_type(type_expr);
-   if (return_type == NULL)
+   if (!return_type)
       return;
 
    s_symbol *paramtag = SX_AS_SYMBOL(paramlist->subexpressions.get_head());
@@ -254,7 +254,7 @@ ir_reader::read_function_sig(ir_function *f, s_expression *expr, bool skip_body)
    exec_node *node = paramlist->subexpressions.get_head_raw()->next;
    for (/* nothing */; !node->is_tail_sentinel(); node = node->next) {
       ir_variable *var = read_declaration((s_expression *) node);
-      if (var == NULL)
+      if (!var)
 	 return;
 
       hir_parameters.push_tail(var);
@@ -270,9 +270,9 @@ ir_reader::read_function_sig(ir_function *f, s_expression *expr, bool skip_body)
        */
       sig = new(mem_ctx) ir_function_signature(return_type, always_available);
       f->add_signature(sig);
-   } else if (sig != NULL) {
+   } else if (sig) {
       const char *badvar = sig->qualifiers_match(&hir_parameters);
-      if (badvar != NULL) {
+      if (badvar) {
 	 ir_read_error(expr, "function `%s' parameter `%s' qualifiers "
 		       "don't match prototype", f->name, badvar);
 	 return;
@@ -312,14 +312,14 @@ ir_reader::read_instructions(exec_list *instructions, s_expression *expr,
 {
    // Read in a list of instructions
    s_list *list = SX_AS_LIST(expr);
-   if (list == NULL) {
+   if (!list) {
       ir_read_error(expr, "Expected (<instruction> ...); found an atom.");
       return;
    }
 
    foreach_in_list(s_expression, sub, &list->subexpressions) {
       ir_instruction *ir = read_instruction(sub, loop_ctx);
-      if (ir != NULL) {
+      if (ir) {
 	 /* Global variable declarations should be moved to the top, before
 	  * any functions that might use them.  Functions are added to the
 	  * instruction stream when scanning for prototypes, so without this
@@ -338,7 +338,7 @@ ir_instruction *
 ir_reader::read_instruction(s_expression *expr, ir_loop *loop_ctx)
 {
    s_symbol *symbol = SX_AS_SYMBOL(expr);
-   if (symbol != NULL) {
+   if (symbol) {
       if (strcmp(symbol->value(), "break") == 0 && loop_ctx != NULL)
 	 return new(mem_ctx) ir_loop_jump(ir_loop_jump::jump_break);
       if (strcmp(symbol->value(), "continue") == 0 && loop_ctx != NULL)
@@ -352,7 +352,7 @@ ir_reader::read_instruction(s_expression *expr, ir_loop *loop_ctx)
    }
 
    s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.get_head());
-   if (tag == NULL) {
+   if (!tag) {
       ir_read_error(expr, "expected instruction tag");
       return NULL;
    }
@@ -380,7 +380,7 @@ ir_reader::read_instruction(s_expression *expr, ir_loop *loop_ctx)
       inst = read_barrier(list);
    } else {
       inst = read_rvalue(list);
-      if (inst == NULL)
+      if (!inst)
 	 ir_read_error(NULL, "when reading instruction");
    }
    return inst;
@@ -400,7 +400,7 @@ ir_reader::read_declaration(s_expression *expr)
    }
 
    const glsl_type *type = read_type(s_type);
-   if (type == NULL)
+   if (!type)
       return NULL;
 
    ir_variable *var = new(mem_ctx) ir_variable(type, s_name->value(),
@@ -480,7 +480,7 @@ ir_reader::read_if(s_expression *expr, ir_loop *loop_ctx)
    }
 
    ir_rvalue *condition = read_rvalue(s_cond);
-   if (condition == NULL) {
+   if (!condition) {
       ir_read_error(NULL, "when reading condition of (if ...)");
       return NULL;
    }
@@ -528,7 +528,7 @@ ir_reader::read_return(s_expression *expr)
    s_pattern return_void_pat[] = { "return" };
    if (MATCH(expr, return_value_pat)) {
       ir_rvalue *retval = read_rvalue(s_retval);
-      if (retval == NULL) {
+      if (!retval) {
          ir_read_error(NULL, "when reading return value");
          return NULL;
       }
@@ -550,7 +550,7 @@ ir_reader::read_rvalue(s_expression *expr)
       return NULL;
 
    s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.get_head());
-   if (tag == NULL) {
+   if (!tag) {
       ir_read_error(expr, "expected rvalue tag");
       return NULL;
    }
@@ -589,9 +589,9 @@ ir_reader::read_assignment(s_expression *expr)
    }
 
    ir_rvalue *condition = NULL;
-   if (cond_expr != NULL) {
+   if (cond_expr) {
       condition = read_rvalue(cond_expr);
-      if (condition == NULL) {
+      if (!condition) {
 	 ir_read_error(NULL, "when reading condition of assignment");
 	 return NULL;
       }
@@ -625,13 +625,13 @@ ir_reader::read_assignment(s_expression *expr)
    }
 
    ir_dereference *lhs = read_dereference(lhs_expr);
-   if (lhs == NULL) {
+   if (!lhs) {
       ir_read_error(NULL, "when reading left-hand side of assignment");
       return NULL;
    }
 
    ir_rvalue *rhs = read_rvalue(rhs_expr);
-   if (rhs == NULL) {
+   if (!rhs) {
       ir_read_error(NULL, "when reading right-hand side of assignment");
       return NULL;
    }
@@ -657,7 +657,7 @@ ir_reader::read_call(s_expression *expr)
    s_pattern non_void_pat[] = { "call", name, s_return, params };
    if (MATCH(expr, non_void_pat)) {
       return_deref = read_var_ref(s_return);
-      if (return_deref == NULL) {
+      if (!return_deref) {
 	 ir_read_error(s_return, "when reading a call's return storage");
 	 return NULL;
       }
@@ -670,7 +670,7 @@ ir_reader::read_call(s_expression *expr)
 
    foreach_in_list(s_expression, e, &params->subexpressions) {
       ir_rvalue *param = read_rvalue(e);
-      if (param == NULL) {
+      if (!param) {
 	 ir_read_error(e, "when reading parameter to function call");
 	 return NULL;
       }
@@ -678,7 +678,7 @@ ir_reader::read_call(s_expression *expr)
    }
 
    ir_function *f = state->symbols->get_function(name->value());
-   if (f == NULL) {
+   if (!f) {
       ir_read_error(expr, "found call to undefined function %s",
 		    name->value());
       return NULL;
@@ -686,7 +686,7 @@ ir_reader::read_call(s_expression *expr)
 
    ir_function_signature *callee =
       f->matching_signature(state, &parameters, true);
-   if (callee == NULL) {
+   if (!callee) {
       ir_read_error(expr, "couldn't find matching signature for function "
                     "%s", name->value());
       return NULL;
@@ -708,7 +708,7 @@ ir_reader::read_expression(s_expression *expr)
 {
    s_expression *s_type;
    s_symbol *s_op;
-   s_expression *s_arg[4] = {NULL};
+   s_expression *s_arg[4] = {};
 
    s_pattern pat[] = { "expression", s_type, s_op, s_arg[0] };
    if (!PARTIAL_MATCH(expr, pat)) {
@@ -722,7 +722,7 @@ ir_reader::read_expression(s_expression *expr)
       s_arg[3] = (s_expression *) s_arg[2]->next; // may be tail sentinel or NULL
 
    const glsl_type *type = read_type(s_type);
-   if (type == NULL)
+   if (!type)
       return NULL;
 
    /* Read the operator */
@@ -742,10 +742,10 @@ ir_reader::read_expression(s_expression *expr)
       return NULL;
    }
 
-   ir_rvalue *arg[4] = {NULL};
+   ir_rvalue *arg[4] = {};
    for (int i = 0; i < num_operands; i++) {
       arg[i] = read_rvalue(s_arg[i]);
-      if (arg[i] == NULL) {
+      if (!arg[i]) {
          ir_read_error(NULL, "when reading operand #%d of %s", i, s_op->value());
          return NULL;
       }
@@ -772,12 +772,12 @@ ir_reader::read_swizzle(s_expression *expr)
    }
 
    ir_rvalue *rvalue = read_rvalue(sub);
-   if (rvalue == NULL)
+   if (!rvalue)
       return NULL;
 
    ir_swizzle *ir = ir_swizzle::create(rvalue, swiz->value(),
 				       rvalue->type->vector_elements);
-   if (ir == NULL)
+   if (!ir)
       ir_read_error(expr, "invalid swizzle");
 
    return ir;
@@ -796,10 +796,10 @@ ir_reader::read_constant(s_expression *expr)
    }
 
    const glsl_type *type = read_type(type_expr);
-   if (type == NULL)
+   if (!type)
       return NULL;
 
-   if (values == NULL) {
+   if (!values) {
       ir_read_error(expr, "expected (constant <type> (...))");
       return NULL;
    }
@@ -809,7 +809,7 @@ ir_reader::read_constant(s_expression *expr)
       exec_list elements;
       foreach_in_list(s_expression, elt, &values->subexpressions) {
 	 ir_constant *ir_elt = read_constant(elt);
-	 if (ir_elt == NULL)
+	 if (!ir_elt)
 	    return NULL;
 	 elements.push_tail(ir_elt);
 	 elements_supplied++;
@@ -823,7 +823,7 @@ ir_reader::read_constant(s_expression *expr)
       return new(mem_ctx) ir_constant(type, &elements);
    }
 
-   ir_constant_data data = { { 0 } };
+   ir_constant_data data = {};
 
    // Read in list of values (at most 16).
    unsigned k = 0;
@@ -835,14 +835,14 @@ ir_reader::read_constant(s_expression *expr)
 
       if (type->is_float()) {
 	 s_number *value = SX_AS_NUMBER(expr);
-	 if (value == NULL) {
+	 if (!value) {
 	    ir_read_error(values, "expected numbers");
 	    return NULL;
 	 }
 	 data.f[k] = value->fvalue();
       } else {
 	 s_int *value = SX_AS_INT(expr);
-	 if (value == NULL) {
+	 if (!value) {
 	    ir_read_error(values, "expected integers");
 	    return NULL;
 	 }
@@ -884,7 +884,7 @@ ir_reader::read_var_ref(s_expression *expr)
 
    if (MATCH(expr, var_pat)) {
       ir_variable *var = state->symbols->get_variable(s_var->value());
-      if (var == NULL) {
+      if (!var) {
 	 ir_read_error(expr, "undeclared variable: %s", s_var->value());
 	 return NULL;
       }
@@ -904,24 +904,24 @@ ir_reader::read_dereference(s_expression *expr)
    s_pattern record_pat[] = { "record_ref", s_subject, s_field };
 
    ir_dereference_variable *var_ref = read_var_ref(expr);
-   if (var_ref != NULL) {
+   if (var_ref) {
       return var_ref;
    } else if (MATCH(expr, array_pat)) {
       ir_rvalue *subject = read_rvalue(s_subject);
-      if (subject == NULL) {
+      if (!subject) {
 	 ir_read_error(NULL, "when reading the subject of an array_ref");
 	 return NULL;
       }
 
       ir_rvalue *idx = read_rvalue(s_index);
-      if (idx == NULL) {
+      if (!idx) {
 	 ir_read_error(NULL, "when reading the index of an array_ref");
 	 return NULL;
       }
       return new(mem_ctx) ir_dereference_array(subject, idx);
    } else if (MATCH(expr, record_pat)) {
       ir_rvalue *subject = read_rvalue(s_subject);
-      if (subject == NULL) {
+      if (!subject) {
 	 ir_read_error(NULL, "when reading the subject of a record_ref");
 	 return NULL;
       }
@@ -994,7 +994,7 @@ ir_reader::read_texture(s_expression *expr)
 
    // Read return type
    const glsl_type *type = read_type(s_type);
-   if (type == NULL) {
+   if (!type) {
       ir_read_error(NULL, "when reading type in (%s ...)",
 		    tex->opcode_string());
       return NULL;
@@ -1002,7 +1002,7 @@ ir_reader::read_texture(s_expression *expr)
 
    // Read sampler (must be a deref)
    ir_dereference *sampler = read_dereference(s_sampler);
-   if (sampler == NULL) {
+   if (!sampler) {
       ir_read_error(NULL, "when reading sampler in (%s ...)",
 		    tex->opcode_string());
       return NULL;
@@ -1012,7 +1012,7 @@ ir_reader::read_texture(s_expression *expr)
    if (op != ir_txs) {
       // Read coordinate (any rvalue)
       tex->coordinate = read_rvalue(s_coord);
-      if (tex->coordinate == NULL) {
+      if (!tex->coordinate) {
 	 ir_read_error(NULL, "when reading coordinate in (%s ...)",
 		       tex->opcode_string());
 	 return NULL;
@@ -1023,7 +1023,7 @@ ir_reader::read_texture(s_expression *expr)
          s_int *si_offset = SX_AS_INT(s_offset);
          if (si_offset == NULL || si_offset->value() != 0) {
             tex->offset = read_rvalue(s_offset);
-            if (tex->offset == NULL) {
+            if (!tex->offset) {
                ir_read_error(s_offset, "expected 0 or an expression");
                return NULL;
             }
@@ -1039,7 +1039,7 @@ ir_reader::read_texture(s_expression *expr)
 	 tex->projector = NULL;
       } else {
 	 tex->projector = read_rvalue(s_proj);
-	 if (tex->projector == NULL) {
+	 if (!tex->projector) {
 	    ir_read_error(NULL, "when reading projective divide in (%s ..)",
 	                  tex->opcode_string());
 	    return NULL;
@@ -1050,7 +1050,7 @@ ir_reader::read_texture(s_expression *expr)
 	 tex->shadow_comparator = NULL;
       } else {
 	 tex->shadow_comparator = read_rvalue(s_shadow);
-	 if (tex->shadow_comparator == NULL) {
+	 if (!tex->shadow_comparator) {
 	    ir_read_error(NULL, "when reading shadow comparator in (%s ..)",
 			  tex->opcode_string());
 	    return NULL;
@@ -1061,7 +1061,7 @@ ir_reader::read_texture(s_expression *expr)
    switch (op) {
    case ir_txb:
       tex->lod_info.bias = read_rvalue(s_lod);
-      if (tex->lod_info.bias == NULL) {
+      if (!tex->lod_info.bias) {
 	 ir_read_error(NULL, "when reading LOD bias in (txb ...)");
 	 return NULL;
       }
@@ -1070,7 +1070,7 @@ ir_reader::read_texture(s_expression *expr)
    case ir_txf:
    case ir_txs:
       tex->lod_info.lod = read_rvalue(s_lod);
-      if (tex->lod_info.lod == NULL) {
+      if (!tex->lod_info.lod) {
 	 ir_read_error(NULL, "when reading LOD in (%s ...)",
 		       tex->opcode_string());
 	 return NULL;
@@ -1078,7 +1078,7 @@ ir_reader::read_texture(s_expression *expr)
       break;
    case ir_txf_ms:
       tex->lod_info.sample_index = read_rvalue(s_sample_index);
-      if (tex->lod_info.sample_index == NULL) {
+      if (!tex->lod_info.sample_index) {
          ir_read_error(NULL, "when reading sample_index in (txf_ms ...)");
          return NULL;
       }
@@ -1091,12 +1091,12 @@ ir_reader::read_texture(s_expression *expr)
 	 return NULL;
       }
       tex->lod_info.grad.dPdx = read_rvalue(s_dx);
-      if (tex->lod_info.grad.dPdx == NULL) {
+      if (!tex->lod_info.grad.dPdx) {
 	 ir_read_error(NULL, "when reading dPdx in (txd ...)");
 	 return NULL;
       }
       tex->lod_info.grad.dPdy = read_rvalue(s_dy);
-      if (tex->lod_info.grad.dPdy == NULL) {
+      if (!tex->lod_info.grad.dPdy) {
 	 ir_read_error(NULL, "when reading dPdy in (txd ...)");
 	 return NULL;
       }
@@ -1104,7 +1104,7 @@ ir_reader::read_texture(s_expression *expr)
    }
    case ir_tg4:
       tex->lod_info.component = read_rvalue(s_component);
-      if (tex->lod_info.component == NULL) {
+      if (!tex->lod_info.component) {
          ir_read_error(NULL, "when reading component in (tg4 ...)");
          return NULL;
       }
@@ -1125,7 +1125,7 @@ ir_reader::read_emit_vertex(s_expression *expr)
 
    if (MATCH(expr, pat)) {
       ir_rvalue *stream = read_dereference(s_stream);
-      if (stream == NULL) {
+      if (!stream) {
          ir_read_error(NULL, "when reading stream info in emit-vertex");
          return NULL;
       }
@@ -1144,7 +1144,7 @@ ir_reader::read_end_primitive(s_expression *expr)
 
    if (MATCH(expr, pat)) {
       ir_rvalue *stream = read_dereference(s_stream);
-      if (stream == NULL) {
+      if (!stream) {
          ir_read_error(NULL, "when reading stream info in end-primitive");
          return NULL;
       }

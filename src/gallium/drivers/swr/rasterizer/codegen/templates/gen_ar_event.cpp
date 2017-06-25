@@ -23,7 +23,7 @@
 * @file ${filename}
 *
 * @brief Implementation for events.  auto-generated file
-* 
+*
 * DO NOT EDIT
 *
 * Generation Command Line:

@@ -225,7 +225,7 @@ NineBuffer9_Lock( struct NineBuffer9 *This,
                             D3DLOCK_READONLY |
                             D3DLOCK_NOOVERWRITE)), D3DERR_INVALIDCALL);
 
-    if (SizeToLock == 0) {
+    if (!SizeToLock) {
         SizeToLock = This->size - OffsetToLock;
         user_warn(OffsetToLock != 0);
     }
@@ -284,7 +284,7 @@ NineBuffer9_Lock( struct NineBuffer9 *This,
         struct NineTransfer *newmaps =
             REALLOC(This->maps, sizeof(struct NineTransfer)*This->maxmaps,
                     sizeof(struct NineTransfer)*(This->maxmaps << 1));
-        if (newmaps == NULL)
+        if (!newmaps)
             return E_OUTOFMEMORY;
 
         This->maxmaps <<= 1;
@@ -309,7 +309,7 @@ NineBuffer9_Lock( struct NineBuffer9 *This,
         pipe->resource_copy_region(pipe, This->base.resource, 0, 0, 0, 0,
                                    src_res, 0, &src_box);
         /* Release previous resource */
-        if (This->nmaps >= 1)
+        if (This->nmaps)
             This->maps[This->nmaps-1].should_destroy_buf = true;
         else
             nine_upload_release_buffer(device->buffer_upload, This->buf);
@@ -326,7 +326,7 @@ NineBuffer9_Lock( struct NineBuffer9 *This,
     if (This->discard_nooverwrite_only) {
         if (This->buf && (Flags & D3DLOCK_DISCARD)) {
             /* Release previous buffer */
-            if (This->nmaps >= 1)
+            if (This->nmaps)
                 This->maps[This->nmaps-1].should_destroy_buf = true;
             else
                 nine_upload_release_buffer(device->buffer_upload, This->buf);

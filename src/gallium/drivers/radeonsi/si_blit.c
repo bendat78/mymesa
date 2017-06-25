@@ -109,7 +109,7 @@ si_blit_dbcb_copy(struct si_context *sctx,
 		  unsigned first_layer, unsigned last_layer,
 		  unsigned first_sample, unsigned last_sample)
 {
-	struct pipe_surface surf_tmpl = {{0}};
+	struct pipe_surface surf_tmpl = {};
 	unsigned layer, sample, checked_last_layer, max_layer;
 	unsigned fully_copied_levels = 0;
 
@@ -210,7 +210,7 @@ si_blit_decompress_zs_planes_in_place(struct si_context *sctx,
 				      unsigned planes, unsigned level_mask,
 				      unsigned first_layer, unsigned last_layer)
 {
-	struct pipe_surface *zsurf, surf_tmpl = {{0}};
+	struct pipe_surface *zsurf, surf_tmpl = {};
 	unsigned layer, max_layer, checked_last_layer;
 	unsigned fully_decompressed_mask = 0;
 
@@ -853,7 +853,7 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 				continue;
 
 			tex = (struct r600_texture *)fb->cbufs[i]->texture;
-			if (tex->fmask.size == 0)
+			if (!tex->fmask.size)
 				tex->dirty_level_mask &= ~(1 << fb->cbufs[i]->u.tex.level);
 		}
 	}

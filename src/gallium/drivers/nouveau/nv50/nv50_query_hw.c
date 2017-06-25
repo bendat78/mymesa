@@ -216,7 +216,7 @@ nv50_hw_end_query(struct nv50_context *nv50, struct nv50_query *q)
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_OCCLUSION_PREDICATE:
       nv50_hw_query_get(push, q, 0, 0x0100f002);
-      if (--nv50->screen->num_occlusion_queries_active == 0) {
+      if (!--nv50->screen->num_occlusion_queries_active) {
          PUSH_SPACE(push, 2);
          BEGIN_NV04(push, NV50_3D(SAMPLECNT_ENABLE), 1);
          PUSH_DATA (push, 0);

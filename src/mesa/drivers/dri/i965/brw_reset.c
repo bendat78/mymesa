@@ -48,7 +48,7 @@ brw_get_graphics_reset_status(struct gl_context *ctx)
     * nonzero active/pending only if reset has been encountered and completed.
     * Return NO_ERROR from now on.
     */
-   if (brw->reset_count != 0)
+   if (brw->reset_count)
       return GL_NO_ERROR;
 
    if (drmIoctl(dri_screen->fd, DRM_IOCTL_I915_GET_RESET_STATS, &stats) != 0)
@@ -57,7 +57,7 @@ brw_get_graphics_reset_status(struct gl_context *ctx)
    /* A reset was observed while a batch from this context was executing.
     * Assume that this context was at fault.
     */
-   if (stats.batch_active != 0) {
+   if (stats.batch_active) {
       brw->reset_count = stats.reset_count;
       return GL_GUILTY_CONTEXT_RESET_ARB;
    }
@@ -66,7 +66,7 @@ brw_get_graphics_reset_status(struct gl_context *ctx)
     * but the batch was not executing.  In this case, assume that the context
     * was not at fault.
     */
-   if (stats.batch_pending != 0) {
+   if (stats.batch_pending) {
       brw->reset_count = stats.reset_count;
       return GL_INNOCENT_CONTEXT_RESET_ARB;
    }

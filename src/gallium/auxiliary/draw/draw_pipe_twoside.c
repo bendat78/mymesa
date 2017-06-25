@@ -1,5 +1,5 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /* Authors:  Keith Whitwell <keithw@vmware.com>
@@ -52,10 +52,10 @@ static inline struct twoside_stage *twoside_stage( struct draw_stage *stage )
  * Copy back color(s) to front color(s).
  */
 static inline struct vertex_header *
-copy_bfc( struct twoside_stage *twoside, 
+copy_bfc( struct twoside_stage *twoside,
           const struct vertex_header *v,
           unsigned idx )
-{   
+{
    struct vertex_header *tmp = dup_vert( &twoside->stage, v, idx );
 
    if (twoside->attrib_back0 >= 0 && twoside->attrib_front0 >= 0) {
@@ -99,7 +99,7 @@ static void twoside_tri( struct draw_stage *stage,
 
 
 
-static void twoside_first_tri( struct draw_stage *stage, 
+static void twoside_first_tri( struct draw_stage *stage,
 			       struct prim_header *header )
 {
    struct twoside_stage *twoside = twoside_stage(stage);
@@ -114,13 +114,13 @@ static void twoside_first_tri( struct draw_stage *stage,
    /* Find which vertex shader outputs are front/back colors */
    for (i = 0; i < vs->info.num_outputs; i++) {
       if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_COLOR) {
-         if (vs->info.output_semantic_index[i] == 0)
+         if (!vs->info.output_semantic_index[i])
             twoside->attrib_front0 = i;
          else
             twoside->attrib_front1 = i;
       }
       if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
-         if (vs->info.output_semantic_index[i] == 0)
+         if (!vs->info.output_semantic_index[i])
             twoside->attrib_back0 = i;
          else
             twoside->attrib_back1 = i;

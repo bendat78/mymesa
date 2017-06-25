@@ -140,7 +140,7 @@ os_get_command_line(char *cmdline, size_t size)
       assert(n < size);
       // The arguments are separated by '\0' chars.  Convert them to spaces.
       for (i = 0; i < n; i++) {
-         if (cmdline[i] == 0) {
+         if (!cmdline[i]) {
             cmdline[i] = ' ';
          }
       }

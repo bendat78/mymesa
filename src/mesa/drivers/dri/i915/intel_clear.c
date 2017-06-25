@@ -115,7 +115,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    }
 
    /* HW color buffers (front, back, aux, generic FBO, etc) */
-   if (colorMask == ~0) {
+   if (colorMask == (~0u)) {
       /* clear all R,G,B,A */
       blit_mask |= (mask & BUFFER_BITS_COLOR);
    }
@@ -165,7 +165,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
     */
    if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
       int color_bit = ffs(mask & BUFFER_BITS_COLOR);
-      if (color_bit != 0) {
+      if (color_bit) {
 	 tri_mask |= blit_mask & (1 << (color_bit - 1));
 	 blit_mask &= ~(1 << (color_bit - 1));
       }

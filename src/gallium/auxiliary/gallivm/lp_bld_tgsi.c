@@ -87,7 +87,7 @@ lp_build_action_set_dst_type(
    struct lp_build_tgsi_context *bld_base,
    unsigned tgsi_opcode)
 {
-   if (emit_data->arg_count == 0) {
+   if (!emit_data->arg_count) {
       emit_data->dst_type = LLVMVoidTypeInContext(bld_base->base.gallivm->context);
    } else {
       /* XXX: Not all opcodes have the same src and dst types. */
@@ -129,7 +129,7 @@ lp_build_emit_llvm_unary(
    unsigned tgsi_opcode,
    LLVMValueRef arg0)
 {
-   struct lp_build_emit_data emit_data = {{0}};
+   struct lp_build_emit_data emit_data = {};
    emit_data.info = tgsi_get_opcode_info(tgsi_opcode);
    emit_data.arg_count = 1;
    emit_data.args[0] = arg0;
@@ -143,7 +143,7 @@ lp_build_emit_llvm_binary(
    LLVMValueRef arg0,
    LLVMValueRef arg1)
 {
-   struct lp_build_emit_data emit_data = {{0}};
+   struct lp_build_emit_data emit_data = {};
    emit_data.info = tgsi_get_opcode_info(tgsi_opcode);
    emit_data.arg_count = 2;
    emit_data.args[0] = arg0;
@@ -159,7 +159,7 @@ lp_build_emit_llvm_ternary(
    LLVMValueRef arg1,
    LLVMValueRef arg2)
 {
-   struct lp_build_emit_data emit_data = {{0}};
+   struct lp_build_emit_data emit_data = {};
    emit_data.info = tgsi_get_opcode_info(tgsi_opcode);
    emit_data.arg_count = 3;
    emit_data.args[0] = arg0;
@@ -211,7 +211,7 @@ static int get_src_chan_idx(unsigned opcode,
          return -1;
       if (tgsi_type_is_64bit(stype))
          return dst_chan_index;
-      if (dst_chan_index == 0)
+      if (!dst_chan_index)
          return 0;
       if (dst_chan_index == 2)
          return 1;
@@ -402,7 +402,7 @@ lp_build_emit_fetch_src(
     * Swizzle the argument
     */
 
-   if (swizzle == ~0u) {
+   if (swizzle == (~0u)) {
       res = bld_base->emit_swizzle(bld_base, res,
                      reg->Register.SwizzleX,
                      reg->Register.SwizzleY,
@@ -471,7 +471,7 @@ lp_build_emit_fetch_texoffset(
     * Swizzle the argument
     */
 
-   if (swizzle == ~0u) {
+   if (swizzle == (~0u)) {
       res = bld_base->emit_swizzle(bld_base, res,
                                    off->SwizzleX,
                                    off->SwizzleY,

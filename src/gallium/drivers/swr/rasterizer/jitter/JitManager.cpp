@@ -19,13 +19,13 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
-* 
+*
 * @file JitManager.cpp
-* 
+*
 * @brief Implementation if the Jit Manager.
-* 
+*
 * Notes:
-* 
+*
 ******************************************************************************/
 #if defined(_WIN32)
 #pragma warning(disable: 4800 4146 4244 4267 4355 4996)
@@ -189,7 +189,7 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
 void JitManager::SetupNewModule()
 {
     SWR_ASSERT(mIsModuleFinalized == true && "Current module is not finalized!");
-    
+
     std::unique_ptr<Module> newModule(new Module("", mContext));
     mpCurrentModule = newModule.get();
 #if defined(_WIN32)

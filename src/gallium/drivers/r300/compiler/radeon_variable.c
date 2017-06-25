@@ -326,7 +326,7 @@ static void get_variable_pair_helper(
 	memset(&reader_data, 0, sizeof(struct rc_reader_data));
 	rc_get_readers_sub(c, inst, sub_inst, &reader_data, NULL, NULL, NULL);
 
-	if (reader_data.ReaderCount == 0) {
+	if (!reader_data.ReaderCount) {
 		return;
 	}
 
@@ -366,7 +366,7 @@ struct rc_list * rc_get_variables(struct radeon_compiler * c)
 
 		if (inst->Type == RC_INSTRUCTION_NORMAL) {
 			rc_get_readers(c, inst, &reader_data, NULL, NULL, NULL);
-			if (reader_data.ReaderCount == 0) {
+			if (!reader_data.ReaderCount) {
 				continue;
 			}
 			new_var = rc_variable(c, inst->U.I.DstReg.File,

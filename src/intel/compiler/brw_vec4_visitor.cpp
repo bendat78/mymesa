@@ -999,7 +999,7 @@ vec4_visitor::emit_texture(ir_texture_opcode op,
                coordinate));
       inst->mlen++;
 
-      if (zero_mask != 0) {
+      if (zero_mask) {
          emit(MOV(dst_reg(MRF, param_base, coordinate.type, zero_mask),
                   brw_imm_d(0)));
       }
@@ -1276,7 +1276,7 @@ vec4_visitor::emit_generic_urb_slot(dst_reg reg, int varying, int component)
    assert(varying < VARYING_SLOT_MAX);
 
    unsigned num_comps = output_num_components[varying][component];
-   if (num_comps == 0)
+   if (!num_comps)
       return NULL;
 
    assert(output_reg[varying][component].type == reg.type);
@@ -1777,7 +1777,7 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
    /* The vulkan dirver doesn't support pull constants other than UBOs so
     * everything has to be pushed regardless.
     */
-   if (stage_prog_data->pull_param == NULL) {
+   if (!stage_prog_data->pull_param) {
       split_uniform_registers();
       return;
    }

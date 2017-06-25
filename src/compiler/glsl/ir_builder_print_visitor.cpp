@@ -87,7 +87,7 @@ private:
 static bool
 is_simple_operand(const ir_rvalue *ir, unsigned depth = 1)
 {
-   if (depth == 0)
+   if (!depth)
       return false;
 
    switch (ir->ir_type) {
@@ -266,7 +266,7 @@ ir_builder_print_visitor::visit(ir_dereference_variable *ir)
    const struct hash_entry *const he =
       _mesa_hash_table_search(index_map, ir->var);
 
-   if (he != NULL)
+   if (he)
       _mesa_hash_table_insert(index_map, ir, he->data);
 
    return visit_continue;
@@ -371,17 +371,17 @@ ir_builder_print_visitor::visit(ir_constant *ir)
       for (unsigned i = 0; i < 16; i++) {
          switch (ir->type->base_type) {
          case GLSL_TYPE_UINT:
-            if (ir->value.u[i] != 0)
+            if (ir->value.u[i])
                print_with_indent("r%04X_data.u[%u] = %u;\n",
                                     my_index, i, ir->value.u[i]);
             break;
          case GLSL_TYPE_INT:
-            if (ir->value.i[i] != 0)
+            if (ir->value.i[i])
                print_with_indent("r%04X_data.i[%u] = %i;\n",
                                     my_index, i, ir->value.i[i]);
             break;
          case GLSL_TYPE_FLOAT:
-            if (ir->value.u[i] != 0)
+            if (ir->value.u[i])
                print_with_indent("r%04X_data.u[%u] = 0x%08x; /* %f */\n",
                                     my_index,
                                     i,
@@ -394,27 +394,27 @@ ir_builder_print_visitor::visit(ir_constant *ir)
             STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
 
             memcpy(&v, &ir->value.d[i], sizeof(v));
-            if (v != 0)
+            if (v)
                print_with_indent("r%04X_data.u64[%u] = 0x%016" PRIx64 "; /* %g */\n",
                                     my_index, i, v, ir->value.d[i]);
             break;
          }
          case GLSL_TYPE_UINT64:
-            if (ir->value.u64[i] != 0)
+            if (ir->value.u64[i])
                print_with_indent("r%04X_data.u64[%u] = %" PRIu64 ";\n",
                                     my_index,
                                     i,
                                     ir->value.u64[i]);
             break;
          case GLSL_TYPE_INT64:
-            if (ir->value.i64[i] != 0)
+            if (ir->value.i64[i])
                print_with_indent("r%04X_data.i64[%u] = %" PRId64 ";\n",
                                     my_index,
                                     i,
                                     ir->value.i64[i]);
             break;
          case GLSL_TYPE_BOOL:
-            if (ir->value.u[i] != 0)
+            if (ir->value.u[i])
                print_with_indent("r%04X_data.u[%u] = 1;\n", my_index, i);
             break;
          default:
@@ -484,7 +484,7 @@ ir_builder_print_visitor::visit_enter(ir_assignment *ir)
    if (!is_simple_operand(ir->rhs) && rhs_expr == NULL)
       return visit_continue;
 
-   if (rhs_expr != NULL) {
+   if (rhs_expr) {
       const unsigned num_op = rhs_expr->get_num_operands();
 
       for (unsigned i = 0; i < num_op; i++) {

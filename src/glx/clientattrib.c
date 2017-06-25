@@ -76,7 +76,7 @@ __indirect_glPushClientAttrib(GLuint mask)
    if (spp < &gc->attributes.stack[__GL_CLIENT_ATTRIB_STACK_DEPTH]) {
       if (!(sp = *spp)) {
          sp = malloc(sizeof(__GLXattribute));
-         if (sp == NULL) {
+         if (!sp) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;
          }

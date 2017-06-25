@@ -81,7 +81,7 @@ create_buffer(struct wl_client *client, struct wl_resource *resource,
 	struct wl_drm_buffer *buffer;
 
 	buffer = calloc(1, sizeof *buffer);
-	if (buffer == NULL) {
+	if (!buffer) {
 		wl_resource_post_no_memory(resource);
 		return;
 	}
@@ -98,7 +98,7 @@ create_buffer(struct wl_client *client, struct wl_resource *resource,
 	buffer->stride[2] = stride2;
 
         drm->callbacks->reference_buffer(drm->user_data, name, fd, buffer);
-	if (buffer->driver_buffer == NULL) {
+	if (!buffer->driver_buffer) {
 		wl_resource_post_error(resource,
 				       WL_DRM_ERROR_INVALID_NAME,
 				       "invalid name");
@@ -247,7 +247,7 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 struct wl_drm_buffer *
 wayland_drm_buffer_get(struct wl_drm *drm, struct wl_resource *resource)
 {
-	if (resource == NULL)
+	if (!resource)
 		return NULL;
 
         if (wl_resource_instance_of(resource, &wl_buffer_interface,

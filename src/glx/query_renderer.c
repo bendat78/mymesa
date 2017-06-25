@@ -36,7 +36,7 @@ __glXQueryRendererInteger(struct glx_screen *psc, int attribute,
    /* This probably means the caller is trying to use an extension function
     * that isn't actually supported.
     */
-   if (psc->vtable->query_renderer_integer == NULL)
+   if (!psc->vtable->query_renderer_integer)
       return False;
 
    switch (attribute) {
@@ -69,7 +69,7 @@ __glXQueryRendererInteger(struct glx_screen *psc, int attribute,
    /* If there was no error, copy the correct number of values from the driver
     * out to the application.
     */
-   if (err == 0)
+   if (!err)
       memcpy(value, buffer, sizeof(unsigned int) * values_for_query);
 
    return err == 0;
@@ -82,20 +82,20 @@ glXQueryRendererIntegerMESA(Display *dpy, int screen,
 {
    struct glx_screen *psc;
 
-   if (dpy == NULL)
+   if (!dpy)
       return False;
 
    /* This probably means the caller passed the wrong display pointer or
     * screen number.
     */
    psc = GetGLXScreenConfigs(dpy, screen);
-   if (psc == NULL)
+   if (!psc)
       return False;
 
    /* Right now only a single renderer per display / screen combination is
     * supported.
     */
-   if (renderer != 0)
+   if (renderer)
       return False;
 
    return __glXQueryRendererInteger(psc, attribute, value);
@@ -121,7 +121,7 @@ __glXQueryRendererString(struct glx_screen *psc, int attribute)
    /* This probably means the caller is trying to use an extension function
     * that isn't actually supported.
     */
-   if (psc->vtable->query_renderer_integer == NULL)
+   if (!psc->vtable->query_renderer_integer)
       return NULL;
 
    switch (attribute) {
@@ -142,20 +142,20 @@ glXQueryRendererStringMESA(Display *dpy, int screen,
 {
    struct glx_screen *psc;
 
-   if (dpy == NULL)
+   if (!dpy)
       return False;
 
    /* This probably means the caller passed the wrong display pointer or
     * screen number.
     */
    psc = GetGLXScreenConfigs(dpy, screen);
-   if (psc == NULL)
+   if (!psc)
       return False;
 
    /* Right now only a single renderer per display / screen combination is
     * supported.
     */
-   if (renderer != 0)
+   if (renderer)
       return False;
 
    return __glXQueryRendererString(psc, attribute);

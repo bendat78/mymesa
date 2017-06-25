@@ -101,12 +101,12 @@ tgsi_varying_semantic_to_slot(unsigned semantic, unsigned index)
    case TGSI_SEMANTIC_POSITION:
       return VARYING_SLOT_POS;
    case TGSI_SEMANTIC_COLOR:
-      if (index == 0)
+      if (!index)
          return VARYING_SLOT_COL0;
       else
          return VARYING_SLOT_COL1;
    case TGSI_SEMANTIC_BCOLOR:
-      if (index == 0)
+      if (!index)
          return VARYING_SLOT_BFC0;
       else
          return VARYING_SLOT_BFC1;
@@ -123,7 +123,7 @@ tgsi_varying_semantic_to_slot(unsigned semantic, unsigned index)
    case TGSI_SEMANTIC_PRIMID:
       return VARYING_SLOT_PRIMITIVE_ID;
    case TGSI_SEMANTIC_CLIPDIST:
-      if (index == 0)
+      if (!index)
          return VARYING_SLOT_CLIP_DIST0;
       else
          return VARYING_SLOT_CLIP_DIST1;

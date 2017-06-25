@@ -1004,7 +1004,7 @@ _mesa_ast_process_interface_block(YYLTYPE *locp,
     * the same language versions, we don't have to explicitly
     * version-check both things.
     */
-   if (block->instance_name != NULL) {
+   if (block->instance_name) {
       state->check_version(150, 300, locp, "interface blocks with "
                            "an instance name are not allowed");
    }
@@ -1175,7 +1175,7 @@ ast_compound_statement::ast_compound_statement(int new_scope,
 {
    this->new_scope = new_scope;
 
-   if (statements != NULL) {
+   if (statements) {
       this->statements.push_degenerate_list_at_head(&statements->link);
    }
 }
@@ -1532,7 +1532,7 @@ void
 ast_switch_body::print(void) const
 {
    printf("{\n");
-   if (stmts != NULL) {
+   if (stmts) {
       stmts->print();
    }
    printf("}\n");
@@ -1547,7 +1547,7 @@ ast_switch_body::ast_switch_body(ast_case_statement_list *stmts)
 
 void ast_case_label::print(void) const
 {
-   if (test_value != NULL) {
+   if (test_value) {
       printf("case ");
       test_value->print();
       printf(": ");
@@ -1675,7 +1675,7 @@ ast_struct_specifier::print(void) const
 ast_struct_specifier::ast_struct_specifier(void *lin_ctx, const char *identifier,
 					   ast_declarator_list *declarator_list)
 {
-   if (identifier == NULL) {
+   if (!identifier) {
       /* All anonymous structs have the same name. This simplifies matching of
        * globals whose type is an unnamed struct.
        *

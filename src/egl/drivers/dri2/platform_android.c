@@ -359,7 +359,7 @@ droid_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    dri2_surf->dri_drawable = (*createNewDrawable)(dri2_dpy->dri_screen, config,
                                                   dri2_surf);
-   if (dri2_surf->dri_drawable == NULL) {
+   if (!dri2_surf->dri_drawable) {
       _eglError(EGL_BAD_ALLOC, "createNewDrawable");
       goto cleanup_surface;
    }
@@ -662,11 +662,11 @@ droid_set_damage_region(_EGLDriver *drv,
    android_native_rect_t* droid_rects = NULL;
    int ret;
 
-   if (n_rects == 0)
+   if (!n_rects)
       return EGL_TRUE;
 
    droid_rects = malloc(n_rects * sizeof(android_native_rect_t));
-   if (droid_rects == NULL) {
+   if (!droid_rects) {
      _eglError(EGL_BAD_ALLOC, "eglSetDamageRegionKHR");
      return EGL_FALSE;
    }
@@ -800,7 +800,7 @@ droid_create_image_from_prime_fd(_EGLDisplay *disp, _EGLContext *ctx,
    }
 
    pitch = buf->stride * get_format_bpp(buf->format);
-   if (pitch == 0) {
+   if (!pitch) {
       _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
       return NULL;
    }
@@ -898,7 +898,7 @@ dri2_create_image_android_native_buffer(_EGLDisplay *disp,
 {
    int fd;
 
-   if (ctx != NULL) {
+   if (ctx) {
       /* From the EGL_ANDROID_image_native_buffer spec:
        *
        *     * If <target> is EGL_NATIVE_BUFFER_ANDROID and <ctx> is not
@@ -1035,7 +1035,7 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
       { HAL_PIXEL_FORMAT_BGRA_8888, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 } },
    };
 
-   unsigned int format_count[ARRAY_SIZE(visuals)] = { 0 };
+   unsigned int format_count[ARRAY_SIZE(visuals)] = {};
    int config_count = 0;
 
    /* The nesting of loops is significant here. Also significant is the order
@@ -1191,7 +1191,7 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *dpy)
    }
 
    dri2_dpy->driver_name = loader_get_driver_for_fd(dri2_dpy->fd);
-   if (dri2_dpy->driver_name == NULL) {
+   if (!dri2_dpy->driver_name) {
       err = "DRI2: failed to get driver name";
       goto cleanup;
    }

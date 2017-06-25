@@ -715,7 +715,7 @@ static void get_readers_for_single_write(
 		case RC_OPCODE_ENDLOOP:
 			if (d->ReaderData->LoopDepth > 0) {
 				d->ReaderData->LoopDepth--;
-				if (d->ReaderData->LoopDepth == 0) {
+				if (!d->ReaderData->LoopDepth) {
 					d->ReaderData->AbortOnWrite = 0;
 				}
 				pop_branch_mask(d, &branch_depth);
@@ -745,7 +745,7 @@ static void get_readers_for_single_write(
 			push_branch_mask(d, &branch_depth);
 			break;
 		case RC_OPCODE_ELSE:
-			if (branch_depth == 0) {
+			if (!branch_depth) {
 				d->ReaderData->InElse = 1;
 			} else {
 				unsigned int temp_mask = d->AliveWriteMask;
@@ -757,7 +757,7 @@ static void get_readers_for_single_write(
 			}
 			break;
 		case RC_OPCODE_ENDIF:
-			if (branch_depth == 0) {
+			if (!branch_depth) {
 				d->ReaderData->AbortOnRead = d->AliveWriteMask;
 				d->ReaderData->InElse = 0;
 			}

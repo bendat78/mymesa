@@ -206,7 +206,7 @@ XF86DRIOpenConnection(Display * dpy, int screen, drm_handle_t * hSAREA,
          *busIdString = calloc(rep.busIdStringLength + 1, 1);
       else
          *busIdString = NULL;
-      if (*busIdString == NULL) {
+      if (!*busIdString) {
          _XEatData(dpy, ((rep.busIdStringLength + 3) & ~3));
          UnlockDisplay(dpy);
          SyncHandle();
@@ -309,7 +309,7 @@ XF86DRIGetClientDriverName(Display * dpy, int screen,
          *clientDriverName = calloc(rep.clientDriverNameLength + 1, 1);
       else
          *clientDriverName = NULL;
-      if (*clientDriverName == NULL) {
+      if (!*clientDriverName) {
          _XEatData(dpy, ((rep.clientDriverNameLength + 3) & ~3));
          UnlockDisplay(dpy);
          SyncHandle();

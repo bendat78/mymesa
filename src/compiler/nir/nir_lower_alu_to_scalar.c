@@ -60,7 +60,7 @@ lower_reduction(nir_alu_instr *instr, nir_op chan_op, nir_op merge_op,
 
       nir_builder_instr_insert(builder, &chan->instr);
 
-      if (i == 0) {
+      if (!i) {
          last = &chan->dest.dest.ssa;
       } else {
          last = nir_build_alu(builder, merge_op,

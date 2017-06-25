@@ -704,7 +704,7 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
          GLint shift = 0;
          GLuint i;
          for (i = 0; i < n; i++) {
-            if (shift == 0)
+            if (!shift)
                *dst = 0;
             *dst |= ((source[i] != 0) << shift);
             shift++;
@@ -1262,7 +1262,7 @@ _mesa_unpack_image( GLuint dimensions,
                   for (i = 0; i < width; i++) {
                      if (*s & srcMask) {
                         *d |= dstMask;
-                     }      
+                     }
                      if (srcMask == 128) {
                         srcMask = 1;
                         s++;
@@ -1304,7 +1304,7 @@ _mesa_unpack_image( GLuint dimensions,
                      }
                      else {
                         dstMask = dstMask >> 1;
-                     }      
+                     }
                   }
                }
             }

@@ -29,7 +29,7 @@
 /**
  * @file
  * Simple vertex/fragment shader generators.
- *  
+ *
  * @author Brian Paul
            Marek Olšák
  */
@@ -92,11 +92,11 @@ util_make_vertex_passthrough_shader_with_so(struct pipe_context *pipe,
       struct ureg_dst dst;
 
       src = ureg_DECL_vs_input( ureg, i );
-      
+
       dst = ureg_DECL_output( ureg,
                               semantic_names[i],
                               semantic_indexes[i]);
-      
+
       ureg_MOV( ureg, dst, src );
    }
 
@@ -263,16 +263,16 @@ util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
    ureg = ureg_create( PIPE_SHADER_FRAGMENT );
    if (!ureg)
       return NULL;
-   
+
    sampler = ureg_DECL_sampler( ureg, 0 );
 
    ureg_DECL_sampler_view(ureg, 0, tex_target, stype, stype, stype, stype);
 
-   tex = ureg_DECL_fs_input( ureg, 
-                             TGSI_SEMANTIC_GENERIC, 0, 
+   tex = ureg_DECL_fs_input( ureg,
+                             TGSI_SEMANTIC_GENERIC, 0,
                              interp_mode );
 
-   out = ureg_DECL_output( ureg, 
+   out = ureg_DECL_output( ureg,
                            TGSI_SEMANTIC_COLOR,
                            0 );
 

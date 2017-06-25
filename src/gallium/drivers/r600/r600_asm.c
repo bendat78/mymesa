@@ -100,7 +100,7 @@ static struct r600_bytecode_gds *r600_bytecode_gds(void)
 {
 	struct r600_bytecode_gds *gds = CALLOC_STRUCT(r600_bytecode_gds);
 
-	if (gds == NULL)
+	if (!gds)
 		return NULL;
 	LIST_INITHEAD(&gds->list);
 	return gds;
@@ -560,7 +560,7 @@ static int check_and_set_bank_swizzle(struct r600_bytecode *bc,
 	while(bank_swizzle[4] <= SQ_ALU_SCL_221) {
 
 		init_bank_swizzle(&bs);
-		if (scalar_only == false) {
+		if (!scalar_only) {
 			for (i = 0; i < 4; i++) {
 				if (slots[i]) {
 					r = check_vector(bc, slots[i], &bs, bank_swizzle[i]);
@@ -753,7 +753,7 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 			     struct r600_bytecode_alu *alu_prev)
 {
 	struct r600_bytecode_alu *prev[5];
-	struct r600_bytecode_alu *result[5] = { NULL };
+	struct r600_bytecode_alu *result[5] = {};
 
 	uint32_t literal[4], prev_literal[4];
 	unsigned nliteral = 0, prev_nliteral = 0;
@@ -986,7 +986,7 @@ static int r600_bytecode_alloc_kcache_line(struct r600_bytecode *bc,
 			} else if (d == 1) {
 				kcache[i].mode = V_SQ_CF_KCACHE_LOCK_2;
 				return 0;
-			} else if (d == 0)
+			} else if (!d)
 				return 0;
 		} else { /* free kcache set - use it */
 			kcache[i].mode = V_SQ_CF_KCACHE_LOCK_1;
@@ -1449,7 +1449,7 @@ int r600_bytecode_add_gds(struct r600_bytecode *bc, const struct r600_bytecode_g
 	struct r600_bytecode_gds *ngds = r600_bytecode_gds();
 	int r;
 
-	if (ngds == NULL)
+	if (!ngds)
 		return -ENOMEM;
 	memcpy(ngds, gds, sizeof(struct r600_bytecode_gds));
 
@@ -1711,7 +1711,7 @@ int r600_bytecode_build(struct r600_bytecode *bc)
 	}
 	free(bc->bytecode);
 	bc->bytecode = calloc(4, bc->ndw);
-	if (bc->bytecode == NULL)
+	if (!bc->bytecode)
 		return -ENOMEM;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		const struct cf_op_info *cfop = r600_isa_cf(cf->op);

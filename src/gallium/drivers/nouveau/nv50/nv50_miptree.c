@@ -368,7 +368,7 @@ nv50_miptree_create(struct pipe_screen *pscreen,
          return pt;
       }
    } else
-   if (bo_config.nv50.memtype != 0) {
+   if (bo_config.nv50.memtype) {
       nv50_miptree_init_layout_tiled(mt);
    } else
    if (!nv50_miptree_init_layout_linear(mt, 64)) {
@@ -418,7 +418,7 @@ nv50_miptree_from_handle(struct pipe_screen *pscreen,
       return NULL;
 
    mt->base.bo = nouveau_screen_bo_from_handle(pscreen, whandle, &stride);
-   if (mt->base.bo == NULL) {
+   if (!mt->base.bo) {
       FREE(mt);
       return NULL;
    }

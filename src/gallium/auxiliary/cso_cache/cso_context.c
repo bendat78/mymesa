@@ -231,7 +231,7 @@ sanitize_hash(struct cso_hash *hash, enum cso_cache_type type,
    if (hash_size > max_size)
       to_remove += hash_size - max_size;
 
-   if (to_remove == 0)
+   if (!to_remove)
       return;
 
    if (type == CSO_SAMPLER) {
@@ -300,7 +300,7 @@ cso_create_context(struct pipe_context *pipe, unsigned u_vbuf_flags)
       return NULL;
 
    ctx->cache = cso_cache_create();
-   if (ctx->cache == NULL)
+   if (!ctx->cache)
       goto out;
    cso_cache_set_sanitize_callback(ctx->cache,
                                    sanitize_hash,
@@ -358,8 +358,8 @@ void cso_destroy_context( struct cso_context *ctx )
       ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
 
       {
-         static struct pipe_sampler_view *views[PIPE_MAX_SHADER_SAMPLER_VIEWS] = { NULL };
-         static void *zeros[PIPE_MAX_SAMPLERS] = { NULL };
+         static struct pipe_sampler_view *views[PIPE_MAX_SHADER_SAMPLER_VIEWS] = {};
+         static void *zeros[PIPE_MAX_SAMPLERS] = {};
          struct pipe_screen *scr = ctx->pipe->screen;
          enum pipe_shader_type sh;
          for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
@@ -1513,7 +1513,7 @@ cso_set_constant_buffer(struct cso_context *cso,
 
    pipe->set_constant_buffer(pipe, shader_stage, index, cb);
 
-   if (index == 0) {
+   if (!index) {
       util_copy_constant_buffer(&cso->aux_constbuf_current[shader_stage], cb);
    }
 }

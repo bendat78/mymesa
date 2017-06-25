@@ -42,9 +42,9 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
                     struct pipe_resource *indexbuf,
                     unsigned index_offset)
 {
-   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = { 0 };
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {};
    struct pipe_transfer *ib_transfer = NULL;
-   struct pipe_transfer *cb_transfer[SVGA_MAX_CONST_BUFS] = { 0 };
+   struct pipe_transfer *cb_transfer[SVGA_MAX_CONST_BUFS] = {};
    struct draw_context *draw = svga->swtnl.draw;
    MAYBE_UNUSED unsigned old_num_vertex_buffers;
    unsigned i;
@@ -97,7 +97,7 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
 
    /* Map constant buffers */
    for (i = 0; i < ARRAY_SIZE(svga->curr.constbufs[PIPE_SHADER_VERTEX]); ++i) {
-      if (svga->curr.constbufs[PIPE_SHADER_VERTEX][i].buffer == NULL) {
+      if (!svga->curr.constbufs[PIPE_SHADER_VERTEX][i].buffer) {
          continue;
       }
 
@@ -163,11 +163,11 @@ boolean svga_init_swtnl( struct svga_context *svga )
     * Create drawing context and plug our rendering stage into it.
     */
    svga->swtnl.draw = draw_create(&svga->pipe);
-   if (svga->swtnl.draw == NULL)
+   if (!svga->swtnl.draw)
       goto fail;
 
 
-   draw_set_rasterize_stage(svga->swtnl.draw, 
+   draw_set_rasterize_stage(svga->swtnl.draw,
                             draw_vbuf_stage( svga->swtnl.draw, svga->swtnl.backend ));
 
    draw_set_render(svga->swtnl.draw, svga->swtnl.backend);

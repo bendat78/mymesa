@@ -225,7 +225,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
       }
 
       for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-	 if (prog[i] != NULL)
+	 if (prog[i])
 	    prog[i]->_Used = GL_TRUE;
       }
    }
@@ -858,7 +858,7 @@ validate_draw_arrays(struct gl_context *ctx, const char *func,
       xfb_obj->GlesRemainingPrims -= prim_count;
    }
 
-   if (count == 0)
+   if (!count)
       return false;
 
    return true;

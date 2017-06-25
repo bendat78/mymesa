@@ -36,7 +36,7 @@
  * Choose the original base level dimension when shifted dimensions agree.
  * Otherwise assume real resize is intended and use the new shifted value.
  */
-static unsigned 
+static unsigned
 get_base_dim(unsigned old_base_dim, unsigned new_level_dim, unsigned level)
 {
    const unsigned old_level_dim = old_base_dim >> level;
@@ -239,14 +239,14 @@ create_mt_for_planar_dri_image(struct brw_context *brw,
                                      width, height, 1,
                                      image->strides[index],
                                      MIPTREE_LAYOUT_DISABLE_AUX);
-      if (mt == NULL)
+      if (!mt)
          return NULL;
 
       mt->target = target;
       mt->total_width = width;
       mt->total_height = height;
 
-      if (i == 0)
+      if (!i)
          planar_mt = mt;
       else
          planar_mt->plane[i - 1] = mt;
@@ -280,7 +280,7 @@ create_mt_for_dri_image(struct brw_context *brw,
                                     0, image->width, image->height, 1,
                                     image->pitch,
                                     MIPTREE_LAYOUT_DISABLE_AUX);
-   if (mt == NULL)
+   if (!mt)
       return NULL;
 
    mt->target = target;
@@ -357,7 +357,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
                                     rb->Base.Base.Width,
                                     rb->Base.Base.Height,
                                     1, rb->mt->pitch, 0);
-   if (mt == NULL)
+   if (!mt)
        return;
    mt->target = target;
    mt->total_width = rb->Base.Base.Width;
@@ -427,7 +427,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 
    image = dri_screen->dri2.image->lookupEGLImage(dri_screen, image_handle,
                                                   dri_screen->loaderPrivate);
-   if (image == NULL)
+   if (!image)
       return;
 
    /* We support external textures only for EGLImages created with
@@ -452,7 +452,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
       mt = create_mt_for_planar_dri_image(brw, target, image);
    else
       mt = create_mt_for_dri_image(brw, target, image);
-   if (mt == NULL)
+   if (!mt)
       return;
 
    struct intel_texture_object *intel_texobj = intel_texture_object(texObj);
@@ -562,7 +562,7 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
    }
 
    void *map = brw_bo_map(brw, bo, MAP_READ | MAP_RAW);
-   if (map == NULL) {
+   if (!map) {
       DBG("%s: failed to map bo\n", __func__);
       return false;
    }

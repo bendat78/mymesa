@@ -102,7 +102,7 @@ vbo_copy_vertices( struct vbo_exec_context *exec )
 	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_LINE_STRIP:
-      if (nr == 0) {
+      if (!nr) {
 	 return 0;
       }
       else {
@@ -110,7 +110,7 @@ vbo_copy_vertices( struct vbo_exec_context *exec )
 	 return 1;
       }
    case GL_LINE_LOOP:
-      if (last_prim->begin == 0) {
+      if (!last_prim->begin) {
          /* We're dealing with the second or later section of a split/wrapped
           * GL_LINE_LOOP.  Since we're converting line loops to line strips,
           * we've already increment the last_prim->start counter by one to
@@ -124,7 +124,7 @@ vbo_copy_vertices( struct vbo_exec_context *exec )
       /* fall-through */
    case GL_TRIANGLE_FAN:
    case GL_POLYGON:
-      if (nr == 0) {
+      if (!nr) {
 	 return 0;
       }
       else if (nr == 1) {
@@ -341,7 +341,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
          exec->vtx.buffer_map =
             (fi_type *)ctx->Driver.MapBufferRange(ctx,
                                                   exec->vtx.buffer_used,
-                                                  (VBO_VERT_BUFFER_SIZE - 
+                                                  (VBO_VERT_BUFFER_SIZE -
                                                    exec->vtx.buffer_used),
                                                   accessRange,
                                                   exec->vtx.bufferobj,

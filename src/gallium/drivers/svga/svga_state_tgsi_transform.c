@@ -195,7 +195,7 @@ add_point_sprite_shader(struct svga_context *svga)
    struct svga_geometry_shader *new_gs;
    const struct tgsi_token *tokens;
 
-   if (orig_gs == NULL) {
+   if (!orig_gs) {
 
       /* If this is the first time adding a geometry shader to this
        * vertex shader to support point sprite, then create
@@ -226,7 +226,7 @@ add_point_sprite_shader(struct svga_context *svga)
     * support vertex point size, then add the new geometry shader
     * to the vertex shader.
     */
-   if (vs->gs == NULL) {
+   if (!vs->gs) {
       vs->gs = new_gs;
    }
 

@@ -120,7 +120,7 @@ nir_opt_trivial_continues(nir_shader *shader)
    bool progress = false;
 
    nir_foreach_function(function, shader) {
-      if (function->impl == NULL)
+      if (!function->impl)
          continue;
 
       /* First we run the simple pass to get rid of pesky continues */

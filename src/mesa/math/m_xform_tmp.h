@@ -371,7 +371,7 @@ TAG(transform_points2_3d_no_rot)( GLvector4f *to_vec,
       to[i][1] =           m5 * oy + m13;
       to[i][2] =                     m14;
    }
-   if (m14 == 0) {
+   if (!m14) {
       to_vec->size = 2;
       to_vec->flags |= VEC_SIZE_2;
    } else {

@@ -340,7 +340,7 @@ brw_emit_post_sync_nonzero_flush(struct brw_context *brw)
  *
  *  SW can track the completion of the end-of-pipe-synchronization by
  *  using "Notify Enable" and "PostSync Operation - Write Immediate
- *  Data" in the PIPE_CONTROL command. 
+ *  Data" in the PIPE_CONTROL command.
  */
 void
 brw_emit_end_of_pipe_sync(struct brw_context *brw, uint32_t flags)
@@ -462,7 +462,7 @@ brw_init_pipe_control(struct brw_context *brw,
    brw->workaround_bo = brw_bo_alloc(brw->bufmgr,
                                      "pipe_control workaround",
                                      4096, 4096);
-   if (brw->workaround_bo == NULL)
+   if (!brw->workaround_bo)
       return -ENOMEM;
 
    brw->pipe_controls_since_last_cs_stall = 0;

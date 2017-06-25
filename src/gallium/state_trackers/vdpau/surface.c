@@ -107,7 +107,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    mtx_unlock(&dev->mutex);
 
    *surface = vlAddDataHTAB(p_surf);
-   if (*surface == 0) {
+   if (!*surface) {
       ret = VDP_STATUS_ERROR;
       goto no_handle;
    }
@@ -222,7 +222,7 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
    if (format == PIPE_FORMAT_NONE)
       return VDP_STATUS_INVALID_Y_CB_CR_FORMAT;
 
-   if (vlsurface->video_buffer == NULL)
+   if (!vlsurface->video_buffer)
       return VDP_STATUS_INVALID_VALUE;
 
    buffer_format = vlsurface->video_buffer->buffer_format;
@@ -466,7 +466,7 @@ struct pipe_video_buffer *vlVdpVideoSurfaceGallium(VdpVideoSurface surface)
       return NULL;
 
    mtx_lock(&p_surf->device->mutex);
-   if (p_surf->video_buffer == NULL) {
+   if (!p_surf->video_buffer) {
       struct pipe_context *pipe = p_surf->device->context;
 
       /* try to create a video buffer if we don't already have one */
@@ -501,7 +501,7 @@ VdpStatus vlVdpVideoSurfaceDMABuf(VdpVideoSurface surface,
    result->handle = -1;
 
    mtx_lock(&p_surf->device->mutex);
-   if (p_surf->video_buffer == NULL) {
+   if (!p_surf->video_buffer) {
       struct pipe_context *pipe = p_surf->device->context;
 
       /* try to create a video buffer if we don't already have one */

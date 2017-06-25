@@ -169,7 +169,7 @@ debug_get_bool_option(const char *name, boolean dfault)
    const char *str = os_get_option(name);
    boolean result;
 
-   if (str == NULL)
+   if (!str)
       result = dfault;
    else if (!util_strcmp(str, "n"))
       result = FALSE;

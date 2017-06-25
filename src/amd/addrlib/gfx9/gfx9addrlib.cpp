@@ -237,7 +237,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileInfo(
         pOut->baseAlign = Max(pOut->baseAlign, GetBlockSize(pIn->swizzleMode));
     }
 
-    if ((IsXor(pIn->swizzleMode) == FALSE) && (numPipeTotal > 2))
+    if (!(IsXor(pIn->swizzleMode)) && (numPipeTotal > 2))
     {
         UINT_32 additionalAlign = numPipeTotal * numCompressBlkPerMetaBlk * 2;
 
@@ -393,7 +393,7 @@ VOID Gfx9Lib::GetMetaMipInfo(
                   (mip0Height <= tailHeight) &&
                   ((dataThick == FALSE) || (mip0Depth <= tailDepth)));
 
-        if (inTail == FALSE)
+        if (!inTail)
         {
             UINT_32 orderLimit;
             UINT_32 *pMipDim;
@@ -432,12 +432,12 @@ VOID Gfx9Lib::GetMetaMipInfo(
         }
     }
 
-    if (pInfo != NULL)
+    if (pInfo)
     {
         UINT_32 mipWidth  = mip0Width;
         UINT_32 mipHeight = mip0Height;
         UINT_32 mipDepth  = mip0Depth;
-        Dim3d   mipCoord  = {0};
+        Dim3d   mipCoord = {};
 
         for (UINT_32 mip = 0; mip < numMipLevels; mip++)
         {
@@ -536,7 +536,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeDccInfo(
     {
         metaLinear = TRUE;
     }
-    else if (metaLinear == TRUE)
+    else if (metaLinear)
     {
         pipeAligned = FALSE;
     }
@@ -585,7 +585,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeDccInfo(
             if ((metaBlkDim.h < metaBlkDim.w) ||
                 ((pIn->numMipLevels > 1) && (metaBlkDim.h == metaBlkDim.w)))
             {
-                if ((dataThick == FALSE) || (metaBlkDim.h <= metaBlkDim.d))
+                if (!(dataThick) || (metaBlkDim.h <= metaBlkDim.d))
                 {
                     metaBlkDim.h <<= 1;
                 }
@@ -596,7 +596,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeDccInfo(
             }
             else
             {
-                if ((dataThick == FALSE) || (metaBlkDim.w <= metaBlkDim.d))
+                if (!(dataThick) || (metaBlkDim.w <= metaBlkDim.d))
                 {
                     metaBlkDim.w <<= 1;
                 }
@@ -687,7 +687,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeCmaskAddrFromCoord(
     ADDR2_COMPUTE_CMASK_ADDRFROMCOORD_OUTPUT*        pOut    ///< [out] output structure
     ) const
 {
-    ADDR2_COMPUTE_CMASK_INFO_INPUT input = {0};
+    ADDR2_COMPUTE_CMASK_INFO_INPUT input = {};
     input.size            = sizeof(input);
     input.cMaskFlags      = pIn->cMaskFlags;
     input.colorFlags      = pIn->colorFlags;
@@ -697,7 +697,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeCmaskAddrFromCoord(
     input.swizzleMode     = pIn->swizzleMode;
     input.resourceType    = pIn->resourceType;
 
-    ADDR2_COMPUTE_CMASK_INFO_OUTPUT output = {0};
+    ADDR2_COMPUTE_CMASK_INFO_OUTPUT output = {};
     output.size = sizeof(output);
 
     ADDR_E_RETURNCODE returnCode = ComputeCmaskInfo(&input, &output);
@@ -764,7 +764,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileAddrFromCoord(
     }
     else
     {
-        ADDR2_COMPUTE_HTILE_INFO_INPUT input = {0};
+        ADDR2_COMPUTE_HTILE_INFO_INPUT input = {};
         input.size            = sizeof(input);
         input.hTileFlags      = pIn->hTileFlags;
         input.depthFlags      = pIn->depthflags;
@@ -774,7 +774,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileAddrFromCoord(
         input.numSlices       = Max(pIn->numSlices, 1u);
         input.numMipLevels    = Max(pIn->numMipLevels, 1u);
 
-        ADDR2_COMPUTE_HTILE_INFO_OUTPUT output = {0};
+        ADDR2_COMPUTE_HTILE_INFO_OUTPUT output = {};
         output.size = sizeof(output);
 
         returnCode = ComputeHtileInfo(&input, &output);
@@ -840,7 +840,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileCoordFromAddr(
     }
     else
     {
-        ADDR2_COMPUTE_HTILE_INFO_INPUT input = {0};
+        ADDR2_COMPUTE_HTILE_INFO_INPUT input = {};
         input.size            = sizeof(input);
         input.hTileFlags      = pIn->hTileFlags;
         input.swizzleMode     = pIn->swizzleMode;
@@ -849,7 +849,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileCoordFromAddr(
         input.numSlices       = Max(pIn->numSlices, 1u);
         input.numMipLevels    = Max(pIn->numMipLevels, 1u);
 
-        ADDR2_COMPUTE_HTILE_INFO_OUTPUT output = {0};
+        ADDR2_COMPUTE_HTILE_INFO_OUTPUT output = {};
         output.size = sizeof(output);
 
         returnCode = ComputeHtileInfo(&input, &output);
@@ -912,7 +912,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeDccAddrFromCoord(
     }
     else
     {
-        ADDR2_COMPUTE_DCCINFO_INPUT input = {0};
+        ADDR2_COMPUTE_DCCINFO_INPUT input = {};
         input.size            = sizeof(input);
         input.dccKeyFlags     = pIn->dccKeyFlags;
         input.colorFlags      = pIn->colorFlags;
@@ -925,7 +925,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeDccAddrFromCoord(
         input.numFrags        = Max(pIn->numFrags, 1u);
         input.numMipLevels    = Max(pIn->numMipLevels, 1u);
 
-        ADDR2_COMPUTE_DCCINFO_OUTPUT output = {0};
+        ADDR2_COMPUTE_DCCINFO_OUTPUT output = {};
         output.size = sizeof(output);
 
         returnCode = ComputeDccInfo(&input, &output);
@@ -1376,7 +1376,7 @@ VOID Gfx9Lib::GetDataEquation(
                     (*pDataEq)[i].add(cz);
                     cz++;
                 }
-                if ((elementBytesLog2 == 0) || (elementBytesLog2 == 3))
+                if (!(elementBytesLog2) || (elementBytesLog2 == 3))
                 {
                     // add an x and z
                     (*pDataEq)[6].add(cx);
@@ -1521,7 +1521,7 @@ VOID Gfx9Lib::GetPipeEquation(
         // so we don't need to do anything
         // Note, this if condition is not necessary, since if we execute the loop when pipe==0,
         // we will get the same pipe equation
-        if (pipeStart != 0)
+        if (pipeStart)
         {
             for (UINT_32 i = 0; i < numPipeLog2; i++)
             {
@@ -1561,7 +1561,7 @@ VOID Gfx9Lib::GetPipeEquation(
             // Xor in the bits above the pipe+gpu bits
             dataEq.copy(xorMask, pipeInterleaveLog2 + pipeStart + numPipeLog2, numPipeLog2);
 
-            if ((numSamplesLog2 == 0) && (IsPrt(swizzleMode) == FALSE))
+            if (!(numSamplesLog2) && (IsPrt(swizzleMode) == FALSE))
             {
                 Coordinate co;
                 CoordEq xorMask2;
@@ -2060,7 +2060,7 @@ UINT_32 Gfx9Lib::HwlGetEquationIndex(
         index = m_equationLookupTable[rsrcTypeIdx][swModeIdx][elementBytesLog2];
     }
 
-    if (pOut->pMipInfo != NULL)
+    if (pOut->pMipInfo)
     {
         for (UINT_32 i = 0; i < pIn->numMipLevels; i++)
         {
@@ -2403,7 +2403,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeThinEquation(
                 InitChannel(&pEquation->xor1[bankStart + i], pXor1Src);
             }
 
-            if (IsPrt(swMode) == FALSE)
+            if (!IsPrt(swMode))
             {
                 for (UINT_32 i = 0; i < pipeXorBits; i++)
                 {
@@ -2933,7 +2933,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
     BOOL_32          prt         = flags.prt;
     BOOL_32          stereo      = flags.qbStereo;
 
-    if (invalid == FALSE)
+    if (!invalid)
     {
         if ((pIn->numFrags > 1) &&
             (GetBlockSize(swizzle) < (m_pipeInterleaveBytes * pIn->numFrags)))
@@ -2943,7 +2943,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
         }
     }
 
-    if (invalid == FALSE)
+    if (!invalid)
     {
         switch (rsrcType)
         {
@@ -2962,7 +2962,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
         }
     }
 
-    if (invalid == FALSE)
+    if (!invalid)
     {
         if (display)
         {
@@ -2970,7 +2970,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
         }
     }
 
-    if (invalid == FALSE)
+    if (!invalid)
     {
         if (linear)
         {
@@ -2988,7 +2988,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
                 }
             }
 
-            if (invalid == FALSE)
+            if (!invalid)
             {
                 if (IsZOrderSwizzle(swizzle))
                 {
@@ -3158,7 +3158,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
             blockSet.value = AddrBlockSetMacro;
 
             // This isn't to be used as texture and caller doesn't allow macro tiled.
-            if ((pIn->flags.texture == FALSE) &&
+            if (!(pIn->flags.texture) &&
                 (pIn->forbiddenBlock.macro4KB && pIn->forbiddenBlock.macro64KB))
             {
                 blockSet.value |= AddrBlockSetLinear;
@@ -3294,9 +3294,9 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
             }
         }
 
-        Dim3d blkAlign[AddrBlockMaxTiledType]  = {{0}, {0}, {0}};
-        Dim3d paddedDim[AddrBlockMaxTiledType] = {{0}, {0}, {0}};
-        UINT_64 padSize[AddrBlockMaxTiledType] = {0};
+        Dim3d blkAlign[AddrBlockMaxTiledType] = {};
+        Dim3d paddedDim[AddrBlockMaxTiledType] = {};
+        UINT_64 padSize[AddrBlockMaxTiledType] = {};
 
         if (blockSet.micro)
         {
@@ -3435,7 +3435,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
                 }
             }
 
-            if (blockSet.value == 0)
+            if (!blockSet.value)
             {
                 // Bad things happen, client will not get any useful information from AddrLib.
                 // Maybe we should fill in some output earlier instead of outputing nothing?
@@ -3516,7 +3516,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
                 // Post sanity check, at least AddrLib should accept the output generated by its own
                 if (pOut->swizzleMode != ADDR_SW_LINEAR)
                 {
-                    ADDR2_COMPUTE_SURFACE_INFO_INPUT localIn = {0};
+                    ADDR2_COMPUTE_SURFACE_INFO_INPUT localIn = {};
                     localIn.flags = pIn->flags;
                     localIn.swizzleMode = pOut->swizzleMode;
                     localIn.resourceType = pOut->resourceType;
@@ -3600,7 +3600,7 @@ ADDR_E_RETURNCODE Gfx9Lib::ComputeStereoInfo(
             {
                 *pHeightAlign = 1u << maxYCoordInPipeBankXor;
 
-                if (pOut->pStereoInfo != NULL)
+                if (pOut->pStereoInfo)
                 {
                     pOut->pStereoInfo->rightSwizzle = 0;
 
@@ -3662,7 +3662,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
     {
         UINT_32 pitchAlignInElement = pOut->blockWidth;
 
-        if ((IsTex2d(pIn->resourceType) == TRUE) &&
+        if ((IsTex2d(pIn->resourceType)) &&
             (pIn->flags.display || pIn->flags.rotated) &&
             (pIn->numMipLevels <= 1) &&
             (pIn->numSamples <= 1) &&
@@ -3721,7 +3721,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                 ADDR2_MIP_INFO *pMipInfo;
                 ADDR2_MIP_INFO mipInfo[4];
 
-                if (pOut->pMipInfo != NULL)
+                if (pOut->pMipInfo)
                 {
                     pMipInfo = pOut->pMipInfo;
                     numMipLevel = pIn->numMipLevels;
@@ -3744,7 +3744,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                                                     numMipLevel,
                                                     pMipInfo);
 
-                if (endingMip == 0)
+                if (!endingMip)
                 {
                     pOut->epitchIsHeight = TRUE;
                     pOut->pitch          = pMipInfo[0].pitch;
@@ -3790,13 +3790,13 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                     }
                 }
 
-                if (pOut->pMipInfo != NULL)
+                if (pOut->pMipInfo)
                 {
                     UINT_32 elementBytesLog2 = Log2(pIn->bpp >> 3);
 
                     for (UINT_32 i = 0; i < pIn->numMipLevels; i++)
                     {
-                        Dim3d   mipStartPos          = {0};
+                        Dim3d   mipStartPos = {};
                         UINT_32 mipTailOffsetInBytes = 0;
 
                         mipStartPos = GetMipStartPos(pIn->resourceType,
@@ -3825,7 +3825,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                     }
                 }
             }
-            else if (pOut->pMipInfo != NULL)
+            else if (pOut->pMipInfo)
             {
                 pOut->pMipInfo[0].pitch = pOut->pitch;
                 pOut->pMipInfo[0].height = pOut->height;
@@ -3890,7 +3890,7 @@ UINT_32 Gfx9Lib::GetMipChainInfo(
     {
         if (inTail)
         {
-            if (finalDim == FALSE)
+            if (!finalDim)
             {
                 UINT_32 mipSize;
 
@@ -4168,7 +4168,7 @@ Dim3d Gfx9Lib::GetMipStartPos(
     UINT_32           log2ElementBytes,
     UINT_32*          pMipTailBytesOffset) const
 {
-    Dim3d       mipStartPos = {0};
+    Dim3d       mipStartPos = {};
     const Dim3d tailMaxDim  = GetMipTailDim(resourceType, swizzleMode, blockWidth, blockHeight, blockDepth);
 
     // Report mip in tail if Mip0 is already in mip tail
@@ -4176,7 +4176,7 @@ Dim3d Gfx9Lib::GetMipStartPos(
     UINT_32 log2blkSize    = GetBlockSizeLog2(swizzleMode);
     UINT_32 mipIndexInTail = mipId;
 
-    if (inMipTail == FALSE)
+    if (!inMipTail)
     {
         // Mip 0 dimension, unit in block
         UINT_32 mipWidthInBlk   = width  / blockWidth;
@@ -4225,7 +4225,7 @@ Dim3d Gfx9Lib::GetMipStartPos(
             {
                 UINT_32 dim = log2blkSize % 3;
 
-                if (dim == 0)
+                if (!dim)
                 {
                     inTail =
                         (mipWidthInBlk <= 2) && (mipHeightInBlk == 1) && (mipDepthInBlk <= 2);
@@ -4297,7 +4297,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceAddrFromCoordTiled(
      ADDR2_COMPUTE_SURFACE_ADDRFROMCOORD_OUTPUT*      pOut    ///< [out] output structure
      ) const
 {
-    ADDR2_COMPUTE_SURFACE_INFO_INPUT localIn = {0};
+    ADDR2_COMPUTE_SURFACE_INFO_INPUT localIn = {};
     localIn.swizzleMode  = pIn->swizzleMode;
     localIn.flags        = pIn->flags;
     localIn.resourceType = pIn->resourceType;
@@ -4313,7 +4313,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceAddrFromCoordTiled(
         localIn.pitchInElement = pIn->pitchInElement;
     }
 
-    ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {0};
+    ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {};
     ADDR_E_RETURNCODE returnCode = ComputeSurfaceInfoTiled(&localIn, &localOut);
 
     BOOL_32 valid = (returnCode == ADDR_OK) &&
@@ -4324,7 +4324,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceAddrFromCoordTiled(
     if (valid)
     {
         UINT_32 log2ElementBytes   = Log2(pIn->bpp >> 3);
-        Dim3d   mipStartPos        = {0};
+        Dim3d   mipStartPos = {};
         UINT_32 mipTailBytesOffset = 0;
 
         if (pIn->numMipLevels > 1)
@@ -4359,7 +4359,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceAddrFromCoordTiled(
             if (IsZOrderSwizzle(pIn->swizzleMode))
             {
                 // Morton generation
-                if ((log2ElementBytes == 0) || (log2ElementBytes == 2))
+                if (!(log2ElementBytes) || (log2ElementBytes == 2))
                 {
                     UINT_32 totalLowBits = 6 - log2ElementBytes;
                     UINT_32 mortBits = totalLowBits / 2;

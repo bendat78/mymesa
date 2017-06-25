@@ -182,7 +182,7 @@ NineSwapChain9_Resize( struct NineSwapChain9 *This,
         pParams->FullScreen_RefreshRateInHz,
         pParams->PresentationInterval);
 
-    if (pParams->BackBufferCount == 0) {
+    if (!pParams->BackBufferCount) {
         pParams->BackBufferCount = 1;
     }
 
@@ -195,7 +195,7 @@ NineSwapChain9_Resize( struct NineSwapChain9 *This,
     if (This->desired_fences > DRI_SWAP_FENCES_MAX)
         This->desired_fences = DRI_SWAP_FENCES_MAX;
 
-    if (This->actx->vblank_mode == 0)
+    if (!This->actx->vblank_mode)
         pParams->PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
     else if (This->actx->vblank_mode == 3)
         pParams->PresentationInterval = D3DPRESENT_INTERVAL_ONE;
@@ -419,7 +419,7 @@ swap_fences_pop_front(struct NineSwapChain9 *This)
     struct pipe_screen *screen = This->screen;
     struct pipe_fence_handle *fence = NULL;
 
-    if (This->desired_fences == 0)
+    if (!This->desired_fences)
         return NULL;
 
     if (This->cur_fences >= This->desired_fences) {
@@ -444,7 +444,7 @@ swap_fences_see_front(struct NineSwapChain9 *This)
     struct pipe_screen *screen = This->screen;
     struct pipe_fence_handle *fence = NULL;
 
-    if (This->desired_fences == 0)
+    if (!This->desired_fences)
         return NULL;
 
     if (This->cur_fences >= This->desired_fences) {

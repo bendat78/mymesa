@@ -117,11 +117,11 @@ OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
       goto error_arrays;
 
    comp->name_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->name_specific[0] == NULL)
+   if (!comp->name_specific[0])
       goto error_specific;
 
    comp->role_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-   if (comp->role_specific[0] == NULL)
+   if (!comp->role_specific[0])
       goto error_specific;
 
    strcpy(comp->name, OMX_VID_ENC_BASE_NAME);
@@ -472,7 +472,7 @@ static OMX_ERRORTYPE vid_enc_GetParameter(OMX_HANDLETYPE handle, OMX_INDEXTYPE i
 
       if (format->nPortIndex > 1)
          return OMX_ErrorBadPortIndex;
-      if (format->nIndex >= 1)
+      if (format->nIndex)
          return OMX_ErrorNoMore;
 
       port = (omx_base_video_PortType *)priv->ports[format->nPortIndex];
@@ -1152,7 +1152,7 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
    if (!task)
       return OMX_ErrorInsufficientResources;
 
-   if (buf->nFilledLen == 0) {
+   if (!buf->nFilledLen) {
       if (buf->nFlags & OMX_BUFFERFLAG_EOS) {
          buf->nFilledLen = buf->nAllocLen;
          enc_ClearBframes(port, inp);

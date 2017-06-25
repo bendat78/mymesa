@@ -195,7 +195,7 @@ brw_search_cache(struct brw_cache *cache,
 
    item = search_cache(cache, hash, &lookup);
 
-   if (item == NULL)
+   if (!item)
       return false;
 
    void *aux = ((char *) item->key) + item->key_size;
@@ -223,7 +223,7 @@ brw_cache_new_bo(struct brw_cache *cache, uint32_t new_size)
       llc_map = brw_bo_map(brw, new_bo, MAP_READ | MAP_ASYNC);
 
    /* Copy any existing data that needs to be saved. */
-   if (cache->next_offset != 0) {
+   if (cache->next_offset) {
       if (brw->has_llc) {
          memcpy(llc_map, cache->map, cache->next_offset);
       } else {

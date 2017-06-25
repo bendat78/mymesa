@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -50,7 +50,7 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   void *dst, int dst_stride)
 {
-   if (dst_stride == 0)
+   if (!dst_stride)
       dst_stride = util_format_get_stride(pt->resource->format, w);
 
    if (u_clip_tile(x, y, &w, &h, &pt->box))
@@ -71,7 +71,7 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
 {
    enum pipe_format format = pt->resource->format;
 
-   if (src_stride == 0)
+   if (!src_stride)
       src_stride = util_format_get_stride(format, w);
 
    if (u_clip_tile(x, y, &w, &h, &pt->box))

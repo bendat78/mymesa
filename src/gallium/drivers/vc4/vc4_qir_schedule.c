@@ -642,7 +642,7 @@ schedule_instructions(struct vc4_compile *c,
         /* Remove non-DAG heads from the list. */
         list_for_each_entry_safe(struct schedule_node, n,
                                  &state->worklist, link) {
-                if (n->parent_count != 0)
+                if (n->parent_count)
                         list_del(&n->link);
         }
 
@@ -679,7 +679,7 @@ schedule_instructions(struct vc4_compile *c,
                                                      latency_between(child,
                                                                      chosen));
                         child->parent_count--;
-                        if (child->parent_count == 0)
+                        if (!child->parent_count)
                                 list_add(&child->link, &state->worklist);
                 }
 
@@ -690,7 +690,7 @@ schedule_instructions(struct vc4_compile *c,
                 }
                 if (inst->dst.file == QFILE_TEMP) {
                         state->temp_writes[inst->dst.index]--;
-                        if (state->temp_writes[inst->dst.index] == 0)
+                        if (!state->temp_writes[inst->dst.index])
                                 BITSET_CLEAR(state->temp_live, inst->dst.index);
                 }
 
@@ -703,7 +703,7 @@ qir_schedule_instructions_block(struct vc4_compile *c,
                                 struct qblock *block)
 {
         void *mem_ctx = ralloc_context(NULL);
-        struct schedule_state state = { { 0 } };
+        struct schedule_state state = {};
 
         state.temp_writes = rzalloc_array(mem_ctx, uint32_t, c->num_temps);
         state.temp_live = rzalloc_array(mem_ctx, BITSET_WORD,

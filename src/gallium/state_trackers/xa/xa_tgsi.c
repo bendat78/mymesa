@@ -272,7 +272,7 @@ create_vs(struct pipe_context *pipe, unsigned vs_traits)
     unsigned input_slot = 0;
 
     ureg = ureg_create(PIPE_SHADER_VERTEX);
-    if (ureg == NULL)
+    if (!ureg)
 	return 0;
 
     const0 = ureg_DECL_constant(ureg, 0);
@@ -444,7 +444,7 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
     struct ureg_src /*dst_pos, */ src_input, mask_pos;
     struct ureg_dst src, mask;
     struct ureg_dst out;
-    struct ureg_src imm0 = { 0 };
+    struct ureg_src imm0 = {};
     unsigned has_mask = (fs_traits & FS_MASK) != 0;
     unsigned is_fill = (fs_traits & FS_FILL) != 0;
     unsigned is_composite = (fs_traits & FS_COMPOSITE) != 0;
@@ -470,7 +470,7 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
 #endif
 
     ureg = ureg_create(PIPE_SHADER_FRAGMENT);
-    if (ureg == NULL)
+    if (!ureg)
 	return 0;
 
     /* it has to be either a fill, a composite op or a yuv conversion */

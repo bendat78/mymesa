@@ -414,7 +414,7 @@ emit_op4(struct svga_shader_emitter *emit,
  * Apply the absolute value modifier to the given src_register, returning
  * a new src_register.
  */
-static struct src_register 
+static struct src_register
 absolute(struct src_register src)
 {
    src.base.srcMod = SVGA3DSRCMOD_ABS;
@@ -426,7 +426,7 @@ absolute(struct src_register src)
  * Apply the negation modifier to the given src_register, returning
  * a new src_register.
  */
-static struct src_register 
+static struct src_register
 negate(struct src_register src)
 {
    switch (src.base.srcMod) {
@@ -3176,7 +3176,7 @@ emit_ps_postamble(struct svga_shader_emitter *emit)
     * redirect the main program to a temporary and then only touch
     * oDepth with a hand-crafted MOV below.
     */
-   if (SVGA3dShaderGetRegType(emit->true_pos.value) != 0) {
+   if (SVGA3dShaderGetRegType(emit->true_pos.value)) {
       if (!submit_op1( emit,
                        inst_token(SVGA3DOP_MOV),
                        emit->true_pos,
@@ -3185,7 +3185,7 @@ emit_ps_postamble(struct svga_shader_emitter *emit)
    }
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      if (SVGA3dShaderGetRegType(emit->true_color_output[i].value) != 0) {
+      if (SVGA3dShaderGetRegType(emit->true_color_output[i].value)) {
          /* Potentially override output colors with white for XOR
           * logicop workaround.
           */
@@ -3233,7 +3233,7 @@ emit_vs_postamble(struct svga_shader_emitter *emit)
     * just to redirect the main program to a temporary and then only
     * touch PSIZ with a hand-crafted MOV below.
     */
-   if (SVGA3dShaderGetRegType(emit->true_psiz.value) != 0) {
+   if (SVGA3dShaderGetRegType(emit->true_psiz.value)) {
       if (!submit_op1( emit,
                        inst_token(SVGA3DOP_MOV),
                        emit->true_psiz,
@@ -3346,7 +3346,7 @@ emit_light_twoside(struct svga_shader_emitter *emit)
    unsigned i;
    SVGA3dShaderInstToken if_token;
 
-   if (count == 0)
+   if (!count)
       return TRUE;
 
    vface = get_vface( emit );
@@ -3496,7 +3496,7 @@ emit_adjusted_vertex_attribs(struct svga_shader_emitter *emit)
 {
    unsigned adjust_mask = (emit->key.vs.adjust_attrib_range |
                            emit->key.vs.adjust_attrib_w_1);
- 
+
    while (adjust_mask) {
       /* Adjust vertex attrib range and/or set W component = 1 */
       const unsigned index = u_bit_scan(&adjust_mask);
@@ -3621,7 +3621,7 @@ needs_to_create_common_immediate(const struct svga_shader_emitter *emit)
       }
    }
    else if (emit->unit == PIPE_SHADER_VERTEX) {
-      if (emit->info.opcode_count[TGSI_OPCODE_CMP] >= 1)
+      if (emit->info.opcode_count[TGSI_OPCODE_CMP])
          return TRUE;
       if (emit->key.vs.adjust_attrib_range ||
           emit->key.vs.adjust_attrib_w_1)

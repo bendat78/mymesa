@@ -150,7 +150,7 @@ _mesa_GetFirstPerfQueryIdINTEL(GLuint *queryId)
     *    queries, then the value of 0 is returned and INVALID_OPERATION error
     *    is raised."
     */
-   if (numQueries == 0) {
+   if (!numQueries) {
       *queryId = 0;
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetFirstPerfQueryIdINTEL(no queries supported)");
@@ -427,7 +427,7 @@ _mesa_CreatePerfQueryINTEL(GLuint queryId, GLuint *queryHandle)
    /* This is not specified in the extension, but is the only sane thing to
     * do.
     */
-   if (queryHandle == NULL) {
+   if (!queryHandle) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCreatePerfQueryINTEL(queryHandle == NULL)");
       return;
@@ -447,7 +447,7 @@ _mesa_CreatePerfQueryINTEL(GLuint queryId, GLuint *queryHandle)
    }
 
    obj = ctx->Driver.NewPerfQueryObject(ctx, queryid_to_index(queryId));
-   if (obj == NULL) {
+   if (!obj) {
       _mesa_error_no_memory(__func__);
       return;
    }
@@ -472,7 +472,7 @@ _mesa_DeletePerfQueryINTEL(GLuint queryHandle)
     *    "If a query handle doesn't reference a previously created performance
     *    query instance, an INVALID_VALUE error is generated."
     */
-   if (obj == NULL) {
+   if (!obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glDeletePerfQueryINTEL(invalid queryHandle)");
       return;
@@ -507,7 +507,7 @@ _mesa_BeginPerfQueryINTEL(GLuint queryHandle)
     *    "If a query handle doesn't reference a previously created performance
     *    query instance, an INVALID_VALUE error is generated."
     */
-   if (obj == NULL) {
+   if (!obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glBeginPerfQueryINTEL(invalid queryHandle)");
       return;
@@ -556,7 +556,7 @@ _mesa_EndPerfQueryINTEL(GLuint queryHandle)
    struct gl_perf_query_object *obj = lookup_object(ctx, queryHandle);
 
    /* Not explicitly covered in the spec, but for consistency... */
-   if (obj == NULL) {
+   if (!obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glEndPerfQueryINTEL(invalid queryHandle)");
       return;
@@ -589,7 +589,7 @@ _mesa_GetPerfQueryDataINTEL(GLuint queryHandle, GLuint flags,
    struct gl_perf_query_object *obj = lookup_object(ctx, queryHandle);
 
    /* Not explicitly covered in the spec, but for consistency... */
-   if (obj == NULL) {
+   if (!obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glEndPerfQueryINTEL(invalid queryHandle)");
       return;

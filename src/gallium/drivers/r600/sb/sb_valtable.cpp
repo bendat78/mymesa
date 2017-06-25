@@ -406,7 +406,7 @@ unsigned sb_bitset::find_bit(unsigned start) {
 
 	while (w < sz) {
 		basetype d = data[w] >> b;
-		if (d != 0) {
+		if (d) {
 			unsigned pos = __builtin_ctz(d) + b + w * bt_bits;
 			return pos;
 		}
@@ -539,7 +539,7 @@ bool ra_constraint::check() {
 		if (!v->gpr)
 			return false;
 
-		if (reg == 0)
+		if (!reg)
 			reg = v->gpr.sel() + 1;
 		else if (reg != v->gpr.sel() + 1)
 			return false;

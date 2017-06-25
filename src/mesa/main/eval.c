@@ -325,7 +325,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    }
 
    k = _mesa_evaluator_components( target );
-   if (k == 0) {
+   if (!k) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
       return;
    }
@@ -335,7 +335,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
       return;
    }
 
-   if (ctx->Texture.CurrentUnit != 0) {
+   if (ctx->Texture.CurrentUnit) {
       /* See OpenGL 1.2.1 spec, section F.2.13 */
       _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE != 0)" );
       return;
@@ -414,7 +414,7 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    }
 
    k = _mesa_evaluator_components( target );
-   if (k==0) {
+   if (!k) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
       return;
    }
@@ -428,7 +428,7 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
       return;
    }
 
-   if (ctx->Texture.CurrentUnit != 0) {
+   if (ctx->Texture.CurrentUnit) {
       /* See OpenGL 1.2.1 spec, section F.2.13 */
       _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE != 0)" );
       return;
@@ -480,7 +480,7 @@ _mesa_Map2d( GLenum target,
              GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
              const GLdouble *points )
 {
-   map2(target, (GLfloat) u1, (GLfloat) u2, ustride, uorder, 
+   map2(target, (GLfloat) u1, (GLfloat) u2, ustride, uorder,
 	(GLfloat) v1, (GLfloat) v2, vstride, vorder, points, GL_DOUBLE);
 }
 
@@ -815,7 +815,7 @@ void GLAPIENTRY
 _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
                  GLint vn, GLdouble v1, GLdouble v2 )
 {
-   _mesa_MapGrid2f( un, (GLfloat) u1, (GLfloat) u2, 
+   _mesa_MapGrid2f( un, (GLfloat) u1, (GLfloat) u2,
 		    vn, (GLfloat) v1, (GLfloat) v2 );
 }
 
@@ -856,7 +856,7 @@ init_1d_map( struct gl_1d_map *map, int n, const float *initial )
 
 
 /**
- * Initialize a 2-D evaluator map 
+ * Initialize a 2-D evaluator map
  */
 static void
 init_2d_map( struct gl_2d_map *map, int n, const float *initial )

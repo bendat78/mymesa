@@ -134,8 +134,8 @@ fs_visitor::opt_peephole_sel()
       if (if_inst->opcode != BRW_OPCODE_IF)
          continue;
 
-      fs_inst *else_mov[MAX_MOVS] = { NULL };
-      fs_inst *then_mov[MAX_MOVS] = { NULL };
+      fs_inst *else_mov[MAX_MOVS] = {};
+      fs_inst *then_mov[MAX_MOVS] = {};
 
       bblock_t *then_block = block->next();
       bblock_t *else_block = NULL;
@@ -147,12 +147,12 @@ fs_visitor::opt_peephole_sel()
             break;
          }
       }
-      if (else_block == NULL)
+      if (!else_block)
          continue;
 
       int movs = count_movs_from_if(then_mov, else_mov, then_block, else_block);
 
-      if (movs == 0)
+      if (!movs)
          continue;
 
       /* Generate SEL instructions for pairs of MOVs to a common destination. */
@@ -180,7 +180,7 @@ fs_visitor::opt_peephole_sel()
          }
       }
 
-      if (movs == 0)
+      if (!movs)
          continue;
 
       for (int i = 0; i < movs; i++) {

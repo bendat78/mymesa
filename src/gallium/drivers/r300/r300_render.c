@@ -354,7 +354,7 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
     unsigned stride[PIPE_MAX_ATTRIBS];
 
     /* Mapped vertex buffers. */
-    uint32_t* map[PIPE_MAX_ATTRIBS] = {0};
+    uint32_t* map[PIPE_MAX_ATTRIBS] = {};
     uint32_t* mapelem[PIPE_MAX_ATTRIBS];
 
     CS_LOCALS(r300);
@@ -802,7 +802,7 @@ static void r300_draw_vbo(struct pipe_context* pipe,
            return;
         }
 
-        if (max_count == ~0) {
+        if (max_count == (~0u)) {
            /* There are no per-vertex vertex elements. Use the hardware maximum. */
            max_count = 0xffffff;
         }

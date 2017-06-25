@@ -399,7 +399,7 @@ one_time_init( struct gl_context *ctx )
       atexit(one_time_fini);
 
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
-      if (MESA_VERBOSE != 0) {
+      if (MESA_VERBOSE) {
          _mesa_debug(ctx, "Mesa %s DEBUG build %s %s\n",
                      PACKAGE_VERSION, __DATE__, __TIME__);
       }

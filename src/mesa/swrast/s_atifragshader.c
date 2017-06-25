@@ -267,7 +267,7 @@ handle_sample_op(struct gl_context * ctx, struct atifs_machine *machine,
 /* sample from unit idx using texinst->src as coords */
    GLuint swizzle = texinst->swizzle;
    GLuint coord_source = texinst->src;
-   GLfloat tex_coords[4] = { 0 };
+   GLfloat tex_coords[4] = {};
 
    if (coord_source >= GL_TEXTURE0_ARB && coord_source <= GL_TEXTURE7_ARB) {
       coord_source -= GL_TEXTURE0_ARB;
@@ -525,7 +525,7 @@ execute_shader(struct gl_context *ctx, const struct ati_fragment_shader *shader,
 	       dstreg = inst->DstReg[optype].Index;
 	       dstp = machine->Registers[dstreg - GL_REG_0_ATI];
 
-	       if ((optype == 0) || ((inst->Opcode[1] != GL_DOT2_ADD_ATI) &&
+	       if (!(optype) || ((inst->Opcode[1] != GL_DOT2_ADD_ATI) &&
 		  (inst->Opcode[1] != GL_DOT3_ATI) && (inst->Opcode[1] != GL_DOT4_ATI)))
 	          write_dst_addr(optype, inst->DstReg[optype].dstMod,
 			      inst->DstReg[optype].dstMask, dst[optype],

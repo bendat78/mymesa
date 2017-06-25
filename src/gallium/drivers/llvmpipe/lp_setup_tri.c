@@ -128,7 +128,7 @@ lp_setup_print_vertex(struct lp_setup_context *setup,
       const float *in = v[key->inputs[i].src_index];
 
       debug_printf("  in[%d] (%s[%d]) %s%s%s%s ",
-                   i, 
+                   i,
                    name, key->inputs[i].src_index,
                    (key->inputs[i].usage_mask & 0x1) ? "x" : " ",
                    (key->inputs[i].usage_mask & 0x2) ? "y" : " ",
@@ -163,7 +163,7 @@ lp_setup_print_triangle(struct lp_setup_context *setup,
 
       /* det = cross(e,f).z */
       const float det = ex * fy - ey * fx;
-      if (det < 0.0f) 
+      if (det < 0.0f)
          debug_printf("   - ccw\n");
       else if (det > 0.0f)
          debug_printf("   - cw\n");
@@ -249,7 +249,7 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
    } else {
       LP_COUNT(nr_shade_64);
       return lp_scene_bin_cmd_with_state( scene, tx, ty,
-                                          setup->fs.stored, 
+                                          setup->fs.stored,
                                           LP_RAST_OP_SHADE_TILE,
                                           lp_rast_arg_inputs(inputs) );
    }
@@ -595,7 +595,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       plane[0].dcdx = position->dy01;
       plane[1].dcdx = position->y[1] - position->y[2];
       plane[2].dcdx = position->dy20;
-  
+
       for (i = 0; i < 3; i++) {
          /* half-edge constants, will be iterated over the whole render
           * target.
@@ -609,8 +609,8 @@ do_triangle_ccw(struct lp_setup_context *setup,
             /* both fill conventions want this - adjust for left edges */
             plane[i].c++;
          }
-         else if (plane[i].dcdx == 0) {
-            if (setup->bottom_edge_rule == 0){
+         else if (!plane[i].dcdx) {
+            if (!setup->bottom_edge_rule){
                /* correct for top-left fill convention:
                 */
                if (plane[i].dcdy > 0) plane[i].c++;
@@ -661,7 +661,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    }
 
 
-   /* 
+   /*
     * When rasterizing scissored tris, use the intersection of the
     * triangle bounding box and the scissor rect to generate the
     * scissor planes.
@@ -674,7 +674,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
     * It's not really clear if it's worth worrying about these tails,
     * but since we generate the planes for each scissored tri, it's
     * free to trim them in this case.
-    * 
+    *
     * Note that otherwise, the scissor planes only vary in 'C' value,
     * and even then only on state-changes.  Could alternatively store
     * these planes elsewhere.
@@ -725,11 +725,11 @@ do_triangle_ccw(struct lp_setup_context *setup,
  *
  * Undefined if no bit set exists, so code should check against 0 first.
  */
-static inline uint32_t 
+static inline uint32_t
 floor_pot(uint32_t n)
 {
 #if defined(PIPE_CC_GCC) && (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64))
-   if (n == 0)
+   if (!n)
       return 0;
 
    __asm__("bsr %1,%0"
@@ -756,7 +756,7 @@ lp_setup_bin_triangle(struct lp_setup_context *setup,
                       unsigned viewport_index)
 {
    struct lp_scene *scene = setup->scene;
-   struct u_rect trimmed_box = *bbox;   
+   struct u_rect trimmed_box = *bbox;
    int i;
    /* What is the largest power-of-two boundary this triangle crosses:
     */
@@ -839,7 +839,7 @@ lp_setup_bin_triangle(struct lp_setup_context *setup,
                                                 lp_rast_arg_triangle_contained(tri, px, py) );
          }
       }
-      else if (nr_planes == 4 && sz < 16) 
+      else if (nr_planes == 4 && sz < 16)
       {
          px = MIN2(px, TILE_SIZE - 16);
          py = MIN2(py, TILE_SIZE - 16);
@@ -878,14 +878,14 @@ lp_setup_bin_triangle(struct lp_setup_context *setup,
       int iy0 = trimmed_box.y0 / TILE_SIZE;
       int ix1 = trimmed_box.x1 / TILE_SIZE;
       int iy1 = trimmed_box.y1 / TILE_SIZE;
-      
+
       for (i = 0; i < nr_planes; i++) {
-         c[i] = (plane[i].c + 
+         c[i] = (plane[i].c +
                  IMUL64(plane[i].dcdy, iy0) * TILE_SIZE -
                  IMUL64(plane[i].dcdx, ix0) * TILE_SIZE);
 
-         ei[i] = (plane[i].dcdy - 
-                  plane[i].dcdx - 
+         ei[i] = (plane[i].dcdy -
+                  plane[i].dcdx -
                   (int64_t)plane[i].eo) << TILE_ORDER;
 
          eo[i] = (int64_t)plane[i].eo << TILE_ORDER;
@@ -932,7 +932,7 @@ lp_setup_bin_triangle(struct lp_setup_context *setup,
                 */
                int count = util_bitcount(partial);
                in = TRUE;
-               
+
                if (!lp_scene_bin_cmd_with_state( scene, x, y,
                                                  setup->fs.stored,
                                                  use_32bits ?
@@ -1204,7 +1204,7 @@ static void triangle_nop( struct lp_setup_context *setup,
 }
 
 
-void 
+void
 lp_setup_choose_triangle( struct lp_setup_context *setup )
 {
    switch (setup->cullmode) {

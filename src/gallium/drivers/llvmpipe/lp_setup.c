@@ -268,7 +268,7 @@ begin_binning( struct lp_setup_context *setup )
 
 
 /* This basically bins and then flushes any outstanding full-screen
- * clears.  
+ * clears.
  *
  * TODO: fast path for fullscreen clears and no triangles.
  */
@@ -296,7 +296,7 @@ set_scene_state( struct lp_setup_context *setup,
 
    if (old_state == new_state)
       return TRUE;
-   
+
    if (LP_DEBUG & DEBUG_SCENE) {
       debug_printf("%s old %s new %s%s%s\n",
                    __FUNCTION__,
@@ -311,7 +311,7 @@ set_scene_state( struct lp_setup_context *setup,
 
    /* wait for a free/empty scene
     */
-   if (old_state == SETUP_FLUSHED) 
+   if (old_state == SETUP_FLUSHED)
       lp_setup_get_empty_scene(setup);
 
    switch (new_state) {
@@ -575,7 +575,7 @@ lp_setup_clear( struct lp_setup_context *setup,
 
 
 
-void 
+void
 lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              unsigned cull_mode,
                              boolean ccw_is_frontface,
@@ -597,7 +597,7 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
    }
 }
 
-void 
+void
 lp_setup_set_line_state( struct lp_setup_context *setup,
 			 float line_width)
 {
@@ -606,7 +606,7 @@ lp_setup_set_line_state( struct lp_setup_context *setup,
    setup->line_width = line_width;
 }
 
-void 
+void
 lp_setup_set_point_state( struct lp_setup_context *setup,
                           float point_size,
                           boolean point_size_per_vertex,
@@ -626,7 +626,7 @@ lp_setup_set_setup_variant( struct lp_setup_context *setup,
 			    const struct lp_setup_variant *variant)
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
-   
+
    setup->setup.variant = variant;
 }
 
@@ -723,7 +723,7 @@ lp_setup_set_scissors( struct lp_setup_context *setup,
 }
 
 
-void 
+void
 lp_setup_set_flatshade_first( struct lp_setup_context *setup,
                               boolean flatshade_first )
 {
@@ -740,7 +740,7 @@ lp_setup_set_rasterizer_discard( struct lp_setup_context *setup,
    }
 }
 
-void 
+void
 lp_setup_set_vertex_info( struct lp_setup_context *setup,
                           struct vertex_info *vertex_info )
 {
@@ -1139,7 +1139,7 @@ try_update_scene_state( struct lp_setup_context *setup )
                  sizeof setup->fs.current) != 0)
       {
          struct lp_rast_state *stored;
-         
+
          /* The fs state that's been stored in the scene is different from
           * the new, current state.  So allocate a new lp_rast_state object
           * and append it to the bin's setup data buffer.
@@ -1154,7 +1154,7 @@ try_update_scene_state( struct lp_setup_context *setup )
                 &setup->fs.current,
                 sizeof setup->fs.current);
          setup->fs.stored = stored;
-         
+
          /* The scene now references the textures in the rasterization
           * state record.  Note that now.
           */
@@ -1210,7 +1210,7 @@ lp_setup_update_state( struct lp_setup_context *setup,
 
       assert(setup->setup.variant);
 
-      /* Will probably need to move this somewhere else, just need  
+      /* Will probably need to move this somewhere else, just need
        * to know about vertex shader point size attribute.
        */
       setup->psize_slot = lp->psize_slot;
@@ -1220,7 +1220,7 @@ lp_setup_update_state( struct lp_setup_context *setup,
 
       assert(lp->dirty == 0);
 
-      assert(lp->setup_variant.key.size == 
+      assert(lp->setup_variant.key.size ==
 	     setup->setup.variant->key.size);
 
       assert(memcmp(&lp->setup_variant.key,
@@ -1266,7 +1266,7 @@ lp_setup_update_state( struct lp_setup_context *setup,
 
 /* Only caller is lp_setup_vbuf_destroy()
  */
-void 
+void
 lp_setup_destroy( struct lp_setup_context *setup )
 {
    uint i;
@@ -1318,7 +1318,7 @@ lp_setup_create( struct pipe_context *pipe,
    }
 
    lp_setup_init_vbuf(setup);
-   
+
    /* Used only in update_state():
     */
    setup->pipe = pipe;
@@ -1344,7 +1344,7 @@ lp_setup_create( struct pipe_context *pipe,
    setup->triangle = first_triangle;
    setup->line     = first_line;
    setup->point    = first_point;
-   
+
    setup->dirty = ~0;
 
    /* Initialize empty default fb correctly, so the rect is empty */
@@ -1493,7 +1493,7 @@ lp_setup_flush_and_restart(struct lp_setup_context *setup)
 
    if (!set_scene_state(setup, SETUP_FLUSHED, __FUNCTION__))
       return FALSE;
-   
+
    if (!lp_setup_update_state(setup, TRUE))
       return FALSE;
 

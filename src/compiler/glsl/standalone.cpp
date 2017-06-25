@@ -78,7 +78,7 @@ public:
       /* If a variable is dereferenced at all, remove it from the set of
        * variables that are candidates for removal.
        */
-      if (entry != NULL)
+      if (entry)
          _mesa_set_remove(variables, entry);
 
       return visit_continue;
@@ -347,7 +347,7 @@ load_text_file(void *ctx, const char *file_name)
    fseek(fp, 0L, SEEK_SET);
 
    text = (char *) ralloc_size(ctx, size + 1);
-   if (text != NULL) {
+   if (text) {
       do {
          size_t bytes = fread(text + total_read,
                1, size - total_read, fp);
@@ -357,7 +357,7 @@ load_text_file(void *ctx, const char *file_name)
             goto error;
          }
 
-         if (bytes == 0) {
+         if (!bytes) {
             break;
          }
 
@@ -478,7 +478,7 @@ standalone_compile_shader(const struct standalone_options *_options,
       shader->Stage = _mesa_shader_enum_to_shader_stage(shader->Type);
 
       shader->Source = load_text_file(whole_program, files[i]);
-      if (shader->Source == NULL) {
+      if (!shader->Source) {
          printf("File \"%s\" does not exist.\n", files[i]);
          exit(EXIT_FAILURE);
       }
@@ -520,7 +520,7 @@ standalone_compile_shader(const struct standalone_options *_options,
          /* Par-linking can fail, for example, if there are undefined external
           * references.
           */
-         if (whole_program->_LinkedShaders[stage] != NULL) {
+         if (whole_program->_LinkedShaders[stage]) {
             assert(whole_program->data->LinkStatus);
 
             struct gl_shader_compiler_options *const compiler_options =

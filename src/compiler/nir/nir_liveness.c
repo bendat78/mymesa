@@ -90,7 +90,7 @@ set_src_live(nir_src *src, void *void_live)
    if (!src->is_ssa)
       return true;
 
-   if (src->ssa->live_index == 0)
+   if (!src->ssa->live_index)
       return true;   /* undefined variables are never live */
 
    BITSET_SET(live, src->ssa->live_index);

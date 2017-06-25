@@ -184,7 +184,7 @@ emit_hw_gs(struct svga_context *svga, unsigned dirty)
       assert(svga->curr.gs);
 
    if (!gs) {
-      if (svga->state.hw_draw.gs != NULL) {
+      if (svga->state.hw_draw.gs) {
 
          /** The previous geometry shader is made inactive.
           *  Needs to unbind the geometry shader.

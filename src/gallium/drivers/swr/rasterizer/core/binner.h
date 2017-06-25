@@ -46,7 +46,7 @@ static const simd16scalar g_pixelOffsets_simd16[SWR_PIXEL_LOCATION_UL + 1] =
 
 #endif
 //////////////////////////////////////////////////////////////////////////
-/// @brief Convert the X,Y coords of a triangle to the requested Fixed 
+/// @brief Convert the X,Y coords of a triangle to the requested Fixed
 /// Point precision from FP32.
 template <typename PT = FixedPointTraits<Fixed_16_8>>
 INLINE simdscalari fpToFixedPointVertical(const simdscalar vIn)
@@ -65,7 +65,7 @@ INLINE simd16scalari fpToFixedPointVertical(const simd16scalar vIn)
 
 #endif
 //////////////////////////////////////////////////////////////////////////
-/// @brief Helper function to set the X,Y coords of a triangle to the 
+/// @brief Helper function to set the X,Y coords of a triangle to the
 /// requested Fixed Point precision from FP32.
 /// @param tri: simdvector[3] of FP triangle verts
 /// @param vXi: fixed point X coords of tri verts
@@ -98,7 +98,7 @@ INLINE static void FPToFixedPoint(const simd16vector * const tri, simd16scalari(
 /// @param vX: fixed point X position for triangle verts
 /// @param vY: fixed point Y position for triangle verts
 /// @param bbox: fixed point bbox
-/// *Note*: expects vX, vY to be in the correct precision for the type 
+/// *Note*: expects vX, vY to be in the correct precision for the type
 /// of rasterization. This avoids unnecessary FP->fixed conversions.
 template <typename CT>
 INLINE void calcBoundingBoxIntVertical(const simdvector * const tri, simdscalari(&vX)[3], simdscalari(&vY)[3], simdBBox &bbox)

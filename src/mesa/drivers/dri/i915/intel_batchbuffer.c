@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "intel_context.h"
@@ -47,7 +47,7 @@ intel_batchbuffer_init(struct intel_context *intel)
 static void
 intel_batchbuffer_reset(struct intel_context *intel)
 {
-   if (intel->batch.last_bo != NULL) {
+   if (intel->batch.last_bo) {
       drm_intel_bo_unreference(intel->batch.last_bo);
       intel->batch.last_bo = NULL;
    }
@@ -80,7 +80,7 @@ do_batch_dump(struct intel_context *intel)
       return;
 
    ret = drm_intel_bo_map(batch->bo, false);
-   if (ret == 0) {
+   if (!ret) {
       drm_intel_decode_set_batch_pointer(decode,
 					 batch->bo->virtual,
 					 batch->bo->offset,
@@ -100,10 +100,10 @@ do_batch_dump(struct intel_context *intel)
 
    drm_intel_decode_context_free(decode);
 
-   if (ret == 0) {
+   if (!ret) {
       drm_intel_bo_unmap(batch->bo);
 
-      if (intel->vtbl.debug_batch != NULL)
+      if (intel->vtbl.debug_batch)
 	 intel->vtbl.debug_batch(intel);
    }
 }
@@ -119,7 +119,7 @@ do_flush_locked(struct intel_context *intel)
    ret = drm_intel_bo_subdata(batch->bo, 0, 4*batch->used, batch->map);
 
    if (!intel->intelScreen->no_hw) {
-      if (ret == 0) {
+      if (!ret) {
          if (unlikely(INTEL_DEBUG & DEBUG_AUB) && intel->vtbl.annotate_aub)
             intel->vtbl.annotate_aub(intel);
          ret = drm_intel_bo_mrb_exec(batch->bo, 4 * batch->used, NULL, 0, 0,
@@ -130,7 +130,7 @@ do_flush_locked(struct intel_context *intel)
    if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
       do_batch_dump(intel);
 
-   if (ret != 0) {
+   if (ret) {
       fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerror(-ret));
       exit(1);
    }
@@ -145,10 +145,10 @@ _intel_batchbuffer_flush(struct intel_context *intel,
 {
    int ret;
 
-   if (intel->batch.used == 0)
+   if (!intel->batch.used)
       return 0;
 
-   if (intel->first_post_swapbuffers_batch == NULL) {
+   if (!intel->first_post_swapbuffers_batch) {
       intel->first_post_swapbuffers_batch = intel->batch.bo;
       drm_intel_bo_reference(intel->first_post_swapbuffers_batch);
    }

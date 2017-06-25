@@ -279,7 +279,7 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
 
       default:
          key = dri2_to_egl_attribute_map[attrib];
-         if (key != 0)
+         if (key)
             _eglSetConfigKey(&base, key, value);
          break;
       }
@@ -328,9 +328,9 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
          /* a similar config type is already added (unlikely) => discard */
          return NULL;
    }
-   else if (num_configs == 0) {
+   else if (!num_configs) {
       conf = calloc(1, sizeof *conf);
-      if (conf == NULL)
+      if (!conf)
          return NULL;
 
       conf->dri_config[double_buffer][srgb] = dri_config;
@@ -374,7 +374,7 @@ dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
    (void) screen;
 
    img = _eglLookupImage(image, disp);
-   if (img == NULL) {
+   if (!img) {
       _eglError(EGL_BAD_PARAMETER, "dri2_lookup_egl_image");
       return NULL;
    }
@@ -489,7 +489,7 @@ dri2_open_driver(_EGLDisplay *disp)
       /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
       search_paths = getenv("LIBGL_DRIVERS_PATH");
    }
-   if (search_paths == NULL)
+   if (!search_paths)
       search_paths = DEFAULT_DRIVER_DIR;
 
    dri2_dpy->driver = NULL;
@@ -497,7 +497,7 @@ dri2_open_driver(_EGLDisplay *disp)
    for (char *p = search_paths; p < end; p = next + 1) {
       int len;
       next = strchr(p, ':');
-      if (next == NULL)
+      if (!next)
          next = end;
 
       len = next - p;
@@ -506,28 +506,28 @@ dri2_open_driver(_EGLDisplay *disp)
                "%.*s/tls/%s_dri.so", len, p, dri2_dpy->driver_name);
       dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 #endif
-      if (dri2_dpy->driver == NULL) {
+      if (!dri2_dpy->driver) {
          snprintf(path, sizeof path,
                   "%.*s/%s_dri.so", len, p, dri2_dpy->driver_name);
          dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-         if (dri2_dpy->driver == NULL)
+         if (!dri2_dpy->driver)
             _eglLog(_EGL_DEBUG, "failed to open %s: %s\n", path, dlerror());
       }
       /* not need continue to loop all paths once the driver is found */
-      if (dri2_dpy->driver != NULL)
+      if (dri2_dpy->driver)
          break;
 
 #ifdef ANDROID
       snprintf(path, sizeof path, "%.*s/gallium_dri.so", len, p);
       dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-      if (dri2_dpy->driver == NULL)
+      if (!dri2_dpy->driver)
          _eglLog(_EGL_DEBUG, "failed to open %s: %s\n", path, dlerror());
       else
          break;
 #endif
    }
 
-   if (dri2_dpy->driver == NULL) {
+   if (!dri2_dpy->driver) {
       _eglLog(_EGL_WARNING,
               "DRI2: failed to open %s (search paths %s)",
               dri2_dpy->driver_name, search_paths);
@@ -550,7 +550,7 @@ dri2_open_driver(_EGLDisplay *disp)
 
    if (!extensions)
       extensions = dlsym(dri2_dpy->driver, __DRI_DRIVER_EXTENSIONS);
-   if (extensions == NULL) {
+   if (!extensions) {
       _eglLog(_EGL_WARNING,
               "DRI2: driver exports no extensions (%s)", dlerror());
       dlclose(dri2_dpy->driver);
@@ -772,7 +772,7 @@ dri2_create_screen(_EGLDisplay *disp)
       }
    }
 
-   if (dri2_dpy->dri_screen == NULL) {
+   if (!dri2_dpy->dri_screen) {
       _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");
       return EGL_FALSE;
    }
@@ -1065,7 +1065,7 @@ dri2_fill_context_attribs(struct dri2_egl_context *dri2_ctx,
    ctx_attribs[pos++] = __DRI_CTX_ATTRIB_MINOR_VERSION;
    ctx_attribs[pos++] = dri2_ctx->base.ClientMinorVersion;
 
-   if (dri2_ctx->base.Flags != 0) {
+   if (dri2_ctx->base.Flags) {
       /* If the implementation doesn't support the __DRI2_ROBUSTNESS
        * extension, don't even try to send it the robust-access flag.
        * It may explode.  Instead, generate the required EGL error here.
@@ -1173,7 +1173,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
-   if (conf != NULL) {
+   if (conf) {
       /* The config chosen here isn't necessarily
        * used for surfaces later.
        * A pixmap surface will use the single config.
@@ -1547,7 +1547,7 @@ dri2_wait_client(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
    /* FIXME: If EGL allows frontbuffer rendering for window surfaces,
     * we need to copy fake to real here.*/
 
-   if (dri2_dpy->flush != NULL)
+   if (dri2_dpy->flush)
       dri2_dpy->flush->flush(dri_drawable);
 
    return EGL_TRUE;
@@ -1658,7 +1658,7 @@ dri2_create_image_from_dri(_EGLDisplay *disp, __DRIimage *dri_image)
 {
    struct dri2_egl_image *dri2_img;
 
-   if (dri_image == NULL) {
+   if (!dri_image) {
       _eglError(EGL_BAD_ALLOC, "dri2_create_image");
       return NULL;
    }
@@ -1689,7 +1689,7 @@ dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
    GLuint renderbuffer = (GLuint) (uintptr_t) buffer;
    __DRIimage *dri_image;
 
-   if (renderbuffer == 0) {
+   if (!renderbuffer) {
       _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
       return EGL_NO_IMAGE_KHR;
    }
@@ -1755,7 +1755,7 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 
    dri_image = dri2_dpy->image->fromPlanar(buffer->driver_buffer, plane, NULL);
 
-   if (dri_image == NULL) {
+   if (!dri_image) {
       _eglError(EGL_BAD_PARAMETER, "dri2_create_image_wayland_wl_buffer");
       return NULL;
    }
@@ -1826,7 +1826,7 @@ dri2_create_image_khr_texture(_EGLDisplay *disp, _EGLContext *ctx,
    GLenum gl_target;
    unsigned error;
 
-   if (texture == 0) {
+   if (!texture) {
       _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
       return EGL_NO_IMAGE_KHR;
    }
@@ -2248,7 +2248,7 @@ dri2_create_image_dma_buf(_EGLDisplay *disp, _EGLContext *ctx,
     * ""* If <target> is EGL_LINUX_DMA_BUF_EXT and <buffer> is not NULL, the
     *     error EGL_BAD_PARAMETER is generated."
     */
-   if (buffer != NULL) {
+   if (buffer) {
       _eglError(EGL_BAD_PARAMETER, "buffer not NULL");
       return NULL;
    }
@@ -2392,7 +2392,7 @@ dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
       dri2_dpy->image->createImage(dri2_dpy->dri_screen,
                                    attrs.Width, attrs.Height,
                                    format, dri_use, dri2_img);
-   if (dri2_img->dri_image == NULL) {
+   if (!dri2_img->dri_image) {
       err = EGL_BAD_ALLOC;
       goto cleanup_img;
    }
@@ -2576,7 +2576,7 @@ dri2_wl_reference_buffer(void *user_data, uint32_t name, int fd,
                                                 buffer->offset,
                                                 NULL);
 
-   if (img == NULL)
+   if (!img)
       return;
 
    dri2_dpy->image->queryImage(img, __DRI_IMAGE_ATTRIB_COMPONENTS, &dri_components);
@@ -2586,7 +2586,7 @@ dri2_wl_reference_buffer(void *user_data, uint32_t name, int fd,
       if (wl_drm_components[i].dri_components == dri_components)
          buffer->driver_format = &wl_drm_components[i];
 
-   if (buffer->driver_format == NULL)
+   if (!buffer->driver_format)
       dri2_dpy->image->destroyImage(img);
    else
       buffer->driver_buffer = img;

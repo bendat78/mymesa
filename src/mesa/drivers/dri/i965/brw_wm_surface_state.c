@@ -1095,7 +1095,7 @@ brw_update_renderbuffer_surfaces(struct brw_context *brw,
    const unsigned int s = _mesa_geometric_samples(fb);
 
    /* Update surfaces for drawing buffers */
-   if (fb->_NumColorDrawBuffers >= 1) {
+   if (fb->_NumColorDrawBuffers) {
       for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
          const uint32_t surf_index = render_target_start + i;
          const int flags = (_mesa_geometric_layers(fb) > 0 ?
@@ -1867,7 +1867,7 @@ brw_upload_cs_work_groups_surface(struct brw_context *brw)
       struct brw_bo *bo;
       uint32_t bo_offset;
 
-      if (brw->compute.num_work_groups_bo == NULL) {
+      if (!brw->compute.num_work_groups_bo) {
          bo = NULL;
          intel_upload_data(brw,
                            (void *)brw->compute.num_work_groups,

@@ -120,7 +120,7 @@ convert_block(nir_block *block, nir_builder *b)
          break;
       }
 
-      if (sysval == NULL) {
+      if (!sysval) {
          nir_intrinsic_op sysval_op =
             nir_intrinsic_from_system_value(var->data.location);
          sysval = nir_load_system_value(b, sysval_op, 0);

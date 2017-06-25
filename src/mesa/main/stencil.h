@@ -86,7 +86,7 @@ _mesa_StencilMaskSeparate_no_error(GLenum face, GLuint mask);
 extern void GLAPIENTRY
 _mesa_StencilMaskSeparate(GLenum face, GLuint mask);
 
-extern void 
+extern void
 _mesa_init_stencil( struct gl_context * ctx );
 
 /* From the GL 4.3 spec, 17.3.5:

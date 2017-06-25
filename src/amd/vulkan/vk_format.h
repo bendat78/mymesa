@@ -166,7 +166,7 @@ vk_format_get_blocksize(VkFormat format)
 
 	assert(bits % 8 == 0);
 	assert(bytes > 0);
-	if (bytes == 0) {
+	if (!bytes) {
 		bytes = 1;
 	}
 
@@ -269,7 +269,7 @@ radv_swizzle_conv(VkComponentSwizzle component, const unsigned char chan[4], VkC
 		return VK_SWIZZLE_1;
 	case VK_COMPONENT_SWIZZLE_R:
 		for (x = 0; x < 4; x++)
-			if (chan[x] == 0)
+			if (!chan[x])
 				return x;
 		return VK_SWIZZLE_0;
 	case VK_COMPONENT_SWIZZLE_G:

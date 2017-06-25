@@ -90,11 +90,11 @@ nv84_decoder_bsp(struct nv84_decoder *dec,
                  struct nv84_video_buffer *dest)
 {
    struct iparm params;
-   uint32_t more_params[0x44 / 4] = {0};
+   uint32_t more_params[0x44 / 4] = {};
    unsigned total_bytes = 0;
    int i;
    static const uint32_t end[] = {0x0b010000, 0, 0x0b010000, 0};
-   char indexes[17] = {0};
+   char indexes[17] = {};
    struct nouveau_pushbuf *push = dec->bsp_pushbuf;
    struct nouveau_pushbuf_refn bo_refs[] = {
       { dec->vpring, NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM },

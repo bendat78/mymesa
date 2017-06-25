@@ -526,7 +526,7 @@ _mesa_BlendEquationiARB(GLuint buf, GLenum mode)
    ctx->Color.Blend[buf].EquationA = mode;
    ctx->Color._BlendEquationPerBuffer = GL_TRUE;
 
-   if (buf == 0)
+   if (!buf)
       ctx->Color._AdvancedBlendMode = advanced_mode;
 }
 
@@ -713,7 +713,7 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
  * \param func alpha comparison function.
  * \param ref reference value.
  *
- * Verifies the parameters and updates gl_colorbuffer_attrib. 
+ * Verifies the parameters and updates gl_colorbuffer_attrib.
  * On a change, flushes the vertices and notifies the driver via
  * dd_function_table::AlphaFunc callback.
  */

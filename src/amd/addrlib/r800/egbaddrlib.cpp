@@ -98,7 +98,7 @@ BOOL_32 EgBasedLib::DispatchComputeSurfaceInfo(
     UINT_32             mipLevel      = pIn->mipLevel;
     ADDR_SURFACE_FLAGS  flags         = pIn->flags;
 
-    ADDR_TILEINFO       tileInfoDef   = {0};
+    ADDR_TILEINFO       tileInfoDef = {};
     ADDR_TILEINFO*      pTileInfo     = &tileInfoDef;
 
     UINT_32             padDims = 0;
@@ -122,13 +122,13 @@ BOOL_32 EgBasedLib::DispatchComputeSurfaceInfo(
     // Caller makes sure pOut->pTileInfo is not NULL, see HwlComputeSurfaceInfo
     ADDR_ASSERT(pOut->pTileInfo);
 
-    if (pOut->pTileInfo != NULL)
+    if (pOut->pTileInfo)
     {
         pTileInfo = pOut->pTileInfo;
     }
 
     // Set default values
-    if (pIn->pTileInfo != NULL)
+    if (pIn->pTileInfo)
     {
         if (pTileInfo != pIn->pTileInfo)
         {
@@ -154,7 +154,7 @@ BOOL_32 EgBasedLib::DispatchComputeSurfaceInfo(
 
     if (flags.cube)
     {
-        if (mipLevel == 0)
+        if (!mipLevel)
         {
             padDims = 2;
         }
@@ -285,9 +285,9 @@ BOOL_32 EgBasedLib::ComputeSurfaceInfoLinear(
                                                   &expHeight,
                                                   &pOut->heightAlign);
 
-    if ((pIn->pitchAlign != 0) || (pIn->heightAlign != 0))
+    if ((pIn->pitchAlign) || (pIn->heightAlign != 0))
     {
-        if (pIn->pitchAlign != 0)
+        if (pIn->pitchAlign)
         {
            ADDR_ASSERT((pIn->pitchAlign % pOut->pitchAlign) == 0);
            pOut->pitchAlign = pIn->pitchAlign;
@@ -304,7 +304,7 @@ BOOL_32 EgBasedLib::ComputeSurfaceInfoLinear(
             }
         }
 
-        if (pIn->heightAlign != 0)
+        if (pIn->heightAlign)
         {
            ADDR_ASSERT((pIn->heightAlign % pOut->heightAlign) == 0);
            pOut->heightAlign = pIn->heightAlign;
@@ -564,13 +564,13 @@ BOOL_32 EgBasedLib::ComputeSurfaceInfoMacroTiled(
         {
             UINT_32 stereoHeightAlign = HwlStereoCheckRightOffsetPadding(pOut->pTileInfo);
 
-            if (stereoHeightAlign != 0)
+            if (stereoHeightAlign)
             {
                 paddedHeight = PowTwoAlign(paddedHeight, stereoHeightAlign);
             }
         }
 
-        if ((pIn->flags.needEquation == TRUE) &&
+        if ((pIn->flags.needEquation) &&
             (m_chipFamily == ADDR_CHIP_FAMILY_SI) &&
             (pIn->numMipLevels > 1) &&
             (pIn->mipLevel == 0))
@@ -789,7 +789,7 @@ BOOL_32 EgBasedLib::HwlReduceBankWidthHeight(
             {
                 pTileInfo->bankWidth >>= 1;
 
-                if (pTileInfo->bankWidth == 0)
+                if (!pTileInfo->bankWidth)
                 {
                     pTileInfo->bankWidth = 1;
                     break;
@@ -846,7 +846,7 @@ BOOL_32 EgBasedLib::HwlReduceBankWidthHeight(
         valid = !stillGreater;
 
         // Generate a warning if we still fail to meet this constraint
-        if (valid == FALSE)
+        if (!valid)
         {
             ADDR_WARN(
                 0, ("TILE_SIZE(%d)*BANK_WIDTH(%d)*BANK_HEIGHT(%d) <= ROW_SIZE(%d)",
@@ -1184,7 +1184,7 @@ BOOL_32 EgBasedLib::HwlGetAlignmentInfoMacroTiled(
 
     ADDR_ASSERT(pIn->pTileInfo);
     ADDR_TILEINFO tileInfo = *pIn->pTileInfo;
-    ADDR_COMPUTE_SURFACE_INFO_OUTPUT out = {0};
+    ADDR_COMPUTE_SURFACE_INFO_OUTPUT out = {};
     out.pTileInfo = &tileInfo;
 
     if (UseTileIndex(pIn->tileIndex))
@@ -1286,7 +1286,7 @@ AddrTileMode EgBasedLib::HwlDegradeThickTileMode(
             break;
     }
 
-    if (pBytesPerTile != NULL)
+    if (pBytesPerTile)
     {
         *pBytesPerTile = bytesPerTile;
     }
@@ -1352,7 +1352,7 @@ UINT_64 EgBasedLib::DispatchComputeSurfaceAddrFromCoord(
         /// @note
         /// 128 bit/thick tiled surface doesn't support display tiling and
         /// mipmap chain must have the same tileType, so please fill tileType correctly
-        if (IsLinear(pIn->tileMode) == FALSE)
+        if (!IsLinear(pIn->tileMode))
         {
             if (bpp >= 128 || Thickness(tileMode) > 1)
             {
@@ -2230,7 +2230,7 @@ VOID EgBasedLib::DispatchComputeSurfaceCoordFromAddr(
         /// @note
         /// 128 bit/thick tiled surface doesn't support display tiling and
         /// mipmap chain must have the same tileType, so please fill tileType correctly
-        if (IsLinear(pIn->tileMode) == FALSE)
+        if (!IsLinear(pIn->tileMode))
         {
             if (bpp >= 128 || Thickness(tileMode) > 1)
             {
@@ -2547,7 +2547,7 @@ VOID EgBasedLib::ComputeSurfaceCoord2DFromBankPipe(
     UINT_32 microTileThickness = Thickness(tileMode);
 
     bank ^= tileSplitRotation * tileSlices;
-    if (pipeRotation == 0)
+    if (!pipeRotation)
     {
         bank ^= bankRotation * (slice / microTileThickness) + bankSwizzle;
         bank %= pTileInfo->banks;
@@ -2816,7 +2816,7 @@ VOID EgBasedLib::ExtractBankPipeSwizzle(
     UINT_32 bankSwizzle = 0;
     UINT_32 pipeSwizzle = 0;
 
-    if (base256b != 0)
+    if (base256b)
     {
         UINT_32 numPipes        = HwlGetPipes(pTileInfo);
         UINT_32 bankBits        = QLog2(pTileInfo->banks);
@@ -2896,7 +2896,7 @@ UINT_32 EgBasedLib::ComputeSliceTileSwizzle(
         pipeRotation = ComputePipeRotation(tileMode, numPipes);
         bankRotation = ComputeBankRotation(tileMode, numBanks, numPipes);
 
-        if (baseSwizzle != 0)
+        if (baseSwizzle)
         {
             ExtractBankPipeSwizzle(baseSwizzle,
                                    pTileInfo,
@@ -2904,7 +2904,7 @@ UINT_32 EgBasedLib::ComputeSliceTileSwizzle(
                                    &pipeSwizzle);
         }
 
-        if (pipeRotation == 0) //2D mode
+        if (!pipeRotation) //2D mode
         {
             bankSwizzle += firstSlice * bankRotation;
             bankSwizzle %= numBanks;
@@ -3263,8 +3263,8 @@ ADDR_E_RETURNCODE EgBasedLib::DispatchComputeFmaskInfo(
 {
     ADDR_E_RETURNCODE retCode = ADDR_OK;
 
-    ADDR_COMPUTE_SURFACE_INFO_INPUT  surfIn     = {0};
-    ADDR_COMPUTE_SURFACE_INFO_OUTPUT surfOut    = {0};
+    ADDR_COMPUTE_SURFACE_INFO_INPUT  surfIn = {};
+    ADDR_COMPUTE_SURFACE_INFO_OUTPUT surfOut = {};
 
     // Setup input structure
     surfIn.tileMode          = pIn->tileMode;
@@ -3337,10 +3337,10 @@ ADDR_E_RETURNCODE EgBasedLib::HwlComputeFmaskInfo(
 {
     ADDR_E_RETURNCODE retCode = ADDR_OK;
 
-    ADDR_TILEINFO tileInfo = {0};
+    ADDR_TILEINFO tileInfo = {};
 
     // Use internal tile info if pOut does not have a valid pTileInfo
-    if (pOut->pTileInfo == NULL)
+    if (!pOut->pTileInfo)
     {
         pOut->pTileInfo = &tileInfo;
     }
@@ -3557,7 +3557,7 @@ UINT_64 EgBasedLib::ComputeFmaskAddrFromCoordMicroTiled(
     //
     // Compute the number of planes.
     //
-    if (resolved == FALSE)
+    if (!resolved)
     {
         effectiveSamples = ComputeFmaskNumPlanesFromNumSamples(numSamples);
         effectiveBpp = numSamples;
@@ -3669,7 +3669,7 @@ UINT_64 EgBasedLib::ComputeFmaskAddrFromCoordMacroTiled(
     //
     // Compute the number of planes.
     //
-    if (resolved == FALSE)
+    if (!resolved)
     {
         effectiveSamples = ComputeFmaskNumPlanesFromNumSamples(numSamples);
         effectiveBpp = numSamples;
@@ -3782,7 +3782,7 @@ VOID EgBasedLib::ComputeFmaskCoordFromAddrMicroTiled(
         numSamples = 4;
     }
 
-    if (resolved == FALSE)
+    if (!resolved)
     {
         effectiveSamples = ComputeFmaskNumPlanesFromNumSamples(numSamples);
         effectiveBpp  = numSamples;
@@ -3877,7 +3877,7 @@ VOID EgBasedLib::ComputeFmaskCoordFromAddrMacroTiled(
     //
     // Compute the number of planes.
     //
-    if (resolved == FALSE)
+    if (!resolved)
     {
         effectiveSamples = ComputeFmaskNumPlanesFromNumSamples(numSamples);
         effectiveBpp  = numSamples;
@@ -4131,7 +4131,7 @@ BOOL_32 EgBasedLib::IsTileInfoAllZero(
 
     if (pTileInfo)
     {
-        if ((pTileInfo->banks            != 0)  ||
+        if ((pTileInfo->banks)  ||
             (pTileInfo->bankWidth        != 0)  ||
             (pTileInfo->bankHeight       != 0)  ||
             (pTileInfo->macroAspectRatio != 0)  ||
@@ -4194,9 +4194,9 @@ ADDR_E_RETURNCODE EgBasedLib::HwlConvertTileInfoToHW(
     ADDR_TILEINFO *pTileInfoIn  = pIn->pTileInfo;
     ADDR_TILEINFO *pTileInfoOut = pOut->pTileInfo;
 
-    if ((pTileInfoIn != NULL) && (pTileInfoOut != NULL))
+    if ((pTileInfoIn) && (pTileInfoOut != NULL))
     {
-        if (pIn->reverse == FALSE)
+        if (!pIn->reverse)
         {
             switch (pTileInfoIn->banks)
             {
@@ -4464,12 +4464,12 @@ ADDR_E_RETURNCODE EgBasedLib::HwlComputeSurfaceInfo(
         retCode = ADDR_INVALIDPARAMS;
     }
 
-    ADDR_TILEINFO tileInfo = {0};
+    ADDR_TILEINFO tileInfo = {};
 
     if (retCode == ADDR_OK)
     {
         // Uses internal tile info if pOut does not have a valid pTileInfo
-        if (pOut->pTileInfo == NULL)
+        if (!pOut->pTileInfo)
         {
             pOut->pTileInfo = &tileInfo;
         }
@@ -4482,7 +4482,7 @@ ADDR_E_RETURNCODE EgBasedLib::HwlComputeSurfaceInfo(
         // In case client uses tile info as input and would like to calculate a correct size and
         // alignment together with tile info as output when the tile info is not suppose to have any
         // matching indices in tile mode tables.
-        if (pIn->flags.skipIndicesOutput == FALSE)
+        if (!pIn->flags.skipIndicesOutput)
         {
             // Returns an index
             pOut->tileIndex = HwlPostCheckTileIndex(pOut->pTileInfo,
@@ -4511,7 +4511,7 @@ ADDR_E_RETURNCODE EgBasedLib::HwlComputeSurfaceInfo(
                 ADDR_ASSERT((m_configFlags.useTileIndex == FALSE) ||
                             (pOut->tileIndex != TileIndexInvalid));
 
-                if (IsTileInfoAllZero(pIn->pTileInfo) == FALSE)
+                if (!IsTileInfoAllZero(pIn->pTileInfo))
                 {
                     // The initial value of pIn->pTileInfo is copied to tileInfo
                     // We do not expect any of these value to be changed nor any 0 of inputs

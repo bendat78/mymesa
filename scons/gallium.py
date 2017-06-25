@@ -77,7 +77,7 @@ def install_shared_library(env, sources, version = ()):
                 version = version[:-1]
                 target_name = '.'.join((str(source),) + version)
                 action = SCons.Action.Action(symlink, "  Symlinking $TARGET ...")
-                last = env.Command(os.path.join(target_dir, target_name), last, action) 
+                last = env.Command(os.path.join(target_dir, target_name), last, action)
                 targets += last
     return targets
 
@@ -499,7 +499,7 @@ def generate(env):
         else:
             env.Append(CCFLAGS = ['/MT'])
             env.Append(SHCCFLAGS = ['/LD'])
-    
+
     # Static code analysis
     if env['analyze']:
         if env['msvc']:
@@ -637,7 +637,7 @@ def generate(env):
 
     if env['llvm']:
         env.Tool('llvm')
-    
+
     # Custom builders and methods
     env.Tool('custom')
     env.AddMethod(install_program, 'InstallProgram')

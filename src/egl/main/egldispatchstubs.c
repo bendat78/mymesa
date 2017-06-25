@@ -58,10 +58,10 @@ static __eglMustCastToProperFunctionPointerType FetchVendorFunc(__EGLvendorInfo 
 {
     __eglMustCastToProperFunctionPointerType func = NULL;
 
-    if (vendor != NULL) {
+    if (vendor) {
         func = exports->fetchDispatchEntry(vendor, __EGL_DISPATCH_FUNC_INDICES[index]);
     }
-    if (func == NULL) {
+    if (!func) {
         if (errorCode != EGL_SUCCESS) {
             _eglError(errorCode, __EGL_DISPATCH_FUNC_NAMES[index]);
         }

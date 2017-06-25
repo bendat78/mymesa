@@ -51,7 +51,7 @@ load_backend(const struct backend_desc *backend)
 {
    const void *init = NULL;
 
-   if (backend == NULL)
+   if (!backend)
       return NULL;
 
    if (backend->builtin) {
@@ -94,11 +94,11 @@ _gbm_create_device(int fd)
 
    for (i = 0; i < ARRAY_SIZE(backends) && dev == NULL; ++i) {
       backend = load_backend(&backends[i]);
-      if (backend == NULL)
+      if (!backend)
          continue;
 
       dev = backend->create_device(fd);
    }
-   
+
    return dev;
 }

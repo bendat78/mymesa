@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	unsigned int		is_overlay, intra_unsigned;
 	int			colorkey;
 	XvMCContext		context;
-	XvMCSurface		surface = {0};
+	XvMCSurface		surface = {};
 
 	display = XOpenDisplay(NULL);
 

@@ -2350,7 +2350,7 @@ emit_input_declarations(struct svga_shader_emitter_v10 *emit)
          unsigned index = emit->linkage.input_map[i];
          unsigned type, interpolationMode, name;
 
-         if (usage_mask == 0)
+         if (!usage_mask)
             continue;  /* register is not actually used */
 
          if (semantic_name == TGSI_SEMANTIC_POSITION) {
@@ -2412,7 +2412,7 @@ emit_input_declarations(struct svga_shader_emitter_v10 *emit)
          unsigned name;
          unsigned dim;
 
-         if (usage_mask == 0)
+         if (!usage_mask)
             continue;  /* register is not actually used */
 
          opcodeType = VGPU10_OPCODE_DCL_INPUT;
@@ -2459,7 +2459,7 @@ emit_input_declarations(struct svga_shader_emitter_v10 *emit)
          unsigned usage_mask = emit->info.input_usage_mask[i];
          unsigned index = i;
 
-         if (usage_mask == 0)
+         if (!usage_mask)
             continue;  /* register is not actually used */
 
          emit_input_declaration(emit, VGPU10_OPCODE_DCL_INPUT,
@@ -2503,7 +2503,7 @@ emit_output_declarations(struct svga_shader_emitter_v10 *emit)
                                     VGPU10_NAME_UNDEFINED,
                                     VGPU10_OPERAND_4_COMPONENT_MASK_ALL);
 
-            if (semantic_index == 0) {
+            if (!semantic_index) {
                if (emit->key.fs.write_color0_to_n_cbufs > 1) {
                   /* Emit declarations for the additional color outputs
                    * for broadcasting.
@@ -2550,7 +2550,7 @@ emit_output_declarations(struct svga_shader_emitter_v10 *emit)
             type = VGPU10_OPCODE_DCL_OUTPUT_SIV;
             name = VGPU10_NAME_CLIP_DISTANCE;
             /* save the starting index of the clip distance output register */
-            if (semantic_index == 0)
+            if (!semantic_index)
                emit->clip_dist_out_index = index;
             writemask = emit->output_usage_mask[index];
             writemask = apply_clip_plane_mask(emit, writemask, semantic_index);
@@ -2645,7 +2645,7 @@ emit_temporaries_declaration(struct svga_shader_emitter_v10 *emit)
       unsigned arrayID;
 
       arrayID = 1;
-      emit->num_temp_arrays = arrayID + 1; 
+      emit->num_temp_arrays = arrayID + 1;
       emit->temp_arrays[arrayID].start = 0;
       emit->temp_arrays[arrayID].size = total_temps;
 
@@ -2761,7 +2761,7 @@ emit_temporaries_declaration(struct svga_shader_emitter_v10 *emit)
     */
    reg = 0;
    for (i = 0; i < total_temps; i++) {
-      if (emit->temp_map[i].arrayId == 0) {
+      if (!emit->temp_map[i].arrayId) {
          emit->temp_map[i].index = reg++;
       }
    }
@@ -3221,7 +3221,7 @@ emit_clip_distance_declarations(struct svga_shader_emitter_v10 *emit)
       return;
    }
 
-   if (num_clip_planes == 0)
+   if (!num_clip_planes)
       return;
 
    /* Declare one or two clip output registers.  The number of components
@@ -6177,7 +6177,7 @@ emit_vertex_attrib_instructions(struct svga_shader_emitter_v10 *emit)
          unsigned index = u_bit_scan(&adjust_mask);
 
          /* skip the instruction if this vertex attribute is not being used */
-         if (emit->info.input_usage_mask[index] == 0)
+         if (!emit->info.input_usage_mask[index])
             continue;
 
          unsigned tmp = emit->vs.adjusted_input[index];

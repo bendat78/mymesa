@@ -424,7 +424,7 @@ constant_referenced(const ir_dereference *deref,
    store = NULL;
    offset = 0;
 
-   if (variable_context == NULL)
+   if (!variable_context)
       return false;
 
    switch (deref->ir_type) {
@@ -578,7 +578,7 @@ ldexp_flush_subnormal(double x, int exp)
 static uint32_t
 bitfield_extract_uint(uint32_t value, int offset, int bits)
 {
-   if (bits == 0)
+   if (!bits)
       return 0;
    else if (offset < 0 || bits < 0)
       return 0; /* Undefined, per spec. */
@@ -594,7 +594,7 @@ bitfield_extract_uint(uint32_t value, int offset, int bits)
 static int32_t
 bitfield_extract_int(int32_t value, int offset, int bits)
 {
-   if (bits == 0)
+   if (!bits)
       return 0;
    else if (offset < 0 || bits < 0)
       return 0; /* Undefined, per spec. */
@@ -610,7 +610,7 @@ bitfield_extract_int(int32_t value, int offset, int bits)
 static uint32_t
 bitfield_insert(uint32_t base, uint32_t insert, int offset, int bits)
 {
-   if (bits == 0)
+   if (!bits)
       return base;
    else if (offset < 0 || bits < 0)
       return 0; /* Undefined, per spec. */
@@ -644,7 +644,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
          return NULL;
    }
 
-   if (op[1] != NULL)
+   if (op[1])
       switch (this->operation) {
       case ir_binop_lshift:
       case ir_binop_rshift:
@@ -711,8 +711,8 @@ ir_swizzle::constant_expression_value(struct hash_table *variable_context)
 {
    ir_constant *v = this->val->constant_expression_value(variable_context);
 
-   if (v != NULL) {
-      ir_constant_data data = { { 0 } };
+   if (v) {
+      ir_constant_data data = {};
 
       const unsigned swiz_idx[4] = {
          this->mask.x, this->mask.y, this->mask.z, this->mask.w
@@ -768,7 +768,7 @@ ir_dereference_array::constant_expression_value(struct hash_table *variable_cont
    ir_constant *array = this->array->constant_expression_value(variable_context);
    ir_constant *idx = this->array_index->constant_expression_value(variable_context);
 
-   if ((array != NULL) && (idx != NULL)) {
+   if ((array) && (idx != NULL)) {
       void *ctx = ralloc_parent(this);
       if (array->type->is_matrix()) {
          /* Array access of a matrix results in a vector.
@@ -782,7 +782,7 @@ ir_dereference_array::constant_expression_value(struct hash_table *variable_cont
           */
          const unsigned mat_idx = column * column_type->vector_elements;
 
-         ir_constant_data data = { { 0 } };
+         ir_constant_data data = {};
 
          switch (column_type->base_type) {
          case GLSL_TYPE_UINT:
@@ -999,7 +999,7 @@ ir_function_signature::constant_expression_value(exec_list *actual_parameters, s
 
    foreach_in_list(ir_rvalue, n, actual_parameters) {
       ir_constant *constant = n->constant_expression_value(variable_context);
-      if (constant == NULL) {
+      if (!constant) {
          _mesa_hash_table_destroy(deref_hash, NULL);
          return NULL;
       }

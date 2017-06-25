@@ -168,7 +168,7 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 		count_inst->Amount += amount;
 		break;
 	case RC_OPCODE_SUB:
-		if(amnt_src_index == 0){
+		if(!amnt_src_index){
 			count_inst->Unknown = 0;
 			return;
 		}

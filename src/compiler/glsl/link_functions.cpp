@@ -83,7 +83,7 @@ public:
        */
       ir_function_signature *sig =
          find_matching_signature(name, &callee->parameters, linked->symbols);
-      if (sig != NULL) {
+      if (sig) {
 	 ir->callee = sig;
 	 return visit_continue;
       }
@@ -98,7 +98,7 @@ public:
             break;
       }
 
-      if (sig == NULL) {
+      if (!sig) {
 	 /* FINISHME: Log the full signature of unresolved function.
 	  */
 	 linker_error(this->prog, "unresolved reference to function `%s'\n",
@@ -111,7 +111,7 @@ public:
        * details that may be missing.
        */
       ir_function *f = linked->symbols->get_function(name);
-      if (f == NULL) {
+      if (!f) {
 	 f = new(linked) ir_function(name);
 
 	 /* Add the new function to the linked IR.  Put it at the end
@@ -124,7 +124,7 @@ public:
 
       ir_function_signature *linked_sig =
 	 f->exact_matching_signature(NULL, &callee->parameters);
-      if (linked_sig == NULL) {
+      if (!linked_sig) {
 	 linked_sig = new(linked) ir_function_signature(callee->return_type);
 	 f->add_signature(linked_sig);
       }
@@ -226,7 +226,7 @@ public:
 	  * shader.
 	  */
 	 ir_variable *var = linked->symbols->get_variable(ir->var->name);
-	 if (var == NULL) {
+	 if (!var) {
 	    /* Clone the ir_variable that the dereference already has and add
 	     * it to the linked shader.
 	     */

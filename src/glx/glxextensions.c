@@ -529,7 +529,7 @@ __glXExtensionBitIsEnabled(struct glx_screen * psc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
-   if (psc != NULL) {
+   if (psc) {
       __glXExtensionsCtr();
       __glXExtensionsCtrScreen(psc);
       enabled = EXT_ENABLED(bit, psc->direct_support);
@@ -548,7 +548,7 @@ __glExtensionBitIsEnabled(struct glx_context *gc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
-   if (gc != NULL) {
+   if (gc) {
       enabled = EXT_ENABLED(bit, gc->gl_extension_bits);
    }
 
@@ -578,7 +578,7 @@ __glXGetStringFromTable(const struct extension_info *ext,
    }
 
    ext_str = malloc(ext_str_len + 1);
-   if (ext_str != NULL) {
+   if (ext_str) {
       point = ext_str;
 
       for (i = 0; ext[i].name != NULL; i++) {
@@ -604,7 +604,7 @@ __glXGetStringFromTable(const struct extension_info *ext,
 const char *
 __glXGetClientExtensions(void)
 {
-   if (__glXGLXClientExtensions == NULL) {
+   if (!__glXGLXClientExtensions) {
       __glXExtensionsCtr();
       __glXGLXClientExtensions = __glXGetStringFromTable(known_glx_extensions,
                                                          client_glx_support);
@@ -727,7 +727,7 @@ __glXCalculateUsableGLExtensions(struct glx_context * gc,
     */
 
    for (i = 0; i < __GL_EXT_BYTES; i++) {
-      if ((known_gl_extensions[i].version_major != 0)
+      if ((known_gl_extensions[i].version_major)
           && ((major_version > known_gl_extensions[i].version_major)
               || ((major_version == known_gl_extensions[i].version_major)
                   && (minor_version >=

@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2006 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
@@ -109,14 +109,14 @@ intel_map_renderbuffer(struct gl_context *ctx,
     * upside-down.  So we need to ask for a rectangle on flipped vertically, and
     * we then return a pointer to the bottom of it with a negative stride.
     */
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       y = rb->Height - y - h;
    }
 
    intel_miptree_map(intel, irb->mt, irb->mt_level, irb->mt_layer,
 		     x, y, w, h, mode, &map, &stride);
 
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       map += (h - 1) * stride;
       stride = -stride;
    }
@@ -243,7 +243,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    screen = intel->intelScreen->driScrnPriv;
    image = screen->dri2.image->lookupEGLImage(screen, image_handle,
 					      screen->loaderPrivate);
-   if (image == NULL)
+   if (!image)
       return;
 
    /* __DRIimage is opaque to the core so it has to be checked here */
@@ -597,7 +597,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
        * intel_wrap_texture() treatment.
        */
       rb = fb->Attachment[i].Renderbuffer;
-      if (rb == NULL) {
+      if (!rb) {
 	 fbo_incomplete(fb, "FBO incomplete: attachment without "
                         "renderbuffer\n");
 	 continue;
@@ -611,7 +611,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
 
       irb = intel_renderbuffer(rb);
-      if (irb == NULL) {
+      if (!irb) {
 	 fbo_incomplete(fb, "FBO incomplete: software rendering "
                         "renderbuffer\n");
 	 continue;

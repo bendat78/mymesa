@@ -99,7 +99,7 @@ RB_MAP::cap_pipe( int xmode, bool is_thick, int& num_ses_log2, int bpp_log2, int
     num_ses_log2 = 0;
 
     // If block size is set to variable (0), compute the size
-    if( block_size_log2 == 0 ) {
+    if(!block_size_log2) {
         //
         //TODO Temporary disable till RTL can drive Var signals properly
     }
@@ -143,7 +143,7 @@ void RB_MAP::Get_Data_Offset_Equation( CoordEq& data_eq, int data_type, int bpp_
     // Clear the equation
     data_eq.resize(0);
     data_eq.resize(27);
-    if( block_size_log2 == 0 ) block_size_log2 = 16;
+    if(!block_size_log2) block_size_log2 = 16;
 
     if( is_linear ) {
         Coordinate cm( 'm', 0 );
@@ -339,7 +339,7 @@ RB_MAP::Get_Pipe_Equation( CoordEq& pipe_equation, CoordEq& addr,
 
     // if pipe is 0, then the first pipe bit is above the comp block size, so we don't need to do anything
     // Note, this if condition is not necessary, since if we execute the loop when pipe==0, we will get the same pipe equation
-    if ( pipe != 0 ) {
+    if (pipe) {
         int j = pipe;
 
 
@@ -939,7 +939,7 @@ RB_MAP::get_meta_eq( CoordEq& metaaddr,
                     }
                 }
                 // if the rb bit is still empty, then we have to mark all pipe bits as affecting the RB
-                if( cur_rbeq[j].getsize() == 0 ) {
+                if(!cur_rbeq[j].getsize()) {
                     pipe_mask = (1 << num_pipes_log2) - 1;
                 }
             }

@@ -481,7 +481,7 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 		}
 	}
 
-	if (mtCount == 0) {
+	if (!mtCount) {
 		free(mtSizes);
 		free(mts);
 		return NULL;
@@ -549,7 +549,7 @@ int radeon_validate_texture_miptree(struct gl_context * ctx,
 			radeon_print(RADEON_TEXTURE, RADEON_TRACE,
 				"Checking image level %d, face %d, mt %p ... ",
 				level, face, img->mt);
-			
+
 			if (img->mt != t->mt && !img->used_as_render_target) {
 				radeon_print(RADEON_TEXTURE, RADEON_TRACE,
 					"MIGRATING\n");

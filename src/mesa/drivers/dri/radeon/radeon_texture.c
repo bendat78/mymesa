@@ -113,7 +113,7 @@ radeonAllocTextureImageBuffer(struct gl_context *ctx,
 		return GL_FALSE;
 
 	teximage_assign_miptree(rmesa, texobj, timage);
-				
+
 	return GL_TRUE;
 }
 
@@ -182,7 +182,7 @@ radeon_map_texture_image(struct gl_context *ctx,
 	} else if (likely(mt)) {
 		void *base;
 		radeon_mipmap_level *lvl = &image->mt->levels[texImage->Level];
-		       
+
 		radeon_bo_map(mt->bo, write);
 		base = mt->bo->ptr + lvl->faces[image->base.Base.Face].offset;
 
@@ -546,7 +546,7 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 	screen = radeon->radeonScreen->driScreen;
 	image = screen->dri2.image->lookupEGLImage(screen, image_handle,
 						   screen->loaderPrivate);
-	if (image == NULL)
+	if (!image)
 		return;
 
 	radeonFreeTextureImageBuffer(ctx, texImage);
@@ -574,7 +574,7 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 
 	radeon_miptree_reference(t->mt, &radeonImage->mt);
 
-	if (t->mt == NULL)
+	if (!t->mt)
 	{
 		radeon_print(RADEON_TEXTURE, RADEON_VERBOSE,
 			     "%s Failed to allocate miptree.\n", __func__);
@@ -691,6 +691,6 @@ static radeon_mipmap_tree *radeon_miptree_create_for_teximage(radeonContextPtr r
 
 	return  radeon_miptree_create(rmesa, texObj->Target,
 				      texImage->TexFormat, firstLevel, lastLevel - firstLevel + 1,
-				      width, height, depth, 
+				      width, height, depth,
 				      t->tile_bits);
-}				     
+}

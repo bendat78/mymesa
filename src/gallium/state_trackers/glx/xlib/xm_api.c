@@ -155,7 +155,7 @@ xmesa_close_display(Display *display)
       }
    }
 
-   if (info == NULL) {
+   if (!info) {
       /* no display found */
       _XUnlockMutex(_Xglobal_lock);
       return;
@@ -193,7 +193,7 @@ xmesa_init_display( Display *display )
    XMesaDisplay xmdpy;
    XMesaExtDisplayInfo *info;
 
-   if (display == NULL) {
+   if (!display) {
       return NULL;
    }
 
@@ -215,7 +215,7 @@ xmesa_init_display( Display *display )
 
    /* allocate mesa display info */
    info = (XMesaExtDisplayInfo *) Xmalloc(sizeof(XMesaExtDisplayInfo));
-   if (info == NULL) {
+   if (!info) {
       mtx_unlock(&init_mutex);
       return NULL;
    }
@@ -396,7 +396,7 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
 static GLuint
 choose_pixel_format(XMesaVisual v)
 {
-   boolean native_byte_order = (host_byte_order() == 
+   boolean native_byte_order = (host_byte_order() ==
                                 ImageByteOrder(v->display));
 
    if (   GET_REDMASK(v)   == 0x0000ff
@@ -685,12 +685,12 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
 
 /**
  * Convert an X visual type to a GLX visual type.
- * 
+ *
  * \param visualType X visual type (i.e., \c TrueColor, \c StaticGray, etc.)
  *        to be converted.
  * \return If \c visualType is a valid X visual type, a GLX visual type will
  *         be returned.  Otherwise \c GLX_NONE will be returned.
- * 
+ *
  * \note
  * This code was lifted directly from lib/GL/glx/glcontextmodes.c in the
  * DRI CVS tree.
@@ -1022,7 +1022,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
 
    c->st = stapi->create_context(stapi, xmdpy->smapi, &attribs,
          &ctx_err, (share_list) ? share_list->st : NULL);
-   if (c->st == NULL)
+   if (!c->st)
       goto no_st;
 
    c->st->st_manager_private = (void *) c;
@@ -1048,9 +1048,9 @@ void XMesaDestroyContext( XMesaContext c )
 
    c->st->destroy(c->st);
 
-   /* FIXME: We should destroy the screen here, but if we do so, surfaces may 
+   /* FIXME: We should destroy the screen here, but if we do so, surfaces may
     * outlive it, causing segfaults
-   struct pipe_screen *screen = c->st->pipe->screen; 
+   struct pipe_screen *screen = c->st->pipe->screen;
    screen->destroy(screen);
    */
 
@@ -1162,7 +1162,7 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
    /* get pixmap size */
    xmesa_get_window_size(v->display, b, &b->width, &b->height);
 
-   if (target == 0) {
+   if (!target) {
       /* examine dims */
       if (ctx->Extensions.ARB_texture_non_power_of_two) {
          target = GLX_TEXTURE_2D_EXT;

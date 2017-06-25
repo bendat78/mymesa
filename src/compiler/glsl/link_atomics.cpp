@@ -59,7 +59,7 @@ namespace {
             realloc(uniforms, sizeof(active_atomic_counter_uniform) *
                     (num_uniforms + 1));
 
-         if (new_uniforms == NULL) {
+         if (!new_uniforms) {
             _mesa_error_no_memory(__func__);
             return;
          }
@@ -123,7 +123,7 @@ namespace {
          /* If this is the first time the buffer is used, increment
           * the counter of buffers used.
           */
-         if (buf->size == 0)
+         if (!buf->size)
             (*num_buffers)++;
 
          buf->push_back(*uniform_loc, var);
@@ -156,7 +156,7 @@ namespace {
 
       for (unsigned i = 0; i < MESA_SHADER_STAGES; ++i) {
          struct gl_linked_shader *sh = prog->_LinkedShaders[i];
-         if (sh == NULL)
+         if (!sh)
             continue;
 
          foreach_in_list(ir_instruction, node, sh->ir) {
@@ -172,7 +172,7 @@ namespace {
       }
 
       for (unsigned i = 0; i < ctx->Const.MaxAtomicBufferBindings; i++) {
-         if (buffers[i].size == 0)
+         if (!buffers[i].size)
             continue;
 
          qsort(buffers[i].uniforms, buffers[i].num_uniforms,
@@ -218,7 +218,7 @@ link_assign_atomic_counter_resources(struct gl_context *ctx,
 
       /* If the binding was not used, skip.
        */
-      if (abs[binding].size == 0)
+      if (!abs[binding].size)
          continue;
 
       active_atomic_buffer &ab = abs[binding];
@@ -315,7 +315,7 @@ link_check_atomic_counter_resources(struct gl_context *ctx,
     * requires.
     */
    for (unsigned i = 0; i < ctx->Const.MaxAtomicBufferBindings; i++) {
-      if (abs[i].size == 0)
+      if (!abs[i].size)
          continue;
 
       for (unsigned j = 0; j < MESA_SHADER_STAGES; ++j) {

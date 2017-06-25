@@ -132,7 +132,7 @@ is_vec_negative_one(ir_constant *ir)
 static inline bool
 is_valid_vec_const(ir_constant *ir)
 {
-   if (ir == NULL)
+   if (!ir)
       return false;
 
    if (!ir->type->is_scalar() && !ir->type->is_vector())
@@ -337,7 +337,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       op_expr[i] = ir->operands[i]->as_expression();
    }
 
-   if (this->mem_ctx == NULL)
+   if (!this->mem_ctx)
       this->mem_ctx = ralloc_parent(ir);
 
    switch (ir->operation) {
@@ -347,7 +347,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       break;
 
    case ir_unop_abs:
-      if (op_expr[0] == NULL)
+      if (!op_expr[0])
 	 break;
 
       switch (op_expr[0]->operation) {
@@ -360,7 +360,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       break;
 
    case ir_unop_neg:
-      if (op_expr[0] == NULL)
+      if (!op_expr[0])
 	 break;
 
       if (op_expr[0]->operation == ir_unop_neg) {
@@ -369,7 +369,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       break;
 
    case ir_unop_exp:
-      if (op_expr[0] == NULL)
+      if (!op_expr[0])
 	 break;
 
       if (op_expr[0]->operation == ir_unop_log) {
@@ -378,7 +378,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       break;
 
    case ir_unop_log:
-      if (op_expr[0] == NULL)
+      if (!op_expr[0])
 	 break;
 
       if (op_expr[0]->operation == ir_unop_exp) {
@@ -387,7 +387,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       break;
 
    case ir_unop_exp2:
-      if (op_expr[0] == NULL)
+      if (!op_expr[0])
 	 break;
 
       if (op_expr[0]->operation == ir_unop_log2) {
@@ -410,7 +410,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       break;
 
    case ir_unop_log2:
-      if (op_expr[0] == NULL)
+      if (!op_expr[0])
 	 break;
 
       if (op_expr[0]->operation == ir_unop_exp2) {
@@ -430,7 +430,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    case ir_unop_logic_not: {
       enum ir_expression_operation new_op = ir_unop_logic_not;
 
-      if (op_expr[0] == NULL)
+      if (!op_expr[0])
 	 break;
 
       switch (op_expr[0]->operation) {
@@ -477,7 +477,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 #define HANDLE_PACK_UNPACK_INVERSE(inverse_operation)                   \
       {                                                                 \
          ir_expression *const op = ir->operands[0]->as_expression();    \
-         if (op == NULL)                                                \
+         if (!op)                                                \
             break;                                                      \
          if (op->operation == (inverse_operation))                      \
             return op->operands[0];                                     \
@@ -666,7 +666,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
          if (!op_const[i])
             continue;
 
-         unsigned components[4] = { 0 }, count = 0;
+         unsigned components[4] = {}, count = 0;
 
          for (unsigned c = 0; c < op_const[i]->type->vector_elements; c++) {
             if (op_const[i]->is_zero())

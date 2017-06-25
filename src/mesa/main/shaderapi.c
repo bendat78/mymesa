@@ -135,7 +135,7 @@ _mesa_init_shader_state(struct gl_context *ctx)
 
    ctx->Shader.Flags = _mesa_get_shader_flags();
 
-   if (ctx->Shader.Flags != 0)
+   if (ctx->Shader.Flags)
       ctx->Const.GenerateTemporaryNames = true;
 
    /* Extended for ARB_separate_shader_objects */
@@ -797,7 +797,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
                      "linked)");
          return;
       }
-      if (shProg->_LinkedShaders[MESA_SHADER_COMPUTE] == NULL) {
+      if (!shProg->_LinkedShaders[MESA_SHADER_COMPUTE]) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramiv(no compute "
                      "shaders)");
          return;
@@ -1232,7 +1232,7 @@ void
 _mesa_active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
 		     const char *caller)
 {
-   if ((shProg != NULL) && !shProg->data->LinkStatus) {
+   if ((shProg) && !shProg->data->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
 		  "%s(program %u not linked)", caller, shProg->Name);
       return;
@@ -1517,7 +1517,7 @@ void GLAPIENTRY
 _mesa_GetObjectParameterfvARB(GLhandleARB object, GLenum pname,
                               GLfloat *params)
 {
-   GLint iparams[1] = {0};  /* XXX is one element enough? */
+   GLint iparams[1] = {};  /* XXX is one element enough? */
    _mesa_GetObjectParameterivARB(object, pname, iparams);
    params[0] = (GLfloat) iparams[0];
 }
@@ -1733,7 +1733,7 @@ _mesa_ShaderSource(GLuint shaderObj, GLsizei count,
    if (!sh)
       return;
 
-   if (string == NULL) {
+   if (!string) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
       return;
    }
@@ -1743,13 +1743,13 @@ _mesa_ShaderSource(GLuint shaderObj, GLsizei count,
     * last element will be set to the total length of the source code.
     */
    offsets = malloc(count * sizeof(GLint));
-   if (offsets == NULL) {
+   if (!offsets) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
    }
 
    for (i = 0; i < count; i++) {
-      if (string[i] == NULL) {
+      if (!string[i]) {
          free((GLvoid *) offsets);
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glShaderSourceARB(null string)");
@@ -1770,7 +1770,7 @@ _mesa_ShaderSource(GLuint shaderObj, GLsizei count,
     */
    totalLength = offsets[count - 1] + 2;
    source = malloc(totalLength * sizeof(GLcharARB));
-   if (source == NULL) {
+   if (!source) {
       free((GLvoid *) offsets);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
@@ -2014,7 +2014,7 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
     * Ensure that length always points to valid storage to avoid multiple NULL
     * pointer checks below.
     */
-   if (length == NULL)
+   if (!length)
       length = &length_dummy;
 
 
@@ -2589,7 +2589,7 @@ _mesa_UniformSubroutinesuiv(GLenum shadertype, GLsizei count,
    bool flushed = false;
    do {
       struct gl_uniform_storage *uni = p->sh.SubroutineUniformRemapTable[i];
-      if (uni == NULL) {
+      if (!uni) {
          i++;
          continue;
       }
@@ -2785,7 +2785,7 @@ _mesa_shader_write_subroutine_index(struct gl_context *ctx,
 {
    int i, j;
 
-   if (p->sh.NumSubroutineUniformRemapTable == 0)
+   if (!p->sh.NumSubroutineUniformRemapTable)
       return;
 
    i = 0;

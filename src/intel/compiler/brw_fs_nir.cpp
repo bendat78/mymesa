@@ -597,7 +597,7 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
     * and destination registers for that channel and emit the instruction.
     */
    unsigned channel = 0;
-   if (nir_op_infos[instr->op].output_size == 0) {
+   if (!nir_op_infos[instr->op].output_size) {
       /* Since NIR is doing the scalarizing for us, we should only ever see
        * vectorized operations with a single channel.
        */
@@ -1596,7 +1596,7 @@ fs_visitor::emit_gs_end_primitive(const nir_src &vertex_count_nir_src)
 
    struct brw_gs_prog_data *gs_prog_data = brw_gs_prog_data(prog_data);
 
-   if (gs_compile->control_data_header_size_bits == 0)
+   if (!gs_compile->control_data_header_size_bits)
       return;
 
    /* We can only do EndPrimitive() functionality when the control data
@@ -1781,7 +1781,7 @@ fs_visitor::set_gs_stream_control_data_bits(const fs_reg &vertex_count,
    /* Control data bits are initialized to 0 so we don't have to set any
     * bits when sending vertices to stream 0.
     */
-   if (stream_id == 0)
+   if (!stream_id)
       return;
 
    const fs_builder abld = bld.annotate("set stream control data bits", NULL);
@@ -2029,7 +2029,7 @@ fs_visitor::emit_gs_input_load(const fs_reg &dst,
    for (unsigned iter = 0; iter < num_iterations; iter++) {
       if (offset_const) {
          /* Constant indexing - use global offset. */
-         if (first_component != 0) {
+         if (first_component) {
             unsigned read_components = num_components + first_component;
             fs_reg tmp = bld.vgrf(dst.type, read_components);
             inst = bld.emit(SHADER_OPCODE_URB_READ_SIMD8, tmp, icp_handle);
@@ -2054,7 +2054,7 @@ fs_visitor::emit_gs_input_load(const fs_reg &dst,
          fs_reg tmp = bld.vgrf(dst.type, read_components);
          fs_reg payload = bld.vgrf(BRW_REGISTER_TYPE_UD, 2);
          bld.LOAD_PAYLOAD(payload, srcs, ARRAY_SIZE(srcs), 0);
-         if (first_component != 0) {
+         if (first_component) {
             inst = bld.emit(SHADER_OPCODE_URB_READ_SIMD8_PER_SLOT, tmp,
                             payload);
             inst->size_written = read_components *
@@ -2360,7 +2360,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
       for (unsigned iter = 0; iter < num_iterations; iter++) {
          if (indirect_offset.file == BAD_FILE) {
             /* Constant indexing - use global offset. */
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components = num_components + first_component;
                fs_reg tmp = bld.vgrf(dst.type, read_components);
                inst = bld.emit(SHADER_OPCODE_URB_READ_SIMD8, tmp, icp_handle);
@@ -2378,7 +2378,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
             const fs_reg srcs[] = { icp_handle, indirect_offset };
             fs_reg payload = bld.vgrf(BRW_REGISTER_TYPE_UD, 2);
             bld.LOAD_PAYLOAD(payload, srcs, ARRAY_SIZE(srcs), 0);
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components = num_components + first_component;
                fs_reg tmp = bld.vgrf(dst.type, read_components);
                inst = bld.emit(SHADER_OPCODE_URB_READ_SIMD8_PER_SLOT, tmp,
@@ -2448,7 +2448,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
                  retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UD));
 
          {
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components =
                   instr->num_components + first_component;
                fs_reg tmp = bld.vgrf(dst.type, read_components);
@@ -2475,7 +2475,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
          };
          fs_reg payload = bld.vgrf(BRW_REGISTER_TYPE_UD, 2);
          bld.LOAD_PAYLOAD(payload, srcs, ARRAY_SIZE(srcs), 0);
-         if (first_component != 0) {
+         if (first_component) {
             unsigned read_components =
                instr->num_components + first_component;
             fs_reg tmp = bld.vgrf(dst.type, read_components);
@@ -2514,7 +2514,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
          srcs[header_regs++] = indirect_offset;
       }
 
-      if (mask == 0)
+      if (!mask)
          break;
 
       unsigned num_components = util_last_bit(mask);
@@ -2692,7 +2692,7 @@ fs_visitor::nir_emit_tes_intrinsic(const fs_builder &bld,
             fs_reg patch_handle = bld.vgrf(BRW_REGISTER_TYPE_UD, 1);
             bld.LOAD_PAYLOAD(patch_handle, srcs, ARRAY_SIZE(srcs), 0);
 
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components =
                   instr->num_components + first_component;
                fs_reg tmp = bld.vgrf(dest.type, read_components);
@@ -2738,7 +2738,7 @@ fs_visitor::nir_emit_tes_intrinsic(const fs_builder &bld,
             fs_reg payload = bld.vgrf(BRW_REGISTER_TYPE_UD, 2);
             bld.LOAD_PAYLOAD(payload, srcs, ARRAY_SIZE(srcs), 0);
 
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components =
                    num_components + first_component;
                fs_reg tmp = bld.vgrf(dest.type, read_components);
@@ -3805,7 +3805,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       }
 
       nir_const_value *const_offset = nir_src_as_const_value(instr->src[1]);
-      if (const_offset == NULL) {
+      if (!const_offset) {
          fs_reg base_offset = retype(get_nir_src(instr->src[1]),
                                      BRW_REGISTER_TYPE_UD);
 

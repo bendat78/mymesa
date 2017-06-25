@@ -179,7 +179,7 @@ swr_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       swr_update_draw_context(ctx, &pq->result);
 
       /* Only change stat collection if there are no active queries */
-      if (ctx->active_queries == 0) {
+      if (!ctx->active_queries) {
          SwrEnableStatsFE(ctx->swrContext, TRUE);
          SwrEnableStatsBE(ctx->swrContext, TRUE);
       }
@@ -216,7 +216,7 @@ swr_end_query(struct pipe_context *pipe, struct pipe_query *q)
 
       /* Only change stat collection if there are no active queries */
       ctx->active_queries--;
-      if (ctx->active_queries == 0) {
+      if (!ctx->active_queries) {
          SwrEnableStatsFE(ctx->swrContext, FALSE);
          SwrEnableStatsBE(ctx->swrContext, FALSE);
       }

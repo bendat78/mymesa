@@ -370,7 +370,7 @@ anv_physical_device_init(struct anv_physical_device *device,
    brw_process_intel_debug_variable();
 
    device->compiler = brw_compiler_create(NULL, &device->info);
-   if (device->compiler == NULL) {
+   if (!device->compiler) {
       result = vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       goto fail;
    }
@@ -891,7 +891,7 @@ void anv_GetPhysicalDeviceProperties(
       .deviceID = pdevice->chipset_id,
       .deviceType = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
       .limits = limits,
-      .sparseProperties = {0}, /* Broadwell doesn't do sparse. */
+      .sparseProperties = {}, /* Broadwell doesn't do sparse. */
    };
 
    strcpy(pProperties->deviceName, pdevice->name);
@@ -1177,7 +1177,7 @@ VkResult anv_CreateDevice(
    }
 
    pthread_condattr_t condattr;
-   if (pthread_condattr_init(&condattr) != 0) {
+   if (pthread_condattr_init(&condattr)) {
       result = vk_error(VK_ERROR_INITIALIZATION_FAILED);
       goto fail_mutex;
    }
@@ -1326,7 +1326,7 @@ VkResult anv_EnumerateInstanceExtensionProperties(
     uint32_t*                                   pPropertyCount,
     VkExtensionProperties*                      pProperties)
 {
-   if (pProperties == NULL) {
+   if (!pProperties) {
       *pPropertyCount = ARRAY_SIZE(global_extensions);
       return VK_SUCCESS;
    }
@@ -1346,7 +1346,7 @@ VkResult anv_EnumerateDeviceExtensionProperties(
     uint32_t*                                   pPropertyCount,
     VkExtensionProperties*                      pProperties)
 {
-   if (pProperties == NULL) {
+   if (!pProperties) {
       *pPropertyCount = ARRAY_SIZE(device_extensions);
       return VK_SUCCESS;
    }
@@ -1364,7 +1364,7 @@ VkResult anv_EnumerateInstanceLayerProperties(
     uint32_t*                                   pPropertyCount,
     VkLayerProperties*                          pProperties)
 {
-   if (pProperties == NULL) {
+   if (!pProperties) {
       *pPropertyCount = 0;
       return VK_SUCCESS;
    }
@@ -1378,7 +1378,7 @@ VkResult anv_EnumerateDeviceLayerProperties(
     uint32_t*                                   pPropertyCount,
     VkLayerProperties*                          pProperties)
 {
-   if (pProperties == NULL) {
+   if (!pProperties) {
       *pPropertyCount = 0;
       return VK_SUCCESS;
    }
@@ -1548,7 +1548,7 @@ VkResult anv_AllocateMemory(
 
    mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
                     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (mem == NULL)
+   if (!mem)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    assert(pAllocateInfo->memoryTypeIndex < pdevice->memory.type_count);
@@ -1637,7 +1637,7 @@ void anv_FreeMemory(
    ANV_FROM_HANDLE(anv_device, device, _device);
    ANV_FROM_HANDLE(anv_device_memory, mem, _mem);
 
-   if (mem == NULL)
+   if (!mem)
       return;
 
    if (mem->map)
@@ -1659,7 +1659,7 @@ VkResult anv_MapMemory(
    ANV_FROM_HANDLE(anv_device, device, _device);
    ANV_FROM_HANDLE(anv_device_memory, mem, _memory);
 
-   if (mem == NULL) {
+   if (!mem) {
       *ppData = NULL;
       return VK_SUCCESS;
    }
@@ -1716,7 +1716,7 @@ void anv_UnmapMemory(
 {
    ANV_FROM_HANDLE(anv_device_memory, mem, _memory);
 
-   if (mem == NULL)
+   if (!mem)
       return;
 
    anv_gem_munmap(mem->map, mem->map_size);
@@ -1996,7 +1996,7 @@ VkResult anv_CreateBuffer(
 
    buffer = vk_alloc2(&device->alloc, pAllocator, sizeof(*buffer), 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (buffer == NULL)
+   if (!buffer)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    buffer->size = pCreateInfo->size;
@@ -2067,7 +2067,7 @@ VkResult anv_CreateFramebuffer(
                  sizeof(struct anv_image_view *) * pCreateInfo->attachmentCount;
    framebuffer = vk_alloc2(&device->alloc, pAllocator, size, 8,
                             VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (framebuffer == NULL)
+   if (!framebuffer)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    framebuffer->attachment_count = pCreateInfo->attachmentCount;

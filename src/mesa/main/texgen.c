@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/** 
+/**
  * \file texgen.c
  *
  * glTexGen-related functions

@@ -38,7 +38,7 @@ vmw_svga_winsys_query_create(struct svga_winsys_screen *sws,
 {
    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
    struct pb_manager *provider = vws->pools.gmr;
-   struct pb_desc desc = {0};
+   struct pb_desc desc = {};
    struct pb_buffer *pb_buf;
    struct svga_winsys_gb_query *query;
 
@@ -134,7 +134,7 @@ vmw_svga_winsys_query_get_result(struct svga_winsys_screen *sws,
 
 
 enum pipe_error
-vmw_swc_query_bind(struct svga_winsys_context *swc, 
+vmw_swc_query_bind(struct svga_winsys_context *swc,
                    struct svga_winsys_gb_query *query,
                    unsigned flags)
 {

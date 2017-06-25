@@ -678,7 +678,7 @@ static inline void moveSourcesAdjustIndex(int8_t &index, int s, int delta)
 void
 Instruction::moveSources(const int s, const int delta)
 {
-   if (delta == 0)
+   if (!delta)
       return;
    assert(s + delta >= 0);
 

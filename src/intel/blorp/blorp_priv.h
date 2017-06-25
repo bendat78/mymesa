@@ -160,7 +160,7 @@ struct blorp_vs_inputs {
 static inline unsigned
 brw_blorp_get_urb_length(const struct brw_wm_prog_data *prog_data)
 {
-   if (prog_data == NULL)
+   if (!prog_data)
       return 1;
 
    /* From the BSpec: 3D Pipeline - Strips and Fans - 3DSTATE_SBE

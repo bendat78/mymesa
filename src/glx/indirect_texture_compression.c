@@ -57,7 +57,7 @@ __indirect_glGetCompressedTexImage(GLenum target, GLint level,
    assert(image_bytes <= ((4 * reply.length) - 0));
    assert(image_bytes >= ((4 * reply.length) - 3));
 
-   if (image_bytes != 0) {
+   if (image_bytes) {
       _XRead(dpy, (char *) img, image_bytes);
       if (image_bytes < (4 * reply.length)) {
          _XEatData(dpy, (4 * reply.length) - image_bytes);
@@ -82,7 +82,7 @@ CompressedTexImage1D2D(GLenum target, GLint level,
    __GLX_DECLARE_VARIABLES();
 
    __GLX_LOAD_VARIABLES();
-   if (gc->currentDpy == NULL) {
+   if (!gc->currentDpy) {
       return;
    }
 
@@ -105,7 +105,7 @@ CompressedTexImage1D2D(GLenum target, GLint level,
       __GLX_PUT_LONG(20, height);
       __GLX_PUT_LONG(24, border);
       __GLX_PUT_LONG(28, image_size);
-      if (compsize != 0) {
+      if (compsize) {
          __GLX_PUT_CHAR_ARRAY(__GLX_COMPRESSED_TEXIMAGE_CMD_HDR_SIZE,
                               data, image_size);
       }
@@ -143,7 +143,7 @@ CompressedTexSubImage1D2D(GLenum target, GLint level,
    __GLX_DECLARE_VARIABLES();
 
    __GLX_LOAD_VARIABLES();
-   if (gc->currentDpy == NULL) {
+   if (!gc->currentDpy) {
       return;
    }
 
@@ -165,7 +165,7 @@ CompressedTexSubImage1D2D(GLenum target, GLint level,
       __GLX_PUT_LONG(24, height);
       __GLX_PUT_LONG(28, format);
       __GLX_PUT_LONG(32, image_size);
-      if (compsize != 0) {
+      if (compsize) {
          __GLX_PUT_CHAR_ARRAY(__GLX_COMPRESSED_TEXSUBIMAGE_CMD_HDR_SIZE,
                               data, image_size);
       }
@@ -225,7 +225,7 @@ __indirect_glCompressedTexImage3D(GLenum target, GLint level,
    __GLX_DECLARE_VARIABLES();
 
    __GLX_LOAD_VARIABLES();
-   if (gc->currentDpy == NULL) {
+   if (!gc->currentDpy) {
       return;
    }
 
@@ -240,7 +240,7 @@ __indirect_glCompressedTexImage3D(GLenum target, GLint level,
       __GLX_PUT_LONG(24, depth);
       __GLX_PUT_LONG(28, border);
       __GLX_PUT_LONG(32, image_size);
-      if (image_size != 0) {
+      if (image_size) {
          __GLX_PUT_CHAR_ARRAY(__GLX_COMPRESSED_TEXIMAGE_3D_CMD_HDR_SIZE,
                               data, image_size);
       }
@@ -300,7 +300,7 @@ __indirect_glCompressedTexSubImage3D(GLenum target, GLint level,
    __GLX_DECLARE_VARIABLES();
 
    __GLX_LOAD_VARIABLES();
-   if (gc->currentDpy == NULL) {
+   if (!gc->currentDpy) {
       return;
    }
 
@@ -318,7 +318,7 @@ __indirect_glCompressedTexSubImage3D(GLenum target, GLint level,
       __GLX_PUT_LONG(32, depth);
       __GLX_PUT_LONG(36, format);
       __GLX_PUT_LONG(40, image_size);
-      if (image_size != 0) {
+      if (image_size) {
          __GLX_PUT_CHAR_ARRAY(__GLX_COMPRESSED_TEXSUBIMAGE_3D_CMD_HDR_SIZE,
                               data, image_size);
       }

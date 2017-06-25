@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /** @file intel_tris.c
@@ -174,7 +174,7 @@ uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
       intel_finish_vb(intel);
 
       /* Start a new VB */
-      if (intel->prim.vb == NULL)
+      if (!intel->prim.vb)
 	 intel->prim.vb = malloc(INTEL_VB_SIZE);
       intel->prim.vb_bo = drm_intel_bo_alloc(intel->bufmgr, "vb",
 					     INTEL_VB_SIZE, 4);
@@ -202,7 +202,7 @@ void intel_flush_prim(struct intel_context *intel)
    /* Must be called after an intel_start_prim. */
    assert(intel->prim.primitive != ~0);
 
-   if (intel->prim.count == 0)
+   if (!intel->prim.count)
       return;
 
    /* Clear the current prims out of the context state so that a batch flush
@@ -331,7 +331,7 @@ void intel_flush_prim(struct intel_context *intel)
  */
 void intel_finish_vb(struct intel_context *intel)
 {
-   if (intel->prim.vb_bo == NULL)
+   if (!intel->prim.vb_bo)
       return;
 
    drm_intel_bo_subdata(intel->prim.vb_bo, 0, intel->prim.start_offset,
@@ -1017,7 +1017,7 @@ intelChooseRenderState(struct gl_context * ctx)
       tnl->Driver.Render.Triangle = rast_tab[index].triangle;
       tnl->Driver.Render.Quad = rast_tab[index].quad;
 
-      if (index == 0) {
+      if (!index) {
          tnl->Driver.Render.PrimTabVerts = intel_render_tab_verts;
          tnl->Driver.Render.PrimTabElts = intel_render_tab_elts;
          tnl->Driver.Render.ClippedLine = line; /* from tritmp.h */
@@ -1059,7 +1059,7 @@ intelRunPipeline(struct gl_context * ctx)
    struct intel_context *intel = intel_context(ctx);
 
    _mesa_lock_context_textures(ctx);
-   
+
    if (ctx->NewState)
       _mesa_update_state_locked(ctx);
 
@@ -1138,7 +1138,7 @@ intelRasterPrimitive(struct gl_context * ctx, GLenum rprim, GLuint hwprim)
 }
 
 
- /* 
+ /*
   */
 static void
 intelRenderPrimitive(struct gl_context * ctx, GLenum prim)
@@ -1220,7 +1220,7 @@ intelFallback(struct intel_context *intel, GLbitfield bit, bool mode)
 
    if (mode) {
       intel->Fallback |= bit;
-      if (oldfallback == 0) {
+      if (!oldfallback) {
 	 assert(!intel->tnl_pipeline_running);
 
          intel_flush(ctx);

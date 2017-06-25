@@ -348,7 +348,7 @@ ir_copy_propagation_visitor::add_copy(ir_assignment *ir)
    ir_variable *lhs_var = ir->whole_variable_written();
    ir_variable *rhs_var = ir->rhs->whole_variable_referenced();
 
-   if ((lhs_var != NULL) && (rhs_var != NULL)) {
+   if ((lhs_var) && (rhs_var != NULL)) {
       if (lhs_var == rhs_var) {
 	 /* This is a dumb assignment, but we've conveniently noticed
 	  * it here.  Removing it now would mess up the loop iteration

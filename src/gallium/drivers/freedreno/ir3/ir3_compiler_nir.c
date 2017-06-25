@@ -616,7 +616,7 @@ create_collect(struct ir3_block *block, struct ir3_instruction *const *arr,
 {
 	struct ir3_instruction *collect;
 
-	if (arrsz == 0)
+	if (!arrsz)
 		return NULL;
 
 	collect = ir3_instr_create2(block, OPC_META_FI, 1 + arrsz);
@@ -2647,7 +2647,7 @@ fixup_astc_srgb(struct ir3_compile *ctx)
 	 * state tex idx.  Zero is invalid since there is at least one sampler
 	 * if we get here.
 	 */
-	unsigned alt_tex_state[16] = {0};
+	unsigned alt_tex_state[16] = {};
 	unsigned tex_idx = ctx->max_texture_index + 1;
 	unsigned idx = 0;
 
@@ -2658,7 +2658,7 @@ fixup_astc_srgb(struct ir3_compile *ctx)
 
 		compile_assert(ctx, sam->cat5.tex < ARRAY_SIZE(alt_tex_state));
 
-		if (alt_tex_state[sam->cat5.tex] == 0) {
+		if (!alt_tex_state[sam->cat5.tex]) {
 			/* assign new alternate/alpha tex state slot: */
 			alt_tex_state[sam->cat5.tex] = tex_idx++;
 			so->astc_srgb.orig_idx[idx++] = sam->cat5.tex;

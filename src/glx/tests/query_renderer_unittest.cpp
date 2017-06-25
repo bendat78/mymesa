@@ -134,7 +134,7 @@ TEST_F(query_renderer_string_test, null_query_render_string)
 
    scr.vtable = &vtable;
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       const char *str =
          glXQueryRendererStringMESA(&dpy, 0, 0, GLX_RENDERER_VENDOR_ID_MESA);
       EXPECT_EQ((char *)0, str);
@@ -194,7 +194,7 @@ TEST_F(query_renderer_string_test, invalid_attribute)
  */
 TEST_F(query_renderer_string_test, null_display_pointer)
 {
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       GetGLXScreenConfigs_called = false;
 
       const char *str =
@@ -214,7 +214,7 @@ TEST_F(query_renderer_string_test, null_screen_pointer)
 {
    psc = NULL;
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       GetGLXScreenConfigs_called = false;
 
       const char *str =
@@ -238,7 +238,7 @@ TEST_F(query_renderer_string_test, invalid_renderer_index)
       999,
    };
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       for (unsigned i = 0; i < ARRAY_SIZE(invalid_renderer_indices); i++) {
          const char *str =
             glXQueryRendererStringMESA(&dpy, 0,
@@ -261,7 +261,7 @@ TEST_F(query_renderer_string_test, invalid_renderer_index)
  */
 TEST_F(query_renderer_string_test, no_current_context)
 {
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       const char *str =
          glXQueryCurrentRendererStringMESA(GLX_RENDERER_VENDOR_ID_MESA);
       EXPECT_EQ((char *)0, str);
@@ -285,7 +285,7 @@ TEST_F(query_renderer_integer_test, null_query_render_string)
 
    scr.vtable = &vtable;
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       unsigned value = 0xDEADBEEF;
       Bool success = glXQueryRendererIntegerMESA(&dpy, 0, 0,
                                                  GLX_RENDERER_VENDOR_ID_MESA,
@@ -349,7 +349,7 @@ TEST_F(query_renderer_integer_test, invalid_attribute)
  */
 TEST_F(query_renderer_integer_test, null_display_pointer)
 {
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       GetGLXScreenConfigs_called = false;
 
       unsigned value = 0xDEADBEEF;
@@ -372,7 +372,7 @@ TEST_F(query_renderer_integer_test, null_screen_pointer)
 {
    psc = NULL;
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       GetGLXScreenConfigs_called = false;
 
       unsigned value = 0xDEADBEEF;
@@ -399,7 +399,7 @@ TEST_F(query_renderer_integer_test, invalid_renderer_index)
       999,
    };
 
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       for (unsigned i = 0; i < ARRAY_SIZE(invalid_renderer_indices); i++) {
          unsigned value = 0xDEADBEEF;
          Bool success =
@@ -425,7 +425,7 @@ TEST_F(query_renderer_integer_test, invalid_renderer_index)
  */
 TEST_F(query_renderer_integer_test, no_current_context)
 {
-   if (setjmp(jmp) == 0) {
+   if (!setjmp(jmp)) {
       unsigned value = 0xDEADBEEF;
       Bool success =
          glXQueryCurrentRendererIntegerMESA(GLX_RENDERER_VENDOR_ID_MESA,

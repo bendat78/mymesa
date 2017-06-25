@@ -119,7 +119,7 @@ static void draw( void )
 #define SIZE 16
 
 static void init_tex( void )
-{ 
+{
    ubyte tex2d[SIZE][SIZE][4];
    int s, t;
 
@@ -164,13 +164,13 @@ static void init_tex( void )
    tex2d[1][1][3] = 255;
 #endif
 
-   texture = graw_util_create_tex2d(&info, SIZE, SIZE, 
+   texture = graw_util_create_tex2d(&info, SIZE, SIZE,
                                     PIPE_FORMAT_B8G8R8A8_UNORM, tex2d);
 
    sv = graw_util_create_simple_sampler_view(&info, texture);
    info.ctx->set_sampler_views(info.ctx, PIPE_SHADER_FRAGMENT, 0, 1, &sv);
 
-   sampler = graw_util_create_simple_sampler(&info, 
+   sampler = graw_util_create_simple_sampler(&info,
                                              PIPE_TEX_WRAP_REPEAT,
                                              PIPE_TEX_FILTER_NEAREST);
    info.ctx->bind_sampler_states(info.ctx, PIPE_SHADER_FRAGMENT,

@@ -334,7 +334,7 @@ static int finish_node(struct r300_emit_state * emit)
 
 		tex_end = 0;
 	} else {
-		if (emit->current_node == 0)
+		if (!emit->current_node)
 			code->config |= R300_PFS_CNTL_FIRST_NODE_HAS_TEX;
 	}
 

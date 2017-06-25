@@ -60,7 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RADEON_MAX_TNL_VERTEX_SIZE (15 * sizeof(GLfloat))	/* for mesa _tnl stage */
 
 /***********************************************************************
- *                         Initialization 
+ *                         Initialization
  ***********************************************************************/
 
 #define EMIT_ATTR( ATTR, STYLE, F0 )					\
@@ -97,7 +97,7 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
 
    /* Important:
     */
-   if ( VB->NdcPtr != NULL ) {
+   if (VB->NdcPtr) {
       VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
    }
    else {
@@ -113,19 +113,19 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
    if ( !rmesa->swtcl.needproj ||
         (index_bitset & BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX))) {
       /* for projtex */
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F, 
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F,
 		 RADEON_CP_VC_FRMT_XY |	RADEON_CP_VC_FRMT_Z | RADEON_CP_VC_FRMT_W0 );
       offset = 4;
    }
    else {
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F, 
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F,
 		 RADEON_CP_VC_FRMT_XY |	RADEON_CP_VC_FRMT_Z );
       offset = 3;
    }
 
    rmesa->swtcl.coloroffset = offset;
-#if MESA_LITTLE_ENDIAN 
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, 
+#if MESA_LITTLE_ENDIAN
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA,
 	      RADEON_CP_VC_FRMT_PKCOLOR );
 #else
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_ABGR,
@@ -137,7 +137,7 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
    if (index_bitset &
        (BITFIELD64_BIT(_TNL_ATTRIB_COLOR1) | BITFIELD64_BIT(_TNL_ATTRIB_FOG))) {
 
-#if MESA_LITTLE_ENDIAN 
+#if MESA_LITTLE_ENDIAN
       if (index_bitset & BITFIELD64_BIT(_TNL_ATTRIB_COLOR1)) {
 	 rmesa->swtcl.specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB,
@@ -220,7 +220,7 @@ static void radeonSetVertexFormat( struct gl_context *ctx )
       rmesa->swtcl.vertex_format = fmt_0;
       rmesa->radeon.swtcl.vertex_size =
 	  _tnl_install_attrs( ctx,
-			      rmesa->radeon.swtcl.vertex_attrs, 
+			      rmesa->radeon.swtcl.vertex_attrs,
 			      rmesa->radeon.swtcl.vertex_attr_count,
 			      NULL, 0 );
       rmesa->radeon.swtcl.vertex_size /= 4;
@@ -277,7 +277,7 @@ void radeonChooseVertexState( struct gl_context *ctx )
    GLboolean unfilled = (ctx->Polygon.FrontMode != GL_FILL ||
                          ctx->Polygon.BackMode != GL_FILL);
    GLboolean twosided = ctx->Light.Enabled && ctx->Light.Model.TwoSide;
-   
+
    se_coord_fmt &= ~(RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
 		     RADEON_VTX_Z_PRE_MULT_1_OVER_W0 |
 		     RADEON_VTX_W0_IS_NOT_1_OVER_W0);
@@ -286,14 +286,14 @@ void radeonChooseVertexState( struct gl_context *ctx )
     * rasterization fallback.  As this function will be called again when we
     * leave a rasterization fallback, we can just skip it for now.
     */
-   if (rmesa->radeon.Fallback != 0)
+   if (rmesa->radeon.Fallback)
       return;
 
    /* HW perspective divide is a win, but tiny vertex formats are a
     * bigger one.
     */
 
-   if ((0 == (tnl->render_inputs_bitset & 
+   if ((0 == (tnl->render_inputs_bitset &
         (BITFIELD64_RANGE(_TNL_ATTRIB_TEX0, _TNL_NUM_TEX)
          | BITFIELD64_BIT(_TNL_ATTRIB_COLOR1))))
        || twosided
@@ -327,7 +327,7 @@ void r100_swtcl_flush(struct gl_context *ctx, uint32_t current_offset)
 			rmesa->radeon.swtcl.bo,
 			current_offset);
 
-		      
+
    radeonEmitVbufPrim( rmesa,
 		       rmesa->swtcl.vertex_format,
 		       rmesa->radeon.swtcl.hw_primitive,
@@ -438,7 +438,7 @@ static GLboolean radeon_run_render( struct gl_context *ctx,
 
       radeon_print(RADEON_SWRENDER, RADEON_NORMAL,
 	  "radeon_render.c: prim %s %d..%d\n",
-		 _mesa_enum_to_string(prim & PRIM_MODE_MASK), 
+		 _mesa_enum_to_string(prim & PRIM_MODE_MASK),
 		 start, start+length);
 
       if (length)
@@ -498,7 +498,7 @@ static void radeonResetLineStipple( struct gl_context *ctx );
    r100ContextPtr rmesa = R100_CONTEXT(ctx);		\
    const char *radeonverts = (char *)rmesa->radeon.swtcl.verts;
 #define VERT(x) (radeonVertex *)(radeonverts + ((x) * (vertsize) * sizeof(int)))
-#define VERTEX radeonVertex 
+#define VERTEX radeonVertex
 #undef TAG
 #define TAG(x) radeon_##x
 #include "tnl_dd/t_dd_triemit.h"
@@ -600,7 +600,7 @@ do {							\
 
 #define LOCAL_VARS(n)							\
    r100ContextPtr rmesa = R100_CONTEXT(ctx);			\
-   GLuint color[n] = {0}, spec[n] = {0};						\
+   GLuint color[n] = {}, spec[n] = {};						\
    GLuint coloroffset = rmesa->swtcl.coloroffset;	\
    GLuint specoffset = rmesa->swtcl.specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
@@ -699,7 +699,7 @@ void radeonChooseRenderState( struct gl_context *ctx )
                          ctx->Polygon.BackMode != GL_FILL);
    GLboolean twosided = ctx->Light.Enabled && ctx->Light.Model.TwoSide;
 
-   if (!rmesa->radeon.TclFallback || rmesa->radeon.Fallback) 
+   if (!rmesa->radeon.TclFallback || rmesa->radeon.Fallback)
       return;
 
    if (twosided)
@@ -714,7 +714,7 @@ void radeonChooseRenderState( struct gl_context *ctx )
       tnl->Driver.Render.Triangle = rast_tab[index].triangle;
       tnl->Driver.Render.Quad = rast_tab[index].quad;
 
-      if (index == 0) {
+      if (!index) {
 	 tnl->Driver.Render.PrimTabVerts = radeon_render_tab_verts;
 	 tnl->Driver.Render.PrimTabElts = radeon_render_tab_elts;
 	 tnl->Driver.Render.ClippedPolygon = radeon_fast_clipped_poly;
@@ -751,7 +751,7 @@ static void radeonRenderPrimitive( struct gl_context *ctx, GLenum prim )
                          ctx->Polygon.BackMode != GL_FILL);
 
    rmesa->radeon.swtcl.render_primitive = prim;
-   if (prim < GL_TRIANGLES || !unfilled) 
+   if (prim < GL_TRIANGLES || !unfilled)
       radeonRasterPrimitive( ctx, reduced_hw_prim[prim] );
 }
 
@@ -801,7 +801,7 @@ void radeonFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 
    if (mode) {
       rmesa->radeon.Fallback |= bit;
-      if (oldfallback == 0) {
+      if (!oldfallback) {
 	 radeon_firevertices(&rmesa->radeon);
 	 TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );
@@ -870,9 +870,9 @@ void radeonInitSwtcl( struct gl_context *ctx )
    tnl->Driver.Render.CopyPV = _tnl_copy_pv;
    tnl->Driver.Render.Interp = _tnl_interp;
 
-   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
+   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12,
 		       RADEON_MAX_TNL_VERTEX_SIZE);
-   
+
    rmesa->radeon.swtcl.verts = (GLubyte *)tnl->clipspace.vertex_buf;
    rmesa->radeon.swtcl.RenderIndex = ~0;
    rmesa->radeon.swtcl.render_primitive = GL_TRIANGLES;

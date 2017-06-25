@@ -115,11 +115,11 @@ static void dispatch_BindTexImageEXT(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(BindTexImageEXT);
-    if (pBindTexImageEXT == NULL)
+    if (!pBindTexImageEXT)
         return;
 
     (*pBindTexImageEXT)(dpy, drawable, buffer, attrib_list);
@@ -136,11 +136,11 @@ static GLXFBConfigSGIX *dispatch_ChooseFBConfigSGIX(Display *dpy, int screen,
     GLXFBConfigSGIX *ret;
 
     dd = __VND->getDynDispatch(dpy, screen);
-    if (dd == NULL)
+    if (!dd)
         return NULL;
 
     __FETCH_FUNCTION_PTR(ChooseFBConfigSGIX);
-    if (pChooseFBConfigSGIX == NULL)
+    if (!pChooseFBConfigSGIX)
         return NULL;
 
     ret = (*pChooseFBConfigSGIX)(dpy, screen, attrib_list, nelements);
@@ -165,11 +165,11 @@ static GLXContext dispatch_CreateContextAttribsARB(Display *dpy,
     GLXContext ret;
 
     dd = GetDispatchFromFBConfig(dpy, config);
-    if (dd == NULL)
+    if (!dd)
         return None;
 
     __FETCH_FUNCTION_PTR(CreateContextAttribsARB);
-    if (pCreateContextAttribsARB == NULL)
+    if (!pCreateContextAttribsARB)
         return None;
 
     ret = (*pCreateContextAttribsARB)(dpy, config, share_list, direct, attrib_list);
@@ -196,11 +196,11 @@ static GLXContext dispatch_CreateContextWithConfigSGIX(Display *dpy,
     GLXContext ret;
 
     dd = GetDispatchFromFBConfig(dpy, config);
-    if (dd == NULL)
+    if (!dd)
         return None;
 
     __FETCH_FUNCTION_PTR(CreateContextWithConfigSGIX);
-    if (pCreateContextWithConfigSGIX == NULL)
+    if (!pCreateContextWithConfigSGIX)
         return None;
 
     ret = (*pCreateContextWithConfigSGIX)(dpy, config, render_type, share_list, direct);
@@ -227,11 +227,11 @@ static GLXPbuffer dispatch_CreateGLXPbufferSGIX(Display *dpy,
     GLXPbuffer ret;
 
     dd = GetDispatchFromFBConfig(dpy, config);
-    if (dd == NULL)
+    if (!dd)
         return None;
 
     __FETCH_FUNCTION_PTR(CreateGLXPbufferSGIX);
-    if (pCreateGLXPbufferSGIX == NULL)
+    if (!pCreateGLXPbufferSGIX)
         return None;
 
     ret = (*pCreateGLXPbufferSGIX)(dpy, config, width, height, attrib_list);
@@ -259,11 +259,11 @@ static GLXPixmap dispatch_CreateGLXPixmapWithConfigSGIX(Display *dpy,
     GLXPixmap ret;
 
     dd = GetDispatchFromFBConfig(dpy, config);
-    if (dd == NULL)
+    if (!dd)
         return None;
 
     __FETCH_FUNCTION_PTR(CreateGLXPixmapWithConfigSGIX);
-    if (pCreateGLXPixmapWithConfigSGIX == NULL)
+    if (!pCreateGLXPixmapWithConfigSGIX)
         return None;
 
     ret = (*pCreateGLXPixmapWithConfigSGIX)(dpy, config, pixmap);
@@ -285,11 +285,11 @@ static void dispatch_DestroyGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf)
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, pbuf);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(DestroyGLXPbufferSGIX);
-    if (pDestroyGLXPbufferSGIX == NULL)
+    if (!pDestroyGLXPbufferSGIX)
         return;
 
     (*pDestroyGLXPbufferSGIX)(dpy, pbuf);
@@ -303,11 +303,11 @@ static GLXContextID dispatch_GetContextIDEXT(const GLXContext ctx)
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromContext(ctx);
-    if (dd == NULL)
+    if (!dd)
         return None;
 
     __FETCH_FUNCTION_PTR(GetContextIDEXT);
-    if (pGetContextIDEXT == NULL)
+    if (!pGetContextIDEXT)
         return None;
 
     return (*pGetContextIDEXT)(ctx);
@@ -324,11 +324,11 @@ static Display *dispatch_GetCurrentDisplayEXT(void)
         return NULL;
 
     dd = __VND->getCurrentDynDispatch();
-    if (dd == NULL)
+    if (!dd)
         return NULL;
 
     __FETCH_FUNCTION_PTR(GetCurrentDisplayEXT);
-    if (pGetCurrentDisplayEXT == NULL)
+    if (!pGetCurrentDisplayEXT)
         return NULL;
 
     return (*pGetCurrentDisplayEXT)();
@@ -354,11 +354,11 @@ static int dispatch_GetFBConfigAttribSGIX(Display *dpy, GLXFBConfigSGIX config,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromFBConfig(dpy, config);
-    if (dd == NULL)
+    if (!dd)
         return GLX_NO_EXTENSION;
 
     __FETCH_FUNCTION_PTR(GetFBConfigAttribSGIX);
-    if (pGetFBConfigAttribSGIX == NULL)
+    if (!pGetFBConfigAttribSGIX)
         return GLX_NO_EXTENSION;
 
     return (*pGetFBConfigAttribSGIX)(dpy, config, attribute, value_return);
@@ -374,11 +374,11 @@ static GLXFBConfigSGIX dispatch_GetFBConfigFromVisualSGIX(Display *dpy,
     GLXFBConfigSGIX ret = NULL;
 
     dd = GetDispatchFromVisual(dpy, vis);
-    if (dd == NULL)
+    if (!dd)
         return NULL;
 
     __FETCH_FUNCTION_PTR(GetFBConfigFromVisualSGIX);
-    if (pGetFBConfigFromVisualSGIX == NULL)
+    if (!pGetFBConfigFromVisualSGIX)
         return NULL;
 
     ret = (*pGetFBConfigFromVisualSGIX)(dpy, vis);
@@ -398,11 +398,11 @@ static void dispatch_GetSelectedEventSGIX(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(GetSelectedEventSGIX);
-    if (pGetSelectedEventSGIX == NULL)
+    if (!pGetSelectedEventSGIX)
         return;
 
     (*pGetSelectedEventSGIX)(dpy, drawable, mask);
@@ -419,11 +419,11 @@ static int dispatch_GetVideoSyncSGI(unsigned int *count)
         return GLX_BAD_CONTEXT;
 
     dd = __VND->getCurrentDynDispatch();
-    if (dd == NULL)
+    if (!dd)
         return GLX_NO_EXTENSION;
 
     __FETCH_FUNCTION_PTR(GetVideoSyncSGI);
-    if (pGetVideoSyncSGI == NULL)
+    if (!pGetVideoSyncSGI)
         return GLX_NO_EXTENSION;
 
     return (*pGetVideoSyncSGI)(count);
@@ -438,11 +438,11 @@ static XVisualInfo *dispatch_GetVisualFromFBConfigSGIX(Display *dpy,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromFBConfig(dpy, config);
-    if (dd == NULL)
+    if (!dd)
         return NULL;
 
     __FETCH_FUNCTION_PTR(GetVisualFromFBConfigSGIX);
-    if (pGetVisualFromFBConfigSGIX == NULL)
+    if (!pGetVisualFromFBConfigSGIX)
         return NULL;
 
     return (*pGetVisualFromFBConfigSGIX)(dpy, config);
@@ -457,11 +457,11 @@ static int dispatch_QueryContextInfoEXT(Display *dpy, GLXContext ctx,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromContext(ctx);
-    if (dd == NULL)
+    if (!dd)
         return GLX_NO_EXTENSION;
 
     __FETCH_FUNCTION_PTR(QueryContextInfoEXT);
-    if (pQueryContextInfoEXT == NULL)
+    if (!pQueryContextInfoEXT)
         return GLX_NO_EXTENSION;
 
     return (*pQueryContextInfoEXT)(dpy, ctx, attribute, value);
@@ -476,11 +476,11 @@ static void dispatch_QueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, pbuf);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(QueryGLXPbufferSGIX);
-    if (pQueryGLXPbufferSGIX == NULL)
+    if (!pQueryGLXPbufferSGIX)
         return;
 
     (*pQueryGLXPbufferSGIX)(dpy, pbuf, attribute, value);
@@ -495,11 +495,11 @@ static void dispatch_ReleaseTexImageEXT(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(ReleaseTexImageEXT);
-    if (pReleaseTexImageEXT == NULL)
+    if (!pReleaseTexImageEXT)
         return;
 
     (*pReleaseTexImageEXT)(dpy, drawable, buffer);
@@ -514,11 +514,11 @@ static void dispatch_SelectEventSGIX(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(SelectEventSGIX);
-    if (pSelectEventSGIX == NULL)
+    if (!pSelectEventSGIX)
         return;
 
     (*pSelectEventSGIX)(dpy, drawable, mask);
@@ -535,11 +535,11 @@ static int dispatch_SwapIntervalSGI(int interval)
         return GLX_BAD_CONTEXT;
 
     dd = __VND->getCurrentDynDispatch();
-    if (dd == NULL)
+    if (!dd)
         return GLX_NO_EXTENSION;
 
     __FETCH_FUNCTION_PTR(SwapIntervalSGI);
-    if (pSwapIntervalSGI == NULL)
+    if (!pSwapIntervalSGI)
         return GLX_NO_EXTENSION;
 
     return (*pSwapIntervalSGI)(interval);
@@ -557,11 +557,11 @@ static int dispatch_WaitVideoSyncSGI(int divisor, int remainder,
         return GLX_BAD_CONTEXT;
 
     dd = __VND->getCurrentDynDispatch();
-    if (dd == NULL)
+    if (!dd)
         return GLX_NO_EXTENSION;
 
     __FETCH_FUNCTION_PTR(WaitVideoSyncSGI);
-    if (pWaitVideoSyncSGI == NULL)
+    if (!pWaitVideoSyncSGI)
         return GLX_NO_EXTENSION;
 
     return (*pWaitVideoSyncSGI)(divisor, remainder, count);
@@ -576,11 +576,11 @@ static void dispatch_BindSwapBarrierSGIX(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(BindSwapBarrierSGIX);
-    if (pBindSwapBarrierSGIX == NULL)
+    if (!pBindSwapBarrierSGIX)
         return;
 
     (*pBindSwapBarrierSGIX)(dpy, drawable, barrier);
@@ -595,11 +595,11 @@ static void dispatch_CopySubBufferMESA(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(CopySubBufferMESA);
-    if (pCopySubBufferMESA == NULL)
+    if (!pCopySubBufferMESA)
         return;
 
     (*pCopySubBufferMESA)(dpy, drawable, x, y, width, height);
@@ -616,11 +616,11 @@ static GLXPixmap dispatch_CreateGLXPixmapMESA(Display *dpy,
     GLXPixmap ret;
 
     dd = GetDispatchFromVisual(dpy, visinfo);
-    if (dd == NULL)
+    if (!dd)
         return None;
 
     __FETCH_FUNCTION_PTR(CreateGLXPixmapMESA);
-    if (pCreateGLXPixmapMESA == NULL)
+    if (!pCreateGLXPixmapMESA)
         return None;
 
     ret = (*pCreateGLXPixmapMESA)(dpy, visinfo, pixmap, cmap);
@@ -643,11 +643,11 @@ static GLboolean dispatch_GetMscRateOML(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return GL_FALSE;
 
     __FETCH_FUNCTION_PTR(GetMscRateOML);
-    if (pGetMscRateOML == NULL)
+    if (!pGetMscRateOML)
         return GL_FALSE;
 
     return (*pGetMscRateOML)(dpy, drawable, numerator, denominator);
@@ -662,11 +662,11 @@ static const char *dispatch_GetScreenDriver(Display *dpy, int scrNum)
     __GLXvendorInfo *dd;
 
     dd = __VND->getDynDispatch(dpy, scrNum);
-    if (dd == NULL)
+    if (!dd)
         return NULL;
 
     __FETCH_FUNCTION_PTR(GetScreenDriver);
-    if (pGetScreenDriver == NULL)
+    if (!pGetScreenDriver)
         return NULL;
 
     return (*pGetScreenDriver)(dpy, scrNum);
@@ -683,11 +683,11 @@ static int dispatch_GetSwapIntervalMESA(void)
         return GLX_BAD_CONTEXT;
 
     dd = __VND->getCurrentDynDispatch();
-    if (dd == NULL)
+    if (!dd)
         return 0;
 
     __FETCH_FUNCTION_PTR(GetSwapIntervalMESA);
-    if (pGetSwapIntervalMESA == NULL)
+    if (!pGetSwapIntervalMESA)
         return 0;
 
     return (*pGetSwapIntervalMESA)();
@@ -702,11 +702,11 @@ static Bool dispatch_GetSyncValuesOML(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return False;
 
     __FETCH_FUNCTION_PTR(GetSyncValuesOML);
-    if (pGetSyncValuesOML == NULL)
+    if (!pGetSyncValuesOML)
         return False;
 
     return (*pGetSyncValuesOML)(dpy, drawable, ust, msc, sbc);
@@ -721,11 +721,11 @@ static void dispatch_JoinSwapGroupSGIX(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return;
 
     __FETCH_FUNCTION_PTR(JoinSwapGroupSGIX);
-    if (pJoinSwapGroupSGIX == NULL)
+    if (!pJoinSwapGroupSGIX)
         return;
 
     (*pJoinSwapGroupSGIX)(dpy, drawable, member);
@@ -743,11 +743,11 @@ static Bool dispatch_QueryCurrentRendererIntegerMESA(int attribute,
         return False;
 
     dd = __VND->getCurrentDynDispatch();
-    if (dd == NULL)
+    if (!dd)
         return False;
 
     __FETCH_FUNCTION_PTR(QueryCurrentRendererIntegerMESA);
-    if (pQueryCurrentRendererIntegerMESA == NULL)
+    if (!pQueryCurrentRendererIntegerMESA)
         return False;
 
     return (*pQueryCurrentRendererIntegerMESA)(attribute, value);
@@ -764,11 +764,11 @@ static const char *dispatch_QueryCurrentRendererStringMESA(int attribute)
         return NULL;
 
     dd = __VND->getCurrentDynDispatch();
-    if (dd == NULL)
+    if (!dd)
         return NULL;
 
     __FETCH_FUNCTION_PTR(QueryCurrentRendererStringMESA);
-    if (pQueryCurrentRendererStringMESA == NULL)
+    if (!pQueryCurrentRendererStringMESA)
         return NULL;
 
     return (*pQueryCurrentRendererStringMESA)(attribute);
@@ -783,11 +783,11 @@ static Bool dispatch_QueryMaxSwapBarriersSGIX(Display *dpy, int screen,
     __GLXvendorInfo *dd;
 
     dd = __VND->getDynDispatch(dpy, screen);
-    if (dd == NULL)
+    if (!dd)
         return False;
 
     __FETCH_FUNCTION_PTR(QueryMaxSwapBarriersSGIX);
-    if (pQueryMaxSwapBarriersSGIX == NULL)
+    if (!pQueryMaxSwapBarriersSGIX)
         return False;
 
     return (*pQueryMaxSwapBarriersSGIX)(dpy, screen, max);
@@ -803,11 +803,11 @@ static Bool dispatch_QueryRendererIntegerMESA(Display *dpy, int screen,
     __GLXvendorInfo *dd;
 
     dd = __VND->getDynDispatch(dpy, screen);
-    if (dd == NULL)
+    if (!dd)
         return False;
 
     __FETCH_FUNCTION_PTR(QueryRendererIntegerMESA);
-    if (pQueryRendererIntegerMESA == NULL)
+    if (!pQueryRendererIntegerMESA)
         return False;
 
     return (*pQueryRendererIntegerMESA)(dpy, screen, renderer, attribute, value);
@@ -822,11 +822,11 @@ static const char *dispatch_QueryRendererStringMESA(Display *dpy, int screen,
     __GLXvendorInfo *dd = NULL;
 
     dd = __VND->getDynDispatch(dpy, screen);
-    if (dd == NULL)
+    if (!dd)
         return NULL;
 
     __FETCH_FUNCTION_PTR(QueryRendererStringMESA);
-    if (pQueryRendererStringMESA == NULL)
+    if (!pQueryRendererStringMESA)
         return NULL;
 
     return (*pQueryRendererStringMESA)(dpy, screen, renderer, attribute);
@@ -840,11 +840,11 @@ static Bool dispatch_ReleaseBuffersMESA(Display *dpy, GLXDrawable d)
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, d);
-    if (dd == NULL)
+    if (!dd)
         return False;
 
     __FETCH_FUNCTION_PTR(ReleaseBuffersMESA);
-    if (pReleaseBuffersMESA == NULL)
+    if (!pReleaseBuffersMESA)
         return False;
 
     return (*pReleaseBuffersMESA)(dpy, d);
@@ -860,11 +860,11 @@ static int64_t dispatch_SwapBuffersMscOML(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return 0;
 
     __FETCH_FUNCTION_PTR(SwapBuffersMscOML);
-    if (pSwapBuffersMscOML == NULL)
+    if (!pSwapBuffersMscOML)
         return 0;
 
     return (*pSwapBuffersMscOML)(dpy, drawable, target_msc, divisor, remainder);
@@ -881,11 +881,11 @@ static int dispatch_SwapIntervalMESA(unsigned int interval)
         return GLX_BAD_CONTEXT;
 
     dd = __VND->getCurrentDynDispatch();
-    if (dd == NULL)
+    if (!dd)
         return 0;
 
     __FETCH_FUNCTION_PTR(SwapIntervalMESA);
-    if (pSwapIntervalMESA == NULL)
+    if (!pSwapIntervalMESA)
         return 0;
 
     return (*pSwapIntervalMESA)(interval);
@@ -902,11 +902,11 @@ static Bool dispatch_WaitForMscOML(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return False;
 
     __FETCH_FUNCTION_PTR(WaitForMscOML);
-    if (pWaitForMscOML == NULL)
+    if (!pWaitForMscOML)
         return False;
 
     return (*pWaitForMscOML)(dpy, drawable, target_msc, divisor, remainder, ust, msc, sbc);
@@ -922,11 +922,11 @@ static Bool dispatch_WaitForSbcOML(Display *dpy, GLXDrawable drawable,
     __GLXvendorInfo *dd;
 
     dd = GetDispatchFromDrawable(dpy, drawable);
-    if (dd == NULL)
+    if (!dd)
         return False;
 
     __FETCH_FUNCTION_PTR(WaitForSbcOML);
-    if (pWaitForSbcOML == NULL)
+    if (!pWaitForSbcOML)
         return False;
 
     return (*pWaitForSbcOML)(dpy, drawable, target_sbc, ust, msc, sbc);

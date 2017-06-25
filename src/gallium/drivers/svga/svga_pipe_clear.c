@@ -117,7 +117,7 @@ ints_fit_in_floats(const union pipe_color_union *color)
 
 
 static enum pipe_error
-try_clear(struct svga_context *svga, 
+try_clear(struct svga_context *svga,
           unsigned buffers,
           const union pipe_color_union *color,
           double depth,
@@ -128,7 +128,7 @@ try_clear(struct svga_context *svga,
    boolean restore_viewport = FALSE;
    SVGA3dClearFlag flags = 0;
    struct pipe_framebuffer_state *fb = &svga->curr.framebuffer;
-   union util_color uc = {0};
+   union util_color uc = {};
 
    ret = svga_update_state(svga, SVGA_STATE_HW_CLEAR);
    if (ret != PIPE_OK)
@@ -182,7 +182,7 @@ try_clear(struct svga_context *svga,
 
             /* Issue VGPU10 Clear commands */
             for (i = 0; i < fb->nr_cbufs; i++) {
-               if ((fb->cbufs[i] == NULL) ||
+               if (!(fb->cbufs[i]) ||
                    !(buffers & (PIPE_CLEAR_COLOR0 << i)))
                   continue;
 
@@ -220,7 +220,7 @@ try_clear(struct svga_context *svga,
    if (restore_viewport) {
       ret = SVGA3D_SetViewport(svga->swc, &svga->state.hw_clear.viewport);
    }
-   
+
    return ret;
 }
 
@@ -287,7 +287,7 @@ svga_clear_texture(struct pipe_context *pipe,
    tmpl.u.tex.level = level;
 
    surface = pipe->create_surface(pipe, res, &tmpl);
-   if (surface == NULL) {
+   if (!surface) {
       debug_printf("failed to create surface\n");
       return;
    }
@@ -303,7 +303,7 @@ svga_clear_texture(struct pipe_context *pipe,
       unsigned clear_flags = 0;
 
       /* If data is NULL, then set depthValue and stencilValue to zeros */
-      if (data == NULL) {
+      if (!data) {
          depth = 0.0;
          stencil = 0;
       }
@@ -361,7 +361,7 @@ svga_clear_texture(struct pipe_context *pipe,
    else {
       /* non depth-stencil formats */
 
-      if (data == NULL) {
+      if (!data) {
          /* If data is NULL, the texture image is filled with zeros */
          color.f[0] = color.f[1] = color.f[2] = color.f[3] = 0;
       }
@@ -535,13 +535,13 @@ svga_clear_render_target(struct pipe_context *pipe,
                                         height);
     } else {
        enum pipe_error ret;
-       
+
        ret = svga_try_clear_render_target(svga, dst, color);
        if (ret == PIPE_ERROR_OUT_OF_MEMORY) {
           svga_context_flush( svga, NULL );
           ret = svga_try_clear_render_target(svga, dst, color);
        }
-       
+
        assert (ret == PIPE_OK);
     }
     svga_toggle_render_condition(svga, render_condition_enabled, TRUE);

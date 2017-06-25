@@ -162,14 +162,14 @@ intel_map_renderbuffer(struct gl_context *ctx,
     * upside-down.  So we need to ask for a rectangle on flipped vertically, and
     * we then return a pointer to the bottom of it with a negative stride.
     */
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       y = rb->Height - y - h;
    }
 
    intel_miptree_map(brw, mt, irb->mt_level, irb->mt_layer,
 		     x, y, w, h, mode, &map, &stride);
 
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       map += (h - 1) * stride;
       stride = -stride;
    }
@@ -337,7 +337,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 
    image = dri_screen->dri2.image->lookupEGLImage(dri_screen, image_handle,
                                                   dri_screen->loaderPrivate);
-   if (image == NULL)
+   if (!image)
       return;
 
    if (image->planar_format && image->planar_format->nplanes > 1) {
@@ -764,7 +764,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
        * intel_wrap_texture() treatment.
        */
       rb = fb->Attachment[i].Renderbuffer;
-      if (rb == NULL) {
+      if (!rb) {
 	 fbo_incomplete(fb, "FBO incomplete: attachment without "
                         "renderbuffer\n");
 	 continue;
@@ -778,7 +778,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
 
       irb = intel_renderbuffer(rb);
-      if (irb == NULL) {
+      if (!irb) {
 	 fbo_incomplete(fb, "FBO incomplete: software rendering "
                         "renderbuffer\n");
 	 continue;

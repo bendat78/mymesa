@@ -93,7 +93,7 @@ wsi_queue_push(struct wsi_queue *queue, uint32_t index)
 
    pthread_mutex_lock(&queue->mutex);
 
-   if (u_vector_length(&queue->vector) == 0)
+   if (!u_vector_length(&queue->vector))
       pthread_cond_signal(&queue->cond);
 
    elem = u_vector_add(&queue->vector);
@@ -130,7 +130,7 @@ wsi_queue_pull(struct wsi_queue *queue, uint32_t *index, uint64_t timeout)
 
    while (u_vector_length(&queue->vector) == 0) {
       ret = pthread_cond_timedwait(&queue->cond, &queue->mutex, &abstime);
-      if (ret == 0) {
+      if (!ret) {
          continue;
       } else if (ret == ETIMEDOUT) {
          result = VK_TIMEOUT;

@@ -675,7 +675,7 @@ blitframebuffer_texture(struct gl_context *ctx,
       srcLevel = 0;
       target = meta_temp_texture->Target;
       texObj = _mesa_lookup_texture(ctx, meta_temp_texture->TexObj);
-      if (texObj == NULL) {
+      if (!texObj) {
          return false;
       }
 
@@ -888,7 +888,7 @@ _mesa_meta_bind_rb_as_tex_image(struct gl_context *ctx,
 
    tempTex = 0;
    _mesa_GenTextures(1, &tempTex);
-   if (tempTex == 0)
+   if (!tempTex)
       return false;
 
    *tex = tempTex;
@@ -921,7 +921,7 @@ _mesa_meta_setup_sampler(struct gl_context *ctx,
                        GL_NEAREST : filter;
 
    samp_obj =  ctx->Driver.NewSamplerObject(ctx, 0xDEADBEEF);
-   if (samp_obj == NULL)
+   if (!samp_obj)
       return NULL;
 
    _mesa_bind_sampler(ctx, ctx->Texture.CurrentUnit, samp_obj);

@@ -598,7 +598,7 @@ etna_get_specs(struct etna_screen *screen)
       DBG("could not get %s", "ETNA_GPU_NUM_CONSTANTS");
       goto fail;
    }
-   if (val == 0) {
+   if (!val) {
       fprintf(stderr, "Warning: zero num constants (update kernel?)\n");
       val = 168;
    }

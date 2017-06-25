@@ -1,18 +1,18 @@
 /*
  * (C) Copyright IBM Corporation 2005
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
  * Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
@@ -138,7 +138,7 @@ __indirect_glGetVertexAttribPointerv(GLuint index, GLenum pname,
 
 /**
  * Get the selected attribute from the vertex array state vector.
- * 
+ *
  * \returns
  * On success \c GL_TRUE is returned.  Otherwise, \c GL_FALSE is returned.
  */
@@ -203,7 +203,7 @@ __indirect_glGetVertexAttribiv(GLuint index, GLenum pname, GLint * params)
 
    get_vertex_attrib(gc, 1303, index, pname, (xReply *) & reply);
 
-   if (reply.size != 0) {
+   if (reply.size) {
       GLintptr data;
 
 
@@ -237,7 +237,7 @@ __indirect_glGetVertexAttribfv(GLuint index, GLenum pname,
 
    get_vertex_attrib(gc, 1302, index, pname, (xReply *) & reply);
 
-   if (reply.size != 0) {
+   if (reply.size) {
       GLintptr data;
 
 
@@ -271,7 +271,7 @@ __indirect_glGetVertexAttribdv(GLuint index, GLenum pname,
 
    get_vertex_attrib(gc, 1301, index, pname, (xReply *) & reply);
 
-   if (reply.size != 0) {
+   if (reply.size) {
       GLintptr data;
 
 

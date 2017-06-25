@@ -403,7 +403,7 @@ int main(int argc, char **argv)
 
       write_tsv_header(fp);
    }
-      
+
    if (single)
       success = test_single(verbose, fp);
    else if (n)

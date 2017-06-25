@@ -696,7 +696,7 @@ loader_dri3_swap_buffers_msc(struct loader_dri3_drawable *draw,
        * behaviour by not using XCB_PRESENT_OPTION_ASYNC, but this should not be
        * the default.
        */
-      if (swap_interval == 0)
+      if (!swap_interval)
           options |= XCB_PRESENT_OPTION_ASYNC;
       if (force_copy)
           options |= XCB_PRESENT_OPTION_COPY;
@@ -753,7 +753,7 @@ loader_dri3_query_buffer_age(struct loader_dri3_drawable *draw)
    if (back_id < 0 || !draw->buffers[back_id])
       return 0;
 
-   if (draw->buffers[back_id]->last_swap != 0)
+   if (draw->buffers[back_id]->last_swap)
       return draw->send_sbc - draw->buffers[back_id]->last_swap + 1;
    else
       return 0;
@@ -842,7 +842,7 @@ dri3_alloc_render_buffer(struct loader_dri3_drawable *draw, unsigned int format,
       return NULL;
 
    shm_fence = xshmfence_map_shm(fence_fd);
-   if (shm_fence == NULL)
+   if (!shm_fence)
       goto no_shm_fence;
 
    /* Allocate the image from the driver
@@ -1132,7 +1132,7 @@ dri3_get_pixmap_buffer(__DRIdrawable *driDrawable, unsigned int format,
    if (fence_fd < 0)
       goto no_fence;
    shm_fence = xshmfence_map_shm(fence_fd);
-   if (shm_fence == NULL) {
+   if (!shm_fence) {
       close (fence_fd);
       goto no_fence;
    }

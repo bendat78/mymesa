@@ -96,7 +96,7 @@ public:
          this->fragdata_array = var;
 
          ir_constant *index = ir->array_index->as_constant();
-         if (index == NULL) {
+         if (!index) {
             /* This is variable indexing. */
             this->fragdata_usage |= (1 << var->type->array_size()) - 1;
             this->lower_fragdata_array = false;
@@ -123,7 +123,7 @@ public:
          this->texcoord_array = var;
 
          ir_constant *index = ir->array_index->as_constant();
-         if (index == NULL) {
+         if (!index) {
             /* There is variable indexing, we can't lower the texcoord array.
              */
             this->texcoord_usage |= (1 << var->type->array_size()) - 1;

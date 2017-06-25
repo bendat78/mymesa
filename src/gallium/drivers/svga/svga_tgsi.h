@@ -50,7 +50,7 @@ static inline void svga_generate_vdecl_semantics( unsigned idx,
                                                   unsigned *usage,
                                                   unsigned *usage_index )
 {
-   if (idx == 0) {
+   if (!idx) {
       *usage = SVGA3D_DECLUSAGE_POSITION;
       *usage_index = 0;
    }

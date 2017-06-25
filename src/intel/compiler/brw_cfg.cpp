@@ -431,7 +431,7 @@ cfg_t::dump(backend_shader *s)
                  link->block->num);
       }
       fprintf(stderr, "\n");
-      if (s != NULL)
+      if (s)
          block->dump(s);
       fprintf(stderr, "END B%d", block->num);
       foreach_list_typed(bblock_link, link, link, &block->children) {
@@ -463,15 +463,15 @@ cfg_t::calculate_idom()
       changed = false;
 
       foreach_block(block, this) {
-         if (block->num == 0)
+         if (!block->num)
             continue;
 
          bblock_t *new_idom = NULL;
          foreach_list_typed(bblock_link, parent, link, &block->parents) {
             if (parent->block->idom) {
-               if (new_idom == NULL) {
+               if (!new_idom) {
                   new_idom = parent->block;
-               } else if (parent->block->idom != NULL) {
+               } else if (parent->block->idom) {
                   new_idom = intersect(parent->block, new_idom);
                }
             }

@@ -75,7 +75,7 @@ vc4_nir_unpack_16i(nir_builder *b, nir_ssa_def *src, unsigned chan)
 static nir_ssa_def *
 vc4_nir_unpack_16u(nir_builder *b, nir_ssa_def *src, unsigned chan)
 {
-        if (chan == 0) {
+        if (!chan) {
                 return nir_iand(b, src, nir_imm_int(b, 0xffff));
         } else {
                 return nir_ushr(b, src, nir_imm_int(b, 16));

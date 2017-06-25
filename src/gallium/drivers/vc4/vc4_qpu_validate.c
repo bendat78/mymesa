@@ -392,7 +392,7 @@ vc4_qpu_validate(uint64_t *insts, uint32_t num_inst)
                                  * during the delay slots OK, or should we do
                                  * this at THRSW signal time?
                                  */
-                                if (last_tex_samples_outstanding != 0) {
+                                if (last_tex_samples_outstanding) {
                                         fail_instr(inst, "THRSW with texture "
                                                    "results from the previous "
                                                    "THRSW still in the FIFO.");
@@ -444,7 +444,7 @@ vc4_qpu_validate(uint64_t *insts, uint32_t num_inst)
 
                         case QPU_SIG_LOAD_TMU0:
                         case QPU_SIG_LOAD_TMU1:
-                                if (last_tex_samples_outstanding == 0) {
+                                if (!last_tex_samples_outstanding) {
                                         fail_instr(inst, "TMU load with nothing "
                                                    "in the results fifo from "
                                                    "the previous THRSW.");

@@ -251,7 +251,7 @@ fetch_vector4_deriv(struct gl_context * ctx,
       result[1] = deriv[GET_SWZ(source->Swizzle, 1)];
       result[2] = deriv[GET_SWZ(source->Swizzle, 2)];
       result[3] = deriv[GET_SWZ(source->Swizzle, 3)];
-      
+
       if (source->Negate) {
          assert(source->Negate == NEGATE_XYZW);
          result[0] = -result[0];
@@ -596,7 +596,7 @@ _mesa_execute_program(struct gl_context * ctx,
             }
             else {
                q[0] = ldexpf(1.0, (int) floor_t0);
-               /* Note: GL_NV_vertex_program expects 
+               /* Note: GL_NV_vertex_program expects
                 * result.z = result.x * APPX(result.y)
                 * We do what the ARB extension says.
                 */
@@ -928,7 +928,7 @@ _mesa_execute_program(struct gl_context * ctx,
             GLfloat a[4], result[4];
             fetch_vector1(&inst->SrcReg[0], machine, a);
             if (DEBUG_PROG) {
-               if (a[0] == 0)
+               if (!a[0])
                   printf("RCP(0)\n");
                else if (IS_INF_OR_NAN(a[0]))
                   printf("RCP(inf)\n");
@@ -938,7 +938,7 @@ _mesa_execute_program(struct gl_context * ctx,
          }
          break;
       case OPCODE_RET:         /* return from subroutine (conditional) */
-         if (machine->StackDepth == 0) {
+         if (!machine->StackDepth) {
             return GL_TRUE;  /* Per GL_NV_vertex_program2 spec */
          }
          /* subtract one because of pc++ in the for loop */

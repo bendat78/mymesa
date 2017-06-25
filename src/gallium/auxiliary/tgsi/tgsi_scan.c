@@ -1,5 +1,5 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
  * Copyright 2008 VMware, Inc.  All rights Reserved.
@@ -11,11 +11,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -23,7 +23,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -139,7 +139,7 @@ scan_src_operand(struct tgsi_shader_info *info,
          break;
       case TGSI_SEMANTIC_BLOCK_SIZE:
          /* The block size is translated to IMM with a fixed block size. */
-         if (info->properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH] == 0)
+         if (!info->properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH])
             info->uses_block_size = true;
          break;
       case TGSI_SEMANTIC_GRID_SIZE:
@@ -471,7 +471,7 @@ scan_instruction(struct tgsi_shader_info *info,
 
    if (fullinst->Instruction.Texture) {
       for (i = 0; i < fullinst->Texture.NumOffsets; i++) {
-         struct tgsi_full_src_register src = {{0}};
+         struct tgsi_full_src_register src = {};
 
          src.Register.File = fullinst->TexOffsets[i].File;
          src.Register.Index = fullinst->TexOffsets[i].Index;
@@ -524,7 +524,7 @@ scan_instruction(struct tgsi_shader_info *info,
 
    info->num_instructions++;
 }
-     
+
 
 static void
 scan_declaration(struct tgsi_shader_info *info,

@@ -153,7 +153,7 @@ __glXInitVertexArrayState(struct glx_context * gc)
    arrays = calloc(1, sizeof(struct array_state_vector));
    state->array_state = arrays;
 
-   if (arrays == NULL) {
+   if (!arrays) {
       __glXSetError(gc, GL_OUT_OF_MEMORY);
       return;
    }
@@ -206,7 +206,7 @@ __glXInitVertexArrayState(struct glx_context * gc)
    arrays->num_arrays = array_count;
    arrays->arrays = calloc(array_count, sizeof(struct array_state));
 
-   if (arrays->arrays == NULL) {
+   if (!arrays->arrays) {
       state->array_state = NULL;
       free(arrays);
       __glXSetError(gc, GL_OUT_OF_MEMORY);
@@ -295,7 +295,7 @@ __glXInitVertexArrayState(struct glx_context * gc)
                           * arrays->num_arrays
                           * __GL_CLIENT_ATTRIB_STACK_DEPTH);
 
-   if (arrays->stack == NULL) {
+   if (!arrays->stack) {
       state->array_state = NULL;
       free(arrays->arrays);
       free(arrays);
@@ -445,7 +445,7 @@ allocate_array_info_cache(struct array_state_vector *arrays,
       GLubyte *temp = realloc(arrays->array_info_cache_base,
                               required_size + MAX_HEADER_SIZE);
 
-      if (temp == NULL) {
+      if (!temp) {
          return GL_FALSE;
       }
 
@@ -714,7 +714,7 @@ emit_DrawArrays_old(GLenum mode, GLint first, GLsizei count)
    /* Write the arrays.
     */
 
-   if (total_requests == 0) {
+   if (!total_requests) {
       assert(elements_per_request >= count);
 
       for (i = 0; i < count; i++) {
@@ -880,7 +880,7 @@ emit_DrawElements_old(GLenum mode, GLsizei count, GLenum type,
          }
       }
 
-      if (total_requests != 0) {
+      if (total_requests) {
          __glXSendLargeChunk(gc, req, total_requests, gc->pc, pc - gc->pc);
          pc = gc->pc;
          req++;
@@ -893,7 +893,7 @@ emit_DrawElements_old(GLenum mode, GLsizei count, GLenum type,
 
    assert((total_requests == 0) || ((req - 1) == total_requests));
 
-   if (total_requests == 0) {
+   if (!total_requests) {
       assert(pc <= gc->bufEnd);
 
       gc->pc = pc;
@@ -1451,7 +1451,7 @@ __indirect_glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
    }
 
    index = arrays->active_texture_unit;
-   if (index == 0) {
+   if (!index) {
       switch (type) {
       case GL_SHORT:
          opcode = short_ops[size];
@@ -1552,7 +1552,7 @@ __indirect_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride,
    }
 
    a = get_array_entry(arrays, GL_SECONDARY_COLOR_ARRAY, 0);
-   if (a == NULL) {
+   if (!a) {
       __glXSetError(gc, GL_INVALID_OPERATION);
       return;
    }
@@ -1594,7 +1594,7 @@ __indirect_glFogCoordPointer(GLenum type, GLsizei stride,
    }
 
    a = get_array_entry(arrays, GL_FOG_COORD_ARRAY, 0);
-   if (a == NULL) {
+   if (!a) {
       __glXSetError(gc, GL_INVALID_OPERATION);
       return;
    }
@@ -1707,7 +1707,7 @@ __indirect_glVertexAttribPointer(GLuint index, GLint size,
    }
 
    a = get_array_entry(arrays, GL_VERTEX_ATTRIB_ARRAY_POINTER, index);
-   if (a == NULL) {
+   if (!a) {
       __glXSetError(gc, GL_INVALID_OPERATION);
       return;
    }
@@ -1802,7 +1802,7 @@ __glXSetArrayEnable(__GLXattribute * state, GLenum key, unsigned index,
 
    a = get_array_entry(arrays, key, index);
 
-   if ((a != NULL) && (a->enabled != enable)) {
+   if ((a) && (a->enabled != enable)) {
       a->enabled = enable;
       arrays->array_info_cache_valid = GL_FALSE;
    }
@@ -1837,7 +1837,7 @@ __glXGetArrayEnable(const __GLXattribute * const state,
       get_array_entry((struct array_state_vector *) arrays,
                       key, index);
 
-   if (a != NULL) {
+   if (a) {
       *dest = (GLintptr) a->enabled;
    }
 
@@ -1856,7 +1856,7 @@ __glXGetArrayType(const __GLXattribute * const state,
       get_array_entry((struct array_state_vector *) arrays,
                       key, index);
 
-   if (a != NULL) {
+   if (a) {
       *dest = (GLintptr) a->data_type;
    }
 
@@ -1875,7 +1875,7 @@ __glXGetArraySize(const __GLXattribute * const state,
       get_array_entry((struct array_state_vector *) arrays,
                       key, index);
 
-   if (a != NULL) {
+   if (a) {
       *dest = (GLintptr) a->count;
    }
 
@@ -1894,7 +1894,7 @@ __glXGetArrayStride(const __GLXattribute * const state,
       get_array_entry((struct array_state_vector *) arrays,
                       key, index);
 
-   if (a != NULL) {
+   if (a) {
       *dest = (GLintptr) a->user_stride;
    }
 
@@ -1914,7 +1914,7 @@ __glXGetArrayPointer(const __GLXattribute * const state,
                       key, index);
 
 
-   if (a != NULL) {
+   if (a) {
       *dest = (void *) (a->data);
    }
 
@@ -1934,7 +1934,7 @@ __glXGetArrayNormalized(const __GLXattribute * const state,
                       key, index);
 
 
-   if (a != NULL) {
+   if (a) {
       *dest = (GLintptr) a->normalized;
    }
 

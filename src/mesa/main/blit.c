@@ -488,7 +488,7 @@ blit_framebuffer(struct gl_context *ctx,
        *     the read and draw framebuffers, the corresponding bit is silently
        *     ignored."
        */
-      if ((readRb == NULL) || (drawRb == NULL)) {
+      if (!(readRb) || (drawRb == NULL)) {
          mask &= ~GL_STENCIL_BUFFER_BIT;
       } else if (!no_error) {
          if (!validate_stencil_buffer(ctx, readFb, drawFb, func))
@@ -508,7 +508,7 @@ blit_framebuffer(struct gl_context *ctx,
        *     the read and draw framebuffers, the corresponding bit is silently
        *     ignored."
        */
-      if ((readRb == NULL) || (drawRb == NULL)) {
+      if (!(readRb) || (drawRb == NULL)) {
          mask &= ~GL_DEPTH_BUFFER_BIT;
       } else if (!no_error) {
          if (!validate_depth_buffer(ctx, readFb, drawFb, func))

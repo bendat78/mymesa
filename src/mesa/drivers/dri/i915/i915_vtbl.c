@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
@@ -96,7 +96,7 @@ i915_reduced_primitive_state(struct intel_context *intel, GLenum rprim)
 
 
 /* Pull apart the vertex format registers and figure out how large a
- * vertex is supposed to be. 
+ * vertex is supposed to be.
  */
 static bool
 i915_check_vertex_size(struct intel_context *intel, GLuint expected)
@@ -304,7 +304,7 @@ i915_emit_state(struct intel_context *intel)
                                    INTEL_PRIM_EMIT_SIZE);
    count = 0;
  again:
-   if (intel->batch.bo == NULL) {
+   if (!intel->batch.bo) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "i915 emit state");
       assert(0);
    }
@@ -330,7 +330,7 @@ i915_emit_state(struct intel_context *intel)
    }
 
    if (dri_bufmgr_check_aperture_space(aper_array, aper_count)) {
-       if (count == 0) {
+       if (!count) {
 	   count++;
 	   intel_batchbuffer_flush(intel);
 	   goto again;
@@ -341,7 +341,7 @@ i915_emit_state(struct intel_context *intel)
    }
 
    /* work out list of buffers to emit */
-   
+
    /* Do this here as we may have flushed the batchbuffer above,
     * causing more state to be dirty!
     */
@@ -432,7 +432,7 @@ i915_emit_state(struct intel_context *intel)
    }
 
    /* Combine all the dirty texture state into a single command to
-    * avoid lockups on I915 hardware. 
+    * avoid lockups on I915 hardware.
     */
    if (dirty & I915_UPLOAD_TEX_ALL) {
       int nr = 0;
@@ -508,7 +508,7 @@ i915_destroy_context(struct intel_context *intel)
    intel_region_release(&i915->state.depth_region);
 
    for (i = 0; i < I915_TEX_UNITS; i++) {
-      if (i915->state.tex_buffer[i] != NULL) {
+      if (i915->state.tex_buffer[i]) {
 	 drm_intel_bo_unreference(i915->state.tex_buffer[i]);
 	 i915->state.tex_buffer[i] = NULL;
       }
@@ -524,7 +524,7 @@ i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
    state[0] = _3DSTATE_BUF_INFO_CMD;
    state[1] = buffer_id;
 
-   if (region != NULL) {
+   if (region) {
       state[1] |= BUF_3D_PITCH(region->pitch);
 
       if (region->tiling != I915_TILING_NONE) {
@@ -603,7 +603,7 @@ i915_set_draw_region(struct intel_context *intel,
    value = (DSTORG_HORT_BIAS(0x8) |     /* .5 */
             DSTORG_VERT_BIAS(0x8) |     /* .5 */
             LOD_PRECLAMP_OGL | TEX_DEFAULT_COLOR_OGL);
-   if (irb != NULL) {
+   if (irb) {
       value |= i915_render_target_format_for_mesa_format[intel_rb_format(irb)];
    } else {
       value |= DV_PF_8888;
@@ -828,7 +828,7 @@ i915_new_batch(struct intel_context *intel)
    i915->current_vertex_size = 0;
 }
 
-static void 
+static void
 i915_assert_not_dirty( struct intel_context *intel )
 {
    struct i915_context *i915 = i915_context(&intel->ctx);

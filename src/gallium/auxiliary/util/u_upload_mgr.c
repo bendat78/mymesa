@@ -180,14 +180,14 @@ u_upload_alloc_buffer(struct u_upload_mgr *upload, unsigned min_size)
    }
 
    upload->buffer = screen->resource_create(screen, &buffer);
-   if (upload->buffer == NULL)
+   if (!upload->buffer)
       return;
 
    /* Map the new buffer. */
    upload->map = pipe_buffer_map_range(upload->pipe, upload->buffer,
                                        0, size, upload->map_flags,
                                        &upload->transfer);
-   if (upload->map == NULL) {
+   if (!upload->map) {
       upload->transfer = NULL;
       pipe_resource_reference(&upload->buffer, NULL);
       return;

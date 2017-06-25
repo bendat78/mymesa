@@ -66,7 +66,7 @@ expect_equal(uint64_t actual, uint64_t expected, const char *test)
 static void
 expect_null(void *ptr, const char *test)
 {
-   if (ptr != NULL) {
+   if (ptr) {
       fprintf(stderr, "Error: Test '%s' failed: Result=%p, but expected NULL.\n",
               test, ptr);
       error = true;
@@ -76,7 +76,7 @@ expect_null(void *ptr, const char *test)
 static void
 expect_non_null(void *ptr, const char *test)
 {
-   if (ptr == NULL) {
+   if (!ptr) {
       fprintf(stderr, "Error: Test '%s' failed: Result=NULL, but expected something else.\n",
               test);
       error = true;

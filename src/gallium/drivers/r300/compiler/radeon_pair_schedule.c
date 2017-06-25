@@ -354,7 +354,7 @@ static void calc_score_readers(struct schedule_instruction * sinst)
 		if (sinst->PairedInst) {
 			sinst->Score += sinst->PairedInst->NumReadValues;
 		}
-		if (get_tex_read_count(sinst) == 0) {
+		if (!get_tex_read_count(sinst)) {
 			sinst->Score |= NO_READ_TEX_SCORE;
 		}
 		score_no_output(sinst);

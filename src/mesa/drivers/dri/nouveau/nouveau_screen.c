@@ -56,7 +56,7 @@ nouveau_get_configs(uint32_t chipset)
 
 	const uint8_t depth_bits[]   = { 0, 16, 24, 24 };
 	const uint8_t stencil_bits[] = { 0,  0,  0,  8 };
-	const uint8_t msaa_samples[] = { 0 };
+	const uint8_t msaa_samples[] = {};
 
 	static const mesa_format formats[3] = {
 		MESA_FORMAT_B5G6R5_UNORM,
@@ -248,7 +248,7 @@ nouveau_create_buffer(__DRIscreen *dri_screen,
 
 	if (visual->redBits == 5)
 		color_format = GL_RGB5;
-	else if (visual->alphaBits == 0)
+	else if (!visual->alphaBits)
 		color_format = GL_RGB8;
 	else
 		color_format = GL_RGBA8;

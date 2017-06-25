@@ -1629,7 +1629,7 @@ These opcodes are used for bit-level manipulation of integers.
     def bfi(base, insert, offset, bits):
       if offset < 0 or bits < 0 or offset + bits > 32:
         return undefined
-      # << defined such that mask == ~0 when bits == 32, offset == 0
+      # << defined such that mask == (~0u) when bits == 32, offset == 0
       mask = ((1 << bits) - 1) << offset
       return ((insert << offset) & mask) | (base & ~mask)
 

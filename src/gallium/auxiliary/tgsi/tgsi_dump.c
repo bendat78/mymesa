@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007-2008 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include <inttypes.h>
@@ -51,14 +51,14 @@ struct dump_ctx
    uint instno;
    uint immno;
    int indent;
-   
+
    uint indentation;
    FILE *file;
 
    void (*dump_printf)(struct dump_ctx *ctx, const char *format, ...);
 };
 
-static void 
+static void
 dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
 {
    va_list ap;
@@ -121,7 +121,7 @@ _dump_register_src(
          SID( src->DimIndirect.Index );
          TXT( "]." );
          ENM( src->DimIndirect.Swizzle, tgsi_swizzle_names );
-         if (src->Dimension.Index != 0) {
+         if (src->Dimension.Index) {
             if (src->Dimension.Index > 0)
                CHR( '+' );
             SID( src->Dimension.Index );
@@ -145,7 +145,7 @@ _dump_register_src(
       SID( src->Indirect.Index );
       TXT( "]." );
       ENM( src->Indirect.Swizzle, tgsi_swizzle_names );
-      if (src->Register.Index != 0) {
+      if (src->Register.Index) {
          if (src->Register.Index > 0)
             CHR( '+' );
          SID( src->Register.Index );
@@ -178,7 +178,7 @@ _dump_register_dst(
          SID( dst->DimIndirect.Index );
          TXT( "]." );
          ENM( dst->DimIndirect.Swizzle, tgsi_swizzle_names );
-         if (dst->Dimension.Index != 0) {
+         if (dst->Dimension.Index) {
             if (dst->Dimension.Index > 0)
                CHR( '+' );
             SID( dst->Dimension.Index );
@@ -202,7 +202,7 @@ _dump_register_dst(
       SID( dst->Indirect.Index );
       TXT( "]." );
       ENM( dst->Indirect.Swizzle, tgsi_swizzle_names );
-      if (dst->Register.Index != 0) {
+      if (dst->Register.Index) {
          if (dst->Register.Index > 0)
             CHR( '+' );
          SID( dst->Register.Index );
@@ -769,7 +769,7 @@ static void
 str_dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
 {
    struct str_dump_ctx *sctx = (struct str_dump_ctx *)ctx;
-   
+
    if (!sctx->nospace) {
       int written;
       va_list ap;

@@ -42,7 +42,7 @@ namespace {
                         map(multiplies(), region, pitch))) {
          // The spec defines a value of zero as the natural pitch,
          // i.e. the unaligned size of the previous dimension.
-         if (std::get<0>(x) == 0)
+         if (!std::get<0>(x))
             std::get<0>(x) = std::get<1>(x);
       }
 

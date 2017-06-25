@@ -215,13 +215,13 @@ check_tmu_write(struct vc4_validated_shader_info *validated_shader,
 		 * two either way.
 		 */
 		clamp_reg = raddr_add_a_to_live_reg_index(inst);
-		if (clamp_reg == ~0) {
+		if (clamp_reg == (~0u)) {
 			DRM_ERROR("direct TMU load wasn't clamped\n");
 			return false;
 		}
 
 		clamp_offset = validation_state->live_min_clamp_offsets[clamp_reg];
-		if (clamp_offset == ~0) {
+		if (clamp_offset == (~0u)) {
 			DRM_ERROR("direct TMU load wasn't clamped\n");
 			return false;
 		}

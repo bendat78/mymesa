@@ -295,7 +295,7 @@ kms_sw_displaytarget_from_handle(struct sw_winsys *ws,
    assert(whandle->type == DRM_API_HANDLE_TYPE_KMS ||
           whandle->type == DRM_API_HANDLE_TYPE_FD);
 
-   if (whandle->offset != 0) {
+   if (whandle->offset) {
       DEBUG_PRINT("KMS-DEBUG: attempt to import unsupported winsys offset %d\n",
                   whandle->offset);
       return NULL;

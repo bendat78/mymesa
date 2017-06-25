@@ -198,7 +198,7 @@ VkResult radv_CreatePipelineLayout(
 
 	layout = vk_alloc2(&device->alloc, pAllocator, sizeof(*layout), 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (layout == NULL)
+	if (!layout)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	layout->num_sets = pCreateInfo->setLayoutCount;

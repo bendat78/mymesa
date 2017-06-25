@@ -914,7 +914,7 @@ static inline UINT_32 GetCoordActiveMask(
 
     for (UINT_32 i = 0; i < searchCount; i++)
     {
-        if ((pChanSet[i].valid   == TRUE)    &&
+        if ((pChanSet[i].valid)    &&
             (pChanSet[i].channel == channel) &&
             (pChanSet[i].index   == index))
         {

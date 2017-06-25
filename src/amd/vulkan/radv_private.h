@@ -156,7 +156,7 @@ round_up_u64(uint64_t v, uint64_t a)
 static inline uint32_t
 radv_minify(uint32_t n, uint32_t levels)
 {
-	if (unlikely(n == 0))
+	if (!unlikely(n))
 		return 0;
 	else
 		return MAX2(n >> levels, 1);

@@ -527,7 +527,7 @@ draw_vgpu10(struct svga_hwtnl *hwtnl,
       if (sbuf) {
          assert(sbuf->key.flags & SVGA3D_SURFACE_BIND_VERTEX_BUFFER);
          vbuffer_handles[i] = svga_buffer_handle(svga, &sbuf->b.b);
-         if (vbuffer_handles[i] == NULL)
+         if (!vbuffer_handles[i])
             return PIPE_ERROR_OUT_OF_MEMORY;
          vbuffers[i] = &sbuf->b.b;
          last_vbuf = i;
@@ -802,7 +802,7 @@ check_draw_params(struct svga_hwtnl *hwtnl,
       int index_bias = (int) range->indexBias + hwtnl->index_bias;
       unsigned width;
 
-      if (size == 0)
+      if (!size)
          continue;
 
       assert(vb);

@@ -158,7 +158,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
       ADVANCE_BATCH();
    }
 
-   if (stencil_mt == NULL) {
+   if (!stencil_mt) {
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_STENCIL_BUFFER << 16 | (3 - 2));
       OUT_BATCH(0);

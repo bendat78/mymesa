@@ -41,7 +41,7 @@ grow_to_fit(struct blob *blob, size_t additional)
    if (blob->size + additional <= blob->allocated)
       return true;
 
-   if (blob->allocated == 0)
+   if (!blob->allocated)
       to_allocate = BLOB_INITIAL_SIZE;
    else
       to_allocate = blob->allocated * 2;
@@ -49,7 +49,7 @@ grow_to_fit(struct blob *blob, size_t additional)
    to_allocate = MAX2(to_allocate, blob->allocated + additional);
 
    new_data = realloc(blob->data, to_allocate);
-   if (new_data == NULL)
+   if (!new_data)
       return false;
 
    blob->data = new_data;
@@ -90,7 +90,7 @@ struct blob *
 blob_create()
 {
    struct blob *blob = (struct blob *) malloc(sizeof(struct blob));
-   if (blob == NULL)
+   if (!blob)
       return NULL;
 
    blob->data = NULL;
@@ -224,7 +224,7 @@ blob_copy_bytes(struct blob_reader *blob, uint8_t *dest, size_t size)
    uint8_t *bytes;
 
    bytes = blob_read_bytes(blob, size);
-   if (bytes == NULL)
+   if (!bytes)
       return;
 
    memcpy(dest, bytes, size);
@@ -306,7 +306,7 @@ blob_read_string(struct blob_reader *blob)
     */
    nul = memchr(blob->current, 0, blob->end - blob->current);
 
-   if (nul == NULL) {
+   if (!nul) {
       blob->overrun = true;
       return NULL;
    }

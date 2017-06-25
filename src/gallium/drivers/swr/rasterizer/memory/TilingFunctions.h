@@ -19,11 +19,11 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
-* 
+*
 * @file TilingFunctions.h
-* 
+*
 * @brief Tiling functions.
-* 
+*
 ******************************************************************************/
 #pragma once
 
@@ -267,7 +267,7 @@ INLINE void ComputeLODOffset1D(
     uint32_t lod,
     uint32_t &offset)
 {
-    if (lod == 0)
+    if (!lod)
     {
         offset = 0;
     }
@@ -347,7 +347,7 @@ INLINE void ComputeLODOffsetY(
     uint32_t lod,
     uint32_t &offset)
 {
-    if (lod == 0)
+    if (!lod)
     {
         offset = 0;
     }
@@ -416,7 +416,7 @@ INLINE void AdjustCoordsForMSAA(const SWR_SURFACE_STATE *pState, uint32_t& x, ui
 {
     /// @todo: might want to templatize adjusting for sample slices when we support tileYS/tileYF.
     if((pState->tileMode == SWR_TILE_MODE_YMAJOR ||
-        pState->tileMode == SWR_TILE_MODE_WMAJOR) && 
+        pState->tileMode == SWR_TILE_MODE_WMAJOR) &&
        pState->bInterleavedSamples)
     {
         uint32_t newX, newY, newSampleX, newSampleY;

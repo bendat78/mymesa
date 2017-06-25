@@ -149,7 +149,7 @@ process_xfb_layout_qualifiers(void *mem_ctx, const gl_linked_shader *sh,
       }
    }
 
-   if (*num_tfeedback_decls == 0)
+   if (!*num_tfeedback_decls)
       return has_xfb_qualifiers;
 
    unsigned i = 0;
@@ -409,7 +409,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
          while (idx < slot_limit) {
             unsigned i = var->data.location_frac;
             while (i < last_comp) {
-               if (explicit_locations[idx][i] != NULL) {
+               if (explicit_locations[idx][i]) {
                   linker_error(prog,
                                "%s shader has multiple outputs explicitly "
                                "assigned to location %d and component %d\n",
@@ -521,7 +521,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
             output = parameters.get_variable(input->name);
          }
 
-         if (output != NULL) {
+         if (output) {
             /* Interface blocks have their own validation elsewhere so don't
              * try validating them here.
              */
@@ -640,7 +640,7 @@ tfeedback_decl::init(struct gl_context *ctx, const void *mem_ctx,
    const char *base_name_end;
    long subscript = parse_program_resource_name(input, &base_name_end);
    this->var_name = ralloc_strndup(mem_ctx, input, base_name_end - input);
-   if (this->var_name == NULL) {
+   if (!this->var_name) {
       _mesa_error_no_memory(__func__);
       return;
    }
@@ -1607,7 +1607,7 @@ varying_matches::store_locations() const
    /* Check is location needs to be packed with lower_packed_varyings() or if
     * we can just use ARB_enhanced_layouts packing.
     */
-   bool pack_loc[MAX_VARYINGS_INCL_PATCH] = { 0 };
+   bool pack_loc[MAX_VARYINGS_INCL_PATCH] = {};
    const glsl_type *loc_type[MAX_VARYINGS_INCL_PATCH][4] = { {NULL, NULL} };
 
    for (unsigned i = 0; i < this->num_matches; i++) {
@@ -1929,7 +1929,7 @@ populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
              */
             consumer_inputs_with_locations[input_var->data.location] =
                input_var;
-         } else if (input_var->get_interface_type() != NULL) {
+         } else if (input_var->get_interface_type()) {
             char *const iface_field_name =
                ralloc_asprintf(mem_ctx, "%s.%s",
                   input_var->get_interface_type()->without_array()->name,
@@ -1962,7 +1962,7 @@ get_matching_input(void *mem_ctx,
 
    if (output_var->data.explicit_location) {
       input_var = consumer_inputs_with_locations[output_var->data.location];
-   } else if (output_var->get_interface_type() != NULL) {
+   } else if (output_var->get_interface_type()) {
       char *const iface_field_name =
          ralloc_asprintf(mem_ctx, "%s.%s",
             output_var->get_interface_type()->without_array()->name,
@@ -2022,7 +2022,7 @@ canonicalize_shader_io(exec_list *ir, enum ir_variable_mode io_mode)
       var_table[num_variables++] = var;
    }
 
-   if (num_variables == 0)
+   if (!num_variables)
       return;
 
    /* Sort the list in reverse order (io_variable_cmp handles this).  Later
@@ -2262,7 +2262,7 @@ assign_varying_locations(struct gl_context *ctx,
       const tfeedback_candidate *matched_candidate
          = tfeedback_decls[i].find_candidate(prog, tfeedback_candidates);
 
-      if (matched_candidate == NULL) {
+      if (!matched_candidate) {
          _mesa_hash_table_destroy(tfeedback_candidates, NULL);
          return false;
       }
@@ -2273,7 +2273,7 @@ assign_varying_locations(struct gl_context *ctx,
       }
    }
 
-   uint8_t components[MAX_VARYINGS_INCL_PATCH] = {0};
+   uint8_t components[MAX_VARYINGS_INCL_PATCH] = {};
    const unsigned slots_used = matches.assign_locations(
          prog, components, reserved_slots);
    matches.store_locations();
@@ -2470,7 +2470,7 @@ link_varyings(struct gl_shader_program *prog, unsigned first, unsigned last,
       varying_names = prog->TransformFeedback.VaryingNames;
    }
 
-   if (num_tfeedback_decls != 0) {
+   if (num_tfeedback_decls) {
       /* From GL_EXT_transform_feedback:
        *   A program will fail to link if:
        *
@@ -2571,7 +2571,7 @@ link_varyings(struct gl_shader_program *prog, unsigned first, unsigned last,
                return false;
 
             /* This must be done after all dead varyings are eliminated. */
-            if (sh_i != NULL) {
+            if (sh_i) {
                unsigned slots_used = _mesa_bitcount_64(reserved_out_slots);
                if (!check_against_output_limit(ctx, prog, sh_i, slots_used)) {
                   return false;

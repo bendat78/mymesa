@@ -31,18 +31,18 @@
 /*
  * (C) Copyright IBM Corporation 2005
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
  * Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
@@ -59,7 +59,7 @@
 /**
  * Send a large image to the server.  If necessary, a buffer is allocated
  * to hold the unpacked data that is copied from the clients memory.
- * 
+ *
  * \param gc        Current GLX context
  * \param compsize  Size, in bytes, of the image portion
  * \param dim       Number of dimensions of the image
@@ -91,7 +91,7 @@ __glXSendLargeImage(struct glx_context * gc, GLint compsize, GLint dim,
     }
 
     /* Apply pixel store unpack modes to copy data into buf */
-    if (src != NULL) {
+    if (src) {
 	(*gc->fillImage) (gc, dim, width, height, depth, format, type,
 			  src, buf, modes);
     }
@@ -156,7 +156,7 @@ __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
                            column, pc, NULL);
          pc += image2len;
       }
-      if ((compsize == 0) && (compsize2 == 0)) {
+      if (!(compsize) && (compsize2 == 0)) {
          /* Setup default store modes */
          (void) memcpy(pixelHeaderPC, __glXDefaultPixelStore + 4, 20);
       }

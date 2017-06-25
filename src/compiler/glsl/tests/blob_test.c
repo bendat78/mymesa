@@ -93,7 +93,7 @@ expect_equal_bytes(uint8_t *expected, uint8_t *actual,
 
       fprintf (stderr, "Expected=[");
       for (i = 0; i < num_bytes; i++) {
-         if (i != 0)
+         if (i)
             fprintf(stderr, ", ");
          fprintf(stderr, "0x%02x", expected[i]);
       }
@@ -101,7 +101,7 @@ expect_equal_bytes(uint8_t *expected, uint8_t *actual,
 
       fprintf (stderr, "Actual=[");
       for (i = 0; i < num_bytes; i++) {
-         if (i != 0)
+         if (i)
             fprintf(stderr, ", ");
          fprintf(stderr, "0x%02x", actual[i]);
       }

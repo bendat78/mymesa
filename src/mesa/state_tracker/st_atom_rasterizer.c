@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,14 +22,14 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
  /*
   * Authors:
   *   Keith Whitwell <keithw@vmware.com>
   */
- 
+
 #include "main/macros.h"
 #include "main/framebuffer.h"
 #include "main/state.h"
@@ -95,7 +95,7 @@ void st_update_rasterizer( struct st_context *st )
    /* _NEW_LIGHT
     */
    raster->flatshade = ctx->Light.ShadeModel == GL_FLAT;
-      
+
    raster->flatshade_first = ctx->Light.ProvokingVertex ==
                              GL_FIRST_VERTEX_CONVENTION_EXT;
 
@@ -142,13 +142,13 @@ void st_update_rasterizer( struct st_context *st )
       if (raster->cull_face & PIPE_FACE_FRONT) {
 	 raster->fill_front = raster->fill_back;
       }
-      
+
       if (raster->cull_face & PIPE_FACE_BACK) {
 	 raster->fill_back = raster->fill_front;
       }
    }
 
-   /* _NEW_POLYGON 
+   /* _NEW_POLYGON
     */
    if (ctx->Polygon.OffsetPoint ||
        ctx->Polygon.OffsetLine ||
@@ -176,7 +176,7 @@ void st_update_rasterizer( struct st_context *st )
       if ((ctx->Point.SpriteOrigin == GL_UPPER_LEFT) ^
           (st->state.fb_orientation == Y_0_BOTTOM))
          raster->sprite_coord_mode = PIPE_SPRITE_COORD_UPPER_LEFT;
-      else 
+      else
          raster->sprite_coord_mode = PIPE_SPRITE_COORD_LOWER_LEFT;
 
       /* Coord replacement flags.  If bit 'k' is set that means
@@ -197,7 +197,7 @@ void st_update_rasterizer( struct st_context *st )
    /* ST_NEW_VERTEX_PROGRAM
     */
    if (vertProg) {
-      if (vertProg->Id == 0) {
+      if (!vertProg->Id) {
          if (vertProg->info.outputs_written &
              BITFIELD64_BIT(VARYING_SLOT_PSIZ)) {
             /* generated program which emits point size */

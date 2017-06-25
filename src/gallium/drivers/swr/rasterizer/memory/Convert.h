@@ -19,11 +19,11 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
-* 
+*
 * @file Convert.h
-* 
+*
 * @brief Conversion utility functions
-* 
+*
 ******************************************************************************/
 #pragma once
 
@@ -56,7 +56,7 @@ static INLINE float ConvertSmallFloatTo32(UINT val)
         uint32_t sign = (val & 0x8000) << 16;
         uint32_t mant = (val & 0x3ff) << 13;
         uint32_t exp = (val >> 10) & 0x1f;
-        if ((exp == 0) && (mant != 0)) // Adjust exponent and mantissa for denormals
+        if (!(exp) && (mant != 0)) // Adjust exponent and mantissa for denormals
         {
             mant <<= 1;
             while (mant < (0x400 << 13))
@@ -74,7 +74,7 @@ static INLINE float ConvertSmallFloatTo32(UINT val)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Convert an IEEE 754 32-bit single precision float to an 
+/// @brief Convert an IEEE 754 32-bit single precision float to an
 ///        unsigned small float with 5 exponent bits and a variable
 ///        number of mantissa bits.
 /// @param val - 32-bit float
@@ -93,7 +93,7 @@ static UINT Convert32ToSmallFloat(float val)
     mant = uf & 0x007FFFFF;
 
     // 10/11 bit floats are unsigned.  Negative values are clamped to 0.
-    if (sign != 0)
+    if (sign)
     {
         exp = mant = 0;
     }
@@ -232,7 +232,7 @@ static void ConvertPixelFromFloat(
     uint8_t* pDstPixel,
     const float srcPixel[4])
 {
-    uint32_t outColor[4] = { 0 };  // typeless bits
+    uint32_t outColor[4] = {};  // typeless bits
 
     // Store component
     for (UINT comp = 0; comp < FormatTraits<DstFormat>::numComps; ++comp)

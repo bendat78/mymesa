@@ -222,7 +222,7 @@ NineVolumeTexture9_AddDirtyBox( struct NineVolumeTexture9 *This,
         This->dirty_box.height = This->base.base.info.height0;
         This->dirty_box.depth = This->base.base.info.depth0;
     } else {
-        if (This->dirty_box.width == 0) {
+        if (!This->dirty_box.width) {
             d3dbox_to_pipe_box(&This->dirty_box, pDirtyBox);
         } else {
             struct pipe_box box;

@@ -197,7 +197,7 @@ xa_tracker_create(int drm_fd)
 
 	    if (xa->screen->is_format_supported(xa->screen, fdesc.format,
 						PIPE_TEXTURE_2D, 0, bind)) {
-		if (xa->format_map[stype][0] == 0)
+		if (!xa->format_map[stype][0])
 		    xa->format_map[stype][0] = num_formats;
 		xa->format_map[stype][1] = num_formats;
 		xa->supported_formats[num_formats++] = xa_format;
@@ -235,7 +235,7 @@ xa_flags_compat(unsigned int old_flags, unsigned int new_flags)
 {
     unsigned int flag_diff = (old_flags ^ new_flags);
 
-    if (flag_diff == 0)
+    if (!flag_diff)
 	return 1;
 
     if (flag_diff & XA_FLAG_SHARED)
@@ -513,7 +513,7 @@ xa_surface_redefine(struct xa_surface *srf,
 XA_EXPORT struct xa_surface*
 xa_surface_ref(struct xa_surface *srf)
 {
-    if (srf == NULL) {
+    if (!srf) {
 	return NULL;
     }
     srf->refcount++;

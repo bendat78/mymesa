@@ -140,7 +140,7 @@ anv_is_aligned(uintmax_t n, uintmax_t a)
 static inline uint32_t
 anv_minify(uint32_t n, uint32_t levels)
 {
-   if (unlikely(n == 0))
+   if (!unlikely(n))
       return 0;
    else
       return MAX2(n >> levels, 1);
@@ -919,7 +919,7 @@ static inline uint64_t
 _anv_combine_address(struct anv_batch *batch, void *location,
                      const struct anv_address address, uint32_t delta)
 {
-   if (address.bo == NULL) {
+   if (!address.bo) {
       return address.offset + delta;
    } else {
       assert(batch->start <= location && location < batch->end);

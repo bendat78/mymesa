@@ -210,7 +210,7 @@ do_blit_bitmap( struct gl_context *ctx,
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
-      if (bitmap == NULL)
+      if (!bitmap)
 	 return true;	/* even though this is an error, we're done */
    }
 
@@ -284,7 +284,7 @@ do_blit_bitmap( struct gl_context *ctx,
                                      (GLubyte *)stipple,
                                      8,
                                      _mesa_is_winsys_fbo(fb));
-         if (count == 0)
+         if (!count)
 	    continue;
 
 	 if (!intelEmitImmediateColorExpandBlit(brw,

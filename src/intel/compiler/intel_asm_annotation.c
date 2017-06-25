@@ -106,7 +106,7 @@ void annotate(const struct gen_device_info *devinfo,
               struct annotation_info *annotation, const struct cfg_t *cfg,
               struct backend_instruction *inst, unsigned offset)
 {
-   if (annotation->mem_ctx == NULL)
+   if (!annotation->mem_ctx)
       annotation->mem_ctx = ralloc_context(NULL);
 
    if (!annotation_array_ensure_space(annotation))

@@ -150,7 +150,7 @@ draw_pt_emit(struct pt_emit *emit,
     */
    draw_do_flush(draw, DRAW_FLUSH_BACKEND);
 
-   if (vertex_count == 0)
+   if (!vertex_count)
       return;
 
    /* XXX: and work out some way to coordinate the render primitive

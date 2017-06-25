@@ -94,8 +94,8 @@ remove_phis_block(nir_block *block, nir_builder *b)
           */
          if (src->src.ssa == &phi->dest.ssa)
             continue;
-         
-         if (def == NULL) {
+
+         if (!def) {
             def  = src->src.ssa;
             mov = get_parent_mov(def);
          } else {

@@ -75,7 +75,7 @@ intel_readpixels_tiled_memcpy(struct gl_context * ctx,
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
 
    /* This path supports reading from color buffers only */
-   if (rb == NULL)
+   if (!rb)
       return false;
 
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
@@ -157,7 +157,7 @@ intel_readpixels_tiled_memcpy(struct gl_context * ctx,
    }
 
    void *map = brw_bo_map(brw, bo, MAP_READ | MAP_RAW);
-   if (map == NULL) {
+   if (!map) {
       DBG("%s: failed to map bo\n", __func__);
       return false;
    }
@@ -176,7 +176,7 @@ intel_readpixels_tiled_memcpy(struct gl_context * ctx,
     * tiled_to_linear a negative pitch so that it walks through the
     * client's data backwards as it walks through the renderbufer forwards.
     */
-   if (rb->Name == 0) {
+   if (!rb->Name) {
       yoffset = rb->Height - yoffset - height;
       pixels += (ptrdiff_t) (height - 1) * dst_pitch;
       dst_pitch = -dst_pitch;

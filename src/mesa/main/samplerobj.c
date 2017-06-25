@@ -44,7 +44,7 @@
 struct gl_sampler_object *
 _mesa_lookup_samplerobj(struct gl_context *ctx, GLuint name)
 {
-   if (name == 0)
+   if (!name)
       return NULL;
    else
       return (struct gl_sampler_object *)
@@ -221,7 +221,7 @@ _mesa_DeleteSamplers(GLsizei count, const GLuint *samplers)
          GLuint j;
          struct gl_sampler_object *sampObj =
             lookup_samplerobj_locked(ctx, samplers[i]);
-   
+
          if (sampObj) {
             /* If the sampler is currently bound, unbind it. */
             for (j = 0; j < ctx->Const.MaxCombinedTextureImageUnits; j++) {
@@ -276,7 +276,7 @@ _mesa_BindSampler(GLuint unit, GLuint sampler)
       return;
    }
 
-   if (sampler == 0) {
+   if (!sampler) {
       /* Use the default sampler object, the one contained in the texture
        * object.
        */
@@ -290,7 +290,7 @@ _mesa_BindSampler(GLuint unit, GLuint sampler)
          return;
       }
    }
-   
+
    /* bind new sampler */
    _mesa_bind_sampler(ctx, unit, sampObj);
 }
@@ -346,7 +346,7 @@ _mesa_BindSamplers(GLuint first, GLsizei count, const GLuint *samplers)
              ctx->Texture.Unit[unit].Sampler;
          struct gl_sampler_object *sampObj;
 
-         if (samplers[i] != 0) {
+         if (samplers[i]) {
             if (currentSampler && currentSampler->Name == samplers[i])
                sampObj = currentSampler;
             else
@@ -399,7 +399,7 @@ _mesa_BindSamplers(GLuint first, GLsizei count, const GLuint *samplers)
  * Check if a coordinate wrap mode is legal.
  * \return GL_TRUE if legal, GL_FALSE otherwise
  */
-static GLboolean 
+static GLboolean
 validate_texture_wrap_mode(struct gl_context *ctx, GLenum wrap)
 {
    const struct gl_extensions * const e = &ctx->Extensions;

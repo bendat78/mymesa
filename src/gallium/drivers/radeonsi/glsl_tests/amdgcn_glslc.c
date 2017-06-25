@@ -78,7 +78,7 @@ create_gl_core_context()
     }
 
     struct gbm_device *gbm = gbm_create_device(fd);
-    if (unlikely(gbm == NULL)) {
+    if (!unlikely(gbm)) {
         fprintf(stderr, "ERROR: Couldn't create gbm device\n");
         exit(1);
     }
@@ -190,7 +190,7 @@ main(int argc, char **argv)
     for (int i = 1; i < argc; i++) {
         if (strstr(argv[i], "-mcpu=") == argv[i]) {
             setenv("SI_FORCE_FAMILY", argv[i] + 6, 1);
-        } else if (filename == NULL) {
+        } else if (!filename) {
             filename = argv[i];
         } else {
             if (strcmp(argv[i], "--help") != 0 && strcmp(argv[i], "-h") != 0)
@@ -201,7 +201,7 @@ main(int argc, char **argv)
         }
     }
 
-    if (filename == NULL) {
+    if (!filename) {
         fprintf(stderr, "No filename specified.\n");
         return 1;
     }

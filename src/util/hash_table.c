@@ -119,7 +119,7 @@ _mesa_hash_table_create(void *mem_ctx,
    struct hash_table *ht;
 
    ht = ralloc(mem_ctx, struct hash_table);
-   if (ht == NULL)
+   if (!ht)
       return NULL;
 
    ht->size_index = 0;
@@ -133,7 +133,7 @@ _mesa_hash_table_create(void *mem_ctx,
    ht->deleted_entries = 0;
    ht->deleted_key = &deleted_key_value;
 
-   if (ht->table == NULL) {
+   if (!ht->table) {
       ralloc_free(ht);
       return NULL;
    }
@@ -177,7 +177,7 @@ _mesa_hash_table_clear(struct hash_table *ht,
    struct hash_entry *entry;
 
    for (entry = ht->table; entry != ht->table + ht->size; entry++) {
-      if (entry->key == NULL)
+      if (!entry->key)
          continue;
 
       if (delete_function != NULL && entry->key != ht->deleted_key)
@@ -269,7 +269,7 @@ _mesa_hash_table_rehash(struct hash_table *ht, unsigned new_size_index)
 
    table = rzalloc_array(ht, struct hash_entry,
                          hash_sizes[new_size_index].size);
-   if (table == NULL)
+   if (!table)
       return;
 
    old_ht = *ht;
@@ -312,7 +312,7 @@ hash_table_insert(struct hash_table *ht, uint32_t hash,
 
       if (!entry_is_present(ht, entry)) {
          /* Stash the first available entry we find */
-         if (available_entry == NULL)
+         if (!available_entry)
             available_entry = entry;
          if (entry_is_free(entry))
             break;
@@ -408,7 +408,7 @@ struct hash_entry *
 _mesa_hash_table_next_entry(struct hash_table *ht,
                             struct hash_entry *entry)
 {
-   if (entry == NULL)
+   if (!entry)
       entry = ht->table;
    else
       entry = entry + 1;
@@ -437,7 +437,7 @@ _mesa_hash_table_random_entry(struct hash_table *ht,
    struct hash_entry *entry;
    uint32_t i = rand() % ht->size;
 
-   if (ht->entries == 0)
+   if (!ht->entries)
       return NULL;
 
    for (entry = ht->table + i; entry != ht->table + ht->size; entry++) {

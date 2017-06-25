@@ -160,14 +160,14 @@ try_coalesce(nir_alu_instr *vec, unsigned start_idx)
        * exception to this is the fdotN instructions which implicitly splat
        * their result out to all channels.
        */
-      if (nir_op_infos[src_alu->op].output_size != 0)
+      if (nir_op_infos[src_alu->op].output_size)
          return 0;
 
       /* If we are going to reswizzle the instruction, we can't have any
        * non-per-component sources either.
        */
       for (unsigned j = 0; j < nir_op_infos[src_alu->op].num_inputs; j++)
-         if (nir_op_infos[src_alu->op].input_sizes[j] != 0)
+         if (nir_op_infos[src_alu->op].input_sizes[j])
             return 0;
    }
 

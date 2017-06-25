@@ -1,5 +1,5 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 Dennis Smit
  * All Rights Reserved.
  *
@@ -21,7 +21,7 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -120,8 +120,8 @@ check_os_altivec_support(void)
 
    err = sysctl(sels, 2, &has_vu, &len, NULL, 0);
 
-   if (err == 0) {
-      if (has_vu != 0) {
+   if (!err) {
+      if (has_vu) {
          util_cpu_caps.has_altivec = 1;
       }
    }
@@ -351,7 +351,7 @@ util_cpu_detect(void)
    }
 #elif defined(PIPE_OS_UNIX) && defined(_SC_NPROCESSORS_ONLN)
    util_cpu_caps.nr_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-   if (util_cpu_caps.nr_cpus == ~0u)
+   if (util_cpu_caps.nr_cpus == (~0u))
       util_cpu_caps.nr_cpus = 1;
 #elif defined(PIPE_OS_BSD)
    {

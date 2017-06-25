@@ -206,7 +206,7 @@ static void encode(struct rvce_encoder *enc)
 	int i;
 
 	if (enc->dual_inst) {
-		if (bs_idx == 0)
+		if (!bs_idx)
 			dep = 1;
 		else if (enc->enc_pic.picture_type == PIPE_H264_ENC_PICTURE_TYPE_IDR)
 			dep = 0;

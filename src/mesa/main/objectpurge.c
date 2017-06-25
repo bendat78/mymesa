@@ -140,7 +140,7 @@ _mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
-   if (name == 0) {
+   if (!name) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glObjectPurgeable(name = 0x%x)", name);
       return 0;
@@ -280,7 +280,7 @@ _mesa_ObjectUnpurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
-   if (name == 0) {
+   if (!name) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glObjectUnpurgeable(name = 0x%x)", name);
       return 0;
@@ -392,7 +392,7 @@ _mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname,
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   if (name == 0) {
+   if (!name) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetObjectParameteriv(name = 0x%x)", name);
       return;

@@ -293,7 +293,7 @@ dri3_create_context_attribs(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (pcp == NULL) {
+   if (!pcp) {
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       goto error_exit;
    }
@@ -315,7 +315,7 @@ dri3_create_context_attribs(struct glx_screen *base,
       ctx_attribs[num_ctx_attribs++] = reset;
    }
 
-   if (flags != 0) {
+   if (flags) {
       ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_FLAGS;
 
       /* The current __DRI_CTX_FLAG_* values are identical to the
@@ -334,7 +334,7 @@ dri3_create_context_attribs(struct glx_screen *base,
                                                   error,
                                                   pcp);
 
-   if (pcp->driContext == NULL)
+   if (!pcp->driContext)
       goto error_exit;
 
    pcp->base.vtable = &dri3_context_vtable;
@@ -605,7 +605,7 @@ dri3_set_swap_interval(__GLXDRIdrawable *pdraw, int interval)
 
    switch (vblank_mode) {
    case DRI_CONF_VBLANK_NEVER:
-      if (interval != 0)
+      if (interval)
          return GLX_BAD_VALUE;
       break;
    case DRI_CONF_VBLANK_ALWAYS_SYNC:
@@ -646,7 +646,7 @@ dri3_bind_tex_image(Display * dpy,
    struct dri3_drawable *pdraw = (struct dri3_drawable *) base;
    struct dri3_screen *psc;
 
-   if (pdraw != NULL) {
+   if (pdraw) {
       psc = (struct dri3_screen *) base->psc;
 
       (*psc->f->invalidate)(pdraw->loader_drawable.dri_drawable);
@@ -669,7 +669,7 @@ dri3_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
    struct dri3_drawable *pdraw = (struct dri3_drawable *) base;
    struct dri3_screen *psc;
 
-   if (pdraw != NULL) {
+   if (pdraw) {
       psc = (struct dri3_screen *) base->psc;
 
       if (psc->texBuffer->base.version >= 3 &&
@@ -799,7 +799,7 @@ dri3_create_screen(int screen, struct glx_display * priv)
    unsigned char disable;
 
    psc = calloc(1, sizeof *psc);
-   if (psc == NULL)
+   if (!psc)
       return NULL;
 
    psc->fd = -1;
@@ -833,13 +833,13 @@ dri3_create_screen(int screen, struct glx_display * priv)
    }
 
    psc->driver = driOpenDriver(driverName);
-   if (psc->driver == NULL) {
+   if (!psc->driver) {
       ErrorMessageF("driver pointer missing\n");
       goto handle_error;
    }
 
    extensions = driGetDriverExtensions(psc->driver, driverName);
-   if (extensions == NULL)
+   if (!extensions)
       goto handle_error;
 
    for (i = 0; extensions[i]; i++) {
@@ -850,12 +850,12 @@ dri3_create_screen(int screen, struct glx_display * priv)
    }
 
 
-   if (psc->core == NULL) {
+   if (!psc->core) {
       ErrorMessageF("core dri driver extension not found\n");
       goto handle_error;
    }
 
-   if (psc->image_driver == NULL) {
+   if (!psc->image_driver) {
       ErrorMessageF("image driver extension not found\n");
       goto handle_error;
    }
@@ -866,7 +866,7 @@ dri3_create_screen(int screen, struct glx_display * priv)
                                           extensions,
                                           &driver_configs, psc);
 
-   if (psc->driScreen == NULL) {
+   if (!psc->driScreen) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }
@@ -1034,7 +1034,7 @@ dri3_create_display(Display * dpy)
                                    XCB_PRESENT_MINOR_VERSION);
 
    pdp = malloc(sizeof *pdp);
-   if (pdp == NULL)
+   if (!pdp)
       return NULL;
 
    dri3_reply = xcb_dri3_query_version_reply(c, dri3_cookie, &error);

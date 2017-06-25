@@ -85,7 +85,7 @@ is_extended_swizzle(ir_expression *ir)
 	 case ir_type_dereference_variable: {
 	    ir_dereference_variable *const d = (ir_dereference_variable *) op;
 
-	    if ((var != NULL) && (var != d->var))
+	    if ((var) && (var != d->var))
 	       return false;
 
 	    var = d->var;
@@ -123,7 +123,7 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
 
    ir_expression *expr = (*rvalue)->as_expression();
-   if ((expr == NULL) || (expr->operation != ir_quadop_vector))
+   if (!(expr) || (expr->operation != ir_quadop_vector))
       return;
 
    if (this->dont_lower_swz && is_extended_swizzle(expr))
@@ -158,14 +158,14 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
     * - All assigments of components from a single variable with the same
     *   unary operator can be assigned at once.
     */
-   ir_constant_data d = { { 0 } };
+   ir_constant_data d = {};
 
    assigned = 0;
    write_mask = 0;
    for (unsigned i = 0; i < expr->type->vector_elements; i++) {
       const ir_constant *const c = expr->operands[i]->as_constant();
 
-      if (c == NULL)
+      if (!c)
 	 continue;
 
       switch (expr->type->base_type) {

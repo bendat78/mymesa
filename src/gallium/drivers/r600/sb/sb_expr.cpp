@@ -667,7 +667,7 @@ bool expr_handler::fold_assoc(alu_node *n) {
 			if (cur_neg && distribute_neg)
 				arg.f = -arg.f;
 
-			if (last_arg == 0) {
+			if (!last_arg) {
 				eval_const_op(op, cr, cr, arg);
 				last_arg = -1;
 				break;

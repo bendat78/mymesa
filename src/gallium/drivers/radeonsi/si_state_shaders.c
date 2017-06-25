@@ -725,7 +725,7 @@ static void si_shader_gs(struct si_screen *sscreen, struct si_shader *shader)
 
 	offset = num_components[0] * sel->gs_max_out_vertices;
 	si_pm4_set_reg(pm4, R_028A60_VGT_GSVS_RING_OFFSET_1, offset);
-	if (max_stream >= 1)
+	if (max_stream)
 		offset += num_components[1] * sel->gs_max_out_vertices;
 	si_pm4_set_reg(pm4, R_028A64_VGT_GSVS_RING_OFFSET_2, offset);
 	if (max_stream >= 2)
@@ -2758,7 +2758,7 @@ static int si_update_scratch_buffer(struct si_context *sctx,
 		return 0;
 
 	/* This shader doesn't need a scratch buffer */
-	if (shader->config.scratch_bytes_per_wave == 0)
+	if (!shader->config.scratch_bytes_per_wave)
 		return 0;
 
 	/* Prevent race conditions when updating:

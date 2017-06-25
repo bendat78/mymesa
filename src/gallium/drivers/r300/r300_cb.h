@@ -86,7 +86,7 @@
 } while (0)
 
 #define END_CB do { \
-    if (cs_count != 0) \
+    if (cs_count) \
         debug_printf("r300: Warning: cs_count off by %d at (%s, %s:%i)\n", \
                      cs_count, __FUNCTION__, __FILE__, __LINE__); \
 } while (0)

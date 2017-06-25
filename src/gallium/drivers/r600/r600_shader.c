@@ -39,23 +39,23 @@
 #include <stdio.h>
 #include <errno.h>
 
-/* CAYMAN notes 
+/* CAYMAN notes
 Why CAYMAN got loops for lots of instructions is explained here.
 
 -These 8xx t-slot only ops are implemented in all vector slots.
 MUL_LIT, FLT_TO_UINT, INT_TO_FLT, UINT_TO_FLT
-These 8xx t-slot only opcodes become vector ops, with all four 
-slots expecting the arguments on sources a and b. Result is 
+These 8xx t-slot only opcodes become vector ops, with all four
+slots expecting the arguments on sources a and b. Result is
 broadcast to all channels.
 MULLO_INT, MULHI_INT, MULLO_UINT, MULHI_UINT, MUL_64
-These 8xx t-slot only opcodes become vector ops in the z, y, and 
+These 8xx t-slot only opcodes become vector ops in the z, y, and
 x slots.
 EXP_IEEE, LOG_IEEE/CLAMPED, RECIP_IEEE/CLAMPED/FF/INT/UINT/_64/CLAMPED_64
 RECIPSQRT_IEEE/CLAMPED/FF/_64/CLAMPED_64
 SQRT_IEEE/_64
 SIN/COS
-The w slot may have an independent co-issued operation, or if the 
-result is required to be in the w slot, the opcode above may be 
+The w slot may have an independent co-issued operation, or if the
+result is required to be in the w slot, the opcode above may be
 issued in the w slot as well.
 The compiler must issue the source argument to slots z, y, and x
 */
@@ -135,10 +135,10 @@ static int store_shader(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	uint32_t *ptr, i;
 
-	if (shader->bo == NULL) {
+	if (!shader->bo) {
 		shader->bo = (struct r600_resource*)
 			pipe_buffer_create(ctx->screen, 0, PIPE_USAGE_IMMUTABLE, shader->shader.bc.ndw * 4);
-		if (shader->bo == NULL) {
+		if (!shader->bo) {
 			return -ENOMEM;
 		}
 		ptr = r600_buffer_map_sync_with_rings(&rctx->b, shader->bo, PIPE_TRANSFER_WRITE);
@@ -1243,7 +1243,7 @@ static int load_sample_position(struct r600_shader_ctx *ctx, struct r600_shader_
 	vtx.op = FETCH_OP_VFETCH;
 	vtx.buffer_id = R600_BUFFER_INFO_CONST_BUFFER;
 	vtx.fetch_type = SQ_VTX_FETCH_NO_INDEX_OFFSET;
-	if (sample_id == NULL) {
+	if (!sample_id) {
 		vtx.src_gpr = ctx->fixed_pt_position_gpr; // SAMPLEID is in .w;
 		vtx.src_sel_x = 3;
 	}
@@ -2278,7 +2278,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 
 		for (j = 0; j < so->num_outputs; j++) {
 			if (so->output[j].register_index == i) {
-				if (so->output[j].stream == 0)
+				if (!so->output[j].stream)
 					break;
 				if (so->output[j].stream > 0)
 					instream0 = false;
@@ -3134,7 +3134,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 			immediate = &ctx.parse.FullToken.FullImmediate;
 			ctx.literals = realloc(ctx.literals, (ctx.nliterals + 1) * 16);
-			if(ctx.literals == NULL) {
+			if(!ctx.literals) {
 				r = -ENOMEM;
 				goto out_err;
 			}
@@ -3158,7 +3158,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 			goto out_err;
 		}
 	}
-	
+
 	shader->ring_item_sizes[0] = ctx.next_ring_offset;
 	shader->ring_item_sizes[1] = 0;
 	shader->ring_item_sizes[2] = 0;
@@ -4129,7 +4129,7 @@ static int egcm_int_to_double(struct r600_shader_ctx *ctx)
 		alu.op = ALU_OP1_FLT32_TO_FLT64;
 
 		alu.src[0].chan = i/2;
-		if (i%2 == 0)
+		if (!i%2)
 			alu.src[0].sel = ctx->temp_reg;
 		else {
 			alu.src[0].sel = V_SQ_ALU_SRC_LITERAL;
@@ -4270,7 +4270,7 @@ static int cayman_emit_float_instr(struct r600_shader_ctx *ctx)
 	int i, j, r;
 	struct r600_bytecode_alu alu;
 	int last_slot = (inst->Dst[0].Register.WriteMask & 0x8) ? 4 : 3;
-	
+
 	for (i = 0 ; i < last_slot; i++) {
 		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 		alu.op = ctx->inst_info->op;
@@ -4623,7 +4623,7 @@ static int tgsi_scs(struct r600_shader_ctx *ctx)
 				alu.op = ALU_OP1_COS;
 				tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
 
-				if (i == 0)
+				if (!i)
 					alu.dst.write = 1;
 				else
 					alu.dst.write = 0;
@@ -4797,7 +4797,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 					alu.last = 1;
 				} else
 					alu.dst.write = 0;
-				
+
 				r = r600_bytecode_add_alu(ctx->bc, &alu);
 				if (r)
 					return r;
@@ -5273,7 +5273,7 @@ static int tgsi_divmod(struct r600_shader_ctx *ctx, int mod, int signed_op)
 
 			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 			alu.op = ALU_OP1_FLT_TO_UINT;
-		  
+
 			alu.dst.sel = tmp0;
 			alu.dst.chan = 0;
 			alu.dst.write = 1;
@@ -5344,7 +5344,7 @@ static int tgsi_divmod(struct r600_shader_ctx *ctx, int mod, int signed_op)
 			} else {
 				r600_bytecode_src(&alu.src[1], &ctx->src[1], i);
 			}
-			
+
 			alu.last = 1;
 			if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
 				return r;
@@ -5610,7 +5610,7 @@ static int tgsi_divmod(struct r600_shader_ctx *ctx, int mod, int signed_op)
 			} else {
 				r600_bytecode_src(&alu.src[0], &ctx->src[1], i);
 			}
-			
+
 			alu.src[1].sel = tmp0;
 			alu.src[1].chan = 2;
 
@@ -7012,7 +7012,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		r = r600_bytecode_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
-		/* write initial compare value into Z component 
+		/* write initial compare value into Z component
 		  - W src 0 for shadow cube
 		  - X src 1 for shadow cube array */
 		if (inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE ||
@@ -7090,7 +7090,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 				r = r600_bytecode_add_alu(ctx->bc, &alu);
 				if (r)
 					return r;
-					
+
 				r = r600_bytecode_add_tex(ctx->bc, &tex);
 				if (r)
 					return r;
@@ -7128,14 +7128,14 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		int start_val = 0;
 
 		/* if we've already loaded the src (i.e. CUBE don't reload it). */
-		if (src_loaded == TRUE)
+		if (src_loaded)
 			start_val = 1;
 		else
 			src_loaded = TRUE;
 		for (i = start_val; i < 3; i++) {
 			int treg = r600_get_temp(ctx);
 
-			if (i == 0)
+			if (!i)
 				src_gpr = treg;
 			else if (i == 1)
 				temp_h = treg;
@@ -7417,7 +7417,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	/* does this shader want a num layers from TXQ for a cube array? */
 	if (has_txq_cube_array_z) {
 		int id = tgsi_tex_get_src_gpr(ctx, sampler_src_reg);
-		
+
 		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 		alu.op = ALU_OP1_MOV;
 
@@ -8071,10 +8071,10 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 				alu.op = ALU_OP1_LOG_IEEE;
 				r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
 				r600_bytecode_src_set_abs(&alu.src[0]);
-			
+
 				alu.dst.sel = ctx->temp_reg;
 				alu.dst.chan = i;
-				if (i == 0) 
+				if (!i)
 					alu.dst.write = 1;
 				if (i == 2)
 					alu.last = 1;
@@ -8089,7 +8089,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 			alu.op = ALU_OP1_LOG_IEEE;
 			r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
 			r600_bytecode_src_set_abs(&alu.src[0]);
-			
+
 			alu.dst.sel = ctx->temp_reg;
 			alu.dst.chan = 0;
 			alu.dst.write = 1;
@@ -8130,10 +8130,10 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 					alu.dst.write = 1;
 				if (i == 2)
 					alu.last = 1;
-				
+
 				r = r600_bytecode_add_alu(ctx->bc, &alu);
 				if (r)
-					return r;	
+					return r;
 			}
 		} else {
 			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
@@ -8214,7 +8214,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 					alu.dst.write = 1;
 				if (i == 2)
 					alu.last = 1;
-				
+
 				r = r600_bytecode_add_alu(ctx->bc, &alu);
 				if (r)
 					return r;
@@ -8825,7 +8825,7 @@ static int tgsi_loop_breakc(struct r600_shader_ctx *ctx)
 		if (FC_LOOP == ctx->bc->fc_stack[fscp - 1].type)
 			break;
 	}
-	if (fscp == 0) {
+	if (!fscp) {
 		R600_ERR("BREAKC not inside loop/endloop pair\n");
 		return -EINVAL;
 	}
@@ -8864,7 +8864,7 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 			break;
 	}
 
-	if (fscp == 0) {
+	if (!fscp) {
 		R600_ERR("Break not inside loop/endloop pair\n");
 		return -EINVAL;
 	}
@@ -8954,7 +8954,7 @@ static int tgsi_umad(struct r600_shader_ctx *ctx)
 
 		alu.src[0].sel = ctx->temp_reg;
 		alu.src[0].chan = i;
-		
+
 		r600_bytecode_src(&alu.src[1], &ctx->src[2], i);
 		if (i == lasti) {
 			alu.last = 1;

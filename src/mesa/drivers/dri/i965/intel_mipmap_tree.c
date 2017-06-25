@@ -688,7 +688,7 @@ create_aux_state_map(struct intel_mipmap_tree *mt,
    const size_t total_size = per_level_array_size +
                              total_slices * sizeof(enum isl_aux_state);
    void *data = malloc(total_size);
-   if (data == NULL)
+   if (!data)
       return NULL;
 
    enum isl_aux_state **per_level_arr = data;
@@ -747,7 +747,7 @@ make_surface(struct brw_context *brw, GLenum target, mesa_format format,
       .levels = last_level - first_level + 1,
       .array_len = target == GL_TEXTURE_3D ? 1 : depth0,
       .samples = MAX2(num_samples, 1),
-      .usage = isl_usage_flags, 
+      .usage = isl_usage_flags,
       .tiling_flags = 1u << isl_tiling
    };
 
@@ -1037,7 +1037,7 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
    if (!singlesample_mt)
       goto fail;
 
-   if (num_samples == 0) {
+   if (!num_samples) {
       intel_miptree_release(&irb->mt);
       irb->mt = singlesample_mt;
 
@@ -1124,7 +1124,7 @@ intel_miptree_reference(struct intel_mipmap_tree **dst,
 static void
 intel_miptree_aux_buffer_free(struct intel_miptree_aux_buffer *aux_buf)
 {
-   if (aux_buf == NULL)
+   if (!aux_buf)
       return;
 
    brw_bo_unreference(aux_buf->bo);
@@ -1656,7 +1656,7 @@ intel_miptree_init_mcs(struct brw_context *brw,
     * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
     */
    void *map = brw_bo_map(brw, mt->mcs_buf->bo, MAP_WRITE);
-   if (unlikely(map == NULL)) {
+   if (!unlikely(map)) {
       fprintf(stderr, "Failed to map mcs buffer into GTT\n");
       brw_bo_unreference(mt->mcs_buf->bo);
       free(mt->mcs_buf);
@@ -1784,7 +1784,7 @@ intel_miptree_alloc_ccs(struct brw_context *brw,
       free(aux_state);
       return false;
    }
-  
+
    mt->aux_state = aux_state;
 
    /* From Gen9 onwards single-sampled (non-msrt) auxiliary buffers are
@@ -2289,7 +2289,7 @@ miptree_layer_range_length(const struct intel_mipmap_tree *mt, uint32_t level,
       total_num_layers = mt->surf.dim == ISL_SURF_DIM_3D ?
          minify(mt->surf.phys_level0_sa.depth, level) :
          mt->surf.phys_level0_sa.array_len;
-   else 
+   else
       total_num_layers = mt->level[level].depth;
 
    assert(start_layer < total_num_layers);
@@ -2844,7 +2844,7 @@ intel_miptree_map_gtt(struct brw_context *brw,
 
    base = intel_miptree_map_raw(brw, mt, map->mode) + mt->offset;
 
-   if (base == NULL)
+   if (!base)
       map->ptr = NULL;
    else {
       /* Note that in the case of cube maps, the caller must have passed the
@@ -3457,7 +3457,7 @@ intel_miptree_map(struct brw_context *brw,
    *out_ptr = map->ptr;
    *out_stride = map->stride;
 
-   if (map->ptr == NULL)
+   if (!map->ptr)
       intel_miptree_release_map(mt, level, slice);
 }
 

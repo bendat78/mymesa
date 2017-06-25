@@ -154,7 +154,7 @@ void r300FragmentProgramDump(struct radeon_compiler *c, void *user)
 				 rgb_addr & R300_ALU_DSTC_REG_Y) ? "y" : "",
 				(code->alu.inst[i].
 				 rgb_addr & R300_ALU_DSTC_REG_Z) ? "z" : "");
-			if (flags[0] != 0) {
+			if (flags[0]) {
 				unsigned int msb = get_msb(
 					R400_ADDRD_EXT_RGB_MSB_BIT,
 					code->alu.inst[i].r400_ext_addr);
@@ -172,7 +172,7 @@ void r300FragmentProgramDump(struct radeon_compiler *c, void *user)
 				 rgb_addr & R300_ALU_DSTC_OUTPUT_Y) ? "y" : "",
 				(code->alu.inst[i].
 				 rgb_addr & R300_ALU_DSTC_OUTPUT_Z) ? "z" : "");
-			if (flags[0] != 0) {
+			if (flags[0]) {
 				sprintf(tmp, "o%i.%s",
 					(code->alu.inst[i].
 					 rgb_addr >> 29) & 3,

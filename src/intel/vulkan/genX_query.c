@@ -78,7 +78,7 @@ VkResult genX(CreateQueryPool)(
 
    pool = vk_alloc2(&device->alloc, pAllocator, sizeof(*pool), 8,
                      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (pool == NULL)
+   if (!pool)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    pool->type = pCreateInfo->queryType;
@@ -211,7 +211,7 @@ VkResult genX(GetQueryPoolResults)(
    if (unlikely(device->lost))
       return VK_ERROR_DEVICE_LOST;
 
-   if (pData == NULL)
+   if (!pData)
       return VK_SUCCESS;
 
    void *data_end = pData + dataSize;

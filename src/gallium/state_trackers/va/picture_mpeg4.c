@@ -29,8 +29,8 @@
 
 void vlVaHandlePictureParameterBufferMPEG4(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *buf)
 {
-   static const uint8_t default_intra_quant_matrix[64] = { 0 };
-   static const uint8_t default_non_intra_quant_matrix[64] = { 0 };
+   static const uint8_t default_intra_quant_matrix[64] = {};
+   static const uint8_t default_non_intra_quant_matrix[64] = {};
 
    VAPictureParameterBufferMPEG4 *mpeg4 = buf->data;
    unsigned i;

@@ -50,7 +50,7 @@ qir_reorder_uniforms(struct vc4_compile *c)
                         if (inst->src[i].file != QFILE_UNIF)
                                 continue;
 
-                        if (new == ~0) {
+                        if (new == (~0u)) {
                                 new = next_uniform++;
                                 if (uniform_index_size <= new) {
                                         uniform_index_size =

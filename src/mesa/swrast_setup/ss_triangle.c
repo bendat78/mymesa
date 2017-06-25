@@ -220,12 +220,12 @@ static void swsetup_points( struct gl_context *ctx, GLuint first, GLuint last )
 
    if (VB->Elts) {
       for (i = first; i < last; i++)
-	 if (VB->ClipMask[VB->Elts[i]] == 0)
+	 if (!VB->ClipMask[VB->Elts[i]])
 	    _swrast_Point( ctx, &verts[VB->Elts[i]] );
    }
    else {
       for (i = first; i < last; i++)
-	 if (VB->ClipMask[i] == 0)
+	 if (!VB->ClipMask[i])
 	    _swrast_Point( ctx, &verts[i] );
    }
 }

@@ -330,7 +330,7 @@ NineTexture9_AddDirtyRect( struct NineTexture9 *This,
         u_box_origin_2d(This->base.base.info.width0,
                         This->base.base.info.height0, &This->dirty_rect);
     } else {
-        if (This->dirty_rect.width == 0) {
+        if (!This->dirty_rect.width) {
             rect_to_pipe_box_clamp(&This->dirty_rect, pDirtyRect);
         } else {
             struct pipe_box box;

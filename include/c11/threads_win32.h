@@ -56,7 +56,7 @@ Configuration macro:
 #if _WIN32_WINNT >= 0x0600
 // Prefer native WindowsAPI on newer environment.
 #if !defined(__MINGW32__)
-#define EMULATED_THREADS_USE_NATIVE_CALL_ONCE 
+#define EMULATED_THREADS_USE_NATIVE_CALL_ONCE
 #endif
 #define EMULATED_THREADS_USE_NATIVE_CV
 #endif
@@ -173,8 +173,8 @@ static void impl_cond_do_signal(cnd_t *cond, int broadcast)
     int nsignal = 0;
 
     EnterCriticalSection(&cond->monitor);
-    if (cond->to_unblock != 0) {
-        if (cond->blocked == 0) {
+    if (cond->to_unblock) {
+        if (!cond->blocked) {
             LeaveCriticalSection(&cond->monitor);
             return;
         }
@@ -188,7 +188,7 @@ static void impl_cond_do_signal(cnd_t *cond, int broadcast)
         }
     } else if (cond->blocked > cond->gone) {
         WaitForSingleObject(cond->sem_gate, INFINITE);
-        if (cond->gone != 0) {
+        if (cond->gone) {
             cond->blocked -= cond->gone;
             cond->gone = 0;
         }
@@ -221,18 +221,18 @@ static int impl_cond_do_wait(cnd_t *cond, mtx_t *mtx, const xtime *xt)
 
     w = WaitForSingleObject(cond->sem_queue, xt ? impl_xtime2msec(xt) : INFINITE);
     timeout = (w == WAIT_TIMEOUT);
- 
+
     EnterCriticalSection(&cond->monitor);
     if ((nleft = cond->to_unblock) != 0) {
         if (timeout) {
-            if (cond->blocked != 0) {
+            if (cond->blocked) {
                 cond->blocked--;
             } else {
                 cond->gone++;
             }
         }
-        if (--cond->to_unblock == 0) {
-            if (cond->blocked != 0) {
+        if (!--cond->to_unblock) {
+            if (cond->blocked) {
                 ReleaseSemaphore(cond->sem_gate, 1, NULL);
                 nleft = 0;
             }
@@ -485,7 +485,7 @@ thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
     pack->func = func;
     pack->arg = arg;
     handle = _beginthreadex(NULL, 0, impl_thrd_routine, pack, 0, NULL);
-    if (handle == 0) {
+    if (!handle) {
         if (errno == EAGAIN || errno == EACCES)
             return thrd_nomem;
         return thrd_error;

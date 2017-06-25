@@ -262,7 +262,7 @@ nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
 	buffers = screen->dri2.loader->getBuffers(draw, &draw->w, &draw->h,
 						  attachments, i, &count,
 						  draw->loaderPrivate);
-	if (buffers == NULL)
+	if (!buffers)
 		return;
 
 	for (i = 0; i < count; i++) {

@@ -265,7 +265,7 @@ nv04_emit_tex_env(struct gl_context *ctx, int emit)
 		setup_combiner(&rc_c);
 
 	} else {
-		if (i == 0) {
+		if (!i) {
 			INPUT_SRC(&rc_a, 0, PRIMARY_COLOR, 0);
 			INPUT_SRC(&rc_c, 0, PRIMARY_COLOR, 0);
 		} else {

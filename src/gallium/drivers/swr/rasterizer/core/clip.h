@@ -346,7 +346,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 simdscalar vCullComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vCullComp = vClipCullDistLo[e][component];
                 }
@@ -373,7 +373,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 simdscalar vClipComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vClipComp = vClipCullDistLo[e][component];
                 }
@@ -413,7 +413,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 simd16scalar vCullComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vCullComp = vClipCullDistLo[e][component];
                 }
@@ -440,7 +440,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 simd16scalar vClipComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vClipComp = vClipCullDistLo[e][component];
                 }
@@ -556,7 +556,7 @@ public:
         {
             SWR_ASSERT(0 && "Unexpected points in clipper.");
         }
-        
+
         uint32_t* pVertexCount = (uint32_t*)&vNumClippedVerts;
         uint32_t* pPrimitiveId = (uint32_t*)&vPrimId;
 
@@ -714,7 +714,7 @@ public:
         // update global pipeline stat
         UPDATE_STAT_FE(CPrimitives, numClippedPrims);
     }
-    
+
 #if USE_SIMD16_FRONTEND
     void ClipSimd(const simd16scalar& vPrimMask, const simd16scalar& vClipMask, PA_STATE& pa, const simd16scalari& vPrimId)
     {
@@ -971,7 +971,7 @@ public:
         // update clipper invocations pipeline stat
         uint32_t numInvoc = _mm_popcnt_u32(primMask);
         UPDATE_STAT_FE(CInvocations, numInvoc);
-        
+
         // Read back viewport index if required
         simdscalari viewportIdx = _simd_set1_epi32(0);
         if (state.backendState.readViewportArrayIndex)
@@ -991,7 +991,7 @@ public:
         // cull prims with NAN coords
         primMask &= ~ComputeNaNMask(prim);
 
-        // user cull distance cull 
+        // user cull distance cull
         if (this->state.rastState.cullDistanceMask)
         {
             primMask &= ~ComputeUserClipCullMask(pa, prim);
@@ -1073,7 +1073,7 @@ public:
         // cull prims with NAN coords
         primMask &= ~ComputeNaNMask(prim);
 
-        // user cull distance cull 
+        // user cull distance cull
         if (this->state.rastState.cullDistanceMask)
         {
             primMask &= ~ComputeUserClipCullMask(pa, prim);
@@ -1238,7 +1238,7 @@ private:
         case FRUSTUM_RIGHT:     t = ComputeInterpFactor(_simd_sub_ps(v1[3], v1[0]), _simd_sub_ps(v2[3], v2[0])); break;
         case FRUSTUM_TOP:       t = ComputeInterpFactor(_simd_add_ps(v1[3], v1[1]), _simd_add_ps(v2[3], v2[1])); break;
         case FRUSTUM_BOTTOM:    t = ComputeInterpFactor(_simd_sub_ps(v1[3], v1[1]), _simd_sub_ps(v2[3], v2[1])); break;
-        case FRUSTUM_NEAR:      
+        case FRUSTUM_NEAR:
             // DX Znear plane is 0, GL is -w
             if (this->state.rastState.clipHalfZ)
             {

@@ -126,7 +126,7 @@ adjust_for_oes_float_texture(const struct gl_context *ctx,
 /**
  * Install gl_texture_image in a gl_texture_object according to the target
  * and level parameters.
- * 
+ *
  * \param tObj texture object.
  * \param target texture target.
  * \param level image level.
@@ -820,12 +820,12 @@ init_teximage_fields_ms(struct gl_context *ctx,
    case GL_TEXTURE_1D:
    case GL_TEXTURE_BUFFER:
    case GL_PROXY_TEXTURE_1D:
-      if (height == 0)
+      if (!height)
          img->Height2 = 0;
       else
          img->Height2 = 1;
       img->HeightLog2 = 0;
-      if (depth == 0)
+      if (!depth)
          img->Depth2 = 0;
       else
          img->Depth2 = 1;
@@ -835,7 +835,7 @@ init_teximage_fields_ms(struct gl_context *ctx,
    case GL_PROXY_TEXTURE_1D_ARRAY:
       img->Height2 = height; /* no border */
       img->HeightLog2 = 0; /* not used */
-      if (depth == 0)
+      if (!depth)
          img->Depth2 = 0;
       else
          img->Depth2 = 1;
@@ -858,7 +858,7 @@ init_teximage_fields_ms(struct gl_context *ctx,
    case GL_PROXY_TEXTURE_2D_MULTISAMPLE:
       img->Height2 = height - 2 * border; /* == 1 << img->HeightLog2; */
       img->HeightLog2 = _mesa_logbase2(img->Height2);
-      if (depth == 0)
+      if (!depth)
          img->Depth2 = 0;
       else
          img->Depth2 = 1;
@@ -993,7 +993,7 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
 
    case GL_TEXTURE_RECTANGLE_NV:
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
-      if (level != 0)
+      if (level)
          return GL_FALSE;
       maxSize = ctx->Const.MaxTextureRectSize;
       if (width < 0 || width > maxSize)
@@ -1899,7 +1899,7 @@ texture_error_check( struct gl_context *ctx,
                      dimensions);
          return GL_TRUE;
       }
-      if (border != 0) {
+      if (border) {
          char message[100];
          _mesa_snprintf(message, sizeof(message),
                         "glTexImage%dD(format=GL_YCBCR_MESA and border=%d)",
@@ -1929,7 +1929,7 @@ texture_error_check( struct gl_context *ctx,
                      "glTexImage%dD(no compression for format)", dimensions);
          return GL_TRUE;
       }
-      if (border != 0) {
+      if (border) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexImage%dD(border!=0)", dimensions);
          return GL_TRUE;
@@ -2058,7 +2058,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    }
 
    /* No compressed formats support borders at this time */
-   if (border != 0) {
+   if (border) {
       reason = "border != 0";
       error = GL_INVALID_VALUE;
       goto error;
@@ -2259,7 +2259,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
 
    /* Check that the source buffer is complete */
    if (_mesa_is_user_fbo(ctx->ReadBuffer)) {
-      if (ctx->ReadBuffer->_Status == 0) {
+      if (!ctx->ReadBuffer->_Status) {
          _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
       }
       if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
@@ -2329,7 +2329,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    }
 
    rb = _mesa_get_read_renderbuffer_for_format(ctx, internalFormat);
-   if (rb == NULL) {
+   if (!rb) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyTexImage%dD(read buffer)", dimensions);
       return GL_TRUE;
@@ -2475,7 +2475,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
                "glCopyTexImage%dD(no compression for format)", dimensions);
          return GL_TRUE;
       }
-      if (border != 0) {
+      if (border) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexImage%dD(border!=0)", dimensions);
          return GL_TRUE;
@@ -2508,7 +2508,7 @@ copytexsubimage_error_check(struct gl_context *ctx, GLuint dimensions,
 
    /* Check that the source buffer is complete */
    if (_mesa_is_user_fbo(ctx->ReadBuffer)) {
-      if (ctx->ReadBuffer->_Status == 0) {
+      if (!ctx->ReadBuffer->_Status) {
          _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
       }
       if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
@@ -2832,10 +2832,10 @@ strip_texture_border(GLenum target,
 
    *unpackNew = *unpack;
 
-   if (unpackNew->RowLength == 0)
+   if (!unpackNew->RowLength)
       unpackNew->RowLength = *width;
 
-   if (unpackNew->ImageHeight == 0)
+   if (!unpackNew->ImageHeight)
       unpackNew->ImageHeight = *height;
 
    assert(*width >= 3);
@@ -4144,7 +4144,7 @@ get_tex_obj_for_clear(struct gl_context *ctx,
    if (!texObj)
       return NULL;
 
-   if (texObj->Target == 0) {
+   if (!texObj->Target) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(unbound tex)", function);
       return NULL;
    }
@@ -4172,7 +4172,7 @@ get_tex_images_for_clear(struct gl_context *ctx,
          target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
 
          texImages[i] = _mesa_select_tex_image(texObj, target, level);
-         if (texImages[i] == NULL) {
+         if (!texImages[i]) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "%s(invalid level)", function);
             return 0;
@@ -4184,7 +4184,7 @@ get_tex_images_for_clear(struct gl_context *ctx,
 
    texImages[0] = _mesa_select_tex_image(texObj, texObj->Target, level);
 
-   if (texImages[0] == NULL) {
+   if (!texImages[0]) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(invalid level)", function);
       return 0;
    }
@@ -4207,14 +4207,14 @@ _mesa_ClearTexSubImage( GLuint texture, GLint level,
 
    texObj = get_tex_obj_for_clear(ctx, "glClearTexSubImage", texture);
 
-   if (texObj == NULL)
+   if (!texObj)
       return;
 
    _mesa_lock_texture(ctx, texObj);
 
    numImages = get_tex_images_for_clear(ctx, "glClearTexSubImage",
                                         texObj, level, texImages);
-   if (numImages == 0)
+   if (!numImages)
       goto out;
 
    if (numImages == 1) {
@@ -4281,7 +4281,7 @@ _mesa_ClearTexImage( GLuint texture, GLint level,
 
    texObj = get_tex_obj_for_clear(ctx, "glClearTexImage", texture);
 
-   if (texObj == NULL)
+   if (!texObj)
       return;
 
    _mesa_lock_texture(ctx, texObj);
@@ -5462,7 +5462,7 @@ texture_image_multisample(struct gl_context *ctx, GLuint dims,
 
    texImage = _mesa_get_tex_image(ctx, texObj, 0, 0);
 
-   if (texImage == NULL) {
+   if (!texImage) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "%s()", func);
       return;
    }

@@ -118,7 +118,7 @@ static void draw(void)
 
 static void
 init_tex(const unsigned swizzle[4])
-{ 
+{
 #define SIZE 256
    struct pipe_sampler_view sv_template;
    ubyte tex2d[SIZE][SIZE][4];
@@ -133,7 +133,7 @@ init_tex(const unsigned swizzle[4])
       }
    }
 
-   texture = graw_util_create_tex2d(&info, SIZE, SIZE, 
+   texture = graw_util_create_tex2d(&info, SIZE, SIZE,
                                     PIPE_FORMAT_B8G8R8A8_UNORM, tex2d);
 
    memset(&sv_template, 0, sizeof sv_template);
@@ -144,7 +144,7 @@ init_tex(const unsigned swizzle[4])
    sv_template.swizzle_b = swizzle[2];
    sv_template.swizzle_a = swizzle[3];
    sv = info.ctx->create_sampler_view(info.ctx, texture, &sv_template);
-   if (sv == NULL)
+   if (!sv)
       exit(5);
 
    info.ctx->set_sampler_views(info.ctx, PIPE_SHADER_FRAGMENT, 0, 1, &sv);
@@ -166,7 +166,7 @@ init(const unsigned swizzle[4])
       exit(1);
 
    graw_util_default_state(&info, FALSE);
-   
+
    graw_util_viewport(&info, 0, 0, WIDTH, HEIGHT, 30, 10000);
 
    init_tex(swizzle);

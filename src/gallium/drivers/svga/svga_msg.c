@@ -252,7 +252,7 @@ typedef uint32_t VMW_REG;
          (void) in_cx; (void) bp;                 \
          (void) ax; (void) bx; (void) cx;         \
          (void) dx; (void) si; (void) di;
-			
+
 
 #define VMW_PORT_HB_IN(cmd, in_cx, in_si, in_di,  \
          port_num, magic, bp,                     \
@@ -429,7 +429,7 @@ svga_host_log(const char *log)
 
    msg_len = strlen(log) + strlen("log ") + 1;
    msg = CALLOC(1, msg_len);
-   if (msg == NULL) {
+   if (!msg) {
       debug_printf("Cannot allocate memory for log message\n");
       return PIPE_ERROR_OUT_OF_MEMORY;
    }

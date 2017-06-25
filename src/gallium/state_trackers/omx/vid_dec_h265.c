@@ -248,7 +248,7 @@ static void scaling_list_data(vid_dec_PrivateType *priv,
             } else {
                const uint8_t *d;
 
-               if (size_id == 0)
+               if (!size_id)
                   memset((*scaling_list_data[0])[matrix_id], 16, 16);
                else {
                   if (size_id < 3)

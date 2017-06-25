@@ -46,7 +46,7 @@
 #if !defined(X_GLXCreateContextAttribsARB) && \
      defined(X_GLXCreateContextAtrribsARB)
 #define X_GLXCreateContextAttribsARB X_GLXCreateContextAtrribsARB
-#endif 
+#endif
 
 /* This indicates the client-side GLX API and GLX encoder version. */
 #define CLIENT_MAJOR_VERSION 1
@@ -427,7 +427,7 @@ get_visual( Display *dpy, int scr, unsigned int depth, int xclass )
          return NULL;
       }
    }
-   
+
    return vis;
 }
 
@@ -456,12 +456,12 @@ get_env_visual(Display *dpy, int scr, const char *varname)
 
    sscanf( value, "%s %d", type, &depth );
 
-   if (strcmp(type,"TrueColor")==0)          xclass = TrueColor;
-   else if (strcmp(type,"DirectColor")==0)   xclass = DirectColor;
-   else if (strcmp(type,"PseudoColor")==0)   xclass = PseudoColor;
-   else if (strcmp(type,"StaticColor")==0)   xclass = StaticColor;
-   else if (strcmp(type,"GrayScale")==0)     xclass = GrayScale;
-   else if (strcmp(type,"StaticGray")==0)    xclass = StaticGray;
+   if (!strcmp(type,"TrueColor"))          xclass = TrueColor;
+   else if (!strcmp(type,"DirectColor"))   xclass = DirectColor;
+   else if (!strcmp(type,"PseudoColor"))   xclass = PseudoColor;
+   else if (!strcmp(type,"StaticColor"))   xclass = StaticColor;
+   else if (!strcmp(type,"GrayScale"))     xclass = GrayScale;
+   else if (!strcmp(type,"StaticGray"))    xclass = StaticGray;
 
    if (xclass>-1 && depth>0) {
       vis = get_visual( dpy, scr, depth, xclass );
@@ -480,7 +480,7 @@ get_env_visual(Display *dpy, int scr, const char *varname)
 
 /*
  * Select an X visual which satisfies the RGBA flag and minimum depth.
- * Input:  dpy, 
+ * Input:  dpy,
  *         screen - X display and screen number
  *         min_depth - minimum visual depth
  *         preferred_class - preferred GLX visual class or DONT_CARE
@@ -510,7 +510,7 @@ choose_x_visual( Display *dpy, int screen, int min_depth,
          case 4:  visclass = GrayScale;    break;
          case 5:  visclass = StaticGray;   break;
          }
-         if (min_depth==0) {
+         if (!min_depth) {
             /* start with shallowest */
             for (depth=0;depth<=32;depth++) {
                if (visclass==TrueColor && depth==8) {
@@ -557,7 +557,7 @@ choose_x_visual( Display *dpy, int screen, int min_depth,
       case GLX_STATIC_GRAY_EXT:   visclass = StaticGray;   break;
       default:   return NULL;
       }
-      if (min_depth==0) {
+      if (!min_depth) {
          /* start with shallowest */
          for (depth=0;depth<=32;depth++) {
             vis = get_visual( dpy, screen, depth, visclass );
@@ -930,7 +930,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             else if (*parselist & GLX_COLOR_INDEX_BIT) {
                rgb_flag = GL_FALSE;
             }
-            else if (*parselist == 0) {
+            else if (!*parselist) {
                rgb_flag = GL_TRUE;
             }
             parselist++;
@@ -1017,7 +1017,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          rgb_flag = GL_TRUE;
       }
    }
-   else if (level==0) {
+   else if (!level) {
       /* normal color planes */
       /* Get an RGB visual */
       int min_rgb = min_red + min_green + min_blue;
@@ -1056,13 +1056,13 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       if (stencil_size > 0)
          stencil_size = 8;
 
-      if (accumRedSize > 0 || 
-          accumGreenSize > 0 || 
+      if (accumRedSize > 0 ||
+          accumGreenSize > 0 ||
           accumBlueSize > 0 ||
           accumAlphaSize > 0) {
 
-         accumRedSize = 
-            accumGreenSize = 
+         accumRedSize =
+            accumGreenSize =
             accumBlueSize = default_accum_bits();
 
          accumAlphaSize = alpha_flag ? accumRedSize : 0;
@@ -1228,7 +1228,7 @@ glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
           MakeCurrent_PrevDrawBuffer == drawBuffer &&
           MakeCurrent_PrevReadBuffer == readBuffer)
          return True;
-          
+
       MakeCurrent_PrevContext = ctx;
       MakeCurrent_PrevDrawable = draw;
       MakeCurrent_PrevReadable = read;
@@ -1894,7 +1894,7 @@ glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
 {
    if (dpy && config) {
       XMesaVisual xmvis = (XMesaVisual) config;
-#if 0      
+#if 0
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */

@@ -82,7 +82,7 @@ static int virgl_vtest_send_init(struct virgl_vtest_winsys *vws)
    int ret;
 
    ret = os_get_process_name(cmdline, 63);
-   if (ret == FALSE)
+   if (!ret)
       strcpy(cmdline, nstr);
 #if defined(__GLIBC__) || defined(__CYGWIN__)
    if (!strcmp(cmdline, "shader_runner")) {

@@ -593,7 +593,7 @@ class GTEST_API_ TypedTestCasePState {
 // returns NULL if no comma is found in 'str'.
 inline const char* SkipComma(const char* str) {
   const char* comma = strchr(str, ',');
-  if (comma == NULL) {
+  if (!comma) {
     return NULL;
   }
   while (IsSpace(*(++comma))) {}

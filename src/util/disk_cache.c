@@ -154,7 +154,7 @@ concatenate_and_mkdir(void *ctx, const char *path, const char *name)
 
    new_path = ralloc_asprintf(ctx, "%s/%s", path, name);
 
-   if (mkdir_if_needed(new_path) == 0)
+   if (!mkdir_if_needed(new_path))
       return new_path;
    else
       return NULL;
@@ -178,7 +178,7 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
 
    /* A ralloc context for transient data during this invocation. */
    local = ralloc_context(NULL);
-   if (local == NULL)
+   if (!local)
       goto fail;
 
    /* At user request, disable shader cache entirely. */
@@ -197,11 +197,11 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
          goto fail;
 
       path = concatenate_and_mkdir(local, path, "mesa");
-      if (path == NULL)
+      if (!path)
          goto fail;
    }
 
-   if (path == NULL) {
+   if (!path) {
       char *xdg_cache_home = getenv("XDG_CACHE_HOME");
 
       if (xdg_cache_home) {
@@ -209,12 +209,12 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
             goto fail;
 
          path = concatenate_and_mkdir(local, xdg_cache_home, "mesa");
-         if (path == NULL)
+         if (!path)
             goto fail;
       }
    }
 
-   if (path == NULL) {
+   if (!path) {
       char *buf;
       size_t buf_size;
       struct passwd pwd, *result;
@@ -241,24 +241,24 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
       }
 
       path = concatenate_and_mkdir(local, pwd.pw_dir, ".cache");
-      if (path == NULL)
+      if (!path)
          goto fail;
 
       path = concatenate_and_mkdir(local, path, "mesa");
-      if (path == NULL)
+      if (!path)
          goto fail;
    }
 
    cache = ralloc(NULL, struct disk_cache);
-   if (cache == NULL)
+   if (!cache)
       goto fail;
 
    cache->path = ralloc_strdup(cache, path);
-   if (cache->path == NULL)
+   if (!cache->path)
       goto fail;
 
    path = ralloc_asprintf(local, "%s/index", cache->path);
-   if (path == NULL)
+   if (!path)
       goto fail;
 
    fd = open(path, O_RDWR | O_CREAT | O_CLOEXEC, 0644);
@@ -330,7 +330,7 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
    }
 
    /* Default to 1GB for maximum cache size. */
-   if (max_size == 0) {
+   if (!max_size) {
       max_size = 1024*1024*1024;
    }
 
@@ -459,12 +459,12 @@ choose_lru_file_matching(const char *dir_path,
    time_t lru_atime = 0;
 
    dir = opendir(dir_path);
-   if (dir == NULL)
+   if (!dir)
       return NULL;
 
    while (1) {
       entry = readdir(dir);
-      if (entry == NULL)
+      if (!entry)
          break;
 
       struct stat sb;
@@ -485,7 +485,7 @@ choose_lru_file_matching(const char *dir_path,
       }
    }
 
-   if (lru_name == NULL) {
+   if (!lru_name) {
       closedir(dir);
       return NULL;
    }
@@ -523,7 +523,7 @@ unlink_lru_file_from_directory(const char *path)
    char *filename;
 
    filename = choose_lru_file_matching(path, is_regular_non_tmp_file);
-   if (filename == NULL)
+   if (!filename)
       return 0;
 
    if (stat(filename, &sb) == -1) {
@@ -559,7 +559,7 @@ is_two_character_sub_directory(const char *path, const struct stat *sb,
    DIR *dir = opendir(subdir);
    free(subdir);
 
-   if (dir == NULL)
+   if (!dir)
      return false;
 
    unsigned subdir_entries = 0;
@@ -610,7 +610,7 @@ evict_lru_item(struct disk_cache *cache)
     */
    dir_path = choose_lru_file_matching(cache->path,
                                        is_two_character_sub_directory);
-   if (dir_path == NULL)
+   if (!dir_path)
       return;
 
    size = unlink_lru_file_from_directory(dir_path);
@@ -627,7 +627,7 @@ disk_cache_remove(struct disk_cache *cache, const cache_key key)
    struct stat sb;
 
    char *filename = get_cache_file(cache, key);
-   if (filename == NULL) {
+   if (!filename) {
       return;
    }
 
@@ -784,7 +784,7 @@ cache_put(void *job, int thread_index)
    struct disk_cache_put_job *dc_job = (struct disk_cache_put_job *) job;
 
    filename = get_cache_file(dc_job->cache, dc_job->key);
-   if (filename == NULL)
+   if (!filename)
       goto done;
 
    /* If the cache is too large, evict something else first. */
@@ -872,7 +872,7 @@ cache_put(void *job, int thread_index)
     */
    size_t file_size = deflate_and_write_to_disk(dc_job->data, dc_job->size,
                                                 fd, filename_tmp);
-   if (file_size == 0) {
+   if (!file_size) {
       unlink(filename_tmp);
       goto done;
    }
@@ -971,7 +971,7 @@ disk_cache_get(struct disk_cache *cache, const cache_key key, size_t *size)
       *size = 0;
 
    filename = get_cache_file(cache, key);
-   if (filename == NULL)
+   if (!filename)
       goto fail;
 
    fd = open(filename, O_RDONLY | O_CLOEXEC);
@@ -982,7 +982,7 @@ disk_cache_get(struct disk_cache *cache, const cache_key key, size_t *size)
       goto fail;
 
    data = malloc(sb.st_size);
-   if (data == NULL)
+   if (!data)
       goto fail;
 
    size_t ck_size = cache->driver_keys_blob_size;

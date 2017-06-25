@@ -331,7 +331,7 @@ class ValuesInIteratorRangeGenerator : public ParamGeneratorInterface<T> {
     // detect that fact. The client code, on the other hand, is
     // responsible for not calling Current() on an out-of-range iterator.
     virtual const T* Current() const {
-      if (value_.get() == NULL)
+      if (!value_.get())
         value_.reset(new T(*iterator_));
       return value_.get();
     }
@@ -701,7 +701,7 @@ class ParameterizedTestCaseRegistry {
         break;
       }
     }
-    if (typed_test_info == NULL) {
+    if (!typed_test_info) {
       typed_test_info = new ParameterizedTestCaseInfo<TestCase>(
           test_case_name, code_location);
       test_case_infos_.push_back(typed_test_info);

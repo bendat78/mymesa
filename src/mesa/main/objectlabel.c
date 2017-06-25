@@ -107,7 +107,7 @@ copy_label(const GLchar *src, GLchar *dst, GLsizei *length, GLsizei bufSize)
    if (src)
       labelLen = strlen(src);
 
-   if (bufSize == 0) {
+   if (!bufSize) {
       if (length)
          *length = labelLen;
       return;

@@ -410,7 +410,7 @@ copy_array_to_vbo_array(struct brw_context *brw,
     * attribute once and set the buffer's stride to 0.  There's no need
     * to replicate it out.
     */
-   if (src_stride == 0) {
+   if (!src_stride) {
       intel_upload_data(brw, element->glarray->Ptr,
                         element->glarray->_ElementSize,
                         element->glarray->_ElementSize,
@@ -434,7 +434,7 @@ copy_array_to_vbo_array(struct brw_context *brw,
     *
     * In this case, let's the dst with undefined values
     */
-   if (src != NULL) {
+   if (src) {
       if (dst_stride == src_stride) {
          memcpy(dst, src, size);
       } else {
@@ -498,7 +498,7 @@ brw_prepare_vertices(struct brw_context *brw)
       brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }
 
-   if (brw->vb.nr_enabled == 0)
+   if (!brw->vb.nr_enabled)
       return;
 
    if (brw->vb.nr_buffers)
@@ -579,7 +579,7 @@ brw_prepare_vertices(struct brw_context *brw)
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
 	  */
-	 if (nr_uploads == 0) {
+	 if (!nr_uploads) {
 	    interleaved = glarray->StrideB;
 	    ptr = glarray->Ptr;
 	 }
@@ -664,7 +664,7 @@ brw_prepare_vertices(struct brw_context *brw)
    /* Upload non-interleaved arrays */
    for (i = 0; i < nr_uploads; i++) {
       struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
-      if (upload[i]->glarray->InstanceDivisor == 0) {
+      if (!upload[i]->glarray->InstanceDivisor) {
          copy_array_to_vbo_array(brw, upload[i], min_index, max_index,
                                  buffer, upload[i]->glarray->_ElementSize);
       } else {
@@ -719,7 +719,7 @@ brw_upload_indices(struct brw_context *brw)
    GLuint offset;
    GLuint ib_type_size;
 
-   if (index_buffer == NULL)
+   if (!index_buffer)
       return;
 
    ib_type_size = index_buffer->index_size;

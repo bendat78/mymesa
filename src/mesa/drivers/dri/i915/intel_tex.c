@@ -36,7 +36,7 @@ intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
 
    DBG("%s\n", __func__);
 
-   if (obj == NULL)
+   if (!obj)
       return NULL;
 
    _mesa_initialize_texture_object(ctx, &obj->base, name, target);
@@ -46,7 +46,7 @@ intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
    return &obj->base;
 }
 
-static void 
+static void
 intelDeleteTextureObject(struct gl_context *ctx,
 			 struct gl_texture_object *texObj)
 {

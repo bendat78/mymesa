@@ -166,9 +166,9 @@ void ParseArgs(int argc, char **argv, struct Config *config)
 		exit(1);
 	}
 
-	if (config->output_width == 0)
+	if (!config->output_width)
 		config->output_width = config->input_width;
-	if (config->output_height == 0)
+	if (!config->output_height)
 		config->output_height = config->input_height;
 	if (!config->pipeline)
 		config->pipeline = PIPELINE_STEP_MC | PIPELINE_STEP_CSC | PIPELINE_STEP_SWAP;

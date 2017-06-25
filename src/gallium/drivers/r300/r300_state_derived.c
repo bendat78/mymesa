@@ -306,7 +306,7 @@ static void r300_update_rs_block(struct r300_context *r300)
     struct r300_vertex_shader *vs = r300->vs_state.state;
     struct r300_shader_semantics *vs_outputs = &vs->outputs;
     struct r300_shader_semantics *fs_inputs = &r300_fs(r300)->shader->inputs;
-    struct r300_rs_block rs = {0};
+    struct r300_rs_block rs = {};
     int i, col_count = 0, tex_count = 0, fp_offset = 0, count, loc = 0, tex_ptr = 0;
     int gen_offset = 0;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
@@ -649,8 +649,8 @@ static uint32_t r300_get_border_color(enum pipe_format format,
                                       boolean is_r500)
 {
     const struct util_format_description *desc;
-    float border_swizzled[4] = {0};
-    union util_color uc = {0};
+    float border_swizzled[4] = {};
+    union util_color uc = {};
 
     desc = util_format_description(format);
 

@@ -328,7 +328,7 @@ __indirect_glGetBooleanv(GLenum val, GLboolean * b)
    __GLX_SINGLE_READ_XREPLY();
    __GLX_SINGLE_GET_SIZE(compsize);
 
-   if (compsize == 0) {
+   if (!compsize) {
       /*
        ** Error occurred; don't modify user's buffer.
        */
@@ -379,7 +379,7 @@ __indirect_glGetDoublev(GLenum val, GLdouble * d)
    __GLX_SINGLE_READ_XREPLY();
    __GLX_SINGLE_GET_SIZE(compsize);
 
-   if (compsize == 0) {
+   if (!compsize) {
       /*
        ** Error occurred; don't modify user's buffer.
        */
@@ -430,7 +430,7 @@ __indirect_glGetFloatv(GLenum val, GLfloat * f)
    __GLX_SINGLE_READ_XREPLY();
    __GLX_SINGLE_GET_SIZE(compsize);
 
-   if (compsize == 0) {
+   if (!compsize) {
       /*
        ** Error occurred; don't modify user's buffer.
        */
@@ -481,7 +481,7 @@ __indirect_glGetIntegerv(GLenum val, GLint * i)
    __GLX_SINGLE_READ_XREPLY();
    __GLX_SINGLE_GET_SIZE(compsize);
 
-   if (compsize == 0) {
+   if (!compsize) {
       /*
        ** Error occurred; don't modify user's buffer.
        */
@@ -720,7 +720,7 @@ __indirect_glGetString(GLenum name)
                const size_t size = 7 + strlen((char *) s) + 4;
 
                gc->version = malloc(size);
-               if (gc->version == NULL) {
+               if (!gc->version) {
                   /* If we couldn't allocate memory for the new string,
                    * make a best-effort and just copy the client-side version
                    * to the string and use that.  It probably doesn't

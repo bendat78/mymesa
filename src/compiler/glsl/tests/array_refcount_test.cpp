@@ -165,7 +165,7 @@ validate_variables_in_hash_table(struct hash_table *ht,
       const ir_instruction *const ir = (ir_instruction *) entry->key;
       const ir_variable *const v = ir->as_variable();
 
-      if (v == NULL) {
+      if (!v) {
          ADD_FAILURE() << "Invalid junk in hash table: ir_type = "
                        << ir->ir_type << ", address = "
                        << (void *) ir;
@@ -174,7 +174,7 @@ validate_variables_in_hash_table(struct hash_table *ht,
 
       unsigned i;
       for (i = 0; i < count; i++) {
-         if (vars[i] == NULL)
+         if (!vars[i])
             continue;
 
          if (vars[i] == v)
@@ -195,7 +195,7 @@ validate_variables_in_hash_table(struct hash_table *ht,
 
    /* Check that there's nothing left in the set. */
    for (unsigned i = 0; i < count; i++) {
-      if (vars[i] != NULL) {
+      if (vars[i]) {
          ADD_FAILURE() << "Variable was not in the hash table: \""
                           << vars[i]->name << "\"";
       }

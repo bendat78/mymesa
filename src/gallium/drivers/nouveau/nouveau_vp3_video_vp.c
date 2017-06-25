@@ -201,7 +201,7 @@ nouveau_vp3_handle_references(struct nouveau_vp3_decoder *dec, struct nouveau_vp
          break;
       } else if (!dec->refs[i].last_used) {
          empty_spot = i;
-      } else if (empty_spot == ~0U && dec->refs[i].last_used != seq)
+      } else if (empty_spot == (~0u) && dec->refs[i].last_used != seq)
          empty_spot = i;
    }
 

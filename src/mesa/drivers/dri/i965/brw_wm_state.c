@@ -131,7 +131,7 @@ brw_upload_wm_unit(struct brw_context *brw)
    wm->thread1.binding_table_entry_count =
       prog_data->base.binding_table.size_bytes / 4;
 
-   if (prog_data->base.total_scratch != 0) {
+   if (prog_data->base.total_scratch) {
       wm->thread2.scratch_space_base_pointer =
 	 brw->wm.base.scratch_bo->offset64 >> 10; /* reloc */
       wm->thread2.per_thread_scratch_space =
@@ -221,7 +221,7 @@ brw_upload_wm_unit(struct brw_context *brw)
       wm->wm4.stats_enable = 1;
 
    /* Emit scratch space relocation */
-   if (prog_data->base.total_scratch != 0) {
+   if (prog_data->base.total_scratch) {
       brw_emit_reloc(&brw->batch,
                      brw->wm.base.state_offset +
                      offsetof(struct brw_wm_unit_state, thread2),
@@ -231,7 +231,7 @@ brw_upload_wm_unit(struct brw_context *brw)
    }
 
    /* Emit sampler state relocation */
-   if (brw->wm.base.sampler_count != 0) {
+   if (brw->wm.base.sampler_count) {
       brw_emit_reloc(&brw->batch,
                      brw->wm.base.state_offset +
                      offsetof(struct brw_wm_unit_state, wm4),

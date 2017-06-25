@@ -436,7 +436,7 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
       }
       return buf->data ? (buf->data + box->x) : tx->map;
    } else
-   if (unlikely(buf->domain == 0)) {
+   if (!unlikely(buf->domain)) {
       return buf->data + box->x;
    }
 
@@ -685,7 +685,7 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
 
    ret = nouveau_buffer_allocate(screen, buffer, buffer->domain);
 
-   if (ret == false)
+   if (!ret)
       goto fail;
 
    if (buffer->domain == NOUVEAU_BO_VRAM && screen->hint_buf_keep_sysmem_copy)

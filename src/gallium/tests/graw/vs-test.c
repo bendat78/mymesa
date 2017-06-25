@@ -14,7 +14,7 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"      /* Offset() */
 #include "util/u_draw_quad.h"
-#include "util/u_box.h"    
+#include "util/u_box.h"
 
 static const char *filename = NULL;
 unsigned show_fps = 0;
@@ -60,7 +60,7 @@ struct vertex {
 #define MESH_SZ 16
 static struct vertex vertices[MESH_SZ * MESH_SZ];
 
-static float constants[] = 
+static float constants[] =
 {  0.4, 0, 0,  1,
    1,   1, 1,  1,
    2,   2, 2,  2,
@@ -95,7 +95,7 @@ static void init_fs_constbuf( void )
 
    constbuf = screen->resource_create(screen,
                                       &templat);
-   if (constbuf == NULL)
+   if (!constbuf)
       exit(4);
 
 
@@ -233,7 +233,7 @@ static void draw( void )
 #define SIZE 16
 
 static void init_tex( void )
-{ 
+{
    struct pipe_sampler_view sv_template;
    struct pipe_sampler_state sampler_desc;
    struct pipe_resource templat;
@@ -293,10 +293,10 @@ static void init_tex( void )
    templat.nr_samples = 1;
    templat.bind = PIPE_BIND_SAMPLER_VIEW;
 
-   
+
    samptex = screen->resource_create(screen,
                                  &templat);
-   if (samptex == NULL)
+   if (!samptex)
       exit(4);
 
    u_box_2d(0,0,SIZE,SIZE, &box);
@@ -337,11 +337,11 @@ static void init_tex( void )
    sv_template.swizzle_b = 2;
    sv_template.swizzle_a = 3;
    sv = ctx->create_sampler_view(ctx, samptex, &sv_template);
-   if (sv == NULL)
+   if (!sv)
       exit(5);
 
    ctx->set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, 1, &sv);
-   
+
 
    memset(&sampler_desc, 0, sizeof sampler_desc);
    sampler_desc.wrap_s = PIPE_TEX_WRAP_REPEAT;
@@ -354,13 +354,13 @@ static void init_tex( void )
    sampler_desc.compare_func = 0;
    sampler_desc.normalized_coords = 1;
    sampler_desc.max_anisotropy = 0;
-   
+
    sampler = ctx->create_sampler_state(ctx, &sampler_desc);
-   if (sampler == NULL)
+   if (!sampler)
       exit(6);
 
    ctx->bind_sampler_states(ctx, PIPE_SHADER_FRAGMENT, 0, 1, &sampler);
-   
+
 }
 
 static void init( void )
@@ -387,9 +387,9 @@ static void init( void )
       fprintf(stderr, "Unable to create window\n");
       exit(1);
    }
-   
+
    ctx = screen->context_create(screen, NULL, 0);
-   if (ctx == NULL)
+   if (!ctx)
       exit(3);
 
    memset(&templat, 0, sizeof(templat));
@@ -403,10 +403,10 @@ static void init( void )
    templat.nr_samples = 1;
    templat.bind = (PIPE_BIND_RENDER_TARGET |
                    PIPE_BIND_DISPLAY_TARGET);
-   
+
    rttex = screen->resource_create(screen,
                                  &templat);
-   if (rttex == NULL)
+   if (!rttex)
       exit(4);
 
    surf_tmpl.format = templat.format;
@@ -414,7 +414,7 @@ static void init( void )
    surf_tmpl.u.tex.first_layer = 0;
    surf_tmpl.u.tex.last_layer = 0;
    surf = ctx->create_surface(ctx, rttex, &surf_tmpl);
-   if (surf == NULL)
+   if (!surf)
       exit(5);
 
    memset(&fb, 0, sizeof fb);
@@ -424,7 +424,7 @@ static void init( void )
    fb.cbufs[0] = surf;
 
    ctx->set_framebuffer_state(ctx, &fb);
-   
+
    {
       struct pipe_blend_state blend;
       void *handle;

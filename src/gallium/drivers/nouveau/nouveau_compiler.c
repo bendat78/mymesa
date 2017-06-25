@@ -104,7 +104,7 @@ dummy_assign_slots(struct nv50_ir_prog_info *info)
 static int
 nouveau_codegen(int chipset, int type, struct tgsi_token tokens[],
                 unsigned *size, unsigned **code) {
-   struct nv50_ir_prog_info info = {0};
+   struct nv50_ir_prog_info info = {};
    int ret;
 
    info.type = type;
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
    int i, chipset = 0, type = -1;
    const char *filename = NULL;
    FILE *f;
-   char text[65536] = {0};
+   char text[65536] = {};
    unsigned size = 0, *code = NULL;
 
    for (i = 1; i < argc; i++) {

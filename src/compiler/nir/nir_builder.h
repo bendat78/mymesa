@@ -300,9 +300,9 @@ nir_build_alu(nir_builder *build, nir_op op, nir_ssa_def *src0,
     * based on our input sizes, if it's not fixed for the op.
     */
    unsigned num_components = op_info->output_size;
-   if (num_components == 0) {
+   if (!num_components) {
       for (unsigned i = 0; i < op_info->num_inputs; i++) {
-         if (op_info->input_sizes[i] == 0)
+         if (!op_info->input_sizes[i])
             num_components = MAX2(num_components,
                                   instr->src[i].src.ssa->num_components);
       }
@@ -313,10 +313,10 @@ nir_build_alu(nir_builder *build, nir_op op, nir_ssa_def *src0,
     * is variable-width.
     */
    unsigned bit_size = nir_alu_type_get_type_size(op_info->output_type);
-   if (bit_size == 0) {
+   if (!bit_size) {
       for (unsigned i = 0; i < op_info->num_inputs; i++) {
          unsigned src_bit_size = instr->src[i].src.ssa->bit_size;
-         if (nir_alu_type_get_type_size(op_info->input_types[i]) == 0) {
+         if (!nir_alu_type_get_type_size(op_info->input_types[i])) {
             if (bit_size)
                assert(src_bit_size == bit_size);
             else
@@ -329,7 +329,7 @@ nir_build_alu(nir_builder *build, nir_op op, nir_ssa_def *src0,
    }
 
    /* When in doubt, assume 32. */
-   if (bit_size == 0)
+   if (!bit_size)
       bit_size = 32;
 
    /* Make sure we don't swizzle from outside of our source vector (like if a
@@ -408,7 +408,7 @@ static inline nir_ssa_def *
 nir_swizzle(nir_builder *build, nir_ssa_def *src, const unsigned swiz[4],
             unsigned num_components, bool use_fmov)
 {
-   nir_alu_src alu_src = { NIR_SRC_INIT };
+   nir_alu_src alu_src = {};
    alu_src.src = nir_src_for_ssa(src);
    for (unsigned i = 0; i < num_components; i++)
       alu_src.swizzle[i] = swiz[i];
@@ -486,7 +486,7 @@ nir_ssa_for_src(nir_builder *build, nir_src src, int num_components)
    if (src.is_ssa && src.ssa->num_components == num_components)
       return src.ssa;
 
-   nir_alu_src alu = { NIR_SRC_INIT };
+   nir_alu_src alu = {};
    alu.src = src;
    for (int j = 0; j < 4; j++)
       alu.swizzle[j] = j;

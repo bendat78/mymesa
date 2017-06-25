@@ -1205,7 +1205,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     }
 
     /* Front face */
-    if (state->front_ccw) 
+    if (state->front_ccw)
         cull_mode = R300_FRONT_FACE_CCW;
     else
         cull_mode = R300_FRONT_FACE_CW;
@@ -1624,7 +1624,7 @@ r300_create_sampler_view_custom(struct pipe_context *pipe,
                                             is_r500,
                                             dxtc_swizzle);
 
-        if (hwformat == ~0) {
+        if (hwformat == (~0u)) {
             fprintf(stderr, "r300: Ooops. Got unsupported format %s in %s.\n",
                     util_format_short_name(templ->format), __func__);
         }
@@ -1833,7 +1833,7 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
 {
     struct r300_vertex_element_state *velems;
     unsigned i;
-    struct pipe_vertex_element dummy_attrib = {0};
+    struct pipe_vertex_element dummy_attrib = {};
 
     /* R300 Programmable Stream Control (PSC) doesn't support 0 vertex elements. */
     if (!count) {

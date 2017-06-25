@@ -200,7 +200,7 @@ void ProcessDiscardInvalidateTiles(
     uint32_t macroTileYMin = (pDesc->rect.ymin + KNOB_MACROTILE_Y_DIM - 1) / KNOB_MACROTILE_Y_DIM;
     uint32_t macroTileYMax = (pDesc->rect.ymax / KNOB_MACROTILE_Y_DIM) - 1;
 
-    if (pDesc->fullTilesOnly == false)
+    if (!pDesc->fullTilesOnly)
     {
         // include partial tiles
         macroTileXMin = pDesc->rect.xmin / KNOB_MACROTILE_X_DIM;
@@ -509,7 +509,7 @@ static void StreamOut(
     // The pPrimData buffer is sparse in that we allocate memory for all 32 attributes for each vertex.
     uint32_t primDataDwordVertexStride = (SWR_VTX_NUM_SLOTS * sizeof(float) * 4) / sizeof(uint32_t);
 
-    SWR_STREAMOUT_CONTEXT soContext = { 0 };
+    SWR_STREAMOUT_CONTEXT soContext = {};
 
     // Setup buffer state pointers.
     for (uint32_t i = 0; i < 4; ++i)
@@ -548,7 +548,7 @@ static void StreamOut(
             soMask &= ~(1 << slot);
         }
 
-        // Update pPrimData pointer 
+        // Update pPrimData pointer
         soContext.pPrimData = pPrimData;
 
         // Call SOS
@@ -877,7 +877,7 @@ static void GeometryShaderStage(
         for (uint32_t instance = 0; instance < pState->instanceCount; ++instance)
         {
             uint32_t numEmittedVerts = pVertexCount[inputPrim];
-            if (numEmittedVerts == 0)
+            if (!numEmittedVerts)
             {
                 continue;
             }
@@ -1038,7 +1038,7 @@ INLINE
 static void AllocateTessellationData(SWR_CONTEXT* pContext)
 {
     /// @TODO - Don't use thread local storage.  Use Worker local storage instead.
-    if (gt_pTessellationThreadData == nullptr)
+    if (!gt_pTessellationThreadData)
     {
         gt_pTessellationThreadData = (TessellationThreadLocalData*)
             AlignedMalloc(sizeof(TessellationThreadLocalData), 64);
@@ -1081,7 +1081,7 @@ static void TessellationStages(
         tsState.tsOutputTopology,
         gt_pTessellationThreadData->pTxCtx,
         gt_pTessellationThreadData->tsCtxSize);
-    if (tsCtx == nullptr)
+    if (!tsCtx)
     {
         gt_pTessellationThreadData->pTxCtx = AlignedMalloc(gt_pTessellationThreadData->tsCtxSize, 64);
         tsCtx = TSInitCtx(
@@ -1163,13 +1163,13 @@ static void TessellationStages(
     for (uint32_t p = 0; p < numPrims; ++p)
     {
         // Run Tessellator
-        SWR_TS_TESSELLATED_DATA tsData = { 0 };
+        SWR_TS_TESSELLATED_DATA tsData = {};
         AR_BEGIN(FETessellation, pDC->drawId);
         TSTessellate(tsCtx, hsContext.pCPout[p].tessFactors, tsData);
         AR_EVENT(TessPrimCount(1));
         AR_END(FETessellation, 0);
 
-        if (tsData.NumPrimitives == 0)
+        if (!tsData.NumPrimitives)
         {
             continue;
         }
@@ -1317,7 +1317,7 @@ static void TessellationStages(
     } // for (uint32_t p = 0; p < numPrims; ++p)
 
 #if USE_SIMD16_FRONTEND
-    if (gt_pTessellationThreadData->pDSOutput != nullptr)
+    if (gt_pTessellationThreadData->pDSOutput)
     {
         AlignedFree(gt_pTessellationThreadData->pDSOutput);
         gt_pTessellationThreadData->pDSOutput = nullptr;
@@ -1455,7 +1455,7 @@ void ProcessDraw(
     // grow the vertex store for the PA as necessary
     if (gVertexStoreSize < vertexStoreSize)
     {
-        if (pVertexStore != nullptr)
+        if (pVertexStore)
         {
             AlignedFree(pVertexStore);
         }
@@ -1481,7 +1481,7 @@ void ProcessDraw(
     vsContext_lo.AlternateOffset = 0;
     vsContext_hi.AlternateOffset = 1;
 
-    SWR_FETCH_CONTEXT   fetchInfo_lo = { 0 };
+    SWR_FETCH_CONTEXT   fetchInfo_lo = {};
 
     fetchInfo_lo.pStreams = &state.vertexBuffers[0];
     fetchInfo_lo.StartInstance = work.startInstance;
@@ -1691,7 +1691,7 @@ void ProcessDraw(
 
 #else
     SWR_VS_CONTEXT      vsContext;
-    SWR_FETCH_CONTEXT   fetchInfo = { 0 };
+    SWR_FETCH_CONTEXT   fetchInfo = {};
 
     fetchInfo.pStreams = &state.vertexBuffers[0];
     fetchInfo.StartInstance = work.startInstance;

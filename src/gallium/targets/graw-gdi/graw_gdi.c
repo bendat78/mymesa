@@ -76,11 +76,11 @@ graw_create_window_and_screen(int x,
       goto fail;
 
    winsys = gdi_create_sw_winsys();
-   if (winsys == NULL)
+   if (!winsys)
       goto fail;
 
    screen = sw_screen_create(winsys);
-   if (screen == NULL)
+   if (!screen)
       goto fail;
 
    memset(&wc, 0, sizeof wc);
@@ -109,11 +109,11 @@ graw_create_window_and_screen(int x,
                          NULL,
                          wc.hInstance,
                          0);
-   if (hWnd == NULL)
+   if (!hWnd)
       goto fail;
 
    hDC = GetDC(hWnd);
-   if (hDC == NULL)
+   if (!hDC)
       goto fail;
 
    *handle = (void *)hDC;
@@ -130,7 +130,7 @@ fail:
    return NULL;
 }
 
-void 
+void
 graw_set_display_func(void (* draw)(void))
 {
    graw.draw = draw;

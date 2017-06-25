@@ -45,7 +45,7 @@ vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
    struct pb_buffer *pb_buf;
    uint32_t pb_flags;
    struct vmw_winsys_screen *vws = vsrf->screen;
-   
+
    *retry = FALSE;
    assert((flags & (PIPE_TRANSFER_READ | PIPE_TRANSFER_WRITE)) != 0);
    mtx_lock(&vsrf->mutex);
@@ -57,7 +57,7 @@ vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
       if ((flags & PIPE_TRANSFER_WRITE) ||
           (vsrf->map_mode & PIPE_TRANSFER_WRITE))
          goto out_unlock;
-      
+
       data = vsrf->data;
       goto out_mapped;
    }
@@ -103,7 +103,7 @@ vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
                                            PIPE_TRANSFER_DONTBLOCK | pb_flags);
          if (data)
             goto out_mapped;
-      } 
+      }
 
       /*
        * Attempt to get a new buffer.
@@ -112,7 +112,7 @@ vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
       memset(&desc, 0, sizeof(desc));
       desc.alignment = 4096;
       pb_buf = provider->create_buffer(provider, vsrf->size, &desc);
-      if (pb_buf != NULL) {
+      if (pb_buf) {
          struct svga_winsys_buffer *vbuf =
             vmw_svga_winsys_buffer_wrap(pb_buf);
 
@@ -137,7 +137,7 @@ vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
        * But tell pipe driver to flush now if already on validate list,
        * Otherwise we'll overwrite previous contents.
        */
-      if (!(flags & PIPE_TRANSFER_UNSYNCHRONIZED) && 
+      if (!(flags & PIPE_TRANSFER_UNSYNCHRONIZED) &&
           p_atomic_read(&vsrf->validated)) {
          *retry = TRUE;
          goto out_unlock;
@@ -146,7 +146,7 @@ vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
 
    pb_flags |= (flags & PIPE_TRANSFER_DONTBLOCK);
    data = vmw_svga_winsys_buffer_map(&vws->base, vsrf->buf, pb_flags);
-   if (data == NULL)
+   if (!data)
       goto out_unlock;
 
 out_mapped:
@@ -166,7 +166,7 @@ vmw_svga_winsys_surface_unmap(struct svga_winsys_context *swc,
 {
    struct vmw_svga_winsys_surface *vsrf = vmw_svga_winsys_surface(srf);
    mtx_lock(&vsrf->mutex);
-   if (--vsrf->mapcount == 0) {
+   if (!--vsrf->mapcount) {
       *rebind = vsrf->rebind;
       vsrf->rebind = FALSE;
       vmw_svga_winsys_buffer_unmap(&vsrf->screen->base, vsrf->buf);

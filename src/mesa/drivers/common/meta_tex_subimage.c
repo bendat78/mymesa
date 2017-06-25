@@ -108,7 +108,7 @@ create_texture_for_pbo(struct gl_context *ctx,
       assert(create_pbo);
 
       *tmp_pbo = ctx->Driver.NewBufferObject(ctx, 0xDEADBEEF);
-      if (*tmp_pbo == NULL)
+      if (!*tmp_pbo)
          return NULL;
 
       /* In case of GL_PIXEL_PACK_BUFFER, pass null pointer for the pixel
@@ -225,11 +225,11 @@ _mesa_meta_pbo_TexSubImage(struct gl_context *ctx, GLuint dims,
    }
 
    readFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (readFb == NULL)
+   if (!readFb)
       goto fail;
 
    drawFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (drawFb == NULL)
+   if (!drawFb)
       goto fail;
 
    _mesa_bind_framebuffers(ctx, drawFb, readFb);
@@ -381,11 +381,11 @@ _mesa_meta_pbo_GetTexSubImage(struct gl_context *ctx, GLuint dims,
       _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
 
    readFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (readFb == NULL)
+   if (!readFb)
       goto fail;
 
    drawFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (drawFb == NULL)
+   if (!drawFb)
       goto fail;
 
    if (tex_image && tex_image->TexObject->Target == GL_TEXTURE_1D_ARRAY) {

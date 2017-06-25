@@ -888,7 +888,7 @@ bit_cast_color(struct nir_builder *b, nir_ssa_def *color,
       for (unsigned i = 0; i < 4; i++) {
          nir_ssa_def *shifted = nir_ishl(b, nir_channel(b, color, i),
                                             nir_imm_int(b, shift));
-         if (shift == 0) {
+         if (!shift) {
             dst_chan[dst_idx] = shifted;
          } else {
             dst_chan[dst_idx] = nir_ior(b, dst_chan[dst_idx], shifted);
@@ -1510,7 +1510,7 @@ can_shrink_surface(const struct brw_blorp_surface_info *surf)
     * Currently the cases where we must split the blit are limited to cases
     * where we don't have a aux buffer.
     */
-   if (surf->aux_addr.buffer != NULL)
+   if (surf->aux_addr.buffer)
       return false;
 
    /* We can't support splitting the blit for gen <= 7, because the qpitch
@@ -1872,7 +1872,7 @@ try_blorp_blit(struct blorp_batch *batch,
        params->dst.surf.logical_level0_px.height > max_surface_size)
       result |= BLIT_HEIGHT_SHRINK;
 
-   if (result == 0) {
+   if (!result) {
       batch->blorp->exec(batch, params);
    }
 
@@ -2014,7 +2014,7 @@ do_blorp_blit(struct blorp_batch *batch,
          adjust_split_source_coords(&orig->y, &split_coords.y, y_scale);
       }
 
-      if (result != 0) {
+      if (result) {
          assert(can_shrink_surfaces(orig_params));
          shrink = true;
          continue;

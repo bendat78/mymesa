@@ -354,7 +354,7 @@ DrvDescribePixelFormat(HDC hdc, INT iPixelFormat, ULONG cjpfd,
 
    count = stw_pixelformat_get_count();
 
-   if (ppfd == NULL)
+   if (!ppfd)
       return count;
 
    if (cjpfd != sizeof(PIXELFORMATDESCRIPTOR))
@@ -448,7 +448,7 @@ stw_pixelformat_choose(HDC hdc, CONST PIXELFORMATDESCRIPTOR *ppfd)
       if (delta < bestdelta) {
          bestindex = index;
          bestdelta = delta;
-         if (bestdelta == 0)
+         if (!bestdelta)
             break;
       }
    }

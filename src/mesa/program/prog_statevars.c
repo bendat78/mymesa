@@ -151,7 +151,7 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
       COPY_4V(value, ctx->Light.Model.Ambient);
       return;
    case STATE_LIGHTMODEL_SCENECOLOR:
-      if (state[1] == 0) {
+      if (!state[1]) {
          /* front */
          GLint i;
          for (i = 0; i < 3; i++) {
@@ -451,10 +451,10 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
          return;
 
       case STATE_NORMAL_SCALE:
-         ASSIGN_4V(value, 
-                   ctx->_ModelViewInvScale, 
-                   ctx->_ModelViewInvScale, 
-                   ctx->_ModelViewInvScale, 
+         ASSIGN_4V(value,
+                   ctx->_ModelViewInvScale,
+                   ctx->_ModelViewInvScale,
+                   ctx->_ModelViewInvScale,
                    1);
          return;
 
@@ -601,7 +601,7 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
          val[0].i = ctx->Color.BlendEnabled ? ctx->Color._AdvancedBlendMode : 0;
          return;
 
-      /* XXX: make sure new tokens added here are also handled in the 
+      /* XXX: make sure new tokens added here are also handled in the
        * _mesa_program_state_flags() switch, below.
        */
       default:
@@ -927,7 +927,7 @@ append_token(char *dst, gl_state_index k)
 static void
 append_face(char *dst, GLint face)
 {
-   if (face == 0)
+   if (!face)
       append(dst, "front.");
    else
       append(dst, "back.");
@@ -968,7 +968,7 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
       append(str, "lightmodel.ambient");
       break;
    case STATE_LIGHTMODEL_SCENECOLOR:
-      if (state[1] == 0) {
+      if (!state[1]) {
          append(str, "lightmodel.front.scenecolor");
       }
       else {

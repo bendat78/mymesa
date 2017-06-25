@@ -74,7 +74,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
    mtx_unlock(&dev->mutex);
 
    *presentation_queue = vlAddDataHTAB(pq);
-   if (*presentation_queue == 0) {
+   if (!*presentation_queue) {
       ret = VDP_STATUS_ERROR;
       goto no_handle;
    }
@@ -283,7 +283,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
 
       if (framenum) {
          sprintf(cmd, "xwd -id %d -silent -out vdpau_frame_%08d.xwd", (int)pq->drawable, framenum);
-         if (system(cmd) != 0)
+         if (system(cmd))
             VDPAU_MSG(VDPAU_ERR, "[VDPAU] Dumping surface %d failed.\n", surface);
       }
       framenum++;

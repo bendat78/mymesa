@@ -86,7 +86,7 @@ static void r200SetVertexFormat( struct gl_context *ctx )
 
    /* Important:
     */
-   if ( VB->NdcPtr != NULL ) {
+   if (VB->NdcPtr) {
       VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
    }
    else {
@@ -246,7 +246,7 @@ void r200ChooseVertexState( struct gl_context *ctx )
     * rasterization fallback.  As this function will be called again when we
     * leave a rasterization fallback, we can just skip it for now.
     */
-   if (rmesa->radeon.Fallback != 0)
+   if (rmesa->radeon.Fallback)
       return;
 
    vte = rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL];
@@ -478,7 +478,7 @@ do {							\
 
 #define LOCAL_VARS(n)							\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);			\
-   GLuint color[n] = {0}, spec[n] = {0};						\
+   GLuint color[n] = {}, spec[n] = {};						\
    GLuint coloroffset = rmesa->swtcl.coloroffset;	\
    GLuint specoffset = rmesa->swtcl.specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
@@ -591,7 +591,7 @@ void r200ChooseRenderState( struct gl_context *ctx )
       tnl->Driver.Render.Triangle = rast_tab[index].triangle;
       tnl->Driver.Render.Quad = rast_tab[index].quad;
 
-      if (index == 0) {
+      if (!index) {
 	 tnl->Driver.Render.PrimTabVerts = r200_render_tab_verts;
 	 tnl->Driver.Render.PrimTabElts = r200_render_tab_elts;
 	 tnl->Driver.Render.ClippedPolygon = r200_fast_clipped_poly;
@@ -692,7 +692,7 @@ void r200Fallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 
    if (mode) {
       rmesa->radeon.Fallback |= bit;
-      if (oldfallback == 0) {
+      if (!oldfallback) {
 	 radeon_firevertices(&rmesa->radeon);
 	 TCL_FALLBACK( ctx, R200_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );

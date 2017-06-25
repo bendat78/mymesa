@@ -243,7 +243,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
                                       PIPE_BIND_CONSTANT_BUFFER,
                                       PIPE_USAGE_DEFAULT,
                                       sizeof(constants));
-   if (ppq->constbuf == NULL) {
+   if (!ppq->constbuf) {
       pp_debug("Failed to allocate constant buffer\n");
       goto fail;
    }
@@ -268,12 +268,12 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
       pp_debug("Areamap format not supported\n");
 
    ppq->areamaptex = ppq->p->screen->resource_create(ppq->p->screen, &res);
-   
-   if (ppq->areamaptex == NULL) {
+
+   if (!ppq->areamaptex) {
       pp_debug("Failed to allocate area map texture\n");
       goto fail;
    }
-   
+
    u_box_2d(0, 0, 165, 165, &box);
 
    ppq->p->pipe->texture_subdata(ppq->p->pipe, ppq->areamaptex, 0,
@@ -298,7 +298,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
    return TRUE;
 
  fail:
-   
+
    FREE(tmp_text);
 
    /*

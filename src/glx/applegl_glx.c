@@ -135,7 +135,7 @@ applegl_create_context(struct glx_screen *psc,
     * struct apple_glx_context inherit from struct glx_context. */
 
    gc = calloc(1, sizeof(*gc));
-   if (gc == NULL)
+   if (!gc)
       return NULL;
 
    if (!glx_context_init(gc, psc, config)) {
@@ -147,7 +147,7 @@ applegl_create_context(struct glx_screen *psc,
    gc->driContext = NULL;
 
    /* TODO: darwin: Integrate with above to do indirect */
-   if(apple_glx_create_context(&gc->driContext, dpy, screen, config, 
+   if(apple_glx_create_context(&gc->driContext, dpy, screen, config,
 			       shareList ? shareList->driContext : NULL,
 			       &errorcode, &x11error)) {
       __glXSendError(dpy, errorcode, 0, X_GLXCreateContext, x11error);
@@ -177,7 +177,7 @@ applegl_create_screen(int screen, struct glx_display * priv)
    struct glx_screen *psc;
 
    psc = calloc(1, sizeof *psc);
-   if (psc == NULL)
+   if (!psc)
       return NULL;
 
    glx_screen_init(psc, screen, priv);

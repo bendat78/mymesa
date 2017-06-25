@@ -39,7 +39,7 @@
  *
  * If we just upload the new data, however, the indices will be
  * incorrect as we tend to upload each set of vertex data to a new
- * region.  
+ * region.
  *
  * This file provides a helper to adjust the arrays, primitives and
  * indices of a draw call so that it can be re-issued with a min_index
@@ -63,7 +63,7 @@ static void *rebase_##TYPE( const void *ptr,			\
    const TYPE *in = (TYPE *)ptr;				\
    TYPE *tmp_indices = malloc(count * sizeof(TYPE));		\
 								\
-   if (tmp_indices == NULL) {                                   \
+   if (!tmp_indices) {                                   \
       _mesa_error_no_memory(__func__);                          \
       return NULL;                                              \
    }                                                            \
@@ -82,7 +82,7 @@ REBASE(GLubyte)
 GLboolean vbo_all_varyings_in_vbos( const struct gl_vertex_array *arrays[] )
 {
    GLuint i;
-   
+
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
       if (arrays[i]->StrideB &&
 	  arrays[i]->BufferObj->Name == 0)
@@ -96,7 +96,7 @@ GLboolean vbo_any_varyings_in_vbos( const struct gl_vertex_array *arrays[] )
    GLuint i;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      if (arrays[i]->BufferObj->Name != 0)
+      if (arrays[i]->BufferObj->Name)
 	 return GL_TRUE;
 
    return GL_FALSE;
@@ -110,7 +110,7 @@ GLboolean vbo_any_varyings_in_vbos( const struct gl_vertex_array *arrays[] )
  *      min_index will be transformed.
  *
  * Hardware tnl:
- *    - if ib != NULL and min_index != 0, otherwise vertices lower than 
+ *    - if ib != NULL and min_index != 0, otherwise vertices lower than
  *      min_index will be uploaded.  Requires adjusting index values.
  *
  *    - if ib == NULL and min_index != 0, just for convenience so this doesn't
@@ -154,7 +154,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
        */
       tmp_prims = malloc(sizeof(*prim) * nr_prims);
 
-      if (tmp_prims == NULL) {
+      if (!tmp_prims) {
          _mesa_error_no_memory(__func__);
          return;
       }
@@ -172,7 +172,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
                          !ib->obj->Mappings[MAP_INTERNAL].Pointer;
       void *ptr;
 
-      if (map_ib) 
+      if (map_ib)
 	 ctx->Driver.MapBufferRange(ctx, 0, ib->obj->Size, GL_MAP_READ_BIT,
 				    ib->obj, MAP_INTERNAL);
 
@@ -192,12 +192,12 @@ void vbo_rebase_prims( struct gl_context *ctx,
       case 1:
 	 tmp_indices = rebase_GLubyte( ptr, ib->count, min_index );
 	 break;
-      }      
+      }
 
-      if (map_ib) 
+      if (map_ib)
 	 ctx->Driver.UnmapBuffer(ctx, ib->obj, MAP_INTERNAL);
 
-      if (tmp_indices == NULL) {
+      if (!tmp_indices) {
          return;
       }
 
@@ -213,7 +213,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
        */
       tmp_prims = malloc(sizeof(*prim) * nr_prims);
 
-      if (tmp_prims == NULL) {
+      if (!tmp_prims) {
          _mesa_error_no_memory(__func__);
          return;
       }
@@ -245,26 +245,26 @@ void vbo_rebase_prims( struct gl_context *ctx,
       tmp_arrays[i].Ptr += min_index * tmp_arrays[i].StrideB;
       tmp_array_pointers[i] = &tmp_arrays[i];
    }
-   
+
    /* Re-issue the draw call.
     */
    ctx->Array._DrawArrays = tmp_array_pointers;
    ctx->NewDriverState |= ctx->DriverFlags.NewArray;
 
-   draw( ctx, 
+   draw( ctx,
 	 prim,
-	 nr_prims, 
-	 ib, 
+	 nr_prims,
+	 ib,
 	 GL_TRUE,
-	 0, 
+	 0,
 	 max_index - min_index,
 	 NULL, 0, NULL );
 
    ctx->Array._DrawArrays = saved_arrays;
    ctx->NewDriverState |= ctx->DriverFlags.NewArray;
-   
+
    free(tmp_indices);
-   
+
    free(tmp_prims);
 }
 

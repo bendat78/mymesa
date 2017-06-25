@@ -237,7 +237,7 @@ void
 isl_genX(surf_fill_state_s)(const struct isl_device *dev, void *state,
                             const struct isl_surf_fill_state_info *restrict info)
 {
-   struct GENX(RENDER_SURFACE_STATE) s = { 0 };
+   struct GENX(RENDER_SURFACE_STATE) s = {};
 
    s.SurfaceType = get_surftype(info->surf->dim, info->view->usage);
 

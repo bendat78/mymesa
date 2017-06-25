@@ -698,7 +698,7 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 					  swizzle,
 					  &word4, &yuv_format, do_endian_swap);
 	assert(format != ~0);
-	if (format == ~0) {
+	if (format == (~0u)) {
 		FREE(view);
 		return NULL;
 	}
@@ -2935,7 +2935,7 @@ static void r600_dma_copy(struct pipe_context *ctx,
 	unsigned src_x, src_y;
 	unsigned dst_x = dstx, dst_y = dsty, dst_z = dstz;
 
-	if (rctx->b.dma.cs == NULL) {
+	if (!rctx->b.dma.cs) {
 		goto fallback;
 	}
 

@@ -190,7 +190,7 @@ gen_get_l3_config_weights(const struct gen_l3_config *cfg)
 
       return norm_l3_weights(w);
    } else {
-      const struct gen_l3_weights w = { { 0 } };
+      const struct gen_l3_weights w = {};
       return w;
    }
 }
@@ -230,7 +230,7 @@ struct gen_l3_weights
 gen_get_default_l3_weights(const struct gen_device_info *devinfo,
                            bool needs_dc, bool needs_slm)
 {
-   struct gen_l3_weights w = {{ 0 }};
+   struct gen_l3_weights w = {};
 
    w.w[GEN_L3P_SLM] = needs_slm;
    w.w[GEN_L3P_URB] = 1.0;

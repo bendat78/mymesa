@@ -261,7 +261,7 @@ stw_framebuffer_create(HDC hdc, int iPixelFormat)
       return NULL;
 
    fb = CALLOC_STRUCT( stw_framebuffer );
-   if (fb == NULL)
+   if (!fb)
       return NULL;
 
    fb->hWnd = hWnd;
@@ -457,7 +457,7 @@ DrvSetPixelFormat(HDC hdc, LONG iPixelFormat)
    /* Some applications mistakenly use the undocumented wglSetPixelFormat
     * function instead of SetPixelFormat, so we call SetPixelFormat here to
     * avoid opengl32.dll's wglCreateContext to fail */
-   if (GetPixelFormat(hdc) == 0) {
+   if (!GetPixelFormat(hdc)) {
       BOOL bRet = SetPixelFormat(hdc, iPixelFormat, NULL);
       if (!bRet) {
 	  debug_printf("SetPixelFormat failed\n");
@@ -495,7 +495,7 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
       return FALSE;
 
    fb = stw_framebuffer_from_hdc( hdc );
-   if (fb == NULL)
+   if (!fb)
       return FALSE;
 
    screen = stw_dev->screen;
@@ -595,7 +595,7 @@ wait_swap_interval(struct stw_framebuffer *fb)
    /* Note: all time variables here are in units of microseconds */
    int64_t cur_time = os_time_get_nano() / 1000;
 
-   if (fb->prev_swap_time != 0) {
+   if (fb->prev_swap_time) {
       /* Compute time since previous swap */
       int64_t delta = cur_time - fb->prev_swap_time;
       int64_t min_swap_period =
@@ -623,7 +623,7 @@ DrvSwapBuffers(HDC hdc)
       return FALSE;
 
    fb = stw_framebuffer_from_hdc( hdc );
-   if (fb == NULL)
+   if (!fb)
       return FALSE;
 
    if (!(fb->pfi->pfd.dwFlags & PFD_DOUBLEBUFFER)) {
@@ -648,7 +648,7 @@ DrvSwapBuffers(HDC hdc)
       }
    }
 
-   if (stw_dev->swap_interval != 0) {
+   if (stw_dev->swap_interval) {
       wait_swap_interval(fb);
    }
 

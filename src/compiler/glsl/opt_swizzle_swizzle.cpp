@@ -58,7 +58,7 @@ ir_swizzle_swizzle_visitor::visit_enter(ir_swizzle *ir)
       return visit_continue;
 
    memset(&mask2, 0, sizeof(mask2));
-   if (swiz2->mask.num_components >= 1)
+   if (swiz2->mask.num_components)
       mask2[0] = swiz2->mask.x;
    if (swiz2->mask.num_components >= 2)
       mask2[1] = swiz2->mask.y;
@@ -67,7 +67,7 @@ ir_swizzle_swizzle_visitor::visit_enter(ir_swizzle *ir)
    if (swiz2->mask.num_components >= 4)
       mask2[3] = swiz2->mask.w;
 
-   if (ir->mask.num_components >= 1)
+   if (ir->mask.num_components)
       ir->mask.x = mask2[ir->mask.x];
    if (ir->mask.num_components >= 2)
       ir->mask.y = mask2[ir->mask.y];

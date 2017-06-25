@@ -36,7 +36,7 @@
  *
  * We want buffer splitting to be a convenience function for the code
  * actually drawing the primitives rather than a system-wide maximum,
- * otherwise it is hard to avoid pessimism.  
+ * otherwise it is hard to avoid pessimism.
  *
  * For instance, if a driver has no hardware limits on vertex buffer
  * dimensions, it would not ordinarily want to split vbos.  But if
@@ -109,7 +109,7 @@ void vbo_split_prims( struct gl_context *ctx,
 		      const struct split_limits *limits )
 {
    if (ib) {
-      if (limits->max_indices == 0) {
+      if (!limits->max_indices) {
 	 /* Could traverse the indices, re-emitting vertices in turn.
 	  * But it's hard to see why this case would be needed - for
 	  * software tnl, it is better to convert to non-indexed

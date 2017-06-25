@@ -59,7 +59,7 @@ etna_zsa_state_create(struct pipe_context *pctx,
 #if 0 /* TODO: It looks like a hardware bug */
     for(int i=0; i<2; ++i)
     {
-        if(so->stencil[i].writemask == 0)
+        if(!so->stencil[i].writemask)
         {
             so->stencil[i].fail_op = so->stencil[i].zfail_op = so->stencil[i].zpass_op = PIPE_STENCIL_OP_KEEP;
         }

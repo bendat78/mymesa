@@ -116,7 +116,7 @@ static int host_byte_order( void )
  */
 static int check_for_xshm( XMesaDisplay *display )
 {
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
    int ignore;
 
    if (XQueryExtension( display, "MIT-SHM", &ignore, &ignore, &ignore )) {
@@ -327,7 +327,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       b->backxrb->Parent = b;
       /* determine back buffer implementation */
       b->db_mode = vis->ximage_flag ? BACK_XIMAGE : BACK_PIXMAP;
-      
+
       _mesa_attach_and_own_rb(&b->mesa_buffer, BUFFER_BACK_LEFT,
                               &b->backxrb->Base.Base);
    }
@@ -686,12 +686,12 @@ xmesa_color_to_pixel(struct gl_context *ctx,
 
 /**
  * Convert an X visual type to a GLX visual type.
- * 
+ *
  * \param visualType X visual type (i.e., \c TrueColor, \c StaticGray, etc.)
  *        to be converted.
  * \return If \c visualType is a valid X visual type, a GLX visual type will
  *         be returned.  Otherwise \c GLX_NONE will be returned.
- * 
+ *
  * \note
  * This code was lifted directly from lib/GL/glx/glcontextmodes.c in the
  * DRI CVS tree.
@@ -1088,7 +1088,7 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
    xmesa_get_window_size(v->display, b, &width, &height);
    _mesa_resize_framebuffer(NULL, &(b->mesa_buffer), width, height);
 
-   if (target == 0) {
+   if (!target) {
       /* examine dims */
       if (ctx->Extensions.ARB_texture_non_power_of_two) {
          target = GLX_TEXTURE_2D_EXT;
@@ -1344,7 +1344,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
    if (b->db_mode) {
       if (b->backxrb->ximage) {
 	 /* Copy Ximage (back buf) from client memory to server window */
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
 	 if (b->shm) {
             /*mtx_lock(&_xmesa_lock);*/
 	    XShmPutImage( b->xm_visual->display, b->frontxrb->drawable,
@@ -1398,14 +1398,14 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
 
    if (!b->backxrb) {
       /* single buffered */
-      return; 
+      return;
    }
 
    if (b->db_mode) {
       int yTop = b->mesa_buffer.Height - y - height;
       if (b->backxrb->ximage) {
          /* Copy Ximage from host's memory to server's window */
-#if defined(USE_XSHM) 
+#if defined(USE_XSHM)
          if (b->shm) {
             /* XXX assuming width and height aren't too large! */
             XShmPutImage( b->xm_visual->display, b->frontxrb->drawable,

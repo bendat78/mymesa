@@ -153,7 +153,7 @@ combine_clip_cull(nir_shader *nir,
       cull->data.compact = true;
 
    if (cull_array_size > 0) {
-      if (clip_array_size == 0) {
+      if (!clip_array_size) {
          /* No clip distances, just change the cull distance location */
          cull->data.location = VARYING_SLOT_CLIP_DIST0;
       } else {

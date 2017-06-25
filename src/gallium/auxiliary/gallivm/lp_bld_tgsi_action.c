@@ -1,10 +1,10 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2011-2012 Advanced Micro Devices, Inc.
  * Copyright 2009 VMware, Inc.
  * Copyright 2007-2008 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -12,11 +12,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -24,7 +24,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -1461,7 +1461,7 @@ ucmp_emit_cpu(
 {
    LLVMBuilderRef builder = bld_base->base.gallivm->builder;
    struct lp_build_context *uint_bld = &bld_base->uint_bld;
-   LLVMValueRef unsigned_cond = 
+   LLVMValueRef unsigned_cond =
       LLVMBuildBitCast(builder, emit_data->args[0], uint_bld->vec_type, "");
    LLVMValueRef cond = lp_build_cmp(uint_bld, PIPE_FUNC_NOTEQUAL,
                                     unsigned_cond,
@@ -2072,7 +2072,7 @@ udiv_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   
+
    LLVMBuilderRef builder = bld_base->base.gallivm->builder;
    LLVMValueRef div_mask = lp_build_cmp(&bld_base->uint_bld,
                                         PIPE_FUNC_EQUAL, emit_data->args[1],
@@ -2124,8 +2124,8 @@ umod_emit_cpu(
    LLVMValueRef div_mask = lp_build_cmp(&bld_base->uint_bld,
                                         PIPE_FUNC_EQUAL, emit_data->args[1],
                                         bld_base->uint_bld.zero);
-   /* We want to make sure that we never divide/mod by zero to not 
-    * generate sigfpe. We don't want to crash just because the 
+   /* We want to make sure that we never divide/mod by zero to not
+    * generate sigfpe. We don't want to crash just because the
     * shader is doing something weird. */
    LLVMValueRef divisor = LLVMBuildOr(builder,
                                       div_mask,

@@ -62,7 +62,7 @@ _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
     *     "The error INVALID_VALUE is generated if <id> is not the name of an
     *     existing query object query."
     */
-   if (queryId != 0)
+   if (queryId)
       q = _mesa_lookup_query_object(ctx, queryId);
 
    if (!q) {

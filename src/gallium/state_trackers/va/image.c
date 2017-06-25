@@ -546,7 +546,7 @@ vlVaPutImage(VADriverContextP ctx, VASurfaceID surface, VAImageID image,
                                           PIPE_TRANSFER_WRITE |
                                           PIPE_TRANSFER_DISCARD_RANGE,
                                           &dst_box, &transfer);
-            if (map == NULL)
+            if (!map)
                return VA_STATUS_ERROR_OPERATION_FAILED;
 
             u_copy_nv12_from_yv12((const void * const*) data, pitches, i, j,

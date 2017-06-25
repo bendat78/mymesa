@@ -677,7 +677,7 @@ rbug_shader_replace(struct rbug_rbug *tr_rbug, struct rbug_header *header)
    }
 
    /* empty inputs means restore old which we did above */
-   if (rep->tokens_len == 0)
+   if (!rep->tokens_len)
       goto out;
 
    tr_shdr->replaced_tokens = tgsi_dup_tokens((struct tgsi_token *)rep->tokens);

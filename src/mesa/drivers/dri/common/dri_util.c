@@ -30,7 +30,7 @@
  * driver doesn't really \e have to use any of this - it's optional.  But, some
  * useful stuff is done here that otherwise would have to be duplicated in most
  * drivers.
- * 
+ *
  * Basically, these utility functions take care of some of the dirty details of
  * screen initialization, context creation, context binding, DRM setup, etc.
  *
@@ -114,7 +114,7 @@ driCreateNewScreen2(int scrn, int fd,
                     const __DRIextension **driver_extensions,
                     const __DRIconfig ***driver_configs, void *data)
 {
-    static const __DRIextension *emptyExtensionList[] = { NULL };
+    static const __DRIextension *emptyExtensionList[] = {};
     __DRIscreen *psp;
 
     psp = calloc(1, sizeof(*psp));
@@ -145,12 +145,12 @@ driCreateNewScreen2(int scrn, int fd,
     psp->myNum = scrn;
 
     *driver_configs = psp->driver->InitScreen(psp);
-    if (*driver_configs == NULL) {
+    if (!*driver_configs) {
 	free(psp);
 	return NULL;
     }
 
-    struct gl_constants consts = { 0 };
+    struct gl_constants consts = {};
     gl_api api;
     unsigned version;
 
@@ -215,7 +215,7 @@ driSWRastCreateNewScreen2(int scrn, const __DRIextension **extensions,
 
 /**
  * Destroy the per-screen private information.
- * 
+ *
  * \internal
  * This function calls __DriverAPIRec::DestroyScreen on \p screenPrivate, calls
  * drmClose(), and finally frees \p screenPrivate.
@@ -273,7 +273,7 @@ validate_context_version(__DRIscreen *screen,
       break;
    }
 
-   if (max_version == 0) {
+   if (!max_version) {
       *dri_ctx_error = __DRI_CTX_ERROR_BAD_API;
       return false;
    } else if (req_version > max_version) {
@@ -490,7 +490,7 @@ driCreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
 
 /**
  * Destroy the per-context private information.
- * 
+ *
  * \internal
  * This function calls __DriverAPIRec::DestroyContext on \p contextPrivate, calls
  * drmDestroyContext(), and finally frees \p contextPrivate.
@@ -557,19 +557,19 @@ static int driBindContext(__DRIcontext *pcp,
 
 /**
  * Unbind context.
- * 
+ *
  * \param scrn the screen.
  * \param gc context.
  *
  * \return \c GL_TRUE on success, or \c GL_FALSE on failure.
- * 
+ *
  * \internal
  * This function calls __DriverAPIRec::UnbindContext, and then decrements
  * __DRIdrawableRec::refcount which must be non-zero for a successful
  * return.
- * 
+ *
  * While casting the opaque private pointers associated with the parameters
- * into their respective real types it also assures they are not \c NULL. 
+ * into their respective real types it also assures they are not \c NULL.
  */
 static int driUnbindContext(__DRIcontext *pcp)
 {
@@ -581,7 +581,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     ** calling driUnbindContext.
     */
 
-    if (pcp == NULL)
+    if (!pcp)
 	return GL_FALSE;
 
     /*
@@ -598,7 +598,7 @@ static int driUnbindContext(__DRIcontext *pcp)
 	return GL_TRUE;
 
     assert(pdp);
-    if (pdp->refcount == 0) {
+    if (!pdp->refcount) {
 	/* ERROR!!! */
 	return GL_FALSE;
     }
@@ -606,7 +606,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     dri_put_drawable(pdp);
 
     if (prp != pdp) {
-	if (prp->refcount == 0) {
+	if (!prp->refcount) {
 	    /* ERROR!!! */
 	    return GL_FALSE;
 	}

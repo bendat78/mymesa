@@ -474,7 +474,7 @@ static unsigned int reg_get_writemask(int reg)
 static int get_reg_id(unsigned int index, unsigned int writemask)
 {
 	assert(writemask);
-	if (writemask == 0) {
+	if (!writemask) {
 		return 0;
 	}
 	return (index * RC_MASK_XYZW) + (writemask - 1);

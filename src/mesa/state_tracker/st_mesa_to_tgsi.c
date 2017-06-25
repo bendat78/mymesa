@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007-2008 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /*
@@ -263,13 +263,13 @@ translate_dst( struct st_translate *t,
                const struct prog_dst_register *DstReg,
                boolean saturate)
 {
-   struct ureg_dst dst = dst_register( t, 
+   struct ureg_dst dst = dst_register( t,
                                        DstReg->File,
                                        DstReg->Index );
 
-   dst = ureg_writemask( dst, 
+   dst = ureg_writemask( dst,
                          DstReg->WriteMask );
-   
+
    if (saturate)
       dst = ureg_saturate( dst );
 
@@ -325,8 +325,8 @@ static struct ureg_src swizzle_4v( struct ureg_src src,
 /**
  * Translate a SWZ instruction into a MOV, MUL or MAD instruction.  EG:
  *
- *   SWZ dst, src.x-y10 
- * 
+ *   SWZ dst, src.x-y10
+ *
  * becomes:
  *
  *   MAD dst {1,-1,0,0}, src.xyxx, {0,0,1,0}
@@ -352,7 +352,7 @@ static void emit_swz( struct st_translate *t,
 
    unsigned negative_one_mask = one_mask & negate_mask;
    unsigned positive_one_mask = one_mask & ~negate_mask;
-   
+
    struct ureg_src imm;
    unsigned i;
    unsigned mul_swizzle[4] = {0,0,0,0};
@@ -361,14 +361,14 @@ static void emit_swz( struct st_translate *t,
    boolean need_add = FALSE;
    boolean need_mul = FALSE;
 
-   if (dst.WriteMask == 0)
+   if (!dst.WriteMask)
       return;
 
    /* Is this just a MOV?
     */
    if (zero_mask == 0 &&
        one_mask == 0 &&
-       (negate_mask == 0 || negate_mask == TGSI_WRITEMASK_XYZW)) 
+       (negate_mask == 0 || negate_mask == TGSI_WRITEMASK_XYZW))
    {
       ureg_MOV( ureg, dst, translate_src( t, SrcReg ));
       return;
@@ -414,20 +414,20 @@ static void emit_swz( struct st_translate *t,
    }
 
    if (need_mul && need_add) {
-      ureg_MAD( ureg, 
+      ureg_MAD( ureg,
                 dst,
                 swizzle_4v( src, src_swizzle ),
                 swizzle_4v( imm, mul_swizzle ),
                 swizzle_4v( imm, add_swizzle ) );
    }
    else if (need_mul) {
-      ureg_MUL( ureg, 
+      ureg_MUL( ureg,
                 dst,
                 swizzle_4v( src, src_swizzle ),
                 swizzle_4v( imm, mul_swizzle ) );
    }
    else if (need_add) {
-      ureg_MOV( ureg, 
+      ureg_MOV( ureg,
                 dst,
                 swizzle_4v( imm, add_swizzle ) );
    }
@@ -526,7 +526,7 @@ compile_instruction(
 {
    struct ureg_program *ureg = t->ureg;
    GLuint i;
-   struct ureg_dst dst[1] = { { 0 } };
+   struct ureg_dst dst[1] = {};
    struct ureg_src src[4];
    unsigned num_dst;
    unsigned num_src;
@@ -534,12 +534,12 @@ compile_instruction(
    num_dst = _mesa_num_inst_dst_regs( inst->Opcode );
    num_src = _mesa_num_inst_src_regs( inst->Opcode );
 
-   if (num_dst) 
-      dst[0] = translate_dst( t, 
+   if (num_dst)
+      dst[0] = translate_dst( t,
                               &inst->DstReg,
                               inst->Saturate);
 
-   for (i = 0; i < num_src; i++) 
+   for (i = 0; i < num_src; i++)
       src[i] = translate_src( t, &inst->SrcReg[i] );
 
    switch( inst->Opcode ) {
@@ -553,7 +553,7 @@ compile_instruction(
       src[num_src++] = t->samplers[inst->TexSrcUnit];
       ureg_tex_insn( ureg,
                      translate_opcode( inst->Opcode ),
-                     dst, num_dst, 
+                     dst, num_dst,
                      st_translate_texture_target( inst->TexSrcTarget,
                                                inst->TexShadow ),
                      TGSI_RETURN_TYPE_FLOAT,
@@ -563,17 +563,17 @@ compile_instruction(
 
    case OPCODE_SCS:
       dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XY );
-      ureg_insn( ureg, 
-                 translate_opcode( inst->Opcode ), 
-                 dst, num_dst, 
+      ureg_insn( ureg,
+                 translate_opcode( inst->Opcode ),
+                 dst, num_dst,
                  src, num_src );
       break;
 
    case OPCODE_XPD:
       dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XYZ );
-      ureg_insn( ureg, 
-                 translate_opcode( inst->Opcode ), 
-                 dst, num_dst, 
+      ureg_insn( ureg,
+                 translate_opcode( inst->Opcode ),
+                 dst, num_dst,
                  src, num_src );
       break;
 
@@ -590,9 +590,9 @@ compile_instruction(
       break;
 
    default:
-      ureg_insn( ureg, 
-                 translate_opcode( inst->Opcode ), 
-                 dst, num_dst, 
+      ureg_insn( ureg,
+                 translate_opcode( inst->Opcode ),
+                 dst, num_dst,
                  src, num_src );
       break;
    }
@@ -619,7 +619,7 @@ emit_wpos_adjustment(struct gl_context *ctx,
     */
    static const gl_state_index wposTransformState[STATE_LENGTH]
       = { STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM, 0, 0, 0 };
-   
+
    /* XXX: note we are modifying the incoming shader here!  Need to
     * do this before emitting the constant decls below, or this
     * will be missed:
@@ -755,7 +755,7 @@ emit_wpos(struct st_context *st,
       else
          assert(0);
    }
-   
+
    if (program->PixelCenterInteger) {
       /* Fragment shader wants pixel center integer */
       if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
@@ -992,7 +992,7 @@ st_translate_mesa_program(
    if (program->Parameters) {
       t->constants = calloc( program->Parameters->NumParameters,
                              sizeof t->constants[0] );
-      if (t->constants == NULL) {
+      if (!t->constants) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }
@@ -1014,7 +1014,7 @@ st_translate_mesa_program(
             if (program->arb.IndirectRegisterFiles & PROGRAM_ANY_CONST)
                t->constants[i] = ureg_DECL_constant( ureg, i );
             else
-               t->constants[i] = 
+               t->constants[i] =
                   ureg_DECL_immediate( ureg,
                                        (const float*) program->Parameters->ParameterValues[i],
                                        4 );

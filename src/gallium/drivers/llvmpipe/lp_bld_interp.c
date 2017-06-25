@@ -1,9 +1,9 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 VMware, Inc.
  * Copyright 2007-2008 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,11 +11,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -23,7 +23,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
@@ -117,7 +117,7 @@ static const unsigned char quad_offset_y[16] = {0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3,
 static void
 attrib_name(LLVMValueRef val, unsigned attrib, unsigned chan, const char *suffix)
 {
-   if(attrib == 0)
+   if(!attrib)
       lp_build_name(val, "pos.%c%s", "xyzw"[chan], suffix);
    else
       lp_build_name(val, "input%u.%c%s", attrib - 1, "xyzw"[chan], suffix);
@@ -311,7 +311,7 @@ attribs_update_simple(struct lp_build_interp_soa_context *bld,
                a = lp_build_fmuladd(builder, dady, pixoffy, a);
 
                if (interp == LP_INTERP_PERSPECTIVE) {
-                  if (oow == NULL) {
+                  if (!oow) {
                      LLVMValueRef w = bld->attribs[0][3];
                      assert(attrib != 0);
                      assert(bld->mask[0] & TGSI_WRITEMASK_W);
@@ -338,7 +338,7 @@ attribs_update_simple(struct lp_build_interp_soa_context *bld,
                break;
             }
 
-            if ((attrib == 0) && (chan == 2) && !bld->depth_clamp){
+            if (!(attrib) && (chan == 2) && !bld->depth_clamp){
                /* FIXME: Depth values can exceed 1.0, due to the fact that
                 * setup interpolation coefficients refer to (0,0) which causes
                 * precision loss. So we must clamp to 1.0 here to avoid artifacts.
@@ -609,7 +609,7 @@ attribs_update(struct lp_build_interp_soa_context *bld,
                if (interp == LP_INTERP_PERSPECTIVE) {
                   LLVMValueRef dwdq = bld->dadq[0][3];
 
-                  if (oow == NULL) {
+                  if (!oow) {
                      assert(bld->oow);
                      oow = LLVMBuildShuffleVector(coeff_bld->builder,
                                                   bld->oow, coeff_bld->undef,
@@ -631,7 +631,7 @@ attribs_update(struct lp_build_interp_soa_context *bld,
 
 #if !PERSPECTIVE_DIVIDE_PER_QUAD
                if (interp == LP_INTERP_PERSPECTIVE) {
-                  if (oow == NULL) {
+                  if (!oow) {
                      LLVMValueRef w = bld->attribs[0][3];
                      assert(attrib != 0);
                      assert(bld->mask[0] & TGSI_WRITEMASK_W);

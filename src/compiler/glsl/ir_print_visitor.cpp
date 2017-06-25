@@ -116,7 +116,7 @@ ir_print_visitor::unique_name(ir_variable *var)
     * string.  Don't worry about tracking the generated name in the printable
     * names hash because this is the only scope where it can ever appear.
     */
-   if (var->name == NULL) {
+   if (!var->name) {
       static unsigned arg = 1;
       return ralloc_asprintf(this->mem_ctx, "parameter@%u", arg++);
    }
@@ -125,7 +125,7 @@ ir_print_visitor::unique_name(ir_variable *var)
    struct hash_entry * entry =
       _mesa_hash_table_search(this->printable_names, var);
 
-   if (entry != NULL) {
+   if (entry) {
       return (const char *) entry->data;
    }
 
@@ -165,19 +165,19 @@ void ir_print_visitor::visit(ir_variable *ir)
 {
    fprintf(f, "(declare ");
 
-   char binding[32] = {0};
+   char binding[32] = {};
    if (ir->data.binding)
       snprintf(binding, sizeof(binding), "binding=%i ", ir->data.binding);
 
-   char loc[32] = {0};
+   char loc[32] = {};
    if (ir->data.location != -1)
       snprintf(loc, sizeof(loc), "location=%i ", ir->data.location);
 
-   char component[32] = {0};
+   char component[32] = {};
    if (ir->data.explicit_component)
       snprintf(component, sizeof(component), "component=%i ", ir->data.location_frac);
 
-   char stream[32] = {0};
+   char stream[32] = {};
    if (ir->data.stream & (1u << 31)) {
       if (ir->data.stream & ~(1u << 31)) {
          snprintf(stream, sizeof(stream), "stream(%u,%u,%u,%u) ",
@@ -188,7 +188,7 @@ void ir_print_visitor::visit(ir_variable *ir)
       snprintf(stream, sizeof(stream), "stream%u ", ir->data.stream);
    }
 
-   char image_format[32] = {0};
+   char image_format[32] = {};
    if (ir->data.image_format) {
       snprintf(image_format, sizeof(image_format), "format=%x ",
                ir->data.image_format);
@@ -323,7 +323,7 @@ void ir_print_visitor::visit(ir_texture *ir)
 
       fprintf(f, " ");
 
-      if (ir->offset != NULL) {
+      if (ir->offset) {
 	 ir->offset->accept(this);
       } else {
 	 fprintf(f, "0");
@@ -476,7 +476,7 @@ void ir_print_visitor::visit(ir_constant *ir)
       }
    } else {
       for (unsigned i = 0; i < ir->type->components(); i++) {
-	 if (i != 0)
+	 if (i)
 	    fprintf(f, " ");
 	 switch (ir->type->base_type) {
 	 case GLSL_TYPE_UINT:  fprintf(f, "%u", ir->value.u[i]); break;
@@ -553,7 +553,7 @@ ir_print_visitor::visit(ir_discard *ir)
 {
    fprintf(f, "(discard ");
 
-   if (ir->condition != NULL) {
+   if (ir->condition) {
       fprintf(f, " ");
       ir->condition->accept(this);
    }

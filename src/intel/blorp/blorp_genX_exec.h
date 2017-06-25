@@ -92,7 +92,7 @@ static uint64_t
 _blorp_combine_address(struct blorp_batch *batch, void *location,
                        struct blorp_address address, uint32_t delta)
 {
-   if (address.buffer == NULL) {
+   if (!address.buffer) {
       return address.offset + delta;
    } else {
       return blorp_emit_reloc(batch, location, address, delta);
@@ -1002,7 +1002,7 @@ blorp_emit_depth_stencil_state(struct blorp_batch *batch,
       GENX(3DSTATE_WM_DEPTH_STENCIL_header),
    };
 #else
-   struct GENX(DEPTH_STENCIL_STATE) ds = { 0 };
+   struct GENX(DEPTH_STENCIL_STATE) ds = {};
 #endif
 
    if (params->depth.enabled) {
@@ -1360,7 +1360,7 @@ blorp_emit_depth_stencil_config(struct blorp_batch *batch,
    const struct isl_device *isl_dev = batch->blorp->isl_dev;
 
    uint32_t *dw = blorp_emit_dwords(batch, isl_dev->ds.size / 4);
-   if (dw == NULL)
+   if (!dw)
       return;
 
    struct isl_depth_stencil_hiz_emit_info info = {

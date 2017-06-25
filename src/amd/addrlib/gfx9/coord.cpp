@@ -463,7 +463,7 @@ VOID CoordEq::solveAddr(
 
     if (bitsLeft > 0)
     {
-        if (sliceInM != 0)
+        if (sliceInM)
         {
             z = m / sliceInM;
             zBitsValid = 0xffffffff;
@@ -602,7 +602,7 @@ UINT_32 CoordEq::Filter(INT_8 f, Coordinate& co, UINT_32 start, INT_8 axis)
     for (UINT_32 i = start; i < m_numBits;)
     {
         UINT_32 m = m_eq[i].Filter(f, co, 0, axis);
-        if (m == 0)
+        if (!m)
         {
             for (UINT_32 j = i; j < m_numBits - 1; j++)
             {
@@ -620,7 +620,7 @@ UINT_32 CoordEq::Filter(INT_8 f, Coordinate& co, UINT_32 start, INT_8 axis)
 
 VOID CoordEq::shift(INT_32 amount, INT_32 start)
 {
-    if (amount != 0)
+    if (amount)
     {
         INT_32 numBits = static_cast<INT_32>(m_numBits);
         amount = -amount;
@@ -648,7 +648,7 @@ CoordTerm& CoordEq::operator[](UINT_32 i)
 
 VOID CoordEq::mort2d(Coordinate& c0, Coordinate& c1, UINT_32 start, UINT_32 end)
 {
-    if (end == 0)
+    if (!end)
     {
         ADDR_ASSERT(m_numBits > 0);
         end = m_numBits - 1;
@@ -664,7 +664,7 @@ VOID CoordEq::mort2d(Coordinate& c0, Coordinate& c1, UINT_32 start, UINT_32 end)
 
 VOID CoordEq::mort3d(Coordinate& c0, Coordinate& c1, Coordinate& c2, UINT_32 start, UINT_32 end)
 {
-    if (end == 0)
+    if (!end)
     {
         ADDR_ASSERT(m_numBits > 0);
         end = m_numBits - 1;

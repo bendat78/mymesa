@@ -64,7 +64,7 @@ nir_block_worklist_push_head(nir_block_worklist *w, nir_block *block)
 
    assert(w->count < w->size);
 
-   if (w->start == 0)
+   if (!w->start)
       w->start = w->size - 1;
    else
       w->start--;

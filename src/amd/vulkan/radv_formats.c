@@ -460,7 +460,7 @@ static bool radv_is_storage_image_format_supported(struct radv_physical_device *
 	num_format = radv_translate_tex_numformat(format, desc,
 						  vk_format_get_first_non_void_channel(format));
 
-	if(data_format == ~0 || num_format == ~0)
+	if(data_format == (~0u) || num_format == (~0u))
 		return false;
 
 	/* Extracted from the GCN3 ISA document. */
@@ -1030,7 +1030,7 @@ static VkResult radv_get_image_format_properties(struct radv_physical_device *ph
 		unreachable("bad VkImageTiling");
 	}
 
-	if (format_feature_flags == 0)
+	if (!format_feature_flags)
 		goto unsupported;
 
 	switch (info->type) {

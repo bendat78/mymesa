@@ -96,7 +96,7 @@ ir_discard::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_rvalue *new_condition = NULL;
 
-   if (this->condition != NULL)
+   if (this->condition)
       new_condition = this->condition->clone(mem_ctx, ht);
 
    return new(mem_ctx) ir_discard(new_condition);
@@ -142,7 +142,7 @@ ir_call *
 ir_call::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_dereference_variable *new_return_ref = NULL;
-   if (this->return_deref != NULL)
+   if (this->return_deref)
       new_return_ref = this->return_deref->clone(mem_ctx, ht);
 
    exec_list new_parameters;
@@ -213,7 +213,7 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
       new_tex->shadow_comparator = this->shadow_comparator->clone(mem_ctx, ht);
    }
 
-   if (this->offset != NULL)
+   if (this->offset)
       new_tex->offset = this->offset->clone(mem_ctx, ht);
 
    switch (this->op) {
@@ -278,7 +278,7 @@ ir_function::clone(void *mem_ctx, struct hash_table *ht) const
       ir_function_signature *sig_copy = sig->clone(mem_ctx, ht);
       copy->add_signature(sig_copy);
 
-      if (ht != NULL) {
+      if (ht) {
          _mesa_hash_table_insert(ht,
                (void *)const_cast<ir_function_signature *>(sig), sig_copy);
       }
@@ -398,7 +398,7 @@ public:
       ir_function_signature *sig;
       hash_entry *entry = _mesa_hash_table_search(this->ht, ir->callee);
 
-      if (entry != NULL) {
+      if (entry) {
          sig = (ir_function_signature *) entry->data;
          ir->callee = sig;
       }

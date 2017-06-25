@@ -202,11 +202,11 @@ brw_nir_opt_peephole_ffma_block(nir_builder *b, nir_block *block)
                                add->dest.dest.ssa.num_components,
                                swizzle, &negate, &abs);
 
-         if (mul != NULL)
+         if (mul)
             break;
       }
 
-      if (mul == NULL)
+      if (!mul)
          continue;
 
       unsigned bit_size = add->dest.dest.ssa.bit_size;

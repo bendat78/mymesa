@@ -708,7 +708,7 @@ ntq_fcos(struct vc4_compile *c, struct qreg src)
                 struct qreg mul = qir_FMUL(c,
                                            x,
                                            qir_uniform_f(c, coeff[i]));
-                if (i == 0)
+                if (!i)
                         sum = mul;
                 else
                         sum = qir_FADD(c, sum, mul);

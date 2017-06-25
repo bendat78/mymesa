@@ -221,7 +221,7 @@ vec4_tcs_visitor::emit_urb_write(const src_reg &value,
                                  unsigned base_offset,
                                  const src_reg &indirect_offset)
 {
-   if (writemask == 0)
+   if (!writemask)
       return;
 
    src_reg message(this, glsl_type::uvec4_type, 2);

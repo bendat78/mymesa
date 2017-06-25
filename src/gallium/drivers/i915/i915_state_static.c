@@ -126,7 +126,7 @@ static void update_framebuffer(struct i915_context *i915)
       unsigned offset = i915_texture_offset(tex, depth_surface->u.tex.level,
                                             depth_surface->u.tex.first_layer);
       assert(tex);
-      if (offset != 0)
+      if (offset)
          debug_printf("Depth offset is %d\n",offset);
 
       i915->current.depth_bo = tex->buffer;

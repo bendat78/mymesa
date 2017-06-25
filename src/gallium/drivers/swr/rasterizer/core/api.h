@@ -47,7 +47,7 @@ struct SWR_RECT
     int32_t xmin; ///< inclusive
     int32_t ymin; ///< inclusive
     int32_t xmax; ///< exclusive
-    int32_t ymax; ///< exclusive 
+    int32_t ymax; ///< exclusive
 
     bool operator == (const SWR_RECT& rhs)
     {
@@ -254,7 +254,7 @@ SWR_FUNC(void, SwrRestoreState,
 ///        has been completed
 /// @param hContext - Handle passed back from SwrCreateContext
 /// @param pfnFunc - pointer to callback function,
-/// @param userData - user data to pass back 
+/// @param userData - user data to pass back
 SWR_FUNC(void, SwrSync,
     HANDLE hContext,
     PFN_CALLBACK_FUNC pfnFunc,

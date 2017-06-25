@@ -100,7 +100,7 @@ emit_rss_vgpu9(struct svga_context *svga, unsigned dirty)
          EMIT_RS( svga, curr->rt[0].dstblend, DSTBLEND, fail );
          EMIT_RS( svga, curr->rt[0].blendeq, BLENDEQUATION, fail );
 
-         EMIT_RS( svga, curr->rt[0].separate_alpha_blend_enable, 
+         EMIT_RS( svga, curr->rt[0].separate_alpha_blend_enable,
                   SEPARATEALPHABLENDENABLE, fail );
 
          if (curr->rt[0].separate_alpha_blend_enable) {
@@ -124,10 +124,10 @@ emit_rss_vgpu9(struct svga_context *svga, unsigned dirty)
    }
 
    if (dirty & (SVGA_NEW_DEPTH_STENCIL_ALPHA | SVGA_NEW_RAST)) {
-      const struct svga_depth_stencil_state *curr = svga->curr.depth; 
-      const struct svga_rasterizer_state *rast = svga->curr.rast; 
+      const struct svga_depth_stencil_state *curr = svga->curr.depth;
+      const struct svga_rasterizer_state *rast = svga->curr.rast;
 
-      if (!curr->stencil[0].enabled) 
+      if (!curr->stencil[0].enabled)
       {
          /* Stencil disabled
           */
@@ -149,7 +149,7 @@ emit_rss_vgpu9(struct svga_context *svga, unsigned dirty)
          EMIT_RS( svga, curr->stencil_mask, STENCILMASK, fail );
          EMIT_RS( svga, curr->stencil_writemask, STENCILWRITEMASK, fail );
       }
-      else 
+      else
       {
          int cw, ccw;
 
@@ -204,7 +204,7 @@ emit_rss_vgpu9(struct svga_context *svga, unsigned dirty)
 
    if (dirty & (SVGA_NEW_RAST | SVGA_NEW_NEED_PIPELINE))
    {
-      const struct svga_rasterizer_state *curr = svga->curr.rast; 
+      const struct svga_rasterizer_state *curr = svga->curr.rast;
       unsigned cullmode = curr->cullmode;
 
       /* Shademode: still need to rearrange index list to move
@@ -241,7 +241,7 @@ emit_rss_vgpu9(struct svga_context *svga, unsigned dirty)
 
    if (dirty & (SVGA_NEW_RAST | SVGA_NEW_FRAME_BUFFER | SVGA_NEW_NEED_PIPELINE))
    {
-      const struct svga_rasterizer_state *curr = svga->curr.rast; 
+      const struct svga_rasterizer_state *curr = svga->curr.rast;
       float slope = 0.0;
       float bias  = 0.0;
 
@@ -343,7 +343,7 @@ static struct svga_depth_stencil_state *
 get_no_depth_stencil_test_state(struct svga_context *svga)
 {
    if (!svga->depthstencil_disable) {
-      struct pipe_depth_stencil_alpha_state ds = {{0}};
+      struct pipe_depth_stencil_alpha_state ds = {};
       svga->depthstencil_disable =
          svga->pipe.create_depth_stencil_alpha_state(&svga->pipe, &ds);
    }
@@ -487,7 +487,7 @@ emit_rss(struct svga_context *svga, unsigned dirty)
 }
 
 
-struct svga_tracked_state svga_hw_rss = 
+struct svga_tracked_state svga_hw_rss =
 {
    "hw rss state",
 

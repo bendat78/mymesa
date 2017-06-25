@@ -82,7 +82,7 @@ util_dynarray_resize(struct util_dynarray *buf, unsigned newsize)
 {
    void *p;
    if (newsize > buf->capacity) {
-      if (buf->capacity == 0)
+      if (!buf->capacity)
          buf->capacity = DYN_ARRAY_INITIAL_SIZE;
 
       while (newsize > buf->capacity)
