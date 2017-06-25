@@ -56,7 +56,7 @@ static INLINE float ConvertSmallFloatTo32(UINT val)
         uint32_t sign = (val & 0x8000) << 16;
         uint32_t mant = (val & 0x3ff) << 13;
         uint32_t exp = (val >> 10) & 0x1f;
-        if ((exp == 0) && (mant != 0)) // Adjust exponent and mantissa for denormals
+        if ((!exp) && (mant)) // Adjust exponent and mantissa for denormals
         {
             mant <<= 1;
             while (mant < (0x400 << 13))
@@ -93,17 +93,17 @@ static UINT Convert32ToSmallFloat(float val)
     mant = uf & 0x007FFFFF;
 
     // 10/11 bit floats are unsigned.  Negative values are clamped to 0.
-    if (sign != 0)
+    if (sign)
     {
         exp = mant = 0;
     }
     // Check for out of range
-    else if ((exp == 0xFF) && (mant != 0)) // NaN
+    else if ((exp == 0xFF) && (mant)) // NaN
     {
         exp = 0x1F;
         mant = 1 << numMantissaBits;
     }
-    else if ((exp == 0xFF) && (mant == 0)) // INF
+    else if ((exp == 0xFF) && (!mant)) // INF
     {
         exp = 0x1F;
         mant = 0;

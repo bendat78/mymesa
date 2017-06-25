@@ -74,12 +74,12 @@ tree_to_vine(ir_expression *root)
    ir_rvalue *vine_tail = root;
    ir_rvalue *remainder = root->operands[1];
 
-   while (remainder != NULL) {
+   while (remainder) {
       ir_expression *remainder_temp = remainder->as_expression();
       ir_expression *remainder_left = remainder_temp ?
          remainder_temp->operands[0]->as_expression() : NULL;
 
-      if (remainder_left == NULL) {
+      if (!remainder_left) {
          /* move vine_tail down one */
          vine_tail = remainder;
          remainder = remainder->as_expression() ?

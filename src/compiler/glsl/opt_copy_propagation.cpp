@@ -317,7 +317,7 @@ ir_copy_propagation_visitor::visit_enter(ir_loop *ir)
 void
 ir_copy_propagation_visitor::kill(ir_variable *var)
 {
-   assert(var != NULL);
+   assert(var);
 
    /* Remove any entries currently in the ACP for this kill. */
    struct hash_entry *entry = _mesa_hash_table_search(acp, var);
@@ -348,7 +348,7 @@ ir_copy_propagation_visitor::add_copy(ir_assignment *ir)
    ir_variable *lhs_var = ir->whole_variable_written();
    ir_variable *rhs_var = ir->rhs->whole_variable_referenced();
 
-   if ((lhs_var != NULL) && (rhs_var != NULL)) {
+   if ((lhs_var) && (rhs_var != NULL)) {
       if (lhs_var == rhs_var) {
 	 /* This is a dumb assignment, but we've conveniently noticed
 	  * it here.  Removing it now would mess up the loop iteration

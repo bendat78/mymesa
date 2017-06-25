@@ -436,7 +436,7 @@ ir_constant_propagation_visitor::visit_enter(ir_loop *ir)
 void
 ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
 {
-   assert(var != NULL);
+   assert(var);
 
    /* We don't track non-vectors. */
    if (!var->type->is_vector() && !var->type->is_scalar())

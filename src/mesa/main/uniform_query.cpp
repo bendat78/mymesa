@@ -163,7 +163,7 @@ validate_uniform_parameters(GLint location, GLsizei count,
                             struct gl_shader_program *shProg,
                             const char *caller)
 {
-   if (shProg == NULL) {
+   if (!shProg) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(program not linked)", caller);
       return NULL;
    }
@@ -287,7 +287,7 @@ _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
    struct gl_uniform_storage *const uni =
       validate_uniform_parameters(location, 1, &offset,
                                   ctx, shProg, "glGetUniform");
-   if (uni == NULL) {
+   if (!uni) {
       /* For glGetUniform, page 264 (page 278 of the PDF) of the OpenGL 2.1
        * spec says:
        *
@@ -897,7 +897,7 @@ validate_uniform(GLint location, GLsizei count, const GLvoid *values,
    struct gl_uniform_storage *const uni =
       validate_uniform_parameters(location, count, offset,
                                   ctx, shProg, "glUniform");
-   if (uni == NULL)
+   if (!uni)
       return NULL;
 
    if (uni->type->is_matrix()) {
@@ -1208,7 +1208,7 @@ _mesa_uniform_matrix(GLint location, GLsizei count,
    struct gl_uniform_storage *const uni =
       validate_uniform_parameters(location, count, &offset,
                                   ctx, shProg, "glUniformMatrix");
-   if (uni == NULL)
+   if (!uni)
       return;
 
    if (!uni->type->is_matrix()) {
@@ -1557,7 +1557,7 @@ _mesa_sampler_uniforms_pipeline_are_valid(struct gl_pipeline_object *pipeline)
           * great job of eliminating unused uniforms currently so for now
           * don't throw an error if two sampler types both point to 0.
           */
-         if (unit == 0)
+         if (!unit)
             continue;
 
          if (TexturesUsed[unit] & ~(1 << tgt)) {

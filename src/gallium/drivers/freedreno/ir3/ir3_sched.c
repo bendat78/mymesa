@@ -188,7 +188,7 @@ delay_calc(struct ir3_sched_ctx *ctx, struct ir3_instruction *instr)
 	foreach_ssa_src_n(src, i, instr) {
 		unsigned d;
 		/* for array writes, no need to delay on previous write: */
-		if (i == 0)
+		if (!i)
 			continue;
 		if (src->block != instr->block)
 			continue;
@@ -340,7 +340,7 @@ find_instr_recursive(struct ir3_sched_ctx *ctx, struct ir3_sched_notes *notes,
 	}
 
 	/* if all our src's are already scheduled: */
-	if (nsrcs == 0) {
+	if (!nsrcs) {
 		if (check_instr(ctx, notes, instr)) {
 			instr->data = instr;
 			return instr;
@@ -392,7 +392,7 @@ find_eligible_instr(struct ir3_sched_ctx *ctx, struct ir3_sched_notes *notes)
 			min_delay = delay;
 		}
 
-		if (min_delay == 0)
+		if (!min_delay)
 			break;
 	}
 

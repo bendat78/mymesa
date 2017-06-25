@@ -32,7 +32,7 @@
 static inline bool
 __is_power_of_two(unsigned int x)
 {
-   return ((x != 0) && !(x & (x - 1)));
+   return ((x) && !(x & (x - 1)));
 }
 
 static inline bool

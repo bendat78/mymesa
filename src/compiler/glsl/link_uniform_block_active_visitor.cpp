@@ -38,7 +38,7 @@ process_block(void *mem_ctx, struct hash_table *ht, ir_variable *var)
     * If a block with this block-name has been seen, it must be identical to
     * the block currently being examined.
     */
-   if (existing_block == NULL) {
+   if (!existing_block) {
       link_uniform_block_active *const b =
          rzalloc(mem_ctx, struct link_uniform_block_active);
 
@@ -172,7 +172,7 @@ link_uniform_block_active_visitor::visit(ir_variable *var)
    /* Process the block.  Bail if there was an error. */
    link_uniform_block_active *const b =
       process_block(this->mem_ctx, this->ht, var);
-   if (b == NULL) {
+   if (!b) {
       linker_error(this->prog,
                    "uniform block `%s' has mismatching definitions",
                    var->get_interface_type()->name);
@@ -219,7 +219,7 @@ link_uniform_block_active_visitor::visit_enter(ir_dereference_array *ir)
 
    ir_dereference_variable *const d =
       base_ir->array->as_dereference_variable();
-   ir_variable *const var = (d == NULL) ? NULL : d->var;
+   ir_variable *const var = (!d) ? NULL : d->var;
 
    /* If the r-value being dereferenced is not a variable (e.g., a field of a
     * structure) or is not a uniform block instance, continue.
@@ -237,7 +237,7 @@ link_uniform_block_active_visitor::visit_enter(ir_dereference_array *ir)
    /* Process the block.  Bail if there was an error. */
    link_uniform_block_active *const b =
       process_block(this->mem_ctx, this->ht, var);
-   if (b == NULL) {
+   if (!b) {
       linker_error(prog,
                    "uniform block `%s' has mismatching definitions",
                    var->get_interface_type()->name);
@@ -275,7 +275,7 @@ link_uniform_block_active_visitor::visit(ir_dereference_variable *ir)
    /* Process the block.  Bail if there was an error. */
    link_uniform_block_active *const b =
       process_block(this->mem_ctx, this->ht, var);
-   if (b == NULL) {
+   if (!b) {
       linker_error(this->prog,
                    "uniform block `%s' has mismatching definitions",
                    var->get_interface_type()->name);

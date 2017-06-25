@@ -115,6 +115,6 @@ _nine_stub( const char *file,
             unsigned line )
 {
     const char *r = strrchr(file, '/');
-    if (r == NULL) { r = strrchr(file, '\\'); }
+    if (!r) { r = strrchr(file, '\\'); }
     debug_printf("nine:%s:%d: %s STUB!\n", r ? ++r : file, line, func);
 }

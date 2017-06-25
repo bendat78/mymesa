@@ -38,7 +38,7 @@ global_to_local(nir_register *reg)
       nir_instr *instr = def_dest->reg.parent_instr;
       nir_function_impl *instr_impl =
          nir_cf_node_get_function(&instr->block->cf_node);
-      if (impl != NULL) {
+      if (impl) {
          if (impl != instr_impl)
             return false;
       } else {
@@ -50,7 +50,7 @@ global_to_local(nir_register *reg)
       nir_instr *instr = use_src->parent_instr;
       nir_function_impl *instr_impl =
          nir_cf_node_get_function(&instr->block->cf_node);
-      if (impl != NULL) {
+      if (impl) {
          if (impl != instr_impl)
             return false;
       } else {
@@ -61,7 +61,7 @@ global_to_local(nir_register *reg)
    nir_foreach_if_use(use_src, reg) {
       nir_if *if_stmt = use_src->parent_if;
       nir_function_impl *if_impl = nir_cf_node_get_function(&if_stmt->cf_node);
-      if (impl != NULL) {
+      if (impl) {
          if (impl != if_impl)
             return false;
       } else {
@@ -69,7 +69,7 @@ global_to_local(nir_register *reg)
       }
    }
 
-   if (impl == NULL) {
+   if (!impl) {
       /* this instruction is never used/defined, delete it */
       nir_reg_remove(reg);
       return true;

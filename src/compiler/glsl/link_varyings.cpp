@@ -521,7 +521,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
             output = parameters.get_variable(input->name);
          }
 
-         if (output != NULL) {
+         if (output) {
             /* Interface blocks have their own validation elsewhere so don't
              * try validating them here.
              */
@@ -1437,9 +1437,9 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
     * This text was also in at least revison 7 of the 4.40 spec but is no
     * longer in revision 9 and not in the 4.50 spec.
     */
-   const ir_variable *const var = (consumer_var != NULL)
+   const ir_variable *const var = (consumer_var)
       ? consumer_var : producer_var;
-   const gl_shader_stage stage = (consumer_var != NULL)
+   const gl_shader_stage stage = (consumer_var)
       ? consumer_stage : producer_stage;
    const glsl_type *type = get_varying_type(var, stage);
 
@@ -2022,7 +2022,7 @@ canonicalize_shader_io(exec_list *ir, enum ir_variable_mode io_mode)
       var_table[num_variables++] = var;
    }
 
-   if (num_variables == 0)
+   if (!num_variables)
       return;
 
    /* Sort the list in reverse order (io_variable_cmp handles this).  Later
@@ -2262,7 +2262,7 @@ assign_varying_locations(struct gl_context *ctx,
       const tfeedback_candidate *matched_candidate
          = tfeedback_decls[i].find_candidate(prog, tfeedback_candidates);
 
-      if (matched_candidate == NULL) {
+      if (!matched_candidate) {
          _mesa_hash_table_destroy(tfeedback_candidates, NULL);
          return false;
       }
@@ -2470,7 +2470,7 @@ link_varyings(struct gl_shader_program *prog, unsigned first, unsigned last,
       varying_names = prog->TransformFeedback.VaryingNames;
    }
 
-   if (num_tfeedback_decls != 0) {
+   if (num_tfeedback_decls) {
       /* From GL_EXT_transform_feedback:
        *   A program will fail to link if:
        *
@@ -2571,7 +2571,7 @@ link_varyings(struct gl_shader_program *prog, unsigned first, unsigned last,
                return false;
 
             /* This must be done after all dead varyings are eliminated. */
-            if (sh_i != NULL) {
+            if (sh_i) {
                unsigned slots_used = _mesa_bitcount_64(reserved_out_slots);
                if (!check_against_output_limit(ctx, prog, sh_i, slots_used)) {
                   return false;

@@ -314,7 +314,7 @@ public:
          return visit_stop;
       }
 
-      if (stream_id != 0)
+      if (stream_id)
          uses_non_zero_stream = true;
 
       return visit_continue;
@@ -338,7 +338,7 @@ public:
          return visit_stop;
       }
 
-      if (stream_id != 0)
+      if (stream_id)
          uses_non_zero_stream = true;
 
       return visit_continue;
@@ -487,7 +487,7 @@ parse_program_resource_name(const GLchar *name,
    for (i = len - 1; (i > 0) && isdigit(name[i-1]); --i)
       /* empty */ ;
 
-   if ((i == 0) || name[i-1] != '[')
+   if ((!i) || name[i-1] != '[')
       return -1;
 
    long array_index = strtol(&name[i], NULL, 10);
@@ -509,7 +509,7 @@ link_invalidate_variable_locations(exec_list *ir)
    foreach_in_list(ir_instruction, node, ir) {
       ir_variable *const var = node->as_variable();
 
-      if (var == NULL)
+      if (!var)
          continue;
 
       /* Only assign locations for variables that lack an explicit location.
@@ -646,7 +646,7 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
                                   struct gl_linked_shader *shader,
                                   struct gl_context *ctx)
 {
-   if (shader == NULL)
+   if (!shader)
       return;
 
    /* From the GLSL 1.10 spec, page 48:
@@ -701,7 +701,7 @@ validate_tess_eval_shader_executable(struct gl_shader_program *prog,
                                      struct gl_linked_shader *shader,
                                      struct gl_context *ctx)
 {
-   if (shader == NULL)
+   if (!shader)
       return;
 
    analyze_clip_cull_usage(prog, shader, ctx,
@@ -719,7 +719,7 @@ void
 validate_fragment_shader_executable(struct gl_shader_program *prog,
                                     struct gl_linked_shader *shader)
 {
-   if (shader == NULL)
+   if (!shader)
       return;
 
    find_assignment_visitor frag_color("gl_FragColor");
@@ -747,7 +747,7 @@ validate_geometry_shader_executable(struct gl_shader_program *prog,
                                     struct gl_linked_shader *shader,
                                     struct gl_context *ctx)
 {
-   if (shader == NULL)
+   if (!shader)
       return;
 
    unsigned num_vertices =
@@ -769,7 +769,7 @@ validate_geometry_shader_emissions(struct gl_context *ctx,
 {
    struct gl_linked_shader *sh = prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
 
-   if (sh != NULL) {
+   if (sh) {
       find_emit_vertex_visitor emit_vertex(ctx->Const.MaxVertexStreams - 1);
       emit_vertex.run(sh->ir);
       if (emit_vertex.error()) {
@@ -867,7 +867,7 @@ cross_validate_globals(struct gl_shader_program *prog,
    foreach_in_list(ir_instruction, node, ir) {
       ir_variable *const var = node->as_variable();
 
-      if (var == NULL)
+      if (!var)
          continue;
 
       if (uniforms_only && (var->data.mode != ir_var_uniform && var->data.mode != ir_var_shader_storage))
@@ -895,7 +895,7 @@ cross_validate_globals(struct gl_shader_program *prog,
        * initializers, the values of the initializers must be the same.
        */
       ir_variable *const existing = variables->get_variable(var->name);
-      if (existing != NULL) {
+      if (existing) {
          /* Check if types match. */
          if (var->type != existing->type) {
             if (!validate_intrastage_arrays(prog, var, existing)) {
@@ -1148,7 +1148,7 @@ interstage_cross_validate_uniform_blocks(struct gl_shader_program *prog,
       for (unsigned int j = 0; j < max_num_buffer_blocks; j++)
          InterfaceBlockStageIndex[i][j] = -1;
 
-      if (sh == NULL)
+      if (!sh)
          continue;
 
       unsigned sh_num_blocks;
@@ -1279,14 +1279,14 @@ remap_variables(ir_instruction *inst, struct gl_linked_shader *target,
             hash_entry *entry = _mesa_hash_table_search(temps, ir->var);
             ir_variable *var = entry ? (ir_variable *) entry->data : NULL;
 
-            assert(var != NULL);
+            assert(var);
             ir->var = var;
             return visit_continue;
          }
 
          ir_variable *const existing =
             this->symbols->get_variable(ir->var->name);
-         if (existing != NULL)
+         if (existing)
             ir->var = existing;
          else {
             ir_variable *copy = ir->var->clone(this->target, NULL);
@@ -1348,18 +1348,18 @@ move_non_declarations(exec_list *instructions, exec_node *last,
          continue;
 
       ir_variable *var = inst->as_variable();
-      if ((var != NULL) && (var->data.mode != ir_var_temporary))
+      if ((var) && (var->data.mode != ir_var_temporary))
          continue;
 
       assert(inst->as_assignment()
              || inst->as_call()
              || inst->as_if() /* for initializers with the ?: operator */
-             || ((var != NULL) && (var->data.mode == ir_var_temporary)));
+             || ((var) && (var->data.mode == ir_var_temporary)));
 
       if (make_copies) {
          inst = inst->clone(target, NULL);
 
-         if (var != NULL)
+         if (var)
             _mesa_hash_table_insert(temps, var, inst);
          else
             remap_variables(inst, target, temps);
@@ -1435,7 +1435,7 @@ public:
 
          ir_variable **interface_vars = entry ? (ir_variable **) entry->data : NULL;
 
-         if (interface_vars == NULL) {
+         if (!interface_vars) {
             interface_vars = rzalloc_array(mem_ctx, ir_variable *,
                                            ifc_type->length);
             _mesa_hash_table_insert(this->unnamed_interfaces, ifc_type,
@@ -2169,7 +2169,7 @@ link_intrastage_shaders(void *mem_ctx,
       foreach_in_list(ir_instruction, node, shader_list[i]->ir) {
          ir_function *const f = node->as_function();
 
-         if (f == NULL)
+         if (!f)
             continue;
 
          for (unsigned j = i + 1; j < num_shaders; j++) {
@@ -2179,7 +2179,7 @@ link_intrastage_shaders(void *mem_ctx,
             /* If the other shader has no function (and therefore no function
              * signatures) with the same name, skip to the next shader.
              */
-            if (other == NULL)
+            if (!other)
                continue;
 
             foreach_in_list(ir_function_signature, sig, &f->signatures) {
@@ -2217,7 +2217,7 @@ link_intrastage_shaders(void *mem_ctx,
    if (main == NULL && allow_missing_main)
       main = shader_list[0];
 
-   if (main == NULL) {
+   if (!main) {
       linker_error(prog, "%s shader lacks `main'\n",
                    _mesa_shader_stage_to_string(shader_list[0]->Stage));
       return NULL;
@@ -2266,7 +2266,7 @@ link_intrastage_shaders(void *mem_ctx,
    /* Move any instructions other than variable declarations or function
     * declarations into main.
     */
-   if (main_sig != NULL) {
+   if (main_sig) {
       exec_node *insertion_point =
          move_non_declarations(linked->ir, (exec_node *) &main_sig->body, false,
                                linked);
@@ -2381,7 +2381,7 @@ update_array_sizes(struct gl_shader_program *prog)
       foreach_in_list(ir_instruction, node, prog->_LinkedShaders[i]->ir) {
          ir_variable *const var = node->as_variable();
 
-         if ((var == NULL) || (var->data.mode != ir_var_uniform) ||
+         if ((!var) || (var->data.mode != ir_var_uniform) ||
              !var->type->is_array())
             continue;
 
@@ -2521,7 +2521,7 @@ find_available_slots(unsigned used_mask, unsigned needed_count)
    /* The comparison to 32 is redundant, but without it GCC emits "warning:
     * cannot optimize possibly infinite loops" for the loop below.
     */
-   if ((needed_count == 0) || (max_bit_to_test < 0) || (max_bit_to_test > 32))
+   if ((!needed_count) || (max_bit_to_test < 0) || (max_bit_to_test > 32))
       return -1;
 
    for (int i = 0; i <= max_bit_to_test; i++) {
@@ -2573,7 +2573,7 @@ assign_attribute_or_color_locations(void *mem_ctx,
           || (target_index == MESA_SHADER_FRAGMENT));
 
    gl_linked_shader *const sh = prog->_LinkedShaders[target_index];
-   if (sh == NULL)
+   if (!sh)
       return true;
 
    /* Operate in a total of four passes.
@@ -2628,7 +2628,7 @@ assign_attribute_or_color_locations(void *mem_ctx,
    foreach_in_list(ir_instruction, node, sh->ir) {
       ir_variable *const var = node->as_variable();
 
-      if ((var == NULL) || (var->data.mode != (unsigned) direction))
+      if ((!var) || (var->data.mode != (unsigned) direction))
          continue;
 
       if (var->data.explicit_location) {
@@ -2922,7 +2922,7 @@ assign_attribute_or_color_locations(void *mem_ctx,
     * are built-in attributes with fixed locations), return early.  This should
     * be the common case.
     */
-   if (num_attr == 0)
+   if (!num_attr)
       return true;
 
    qsort(to_assign, num_attr, sizeof(to_assign[0]), temp_attr::compare);
@@ -3002,7 +3002,7 @@ match_explicit_outputs_to_inputs(gl_linked_shader *producer,
    foreach_in_list(ir_instruction, node, producer->ir) {
       ir_variable *const var = node->as_variable();
 
-      if ((var == NULL) || (var->data.mode != ir_var_shader_out))
+      if ((!var) || (var->data.mode != ir_var_shader_out))
          continue;
 
       if (var->data.explicit_location &&
@@ -3017,7 +3017,7 @@ match_explicit_outputs_to_inputs(gl_linked_shader *producer,
    foreach_in_list(ir_instruction, node, consumer->ir) {
       ir_variable *const input = node->as_variable();
 
-      if ((input == NULL) || (input->data.mode != ir_var_shader_in))
+      if ((!input) || (input->data.mode != ir_var_shader_in))
          continue;
 
       ir_variable *output = NULL;
@@ -3026,7 +3026,7 @@ match_explicit_outputs_to_inputs(gl_linked_shader *producer,
          output = explicit_locations[input->data.location - VARYING_SLOT_VAR0]
             [input->data.location_frac];
 
-         if (output != NULL){
+         if (output){
             input->data.is_unmatched_generic_inout = 0;
             output->data.is_unmatched_generic_inout = 0;
          }
@@ -3097,7 +3097,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *sh = prog->_LinkedShaders[i];
 
-      if (sh == NULL)
+      if (!sh)
          continue;
 
       if (sh->Program->info.num_textures >
@@ -3766,7 +3766,7 @@ add_shader_variable(const struct gl_context *ctx,
 {
    const glsl_type *interface_type = var->get_interface_type();
 
-   if (outermost_struct_type == NULL) {
+   if (!outermost_struct_type) {
       if (var->data.from_named_ifc_block) {
          const char *interface_name = interface_type->name;
 
@@ -3813,7 +3813,7 @@ add_shader_variable(const struct gl_context *ctx,
        *     structure member to enumerate is itself a structure or array,
        *     these enumeration rules are applied recursively."
        */
-      if (outermost_struct_type == NULL)
+      if (!outermost_struct_type)
          outermost_struct_type = type;
 
       unsigned field_location = location;
@@ -4156,7 +4156,7 @@ calculate_array_size_and_stride(struct gl_shader_program *shProg,
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       const gl_linked_shader *sh = shProg->_LinkedShaders[i];
-      if (sh == NULL)
+      if (!sh)
          continue;
 
       foreach_in_list(ir_instruction, node, sh->ir) {

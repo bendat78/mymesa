@@ -234,7 +234,7 @@ util_queue_init(struct util_queue *queue,
       if (!queue->threads[i]) {
          free(input);
 
-         if (i == 0) {
+         if (!i) {
             /* no threads created, fail */
             goto fail;
          } else {

@@ -1295,7 +1295,7 @@ lp_build_mul_imm(struct lp_build_context *bld,
 
    assert(lp_check_value(bld->type, a));
 
-   if(b == 0)
+   if(!b)
       return bld->zero;
 
    if(b == 1)
@@ -1415,7 +1415,7 @@ lp_build_lerp_simple(struct lp_build_context *bld,
    delta = lp_build_sub(bld, v1, v0);
 
    if (bld->type.floating) {
-      assert(flags == 0);
+      assert(!flags);
       return lp_build_mad(bld, x, delta, v0);
    }
 

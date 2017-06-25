@@ -243,7 +243,7 @@ static void decode(struct gen_spec *spec,
       length = gen_group_get_length(inst, p);
       assert(inst == NULL || length > 0);
       length = MAX2(1, length);
-      if (inst == NULL) {
+      if (!inst) {
          printf("unknown instruction %08x\n", p[0]);
          continue;
       }
@@ -422,7 +422,7 @@ static int zlib_inflate(uint32_t **ptr, int len)
          break;
 
       out = realloc(out, 2*zstream.total_out);
-      if (out == NULL) {
+      if (!out) {
          inflateEnd(&zstream);
          return 0;
       }
@@ -585,7 +585,7 @@ read_data_file(FILE *file)
 
       if (line[0] == ':' || line[0] == '~') {
          count = ascii85_decode(line+1, &data, line[0] == ':');
-         if (count == 0) {
+         if (!count) {
             fprintf(stderr, "ASCII85 decode failed.\n");
             exit(EXIT_FAILURE);
          }
@@ -625,9 +625,9 @@ read_data_file(FILE *file)
          printf("%s", line);
 
          matched = sscanf(line, "PCI ID: 0x%04x\n", &reg);
-         if (matched == 0)
+         if (!matched)
             matched = sscanf(line, " PCI ID: 0x%04x\n", &reg);
-         if (matched == 0) {
+         if (!matched) {
             const char *pci_id_start = strstr(line, "PCI ID");
             if (pci_id_start)
                matched = sscanf(pci_id_start, "PCI ID: 0x%04x\n", &reg);
@@ -642,7 +642,7 @@ read_data_file(FILE *file)
 
             printf("Detected GEN%i chipset\n", devinfo.gen);
 
-            if (xml_path == NULL)
+            if (!xml_path)
                spec = gen_spec_load(&devinfo);
             else
                spec = gen_spec_load_from_path(&devinfo, xml_path);
@@ -699,7 +699,7 @@ read_data_file(FILE *file)
                register_name_from_ring(fault_registers,
                                        ARRAY_SIZE(fault_registers),
                                        ring_name);
-            if (reg_name == NULL)
+            if (!reg_name)
                reg_name = "FAULT_REG";
             print_register(spec, reg_name, reg);
          }
@@ -716,7 +716,7 @@ read_data_file(FILE *file)
       if (count > data_size) {
          data_size = data_size ? data_size * 2 : 1024;
          data = realloc(data, data_size * sizeof (uint32_t));
-         if (data == NULL) {
+         if (!data) {
             fprintf(stderr, "Out of memory.\n");
             exit(EXIT_FAILURE);
          }
@@ -751,7 +751,7 @@ setup_pager(void)
    if (pid == -1)
       return;
 
-   if (pid == 0) {
+   if (!pid) {
       close(fds[1]);
       dup2(fds[0], 0);
       execlp("less", "less", "-FRSi", NULL);
@@ -831,15 +831,15 @@ main(int argc, char *argv[])
       if (isatty(0)) {
          path = "/sys/class/drm/card0/error";
          error = stat(path, &st);
-         if (error != 0) {
+         if (error) {
             path = "/debug/dri";
             error = stat(path, &st);
          }
-         if (error != 0) {
+         if (error) {
             path = "/sys/kernel/debug/dri";
             error = stat(path, &st);
          }
-         if (error != 0) {
+         if (error) {
             errx(1,
                  "Couldn't find i915 debugfs directory.\n\n"
                  "Is debugfs mounted? You might try mounting it with a command such as:\n\n"
@@ -852,7 +852,7 @@ main(int argc, char *argv[])
    } else {
       path = argv[optind];
       error = stat(path, &st);
-      if (error != 0) {
+      if (error) {
          fprintf(stderr, "Error opening %s: %s\n",
                  path, strerror(errno));
          exit(EXIT_FAILURE);

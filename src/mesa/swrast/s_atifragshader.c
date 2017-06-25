@@ -525,7 +525,7 @@ execute_shader(struct gl_context *ctx, const struct ati_fragment_shader *shader,
 	       dstreg = inst->DstReg[optype].Index;
 	       dstp = machine->Registers[dstreg - GL_REG_0_ATI];
 
-	       if ((optype == 0) || ((inst->Opcode[1] != GL_DOT2_ADD_ATI) &&
+	       if ((!optype) || ((inst->Opcode[1] != GL_DOT2_ADD_ATI) &&
 		  (inst->Opcode[1] != GL_DOT3_ATI) && (inst->Opcode[1] != GL_DOT4_ATI)))
 	          write_dst_addr(optype, inst->DstReg[optype].dstMod,
 			      inst->DstReg[optype].dstMask, dst[optype],

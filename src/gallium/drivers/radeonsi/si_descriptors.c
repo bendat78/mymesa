@@ -2979,7 +2979,7 @@ void si_set_active_descriptors(struct si_context *sctx, unsigned desc_idx,
 
 	int first, count;
 	u_bit_scan_consecutive_range64(&new_active_mask, &first, &count);
-	assert(new_active_mask == 0);
+	assert(!new_active_mask);
 
 	/* Upload/dump descriptors if slots are being enabled. */
 	if (first < desc->first_active_slot ||

@@ -157,7 +157,7 @@ intel_update_dri2_buffers(struct intel_context *intel, __DRIdrawable *drawable)
 
    intel_query_dri2_buffers(intel, drawable, &buffers, &count);
 
-   if (buffers == NULL)
+   if (!buffers)
       return;
 
    for (i = 0; i < count; i++) {

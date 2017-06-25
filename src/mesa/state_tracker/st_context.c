@@ -340,7 +340,7 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
        * particular call would have to be moved to just before each
        * drawing call.
        */
-      assert(slot == 0);
+      assert(!slot);
 
       STATIC_ASSERT(sizeof(struct st_util_vertex) == 9 * sizeof(float));
 

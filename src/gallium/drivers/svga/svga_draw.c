@@ -802,7 +802,7 @@ check_draw_params(struct svga_hwtnl *hwtnl,
       int index_bias = (int) range->indexBias + hwtnl->index_bias;
       unsigned width;
 
-      if (size == 0)
+      if (!size)
          continue;
 
       assert(vb);
@@ -955,7 +955,7 @@ svga_hwtnl_prim(struct svga_hwtnl *hwtnl,
       /* batch up drawing commands */
 #ifdef DEBUG
       check_draw_params(hwtnl, range, min_index, max_index, ib);
-      assert(start_instance == 0);
+      assert(!start_instance);
       assert(instance_count <= 1);
 #else
       (void) check_draw_params;

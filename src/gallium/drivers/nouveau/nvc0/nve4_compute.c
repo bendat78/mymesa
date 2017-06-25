@@ -372,7 +372,7 @@ nve4_compute_validate_constbufs(struct nvc0_context *nvc0)
          struct nouveau_bo *bo = nvc0->screen->uniform_bo;
          const unsigned base = NVC0_CB_USR_INFO(s);
          const unsigned size = nvc0->constbuf[s][0].size;
-         assert(i == 0); /* we really only want OpenGL uniforms here */
+         assert(!i); /* we really only want OpenGL uniforms here */
          assert(nvc0->constbuf[s][0].u.data);
 
          BEGIN_NVC0(push, NVE4_CP(UPLOAD_DST_ADDRESS_HIGH), 2);

@@ -564,7 +564,7 @@ genX(emit_vertices)(struct brw_context *brw)
     * The stale VB state stays in place, but they don't do anything unless
     * a VE loads from them.
     */
-   if (nr_elements == 0) {
+   if (!nr_elements) {
       dw = brw_batch_emitn(brw, GENX(3DSTATE_VERTEX_ELEMENTS),
                            1 + GENX(VERTEX_ELEMENT_STATE_length));
       struct GENX(VERTEX_ELEMENT_STATE) elem = {
@@ -874,7 +874,7 @@ genX(emit_index_buffer)(struct brw_context *brw)
 {
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
 
-   if (index_buffer == NULL)
+   if (!index_buffer)
       return;
 
    brw_batch_emit(brw, GENX(3DSTATE_INDEX_BUFFER), ib) {
@@ -4710,7 +4710,7 @@ genX(upload_sampler_state_table)(struct brw_context *brw,
 
    GLbitfield SamplersUsed = prog->SamplersUsed;
 
-   if (sampler_count == 0)
+   if (!sampler_count)
       return;
 
    /* SAMPLER_STATE is 4 DWords on all platforms. */

@@ -309,7 +309,7 @@ count_to_loop_end(const bblock_t *block)
          depth++;
       if (block->end()->opcode == BRW_OPCODE_WHILE) {
          depth--;
-         if (depth == 0)
+         if (!depth)
             return block->end_ip;
       }
    }

@@ -89,7 +89,7 @@ add_byte_offset(backend_reg *reg, unsigned bytes)
          break;
       }
       default:
-         assert(bytes == 0);
+         assert(!bytes);
    }
 }
 

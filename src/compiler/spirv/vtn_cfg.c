@@ -727,7 +727,7 @@ vtn_emit_cf_list(struct vtn_builder *b, struct list_head *cf_list,
             /* Figure out the condition */
             nir_ssa_def *cond = conditions[i++];
             if (cse->is_default) {
-               assert(cond == NULL);
+               assert(!cond);
                cond = nir_inot(&b->nb, any);
             }
             /* Take fallthrough into account */

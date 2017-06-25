@@ -211,7 +211,7 @@ static int get_src_chan_idx(unsigned opcode,
          return -1;
       if (tgsi_type_is_64bit(stype))
          return dst_chan_index;
-      if (dst_chan_index == 0)
+      if (!dst_chan_index)
          return 0;
       if (dst_chan_index == 2)
          return 1;

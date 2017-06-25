@@ -382,7 +382,7 @@ bitsize_tree_filter_up(bitsize_tree *tree)
 {
    for (unsigned i = 0; i < tree->num_srcs; i++) {
       unsigned src_size = bitsize_tree_filter_up(tree->srcs[i]);
-      if (src_size == 0)
+      if (!src_size)
          continue;
 
       if (tree->is_src_sized[i]) {

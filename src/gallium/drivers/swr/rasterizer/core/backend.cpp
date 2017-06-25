@@ -52,7 +52,7 @@ void ProcessComputeBE(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t threadGroup
     AR_BEGIN(BEDispatch, pDC->drawId);
 
     const COMPUTE_DESC* pTaskData = (COMPUTE_DESC*)pDC->pDispatch->GetTasksData();
-    SWR_ASSERT(pTaskData != nullptr);
+    SWR_ASSERT(pTaskData);
 
     // Ensure spill fill memory has been allocated.
     size_t spillFillSize = pDC->pState->state.totalSpillFillSize;
@@ -300,7 +300,7 @@ void ProcessClearBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, vo
             clearData[3] = *(DWORD*)&(pClear->clearRTColor[3]);
 
             PFN_CLEAR_TILES pfnClearTiles = sClearTilesTable[KNOB_COLOR_HOT_TILE_FORMAT];
-            SWR_ASSERT(pfnClearTiles != nullptr);
+            SWR_ASSERT(pfnClearTiles);
 
             unsigned long rt = 0;
             uint32_t mask = pClear->attachmentMask & SWR_ATTACHMENT_MASK_COLOR;
@@ -317,7 +317,7 @@ void ProcessClearBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, vo
             DWORD clearData[4];
             clearData[0] = *(DWORD*)&pClear->clearDepth;
             PFN_CLEAR_TILES pfnClearTiles = sClearTilesTable[KNOB_DEPTH_HOT_TILE_FORMAT];
-            SWR_ASSERT(pfnClearTiles != nullptr);
+            SWR_ASSERT(pfnClearTiles);
 
             pfnClearTiles(pDC, SWR_ATTACHMENT_DEPTH, macroTile, pClear->renderTargetArrayIndex, clearData, pClear->rect);
         }
@@ -369,7 +369,7 @@ void ProcessStoreTileBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile
         if (pHotTile->state == HOTTILE_CLEAR)
         {
             PFN_CLEAR_TILES pfnClearTiles = sClearTilesTable[srcFormat];
-            SWR_ASSERT(pfnClearTiles != nullptr);
+            SWR_ASSERT(pfnClearTiles);
 
             pfnClearTiles(pDC, attachment, macroTile, pHotTile->renderTargetArrayIndex, pHotTile->clearData, pDesc->rect);
         }
@@ -1081,7 +1081,7 @@ struct BEChooser
     template <typename... TArgsT>
     static PFN_BACKEND_FUNC GetFunc(bool tArg, TArgsT... remainingArgs)
     {
-        if(tArg == true)
+        if(tArg)
         {
             return BEChooser<ArgsT..., 1>::GetFunc(remainingArgs...);
         }

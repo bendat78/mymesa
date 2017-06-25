@@ -222,7 +222,7 @@ _eglAddDrivers(void)
       _eglAddBuiltInDrivers();
    }
 
-   return (_eglModules != NULL);
+   return (_eglModules);
 }
 
 

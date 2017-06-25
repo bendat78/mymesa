@@ -108,7 +108,7 @@ _mesa_new_framebuffer(struct gl_context *ctx, GLuint name)
 {
    struct gl_framebuffer *fb;
    (void) ctx;
-   assert(name != 0);
+   assert(name);
    fb = CALLOC_STRUCT(gl_framebuffer);
    if (fb) {
       _mesa_initialize_user_framebuffer(fb, name);
@@ -801,7 +801,7 @@ _mesa_get_color_read_format(struct gl_context *ctx,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (fb == NULL)
+   if (!fb)
       fb = ctx->ReadBuffer;
 
    if (!fb || !fb->_ColorReadBuffer) {
@@ -870,7 +870,7 @@ _mesa_get_color_read_type(struct gl_context *ctx,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (fb == NULL)
+   if (!fb)
       fb = ctx->ReadBuffer;
 
    if (!fb || !fb->_ColorReadBuffer) {

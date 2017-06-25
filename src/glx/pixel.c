@@ -440,7 +440,7 @@ __glEmptyImage(struct glx_context * gc, GLint dim, GLint width, GLint height,
 
       itera = start;
       for (h = 0; h < depth; h++) {
-         if ((rowSize == sourceRowSize) && (sourcePadding == 0)) {
+         if ((rowSize == sourceRowSize) && (!sourcePadding)) {
             /* Ha!  This is mondo easy! */
             __GLX_MEM_COPY(itera, sourceImage,
                            elementsPerRow * elementSize * height);

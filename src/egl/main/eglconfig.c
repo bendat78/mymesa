@@ -352,7 +352,7 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
          break;
       case ATTRIB_TYPE_PSEUDO:
          /* pseudo attributes should not be set */
-         if (val != 0)
+         if (val)
             valid = EGL_FALSE;
          break;
       default:

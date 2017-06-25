@@ -288,7 +288,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXP:
-      if (src_idx == 0) {
+      if (!src_idx) {
          /* Note that the SHADOW variants use the Z component too */
          switch (inst->Texture.Texture) {
          case TGSI_TEXTURE_1D:

@@ -190,7 +190,7 @@ svga_delete_stream_output(struct svga_context *svga,
    SVGA_DBG(DEBUG_STREAMOUT, "%s streamout=0x%x\n", __FUNCTION__, streamout);
 
    assert(svga_have_vgpu10(svga));
-   assert(streamout != NULL);
+   assert(streamout);
 
    ret = SVGA3D_vgpu10_DestroyStreamOutput(svga->swc, streamout->id);
    if (ret != PIPE_OK) {

@@ -136,7 +136,7 @@ Lib* Lib::GetLib(
     ADDR_HANDLE hLib)   ///< [in] handle of ADDR_HANDLE
 {
     Addr::Lib* pAddrLib = Addr::Lib::GetLib(hLib);
-    if ((pAddrLib != NULL) &&
+    if ((pAddrLib) &&
         ((pAddrLib->GetChipFamily() == ADDR_CHIP_FAMILY_IVLD) ||
          (pAddrLib->GetChipFamily() > ADDR_CHIP_FAMILY_VI)))
     {
@@ -1892,7 +1892,7 @@ UINT_32 Lib::ComputeCmaskBaseAlign(
 
     if (flags.tcCompatible)
     {
-        ADDR_ASSERT(pTileInfo != NULL);
+        ADDR_ASSERT(pTileInfo);
         if (pTileInfo)
         {
             baseAlign *= pTileInfo->banks;
@@ -3268,7 +3268,7 @@ VOID Lib::PadDimensions(
     }
 
     // Any possibilities that padDims is 0?
-    if (padDims == 0)
+    if (!padDims)
     {
         padDims = 3;
     }
@@ -3540,7 +3540,7 @@ BOOL_32 Lib::DegradeTo1D(
     BOOL_32 degrade = ((width < macroTilePitchAlign) || (height < macroTileHeightAlign));
 
     // Check whether 2D tiling still has too much footprint
-    if (degrade == FALSE)
+    if (!degrade)
     {
         // Only check width and height as slices are aligned to thickness
         UINT_64 unalignedSize = width * height;
@@ -3582,7 +3582,7 @@ VOID Lib::OptimizeTileMode(
     BOOL_32 convertToPrt = FALSE;
 
     // Optimization can only be done on level 0 and samples <= 1
-    if ((doOpt == TRUE)                     &&
+    if ((doOpt)                     &&
         (pInOut->mipLevel == 0)             &&
         (IsPrtTileMode(tileMode) == FALSE)  &&
         (pInOut->flags.prt == FALSE))
@@ -3922,7 +3922,7 @@ ADDR_E_RETURNCODE Lib::ComputePrtInfo(
     const ADDR_PRT_INFO_INPUT*  pIn,
     ADDR_PRT_INFO_OUTPUT*       pOut) const
 {
-    ADDR_ASSERT(pOut != NULL);
+    ADDR_ASSERT(pOut);
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 

@@ -262,7 +262,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    char *supported = ralloc_strdup(this, "");
    for (unsigned i = 0; i < this->num_supported_versions; i++) {
       unsigned ver = this->supported_versions[i].ver;
-      const char *const prefix = (i == 0)
+      const char *const prefix = (!i)
 	 ? ""
 	 : ((i == this->num_supported_versions - 1) ? ", and " : ", ");
       const char *const suffix = (this->supported_versions[i].es) ? " ES" : "";
@@ -1174,7 +1174,7 @@ ast_compound_statement::ast_compound_statement(int new_scope,
 {
    this->new_scope = new_scope;
 
-   if (statements != NULL) {
+   if (statements) {
       this->statements.push_degenerate_list_at_head(&statements->link);
    }
 }
@@ -1531,7 +1531,7 @@ void
 ast_switch_body::print(void) const
 {
    printf("{\n");
-   if (stmts != NULL) {
+   if (stmts) {
       stmts->print();
    }
    printf("}\n");
@@ -1546,7 +1546,7 @@ ast_switch_body::ast_switch_body(ast_case_statement_list *stmts)
 
 void ast_case_label::print(void) const
 {
-   if (test_value != NULL) {
+   if (test_value) {
       printf("case ");
       test_value->print();
       printf(": ");
@@ -1674,7 +1674,7 @@ ast_struct_specifier::print(void) const
 ast_struct_specifier::ast_struct_specifier(void *lin_ctx, const char *identifier,
 					   ast_declarator_list *declarator_list)
 {
-   if (identifier == NULL) {
+   if (!identifier) {
       /* All anonymous structs have the same name. This simplifies matching of
        * globals whose type is an unnamed struct.
        *

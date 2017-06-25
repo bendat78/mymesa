@@ -365,7 +365,7 @@ indirect_create_context(struct glx_screen *psc,
    state = calloc(1, sizeof(struct __GLXattributeRec));
    gc->renderType = renderType;
 
-   if (state == NULL) {
+   if (!state) {
       /* Out of memory */
       free(gc);
       return NULL;
@@ -474,7 +474,7 @@ indirect_create_screen(int screen, struct glx_display * priv)
    struct glx_screen *psc;
 
    psc = calloc(1, sizeof *psc);
-   if (psc == NULL)
+   if (!psc)
       return NULL;
 
    glx_screen_init(psc, screen, priv);

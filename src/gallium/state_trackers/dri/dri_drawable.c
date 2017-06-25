@@ -135,7 +135,7 @@ dri_create_buffer(__DRIscreen * sPriv,
       goto fail;		       /* not implemented */
 
    drawable = CALLOC_STRUCT(dri_drawable);
-   if (drawable == NULL)
+   if (!drawable)
       goto fail;
 
    dri_fill_st_visual(&drawable->stvis, screen, visual);

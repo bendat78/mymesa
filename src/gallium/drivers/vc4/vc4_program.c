@@ -708,7 +708,7 @@ ntq_fcos(struct vc4_compile *c, struct qreg src)
                 struct qreg mul = qir_FMUL(c,
                                            x,
                                            qir_uniform_f(c, coeff[i]));
-                if (i == 0)
+                if (!i)
                         sum = mul;
                 else
                         sum = qir_FADD(c, sum, mul);
@@ -1927,7 +1927,7 @@ ntq_emit_if(struct vc4_compile *c, nir_if *if_stmt)
                 was_top_level = true;
         }
 
-        /* Set ZS for executing (execute == 0) and jumping (if->condition ==
+        /* Set ZS for executing (!execute) and jumping (if->condition ==
          * 0) channels, and then update execute flags for those to point to
          * the ELSE block.
          */

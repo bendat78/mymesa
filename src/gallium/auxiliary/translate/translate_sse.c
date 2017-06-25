@@ -1256,7 +1256,7 @@ incr_inputs(struct translate_sse *p, unsigned index_size)
             x86_mov(p->func, p->tmp_EAX, buf_stride);
             x64_rexw(p->func);
             x86_add(p->func, p->tmp_EAX, buf_ptr);
-            if (i == 0)
+            if (!i)
                sse_prefetchnta(p->func, x86_make_disp(p->tmp_EAX, 192));
             x64_rexw(p->func);
             x86_mov(p->func, buf_ptr, p->tmp_EAX);

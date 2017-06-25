@@ -56,7 +56,7 @@ load_text_fp (void *ctx, FILE *fp)
 		if (total_read + CHUNK + 1 > text_size) {
 			text_size = text_size ? text_size * 2 : CHUNK + 1;
 			text = reralloc_size (ctx, text, text_size);
-			if (text == NULL) {
+			if (!text) {
 				fprintf (stderr, "Out of memory\n");
 				return NULL;
 			}
@@ -84,7 +84,7 @@ load_text_file(void *ctx, const char *filename)
 		return load_text_fp (ctx, stdin);
 
 	fp = fopen (filename, "r");
-	if (fp == NULL) {
+	if (!fp) {
 		fprintf (stderr, "Failed to open file %s: %s\n",
 			 filename, strerror (errno));
 		return NULL;
@@ -166,7 +166,7 @@ main (int argc, char *argv[])
 	}
 
 	shader = load_text_file (ctx, filename);
-	if (shader == NULL)
+	if (!shader)
 	   return 1;
 
 	_mesa_locale_init();

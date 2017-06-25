@@ -300,20 +300,20 @@ nir_build_alu(nir_builder *build, nir_op op, nir_ssa_def *src0,
     * based on our input sizes, if it's not fixed for the op.
     */
    unsigned num_components = op_info->output_size;
-   if (num_components == 0) {
+   if (!num_components) {
       for (unsigned i = 0; i < op_info->num_inputs; i++) {
          if (op_info->input_sizes[i] == 0)
             num_components = MAX2(num_components,
                                   instr->src[i].src.ssa->num_components);
       }
    }
-   assert(num_components != 0);
+   assert(num_components);
 
    /* Figure out the bitwidth based on the source bitwidth if the instruction
     * is variable-width.
     */
    unsigned bit_size = nir_alu_type_get_type_size(op_info->output_type);
-   if (bit_size == 0) {
+   if (!bit_size) {
       for (unsigned i = 0; i < op_info->num_inputs; i++) {
          unsigned src_bit_size = instr->src[i].src.ssa->bit_size;
          if (nir_alu_type_get_type_size(op_info->input_types[i]) == 0) {
@@ -329,7 +329,7 @@ nir_build_alu(nir_builder *build, nir_op op, nir_ssa_def *src0,
    }
 
    /* When in doubt, assume 32. */
-   if (bit_size == 0)
+   if (!bit_size)
       bit_size = 32;
 
    /* Make sure we don't swizzle from outside of our source vector (like if a

@@ -1386,7 +1386,7 @@ convert_to_blend_type(struct gallivm_state *gallivm,
                                  lp_build_const_int_vec(gallivm, src_type, from_lsb * blend_type.width),
                                  "");
 
-         if (j == 0) {
+         if (!j) {
             res = chans[j];
          } else {
             res = LLVMBuildOr(builder, res, chans[j], "");
@@ -1575,7 +1575,7 @@ convert_from_blend_type(struct gallivm_state *gallivm,
 
          sa += src_fmt->channel[j].size;
 
-         if (j == 0) {
+         if (!j) {
             res = chans[j];
          } else {
             res = LLVMBuildOr(builder, res, chans[j], "");

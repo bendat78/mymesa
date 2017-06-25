@@ -501,7 +501,7 @@ vmw_swc_surface_only_relocation(struct svga_winsys_context *swc,
    assert(vswc->surface.staged < vswc->surface.reserved);
    isrf = util_hash_table_get(vswc->hash, vsurf);
 
-   if (isrf == NULL) {
+   if (!isrf) {
       isrf = &vswc->surface.items[vswc->surface.used + vswc->surface.staged];
       vmw_svga_winsys_surface_reference(&isrf->vsurf, vsurf);
       isrf->referenced = FALSE;
@@ -589,7 +589,7 @@ vmw_swc_shader_relocation(struct svga_winsys_context *swc,
       assert(vswc->shader.staged < vswc->shader.reserved);
       ishader = util_hash_table_get(vswc->hash, vshader);
 
-      if (ishader == NULL) {
+      if (!ishader) {
          ishader = &vswc->shader.items[vswc->shader.used + vswc->shader.staged];
          vmw_svga_winsys_shader_reference(&ishader->vshader, vshader);
          ishader->referenced = FALSE;

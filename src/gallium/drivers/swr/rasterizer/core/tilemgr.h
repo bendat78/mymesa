@@ -211,7 +211,7 @@ public:
         LONG result = InterlockedDecrement(&mTasksOutstanding);
         SWR_ASSERT(result >= 0, "Should never oversubscribe work");
 
-        return (result == 0) ? true : false;
+        return (!result) ? true : false;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -233,7 +233,7 @@ public:
     /// @brief Dispatches a unit of work
     void dispatch(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t threadGroupId, void*& pSpillFillBuffer, void*& pScratchSpace)
     {
-        SWR_ASSERT(mPfnDispatch != nullptr);
+        SWR_ASSERT(mPfnDispatch);
         mPfnDispatch(pDC, workerId, threadGroupId, pSpillFillBuffer, pScratchSpace);
     }
 

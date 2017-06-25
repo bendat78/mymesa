@@ -133,7 +133,7 @@ register_surface(struct gl_context *ctx, GLboolean isOutput,
    }
 
    surf = CALLOC_STRUCT( vdp_surface );
-   if (surf == NULL) {
+   if (!surf) {
       _mesa_error_no_memory("VDPAURegisterSurfaceNV");
       return (GLintptr)NULL;
    }
@@ -148,7 +148,7 @@ register_surface(struct gl_context *ctx, GLboolean isOutput,
 
       tex = _mesa_lookup_texture_err(ctx, textureNames[i],
                                      "VDPAURegisterSurfaceNV");
-      if (tex == NULL) {
+      if (!tex) {
          free(surf);
          return (GLintptr)NULL;
       }
@@ -250,7 +250,7 @@ _mesa_VDPAUUnregisterSurfaceNV(GLintptr surface)
    }
 
    /* according to the spec it's ok when this is zero */
-   if (surface == 0)
+   if (!surface)
       return;
 
    entry = _mesa_set_search(ctx->vdpSurfaces, surf);
@@ -299,7 +299,7 @@ _mesa_VDPAUGetSurfaceivNV(GLintptr surface, GLenum pname, GLsizei bufSize,
 
    values[0] = surf->state;
 
-   if (length != NULL)
+   if (length)
       *length = 1;
 }
 

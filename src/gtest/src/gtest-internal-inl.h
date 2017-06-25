@@ -134,7 +134,7 @@ GTEST_API_ bool ParseInt32Flag(
 // Returns a random seed in range [1, kMaxRandomSeed] based on the
 // given --gtest_random_seed flag value.
 inline int GetRandomSeedFromFlag(Int32 random_seed_flag) {
-  const unsigned int raw_seed = (random_seed_flag == 0) ?
+  const unsigned int raw_seed = (!random_seed_flag) ?
       static_cast<unsigned int>(GetTimeInMillis()) :
       static_cast<unsigned int>(random_seed_flag);
 
@@ -1153,7 +1153,7 @@ class GTEST_API_ StreamingListener : public EmptyTestEventListener {
 
   void OnTestPartResult(const TestPartResult& test_part_result) {
     const char* file_name = test_part_result.file_name();
-    if (file_name == NULL)
+    if (!file_name)
       file_name = "";
     SendLn("event=TestPartResult&file=" + UrlEncode(file_name) +
            "&line=" + StreamableToString(test_part_result.line_number()) +

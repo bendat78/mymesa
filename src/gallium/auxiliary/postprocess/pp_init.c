@@ -53,7 +53,7 @@ pp_init(struct pipe_context *pipe, const unsigned int *enabled,
       if (enabled[i])
          num_filters++;
    }
-   if (num_filters == 0)
+   if (!num_filters)
       return NULL;
 
    ppq = CALLOC(1, sizeof(struct pp_queue_t));

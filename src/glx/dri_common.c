@@ -112,13 +112,13 @@ driOpenDriver(const char *driverName)
       if (!libPaths)
          libPaths = getenv("LIBGL_DRIVERS_DIR");        /* deprecated */
    }
-   if (libPaths == NULL)
+   if (!libPaths)
       libPaths = DEFAULT_DRIVER_DIR;
 
    handle = NULL;
    for (p = libPaths; *p; p = next) {
       next = strchr(p, ':');
-      if (next == NULL) {
+      if (!next) {
          len = strlen(p);
          next = p + len;
       }
@@ -134,14 +134,14 @@ driOpenDriver(const char *driverName)
       handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
 #endif
 
-      if (handle == NULL) {
+      if (!handle) {
          snprintf(realDriverName, sizeof realDriverName,
                   "%.*s/%s_dri.so", len, p, driverName);
          InfoMessageF("OpenDriver: trying %s\n", realDriverName);
          handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
       }
 
-      if (handle != NULL)
+      if (handle)
          break;
       else
          InfoMessageF("dlopen %s failed (%s)\n", realDriverName, dlerror());
@@ -176,7 +176,7 @@ driGetDriverExtensions(void *handle, const char *driver_name)
    }
 
    extensions = dlsym(handle, __DRI_DRIVER_EXTENSIONS);
-   if (extensions == NULL) {
+   if (!extensions) {
       ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
       return NULL;
    }
@@ -344,7 +344,7 @@ createDriMode(const __DRIcoreExtension * core,
       return NULL;
 
    driConfig = malloc(sizeof *driConfig);
-   if (driConfig == NULL)
+   if (!driConfig)
       return NULL;
 
    driConfig->base = *config;
@@ -392,7 +392,7 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
    __GLXDRIdrawable *pdraw;
    struct glx_screen *psc;
 
-   if (priv == NULL)
+   if (!priv)
       return NULL;
 
    if (glxDrawable == None)
@@ -410,7 +410,7 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
    pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
                                           glxDrawable, gc->config);
 
-   if (pdraw == NULL) {
+   if (!pdraw) {
       ErrorMessageF("failed to create drawable\n");
       return NULL;
    }
@@ -430,7 +430,7 @@ driReleaseDrawables(struct glx_context *gc)
    const struct glx_display *priv = gc->psc->display;
    __GLXDRIdrawable *pdraw;
 
-   if (priv == NULL)
+   if (!priv)
       return;
 
    if (__glxHashLookup(priv->drawHash,
@@ -477,13 +477,13 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
    *flags = 0;
    *api = __DRI_API_OPENGL;
 
-   if (num_attribs == 0) {
+   if (!num_attribs) {
       return true;
    }
 
    /* This is actually an internal error, but what the heck.
     */
-   if (attribs == NULL) {
+   if (!attribs) {
       *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
       return false;
    }

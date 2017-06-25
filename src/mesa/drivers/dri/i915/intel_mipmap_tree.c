@@ -458,7 +458,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    if (mt->target == GL_TEXTURE_2D_MULTISAMPLE ||
          mt->target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
       /* nonzero level here is always bogus */
-      assert(level == 0);
+      assert(!level);
 
       if (width != mt->logical_width0 ||
             height != mt->logical_height0 ||
@@ -742,7 +742,7 @@ intel_miptree_map_gtt(struct intel_context *intel,
 
    base = intel_miptree_map_raw(intel, mt) + mt->offset;
 
-   if (base == NULL)
+   if (!base)
       map->ptr = NULL;
    else {
       /* Note that in the case of cube maps, the caller must have passed the

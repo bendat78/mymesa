@@ -400,12 +400,12 @@ st_nir_get_mesa_program(struct gl_context *ctx,
    foreach_in_list(ir_instruction, node, shader->ir) {
       ir_variable *var = node->as_variable();
 
-      if ((var == NULL) || (var->data.mode != ir_var_uniform) ||
+      if ((!var) || (var->data.mode != ir_var_uniform) ||
           (strncmp(var->name, "gl_", 3) != 0))
          continue;
 
       const ir_state_slot *const slots = var->get_state_slots();
-      assert(slots != NULL);
+      assert(slots);
 
       for (unsigned int i = 0; i < var->get_num_state_slots(); i++) {
          _mesa_add_state_reference(prog->Parameters,

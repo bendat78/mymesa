@@ -119,7 +119,7 @@ fd5_emit_shader(struct fd_ringbuffer *ring, const struct ir3_shader_variant *so)
 	/* for how clever coverity is, it is sometimes rather dull, and
 	 * doesn't realize that the only case where bin==NULL, sz==0:
 	 */
-	assume(bin || (sz == 0));
+	assume(bin || (!sz));
 
 	for (i = 0; i < sz; i++) {
 		OUT_RING(ring, bin[i]);

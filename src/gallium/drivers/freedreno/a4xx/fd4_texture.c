@@ -172,17 +172,17 @@ fd4_sampler_states_bind(struct pipe_context *pctx,
 
 	if (shader == PIPE_SHADER_FRAGMENT) {
 		fd4_ctx->fsaturate =
-			(saturate_s != 0) ||
-			(saturate_t != 0) ||
-			(saturate_r != 0);
+			(saturate_s) ||
+			(saturate_t) ||
+			(saturate_r);
 		fd4_ctx->fsaturate_s = saturate_s;
 		fd4_ctx->fsaturate_t = saturate_t;
 		fd4_ctx->fsaturate_r = saturate_r;
 	} else if (shader == PIPE_SHADER_VERTEX) {
 		fd4_ctx->vsaturate =
-			(saturate_s != 0) ||
-			(saturate_t != 0) ||
-			(saturate_r != 0);
+			(saturate_s) ||
+			(saturate_t) ||
+			(saturate_r);
 		fd4_ctx->vsaturate_s = saturate_s;
 		fd4_ctx->vsaturate_t = saturate_t;
 		fd4_ctx->vsaturate_r = saturate_r;

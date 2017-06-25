@@ -104,7 +104,7 @@ windows_create_drawable(int type, void *handle)
    windowsDrawable *d;
 
    d = calloc(1, sizeof *d);
-   if (d == NULL)
+   if (!d)
       return NULL;
 
    switch (type)

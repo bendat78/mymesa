@@ -287,7 +287,7 @@ svga_clear_texture(struct pipe_context *pipe,
    tmpl.u.tex.level = level;
 
    surface = pipe->create_surface(pipe, res, &tmpl);
-   if (surface == NULL) {
+   if (!surface) {
       debug_printf("failed to create surface\n");
       return;
    }
@@ -303,7 +303,7 @@ svga_clear_texture(struct pipe_context *pipe,
       unsigned clear_flags = 0;
 
       /* If data is NULL, then set depthValue and stencilValue to zeros */
-      if (data == NULL) {
+      if (!data) {
          depth = 0.0;
          stencil = 0;
       }
@@ -361,7 +361,7 @@ svga_clear_texture(struct pipe_context *pipe,
    else {
       /* non depth-stencil formats */
 
-      if (data == NULL) {
+      if (!data) {
          /* If data is NULL, the texture image is filled with zeros */
          color.f[0] = color.f[1] = color.f[2] = color.f[3] = 0;
       }

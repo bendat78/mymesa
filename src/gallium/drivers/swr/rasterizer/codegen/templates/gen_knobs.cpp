@@ -184,7 +184,7 @@ std::string GlobalKnobs::ToString(const char* optPerLinePrefix)
     std::basic_stringstream<char> str;
     str << std::showbase << std::setprecision(1) << std::fixed;
 
-    if (optPerLinePrefix == nullptr) { optPerLinePrefix = ""; }
+    if (!optPerLinePrefix) { optPerLinePrefix = ""; }
 
     % for knob in knobs:
     str << optPerLinePrefix << "KNOB_${knob[0]}:${space_knob(knob[0])}";

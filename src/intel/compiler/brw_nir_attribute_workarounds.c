@@ -51,7 +51,7 @@ apply_attr_wa_block(nir_block *block, struct attr_wa_state *state)
          continue;
 
       uint8_t wa_flags = state->wa_flags[intrin->const_index[0]];
-      if (wa_flags == 0)
+      if (!wa_flags)
          continue;
 
       b->cursor = nir_after_instr(instr);

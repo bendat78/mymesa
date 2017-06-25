@@ -63,7 +63,7 @@ read_atom(void *ctx, const char *&src, char *&symbol_buffer)
    skip_whitespace(src, symbol_buffer);
 
    size_t n = strcspn(src, "( \v\t\r\n);");
-   if (n == 0)
+   if (!n)
       return NULL; // no atom
 
    // Check for the special symbol '+INF', which means +Infinity.  Note: C99
@@ -100,7 +100,7 @@ static s_expression *
 __read_expression(void *ctx, const char *&src, char *&symbol_buffer)
 {
    s_expression *atom = read_atom(ctx, src, symbol_buffer);
-   if (atom != NULL)
+   if (atom)
       return atom;
 
    skip_whitespace(src, symbol_buffer);
@@ -129,7 +129,7 @@ __read_expression(void *ctx, const char *&src, char *&symbol_buffer)
 s_expression *
 s_expression::read_expression(void *ctx, const char *&src)
 {
-   assert(src != NULL);
+   assert(src);
 
    /* When we encounter a Symbol, we need to save a nul-terminated copy of
     * the string.  However, ralloc_strndup'ing every individual Symbol is
@@ -197,7 +197,7 @@ bool
 s_match(s_expression *top, unsigned n, s_pattern *pattern, bool partial)
 {
    s_list *list = SX_AS_LIST(top);
-   if (list == NULL)
+   if (!list)
       return false;
 
    unsigned i = 0;

@@ -400,7 +400,7 @@ struct pipe_query *r600_create_batch_query(struct pipe_context *ctx,
 		sub_index = sub_index % block->num_selectors;
 
 		group = get_group_state(screen, query, block, sub_gid);
-		assert(group != NULL);
+		assert(group);
 
 		for (j = 0; j < group->num_counters; ++j) {
 			if (group->selectors[j] == sub_index)

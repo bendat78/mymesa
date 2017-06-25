@@ -128,7 +128,7 @@ fse_prepare(struct draw_pt_middle_end *middle,
          unsigned emit_sz = draw_translate_vinfo_size(vinfo->attrib[i].emit);
 
          /* doesn't handle EMIT_OMIT */
-         assert(emit_sz != 0);
+         assert(emit_sz);
 
          /* The elements in the key correspond to vertex shader output
           * numbers, not to positions in the hw vertex description --

@@ -289,7 +289,7 @@ static void radeonTexEnv( struct gl_context *ctx, GLenum target,
       min = driQueryOptionb (&rmesa->radeon.optionCache, "no_neg_lod_bias") ?
 	  0.0 : -1.0;
       bias = CLAMP( *param, min, 4.0 );
-      if ( bias == 0 ) {
+      if (!bias) {
 	 b = 0;
       } else if ( bias > 0 ) {
 	 b = ((GLuint)SCALED_FLOAT_TO_BYTE( bias, 4.0 )) << RADEON_LOD_BIAS_SHIFT;

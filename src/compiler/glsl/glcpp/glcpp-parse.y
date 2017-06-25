@@ -810,7 +810,7 @@ _string_list_contains(string_list_t *list, const char *member, int *index)
    string_node_t *node;
    int i;
 
-   if (list == NULL)
+   if (!list)
       return 0;
 
    for (i = 0, node = list->head; node; i++, node = node->next) {
@@ -830,7 +830,7 @@ _string_list_has_duplicate(string_list_t *list)
 {
    string_node_t *node, *dup;
 
-   if (list == NULL)
+   if (!list)
       return NULL;
 
    for (node = list->head; node; node = node->next) {
@@ -849,7 +849,7 @@ _string_list_length(string_list_t *list)
    int length = 0;
    string_node_t *node;
 
-   if (list == NULL)
+   if (!list)
       return 0;
 
    for (node = list->head; node; node = node->next)
@@ -921,7 +921,7 @@ _argument_list_length(argument_list_t *list)
    int length = 0;
    argument_node_t *node;
 
-   if (list == NULL)
+   if (!list)
       return 0;
 
    for (node = list->head; node; node = node->next)
@@ -936,13 +936,13 @@ _argument_list_member_at(argument_list_t *list, int index)
    argument_node_t *node;
    int i;
 
-   if (list == NULL)
+   if (!list)
       return NULL;
 
    node = list->head;
    for (i = 0; i < index; i++) {
       node = node->next;
-      if (node == NULL)
+      if (!node)
          break;
    }
 
@@ -1031,7 +1031,7 @@ _token_list_copy(glcpp_parser_t *parser, token_list_t *other)
    token_list_t *copy;
    token_node_t *node;
 
-   if (other == NULL)
+   if (!other)
       return NULL;
 
    copy = _token_list_create (parser);
@@ -1058,7 +1058,7 @@ _token_list_is_empty_ignoring_space(token_list_t *l)
 {
    token_node_t *n;
 
-   if (l == NULL)
+   if (!l)
       return 1;
 
    n = l->head;
@@ -1244,7 +1244,7 @@ _token_paste(glcpp_parser_t *parser, token_t *token, token_t *other)
       break;
    }
 
-   if (combined != NULL) {
+   if (combined) {
       /* Inherit the location from the first token */
       combined->location = token->location;
       return combined;
@@ -1321,7 +1321,7 @@ _token_list_print(glcpp_parser_t *parser, token_list_t *list)
 {
    token_node_t *node;
 
-   if (list == NULL)
+   if (!list)
       return;
 
    for (node = list->head; node; node = node->next)
@@ -1465,7 +1465,7 @@ _arguments_parse(glcpp_parser_t *parser,
          paren_count++;
       } else if (node->token->type == ')') {
          paren_count--;
-         if (paren_count == 0)
+         if (!paren_count)
             break;
       }
 
@@ -1551,7 +1551,7 @@ _glcpp_parser_evaluate_defined(glcpp_parser_t *parser, token_node_t *node,
    while (node && node->token->type == SPACE)
       node = node->next;
 
-   if (node == NULL)
+   if (!node)
       goto FAIL;
 
    if (node->token->type == IDENTIFIER || node->token->type == OTHER) {
@@ -1602,7 +1602,7 @@ _glcpp_parser_evaluate_defined_in_list(glcpp_parser_t *parser,
    token_node_t *node, *node_prev, *replacement, *last = NULL;
    int value;
 
-   if (list == NULL)
+   if (!list)
       return;
 
    node_prev = NULL;
@@ -1675,7 +1675,7 @@ _glcpp_parser_apply_pastes(glcpp_parser_t *parser, token_list_t *list)
       while (next_non_space && next_non_space->token->type == SPACE)
          next_non_space = next_non_space->next;
 
-      if (next_non_space == NULL)
+      if (!next_non_space)
          break;
 
       if (next_non_space->token->type != PASTE) {
@@ -1688,7 +1688,7 @@ _glcpp_parser_apply_pastes(glcpp_parser_t *parser, token_list_t *list)
       while (next_non_space && next_non_space->token->type == SPACE)
          next_non_space = next_non_space->next;
 
-      if (next_non_space == NULL) {
+      if (!next_non_space) {
          yyerror(&node->token->location, parser, "'##' cannot appear at either end of a macro expansion\n");
          return;
       }
@@ -1861,7 +1861,7 @@ _glcpp_parser_expand_node(glcpp_parser_t *parser, token_node_t *node,
    macro = entry ? entry->data : NULL;
 
    /* Not a macro, so no expansion needed. */
-   if (macro == NULL)
+   if (!macro)
       return NULL;
 
    /* Finally, don't expand this macro if we're already actively
@@ -1921,7 +1921,7 @@ _parser_active_list_pop(glcpp_parser_t *parser)
 {
    active_list_t *node = parser->active;
 
-   if (node == NULL) {
+   if (!node) {
       parser->active = NULL;
       return;
    }
@@ -1975,7 +1975,7 @@ _glcpp_parser_expand_token_list(glcpp_parser_t *parser, token_list_t *list,
    token_list_t *expansion;
    active_list_t *active_initial = parser->active;
 
-   if (list == NULL)
+   if (!list)
       return;
 
    _token_list_trim_trailing_space (list);
@@ -2044,7 +2044,7 @@ void
 _glcpp_parser_print_expanded_token_list(glcpp_parser_t *parser,
                                         token_list_t *list)
 {
-   if (list == NULL)
+   if (!list)
       return;
 
    _glcpp_parser_expand_token_list (parser, list, EXPANSION_MODE_IGNORE_DEFINED);
@@ -2111,7 +2111,7 @@ _define_object_macro(glcpp_parser_t *parser, YYLTYPE *loc,
    /* We define pre-defined macros before we've started parsing the actual
     * file. So if there's no location defined yet, that's what were doing and
     * we don't want to generate an error for using the reserved names. */
-   if (loc != NULL)
+   if (loc)
       _check_for_reserved_macro_name(parser, loc, identifier);
 
    macro = linear_alloc_child(parser->linalloc, sizeof(macro_t));
@@ -2225,7 +2225,7 @@ glcpp_parser_lex(YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser)
 
    node = parser->lex_from_node;
 
-   if (node == NULL) {
+   if (!node) {
       parser->lex_from_list = NULL;
       return NEWLINE;
    }

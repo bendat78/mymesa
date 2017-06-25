@@ -284,7 +284,7 @@ DRAW_CONTEXT* GetDrawContext(SWR_CONTEXT *pContext, bool isSplitDraw = false)
             // If we're splitting our draw then we can just use the same state from the previous
             // draw. In this case, we won't increment the DS ring index so the next non-split
             // draw can receive the state.
-            if (isSplitDraw == false)
+            if (!isSplitDraw)
             {
                 CopyState(*pCurDrawContext->pState, *pPrevDrawContext->pState);
 
@@ -434,7 +434,7 @@ void SetupDefaultState(SWR_CONTEXT *pContext)
 
 void SwrSync(HANDLE hContext, PFN_CALLBACK_FUNC pfnFunc, uint64_t userData, uint64_t userData2, uint64_t userData3)
 {
-    SWR_ASSERT(pfnFunc != nullptr);
+    SWR_ASSERT(pfnFunc);
 
     SWR_CONTEXT *pContext = GetContext(hContext);
     DRAW_CONTEXT* pDC = GetDrawContext(pContext);
@@ -1000,7 +1000,7 @@ void InitDraw(
     bool isSplitDraw)
 {
     // We don't need to re-setup the scissors/pipeline state again for split draw.
-    if (isSplitDraw == false)
+    if (!isSplitDraw)
     {
         SetupMacroTileScissors(pDC);
         SetupPipeline(pDC);

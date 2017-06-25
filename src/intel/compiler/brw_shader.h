@@ -47,14 +47,14 @@ struct backend_reg : private brw_reg
    const brw_reg &as_brw_reg() const
    {
       assert(file == ARF || file == FIXED_GRF || file == MRF || file == IMM);
-      assert(offset == 0);
+      assert(!offset);
       return static_cast<const brw_reg &>(*this);
    }
 
    brw_reg &as_brw_reg()
    {
       assert(file == ARF || file == FIXED_GRF || file == MRF || file == IMM);
-      assert(offset == 0);
+      assert(!offset);
       return static_cast<brw_reg &>(*this);
    }
 

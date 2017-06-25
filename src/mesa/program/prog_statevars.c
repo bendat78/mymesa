@@ -927,7 +927,7 @@ append_token(char *dst, gl_state_index k)
 static void
 append_face(char *dst, GLint face)
 {
-   if (face == 0)
+   if (!face)
       append(dst, "front.");
    else
       append(dst, "back.");

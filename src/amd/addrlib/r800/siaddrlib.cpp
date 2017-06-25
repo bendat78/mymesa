@@ -1202,7 +1202,7 @@ VOID SiLib::HwlComputeTileDataWidthAndHeightLinear(
     ADDR_TILEINFO*  pTileInfo        ///< [in] tile info
     ) const
 {
-    ADDR_ASSERT(pTileInfo != NULL);
+    ADDR_ASSERT(pTileInfo);
     UINT_32 macroWidth;
     UINT_32 macroHeight;
 
@@ -1505,7 +1505,7 @@ VOID SiLib::HwlComputeXmaskCoordFromAddr(
     UINT_32 tileIndex;
     if (factor == 2) //CMASK
     {
-        tileIndex = (UINT_32)(localOffset * 2 + (bitPosition != 0));
+        tileIndex = (UINT_32)(localOffset * 2 + (bitPosition));
     }
     else
     {
@@ -2669,7 +2669,7 @@ ADDR_E_RETURNCODE SiLib::HwlComputeSurfaceInfo(
             pOut->equationIndex = ADDR_INVALID_EQUATION_INDEX;
         }
         else if ((pIn->flags.prt == FALSE) &&
-                 (m_uncompressDepthEqIndex != 0) &&
+                 (m_uncompressDepthEqIndex) &&
                  (tileIndex == SiUncompressDepthTileIndex))
         {
             pOut->equationIndex = m_uncompressDepthEqIndex + Log2(pIn->bpp >> 3);
@@ -2763,7 +2763,7 @@ VOID SiLib::HwlCheckLastMacroTiledLvl(
 
         if (pIn->mipLevel == 0 || pIn->basePitch == 0)
         {
-            // Base level or fail-safe case (basePitch == 0)
+            // Base level or fail-safe case (!basePitch)
             nextPitch = pOut->pitch >> 1;
         }
         else
@@ -3094,7 +3094,7 @@ BOOL_32 SiLib::InitTileSettingTable(
 
     memset(m_tileTable, 0, sizeof(m_tileTable));
 
-    if (noOfEntries != 0)
+    if (noOfEntries)
     {
         m_noOfEntries = noOfEntries;
     }
@@ -3510,7 +3510,7 @@ ADDR_E_RETURNCODE SiLib::HwlGetMaxAlignments(
         }
     }
 
-    if (pOut != NULL)
+    if (pOut)
     {
         pOut->baseAlign = maxBaseAlign;
     }
@@ -3539,7 +3539,7 @@ VOID SiLib::HwlComputeSurfaceAlignmentsMacroTiled(
     ADDR_COMPUTE_SURFACE_INFO_OUTPUT* pOut                ///< [in,out] Surface output
     ) const
 {
-    if ((mipLevel == 0) && (flags.prt))
+    if ((!mipLevel) && (flags.prt))
     {
         UINT_32 macroTileSize = pOut->blockWidth * pOut->blockHeight * numSamples * bpp / 8;
 
@@ -3817,7 +3817,7 @@ BOOL_32 SiLib::IsEquationSupported(
             supported = FALSE;
         }
 
-        if ((supported == TRUE) && (m_chipFamily == ADDR_CHIP_FAMILY_SI))
+        if ((supported) && (m_chipFamily == ADDR_CHIP_FAMILY_SI))
         {
             supported = m_EquationSupport[tileIndex][elementBytesLog2];
         }

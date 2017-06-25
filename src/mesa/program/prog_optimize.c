@@ -169,7 +169,7 @@ remove_instructions(struct gl_program *prog, const GLboolean *removeFlags,
    for (i = prog->arb.NumInstructions - 1; i >= 0; i--) {
       if (removeFlags[i]) {
          totalRemoved++;
-         if (removeCount == 0) {
+         if (!removeCount) {
             /* begin a run of instructions to remove */
             removeEnd = i;
             removeCount = 1;
@@ -396,7 +396,7 @@ find_next_use(const struct gl_program *prog,
                 inst->DstReg.File == PROGRAM_TEMPORARY &&
                 inst->DstReg.Index == index) {
                mask &= ~inst->DstReg.WriteMask;
-               if (mask == 0)
+               if (!mask)
                   return WRITE;
             }
          }
@@ -551,7 +551,7 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
             src_mask &= ~inst2->DstReg.WriteMask;
             dst_mask &= get_dst_mask_for_mov(mov, src_mask);
          }
-         if (dst_mask == 0)
+         if (!dst_mask)
             break;
       }
    }

@@ -1010,7 +1010,7 @@ radv_CreateImageView(VkDevice _device,
 
 	view = vk_alloc2(&device->alloc, pAllocator, sizeof(*view), 8,
 			   VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (view == NULL)
+	if (!view)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	radv_image_view_init(view, device, pCreateInfo, NULL, ~0);

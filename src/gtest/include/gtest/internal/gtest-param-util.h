@@ -701,7 +701,7 @@ class ParameterizedTestCaseRegistry {
         break;
       }
     }
-    if (typed_test_info == NULL) {
+    if (!typed_test_info) {
       typed_test_info = new ParameterizedTestCaseInfo<TestCase>(
           test_case_name, code_location);
       test_case_infos_.push_back(typed_test_info);

@@ -104,7 +104,7 @@ gcd(int a, int b)
 	int c;
 
 	c = a % b;
-	while (c != 0) {
+	while (c) {
 		a = b;
 		b = c;
 		c = a % b;
@@ -232,7 +232,7 @@ parse_long_options(char * const *nargv, const char *options,
 			}
 		}
 		if ((long_options[match].has_arg == required_argument)
-		    && (optarg == NULL)) {
+		    && (!optarg)) {
 			/*
 			 * Missing argument; leading ':' indicates no error
 			 * should be generated.
@@ -281,7 +281,7 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 	int optchar, short_too;
 	static int posixly_correct = -1;
 
-	if (options == NULL)
+	if (!options)
 		return (-1);
 
 	/*
@@ -301,7 +301,7 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 	 * XXX Some GNU programs (like cvs) set optind to 0 instead of
 	 * XXX using optreset.  Work around this braindamage.
 	 */
-	if (optind == 0)
+	if (!optind)
 		optind = optreset = 1;
 
 	optarg = NULL;

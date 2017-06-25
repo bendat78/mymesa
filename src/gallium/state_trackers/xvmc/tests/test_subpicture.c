@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 		printf("\tscanline_order: %s\n", subpics[i].scanline_order == XvTopToBottom ? "XvTopToBottom" : (subpics[i].scanline_order == XvBottomToTop ? "XvBottomToTop" : "Unknown"));
 	}
 
-	if (num_subpics == 0)
+	if (!num_subpics)
 	{
 		printf("Subpictures not supported, nothing to test.\n");
 		return 0;

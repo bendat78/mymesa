@@ -185,7 +185,7 @@ FilePath FilePath::MakeFileName(const FilePath& directory,
                                 int number,
                                 const char* extension) {
   std::string file;
-  if (number == 0) {
+  if (!number) {
     file = base_name.string() + "." + extension;
   } else {
     file = base_name.string() + "_" + StreamableToString(number)

@@ -620,7 +620,7 @@ ir_if*
 if_tree(operand condition,
         ir_instruction *then_branch)
 {
-   assert(then_branch != NULL);
+   assert(then_branch);
 
    void *mem_ctx = ralloc_parent(condition.val);
 
@@ -634,8 +634,8 @@ if_tree(operand condition,
         ir_instruction *then_branch,
         ir_instruction *else_branch)
 {
-   assert(then_branch != NULL);
-   assert(else_branch != NULL);
+   assert(then_branch);
+   assert(else_branch);
 
    void *mem_ctx = ralloc_parent(condition.val);
 

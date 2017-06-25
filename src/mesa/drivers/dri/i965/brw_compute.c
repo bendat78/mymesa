@@ -69,7 +69,7 @@ prepare_indirect_gpgpu_walker(struct brw_context *brw)
                          I915_GEM_DOMAIN_INSTRUCTION, 0,
                          indirect_offset + 0);
 
-   /* predicate = (compute_dispatch_indirect_x_size == 0); */
+   /* predicate = (!compute_dispatch_indirect_x_size); */
    BEGIN_BATCH(1);
    OUT_BATCH(GEN7_MI_PREDICATE |
              MI_PREDICATE_LOADOP_LOAD |
@@ -82,7 +82,7 @@ prepare_indirect_gpgpu_walker(struct brw_context *brw)
                          I915_GEM_DOMAIN_INSTRUCTION, 0,
                          indirect_offset + 4);
 
-   /* predicate |= (compute_dispatch_indirect_y_size == 0); */
+   /* predicate |= (!compute_dispatch_indirect_y_size); */
    BEGIN_BATCH(1);
    OUT_BATCH(GEN7_MI_PREDICATE |
              MI_PREDICATE_LOADOP_LOAD |
@@ -95,7 +95,7 @@ prepare_indirect_gpgpu_walker(struct brw_context *brw)
                          I915_GEM_DOMAIN_INSTRUCTION, 0,
                          indirect_offset + 8);
 
-   /* predicate |= (compute_dispatch_indirect_z_size == 0); */
+   /* predicate |= (!compute_dispatch_indirect_z_size); */
    BEGIN_BATCH(1);
    OUT_BATCH(GEN7_MI_PREDICATE |
              MI_PREDICATE_LOADOP_LOAD |
@@ -138,7 +138,7 @@ brw_emit_gpgpu_walker(struct brw_context *brw)
 
    uint32_t right_mask = 0xffffffffu >> (32 - simd_size);
    const unsigned right_non_aligned = group_size & (simd_size - 1);
-   if (right_non_aligned != 0)
+   if (right_non_aligned)
       right_mask >>= (simd_size - right_non_aligned);
 
    uint32_t dwords = brw->gen < 8 ? 11 : 15;

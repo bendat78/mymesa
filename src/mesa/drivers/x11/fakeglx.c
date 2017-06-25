@@ -598,7 +598,7 @@ choose_x_visual(Display *dpy, int screen, int min_depth, int preferred_class)
 	 case 2:  visclass = GrayScale;    break;
 	 case 3:  visclass = StaticGray;   break;
 	 }
-	 if (min_depth==0) {
+	 if (!min_depth) {
 	    /* start with shallowest */
 	    for (depth=0;depth<=32;depth++) {
 	       vis = get_visual( dpy, screen, depth, visclass );
@@ -629,7 +629,7 @@ choose_x_visual(Display *dpy, int screen, int min_depth, int preferred_class)
       case GLX_STATIC_COLOR_EXT:
       default:   return NULL;
       }
-      if (min_depth==0) {
+      if (!min_depth) {
 	 /* start with shallowest */
 	 for (depth=0;depth<=32;depth++) {
 	    vis = get_visual( dpy, screen, depth, visclass );
@@ -1174,7 +1174,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 	 min_rgb = 1;
       }
 
-      if (level==0) {
+      if (!level) {
 	 vis = choose_x_visual(dpy, screen, min_rgb, visual_type);
       }
       else {

@@ -689,7 +689,7 @@ write_uniform_remap_table_entry(struct blob *metadata,
 {
    if (entry == INACTIVE_UNIFORM_EXPLICIT_LOCATION) {
       blob_write_uint32(metadata, remap_type_inactive_explicit_location);
-   } else if (entry == NULL) {
+   } else if (!entry) {
       blob_write_uint32(metadata, remap_type_null_ptr);
    } else {
       blob_write_uint32(metadata, remap_type_uniform_offset);
@@ -1395,7 +1395,7 @@ shader_cache_read_program_metadata(struct gl_context *ctx,
    size_t size;
    uint8_t *buffer = (uint8_t *) disk_cache_get(cache, prog->data->sha1,
                                                 &size);
-   if (buffer == NULL) {
+   if (!buffer) {
       /* Cached program not found. We may have seen the individual shaders
        * before and skipped compiling but they may not have been used together
        * in this combination before. Fall back to linking shaders but first

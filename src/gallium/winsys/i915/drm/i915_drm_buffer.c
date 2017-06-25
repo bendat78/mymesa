@@ -186,7 +186,7 @@ i915_drm_buffer_map(struct i915_winsys *iws,
 
    buf->ptr = bo->virtual;
 
-   assert(ret == 0);
+   assert(!ret);
 out:
    if (ret)
       return NULL;

@@ -208,7 +208,7 @@ virgl_drm_winsys_resource_create(struct virgl_winsys *qws,
    createcmd.size = size;
 
    ret = drmIoctl(qdws->fd, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE, &createcmd);
-   if (ret != 0) {
+   if (ret) {
       FREE(res);
       return NULL;
    }
@@ -746,7 +746,7 @@ static bool virgl_fence_wait(struct virgl_winsys *vws,
    struct virgl_drm_winsys *vdws = virgl_drm_winsys(vws);
    struct virgl_hw_res *res = virgl_hw_res(fence);
 
-   if (timeout == 0)
+   if (!timeout)
       return !virgl_drm_resource_is_busy(vdws, res);
 
    if (timeout != PIPE_TIMEOUT_INFINITE) {

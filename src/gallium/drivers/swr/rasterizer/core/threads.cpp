@@ -151,7 +151,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
                     pCore->procGroup = procGroup;
                 }
                 pCore->threadIds.push_back(threadId);
-                if (procGroup == 0)
+                if (!procGroup)
                 {
                     out_numThreadsPerProcGroup++;
                 }
@@ -398,7 +398,7 @@ INLINE int32_t CompleteDrawContextInl(SWR_CONTEXT* pContext, uint32_t workerId, 
 
     AR_FLUSH(pDC->drawId);
 
-    if (result == 0)
+    if (!result)
     {
         ExecuteCallbacks(pContext, workerId, pDC);
 
@@ -676,7 +676,7 @@ void WorkOnFifoFE(SWR_CONTEXT *pContext, uint32_t workerId, uint32_t &curDrawFE)
             }
 
             uint32_t initial = InterlockedCompareExchange((volatile uint32_t*)&pDC->FeLock, 1, 0);
-            if (initial == 0)
+            if (!initial)
             {
                 // successfully grabbed the DC, now run the FE
                 pDC->FeWork.pfnWork(pContext, pDC, workerId, &pDC->FeWork.desc);

@@ -167,7 +167,7 @@ NineQuery9_Issue( struct NineQuery9 *This,
     DBG("This=%p dwIssueFlags=%d\n", This, dwIssueFlags);
 
     user_assert((dwIssueFlags == D3DISSUE_BEGIN) ||
-                (dwIssueFlags == 0) ||
+                (!dwIssueFlags) ||
                 (dwIssueFlags == D3DISSUE_END), D3DERR_INVALIDCALL);
 
     /* Wine tests: always return D3D_OK on D3DISSUE_BEGIN

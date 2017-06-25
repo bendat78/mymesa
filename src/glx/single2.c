@@ -328,7 +328,7 @@ __indirect_glGetBooleanv(GLenum val, GLboolean * b)
    __GLX_SINGLE_READ_XREPLY();
    __GLX_SINGLE_GET_SIZE(compsize);
 
-   if (compsize == 0) {
+   if (!compsize) {
       /*
        ** Error occurred; don't modify user's buffer.
        */
@@ -379,7 +379,7 @@ __indirect_glGetDoublev(GLenum val, GLdouble * d)
    __GLX_SINGLE_READ_XREPLY();
    __GLX_SINGLE_GET_SIZE(compsize);
 
-   if (compsize == 0) {
+   if (!compsize) {
       /*
        ** Error occurred; don't modify user's buffer.
        */
@@ -430,7 +430,7 @@ __indirect_glGetFloatv(GLenum val, GLfloat * f)
    __GLX_SINGLE_READ_XREPLY();
    __GLX_SINGLE_GET_SIZE(compsize);
 
-   if (compsize == 0) {
+   if (!compsize) {
       /*
        ** Error occurred; don't modify user's buffer.
        */
@@ -481,7 +481,7 @@ __indirect_glGetIntegerv(GLenum val, GLint * i)
    __GLX_SINGLE_READ_XREPLY();
    __GLX_SINGLE_GET_SIZE(compsize);
 
-   if (compsize == 0) {
+   if (!compsize) {
       /*
        ** Error occurred; don't modify user's buffer.
        */
@@ -884,7 +884,7 @@ __indirect_glAreTexturesResident(GLsizei n, const GLuint * textures,
    struct glx_context *const gc = __glXGetCurrentContext();
    Display *const dpy = gc->currentDpy;
    GLboolean retval = (GLboolean) 0;
-   if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+   if (__builtin_expect((n >= 0) && (dpy), 1)) {
       xcb_connection_t *c = XGetXCBConnection(dpy);
       xcb_glx_are_textures_resident_reply_t *reply;
       (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -926,7 +926,7 @@ glAreTexturesResidentEXT(GLsizei n, const GLuint * textures,
       Display *const dpy = gc->currentDpy;
       GLboolean retval = (GLboolean) 0;
       const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
-      if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+      if (__builtin_expect((n >= 0) && (dpy), 1)) {
          GLubyte const *pc =
             __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
                                     X_GLvop_AreTexturesResidentEXT,

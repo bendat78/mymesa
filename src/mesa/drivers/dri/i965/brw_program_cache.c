@@ -195,7 +195,7 @@ brw_search_cache(struct brw_cache *cache,
 
    item = search_cache(cache, hash, &lookup);
 
-   if (item == NULL)
+   if (!item)
       return false;
 
    void *aux = ((char *) item->key) + item->key_size;

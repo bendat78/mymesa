@@ -662,11 +662,11 @@ droid_set_damage_region(_EGLDriver *drv,
    android_native_rect_t* droid_rects = NULL;
    int ret;
 
-   if (n_rects == 0)
+   if (!n_rects)
       return EGL_TRUE;
 
    droid_rects = malloc(n_rects * sizeof(android_native_rect_t));
-   if (droid_rects == NULL) {
+   if (!droid_rects) {
      _eglError(EGL_BAD_ALLOC, "eglSetDamageRegionKHR");
      return EGL_FALSE;
    }
@@ -800,7 +800,7 @@ droid_create_image_from_prime_fd(_EGLDisplay *disp, _EGLContext *ctx,
    }
 
    pitch = buf->stride * get_format_bpp(buf->format);
-   if (pitch == 0) {
+   if (!pitch) {
       _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
       return NULL;
    }
@@ -898,7 +898,7 @@ dri2_create_image_android_native_buffer(_EGLDisplay *disp,
 {
    int fd;
 
-   if (ctx != NULL) {
+   if (ctx) {
       /* From the EGL_ANDROID_image_native_buffer spec:
        *
        *     * If <target> is EGL_NATIVE_BUFFER_ANDROID and <ctx> is not
@@ -1087,7 +1087,7 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
       }
    }
 
-   return (config_count != 0);
+   return (config_count);
 }
 
 static int

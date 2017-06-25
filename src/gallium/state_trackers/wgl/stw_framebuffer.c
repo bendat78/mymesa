@@ -261,7 +261,7 @@ stw_framebuffer_create(HDC hdc, int iPixelFormat)
       return NULL;
 
    fb = CALLOC_STRUCT( stw_framebuffer );
-   if (fb == NULL)
+   if (!fb)
       return NULL;
 
    fb->hWnd = hWnd;
@@ -495,7 +495,7 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
       return FALSE;
 
    fb = stw_framebuffer_from_hdc( hdc );
-   if (fb == NULL)
+   if (!fb)
       return FALSE;
 
    screen = stw_dev->screen;
@@ -623,7 +623,7 @@ DrvSwapBuffers(HDC hdc)
       return FALSE;
 
    fb = stw_framebuffer_from_hdc( hdc );
-   if (fb == NULL)
+   if (!fb)
       return FALSE;
 
    if (!(fb->pfi->pfd.dwFlags & PFD_DOUBLEBUFFER)) {

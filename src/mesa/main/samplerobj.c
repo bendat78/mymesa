@@ -44,7 +44,7 @@
 struct gl_sampler_object *
 _mesa_lookup_samplerobj(struct gl_context *ctx, GLuint name)
 {
-   if (name == 0)
+   if (!name)
       return NULL;
    else
       return (struct gl_sampler_object *)
@@ -276,7 +276,7 @@ _mesa_BindSampler(GLuint unit, GLuint sampler)
       return;
    }
 
-   if (sampler == 0) {
+   if (!sampler) {
       /* Use the default sampler object, the one contained in the texture
        * object.
        */

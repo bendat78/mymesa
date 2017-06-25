@@ -226,7 +226,7 @@ ADDR_E_RETURNCODE Lib::Create(
         }
     }
 
-    if (pLib != NULL)
+    if (pLib)
     {
         BOOL_32 initValid;
 
@@ -271,14 +271,14 @@ ADDR_E_RETURNCODE Lib::Create(
 
     pCreateOut->hLib = pLib;
 
-    if ((pLib != NULL) &&
+    if ((pLib) &&
         (returnCode == ADDR_OK))
     {
         pCreateOut->numEquations =
             pLib->HwlGetEquationTableInfo(&pCreateOut->pEquationTable);
     }
 
-    if ((pLib == NULL) &&
+    if ((!pLib) &&
         (returnCode == ADDR_OK))
     {
         // Unknown failures, we return the general error code
@@ -324,7 +324,7 @@ VOID Lib::SetChipFamily(
 VOID Lib::SetMinPitchAlignPixels(
     UINT_32 minPitchAlignPixels)    ///< [in] minmum pitch alignment in pixels
 {
-    m_minPitchAlignPixels = (minPitchAlignPixels == 0) ? 1 : minPitchAlignPixels;
+    m_minPitchAlignPixels = (!minPitchAlignPixels) ? 1 : minPitchAlignPixels;
 }
 
 /**

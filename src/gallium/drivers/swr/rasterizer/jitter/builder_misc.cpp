@@ -129,7 +129,7 @@ namespace SwrJit
             uint32_t sign = (val & 0x8000) << 16;
             uint32_t mant = (val & 0x3ff) << 13;
             uint32_t exp = (val >> 10) & 0x1f;
-            if ((exp == 0) && (mant != 0)) // Adjust exponent and mantissa for denormals
+            if ((!exp) && (mant)) // Adjust exponent and mantissa for denormals
             {
                 mant <<= 1;
                 while (mant < (0x400 << 13))
@@ -1240,7 +1240,7 @@ namespace SwrJit
                 }
 
                 // if x or z, extract 128bits from lane 0, else for y or w, extract from lane 1
-                uint32_t lane = ((i == 0) || (i == 2)) ? 0 : 1;
+                uint32_t lane = ((!i) || (i == 2)) ? 0 : 1;
                 // if x or y, use vi128XY permute result, else use vi128ZW
                 Value* selectedPermute = (i < 2) ? vi128XY : vi128ZW;
 
@@ -1274,7 +1274,7 @@ namespace SwrJit
                 uint32_t swizzleIndex = info.swizzle[i];
 
                 // select correct constMask for x/z or y/w pshufb
-                uint32_t selectedMask = ((i == 0) || (i == 2)) ? 0 : 1;
+                uint32_t selectedMask = ((!i) || (i == 2)) ? 0 : 1;
                 // if x or y, use vi128XY permute result, else use vi128ZW
                 uint32_t selectedGather = (i < 2) ? 0 : 1;
 
@@ -1329,7 +1329,7 @@ namespace SwrJit
                 }
 
                 // if x or z, extract 128bits from lane 0, else for y or w, extract from lane 1
-                uint32_t lane = ((i == 0) || (i == 2)) ? 0 : 1; 
+                uint32_t lane = ((!i) || (i == 2)) ? 0 : 1; 
                 // if x or y, use vi128XY permute result, else use vi128ZW
                 Value* selectedPermute = (i < 2) ? vi128XY : vi128ZW;
             
@@ -1430,7 +1430,7 @@ namespace SwrJit
         Type* pSrcTy = vSrc->getType()->getVectorElementType();
 
         // Store vectors on stack
-        if (pScatterStackSrc == nullptr)
+        if (!pScatterStackSrc)
         {
             // Save off stack allocations and reuse per scatter. Significantly reduces stack
             // requirements for shaders with a lot of scatters.

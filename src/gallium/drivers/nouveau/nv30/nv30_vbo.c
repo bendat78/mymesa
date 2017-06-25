@@ -207,7 +207,7 @@ nv30_vbo_validate(struct nv30_context *nv30)
       return;
 
    redefine = MAX2(vertex->num_elements, nv30->state.num_vtxelts);
-   if (redefine == 0)
+   if (!redefine)
       return;
 
    BEGIN_NV04(push, NV30_3D(VTXFMT(0)), redefine);

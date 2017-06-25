@@ -102,7 +102,7 @@ wire_to_event(Display *dpy, XEvent *re, xEvent *event)
    switch ((event->u.u.type & 0x7f) - info->codes->first_event) {
    case AppleDRISurfaceNotify:
       sevent = (xAppleDRINotifyEvent *) event;
-      if (surface_notify_handler != NULL) {
+      if (surface_notify_handler) {
          (*surface_notify_handler) (dpy, (unsigned int) sevent->arg,
                                     (int) sevent->kind);
       }

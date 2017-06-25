@@ -666,8 +666,8 @@ emit_consts_vgpu10(struct svga_context *svga, enum pipe_shader_type shader)
       else {
          handle = NULL;
          enabled_constbufs &= ~(1 << index);
-         assert(offset == 0);
-         assert(size == 0);
+         assert(!offset);
+         assert(!size);
       }
 
       if (size % 16 != 0) {

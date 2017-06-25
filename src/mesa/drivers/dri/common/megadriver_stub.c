@@ -74,12 +74,12 @@ megadriver_stub_init(void)
     * figure out the path name of the library being loaded.
     */
    i = dladdr((void*) __driDriverExtensions, &info);
-   if (i == 0)
+   if (!i)
       return;
 
    /* Search for the last '/' character in the path. */
    driver_name = strrchr(info.dli_fname, '/');
-   if (driver_name != NULL) {
+   if (driver_name) {
       /* Skip '/' character */
       driver_name++;
    } else {

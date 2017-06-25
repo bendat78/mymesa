@@ -111,7 +111,7 @@ _mesa_set_create(void *mem_ctx,
    struct set *ht;
 
    ht = ralloc(mem_ctx, struct set);
-   if (ht == NULL)
+   if (!ht)
       return NULL;
 
    ht->size_index = 0;
@@ -217,7 +217,7 @@ set_rehash(struct set *ht, unsigned new_size_index)
 
    table = rzalloc_array(ht, struct set_entry,
                          hash_sizes[new_size_index].size);
-   if (table == NULL)
+   if (!table)
       return;
 
    old_ht = *ht;
@@ -266,7 +266,7 @@ set_add(struct set *ht, uint32_t hash, const void *key)
 
       if (!entry_is_present(entry)) {
          /* Stash the first available entry we find */
-         if (available_entry == NULL)
+         if (!available_entry)
             available_entry = entry;
          if (entry_is_free(entry))
             break;
@@ -350,7 +350,7 @@ _mesa_set_remove(struct set *ht, struct set_entry *entry)
 struct set_entry *
 _mesa_set_next_entry(const struct set *ht, struct set_entry *entry)
 {
-   if (entry == NULL)
+   if (!entry)
       entry = ht->table;
    else
       entry = entry + 1;

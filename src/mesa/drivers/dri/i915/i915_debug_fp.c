@@ -134,13 +134,13 @@ print_reg_type_nr(GLuint type, GLuint nr)
          return;
       }
    case REG_TYPE_OC:
-      if (nr == 0) {
+      if (!nr) {
          printf("oC");
          return;
       }
       break;
    case REG_TYPE_OD:
-      if (nr == 0) {
+      if (!nr) {
          printf("oD");
          return;
       }

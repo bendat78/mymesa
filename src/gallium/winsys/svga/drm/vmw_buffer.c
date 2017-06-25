@@ -349,7 +349,7 @@ vmw_svga_winsys_buffer_map(struct svga_winsys_screen *sws,
    map = pb_map(vmw_pb_buffer(buf), flags, NULL);
 
 #ifdef DEBUG
-   if (map != NULL)
+   if (map)
       debug_flush_map(buf->fbuf, flags);
 #endif
 

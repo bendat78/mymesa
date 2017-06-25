@@ -363,7 +363,7 @@ vc4_set_constant_buffer(struct pipe_context *pctx,
         struct vc4_context *vc4 = vc4_context(pctx);
         struct vc4_constbuf_stateobj *so = &vc4->constbuf[shader];
 
-        assert(index == 0);
+        assert(!index);
 
         /* Note that the state tracker can unbind constant buffers by
          * passing NULL here.
@@ -515,7 +515,7 @@ vc4_sampler_states_bind(struct pipe_context *pctx,
         struct vc4_context *vc4 = vc4_context(pctx);
         struct vc4_texture_stateobj *stage_tex = vc4_get_stage_tex(vc4, shader);
 
-        assert(start == 0);
+        assert(!start);
         unsigned i;
         unsigned new_nr = 0;
 
@@ -623,7 +623,7 @@ vc4_set_sampler_views(struct pipe_context *pctx,
         unsigned i;
         unsigned new_nr = 0;
 
-        assert(start == 0);
+        assert(!start);
 
         for (i = 0; i < nr; i++) {
                 if (views[i])

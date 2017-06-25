@@ -136,7 +136,7 @@ intel_bufferobj_data(struct gl_context * ctx,
    _mesa_align_free(intel_obj->sys_buffer);
    intel_obj->sys_buffer = NULL;
 
-   if (size != 0) {
+   if (size) {
       /* Stick VBOs in system memory, as we're always doing swtnl with their
        * contents anyway.
        */
@@ -144,7 +144,7 @@ intel_bufferobj_data(struct gl_context * ctx,
 	 intel_obj->sys_buffer =
             _mesa_align_malloc(size, ctx->Const.MinMapBufferAlignment);
 	 if (intel_obj->sys_buffer != NULL) {
-	    if (data != NULL)
+	    if (data)
 	       memcpy(intel_obj->sys_buffer, data, size);
 	    return true;
 	 }
@@ -154,7 +154,7 @@ intel_bufferobj_data(struct gl_context * ctx,
       if (!intel_obj->buffer)
          return false;
 
-      if (data != NULL)
+      if (data)
 	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
    }
 
@@ -178,7 +178,7 @@ intel_bufferobj_subdata(struct gl_context * ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
    bool busy;
 
-   if (size == 0)
+   if (!size)
       return;
 
    assert(intel_obj);
@@ -403,7 +403,7 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
    if (intel_obj->range_map_buffer[index] == NULL)
       return;
 
-   if (length == 0)
+   if (!length)
       return;
 
    temp_bo = drm_intel_bo_alloc(intel->bufmgr, "range map flush", length, 64);
@@ -604,7 +604,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
    drm_intel_bo *src_bo, *dst_bo;
    GLuint src_offset;
 
-   if (size == 0)
+   if (!size)
       return;
 
    /* If we're in system memory, just map and memcpy. */
@@ -660,7 +660,7 @@ intel_buffer_purgeable(drm_intel_bo *buffer)
 {
    int retained = 0;
 
-   if (buffer != NULL)
+   if (buffer)
       retained = drm_intel_bo_madvise (buffer, I915_MADV_DONTNEED);
 
    return retained ? GL_VOLATILE_APPLE : GL_RELEASED_APPLE;
@@ -730,7 +730,7 @@ intel_buffer_unpurgeable(drm_intel_bo *buffer)
    int retained;
 
    retained = 0;
-   if (buffer != NULL)
+   if (buffer)
       retained = drm_intel_bo_madvise (buffer, I915_MADV_WILLNEED);
 
    return retained ? GL_RETAINED_APPLE : GL_UNDEFINED_APPLE;

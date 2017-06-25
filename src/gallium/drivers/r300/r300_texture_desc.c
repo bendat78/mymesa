@@ -641,7 +641,7 @@ unsigned r300_texture_get_offset(struct r300_resource *tex,
             return offset + layer * tex->tex.layer_size_in_bytes[level];
 
         default:
-            assert(layer == 0);
+            assert(!layer);
             return offset;
     }
 }

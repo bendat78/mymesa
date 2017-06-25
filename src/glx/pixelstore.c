@@ -132,10 +132,10 @@ __indirect_glPixelStoref(GLenum pname, GLfloat param)
       }
       break;
    case GL_PACK_SWAP_BYTES:
-      state->storePack.swapEndian = (param != 0);
+      state->storePack.swapEndian = (param);
       break;
    case GL_PACK_LSB_FIRST:
-      state->storePack.lsbFirst = (param != 0);
+      state->storePack.lsbFirst = (param);
       break;
 
    case GL_UNPACK_ROW_LENGTH:
@@ -193,10 +193,10 @@ __indirect_glPixelStoref(GLenum pname, GLfloat param)
       }
       break;
    case GL_UNPACK_SWAP_BYTES:
-      state->storeUnpack.swapEndian = (param != 0);
+      state->storeUnpack.swapEndian = (param);
       break;
    case GL_UNPACK_LSB_FIRST:
-      state->storeUnpack.lsbFirst = (param != 0);
+      state->storeUnpack.lsbFirst = (param);
       break;
 
       /* Group all of the pixel store modes that need to be sent to the
@@ -275,10 +275,10 @@ __indirect_glPixelStorei(GLenum pname, GLint param)
       }
       break;
    case GL_PACK_SWAP_BYTES:
-      state->storePack.swapEndian = (param != 0);
+      state->storePack.swapEndian = (param);
       break;
    case GL_PACK_LSB_FIRST:
-      state->storePack.lsbFirst = (param != 0);
+      state->storePack.lsbFirst = (param);
       break;
 
    case GL_UNPACK_ROW_LENGTH:
@@ -330,10 +330,10 @@ __indirect_glPixelStorei(GLenum pname, GLint param)
       }
       break;
    case GL_UNPACK_SWAP_BYTES:
-      state->storeUnpack.swapEndian = (param != 0);
+      state->storeUnpack.swapEndian = (param);
       break;
    case GL_UNPACK_LSB_FIRST:
-      state->storeUnpack.lsbFirst = (param != 0);
+      state->storeUnpack.lsbFirst = (param);
       break;
 
       /* Group all of the pixel store modes that need to be sent to the

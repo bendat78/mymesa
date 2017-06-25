@@ -129,7 +129,7 @@ nv84_decoder_vp_h264(struct nv84_decoder *dec,
       if (buf) {
          bo1 = buf->interlaced;
          bo2 = buf->full;
-         if (i == 0)
+         if (!i)
             ref2_default = buf->full;
       } else {
          bo1 = dest->interlaced;

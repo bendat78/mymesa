@@ -335,7 +335,7 @@ VkResult anv_BindImageMemory(
    ANV_FROM_HANDLE(anv_device_memory, mem, _memory);
    ANV_FROM_HANDLE(anv_image, image, _image);
 
-   if (mem == NULL) {
+   if (!mem) {
       image->bo = NULL;
       image->offset = 0;
       return VK_SUCCESS;
@@ -416,10 +416,10 @@ anv_layout_to_aux_usage(const struct gen_device_info * const devinfo,
    /* Validate the inputs. */
 
    /* The devinfo is needed as the optimal buffer varies across generations. */
-   assert(devinfo != NULL);
+   assert(devinfo);
 
    /* The layout of a NULL image is not properly defined. */
-   assert(image != NULL);
+   assert(image);
 
    /* The aspects must be a subset of the image aspects. */
    assert(aspects & image->aspects && aspects <= image->aspects);
@@ -570,7 +570,7 @@ anv_CreateImageView(VkDevice _device,
 
    iview = vk_alloc2(&device->alloc, pAllocator, sizeof(*iview), 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (iview == NULL)
+   if (!iview)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    const VkImageSubresourceRange *range = &pCreateInfo->subresourceRange;

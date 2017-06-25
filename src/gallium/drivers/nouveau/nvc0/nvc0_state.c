@@ -477,7 +477,7 @@ nvc0_bind_sampler_states(struct pipe_context *pipe,
 {
    const unsigned s = nvc0_shader_stage(shader);
 
-   assert(start == 0);
+   assert(!start);
    nvc0_stage_sampler_states_bind(nvc0_context(pipe), s, nr, samplers);
 
    if (s == 5)
@@ -557,7 +557,7 @@ nvc0_set_sampler_views(struct pipe_context *pipe, enum pipe_shader_type shader,
 {
    const unsigned s = nvc0_shader_stage(shader);
 
-   assert(start == 0);
+   assert(!start);
    nvc0_stage_set_sampler_views(nvc0_context(pipe), s, nr, views);
 
    if (s == 5)
@@ -1096,7 +1096,7 @@ nvc0_bind_surfaces_range(struct nvc0_context *nvc0, const unsigned t,
    }
    nvc0->surfaces_dirty[t] |= mask;
 
-   if (t == 0)
+   if (!t)
       nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_3D_SUF);
    else
       nouveau_bufctx_reset(nvc0->bufctx_cp, NVC0_BIND_CP_SUF);

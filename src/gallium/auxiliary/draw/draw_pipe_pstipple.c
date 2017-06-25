@@ -381,7 +381,7 @@ pstip_bind_sampler_states(struct pipe_context *pipe,
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
    uint i;
 
-   assert(start == 0);
+   assert(!start);
 
    if (shader == PIPE_SHADER_FRAGMENT) {
       /* save current */

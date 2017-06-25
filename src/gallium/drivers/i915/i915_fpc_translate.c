@@ -216,7 +216,7 @@ src_vector(struct i915_fp_compile *p,
             break;
          }
       case TGSI_SEMANTIC_COLOR:
-         if (sem_ind == 0) {
+         if (!sem_ind) {
             src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
          }
          else {

@@ -558,7 +558,7 @@ builtin_variable_generator::add_uniform(const glsl_type *type,
 
    const struct gl_builtin_uniform_desc* const statevar =
       _mesa_glsl_get_builtin_uniform_desc(name);
-   assert(statevar != NULL);
+   assert(statevar);
 
    const unsigned array_count = type->is_array() ? type->length : 1;
 
@@ -1489,7 +1489,7 @@ initialize_cs_derived_variables(gl_shader *shader,
    assert(gl_WorkGroupID);
    ir_variable *gl_WorkGroupSize =
       shader->symbols->get_variable("gl_WorkGroupSize");
-   if (gl_WorkGroupSize == NULL) {
+   if (!gl_WorkGroupSize) {
       void *const mem_ctx = ralloc_parent(shader->ir);
       gl_WorkGroupSize = new(mem_ctx) ir_variable(glsl_type::uvec3_type,
                                                   "gl_WorkGroupSize",
@@ -1546,7 +1546,7 @@ _mesa_glsl_initialize_derived_variables(struct gl_context *ctx,
       ir_function_signature *const main_sig =
          _mesa_get_main_function_signature(shader->symbols);
 
-      if (main_sig != NULL)
+      if (main_sig)
          initialize_cs_derived_variables(shader, main_sig);
    }
 }

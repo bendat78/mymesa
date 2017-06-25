@@ -427,7 +427,7 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 	/* These are the new states set by this function. */
 	uint32_t new_mask = 0;
 
-	assert(start == 0); /* XXX fix below */
+	assert(!start); /* XXX fix below */
 
 	if (!states) {
 		disable_mask = ~0u;
@@ -606,7 +606,7 @@ static void r600_set_sampler_views(struct pipe_context *pipe,
 	/* Set textures with index >= count to NULL. */
 	uint32_t remaining_mask;
 
-	assert(start == 0); /* XXX fix below */
+	assert(!start); /* XXX fix below */
 
 	if (!views) {
 		disable_mask = ~0u;
@@ -1827,7 +1827,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	r600_flush_emit(rctx);
 
 	mask = rctx->dirty_atoms;
-	while (mask != 0) {
+	while (mask) {
 		r600_emit_atom(rctx, rctx->atoms[u_bit_scan64(&mask)]);
 	}
 

@@ -526,7 +526,7 @@ _mesa_BlendEquationiARB(GLuint buf, GLenum mode)
    ctx->Color.Blend[buf].EquationA = mode;
    ctx->Color._BlendEquationPerBuffer = GL_TRUE;
 
-   if (buf == 0)
+   if (!buf)
       ctx->Color._AdvancedBlendMode = advanced_mode;
 }
 

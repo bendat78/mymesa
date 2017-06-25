@@ -86,7 +86,7 @@ public:
     static Addr::Lib* CreateObj(const Client* pClient)
     {
         VOID* pMem = Object::ClientAlloc(sizeof(SiLib), pClient);
-        return (pMem != NULL) ? new (pMem) SiLib(pClient) : NULL;
+        return (pMem) ? new (pMem) SiLib(pClient) : NULL;
     }
 
 protected:

@@ -198,7 +198,7 @@ emit_pipeline_stat(struct brw_context *brw, struct brw_bo *bo,
     */
    if (brw->gen == 6 && target == GL_GEOMETRY_SHADER_PRIMITIVES_EMITTED_ARB)
       reg = CL_INVOCATION_COUNT;
-   assert(reg != 0);
+   assert(reg);
 
    /* Emit a flush to make sure various parts of the pipeline are complete and
     * we get an accurate value

@@ -312,7 +312,7 @@ lp_depth_type(const struct util_format_description *format_desc,
    if (z_swizzle < 4) {
       if (format_desc->channel[z_swizzle].type == UTIL_FORMAT_TYPE_FLOAT) {
          type.floating = TRUE;
-         assert(z_swizzle == 0);
+         assert(!z_swizzle);
          assert(format_desc->channel[z_swizzle].size == 32);
       }
       else if(format_desc->channel[z_swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED) {
@@ -893,7 +893,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
       if (depth->enabled) {
          assert(z_swizzle < 4);
          if (z_type.floating) {
-            assert(z_swizzle == 0);
+            assert(!z_swizzle);
             assert(format_desc->channel[z_swizzle].type ==
                    UTIL_FORMAT_TYPE_FLOAT);
             assert(format_desc->channel[z_swizzle].size == 32);

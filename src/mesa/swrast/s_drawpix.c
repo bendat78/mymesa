@@ -350,7 +350,7 @@ draw_depth_pixels( struct gl_context *ctx, GLint x, GLint y,
          const GLuint *zSrc = (const GLuint *)
             _mesa_image_address2d(unpack, pixels, width, height,
                                   GL_DEPTH_COMPONENT, type, row, 0);
-         if (shift == 0) {
+         if (!shift) {
             memcpy(span.array->z, zSrc, width * sizeof(GLuint));
          }
          else {

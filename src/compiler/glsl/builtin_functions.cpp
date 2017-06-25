@@ -1016,12 +1016,12 @@ builtin_builder::find(_mesa_glsl_parse_state *state,
    state->uses_builtin_functions = true;
 
    ir_function *f = shader->symbols->get_function(name);
-   if (f == NULL)
+   if (!f)
       return NULL;
 
    ir_function_signature *sig =
       f->matching_signature(state, actual_parameters, true);
-   if (sig == NULL)
+   if (!sig)
       return NULL;
 
    return sig;
@@ -1031,7 +1031,7 @@ void
 builtin_builder::initialize()
 {
    /* If already initialized, don't do it again. */
-   if (mem_ctx != NULL)
+   if (mem_ctx)
       return;
 
    mem_ctx = ralloc_context(NULL);
@@ -3265,7 +3265,7 @@ builtin_builder::add_function(const char *name, ...)
    va_start(ap, name);
    while (true) {
       ir_function_signature *sig = va_arg(ap, ir_function_signature *);
-      if (sig == NULL)
+      if (!sig)
          break;
 
       if (false) {
@@ -3639,12 +3639,12 @@ builtin_builder::call(ir_function *f, ir_variable *ret, exec_list params)
 
    foreach_in_list_safe(ir_instruction, ir, &params) {
       ir_dereference_variable *d = ir->as_dereference_variable();
-      if (d != NULL) {
+      if (d) {
          d->remove();
          actual_params.push_tail(d);
       } else {
          ir_variable *var = ir->as_variable();
-         assert(var != NULL);
+         assert(var);
          actual_params.push_tail(var_ref(var));
       }
    }
@@ -5165,7 +5165,7 @@ builtin_builder::_texelFetch(builtin_available_predicate avail,
       tex->lod_info.lod = imm(0u);
    }
 
-   if (offset_type != NULL) {
+   if (offset_type) {
       ir_variable *offset =
          new(mem_ctx) ir_variable(offset_type, "offset", ir_var_const_in);
       sig->parameters.push_tail(offset);
@@ -5771,7 +5771,7 @@ builtin_builder::_atomic_counter_op1(const char *intrinsic,
          shader->symbols->get_function("__intrinsic_atomic_add");
       ir_instruction *const c = call(func, retval, parameters);
 
-      assert(c != NULL);
+      assert(c);
       assert(parameters.is_empty());
 
       body.emit(c);
@@ -6214,7 +6214,7 @@ _mesa_glsl_find_builtin_function(_mesa_glsl_parse_state *state,
    s = builtins.find(state, name, actual_parameters);
    mtx_unlock(&builtins_lock);
 
-   if (s == NULL)
+   if (!s)
       return NULL;
 
    struct hash_table *ht =
@@ -6251,7 +6251,7 @@ ir_function_signature *
 _mesa_get_main_function_signature(glsl_symbol_table *symbols)
 {
    ir_function *const f = symbols->get_function("main");
-   if (f != NULL) {
+   if (f) {
       exec_list void_parameters;
 
       /* Look for the 'void main()' signature and ensure that it's defined.
@@ -6263,7 +6263,7 @@ _mesa_get_main_function_signature(glsl_symbol_table *symbols)
        */
       ir_function_signature *sig =
          f->matching_signature(NULL, &void_parameters, false);
-      if ((sig != NULL) && sig->is_defined) {
+      if ((sig) && sig->is_defined) {
          return sig;
       }
    }

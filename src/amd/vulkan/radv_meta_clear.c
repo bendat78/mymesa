@@ -922,7 +922,7 @@ emit_fast_color_clear(struct radv_cmd_buffer *cmd_buffer,
 	/* DCC */
 	ret = radv_format_pack_clear_color(iview->image->vk_format,
 					   clear_color, &clear_value);
-	if (ret == false)
+	if (!ret)
 		goto fail;
 
 	if (pre_flush) {

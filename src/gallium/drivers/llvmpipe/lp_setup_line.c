@@ -341,7 +341,7 @@ try_setup_line( struct lp_setup_context *setup,
    dx = v1[0][0] - v2[0][0];
    dy = v1[0][1] - v2[0][1];
    area = (dx * dx  + dy * dy);
-   if (area == 0) {
+   if (!area) {
       LP_COUNT(nr_culled_tris);
       return TRUE;
    }

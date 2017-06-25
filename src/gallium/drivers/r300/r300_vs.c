@@ -50,12 +50,12 @@ static void r300_shader_read_vs_outputs(
 
         switch (info->output_semantic_name[i]) {
             case TGSI_SEMANTIC_POSITION:
-                assert(index == 0);
+                assert(!index);
                 vs_outputs->pos = i;
                 break;
 
             case TGSI_SEMANTIC_PSIZE:
-                assert(index == 0);
+                assert(!index);
                 vs_outputs->psize = i;
                 break;
 
@@ -76,17 +76,17 @@ static void r300_shader_read_vs_outputs(
                 break;
 
             case TGSI_SEMANTIC_FOG:
-                assert(index == 0);
+                assert(!index);
                 vs_outputs->fog = i;
                 break;
 
             case TGSI_SEMANTIC_EDGEFLAG:
-                assert(index == 0);
+                assert(!index);
                 fprintf(stderr, "r300 VP: cannot handle edgeflag output.\n");
                 break;
 
             case TGSI_SEMANTIC_CLIPVERTEX:
-                assert(index == 0);
+                assert(!index);
                 /* Draw does clip vertex for us. */
                 if (r300->screen->caps.has_tcl) {
                     fprintf(stderr, "r300 VP: cannot handle clip vertex output.\n");

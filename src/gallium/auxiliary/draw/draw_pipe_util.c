@@ -73,7 +73,7 @@ boolean draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr )
    stage->tmp = NULL;
    stage->nr_tmps = nr;
 
-   if (nr != 0)
+   if (nr)
    {
       unsigned i;
       ubyte *store = (ubyte *) MALLOC( MAX_VERTEX_SIZE * nr );

@@ -606,7 +606,7 @@ intel_emit_linear_blit(struct intel_context *intel,
     * rounding that down to the nearest DWORD is 1 << 15 - 4
     */
    pitch = ROUND_DOWN_TO(MIN2(size, (1 << 15) - 1), 4);
-   height = (pitch == 0) ? 1 : size / pitch;
+   height = (!pitch) ? 1 : size / pitch;
    ok = intelEmitCopyBlit(intel, 1,
 			  pitch, src_bo, src_offset, I915_TILING_NONE,
 			  pitch, dst_bo, dst_offset, I915_TILING_NONE,
@@ -622,7 +622,7 @@ intel_emit_linear_blit(struct intel_context *intel,
    size -= pitch * height;
    assert (size < (1 << 15));
    pitch = ALIGN(size, 4);
-   if (size != 0) {
+   if (size) {
       ok = intelEmitCopyBlit(intel, 1,
 			     pitch, src_bo, src_offset, I915_TILING_NONE,
 			     pitch, dst_bo, dst_offset, I915_TILING_NONE,

@@ -94,7 +94,7 @@ byte_offset(fs_reg reg, unsigned delta)
    }
    case IMM:
    default:
-      assert(delta == 0);
+      assert(!delta);
    }
    return reg;
 }
@@ -141,7 +141,7 @@ offset(fs_reg reg, unsigned width, unsigned delta)
    case UNIFORM:
       return byte_offset(reg, delta * reg.component_size(width));
    case IMM:
-      assert(delta == 0);
+      assert(!delta);
    }
    return reg;
 }

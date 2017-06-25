@@ -473,7 +473,7 @@ static int vc4_rcl_surface_setup(struct vc4_exec_info *exec,
 	}
 
 	if (buffer == VC4_LOADSTORE_TILE_BUFFER_ZS) {
-		if (format != 0) {
+		if (format) {
 			DRM_ERROR("No color format should be set for ZS\n");
 			return -EINVAL;
 		}

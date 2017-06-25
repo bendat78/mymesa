@@ -95,7 +95,7 @@ get_io_offset(nir_builder *b, nir_deref_var *deref,
    /* For per-vertex input arrays (i.e. geometry shader inputs), keep the
     * outermost array index separate.  Process the rest normally.
     */
-   if (vertex_index != NULL) {
+   if (vertex_index) {
       tail = tail->child;
       nir_deref_array *deref_array = nir_deref_as_array(tail);
 
@@ -170,7 +170,7 @@ lower_load(nir_intrinsic_instr *intrin, struct lower_io_state *state,
       if (nir->stage == MESA_SHADER_FRAGMENT &&
           nir->options->use_interpolated_input_intrinsics &&
           var->data.interpolation != INTERP_MODE_FLAT) {
-         assert(vertex_index == NULL);
+         assert(!vertex_index);
 
          nir_intrinsic_op bary_op;
          if (var->data.sample ||
@@ -445,14 +445,14 @@ nir_lower_io_block(nir_block *block,
       case nir_intrinsic_var_atomic_xor:
       case nir_intrinsic_var_atomic_exchange:
       case nir_intrinsic_var_atomic_comp_swap:
-         assert(vertex_index == NULL);
+         assert(!vertex_index);
          replacement = lower_atomic(intrin, state, offset);
          break;
 
       case nir_intrinsic_interp_var_at_centroid:
       case nir_intrinsic_interp_var_at_sample:
       case nir_intrinsic_interp_var_at_offset:
-         assert(vertex_index == NULL);
+         assert(!vertex_index);
          replacement = lower_interpolate_at(intrin, state, offset,
                                             component_offset);
          break;

@@ -897,7 +897,7 @@ ir_validate::visit(ir_variable *ir)
             const int *const max_ifc_array_access =
                ir->get_max_ifc_array_access();
 
-            assert(max_ifc_array_access != NULL);
+            assert(max_ifc_array_access);
 
             if (max_ifc_array_access[i] >= (int)fields[i].type->length) {
                printf("ir_variable has maximum access out of bounds for "
@@ -1045,7 +1045,7 @@ check_node_type(ir_instruction *ir, void *data)
       ir->print(); printf("\n");
    }
    ir_rvalue *value = ir->as_rvalue();
-   if (value != NULL)
+   if (value)
       assert(value->type != glsl_type::error_type);
 }
 

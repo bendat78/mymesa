@@ -3346,7 +3346,7 @@ emit_light_twoside(struct svga_shader_emitter *emit)
    unsigned i;
    SVGA3dShaderInstToken if_token;
 
-   if (count == 0)
+   if (!count)
       return TRUE;
 
    vface = get_vface( emit );

@@ -166,7 +166,7 @@ blorp_emit_urb_config(struct blorp_batch *batch,
    struct anv_device *device = batch->blorp->driver_ctx;
    struct anv_cmd_buffer *cmd_buffer = batch->driver_batch;
 
-   assert(sf_entry_size == 0);
+   assert(!sf_entry_size);
 
    const unsigned entry_size[4] = { vs_entry_size, 1, 1, 1 };
 

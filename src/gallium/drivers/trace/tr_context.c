@@ -357,7 +357,7 @@ trace_context_bind_sampler_states(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
 
    /* remove this when we have pipe->bind_sampler_states(..., start, ...) */
-   assert(start == 0);
+   assert(!start);
 
    trace_dump_call_begin("pipe_context", "bind_sampler_states");
 
@@ -988,7 +988,7 @@ trace_context_set_sampler_views(struct pipe_context *_pipe,
    unsigned i;
 
    /* remove this when we have pipe->set_sampler_views(..., start, ...) */
-   assert(start == 0);
+   assert(!start);
 
    for (i = 0; i < num; ++i) {
       tr_view = trace_sampler_view(views[i]);

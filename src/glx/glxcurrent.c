@@ -82,7 +82,7 @@ __thread void *__glX_tls_Context __attribute__ ((tls_model("initial-exec")))
 _X_HIDDEN void
 __glXSetCurrentContext(struct glx_context * c)
 {
-   __glX_tls_Context = (c != NULL) ? c : &dummyContext;
+   __glX_tls_Context = (c) ? c : &dummyContext;
 }
 
 # else
@@ -129,7 +129,7 @@ __glXGetCurrentContext(void)
    pthread_once(&once_control, init_thread_data);
 
    v = pthread_getspecific(ContextTSD);
-   return (v == NULL) ? &dummyContext : (struct glx_context *) v;
+   return (!v) ? &dummyContext : (struct glx_context *) v;
 }
 
 # endif /* defined( GLX_USE_TLS ) */
@@ -196,7 +196,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
     * a zero context ID is used only to mean that we bind to no current
     * context.
     */
-   if ((gc != NULL) && (gc->xid == None)) {
+   if ((gc) && (gc->xid == None)) {
       return GL_FALSE;
    }
 

@@ -447,7 +447,7 @@ vc4_setup_slices(struct vc4_resource *rsc)
                 struct vc4_resource_slice *slice = &rsc->slices[i];
 
                 uint32_t level_width, level_height;
-                if (i == 0) {
+                if (!i) {
                         level_width = width;
                         level_height = height;
                 } else {

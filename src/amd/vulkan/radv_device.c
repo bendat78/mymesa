@@ -770,7 +770,7 @@ static void radv_get_physical_device_queue_family_properties(
 	    !(pdevice->instance->debug_flags & RADV_DEBUG_NO_COMPUTE_QUEUE))
 		num_queue_families++;
 
-	if (pQueueFamilyProperties == NULL) {
+	if (!pQueueFamilyProperties) {
 		*pCount = num_queue_families;
 		return;
 	}
@@ -1213,7 +1213,7 @@ VkResult radv_EnumerateInstanceExtensionProperties(
 	uint32_t*                                   pPropertyCount,
 	VkExtensionProperties*                      pProperties)
 {
-	if (pProperties == NULL) {
+	if (!pProperties) {
 		*pPropertyCount = ARRAY_SIZE(instance_extensions);
 		return VK_SUCCESS;
 	}
@@ -1235,7 +1235,7 @@ VkResult radv_EnumerateDeviceExtensionProperties(
 {
 	RADV_FROM_HANDLE(radv_physical_device, pdevice, physicalDevice);
 
-	if (pProperties == NULL) {
+	if (!pProperties) {
 		*pPropertyCount = pdevice->extensions.num_ext;
 		return VK_SUCCESS;
 	}
@@ -1253,7 +1253,7 @@ VkResult radv_EnumerateInstanceLayerProperties(
 	uint32_t*                                   pPropertyCount,
 	VkLayerProperties*                          pProperties)
 {
-	if (pProperties == NULL) {
+	if (!pProperties) {
 		*pPropertyCount = 0;
 		return VK_SUCCESS;
 	}
@@ -1267,7 +1267,7 @@ VkResult radv_EnumerateDeviceLayerProperties(
 	uint32_t*                                   pPropertyCount,
 	VkLayerProperties*                          pProperties)
 {
-	if (pProperties == NULL) {
+	if (!pProperties) {
 		*pPropertyCount = 0;
 		return VK_SUCCESS;
 	}
@@ -2092,7 +2092,7 @@ VkResult radv_AllocateMemory(
 
 	mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
 			  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (mem == NULL)
+	if (!mem)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	if (dedicate_info) {
@@ -2157,7 +2157,7 @@ void radv_FreeMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _mem);
 
-	if (mem == NULL)
+	if (!mem)
 		return;
 
 	device->ws->buffer_destroy(mem->bo);
@@ -2177,7 +2177,7 @@ VkResult radv_MapMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _memory);
 
-	if (mem == NULL) {
+	if (!mem) {
 		*ppData = NULL;
 		return VK_SUCCESS;
 	}
@@ -2198,7 +2198,7 @@ void radv_UnmapMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _memory);
 
-	if (mem == NULL)
+	if (!mem)
 		return;
 
 	device->ws->buffer_unmap(mem->bo);
@@ -2629,7 +2629,7 @@ VkResult radv_CreateBuffer(
 
 	buffer = vk_alloc2(&device->alloc, pAllocator, sizeof(*buffer), 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (buffer == NULL)
+	if (!buffer)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	buffer->size = pCreateInfo->size;
@@ -3027,7 +3027,7 @@ VkResult radv_CreateFramebuffer(
 		sizeof(struct radv_attachment_info) * pCreateInfo->attachmentCount;
 	framebuffer = vk_alloc2(&device->alloc, pAllocator, size, 8,
 				  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (framebuffer == NULL)
+	if (!framebuffer)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	framebuffer->attachment_count = pCreateInfo->attachmentCount;
@@ -3299,7 +3299,7 @@ VkResult radv_GetMemoryFdKHX(VkDevice _device,
 	assert(handleType == VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHX);
 
 	bool ret = radv_get_memory_fd(device, memory, pFD);
-	if (ret == false)
+	if (!ret)
 		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 	return VK_SUCCESS;
 }

@@ -95,7 +95,7 @@ remove_phis_block(nir_block *block, nir_builder *b)
          if (src->src.ssa == &phi->dest.ssa)
             continue;
 
-         if (def == NULL) {
+         if (!def) {
             def  = src->src.ssa;
             mov = get_parent_mov(def);
          } else {
@@ -112,7 +112,7 @@ remove_phis_block(nir_block *block, nir_builder *b)
       /* We must have found at least one definition, since there must be at
        * least one forward edge.
        */
-      assert(def != NULL);
+      assert(def);
 
       if (mov) {
          /* If the sources were all movs from the same source with the same

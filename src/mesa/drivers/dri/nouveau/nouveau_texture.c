@@ -94,7 +94,7 @@ nouveau_map_texture_image(struct gl_context *ctx,
 	struct nouveau_client *client = context_client(ctx);
 
 	/* Nouveau has no support for 3D or cubemap textures. */
-	assert(slice == 0);
+	assert(!slice);
 
 	if (s->bo) {
 		if (!(mode & GL_MAP_READ_BIT) &&

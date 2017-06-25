@@ -69,7 +69,7 @@ __glXQueryRendererInteger(struct glx_screen *psc, int attribute,
    /* If there was no error, copy the correct number of values from the driver
     * out to the application.
     */
-   if (err == 0)
+   if (!err)
       memcpy(value, buffer, sizeof(unsigned int) * values_for_query);
 
    return err == 0;
@@ -82,20 +82,20 @@ glXQueryRendererIntegerMESA(Display *dpy, int screen,
 {
    struct glx_screen *psc;
 
-   if (dpy == NULL)
+   if (!dpy)
       return False;
 
    /* This probably means the caller passed the wrong display pointer or
     * screen number.
     */
    psc = GetGLXScreenConfigs(dpy, screen);
-   if (psc == NULL)
+   if (!psc)
       return False;
 
    /* Right now only a single renderer per display / screen combination is
     * supported.
     */
-   if (renderer != 0)
+   if (renderer)
       return False;
 
    return __glXQueryRendererInteger(psc, attribute, value);
@@ -133,7 +133,7 @@ __glXQueryRendererString(struct glx_screen *psc, int attribute)
    }
 
    err = psc->vtable->query_renderer_string(psc, attribute, &value);
-   return (err == 0) ? value : NULL;
+   return (!err) ? value : NULL;
 }
 
 _X_HIDDEN const char *
@@ -142,20 +142,20 @@ glXQueryRendererStringMESA(Display *dpy, int screen,
 {
    struct glx_screen *psc;
 
-   if (dpy == NULL)
+   if (!dpy)
       return False;
 
    /* This probably means the caller passed the wrong display pointer or
     * screen number.
     */
    psc = GetGLXScreenConfigs(dpy, screen);
-   if (psc == NULL)
+   if (!psc)
       return False;
 
    /* Right now only a single renderer per display / screen combination is
     * supported.
     */
-   if (renderer != 0)
+   if (renderer)
       return False;
 
    return __glXQueryRendererString(psc, attribute);

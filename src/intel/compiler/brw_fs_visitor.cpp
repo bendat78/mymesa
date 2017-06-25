@@ -444,7 +444,7 @@ fs_visitor::emit_fb_writes()
    prog_data->dual_src_blend = (this->dual_src_output.file != BAD_FILE);
    assert(!prog_data->dual_src_blend || key->nr_color_regions == 1);
 
-   if (inst == NULL) {
+   if (!inst) {
       /* Even if there's no color buffers enabled, we still need to send
        * alpha out the pipeline to our null renderbuffer to support
        * alpha-testing, alpha-to-coverage, and so on.
@@ -648,7 +648,7 @@ fs_visitor::emit_urb_writes(const fs_reg &gs_vertex_count)
           * header, provided the corresponding state properly clamps the
           * values further down the pipeline. */
          if ((vue_map->slots_valid & psiz_mask) == 0) {
-            assert(length == 0);
+            assert(!length);
             urb_offset++;
             break;
          }

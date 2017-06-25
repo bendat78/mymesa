@@ -142,7 +142,7 @@ i915_miptree_layout_cube(struct intel_mipmap_tree * mt)
       for (level = mt->first_level; level <= mt->last_level; level++) {
 	 intel_miptree_set_image_offset(mt, level, face, x, y);
 
-	 if (d == 0)
+	 if (!d)
 	    printf("cube mipmap %d/%d (%d..%d) is 0x0\n",
 		   face, level, mt->first_level, mt->last_level);
 

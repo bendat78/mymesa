@@ -727,7 +727,7 @@ tx_temp_alloc(struct shader_translator *tx, INT idx)
 static inline void
 tx_addr_alloc(struct shader_translator *tx, INT idx)
 {
-    assert(idx == 0);
+    assert(!idx);
     if (ureg_dst_is_undef(tx->regs.address))
         tx->regs.address = ureg_DECL_address(tx->ureg);
     if (ureg_dst_is_undef(tx->regs.a0))
@@ -1959,7 +1959,7 @@ sm1_declusage_to_tgsi(struct tgsi_declaration_semantic *sem,
     case D3DDECLUSAGE_POSITION:
     case D3DDECLUSAGE_POSITIONT:
     case D3DDECLUSAGE_DEPTH:
-        if (index == 0) {
+        if (!index) {
             sem->Name = TGSI_SEMANTIC_POSITION;
             sem->Index = 0;
         } else {
@@ -1977,12 +1977,12 @@ sm1_declusage_to_tgsi(struct tgsi_declaration_semantic *sem,
         }
         break;
     case D3DDECLUSAGE_FOG:
-        assert(index == 0);
+        assert(!index);
         sem->Name = TGSI_SEMANTIC_FOG;
         sem->Index = 0;
         break;
     case D3DDECLUSAGE_PSIZE:
-        assert(index == 0);
+        assert(!index);
         sem->Name = TGSI_SEMANTIC_PSIZE;
         sem->Index = 0;
         break;

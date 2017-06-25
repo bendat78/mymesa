@@ -400,7 +400,7 @@ NineVertexDeclaration9_new_from_fvf( struct NineDevice9 *pDevice,
     /* fill out remaining data */
     for (i = 0; i < nelems; ++i) {
         elems[i].Stream = 0;
-        elems[i].Offset = (i == 0) ? 0 : (elems[i-1].Offset +
+        elems[i].Offset = (!i) ? 0 : (elems[i-1].Offset +
                                           decltype_size(elems[i-1].Type));
         elems[i].Method = D3DDECLMETHOD_DEFAULT;
     }

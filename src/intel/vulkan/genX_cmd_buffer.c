@@ -1350,7 +1350,7 @@ emit_samplers(struct anv_cmd_buffer *cmd_buffer,
       /* This can happen if we have an unfilled slot since TYPE_SAMPLER
        * happens to be zero.
        */
-      if (sampler == NULL)
+      if (!sampler)
          continue;
 
       memcpy(state->map + (s * 16),
@@ -2192,7 +2192,7 @@ void genX(CmdDispatchIndirect)(
    /* Load compute_dispatch_indirect_x_size into SRC0 */
    emit_lrm(batch, MI_PREDICATE_SRC0, bo, bo_offset + 0);
 
-   /* predicate = (compute_dispatch_indirect_x_size == 0); */
+   /* predicate = (!compute_dispatch_indirect_x_size); */
    anv_batch_emit(batch, GENX(MI_PREDICATE), mip) {
       mip.LoadOperation    = LOAD_LOAD;
       mip.CombineOperation = COMBINE_SET;
@@ -2202,7 +2202,7 @@ void genX(CmdDispatchIndirect)(
    /* Load compute_dispatch_indirect_y_size into SRC0 */
    emit_lrm(batch, MI_PREDICATE_SRC0, bo, bo_offset + 4);
 
-   /* predicate |= (compute_dispatch_indirect_y_size == 0); */
+   /* predicate |= (!compute_dispatch_indirect_y_size); */
    anv_batch_emit(batch, GENX(MI_PREDICATE), mip) {
       mip.LoadOperation    = LOAD_LOAD;
       mip.CombineOperation = COMBINE_OR;
@@ -2212,7 +2212,7 @@ void genX(CmdDispatchIndirect)(
    /* Load compute_dispatch_indirect_z_size into SRC0 */
    emit_lrm(batch, MI_PREDICATE_SRC0, bo, bo_offset + 8);
 
-   /* predicate |= (compute_dispatch_indirect_z_size == 0); */
+   /* predicate |= (!compute_dispatch_indirect_z_size); */
    anv_batch_emit(batch, GENX(MI_PREDICATE), mip) {
       mip.LoadOperation    = LOAD_LOAD;
       mip.CombineOperation = COMBINE_OR;
@@ -2354,7 +2354,7 @@ cmd_buffer_emit_depth_stencil(struct anv_cmd_buffer *cmd_buffer)
 
    uint32_t *dw = anv_batch_emit_dwords(&cmd_buffer->batch,
                                         device->isl_dev.ds.size / 4);
-   if (dw == NULL)
+   if (!dw)
       return;
 
    struct isl_depth_stencil_hiz_emit_info info = {

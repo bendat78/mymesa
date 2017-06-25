@@ -243,7 +243,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
       struct gl_buffer_object *bufobj = ib->obj;
       unsigned index_size = ib->index_size;
 
-      if (index_size == 0)
+      if (!index_size)
          goto out_unref_vertex;
 
       if (bufobj && bufobj->Name) {

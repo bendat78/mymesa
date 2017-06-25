@@ -276,7 +276,7 @@ INLINE void adjustTopLeftRuleIntFix16(const __m128i vA, const __m128i vB, __m256
     int msk2 = _mm_movemask_ps(_mm_castsi128_ps(vCmp));
     msk2 &= _mm_movemask_ps(_mm_castsi128_ps(vB));
 
-    // if either of these are true and we're on the line (edge == 0), bump it outside the line
+    // if either of these are true and we're on the line (!edge), bump it outside the line
     vEdge = _mm256_blendv_pd(vEdgeOut, vEdgeAdjust, gMaskToVecpd[msk | msk2]);
 }
 

@@ -234,7 +234,7 @@ static void vp_dump_inputs(struct r200_vertex_program *vp, char *caller)
 {
    int i;
 
-   if(vp == NULL){
+   if(!vp){
       fprintf(stderr, "vp null in call to %s from %s\n", __func__, caller);
       return ;
    }
@@ -560,7 +560,7 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
 	    if (free_inputs & (1 << j)) {
 	       free_inputs &= ~(1 << j);
 	       vp->inputs[VERT_ATTRIB_GENERIC(i)] = j;
-	       if (j == 0) {
+	       if (!j) {
                   /* mapped to pos */
                   vp->inputmap_rev[j] = VERT_ATTRIB_GENERIC(i);
 	       } else if (j < 12) {

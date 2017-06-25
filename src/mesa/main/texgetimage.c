@@ -497,7 +497,7 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
             rgba = dest;
          } else {
             need_convert = true;
-            if (rgba == NULL) { /* Allocate the RGBA buffer only once */
+            if (!rgba) { /* Allocate the RGBA buffer only once */
                rgba = malloc(height * rgba_stride);
                if (!rgba) {
                   _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");
@@ -949,7 +949,7 @@ dimensions_error_check(struct gl_context *ctx,
    /* do special per-target checks */
    switch (target) {
    case GL_TEXTURE_1D:
-      if (yoffset != 0) {
+      if (yoffset) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "%s(1D, yoffset = %d)", caller, yoffset);
          return true;
@@ -963,7 +963,7 @@ dimensions_error_check(struct gl_context *ctx,
    case GL_TEXTURE_1D_ARRAY:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE:
-      if (zoffset != 0) {
+      if (zoffset) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "%s(zoffset = %d)", caller, zoffset);
          return true;

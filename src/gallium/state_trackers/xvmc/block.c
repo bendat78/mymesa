@@ -41,7 +41,7 @@ Status XvMCCreateBlocks(Display *dpy, XvMCContext *context, unsigned int num_blo
 
    if (!context)
       return XvMCBadContext;
-   if (num_blocks == 0)
+   if (!num_blocks)
       return BadValue;
 
    assert(blocks);
@@ -71,7 +71,7 @@ Status XvMCCreateMacroBlocks(Display *dpy, XvMCContext *context, unsigned int nu
 
    if (!context)
       return XvMCBadContext;
-   if (num_blocks == 0)
+   if (!num_blocks)
       return BadValue;
 
    assert(blocks);

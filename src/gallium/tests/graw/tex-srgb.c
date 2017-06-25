@@ -181,7 +181,7 @@ static void init_tex( void )
       sv_temp.swizzle_b = PIPE_SWIZZLE_Z;
       sv_temp.swizzle_a = PIPE_SWIZZLE_W;
       linear_sv = info.ctx->create_sampler_view(info.ctx, texture, &sv_temp);
-      if (linear_sv == NULL)
+      if (!linear_sv)
          exit(0);
    }
 
@@ -196,7 +196,7 @@ static void init_tex( void )
       sv_temp.swizzle_b = PIPE_SWIZZLE_Z;
       sv_temp.swizzle_a = PIPE_SWIZZLE_W;
       srgb_sv = info.ctx->create_sampler_view(info.ctx, texture, &sv_temp);
-      if (srgb_sv == NULL)
+      if (!srgb_sv)
          exit(0);
    }
 #undef SIZE

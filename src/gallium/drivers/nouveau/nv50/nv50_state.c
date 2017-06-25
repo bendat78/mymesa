@@ -646,7 +646,7 @@ nv50_bind_sampler_states(struct pipe_context *pipe,
                          enum pipe_shader_type shader, unsigned start,
                          unsigned num_samplers, void **samplers)
 {
-   assert(start == 0);
+   assert(!start);
    switch (shader) {
    case PIPE_SHADER_VERTEX:
       nv50_vp_sampler_states_bind(pipe, num_samplers, samplers);
@@ -726,7 +726,7 @@ nv50_set_sampler_views(struct pipe_context *pipe, enum pipe_shader_type shader,
                        unsigned start, unsigned nr,
                        struct pipe_sampler_view **views)
 {
-   assert(start == 0);
+   assert(!start);
    switch (shader) {
    case PIPE_SHADER_VERTEX:
       nv50_stage_set_sampler_views(nv50_context(pipe), 0, nr, views);

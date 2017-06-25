@@ -56,7 +56,7 @@ nouveau_buffer_allocate(struct nouveau_screen *screen,
          return false;
       NOUVEAU_DRV_STAT(screen, buf_obj_current_bytes_sys, buf->base.width0);
    } else {
-      assert(domain == 0);
+      assert(!domain);
       if (!nouveau_buffer_malloc(buf))
          return false;
    }
@@ -685,7 +685,7 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
 
    ret = nouveau_buffer_allocate(screen, buffer, buffer->domain);
 
-   if (ret == false)
+   if (!ret)
       goto fail;
 
    if (buffer->domain == NOUVEAU_BO_VRAM && screen->hint_buf_keep_sysmem_copy)

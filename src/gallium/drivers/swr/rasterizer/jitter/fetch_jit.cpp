@@ -1353,7 +1353,7 @@ void FetchJit::Shuffle8bpcGatherd(Shuffle8bpcArgs &args)
                 if (compCtrl[i] == ComponentControl::StoreSrc)
                 {
                     // if x or z, extract 128bits from lane 0, else for y or w, extract from lane 1
-                    uint32_t lane = ((i == 0) || (i == 2)) ? 0 : 1;
+                    uint32_t lane = ((!i) || (i == 2)) ? 0 : 1;
                     // if x or y, use vi128XY permute result, else use vi128ZW
                     Value* selectedPermute = (i < 2) ? vi128XY : vi128ZW;
 
@@ -1572,7 +1572,7 @@ void FetchJit::Shuffle16bpcGather(Shuffle16bpcArgs &args)
                 if (compCtrl[i] == ComponentControl::StoreSrc)
                 {
                     // if x or z, extract 128bits from lane 0, else for y or w, extract from lane 1
-                    uint32_t lane = ((i == 0) || (i == 2)) ? 0 : 1;
+                    uint32_t lane = ((!i) || (i == 2)) ? 0 : 1;
                     // if x or y, use vi128XY permute result, else use vi128ZW
                     Value* selectedPermute = (i < 2) ? vi128XY : vi128ZW;
 
@@ -1654,7 +1654,7 @@ void FetchJit::Shuffle16bpcGather(Shuffle16bpcArgs &args)
                 if (compCtrl[i] == ComponentControl::StoreSrc)
                 {
                     // select correct constMask for x/z or y/w pshufb
-                    uint32_t selectedMask = ((i == 0) || (i == 2)) ? 0 : 1;
+                    uint32_t selectedMask = ((!i) || (i == 2)) ? 0 : 1;
                     // if x or y, use vi128XY permute result, else use vi128ZW
                     uint32_t selectedGather = (i < 2) ? 0 : 1;
 

@@ -53,7 +53,7 @@ get_texcoord(lower_drawpixels_state *state)
       }
 
       /* otherwise create it: */
-      if (texcoord == NULL) {
+      if (!texcoord) {
          texcoord = nir_variable_create(state->shader,
                                         nir_var_shader_in,
                                         glsl_vec4_type(),

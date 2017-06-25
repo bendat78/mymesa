@@ -644,7 +644,7 @@ ac_build_buffer_load(struct ac_llvm_context *ctx,
 
 	/* TODO: VI and later generations can use SMEM with GLC=1.*/
 	if (allow_smem && !glc && !slc) {
-		assert(vindex == NULL);
+		assert(!vindex);
 
 		LLVMValueRef result[4];
 

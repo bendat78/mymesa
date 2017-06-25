@@ -100,7 +100,7 @@ VkResult anv_CreateDescriptorSetLayout(
       const VkDescriptorSetLayoutBinding *binding =
          (void *)set_layout->binding[b].immutable_samplers;
 
-      if (binding == NULL)
+      if (!binding)
          continue;
 
       assert(binding->descriptorCount > 0);
@@ -232,7 +232,7 @@ VkResult anv_CreatePipelineLayout(
 
    layout = vk_alloc2(&device->alloc, pAllocator, sizeof(*layout), 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (layout == NULL)
+   if (!layout)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    layout->num_sets = pCreateInfo->setLayoutCount;
@@ -432,7 +432,7 @@ anv_descriptor_set_create(struct anv_device *device,
       }
    }
 
-   if (set == NULL) {
+   if (!set) {
       if (pool->free_list != EMPTY) {
          return vk_error(VK_ERROR_FRAGMENTED_POOL);
       } else {
@@ -878,7 +878,7 @@ VkResult anv_CreateDescriptorUpdateTemplateKHR(
       pCreateInfo->descriptorUpdateEntryCount * sizeof(template->entries[0]);
    template = vk_alloc2(&device->alloc, pAllocator, size, 8,
                         VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (template == NULL)
+   if (!template)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    if (pCreateInfo->templateType == VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_DESCRIPTOR_SET_KHR)

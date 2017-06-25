@@ -1243,7 +1243,7 @@ static int load_sample_position(struct r600_shader_ctx *ctx, struct r600_shader_
 	vtx.op = FETCH_OP_VFETCH;
 	vtx.buffer_id = R600_BUFFER_INFO_CONST_BUFFER;
 	vtx.fetch_type = SQ_VTX_FETCH_NO_INDEX_OFFSET;
-	if (sample_id == NULL) {
+	if (!sample_id) {
 		vtx.src_gpr = ctx->fixed_pt_position_gpr; // SAMPLEID is in .w;
 		vtx.src_sel_x = 3;
 	}
@@ -4623,7 +4623,7 @@ static int tgsi_scs(struct r600_shader_ctx *ctx)
 				alu.op = ALU_OP1_COS;
 				tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
 
-				if (i == 0)
+				if (!i)
 					alu.dst.write = 1;
 				else
 					alu.dst.write = 0;
@@ -5244,7 +5244,7 @@ static int tgsi_divmod(struct r600_shader_ctx *ctx, int mod, int signed_op)
 
 				alu.dst.sel = tmp0;
 				alu.dst.chan = j;
-				alu.dst.write = (j == 0);
+				alu.dst.write = (!j);
 
 				alu.src[0].sel = tmp3;
 				alu.src[0].chan = 0;
@@ -6519,7 +6519,7 @@ static int tgsi_make_src_for_op3(struct r600_shader_ctx *ctx,
 
 	/* op3 operands don't support abs modifier */
 	if (bc_src->abs) {
-		assert(temp!=0);      /* we actually need the extra register, make sure it is allocated. */
+		assert(temp);      /* we actually need the extra register, make sure it is allocated. */
 		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 		alu.op = ALU_OP1_MOV;
 		alu.dst.sel = temp;
@@ -7128,14 +7128,14 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		int start_val = 0;
 
 		/* if we've already loaded the src (i.e. CUBE don't reload it). */
-		if (src_loaded == TRUE)
+		if (src_loaded)
 			start_val = 1;
 		else
 			src_loaded = TRUE;
 		for (i = start_val; i < 3; i++) {
 			int treg = r600_get_temp(ctx);
 
-			if (i == 0)
+			if (!i)
 				src_gpr = treg;
 			else if (i == 1)
 				temp_h = treg;
@@ -8074,7 +8074,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 
 				alu.dst.sel = ctx->temp_reg;
 				alu.dst.chan = i;
-				if (i == 0)
+				if (!i)
 					alu.dst.write = 1;
 				if (i == 2)
 					alu.last = 1;
@@ -8825,7 +8825,7 @@ static int tgsi_loop_breakc(struct r600_shader_ctx *ctx)
 		if (FC_LOOP == ctx->bc->fc_stack[fscp - 1].type)
 			break;
 	}
-	if (fscp == 0) {
+	if (!fscp) {
 		R600_ERR("BREAKC not inside loop/endloop pair\n");
 		return -EINVAL;
 	}
@@ -8864,7 +8864,7 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 			break;
 	}
 
-	if (fscp == 0) {
+	if (!fscp) {
 		R600_ERR("Break not inside loop/endloop pair\n");
 		return -EINVAL;
 	}

@@ -140,7 +140,7 @@ anv_is_aligned(uintmax_t n, uintmax_t a)
 static inline uint32_t
 anv_minify(uint32_t n, uint32_t levels)
 {
-   if (unlikely(n == 0))
+   if (unlikely(!n))
       return 0;
    else
       return MAX2(n >> levels, 1);

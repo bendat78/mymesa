@@ -83,7 +83,7 @@ void _tnl_register_fastpath( struct tnl_clipspace *vtx,
    struct tnl_clipspace_fastpath *fastpath = CALLOC_STRUCT(tnl_clipspace_fastpath);
    GLuint i;
 
-   if (fastpath == NULL) {
+   if (!fastpath) {
       _mesa_error_no_memory(__func__);
       return;
    }

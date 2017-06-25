@@ -914,7 +914,7 @@ process_qualifier_constant(struct _mesa_glsl_parse_state *state,
 {
    exec_list dummy_instructions;
 
-   if (const_expression == NULL) {
+   if (!const_expression) {
       *value = 0;
       return true;
    }

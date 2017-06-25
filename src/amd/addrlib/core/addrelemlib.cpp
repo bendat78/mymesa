@@ -1143,7 +1143,7 @@ VOID ElemLib::AdjustSurfaceInfo(
     UINT_32 bpp;
     BOOL_32 bBCnFormat = FALSE;
 
-    ADDR_ASSERT(pBpp != NULL);
+    ADDR_ASSERT(pBpp);
     ADDR_ASSERT(pWidth != NULL && pHeight != NULL && pBasePitch != NULL);
 
     if (pBpp)
@@ -1220,8 +1220,8 @@ VOID ElemLib::AdjustSurfaceInfo(
                     width     = width  / expandX;
                     height    = height / expandY;
 #if DEBUG
-                    width     = (width == 0) ? 1 : width;
-                    height    = (height == 0) ? 1 : height;
+                    width     = (!width) ? 1 : width;
+                    height    = (!height) ? 1 : height;
 
                     if ((*pWidth > PowTwoAlign(width, 8) * expandX) ||
                         (*pHeight > PowTwoAlign(height, 8) * expandY)) // 8 is 1D tiling alignment
@@ -1241,8 +1241,8 @@ VOID ElemLib::AdjustSurfaceInfo(
             }
 
             *pBasePitch = basePitch; // 0 is legal value for base pitch.
-            *pWidth     = (width == 0) ? 1 : width;
-            *pHeight    = (height == 0) ? 1 : height;
+            *pWidth     = (!width) ? 1 : width;
+            *pHeight    = (!height) ? 1 : height;
         } //if (pWidth && pHeight && pBasePitch)
     }
 }
@@ -1271,7 +1271,7 @@ VOID ElemLib::RestoreSurfaceInfo(
     UINT_32 height;
     UINT_32 bpp;
 
-    ADDR_ASSERT(pBpp != NULL);
+    ADDR_ASSERT(pBpp);
     ADDR_ASSERT(pWidth != NULL && pHeight != NULL);
 
     if (pBpp)
@@ -1347,8 +1347,8 @@ VOID ElemLib::RestoreSurfaceInfo(
             }
         }
 
-        *pWidth  = (width == 0) ? 1 : width;
-        *pHeight = (height == 0) ? 1 : height;
+        *pWidth  = (!width) ? 1 : width;
+        *pHeight = (!height) ? 1 : height;
     }
 }
 
@@ -1720,7 +1720,7 @@ VOID ElemLib::SetClearComps(
     INT_32 i;
 
     // Use default clearvalues if clearColor is disabled
-    if (clearColor == FALSE)
+    if (!clearColor)
     {
         for (i=0; i<3; i++)
         {

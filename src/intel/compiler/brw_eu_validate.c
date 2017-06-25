@@ -565,7 +565,7 @@ general_restrictions_on_region_parameters(const struct gen_device_info *devinfo,
       element_size = brw_element_size(devinfo, inst, src ## n);                \
       subreg = brw_inst_src ## n ## _da1_subreg_nr(devinfo, inst)
 
-      if (i == 0) {
+      if (!i) {
          DO_SRC(0);
       } else if (i == 1) {
          DO_SRC(1);
@@ -766,7 +766,7 @@ region_alignment_rules(const struct gen_device_info *devinfo,
                          exec_size, element_size, subreg,                      \
                          vstride, width, hstride)
 
-      if (i == 0) {
+      if (!i) {
          DO_SRC(0);
       } else if (i == 1) {
          DO_SRC(1);
@@ -957,7 +957,7 @@ region_alignment_rules(const struct gen_device_info *devinfo,
                   "The offset from the two source registers "                 \
                   "must be the same")
 
-         if (i == 0) {
+         if (!i) {
             DO_SRC(0);
          } else if (i == 1) {
             DO_SRC(1);
@@ -1017,7 +1017,7 @@ region_alignment_rules(const struct gen_device_info *devinfo,
                   "span two registers\n" ERROR_INDENT "(exceptions for scalar "    \
                   "source and packed-word to packed-dword expansion)")
 
-         if (i == 0) {
+         if (!i) {
             DO_SRC(0);
          } else if (i == 1) {
             DO_SRC(1);

@@ -4569,7 +4569,7 @@ exec_64_2_t(struct tgsi_exec_machine *mach,
       bit = ffs(wm);
       if (bit) {
          wm &= ~(1 << (bit - 1));
-         if (i == 0)
+         if (!i)
             fetch_double_channel(mach, &src, &inst->Src[0], TGSI_CHAN_X, TGSI_CHAN_Y);
          else
             fetch_double_channel(mach, &src, &inst->Src[0], TGSI_CHAN_Z, TGSI_CHAN_W);
@@ -4991,7 +4991,7 @@ micro_ibfe(union tgsi_exec_channel *dst,
    for (i = 0; i < 4; i++) {
       int width = src2->i[i] & 0x1f;
       int offset = src1->i[i] & 0x1f;
-      if (width == 0)
+      if (!width)
          dst->i[i] = 0;
       else if (width + offset < 32)
          dst->i[i] = (src0->i[i] << (32 - width - offset)) >> (32 - width);
@@ -5013,7 +5013,7 @@ micro_ubfe(union tgsi_exec_channel *dst,
    for (i = 0; i < 4; i++) {
       int width = src2->u[i] & 0x1f;
       int offset = src1->u[i] & 0x1f;
-      if (width == 0)
+      if (!width)
          dst->u[i] = 0;
       else if (width + offset < 32)
          dst->u[i] = (src0->u[i] << (32 - width - offset)) >> (32 - width);

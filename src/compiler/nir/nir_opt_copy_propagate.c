@@ -86,7 +86,7 @@ is_swizzleless_move(nir_alu_instr *instr)
          if (instr->src[i].swizzle[0] != i)
             return false;
 
-         if (def == NULL) {
+         if (!def) {
             def = instr->src[i].src.ssa;
          } else if (instr->src[i].src.ssa != def) {
             return false;
@@ -166,7 +166,7 @@ copy_prop_alu_src(nir_alu_instr *parent_alu_instr, unsigned index)
             continue;
 
          nir_ssa_def *new_def = alu_instr->src[src->swizzle[i]].src.ssa;
-         if (def == NULL)
+         if (!def)
             def = new_def;
          else {
             if (def != new_def)

@@ -140,7 +140,7 @@ memfd_create(const char *name, unsigned int flags)
 static inline uint32_t
 ilog2_round_up(uint32_t value)
 {
-   assert(value != 0);
+   assert(value);
    return 32 - __builtin_clz(value - 1);
 }
 
@@ -364,7 +364,7 @@ anv_block_pool_expand_range(struct anv_block_pool *pool,
       return vk_errorf(VK_ERROR_MEMORY_MAP_FAILED, "mmap failed: %m");
 
    gem_handle = anv_gem_userptr(pool->device, map, size);
-   if (gem_handle == 0) {
+   if (!gem_handle) {
       munmap(map, size);
       return vk_errorf(VK_ERROR_TOO_MANY_OBJECTS, "userptr failed: %m");
    }
@@ -505,7 +505,7 @@ anv_block_pool_grow(struct anv_block_pool *pool, struct anv_block_state *state)
     * This way things should remain more-or-less balanced.
     */
    uint32_t center_bo_offset;
-   if (back_used == 0) {
+   if (!back_used) {
       /* If we're in this case then we have never called alloc_back().  In
        * this case, we want keep the offset at 0 to make things as simple
        * as possible for users that don't care about back allocations.
@@ -796,7 +796,7 @@ done:
 struct anv_state
 anv_state_pool_alloc(struct anv_state_pool *pool, uint32_t size, uint32_t align)
 {
-   if (size == 0)
+   if (!size)
       return ANV_STATE_NULL;
 
    struct anv_state state = anv_state_pool_alloc_no_vg(pool, size, align);
@@ -894,7 +894,7 @@ void
 anv_state_stream_finish(struct anv_state_stream *stream)
 {
    struct anv_state_stream_block *next = stream->block_list;
-   while (next != NULL) {
+   while (next) {
       struct anv_state_stream_block sb = VG_NOACCESS_READ(next);
       VG(VALGRIND_MEMPOOL_FREE(stream, sb._vg_ptr));
       VG(VALGRIND_MAKE_MEM_UNDEFINED(next, stream->block_size));
@@ -909,7 +909,7 @@ struct anv_state
 anv_state_stream_alloc(struct anv_state_stream *stream,
                        uint32_t size, uint32_t alignment)
 {
-   if (size == 0)
+   if (!size)
       return ANV_STATE_NULL;
 
    assert(alignment <= PAGE_SIZE);
@@ -948,7 +948,7 @@ anv_state_stream_alloc(struct anv_state_stream *stream,
 #ifdef HAVE_VALGRIND
    struct anv_state_stream_block *sb = stream->block_list;
    void *vg_ptr = VG_NOACCESS_READ(&sb->_vg_ptr);
-   if (vg_ptr == NULL) {
+   if (!vg_ptr) {
       vg_ptr = state.map;
       VG_NOACCESS_WRITE(&sb->_vg_ptr, vg_ptr);
       VALGRIND_MEMPOOL_ALLOC(stream, vg_ptr, size);
@@ -984,7 +984,7 @@ anv_bo_pool_finish(struct anv_bo_pool *pool)
 {
    for (unsigned i = 0; i < ARRAY_SIZE(pool->free_list); i++) {
       struct bo_pool_bo_link *link = PFL_PTR(pool->free_list[i]);
-      while (link != NULL) {
+      while (link) {
          struct bo_pool_bo_link link_copy = VG_NOACCESS_READ(link);
 
          anv_gem_munmap(link_copy.bo.map, link_copy.bo.size);
@@ -1089,7 +1089,7 @@ struct anv_bo *
 anv_scratch_pool_alloc(struct anv_device *device, struct anv_scratch_pool *pool,
                        gl_shader_stage stage, unsigned per_thread_scratch)
 {
-   if (per_thread_scratch == 0)
+   if (!per_thread_scratch)
       return NULL;
 
    unsigned scratch_size_log2 = ffs(per_thread_scratch / 2048);

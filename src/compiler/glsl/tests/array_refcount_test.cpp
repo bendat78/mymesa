@@ -165,7 +165,7 @@ validate_variables_in_hash_table(struct hash_table *ht,
       const ir_instruction *const ir = (ir_instruction *) entry->key;
       const ir_variable *const v = ir->as_variable();
 
-      if (v == NULL) {
+      if (!v) {
          ADD_FAILURE() << "Invalid junk in hash table: ir_type = "
                        << ir->ir_type << ", address = "
                        << (void *) ir;
@@ -304,7 +304,7 @@ TEST_F(array_refcount_test, mark_array_elements_referenced_whole_first_array)
    for (unsigned i = 0; i < 3; i++) {
       for (unsigned j = 0; j < 4; j++) {
          for (unsigned k = 0; k < 5; k++) {
-            const bool accessed = (j == 1) && (k == 0);
+            const bool accessed = (j == 1) && (!k);
             const unsigned linearized_index = k + (j * 5) + (i * 4 * 5);
 
             EXPECT_EQ(accessed,
@@ -332,7 +332,7 @@ TEST_F(array_refcount_test, mark_array_elements_referenced_whole_second_array)
    for (unsigned i = 0; i < 3; i++) {
       for (unsigned j = 0; j < 4; j++) {
          for (unsigned k = 0; k < 5; k++) {
-            const bool accessed = (i == 1) && (k == 0);
+            const bool accessed = (i == 1) && (!k);
             const unsigned linearized_index = k + (j * 5) + (i * 4 * 5);
 
             EXPECT_EQ(accessed,

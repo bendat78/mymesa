@@ -342,7 +342,7 @@ lower_distance_visitor::lower_distance_vec8(ir_rvalue *ir)
       if (ir->variable_referenced() == this->old_distance_in_var)
          new_var = &this->new_distance_in_var;
    }
-   if (new_var == NULL)
+   if (!new_var)
       return NULL;
 
    if (ir->as_dereference_variable()) {
@@ -365,7 +365,7 @@ lower_distance_visitor::handle_rvalue(ir_rvalue **rv)
       return;
 
    ir_dereference_array *const array_deref = (*rv)->as_dereference_array();
-   if (array_deref == NULL)
+   if (!array_deref)
       return;
 
    /* Replace any expression that indexes one of the floats in gl_ClipDistance
@@ -374,7 +374,7 @@ lower_distance_visitor::handle_rvalue(ir_rvalue **rv)
     */
    ir_rvalue *lowered_vec8 =
       this->lower_distance_vec8(array_deref->array);
-   if (lowered_vec8 != NULL) {
+   if (lowered_vec8) {
       this->progress = true;
       ir_rvalue *array_index;
       ir_rvalue *swizzle_index;

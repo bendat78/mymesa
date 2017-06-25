@@ -442,14 +442,14 @@ get_aux_bo(struct dri2_egl_surface *dri2_surf,
       dri2_egl_display(dri2_surf->base.Resource.Display);
    __DRIbuffer *b = dri2_surf->dri_buffers[attachment];
 
-   if (b == NULL) {
+   if (!b) {
       b = dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
 					 attachment, format,
 					 dri2_surf->base.Width,
 					 dri2_surf->base.Height);
       dri2_surf->dri_buffers[attachment] = b;
    }
-   if (b == NULL)
+   if (!b)
       return -1;
 
    memcpy(buffer, b, sizeof *buffer);
@@ -526,7 +526,7 @@ dri2_wl_get_buffers_with_format(__DRIdrawable * driDrawable,
    }
 
    *out_count = j;
-   if (j == 0)
+   if (!j)
 	   return NULL;
 
    *width = dri2_surf->base.Width;
@@ -1137,7 +1137,7 @@ dri2_wl_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *disp)
       }
    }
 
-   return (count != 0);
+   return (count);
 }
 
 static EGLBoolean

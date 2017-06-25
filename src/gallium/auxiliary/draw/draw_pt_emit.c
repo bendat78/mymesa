@@ -89,7 +89,7 @@ draw_pt_emit_prepare(struct pt_emit *emit,
       emit_sz = draw_translate_vinfo_size(vinfo->attrib[i].emit);
 
       /* doesn't handle EMIT_OMIT */
-      assert(emit_sz != 0);
+      assert(emit_sz);
 
       if (vinfo->attrib[i].emit == EMIT_1F_PSIZE) {
          src_buffer = 1;
@@ -150,7 +150,7 @@ draw_pt_emit(struct pt_emit *emit,
     */
    draw_do_flush(draw, DRAW_FLUSH_BACKEND);
 
-   if (vertex_count == 0)
+   if (!vertex_count)
       return;
 
    /* XXX: and work out some way to coordinate the render primitive

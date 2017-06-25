@@ -212,7 +212,7 @@ gen6_gs_visitor::gs_end_primitive()
 
    /* Otherwise we know that the last vertex we have processed was the last
     * vertex in the primitive and we need to set its PrimEnd flag, so do this
-    * unless we haven't emitted that vertex at all (vertex_count != 0).
+    * unless we haven't emitted that vertex at all (vertex_count).
     *
     * Notice that we have already incremented vertex_count when we processed
     * the last emit_vertex, so we need to take that into account in the

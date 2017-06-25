@@ -167,12 +167,12 @@ brw_buffer_data(struct gl_context *ctx,
    if (intel_obj->buffer != NULL)
       release_buffer(intel_obj);
 
-   if (size != 0) {
+   if (size) {
       alloc_buffer_object(brw, intel_obj);
       if (!intel_obj->buffer)
          return false;
 
-      if (data != NULL)
+      if (data)
 	 brw_bo_subdata(intel_obj->buffer, 0, size, data);
    }
 
@@ -200,7 +200,7 @@ brw_buffer_subdata(struct gl_context *ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
    bool busy;
 
-   if (size == 0)
+   if (!size)
       return;
 
    assert(intel_obj);
@@ -435,7 +435,7 @@ brw_flush_mapped_buffer_range(struct gl_context *ctx,
    if (intel_obj->range_map_bo[index] == NULL)
       return;
 
-   if (length == 0)
+   if (!length)
       return;
 
    /* Note that we're not unmapping our buffer while executing the blit.  We
@@ -563,7 +563,7 @@ brw_copy_buffer_subdata(struct gl_context *ctx,
    struct intel_buffer_object *intel_dst = intel_buffer_object(dst);
    struct brw_bo *src_bo, *dst_bo;
 
-   if (size == 0)
+   if (!size)
       return;
 
    dst_bo = intel_bufferobj_buffer(brw, intel_dst, write_offset, size);

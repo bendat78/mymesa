@@ -1369,7 +1369,7 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
       /* If the enum isn't valid, the hash walk ends with index 0,
        * pointing to the first entry of values[] which doesn't hold
        * any valid enum. */
-      if (unlikely(idx == 0)) {
+      if (unlikely(!idx)) {
          _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=%s)", func,
                _mesa_enum_to_string(pname));
          return &error_value;
@@ -2169,7 +2169,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
 
    /* ARB_texture_multisample / GL3.2 */
    case GL_SAMPLE_MASK_VALUE:
-      if (index != 0)
+      if (index)
          goto invalid_value;
       if (!ctx->Extensions.ARB_texture_multisample)
          goto invalid_enum;

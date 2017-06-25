@@ -183,7 +183,7 @@ lp_exec_mask_function_init(struct lp_exec_mask *mask, int function_idx)
    ctx->loop_stack_size = 0;
    ctx->switch_stack_size = 0;
 
-   if (function_idx == 0) {
+   if (!function_idx) {
       ctx->ret_mask = mask->ret_mask;
    }
 
@@ -485,7 +485,7 @@ static void lp_exec_endloop(struct gallivm_state *gallivm,
 
    LLVMBuildStore(builder, limiter, ctx->loop_limiter);
 
-   /* i1cond = (mask != 0) */
+   /* i1cond = (mask) */
    i1cond = LLVMBuildICmp(
       builder,
       LLVMIntNE,

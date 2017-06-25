@@ -83,7 +83,7 @@ bool r600_prepare_for_dma_blit(struct r600_common_context *rctx,
 	 */
 	if (rdst->cmask.size && rdst->dirty_level_mask & (1 << dst_level)) {
 		/* The CMASK clear is only enabled for the first level. */
-		assert(dst_level == 0);
+		assert(!dst_level);
 		if (!util_texrange_covers_whole_level(&rdst->resource.b.b, dst_level,
 						      dstx, dsty, dstz, src_box->width,
 						      src_box->height, src_box->depth))

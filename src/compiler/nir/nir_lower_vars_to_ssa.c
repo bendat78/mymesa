@@ -277,7 +277,7 @@ foreach_deref_node_match(nir_deref_var *deref,
    var_deref.deref.child = NULL;
    struct deref_node *node = get_deref_node(&var_deref, state);
 
-   if (node == NULL)
+   if (!node)
       return false;
 
    return foreach_deref_node_worker(node, &deref->deref, cb, state);
@@ -358,7 +358,7 @@ register_load_instr(nir_intrinsic_instr *load_instr,
                     struct lower_variables_state *state)
 {
    struct deref_node *node = get_deref_node(load_instr->variables[0], state);
-   if (node == NULL)
+   if (!node)
       return;
 
    if (node->loads == NULL)
@@ -373,7 +373,7 @@ register_store_instr(nir_intrinsic_instr *store_instr,
                      struct lower_variables_state *state)
 {
    struct deref_node *node = get_deref_node(store_instr->variables[0], state);
-   if (node == NULL)
+   if (!node)
       return;
 
    if (node->stores == NULL)
@@ -391,7 +391,7 @@ register_copy_instr(nir_intrinsic_instr *copy_instr,
       struct deref_node *node =
          get_deref_node(copy_instr->variables[idx], state);
 
-      if (node == NULL)
+      if (!node)
          continue;
 
       if (node->copies == NULL)
@@ -496,7 +496,7 @@ rename_variables(struct lower_variables_state *state)
             struct deref_node *node =
                get_deref_node(intrin->variables[0], state);
 
-            if (node == NULL) {
+            if (!node) {
                /* If we hit this path then we are referencing an invalid
                 * value.  Most likely, we unrolled something and are
                 * reading past the end of some array.  In any case, this
@@ -544,7 +544,7 @@ rename_variables(struct lower_variables_state *state)
             struct deref_node *node =
                get_deref_node(intrin->variables[0], state);
 
-            if (node == NULL) {
+            if (!node) {
                /* Probably an out-of-bounds array store.  That should be a
                 * no-op. */
                nir_instr_remove(&intrin->instr);

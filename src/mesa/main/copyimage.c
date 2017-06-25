@@ -68,7 +68,7 @@ prepare_target_err(struct gl_context *ctx, GLuint name, GLenum target,
                    GLuint *num_samples,
                    const char *dbg_prefix)
 {
-   if (name == 0) {
+   if (!name) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyImageSubData(%sName = %d)", dbg_prefix, name);
       return false;
@@ -121,7 +121,7 @@ prepare_target_err(struct gl_context *ctx, GLuint name, GLenum target,
          return false;
       }
 
-      if (level != 0) {
+      if (level) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCopyImageSubData(%sLevel = %u)", dbg_prefix, level);
          return false;

@@ -428,7 +428,7 @@ nvc0_hw_get_query_result_resource(struct nvc0_context *nvc0,
       qoffset = 8;
       /* fallthrough */
    default:
-      assert(index == 0);
+      assert(!index);
       stride = 1;
       break;
    }

@@ -1228,7 +1228,7 @@ SVGA3D_vgpu10_SetSingleConstantBuffer(struct svga_winsys_context *swc,
 
    assert(offsetInBytes % 256 == 0);
    if (!surface)
-      assert(sizeInBytes == 0);
+      assert(!sizeInBytes);
    else
       assert(sizeInBytes > 0);
 

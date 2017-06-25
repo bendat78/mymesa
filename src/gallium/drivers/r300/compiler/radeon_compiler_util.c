@@ -643,7 +643,7 @@ struct rc_instruction * rc_match_endloop(struct rc_instruction * endloop)
 		if (op == RC_OPCODE_ENDLOOP) {
 			endloop_count++;
 		} else if (op == RC_OPCODE_BGNLOOP) {
-			if (endloop_count == 0) {
+			if (!endloop_count) {
 				return inst;
 			} else {
 				endloop_count--;
@@ -665,7 +665,7 @@ struct rc_instruction * rc_match_bgnloop(struct rc_instruction * bgnloop)
 		if (op == RC_OPCODE_BGNLOOP) {
 			bgnloop_count++;
 		} else if (op == RC_OPCODE_ENDLOOP) {
-			if (bgnloop_count == 0) {
+			if (!bgnloop_count) {
 				return inst;
 			} else {
 				bgnloop_count--;

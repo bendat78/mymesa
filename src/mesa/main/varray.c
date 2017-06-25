@@ -1249,9 +1249,9 @@ error:
 static const GLfloat *
 get_current_attrib(struct gl_context *ctx, GLuint index, const char *function)
 {
-   if (index == 0) {
+   if (!index) {
       if (_mesa_attr_zero_aliases_vertex(ctx)) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION, "%s(index==0)", function);
+	 _mesa_error(ctx, GL_INVALID_OPERATION, "%s(!index)", function);
 	 return NULL;
       }
    }
@@ -1275,7 +1275,7 @@ _mesa_GetVertexAttribfv(GLuint index, GLenum pname, GLfloat *params)
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
       const GLfloat *v = get_current_attrib(ctx, index, "glGetVertexAttribfv");
-      if (v != NULL) {
+      if (v) {
          COPY_4V(params, v);
       }
    }
@@ -1294,7 +1294,7 @@ _mesa_GetVertexAttribdv(GLuint index, GLenum pname, GLdouble *params)
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
       const GLfloat *v = get_current_attrib(ctx, index, "glGetVertexAttribdv");
-      if (v != NULL) {
+      if (v) {
          params[0] = (GLdouble) v[0];
          params[1] = (GLdouble) v[1];
          params[2] = (GLdouble) v[2];
@@ -1317,7 +1317,7 @@ _mesa_GetVertexAttribLdv(GLuint index, GLenum pname, GLdouble *params)
       const GLdouble *v =
          (const GLdouble *)get_current_attrib(ctx, index,
                                               "glGetVertexAttribLdv");
-      if (v != NULL) {
+      if (v) {
          params[0] = v[0];
          params[1] = v[1];
          params[2] = v[2];
@@ -1338,7 +1338,7 @@ _mesa_GetVertexAttribiv(GLuint index, GLenum pname, GLint *params)
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
       const GLfloat *v = get_current_attrib(ctx, index, "glGetVertexAttribiv");
-      if (v != NULL) {
+      if (v) {
          /* XXX should floats in[0,1] be scaled to full int range? */
          params[0] = (GLint) v[0];
          params[1] = (GLint) v[1];
@@ -1362,7 +1362,7 @@ _mesa_GetVertexAttribLui64vARB(GLuint index, GLenum pname, GLuint64EXT *params)
       const GLuint64 *v =
          (const GLuint64 *)get_current_attrib(ctx, index,
                                               "glGetVertexAttribLui64vARB");
-      if (v != NULL) {
+      if (v) {
          params[0] = v[0];
          params[1] = v[1];
          params[2] = v[2];
@@ -1386,7 +1386,7 @@ _mesa_GetVertexAttribIiv(GLuint index, GLenum pname, GLint *params)
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
       const GLint *v = (const GLint *)
 	 get_current_attrib(ctx, index, "glGetVertexAttribIiv");
-      if (v != NULL) {
+      if (v) {
          COPY_4V(params, v);
       }
    }
@@ -1407,7 +1407,7 @@ _mesa_GetVertexAttribIuiv(GLuint index, GLenum pname, GLuint *params)
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
       const GLuint *v = (const GLuint *)
 	 get_current_attrib(ctx, index, "glGetVertexAttribIuiv");
-      if (v != NULL) {
+      if (v) {
          COPY_4V(params, v);
       }
    }
@@ -1745,7 +1745,7 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
          return;
    }
 
-   if (stride==0) {
+   if (!stride) {
       stride = defstride;
    }
 
@@ -1983,7 +1983,7 @@ vertex_array_vertex_buffer(struct gl_context *ctx,
    if (buffer ==
        vao->BufferBinding[VERT_ATTRIB_GENERIC(bindingIndex)].BufferObj->Name) {
       vbo = vao->BufferBinding[VERT_ATTRIB_GENERIC(bindingIndex)].BufferObj;
-   } else if (buffer != 0) {
+   } else if (buffer) {
       vbo = _mesa_lookup_bufferobj(ctx, buffer);
 
       if (!no_error && !vbo && _mesa_is_gles31(ctx)) {

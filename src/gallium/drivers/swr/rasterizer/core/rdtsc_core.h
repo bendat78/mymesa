@@ -132,7 +132,7 @@ INLINE void rdtscReset()
 INLINE void rdtscInit(int threadId)
 {
     // register all the buckets once
-    if (!gBucketsInitialized && (threadId == 0))
+    if (!gBucketsInitialized && (!threadId))
     {
         gBucketMap.resize(NumBuckets);
         for (uint32_t i = 0; i < NumBuckets; ++i)

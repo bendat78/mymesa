@@ -418,7 +418,7 @@ public:                                                                  \
    static void* operator new(size_t size, void *mem_ctx)                 \
    {                                                                     \
       void *p = ALLOC_FUNC(mem_ctx, size);                               \
-      assert(p != NULL);                                                 \
+      assert(p);                                                 \
       if (!HAS_TRIVIAL_DESTRUCTOR(TYPE))                                 \
          ralloc_set_destructor(p, _ralloc_destructor);                   \
       return p;                                                          \

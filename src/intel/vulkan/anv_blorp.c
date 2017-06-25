@@ -651,7 +651,7 @@ void anv_CmdCopyBuffer(
       /* Now make a max-width copy */
       uint64_t height = copy_size / (MAX_SURFACE_DIM * bs);
       assert(height < MAX_SURFACE_DIM);
-      if (height != 0) {
+      if (height) {
          uint64_t rect_copy_size = height * MAX_SURFACE_DIM * bs;
          do_buffer_copy(&batch, src_buffer->bo, src_offset,
                         dst_buffer->bo, dst_offset,
@@ -662,7 +662,7 @@ void anv_CmdCopyBuffer(
       }
 
       /* Finally, make a small copy to finish it off */
-      if (copy_size != 0) {
+      if (copy_size) {
          do_buffer_copy(&batch, src_buffer->bo, src_offset,
                         dst_buffer->bo, dst_offset,
                         copy_size / bs, 1, bs);
@@ -782,7 +782,7 @@ void anv_CmdFillBuffer(
 
    uint64_t height = fillSize / (MAX_SURFACE_DIM * bs);
    assert(height < MAX_SURFACE_DIM);
-   if (height != 0) {
+   if (height) {
       const uint64_t rect_fill_size = height * MAX_SURFACE_DIM * bs;
       get_blorp_surf_for_anv_buffer(cmd_buffer->device,
                                     dst_buffer, dstOffset,
@@ -797,7 +797,7 @@ void anv_CmdFillBuffer(
       dstOffset += rect_fill_size;
    }
 
-   if (fillSize != 0) {
+   if (fillSize) {
       const uint32_t width = fillSize / bs;
       get_blorp_surf_for_anv_buffer(cmd_buffer->device,
                                     dst_buffer, dstOffset,

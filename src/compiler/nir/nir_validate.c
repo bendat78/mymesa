@@ -402,7 +402,7 @@ validate_deref_chain(nir_deref *deref, validate_state *state)
    validate_assert(state, deref->child == NULL || ralloc_parent(deref->child) == deref);
 
    nir_deref *parent = NULL;
-   while (deref != NULL) {
+   while (deref) {
       switch (deref->deref_type) {
       case nir_deref_type_array:
          validate_assert(state, deref->type == glsl_get_array_element(parent->type));
@@ -469,7 +469,7 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
    for (unsigned i = 0; i < num_srcs; i++) {
       unsigned components_read =
          nir_intrinsic_infos[instr->intrinsic].src_components[i];
-      if (components_read == 0)
+      if (!components_read)
          components_read = instr->num_components;
 
       validate_assert(state, components_read > 0);
@@ -485,7 +485,7 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
    if (nir_intrinsic_infos[instr->intrinsic].has_dest) {
       unsigned components_written =
          nir_intrinsic_infos[instr->intrinsic].dest_components;
-      if (components_written == 0)
+      if (!components_written)
          components_written = instr->num_components;
 
       validate_assert(state, components_written > 0);
@@ -745,7 +745,7 @@ validate_block(nir_block *block, validate_state *state)
       }
    } else {
       nir_cf_node *next = nir_cf_node_next(&block->cf_node);
-      if (next == NULL) {
+      if (!next) {
          switch (state->parent_node->type) {
          case nir_cf_node_loop: {
             nir_block *first = nir_loop_first_block(state->loop);

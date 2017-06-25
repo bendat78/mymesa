@@ -74,7 +74,7 @@ emulate_point_sprite(struct svga_context *svga,
    int pos_out_index = -1;
    int aa_point_coord_index = -1;
 
-   assert(tokens != NULL);
+   assert(tokens);
 
    orig_tokens = tokens;
 
@@ -142,7 +142,7 @@ emulate_point_sprite(struct svga_context *svga,
           * stream output declaration with the new register index.
           */
          if (pos_out_index != -1) {
-            assert(orig_gs != NULL);
+            assert(orig_gs);
             templ.stream_output.output[pos_out_index].register_index =
                orig_gs->base.info.num_outputs;
          }
@@ -195,7 +195,7 @@ add_point_sprite_shader(struct svga_context *svga)
    struct svga_geometry_shader *new_gs;
    const struct tgsi_token *tokens;
 
-   if (orig_gs == NULL) {
+   if (!orig_gs) {
 
       /* If this is the first time adding a geometry shader to this
        * vertex shader to support point sprite, then create

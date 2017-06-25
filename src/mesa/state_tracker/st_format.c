@@ -2365,7 +2365,7 @@ st_QueryInternalFormat(struct gl_context *ctx, GLenum target,
    /* The API entry-point gives us a temporary params buffer that is non-NULL
     * and guaranteed to have at least 16 elements.
     */
-   assert(params != NULL);
+   assert(params);
 
    switch (pname) {
    case GL_SAMPLES:

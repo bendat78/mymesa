@@ -231,7 +231,7 @@ sanitize_hash(struct cso_hash *hash, enum cso_cache_type type,
    if (hash_size > max_size)
       to_remove += hash_size - max_size;
 
-   if (to_remove == 0)
+   if (!to_remove)
       return;
 
    if (type == CSO_SAMPLER) {
@@ -1426,7 +1426,7 @@ cso_set_stream_outputs(struct cso_context *ctx,
    uint i;
 
    if (!ctx->has_streamout) {
-      assert(num_targets == 0);
+      assert(!num_targets);
       return;
    }
 
@@ -1513,7 +1513,7 @@ cso_set_constant_buffer(struct cso_context *cso,
 
    pipe->set_constant_buffer(pipe, shader_stage, index, cb);
 
-   if (index == 0) {
+   if (!index) {
       util_copy_constant_buffer(&cso->aux_constbuf_current[shader_stage], cb);
    }
 }

@@ -2503,20 +2503,20 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
    if (lod_control == LP_SAMPLER_LOD_BIAS) {
       lod_bias = lod;
       assert(lod);
-      assert(derivs == NULL);
+      assert(!derivs);
    }
    else if (lod_control == LP_SAMPLER_LOD_EXPLICIT) {
       explicit_lod = lod;
       assert(lod);
-      assert(derivs == NULL);
+      assert(!derivs);
    }
    else if (lod_control == LP_SAMPLER_LOD_DERIVATIVES) {
       assert(derivs);
-      assert(lod == NULL);
+      assert(!lod);
    }
    else {
-      assert(derivs == NULL);
-      assert(lod == NULL);
+      assert(!derivs);
+      assert(!lod);
    }
 
    if (static_texture_state->format == PIPE_FORMAT_NONE) {

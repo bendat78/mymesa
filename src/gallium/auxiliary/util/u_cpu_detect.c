@@ -120,8 +120,8 @@ check_os_altivec_support(void)
 
    err = sysctl(sels, 2, &has_vu, &len, NULL, 0);
 
-   if (err == 0) {
-      if (has_vu != 0) {
+   if (!err) {
+      if (has_vu) {
          util_cpu_caps.has_altivec = 1;
       }
    }

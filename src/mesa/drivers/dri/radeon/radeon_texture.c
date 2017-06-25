@@ -546,7 +546,7 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 	screen = radeon->radeonScreen->driScreen;
 	image = screen->dri2.image->lookupEGLImage(screen, image_handle,
 						   screen->loaderPrivate);
-	if (image == NULL)
+	if (!image)
 		return;
 
 	radeonFreeTextureImageBuffer(ctx, texImage);

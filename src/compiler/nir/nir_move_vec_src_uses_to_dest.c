@@ -106,7 +106,7 @@ move_vec_src_uses_to_dest_block(nir_block *block)
       }
 
       /* We can't actually do anything with this instruction */
-      if (srcs_remaining == 0)
+      if (!srcs_remaining)
          continue;
 
       for (unsigned i; i = ffs(srcs_remaining) - 1, srcs_remaining;) {

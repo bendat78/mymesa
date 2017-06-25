@@ -382,7 +382,7 @@ fs_visitor::optimize_extract_to_float(nir_alu_instr *instr,
       return false;
 
    nir_const_value *element = nir_src_as_const_value(src0->src[1].src);
-   assert(element != NULL);
+   assert(element);
 
    /* Element type to extract.*/
    const brw_reg_type type = brw_int_type(
@@ -1303,7 +1303,7 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
    case nir_op_extract_i8: {
       const brw_reg_type type = brw_int_type(1, instr->op == nir_op_extract_i8);
       nir_const_value *byte = nir_src_as_const_value(instr->src[1].src);
-      assert(byte != NULL);
+      assert(byte);
       bld.MOV(result, subscript(op[0], type, byte->u32[0]));
       break;
    }
@@ -1312,7 +1312,7 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
    case nir_op_extract_i16: {
       const brw_reg_type type = brw_int_type(2, instr->op == nir_op_extract_i16);
       nir_const_value *word = nir_src_as_const_value(instr->src[1].src);
-      assert(word != NULL);
+      assert(word);
       bld.MOV(result, subscript(op[0], type, word->u32[0]));
       break;
    }
@@ -1781,7 +1781,7 @@ fs_visitor::set_gs_stream_control_data_bits(const fs_reg &vertex_count,
    /* Control data bits are initialized to 0 so we don't have to set any
     * bits when sending vertices to stream 0.
     */
-   if (stream_id == 0)
+   if (!stream_id)
       return;
 
    const fs_builder abld = bld.annotate("set stream control data bits", NULL);
@@ -2029,7 +2029,7 @@ fs_visitor::emit_gs_input_load(const fs_reg &dst,
    for (unsigned iter = 0; iter < num_iterations; iter++) {
       if (offset_const) {
          /* Constant indexing - use global offset. */
-         if (first_component != 0) {
+         if (first_component) {
             unsigned read_components = num_components + first_component;
             fs_reg tmp = bld.vgrf(dst.type, read_components);
             inst = bld.emit(SHADER_OPCODE_URB_READ_SIMD8, tmp, icp_handle);
@@ -2054,7 +2054,7 @@ fs_visitor::emit_gs_input_load(const fs_reg &dst,
          fs_reg tmp = bld.vgrf(dst.type, read_components);
          fs_reg payload = bld.vgrf(BRW_REGISTER_TYPE_UD, 2);
          bld.LOAD_PAYLOAD(payload, srcs, ARRAY_SIZE(srcs), 0);
-         if (first_component != 0) {
+         if (first_component) {
             inst = bld.emit(SHADER_OPCODE_URB_READ_SIMD8_PER_SLOT, tmp,
                             payload);
             inst->size_written = read_components *
@@ -2360,7 +2360,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
       for (unsigned iter = 0; iter < num_iterations; iter++) {
          if (indirect_offset.file == BAD_FILE) {
             /* Constant indexing - use global offset. */
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components = num_components + first_component;
                fs_reg tmp = bld.vgrf(dst.type, read_components);
                inst = bld.emit(SHADER_OPCODE_URB_READ_SIMD8, tmp, icp_handle);
@@ -2378,7 +2378,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
             const fs_reg srcs[] = { icp_handle, indirect_offset };
             fs_reg payload = bld.vgrf(BRW_REGISTER_TYPE_UD, 2);
             bld.LOAD_PAYLOAD(payload, srcs, ARRAY_SIZE(srcs), 0);
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components = num_components + first_component;
                fs_reg tmp = bld.vgrf(dst.type, read_components);
                inst = bld.emit(SHADER_OPCODE_URB_READ_SIMD8_PER_SLOT, tmp,
@@ -2448,7 +2448,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
                  retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UD));
 
          {
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components =
                   instr->num_components + first_component;
                fs_reg tmp = bld.vgrf(dst.type, read_components);
@@ -2475,7 +2475,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
          };
          fs_reg payload = bld.vgrf(BRW_REGISTER_TYPE_UD, 2);
          bld.LOAD_PAYLOAD(payload, srcs, ARRAY_SIZE(srcs), 0);
-         if (first_component != 0) {
+         if (first_component) {
             unsigned read_components =
                instr->num_components + first_component;
             fs_reg tmp = bld.vgrf(dst.type, read_components);
@@ -2514,7 +2514,7 @@ fs_visitor::nir_emit_tcs_intrinsic(const fs_builder &bld,
          srcs[header_regs++] = indirect_offset;
       }
 
-      if (mask == 0)
+      if (!mask)
          break;
 
       unsigned num_components = util_last_bit(mask);
@@ -2692,7 +2692,7 @@ fs_visitor::nir_emit_tes_intrinsic(const fs_builder &bld,
             fs_reg patch_handle = bld.vgrf(BRW_REGISTER_TYPE_UD, 1);
             bld.LOAD_PAYLOAD(patch_handle, srcs, ARRAY_SIZE(srcs), 0);
 
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components =
                   instr->num_components + first_component;
                fs_reg tmp = bld.vgrf(dest.type, read_components);
@@ -2738,7 +2738,7 @@ fs_visitor::nir_emit_tes_intrinsic(const fs_builder &bld,
             fs_reg payload = bld.vgrf(BRW_REGISTER_TYPE_UD, 2);
             bld.LOAD_PAYLOAD(payload, srcs, ARRAY_SIZE(srcs), 0);
 
-            if (first_component != 0) {
+            if (first_component) {
                unsigned read_components =
                    num_components + first_component;
                fs_reg tmp = bld.vgrf(dest.type, read_components);
@@ -3805,7 +3805,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       }
 
       nir_const_value *const_offset = nir_src_as_const_value(instr->src[1]);
-      if (const_offset == NULL) {
+      if (!const_offset) {
          fs_reg base_offset = retype(get_nir_src(instr->src[1]),
                                      BRW_REGISTER_TYPE_UD);
 
@@ -4429,7 +4429,7 @@ fs_visitor::nir_emit_texture(const fs_builder &bld, nir_tex_instr *instr)
       unsigned write_mask = instr->dest.is_ssa ?
                             nir_ssa_def_components_read(&instr->dest.ssa):
                             (1 << dest_size) - 1;
-      assert(write_mask != 0); /* dead code should have been eliminated */
+      assert(write_mask); /* dead code should have been eliminated */
       inst->size_written = util_last_bit(write_mask) *
                            inst->dst.component_size(inst->exec_size);
    } else {

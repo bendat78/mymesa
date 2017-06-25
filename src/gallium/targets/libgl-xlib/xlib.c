@@ -55,13 +55,13 @@ swrast_xlib_create_screen( Display *display )
     * drawables:
     */
    winsys = xlib_create_sw_winsys( display );
-   if (winsys == NULL)
+   if (!winsys)
       return NULL;
 
    /* Create a software rasterizer on top of that winsys:
     */
    screen = sw_screen_create( winsys );
-   if (screen == NULL)
+   if (!screen)
       goto fail;
 
    /* Inject any wrapping layers we want to here:

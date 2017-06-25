@@ -50,7 +50,7 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   void *dst, int dst_stride)
 {
-   if (dst_stride == 0)
+   if (!dst_stride)
       dst_stride = util_format_get_stride(pt->resource->format, w);
 
    if (u_clip_tile(x, y, &w, &h, &pt->box))
@@ -71,7 +71,7 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
 {
    enum pipe_format format = pt->resource->format;
 
-   if (src_stride == 0)
+   if (!src_stride)
       src_stride = util_format_get_stride(format, w);
 
    if (u_clip_tile(x, y, &w, &h, &pt->box))

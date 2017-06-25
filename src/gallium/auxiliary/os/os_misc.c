@@ -168,7 +168,7 @@ os_get_total_physical_memory(uint64_t *size)
    status.dwLength = sizeof(status);
    ret = GlobalMemoryStatusEx(&status);
    *size = status.ullTotalPhys;
-   return (ret == TRUE);
+   return (ret);
 #else
 #error unexpected platform in os_sysinfo.c
    return false;

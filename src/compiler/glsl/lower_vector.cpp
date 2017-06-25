@@ -70,7 +70,7 @@ is_extended_swizzle(ir_expression *ir)
    for (unsigned i = 0; i < ir->type->vector_elements; i++) {
       ir_rvalue *op = ir->operands[i];
 
-      while (op != NULL) {
+      while (op) {
 	 switch (op->ir_type) {
 	 case ir_type_constant: {
 	    const ir_constant *const c = op->as_constant();
@@ -85,7 +85,7 @@ is_extended_swizzle(ir_expression *ir)
 	 case ir_type_dereference_variable: {
 	    ir_dereference_variable *const d = (ir_dereference_variable *) op;
 
-	    if ((var != NULL) && (var != d->var))
+	    if ((var) && (var != d->var))
 	       return false;
 
 	    var = d->var;
@@ -123,7 +123,7 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
 
    ir_expression *expr = (*rvalue)->as_expression();
-   if ((expr == NULL) || (expr->operation != ir_quadop_vector))
+   if ((!expr) || (expr->operation != ir_quadop_vector))
       return;
 
    if (this->dont_lower_swz && is_extended_swizzle(expr))
@@ -165,7 +165,7 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
    for (unsigned i = 0; i < expr->type->vector_elements; i++) {
       const ir_constant *const c = expr->operands[i]->as_constant();
 
-      if (c == NULL)
+      if (!c)
 	 continue;
 
       switch (expr->type->base_type) {
@@ -180,7 +180,7 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
       assigned++;
    }
 
-   assert((write_mask == 0) == (assigned == 0));
+   assert((!write_mask) == (!assigned));
 
    /* If there were constant values, generate an assignment.
     */

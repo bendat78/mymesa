@@ -167,12 +167,12 @@ static int check_arith_arg(struct ati_fragment_shader *curProg,
       _mesa_error(ctx, GL_INVALID_ENUM, "C/AFragmentOpATI(arg)");
       return 0;
    }
-   if ((arg == GL_SECONDARY_INTERPOLATOR_ATI) && (((optype == 0) && (argRep == GL_ALPHA)) ||
+   if ((arg == GL_SECONDARY_INTERPOLATOR_ATI) && (((!optype) && (argRep == GL_ALPHA)) ||
       ((optype == 1) && ((arg == GL_ALPHA) || (argRep == GL_NONE))))) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "C/AFragmentOpATI(sec_interp)");
       return 0;
    }
-   if ((arg == GL_SECONDARY_INTERPOLATOR_ATI) && (((optype == 0) && (argRep == GL_ALPHA)) ||
+   if ((arg == GL_SECONDARY_INTERPOLATOR_ATI) && (((!optype) && (argRep == GL_ALPHA)) ||
       ((optype == 1) && ((arg == GL_ALPHA) || (argRep == GL_NONE))))) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "C/AFragmentOpATI(sec_interp)");
       return 0;
@@ -191,7 +191,7 @@ _mesa_GenFragmentShadersATI(GLuint range)
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (range == 0) {
+   if (!range) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenFragmentShadersATI(range)");
       return 0;
    }
@@ -240,7 +240,7 @@ _mesa_BindFragmentShaderATI(GLuint id)
    }
 
    /* find new shader */
-   if (id == 0) {
+   if (!id) {
       newProg = ctx->Shared->DefaultFragmentShader;
    }
    else {
@@ -276,7 +276,7 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
       return;
    }
 
-   if (id != 0) {
+   if (id) {
       struct ati_fragment_shader *prog = (struct ati_fragment_shader *)
 	 _mesa_HashLookup(ctx->Shared->ATIShaders, id);
       if (prog == &DummyShader) {
@@ -596,7 +596,7 @@ _mesa_FragmentOpXATI(GLint optype, GLuint arg_count, GLenum op, GLuint dst,
 
    /* decide whether this is a new instruction or not ... all color instructions are new,
       and alpha instructions might also be new if there was no preceding color inst */
-   if ((optype == 0) || (curProg->last_optype == optype)) {
+   if ((!optype) || (curProg->last_optype == optype)) {
       if (curProg->numArithInstr[curProg->cur_pass >> 1] > 7) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION, "C/AFragmentOpATI(instrCount)");
 	 return;

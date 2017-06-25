@@ -77,7 +77,7 @@ struct QUEUE
 
         // try to lock the FIFO
         LONG initial = InterlockedCompareExchange(&mLock, 1, 0);
-        return (initial == 0);
+        return (!initial);
     }
         
     void unlock()
@@ -87,7 +87,7 @@ struct QUEUE
 
     T* peek()
     {
-        if (mNumEntries == 0)
+        if (!mNumEntries)
         {
             return nullptr;
         }

@@ -140,7 +140,7 @@ find_discard(exec_list &instructions)
 {
    foreach_in_list(ir_instruction, node, &instructions) {
       ir_discard *ir = node->as_discard();
-      if (ir != NULL)
+      if (ir)
 	 return ir;
    }
    return NULL;
@@ -153,7 +153,7 @@ replace_discard(void *mem_ctx, ir_variable *var, ir_discard *ir)
    ir_rvalue *condition = ir->condition;
 
    /* For unconditional discards, use "true" as the condition. */
-   if (condition == NULL)
+   if (!condition)
       condition = new(mem_ctx) ir_constant(true);
 
    ir_assignment *assignment =
@@ -185,10 +185,10 @@ lower_discard_visitor::visit_leave(ir_if *ir)
    ir->insert_before(temp);
    ir->insert_before(temp_initializer);
 
-   if (then_discard != NULL)
+   if (then_discard)
       replace_discard(mem_ctx, temp, then_discard);
 
-   if (else_discard != NULL)
+   if (else_discard)
       replace_discard(mem_ctx, temp, else_discard);
 
    ir_discard *discard = then_discard != NULL ? then_discard : else_discard;

@@ -181,7 +181,7 @@ try_pbo_readpixels(struct st_context *st, struct st_renderbuffer *strb,
       }
 
       sampler_view = pipe->create_sampler_view(pipe, texture, &templ);
-      if (sampler_view == NULL)
+      if (!sampler_view)
          goto fail;
 
       cso_set_sampler_views(cso, PIPE_SHADER_FRAGMENT, 1, &sampler_view);

@@ -230,7 +230,7 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
       shader->func = "texture";
    }
 
-   assert(shader != NULL);
+   assert(shader);
 
    if (shader->shader_prog != NULL) {
       _mesa_meta_use_program(ctx, shader->shader_prog);
@@ -314,7 +314,7 @@ _mesa_meta_setup_vertex_objects(struct gl_context *ctx,
       _mesa_BindVertexArray(*VAO);
 
       array_obj = _mesa_lookup_vao(ctx, *VAO);
-      assert(array_obj != NULL);
+      assert(array_obj);
 
       /* create vertex array buffer */
       *buf_obj = ctx->Driver.NewBufferObject(ctx, 0xDEADBEEF);
@@ -327,7 +327,7 @@ _mesa_meta_setup_vertex_objects(struct gl_context *ctx,
       /* setup vertex arrays */
       FLUSH_VERTICES(ctx, 0);
       if (use_generic_attributes) {
-         assert(color_size == 0);
+         assert(!color_size);
 
          _mesa_update_array_format(ctx, array_obj, VERT_ATTRIB_GENERIC(0),
                                    vertex_size, GL_FLOAT, GL_RGBA, GL_FALSE,
@@ -867,7 +867,7 @@ _mesa_meta_end(struct gl_context *ctx)
       GLuint i;
       for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
          if (!TEST_EQ_4V(ctx->Color.ColorMask[i], save->ColorMask[i])) {
-            if (i == 0) {
+            if (!i) {
                _mesa_ColorMask(save->ColorMask[i][0], save->ColorMask[i][1],
                                save->ColorMask[i][2], save->ColorMask[i][3]);
             }
@@ -1431,7 +1431,7 @@ _mesa_meta_setup_drawpix_texture(struct gl_context *ctx,
          /* create empty texture */
          _mesa_TexImage2D(tex->Target, 0, tex->IntFormat,
                           tex->Width, tex->Height, 0, format, type, NULL);
-         if (save_unpack_obj != NULL)
+         if (save_unpack_obj)
             _mesa_BindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB,
                              save_unpack_obj->Name);
          /* load image */
@@ -2788,7 +2788,7 @@ copytexsubimage_using_blit_framebuffer(struct gl_context *ctx,
       return false;
 
    drawFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (drawFb == NULL)
+   if (!drawFb)
       return false;
 
    _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_DRAW_BUFFERS);
@@ -2920,7 +2920,7 @@ _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    _mesa_meta_begin(ctx, MESA_META_PIXEL_STORE);
 
    if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
-      assert(yoffset == 0);
+      assert(!yoffset);
       ctx->Driver.TexSubImage(ctx, dims, texImage,
                               xoffset, zoffset, 0, width, 1, 1,
                               format, type, buf, &ctx->Unpack);
@@ -3313,7 +3313,7 @@ _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
       _mesa_BindVertexArray(drawtex->VAO);
 
       array_obj = _mesa_lookup_vao(ctx, drawtex->VAO);
-      assert(array_obj != NULL);
+      assert(array_obj);
 
       /* create vertex array buffer */
       drawtex->buf_obj = ctx->Driver.NewBufferObject(ctx, 0xDEADBEEF);
@@ -3529,7 +3529,7 @@ cleartexsubimage_for_zoffset(struct gl_context *ctx,
    bool success;
 
    drawFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (drawFb == NULL)
+   if (!drawFb)
       return false;
 
    _mesa_bind_framebuffers(ctx, drawFb, ctx->ReadBuffer);

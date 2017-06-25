@@ -251,7 +251,7 @@ __glXReportDamage(__DRIdrawable * driDraw,
    }
 
    xrects = malloc(sizeof(XRectangle) * num_rects);
-   if (xrects == NULL)
+   if (!xrects)
       return;
 
    for (i = 0; i < num_rects; i++) {
@@ -424,7 +424,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
    /* Map the framebuffer region. */
    status = drmMap(fd, hFB, framebuffer.size,
                    (drmAddressPtr) & framebuffer.base);
-   if (status != 0) {
+   if (status) {
       ErrorMessageF("drmMap of framebuffer failed (%s)\n", strerror(-status));
       goto handle_error;
    }
@@ -433,7 +433,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
     * each DRI driver's "createNewScreen" function.
     */
    status = drmMap(fd, hSAREA, SAREA_MAX, &pSAREA);
-   if (status != 0) {
+   if (status) {
       ErrorMessageF("drmMap of SAREA failed (%s)\n", strerror(-status));
       goto handle_error;
    }
@@ -448,7 +448,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
                                           loader_extensions,
                                           &driver_configs, psc);
 
-   if (psp == NULL) {
+   if (!psp) {
       ErrorMessageF("Calling driver entry point failed\n");
       goto handle_error;
    }
@@ -607,7 +607,7 @@ dri_create_context(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (pcp == NULL)
+   if (!pcp)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
@@ -746,7 +746,7 @@ driSetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
 
-   if (pdraw != NULL) {
+   if (pdraw) {
       struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
       if (psc->swapControl != NULL) {
@@ -762,7 +762,7 @@ driGetSwapInterval(__GLXDRIdrawable *pdraw)
 {
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
 
-   if (pdraw != NULL) {
+   if (pdraw) {
       struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
       if (psc->swapControl != NULL)
@@ -821,7 +821,7 @@ driCreateScreen(int screen, struct glx_display *priv)
    int i;
 
    psc = calloc(1, sizeof *psc);
-   if (psc == NULL)
+   if (!psc)
       return NULL;
 
    if (!glx_screen_init(&psc->base, screen, priv)) {
@@ -838,7 +838,7 @@ driCreateScreen(int screen, struct glx_display *priv)
       goto cleanup;
 
    extensions = dlsym(psc->driver, __DRI_DRIVER_EXTENSIONS);
-   if (extensions == NULL) {
+   if (!extensions) {
       ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
       goto cleanup;
    }

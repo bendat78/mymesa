@@ -225,18 +225,18 @@ _mesa_meta_pbo_TexSubImage(struct gl_context *ctx, GLuint dims,
    }
 
    readFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (readFb == NULL)
+   if (!readFb)
       goto fail;
 
    drawFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (drawFb == NULL)
+   if (!drawFb)
       goto fail;
 
    _mesa_bind_framebuffers(ctx, drawFb, readFb);
 
    if (tex_image->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
       assert(depth == 1);
-      assert(zoffset == 0);
+      assert(!zoffset);
       depth = height;
       height = 1;
       image_height = 1;
@@ -381,16 +381,16 @@ _mesa_meta_pbo_GetTexSubImage(struct gl_context *ctx, GLuint dims,
       _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
 
    readFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (readFb == NULL)
+   if (!readFb)
       goto fail;
 
    drawFb = ctx->Driver.NewFramebuffer(ctx, 0xDEADBEEF);
-   if (drawFb == NULL)
+   if (!drawFb)
       goto fail;
 
    if (tex_image && tex_image->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
       assert(depth == 1);
-      assert(zoffset == 0);
+      assert(!zoffset);
       depth = height;
       height = 1;
       image_height = 1;

@@ -1151,7 +1151,7 @@ destroy_list(struct gl_context *ctx, GLuint list)
 {
    struct gl_display_list *dlist;
 
-   if (list == 0)
+   if (!list)
       return;
 
    dlist = _mesa_lookup_list(ctx, list);
@@ -5738,7 +5738,7 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
    }
 
    /* If this call has no effect, return early */
-   if (bitmask == 0)
+   if (!bitmask)
       return;
 
    SAVE_FLUSH_VERTICES(ctx);
@@ -9253,7 +9253,7 @@ _mesa_GenLists(GLsizei range)
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenLists");
       return 0;
    }
-   if (range == 0) {
+   if (!range) {
       return 0;
    }
 
@@ -9311,7 +9311,7 @@ _mesa_NewList(GLuint name, GLenum mode)
       _mesa_debug(ctx, "glNewList %u %s\n", name,
                   _mesa_enum_to_string(mode));
 
-   if (name == 0) {
+   if (!name) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glNewList");
       return;
    }
@@ -9417,8 +9417,8 @@ _mesa_CallList(GLuint list)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glCallList %d\n", list);
 
-   if (list == 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glCallList(list==0)");
+   if (!list) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glCallList(!list)");
       return;
    }
 

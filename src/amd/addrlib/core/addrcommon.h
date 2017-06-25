@@ -602,7 +602,7 @@ static inline VOID SafeAssign(
 static inline UINT_32 RoundHalf(
     UINT_32     x)     ///< [in] input value
 {
-    ADDR_ASSERT(x != 0);
+    ADDR_ASSERT(x);
 
 #if 1
     return (x >> 1) + (x & 1);

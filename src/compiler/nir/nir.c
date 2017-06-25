@@ -628,7 +628,7 @@ nir_deref_struct_create(void *mem_ctx, unsigned field_index)
 nir_deref_var *
 nir_deref_var_clone(const nir_deref_var *deref, void *mem_ctx)
 {
-   if (deref == NULL)
+   if (!deref)
       return NULL;
 
    nir_deref_var *ret = nir_deref_var_create(mem_ctx, deref->var);
@@ -666,7 +666,7 @@ deref_struct_clone(const nir_deref_struct *deref, void *mem_ctx)
 nir_deref *
 nir_deref_clone(const nir_deref *deref, void *mem_ctx)
 {
-   if (deref == NULL)
+   if (!deref)
       return NULL;
 
    switch (deref->deref_type) {
@@ -1226,7 +1226,7 @@ static bool
 visit_deref_src(nir_deref_var *deref, nir_foreach_src_cb cb, void *state)
 {
    nir_deref *cur = &deref->deref;
-   while (cur != NULL) {
+   while (cur) {
       if (cur->deref_type == nir_deref_type_array) {
          if (!visit_deref_array_src(nir_deref_as_array(cur), cb, state))
             return false;
@@ -1632,7 +1632,7 @@ nir_ssa_def_components_read(nir_ssa_def *def)
 nir_block *
 nir_block_cf_tree_next(nir_block *block)
 {
-   if (block == NULL) {
+   if (!block) {
       /* nir_foreach_block_safe() will call this function on a NULL block
        * after the last iteration, but it won't use the result so just return
        * NULL here.
@@ -1671,7 +1671,7 @@ nir_block_cf_tree_next(nir_block *block)
 nir_block *
 nir_block_cf_tree_prev(nir_block *block)
 {
-   if (block == NULL) {
+   if (!block) {
       /* do this for consistency with nir_block_cf_tree_next() */
       return NULL;
    }

@@ -305,7 +305,7 @@ _eglConvertIntsToAttribs(const EGLint *int_list, EGLAttrib **out_attrib_list)
          ++len;
    }
 
-   if (len == 0) {
+   if (!len) {
       *out_attrib_list = NULL;
       return EGL_SUCCESS;
    }
@@ -620,7 +620,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
    }
 
    /* Update applications version of major and minor if not NULL */
-   if ((major != NULL) && (minor != NULL)) {
+   if ((major) && (minor != NULL)) {
       *major = disp->Version / 10;
       *minor = disp->Version % 10;
    }
@@ -660,7 +660,7 @@ eglQueryString(EGLDisplay dpy, EGLint name)
 
    if (dpy == EGL_NO_DISPLAY && name == EGL_EXTENSIONS) {
       const char *ret = _eglGetClientExtensionString();
-      if (ret != NULL)
+      if (ret)
          RETURN_EGL_SUCCESS(NULL, ret);
       else
          RETURN_EGL_ERROR(NULL, EGL_BAD_ALLOC, NULL);
@@ -872,7 +872,7 @@ _eglCreateWindowSurfaceCommon(_EGLDisplay *disp, EGLConfig config,
    EGLSurface ret;
 
 
-   if (native_window == NULL)
+   if (!native_window)
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
 
 #ifdef HAVE_SURFACELESS_PLATFORM
@@ -1944,7 +1944,7 @@ _eglWaitSyncCommon(_EGLDisplay *disp, _EGLSync *s, EGLint flags)
       RETURN_EGL_ERROR(disp, EGL_BAD_MATCH, EGL_FALSE);
 
    /* the API doesn't allow any flags yet */
-   if (flags != 0)
+   if (flags)
       RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
 
    ret = drv->API.WaitSyncKHR(drv, disp, s);
@@ -2341,7 +2341,7 @@ eglLabelObjectKHR(EGLDisplay dpy, EGLenum objectType, EGLObjectKHR object,
    }
 
    disp = _eglLockDisplay(dpy);
-   if (disp == NULL)
+   if (!disp)
       RETURN_EGL_ERROR(disp, EGL_BAD_DISPLAY, EGL_BAD_DISPLAY);
 
    if (objectType == EGL_OBJECT_DISPLAY_KHR) {
@@ -2398,7 +2398,7 @@ eglDebugMessageControlKHR(EGLDEBUGPROCKHR callback,
    mtx_lock(_eglGlobal.Mutex);
 
    newEnabled = _eglGlobal.debugTypesEnabled;
-   if (attrib_list != NULL) {
+   if (attrib_list) {
       int i;
 
       for (i = 0; attrib_list[i] != EGL_NONE; i += 2) {
@@ -2419,7 +2419,7 @@ eglDebugMessageControlKHR(EGLDEBUGPROCKHR callback,
       }
    }
 
-   if (callback != NULL) {
+   if (callback) {
       _eglGlobal.debugCallback = callback;
       _eglGlobal.debugTypesEnabled = newEnabled;
    } else {

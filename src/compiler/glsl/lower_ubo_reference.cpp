@@ -131,7 +131,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
 
    /* Loop back through the IR until we find the uniform block */
    ir_rvalue *ir = d;
-   while (ir != NULL) {
+   while (ir) {
       switch (ir->ir_type) {
       case ir_type_dereference_variable: {
          /* Exit loop */
@@ -171,7 +171,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
       }
    }
 
-   while (d != NULL) {
+   while (d) {
       switch (d->ir_type) {
       case ir_type_dereference_variable: {
          ir_dereference_variable *v = (ir_dereference_variable *) d;
@@ -191,7 +191,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
          ir_dereference_array *a = (ir_dereference_array *) d;
          size_t new_length;
 
-         if (name_copy == NULL) {
+         if (!name_copy) {
             name_copy = ralloc_strdup(mem_ctx, base_name);
             base_length = strlen(name_copy);
          }
@@ -702,7 +702,7 @@ lower_ubo_reference_visitor::calculate_unsized_array_stride(ir_dereference *dere
       ir_dereference_record *deref_record = (ir_dereference_record *) deref;
       ir_dereference *interface_deref =
          deref_record->record->as_dereference();
-      assert(interface_deref != NULL);
+      assert(interface_deref);
       const struct glsl_type *interface_type = interface_deref->type;
       unsigned record_length = interface_type->length;
       /* Unsized array is always the last element of the interface */

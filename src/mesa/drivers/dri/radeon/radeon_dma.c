@@ -140,7 +140,7 @@ void rcommon_emit_vector(struct gl_context * ctx, struct radeon_aos *aos,
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	uint32_t *out;
 
-	if (stride == 0) {
+	if (!stride) {
 		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * 4, 32);
 		count = 1;
 		aos->stride = 0;
@@ -178,7 +178,7 @@ void rcommon_emit_vecfog(struct gl_context *ctx, struct radeon_aos *aos,
 		fprintf(stderr, "%s count %d stride %d\n",
 			__func__, count, stride);
 
-	if (stride == 0) {
+	if (!stride) {
 		radeonAllocDmaRegion( rmesa, &aos->bo, &aos->offset, size * 4, 32 );
 		count = 1;
 		aos->stride = 0;

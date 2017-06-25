@@ -55,7 +55,7 @@ anv_gem_create(struct anv_device *device, uint64_t size)
    };
 
    int ret = anv_ioctl(device->fd, DRM_IOCTL_I915_GEM_CREATE, &gem_create);
-   if (ret != 0) {
+   if (ret) {
       /* FIXME: What do we do if this fails? */
       return 0;
    }
@@ -88,7 +88,7 @@ anv_gem_mmap(struct anv_device *device, uint32_t gem_handle,
    };
 
    int ret = anv_ioctl(device->fd, DRM_IOCTL_I915_GEM_MMAP, &gem_mmap);
-   if (ret != 0)
+   if (ret)
       return MAP_FAILED;
 
    VG(VALGRIND_MALLOCLIKE_BLOCK(gem_mmap.addr_ptr, gem_mmap.size, 0, 1));
@@ -221,7 +221,7 @@ anv_gem_get_param(int fd, uint32_t param)
    };
 
    int ret = anv_ioctl(fd, DRM_IOCTL_I915_GETPARAM, &gp);
-   if (ret == 0)
+   if (!ret)
       return tmp;
 
    return 0;
@@ -257,7 +257,7 @@ anv_gem_get_bit6_swizzle(int fd, uint32_t tiling)
       ret = ioctl(fd, DRM_IOCTL_I915_GEM_SET_TILING, &set_tiling);
    } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
 
-   if (ret != 0) {
+   if (ret) {
       assert(!"Failed to set BO tiling");
       goto close_and_return;
    }
@@ -361,7 +361,7 @@ anv_gem_gpu_get_reset_stats(struct anv_device *device,
    };
 
    int ret = anv_ioctl(device->fd, DRM_IOCTL_I915_GET_RESET_STATS, &stats);
-   if (ret == 0) {
+   if (!ret) {
       *active = stats.batch_active;
       *pending = stats.batch_pending;
    }

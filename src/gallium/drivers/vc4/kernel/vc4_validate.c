@@ -137,7 +137,7 @@ gl_shader_rec_size(uint32_t pointer_bits)
 	uint32_t attribute_count = pointer_bits & 7;
 	bool extended = pointer_bits & 8;
 
-	if (attribute_count == 0)
+	if (!attribute_count)
 		attribute_count = 8;
 
 	if (extended)
@@ -593,9 +593,9 @@ reloc_tex(struct vc4_exec_info *exec,
 		return true;
 	}
 
-	if (width == 0)
+	if (!width)
 		width = 2048;
-	if (height == 0)
+	if (!height)
 		height = 2048;
 
 	if (p0 & VC4_TEX_P0_CMMODE_MASK) {
@@ -746,7 +746,7 @@ validate_gl_shader_rec(struct drm_device *dev,
 	int i;
 
 	nr_attributes = state->addr & 0x7;
-	if (nr_attributes == 0)
+	if (!nr_attributes)
 		nr_attributes = 8;
 	packet_size = gl_shader_rec_size(state->addr);
 
@@ -818,7 +818,7 @@ validate_gl_shader_rec(struct drm_device *dev,
 
 		*(uint32_t *)(pkt_v + o) = bo[i]->paddr + src_offset;
 
-		if (src_offset != 0) {
+		if (src_offset) {
 			DRM_ERROR("Shaders must be at offset 0 of "
 				  "the BO.\n");
 			return -EINVAL;
@@ -889,7 +889,7 @@ validate_gl_shader_rec(struct drm_device *dev,
 			return -EINVAL;
 		}
 
-		if (stride != 0) {
+		if (stride) {
 			max_index = ((vbo->base.size - offset - attr_size) /
 				     stride);
 			if (state->max_index > max_index) {

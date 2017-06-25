@@ -1618,7 +1618,7 @@ class ThreadWithParam : public ThreadWithParamBase {
   }
 
   virtual void Run() {
-    if (thread_can_start_ != NULL)
+    if (thread_can_start_)
       thread_can_start_->WaitForNotification();
     func_(param_);
   }
@@ -2075,7 +2075,7 @@ class ThreadLocal {
   T* GetOrCreateValue() const {
     ThreadLocalValueHolderBase* const holder =
         static_cast<ThreadLocalValueHolderBase*>(pthread_getspecific(key_));
-    if (holder != NULL) {
+    if (holder) {
       return CheckedDowncastToActualType<ValueHolder>(holder)->pointer();
     }
 

@@ -183,7 +183,7 @@ int test_optpass(int argc, char **argv)
    int idx = 0;
    int c;
    while ((c = getopt_long(argc, argv, "", optpass_opts, &idx)) != -1) {
-      if (c != 0) {
+      if (c) {
          printf("*** usage: %s optpass <optimizations> <options>\n", argv[0]);
          printf("\n");
          printf("Possible options are:\n");

@@ -712,7 +712,7 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
          GLint shift = 0;
 
          for (i = 0; i < n; i++) {
-            if (shift == 0)
+            if (!shift)
                *dst = 0;
             *dst |= ((source[i] != 0) << shift);
             shift++;

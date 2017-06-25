@@ -270,7 +270,7 @@ lower_packed_varyings_visitor::run(struct gl_linked_shader *shader)
 {
    foreach_in_list(ir_instruction, node, shader->ir) {
       ir_variable *var = node->as_variable();
-      if (var == NULL)
+      if (!var)
          continue;
 
       if (var->data.mode != this->mode ||
@@ -522,7 +522,7 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
 
    if (rvalue->type->is_record()) {
       for (unsigned i = 0; i < rvalue->type->length; i++) {
-         if (i != 0)
+         if (i)
             rvalue = rvalue->clone(this->mem_ctx, NULL);
          const char *field_name = rvalue->type->fields.structure[i].name;
          ir_dereference_record *dereference_record = new(this->mem_ctx)
@@ -651,7 +651,7 @@ lower_packed_varyings_visitor::lower_arraylike(ir_rvalue *rvalue,
                                                unsigned vertex_index)
 {
    for (unsigned i = 0; i < array_size; i++) {
-      if (i != 0)
+      if (i)
          rvalue = rvalue->clone(this->mem_ctx, NULL);
       ir_constant *constant = new(this->mem_ctx) ir_constant(i);
       ir_dereference_array *dereference_array = new(this->mem_ctx)

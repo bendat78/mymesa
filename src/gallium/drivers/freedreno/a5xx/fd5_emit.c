@@ -348,7 +348,7 @@ emit_ssbos(struct fd_context *ctx, struct fd_ringbuffer *ring,
 {
 	unsigned count = util_last_bit(so->enabled_mask);
 
-	if (count == 0)
+	if (!count)
 		return;
 
 	OUT_PKT7(ring, CP_LOAD_STATE4, 3 + (4 * count));

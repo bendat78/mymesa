@@ -410,7 +410,7 @@ copy_array_to_vbo_array(struct brw_context *brw,
     * attribute once and set the buffer's stride to 0.  There's no need
     * to replicate it out.
     */
-   if (src_stride == 0) {
+   if (!src_stride) {
       intel_upload_data(brw, element->glarray->Ptr,
                         element->glarray->_ElementSize,
                         element->glarray->_ElementSize,
@@ -434,7 +434,7 @@ copy_array_to_vbo_array(struct brw_context *brw,
     *
     * In this case, let's the dst with undefined values
     */
-   if (src != NULL) {
+   if (src) {
       if (dst_stride == src_stride) {
          memcpy(dst, src, size);
       } else {
@@ -579,7 +579,7 @@ brw_prepare_vertices(struct brw_context *brw)
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
 	  */
-	 if (nr_uploads == 0) {
+	 if (!nr_uploads) {
 	    interleaved = glarray->StrideB;
 	    ptr = glarray->Ptr;
 	 }
@@ -719,7 +719,7 @@ brw_upload_indices(struct brw_context *brw)
    GLuint offset;
    GLuint ib_type_size;
 
-   if (index_buffer == NULL)
+   if (!index_buffer)
       return;
 
    ib_type_size = index_buffer->index_size;

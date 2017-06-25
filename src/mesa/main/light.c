@@ -734,7 +734,7 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
                   _mesa_enum_to_string(mode));
 
    bitmask = _mesa_material_bitmask(ctx, face, mode, legal, "glColorMaterial");
-   if (bitmask == 0)
+   if (!bitmask)
       return; /* error was recorded */
 
    if (ctx->Light._ColorMaterialBitmask == bitmask &&
@@ -1122,7 +1122,7 @@ static void
 init_light( struct gl_light *l, GLuint n )
 {
    ASSIGN_4V( l->Ambient, 0.0, 0.0, 0.0, 1.0 );
-   if (n==0) {
+   if (!n) {
       ASSIGN_4V( l->Diffuse, 1.0, 1.0, 1.0, 1.0 );
       ASSIGN_4V( l->Specular, 1.0, 1.0, 1.0, 1.0 );
    }

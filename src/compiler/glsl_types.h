@@ -157,7 +157,7 @@ struct glsl_type {
       void *type;
 
       type = ralloc_size(glsl_type::mem_ctx, size);
-      assert(type != NULL);
+      assert(type);
 
       mtx_unlock(&glsl_type::mem_mutex);
 

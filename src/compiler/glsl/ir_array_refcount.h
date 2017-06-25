@@ -94,7 +94,7 @@ public:
    /** Has a linearized array index been referenced? */
    bool is_linearized_index_referenced(unsigned linearized_index) const
    {
-      assert(bits != 0);
+      assert(bits);
       assert(linearized_index <= num_bits);
 
       return BITSET_TEST(bits, linearized_index);

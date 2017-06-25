@@ -920,7 +920,7 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 	ret = evergreen_fill_tex_resource_words(rctx, texture, &params,
 						&view->skip_mip_address_reloc,
 						view->tex_resource_words);
-	if (ret != 0) {
+	if (ret) {
 		FREE(view);
 		return NULL;
 	}
@@ -3186,7 +3186,7 @@ void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader
 		exports_ps = 2;
 	}
 	shader->nr_ps_color_outputs = num_cout;
-	if (ninterp == 0) {
+	if (!ninterp) {
 		ninterp = 1;
 		have_perspective = TRUE;
 	}

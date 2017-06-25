@@ -344,7 +344,7 @@ NineAdapter9_CheckDeviceFormat( struct NineAdapter9 *This,
          * compatibility (a WONTIMPL of nine) + format conversion (useful in
          * particular for YUV because the format was not advertised for textures
          * on NV chips). */
-        if (Usage == 0)
+        if (!Usage)
             bind |= PIPE_BIND_RENDER_TARGET; /* A current requirement of our impl, which we should get rid of. */
     default:
         break;

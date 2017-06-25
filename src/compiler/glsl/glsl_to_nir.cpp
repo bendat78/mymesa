@@ -209,7 +209,7 @@ nir_visitor::evaluate_deref(nir_instr *mem_ctx, ir_instruction *ir)
 static nir_constant *
 constant_copy(ir_constant *ir, void *mem_ctx)
 {
-   if (ir == NULL)
+   if (!ir)
       return NULL;
 
    nir_constant *ret = ralloc(mem_ctx, nir_constant);
@@ -2146,7 +2146,7 @@ nir_visitor::visit(ir_dereference_array *ir)
    deref->deref.type = ir->type;
 
    ir_constant *const_index = ir->array_index->as_constant();
-   if (const_index != NULL) {
+   if (const_index) {
       deref->deref_array_type = nir_deref_array_type_direct;
       deref->base_offset = const_index->value.u[0];
    } else {

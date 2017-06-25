@@ -97,7 +97,7 @@ output_read_remover::visit(ir_dereference_variable *ir)
    ir_variable *temp = entry ? (ir_variable *) entry->data : NULL;
 
    /* If we don't have an existing temporary, create one. */
-   if (temp == NULL) {
+   if (!temp) {
       void *var_ctx = ralloc_parent(ir->var);
       temp = new(var_ctx) ir_variable(ir->var->type, ir->var->name,
                                       ir_var_temporary);

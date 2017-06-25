@@ -189,7 +189,7 @@ static void brwDeleteProgram( struct gl_context *ctx,
     *
     * We cannot set brw->foo_program to NULL, either.  If we've deleted the
     * active program, Mesa may set ctx->FooProgram._Current to NULL.  That
-    * would cause us to see matching pointers (NULL == NULL), and fail to
+    * would cause us to see matching pointers (!NULL), and fail to
     * detect that a program has changed since our last draw.
     *
     * So, set it to a bogus gl_program pointer that will never match,
@@ -434,7 +434,7 @@ print_shader_time_line(const char *stage, const char *name,
 {
    fprintf(stderr, "%-6s%-18s", stage, name);
 
-   if (shader_num != 0)
+   if (shader_num)
       fprintf(stderr, "%4d: ", shader_num);
    else
       fprintf(stderr, "    : ");
@@ -507,7 +507,7 @@ brw_report_shader_time(struct brw_context *brw)
       total += scaled[i];
    }
 
-   if (total == 0) {
+   if (!total) {
       fprintf(stderr, "No shader time collected yet\n");
       return;
    }

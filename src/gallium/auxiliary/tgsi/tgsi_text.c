@@ -1193,7 +1193,7 @@ parse_instruction(
       ctx->tokens_cur,
       ctx->header,
       (uint) (ctx->tokens_end - ctx->tokens_cur) );
-   if (advance == 0)
+   if (!advance)
       return FALSE;
    ctx->tokens_cur += advance;
 
@@ -1603,7 +1603,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       ctx->header,
       (uint) (ctx->tokens_end - ctx->tokens_cur) );
 
-   if (advance == 0)
+   if (!advance)
       return FALSE;
    ctx->tokens_cur += advance;
 
@@ -1664,7 +1664,7 @@ static boolean parse_immediate( struct translate_ctx *ctx )
       ctx->tokens_cur,
       ctx->header,
       (uint) (ctx->tokens_end - ctx->tokens_cur) );
-   if (advance == 0)
+   if (!advance)
       return FALSE;
    ctx->tokens_cur += advance;
 
@@ -1817,7 +1817,7 @@ static boolean parse_property( struct translate_ctx *ctx )
       ctx->tokens_cur,
       ctx->header,
       (uint) (ctx->tokens_end - ctx->tokens_cur) );
-   if (advance == 0)
+   if (!advance)
       return FALSE;
    ctx->tokens_cur += advance;
 

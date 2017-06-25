@@ -339,7 +339,7 @@ int main(int argc, char **argv)
 		char *ext = rindex(filename, '.');
 
 		if (strcmp(ext, ".tgsi") == 0) {
-			if (num_files != 0)
+			if (num_files)
 				errx(1, "in TGSI mode, only a single file may be specified");
 			s.from_tgsi = true;
 		} else if (strcmp(ext, ".frag") == 0) {

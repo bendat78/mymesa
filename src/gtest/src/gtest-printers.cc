@@ -65,7 +65,7 @@ void PrintByteSegmentInObjectTo(const unsigned char* obj_bytes, size_t start,
   char text[5] = "";
   for (size_t i = 0; i != count; i++) {
     const size_t j = start + i;
-    if (i != 0) {
+    if (i) {
       // Organizes the bytes into groups of 2 for easy parsing by
       // human.
       if ((j % 2) == 0)
@@ -223,7 +223,7 @@ void PrintCharAndCodeTo(Char c, ostream* os) {
   // To aid user debugging, we also print c's code in decimal, unless
   // it's 0 (in which case c was printed as '\\0', making the code
   // obvious).
-  if (c == 0)
+  if (!c)
     return;
   *os << " (" << static_cast<int>(c);
 
@@ -318,7 +318,7 @@ void UniversalPrintArray(const wchar_t* begin, size_t len, ostream* os) {
 
 // Prints the given C string to the ostream.
 void PrintTo(const char* s, ostream* os) {
-  if (s == NULL) {
+  if (!s) {
     *os << "NULL";
   } else {
     *os << ImplicitCast_<const void*>(s) << " pointing to ";
@@ -335,7 +335,7 @@ void PrintTo(const char* s, ostream* os) {
 #if !defined(_MSC_VER) || defined(_NATIVE_WCHAR_T_DEFINED)
 // Prints the given wide C string to the ostream.
 void PrintTo(const wchar_t* s, ostream* os) {
-  if (s == NULL) {
+  if (!s) {
     *os << "NULL";
   } else {
     *os << ImplicitCast_<const void*>(s) << " pointing to ";

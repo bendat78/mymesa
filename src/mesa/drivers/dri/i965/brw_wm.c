@@ -194,7 +194,7 @@ brw_codegen_wm_prog(struct brw_context *brw,
                             true, false, vue_map,
                             &program_size, &error_str);
 
-   if (program == NULL) {
+   if (!program) {
       if (!fp->program.is_arb_asm) {
          fp->program.sh.data->LinkStatus = linking_failure;
          ralloc_strcat(&fp->program.sh.data->InfoLog, error_str);

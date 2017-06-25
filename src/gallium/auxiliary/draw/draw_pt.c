@@ -99,7 +99,7 @@ draw_pt_arrays(struct draw_context *draw,
    if (draw->pt.middle.llvm) {
       middle = draw->pt.middle.llvm;
    } else {
-      if (opt == 0)
+      if (!opt)
          middle = draw->pt.middle.fetch_emit;
       else if (opt == PT_SHADE && !draw->pt.no_fse)
          middle = draw->pt.middle.fetch_shade_emit;
@@ -439,7 +439,7 @@ resolve_draw_info(const struct pipe_draw_info *raw_info,
    if (raw_info->count_from_stream_output) {
       struct draw_so_target *target =
          (struct draw_so_target *)info->count_from_stream_output;
-      assert(vertex_buffer != NULL);
+      assert(vertex_buffer);
       info->count = target->internal_offset / vertex_buffer->stride;
 
       /* Stream output draw can not be indexed */
@@ -523,7 +523,7 @@ draw_vbo(struct draw_context *draw,
    if (!draw->llvm)
 #endif
    {
-      if (index_limit == 0) {
+      if (!index_limit) {
          /* one of the buffers is too small to do any valid drawing */
          debug_warning("draw: VBO too small to draw anything\n");
          util_fpstate_set(fpstate);

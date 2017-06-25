@@ -352,7 +352,7 @@ vmw_ioctl_gb_surface_ref(struct vmw_winsys_screen *vws,
 
    vmw_printf("%s flags %d format %d\n", __FUNCTION__, flags, format);
 
-   assert(p_region != NULL);
+   assert(p_region);
    region = CALLOC_STRUCT(vmw_region);
    if (!region)
       return -ENOMEM;
@@ -666,7 +666,7 @@ vmw_ioctl_fence_unref(struct vmw_winsys_screen *vws,
 
    ret = drmCommandWrite(vws->ioctl.drm_fd, DRM_VMW_FENCE_UNREF,
 			 &arg, sizeof(arg));
-   if (ret != 0)
+   if (ret)
       vmw_error("%s Failed\n", __FUNCTION__);
 }
 
@@ -700,7 +700,7 @@ vmw_ioctl_fence_signalled(struct vmw_winsys_screen *vws,
    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_FENCE_SIGNALED,
 			     &arg, sizeof(arg));
 
-   if (ret != 0)
+   if (ret)
       return ret;
 
    vmw_fences_signal(vws->fence_ops, arg.passed_seqno, 0, FALSE);
@@ -729,7 +729,7 @@ vmw_ioctl_fence_finish(struct vmw_winsys_screen *vws,
    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_FENCE_WAIT,
 			     &arg, sizeof(arg));
 
-   if (ret != 0)
+   if (ret)
       vmw_error("%s Failed\n", __FUNCTION__);
 
    return 0;

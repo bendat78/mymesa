@@ -827,7 +827,7 @@ endBinTriangles:
         desc.triFlags.viewportIndex = pViewportIndex[triIndex];
 
         auto pArena = pDC->pArena;
-        SWR_ASSERT(pArena != nullptr);
+        SWR_ASSERT(pArena);
 
         // store active attribs
         float *pAttribs = (float*)pArena->AllocAligned(numScalarAttribs * 3 * sizeof(float), 16);
@@ -1291,7 +1291,7 @@ endBinTriangles:
         desc.triFlags.viewportIndex = pViewportIndex[triIndex];
 
         auto pArena = pDC->pArena;
-        SWR_ASSERT(pArena != nullptr);
+        SWR_ASSERT(pArena);
 
         // store active attribs
         float *pAttribs = (float*)pArena->AllocAligned(numScalarAttribs * 3 * sizeof(float), 16);
@@ -1486,7 +1486,7 @@ void BinPostSetupPoints(
             work.pfnWork = RasterizeSimplePoint;
 
             auto pArena = pDC->pArena;
-            SWR_ASSERT(pArena != nullptr);
+            SWR_ASSERT(pArena);
 
             // store attributes
             float *pAttribs = (float*)pArena->AllocAligned(3 * numScalarAttribs * sizeof(float), 16);
@@ -1636,7 +1636,7 @@ void BinPostSetupPoints(
             work.pfnWork = RasterizeTriPoint;
 
             auto pArena = pDC->pArena;
-            SWR_ASSERT(pArena != nullptr);
+            SWR_ASSERT(pArena);
 
             // store active attribs
             desc.pAttribs = (float*)pArena->AllocAligned(numScalarAttribs * 3 * sizeof(float), 16);
@@ -1870,7 +1870,7 @@ void BinPostSetupPoints_simd16(
             work.pfnWork = RasterizeSimplePoint;
 
             auto pArena = pDC->pArena;
-            SWR_ASSERT(pArena != nullptr);
+            SWR_ASSERT(pArena);
 
             // store attributes
             float *pAttribs = (float*)pArena->AllocAligned(3 * numScalarAttribs * sizeof(float), 16);
@@ -2025,7 +2025,7 @@ void BinPostSetupPoints_simd16(
             work.pfnWork = RasterizeTriPoint;
 
             auto pArena = pDC->pArena;
-            SWR_ASSERT(pArena != nullptr);
+            SWR_ASSERT(pArena);
 
             // store active attribs
             desc.pAttribs = (float*)pArena->AllocAligned(numScalarAttribs * 3 * sizeof(float), 16);
@@ -2306,7 +2306,7 @@ void BinPostSetupLines(
         work.pfnWork = RasterizeLine;
 
         auto pArena = pDC->pArena;
-        SWR_ASSERT(pArena != nullptr);
+        SWR_ASSERT(pArena);
 
         // store active attribs
         desc.pAttribs = (float*)pArena->AllocAligned(numScalarAttribs * 3 * sizeof(float), 16);
@@ -2523,7 +2523,7 @@ void BinPostSetupLines_simd16(
         work.pfnWork = RasterizeLine;
 
         auto pArena = pDC->pArena;
-        SWR_ASSERT(pArena != nullptr);
+        SWR_ASSERT(pArena);
 
         // store active attribs
         desc.pAttribs = (float*)pArena->AllocAligned(numScalarAttribs * 3 * sizeof(float), 16);

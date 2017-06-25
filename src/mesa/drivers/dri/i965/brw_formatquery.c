@@ -89,7 +89,7 @@ brw_query_internal_format(struct gl_context *ctx, GLenum target,
    /* The Mesa layer gives us a temporary params buffer that is guaranteed
     * to be non-NULL, and have at least 16 elements.
     */
-   assert(params != NULL);
+   assert(params);
 
    switch (pname) {
    case GL_SAMPLES:

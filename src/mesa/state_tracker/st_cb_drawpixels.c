@@ -134,7 +134,7 @@ get_drawpix_z_stencil_program(struct st_context *st,
    }
 
    ureg = ureg_create(PIPE_SHADER_FRAGMENT);
-   if (ureg == NULL)
+   if (!ureg)
       return NULL;
 
    ureg_property(ureg, TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS, TRUE);
@@ -202,7 +202,7 @@ make_passthrough_vertex_shader(struct st_context *st,
    if (!st->drawpix.vert_shaders[passColor]) {
       struct ureg_program *ureg = ureg_create( PIPE_SHADER_VERTEX );
 
-      if (ureg == NULL)
+      if (!ureg)
          return NULL;
 
       /* MOV result.pos, vertex.pos; */

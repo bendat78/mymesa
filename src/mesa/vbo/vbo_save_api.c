@@ -136,7 +136,7 @@ _save_copy_vertices(struct gl_context *ctx,
                 sz * sizeof(GLfloat));
       return i;
    case GL_LINE_STRIP:
-      if (nr == 0)
+      if (!nr)
          return 0;
       else {
          memcpy(dst, src + (nr - 1) * sz, sz * sizeof(GLfloat));
@@ -145,7 +145,7 @@ _save_copy_vertices(struct gl_context *ctx,
    case GL_LINE_LOOP:
    case GL_TRIANGLE_FAN:
    case GL_POLYGON:
-      if (nr == 0)
+      if (!nr)
          return 0;
       else if (nr == 1) {
          memcpy(dst, src + 0, sz * sizeof(GLfloat));
@@ -736,7 +736,7 @@ _save_upgrade_vertex(struct gl_context *ctx, GLuint attr, GLuint newsz)
       /* Need to note this and fix up at runtime (or loopback):
        */
       if (attr != VBO_ATTRIB_POS && save->currentsz[attr][0] == 0) {
-         assert(oldsz == 0);
+         assert(!oldsz);
          save->dangling_attr_ref = GL_TRUE;
       }
 

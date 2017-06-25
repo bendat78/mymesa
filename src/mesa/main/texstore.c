@@ -1018,12 +1018,12 @@ store_texsubimage(struct gl_context *ctx,
    case GL_TEXTURE_1D:
       assert(height == 1);
       assert(depth == 1);
-      assert(yoffset == 0);
-      assert(zoffset == 0);
+      assert(!yoffset);
+      assert(!zoffset);
       break;
    case GL_TEXTURE_1D_ARRAY:
       assert(depth == 1);
-      assert(zoffset == 0);
+      assert(!zoffset);
       numSlices = height;
       sliceOffset = yoffset;
       height = 1;
@@ -1194,7 +1194,7 @@ _mesa_store_cleartexsubimage(struct gl_context *ctx,
                                   width, height,
                                   GL_MAP_WRITE_BIT,
                                   &dstMap, &dstRowStride);
-      if (dstMap == NULL) {
+      if (!dstMap) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glClearTex*Image");
          return;
       }

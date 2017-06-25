@@ -66,7 +66,7 @@ st_pbo_addresses_setup(struct st_context *st,
    /* Check alignment against texture buffer requirements. */
    {
       unsigned ofs = (buf_offset * addr->bytes_per_pixel) % st->ctx->Const.TextureBufferOffsetAlignment;
-      if (ofs != 0) {
+      if (ofs) {
          if (ofs % addr->bytes_per_pixel != 0)
             return false;
 

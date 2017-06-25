@@ -116,7 +116,7 @@ texcoord_coef(struct lp_setup_context *setup,
 
    assert(i < 4);
 
-   if (i == 0) {
+   if (!i) {
       float dadx = FIXED_ONE / (float)info->dx12;
       float dady =  0.0f;
       float x0 = info->v0[0][0] - setup->pixel_offset;

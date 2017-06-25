@@ -209,7 +209,7 @@ cfg_t::cfg_t(exec_list *instructions)
          cur_else = cur;
 
 	 next = new_block();
-         assert(cur_if != NULL);
+         assert(cur_if);
 	 cur_if->add_successor(mem_ctx, next);
 
 	 set_next_block(&cur, next, ip);
@@ -232,7 +232,7 @@ cfg_t::cfg_t(exec_list *instructions)
          if (cur_else) {
             cur_else->add_successor(mem_ctx, cur_endif);
          } else {
-            assert(cur_if != NULL);
+            assert(cur_if);
             cur_if->add_successor(mem_ctx, cur_endif);
          }
 
@@ -273,7 +273,7 @@ cfg_t::cfg_t(exec_list *instructions)
       case BRW_OPCODE_CONTINUE:
          cur->instructions.push_tail(inst);
 
-         assert(cur_do != NULL);
+         assert(cur_do);
 	 cur->add_successor(mem_ctx, cur_do);
 
 	 next = new_block();
@@ -286,7 +286,7 @@ cfg_t::cfg_t(exec_list *instructions)
       case BRW_OPCODE_BREAK:
          cur->instructions.push_tail(inst);
 
-         assert(cur_while != NULL);
+         assert(cur_while);
 	 cur->add_successor(mem_ctx, cur_while);
 
 	 next = new_block();
@@ -431,7 +431,7 @@ cfg_t::dump(backend_shader *s)
                  link->block->num);
       }
       fprintf(stderr, "\n");
-      if (s != NULL)
+      if (s)
          block->dump(s);
       fprintf(stderr, "END B%d", block->num);
       foreach_list_typed(bblock_link, link, link, &block->children) {
@@ -469,7 +469,7 @@ cfg_t::calculate_idom()
          bblock_t *new_idom = NULL;
          foreach_list_typed(bblock_link, parent, link, &block->parents) {
             if (parent->block->idom) {
-               if (new_idom == NULL) {
+               if (!new_idom) {
                   new_idom = parent->block;
                } else if (parent->block->idom != NULL) {
                   new_idom = intersect(parent->block, new_idom);

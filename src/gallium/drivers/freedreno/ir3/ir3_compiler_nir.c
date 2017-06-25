@@ -616,7 +616,7 @@ create_collect(struct ir3_block *block, struct ir3_instruction *const *arr,
 {
 	struct ir3_instruction *collect;
 
-	if (arrsz == 0)
+	if (!arrsz)
 		return NULL;
 
 	collect = ir3_instr_create2(block, OPC_META_FI, 1 + arrsz);

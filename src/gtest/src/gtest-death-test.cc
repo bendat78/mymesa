@@ -229,7 +229,7 @@ static std::string DeathTestThreadWarning(size_t thread_count) {
   Message msg;
   msg << "Death tests use fork(), which is unsafe particularly"
       << " in a threaded context. For this test, " << GTEST_NAME_ << " ";
-  if (thread_count == 0)
+  if (!thread_count)
     msg << "couldn't detect the number of threads.";
   else
     msg << "detected " << thread_count << " threads.";
@@ -265,7 +265,7 @@ void DeathTestAbort(const std::string& message) {
   // the heap for any additional non-minuscule memory requirements.
   const InternalRunDeathTestFlag* const flag =
       GetUnitTestImpl()->internal_run_death_test_flag();
-  if (flag != NULL) {
+  if (flag) {
     FILE* parent = posix::FDOpen(flag->write_fd(), "w");
     fputc(kDeathTestInternalError, parent);
     fprintf(parent, "%s", message.c_str());
@@ -332,7 +332,7 @@ static void FailFromInternalError(int fd) {
     }
   } while (num_read == -1 && errno == EINTR);
 
-  if (num_read == 0) {
+  if (!num_read) {
     GTEST_LOG_(FATAL) << error.GetString();
   } else {
     const int last_error = errno;
@@ -345,7 +345,7 @@ static void FailFromInternalError(int fd) {
 // for the current test.
 DeathTest::DeathTest() {
   TestInfo* const info = GetUnitTestImpl()->current_test_info();
-  if (info == NULL) {
+  if (!info) {
     DeathTestAbort("Cannot run a death test outside of a TEST or "
                    "TEST_F construct");
   }
@@ -445,7 +445,7 @@ void DeathTestImpl::ReadAndInterpretStatusByte() {
     bytes_read = posix::Read(read_fd(), &flag, 1);
   } while (bytes_read == -1 && errno == EINTR);
 
-  if (bytes_read == 0) {
+  if (!bytes_read) {
     set_outcome(DIED);
   } else if (bytes_read == 1) {
     switch (flag) {
@@ -699,7 +699,7 @@ DeathTest::TestRole WindowsDeathTest::AssumeRole() {
   const TestInfo* const info = impl->current_test_info();
   const int death_test_index = info->result()->death_test_count();
 
-  if (flag != NULL) {
+  if (flag) {
     // ParseInternalRunDeathTestFlag() has performed all the necessary
     // processing.
     set_write_fd(flag->write_fd());
@@ -853,7 +853,7 @@ DeathTest::TestRole NoExecDeathTest::AssumeRole() {
   const pid_t child_pid = fork();
   GTEST_DEATH_TEST_CHECK_(child_pid != -1);
   set_child_pid(child_pid);
-  if (child_pid == 0) {
+  if (!child_pid) {
     GTEST_DEATH_TEST_CHECK_SYSCALL_(close(pipe_fd[0]));
     set_write_fd(pipe_fd[1]);
     // Redirects all logging to stderr in the child process to prevent
@@ -1122,7 +1122,7 @@ DeathTest::TestRole ExecDeathTest::AssumeRole() {
   const TestInfo* const info = impl->current_test_info();
   const int death_test_index = info->result()->death_test_count();
 
-  if (flag != NULL) {
+  if (flag) {
     set_write_fd(flag->write_fd());
     return EXECUTE_TEST;
   }
@@ -1177,7 +1177,7 @@ bool DefaultDeathTestFactory::Create(const char* statement, const RE* regex,
   const int death_test_index = impl->current_test_info()
       ->increment_death_test_count();
 
-  if (flag != NULL) {
+  if (flag) {
     if (death_test_index > flag->index()) {
       DeathTest::set_last_death_test_message(
           "Death test count (" + StreamableToString(death_test_index)

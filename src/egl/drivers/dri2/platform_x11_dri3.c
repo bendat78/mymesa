@@ -249,7 +249,7 @@ dri3_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 
    surf = dri3_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
                               native_window, attrib_list);
-   if (surf != NULL)
+   if (surf)
       dri3_set_swap_interval(drv, disp, surf, dri2_dpy->default_swap_interval);
 
    return surf;

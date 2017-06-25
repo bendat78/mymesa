@@ -104,7 +104,7 @@ nv50_constbufs_validate(struct nv50_context *nv50)
                BEGIN_NV04(push, NV50_3D(SET_PROGRAM_CB), 1);
                PUSH_DATA (push, (i << 8) | p | 0);
             }
-            if (i == 0)
+            if (!i)
                nv50->state.uniform_buffer_bound[s] = false;
          }
       }

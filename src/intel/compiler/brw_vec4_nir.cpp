@@ -791,7 +791,7 @@ vec4_visitor::nir_emit_intrinsic(nir_intrinsic_instr *instr)
          /* Uniform arrays are vec4 aligned, because of std140 alignment
           * rules.
           */
-         assert(shift == 0);
+         assert(!shift);
 
          src_reg indirect = get_nir_src(instr->src[0], BRW_REGISTER_TYPE_UD, 1);
 
@@ -2221,7 +2221,7 @@ vec4_visitor::nir_emit_texture(nir_tex_instr *instr)
 
    if (instr->op == nir_texop_txf_ms ||
        instr->op == nir_texop_samples_identical) {
-      assert(coord_type != NULL);
+      assert(coord_type);
       if (devinfo->gen >= 7 &&
           key_tex->compressed_multisample_layout_mask & (1 << texture)) {
          mcs = emit_mcs_fetch(coord_type, coordinate, texture_reg);

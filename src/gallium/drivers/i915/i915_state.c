@@ -703,7 +703,7 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
       new_num = ibuf->b.b.width0 / 4 * sizeof(float);
 
       if (old_num == new_num) {
-         if (old_num == 0)
+         if (!old_num)
             diff = FALSE;
 #if 0
          /* XXX no point in running this code since st/mesa only uses user buffers */
@@ -798,7 +798,7 @@ i915_set_sampler_views(struct pipe_context *pipe, enum pipe_shader_type shader,
                        unsigned start, unsigned num,
                        struct pipe_sampler_view **views)
 {
-   assert(start == 0);
+   assert(!start);
    switch (shader) {
    case PIPE_SHADER_FRAGMENT:
       i915_set_fragment_sampler_views(pipe, num, views);

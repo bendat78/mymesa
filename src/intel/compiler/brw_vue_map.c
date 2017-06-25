@@ -168,7 +168,7 @@ brw_compute_vue_map(const struct gen_device_info *devinfo,
     * recompute state when TF changes, so we just always include it.
     */
    uint64_t builtins = slots_valid & BITFIELD64_MASK(VARYING_SLOT_VAR0);
-   while (builtins != 0) {
+   while (builtins) {
       const int varying = ffsll(builtins) - 1;
       if (vue_map->varying_to_slot[varying] == -1) {
          assign_vue_slot(vue_map, varying, slot++);
@@ -178,7 +178,7 @@ brw_compute_vue_map(const struct gen_device_info *devinfo,
 
    const int first_generic_slot = slot;
    uint64_t generics = slots_valid & ~BITFIELD64_MASK(VARYING_SLOT_VAR0);
-   while (generics != 0) {
+   while (generics) {
       const int varying = ffsll(generics) - 1;
       if (separate) {
          slot = first_generic_slot + varying - VARYING_SLOT_VAR0;
@@ -236,7 +236,7 @@ brw_compute_tess_vue_map(struct brw_vue_map *vue_map,
    assign_vue_slot(vue_map, VARYING_SLOT_TESS_LEVEL_OUTER, slot++);
 
    /* first assign per-patch varyings */
-   while (patch_slots != 0) {
+   while (patch_slots) {
       const int varying = ffsll(patch_slots) - 1;
       if (vue_map->varying_to_slot[varying + VARYING_SLOT_PATCH0] == -1) {
          assign_vue_slot(vue_map, varying + VARYING_SLOT_PATCH0, slot++);
@@ -248,7 +248,7 @@ brw_compute_tess_vue_map(struct brw_vue_map *vue_map,
    vue_map->num_per_patch_slots = slot;
 
    /* then assign per-vertex varyings for each vertex in our patch */
-   while (vertex_slots != 0) {
+   while (vertex_slots) {
       const int varying = ffsll(vertex_slots) - 1;
       if (vue_map->varying_to_slot[varying] == -1) {
          assign_vue_slot(vue_map, varying, slot++);

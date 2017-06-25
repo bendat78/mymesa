@@ -40,7 +40,7 @@ anv_gem_create(struct anv_device *device, uint64_t size)
    if (fd == -1)
       return 0;
 
-   assert(fd != 0);
+   assert(fd);
 
    if (ftruncate(fd, size) == -1)
       return 0;

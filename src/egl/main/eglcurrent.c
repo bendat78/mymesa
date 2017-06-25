@@ -316,10 +316,10 @@ _eglDebugReportFullv(EGLenum error, const char *command, const char *funcName,
    }
    mtx_unlock(_eglGlobal.Mutex);
 
-   if (callback != NULL) {
+   if (callback) {
       char *buf = NULL;
 
-      if (message != NULL) {
+      if (message) {
          if (vasprintf(&buf, message, args) < 0) {
             buf = NULL;
          }
@@ -350,7 +350,7 @@ _eglDebugReport(EGLenum error, const char *funcName,
    _EGLThreadInfo *thr = _eglGetCurrentThread();
    va_list args;
 
-   if (funcName == NULL) {
+   if (!funcName) {
       funcName = thr->CurrentFuncName;
    }
 

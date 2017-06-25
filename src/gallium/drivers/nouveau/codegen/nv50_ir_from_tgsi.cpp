@@ -299,7 +299,7 @@ unsigned int Instruction::srcMask(unsigned int s) const
    case TGSI_OPCODE_TEX2:
    case TGSI_OPCODE_TXB2:
    case TGSI_OPCODE_TXL2:
-      return (s == 0) ? 0xf : 0x3;
+      return (!s) ? 0xf : 0x3;
    case TGSI_OPCODE_TEX:
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXD:
@@ -3570,7 +3570,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       break;
    case TGSI_OPCODE_EMIT:
       /* export the saved viewport index */
-      if (viewport != NULL) {
+      if (viewport) {
          Symbol *vpSym = mkSymbol(FILE_SHADER_OUTPUT, 0, TYPE_U32,
                                   info->out[info->io.viewportId].slot[0] * 4);
          mkStore(OP_EXPORT, TYPE_U32, vpSym, NULL, viewport);
@@ -4201,7 +4201,7 @@ Converter::handleUserClipPlanes()
          Symbol *sym = mkSymbol(FILE_MEMORY_CONST, info->io.auxCBSlot,
                                 TYPE_F32, info->io.ucpBase + i * 16 + c * 4);
          Value *ucp = mkLoadv(TYPE_F32, sym, NULL);
-         if (c == 0)
+         if (!c)
             res[i] = mkOp2v(OP_MUL, TYPE_F32, getScratch(), clipVtx[c], ucp);
          else
             mkOp3(OP_MAD, TYPE_F32, res[i], clipVtx[c], ucp, res[i]);

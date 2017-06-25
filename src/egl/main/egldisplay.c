@@ -116,7 +116,7 @@ _eglPointerIsDereferencable(void *p)
    unsigned char valid = 0;
    const long page_size = getpagesize();
 
-   if (p == NULL)
+   if (!p)
       return EGL_FALSE;
 
    /* align addr to page_size */
@@ -365,7 +365,7 @@ _eglCheckDisplayHandle(EGLDisplay dpy)
       cur = cur->Next;
    }
    mtx_unlock(_eglGlobal.Mutex);
-   return (cur != NULL);
+   return (cur);
 }
 
 
@@ -389,7 +389,7 @@ _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
       list = list->Next;
    }
 
-   return (list != NULL);
+   return (list);
 }
 
 
@@ -484,7 +484,7 @@ _eglParseX11DisplayAttribList(_EGLDisplay *display, const EGLint *attrib_list)
 {
    int i;
 
-   if (attrib_list == NULL) {
+   if (!attrib_list) {
       return EGL_TRUE;
    }
 
@@ -562,7 +562,7 @@ _eglGetSurfacelessDisplay(void *native_display,
                           const EGLint *attrib_list)
 {
    /* This platform has no native display. */
-   if (native_display != NULL) {
+   if (native_display) {
       _eglError(EGL_BAD_PARAMETER, "eglGetPlatformDisplay");
       return NULL;
    }

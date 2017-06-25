@@ -126,7 +126,7 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
    void *mem;
 
    mem = _mesa_align_malloc(bytes, alignment);
-   if (mem != NULL) {
+   if (mem) {
       (void) memset(mem, 0, bytes);
    }
 
@@ -135,7 +135,7 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
    void *mem;
 
    mem = _aligned_malloc(bytes, alignment);
-   if (mem != NULL) {
+   if (mem) {
       (void) memset(mem, 0, bytes);
    }
 

@@ -325,7 +325,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    }
 
    k = _mesa_evaluator_components( target );
-   if (k == 0) {
+   if (!k) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
       return;
    }
@@ -337,7 +337,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
 
    if (ctx->Texture.CurrentUnit != 0) {
       /* See OpenGL 1.2.1 spec, section F.2.13 */
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE != 0)" );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE)" );
       return;
    }
 
@@ -414,7 +414,7 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    }
 
    k = _mesa_evaluator_components( target );
-   if (k==0) {
+   if (!k) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
       return;
    }
@@ -430,7 +430,7 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
 
    if (ctx->Texture.CurrentUnit != 0) {
       /* See OpenGL 1.2.1 spec, section F.2.13 */
-      _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE != 0)" );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glMap2(ACTIVE_TEXTURE)" );
       return;
    }
 

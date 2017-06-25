@@ -197,7 +197,7 @@ clear_32bit_ximage(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
       /* clearing whole buffer */
       const GLuint n = xrb->Base.Base.Width * xrb->Base.Base.Height;
       GLuint *ptr4 = (GLuint *) xrb->ximage->data;
-      if (pixel == 0) {
+      if (!pixel) {
          /* common case */
          memset(ptr4, pixel, 4 * n);
       }

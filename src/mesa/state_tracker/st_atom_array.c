@@ -337,11 +337,11 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
       stride = array->StrideB; /* in bytes */
 
       /* To keep things simple, don't allow interleaved zero-stride attribs. */
-      if (stride == 0)
+      if (!stride)
          return false;
 
       bufObj = array->BufferObj;
-      if (attr == 0) {
+      if (!attr) {
          /* save info about the first array */
          firstStride = stride;
          firstPtr = array->Ptr;
@@ -528,7 +528,7 @@ setup_interleaved_attribs(struct st_context *st,
    /*
     * Return the vbuffer info and setup user-space attrib info, if needed.
     */
-   if (num_inputs == 0) {
+   if (!num_inputs) {
       /* just defensive coding here */
       vbuffer.buffer.resource = NULL;
       vbuffer.is_user_buffer = false;
@@ -618,7 +618,7 @@ setup_non_interleaved_attribs(struct st_context *st,
          vbuffer[bufidx].buffer_offset = pointer_to_offset(array->Ptr);
       }
       else {
-         if (stride == 0) {
+         if (!stride) {
             unsigned size = array->_ElementSize;
             /* This is optimal for GPU cache line usage if the upload size
              * is <= cache line size.

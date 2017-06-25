@@ -1030,7 +1030,7 @@ static VkResult radv_get_image_format_properties(struct radv_physical_device *ph
 		unreachable("bad VkImageTiling");
 	}
 
-	if (format_feature_flags == 0)
+	if (!format_feature_flags)
 		goto unsupported;
 
 	switch (info->type) {

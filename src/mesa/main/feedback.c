@@ -59,7 +59,7 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
       return;
    }
    if (!buffer && size > 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glFeedbackBuffer(buffer==NULL)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glFeedbackBuffer(!buffer)" );
       ctx->Feedback.BufferSize = 0;
       return;
    }
@@ -241,7 +241,7 @@ write_hit_record(struct gl_context *ctx)
    /* HitMinZ and HitMaxZ are in [0,1].  Multiply these values by */
    /* 2^32-1 and round to nearest unsigned integer. */
 
-   assert( ctx != NULL ); /* this line magically fixes a SunOS 5.x/gcc bug */
+   assert(ctx); /* this line magically fixes a SunOS 5.x/gcc bug */
    zmin = (GLuint) ((GLfloat) zscale * ctx->Select.HitMinZ);
    zmax = (GLuint) ((GLfloat) zscale * ctx->Select.HitMaxZ);
 

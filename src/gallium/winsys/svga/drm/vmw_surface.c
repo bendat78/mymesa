@@ -112,7 +112,7 @@ vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
       memset(&desc, 0, sizeof(desc));
       desc.alignment = 4096;
       pb_buf = provider->create_buffer(provider, vsrf->size, &desc);
-      if (pb_buf != NULL) {
+      if (pb_buf) {
          struct svga_winsys_buffer *vbuf =
             vmw_svga_winsys_buffer_wrap(pb_buf);
 
@@ -146,7 +146,7 @@ vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
 
    pb_flags |= (flags & PIPE_TRANSFER_DONTBLOCK);
    data = vmw_svga_winsys_buffer_map(&vws->base, vsrf->buf, pb_flags);
-   if (data == NULL)
+   if (!data)
       goto out_unlock;
 
 out_mapped:

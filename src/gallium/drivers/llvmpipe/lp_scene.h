@@ -214,7 +214,7 @@ lp_scene_alloc( struct lp_scene *scene, unsigned size)
    struct data_block *block = list->head;
 
    assert(size <= DATA_BLOCK_SIZE);
-   assert(block != NULL);
+   assert(block);
 
    if (LP_DEBUG & DEBUG_MEM)
       debug_printf("alloc %u block %u/%u tot %u/%u\n",
@@ -247,7 +247,7 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
    struct data_block_list *list = &scene->data;
    struct data_block *block = list->head;
 
-   assert(block != NULL);
+   assert(block);
 
    if (LP_DEBUG & DEBUG_MEM)
       debug_printf("alloc %u block %u/%u tot %u/%u\n",

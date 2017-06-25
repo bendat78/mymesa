@@ -171,7 +171,7 @@ namespace ArchRast
         // Flush cached events for this draw
         virtual void FlushDraw(uint32_t drawId)
         {
-            if (mNeedFlush == false) return;
+            if (!mNeedFlush) return;
 
             //singleSample
             EventHandlerFile::Handle(EarlyZSingleSample(drawId, mDSSingleSample.earlyZTestPassCount, mDSSingleSample.earlyZTestFailCount));
@@ -292,7 +292,7 @@ namespace ArchRast
     void DestroyThreadContext(HANDLE hThreadContext)
     {
         EventManager* pManager = FromHandle(hThreadContext);
-        SWR_ASSERT(pManager != nullptr);
+        SWR_ASSERT(pManager);
 
         delete pManager;
     }
@@ -301,7 +301,7 @@ namespace ArchRast
     void Dispatch(HANDLE hThreadContext, const Event& event)
     {
         EventManager* pManager = FromHandle(hThreadContext);
-        SWR_ASSERT(pManager != nullptr);
+        SWR_ASSERT(pManager);
 
         pManager->Dispatch(event);
     }
@@ -310,7 +310,7 @@ namespace ArchRast
     void FlushDraw(HANDLE hThreadContext, uint32_t drawId)
     {
         EventManager* pManager = FromHandle(hThreadContext);
-        SWR_ASSERT(pManager != nullptr);
+        SWR_ASSERT(pManager);
 
         pManager->FlushDraw(drawId);
     }

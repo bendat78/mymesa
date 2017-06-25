@@ -66,7 +66,7 @@
 struct gl_vertex_array_object *
 _mesa_lookup_vao(struct gl_context *ctx, GLuint id)
 {
-   if (id == 0)
+   if (!id)
       return NULL;
    else
       return (struct gl_vertex_array_object *)
@@ -90,7 +90,7 @@ _mesa_lookup_vao_err(struct gl_context *ctx, GLuint id, const char *caller)
     *     zero, indicating the default vertex array object, or]
     *     the name of the vertex array object."
     */
-   if (id == 0) {
+   if (!id) {
       if (ctx->API == API_OPENGL_CORE) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(zero is not valid vaobj name in a core profile "
@@ -427,7 +427,7 @@ _mesa_BindVertexArray( GLuint id )
    struct gl_vertex_array_object * const oldObj = ctx->Array.VAO;
    struct gl_vertex_array_object *newObj = NULL;
 
-   assert(oldObj != NULL);
+   assert(oldObj);
 
    if (oldObj->Name == id)
       return;   /* rebinding the same array object- no change */
@@ -435,7 +435,7 @@ _mesa_BindVertexArray( GLuint id )
    /*
     * Get pointer to new array object (newObj)
     */
-   if (id == 0) {
+   if (!id) {
       /* The spec says there is no array object named 0, but we use
        * one internally because it simplifies things.
        */
@@ -493,7 +493,7 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
    for (i = 0; i < n; i++) {
       struct gl_vertex_array_object *obj = _mesa_lookup_vao(ctx, ids[i]);
 
-      if ( obj != NULL ) {
+      if (obj) {
 	 assert( obj->Name == ids[i] );
 
 	 /* If the array object is currently bound, the spec says "the binding
@@ -641,7 +641,7 @@ _mesa_VertexArrayElementBuffer(GLuint vaobj, GLuint buffer)
     *    "An INVALID_OPERATION error is generated if <buffer> is not zero or
     *     the name of an existing buffer object."
     */
-   if (buffer != 0)
+   if (buffer)
       bufObj = _mesa_lookup_bufferobj_err(ctx, buffer,
                                           "glVertexArrayElementBuffer");
    else

@@ -142,7 +142,7 @@ _mesa_new_parameter_list_sized(unsigned size)
 {
    struct gl_program_parameter_list *p = _mesa_new_parameter_list();
 
-   if ((p != NULL) && (size != 0)) {
+   if ((p) && (size)) {
       p->Size = size;
 
       /* alloc arrays */

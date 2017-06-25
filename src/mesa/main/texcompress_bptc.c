@@ -451,7 +451,7 @@ is_anchor(int n_subsets,
           int partition_num,
           int texel)
 {
-   if (texel == 0)
+   if (!texel)
       return true;
 
    switch (n_subsets) {
@@ -475,7 +475,7 @@ count_anchors_before_texel(int n_subsets,
 {
    int count = 1;
 
-   if (texel == 0)
+   if (!texel)
       return 0;
 
    switch (n_subsets) {
@@ -524,7 +524,7 @@ apply_rotation(int rotation,
 {
    uint8_t t;
 
-   if (rotation == 0)
+   if (!rotation)
       return;
 
    rotation--;
@@ -555,7 +555,7 @@ fetch_rgba_unorm_from_block(const uint8_t *block,
    uint32_t subsets;
    int component;
 
-   if (mode_num == 0) {
+   if (!mode_num) {
       /* According to the spec this mode is reserved and shouldn't be used. */
       memset(result, 0, 3);
       result[3] = 0xff;
@@ -717,7 +717,7 @@ signed_unquantize(int value, int n_endpoint_bits)
    if (n_endpoint_bits >= 16)
       return value;
 
-   if (value == 0)
+   if (!value)
       return 0;
 
    sign = false;
@@ -744,7 +744,7 @@ unsigned_unquantize(int value, int n_endpoint_bits)
    if (n_endpoint_bits >= 15)
       return value;
 
-   if (value == 0)
+   if (!value)
       return 0;
 
    if (value == (1 << n_endpoint_bits) - 1)

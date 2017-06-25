@@ -556,7 +556,7 @@ try_blit(struct svga_context *svga, const struct pipe_blit_info *blit_info)
       template = *src;
       template.format = blit.src.format;
       newSrc = svga_texture_create(svga->pipe.screen, &template);
-      if (newSrc == NULL) {
+      if (!newSrc) {
          debug_printf("svga_blit: fails to create temporary src\n");
          ret = false;
          goto done;
@@ -593,7 +593,7 @@ try_blit(struct svga_context *svga, const struct pipe_blit_info *blit_info)
       template = *dst;
       template.format = blit.dst.format;
       newDst = svga_texture_create(svga->pipe.screen, &template);
-      if (newDst == NULL) {
+      if (!newDst) {
          debug_printf("svga_blit: fails to create temporary dst\n");
          ret = false;
          goto done;

@@ -427,7 +427,7 @@ vec4_gs_visitor::set_stream_control_data_bits(unsigned stream_id)
    /* Control data bits are initialized to 0 so we don't have to set any
     * bits when sending vertices to stream 0.
     */
-   if (stream_id == 0)
+   if (!stream_id)
       return;
 
    /* reg::sid = stream_id */
@@ -804,7 +804,7 @@ brw_compile_gs(const struct brw_compiler *compiler, void *log_data,
     * may have a URB size of 0 bytes.  Nothing good can come from that,
     * so enforce a minimum size.
     */
-   if (output_size_bytes == 0)
+   if (!output_size_bytes)
       output_size_bytes = 1;
 
    unsigned max_output_size_bytes = GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES;

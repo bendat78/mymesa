@@ -87,7 +87,7 @@ private:
 static bool
 is_simple_operand(const ir_rvalue *ir, unsigned depth = 1)
 {
-   if (depth == 0)
+   if (!depth)
       return false;
 
    switch (ir->ir_type) {
@@ -266,7 +266,7 @@ ir_builder_print_visitor::visit(ir_dereference_variable *ir)
    const struct hash_entry *const he =
       _mesa_hash_table_search(index_map, ir->var);
 
-   if (he != NULL)
+   if (he)
       _mesa_hash_table_insert(index_map, ir, he->data);
 
    return visit_continue;
@@ -394,7 +394,7 @@ ir_builder_print_visitor::visit(ir_constant *ir)
             STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
 
             memcpy(&v, &ir->value.d[i], sizeof(v));
-            if (v != 0)
+            if (v)
                print_with_indent("r%04X_data.u64[%u] = 0x%016" PRIx64 "; /* %g */\n",
                                     my_index, i, v, ir->value.d[i]);
             break;
@@ -484,7 +484,7 @@ ir_builder_print_visitor::visit_enter(ir_assignment *ir)
    if (!is_simple_operand(ir->rhs) && rhs_expr == NULL)
       return visit_continue;
 
-   if (rhs_expr != NULL) {
+   if (rhs_expr) {
       const unsigned num_op = rhs_expr->get_num_operands();
 
       for (unsigned i = 0; i < num_op; i++) {

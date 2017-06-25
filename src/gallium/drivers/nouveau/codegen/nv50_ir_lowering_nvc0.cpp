@@ -2300,7 +2300,7 @@ NVC0LoweringPass::processSurfaceCoordsGM107(TexInstruction *su)
       pos = (su->subOp == NV50_IR_SUBOP_ATOM_CAS) ? 2 : 1;
       break;
    default:
-      assert(pos == 0);
+      assert(!pos);
       break;
    }
    su->setSrc(arg + pos, loadTexHandle(ind, slot + 32));
@@ -2490,7 +2490,7 @@ NVC0LoweringPass::readTessCoord(LValue *dst, int c)
 
    bld.mkOp1(OP_RDSV, TYPE_U32, laneid, bld.mkSysVal(SV_LANEID, 0));
 
-   if (c == 0) {
+   if (!c) {
       x = dst;
       y = NULL;
    } else

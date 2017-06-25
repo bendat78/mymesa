@@ -66,7 +66,7 @@ new_performance_monitor(struct gl_context *ctx, GLuint index)
    unsigned i;
    struct gl_perf_monitor_object *m = ctx->Driver.NewPerfMonitor(ctx);
 
-   if (m == NULL)
+   if (!m)
       return NULL;
 
    m->Name = index;
@@ -153,7 +153,7 @@ _mesa_GetPerfMonitorGroupsAMD(GLint *numGroups, GLsizei groupsSize,
    GET_CURRENT_CONTEXT(ctx);
    init_groups(ctx);
 
-   if (numGroups != NULL)
+   if (numGroups)
       *numGroups = ctx->PerfMonitor.NumGroups;
 
    if (groupsSize > 0 && groups != NULL) {
@@ -177,19 +177,19 @@ _mesa_GetPerfMonitorCountersAMD(GLuint group, GLint *numCounters,
    init_groups(ctx);
 
    group_obj = get_group(ctx, group);
-   if (group_obj == NULL) {
+   if (!group_obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetPerfMonitorCountersAMD(invalid group)");
       return;
    }
 
-   if (maxActiveCounters != NULL)
+   if (maxActiveCounters)
       *maxActiveCounters = group_obj->MaxActiveCounters;
 
-   if (numCounters != NULL)
+   if (numCounters)
       *numCounters = group_obj->NumCounters;
 
-   if (counters != NULL) {
+   if (counters) {
       unsigned i;
       unsigned n = MIN2(group_obj->NumCounters, (GLuint) countersSize);
       for (i = 0; i < n; i++) {
@@ -209,21 +209,21 @@ _mesa_GetPerfMonitorGroupStringAMD(GLuint group, GLsizei bufSize,
    init_groups(ctx);
 
    group_obj = get_group(ctx, group);
-   if (group_obj == NULL) {
+   if (!group_obj) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetPerfMonitorGroupStringAMD");
       return;
    }
 
-   if (bufSize == 0) {
+   if (!bufSize) {
       /* Return the number of characters that would be required to hold the
        * group string, excluding the null terminator.
        */
-      if (length != NULL)
+      if (length)
          *length = strlen(group_obj->Name);
    } else {
-      if (length != NULL)
+      if (length)
          *length = MIN2(strlen(group_obj->Name), bufSize);
-      if (groupString != NULL)
+      if (groupString)
          strncpy(groupString, group_obj->Name, bufSize);
    }
 }
@@ -242,7 +242,7 @@ _mesa_GetPerfMonitorCounterStringAMD(GLuint group, GLuint counter,
 
    group_obj = get_group(ctx, group);
 
-   if (group_obj == NULL) {
+   if (!group_obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetPerfMonitorCounterStringAMD(invalid group)");
       return;
@@ -250,22 +250,22 @@ _mesa_GetPerfMonitorCounterStringAMD(GLuint group, GLuint counter,
 
    counter_obj = get_counter(group_obj, counter);
 
-   if (counter_obj == NULL) {
+   if (!counter_obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetPerfMonitorCounterStringAMD(invalid counter)");
       return;
    }
 
-   if (bufSize == 0) {
+   if (!bufSize) {
       /* Return the number of characters that would be required to hold the
        * counter string, excluding the null terminator.
        */
-      if (length != NULL)
+      if (length)
          *length = strlen(counter_obj->Name);
    } else {
-      if (length != NULL)
+      if (length)
          *length = MIN2(strlen(counter_obj->Name), bufSize);
-      if (counterString != NULL)
+      if (counterString)
          strncpy(counterString, counter_obj->Name, bufSize);
    }
 }
@@ -283,7 +283,7 @@ _mesa_GetPerfMonitorCounterInfoAMD(GLuint group, GLuint counter, GLenum pname,
 
    group_obj = get_group(ctx, group);
 
-   if (group_obj == NULL) {
+   if (!group_obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetPerfMonitorCounterInfoAMD(invalid group)");
       return;
@@ -291,7 +291,7 @@ _mesa_GetPerfMonitorCounterInfoAMD(GLuint group, GLuint counter, GLenum pname,
 
    counter_obj = get_counter(group_obj, counter);
 
-   if (counter_obj == NULL) {
+   if (!counter_obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetPerfMonitorCounterInfoAMD(invalid counter)");
       return;
@@ -351,7 +351,7 @@ _mesa_GenPerfMonitorsAMD(GLsizei n, GLuint *monitors)
       return;
    }
 
-   if (monitors == NULL)
+   if (!monitors)
       return;
 
    /* We don't actually need them to be contiguous, but this is what
@@ -390,7 +390,7 @@ _mesa_DeletePerfMonitorsAMD(GLsizei n, GLuint *monitors)
       return;
    }
 
-   if (monitors == NULL)
+   if (!monitors)
       return;
 
    for (i = 0; i < n; i++) {
@@ -434,7 +434,7 @@ _mesa_SelectPerfMonitorCountersAMD(GLuint monitor, GLboolean enable,
     *  SelectPerfMonitorCountersAMD does not reference a monitor created by
     *  GenPerfMonitorsAMD."
     */
-   if (m == NULL) {
+   if (!m) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glSelectPerfMonitorCountersAMD(invalid monitor)");
       return;
@@ -447,7 +447,7 @@ _mesa_SelectPerfMonitorCountersAMD(GLuint monitor, GLboolean enable,
     *  GetPerfMonitorCounterStringAMD, GetPerfMonitorCounterInfoAMD, or
     *  SelectPerfMonitorCountersAMD does not reference a valid group ID."
     */
-   if (group_obj == NULL) {
+   if (!group_obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glSelectPerfMonitorCountersAMD(invalid group)");
       return;
@@ -499,7 +499,7 @@ _mesa_BeginPerfMonitorAMD(GLuint monitor)
 
    struct gl_perf_monitor_object *m = lookup_monitor(ctx, monitor);
 
-   if (m == NULL) {
+   if (!m) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glBeginPerfMonitorAMD(invalid monitor)");
       return;
@@ -533,7 +533,7 @@ _mesa_EndPerfMonitorAMD(GLuint monitor)
 
    struct gl_perf_monitor_object *m = lookup_monitor(ctx, monitor);
 
-   if (m == NULL) {
+   if (!m) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glEndPerfMonitorAMD(invalid monitor)");
       return;
    }
@@ -587,22 +587,22 @@ _mesa_GetPerfMonitorCounterDataAMD(GLuint monitor, GLenum pname,
    struct gl_perf_monitor_object *m = lookup_monitor(ctx, monitor);
    bool result_available;
 
-   if (m == NULL) {
+   if (!m) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetPerfMonitorCounterDataAMD(invalid monitor)");
       return;
    }
 
    /* "It is an INVALID_OPERATION error for <data> to be NULL." */
-   if (data == NULL) {
+   if (!data) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetPerfMonitorCounterDataAMD(data == NULL)");
+                  "glGetPerfMonitorCounterDataAMD(!data)");
       return;
    }
 
    /* We need at least enough room for a single value. */
    if (dataSize < sizeof(GLuint)) {
-      if (bytesWritten != NULL)
+      if (bytesWritten)
          *bytesWritten = 0;
       return;
    }
@@ -614,7 +614,7 @@ _mesa_GetPerfMonitorCounterDataAMD(GLuint monitor, GLenum pname,
    /* AMD appears to return 0 for all queries unless a result is available. */
    if (!result_available) {
       *data = 0;
-      if (bytesWritten != NULL)
+      if (bytesWritten)
          *bytesWritten = sizeof(GLuint);
       return;
    }
@@ -622,12 +622,12 @@ _mesa_GetPerfMonitorCounterDataAMD(GLuint monitor, GLenum pname,
    switch (pname) {
    case GL_PERFMON_RESULT_AVAILABLE_AMD:
       *data = 1;
-      if (bytesWritten != NULL)
+      if (bytesWritten)
          *bytesWritten = sizeof(GLuint);
       break;
    case GL_PERFMON_RESULT_SIZE_AMD:
       *data = perf_monitor_result_size(ctx, m);
-      if (bytesWritten != NULL)
+      if (bytesWritten)
          *bytesWritten = sizeof(GLuint);
       break;
    case GL_PERFMON_RESULT_AMD:

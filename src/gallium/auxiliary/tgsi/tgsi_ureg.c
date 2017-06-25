@@ -282,7 +282,7 @@ ureg_DECL_fs_input_cyl_centroid_layout(struct ureg_program *ureg,
 {
    unsigned i;
 
-   assert(usage_mask != 0);
+   assert(usage_mask);
    assert(usage_mask <= TGSI_WRITEMASK_XYZW);
 
    for (i = 0; i < ureg->nr_inputs; i++) {
@@ -416,7 +416,7 @@ ureg_DECL_output_layout(struct ureg_program *ureg,
 {
    unsigned i;
 
-   assert(usage_mask != 0);
+   assert(usage_mask);
    assert(!(streams & 0x03) || (usage_mask & 1));
    assert(!(streams & 0x0c) || (usage_mask & 2));
    assert(!(streams & 0x30) || (usage_mask & 4));

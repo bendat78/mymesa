@@ -224,7 +224,7 @@ i915_surface_copy_blitter(struct pipe_context *pipe,
    assert(src_box->depth == 1);
    if (dst->target != PIPE_TEXTURE_CUBE &&
        dst->target != PIPE_TEXTURE_3D)
-      assert(dstz == 0);
+      assert(!dstz);
    dst_offset = i915_texture_offset(dst_tex, dst_level, dstz);
 
    if (src->target != PIPE_TEXTURE_CUBE &&

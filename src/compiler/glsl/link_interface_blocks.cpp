@@ -304,7 +304,7 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
 
          const glsl_type *iface_type = var->get_interface_type();
 
-         if (iface_type == NULL)
+         if (!iface_type)
             continue;
 
          interface_block_definitions *definitions;
@@ -330,7 +330,7 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
          }
 
          ir_variable *prev_def = definitions->lookup(var);
-         if (prev_def == NULL) {
+         if (!prev_def) {
             /* This is the first time we've seen the interface, so save
              * it into the appropriate data structure.
              */
@@ -423,7 +423,7 @@ validate_interstage_uniform_blocks(struct gl_shader_program *prog,
             continue;
 
          ir_variable *old_def = definitions.lookup(var);
-         if (old_def == NULL) {
+         if (!old_def) {
             definitions.store(var);
          } else {
             /* Interstage uniform matching rules are the same as intrastage

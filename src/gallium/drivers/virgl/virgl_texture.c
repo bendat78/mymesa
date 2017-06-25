@@ -113,7 +113,7 @@ vrend_get_tex_image_offset(const struct virgl_texture *res,
       offset += layer * res->stride[level];
    }
    else {
-      assert(layer == 0);
+      assert(!layer);
    }
 
    return offset;

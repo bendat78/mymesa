@@ -1018,7 +1018,7 @@ intelChooseRenderState(struct gl_context * ctx)
       tnl->Driver.Render.Triangle = rast_tab[index].triangle;
       tnl->Driver.Render.Quad = rast_tab[index].quad;
 
-      if (index == 0) {
+      if (!index) {
          tnl->Driver.Render.PrimTabVerts = intel_render_tab_verts;
          tnl->Driver.Render.PrimTabElts = intel_render_tab_elts;
          tnl->Driver.Render.ClippedLine = line; /* from tritmp.h */
@@ -1221,7 +1221,7 @@ intelFallback(struct intel_context *intel, GLbitfield bit, bool mode)
 
    if (mode) {
       intel->Fallback |= bit;
-      if (oldfallback == 0) {
+      if (!oldfallback) {
 	 assert(!intel->tnl_pipeline_running);
 
          intel_flush(ctx);

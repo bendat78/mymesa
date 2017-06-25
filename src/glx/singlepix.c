@@ -56,7 +56,7 @@ __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
    __GLX_SINGLE_READ_XREPLY();
    compsize = reply.length << 2;
 
-   if (compsize != 0) {
+   if (compsize) {
       GLint width, height;
       GLint widthsize, heightsize;
 
@@ -128,7 +128,7 @@ void gl_dispatch_stub_GetSeparableFilterEXT (GLenum target, GLenum format,
       Display *const dpy = gc->currentDpy;
       const GLuint cmdlen = __GLX_PAD(13);
 
-      if (dpy != NULL) {
+      if (dpy) {
          const __GLXattribute *const state = gc->client_state_private;
          xGLXGetSeparableFilterReply reply;
          GLubyte const *pc =
@@ -146,7 +146,7 @@ void gl_dispatch_stub_GetSeparableFilterEXT (GLenum target, GLenum format,
 
          compsize = reply.length << 2;
 
-         if (compsize != 0) {
+         if (compsize) {
             const GLint width = reply.width;
             const GLint height = reply.height;
             const GLint widthsize =
@@ -156,7 +156,7 @@ void gl_dispatch_stub_GetSeparableFilterEXT (GLenum target, GLenum format,
             GLubyte *const buf =
                malloc((widthsize > heightsize) ? widthsize : heightsize);
 
-            if (buf == NULL) {
+            if (!buf) {
                /* Throw data away */
                _XEatData(dpy, compsize);
                __glXSetError(gc, GL_OUT_OF_MEMORY);

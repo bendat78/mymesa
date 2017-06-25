@@ -642,7 +642,7 @@ swr_displaytarget_layout(struct swr_screen *screen, struct swr_resource *res)
                                      64, NULL,
                                      &stride);
 
-   if (dt == NULL)
+   if (!dt)
       return FALSE;
 
    void *map = winsys->displaytarget_map(winsys, dt, 0);

@@ -532,7 +532,7 @@ static void NAME(struct gl_context *ctx, const SWvertex *v0,
             int setupLeft, setupRight;
             int lines;
 
-            if (subTriangle==0) {
+            if (!subTriangle) {
                /* bottom half */
                if (scan_from_left_to_right) {
                   eLeft = &eMaj;
@@ -565,7 +565,7 @@ static void NAME(struct gl_context *ctx, const SWvertex *v0,
                   setupLeft = 1;
                   setupRight = 0;
                }
-               if (lines == 0)
+               if (!lines)
                   return;
             }
 
@@ -732,7 +732,7 @@ static void NAME(struct gl_context *ctx, const SWvertex *v0,
                fdxRightEdge = eRight->fdxdy;
             }
 
-            if (lines==0) {
+            if (!lines) {
                continue;
             }
 

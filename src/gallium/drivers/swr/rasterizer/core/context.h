@@ -423,7 +423,7 @@ static_assert((sizeof(DRAW_CONTEXT) & 63) == 0, "Invalid size for DRAW_CONTEXT")
 
 INLINE const API_STATE& GetApiState(const DRAW_CONTEXT* pDC)
 {
-    SWR_ASSERT(pDC != nullptr);
+    SWR_ASSERT(pDC);
     SWR_ASSERT(pDC->pState != nullptr);
 
     return pDC->pState->state;
@@ -431,7 +431,7 @@ INLINE const API_STATE& GetApiState(const DRAW_CONTEXT* pDC)
 
 INLINE void* GetPrivateState(const DRAW_CONTEXT* pDC)
 {
-    SWR_ASSERT(pDC != nullptr);
+    SWR_ASSERT(pDC);
     SWR_ASSERT(pDC->pState != nullptr);
 
     return pDC->pState->pPrivateState;

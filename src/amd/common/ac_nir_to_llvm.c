@@ -2239,7 +2239,7 @@ static void visit_store_ssbo(struct nir_to_llvm_context *ctx,
 		}
 
 		offset = base_offset;
-		if (start != 0) {
+		if (start) {
 			offset = LLVMBuildAdd(ctx->builder, offset, LLVMConstInt(ctx->i32, start * 4, false), "");
 		}
 		params[0] = data;

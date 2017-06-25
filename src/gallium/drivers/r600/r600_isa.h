@@ -699,7 +699,7 @@ r600_isa_alu_opcode(enum r600_chip_class chip_class, unsigned op) {
 static inline unsigned
 r600_isa_alu_slots(enum r600_chip_class chip_class, unsigned op) {
 	unsigned slots = r600_isa_alu(op)->slots[chip_class];
-	assert(slots != 0);
+	assert(slots);
 	return slots;
 }
 

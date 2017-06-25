@@ -151,10 +151,10 @@ bool glsl_symbol_table::add_variable(ir_variable *v)
 	  * the new variable declaration would shadow the function.
 	  */
 	 symbol_table_entry *entry = new(linalloc) symbol_table_entry(v);
-	 if (existing != NULL)
+	 if (existing)
 	    entry->f = existing->f;
 	 int added = _mesa_symbol_table_add_symbol(table, v->name, entry);
-	 assert(added == 0);
+	 assert(!added);
 	 (void)added;
 	 return true;
       }
@@ -177,7 +177,7 @@ bool glsl_symbol_table::add_interface(const char *name, const glsl_type *i,
 {
    assert(i->is_interface());
    symbol_table_entry *entry = get_entry(name);
-   if (entry == NULL) {
+   if (!entry) {
       symbol_table_entry *entry =
          new(linalloc) symbol_table_entry(i, mode);
       bool add_interface_symbol_result =
@@ -224,7 +224,7 @@ void glsl_symbol_table::add_global_function(ir_function *f)
 {
    symbol_table_entry *entry = new(linalloc) symbol_table_entry(f);
    int added = _mesa_symbol_table_add_global_symbol(table, f->name, entry);
-   assert(added == 0);
+   assert(!added);
    (void)added;
 }
 
@@ -278,7 +278,7 @@ glsl_symbol_table::disable_variable(const char *name)
     * further attempts to access it using get_variable() will return NULL.
     */
    symbol_table_entry *entry = get_entry(name);
-   if (entry != NULL) {
+   if (entry) {
       entry->v = NULL;
    }
 }
@@ -288,7 +288,7 @@ glsl_symbol_table::replace_variable(const char *name,
                                     ir_variable *v)
 {
    symbol_table_entry *entry = get_entry(name);
-   if (entry != NULL) {
+   if (entry) {
       entry->v = v;
    }
 }

@@ -272,7 +272,7 @@ create_vs(struct pipe_context *pipe, unsigned vs_traits)
     unsigned input_slot = 0;
 
     ureg = ureg_create(PIPE_SHADER_VERTEX);
-    if (ureg == NULL)
+    if (!ureg)
 	return 0;
 
     const0 = ureg_DECL_constant(ureg, 0);
@@ -470,7 +470,7 @@ create_fs(struct pipe_context *pipe, unsigned fs_traits)
 #endif
 
     ureg = ureg_create(PIPE_SHADER_FRAGMENT);
-    if (ureg == NULL)
+    if (!ureg)
 	return 0;
 
     /* it has to be either a fill, a composite op or a yuv conversion */

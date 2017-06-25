@@ -97,7 +97,7 @@ static void emit_tex_vector(struct gl_context *ctx, struct radeon_aos *aos,
    }
 
 
-   if (stride == 0) {
+   if (!stride) {
       radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, emitsize * 4, 32);
       count = 1;
       aos->stride = 0;

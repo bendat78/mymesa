@@ -312,7 +312,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       /* All done.  We either ran out of memory or we would go beyond the last
        * valid level of an immutable texture if we continued.
        */
-      if (dstImage == NULL)
+      if (!dstImage)
          break;
 
       /* limit minification to src level */

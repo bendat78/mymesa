@@ -317,11 +317,11 @@ dri_open_driver(struct gbm_dri_device *dri)
       /* Read LIBGL_DRIVERS_PATH if GBM_DRIVERS_PATH was not set.
        * LIBGL_DRIVERS_PATH is recommended over GBM_DRIVERS_PATH.
        */
-      if (search_paths == NULL) {
+      if (!search_paths) {
          search_paths = getenv("LIBGL_DRIVERS_PATH");
       }
    }
-   if (search_paths == NULL)
+   if (!search_paths)
       search_paths = DEFAULT_DRIVER_DIR;
 
    /* Temporarily work around dri driver libs that need symbols in libglapi
@@ -337,7 +337,7 @@ dri_open_driver(struct gbm_dri_device *dri)
    for (p = search_paths; p < end && dri->driver == NULL; p = next + 1) {
       int len;
       next = strchr(p, ':');
-      if (next == NULL)
+      if (!next)
          next = end;
 
       len = next - p;
@@ -385,7 +385,7 @@ dri_open_driver(struct gbm_dri_device *dri)
 
    if (!extensions)
       extensions = dlsym(dri->driver, __DRI_DRIVER_EXTENSIONS);
-   if (extensions == NULL) {
+   if (!extensions) {
       fprintf(stderr, "gbm: driver exports no extensions (%s)", dlerror());
       dlclose(dri->driver);
    }
@@ -544,7 +544,7 @@ dri_screen_create_sw(struct gbm_dri_device *dri)
       return -errno;
 
    ret = dri_screen_create_dri2(dri, driver_name);
-   if (ret == 0)
+   if (!ret)
       return ret;
 
    return dri_screen_create_swrast(dri);
@@ -653,7 +653,7 @@ gbm_dri_bo_get_handle_for_plane(struct gbm_bo *_bo, int plane)
 
    /* dumb BOs can only utilize non-planar formats */
    if (!bo->image) {
-      assert(plane == 0);
+      assert(!plane);
       ret.s32 = bo->handle;
       return ret;
    }
@@ -663,7 +663,7 @@ gbm_dri_bo_get_handle_for_plane(struct gbm_bo *_bo, int plane)
       dri->image->queryImage(image, __DRI_IMAGE_ATTRIB_HANDLE, &ret.s32);
       dri->image->destroyImage(image);
    } else {
-      assert(plane == 0);
+      assert(!plane);
       dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_HANDLE, &ret.s32);
    }
 
@@ -680,7 +680,7 @@ gbm_dri_bo_get_stride(struct gbm_bo *_bo, int plane)
 
    if (!dri->image || dri->image->base.version < 11 || !dri->image->fromPlanar) {
       /* Preserve legacy behavior if plane is 0 */
-      if (plane == 0)
+      if (!plane)
          return _bo->stride;
 
       errno = ENOSYS;
@@ -693,7 +693,7 @@ gbm_dri_bo_get_stride(struct gbm_bo *_bo, int plane)
    }
 
    if (bo->image == NULL) {
-      assert(plane == 0);
+      assert(!plane);
       return _bo->stride;
    }
 
@@ -702,7 +702,7 @@ gbm_dri_bo_get_stride(struct gbm_bo *_bo, int plane)
       dri->image->queryImage(image, __DRI_IMAGE_ATTRIB_STRIDE, &stride);
       dri->image->destroyImage(image);
    } else {
-      assert(plane == 0);
+      assert(!plane);
       dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_STRIDE, &stride);
    }
 
@@ -729,7 +729,7 @@ gbm_dri_bo_get_offset(struct gbm_bo *_bo, int plane)
 
     /* Dumb images have no offset */
    if (bo->image == NULL) {
-      assert(plane == 0);
+      assert(!plane);
       return 0;
    }
 
@@ -892,7 +892,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
       image = dri->image->dupImage(image, NULL);
       dri->image->queryImage(image, __DRI_IMAGE_ATTRIB_FORMAT, &dri_format);
       gbm_format = gbm_dri_to_gbm_format(dri_format);
-      if (gbm_format == 0) {
+      if (!gbm_format) {
          errno = EINVAL;
          dri->image->destroyImage(image);
          return NULL;
@@ -924,7 +924,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
                                              &fd_data->fd, 1,
                                              &stride, &offset,
                                              NULL);
-      if (image == NULL) {
+      if (!image) {
          errno = EINVAL;
          return NULL;
       }
@@ -977,7 +977,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
                                                   fd_data->offsets,
                                                   0, 0, 0, 0,
                                                   &error, NULL);
-      if (image == NULL) {
+      if (!image) {
          errno = ENOSYS;
          return NULL;
       }
@@ -993,7 +993,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
 
 
    bo = calloc(1, sizeof *bo);
-   if (bo == NULL) {
+   if (!bo) {
       dri->image->destroyImage(image);
       return NULL;
    }
@@ -1079,7 +1079,7 @@ create_dumb(struct gbm_device *gbm,
    }
 
    bo = calloc(1, sizeof *bo);
-   if (bo == NULL)
+   if (!bo)
       return NULL;
 
    memset(&create_arg, 0, sizeof(create_arg));
@@ -1136,7 +1136,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
       return create_dumb(gbm, width, height, format, usage);
 
    bo = calloc(1, sizeof *bo);
-   if (bo == NULL)
+   if (!bo)
       return NULL;
 
    bo->base.gbm = gbm;
@@ -1334,7 +1334,7 @@ gbm_dri_surface_create(struct gbm_device *gbm,
    }
 
    surf = calloc(1, sizeof *surf);
-   if (surf == NULL) {
+   if (!surf) {
       errno = ENOMEM;
       return NULL;
    }

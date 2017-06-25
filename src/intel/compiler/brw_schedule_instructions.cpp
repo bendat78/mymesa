@@ -1660,7 +1660,7 @@ instruction_scheduler::schedule_instructions(bblock_t *block)
       }
    }
 
-   assert(instructions_to_schedule == 0);
+   assert(!instructions_to_schedule);
 
    block->cycle_count = time;
 }

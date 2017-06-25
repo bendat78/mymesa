@@ -182,7 +182,7 @@ simple_draw_arrays(struct svga_hwtnl *hwtnl,
    unsigned hw_count;
 
    hw_prim = svga_translate_prim(prim, count, &hw_count);
-   if (hw_count == 0)
+   if (!hw_count)
       return PIPE_ERROR_BAD_INPUT;
 
    range.primType = hw_prim;

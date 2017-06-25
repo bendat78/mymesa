@@ -539,7 +539,7 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
       }
    }
 
-   if (numVaryingReads == 0)
+   if (!numVaryingReads)
       return; /* nothing to be done */
 
    /* look for instructions which write to the varying vars identified above */

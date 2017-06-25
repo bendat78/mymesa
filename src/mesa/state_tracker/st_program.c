@@ -540,7 +540,7 @@ st_translate_vertex_program(struct st_context *st,
    }
 
    ureg = ureg_create_with_screen(PIPE_SHADER_VERTEX, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    if (stvp->Base.info.clip_distance_array_size)
@@ -953,7 +953,7 @@ st_translate_fragment_program(struct st_context *st,
 
             if (attr >= FRAG_RESULT_MAX) {
                /* Secondary color for dual source blending. */
-               assert(index == 0);
+               assert(!index);
                index++;
             }
 
@@ -979,7 +979,7 @@ st_translate_fragment_program(struct st_context *st,
    }
 
    ureg = ureg_create_with_screen(PIPE_SHADER_FRAGMENT, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    if (ST_DEBUG & DEBUG_MESA) {
@@ -1481,7 +1481,7 @@ st_translate_program_common(struct st_context *st,
 
          switch (attr) {
          case VARYING_SLOT_POS:
-            assert(slot == 0);
+            assert(!slot);
             output_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
             output_semantic_index[slot] = 0;
             break;
@@ -1635,7 +1635,7 @@ st_translate_geometry_program(struct st_context *st,
    struct ureg_program *ureg;
 
    ureg = ureg_create_with_screen(PIPE_SHADER_GEOMETRY, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    ureg_property(ureg, TGSI_PROPERTY_GS_INPUT_PRIM,
@@ -1722,7 +1722,7 @@ st_translate_tessctrl_program(struct st_context *st,
    struct ureg_program *ureg;
 
    ureg = ureg_create_with_screen(PIPE_SHADER_TESS_CTRL, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    ureg_property(ureg, TGSI_PROPERTY_TCS_VERTICES_OUT,
@@ -1747,7 +1747,7 @@ st_translate_tesseval_program(struct st_context *st,
    struct ureg_program *ureg;
 
    ureg = ureg_create_with_screen(PIPE_SHADER_TESS_EVAL, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    if (sttep->Base.info.tess.primitive_mode == GL_ISOLINES)
@@ -1803,7 +1803,7 @@ st_translate_compute_program(struct st_context *st,
    }
 
    ureg = ureg_create_with_screen(PIPE_SHADER_COMPUTE, st->pipe->screen);
-   if (ureg == NULL)
+   if (!ureg)
       return false;
 
    st_translate_program_common(st, &stcp->Base, stcp->glsl_to_tgsi, ureg,

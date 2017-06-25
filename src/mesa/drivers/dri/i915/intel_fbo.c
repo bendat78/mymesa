@@ -243,7 +243,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    screen = intel->intelScreen->driScrnPriv;
    image = screen->dri2.image->lookupEGLImage(screen, image_handle,
 					      screen->loaderPrivate);
-   if (image == NULL)
+   if (!image)
       return;
 
    /* __DRIimage is opaque to the core so it has to be checked here */
@@ -597,7 +597,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
        * intel_wrap_texture() treatment.
        */
       rb = fb->Attachment[i].Renderbuffer;
-      if (rb == NULL) {
+      if (!rb) {
 	 fbo_incomplete(fb, "FBO incomplete: attachment without "
                         "renderbuffer\n");
 	 continue;
@@ -611,7 +611,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
 
       irb = intel_renderbuffer(rb);
-      if (irb == NULL) {
+      if (!irb) {
 	 fbo_incomplete(fb, "FBO incomplete: software rendering "
                         "renderbuffer\n");
 	 continue;

@@ -454,7 +454,7 @@ i830_emit_state(struct intel_context *intel)
      }
 
    if (dri_bufmgr_check_aperture_space(aper_array, aper_count)) {
-       if (count == 0) {
+       if (!count) {
 	   count++;
 	   intel_batchbuffer_flush(intel);
 	   goto again;
@@ -643,7 +643,7 @@ i830_set_draw_region(struct intel_context *intel,
    value = (DSTORG_HORT_BIAS(0x8) |     /* .5 */
             DSTORG_VERT_BIAS(0x8) | DEPTH_IS_Z);    /* .5 */
 
-   if (irb != NULL) {
+   if (irb) {
       value |= i830_render_target_format_for_mesa_format[intel_rb_format(irb)];
    }
 

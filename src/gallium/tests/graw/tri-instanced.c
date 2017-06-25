@@ -247,7 +247,7 @@ static void init( void )
    }
 
    ctx = screen->context_create(screen, NULL, 0);
-   if (ctx == NULL)
+   if (!ctx)
       exit(3);
 
    memset(&templat, 0, sizeof(templat));
@@ -264,7 +264,7 @@ static void init( void )
 
    tex = screen->resource_create(screen,
                                  &templat);
-   if (tex == NULL)
+   if (!tex)
       exit(4);
 
    surf_tmpl.format = templat.format;
@@ -272,7 +272,7 @@ static void init( void )
    surf_tmpl.u.tex.first_layer = 0;
    surf_tmpl.u.tex.last_layer = 0;
    surf = ctx->create_surface(ctx, tex, &surf_tmpl);
-   if (surf == NULL)
+   if (!surf)
       exit(5);
 
    memset(&fb, 0, sizeof fb);

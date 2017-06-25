@@ -1190,7 +1190,7 @@ try_pbo_upload_common(struct gl_context *ctx,
       templ.swizzle_a = PIPE_SWIZZLE_W;
 
       sampler_view = pipe->create_sampler_view(pipe, addr->buffer, &templ);
-      if (sampler_view == NULL)
+      if (!sampler_view)
          goto fail;
 
       cso_set_sampler_views(cso, PIPE_SHADER_FRAGMENT, 1, &sampler_view);

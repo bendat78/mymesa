@@ -563,7 +563,7 @@ util_pack64_z(enum pipe_format format, double z)
 {
    union fi fui;
 
-   if (z == 0)
+   if (!z)
       return 0;
 
    switch (format) {

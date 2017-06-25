@@ -36,7 +36,7 @@ public:
       this->configs = 0;
 
       this->display = glx_dpy;
-      this->dpy = (glx_dpy != NULL) ? glx_dpy->dpy : NULL;
+      this->dpy = (glx_dpy) ? glx_dpy->dpy : NULL;
 
       this->serverGLXexts = new char[strlen(ext) + 1];
       strcpy((char *) this->serverGLXexts, ext);

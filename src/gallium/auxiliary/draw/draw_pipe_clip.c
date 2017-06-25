@@ -733,7 +733,7 @@ clip_line(struct draw_stage *stage, struct prim_header *header)
    unsigned clipmask = (header->v[0]->clipmask |
                         header->v[1]->clipmask);
 
-   if (clipmask == 0) {
+   if (!clipmask) {
       /* no clipping needed */
       stage->next->line( stage->next, header );
    }
@@ -752,7 +752,7 @@ clip_tri(struct draw_stage *stage, struct prim_header *header)
                         header->v[1]->clipmask |
                         header->v[2]->clipmask);
 
-   if (clipmask == 0) {
+   if (!clipmask) {
       /* no clipping needed */
       stage->next->tri( stage->next, header );
    }

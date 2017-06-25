@@ -162,7 +162,7 @@ svga_hwtnl_simple_draw_range_elements(struct svga_hwtnl *hwtnl,
    unsigned index_offset = start * index_size;
 
    hw_prim = svga_translate_prim(prim, count, &hw_count);
-   if (hw_count == 0)
+   if (!hw_count)
       return PIPE_OK; /* nothing to draw */
 
    range.primType = hw_prim;

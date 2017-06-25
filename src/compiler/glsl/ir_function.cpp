@@ -262,7 +262,7 @@ choose_best_inexact_overload(_mesa_glsl_parse_state *state,
                              ir_function_signature **matches,
                              int num_matches)
 {
-   if (num_matches == 0)
+   if (!num_matches)
       return NULL;
 
    if (num_matches == 1)
@@ -332,7 +332,7 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
                realloc(inexact_matches,
                        sizeof(*inexact_matches) *
                        (num_inexact_matches + 1));
-         if (inexact_matches_temp == NULL) {
+         if (!inexact_matches_temp) {
             _mesa_error_no_memory(__func__);
             free(inexact_matches);
             return NULL;

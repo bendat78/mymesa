@@ -551,7 +551,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
          disp_vertices_i32(&ctx, info->start, vert_count);
          break;
       default:
-         assert(index_size == 0);
+         assert(!index_size);
          disp_vertices_seq(&ctx, info->start, vert_count);
          break;
       }

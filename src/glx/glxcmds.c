@@ -76,7 +76,7 @@ GetGLXDRIDrawable(Display * dpy, GLXDrawable drawable)
    struct glx_display *priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
 
-   if (priv == NULL)
+   if (!priv)
       return NULL;
 
    if (__glxHashLookup(priv->drawHash, drawable, (void *) &pdraw) == 0)
@@ -93,7 +93,7 @@ GetGLXDrawable(Display *dpy, GLXDrawable drawable)
    struct glx_display *priv = __glXInitialize(dpy);
    struct glx_drawable *glxDraw;
 
-   if (priv == NULL)
+   if (!priv)
       return NULL;
 
    if (__glxHashLookup(priv->glXDrawHash, drawable, (void *) &glxDraw) == 0)
@@ -166,7 +166,7 @@ GetGLXPrivScreenConfig(Display * dpy, int scrn, struct glx_display ** ppriv,
     * of initializing/allocating the display private
     */
 
-   if (dpy == NULL) {
+   if (!dpy) {
       return GLX_NO_EXTENSION;
    }
 
@@ -209,7 +209,7 @@ ValidateGLXFBConfig(Display * dpy, GLXFBConfig fbconfig)
    unsigned i;
    struct glx_config *config;
 
-   if (priv != NULL) {
+   if (priv) {
       for (i = 0; i < num_screens; i++) {
 	 for (config = priv->screens[i]->configs; config != NULL;
 	      config = config->next) {
@@ -282,11 +282,11 @@ CreateContext(Display *dpy, int generic_id, struct glx_config *config,
    struct glx_context *gc;
    struct glx_screen *psc;
    struct glx_context *shareList = (struct glx_context *) shareList_user;
-   if (dpy == NULL)
+   if (!dpy)
       return NULL;
 
    psc = GetGLXScreenConfigs(dpy, screen);
-   if (psc == NULL)
+   if (!psc)
       return NULL;
 
    if (generic_id == None)
@@ -387,7 +387,7 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
    if (psc)
       config = glx_config_find_visual(psc->visuals, vis->visualid);
 
-   if (config == NULL) {
+   if (!config) {
       xError error;
 
       error.errorCode = BadValue;
@@ -641,7 +641,7 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
    reply = xcb_glx_is_direct_reply(c, xcb_glx_is_direct(c, contextID), &err);
    is_direct = (reply != NULL && reply->is_direct) ? True : False;
 
-   if (err != NULL) {
+   if (err) {
       __glXSendErrorForXcb(dpy, err);
       free(err);
    }
@@ -698,7 +698,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    struct glx_display *const priv = __glXInitialize(dpy);
 
-   if (priv == NULL)
+   if (!priv)
       return None;
 #endif
 
@@ -743,7 +743,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
 
       config = glx_config_find_visual(psc->visuals, vis->visualid);
       pdraw = psc->driScreen->createDrawable(psc, pixmap, xid, config);
-      if (pdraw == NULL) {
+      if (!pdraw) {
          fprintf(stderr, "failed to create pixmap\n");
          xid = None;
          break;
@@ -837,7 +837,7 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
    {
       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
-      if (pdraw != NULL) {
+      if (pdraw) {
          Bool flush = gc != &dummyContext && drawable == gc->currentDrawable;
 
          (*pdraw->psc->driScreen->swapBuffers)(pdraw, 0, 0, 0, flush);
@@ -889,7 +889,7 @@ glXGetConfig(Display * dpy, XVisualInfo * vis, int attribute,
       config = glx_config_find_visual(psc->visuals, vis->visualid);
 
       /* Lookup attribute after first finding a match on the visual */
-      if (config != NULL) {
+      if (config) {
 	 return glx_config_get(config, attribute, value_return);
       }
 
@@ -1206,7 +1206,7 @@ choose_fbconfig(struct glx_config ** configs, int num_configs,
       }
    }
 
-   if (base == 0) {
+   if (!base) {
       return 0;
    }
 
@@ -1268,7 +1268,7 @@ glXChooseVisual(Display * dpy, int screen, int *attribList)
     */
    for (config = psc->visuals; config != NULL; config = config->next) {
       if (fbconfigs_compatible(&test_config, config)
-          && ((best_config == NULL) ||
+          && ((!best_config) ||
               (fbconfig_compare (&config, &best_config) < 0))) {
          XVisualInfo visualTemplate;
          XVisualInfo *newList;
@@ -1417,7 +1417,7 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
    uint32_t screen = 0;
    Bool got_screen = False;
 
-   if (priv == NULL)
+   if (!priv)
       return NULL;
 
    /* The GLX_EXT_import_context spec says:
@@ -1509,20 +1509,20 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
       return NULL;
 
    psc = GetGLXScreenConfigs(dpy, screen);
-   if (psc == NULL)
+   if (!psc)
       return NULL;
 
-   if (fbconfigID != 0) {
+   if (fbconfigID) {
       mode = glx_config_find_fbconfig(psc->configs, fbconfigID);
-   } else if (visualID != 0) {
+   } else if (visualID) {
       mode = glx_config_find_visual(psc->visuals, visualID);
    }
 
-   if (mode == NULL)
+   if (!mode)
       return NULL;
 
    ctx = indirect_create_context(psc, mode, NULL, renderType);
-   if (ctx == NULL)
+   if (!ctx)
       return NULL;
 
    ctx->xid = contextID;
@@ -1570,7 +1570,7 @@ _GLX_PUBLIC GLXContextID glXGetContextIDEXT(const GLXContext ctx_user)
 {
    struct glx_context *ctx = (struct glx_context *) ctx_user;
 
-   return (ctx == NULL) ? None : ctx->xid;
+   return (!ctx) ? None : ctx->xid;
 }
 
 _GLX_PUBLIC void
@@ -1609,9 +1609,9 @@ glXChooseFBConfig(Display * dpy, int screen,
    config_list = (struct glx_config **)
       glXGetFBConfigs(dpy, screen, &list_size);
 
-   if ((config_list != NULL) && (list_size > 0) && (attribList != NULL)) {
+   if ((config_list) && (list_size > 0) && (attribList != NULL)) {
       list_size = choose_fbconfig(config_list, list_size, attribList);
-      if (list_size == 0) {
+      if (!list_size) {
          free(config_list);
          config_list = NULL;
       }
@@ -1689,7 +1689,7 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
       }
 
       config_list = malloc(num_configs * sizeof *config_list);
-      if (config_list != NULL) {
+      if (config_list) {
          *nelements = num_configs;
          i = 0;
          for (config = priv->screens[screen]->configs; config != NULL;
@@ -1712,7 +1712,7 @@ glXGetFBConfigAttrib(Display * dpy, GLXFBConfig fbconfig,
 {
    struct glx_config *config = ValidateGLXFBConfig(dpy, fbconfig);
 
-   if (config == NULL)
+   if (!config)
       return GLXBadFBConfig;
 
    return glx_config_get(config, attribute, value);
@@ -1886,7 +1886,7 @@ __glXGetVideoSyncSGI(unsigned int *count)
    if (psc && psc->driScreen && psc->driScreen->getDrawableMSC) {
       ret = psc->driScreen->getDrawableMSC(psc, pdraw, &ust, &msc, &sbc);
       *count = (unsigned) msc;
-      return (ret == True) ? 0 : GLX_BAD_CONTEXT;
+      return (ret) ? 0 : GLX_BAD_CONTEXT;
    }
 #endif
 
@@ -1925,7 +1925,7 @@ __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
       ret = psc->driScreen->waitForMSC(pdraw, 0, divisor, remainder, &ust, &msc,
 				       &sbc);
       *count = (unsigned) msc;
-      return (ret == True) ? 0 : GLX_BAD_CONTEXT;
+      return (ret) ? 0 : GLX_BAD_CONTEXT;
    }
 #endif
 
@@ -1969,7 +1969,7 @@ glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
    struct glx_config *config = (struct glx_config *) fbconfig;
 
 
-   if ((dpy == NULL) || (config == NULL)) {
+   if ((!dpy) || (!config)) {
       return None;
    }
 #ifdef GLX_USE_APPLEGL
@@ -1979,7 +1979,7 @@ glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
 #else
 
    psc = GetGLXScreenConfigs(dpy, config->screen);
-   if ((psc != NULL)
+   if ((psc)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)) {
       opcode = __glXSetupForCommand(dpy);
       if (!opcode) {
@@ -2017,12 +2017,12 @@ glXCreateContextWithConfigSGIX(Display * dpy,
    struct glx_screen *psc;
 
 
-   if ((dpy == NULL) || (config == NULL)) {
+   if ((!dpy) || (!config)) {
       return None;
    }
 
    psc = GetGLXScreenConfigs(dpy, config->screen);
-   if ((psc != NULL)
+   if ((psc)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)) {
       gc = CreateContext(dpy, config->fbconfigID, config, shareList,
                          allowDirect,
@@ -2196,7 +2196,7 @@ __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 #if defined( GLX_DIRECT_RENDERING ) && defined( XF86VIDMODE )
    __GLXDRIdrawable *draw = GetGLXDRIDrawable(dpy, drawable);
 
-   if (draw == NULL)
+   if (!draw)
       return False;
 
    return __glxGetMscRate(draw->psc, numerator, denominator);
@@ -2381,7 +2381,7 @@ __glXCopySubBufferMESA(Display * dpy, GLXDrawable drawable,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
-   if (pdraw != NULL) {
+   if (pdraw) {
       struct glx_screen *psc = pdraw->psc;
       if (psc->driScreen->copySubBuffer != NULL) {
          (*psc->driScreen->copySubBuffer) (pdraw, x, y, width, height, True);
@@ -2650,7 +2650,7 @@ _GLX_PUBLIC void (*glXGetProcAddressARB(const GLubyte * procName)) (void)
     * internal API functions.
     */
    f = (gl_function) get_glx_proc_address((const char *) procName);
-   if ((f == NULL) && (procName[0] == 'g') && (procName[1] == 'l')
+   if ((!f) && (procName[0] == 'g') && (procName[1] == 'l')
        && (procName[2] != 'X')) {
 #ifdef GLX_INDIRECT_RENDERING
       f = (gl_function) __indirect_get_proc_address((const char *) procName);
@@ -2701,7 +2701,7 @@ __glXGetUST(int64_t * ust)
 {
    struct timeval tv;
 
-   if (ust == NULL) {
+   if (!ust) {
       return -EFAULT;
    }
 

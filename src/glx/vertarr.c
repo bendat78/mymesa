@@ -185,7 +185,7 @@ __indirect_glInterleavedArrays(GLenum format, GLsizei stride,
       size += modes[idx][i].size;
    }
 
-   trueStride = (stride == 0) ? size : stride;
+   trueStride = (!stride) ? size : stride;
 
    __glXArrayDisableAll(state);
 

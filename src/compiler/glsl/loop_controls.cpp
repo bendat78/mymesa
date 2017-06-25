@@ -97,7 +97,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       new(mem_ctx) ir_expression(ir_binop_div, sub->type, sub, increment);
 
    ir_constant *iter = div->constant_expression_value();
-   if (iter == NULL) {
+   if (!iter) {
       ralloc_free(mem_ctx);
       return -1;
    }
@@ -155,7 +155,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
 
       ir_constant *const cmp_result = cmp->constant_expression_value();
 
-      assert(cmp_result != NULL);
+      assert(cmp_result);
       if (cmp_result->get_bool_component(0)) {
 	 iter_value += bias[i];
 	 valid_loop = true;
@@ -194,8 +194,8 @@ loop_control_visitor::visit_leave(ir_loop *ir)
    /* If we've entered a loop that hasn't been analyzed, something really,
     * really bad has happened.
     */
-   if (ls == NULL) {
-      assert(ls != NULL);
+   if (!ls) {
+      assert(ls);
       return visit_continue;
    }
 
@@ -204,7 +204,7 @@ loop_control_visitor::visit_leave(ir_loop *ir)
        * proven that the loop cannot run, so delete it.
        */
       int iterations = ls->limiting_terminator->iterations;
-      if (iterations == 0) {
+      if (!iterations) {
          ir->remove();
          this->progress = true;
          return visit_continue;

@@ -230,7 +230,7 @@ driCreateConfigs(mesa_format format,
 
    num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
    configs = calloc(num_modes + 1, sizeof *configs);
-   if (configs == NULL)
+   if (!configs)
        return NULL;
 
     c = configs;
@@ -271,7 +271,7 @@ driCreateConfigs(mesa_format format,
 		    modes->accumGreenBits = 16 * j;
 		    modes->accumBlueBits  = 16 * j;
 		    modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
-		    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
+		    modes->visualRating = (!j) ? GLX_NONE : GLX_SLOW_CONFIG;
 
 		    modes->stencilBits = stencil_bits[k];
 		    modes->depthBits = depth_bits[k];

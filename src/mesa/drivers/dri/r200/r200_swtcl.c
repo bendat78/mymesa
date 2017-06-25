@@ -591,7 +591,7 @@ void r200ChooseRenderState( struct gl_context *ctx )
       tnl->Driver.Render.Triangle = rast_tab[index].triangle;
       tnl->Driver.Render.Quad = rast_tab[index].quad;
 
-      if (index == 0) {
+      if (!index) {
 	 tnl->Driver.Render.PrimTabVerts = r200_render_tab_verts;
 	 tnl->Driver.Render.PrimTabElts = r200_render_tab_elts;
 	 tnl->Driver.Render.ClippedPolygon = r200_fast_clipped_poly;
@@ -692,7 +692,7 @@ void r200Fallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 
    if (mode) {
       rmesa->radeon.Fallback |= bit;
-      if (oldfallback == 0) {
+      if (!oldfallback) {
 	 radeon_firevertices(&rmesa->radeon);
 	 TCL_FALLBACK( ctx, R200_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );

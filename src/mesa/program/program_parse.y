@@ -728,7 +728,7 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 
 	   free($1);
 
-	   if (s == NULL) {
+	   if (!s) {
 	      yyerror(& @1, state, "invalid operand variable");
 	      YYERROR;
 	   } else if ((s->type != at_param) && (s->type != at_temp)
@@ -816,7 +816,7 @@ dstReg: resultBinding
 
 	   free($1);
 
-	   if (s == NULL) {
+	   if (!s) {
 	      yyerror(& @1, state, "invalid operand variable");
 	      YYERROR;
 	   } else if ((s->type != at_output) && (s->type != at_temp)) {
@@ -845,7 +845,7 @@ progParamArray: USED_IDENTIFIER
 
 	   free($1);
 
-	   if (s == NULL) {
+	   if (!s) {
 	      yyerror(& @1, state, "invalid operand variable");
 	      YYERROR;
 	   } else if ((s->type != at_param) || !s->param_is_array) {
@@ -918,7 +918,7 @@ addrReg: USED_IDENTIFIER
 
 	   free($1);
 
-	   if (s == NULL) {
+	   if (!s) {
 	      yyerror(& @1, state, "invalid array member");
 	      YYERROR;
 	   } else if (s->type != at_address) {
@@ -979,7 +979,7 @@ ATTRIB_statement: ATTRIB IDENTIFIER '=' attribBinding
 	   struct asm_symbol *const s =
 	      declare_variable(state, $2, at_attrib, & @2);
 
-	   if (s == NULL) {
+	   if (!s) {
 	      free($2);
 	      YYERROR;
 	   } else {
@@ -1077,7 +1077,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 	   struct asm_symbol *const s =
 	      declare_variable(state, $2, at_param, & @2);
 
-	   if (s == NULL) {
+	   if (!s) {
 	      free($2);
 	      YYERROR;
 	   } else {
@@ -1101,7 +1101,7 @@ PARAM_multipleStmt: PARAM IDENTIFIER '[' optArraySize ']' paramMultipleInit
 	      struct asm_symbol *const s =
 		 declare_variable(state, $2, $6.type, & @2);
 
-	      if (s == NULL) {
+	      if (!s) {
 		 free($2);
 		 YYERROR;
 	      } else {
@@ -1821,7 +1821,7 @@ OUTPUT_statement: OUTPUT IDENTIFIER '=' resultBinding
 	   struct asm_symbol *const s =
 	      declare_variable(state, $2, at_output, & @2);
 
-	   if (s == NULL) {
+	   if (!s) {
 	      free($2);
 	      YYERROR;
 	   } else {
@@ -2034,13 +2034,13 @@ ALIAS_statement: ALIAS IDENTIFIER '=' USED_IDENTIFIER
 
 	   free($4);
 
-	   if (exist != NULL) {
+	   if (exist) {
 	      char m[1000];
 	      _mesa_snprintf(m, sizeof(m), "redeclared identifier: %s", $2);
 	      free($2);
 	      yyerror(& @2, state, m);
 	      YYERROR;
-	   } else if (target == NULL) {
+	   } else if (!target) {
 	      free($2);
 	      yyerror(& @4, state,
 		      "undefined variable binding in ALIAS statement");
@@ -2067,27 +2067,27 @@ asm_instruction_set_operands(struct asm_instruction *inst,
    /* In the core ARB extensions only the KIL instruction doesn't have a
     * destination register.
     */
-   if (dst == NULL) {
+   if (!dst) {
       init_dst_reg(& inst->Base.DstReg);
    } else {
       inst->Base.DstReg = *dst;
    }
 
-   if (src0 != NULL) {
+   if (src0) {
       inst->Base.SrcReg[0] = src0->Base;
       inst->SrcReg[0] = *src0;
    } else {
       init_src_reg(& inst->SrcReg[0]);
    }
 
-   if (src1 != NULL) {
+   if (src1) {
       inst->Base.SrcReg[1] = src1->Base;
       inst->SrcReg[1] = *src1;
    } else {
       init_src_reg(& inst->SrcReg[1]);
    }
 
-   if (src2 != NULL) {
+   if (src2) {
       inst->Base.SrcReg[2] = src2->Base;
       inst->SrcReg[2] = *src2;
    } else {
@@ -2238,7 +2238,7 @@ declare_variable(struct asm_parser_state *state, char *name, enum asm_type t,
       _mesa_symbol_table_find_symbol(state->st, name);
 
 
-   if (exist != NULL) {
+   if (exist) {
       yyerror(locp, state, "redeclared identifier");
    } else {
       s = calloc(1, sizeof(struct asm_symbol));
@@ -2513,7 +2513,7 @@ _mesa_parse_arb_program(struct gl_context *ctx, GLenum target, const GLubyte *st
    /* Make a copy of the program string and force it to be NUL-terminated.
     */
    strz = (GLubyte *) ralloc_size(state->mem_ctx, len + 1);
-   if (strz == NULL) {
+   if (!strz) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
       return GL_FALSE;
    }

@@ -227,7 +227,7 @@ surfaceless_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
       }
    }
 
-   return (config_count != 0);
+   return (config_count);
 }
 
 static const struct dri2_egl_display_vtbl dri2_surfaceless_display_vtbl = {

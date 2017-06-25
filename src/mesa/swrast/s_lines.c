@@ -78,7 +78,7 @@ draw_wide_line( struct gl_context *ctx, SWspan *span, GLboolean xMajor )
       GLuint i;
       GLint w;
       for (w = 0; w < width; w++) {
-         if (w == 0) {
+         if (!w) {
             for (i = 0; i < span->end; i++)
                y[i] -= start;
          }
@@ -94,7 +94,7 @@ draw_wide_line( struct gl_context *ctx, SWspan *span, GLboolean xMajor )
       GLuint i;
       GLint w;
       for (w = 0; w < width; w++) {
-         if (w == 0) {
+         if (!w) {
             for (i = 0; i < span->end; i++)
                x[i] -= start;
          }

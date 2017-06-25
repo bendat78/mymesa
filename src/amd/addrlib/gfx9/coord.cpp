@@ -58,7 +58,7 @@ UINT_32 Coordinate::ison(UINT_32 x, UINT_32 y, UINT_32 z, UINT_32 s, UINT_32 m)
     case 'y': out = y & bit; break;
     case 'z': out = z & bit; break;
     }
-    return (out != 0) ? 1 : 0;
+    return (out) ? 1 : 0;
 }
 
 INT_8 Coordinate::getdim()
@@ -308,7 +308,7 @@ BOOL_32 CoordTerm::operator!=(const CoordTerm& b)
 BOOL_32 CoordTerm::exceedRange(UINT_32 xRange, UINT_32 yRange, UINT_32 zRange, UINT_32 sRange)
 {
     BOOL_32 exceed = FALSE;
-    for (UINT_32 i = 0; (i < num_coords) && (exceed == FALSE); i++)
+    for (UINT_32 i = 0; (i < num_coords) && (!exceed); i++)
     {
         UINT_32 subject;
         switch (m_coord[i].getdim())
@@ -425,7 +425,7 @@ VOID CoordEq::solveAddr(
             INT_8 dim = temp.m_eq[i][0].getdim();
             INT_8 ord = temp.m_eq[i][0].getord();
 
-            ADDR_ASSERT((ord < 32) || (bit == 0));
+            ADDR_ASSERT((ord < 32) || (!bit));
 
             switch (dim)
             {
@@ -463,7 +463,7 @@ VOID CoordEq::solveAddr(
 
     if (bitsLeft > 0)
     {
-        if (sliceInM != 0)
+        if (sliceInM)
         {
             z = m / sliceInM;
             zBitsValid = 0xffffffff;
@@ -483,7 +483,7 @@ VOID CoordEq::solveAddr(
                     INT_8 dim = temp.m_eq[i][0].getdim();
                     INT_8 ord = temp.m_eq[i][0].getord();
 
-                    ADDR_ASSERT((ord < 32) || (bit == 0));
+                    ADDR_ASSERT((ord < 32) || (!bit));
 
                     switch (dim)
                     {
@@ -602,7 +602,7 @@ UINT_32 CoordEq::Filter(INT_8 f, Coordinate& co, UINT_32 start, INT_8 axis)
     for (UINT_32 i = start; i < m_numBits;)
     {
         UINT_32 m = m_eq[i].Filter(f, co, 0, axis);
-        if (m == 0)
+        if (!m)
         {
             for (UINT_32 j = i; j < m_numBits - 1; j++)
             {
@@ -620,7 +620,7 @@ UINT_32 CoordEq::Filter(INT_8 f, Coordinate& co, UINT_32 start, INT_8 axis)
 
 VOID CoordEq::shift(INT_32 amount, INT_32 start)
 {
-    if (amount != 0)
+    if (amount)
     {
         INT_32 numBits = static_cast<INT_32>(m_numBits);
         amount = -amount;
@@ -648,7 +648,7 @@ CoordTerm& CoordEq::operator[](UINT_32 i)
 
 VOID CoordEq::mort2d(Coordinate& c0, Coordinate& c1, UINT_32 start, UINT_32 end)
 {
-    if (end == 0)
+    if (!end)
     {
         ADDR_ASSERT(m_numBits > 0);
         end = m_numBits - 1;
@@ -656,7 +656,7 @@ VOID CoordEq::mort2d(Coordinate& c0, Coordinate& c1, UINT_32 start, UINT_32 end)
     for (UINT_32 i = start; i <= end; i++)
     {
         UINT_32 select = (i - start) % 2;
-        Coordinate& c = (select == 0) ? c0 : c1;
+        Coordinate& c = (!select) ? c0 : c1;
         m_eq[i].add(c);
         c++;
     }
@@ -664,7 +664,7 @@ VOID CoordEq::mort2d(Coordinate& c0, Coordinate& c1, UINT_32 start, UINT_32 end)
 
 VOID CoordEq::mort3d(Coordinate& c0, Coordinate& c1, Coordinate& c2, UINT_32 start, UINT_32 end)
 {
-    if (end == 0)
+    if (!end)
     {
         ADDR_ASSERT(m_numBits > 0);
         end = m_numBits - 1;
@@ -672,7 +672,7 @@ VOID CoordEq::mort3d(Coordinate& c0, Coordinate& c1, Coordinate& c2, UINT_32 sta
     for (UINT_32 i = start; i <= end; i++)
     {
         UINT_32 select = (i - start) % 3;
-        Coordinate& c = (select == 0) ? c0 : ((select == 1) ? c1 : c2);
+        Coordinate& c = (!select) ? c0 : ((select == 1) ? c1 : c2);
         m_eq[i].add(c);
         c++;
     }

@@ -34,7 +34,7 @@ void
 mmDumpMemInfo(const struct mem_block *heap)
 {
    fprintf(stderr, "Memory heap %p:\n", (void *)heap);
-   if (heap == 0) {
+   if (!heap) {
       fprintf(stderr, "  heap == 0\n");
    } else {
       const struct mem_block *p;

@@ -278,7 +278,7 @@ _mesa_initialize_texture_object( struct gl_context *ctx,
    obj->RefCount = 1;
    obj->Name = name;
    obj->Target = target;
-   if (target != 0) {
+   if (target) {
       obj->TargetIndex = _mesa_tex_target_to_index(ctx, target);
    }
    else {
@@ -1163,7 +1163,7 @@ invalidate_tex_image_error_check(struct gl_context *ctx, GLuint texture,
     *     TEXTURE_2D_MULTISAMPLE, or TEXTURE_2D_MULTISAMPLE_ARRAY, and <level>
     *     is not zero, the error INVALID_VALUE is generated."
     */
-   if (level != 0) {
+   if (level) {
       switch (t->Target) {
       case GL_TEXTURE_RECTANGLE:
       case GL_TEXTURE_BUFFER:
@@ -1640,7 +1640,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    /*
     * Get pointer to new texture object (newTexObj)
     */
-   if (texName == 0) {
+   if (!texName) {
       /* Use a default texture object */
       newTexObj = ctx->Shared->DefaultTex[targetIndex];
    }
@@ -1721,7 +1721,7 @@ _mesa_BindTextureUnit(GLuint unit, GLuint texture)
     *    beginning of this section is reset to its default texture for the
     *    corresponding texture image unit."
     */
-   if (texture == 0) {
+   if (!texture) {
       unbind_textures_from_unit(ctx, unit);
       return;
    }

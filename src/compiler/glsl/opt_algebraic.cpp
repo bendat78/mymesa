@@ -102,37 +102,37 @@ ir_algebraic_visitor::visit_enter(ir_assignment *ir)
 static inline bool
 is_vec_zero(ir_constant *ir)
 {
-   return (ir == NULL) ? false : ir->is_zero();
+   return (!ir) ? false : ir->is_zero();
 }
 
 static inline bool
 is_vec_one(ir_constant *ir)
 {
-   return (ir == NULL) ? false : ir->is_one();
+   return (!ir) ? false : ir->is_one();
 }
 
 static inline bool
 is_vec_two(ir_constant *ir)
 {
-   return (ir == NULL) ? false : ir->is_value(2.0, 2);
+   return (!ir) ? false : ir->is_value(2.0, 2);
 }
 
 static inline bool
 is_vec_four(ir_constant *ir)
 {
-   return (ir == NULL) ? false : ir->is_value(4.0, 4);
+   return (!ir) ? false : ir->is_value(4.0, 4);
 }
 
 static inline bool
 is_vec_negative_one(ir_constant *ir)
 {
-   return (ir == NULL) ? false : ir->is_negative_one();
+   return (!ir) ? false : ir->is_negative_one();
 }
 
 static inline bool
 is_valid_vec_const(ir_constant *ir)
 {
-   if (ir == NULL)
+   if (!ir)
       return false;
 
    if (!ir->type->is_scalar() && !ir->type->is_vector())
@@ -477,7 +477,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 #define HANDLE_PACK_UNPACK_INVERSE(inverse_operation)                   \
       {                                                                 \
          ir_expression *const op = ir->operands[0]->as_expression();    \
-         if (op == NULL)                                                \
+         if (!op)                                                \
             break;                                                      \
          if (op->operation == (inverse_operation))                      \
             return op->operands[0];                                     \

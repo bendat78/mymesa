@@ -429,7 +429,7 @@ svga_host_log(const char *log)
 
    msg_len = strlen(log) + strlen("log ") + 1;
    msg = CALLOC(1, msg_len);
-   if (msg == NULL) {
+   if (!msg) {
       debug_printf("Cannot allocate memory for log message\n");
       return PIPE_ERROR_OUT_OF_MEMORY;
    }

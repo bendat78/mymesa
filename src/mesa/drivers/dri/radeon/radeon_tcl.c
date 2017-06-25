@@ -545,7 +545,7 @@ void radeonTclFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 
    if (mode) {
       rmesa->radeon.TclFallback |= bit;
-      if (oldfallback == 0) {
+      if (!oldfallback) {
 	 if (RADEON_DEBUG & RADEON_FALLBACKS)
 	    fprintf(stderr, "Radeon begin tcl fallback %s\n",
 		    getFallbackString( bit ));

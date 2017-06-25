@@ -295,7 +295,7 @@ clear_tile(struct softpipe_cached_tile *tile,
       memset(tile->data.any, (int) clear_value, TILE_SIZE * TILE_SIZE);
       break;
    case 2:
-      if (clear_value == 0) {
+      if (!clear_value) {
          memset(tile->data.any, 0, 2 * TILE_SIZE * TILE_SIZE);
       }
       else {
@@ -307,7 +307,7 @@ clear_tile(struct softpipe_cached_tile *tile,
       }
       break;
    case 4:
-      if (clear_value == 0) {
+      if (!clear_value) {
          memset(tile->data.any, 0, 4 * TILE_SIZE * TILE_SIZE);
       }
       else {
@@ -319,7 +319,7 @@ clear_tile(struct softpipe_cached_tile *tile,
       }
       break;
    case 8:
-      if (clear_value == 0) {
+      if (!clear_value) {
          memset(tile->data.any, 0, 8 * TILE_SIZE * TILE_SIZE);
       }
       else {

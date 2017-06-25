@@ -110,8 +110,8 @@ static inline float uf11_to_f32(uint16_t val)
 
    f32.f = 0.0;
 
-   if (exponent == 0) {
-      if (mantissa != 0) {
+   if (!exponent) {
+      if (mantissa) {
          const float scale = 1.0 / (1 << 20);
          f32.f = scale * mantissa;
       }
@@ -192,8 +192,8 @@ static inline float uf10_to_f32(uint16_t val)
 
    f32.f = 0.0;
 
-   if (exponent == 0) {
-      if (mantissa != 0) {
+   if (!exponent) {
+      if (mantissa) {
          const float scale = 1.0 / (1 << 19);
          f32.f = scale * mantissa;
       }

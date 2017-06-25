@@ -39,7 +39,7 @@ int ra_checker::run() {
 
 	run_on(sh.root);
 
-	assert(rm_stk_level == 0);
+	assert(!rm_stk_level);
 
 	dump_all_errors();
 

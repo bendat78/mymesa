@@ -1360,7 +1360,7 @@ blorp_emit_depth_stencil_config(struct blorp_batch *batch,
    const struct isl_device *isl_dev = batch->blorp->isl_dev;
 
    uint32_t *dw = blorp_emit_dwords(batch, isl_dev->ds.size / 4);
-   if (dw == NULL)
+   if (!dw)
       return;
 
    struct isl_depth_stencil_hiz_emit_info info = {

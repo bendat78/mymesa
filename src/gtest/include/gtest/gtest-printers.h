@@ -404,7 +404,7 @@ template <typename T>
 void DefaultPrintTo(IsNotContainer /* dummy */,
                     true_type /* is a pointer */,
                     T* p, ::std::ostream* os) {
-  if (p == NULL) {
+  if (!p) {
     *os << "NULL";
   } else {
     // C++ doesn't allow casting from a function pointer to any object
@@ -714,7 +714,7 @@ class UniversalPrinter {
 // elements, starting at address 'begin'.
 template <typename T>
 void UniversalPrintArray(const T* begin, size_t len, ::std::ostream* os) {
-  if (len == 0) {
+  if (!len) {
     *os << "{}";
   } else {
     *os << "{ ";
@@ -802,7 +802,7 @@ template <>
 class UniversalTersePrinter<const char*> {
  public:
   static void Print(const char* str, ::std::ostream* os) {
-    if (str == NULL) {
+    if (!str) {
       *os << "NULL";
     } else {
       UniversalPrint(string(str), os);
@@ -822,7 +822,7 @@ template <>
 class UniversalTersePrinter<const wchar_t*> {
  public:
   static void Print(const wchar_t* str, ::std::ostream* os) {
-    if (str == NULL) {
+    if (!str) {
       *os << "NULL";
     } else {
       UniversalPrint(::std::wstring(str), os);

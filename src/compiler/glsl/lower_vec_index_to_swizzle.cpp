@@ -64,7 +64,7 @@ ir_vec_index_to_swizzle_visitor::handle_rvalue(ir_rvalue **rv)
       return;
 
    ir_constant *const idx = expr->operands[1]->constant_expression_value();
-   if (idx == NULL)
+   if (!idx)
       return;
 
    void *ctx = ralloc_parent(expr);

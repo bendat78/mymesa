@@ -166,7 +166,7 @@ vk_format_get_blocksize(VkFormat format)
 
 	assert(bits % 8 == 0);
 	assert(bytes > 0);
-	if (bytes == 0) {
+	if (!bytes) {
 		bytes = 1;
 	}
 

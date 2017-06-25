@@ -568,7 +568,7 @@ radeon_image_target_renderbuffer_storage(struct gl_context *ctx,
    screen = radeon->radeonScreen->driScreen;
    image = screen->dri2.image->lookupEGLImage(screen, image_handle,
 					      screen->loaderPrivate);
-   if (image == NULL)
+   if (!image)
       return;
 
    rrb = radeon_renderbuffer(rb);

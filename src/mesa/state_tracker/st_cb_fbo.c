@@ -156,7 +156,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
     *   by the implementation.
     *
     * So let's find the supported number of samples closest to NumSamples.
-    * (NumSamples == 1) is treated the same as (NumSamples == 0).
+    * (NumSamples == 1) is treated the same as (!NumSamples).
     */
    if (rb->NumSamples > 1) {
       unsigned i;
@@ -247,7 +247,7 @@ st_new_renderbuffer(struct gl_context *ctx, GLuint name)
 {
    struct st_renderbuffer *strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (strb) {
-      assert(name != 0);
+      assert(name);
       _mesa_init_renderbuffer(&strb->Base, name);
       strb->Base.Delete = st_renderbuffer_delete;
       strb->Base.AllocStorage = st_renderbuffer_alloc_storage;

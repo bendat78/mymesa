@@ -1211,7 +1211,7 @@ svga_render_condition(struct pipe_context *pipe, struct pipe_query *q,
    SVGA_DBG(DEBUG_QUERY, "%s\n", __FUNCTION__);
 
    assert(svga_have_vgpu10(svga));
-   if (sq == NULL) {
+   if (!sq) {
       queryId = SVGA3D_INVALID_ID;
    }
    else {
@@ -1250,7 +1250,7 @@ svga_render_condition(struct pipe_context *pipe, struct pipe_query *q,
       svga->pred.cond = condition;
    }
 
-   svga->render_condition = (sq != NULL);
+   svga->render_condition = (sq);
 }
 
 

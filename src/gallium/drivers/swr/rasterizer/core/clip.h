@@ -346,7 +346,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 simdscalar vCullComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vCullComp = vClipCullDistLo[e][component];
                 }
@@ -373,7 +373,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 simdscalar vClipComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vClipComp = vClipCullDistLo[e][component];
                 }
@@ -413,7 +413,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 simd16scalar vCullComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vCullComp = vClipCullDistLo[e][component];
                 }
@@ -440,7 +440,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 simd16scalar vClipComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vClipComp = vClipCullDistLo[e][component];
                 }

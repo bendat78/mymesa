@@ -99,7 +99,7 @@ RB_MAP::cap_pipe( int xmode, bool is_thick, int& num_ses_log2, int bpp_log2, int
     num_ses_log2 = 0;
 
     // If block size is set to variable (0), compute the size
-    if( block_size_log2 == 0 ) {
+    if(!block_size_log2) {
         //
         //TODO Temporary disable till RTL can drive Var signals properly
     }
@@ -143,7 +143,7 @@ void RB_MAP::Get_Data_Offset_Equation( CoordEq& data_eq, int data_type, int bpp_
     // Clear the equation
     data_eq.resize(0);
     data_eq.resize(27);
-    if( block_size_log2 == 0 ) block_size_log2 = 16;
+    if(!block_size_log2) block_size_log2 = 16;
 
     if( is_linear ) {
         Coordinate cm( 'm', 0 );
@@ -193,7 +193,7 @@ void RB_MAP::Get_Data_Offset_Equation( CoordEq& data_eq, int data_type, int bpp_
             }
         } else {
             // Z 3d swizzle
-            int m2d_end = (bpp_log2==0) ? 3 : ((bpp_log2 < 4) ? 4 : 5);
+            int m2d_end = (!bpp_log2) ? 3 : ((bpp_log2 < 4) ? 4 : 5);
             int num_zs = (bpp_log2==0 || bpp_log2==4) ? 2 : ((bpp_log2==1) ? 3 : 1);
             data_eq.mort2d( cx, cy, bpp_log2, m2d_end );
             for( i=m2d_end+1; i<=m2d_end+num_zs; i++ ) {
@@ -274,7 +274,7 @@ void RB_MAP::Get_Data_Offset_Equation( CoordEq& data_eq, int data_type, int bpp_
 void RB_MAP::Get_RB_Equation( CoordEq& rb_equation, int num_ses_log2, int num_rbs_log2 )
 {
     // RB's are distributed on 16x16, except when we have 1 rb per se, in which case its 32x32
-    int rb_region = (num_rbs_log2 == 0) ? 5 : 4;
+    int rb_region = (!num_rbs_log2) ? 5 : 4;
     Coordinate cx( 'x', rb_region );
     Coordinate cy( 'y', rb_region );
     int i, start = 0, num_total_rbs_log2 = num_ses_log2 + num_rbs_log2;
@@ -339,7 +339,7 @@ RB_MAP::Get_Pipe_Equation( CoordEq& pipe_equation, CoordEq& addr,
 
     // if pipe is 0, then the first pipe bit is above the comp block size, so we don't need to do anything
     // Note, this if condition is not necessary, since if we execute the loop when pipe==0, we will get the same pipe equation
-    if ( pipe != 0 ) {
+    if (pipe) {
         int j = pipe;
 
 
@@ -618,7 +618,7 @@ void RB_MAP::get_mip_coord_nonlinear( int& x, int& y, int& z,
             // in x or z major, it only occurs if width/depth is greater than 4 blocks
             // Height is special, since we can enter the mip tail when height is 1/2 block high
             int order_dim_limit = (order == 1) ? 2 : 4;
-            int& order_dim = (order == 0) ? surf_width : ((order == 1) ? surf_height : surf_depth);
+            int& order_dim = (!order) ? surf_width : ((order == 1) ? surf_height : surf_depth);
             if( mip_dim < 3 && order_dim > order_dim_limit && max_mip >= 3 ) mip_dim += 2;
             else mip_dim += (mip_dim/2) + (mip_dim&1);
         }

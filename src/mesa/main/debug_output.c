@@ -744,10 +744,10 @@ _mesa_set_debug_state_int(struct gl_context *ctx, GLenum pname, GLint val)
 
    switch (pname) {
    case GL_DEBUG_OUTPUT:
-      debug->DebugOutput = (val != 0);
+      debug->DebugOutput = (val);
       break;
    case GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB:
-      debug->SyncOutput = (val != 0);
+      debug->SyncOutput = (val);
       break;
    default:
       assert(!"unknown debug output param");

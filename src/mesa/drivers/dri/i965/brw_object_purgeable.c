@@ -42,7 +42,7 @@ intel_buffer_purgeable(struct brw_bo *buffer)
 {
    int retained = 0;
 
-   if (buffer != NULL)
+   if (buffer)
       retained = brw_bo_madvise(buffer, I915_MADV_DONTNEED);
 
    return retained ? GL_VOLATILE_APPLE : GL_RELEASED_APPLE;
@@ -106,7 +106,7 @@ intel_bo_unpurgeable(struct brw_bo *buffer)
    int retained;
 
    retained = 0;
-   if (buffer != NULL)
+   if (buffer)
       retained = brw_bo_madvise(buffer, I915_MADV_WILLNEED);
 
    return retained;

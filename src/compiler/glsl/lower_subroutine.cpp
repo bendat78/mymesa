@@ -98,7 +98,7 @@ lower_subroutine_visitor::visit_leave(ir_call *ir)
             break;
          }
       }
-      if (is_compat == false)
+      if (!is_compat)
          continue;
 
       if (ir->array_idx != NULL)

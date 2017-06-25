@@ -222,7 +222,7 @@ radv_pipeline_cache_grow(struct radv_pipeline_cache *cache)
 	struct cache_entry **old_table = cache->hash_table;
 
 	table = malloc(byte_size);
-	if (table == NULL)
+	if (!table)
 		return VK_ERROR_OUT_OF_HOST_MEMORY;
 
 	cache->hash_table = table;
@@ -369,7 +369,7 @@ VkResult radv_CreatePipelineCache(
 	cache = vk_alloc2(&device->alloc, pAllocator,
 			    sizeof(*cache), 8,
 			    VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (cache == NULL)
+	if (!cache)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	if (pAllocator)
@@ -416,7 +416,7 @@ VkResult radv_GetPipelineCacheData(
 	struct cache_header *header;
 	VkResult result = VK_SUCCESS;
 	const size_t size = sizeof(*header) + cache->total_size;
-	if (pData == NULL) {
+	if (!pData) {
 		*pDataSize = size;
 		return VK_SUCCESS;
 	}

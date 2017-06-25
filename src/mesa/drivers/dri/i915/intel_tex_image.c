@@ -351,7 +351,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    screen = intel->intelScreen->driScrnPriv;
    image = screen->dri2.image->lookupEGLImage(screen, image_handle,
 					      screen->loaderPrivate);
-   if (image == NULL)
+   if (!image)
       return;
 
    intel_set_texture_image_region(ctx, texImage, image->region,

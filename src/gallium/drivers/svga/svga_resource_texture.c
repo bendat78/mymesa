@@ -1261,7 +1261,7 @@ svga_texture_generate_mipmap(struct pipe_context *pipe,
    templ.u.tex.last_level = last_level;
 
    psv = pipe->create_sampler_view(pipe, pt, &templ);
-   if (psv == NULL)
+   if (!psv)
       return FALSE;
 
    sv = svga_pipe_sampler_view(psv);

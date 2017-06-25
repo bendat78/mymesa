@@ -91,7 +91,7 @@ __glXSendLargeImage(struct glx_context * gc, GLint compsize, GLint dim,
     }
 
     /* Apply pixel store unpack modes to copy data into buf */
-    if (src != NULL) {
+    if (src) {
 	(*gc->fillImage) (gc, dim, width, height, depth, format, type,
 			  src, buf, modes);
     }
@@ -156,7 +156,7 @@ __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
                            column, pc, NULL);
          pc += image2len;
       }
-      if ((compsize == 0) && (compsize2 == 0)) {
+      if ((!compsize) && (!compsize2)) {
          /* Setup default store modes */
          (void) memcpy(pixelHeaderPC, __glXDefaultPixelStore + 4, 20);
       }

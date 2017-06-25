@@ -103,7 +103,7 @@ radeonBufferData(struct gl_context * ctx,
         radeon_obj->bo = NULL;
     }
 
-    if (size != 0) {
+    if (size) {
         radeon_obj->bo = radeon_bo_open(radeon->radeonScreen->bom,
                                         0,
                                         size,
@@ -114,7 +114,7 @@ radeonBufferData(struct gl_context * ctx,
         if (!radeon_obj->bo)
             return GL_FALSE;
 
-        if (data != NULL) {
+        if (data) {
             radeon_bo_map(radeon_obj->bo, GL_TRUE);
 
             memcpy(radeon_obj->bo->ptr, data, size);

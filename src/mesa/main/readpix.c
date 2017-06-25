@@ -1021,7 +1021,7 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    rb = _mesa_get_read_renderbuffer_for_format(ctx, format);
-   if (rb == NULL) {
+   if (!rb) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glReadPixels(read buffer)");
       return;

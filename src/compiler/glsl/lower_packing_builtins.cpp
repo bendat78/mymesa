@@ -1165,7 +1165,7 @@ private:
           *         = m16 / 2^(-24)             (22)
           */
 
-         /* if (e16 == 0) { */
+         /* if (!e16) { */
          if_tree(equal(e, constant(0u)),
 
             /* u32 = bitcast_f2u(float(m) / float(1 << 24)); */

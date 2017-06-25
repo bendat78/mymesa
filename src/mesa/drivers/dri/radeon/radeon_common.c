@@ -256,7 +256,7 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 		}
 	}
 
-	if (rrbColor == NULL)
+	if (!rrbColor)
 		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DRAW_BUFFER, GL_TRUE);
 	else
 		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE);

@@ -359,7 +359,7 @@ _mesa_compute_max_transform_feedback_vertices(struct gl_context *ctx,
          unsigned max_for_this_buffer;
 
          /* Skip any inactive buffers, which have a stride of 0. */
-         if (stride == 0)
+         if (!stride)
 	    continue;
 
          max_for_this_buffer = obj->Size[i] / (4 * stride);
@@ -410,7 +410,7 @@ _mesa_BeginTransformFeedback(GLenum mode)
     * feedback.
     */
    struct gl_program *source = get_xfb_source(ctx);
-   if (source == NULL) {
+   if (!source) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBeginTransformFeedback(no program active)");
       return;
@@ -685,7 +685,7 @@ lookup_transform_feedback_bufferobj_err(struct gl_context *ctx,
    /* OpenGL 4.5 core profile, 13.2, pdf page 444: buffer must be zero or the
     * name of an existing buffer object.
     */
-   if (buffer == 0) {
+   if (!buffer) {
       bufObj = ctx->Shared->NullBufferObj;
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
@@ -788,7 +788,7 @@ _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
       return;
    }
 
-   if (buffer == 0) {
+   if (!buffer) {
       bufObj = ctx->Shared->NullBufferObj;
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
@@ -962,7 +962,7 @@ _mesa_lookup_transform_feedback_object(struct gl_context *ctx, GLuint name)
     * the default transform feedback object, or the name of an existing
     * transform feedback object."
     */
-   if (name == 0) {
+   if (!name) {
       return ctx->TransformFeedback.DefaultObject;
    }
    else
@@ -1062,11 +1062,11 @@ _mesa_IsTransformFeedback(GLuint name)
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (name == 0)
+   if (!name)
       return GL_FALSE;
 
    obj = _mesa_lookup_transform_feedback_object(ctx, name);
-   if (obj == NULL)
+   if (!obj)
       return GL_FALSE;
 
    return obj->EverBound;

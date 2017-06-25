@@ -43,7 +43,7 @@ __eglGLVNDGetPlatformDisplay(EGLenum platform, void *native_display,
 {
    if (platform == EGL_NONE) {
       assert(native_display == (void *) EGL_DEFAULT_DISPLAY);
-      assert(attrib_list == NULL);
+      assert(!attrib_list);
       return eglGetDisplay((EGLNativeDisplayType) native_display);
    } else {
       return eglGetPlatformDisplay(platform, native_display, attrib_list);

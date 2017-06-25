@@ -76,13 +76,13 @@ __getProgramName()
 {
     static const char *progname;
 
-    if (progname == NULL) {
+    if (!progname) {
         const char *e = getexecname();
-        if (e != NULL) {
+        if (e) {
             /* Have to make a copy since getexecname can return a readonly
                string, but basename expects to be able to modify its arg. */
             char *n = strdup(e);
-            if (n != NULL) {
+            if (n) {
                 progname = basename(n);
             }
         }
@@ -269,7 +269,7 @@ strToF(const XML_Char *string, const XML_Char **tail)
             nDigits++;
         }
     }
-    if (nDigits == 0) {
+    if (!nDigits) {
         /* no digits, no number */
         *tail = start;
         return 0.0f;
@@ -401,7 +401,7 @@ parseRanges(driOptionInfo *info, const XML_Char *string)
         free(ranges);
         return false;
     } else
-        assert (range == NULL);
+        assert (!range);
 
     info->nRanges = nRanges;
     info->ranges = ranges;
@@ -609,7 +609,7 @@ parseOptInfoAttr(struct OptInfoData *data, const XML_Char **attr)
         XML_FATAL ("illegal type in option: %s.", attrVal[OA_TYPE]);
 
     defaultVal = getenv (cache->info[opt].name);
-    if (defaultVal != NULL) {
+    if (defaultVal) {
       /* don't use XML_WARNING, we want the user to see this! */
         fprintf (stderr,
                  "ATTENTION: default value of option %s overridden by environment.\n",
@@ -971,7 +971,7 @@ parseOneConfigFile(XML_Parser p)
             XML_ERROR ("%s.", XML_ErrorString(XML_GetErrorCode(p)));
             break;
         }
-        if (bytesRead == 0)
+        if (!bytesRead)
             break;
     }
 

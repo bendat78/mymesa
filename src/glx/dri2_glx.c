@@ -203,7 +203,7 @@ dri2_create_context(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (pcp == NULL)
+   if (!pcp)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
@@ -272,7 +272,7 @@ dri2_create_context_attribs(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (pcp == NULL) {
+   if (!pcp) {
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       goto error_exit;
    }
@@ -294,7 +294,7 @@ dri2_create_context_attribs(struct glx_screen *base,
       ctx_attribs[num_ctx_attribs++] = reset;
    }
 
-   if (flags != 0) {
+   if (flags) {
       ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_FLAGS;
 
       /* The current __DRI_CTX_FLAG_* values are identical to the
@@ -367,7 +367,7 @@ dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
    dpyPriv = __glXInitialize(psc->base.dpy);
-   if (dpyPriv == NULL)
+   if (!dpyPriv)
       return NULL;
 
    pdraw = calloc(1, sizeof(*pdraw));
@@ -679,7 +679,7 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 
    priv = __glXInitialize(psc->base.dpy);
 
-   if (priv == NULL)
+   if (!priv)
        return;
 
    pdp = (struct dri2_display *) priv->dri2Display;
@@ -870,7 +870,7 @@ dri2GetBuffers(__DRIdrawable * driDrawable,
 
    buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
                             width, height, attachments, count, out_count);
-   if (buffers == NULL)
+   if (!buffers)
       return NULL;
 
    pdraw->width = *width;
@@ -895,7 +895,7 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
                                       pdraw->base.xDrawable,
                                       width, height, attachments,
                                       count, out_count);
-   if (buffers == NULL)
+   if (!buffers)
       return NULL;
 
    pdraw->width = *width;
@@ -921,7 +921,7 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 
    switch (vblank_mode) {
    case DRI_CONF_VBLANK_NEVER:
-      if (interval != 0)
+      if (interval)
          return GLX_BAD_VALUE;
       break;
    case DRI_CONF_VBLANK_ALWAYS_SYNC:
@@ -1022,12 +1022,12 @@ dri2_bind_tex_image(Display * dpy,
    struct dri2_display *pdp;
    struct dri2_screen *psc;
 
-   if (dpyPriv == NULL)
+   if (!dpyPriv)
        return;
 
    pdp = (struct dri2_display *) dpyPriv->dri2Display;
 
-   if (pdraw != NULL) {
+   if (pdraw) {
       psc = (struct dri2_screen *) base->psc;
 
       if (!pdp->invalidateAvailable && psc->f &&
@@ -1195,7 +1195,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    int i;
 
    psc = calloc(1, sizeof *psc);
-   if (psc == NULL)
+   if (!psc)
       return NULL;
 
    psc->fd = -1;
@@ -1245,7 +1245,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    }
 
    extensions = driGetDriverExtensions(psc->driver, driverName);
-   if (extensions == NULL)
+   if (!extensions)
       goto handle_error;
 
    for (i = 0; extensions[i]; i++) {
@@ -1403,7 +1403,7 @@ dri2CreateDisplay(Display * dpy)
       return NULL;
 
    pdp = malloc(sizeof *pdp);
-   if (pdp == NULL)
+   if (!pdp)
       return NULL;
 
    if (!DRI2QueryVersion(dpy, &pdp->driMajor, &pdp->driMinor)) {

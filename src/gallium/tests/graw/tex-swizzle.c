@@ -144,7 +144,7 @@ init_tex(const unsigned swizzle[4])
    sv_template.swizzle_b = swizzle[2];
    sv_template.swizzle_a = swizzle[3];
    sv = info.ctx->create_sampler_view(info.ctx, texture, &sv_template);
-   if (sv == NULL)
+   if (!sv)
       exit(5);
 
    info.ctx->set_sampler_views(info.ctx, PIPE_SHADER_FRAGMENT, 0, 1, &sv);

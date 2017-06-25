@@ -130,7 +130,7 @@ void SwrLoadHotTile(
         }
     }
 
-    if (pfnLoadTiles == nullptr)
+    if (!pfnLoadTiles)
     {
         SWR_INVALID("Unsupported format for load tile");
         return;

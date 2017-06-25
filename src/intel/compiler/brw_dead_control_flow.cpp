@@ -82,7 +82,7 @@ dead_control_flow_eliminate(backend_shader *s)
          }
          endif_inst->remove(endif_block);
 
-         assert((earlier_block == NULL) == (later_block == NULL));
+         assert((!earlier_block) == (!later_block));
          if (earlier_block && earlier_block->can_combine_with(later_block)) {
             earlier_block->combine_with(later_block);
 

@@ -29,7 +29,7 @@ u_socket_init()
    wVersionRequested = MAKEWORD(1, 1);
 
    err = WSAStartup(wVersionRequested, &wsaData);
-   if (err != 0) {
+   if (err) {
       debug_printf("WSAStartup failed with error: %d\n", err);
       return FALSE;
    }

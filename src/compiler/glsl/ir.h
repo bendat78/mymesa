@@ -145,12 +145,12 @@ public:
    #define AS_BASE(TYPE)                                \
    class ir_##TYPE *as_##TYPE()                         \
    {                                                    \
-      assume(this != NULL);                             \
+      assume(this);                             \
       return is_##TYPE() ? (ir_##TYPE *) this : NULL;   \
    }                                                    \
    const class ir_##TYPE *as_##TYPE() const             \
    {                                                    \
-      assume(this != NULL);                             \
+      assume(this);                             \
       return is_##TYPE() ? (ir_##TYPE *) this : NULL;   \
    }
 
@@ -162,12 +162,12 @@ public:
    #define AS_CHILD(TYPE) \
    class ir_##TYPE * as_##TYPE() \
    { \
-      assume(this != NULL);                                         \
+      assume(this);                                         \
       return ir_type == ir_type_##TYPE ? (ir_##TYPE *) this : NULL; \
    }                                                                      \
    const class ir_##TYPE * as_##TYPE() const                              \
    {                                                                      \
-      assume(this != NULL);                                               \
+      assume(this);                                               \
       return ir_type == ir_type_##TYPE ? (const ir_##TYPE *) this : NULL; \
    }
    AS_CHILD(variable)

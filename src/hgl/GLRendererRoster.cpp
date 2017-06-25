@@ -124,7 +124,7 @@ GLRendererRoster::AddPath(const char* path)
 		return status;
 
 	// if a subdirectory for our ABI exists, use that instead
-	if (fABISubDirectory != NULL) {
+	if (fABISubDirectory) {
 		BEntry entry(&directory, fABISubDirectory);
 		if (entry.IsDirectory()) {
 			status = directory.SetTo(&entry);
@@ -169,7 +169,7 @@ GLRendererRoster::AddRenderer(BGLRenderer* renderer,
 	item.renderer = renderer;
 	item.image = image;
 	item.node = node;
-	if (ref != NULL)
+	if (ref)
 		item.ref = *ref;
 
 	try {

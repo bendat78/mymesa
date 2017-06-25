@@ -273,7 +273,7 @@ validate_context_version(__DRIscreen *screen,
       break;
    }
 
-   if (max_version == 0) {
+   if (!max_version) {
       *dri_ctx_error = __DRI_CTX_ERROR_BAD_API;
       return false;
    } else if (req_version > max_version) {
@@ -299,15 +299,15 @@ driCreateContextAttribs(__DRIscreen *screen, int api,
                         void *data)
 {
     __DRIcontext *context;
-    const struct gl_config *modes = (config != NULL) ? &config->modes : NULL;
-    void *shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
+    const struct gl_config *modes = (config) ? &config->modes : NULL;
+    void *shareCtx = (shared) ? shared->driverPrivate : NULL;
     gl_api mesa_api;
     unsigned major_version = 1;
     unsigned minor_version = 0;
     uint32_t flags = 0;
     bool notify_reset = false;
 
-    assert((num_attribs == 0) || (attribs != NULL));
+    assert((!num_attribs) || (attribs));
 
     if (!(screen->api_mask & (1 << api))) {
 	*error = __DRI_CTX_ERROR_BAD_API;
@@ -581,7 +581,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     ** calling driUnbindContext.
     */
 
-    if (pcp == NULL)
+    if (!pcp)
 	return GL_FALSE;
 
     /*
@@ -647,7 +647,7 @@ driCreateNewDrawable(__DRIscreen *screen,
 {
     __DRIdrawable *pdraw;
 
-    assert(data != NULL);
+    assert(data);
 
     pdraw = malloc(sizeof *pdraw);
     if (!pdraw)

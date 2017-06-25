@@ -336,9 +336,9 @@ class ThreadWithParamSupport : public ThreadWithParamBase {
         param,   // Parameter to ThreadMainStatic
         0x0,     // Default creation flags.
         &thread_id);  // Need a valid pointer for the call to work under Win98.
-    GTEST_CHECK_(thread_handle != NULL) << "CreateThread failed with error "
+    GTEST_CHECK_(thread_handle) << "CreateThread failed with error "
                                         << ::GetLastError() << ".";
-    if (thread_handle == NULL) {
+    if (!thread_handle) {
       delete param;
     }
     return thread_handle;
@@ -452,7 +452,7 @@ class ThreadLocalRegistryImpl {
   }
 
   static void OnThreadExit(DWORD thread_id) {
-    GTEST_CHECK_(thread_id != 0) << ::GetLastError();
+    GTEST_CHECK_(thread_id) << ::GetLastError();
     std::vector<linked_ptr<ThreadLocalValueHolderBase> > value_holders;
     // Clean up the ThreadIdToThreadLocals data structure while holding the
     // lock, but defer the destruction of the ThreadLocalValueHolderBases.
@@ -495,7 +495,7 @@ class ThreadLocalRegistryImpl {
     HANDLE thread = ::OpenThread(SYNCHRONIZE | THREAD_QUERY_INFORMATION,
                                  FALSE,
                                  thread_id);
-    GTEST_CHECK_(thread != NULL);
+    GTEST_CHECK_(thread);
     // We need to to pass a valid thread ID pointer into CreateThread for it
     // to work correctly under Win98.
     DWORD watcher_thread_id;
@@ -506,7 +506,7 @@ class ThreadLocalRegistryImpl {
         reinterpret_cast<LPVOID>(new ThreadIdAndHandle(thread_id, thread)),
         CREATE_SUSPENDED,
         &watcher_thread_id);
-    GTEST_CHECK_(watcher_thread != NULL);
+    GTEST_CHECK_(watcher_thread);
     // Give the watcher thread the same priority as ours to avoid being
     // blocked by it.
     ::SetThreadPriority(watcher_thread,
@@ -679,7 +679,7 @@ std::string FormatRegexSyntaxError(const char* regex, int index) {
 // Generates non-fatal failures and returns false if regex is invalid;
 // otherwise returns true.
 bool ValidateRegex(const char* regex) {
-  if (regex == NULL) {
+  if (!regex) {
     // TODO(wan@google.com): fix the source file location in the
     // assertion failures to match where the regex is used in user
     // code.
@@ -840,7 +840,7 @@ bool RE::PartialMatch(const char* str, const RE& re) {
 // Initializes an RE from its string representation.
 void RE::Init(const char* regex) {
   pattern_ = full_pattern_ = NULL;
-  if (regex != NULL) {
+  if (regex) {
     pattern_ = posix::StrDup(regex);
   }
 
@@ -943,7 +943,7 @@ class CapturedStream {
                                             "gtest_redir",
                                             0,  // Generate unique file name.
                                             temp_file_path);
-    GTEST_CHECK_(success != 0)
+    GTEST_CHECK_(success)
         << "Unable to create a temporary file in " << temp_dir_path;
     const int captured_fd = creat(temp_file_path, _S_IREAD | _S_IWRITE);
     GTEST_CHECK_(captured_fd != -1) << "Unable to open temporary file "
@@ -1112,7 +1112,7 @@ void SetInjectableArgvs(const ::std::vector<testing::internal::string>* argvs) {
 }
 
 const ::std::vector<testing::internal::string>& GetInjectableArgvs() {
-  if (g_injected_test_argvs != NULL) {
+  if (g_injected_test_argvs) {
     return *g_injected_test_argvs;
   }
   return GetArgvs();
@@ -1207,7 +1207,7 @@ Int32 Int32FromGTestEnv(const char* flag, Int32 default_value) {
 #endif  // defined(GTEST_GET_INT32_FROM_ENV_)
   const std::string env_var = FlagToEnvVar(flag);
   const char* const string_value = posix::GetEnv(env_var.c_str());
-  if (string_value == NULL) {
+  if (!string_value) {
     // The environment variable is not set.
     return default_value;
   }
@@ -1232,7 +1232,7 @@ std::string StringFromGTestEnv(const char* flag, const char* default_value) {
 #endif  // defined(GTEST_GET_STRING_FROM_ENV_)
   const std::string env_var = FlagToEnvVar(flag);
   const char* value = posix::GetEnv(env_var.c_str());
-  if (value != NULL) {
+  if (value) {
     return value;
   }
 
@@ -1248,7 +1248,7 @@ std::string StringFromGTestEnv(const char* flag, const char* default_value) {
   //   'default_value'
   if (strcmp(flag, "output") == 0) {
     value = posix::GetEnv("XML_OUTPUT_FILE");
-    if (value != NULL) {
+    if (value) {
       return std::string("xml:") + value;
     }
   }

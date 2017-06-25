@@ -180,7 +180,7 @@ nir_phi_builder_value_get_block_def(struct nir_phi_builder_value *val,
       dom = dom->imm_dom;
 
    nir_ssa_def *def;
-   if (dom == NULL) {
+   if (!dom) {
       /* No dominator means either that we crawled to the top without ever
        * finding a definition or that this block is unreachable.  In either
        * case, the value is undefined so we need an SSA undef.

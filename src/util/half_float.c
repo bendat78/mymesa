@@ -61,22 +61,22 @@ _mesa_float_to_half(float val)
    s = flt_s;
 
    /* handle special cases */
-   if ((flt_e == 0) && (flt_m == 0)) {
+   if ((!flt_e) && (!flt_m)) {
       /* zero */
       /* m = 0; - already set */
       e = 0;
    }
-   else if ((flt_e == 0) && (flt_m != 0)) {
+   else if ((!flt_e) && (flt_m)) {
       /* denorm -- denorm float maps to 0 half */
       /* m = 0; - already set */
       e = 0;
    }
-   else if ((flt_e == 0xff) && (flt_m == 0)) {
+   else if ((flt_e == 0xff) && (!flt_m)) {
       /* infinity */
       /* m = 0; - already set */
       e = 31;
    }
-   else if ((flt_e == 0xff) && (flt_m != 0)) {
+   else if ((flt_e == 0xff) && (flt_m)) {
       /* NaN */
       m = 1;
       e = 31;
@@ -143,24 +143,24 @@ _mesa_half_to_float(uint16_t val)
    flt_s = s;
 
    /* handle special cases */
-   if ((e == 0) && (m == 0)) {
+   if ((!e) && (!m)) {
       /* zero */
       flt_m = 0;
       flt_e = 0;
    }
-   else if ((e == 0) && (m != 0)) {
+   else if ((!e) && (m)) {
       /* denorm -- denorm half will fit in non-denorm single */
       const float half_denorm = 1.0f / 16384.0f; /* 2^-14 */
       float mantissa = ((float) (m)) / 1024.0f;
       float sign = s ? -1.0f : 1.0f;
       return sign * mantissa * half_denorm;
    }
-   else if ((e == 31) && (m == 0)) {
+   else if ((e == 31) && (!m)) {
       /* infinity */
       flt_e = 0xff;
       flt_m = 0;
    }
-   else if ((e == 31) && (m != 0)) {
+   else if ((e == 31) && (m)) {
       /* NaN */
       flt_e = 0xff;
       flt_m = 1;

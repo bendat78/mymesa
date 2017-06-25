@@ -152,7 +152,7 @@ fail(struct location *loc, const char *msg, ...)
 static void *
 fail_on_null(void *p)
 {
-   if (p == NULL) {
+   if (!p) {
       fprintf(stderr, "aubinator: out of memory\n");
       exit(EXIT_FAILURE);
    }
@@ -409,15 +409,15 @@ start_element(void *data, const char *element_name, const char **atts)
    }
 
    if (strcmp(element_name, "genxml") == 0) {
-      if (name == NULL)
+      if (!name)
          fail(&ctx->loc, "no platform name given");
-      if (gen == NULL)
+      if (!gen)
          fail(&ctx->loc, "no gen given");
 
       ctx->platform = xstrdup(name);
       int major, minor;
       int n = sscanf(gen, "%d.%d", &major, &minor);
-      if (n == 0)
+      if (!n)
          fail(&ctx->loc, "invalid gen given: %s", gen);
       if (n == 1)
          minor = 0;
@@ -554,7 +554,7 @@ static uint32_t zlib_inflate(const void *compressed_data,
          break;
 
       out = realloc(out, 2*zstream.total_out);
-      if (out == NULL) {
+      if (!out) {
          inflateEnd(&zstream);
          return 0;
       }
@@ -585,7 +585,7 @@ gen_spec_load(const struct gen_device_info *devinfo)
       }
    }
 
-   if (text_length == 0) {
+   if (!text_length) {
       fprintf(stderr, "unable to find gen (%u) data\n", gen_10);
       return NULL;
    }
@@ -645,7 +645,7 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
    assert(len < filename_len);
 
    input = fopen(filename, "r");
-   if (input == NULL) {
+   if (!input) {
       fprintf(stderr, "failed to open xml description\n");
       free(filename);
       return NULL;
@@ -669,7 +669,7 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
    do {
       buf = XML_GetBuffer(ctx.parser, XML_BUFFER_SIZE);
       len = fread(buf, 1, XML_BUFFER_SIZE, input);
-      if (len == 0) {
+      if (!len) {
          fprintf(stderr, "fread: %m\n");
          free(ctx.spec);
          ctx.spec = NULL;
@@ -746,7 +746,7 @@ gen_group_get_length(struct gen_group *group, const uint32_t *p)
          else
             return -1;
       case 2: {
-         if (opcode == 0)
+         if (!opcode)
             return field(h, 0, 7) + 2;
          else if (opcode < 3)
             return field(h, 0, 15) + 2;

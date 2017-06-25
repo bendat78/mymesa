@@ -49,7 +49,7 @@ public:
         SWR_ASSERT(((1ULL << 32) % numEntries) == 0, "%d is not evenly divisible into 2 ^ 32.  Wrap errors will occur!", numEntries);
         mNumEntries = numEntries;
         mpRingBuffer = (T*)AlignedMalloc(sizeof(T)*numEntries, 64);
-        SWR_ASSERT(mpRingBuffer != nullptr);
+        SWR_ASSERT(mpRingBuffer);
         memset(mpRingBuffer, 0, sizeof(T)*numEntries);
     }
 

@@ -1865,7 +1865,7 @@ struct gl_transform_feedback_state
    /** The current xform-fb object (GL_TRANSFORM_FEEDBACK_BINDING) */
    struct gl_transform_feedback_object *CurrentObject;
 
-   /** The default xform-fb object (Name==0) */
+   /** The default xform-fb object (!Name) */
    struct gl_transform_feedback_object *DefaultObject;
 };
 

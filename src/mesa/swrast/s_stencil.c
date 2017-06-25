@@ -96,7 +96,7 @@ clamp(GLint val)
 
 
 #define STENCIL_OP(NEW_VAL)                                                 \
-   if (invmask == 0) {                                                      \
+   if (!invmask) {                                                      \
       for (i = j = 0; i < n; i++, j += stride) {                            \
          if (mask[i]) {                                                     \
             GLubyte s = stencil[j];                                         \
@@ -591,7 +591,7 @@ _swrast_clear_stencil_buffer(struct gl_context *ctx)
       {
          GLubyte clear = ctx->Stencil.Clear & writeMask & 0xff;
          GLubyte mask = (~writeMask) & 0xff;
-         if (mask != 0) {
+         if (mask) {
             /* masked clear */
             for (i = 0; i < height; i++) {
                GLubyte *row = map;

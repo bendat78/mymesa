@@ -135,7 +135,7 @@ blend_transparency_ubyte(struct gl_context *ctx, GLuint n, const GLubyte mask[],
    for (i = 0; i < n; i++) {
       if (mask[i]) {
          const GLint t = rgba[i][ACOMP];  /* t is in [0, 255] */
-         if (t == 0) {
+         if (!t) {
             /* 0% alpha */
             COPY_4UBV(rgba[i], dest[i]);
          }
@@ -180,7 +180,7 @@ blend_transparency_ushort(struct gl_context *ctx, GLuint n, const GLubyte mask[]
    for (i = 0; i < n; i++) {
       if (mask[i]) {
          const GLint t = rgba[i][ACOMP];
-         if (t == 0) {
+         if (!t) {
             /* 0% alpha */
             COPY_4V(rgba[i], dest[i]);
          }

@@ -94,7 +94,7 @@ public:
     static Addr::Lib* CreateObj(const Client* pClient)
     {
         VOID* pMem = Object::ClientAlloc(sizeof(Gfx9Lib), pClient);
-        return (pMem != NULL) ? new (pMem) Gfx9Lib(pClient) : NULL;
+        return (pMem) ? new (pMem) Gfx9Lib(pClient) : NULL;
     }
 
 protected:
@@ -298,7 +298,7 @@ protected:
         UINT_32          mip0DepthInBlk) const
     {
         BOOL_32 yMajor = (mip0WidthInBlk < mip0HeightInBlk);
-        BOOL_32 xMajor = (yMajor == FALSE);
+        BOOL_32 xMajor = (!yMajor);
 
         if (IsThick(resourceType, swizzleMode))
         {

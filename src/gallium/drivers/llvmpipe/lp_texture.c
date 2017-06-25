@@ -375,8 +375,8 @@ llvmpipe_resource_map(struct pipe_resource *resource,
          dt_usage = PIPE_TRANSFER_READ_WRITE;
       }
 
-      assert(level == 0);
-      assert(layer == 0);
+      assert(!level);
+      assert(!layer);
 
       /* FIXME: keep map count? */
       map = winsys->displaytarget_map(winsys, lpr->dt, dt_usage);
@@ -412,8 +412,8 @@ llvmpipe_resource_unmap(struct pipe_resource *resource,
       struct llvmpipe_screen *lp_screen = llvmpipe_screen(resource->screen);
       struct sw_winsys *winsys = lp_screen->winsys;
 
-      assert(level == 0);
-      assert(layer == 0);
+      assert(!level);
+      assert(!layer);
 
       winsys->displaytarget_unmap(winsys, lpr->dt);
    }

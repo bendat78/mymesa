@@ -81,7 +81,7 @@ lower_vertex_id_visitor::visit(ir_dereference_variable *ir)
        ir->var->data.location != SYSTEM_VALUE_VERTEX_ID)
       return visit_continue;
 
-   if (VertexID == NULL) {
+   if (!VertexID) {
       const glsl_type *const int_t = glsl_type::int_type;
       void *const mem_ctx = ralloc_parent(ir);
 
@@ -98,7 +98,7 @@ lower_vertex_id_visitor::visit(ir_dereference_variable *ir)
       gl_VertexID->data.explicit_index = 0;
       ir_list->push_head(gl_VertexID);
 
-      if (gl_BaseVertex == NULL) {
+      if (!gl_BaseVertex) {
          gl_BaseVertex = new(mem_ctx) ir_variable(int_t, "gl_BaseVertex",
                                                   ir_var_system_value);
          gl_BaseVertex->data.how_declared = ir_var_hidden;
@@ -132,8 +132,8 @@ lower_vertex_id(gl_linked_shader *shader)
 
    ir_function_signature *const main_sig =
       _mesa_get_main_function_signature(shader->symbols);
-   if (main_sig == NULL) {
-      assert(main_sig != NULL);
+   if (!main_sig) {
+      assert(main_sig);
       return false;
    }
 

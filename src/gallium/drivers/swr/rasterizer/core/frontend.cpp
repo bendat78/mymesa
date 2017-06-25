@@ -877,7 +877,7 @@ static void GeometryShaderStage(
         for (uint32_t instance = 0; instance < pState->instanceCount; ++instance)
         {
             uint32_t numEmittedVerts = pVertexCount[inputPrim];
-            if (numEmittedVerts == 0)
+            if (!numEmittedVerts)
             {
                 continue;
             }
@@ -982,7 +982,7 @@ static INLINE void AllocateGsBuffers(DRAW_CONTEXT* pDC, const API_STATE& state, 
     void **ppStreamCutBuffer)
 {
     auto pArena = pDC->pArena;
-    SWR_ASSERT(pArena != nullptr);
+    SWR_ASSERT(pArena);
     SWR_ASSERT(state.gsState.gsEnable);
 
     // allocate arena space to hold GS output verts
@@ -1038,7 +1038,7 @@ INLINE
 static void AllocateTessellationData(SWR_CONTEXT* pContext)
 {
     /// @TODO - Don't use thread local storage.  Use Worker local storage instead.
-    if (gt_pTessellationThreadData == nullptr)
+    if (!gt_pTessellationThreadData)
     {
         gt_pTessellationThreadData = (TessellationThreadLocalData*)
             AlignedMalloc(sizeof(TessellationThreadLocalData), 64);
@@ -1081,7 +1081,7 @@ static void TessellationStages(
         tsState.tsOutputTopology,
         gt_pTessellationThreadData->pTxCtx,
         gt_pTessellationThreadData->tsCtxSize);
-    if (tsCtx == nullptr)
+    if (!tsCtx)
     {
         gt_pTessellationThreadData->pTxCtx = AlignedMalloc(gt_pTessellationThreadData->tsCtxSize, 64);
         tsCtx = TSInitCtx(
@@ -1455,7 +1455,7 @@ void ProcessDraw(
     // grow the vertex store for the PA as necessary
     if (gVertexStoreSize < vertexStoreSize)
     {
-        if (pVertexStore != nullptr)
+        if (pVertexStore)
         {
             AlignedFree(pVertexStore);
         }
@@ -1463,7 +1463,7 @@ void ProcessDraw(
         pVertexStore = reinterpret_cast<PA_STATE::SIMDVERTEX *>(AlignedMalloc(vertexStoreSize, 64));
         gVertexStoreSize = vertexStoreSize;
 
-        SWR_ASSERT(pVertexStore != nullptr);
+        SWR_ASSERT(pVertexStore);
     }
 
     // choose primitive assembler

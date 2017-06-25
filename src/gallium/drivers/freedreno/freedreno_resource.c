@@ -877,7 +877,7 @@ fd_resource_create(struct pipe_screen *pscreen,
 	/* special case for hw-query buffer, which we need to allocate before we
 	 * know the size:
 	 */
-	if (size == 0) {
+	if (!size) {
 		/* note, semi-intention == instead of & */
 		debug_assert(prsc->bind == PIPE_BIND_QUERY_BUFFER);
 		return prsc;

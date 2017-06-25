@@ -129,7 +129,7 @@ nv50_mt_choose_storage_type(struct nv50_miptree *mt, bool compressed)
          break;
       case 32:
          if (mt->base.base.bind & PIPE_BIND_SCANOUT) {
-            assert(ms == 0);
+            assert(!ms);
             tile_flags = 0x7a;
          } else {
             switch (ms) {

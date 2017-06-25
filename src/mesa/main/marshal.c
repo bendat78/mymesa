@@ -236,14 +236,14 @@ track_vbo_binding(struct gl_context *ctx, GLenum target, GLuint buffer)
 
    switch (target) {
    case GL_ARRAY_BUFFER:
-      glthread->vertex_array_is_vbo = (buffer != 0);
+      glthread->vertex_array_is_vbo = (buffer);
       break;
    case GL_ELEMENT_ARRAY_BUFFER:
       /* The current element array buffer binding is actually tracked in the
        * vertex array object instead of the context, so this would need to
        * change on vertex array object updates.
        */
-      glthread->element_array_is_vbo = (buffer != 0);
+      glthread->element_array_is_vbo = (buffer);
       break;
    }
 }

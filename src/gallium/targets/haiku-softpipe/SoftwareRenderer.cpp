@@ -346,7 +346,7 @@ SoftwareRenderer::_AllocateBitmap()
 	}
 	BRect rect(0.0, 0.0, fWidth, fHeight);
 	fBitmap = new (std::nothrow) BBitmap(rect, fColorSpace);
-	if (fBitmap == NULL) {
+	if (!fBitmap) {
 		TRACE("%s: Can't create bitmap!\n", __func__);
 		return;
 	}

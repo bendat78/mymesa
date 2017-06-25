@@ -688,7 +688,7 @@ create_aux_state_map(struct intel_mipmap_tree *mt,
    const size_t total_size = per_level_array_size +
                              total_slices * sizeof(enum isl_aux_state);
    void *data = malloc(total_size);
-   if (data == NULL)
+   if (!data)
       return NULL;
 
    enum isl_aux_state **per_level_arr = data;
@@ -1037,7 +1037,7 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
    if (!singlesample_mt)
       goto fail;
 
-   if (num_samples == 0) {
+   if (!num_samples) {
       intel_miptree_release(&irb->mt);
       irb->mt = singlesample_mt;
 
@@ -1124,7 +1124,7 @@ intel_miptree_reference(struct intel_mipmap_tree **dst,
 static void
 intel_miptree_aux_buffer_free(struct intel_miptree_aux_buffer *aux_buf)
 {
-   if (aux_buf == NULL)
+   if (!aux_buf)
       return;
 
    brw_bo_unreference(aux_buf->bo);
@@ -1613,7 +1613,7 @@ intel_miptree_copy_teximage(struct brw_context *brw,
    unsigned start_layer, end_layer;
 
    if (intel_obj->base.Target == GL_TEXTURE_1D_ARRAY) {
-      assert(face == 0);
+      assert(!face);
       assert(intelImage->base.Base.Height);
       start_layer = 0;
       end_layer = intelImage->base.Base.Height - 1;
@@ -1656,7 +1656,7 @@ intel_miptree_init_mcs(struct brw_context *brw,
     * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
     */
    void *map = brw_bo_map(brw, mt->mcs_buf->bo, MAP_WRITE);
-   if (unlikely(map == NULL)) {
+   if (unlikely(!map)) {
       fprintf(stderr, "Failed to map mcs buffer into GTT\n");
       brw_bo_unreference(mt->mcs_buf->bo);
       free(mt->mcs_buf);
@@ -2844,7 +2844,7 @@ intel_miptree_map_gtt(struct brw_context *brw,
 
    base = intel_miptree_map_raw(brw, mt, map->mode) + mt->offset;
 
-   if (base == NULL)
+   if (!base)
       map->ptr = NULL;
    else {
       /* Note that in the case of cube maps, the caller must have passed the

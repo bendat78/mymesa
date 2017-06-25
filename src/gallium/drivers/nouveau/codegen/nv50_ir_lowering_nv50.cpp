@@ -1190,7 +1190,7 @@ NV50LoweringPreSSA::handleRDSV(Instruction *i)
       }
       break;
    case SV_TID:
-      if (idx == 0) {
+      if (!idx) {
          bld.mkOp2(OP_AND, TYPE_U32, def, tid, bld.mkImm(0x0000ffff));
       } else if (idx == 1) {
          bld.mkOp2(OP_AND, TYPE_U32, def, tid, bld.mkImm(0x03ff0000));

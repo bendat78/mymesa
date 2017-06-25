@@ -584,7 +584,7 @@ tgsi_sanity_check(
    regs_hash_destroy(ctx.regs_decl);
    regs_hash_destroy(ctx.regs_used);
    regs_hash_destroy(ctx.regs_ind_used);
-   if (retval == FALSE)
+   if (!retval)
       return FALSE;
 
    return ctx.errors == 0;

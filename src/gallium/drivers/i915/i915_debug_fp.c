@@ -149,13 +149,13 @@ print_reg_type_nr(struct debug_stream *stream, unsigned type, unsigned nr)
          return;
       }
    case REG_TYPE_OC:
-      if (nr == 0) {
+      if (!nr) {
          PRINTF(stream, "oC");
          return;
       }
       break;
    case REG_TYPE_OD:
-      if (nr == 0) {
+      if (!nr) {
          PRINTF(stream, "oD");
          return;
       }

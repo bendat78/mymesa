@@ -66,7 +66,7 @@ get_texcoord(nir_shader *shader)
    }
 
    /* otherwise create it: */
-   if (texcoord == NULL) {
+   if (!texcoord) {
       texcoord = nir_variable_create(shader,
                                      nir_var_shader_in,
                                      glsl_vec4_type(),

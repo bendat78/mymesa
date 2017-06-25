@@ -73,7 +73,7 @@ static void init_legacy_currval(struct gl_context *ctx)
    struct vbo_context *vbo = vbo_context(ctx);
    GLuint i;
 
-   /* Set up a constant (StrideB == 0) array for each current
+   /* Set up a constant (!StrideB) array for each current
     * attribute:
     */
    for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) {
@@ -104,7 +104,7 @@ static void init_mat_currval(struct gl_context *ctx)
    struct vbo_context *vbo = vbo_context(ctx);
    GLuint i;
 
-   /* Set up a constant (StrideB == 0) array for each current
+   /* Set up a constant (!StrideB) array for each current
     * attribute:
     */
    for (i = 0; i < MAT_ATTRIB_MAX; i++) {
@@ -149,7 +149,7 @@ vbo_draw_indirect_prims(struct gl_context *ctx,
    GLsizei i;
 
    prim = calloc(draw_count, sizeof(*prim));
-   if (prim == NULL) {
+   if (!prim) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "gl%sDraw%sIndirect%s",
                   (draw_count > 1) ? "Multi" : "",
                   ib ? "Elements" : "Arrays",

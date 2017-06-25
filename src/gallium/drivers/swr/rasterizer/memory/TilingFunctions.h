@@ -267,7 +267,7 @@ INLINE void ComputeLODOffset1D(
     uint32_t lod,
     uint32_t &offset)
 {
-    if (lod == 0)
+    if (!lod)
     {
         offset = 0;
     }
@@ -347,7 +347,7 @@ INLINE void ComputeLODOffsetY(
     uint32_t lod,
     uint32_t &offset)
 {
-    if (lod == 0)
+    if (!lod)
     {
         offset = 0;
     }
@@ -491,7 +491,7 @@ INLINE void AdjustCoordsForMSAA(const SWR_SURFACE_STATE *pState, uint32_t& x, ui
         switch(pState->numSamples)
         {
         case 1:
-            assert(sampleNum == 0);
+            assert(!sampleNum);
             sampleShift = 0;
             break;
         case 2:

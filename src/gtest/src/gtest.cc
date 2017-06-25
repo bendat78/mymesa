@@ -192,7 +192,7 @@ bool g_help_flag = false;
 static const char* GetDefaultFilter() {
 #ifdef GTEST_TEST_FILTER_ENV_VAR_
   const char* const testbridge_test_only = getenv(GTEST_TEST_FILTER_ENV_VAR_);
-  if (testbridge_test_only != NULL) {
+  if (testbridge_test_only) {
     return testbridge_test_only;
   }
 #endif  // GTEST_TEST_FILTER_ENV_VAR_
@@ -413,10 +413,10 @@ FilePath GetCurrentExecutableName() {
 // Returns the output format, or "" for normal printed output.
 std::string UnitTestOptions::GetOutputFormat() {
   const char* const gtest_output_flag = GTEST_FLAG(output).c_str();
-  if (gtest_output_flag == NULL) return std::string("");
+  if (!gtest_output_flag) return std::string("");
 
   const char* const colon = strchr(gtest_output_flag, ':');
-  return (colon == NULL) ?
+  return (!colon) ?
       std::string(gtest_output_flag) :
       std::string(gtest_output_flag, colon - gtest_output_flag);
 }
@@ -425,11 +425,11 @@ std::string UnitTestOptions::GetOutputFormat() {
 // was explicitly specified.
 std::string UnitTestOptions::GetAbsolutePathToOutputFile() {
   const char* const gtest_output_flag = GTEST_FLAG(output).c_str();
-  if (gtest_output_flag == NULL)
+  if (!gtest_output_flag)
     return "";
 
   const char* const colon = strchr(gtest_output_flag, ':');
-  if (colon == NULL)
+  if (!colon)
     return internal::FilePath::ConcatPaths(
         internal::FilePath(
             UnitTest::GetInstance()->original_working_dir()),
@@ -488,7 +488,7 @@ bool UnitTestOptions::MatchesFilter(
     cur_pattern = strchr(cur_pattern, ':');
 
     // Returns if no more pattern can be found.
-    if (cur_pattern == NULL) {
+    if (!cur_pattern) {
       return false;
     }
 
@@ -509,7 +509,7 @@ bool UnitTestOptions::FilterMatchesTest(const std::string &test_case_name,
   const char* const dash = strchr(p, '-');
   std::string positive;
   std::string negative;
-  if (dash == NULL) {
+  if (!dash) {
     positive = GTEST_FLAG(filter).c_str();  // Whole string is a positive filter
     negative = "";
   } else {
@@ -892,9 +892,9 @@ const char* String::Utf16ToAnsi(LPCWSTR utf16_str)  {
 // C string is considered different to any non-NULL C string,
 // including the empty string.
 bool String::CStringEquals(const char * lhs, const char * rhs) {
-  if ( lhs == NULL ) return rhs == NULL;
+  if (!lhs) return rhs == NULL;
 
-  if ( rhs == NULL ) return false;
+  if (!rhs) return false;
 
   return strcmp(lhs, rhs) == 0;
 }
@@ -1846,7 +1846,7 @@ std::string WideStringToUtf8(const wchar_t* str, int num_chars) {
 // Converts a wide C string to an std::string using the UTF-8 encoding.
 // NULL will be converted to "(null)".
 std::string String::ShowWideCString(const wchar_t * wide_c_str) {
-  if (wide_c_str == NULL)  return "(null)";
+  if (!wide_c_str)  return "(null)";
 
   return internal::WideStringToUtf8(wide_c_str, -1);
 }
@@ -1858,9 +1858,9 @@ std::string String::ShowWideCString(const wchar_t * wide_c_str) {
 // C string is considered different to any non-NULL C string,
 // including the empty string.
 bool String::WideCStringEquals(const wchar_t * lhs, const wchar_t * rhs) {
-  if (lhs == NULL) return rhs == NULL;
+  if (!lhs) return rhs == NULL;
 
-  if (rhs == NULL) return false;
+  if (!rhs) return false;
 
   return wcscmp(lhs, rhs) == 0;
 }
@@ -1903,9 +1903,9 @@ AssertionResult CmpHelperSTRNE(const char* s1_expression,
 // NULL C string is considered different to any non-NULL C string,
 // including the empty string.
 bool String::CaseInsensitiveCStringEquals(const char * lhs, const char * rhs) {
-  if (lhs == NULL)
+  if (!lhs)
     return rhs == NULL;
-  if (rhs == NULL)
+  if (!rhs)
     return false;
   return posix::StrCaseCmp(lhs, rhs) == 0;
 }
@@ -1924,9 +1924,9 @@ bool String::CaseInsensitiveCStringEquals(const char * lhs, const char * rhs) {
   // current locale.
 bool String::CaseInsensitiveWideCStringEquals(const wchar_t* lhs,
                                               const wchar_t* rhs) {
-  if (lhs == NULL) return rhs == NULL;
+  if (!lhs) return rhs == NULL;
 
-  if (rhs == NULL) return false;
+  if (!rhs) return false;
 
 #if GTEST_OS_WINDOWS
   return _wcsicmp(lhs, rhs) == 0;
@@ -2352,7 +2352,7 @@ namespace internal {
 static std::string FormatCxxExceptionMessage(const char* description,
                                              const char* location) {
   Message message;
-  if (description != NULL) {
+  if (description) {
     message << "C++ exception with description \"" << description << "\"";
   } else {
     message << "Unknown C++ exception";
@@ -2650,7 +2650,7 @@ void TestInfo::Run() {
 
   // Runs the test only if the test object was created and its
   // constructor didn't generate a fatal failure.
-  if ((test != NULL) && !Test::HasFatalFailure()) {
+  if ((test) && !Test::HasFatalFailure()) {
     // This doesn't throw as all user code that can throw are wrapped into
     // exception handling code.
     test->Run();
@@ -3012,12 +3012,12 @@ void PrintFullTestCommentIfPresent(const TestInfo& test_info) {
 
   if (type_param != NULL || value_param != NULL) {
     printf(", where ");
-    if (type_param != NULL) {
+    if (type_param) {
       printf("%s = %s", kTypeParamLabel, type_param);
-      if (value_param != NULL)
+      if (value_param)
         printf(" and ");
     }
-    if (value_param != NULL) {
+    if (value_param) {
       printf("%s = %s", kValueParamLabel, value_param);
     }
   }
@@ -3168,7 +3168,7 @@ void PrettyUnitTestResultPrinter::OnEnvironmentsTearDownStart(
 // Internal helper for printing the list of failed tests.
 void PrettyUnitTestResultPrinter::PrintFailedTests(const UnitTest& unit_test) {
   const int failed_test_count = unit_test.failed_test_count();
-  if (failed_test_count == 0) {
+  if (!failed_test_count) {
     return;
   }
 
@@ -3438,7 +3438,7 @@ void XmlUnitTestResultPrinter::OnTestIterationEnd(const UnitTest& unit_test,
   if (output_dir.CreateDirectoriesRecursively()) {
     xmlout = posix::FOpen(output_file_.c_str(), "w");
   }
-  if (xmlout == NULL) {
+  if (!xmlout) {
     // TODO(wan): report the reason of the failure.
     //
     // We don't do it for now as:
@@ -3560,7 +3560,7 @@ static bool PortableLocaltime(time_t seconds, struct tm* out) {
   // MINGW <time.h> provides neither localtime_r nor localtime_s, but uses
   // Windows' localtime(), which has a thread-local tm buffer.
   struct tm* tm_ptr = localtime(&seconds);  // NOLINT
-  if (tm_ptr == NULL)
+  if (!tm_ptr)
     return false;
   *out = *tm_ptr;
   return true;
@@ -3591,7 +3591,7 @@ void XmlUnitTestResultPrinter::OutputXmlCDataSection(::std::ostream* stream,
   *stream << "<![CDATA[";
   for (;;) {
     const char* const next_segment = strstr(segment, "]]>");
-    if (next_segment != NULL) {
+    if (next_segment) {
       stream->write(
           segment, static_cast<std::streamsize>(next_segment - segment));
       *stream << "]]>]]&gt;<![CDATA[";
@@ -3665,7 +3665,7 @@ void XmlUnitTestResultPrinter::OutputXmlTestInfo(::std::ostream* stream,
     }
   }
 
-  if (failures == 0)
+  if (!failures)
     *stream << " />\n";
   else
     *stream << "    </testcase>\n";
@@ -3791,7 +3791,7 @@ void StreamingListener::SocketWriter::MakeConnection() {
   // the given host name.
   const int error_num = getaddrinfo(
       host_name_.c_str(), port_num_.c_str(), &hints, &servinfo);
-  if (error_num != 0) {
+  if (error_num) {
     GTEST_LOG_(WARNING) << "stream_result_to: getaddrinfo() failed: "
                         << gai_strerror(error_num);
   }
@@ -3929,7 +3929,7 @@ void TestEventListeners::SetDefaultResultPrinter(TestEventListener* listener) {
     // list.
     delete Release(default_result_printer_);
     default_result_printer_ = listener;
-    if (listener != NULL)
+    if (listener)
       Append(listener);
   }
 }
@@ -3945,7 +3945,7 @@ void TestEventListeners::SetDefaultXmlGenerator(TestEventListener* listener) {
     // list.
     delete Release(default_xml_generator_);
     default_xml_generator_ = listener;
-    if (listener != NULL)
+    if (listener)
       Append(listener);
   }
 }
@@ -4093,7 +4093,7 @@ TestEventListeners& UnitTest::listeners() {
 // We don't protect this under mutex_, as we only support calling it
 // from the main thread.
 Environment* UnitTest::AddEnvironment(Environment* env) {
-  if (env == NULL) {
+  if (!env) {
     return NULL;
   }
 
@@ -4373,10 +4373,10 @@ void UnitTestImpl::RecordProperty(const TestProperty& test_property) {
   std::string xml_element;
   TestResult* test_result;  // TestResult appropriate for property recording.
 
-  if (current_test_info_ != NULL) {
+  if (current_test_info_) {
     xml_element = "testcase";
     test_result = &(current_test_info_->result_);
-  } else if (current_test_case_ != NULL) {
+  } else if (current_test_case_) {
     xml_element = "testsuite";
     test_result = &(current_test_case_->ad_hoc_test_result_);
   } else {
@@ -4692,9 +4692,9 @@ bool UnitTestImpl::RunAllTests() {
 // be created, prints an error and exits.
 void WriteToShardStatusFileIfNeeded() {
   const char* const test_shard_file = posix::GetEnv(kTestShardStatusFile);
-  if (test_shard_file != NULL) {
+  if (test_shard_file) {
     FILE* const file = posix::FOpen(test_shard_file, "w");
-    if (file == NULL) {
+    if (!file) {
       ColoredPrintf(COLOR_RED,
                     "Could not write to the test shard status file \"%s\" "
                     "specified by the %s environment variable.\n",
@@ -4759,7 +4759,7 @@ bool ShouldShard(const char* total_shards_env,
 // and aborts.
 Int32 Int32FromEnvOrDie(const char* var, Int32 default_val) {
   const char* str_val = posix::GetEnv(var);
-  if (str_val == NULL) {
+  if (!str_val) {
     return default_val;
   }
 
@@ -4844,7 +4844,7 @@ int UnitTestImpl::FilterTests(ReactionToSharding shard_tests) {
 // max_length characters, only prints the first max_length characters
 // and "...".
 static void PrintOnOneLine(const char* str, int max_length) {
-  if (str != NULL) {
+  if (str) {
     for (int i = 0; *str != '\0'; ++str) {
       if (i >= max_length) {
         printf("...");
@@ -4916,7 +4916,7 @@ void UnitTestImpl::set_os_stack_trace_getter(
 // otherwise, creates an OsStackTraceGetter, makes it the current
 // getter, and returns it.
 OsStackTraceGetterInterface* UnitTestImpl::os_stack_trace_getter() {
-  if (os_stack_trace_getter_ == NULL) {
+  if (!os_stack_trace_getter_) {
 #ifdef GTEST_OS_STACK_TRACE_GETTER_
     os_stack_trace_getter_ = new GTEST_OS_STACK_TRACE_GETTER_;
 #else
@@ -5055,7 +5055,7 @@ bool ParseBoolFlag(const char* str, const char* flag, bool* value) {
   const char* const value_str = ParseFlagValue(str, flag, true);
 
   // Aborts if the parsing failed.
-  if (value_str == NULL) return false;
+  if (!value_str) return false;
 
   // Converts the string value to a bool.
   *value = !(*value_str == '0' || *value_str == 'f' || *value_str == 'F');
@@ -5072,7 +5072,7 @@ bool ParseInt32Flag(const char* str, const char* flag, Int32* value) {
   const char* const value_str = ParseFlagValue(str, flag, false);
 
   // Aborts if the parsing failed.
-  if (value_str == NULL) return false;
+  if (!value_str) return false;
 
   // Sets *value to the value of the flag.
   return ParseInt32(Message() << "The value of flag --" << flag,
@@ -5089,7 +5089,7 @@ bool ParseStringFlag(const char* str, const char* flag, std::string* value) {
   const char* const value_str = ParseFlagValue(str, flag, false);
 
   // Aborts if the parsing failed.
-  if (value_str == NULL) return false;
+  if (!value_str) return false;
 
   // Sets *value to the value of the flag.
   *value = value_str;
@@ -5131,7 +5131,7 @@ static void PrintColorEncoded(const char* str) {
   // next segment.
   for (;;) {
     const char* p = strchr(str, '@');
-    if (p == NULL) {
+    if (!p) {
       ColoredPrintf(color, "%s", str);
       return;
     }

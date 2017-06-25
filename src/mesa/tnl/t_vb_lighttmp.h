@@ -464,7 +464,7 @@ static void TAG(light_fast_rgba_single)( struct gl_context *ctx,
       /* No attenuation, so incoporate _MatAmbient into base color.
        */
 #if !(IDX & LIGHT_MATERIAL)
-      if ( j == 0 )
+      if (!j)
 #endif
       {
 	 COPY_3V(base[0], light->_MatAmbient[0]);

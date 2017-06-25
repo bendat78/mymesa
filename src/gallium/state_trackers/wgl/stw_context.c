@@ -156,7 +156,7 @@ stw_create_context_attribs(HDC hdc, INT iLayerPlane, DHGLRC hShareContext,
    if (!stw_dev)
       return 0;
 
-   if (iLayerPlane != 0)
+   if (iLayerPlane)
       return 0;
 
    /*
@@ -181,7 +181,7 @@ stw_create_context_attribs(HDC hdc, INT iLayerPlane, DHGLRC hShareContext,
 
    pfi = stw_pixelformat_get_info( iPixelFormat );
 
-   if (hShareContext != 0) {
+   if (hShareContext) {
       stw_lock_contexts(stw_dev);
       shareCtx = stw_lookup_context_locked( hShareContext );
       shareCtx->shared = TRUE;
@@ -189,7 +189,7 @@ stw_create_context_attribs(HDC hdc, INT iLayerPlane, DHGLRC hShareContext,
    }
 
    ctx = CALLOC_STRUCT( stw_context );
-   if (ctx == NULL)
+   if (!ctx)
       goto no_ctx;
 
    ctx->hDrawDC = hdc;
@@ -419,7 +419,7 @@ stw_make_current(HDC hDrawDC, HDC hReadDC, DHGLRC dhglrc)
       return FALSE;
 
    old_ctx = stw_current_context();
-   if (old_ctx != NULL) {
+   if (old_ctx) {
       if (old_ctx->dhglrc == dhglrc) {
          if (old_ctx->hDrawDC == hDrawDC && old_ctx->hReadDC == hReadDC) {
             /* Return if already current. */

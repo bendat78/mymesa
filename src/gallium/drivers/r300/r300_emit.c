@@ -223,7 +223,7 @@ void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     unsigned i, j;
     CS_LOCALS(r300);
 
-    if (count == 0)
+    if (!count)
         return;
 
     BEGIN_CS(size);
@@ -254,7 +254,7 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     unsigned j;
     CS_LOCALS(r300);
 
-    if (count == 0)
+    if (!count)
         return;
 
     BEGIN_CS(size);
@@ -287,7 +287,7 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     unsigned count = fs->shader->externals_count;
     CS_LOCALS(r300);
 
-    if (count == 0)
+    if (!count)
         return;
 
     BEGIN_CS(size);
@@ -314,7 +314,7 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     unsigned end = constants->Count;
     CS_LOCALS(r300);
 
-    if (count == 0)
+    if (!count)
         return;
 
     BEGIN_CS(size);
@@ -521,7 +521,7 @@ static unsigned r300_get_mspos(int index, unsigned *p)
 {
     unsigned reg, i, distx, disty, dist;
 
-    if (index == 0) {
+    if (!index) {
         /* MSPOS0 contains positions for samples 0,1,2 as (X,Y) pairs of nibbles,
          * followed by a (Y,X) pair containing the minimum distance from the pixel
          * edge:

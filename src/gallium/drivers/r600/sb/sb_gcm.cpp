@@ -97,7 +97,7 @@ int gcm::run() {
 		dump::dump_op(pending.front());
 	}
 
-	assert(ucs_level == 0);
+	assert(!ucs_level);
 	assert(pending.empty());
 
 	return 0;

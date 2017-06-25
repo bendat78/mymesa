@@ -59,7 +59,7 @@ namespace {
             realloc(uniforms, sizeof(active_atomic_counter_uniform) *
                     (num_uniforms + 1));
 
-         if (new_uniforms == NULL) {
+         if (!new_uniforms) {
             _mesa_error_no_memory(__func__);
             return;
          }
@@ -156,7 +156,7 @@ namespace {
 
       for (unsigned i = 0; i < MESA_SHADER_STAGES; ++i) {
          struct gl_linked_shader *sh = prog->_LinkedShaders[i];
-         if (sh == NULL)
+         if (!sh)
             continue;
 
          foreach_in_list(ir_instruction, node, sh->ir) {

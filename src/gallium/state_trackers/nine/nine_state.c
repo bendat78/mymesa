@@ -1551,7 +1551,7 @@ CSMT_ITEM_NO_WAIT(nine_context_set_stream_source_freq,
     else
         context->stream_instancedata_mask &= ~(1 << StreamNumber);
 
-    if (StreamNumber != 0)
+    if (StreamNumber)
         context->changed.group |= NINE_STATE_STREAMFREQ;
 }
 
@@ -1796,7 +1796,7 @@ CSMT_ITEM_NO_WAIT(nine_context_set_render_target,
     struct nine_context *context = &device->context;
     const unsigned i = RenderTargetIndex;
 
-    if (i == 0) {
+    if (!i) {
         context->viewport.X = 0;
         context->viewport.Y = 0;
         context->viewport.Width = rt->desc.Width;

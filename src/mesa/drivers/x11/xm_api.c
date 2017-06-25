@@ -1088,7 +1088,7 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
    xmesa_get_window_size(v->display, b, &width, &height);
    _mesa_resize_framebuffer(NULL, &(b->mesa_buffer), width, height);
 
-   if (target == 0) {
+   if (!target) {
       /* examine dims */
       if (ctx->Extensions.ARB_texture_non_power_of_two) {
          target = GLX_TEXTURE_2D_EXT;

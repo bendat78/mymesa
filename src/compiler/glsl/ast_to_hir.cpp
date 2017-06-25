@@ -170,7 +170,7 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
    foreach_in_list_safe(ir_instruction, node, instructions) {
       ir_variable *const var = node->as_variable();
 
-      if (var == NULL)
+      if (!var)
          continue;
 
       var->remove();
@@ -179,7 +179,7 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 
    /* Figure out if gl_FragCoord is actually used in fragment shader */
    ir_variable *const var = state->symbols->get_variable("gl_FragCoord");
-   if (var != NULL)
+   if (var)
       state->fs_uses_gl_fragcoord = var->data.used;
 
    /* From section 7.1 (Built-In Language Variables) of the GLSL 4.10 spec:
@@ -940,7 +940,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
       lhs_var->data.assigned = true;
 
    if (!error_emitted) {
-      if (non_lvalue_description != NULL) {
+      if (non_lvalue_description) {
          _mesa_glsl_error(&lhs_loc, state,
                           "assignment to %s",
                           non_lvalue_description);
@@ -979,7 +979,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 
    ir_rvalue *new_rhs =
       validate_assignment(state, lhs_loc, lhs, rhs, is_initializer);
-   if (new_rhs != NULL) {
+   if (new_rhs) {
       rhs = new_rhs;
 
       /* If the LHS array was not declared with a size, it takes it size from
@@ -990,11 +990,11 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
       if (lhs->type->is_unsized_array()) {
          ir_dereference *const d = lhs->as_dereference();
 
-         assert(d != NULL);
+         assert(d);
 
          ir_variable *const var = d->variable_referenced();
 
-         assert(var != NULL);
+         assert(var);
 
          if (var->data.max_array_access >= rhs->type->array_size()) {
             /* FINISHME: This should actually log the location of the RHS. */
@@ -1172,7 +1172,7 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
       break;
    }
 
-   if (cmp == NULL)
+   if (!cmp)
       cmp = new(mem_ctx) ir_constant(true);
 
    return cmp;
@@ -1981,7 +1981,7 @@ ast_expression::do_hir(exec_list *instructions,
       ir_variable *var =
          state->symbols->get_variable(this->primary_expression.identifier);
 
-      if (var == NULL) {
+      if (!var) {
          /* the identifier might be a subroutine name */
          char *sub_name;
          sub_name = ralloc_asprintf(ctx, "%s_%s", _mesa_shader_stage_to_subroutine_prefix(state->stage), this->primary_expression.identifier);
@@ -1989,7 +1989,7 @@ ast_expression::do_hir(exec_list *instructions,
          ralloc_free(sub_name);
       }
 
-      if (var != NULL) {
+      if (var) {
          var->data.used = true;
          result = new(ctx) ir_dereference_variable(var);
 
@@ -2194,7 +2194,7 @@ ast_expression_statement::hir(exec_list *instructions,
     * In this case the expression will be NULL.  Test for NULL and don't do
     * anything in that case.
     */
-   if (expression != NULL)
+   if (expression)
       expression->hir_no_rvalue(instructions, state);
 
    /* Statements do not have r-values.
@@ -2243,7 +2243,7 @@ process_array_size(exec_node *node,
    ir_rvalue *const ir = array_size->hir(& dummy_instructions, state);
    YYLTYPE loc = array_size->get_location();
 
-   if (ir == NULL) {
+   if (!ir) {
       _mesa_glsl_error(& loc, state,
                        "array size could not be resolved");
       return 0;
@@ -2295,7 +2295,7 @@ process_array_type(YYLTYPE *loc, const glsl_type *base,
 {
    const glsl_type *array_type = base;
 
-   if (array_specifier != NULL) {
+   if (array_specifier) {
       if (base->is_array()) {
 
          /* From page 19 (page 25) of the GLSL 1.20 spec:
@@ -2615,7 +2615,7 @@ select_gles_precision(unsigned qual_precision,
    } else if (precision_qualifier_allowed(type)) {
       const char *type_name =
          get_type_name_for_precision_qualifier(type->without_array());
-      assert(type_name != NULL);
+      assert(type_name);
 
       precision =
          state->symbols->get_default_precision_qualifier(type_name);
@@ -4418,7 +4418,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
        || (state->es_shader && state->current_function == NULL)) {
       ir_rvalue *new_rhs = validate_assignment(state, initializer_loc,
                                                lhs, rhs, true);
-      if (new_rhs != NULL) {
+      if (new_rhs) {
          rhs = new_rhs;
 
          /* Section 4.3.3 (Constant Expressions) of the GLSL ES 3.00.4 spec
@@ -4570,7 +4570,7 @@ validate_layout_qualifier_vertex_count(struct _mesa_glsl_parse_state *state,
        *
        * Similarly for tessellation control shader outputs.
        */
-      if (num_vertices != 0)
+      if (num_vertices)
          var->type = glsl_type::get_array_instance(var->type->fields.array,
                                                    num_vertices);
    } else {
@@ -4785,7 +4785,7 @@ ast_declarator_list::hir(exec_list *instructions,
 
          ir_variable *const earlier =
             state->symbols->get_variable(decl->identifier);
-         if (earlier == NULL) {
+         if (!earlier) {
             _mesa_glsl_error(& loc, state,
                              "undeclared variable `%s' cannot be marked "
                              "invariant", decl->identifier);
@@ -4817,7 +4817,7 @@ ast_declarator_list::hir(exec_list *instructions,
 
          ir_variable *const earlier =
             state->symbols->get_variable(decl->identifier);
-         if (earlier == NULL) {
+         if (!earlier) {
             _mesa_glsl_error(& loc, state,
                              "undeclared variable `%s' cannot be marked "
                              "precise", decl->identifier);
@@ -4922,7 +4922,7 @@ ast_declarator_list::hir(exec_list *instructions,
       assert(this->type->specifier->structure == NULL || decl_type != NULL
              || state->error);
 
-      if (decl_type == NULL) {
+      if (!decl_type) {
          _mesa_glsl_error(&loc, state,
                           "invalid type `%s' in empty declaration",
                           type_name);
@@ -4989,8 +4989,8 @@ ast_declarator_list::hir(exec_list *instructions,
        * FINISHME: declaration at a higher scope.
        */
 
-      if ((decl_type == NULL) || decl_type->is_void()) {
-         if (type_name != NULL) {
+      if ((!decl_type) || decl_type->is_void()) {
+         if (type_name) {
             _mesa_glsl_error(& loc, state,
                              "invalid type `%s' in declaration of `%s'",
                              type_name, decl->identifier);
@@ -5600,8 +5600,8 @@ ast_parameter_declarator::hir(exec_list *instructions,
 
    type = this->type->glsl_type(& name, state);
 
-   if (type == NULL) {
-      if (name != NULL) {
+   if (!type) {
+      if (name) {
          _mesa_glsl_error(& loc, state,
                           "invalid type `%s' in declaration of `%s'",
                           name, this->identifier);
@@ -5734,7 +5734,7 @@ ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
       count++;
    }
 
-   if ((void_param != NULL) && (count > 1)) {
+   if ((void_param) && (count > 1)) {
       YYLTYPE loc = void_param->get_location();
 
       _mesa_glsl_error(& loc, state,
@@ -5889,7 +5889,7 @@ ast_function::hir(exec_list *instructions,
 
    /* Create an ir_function if one doesn't already exist. */
    f = state->symbols->get_function(name);
-   if (f == NULL) {
+   if (!f) {
       f = new(ctx) ir_function(name);
       if (!this->return_type->qualifier.is_subroutine_decl()) {
          if (!state->symbols->add_function(f)) {
@@ -5941,9 +5941,9 @@ ast_function::hir(exec_list *instructions,
     */
    if (state->es_shader || f->has_user_signature()) {
       sig = f->exact_matching_signature(state, &hir_parameters);
-      if (sig != NULL) {
+      if (sig) {
          const char *badvar = sig->qualifiers_match(&hir_parameters);
-         if (badvar != NULL) {
+         if (badvar) {
             YYLTYPE loc = this->get_location();
 
             _mesa_glsl_error(&loc, state, "function `%s' parameter `%s' "
@@ -5999,7 +5999,7 @@ ast_function::hir(exec_list *instructions,
 
    /* Finish storing the information about this new function in its signature.
     */
-   if (sig == NULL) {
+   if (!sig) {
       sig = new(ctx) ir_function_signature(return_type);
       f->add_signature(sig);
    }
@@ -6098,7 +6098,7 @@ ast_function_definition::hir(exec_list *instructions,
    prototype->hir(instructions, state);
 
    ir_function_signature *signature = prototype->signature;
-   if (signature == NULL)
+   if (!signature)
       return NULL;
 
    assert(state->current_function == NULL);
@@ -6169,7 +6169,7 @@ ast_jump_statement::hir(exec_list *instructions,
           * also void, then this should compile without error.  Seriously.
           */
          const glsl_type *const ret_type =
-            (ret == NULL) ? glsl_type::void_type : ret->type;
+            (!ret) ? glsl_type::void_type : ret->type;
 
          /* Implicit conversions are not allowed for return values prior to
           * ARB_shading_language_420pack.
@@ -6338,13 +6338,13 @@ ast_selection_statement::hir(exec_list *instructions,
 
    ir_if *const stmt = new(ctx) ir_if(condition);
 
-   if (then_statement != NULL) {
+   if (then_statement) {
       state->symbols->push_scope();
       then_statement->hir(& stmt->then_instructions, state);
       state->symbols->pop_scope();
    }
 
-   if (else_statement != NULL) {
+   if (else_statement) {
       state->symbols->push_scope();
       else_statement->hir(& stmt->else_instructions, state);
       state->symbols->pop_scope();
@@ -6522,7 +6522,7 @@ ir_rvalue *
 ast_switch_body::hir(exec_list *instructions,
                      struct _mesa_glsl_parse_state *state)
 {
-   if (stmts != NULL)
+   if (stmts)
       stmts->hir(instructions, state);
 
    /* Switch bodies do not have r-values. */
@@ -6771,11 +6771,11 @@ ast_iteration_statement::condition_to_hir(exec_list *instructions,
 {
    void *ctx = state;
 
-   if (condition != NULL) {
+   if (condition) {
       ir_rvalue *const cond =
          condition->hir(instructions, state);
 
-      if ((cond == NULL)
+      if ((!cond)
           || !cond->type->is_boolean() || !cond->type->is_scalar()) {
          YYLTYPE loc = condition->get_location();
 
@@ -6811,7 +6811,7 @@ ast_iteration_statement::hir(exec_list *instructions,
    if (mode != ast_do_while)
       state->symbols->push_scope();
 
-   if (init_statement != NULL)
+   if (init_statement)
       init_statement->hir(instructions, state);
 
    ir_loop *const stmt = new(ctx) ir_loop();
@@ -6831,10 +6831,10 @@ ast_iteration_statement::hir(exec_list *instructions,
    if (mode != ast_do_while)
       condition_to_hir(&stmt->body_instructions, state);
 
-   if (body != NULL)
+   if (body)
       body->hir(& stmt->body_instructions, state);
 
-   if (rest_expression != NULL)
+   if (rest_expression)
       rest_expression->hir(& stmt->body_instructions, state);
 
    if (mode == ast_do_while)
@@ -6876,7 +6876,7 @@ ast_iteration_statement::hir(exec_list *instructions,
 static bool
 is_valid_default_precision_type(const struct glsl_type *const type)
 {
-   if (type == NULL)
+   if (!type)
       return false;
 
    switch (type->base_type) {
@@ -7520,7 +7520,7 @@ ast_struct_specifier::hir(exec_list *instructions,
       const glsl_type **s = reralloc(state, state->user_structures,
                                      const glsl_type *,
                                      state->num_user_structures + 1);
-      if (s != NULL) {
+      if (s) {
          s[state->num_user_structures] = type;
          state->user_structures = s;
          state->num_user_structures++;
@@ -7889,7 +7889,7 @@ ast_interface_block::hir(exec_list *instructions,
          break;
       }
 
-      if (earlier_per_vertex == NULL) {
+      if (!earlier_per_vertex) {
          /* An error has already been reported.  Bail out to avoid null
           * dereferences later in this function.
           */
@@ -8639,7 +8639,7 @@ remove_per_vertex_blocks(exec_list *instructions,
    /* If we didn't find a built-in gl_PerVertex interface block, then we don't
     * need to do anything.
     */
-   if (per_vertex == NULL)
+   if (!per_vertex)
       return;
 
    /* If the interface block is used by the shader, then we don't need to do

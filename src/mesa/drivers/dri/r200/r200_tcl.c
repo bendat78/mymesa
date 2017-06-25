@@ -609,7 +609,7 @@ void r200TclFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 	GLuint oldfallback = rmesa->radeon.TclFallback;
 
 	if (mode) {
-		if (oldfallback == 0) {
+		if (!oldfallback) {
 			/* We have to flush before transition */
 			if ( rmesa->radeon.dma.flush )
 				rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );

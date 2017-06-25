@@ -891,7 +891,7 @@ aaline_bind_sampler_states(struct pipe_context *pipe,
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
 
-   assert(start == 0);
+   assert(!start);
 
    if (!aaline) {
       return;

@@ -654,7 +654,7 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 					surf->u.legacy.stencil_level[level].nblk_x;
 			}
 
-			if (level == 0) {
+			if (!level) {
 				if (only_stencil)
 					gfx6_surface_settings(info, &AddrSurfInfoOut, surf);
 

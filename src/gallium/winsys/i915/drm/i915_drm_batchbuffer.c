@@ -85,7 +85,7 @@ i915_drm_batchbuffer_validate_buffers(struct i915_winsys_batchbuffer *batch,
       bos[i+1] = intel_bo(buffer[i]);
 
    ret = drm_intel_bufmgr_check_aperture_space(bos, num_of_buffers);
-   if (ret != 0)
+   if (ret)
       return FALSE;
 
    return TRUE;
@@ -186,7 +186,7 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
 
    if (ret != 0 || i915_drm_winsys(ibatch->iws)->dump_cmd) {
       i915_dump_batchbuffer(ibatch);
-      assert(ret == 0);
+      assert(!ret);
    }
 
    if (i915_drm_winsys(ibatch->iws)->dump_raw_file) {

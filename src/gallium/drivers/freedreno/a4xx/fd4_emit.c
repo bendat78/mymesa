@@ -294,7 +294,7 @@ fd4_emit_gmem_restore_tex(struct fd_ringbuffer *ring, unsigned nr_bufs,
 			/* The restore blit_zs shader expects stencil in sampler 0,
 			 * and depth in sampler 1
 			 */
-			if (rsc->stencil && (i == 0)) {
+			if (rsc->stencil && (!i)) {
 				rsc = rsc->stencil;
 				format = fd_gmem_restore_format(rsc->base.b.format);
 			}

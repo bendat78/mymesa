@@ -85,7 +85,7 @@ static boolean debug( struct debug_stream *stream, const char *name, unsigned le
    unsigned i;
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
 
-   if (len == 0) {
+   if (!len) {
       PRINTF(stream, "Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return FALSE;
@@ -159,7 +159,7 @@ static boolean debug_program( struct debug_stream *stream, const char *name, uns
 {
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
 
-   if (len == 0) {
+   if (!len) {
       PRINTF(stream, "Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return FALSE;
@@ -428,7 +428,7 @@ static boolean debug_load_indirect( struct debug_stream *stream,
       }
    }
 
-   if (bits == 0) {
+   if (!bits) {
       PRINTF(stream, "\t  DUMMY: 0x%08x\n", ptr[j++]);
    }
 

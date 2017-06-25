@@ -738,7 +738,7 @@ rbug_set_sampler_views(struct pipe_context *_pipe,
    struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   assert(start == 0); /* XXX fix */
+   assert(!start); /* XXX fix */
 
    /* must protect curr status */
    mtx_lock(&rb_pipe->call_mutex);

@@ -634,7 +634,7 @@ vl_mc_render_ycbcr(struct vl_mc *renderer, struct vl_mc_buffer *buffer, unsigned
 
    assert(buffer);
 
-   if (num_instances == 0)
+   if (!num_instances)
       return;
 
    prepare_pipe_4_rendering(renderer, buffer, mask);

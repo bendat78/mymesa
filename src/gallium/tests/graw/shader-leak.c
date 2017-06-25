@@ -189,7 +189,7 @@ static void init( void )
    }
 
    ctx = screen->context_create(screen, NULL, 0);
-   if (ctx == NULL)
+   if (!ctx)
       exit(3);
 
    memset(&templat, 0, sizeof(templat));
@@ -204,7 +204,7 @@ static void init( void )
                    PIPE_BIND_DISPLAY_TARGET);
 
    tex = screen->resource_create(screen, &templat);
-   if (tex == NULL) {
+   if (!tex) {
       fprintf(stderr, "Unable to create screen texture!\n");
       exit(4);
    }
@@ -214,7 +214,7 @@ static void init( void )
    surf_tmpl.u.tex.first_layer = 0;
    surf_tmpl.u.tex.last_layer = 0;
    surf = ctx->create_surface(ctx, tex, &surf_tmpl);
-   if (surf == NULL) {
+   if (!surf) {
       fprintf(stderr, "Unable to create tex surface!\n");
       exit(5);
    }

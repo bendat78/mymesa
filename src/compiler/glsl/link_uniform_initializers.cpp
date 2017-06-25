@@ -286,7 +286,7 @@ link_set_uniform_initializers(struct gl_shader_program *prog,
    for (unsigned int i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *shader = prog->_LinkedShaders[i];
 
-      if (shader == NULL)
+      if (!shader)
          continue;
 
       foreach_in_list(ir_instruction, node, shader->ir) {

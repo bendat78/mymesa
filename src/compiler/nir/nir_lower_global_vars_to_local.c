@@ -90,7 +90,7 @@ nir_lower_global_vars_to_local(nir_shader *shader)
 
       assert(var->data.mode == nir_var_global);
 
-      if (impl != NULL) {
+      if (impl) {
          exec_node_remove(&var->node);
          var->data.mode = nir_var_local;
          exec_list_push_tail(&impl->locals, &var->node);

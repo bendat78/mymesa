@@ -111,7 +111,7 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    }
 
    ctx = CALLOC_STRUCT(dri_context);
-   if (ctx == NULL) {
+   if (!ctx) {
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       goto fail;
    }

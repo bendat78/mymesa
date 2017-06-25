@@ -985,7 +985,7 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     CS_LOCALS(r300);
     (void) i; (void) ptr;
 
-    assert(start == 0);
+    assert(!start);
     assert(count < (1 << 16));
 
     DBG(r300, DBG_DRAW, "r300: render_draw_arrays (count: %d)\n", count);

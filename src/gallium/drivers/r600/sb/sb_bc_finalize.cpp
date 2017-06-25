@@ -846,7 +846,7 @@ void bc_finalizer::update_ngpr(unsigned gpr) {
 unsigned bc_finalizer::get_stack_depth(node *n, unsigned &loops,
                                            unsigned &ifs, unsigned add) {
 	unsigned stack_elements = add;
-	bool has_non_wqm_push = (add != 0);
+	bool has_non_wqm_push = (add);
 	region_node *r = n->is_region() ?
 			static_cast<region_node*>(n) : n->get_parent_region();
 

@@ -1694,7 +1694,7 @@ NineDevice9_StretchRect( struct NineDevice9 *This,
                            dst->desc.Width, dst->desc.Height);
         if (xy < 0)
             return D3D_OK;
-        if (xy == 0)
+        if (!xy)
             xy = u_box_clip_2d(&box, &blit.src.box,
                                src->desc.Width, src->desc.Height);
         clamped = !!xy;
@@ -1849,7 +1849,7 @@ NineDevice9_SetRenderTarget( struct NineDevice9 *This,
     user_assert(!pRenderTarget ||
                 rt->desc.Usage & D3DUSAGE_RENDERTARGET, D3DERR_INVALIDCALL);
 
-    if (i == 0) {
+    if (!i) {
         This->state.viewport.X = 0;
         This->state.viewport.Y = 0;
         This->state.viewport.Width = rt->desc.Width;
@@ -2589,7 +2589,7 @@ NineDevice9_ValidateDevice( struct NineDevice9 *This,
     for (i = 0; i < This->caps.NumSimultaneousRTs; ++i) {
         if (!state->rt[i])
             continue;
-        if (w == 0) {
+        if (!w) {
             w = state->rt[i]->desc.Width;
             h = state->rt[i]->desc.Height;
         } else
@@ -3502,7 +3502,7 @@ NineDevice9_SetStreamSourceFreq( struct NineDevice9 *This,
     if (unlikely(This->is_recording)) {
         state->stream_freq[StreamNumber] = Setting;
         state->changed.stream_freq |= 1 << StreamNumber;
-        if (StreamNumber != 0)
+        if (StreamNumber)
             state->changed.group |= NINE_STATE_STREAMFREQ;
         return D3D_OK;
     }

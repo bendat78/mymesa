@@ -80,7 +80,7 @@ do_batch_dump(struct intel_context *intel)
       return;
 
    ret = drm_intel_bo_map(batch->bo, false);
-   if (ret == 0) {
+   if (!ret) {
       drm_intel_decode_set_batch_pointer(decode,
 					 batch->bo->virtual,
 					 batch->bo->offset,
@@ -100,7 +100,7 @@ do_batch_dump(struct intel_context *intel)
 
    drm_intel_decode_context_free(decode);
 
-   if (ret == 0) {
+   if (!ret) {
       drm_intel_bo_unmap(batch->bo);
 
       if (intel->vtbl.debug_batch != NULL)
@@ -119,7 +119,7 @@ do_flush_locked(struct intel_context *intel)
    ret = drm_intel_bo_subdata(batch->bo, 0, 4*batch->used, batch->map);
 
    if (!intel->intelScreen->no_hw) {
-      if (ret == 0) {
+      if (!ret) {
          if (unlikely(INTEL_DEBUG & DEBUG_AUB) && intel->vtbl.annotate_aub)
             intel->vtbl.annotate_aub(intel);
          ret = drm_intel_bo_mrb_exec(batch->bo, 4 * batch->used, NULL, 0, 0,
@@ -130,7 +130,7 @@ do_flush_locked(struct intel_context *intel)
    if (unlikely(INTEL_DEBUG & DEBUG_BATCH))
       do_batch_dump(intel);
 
-   if (ret != 0) {
+   if (ret) {
       fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerror(-ret));
       exit(1);
    }
@@ -202,7 +202,7 @@ intel_batchbuffer_emit_reloc(struct intel_context *intel,
    ret = drm_intel_bo_emit_reloc(intel->batch.bo, 4*intel->batch.used,
 				 buffer, delta,
 				 read_domains, write_domain);
-   assert(ret == 0);
+   assert(!ret);
    (void)ret;
 
    /*
@@ -227,7 +227,7 @@ intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
    ret = drm_intel_bo_emit_reloc_fence(intel->batch.bo, 4*intel->batch.used,
 				       buffer, delta,
 				       read_domains, write_domain);
-   assert(ret == 0);
+   assert(!ret);
    (void)ret;
 
    /*

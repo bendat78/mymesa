@@ -136,7 +136,7 @@ vl_vlc_fillbits(struct vl_vlc *vlc)
       unsigned bytes_left = vlc->end - vlc->data;
 
       /* if this input is depleted */
-      if (bytes_left == 0) {
+      if (!bytes_left) {
 
          if (vlc->bytes_left) {
             /* go on to next input */
@@ -307,7 +307,7 @@ vl_vlc_search_byte(struct vl_vlc *vlc, unsigned num_bits, uint8_t value)
 
       if (num_bits != ~0u) {
          num_bits -= 8;
-         if (num_bits == 0)
+         if (!num_bits)
             return FALSE;
       }
    }
@@ -334,7 +334,7 @@ vl_vlc_search_byte(struct vl_vlc *vlc, unsigned num_bits, uint8_t value)
       ++vlc->data;
       if (num_bits != ~0u) {
          num_bits -= 8;
-         if (num_bits == 0) {
+         if (!num_bits) {
             vl_vlc_align_data_ptr(vlc);
             return FALSE;
          }

@@ -74,19 +74,19 @@ update_max_array_access(ir_rvalue *ir, int idx, YYLTYPE *loc,
        */
       ir_dereference_variable *deref_var =
          deref_record->record->as_dereference_variable();
-      if (deref_var == NULL) {
+      if (!deref_var) {
          ir_dereference_array *deref_array =
             deref_record->record->as_dereference_array();
          ir_dereference_array *deref_array_prev = NULL;
-         while (deref_array != NULL) {
+         while (deref_array) {
             deref_array_prev = deref_array;
             deref_array = deref_array->array->as_dereference_array();
          }
-         if (deref_array_prev != NULL)
+         if (deref_array_prev)
             deref_var = deref_array_prev->array->as_dereference_variable();
       }
 
-      if (deref_var != NULL) {
+      if (deref_var) {
          if (deref_var->var->is_interface_instance()) {
             unsigned field_index =
                deref_record->record->type->field_index(deref_record->field);
@@ -95,7 +95,7 @@ update_max_array_access(ir_rvalue *ir, int idx, YYLTYPE *loc,
             int *const max_ifc_array_access =
                deref_var->var->get_max_ifc_array_access();
 
-            assert(max_ifc_array_access != NULL);
+            assert(max_ifc_array_access);
 
             if (idx > max_ifc_array_access[field_index]) {
                max_ifc_array_access[field_index] = idx;
@@ -217,7 +217,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
          int implicit_size = get_implicit_array_size(state, array);
          if (implicit_size) {
             ir_variable *v = array->whole_variable_referenced();
-            if (v != NULL)
+            if (v)
                v->data.max_array_access = implicit_size - 1;
          }
          else if (state->stage == MESA_SHADER_TESS_CTRL &&
@@ -276,7 +276,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
           * of structures.
           */
          ir_variable *v = array->whole_variable_referenced();
-         if (v != NULL)
+         if (v)
             v->data.max_array_access = array->type->array_size() - 1;
       }
 

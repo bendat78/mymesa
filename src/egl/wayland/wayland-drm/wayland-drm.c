@@ -81,7 +81,7 @@ create_buffer(struct wl_client *client, struct wl_resource *resource,
 	struct wl_drm_buffer *buffer;
 
 	buffer = calloc(1, sizeof *buffer);
-	if (buffer == NULL) {
+	if (!buffer) {
 		wl_resource_post_no_memory(resource);
 		return;
 	}
@@ -247,7 +247,7 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 struct wl_drm_buffer *
 wayland_drm_buffer_get(struct wl_drm *drm, struct wl_resource *resource)
 {
-	if (resource == NULL)
+	if (!resource)
 		return NULL;
 
         if (wl_resource_instance_of(resource, &wl_buffer_interface,

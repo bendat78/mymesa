@@ -121,7 +121,7 @@ gbm_create_device(int fd)
    }
 
    gbm = _gbm_create_device(fd);
-   if (gbm == NULL)
+   if (!gbm)
       return NULL;
 
    gbm->dummy = gbm_create_device;

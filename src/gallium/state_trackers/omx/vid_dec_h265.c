@@ -248,7 +248,7 @@ static void scaling_list_data(vid_dec_PrivateType *priv,
             } else {
                const uint8_t *d;
 
-               if (size_id == 0)
+               if (!size_id)
                   memset((*scaling_list_data[0])[matrix_id], 16, 16);
                else {
                   if (size_id < 3)
@@ -295,7 +295,7 @@ static void st_ref_pic_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
    int delta_poc;
    unsigned i;
 
-   inter_rps_pred_flag = (idx != 0) ? (vl_rbsp_u(rbsp, 1)) : false;
+   inter_rps_pred_flag = (idx) ? (vl_rbsp_u(rbsp, 1)) : false;
 
    if (inter_rps_pred_flag) {
       struct ref_pic_set *ref_rps;

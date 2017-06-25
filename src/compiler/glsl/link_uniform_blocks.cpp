@@ -116,10 +116,10 @@ private:
          v->IndexName = ralloc_strdup(mem_ctx, name);
 
          char *open_bracket = strchr(v->IndexName, '[');
-         assert(open_bracket != NULL);
+         assert(open_bracket);
 
          char *close_bracket = strchr(open_bracket, '.') - 1;
-         assert(close_bracket != NULL);
+         assert(close_bracket);
 
          /* Length of the tail without the ']' but with the NUL.
           */
@@ -334,12 +334,12 @@ create_buffer_blocks(void *mem_ctx, struct gl_context *ctx,
                      struct hash_table *block_hash, unsigned num_variables,
                      bool create_ubo_blocks)
 {
-   if (num_blocks == 0) {
-      assert(num_variables == 0);
+   if (!num_blocks) {
+      assert(!num_variables);
       return;
    }
 
-   assert(num_variables != 0);
+   assert(num_variables);
 
    /* Allocate storage to hold all of the information related to uniform
     * blocks that can be queried through the API.
@@ -415,7 +415,7 @@ link_uniform_blocks(void *mem_ctx,
       _mesa_hash_table_create(mem_ctx, _mesa_key_hash_string,
                               _mesa_key_string_equal);
 
-   if (block_hash == NULL) {
+   if (!block_hash) {
       _mesa_error_no_memory(__func__);
       linker_error(prog, "out of memory\n");
       return;

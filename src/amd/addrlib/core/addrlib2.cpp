@@ -110,7 +110,7 @@ Lib* Lib::GetLib(
     ADDR_HANDLE hLib)   ///< [in] handle of ADDR_HANDLE
 {
     Addr::Lib* pAddrLib = Addr::Lib::GetLib(hLib);
-    if ((pAddrLib != NULL) &&
+    if ((pAddrLib) &&
         (pAddrLib->GetChipFamily() <= ADDR_CHIP_FAMILY_VI))
     {
         // only valid and GFX9+ AISC can use AddrLib2 function.
@@ -632,7 +632,7 @@ ADDR_E_RETURNCODE Lib::ComputeFmaskInfo(
         }
     }
 
-    if (valid == FALSE)
+    if (!valid)
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
@@ -1092,7 +1092,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceInfoLinear(
         returnCode = ComputeSurfaceLinearPadding(pIn, &pitch, &actualHeight, pOut->pMipInfo);
     }
 
-    if ((pitch == 0) || (actualHeight == 0))
+    if ((!pitch) || (!actualHeight))
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
@@ -1211,7 +1211,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceAddrFromCoordLinear(
         }
     }
 
-    if (valid == FALSE)
+    if (!valid)
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
@@ -1305,7 +1305,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddrLinear(
                     mipSize = currentMipHeight * localOut.pitch * elementBytes;
                 }
 
-                if (mipSize == 0)
+                if (!mipSize)
                 {
                     valid = FALSE;
                     break;
@@ -1367,7 +1367,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddrLinear(
         }
     }
 
-    if (valid == FALSE)
+    if (!valid)
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
@@ -1445,7 +1445,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceLinearPadding(
 
         for (UINT_32 i = 0; i < pIn->numMipLevels; i++)
         {
-            if (pMipInfo != NULL)
+            if (pMipInfo)
             {
                 pMipInfo[i].offset = mipChainWidth * mipChainHeight * elementBytes;
                 pMipInfo[i].pitch = mipChainWidth;
@@ -1561,7 +1561,7 @@ ADDR_E_RETURNCODE Lib::ComputeBlockDimension(
 
         *pWidth  = Block1K_3d[microBlockSizeTableIndex].w << averageAmp;
         *pHeight = Block1K_3d[microBlockSizeTableIndex].h << (averageAmp + (restAmp / 2));
-        *pDepth  = Block1K_3d[microBlockSizeTableIndex].d << (averageAmp + ((restAmp != 0) ? 1 : 0));
+        *pDepth  = Block1K_3d[microBlockSizeTableIndex].d << (averageAmp + ((restAmp) ? 1 : 0));
     }
     else
     {
@@ -1597,7 +1597,7 @@ Dim3d Lib::GetMipTailDim(
     {
         UINT_32 dim = log2blkSize % 3;
 
-        if (dim == 0)
+        if (!dim)
         {
             out.h >>= 1;
         }
@@ -1650,7 +1650,7 @@ UINT_32 Lib::ComputeSurface2DMicroBlockOffset(
         if (log2ElementBytes < 3)
         {
             microBlockOffset |= (pIn->y & 0x4) << 4;
-            if (log2ElementBytes == 0)
+            if (!log2ElementBytes)
             {
                 microBlockOffset |= (pIn->y & 0x8) << 4;
             }
@@ -1723,7 +1723,7 @@ UINT_32 Lib::ComputeSurface3DMicroBlockOffset(
     UINT_32 microBlockOffset = 0;
     if (IsStandardSwizzle(pIn->resourceType, pIn->swizzleMode))
     {
-        if (log2ElementBytes == 0)
+        if (!log2ElementBytes)
         {
             microBlockOffset = ((pIn->slice & 4) >> 2) | ((pIn->y & 4) >> 1);
         }
@@ -1753,7 +1753,7 @@ UINT_32 Lib::ComputeSurface3DMicroBlockOffset(
     {
         UINT_32 xh, yh, zh;
 
-        if (log2ElementBytes == 0)
+        if (!log2ElementBytes)
         {
             microBlockOffset =
                 (pIn->x & 1) | ((pIn->y & 1) << 1) | ((pIn->x & 2) << 1) | ((pIn->y & 2) << 2);

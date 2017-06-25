@@ -136,7 +136,7 @@ VOID Object::ClientFree(
 {
     if (pClient->callbacks.freeSysMem != NULL)
     {
-        if (pObjMem != NULL)
+        if (pObjMem)
         {
             ADDR_FREESYSMEM_INPUT freeInput = {};
 

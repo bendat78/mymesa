@@ -953,7 +953,7 @@ schedule_instructions(struct vc4_compile *c,
                                 time = MAX2(merge->unblocked_time, time);
                                 list_del(&merge->link);
                                 inst = qpu_merge_inst(inst, merge->inst->inst);
-                                assert(inst != 0);
+                                assert(inst);
                                 if (merge->uniform != -1) {
                                         c->uniform_data[*next_uniform] =
                                                 orig_uniform_data[merge->uniform];

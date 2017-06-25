@@ -40,7 +40,7 @@
  * There are 3 categories of vertex elements, which are processed separately:
  * - per-vertex attribs (stride != 0, instance_divisor == 0)
  * - instanced attribs (stride != 0, instance_divisor > 0)
- * - constant attribs (stride == 0)
+ * - constant attribs (!stride)
  *
  * All needed uploads and translations are performed every draw command, but
  * only the subset of vertices needed for that draw command is uploaded or

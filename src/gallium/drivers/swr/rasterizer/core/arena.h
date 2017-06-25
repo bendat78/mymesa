@@ -407,9 +407,9 @@ public:
         blockSize = AlignUp(blockSize, ARENA_BLOCK_ALIGN);
 
         ArenaBlock* pNewBlock = m_allocator.AllocateAligned(blockSize, ARENA_BLOCK_ALIGN);    // Arena blocks are always simd byte aligned.
-        SWR_ASSERT(pNewBlock != nullptr);
+        SWR_ASSERT(pNewBlock);
 
-        if (pNewBlock != nullptr)
+        if (pNewBlock)
         {
             m_offset = ARENA_BLOCK_ALIGN;
             pNewBlock->pNext = m_pCurBlock;
@@ -473,7 +473,7 @@ public:
 
     bool IsEmpty()
     {
-        return (m_pCurBlock == nullptr) || (m_offset == ARENA_BLOCK_ALIGN && m_pCurBlock->pNext == nullptr);
+        return (!m_pCurBlock) || (m_offset == ARENA_BLOCK_ALIGN && m_pCurBlock->pNext == nullptr);
     }
 
 private:

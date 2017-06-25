@@ -211,10 +211,10 @@ nir_calc_dominance(nir_shader *shader)
 nir_block *
 nir_dominance_lca(nir_block *b1, nir_block *b2)
 {
-   if (b1 == NULL)
+   if (!b1)
       return b2;
 
-   if (b2 == NULL)
+   if (!b2)
       return b1;
 
    assert(nir_cf_node_get_function(&b1->cf_node) ==

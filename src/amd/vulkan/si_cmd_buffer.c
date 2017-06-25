@@ -661,7 +661,7 @@ si_write_scissors(struct radeon_winsys_cs *cs, int first,
 static inline unsigned
 radv_prims_for_vertices(struct radv_prim_vertex_count *info, unsigned num)
 {
-	if (num == 0)
+	if (!num)
 		return 0;
 
 	if (info->incr == 0)

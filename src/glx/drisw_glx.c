@@ -287,7 +287,7 @@ drisw_bind_tex_image(Display * dpy,
 
    __glXInitialize(dpy);
 
-   if (pdraw != NULL) {
+   if (pdraw) {
       psc = (struct drisw_screen *) base->psc;
 
       if (!psc->texBuffer)
@@ -375,7 +375,7 @@ drisw_create_context(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (pcp == NULL)
+   if (!pcp)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
@@ -447,7 +447,7 @@ drisw_create_context_attribs(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (pcp == NULL)
+   if (!pcp)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
@@ -460,7 +460,7 @@ drisw_create_context_attribs(struct glx_screen *base,
    ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_MINOR_VERSION;
    ctx_attribs[num_ctx_attribs++] = minor_ver;
 
-   if (flags != 0) {
+   if (flags) {
       ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_FLAGS;
 
       /* The current __DRI_CTX_FLAG_* values are identical to the
@@ -598,7 +598,7 @@ driOpenSwrast(void)
 {
    void *driver = NULL;
 
-   if (driver == NULL)
+   if (!driver)
       driver = driOpenDriver(SWRAST_DRIVER_NAME);
 
    return driver;
@@ -661,7 +661,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
    int i;
 
    psc = calloc(1, sizeof *psc);
-   if (psc == NULL)
+   if (!psc)
       return NULL;
 
    if (!glx_screen_init(&psc->base, screen, priv)) {
@@ -674,7 +674,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
       goto handle_error;
 
    extensions = driGetDriverExtensions(psc->driver, SWRAST_DRIVER_NAME);
-   if (extensions == NULL)
+   if (!extensions)
       goto handle_error;
 
    for (i = 0; extensions[i]; i++) {
@@ -774,7 +774,7 @@ driswCreateDisplay(Display * dpy)
    struct drisw_display *pdpyp;
 
    pdpyp = malloc(sizeof *pdpyp);
-   if (pdpyp == NULL)
+   if (!pdpyp)
       return NULL;
 
    pdpyp->base.destroyDisplay = driswDestroyDisplay;

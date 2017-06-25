@@ -488,7 +488,7 @@ wsi_wl_surface_get_present_modes(VkIcdSurfaceBase *surface,
                                  uint32_t* pPresentModeCount,
                                  VkPresentModeKHR* pPresentModes)
 {
-   if (pPresentModes == NULL) {
+   if (!pPresentModes) {
       *pPresentModeCount = ARRAY_SIZE(present_modes);
       return VK_SUCCESS;
    }
@@ -510,7 +510,7 @@ VkResult wsi_create_wl_surface(const VkAllocationCallbacks *pAllocator,
 
    surface = vk_alloc(pAllocator, sizeof *surface, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (surface == NULL)
+   if (!surface)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    surface->base.platform = VK_ICD_WSI_PLATFORM_WAYLAND;
@@ -557,7 +557,7 @@ wsi_wl_swapchain_get_images(struct wsi_swapchain *wsi_chain,
    uint32_t ret_count;
    VkResult result;
 
-   if (pSwapchainImages == NULL) {
+   if (!pSwapchainImages) {
       *pCount = chain->base.image_count;
       return VK_SUCCESS;
    }
@@ -786,7 +786,7 @@ wsi_wl_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    size_t size = sizeof(*chain) + num_images * sizeof(chain->images[0]);
    chain = vk_alloc(pAllocator, size, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (chain == NULL)
+   if (!chain)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    /* Mark a bunch of stuff as NULL.  This way we can just call
@@ -882,7 +882,7 @@ wsi_wl_init_wsi(struct wsi_device *wsi_device,
    wsi->alloc = alloc;
    wsi->cbs = cbs;
    int ret = pthread_mutex_init(&wsi->mutex, NULL);
-   if (ret != 0) {
+   if (ret) {
       if (ret == ENOMEM) {
          result = VK_ERROR_OUT_OF_HOST_MEMORY;
       } else {

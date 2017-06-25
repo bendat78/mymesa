@@ -562,7 +562,7 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 
 	rImage = get_radeon_texture_image(texImage);
 	t = radeon_tex_obj(texObj);
-        if (t == NULL) {
+        if (!t) {
     	    return;
     	}
 

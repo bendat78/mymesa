@@ -301,14 +301,14 @@ get_entry_and_kill_aliases(struct copy_prop_var_state *state,
          remove_dead_writes(state, iter, write_mask);
 
       if (comp & derefs_equal_bit) {
-         assert(entry == NULL);
+         assert(!entry);
          entry = iter;
       } else if (comp & derefs_may_alias_bit) {
          copy_entry_remove(state, iter);
       }
    }
 
-   if (entry == NULL)
+   if (!entry)
       entry = copy_entry_create(state, deref);
 
    return entry;
@@ -425,7 +425,7 @@ load_from_ssa_entry_value(struct copy_prop_var_state *state,
          /* We don't have anything for this component in our
           * list.  Just re-use a channel from the load.
           */
-         if (load_def == NULL)
+         if (!load_def)
             load_def = nir_load_deref_var(b, entry->dst);
 
          if (load_def->parent_instr == &intrin->instr)
@@ -604,7 +604,7 @@ try_load_from_entry(struct copy_prop_var_state *state, struct copy_entry *entry,
                     nir_builder *b, nir_intrinsic_instr *intrin,
                     nir_deref_var *src, struct value *value)
 {
-   if (entry == NULL)
+   if (!entry)
       return false;
 
    if (entry->src.is_ssa) {

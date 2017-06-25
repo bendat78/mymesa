@@ -197,7 +197,7 @@ static bool valid_flags(struct ir3_instruction *instr, unsigned n,
 			/* disallow CP into anything but the SSBO slot argument for
 			 * atomics:
 			 */
-			if (is_atomic(instr->opc) && (n != 0))
+			if (is_atomic(instr->opc) && (n))
 				return false;
 		}
 

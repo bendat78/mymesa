@@ -245,7 +245,7 @@ static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slo
 			(replaceargs << R200_TXA_TFACTOR1_SEL_SHIFT);
 
    if ( !texUnit->_Current ) {
-      assert( unit == 0);
+      assert(!unit);
       color_combine = R200_TXC_ARG_A_ZERO | R200_TXC_ARG_B_ZERO
 	  | R200_TXC_ARG_C_DIFFUSE_COLOR | R200_TXC_OP_MADD;
       alpha_combine = R200_TXA_ARG_A_ZERO | R200_TXA_ARG_B_ZERO
@@ -304,7 +304,7 @@ static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slo
 		  color_arg[i] = r200_primary_color[op];
 		  break;
 	       case GL_PREVIOUS:
-		  if (slot == 0)
+		  if (!slot)
 		     color_arg[i] = r200_primary_color[op];
 		  else
 		     color_arg[i] = r200_register_color[op]
@@ -329,7 +329,7 @@ static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slo
 	       }
 	    }
 	    else {
-	       if (slot == 0)
+	       if (!slot)
 		  color_arg[i] = r200_primary_color[op];
 	       else
 		  color_arg[i] = r200_register_color[op]
@@ -386,7 +386,7 @@ static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slo
 		  alpha_arg[i] = r200_primary_alpha[op];
 		  break;
 	       case GL_PREVIOUS:
-		  if (slot == 0)
+		  if (!slot)
 		     alpha_arg[i] = r200_primary_alpha[op];
 		  else
 		     alpha_arg[i] = r200_register_alpha[op]
@@ -411,7 +411,7 @@ static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slo
 	       }
 	    }
 	    else {
-	       if (slot == 0)
+	       if (!slot)
 		  alpha_arg[i] = r200_primary_alpha[op];
 	       else
 		  alpha_arg[i] = r200_register_alpha[op]
@@ -654,7 +654,7 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 
 	rImage = get_radeon_texture_image(texImage);
 	t = radeon_tex_obj(texObj);
-        if (t == NULL) {
+        if (!t) {
     	    return;
     	}
 
@@ -899,7 +899,7 @@ static GLboolean r200UpdateAllTexEnv( struct gl_context *ctx )
       i = i + 1;
    }
 
-   if (currslot == 0) {
+   if (!currslot) {
       /* need one stage at least */
       rmesa->state.texture.unit[0].outputreg = 0;
       ok = r200UpdateTextureEnv( ctx, 0, 0, 0 );

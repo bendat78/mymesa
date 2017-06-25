@@ -349,7 +349,7 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    struct etna_screen *screen;
    struct pipe_context *pctx;
 
-   if (ctx == NULL)
+   if (!ctx)
       return NULL;
 
    pctx = &ctx->base;

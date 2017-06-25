@@ -136,7 +136,7 @@ static bool radeon_bo_wait(struct pb_buffer *_buf, uint64_t timeout,
     int64_t abs_timeout;
 
     /* No timeout. Just query. */
-    if (timeout == 0)
+    if (!timeout)
         return !bo->num_active_ioctls && !radeon_bo_is_busy(bo);
 
     abs_timeout = os_time_get_absolute_timeout(timeout);
@@ -1205,7 +1205,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
         lseek(whandle->handle, 0, SEEK_SET);
     }
 
-    assert(handle != 0);
+    assert(handle);
 
     bo->handle = handle;
 

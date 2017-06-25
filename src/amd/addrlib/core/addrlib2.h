@@ -318,8 +318,8 @@ protected:
 
     static UINT_32 GetFmaskBpp(UINT_32 sample, UINT_32 frag)
     {
-        sample = (sample == 0) ? 1 : sample;
-        frag   = (frag   == 0) ? sample : frag;
+        sample = (!sample) ? 1 : sample;
+        frag   = (!frag) ? sample : frag;
 
         UINT_32 fmaskBpp = QLog2(frag);
 

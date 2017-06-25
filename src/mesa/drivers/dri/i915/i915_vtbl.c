@@ -330,7 +330,7 @@ i915_emit_state(struct intel_context *intel)
    }
 
    if (dri_bufmgr_check_aperture_space(aper_array, aper_count)) {
-       if (count == 0) {
+       if (!count) {
 	   count++;
 	   intel_batchbuffer_flush(intel);
 	   goto again;
@@ -524,7 +524,7 @@ i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
    state[0] = _3DSTATE_BUF_INFO_CMD;
    state[1] = buffer_id;
 
-   if (region != NULL) {
+   if (region) {
       state[1] |= BUF_3D_PITCH(region->pitch);
 
       if (region->tiling != I915_TILING_NONE) {
@@ -603,7 +603,7 @@ i915_set_draw_region(struct intel_context *intel,
    value = (DSTORG_HORT_BIAS(0x8) |     /* .5 */
             DSTORG_VERT_BIAS(0x8) |     /* .5 */
             LOD_PRECLAMP_OGL | TEX_DEFAULT_COLOR_OGL);
-   if (irb != NULL) {
+   if (irb) {
       value |= i915_render_target_format_for_mesa_format[intel_rb_format(irb)];
    } else {
       value |= DV_PF_8888;

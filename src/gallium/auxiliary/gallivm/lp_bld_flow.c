@@ -140,7 +140,7 @@ lp_build_mask_check(struct lp_build_mask_context *mask)
     * Not sure if llvm could figure that out on its own.
     */
 
-   /* cond = (mask == 0) */
+   /* cond = (!mask) */
    cond = LLVMBuildICmp(builder,
                         LLVMIntEQ,
                         LLVMBuildBitCast(builder, value, mask->reg_type, ""),

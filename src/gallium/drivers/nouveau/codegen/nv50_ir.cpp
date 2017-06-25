@@ -678,7 +678,7 @@ static inline void moveSourcesAdjustIndex(int8_t &index, int s, int delta)
 void
 Instruction::moveSources(const int s, const int delta)
 {
-   if (delta == 0)
+   if (!delta)
       return;
    assert(s + delta >= 0);
 
@@ -833,7 +833,7 @@ Instruction::setIndirect(int s, int dim, Value *value)
          --p;
    }
    setSrc(p, value);
-   srcs[p].usedAsPtr = (value != 0);
+   srcs[p].usedAsPtr = (value);
    srcs[s].indirect[dim] = value ? p : -1;
    return true;
 }

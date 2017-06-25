@@ -265,7 +265,7 @@ glx_config_create_list(unsigned count)
 _X_HIDDEN void
 glx_config_destroy_list(struct glx_config *configs)
 {
-   while (configs != NULL) {
+   while (configs) {
       struct glx_config *const next = configs->next;
 
       free(configs);

@@ -124,7 +124,7 @@ struct inout_decl {
 static struct inout_decl *
 find_inout_array(struct inout_decl *decls, unsigned count, unsigned array_id)
 {
-   assert(array_id != 0);
+   assert(array_id);
 
    for (unsigned i = 0; i < count; i++) {
       struct inout_decl *decl = &decls[i];
@@ -405,7 +405,7 @@ glsl_to_tgsi_visitor::emit_asm(ir_instruction *ir, unsigned op,
       emit_arl(ir, address_reg, *dst1.reladdr);
       num_reladdr--;
    }
-   assert(num_reladdr == 0);
+   assert(!num_reladdr);
 
    /* inst->op has only 8 bits. */
    STATIC_ASSERT(TGSI_OPCODE_LAST <= 255);
@@ -530,7 +530,7 @@ glsl_to_tgsi_visitor::emit_asm(ir_instruction *ir, unsigned op,
          }
 
          /* first time use previous instruction */
-         if (dinst == NULL) {
+         if (!dinst) {
             dinst = inst;
          } else {
             /* create a new instructions for subsequent attempts */
@@ -1050,7 +1050,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
    if (ir->data.mode == ir_var_uniform && strncmp(ir->name, "gl_", 3) == 0) {
       unsigned int i;
       const ir_state_slot *const slots = ir->get_state_slots();
-      assert(slots != NULL);
+      assert(slots);
 
       /* Check if this statevar's setup in the STATE file exactly
        * matches how we'll want to reference it as a
@@ -2701,7 +2701,7 @@ glsl_to_tgsi_visitor::process_move_condition(ir_rvalue *ir)
    ir_expression *const expr = ir->as_expression();
 
    if (native_integers) {
-      if ((expr != NULL) && (expr->get_num_operands() == 2)) {
+      if ((expr) && (expr->get_num_operands() == 2)) {
          enum glsl_base_type type = expr->operands[0]->type->base_type;
          if (type == GLSL_TYPE_INT || type == GLSL_TYPE_UINT ||
              type == GLSL_TYPE_BOOL) {
@@ -2730,7 +2730,7 @@ glsl_to_tgsi_visitor::process_move_condition(ir_rvalue *ir)
       return switch_order;
    }
 
-   if ((expr != NULL) && (expr->get_num_operands() == 2)) {
+   if ((expr) && (expr->get_num_operands() == 2)) {
       bool zero_on_left = false;
 
       if (expr->operands[0]->is_zero()) {
@@ -4588,7 +4588,7 @@ glsl_to_tgsi_visitor::get_first_temp_write(int *first_writes)
       for (j = 0; j < num_inst_dst_regs(inst); j++) {
          if (inst->dst[j].file == PROGRAM_TEMPORARY) {
             if (first_writes[inst->dst[j].index] == -1)
-                first_writes[inst->dst[j].index] = (depth == 0) ? i : loop_start;
+                first_writes[inst->dst[j].index] = (!depth) ? i : loop_start;
          }
       }
 
@@ -4615,13 +4615,13 @@ glsl_to_tgsi_visitor::get_first_temp_read(int *first_reads)
       for (j = 0; j < num_inst_src_regs(inst); j++) {
          if (inst->src[j].file == PROGRAM_TEMPORARY) {
             if (first_reads[inst->src[j].index] == -1)
-                first_reads[inst->src[j].index] = (depth == 0) ? i : loop_start;
+                first_reads[inst->src[j].index] = (!depth) ? i : loop_start;
          }
       }
       for (j = 0; j < inst->tex_offset_num_offset; j++) {
          if (inst->tex_offsets[j].file == PROGRAM_TEMPORARY) {
             if (first_reads[inst->tex_offsets[j].index] == -1)
-               first_reads[inst->tex_offsets[j].index] = (depth == 0) ? i : loop_start;
+               first_reads[inst->tex_offsets[j].index] = (!depth) ? i : loop_start;
          }
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
@@ -4646,18 +4646,18 @@ glsl_to_tgsi_visitor::get_last_temp_read_first_temp_write(int *last_reads, int *
    foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       for (j = 0; j < num_inst_src_regs(inst); j++) {
          if (inst->src[j].file == PROGRAM_TEMPORARY)
-            last_reads[inst->src[j].index] = (depth == 0) ? i : -2;
+            last_reads[inst->src[j].index] = (!depth) ? i : -2;
       }
       for (j = 0; j < num_inst_dst_regs(inst); j++) {
          if (inst->dst[j].file == PROGRAM_TEMPORARY) {
             if (first_writes[inst->dst[j].index] == -1)
-               first_writes[inst->dst[j].index] = (depth == 0) ? i : loop_start;
-            last_reads[inst->dst[j].index] = (depth == 0) ? i : -2;
+               first_writes[inst->dst[j].index] = (!depth) ? i : loop_start;
+            last_reads[inst->dst[j].index] = (!depth) ? i : -2;
          }
       }
       for (j = 0; j < inst->tex_offset_num_offset; j++) {
          if (inst->tex_offsets[j].file == PROGRAM_TEMPORARY)
-            last_reads[inst->tex_offsets[j].index] = (depth == 0) ? i : -2;
+            last_reads[inst->tex_offsets[j].index] = (!depth) ? i : -2;
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
          if(depth++ == 0)
@@ -4687,7 +4687,7 @@ glsl_to_tgsi_visitor::get_last_temp_write(int *last_writes)
    foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
       for (j = 0; j < num_inst_dst_regs(inst); j++) {
          if (inst->dst[j].file == PROGRAM_TEMPORARY)
-            last_writes[inst->dst[j].index] = (depth == 0) ? i : -2;
+            last_writes[inst->dst[j].index] = (!depth) ? i : -2;
       }
 
       if (inst->op == TGSI_OPCODE_BGNLOOP)
@@ -5678,7 +5678,7 @@ compile_tgsi_instruction(struct st_translate *t,
    case TGSI_OPCODE_ENDLOOP:
    case TGSI_OPCODE_IF:
    case TGSI_OPCODE_UIF:
-      assert(num_dst == 0);
+      assert(!num_dst);
       ureg_insn(ureg, inst->op, NULL, 0, src, num_src);
       return;
 
@@ -6899,7 +6899,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *shader = prog->_LinkedShaders[i];
-      if (shader == NULL)
+      if (!shader)
          continue;
 
       enum pipe_shader_type ptarget =

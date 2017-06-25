@@ -63,7 +63,7 @@ emit_indirect_load_store(nir_builder *b, nir_intrinsic_instr *orig_instr,
                                mid, end, &else_dest, src);
       nir_pop_if(b, NULL);
 
-      if (src == NULL)
+      if (!src)
          *dest = nir_if_phi(b, then_dest, else_dest);
    }
 }
@@ -92,7 +92,7 @@ emit_load_store(nir_builder *b, nir_intrinsic_instr *orig_instr,
 
    /* We reached the end of the deref chain.  Emit the instruction */
 
-   if (src == NULL) {
+   if (!src) {
       /* This is a load instruction */
       nir_intrinsic_instr *load =
          nir_intrinsic_instr_create(b->shader, nir_intrinsic_load_var);

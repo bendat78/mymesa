@@ -244,7 +244,7 @@ brw_codegen_vs_prog(struct brw_context *brw,
                             brw_select_clip_planes(&brw->ctx),
                             !_mesa_is_gles3(&brw->ctx),
                             st_index, &program_size, &error_str);
-   if (program == NULL) {
+   if (!program) {
       if (!vp->program.is_arb_asm) {
          vp->program.sh.data->LinkStatus = linking_failure;
          ralloc_strcat(&vp->program.sh.data->InfoLog, error_str);

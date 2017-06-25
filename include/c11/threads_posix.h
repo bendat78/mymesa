@@ -102,7 +102,7 @@ call_once(once_flag *flag, void (*func)(void))
 static inline int
 cnd_broadcast(cnd_t *cond)
 {
-    assert(cond != NULL);
+    assert(cond);
     return (pthread_cond_broadcast(cond) == 0) ? thrd_success : thrd_error;
 }
 
@@ -118,7 +118,7 @@ cnd_destroy(cnd_t *cond)
 static inline int
 cnd_init(cnd_t *cond)
 {
-    assert(cond != NULL);
+    assert(cond);
     return (pthread_cond_init(cond, NULL) == 0) ? thrd_success : thrd_error;
 }
 
@@ -126,7 +126,7 @@ cnd_init(cnd_t *cond)
 static inline int
 cnd_signal(cnd_t *cond)
 {
-    assert(cond != NULL);
+    assert(cond);
     return (pthread_cond_signal(cond) == 0) ? thrd_success : thrd_error;
 }
 
@@ -137,9 +137,9 @@ cnd_timedwait(cnd_t *cond, mtx_t *mtx, const xtime *xt)
     struct timespec abs_time;
     int rt;
 
-    assert(mtx != NULL);
-    assert(cond != NULL);
-    assert(xt != NULL);
+    assert(mtx);
+    assert(cond);
+    assert(xt);
 
     abs_time.tv_sec = xt->sec;
     abs_time.tv_nsec = xt->nsec;
@@ -147,15 +147,15 @@ cnd_timedwait(cnd_t *cond, mtx_t *mtx, const xtime *xt)
     rt = pthread_cond_timedwait(cond, mtx, &abs_time);
     if (rt == ETIMEDOUT)
         return thrd_busy;
-    return (rt == 0) ? thrd_success : thrd_error;
+    return (!rt) ? thrd_success : thrd_error;
 }
 
 // 7.25.3.6
 static inline int
 cnd_wait(cnd_t *cond, mtx_t *mtx)
 {
-    assert(mtx != NULL);
-    assert(cond != NULL);
+    assert(mtx);
+    assert(cond);
     return (pthread_cond_wait(cond, mtx) == 0) ? thrd_success : thrd_error;
 }
 
@@ -165,7 +165,7 @@ cnd_wait(cnd_t *cond, mtx_t *mtx)
 static inline void
 mtx_destroy(mtx_t *mtx)
 {
-    assert(mtx != NULL);
+    assert(mtx);
     pthread_mutex_destroy(mtx);
 }
 
@@ -200,7 +200,7 @@ static inline int
 mtx_init(mtx_t *mtx, int type)
 {
     pthread_mutexattr_t attr;
-    assert(mtx != NULL);
+    assert(mtx);
     if (type != mtx_plain && type != mtx_timed && type != mtx_try
       && type != (mtx_plain|mtx_recursive)
       && type != (mtx_timed|mtx_recursive)
@@ -223,7 +223,7 @@ mtx_init(mtx_t *mtx, int type)
 static inline int
 mtx_lock(mtx_t *mtx)
 {
-    assert(mtx != NULL);
+    assert(mtx);
     return (pthread_mutex_lock(mtx) == 0) ? thrd_success : thrd_error;
 }
 
@@ -237,8 +237,8 @@ thrd_yield(void);
 static inline int
 mtx_timedlock(mtx_t *mtx, const xtime *xt)
 {
-    assert(mtx != NULL);
-    assert(xt != NULL);
+    assert(mtx);
+    assert(xt);
 
     {
 #ifdef EMULATED_THREADS_USE_NATIVE_TIMEDLOCK
@@ -247,7 +247,7 @@ mtx_timedlock(mtx_t *mtx, const xtime *xt)
     ts.tv_sec = xt->sec;
     ts.tv_nsec = xt->nsec;
     rt = pthread_mutex_timedlock(mtx, &ts);
-    if (rt == 0)
+    if (!rt)
         return thrd_success;
     return (rt == ETIMEDOUT) ? thrd_busy : thrd_error;
 #else
@@ -269,7 +269,7 @@ mtx_timedlock(mtx_t *mtx, const xtime *xt)
 static inline int
 mtx_trylock(mtx_t *mtx)
 {
-    assert(mtx != NULL);
+    assert(mtx);
     return (pthread_mutex_trylock(mtx) == 0) ? thrd_success : thrd_busy;
 }
 
@@ -277,7 +277,7 @@ mtx_trylock(mtx_t *mtx)
 static inline int
 mtx_unlock(mtx_t *mtx)
 {
-    assert(mtx != NULL);
+    assert(mtx);
     return (pthread_mutex_unlock(mtx) == 0) ? thrd_success : thrd_error;
 }
 
@@ -288,7 +288,7 @@ static inline int
 thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 {
     struct impl_thrd_param *pack;
-    assert(thr != NULL);
+    assert(thr);
     pack = (struct impl_thrd_param *)malloc(sizeof(struct impl_thrd_param));
     if (!pack) return thrd_nomem;
     pack->func = func;
@@ -364,7 +364,7 @@ thrd_yield(void)
 static inline int
 tss_create(tss_t *key, tss_dtor_t dtor)
 {
-    assert(key != NULL);
+    assert(key);
     return (pthread_key_create(key, dtor) == 0) ? thrd_success : thrd_error;
 }
 

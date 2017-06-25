@@ -87,7 +87,7 @@ _mesa_BindProgramARB(GLenum target, GLuint id)
     * NOTE: binding to a non-existant program is not an error.
     * That's supposed to be caught in glBegin.
     */
-   if (id == 0) {
+   if (!id) {
       /* Bind a default program */
       newProg = NULL;
       if (target == GL_VERTEX_PROGRAM_ARB)
@@ -246,7 +246,7 @@ _mesa_IsProgramARB(GLuint id)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (id == 0)
+   if (!id)
       return GL_FALSE;
 
    prog = _mesa_lookup_program(ctx, id);
@@ -391,7 +391,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 
    /* Capture vp-*.shader_test/fp-*.shader_test files. */
    const char *capture_path = _mesa_get_shader_capture_path();
-   if (capture_path != NULL) {
+   if (capture_path) {
       FILE *file;
       const char *shader_type =
          target == GL_FRAGMENT_PROGRAM_ARB ? "fragment" : "vertex";

@@ -66,7 +66,7 @@ vector_insert_visitor::handle_rvalue(ir_rvalue **rv)
    factory.mem_ctx = ralloc_parent(expr);
 
    ir_constant *const idx = expr->operands[2]->constant_expression_value();
-   if (idx != NULL) {
+   if (idx) {
       /* Replace (vector_insert (vec) (scalar) (index)) with a dereference of
        * a new temporary.  The new temporary gets assigned as
        *
@@ -90,7 +90,7 @@ vector_insert_visitor::handle_rvalue(ir_rvalue **rv)
        * a new temporary.  The new temporary gets assigned as
        *
        *     t = vec
-       *     if (index == 0)
+       *     if (!index)
        *         t.x = scalar
        *     if (index == 1)
        *         t.y = scalar

@@ -921,7 +921,7 @@ sample_1d_nearest_mipmap_nearest(struct gl_context *ctx,
                                  const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = nearest_mipmap_level(tObj, lambda[i]);
       sample_1d_nearest(ctx, samp, tObj->Image[0][level], texcoord[i], rgba[i]);
@@ -937,7 +937,7 @@ sample_1d_linear_mipmap_nearest(struct gl_context *ctx,
                                 const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = nearest_mipmap_level(tObj, lambda[i]);
       sample_1d_linear(ctx, samp, tObj->Image[0][level], texcoord[i], rgba[i]);
@@ -953,7 +953,7 @@ sample_1d_nearest_mipmap_linear(struct gl_context *ctx,
                                 const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -979,7 +979,7 @@ sample_1d_linear_mipmap_linear(struct gl_context *ctx,
                                const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -1043,7 +1043,7 @@ sample_lambda_1d( struct gl_context *ctx,
    GLuint magStart, magEnd;  /* texels with magnification */
    GLuint i;
 
-   assert(lambda != NULL);
+   assert(lambda);
    compute_min_mag_ranges(samp, n, lambda,
                           &minStart, &minEnd, &magStart, &magEnd);
 
@@ -1267,7 +1267,7 @@ sample_2d_linear_mipmap_nearest(struct gl_context *ctx,
                                 const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = nearest_mipmap_level(tObj, lambda[i]);
       sample_2d_linear(ctx, samp, tObj->Image[0][level], texcoord[i], rgba[i]);
@@ -1283,7 +1283,7 @@ sample_2d_nearest_mipmap_linear(struct gl_context *ctx,
                                 const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -1309,7 +1309,7 @@ sample_2d_linear_mipmap_linear( struct gl_context *ctx,
                                 const GLfloat lambda[], GLfloat rgba[][4] )
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -1335,7 +1335,7 @@ sample_2d_linear_mipmap_linear_repeat(struct gl_context *ctx,
                                       const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    assert(samp->WrapS == GL_REPEAT);
    assert(samp->WrapT == GL_REPEAT);
    for (i = 0; i < n; i++) {
@@ -1512,7 +1512,7 @@ sample_lambda_2d(struct gl_context *ctx,
           swImg->RowStride)
       && swImg->_IsPowerOfTwo;
 
-   assert(lambda != NULL);
+   assert(lambda);
    compute_min_mag_ranges(samp, n, lambda,
                           &minStart, &minEnd, &magStart, &magEnd);
 
@@ -2165,7 +2165,7 @@ sample_3d_linear_mipmap_nearest(struct gl_context *ctx,
                                 const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = nearest_mipmap_level(tObj, lambda[i]);
       sample_3d_linear(ctx, samp, tObj->Image[0][level], texcoord[i], rgba[i]);
@@ -2181,7 +2181,7 @@ sample_3d_nearest_mipmap_linear(struct gl_context *ctx,
                                 const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -2207,7 +2207,7 @@ sample_3d_linear_mipmap_linear(struct gl_context *ctx,
                                const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -2271,7 +2271,7 @@ sample_lambda_3d(struct gl_context *ctx,
    GLuint magStart, magEnd;  /* texels with magnification */
    GLuint i;
 
-   assert(lambda != NULL);
+   assert(lambda);
    compute_min_mag_ranges(samp, n, lambda,
                           &minStart, &minEnd, &magStart, &magEnd);
 
@@ -2472,7 +2472,7 @@ sample_cube_nearest_mipmap_nearest(struct gl_context *ctx,
                                    const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
       GLfloat newCoord[4];
@@ -2507,7 +2507,7 @@ sample_cube_linear_mipmap_nearest(struct gl_context *ctx,
                                   const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
       GLfloat newCoord[4];
@@ -2532,7 +2532,7 @@ sample_cube_nearest_mipmap_linear(struct gl_context *ctx,
                                   const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
       GLfloat newCoord[4];
@@ -2567,7 +2567,7 @@ sample_cube_linear_mipmap_linear(struct gl_context *ctx,
                                  const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
       GLfloat newCoord[4];
@@ -2605,7 +2605,7 @@ sample_lambda_cube(struct gl_context *ctx,
    GLuint minStart, minEnd;  /* texels with minification */
    GLuint magStart, magEnd;  /* texels with magnification */
 
-   assert(lambda != NULL);
+   assert(lambda);
    compute_min_mag_ranges(samp, n, lambda,
                           &minStart, &minEnd, &magStart, &magEnd);
 
@@ -2948,7 +2948,7 @@ sample_2d_array_linear_mipmap_nearest(struct gl_context *ctx,
                                       const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = nearest_mipmap_level(tObj, lambda[i]);
       sample_2d_array_linear(ctx, samp, tObj->Image[0][level],
@@ -2965,7 +2965,7 @@ sample_2d_array_nearest_mipmap_linear(struct gl_context *ctx,
                                       const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -2993,7 +2993,7 @@ sample_2d_array_linear_mipmap_linear(struct gl_context *ctx,
                                      const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -3060,7 +3060,7 @@ sample_lambda_2d_array(struct gl_context *ctx,
    GLuint magStart, magEnd;  /* texels with magnification */
    GLuint i;
 
-   assert(lambda != NULL);
+   assert(lambda);
    compute_min_mag_ranges(samp, n, lambda,
                           &minStart, &minEnd, &magStart, &magEnd);
 
@@ -3243,7 +3243,7 @@ sample_1d_array_linear_mipmap_nearest(struct gl_context *ctx,
                                       const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = nearest_mipmap_level(tObj, lambda[i]);
       sample_1d_array_linear(ctx, samp, tObj->Image[0][level],
@@ -3260,7 +3260,7 @@ sample_1d_array_nearest_mipmap_linear(struct gl_context *ctx,
                                       const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -3286,7 +3286,7 @@ sample_1d_array_linear_mipmap_linear(struct gl_context *ctx,
                                      const GLfloat lambda[], GLfloat rgba[][4])
 {
    GLuint i;
-   assert(lambda != NULL);
+   assert(lambda);
    for (i = 0; i < n; i++) {
       GLint level = linear_mipmap_level(tObj, lambda[i]);
       if (level >= tObj->_MaxLevel) {
@@ -3350,7 +3350,7 @@ sample_lambda_1d_array(struct gl_context *ctx,
    GLuint magStart, magEnd;  /* texels with magnification */
    GLuint i;
 
-   assert(lambda != NULL);
+   assert(lambda);
    compute_min_mag_ranges(samp, n, lambda,
                           &minStart, &minEnd, &magStart, &magEnd);
 

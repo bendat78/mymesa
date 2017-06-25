@@ -217,7 +217,7 @@ vec4_instruction::size_read(unsigned arg) const
    case SHADER_OPCODE_TYPED_SURFACE_READ:
    case SHADER_OPCODE_TYPED_SURFACE_WRITE:
    case TCS_OPCODE_URB_WRITE:
-      if (arg == 0)
+      if (!arg)
          return mlen * REG_SIZE;
       break;
    case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
@@ -1320,7 +1320,7 @@ vec4_visitor::opt_register_coalesce()
 	    if (!scan_inst->predicate)
                chans_remaining &= ~scan_inst->dst.writemask;
 
-	    if (chans_remaining == 0)
+	    if (!chans_remaining)
 	       break;
 	 }
 
@@ -1367,7 +1367,7 @@ vec4_visitor::opt_register_coalesce()
          }
       }
 
-      if (chans_remaining == 0) {
+      if (!chans_remaining) {
 	 /* If we've made it here, we have an MOV we want to coalesce out, and
 	  * a scan_inst pointing to the earliest instruction involved in
 	  * computing the value.  Now go rewrite the instruction stream
@@ -1440,7 +1440,7 @@ vec4_visitor::eliminate_find_live_channel()
          break;
 
       case SHADER_OPCODE_FIND_LIVE_CHANNEL:
-         if (depth == 0) {
+         if (!depth) {
             inst->opcode = BRW_OPCODE_MOV;
             inst->src[0] = brw_imm_d(0);
             inst->force_writemask_all = true;

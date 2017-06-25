@@ -216,7 +216,7 @@ vbuf_start_prim(struct vbuf_stage *vbuf, uint prim)
       emit_sz = draw_translate_vinfo_size(vinfo->attrib[i].emit);
 
       /* doesn't handle EMIT_OMIT */
-      assert(emit_sz != 0);
+      assert(emit_sz);
 
       if (vinfo->attrib[i].emit == EMIT_1F_PSIZE) {
          src_buffer = 1;

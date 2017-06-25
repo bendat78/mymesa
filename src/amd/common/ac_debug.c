@@ -136,7 +136,7 @@ static void ac_parse_set_reg_packet(FILE *f, uint32_t *ib, unsigned count,
 	unsigned index = ib[1] >> 28;
 	unsigned int i;
 
-	if (index != 0) {
+	if (index) {
 		print_spaces(f, INDENT_PKT);
 		fprintf(f, "INDEX = %u\n", index);
 	}

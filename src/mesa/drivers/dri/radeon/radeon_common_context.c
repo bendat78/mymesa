@@ -406,13 +406,13 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 			depth_rb = radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH);
 			stencil_rb = radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL);
 
-			if ((depth_rb != NULL) && (stencil_rb != NULL)) {
+			if ((depth_rb) && (stencil_rb != NULL)) {
 				attachments[i++] = __DRI_BUFFER_DEPTH_STENCIL;
 				attachments[i++] = radeon_bits_per_pixel(depth_rb);
-			} else if (depth_rb != NULL) {
+			} else if (depth_rb) {
 				attachments[i++] = __DRI_BUFFER_DEPTH;
 				attachments[i++] = radeon_bits_per_pixel(depth_rb);
-			} else if (stencil_rb != NULL) {
+			} else if (stencil_rb) {
 				attachments[i++] = __DRI_BUFFER_STENCIL;
 				attachments[i++] = radeon_bits_per_pixel(stencil_rb);
 			}
@@ -445,7 +445,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 							  drawable->loaderPrivate);
 	}
 
-	if (buffers == NULL)
+	if (!buffers)
 		return;
 
 	for (i = 0; i < count; i++) {
@@ -482,7 +482,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 			return;
 		}
 
-		if (rb == NULL)
+		if (!rb)
 			continue;
 
 		if (rb->bo) {
@@ -519,7 +519,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 						RADEON_GEM_DOMAIN_VRAM,
 						buffers[i].flags);
 
-			if (bo == NULL) {
+			if (!bo) {
 				fprintf(stderr, "failed to attach %s %d\n",
 					regname, buffers[i].name);
 				continue;
@@ -552,7 +552,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 
 		if (buffers[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
 			rb = radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL);
-			if (rb != NULL) {
+			if (rb) {
 				struct radeon_bo *stencil_bo = NULL;
 
 				if (rb->bo) {
@@ -636,7 +636,7 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 	_mesa_update_state(&radeon->glCtx);
 
 	if (radeon->glCtx.DrawBuffer == drfb) {
-		if(driDrawPriv != NULL) {
+		if(driDrawPriv) {
 			radeon_window_moved(radeon);
 		}
 

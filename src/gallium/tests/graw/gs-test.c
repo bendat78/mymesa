@@ -162,10 +162,10 @@ static void init_fs_constbuf( void )
    templat.bind = PIPE_BIND_CONSTANT_BUFFER;
 
    constbuf1 = screen->resource_create(screen, &templat);
-   if (constbuf1 == NULL)
+   if (!constbuf1)
       exit(4);
    constbuf2 = screen->resource_create(screen, &templat);
-   if (constbuf2 == NULL)
+   if (!constbuf2)
       exit(4);
 
    {
@@ -398,7 +398,7 @@ static void init_tex( void )
 
    samptex = screen->resource_create(screen,
                                  &templat);
-   if (samptex == NULL)
+   if (!samptex)
       exit(4);
 
    u_box_2d(0,0,SIZE,SIZE, &box);
@@ -439,7 +439,7 @@ static void init_tex( void )
    sv_template.swizzle_b = 2;
    sv_template.swizzle_a = 3;
    sv = ctx->create_sampler_view(ctx, samptex, &sv_template);
-   if (sv == NULL)
+   if (!sv)
       exit(5);
 
    ctx->set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, 1, &sv);
@@ -458,7 +458,7 @@ static void init_tex( void )
    sampler_desc.max_anisotropy = 0;
 
    sampler = ctx->create_sampler_state(ctx, &sampler_desc);
-   if (sampler == NULL)
+   if (!sampler)
       exit(6);
 
    ctx->bind_sampler_states(ctx, PIPE_SHADER_FRAGMENT, 0, 1, &sampler);
@@ -491,7 +491,7 @@ static void init( void )
    }
 
    ctx = screen->context_create(screen, NULL, 0);
-   if (ctx == NULL)
+   if (!ctx)
       exit(3);
 
    memset(&templat, 0, sizeof(templat));
@@ -508,7 +508,7 @@ static void init( void )
 
    rttex = screen->resource_create(screen,
                                  &templat);
-   if (rttex == NULL)
+   if (!rttex)
       exit(4);
 
    surf_tmpl.format = templat.format;
@@ -516,7 +516,7 @@ static void init( void )
    surf_tmpl.u.tex.first_layer = 0;
    surf_tmpl.u.tex.last_layer = 0;
    surf = ctx->create_surface(ctx, rttex, &surf_tmpl);
-   if (surf == NULL)
+   if (!surf)
       exit(5);
 
    memset(&fb, 0, sizeof fb);

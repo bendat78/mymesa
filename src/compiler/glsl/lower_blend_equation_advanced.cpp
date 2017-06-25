@@ -457,7 +457,7 @@ get_main(gl_linked_shader *sh)
          break;
       }
    }
-   assert(sig != NULL); /* main() must exist */
+   assert(sig); /* main() must exist */
    return sig;
 }
 

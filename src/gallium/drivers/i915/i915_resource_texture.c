@@ -837,7 +837,7 @@ static void i915_texture_subdata(struct pipe_context *pipe,
                                  level,
                                  usage,
                                  box );
-   if (transfer == NULL)
+   if (!transfer)
       goto out;
 
    itransfer = (struct i915_transfer*)transfer;
@@ -879,7 +879,7 @@ static void i915_texture_subdata(struct pipe_context *pipe,
       }
    } else {
       uint8_t *map = pipe_transfer_map(pipe, &itransfer->b);
-      if (map == NULL)
+      if (!map)
          goto nomap;
 
       for (i = 0; i < box->depth; i++) {

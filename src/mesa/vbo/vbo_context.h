@@ -234,7 +234,7 @@ vbo_compute_max_verts(const struct vbo_exec_context *exec)
 {
    unsigned n = (VBO_VERT_BUFFER_SIZE - exec->vtx.buffer_used) /
       (exec->vtx.vertex_size * sizeof(GLfloat));
-   if (n == 0)
+   if (!n)
       return 0;
    /* Subtract one so we're always sure to have room for an extra
     * vertex for GL_LINE_LOOP -> GL_LINE_STRIP conversion.

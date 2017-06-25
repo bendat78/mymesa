@@ -65,7 +65,7 @@ main(int argc, char **argv)
 	_mesa_hash_table_remove(ht, entry);
 
 	entry = _mesa_hash_table_search(ht, str1);
-	assert(entry == NULL);
+	assert(!entry);
 
 	entry = _mesa_hash_table_search(ht, str2);
 	assert(strcmp(entry->key, str2) == 0);

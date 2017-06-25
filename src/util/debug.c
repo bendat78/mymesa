@@ -31,7 +31,7 @@ parse_debug_string(const char *debug,
 {
    uint64_t flag = 0;
 
-   if (debug != NULL) {
+   if (debug) {
       for (; control->string != NULL; control++) {
          if (!strcmp(debug, "all")) {
             flag |= control->flag;
@@ -61,7 +61,7 @@ bool
 env_var_as_boolean(const char *var_name, bool default_value)
 {
    const char *str = getenv(var_name);
-   if (str == NULL)
+   if (!str)
       return default_value;
 
    if (strcmp(str, "1") == 0 ||

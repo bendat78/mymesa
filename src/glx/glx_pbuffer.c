@@ -91,7 +91,7 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
    CARD8 opcode;
    int i;
 
-   if ((priv == NULL) || (dpy == NULL) || (drawable == 0)) {
+   if ((!priv) || (!dpy) || (!drawable)) {
       return;
    }
 
@@ -197,7 +197,7 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
    __GLXDRIdrawable *pdraw;
    struct glx_screen *psc;
 
-   if (priv == NULL) {
+   if (!priv) {
       fprintf(stderr, "failed to create drawable\n");
       return GL_FALSE;
    }
@@ -208,7 +208,7 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
 
    pdraw = psc->driScreen->createDrawable(psc, drawable,
 					  glxdrawable, config);
-   if (pdraw == NULL) {
+   if (!pdraw) {
       fprintf(stderr, "failed to create drawable\n");
       return GL_FALSE;
    }
@@ -289,7 +289,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    __GLXDRIdrawable *pdraw;
 #endif
 
-   if (dpy == NULL)
+   if (!dpy)
       return 0;
 
    /* Page 38 (page 52 of the PDF) of glxencode1.3.pdf says:
@@ -297,13 +297,13 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
     *     "If drawable is not a valid GLX drawable, a GLXBadDrawable error is
     *     generated."
     */
-   if (drawable == 0) {
+   if (!drawable) {
       __glXSendError(dpy, GLXBadDrawable, 0, X_GLXGetDrawableAttributes, false);
       return 0;
    }
 
    priv = __glXInitialize(dpy);
-   if (priv == NULL)
+   if (!priv)
       return 0;
 
    use_glx_1_3 = ((priv->majorVersion > 1) || (priv->minorVersion >= 3));
@@ -379,7 +379,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    if (length) {
       num_attributes = (use_glx_1_3) ? reply.numAttribs : length / 2;
       data = malloc(length * sizeof(CARD32));
-      if (data == NULL) {
+      if (!data) {
          /* Throw data on the floor */
          _XEatData(dpy, length);
       }
@@ -397,7 +397,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
          }
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-         if (pdraw != NULL) {
+         if (pdraw) {
             if (!pdraw->textureTarget)
                pdraw->textureTarget =
                   determineTextureTarget((const int *) data, num_attributes);
@@ -508,7 +508,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
 static void
 DestroyDrawable(Display * dpy, GLXDrawable drawable, CARD32 glxCode)
 {
-   if ((dpy == NULL) || (drawable == 0)) {
+   if ((!dpy) || (!drawable)) {
       return;
    }
 
@@ -544,7 +544,7 @@ CreatePbuffer(Display * dpy, struct glx_config *config,
    Pixmap pixmap;
    GLboolean glx_1_3 = GL_FALSE;
 
-   if (priv == NULL)
+   if (!priv)
       return None;
 
    i = 0;
@@ -636,7 +636,7 @@ DestroyPbuffer(Display * dpy, GLXDrawable drawable)
    struct glx_display *priv = __glXInitialize(dpy);
    CARD8 opcode;
 
-   if ((priv == NULL) || (dpy == NULL) || (drawable == 0)) {
+   if ((!priv) || (!dpy) || (!drawable)) {
       return;
    }
 

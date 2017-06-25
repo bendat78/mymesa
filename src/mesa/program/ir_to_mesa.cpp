@@ -375,7 +375,7 @@ ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op,
       emit(ir, OPCODE_ARL, address_reg, *dst.reladdr);
       num_reladdr--;
    }
-   assert(num_reladdr == 0);
+   assert(!num_reladdr);
 
    inst->op = op;
    inst->dst = dst;
@@ -615,7 +615,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
    if (ir->data.mode == ir_var_uniform && strncmp(ir->name, "gl_", 3) == 0) {
       unsigned int i;
       const ir_state_slot *const slots = ir->get_state_slots();
-      assert(slots != NULL);
+      assert(slots);
 
       /* Check if this statevar's setup in the STATE file exactly
        * matches how we'll want to reference it as a
@@ -833,7 +833,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
 
       assert(op->type->is_scalar());
 
-      while (op != NULL) {
+      while (op) {
 	 switch (op->ir_type) {
 	 case ir_type_constant: {
 
@@ -859,7 +859,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
 	    ir_dereference_variable *const deref =
 	       (ir_dereference_variable *) op;
 
-	    assert((var == NULL) || (deref->var == var));
+	    assert((!var) || (deref->var == var));
 	    components[i] = SWIZZLE_X;
 	    var = deref->var;
 	    op = NULL;
@@ -891,7 +891,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
       }
    }
 
-   assert(var != NULL);
+   assert(var);
 
    ir_dereference_variable *const deref =
       new(mem_ctx) ir_dereference_variable(var);
@@ -1736,7 +1736,7 @@ ir_to_mesa_visitor::process_move_condition(ir_rvalue *ir)
    bool switch_order = false;
 
    ir_expression *const expr = ir->as_expression();
-   if ((expr != NULL) && (expr->get_num_operands() == 2)) {
+   if ((expr) && (expr->get_num_operands() == 2)) {
       bool zero_on_left = false;
 
       if (expr->operands[0]->is_zero()) {
@@ -2488,7 +2488,7 @@ _mesa_generate_parameters_list_for_uniforms(struct gl_shader_program
    foreach_in_list(ir_instruction, node, sh->ir) {
       ir_variable *var = node->as_variable();
 
-      if ((var == NULL) || (var->data.mode != ir_var_uniform)
+      if ((!var) || (var->data.mode != ir_var_uniform)
 	  || var->is_in_buffer_block() || (strncmp(var->name, "gl_", 3) == 0))
 	 continue;
 

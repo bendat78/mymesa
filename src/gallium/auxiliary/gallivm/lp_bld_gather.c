@@ -58,7 +58,7 @@ lp_build_gather_elem_ptr(struct gallivm_state *gallivm,
    assert(LLVMTypeOf(base_ptr) == LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0));
 
    if (length == 1) {
-      assert(i == 0);
+      assert(!i);
       offset = offsets;
    } else {
       LLVMValueRef index = lp_build_const_int32(gallivm, i);
@@ -505,7 +505,7 @@ lp_build_gather(struct gallivm_state *gallivm,
           * (We're not trying that with other bit widths as that might not be
           * easier, in particular with 8 bit values at least with only sse2.)
           */
-         assert(vec_fetch == FALSE);
+         assert(!vec_fetch);
          gather_res_type.width /= 2;
          fetch_dst_type = fetch_type;
          src_type = lp_build_vec_type(gallivm, fetch_type);

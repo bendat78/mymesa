@@ -93,7 +93,7 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
       return FALSE;
 
    if (!draw_elts) {
-      if (min_index == 0) {
+      if (!min_index) {
          for (i = 0; i < icount; i++) {
             ELT_TYPE idx = DRAW_GET_IDX(ib, i + start);
 
@@ -145,7 +145,7 @@ CONCAT(vsplit_segment_cache_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    vsplit_clear_cache(vsplit);
 
    spoken = !!spoken;
-   if (ibias == 0) {
+   if (!ibias) {
       if (spoken)
          ADD_CACHE(vsplit, ib, 0, ispoken, 0);
 

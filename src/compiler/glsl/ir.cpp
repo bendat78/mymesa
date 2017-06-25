@@ -73,10 +73,10 @@ ir_assignment::set_lhs(ir_rvalue *lhs)
    void *mem_ctx = this;
    bool swizzled = false;
 
-   while (lhs != NULL) {
+   while (lhs) {
       ir_swizzle *swiz = lhs->as_swizzle();
 
-      if (swiz == NULL)
+      if (!swiz)
 	 break;
 
       unsigned write_mask = 0;
@@ -119,7 +119,7 @@ ir_assignment::set_lhs(ir_rvalue *lhs)
       this->rhs = new(mem_ctx) ir_swizzle(this->rhs, rhs_swiz);
    }
 
-   assert((lhs == NULL) || lhs->as_dereference());
+   assert((!lhs) || lhs->as_dereference());
 
    this->lhs = (ir_dereference *) lhs;
 }
@@ -129,7 +129,7 @@ ir_assignment::whole_variable_written()
 {
    ir_variable *v = this->lhs->whole_variable_referenced();
 
-   if (v == NULL)
+   if (!v)
       return NULL;
 
    if (v->type->is_scalar())
@@ -1378,7 +1378,7 @@ ir_loop::ir_loop()
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
    : ir_dereference(ir_type_dereference_variable)
 {
-   assert(var != NULL);
+   assert(var);
 
    this->var = var;
    this->type = var->type;
@@ -1408,7 +1408,7 @@ ir_dereference_array::ir_dereference_array(ir_variable *var,
 void
 ir_dereference_array::set_array(ir_rvalue *value)
 {
-   assert(value != NULL);
+   assert(value);
 
    this->array = value;
 
@@ -1428,7 +1428,7 @@ ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 					     const char *field)
    : ir_dereference(ir_type_dereference_record)
 {
-   assert(value != NULL);
+   assert(value);
 
    this->record = value;
    this->field = ralloc_strdup(this, field);
@@ -1454,7 +1454,7 @@ ir_dereference::is_lvalue(const struct _mesa_glsl_parse_state *state) const
 
    /* Every l-value derference chain eventually ends in a variable.
     */
-   if ((var == NULL) || var->data.read_only)
+   if ((!var) || var->data.read_only)
       return false;
 
    /* From section 4.1.7 of the ARB_bindless_texture spec:
@@ -1507,8 +1507,8 @@ ir_texture::get_opcode(const char *str)
 void
 ir_texture::set_sampler(ir_dereference *sampler, const glsl_type *type)
 {
-   assert(sampler != NULL);
-   assert(type != NULL);
+   assert(sampler);
+   assert(type);
    this->sampler = sampler;
    this->type = type;
 
@@ -1756,7 +1756,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.bindless = false;
    this->data.bound = false;
 
-   if (type != NULL) {
+   if (type) {
       if (type->is_interface())
          this->init_interface_type(type);
       else if (type->without_array()->is_interface())
@@ -1832,10 +1832,10 @@ ir_function_signature::is_builtin_available(const _mesa_glsl_parse_state *state)
     * imported built-in prototypes to their definitions, which will always
     * be an exact match.  So we can skip the filtering.
     */
-   if (state == NULL)
+   if (!state)
       return true;
 
-   assert(builtin_avail != NULL);
+   assert(builtin_avail);
    return builtin_avail(state);
 }
 
@@ -1950,7 +1950,7 @@ steal_memory(ir_instruction *ir, void *new_ctx)
    /* The components of aggregate constants are not visited by the normal
     * visitor, so steal their values by hand.
     */
-   if (constant != NULL) {
+   if (constant) {
       if (constant->type->is_record()) {
 	 foreach_in_list(ir_constant, field, &constant->components) {
 	    steal_memory(field, ir);

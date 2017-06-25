@@ -70,7 +70,7 @@ static inline void
 etna_set_state_multi(struct etna_cmd_stream *stream, uint32_t base,
                      uint32_t num, const uint32_t *values)
 {
-   if (num == 0)
+   if (!num)
       return;
 
    etna_cmd_stream_reserve(stream, 1 + num + 1); /* 1 extra for potential alignment */

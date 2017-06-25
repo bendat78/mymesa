@@ -117,7 +117,7 @@ void si_context_gfx_flush(void *context, unsigned flags,
 	 * internally, and it never asks for a fence handle.
 	 */
 	if (radeon_emitted(ctx->b.dma.cs, 0)) {
-		assert(fence == NULL); /* internal flushes only */
+		assert(!fence); /* internal flushes only */
 		ctx->b.dma.flush(ctx, flags, NULL);
 	}
 

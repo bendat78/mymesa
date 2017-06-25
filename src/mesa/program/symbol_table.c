@@ -92,7 +92,7 @@ _mesa_symbol_table_pop_scope(struct _mesa_symbol_table *table)
 
     free(scope);
 
-    while (sym != NULL) {
+    while (sym) {
         struct symbol *const next = sym->next_with_same_scope;
         struct hash_entry *hte = _mesa_hash_table_search(table->ht,
                                                          sym->name);
@@ -117,7 +117,7 @@ void
 _mesa_symbol_table_push_scope(struct _mesa_symbol_table *table)
 {
     struct scope_level *const scope = calloc(1, sizeof(*scope));
-    if (scope == NULL) {
+    if (!scope) {
        _mesa_error_no_memory(__func__);
        return;
     }
@@ -182,7 +182,7 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
       return -1;
 
    new_sym = calloc(1, sizeof(*sym));
-   if (new_sym == NULL) {
+   if (!new_sym) {
       _mesa_error_no_memory(__func__);
       return -1;
    }
@@ -219,7 +219,7 @@ _mesa_symbol_table_replace_symbol(struct _mesa_symbol_table *table,
     struct symbol *sym = find_symbol(table, name);
 
     /* If the symbol doesn't exist, it cannot be replaced. */
-    if (sym == NULL)
+    if (!sym)
        return -1;
 
     sym->data = declaration;
@@ -251,7 +251,7 @@ _mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
    }
 
    sym = calloc(1, sizeof(*sym));
-   if (sym == NULL) {
+   if (!sym) {
       _mesa_error_no_memory(__func__);
       return -1;
    }
@@ -289,7 +289,7 @@ _mesa_symbol_table_ctor(void)
 {
     struct _mesa_symbol_table *table = calloc(1, sizeof(*table));
 
-    if (table != NULL) {
+    if (table) {
        table->ht = _mesa_hash_table_create(NULL, _mesa_key_hash_string,
                                            _mesa_key_string_equal);
 

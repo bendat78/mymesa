@@ -278,7 +278,7 @@ ir_function::clone(void *mem_ctx, struct hash_table *ht) const
       ir_function_signature *sig_copy = sig->clone(mem_ctx, ht);
       copy->add_signature(sig_copy);
 
-      if (ht != NULL) {
+      if (ht) {
          _mesa_hash_table_insert(ht,
                (void *)const_cast<ir_function_signature *>(sig), sig_copy);
       }
@@ -398,7 +398,7 @@ public:
       ir_function_signature *sig;
       hash_entry *entry = _mesa_hash_table_search(this->ht, ir->callee);
 
-      if (entry != NULL) {
+      if (entry) {
          sig = (ir_function_signature *) entry->data;
          ir->callee = sig;
       }

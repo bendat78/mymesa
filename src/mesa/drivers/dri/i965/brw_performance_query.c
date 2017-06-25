@@ -1098,7 +1098,7 @@ brw_wait_perf_query(struct gl_context *ctx, struct gl_perf_query_object *o)
       break;
    }
 
-   if (bo == NULL)
+   if (!bo)
       return;
 
    /* If the current batch references our results bo then we need to

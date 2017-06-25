@@ -246,7 +246,7 @@ print_alu_instr(nir_alu_instr *instr, print_state *state)
    fprintf(fp, " ");
 
    for (unsigned i = 0; i < nir_op_infos[instr->op].num_inputs; i++) {
-      if (i != 0)
+      if (i)
          fprintf(fp, ", ");
 
       print_alu_src(instr, i, state);
@@ -270,7 +270,7 @@ get_var_name(nir_variable *var, print_state *state)
       name = ralloc_asprintf(state->syms, "@%u", state->index++);
    } else {
       struct set_entry *set_entry = _mesa_set_search(state->syms, var->name);
-      if (set_entry != NULL) {
+      if (set_entry) {
          /* we have a collision with another name, append an @ + a unique
           * index */
          name = ralloc_asprintf(state->syms, "%s@%u", var->name,
@@ -516,21 +516,21 @@ print_deref(nir_deref_var *deref, print_state *state)
 {
    nir_deref *tail = &deref->deref;
    nir_deref *pretail = NULL;
-   while (tail != NULL) {
+   while (tail) {
       switch (tail->deref_type) {
       case nir_deref_type_var:
-         assert(pretail == NULL);
+         assert(!pretail);
          assert(tail == &deref->deref);
          print_deref_var(deref, state);
          break;
 
       case nir_deref_type_array:
-         assert(pretail != NULL);
+         assert(pretail);
          print_deref_array(nir_deref_as_array(tail), state);
          break;
 
       case nir_deref_type_struct:
-         assert(pretail != NULL);
+         assert(pretail);
          print_deref_struct(nir_deref_as_struct(tail),
                             pretail->type, state);
          break;
@@ -559,7 +559,7 @@ print_intrinsic_instr(nir_intrinsic_instr *instr, print_state *state)
    fprintf(fp, "intrinsic %s (", info->name);
 
    for (unsigned i = 0; i < num_srcs; i++) {
-      if (i != 0)
+      if (i)
          fprintf(fp, ", ");
 
       print_src(&instr->src[i], state);
@@ -568,7 +568,7 @@ print_intrinsic_instr(nir_intrinsic_instr *instr, print_state *state)
    fprintf(fp, ") (");
 
    for (unsigned i = 0; i < info->num_variables; i++) {
-      if (i != 0)
+      if (i)
          fprintf(fp, ", ");
 
       print_deref(instr->variables[i], state);
@@ -577,7 +577,7 @@ print_intrinsic_instr(nir_intrinsic_instr *instr, print_state *state)
    fprintf(fp, ") (");
 
    for (unsigned i = 0; i < info->num_indices; i++) {
-      if (i != 0)
+      if (i)
          fprintf(fp, ", ");
 
       fprintf(fp, "%d", instr->const_index[i]);
@@ -782,7 +782,7 @@ print_call_instr(nir_call_instr *instr, print_state *state)
    fprintf(fp, "call %s ", instr->callee->name);
 
    for (unsigned i = 0; i < instr->num_params; i++) {
-      if (i != 0)
+      if (i)
          fprintf(fp, ", ");
 
       print_deref(instr->params[i], state);
@@ -806,7 +806,7 @@ print_load_const_instr(nir_load_const_instr *instr, print_state *state)
    fprintf(fp, " = load_const (");
 
    for (unsigned i = 0; i < instr->def.num_components; i++) {
-      if (i != 0)
+      if (i)
          fprintf(fp, ", ");
 
       /*
@@ -1053,7 +1053,7 @@ print_function_impl(nir_function_impl *impl, print_state *state)
    fprintf(fp, "\nimpl %s ", impl->function->name);
 
    for (unsigned i = 0; i < impl->num_params; i++) {
-      if (i != 0)
+      if (i)
          fprintf(fp, ", ");
 
       print_arg(impl->params[i], state);
@@ -1095,7 +1095,7 @@ print_function(nir_function *function, print_state *state)
    fprintf(fp, "decl_function %s ", function->name);
 
    for (unsigned i = 0; i < function->num_params; i++) {
-      if (i != 0)
+      if (i)
          fprintf(fp, ", ");
 
       switch (function->params[i].param_type) {

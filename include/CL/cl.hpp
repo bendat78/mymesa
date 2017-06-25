@@ -227,7 +227,7 @@ public:
      */
     virtual const char * what() const throw ()
     {
-        if (errStr_ == NULL) {
+        if (!errStr_) {
             return "empty";
         }
         else {
@@ -343,7 +343,7 @@ public:
         str_(NULL)
     {
         str_ = new char[size_+1];
-        if (str_ != NULL) {
+        if (str_) {
             memcpy(str_, str, size_  * sizeof(char));
             str_[size_] = '\0';
         }
@@ -357,7 +357,7 @@ public:
     {
         size_= ::strlen(str);
         str_ = new char[size_ + 1];
-        if (str_ != NULL) {
+        if (str_) {
             memcpy(str_, str, (size_ + 1) * sizeof(char));
         }
         else {
@@ -378,7 +378,7 @@ public:
         else {
             size_ = rhs.size_;
             str_ = new char[size_ + 1];
-            if (str_ != NULL) {
+            if (str_) {
                 memcpy(str_, rhs.str_, (size_ + 1) * sizeof(char));
             }
             else {
@@ -396,7 +396,7 @@ public:
 
     ~string()
     {
-        if (str_ != NULL) {
+        if (str_) {
             delete[] str_;
         }
     }
@@ -1100,20 +1100,20 @@ public:
 
     ~Wrapper()
     {
-        if (object_ != NULL) { release(); }
+        if (object_) { release(); }
     }
 
     Wrapper(const Wrapper<cl_type>& rhs)
     {
         object_ = rhs.object_;
-        if (object_ != NULL) { retain(); }
+        if (object_) { retain(); }
     }
 
     Wrapper<cl_type>& operator = (const Wrapper<cl_type>& rhs)
     {
-        if (object_ != NULL) { release(); }
+        if (object_) { release(); }
         object_ = rhs.object_;
-        if (object_ != NULL) { retain(); }
+        if (object_) { retain(); }
         return *this;
     }
 
@@ -1212,7 +1212,7 @@ public:
         typename detail::param_traits<
             detail::cl_device_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -1288,7 +1288,7 @@ public:
         typename detail::param_traits<
             detail::cl_platform_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -1435,7 +1435,7 @@ public:
             notifyFptr, data, &error);
 
         detail::errHandler(error, __CREATE_CONTEXT_FROM_TYPE_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -1456,7 +1456,7 @@ public:
             properties, type, notifyFptr, data, &error);
 
         detail::errHandler(error, __CREATE_CONTEXT_FROM_TYPE_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -1488,7 +1488,7 @@ public:
         typename detail::param_traits<
             detail::cl_context_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -1564,7 +1564,7 @@ public:
         typename detail::param_traits<
             detail::cl_event_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -1585,7 +1585,7 @@ public:
         typename detail::param_traits<
             detail::cl_profiling_info, name>::param_type param;
         cl_int result = getProfilingInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -1643,7 +1643,7 @@ public:
             &error);
 
         detail::errHandler(error, __CREATE_USER_EVENT_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -1711,7 +1711,7 @@ public:
         typename detail::param_traits<
             detail::cl_mem_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -1752,7 +1752,7 @@ public:
         object_ = ::clCreateBuffer(context(), flags, size, host_ptr, &error);
 
         detail::errHandler(error, __CREATE_BUFFER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -1786,7 +1786,7 @@ public:
             &error);
 
         detail::errHandler(error, __CREATE_SUBBUFFER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
 
@@ -1820,7 +1820,7 @@ public:
             &error);
 
         detail::errHandler(error, __CREATE_GL_BUFFER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -1859,7 +1859,7 @@ public:
             &error);
 
         detail::errHandler(error, __CREATE_GL_BUFFER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -1906,7 +1906,7 @@ public:
             &error);
 
         detail::errHandler(error, __CREATE_GL_BUFFER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -1966,7 +1966,7 @@ public:
         typename detail::param_traits<
             detail::cl_image_info, name>::param_type param;
         cl_int result = getImageInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -1994,7 +1994,7 @@ public:
             context(), flags,&format, width, height, row_pitch, host_ptr, &error);
 
         detail::errHandler(error, __CREATE_IMAGE2D_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -2036,7 +2036,7 @@ public:
             &error);
 
         detail::errHandler(error, __CREATE_GL_BUFFER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -2078,7 +2078,7 @@ public:
             slice_pitch, host_ptr, &error);
 
         detail::errHandler(error, __CREATE_IMAGE3D_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -2120,7 +2120,7 @@ public:
             &error);
 
         detail::errHandler(error, __CREATE_GL_BUFFER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -2162,7 +2162,7 @@ public:
             &error);
 
         detail::errHandler(error, __CREATE_SAMPLER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -2192,7 +2192,7 @@ public:
         typename detail::param_traits<
             detail::cl_sampler_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -2318,7 +2318,7 @@ public:
         typename detail::param_traits<
             detail::cl_kernel_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -2341,7 +2341,7 @@ public:
         typename detail::param_traits<
         detail::cl_kernel_work_group_info, name>::param_type param;
         cl_int result = getWorkGroupInfo(device, name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -2409,7 +2409,7 @@ public:
             context(), (cl_uint)n, strings, lengths, &error);
 
         detail::errHandler(error, __CREATE_PROGRAM_WITH_SOURCE_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -2439,7 +2439,7 @@ public:
                : NULL, &error);
 
         detail::errHandler(error, __CREATE_PROGRAM_WITH_BINARY_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -2489,7 +2489,7 @@ public:
         typename detail::param_traits<
             detail::cl_program_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -2512,7 +2512,7 @@ public:
         typename detail::param_traits<
             detail::cl_program_build_info, name>::param_type param;
         cl_int result = getBuildInfo(device, name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -2547,7 +2547,7 @@ inline Kernel::Kernel(const Program& program, const char* name, cl_int* err)
     object_ = ::clCreateKernel(program(), name, &error);
     detail::errHandler(error, __CREATE_KERNEL_ERR);
 
-    if (err != NULL) {
+    if (err) {
         *err = error;
     }
 
@@ -2570,7 +2570,7 @@ public:
             context(), device(), properties, &error);
 
         detail::errHandler(error, __CREATE_COMMAND_QUEUE_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
     }
@@ -2603,7 +2603,7 @@ public:
         typename detail::param_traits<
             detail::cl_command_queue_info, name>::param_type param;
         cl_int result = getInfo(name, &param);
-        if (err != NULL) {
+        if (err) {
             *err = result;
         }
         return param;
@@ -2622,7 +2622,7 @@ public:
             ::clEnqueueReadBuffer(
                 object_, buffer(), blocking, offset, size,
                 ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_READ_BUFFER_ERR);
@@ -2641,7 +2641,7 @@ public:
             ::clEnqueueWriteBuffer(
                 object_, buffer(), blocking, offset, size,
                 ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
                 __ENQUEUE_WRITE_BUFFER_ERR);
@@ -2659,7 +2659,7 @@ public:
         return detail::errHandler(
             ::clEnqueueCopyBuffer(
                 object_, src(), dst(), src_offset, dst_offset, size,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQEUE_COPY_BUFFER_ERR);
@@ -2693,7 +2693,7 @@ public:
                 host_row_pitch,
                 host_slice_pitch,
                 ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
                 __ENQUEUE_READ_BUFFER_RECT_ERR);
@@ -2727,7 +2727,7 @@ public:
                 host_row_pitch,
                 host_slice_pitch,
                 ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
                 __ENQUEUE_WRITE_BUFFER_RECT_ERR);
@@ -2758,7 +2758,7 @@ public:
                 src_slice_pitch,
                 dst_row_pitch,
                 dst_slice_pitch,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQEUE_COPY_BUFFER_RECT_ERR);
@@ -2780,7 +2780,7 @@ public:
             ::clEnqueueReadImage(
                 object_, image(), blocking, (const ::size_t *) origin,
                 (const ::size_t *) region, row_pitch, slice_pitch, ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_READ_IMAGE_ERR);
@@ -2801,7 +2801,7 @@ public:
             ::clEnqueueWriteImage(
                 object_, image(), blocking, (const ::size_t *) origin,
                 (const ::size_t *) region, row_pitch, slice_pitch, ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_WRITE_IMAGE_ERR);
@@ -2820,7 +2820,7 @@ public:
             ::clEnqueueCopyImage(
                 object_, src(), dst(), (const ::size_t *) src_origin,
                 (const ::size_t *)dst_origin, (const ::size_t *) region,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_COPY_IMAGE_ERR);
@@ -2839,7 +2839,7 @@ public:
             ::clEnqueueCopyImageToBuffer(
                 object_, src(), dst(), (const ::size_t *) src_origin,
                 (const ::size_t *) region, dst_offset,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_COPY_IMAGE_TO_BUFFER_ERR);
@@ -2858,7 +2858,7 @@ public:
             ::clEnqueueCopyBufferToImage(
                 object_, src(), dst(), src_offset,
                 (const ::size_t *) dst_origin, (const ::size_t *) region,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_COPY_BUFFER_TO_IMAGE_ERR);
@@ -2877,13 +2877,13 @@ public:
         cl_int error;
         void * result = ::clEnqueueMapBuffer(
             object_, buffer(), blocking, flags, offset, size,
-            (events != NULL) ? (cl_uint) events->size() : 0,
+            (events) ? (cl_uint) events->size() : 0,
             (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
             (cl_event*) event,
             &error);
 
         detail::errHandler(error, __ENQUEUE_MAP_BUFFER_ERR);
-        if (err != NULL) {
+        if (err) {
             *err = error;
         }
         return result;
@@ -2906,13 +2906,13 @@ public:
             object_, buffer(), blocking, flags,
             (const ::size_t *) origin, (const ::size_t *) region,
             row_pitch, slice_pitch,
-            (events != NULL) ? (cl_uint) events->size() : 0,
+            (events) ? (cl_uint) events->size() : 0,
             (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
             (cl_event*) event,
             &error);
 
         detail::errHandler(error, __ENQUEUE_MAP_IMAGE_ERR);
-        if (err != NULL) {
+        if (err) {
               *err = error;
         }
         return result;
@@ -2927,7 +2927,7 @@ public:
         return detail::errHandler(
             ::clEnqueueUnmapMemObject(
                 object_, memory(), mapped_ptr,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_UNMAP_MEM_OBJECT_ERR);
@@ -2947,7 +2947,7 @@ public:
                 offset.dimensions() != 0 ? (const ::size_t*) offset : NULL,
                 (const ::size_t*) global,
                 local.dimensions() != 0 ? (const ::size_t*) local : NULL,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_NDRANGE_KERNEL_ERR);
@@ -2961,7 +2961,7 @@ public:
         return detail::errHandler(
             ::clEnqueueTask(
                 object_, kernel(),
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_TASK_ERR);
@@ -2979,7 +2979,7 @@ public:
             ? (cl_mem*) alloca(mem_objects->size() * sizeof(cl_mem))
             : NULL;
 
-        if (mems != NULL) {
+        if (mems) {
             for (unsigned int i = 0; i < mem_objects->size(); i++) {
                 mems[i] = ((*mem_objects)[i])();
             }
@@ -2988,10 +2988,10 @@ public:
         return detail::errHandler(
             ::clEnqueueNativeKernel(
                 object_, userFptr, args.first, args.second,
-                (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
+                (mem_objects) ? (cl_uint) mem_objects->size() : 0,
                 mems,
-                (mem_locs != NULL) ? (const void **) &mem_locs->front() : NULL,
-                (events != NULL) ? (cl_uint) events->size() : 0,
+                (mem_locs) ? (const void **) &mem_locs->front() : NULL,
+                (events) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_NATIVE_KERNEL);
@@ -3022,9 +3022,9 @@ public:
          return detail::errHandler(
              ::clEnqueueAcquireGLObjects(
                  object_,
-                 (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
-                 (mem_objects != NULL) ? (const cl_mem *) &mem_objects->front(): NULL,
-                 (events != NULL) ? (cl_uint) events->size() : 0,
+                 (mem_objects) ? (cl_uint) mem_objects->size() : 0,
+                 (mem_objects) ? (const cl_mem *) &mem_objects->front(): NULL,
+                 (events) ? (cl_uint) events->size() : 0,
                  (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                  (cl_event*) event),
              __ENQUEUE_ACQUIRE_GL_ERR);
@@ -3038,9 +3038,9 @@ public:
          return detail::errHandler(
              ::clEnqueueReleaseGLObjects(
                  object_,
-                 (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
-                 (mem_objects != NULL) ? (const cl_mem *) &mem_objects->front(): NULL,
-                 (events != NULL) ? (cl_uint) events->size() : 0,
+                 (mem_objects) ? (cl_uint) mem_objects->size() : 0,
+                 (mem_objects) ? (const cl_mem *) &mem_objects->front(): NULL,
+                 (events) ? (cl_uint) events->size() : 0,
                  (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                  (cl_event*) event),
              __ENQUEUE_RELEASE_GL_ERR);
@@ -3067,10 +3067,10 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *PFN_clEnqueueReleaseD3D10ObjectsKHR)(
          return detail::errHandler(
              pfn_clEnqueueAcquireD3D10ObjectsKHR(
                  object_,
-                 (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
-                 (mem_objects != NULL) ? (const cl_mem *) &mem_objects->front(): NULL,
-                 (events != NULL) ? (cl_uint) events->size() : 0,
-                 (events != NULL) ? (cl_event*) &events->front() : NULL,
+                 (mem_objects) ? (cl_uint) mem_objects->size() : 0,
+                 (mem_objects) ? (const cl_mem *) &mem_objects->front(): NULL,
+                 (events) ? (cl_uint) events->size() : 0,
+                 (events) ? (cl_event*) &events->front() : NULL,
                  (cl_event*) event),
              __ENQUEUE_ACQUIRE_GL_ERR);
      }
@@ -3086,10 +3086,10 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *PFN_clEnqueueReleaseD3D10ObjectsKHR)(
         return detail::errHandler(
             pfn_clEnqueueReleaseD3D10ObjectsKHR(
                 object_,
-                (mem_objects != NULL) ? (cl_uint) mem_objects->size() : 0,
-                (mem_objects != NULL) ? (const cl_mem *) &mem_objects->front(): NULL,
-                (events != NULL) ? (cl_uint) events->size() : 0,
-                (events != NULL) ? (cl_event*) &events->front() : NULL,
+                (mem_objects) ? (cl_uint) mem_objects->size() : 0,
+                (mem_objects) ? (const cl_mem *) &mem_objects->front(): NULL,
+                (events) ? (cl_uint) events->size() : 0,
+                (events) ? (cl_event*) &events->front() : NULL,
                 (cl_event*) event),
             __ENQUEUE_RELEASE_GL_ERR);
     }

@@ -92,8 +92,8 @@ public:
 static enum compare_components_result
 compare_components(ir_constant *a, ir_constant *b)
 {
-   assert(a != NULL);
-   assert(b != NULL);
+   assert(a);
+   assert(b);
 
    assert(a->type->base_type == b->type->base_type);
 
@@ -201,8 +201,8 @@ combine_constant(bool ismin, ir_constant *a, ir_constant *b)
 static ir_constant *
 smaller_constant(ir_constant *a, ir_constant *b)
 {
-   assert(a != NULL);
-   assert(b != NULL);
+   assert(a);
+   assert(b);
 
    enum compare_components_result ret = compare_components(a, b);
    if (ret == MIXED)
@@ -216,8 +216,8 @@ smaller_constant(ir_constant *a, ir_constant *b)
 static ir_constant *
 larger_constant(ir_constant *a, ir_constant *b)
 {
-   assert(a != NULL);
-   assert(b != NULL);
+   assert(a);
+   assert(b);
 
    enum compare_components_result ret = compare_components(a, b);
    if (ret == MIXED)

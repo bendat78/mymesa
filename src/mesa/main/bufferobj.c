@@ -242,7 +242,7 @@ simplified_access_mode(struct gl_context *ctx, GLbitfield access)
     * The difference is because GL_OES_mapbuffer only supports mapping buffers
     * write-only.
     */
-   assert(access == 0);
+   assert(!access);
 
    return _mesa_is_gles(ctx) ? GL_WRITE_ONLY : GL_READ_WRITE;
 }
@@ -737,7 +737,7 @@ _mesa_ClearBufferSubData_sw(struct gl_context *ctx,
       return;
    }
 
-   if (clearValue == NULL) {
+   if (!clearValue) {
       /* Clear with zeros, per the spec */
       memset(dest, 0, size);
       ctx->Driver.UnmapBuffer(ctx, bufObj, MAP_INTERNAL);
@@ -1023,7 +1023,7 @@ bind_buffer_object(struct gl_context *ctx,
    /*
     * Get pointer to new buffer object (newBufObj)
     */
-   if (buffer == 0) {
+   if (!buffer) {
       /* The spec says there's not a buffer object named 0, but we use
        * one internally because it simplifies things.
        */
@@ -1073,7 +1073,7 @@ _mesa_update_default_objects_buffer_objects(struct gl_context *ctx)
 struct gl_buffer_object *
 _mesa_lookup_bufferobj(struct gl_context *ctx, GLuint buffer)
 {
-   if (buffer == 0)
+   if (!buffer)
       return NULL;
    else
       return (struct gl_buffer_object *)
@@ -1084,7 +1084,7 @@ _mesa_lookup_bufferobj(struct gl_context *ctx, GLuint buffer)
 struct gl_buffer_object *
 _mesa_lookup_bufferobj_locked(struct gl_context *ctx, GLuint buffer)
 {
-   if (buffer == 0)
+   if (!buffer)
       return NULL;
    else
       return (struct gl_buffer_object *)
@@ -1853,7 +1853,7 @@ void
 _mesa_buffer_sub_data(struct gl_context *ctx, struct gl_buffer_object *bufObj,
                       GLintptr offset, GLsizeiptr size, const GLvoid *data)
 {
-   if (size == 0)
+   if (!size)
       return;
 
    bufObj->NumSubDataCalls++;
@@ -2009,12 +2009,12 @@ clear_buffer_sub_data(struct gl_context *ctx, struct gl_buffer_object *bufObj,
    }
 
    /* Bail early. Negative size has already been checked. */
-   if (size == 0)
+   if (!size)
       return;
 
    bufObj->MinMaxCacheDirty = true;
 
-   if (data == NULL) {
+   if (!data) {
       /* clear to zeros, per the spec */
       ctx->Driver.ClearBufferSubData(ctx, offset, size,
                                      NULL, clearValueSize, bufObj);
@@ -2560,7 +2560,7 @@ validate_map_buffer_range(struct gl_context *ctx,
     * (30.10.2014) also says this, so it's no longer allowed for desktop GL,
     * either.
     */
-   if (length == 0) {
+   if (!length) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(length = 0)", func);
       return false;
    }
@@ -4014,7 +4014,7 @@ bind_buffer_range(GLenum target, GLuint index, GLuint buffer, GLintptr offset,
                   (unsigned long) offset, (unsigned long) size);
    }
 
-   if (buffer == 0) {
+   if (!buffer) {
       bufObj = ctx->Shared->NullBufferObj;
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
@@ -4049,7 +4049,7 @@ bind_buffer_range(GLenum target, GLuint index, GLuint buffer, GLintptr offset,
          return;
       }
 
-      if (buffer != 0) {
+      if (buffer) {
          if (size <= 0) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(size=%d)",
                         (int) size);
@@ -4112,7 +4112,7 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
                   _mesa_enum_to_string(target), index, buffer);
    }
 
-   if (buffer == 0) {
+   if (!buffer) {
       bufObj = ctx->Shared->NullBufferObj;
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);

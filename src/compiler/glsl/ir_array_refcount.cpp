@@ -146,7 +146,7 @@ ir_array_refcount_visitor::get_array_deref()
    if ((num_derefs + 1) * sizeof(array_deref_range) > derefs_size) {
       void *ptr = reralloc_size(mem_ctx, derefs, derefs_size + 4096);
 
-      if (ptr == NULL)
+      if (!ptr)
          return NULL;
 
       derefs_size += 4096;
@@ -187,7 +187,7 @@ ir_array_refcount_visitor::visit_enter(ir_dereference_array *ir)
    while (rv->ir_type == ir_type_dereference_array) {
       ir_dereference_array *const deref = rv->as_dereference_array();
 
-      assert(deref != NULL);
+      assert(deref);
       assert(deref->array->type->is_array());
 
       ir_rvalue *const array = deref->array;
@@ -196,7 +196,7 @@ ir_array_refcount_visitor::visit_enter(ir_dereference_array *ir)
 
       dr->size = array->type->array_size();
 
-      if (idx != NULL) {
+      if (idx) {
          dr->index = idx->get_int_component(0);
       } else {
          /* An unsized array can occur at the end of an SSBO.  We can't track
@@ -216,13 +216,13 @@ ir_array_refcount_visitor::visit_enter(ir_dereference_array *ir)
    /* If the array being dereferenced is not a variable, bail.  At the very
     * least, ir_constant and ir_dereference_record are possible.
     */
-   if (var_deref == NULL)
+   if (!var_deref)
       return visit_continue;
 
    ir_array_refcount_entry *const entry =
       this->get_variable_entry(var_deref->var);
 
-   if (entry == NULL)
+   if (!entry)
       return visit_stop;
 
    entry->mark_array_elements_referenced(derefs, num_derefs);

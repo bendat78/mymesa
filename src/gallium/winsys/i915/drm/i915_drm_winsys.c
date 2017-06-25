@@ -25,7 +25,7 @@ i915_drm_get_device_id(int fd, unsigned int *device_id)
    gp.value = (int *)device_id;
 
    ret = ioctl(fd, DRM_IOCTL_I915_GETPARAM, &gp, sizeof(gp));
-   assert(ret == 0);
+   assert(!ret);
 }
 
 static int

@@ -747,7 +747,7 @@ _swrast_clear_depth_stencil_buffer(struct gl_context *ctx)
             for (j = 0; j < width; j++) {
                zRow[j * 2 + 0] = zClear;
             }
-            if (sMask != 0) {
+            if (sMask) {
                for (j = 0; j < width; j++) {
                   sRow[j * 2 + 1] = (sRow[j * 2 + 1] & sMask) | sClear;
                }

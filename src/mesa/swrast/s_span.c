@@ -684,7 +684,7 @@ stipple_polygon_span(struct gl_context *ctx, SWspan *span)
             mask[i] = 0;
          }
          m = m >> 1;
-         if (m == 0) {
+         if (!m) {
             m = highBit;
          }
       }
@@ -1094,7 +1094,7 @@ _swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
       runLen = runStart = 0;
       for (i = 0; i < count; i++) {
          if (mask[i]) {
-            if (runLen == 0)
+            if (!runLen)
                runStart = i;
             runLen++;
          }

@@ -168,7 +168,7 @@ lower_returns_in_block(nir_block *block, struct lower_returns_state *state)
    }
 
    nir_instr *last_instr = nir_block_last_instr(block);
-   if (last_instr == NULL)
+   if (!last_instr)
       return false;
 
    if (last_instr->type != nir_instr_type_jump)

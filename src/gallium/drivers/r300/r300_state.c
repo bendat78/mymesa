@@ -1478,7 +1478,7 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
         (struct r300_textures_state*)r300->textures_state.state;
     unsigned tex_units = r300->screen->caps.num_tex_units;
 
-    assert(start == 0);
+    assert(!start);
 
     if (shader != PIPE_SHADER_FRAGMENT)
        return;
@@ -1538,7 +1538,7 @@ static void r300_set_sampler_views(struct pipe_context* pipe,
     if (shader != PIPE_SHADER_FRAGMENT)
        return;
 
-    assert(start == 0);  /* non-zero not handled yet */
+    assert(!start);  /* non-zero not handled yet */
 
     if (count > tex_units) {
         return;

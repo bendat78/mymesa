@@ -200,7 +200,7 @@ nvc0_compute_validate_constbufs(struct nvc0_context *nvc0)
          struct nouveau_bo *bo = nvc0->screen->uniform_bo;
          const unsigned base = NVC0_CB_USR_INFO(s);
          const unsigned size = nvc0->constbuf[s][0].size;
-         assert(i == 0); /* we really only want OpenGL uniforms here */
+         assert(!i); /* we really only want OpenGL uniforms here */
          assert(nvc0->constbuf[s][0].u.data);
 
          if (nvc0->state.uniform_buffer_bound[s] < size) {
@@ -235,7 +235,7 @@ nvc0_compute_validate_constbufs(struct nvc0_context *nvc0)
             BEGIN_NVC0(push, NVC0_CP(CB_BIND), 1);
             PUSH_DATA (push, (i << 8) | 0);
          }
-         if (i == 0)
+         if (!i)
             nvc0->state.uniform_buffer_bound[s] = 0;
       }
    }

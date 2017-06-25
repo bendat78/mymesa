@@ -144,7 +144,7 @@ remove_dead_vars(struct exec_list *var_list, struct set *live)
 
    foreach_list_typed_safe(nir_variable, var, node, var_list) {
       struct set_entry *entry = _mesa_set_search(live, var);
-      if (entry == NULL) {
+      if (!entry) {
          /* Mark this variable as used by setting the mode to 0 */
          var->data.mode = 0;
          exec_node_remove(&var->node);

@@ -306,7 +306,7 @@ etna_set_sampler_views(struct pipe_context *pctx, enum pipe_shader_type shader,
                        struct pipe_sampler_view **views)
 {
    struct etna_context *ctx = etna_context(pctx);
-   assert(start_slot == 0);
+   assert(!start_slot);
 
    ctx->dirty |= ETNA_DIRTY_SAMPLER_VIEWS | ETNA_DIRTY_TEXTURE_CACHES;
 

@@ -168,7 +168,7 @@ vtn_access_chain_to_deref(struct vtn_builder *b, struct vtn_access_chain *chain)
       }
    }
 
-   assert(members == NULL);
+   assert(!members);
    return deref_var;
 }
 
@@ -547,7 +547,7 @@ _vtn_block_load_store(struct vtn_builder *b, nir_intrinsic_op op, bool load,
        * a vector, a scalar, or a matrix.
        */
       if (glsl_type_is_matrix(type->type)) {
-         if (chain == NULL) {
+         if (!chain) {
             /* Loading the whole matrix */
             struct vtn_ssa_value *transpose;
             unsigned num_ops, vec_width;
@@ -639,7 +639,7 @@ _vtn_block_load_store(struct vtn_builder *b, nir_intrinsic_op op, bool load,
                                   chain, chain_idx + 1,
                                   type->array_element, inout);
          }
-      } else if (chain == NULL) {
+      } else if (!chain) {
          /* Single whole vector */
          assert(glsl_type_is_vector_or_scalar(type->type));
          _vtn_load_store_tail(b, op, load, index, offset,

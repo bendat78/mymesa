@@ -94,7 +94,7 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
    /* find expected last mipmap level to generate*/
    lastLevel = compute_num_levels(ctx, texObj, target) - 1;
 
-   if (lastLevel == 0)
+   if (!lastLevel)
       return;
 
    st_flush_bitmap_cache(st);

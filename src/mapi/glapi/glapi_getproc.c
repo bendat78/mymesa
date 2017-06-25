@@ -79,7 +79,7 @@ static GLint
 get_static_proc_offset(const char *funcName)
 {
    const glprocs_table_t * const f = get_static_proc( funcName );
-   if (f == NULL) {
+   if (!f) {
       return -1;
    }
 
@@ -96,7 +96,7 @@ static _glapi_proc
 get_static_proc_address(const char *funcName)
 {
    const glprocs_table_t * const f = get_static_proc( funcName );
-   if (f == NULL) {
+   if (!f) {
       return NULL;
    }
 
@@ -202,7 +202,7 @@ static GLint
 get_extension_proc_offset(const char *funcName)
 {
    const struct _glapi_function * const f = get_extension_proc( funcName );
-   if (f == NULL) {
+   if (!f) {
       return -1;
    }
 
@@ -214,7 +214,7 @@ static _glapi_proc
 get_extension_proc_address(const char *funcName)
 {
    const struct _glapi_function * const f = get_extension_proc( funcName );
-   if (f == NULL) {
+   if (!f) {
       return NULL;
    }
 
@@ -274,16 +274,16 @@ add_function_name( const char * funcName )
    if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS)
       return NULL;
 
-   if (funcName == NULL)
+   if (!funcName)
       return NULL;
 
    name_dup = str_dup(funcName);
-   if (name_dup == NULL)
+   if (!name_dup)
       return NULL;
 
    entrypoint = generate_entrypoint(~0);
 
-   if (entrypoint == NULL) {
+   if (!entrypoint) {
       free(name_dup);
       return NULL;
    }
@@ -305,11 +305,11 @@ set_entry_info( struct _glapi_function * entry, const char * signature, unsigned
 {
    char * sig_dup = NULL;
 
-   if (signature == NULL)
+   if (!signature)
       return NULL;
 
    sig_dup = str_dup(signature);
-   if (sig_dup == NULL)
+   if (!sig_dup)
       return NULL;
 
    fill_in_entrypoint_offset(entry->dispatch_stub, offset);
@@ -373,7 +373,7 @@ _glapi_add_dispatch( const char * const * function_names,
 		     const char * parameter_signature )
 {
    static int next_dynamic_offset = FIRST_DYNAMIC_OFFSET;
-   const char * const real_sig = (parameter_signature != NULL)
+   const char * const real_sig = (parameter_signature)
      ? parameter_signature : "";
    struct _glapi_function * entry[8];
    GLboolean is_static[8];
@@ -531,7 +531,7 @@ _glapi_get_proc_address(const char *funcName)
 
    /* generate entrypoint, dispatch offset must be filled in by the driver */
    entry = add_function_name(funcName);
-   if (entry == NULL)
+   if (!entry)
       return NULL;
 
    return entry->dispatch_stub;
@@ -550,7 +550,7 @@ _glapi_get_proc_name(GLuint offset)
 
    /* search built-in functions */
    n = get_static_proc_name(offset);
-   if ( n != NULL ) {
+   if (n) {
       return n;
    }
 

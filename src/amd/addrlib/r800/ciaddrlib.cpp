@@ -630,7 +630,7 @@ ADDR_E_RETURNCODE CiLib::HwlSetupTileCfg(
         {
             const TileConfig* pCfgTable = GetTileSetting(index);
 
-            if (pInfo != NULL)
+            if (pInfo)
             {
                 if (IsMacroTiled(pCfgTable->mode))
                 {
@@ -673,12 +673,12 @@ ADDR_E_RETURNCODE CiLib::HwlSetupTileCfg(
                 }
             }
 
-            if (pMode != NULL)
+            if (pMode)
             {
                 *pMode = pCfgTable->mode;
             }
 
-            if (pType != NULL)
+            if (pType)
             {
                 *pType = pCfgTable->type;
             }
@@ -735,7 +735,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeSurfaceInfo(
         {
             BOOL_32 depthStencil2DTileConfigMatch = DepthStencilTileCfgMatch(pIn, pOut);
 
-            if ((depthStencil2DTileConfigMatch == FALSE) &&
+            if ((!depthStencil2DTileConfigMatch) &&
                 (pOut->tcCompatible == TRUE))
             {
                 pOut->macroModeIndex = TileIndexInvalid;
@@ -752,7 +752,7 @@ ADDR_E_RETURNCODE CiLib::HwlComputeSurfaceInfo(
                 depthStencil2DTileConfigMatch = DepthStencilTileCfgMatch(pIn, pOut);
             }
 
-            if ((depthStencil2DTileConfigMatch == FALSE) &&
+            if ((!depthStencil2DTileConfigMatch) &&
                 (pIn->numSamples <= 1))
             {
                 pOut->macroModeIndex = TileIndexInvalid;
@@ -1144,17 +1144,17 @@ VOID CiLib::HwlSelectTileMode(
     else if (pInOut->flags.volume)
     {
         BOOL_32 bThin = (m_settings.isBonaire == TRUE) ||
-                        ((m_allowNonDispThickModes == TRUE) && (pInOut->flags.color == TRUE));
+                        ((m_allowNonDispThickModes) && (pInOut->flags.color == TRUE));
 
         if (pInOut->numSlices >= 8)
         {
             tileMode = ADDR_TM_2D_TILED_XTHICK;
-            tileType = (bThin == TRUE) ? ADDR_NON_DISPLAYABLE : ADDR_THICK;
+            tileType = (bThin) ? ADDR_NON_DISPLAYABLE : ADDR_THICK;
         }
         else if (pInOut->numSlices >= 4)
         {
             tileMode = ADDR_TM_2D_TILED_THICK;
-            tileType = (bThin == TRUE) ? ADDR_NON_DISPLAYABLE : ADDR_THICK;
+            tileType = (bThin) ? ADDR_NON_DISPLAYABLE : ADDR_THICK;
         }
         else
         {
@@ -1282,7 +1282,7 @@ VOID CiLib::HwlSetupTileInfo(
             {
                 inTileType = ADDR_NON_DISPLAYABLE;
             }
-            else if ((m_allowNonDispThickModes == FALSE) ||
+            else if ((!m_allowNonDispThickModes) ||
                      (inTileType != ADDR_NON_DISPLAYABLE) ||
                      // There is no PRT_THICK + THIN entry in tile mode table except Bonaire
                      (IsPrtTileMode(tileMode) == TRUE))
@@ -1673,7 +1673,7 @@ BOOL_32 CiLib::InitTileSettingTable(
 
     memset(m_tileTable, 0, sizeof(m_tileTable));
 
-    if (noOfEntries != 0)
+    if (noOfEntries)
     {
         m_noOfEntries = noOfEntries;
     }
@@ -1764,7 +1764,7 @@ BOOL_32 CiLib::InitMacroTileCfgTable(
 
     memset(m_macroTileTable, 0, sizeof(m_macroTileTable));
 
-    if (noOfMacroEntries != 0)
+    if (noOfMacroEntries)
     {
         m_noOfMacroEntries = noOfMacroEntries;
     }
@@ -1905,7 +1905,7 @@ VOID CiLib::HwlComputeTileDataWidthAndHeightLinear(
     ADDR_TILEINFO*  pTileInfo        ///< [in] tile info
     ) const
 {
-    ADDR_ASSERT(pTileInfo != NULL);
+    ADDR_ASSERT(pTileInfo);
 
     UINT_32 numTiles;
 
@@ -2074,7 +2074,7 @@ VOID CiLib::HwlComputeSurfaceAlignmentsMacroTiled(
     if ((m_settings.isFiji == TRUE) &&
         (flags.dccPipeWorkaround == TRUE) &&
         (flags.prt == FALSE) &&
-        (mipLevel == 0) &&
+        (!mipLevel) &&
         (tileMode == ADDR_TM_PRT_TILED_THIN1) &&
         (pOut->dccUnsupport == TRUE))
     {
@@ -2109,7 +2109,7 @@ VOID CiLib::HwlPadDimensions(
     if ((m_settings.isVolcanicIslands == TRUE) &&
         (flags.dccCompatible == TRUE) &&
         (numSamples > 1) &&
-        (mipLevel == 0) &&
+        (!mipLevel) &&
         (IsMacroTiled(tileMode) == TRUE))
     {
         UINT_32 tileSizePerSample = BITS_TO_BYTES(bpp * MicroTileWidth * MicroTileHeight);
@@ -2199,7 +2199,7 @@ ADDR_E_RETURNCODE CiLib::HwlGetMaxAlignments(
         }
     }
 
-    if (pOut != NULL)
+    if (pOut)
     {
         pOut->baseAlign = maxBaseAlign;
     }

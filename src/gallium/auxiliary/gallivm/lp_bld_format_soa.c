@@ -237,7 +237,7 @@ lp_build_extract_soa_chan(struct lp_build_context *bld,
                                    lp_build_vec_type(gallivm, f16i_type), "");
             input = lp_build_half_to_float(gallivm, input);
          } else {
-            assert(start == 0);
+            assert(!start);
             assert(stop == 32);
             assert(type.width == 32);
          }

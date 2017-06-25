@@ -897,7 +897,7 @@ store_aos_array(struct gallivm_state *gallivm,
       io_ptrs[i] = LLVMBuildGEP(builder, io_ptr, &inds[i], 1, "");
    }
 
-   if (attrib == 0) {
+   if (!attrib) {
       /* store vertex header for each of the n vertices */
       LLVMValueRef val, cliptmp;
       int vertex_id_pad_edgeflag;

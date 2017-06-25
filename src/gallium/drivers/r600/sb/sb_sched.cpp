@@ -1288,7 +1288,7 @@ bool post_scheduler::recolor_local(value *v) {
 
 	while (pass < 2) {
 
-		if (pass == 0) {
+		if (!pass) {
 			rs = sh.first_temp_gpr();
 			re = MAX_GPR;
 		} else {

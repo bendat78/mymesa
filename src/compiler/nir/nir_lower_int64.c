@@ -101,7 +101,7 @@ lower_udiv64_mod64(nir_builder *b, nir_ssa_def *n, nir_ssa_def *d,
          nir_ssa_def *new_q_hi = nir_ior(b, q_hi, nir_imm_int(b, 1u << i));
          nir_ssa_def *cond = nir_iand(b, need_high_div,
                                          nir_uge(b, n_hi, d_shift));
-         if (i != 0) {
+         if (i) {
             /* log2_d_lo is always <= 31, so we don't need to bother with it
              * in the last iteration.
              */
@@ -130,7 +130,7 @@ lower_udiv64_mod64(nir_builder *b, nir_ssa_def *n, nir_ssa_def *d,
       nir_ssa_def *new_n = nir_isub(b, n, d_shift);
       nir_ssa_def *new_q_lo = nir_ior(b, q_lo, nir_imm_int(b, 1u << i));
       nir_ssa_def *cond = nir_uge(b, n, d_shift);
-      if (i != 0) {
+      if (i) {
          /* log2_denom is always <= 31, so we don't need to bother with it
           * in the last iteration.
           */

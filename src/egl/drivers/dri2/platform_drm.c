@@ -297,14 +297,14 @@ get_aux_bo(struct dri2_egl_surface *dri2_surf,
       dri2_egl_display(dri2_surf->base.Resource.Display);
    __DRIbuffer *b = dri2_surf->dri_buffers[attachment];
 
-   if (b == NULL) {
+   if (!b) {
       b = dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
 					 attachment, format,
 					 dri2_surf->base.Width,
 					 dri2_surf->base.Height);
       dri2_surf->dri_buffers[attachment] = b;
    }
-   if (b == NULL)
+   if (!b)
       return -1;
 
    memcpy(buffer, b, sizeof *buffer);
@@ -345,7 +345,7 @@ dri2_drm_get_buffers_with_format(__DRIdrawable *driDrawable,
    }
 
    *out_count = j;
-   if (j == 0)
+   if (!j)
       return NULL;
 
    *width = dri2_surf->base.Width;
@@ -638,7 +638,7 @@ drm_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *disp)
       }
    }
 
-   return (config_count != 0);
+   return (config_count);
 }
 
 static const struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
@@ -678,7 +678,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    disp->DriverData = (void *) dri2_dpy;
 
    gbm = disp->PlatformDisplay;
-   if (gbm == NULL) {
+   if (!gbm) {
       char buf[64];
       int n = snprintf(buf, sizeof(buf), DRM_DEV_NAME, DRM_DIR_NAME, 0);
       if (n != -1 && n < sizeof(buf))
@@ -686,7 +686,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
       if (dri2_dpy->fd < 0)
          dri2_dpy->fd = loader_open_device("/dev/dri/card0");
       gbm = gbm_create_device(dri2_dpy->fd);
-      if (gbm == NULL) {
+      if (!gbm) {
          err = "DRI2: failed to create gbm device";
          goto cleanup;
       }

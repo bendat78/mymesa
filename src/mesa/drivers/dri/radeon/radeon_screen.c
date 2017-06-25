@@ -195,11 +195,11 @@ radeon_create_image_from_name(__DRIscreen *screen,
    __DRIimage *image;
    radeonScreenPtr radeonScreen = screen->driverPrivate;
 
-   if (name == 0)
+   if (!name)
       return NULL;
 
    image = calloc(1, sizeof *image);
-   if (image == NULL)
+   if (!image)
       return NULL;
 
    switch (format) {
@@ -262,7 +262,7 @@ radeon_create_image_from_renderbuffer(__DRIcontext *context,
 
    rrb = radeon_renderbuffer(rb);
    image = calloc(1, sizeof *image);
-   if (image == NULL)
+   if (!image)
       return NULL;
 
    image->internal_format = rb->InternalFormat;
@@ -297,7 +297,7 @@ radeon_create_image(__DRIscreen *screen,
    radeonScreenPtr radeonScreen = screen->driverPrivate;
 
    image = calloc(1, sizeof *image);
-   if (image == NULL)
+   if (!image)
       return NULL;
 
    image->dri_format = format;
@@ -813,7 +813,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
       configs = driConcatConfigs(configs, new_configs);
    }
 
-   if (configs == NULL) {
+   if (!configs) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;

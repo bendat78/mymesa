@@ -434,7 +434,7 @@ vbo_exec_fixup_vertex(struct gl_context *ctx, GLuint attr,
     * vtxfmt on each flush (otherwise flags won't get reset
     * afterwards).
     */
-   if (attr == 0)
+   if (!attr)
       ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
 }
 

@@ -115,13 +115,13 @@ anv_reloc_list_grow(struct anv_reloc_list *list,
    struct drm_i915_gem_relocation_entry *new_relocs =
       vk_alloc(alloc, new_length * sizeof(*list->relocs), 8,
                 VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (new_relocs == NULL)
+   if (!new_relocs)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    struct anv_bo **new_reloc_bos =
       vk_alloc(alloc, new_length * sizeof(*list->reloc_bos), 8,
                 VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (new_reloc_bos == NULL) {
+   if (!new_reloc_bos) {
       vk_free(alloc, new_relocs);
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
    }
@@ -272,7 +272,7 @@ anv_batch_bo_create(struct anv_cmd_buffer *cmd_buffer,
 
    struct anv_batch_bo *bbo = vk_alloc(&cmd_buffer->pool->alloc, sizeof(*bbo),
                                         8, VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (bbo == NULL)
+   if (!bbo)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    result = anv_bo_pool_alloc(&cmd_buffer->device->batch_bo_pool, &bbo->bo,
@@ -305,7 +305,7 @@ anv_batch_bo_clone(struct anv_cmd_buffer *cmd_buffer,
 
    struct anv_batch_bo *bbo = vk_alloc(&cmd_buffer->pool->alloc, sizeof(*bbo),
                                         8, VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (bbo == NULL)
+   if (!bbo)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    result = anv_bo_pool_alloc(&cmd_buffer->device->batch_bo_pool, &bbo->bo,
@@ -520,7 +520,7 @@ anv_cmd_buffer_chain_batch(struct anv_batch *batch, void *_data)
       return result;
 
    struct anv_batch_bo **seen_bbo = u_vector_add(&cmd_buffer->seen_bbos);
-   if (seen_bbo == NULL) {
+   if (!seen_bbo) {
       anv_batch_bo_destroy(new_bbo, cmd_buffer);
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
    }
@@ -664,7 +664,7 @@ anv_cmd_buffer_new_binding_table_block(struct anv_cmd_buffer *cmd_buffer)
    struct anv_state_pool *state_pool = &cmd_buffer->device->surface_state_pool;
 
    struct anv_state *bt_block = u_vector_add(&cmd_buffer->bt_block_states);
-   if (bt_block == NULL) {
+   if (!bt_block) {
       anv_batch_set_error(&cmd_buffer->batch, VK_ERROR_OUT_OF_HOST_MEMORY);
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
    }
@@ -854,7 +854,7 @@ anv_cmd_buffer_add_seen_bbos(struct anv_cmd_buffer *cmd_buffer,
 {
    list_for_each_entry(struct anv_batch_bo, bbo, list, link) {
       struct anv_batch_bo **bbo_ptr = u_vector_add(&cmd_buffer->seen_bbos);
-      if (bbo_ptr == NULL)
+      if (!bbo_ptr)
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
       *bbo_ptr = bbo;
@@ -987,7 +987,7 @@ anv_execbuf_add_bo(struct anv_execbuf *exec,
    if (bo->index < exec->bo_count && exec->bos[bo->index] == bo)
       obj = &exec->objects[bo->index];
 
-   if (obj == NULL) {
+   if (!obj) {
       /* We've never seen this one before.  Add it to the list and assign
        * an id that we can use later.
        */
@@ -997,13 +997,13 @@ anv_execbuf_add_bo(struct anv_execbuf *exec,
          struct drm_i915_gem_exec_object2 *new_objects =
             vk_alloc(alloc, new_len * sizeof(*new_objects),
                      8, VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
-         if (new_objects == NULL)
+         if (!new_objects)
             return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
          struct anv_bo **new_bos =
             vk_alloc(alloc, new_len * sizeof(*new_bos),
                       8, VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
-         if (new_bos == NULL) {
+         if (!new_bos) {
             vk_free(alloc, new_objects);
             return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
          }

@@ -212,7 +212,7 @@ emit_dst(struct nvfx_vpc *vpc, uint32_t *hw,
          hw[0] |= NV30_VP_INST_DEST_TEMP_ID_MASK;
       else {
          hw[3] |= NV40_VP_INST_DEST_MASK;
-         if (slot == 0)
+         if (!slot)
             hw[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK;
          else
             hw[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
@@ -223,7 +223,7 @@ emit_dst(struct nvfx_vpc *vpc, uint32_t *hw,
          hw[0] |= (dst.index << NV30_VP_INST_DEST_TEMP_ID_SHIFT);
       else {
          hw[3] |= NV40_VP_INST_DEST_MASK;
-         if (slot == 0)
+         if (!slot)
             hw[0] |= (dst.index << NV40_VP_INST_VEC_DEST_TEMP_SHIFT);
          else
             hw[3] |= (dst.index << NV40_VP_INST_SCA_DEST_TEMP_SHIFT);
@@ -276,7 +276,7 @@ emit_dst(struct nvfx_vpc *vpc, uint32_t *hw,
          hw[3] |= 0x800;
       } else {
          hw[3] |= (dst.index << NV40_VP_INST_DEST_SHIFT);
-         if (slot == 0) {
+         if (!slot) {
             hw[0] |= NV40_VP_INST_VEC_RESULT;
             hw[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK;
          } else {
@@ -321,7 +321,7 @@ nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
    }
 
    if(!vpc->is_nv4x) {
-      if(slot == 0)
+      if(!slot)
          hw[1] |= (op << NV30_VP_INST_VEC_OPCODE_SHIFT);
       else {
          hw[0] |= ((op >> 4) << NV30_VP_INST_SCA_OPCODEH_SHIFT);
@@ -342,7 +342,7 @@ nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
             hw[3] |= (insn.mask << NV30_VP_INST_VTEMP_WRITEMASK_SHIFT);
       }
     } else {
-      if (slot == 0) {
+      if (!slot) {
          hw[1] |= (op << NV40_VP_INST_VEC_OPCODE_SHIFT);
          hw[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
          hw[3] |= (insn.mask << NV40_VP_INST_VEC_WRITEMASK_SHIFT);

@@ -88,7 +88,7 @@ int main() {
          key = malloc(sizeof(cache_test_key));
          *key = 0xdeadbeef;
          value_out = (cache_test_value *) util_cache_get(cache, key);
-         assert(value_out == NULL);
+         assert(!value_out);
          free(key);
 
 
@@ -104,7 +104,7 @@ int main() {
             util_cache_set(cache, key, value_in);
 
             value_out = util_cache_get(cache, key);
-            assert(value_out != NULL);
+            assert(value_out);
             assert(value_in == value_out);
             assert(*value_in == *value_out);
          }

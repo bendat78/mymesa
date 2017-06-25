@@ -1099,7 +1099,7 @@ static void build_lighting( struct tnl_program *p )
       emit_op1(p, OPCODE_MOV, res1, 0, _bfc1);
    }
 
-   if (nr_lights == 0) {
+   if (!nr_lights) {
       release_temps(p);
       return;
    }

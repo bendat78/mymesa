@@ -359,7 +359,7 @@ delete_shader_program(struct gl_context *ctx, GLuint name)
     * NOTE: deleting shaders/programs works a bit differently than
     * texture objects (and buffer objects, etc).  Shader/program
     * handles/IDs exist in the hash table until the object is really
-    * deleted (refcount==0).  With texture objects, the handle/ID is
+    * deleted (!refcount).  With texture objects, the handle/ID is
     * removed from the hash table in glDeleteTextures() while the tex
     * object itself might linger until its refcount goes to zero.
     */
@@ -1232,7 +1232,7 @@ void
 _mesa_active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
 		     const char *caller)
 {
-   if ((shProg != NULL) && !shProg->data->LinkStatus) {
+   if ((shProg) && !shProg->data->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
 		  "%s(program %u not linked)", caller, shProg->Name);
       return;
@@ -1733,7 +1733,7 @@ _mesa_ShaderSource(GLuint shaderObj, GLsizei count,
    if (!sh)
       return;
 
-   if (string == NULL) {
+   if (!string) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
       return;
    }
@@ -1743,7 +1743,7 @@ _mesa_ShaderSource(GLuint shaderObj, GLsizei count,
     * last element will be set to the total length of the source code.
     */
    offsets = malloc(count * sizeof(GLint));
-   if (offsets == NULL) {
+   if (!offsets) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
    }
@@ -1770,7 +1770,7 @@ _mesa_ShaderSource(GLuint shaderObj, GLsizei count,
     */
    totalLength = offsets[count - 1] + 2;
    source = malloc(totalLength * sizeof(GLcharARB));
-   if (source == NULL) {
+   if (!source) {
       free((GLvoid *) offsets);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
@@ -2014,7 +2014,7 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
     * Ensure that length always points to valid storage to avoid multiple NULL
     * pointer checks below.
     */
-   if (length == NULL)
+   if (!length)
       length = &length_dummy;
 
 
@@ -2590,7 +2590,7 @@ _mesa_UniformSubroutinesuiv(GLenum shadertype, GLuint count,
    bool flushed = false;
    do {
       struct gl_uniform_storage *uni = p->sh.SubroutineUniformRemapTable[i];
-      if (uni == NULL) {
+      if (!uni) {
          i++;
          continue;
       }

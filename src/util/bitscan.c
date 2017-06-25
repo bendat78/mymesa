@@ -68,11 +68,11 @@ ffsll(long long int val)
    int bit;
 
    bit = ffs((unsigned) (val & 0xffffffff));
-   if (bit != 0)
+   if (bit)
       return bit;
 
    bit = ffs((unsigned) (val >> 32));
-   if (bit != 0)
+   if (bit)
       return 32 + bit;
 
    return 0;

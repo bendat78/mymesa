@@ -417,7 +417,7 @@ fenced_manager_check_signalled_locked(struct fenced_manager *fenced_mgr,
             signaled = ops->fence_signalled(ops, fenced_buf->fence, 0);
          }
 
-         if (signaled != 0) {
+         if (signaled) {
             return ret;
          }
 

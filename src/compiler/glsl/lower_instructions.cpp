@@ -1087,7 +1087,7 @@ lower_instructions_visitor::extract_to_shifts(ir_expression *ir)
        * (32-0)) doesn't "erase" all of the data as we would like, so finish
        * up with:
        *
-       * (bits == 0) ? 0 : e;
+       * (!bits) ? 0 : e;
        */
       ir->operation = ir_triop_csel;
       ir->operands[0] = equal(c0, bits);
@@ -1314,11 +1314,11 @@ lower_instructions_visitor::find_lsb_to_float_cast(ir_expression *ir)
    /* Use lsb_only in the comparison instead of temp so that the & (far above)
     * can possibly generate the result without an explicit comparison.
     *
-    * (lsb_only == 0) ? -1 : lsb;
+    * (!lsb_only) ? -1 : lsb;
     *
     * Since our input values are all integers, the unbiased exponent must not
     * be negative.  It will only be negative (-0x7f, in fact) if lsb_only is
-    * 0.  Instead of using (lsb_only == 0), we could use (lsb >= 0).  Which is
+    * 0.  Instead of using (!lsb_only), we could use (lsb >= 0).  Which is
     * better is likely GPU dependent.  Either way, the difference should be
     * small.
     */
@@ -1551,7 +1551,7 @@ lower_instructions_visitor::imul_high_to_mul(ir_expression *ir)
    i.insert_before(assign(hi, add(hi, _carry(lo, lshift(t2, c16->clone(ir, NULL))))));
    i.insert_before(assign(lo,            add(lo, lshift(t2, c16->clone(ir, NULL)))));
 
-   if (different_signs == NULL) {
+   if (!different_signs) {
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_UINT);
 
       ir->operation = ir_binop_add;

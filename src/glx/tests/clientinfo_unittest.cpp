@@ -680,7 +680,7 @@ TEST_F(glX_send_client_info_test, glx_extensions_has_GLX_ARB_create_context)
    const char *const needle = "GLX_ARB_create_context";
    const unsigned len = strlen(needle);
    char *haystack = glx_ext_string;
-   while (haystack != NULL) {
+   while (haystack) {
       char *match = strstr(haystack, needle);
 
       if (match[len] == '\0' || match[len] == ' ') {
@@ -706,7 +706,7 @@ TEST_F(glX_send_client_info_test, glx_extensions_has_GLX_ARB_create_context_prof
    const char *const needle = "GLX_ARB_create_context_profile";
    const unsigned len = strlen(needle);
    char *haystack = glx_ext_string;
-   while (haystack != NULL) {
+   while (haystack) {
       char *match = strstr(haystack, needle);
 
       if (match[len] == '\0' || match[len] == ' ') {

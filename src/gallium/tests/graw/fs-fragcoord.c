@@ -157,7 +157,7 @@ set_fragment_shader(int mode)
 
    const char *text;
 
-   if (mode == 0)
+   if (!mode)
       text = origin_upper_left_text;
    else if (mode == 1)
       text = origin_lower_left_text;

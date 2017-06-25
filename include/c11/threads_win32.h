@@ -485,7 +485,7 @@ thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
     pack->func = func;
     pack->arg = arg;
     handle = _beginthreadex(NULL, 0, impl_thrd_routine, pack, 0, NULL);
-    if (handle == 0) {
+    if (!handle) {
         if (errno == EAGAIN || errno == EACCES)
             return thrd_nomem;
         return thrd_error;

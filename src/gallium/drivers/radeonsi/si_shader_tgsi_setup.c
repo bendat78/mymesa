@@ -733,7 +733,7 @@ static LLVMValueRef fetch_system_value(struct lp_build_tgsi_context *bld_base,
 		cval = LLVMBuildExtractElement(
 			builder, cval, LLVMConstInt(ctx->i32, swizzle, 0), "");
 	} else {
-		assert(swizzle == 0);
+		assert(!swizzle);
 	}
 
 	return bitcast(bld_base, type, cval);

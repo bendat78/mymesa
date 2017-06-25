@@ -63,7 +63,7 @@ static void *rebase_##TYPE( const void *ptr,			\
    const TYPE *in = (TYPE *)ptr;				\
    TYPE *tmp_indices = malloc(count * sizeof(TYPE));		\
 								\
-   if (tmp_indices == NULL) {                                   \
+   if (!tmp_indices) {                                   \
       _mesa_error_no_memory(__func__);                          \
       return NULL;                                              \
    }                                                            \
@@ -139,7 +139,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
    void *tmp_indices = NULL;
    GLuint i;
 
-   assert(min_index != 0);
+   assert(min_index);
 
    if (0)
       printf("%s %d..%d\n", __func__, min_index, max_index);
@@ -154,7 +154,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
        */
       tmp_prims = malloc(sizeof(*prim) * nr_prims);
 
-      if (tmp_prims == NULL) {
+      if (!tmp_prims) {
          _mesa_error_no_memory(__func__);
          return;
       }
@@ -197,7 +197,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
       if (map_ib)
 	 ctx->Driver.UnmapBuffer(ctx, ib->obj, MAP_INTERNAL);
 
-      if (tmp_indices == NULL) {
+      if (!tmp_indices) {
          return;
       }
 
@@ -213,7 +213,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
        */
       tmp_prims = malloc(sizeof(*prim) * nr_prims);
 
-      if (tmp_prims == NULL) {
+      if (!tmp_prims) {
          _mesa_error_no_memory(__func__);
          return;
       }

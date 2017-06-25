@@ -67,7 +67,7 @@ windows_create_context(int pxfi, windowsContext *shared)
    windowsContext *gc;
 
    gc = calloc(1, sizeof *gc);
-   if (gc == NULL)
+   if (!gc)
       return NULL;
 
    // create a temporary, invisible window
@@ -75,7 +75,7 @@ windows_create_context(int pxfi, windowsContext *shared)
    {
       static wATOM glTempWndClass = 0;
 
-      if (glTempWndClass == 0) {
+      if (!glTempWndClass) {
          WNDCLASSEX wc;
          wc.cbSize = sizeof(WNDCLASSEX);
          wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -128,7 +128,7 @@ windows_create_context_attribs(int pxfi, windowsContext *shared, const int *attr
    windowsContext *gc;
 
    gc = calloc(1, sizeof *gc);
-   if (gc == NULL)
+   if (!gc)
       return NULL;
 
    // create a temporary, invisible window
@@ -136,7 +136,7 @@ windows_create_context_attribs(int pxfi, windowsContext *shared, const int *attr
    {
       static wATOM glTempWndClass = 0;
 
-      if (glTempWndClass == 0) {
+      if (!glTempWndClass) {
          WNDCLASSEX wc;
          wc.cbSize = sizeof(WNDCLASSEX);
          wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -201,7 +201,7 @@ int windows_bind_context(windowsContext *context, windowsDrawable *draw, windows
       draw->pxfi = context->pxfi;
    }
 
-   if ((read != NULL) &&  (read != draw))
+   if ((read) &&  (read != draw))
    {
       /*
         If there is a separate read drawable, create a separate read DC, and
@@ -288,7 +288,7 @@ windows_call_with_context(void (*proc)(HDC, void *), void *args)
    {
       static wATOM glTestWndClass = 0;
 
-      if (glTestWndClass == 0) {
+      if (!glTestWndClass) {
          WNDCLASSEX wc;
 
          wc.cbSize = sizeof(WNDCLASSEX);

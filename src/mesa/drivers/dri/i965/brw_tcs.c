@@ -83,7 +83,7 @@ create_passthrough_tcs(void *mem_ctx, const struct brw_compiler *compiler,
    /* Copy inputs to outputs. */
    uint64_t varyings = nir->info.inputs_read;
 
-   while (varyings != 0) {
+   while (varyings) {
       const int varying = ffsll(varyings) - 1;
 
       load = nir_intrinsic_instr_create(nir,
@@ -246,7 +246,7 @@ brw_codegen_tcs_prog(struct brw_context *brw, struct brw_program *tcp,
    const unsigned *program =
       brw_compile_tcs(compiler, brw, mem_ctx, key, &prog_data, nir, st_index,
                       &program_size, &error_str);
-   if (program == NULL) {
+   if (!program) {
       if (tep) {
          tep->program.sh.data->LinkStatus = linking_failure;
          ralloc_strcat(&tep->program.sh.data->InfoLog, error_str);

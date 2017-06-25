@@ -34,7 +34,7 @@
 static struct vtn_ssa_value *
 wrap_matrix(struct vtn_builder *b, struct vtn_ssa_value *val)
 {
-   if (val == NULL)
+   if (!val)
       return NULL;
 
    if (glsl_type_is_matrix(val->type))

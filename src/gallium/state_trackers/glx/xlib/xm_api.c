@@ -155,7 +155,7 @@ xmesa_close_display(Display *display)
       }
    }
 
-   if (info == NULL) {
+   if (!info) {
       /* no display found */
       _XUnlockMutex(_Xglobal_lock);
       return;
@@ -193,7 +193,7 @@ xmesa_init_display( Display *display )
    XMesaDisplay xmdpy;
    XMesaExtDisplayInfo *info;
 
-   if (display == NULL) {
+   if (!display) {
       return NULL;
    }
 
@@ -215,7 +215,7 @@ xmesa_init_display( Display *display )
 
    /* allocate mesa display info */
    info = (XMesaExtDisplayInfo *) Xmalloc(sizeof(XMesaExtDisplayInfo));
-   if (info == NULL) {
+   if (!info) {
       mtx_unlock(&init_mutex);
       return NULL;
    }
@@ -1162,7 +1162,7 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
    /* get pixmap size */
    xmesa_get_window_size(v->display, b, &b->width, &b->height);
 
-   if (target == 0) {
+   if (!target) {
       /* examine dims */
       if (ctx->Extensions.ARB_texture_non_power_of_two) {
          target = GLX_TEXTURE_2D_EXT;

@@ -114,10 +114,10 @@ swrastGetDrawableInfo(__DRIdrawable * draw,
    *w = *h = 0;
    cookie = xcb_get_geometry (dri2_dpy->conn, dri2_surf->drawable);
    reply = xcb_get_geometry_reply (dri2_dpy->conn, cookie, &error);
-   if (reply == NULL)
+   if (!reply)
       return;
 
-   if (error != NULL) {
+   if (error) {
       _eglLog(_EGL_WARNING, "error in xcb_get_geometry");
       free(error);
    } else {
@@ -168,10 +168,10 @@ swrastGetImage(__DRIdrawable * read,
    cookie = xcb_get_image (dri2_dpy->conn, XCB_IMAGE_FORMAT_Z_PIXMAP,
                            dri2_surf->drawable, x, y, w, h, ~0);
    reply = xcb_get_image_reply (dri2_dpy->conn, cookie, &error);
-   if (reply == NULL)
+   if (!reply)
       return;
 
-   if (error != NULL) {
+   if (error) {
       _eglLog(_EGL_WARNING, "error in xcb_get_image");
       free(error);
    } else {
@@ -187,7 +187,7 @@ static xcb_screen_t *
 get_xcb_screen(xcb_screen_iterator_t iter, int screen)
 {
     for (; iter.rem; --screen, xcb_screen_next(&iter))
-        if (screen == 0)
+        if (!screen)
             return iter.data;
 
     return NULL;
@@ -264,7 +264,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    if (type != EGL_PBUFFER_BIT) {
       cookie = xcb_get_geometry (dri2_dpy->conn, dri2_surf->drawable);
       reply = xcb_get_geometry_reply (dri2_dpy->conn, cookie, &error);
-      if (error != NULL) {
+      if (error) {
          if (error->error_code == BadAlloc)
             _eglError(EGL_BAD_ALLOC, "xcb_get_geometry");
          else if (type == EGL_WINDOW_BIT)
@@ -273,7 +273,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
             _eglError(EGL_BAD_NATIVE_PIXMAP, "xcb_get_geometry");
          free(error);
          goto cleanup_dri_drawable;
-      } else if (reply == NULL) {
+      } else if (!reply) {
          _eglError(EGL_BAD_ALLOC, "xcb_get_geometry");
          goto cleanup_dri_drawable;
       }
@@ -340,7 +340,7 @@ dri2_x11_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 
    surf = dri2_x11_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
                                   native_window, attrib_list);
-   if (surf != NULL) {
+   if (surf) {
       /* When we first create the DRI2 drawable, its swap interval on the
        * server side is 1.
        */
@@ -494,10 +494,10 @@ dri2_x11_get_buffers(__DRIdrawable * driDrawable,
 					    dri2_surf->drawable,
 					    count, count, attachments);
    reply = xcb_dri2_get_buffers_reply (dri2_dpy->conn, cookie, NULL);
-   if (reply == NULL)
+   if (!reply)
       return NULL;
    buffers = xcb_dri2_get_buffers_buffers (reply);
-   if (buffers == NULL)
+   if (!buffers)
       return NULL;
 
    *out_count = reply->count;
@@ -534,7 +534,7 @@ dri2_x11_get_buffers_with_format(__DRIdrawable * driDrawable,
 
    reply = xcb_dri2_get_buffers_with_format_reply (dri2_dpy->conn,
 						   cookie, NULL);
-   if (reply == NULL)
+   if (!reply)
       return NULL;
 
    buffers = xcb_dri2_get_buffers_with_format_buffers (reply);
@@ -1027,11 +1027,11 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
    geometry_cookie = xcb_get_geometry (dri2_dpy->conn, drawable);
    buffers_reply = xcb_dri2_get_buffers_reply (dri2_dpy->conn,
 					       buffers_cookie, NULL);
-   if (buffers_reply == NULL)
+   if (!buffers_reply)
      return NULL;
 
    buffers = xcb_dri2_get_buffers_buffers (buffers_reply);
-   if (buffers == NULL) {
+   if (!buffers) {
       return NULL;
    }
 

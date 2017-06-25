@@ -329,7 +329,7 @@ lower_64bit_visitor::handle_op(ir_expression *ir,
    ir_function_signature *callee = NULL;
    ir_function *f = find_function(function_name);
 
-   if (f != NULL) {
+   if (f) {
       callee = (ir_function_signature *) f->signatures.get_head();
       assert(callee != NULL && callee->ir_type == ir_type_function_signature);
    } else {
@@ -352,7 +352,7 @@ lower_64bit_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
 
    ir_expression *const ir = (*rvalue)->as_expression();
-   assert(ir != NULL);
+   assert(ir);
 
    switch (ir->operation) {
    case ir_unop_sign:

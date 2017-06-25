@@ -5205,7 +5205,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 					       stream);
 		}
 
-		if (stream == 0)
+		if (!stream)
 			si_llvm_export_vs(bld_base, outputs, gsinfo->num_outputs);
 
 		LLVMBuildBr(builder, end_bb);
@@ -5235,7 +5235,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 
 	FREE(outputs);
 
-	if (r != 0) {
+	if (r) {
 		FREE(shader);
 		shader = NULL;
 	}
@@ -5894,7 +5894,7 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 		LLVMValueRef param = LLVMGetParam(parts[0], i);
 
 		if (ac_is_sgpr_param(param)) {
-			assert(num_vgprs == 0);
+			assert(!num_vgprs);
 			num_sgprs += llvm_get_type_size(LLVMTypeOf(param)) / 4;
 		} else {
 			num_vgprs += llvm_get_type_size(LLVMTypeOf(param)) / 4;

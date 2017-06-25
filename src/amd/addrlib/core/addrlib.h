@@ -202,7 +202,7 @@ protected:
 
     static UINT_32 GetNumFragments(UINT_32 numSamples, UINT_32 numFrags)
     {
-        return (numFrags != 0) ? numFrags : Max(1u, numSamples);
+        return (numFrags) ? numFrags : Max(1u, numSamples);
     }
 
     /// Returns pointer of ElemLib

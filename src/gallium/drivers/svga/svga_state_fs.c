@@ -132,7 +132,7 @@ compile_fs(struct svga_context *svga,
    enum pipe_error ret = PIPE_ERROR;
 
    variant = translate_fragment_program(svga, fs, key);
-   if (variant == NULL) {
+   if (!variant) {
       debug_printf("Failed to compile fragment shader,"
                    " using dummy shader instead.\n");
       variant = get_compiled_dummy_shader(svga, fs, key);

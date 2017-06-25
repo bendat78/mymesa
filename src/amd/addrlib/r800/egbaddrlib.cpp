@@ -154,7 +154,7 @@ BOOL_32 EgBasedLib::DispatchComputeSurfaceInfo(
 
     if (flags.cube)
     {
-        if (mipLevel == 0)
+        if (!mipLevel)
         {
             padDims = 2;
         }
@@ -564,7 +564,7 @@ BOOL_32 EgBasedLib::ComputeSurfaceInfoMacroTiled(
         {
             UINT_32 stereoHeightAlign = HwlStereoCheckRightOffsetPadding(pOut->pTileInfo);
 
-            if (stereoHeightAlign != 0)
+            if (stereoHeightAlign)
             {
                 paddedHeight = PowTwoAlign(paddedHeight, stereoHeightAlign);
             }
@@ -742,7 +742,7 @@ BOOL_32 EgBasedLib::ComputeSurfaceAlignmentsMicroTiled(
     // ECR#393489
     // Workaround 2 for 1D tiling -  There is HW bug for Carrizo
     // where it requires the following alignments for 1D tiling.
-    if (flags.czDispCompatible && (mipLevel == 0))
+    if (flags.czDispCompatible && (!mipLevel))
     {
         *pBaseAlign  = PowTwoAlign(*pBaseAlign, 4096);                         //Base address MOD 4096 = 0
         *pPitchAlign = PowTwoAlign(*pPitchAlign, 512 / (BITS_TO_BYTES(bpp))); //(8 lines * pitch * bytes per pixel) MOD 4096 = 0
@@ -846,7 +846,7 @@ BOOL_32 EgBasedLib::HwlReduceBankWidthHeight(
         valid = !stillGreater;
 
         // Generate a warning if we still fail to meet this constraint
-        if (valid == FALSE)
+        if (!valid)
         {
             ADDR_WARN(
                 0, ("TILE_SIZE(%d)*BANK_WIDTH(%d)*BANK_HEIGHT(%d) <= ROW_SIZE(%d)",
@@ -1060,7 +1060,7 @@ BOOL_32 EgBasedLib::SanityCheckMacroTiled(
         valid = HwlSanityCheckMacroTiled(pTileInfo);
     }
 
-    ADDR_ASSERT(valid == TRUE);
+    ADDR_ASSERT(valid);
 
     // Add this assert for guidance
     ADDR_ASSERT(numPipes * pTileInfo->banks >= 4);
@@ -1286,7 +1286,7 @@ AddrTileMode EgBasedLib::HwlDegradeThickTileMode(
             break;
     }
 
-    if (pBytesPerTile != NULL)
+    if (pBytesPerTile)
     {
         *pBytesPerTile = bytesPerTile;
     }
@@ -2021,7 +2021,7 @@ VOID EgBasedLib::HwlComputePixelCoordFromOffset(
     UINT_32 thickness = Thickness(tileMode);
 
     // For planar surface, we adjust offset acoording to tile base
-    if ((bpp != compBits) && (compBits != 0) && isDepthSampleOrder)
+    if ((bpp != compBits) && (compBits) && isDepthSampleOrder)
     {
         offset -= tileBase;
 
@@ -2547,7 +2547,7 @@ VOID EgBasedLib::ComputeSurfaceCoord2DFromBankPipe(
     UINT_32 microTileThickness = Thickness(tileMode);
 
     bank ^= tileSplitRotation * tileSlices;
-    if (pipeRotation == 0)
+    if (!pipeRotation)
     {
         bank ^= bankRotation * (slice / microTileThickness) + bankSwizzle;
         bank %= pTileInfo->banks;
@@ -2816,7 +2816,7 @@ VOID EgBasedLib::ExtractBankPipeSwizzle(
     UINT_32 bankSwizzle = 0;
     UINT_32 pipeSwizzle = 0;
 
-    if (base256b != 0)
+    if (base256b)
     {
         UINT_32 numPipes        = HwlGetPipes(pTileInfo);
         UINT_32 bankBits        = QLog2(pTileInfo->banks);
@@ -2896,7 +2896,7 @@ UINT_32 EgBasedLib::ComputeSliceTileSwizzle(
         pipeRotation = ComputePipeRotation(tileMode, numPipes);
         bankRotation = ComputeBankRotation(tileMode, numBanks, numPipes);
 
-        if (baseSwizzle != 0)
+        if (baseSwizzle)
         {
             ExtractBankPipeSwizzle(baseSwizzle,
                                    pTileInfo,
@@ -2904,7 +2904,7 @@ UINT_32 EgBasedLib::ComputeSliceTileSwizzle(
                                    &pipeSwizzle);
         }
 
-        if (pipeRotation == 0) //2D mode
+        if (!pipeRotation) //2D mode
         {
             bankSwizzle += firstSlice * bankRotation;
             bankSwizzle %= numBanks;
@@ -3557,7 +3557,7 @@ UINT_64 EgBasedLib::ComputeFmaskAddrFromCoordMicroTiled(
     //
     // Compute the number of planes.
     //
-    if (resolved == FALSE)
+    if (!resolved)
     {
         effectiveSamples = ComputeFmaskNumPlanesFromNumSamples(numSamples);
         effectiveBpp = numSamples;
@@ -3669,7 +3669,7 @@ UINT_64 EgBasedLib::ComputeFmaskAddrFromCoordMacroTiled(
     //
     // Compute the number of planes.
     //
-    if (resolved == FALSE)
+    if (!resolved)
     {
         effectiveSamples = ComputeFmaskNumPlanesFromNumSamples(numSamples);
         effectiveBpp = numSamples;
@@ -3782,7 +3782,7 @@ VOID EgBasedLib::ComputeFmaskCoordFromAddrMicroTiled(
         numSamples = 4;
     }
 
-    if (resolved == FALSE)
+    if (!resolved)
     {
         effectiveSamples = ComputeFmaskNumPlanesFromNumSamples(numSamples);
         effectiveBpp  = numSamples;
@@ -3877,7 +3877,7 @@ VOID EgBasedLib::ComputeFmaskCoordFromAddrMacroTiled(
     //
     // Compute the number of planes.
     //
-    if (resolved == FALSE)
+    if (!resolved)
     {
         effectiveSamples = ComputeFmaskNumPlanesFromNumSamples(numSamples);
         effectiveBpp  = numSamples;
@@ -4194,7 +4194,7 @@ ADDR_E_RETURNCODE EgBasedLib::HwlConvertTileInfoToHW(
     ADDR_TILEINFO *pTileInfoIn  = pIn->pTileInfo;
     ADDR_TILEINFO *pTileInfoOut = pOut->pTileInfo;
 
-    if ((pTileInfoIn != NULL) && (pTileInfoOut != NULL))
+    if ((pTileInfoIn) && (pTileInfoOut != NULL))
     {
         if (pIn->reverse == FALSE)
         {
@@ -4666,7 +4666,7 @@ UINT_32 EgBasedLib::HwlComputeHtileBaseAlign(
 
     if (isTcCompatible)
     {
-        ADDR_ASSERT(pTileInfo != NULL);
+        ADDR_ASSERT(pTileInfo);
         if (pTileInfo)
         {
             baseAlign *= pTileInfo->banks;

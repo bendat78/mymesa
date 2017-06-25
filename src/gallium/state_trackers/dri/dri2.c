@@ -1038,7 +1038,7 @@ dri2_create_image_from_fd(__DRIscreen *_screen,
 
    img = dri2_create_image_from_winsys(_screen, width, height, format,
                                        num_fds, whandles, loaderPrivate);
-   if(img == NULL)
+   if(!img)
       err = __DRI_IMAGE_ERROR_BAD_ALLOC;
 
 exit:
@@ -1078,7 +1078,7 @@ dri2_create_image_common(__DRIscreen *_screen,
    /* createImageWithModifiers doesn't supply usage, and we should not get
     * here with both modifiers and a usage flag.
     */
-   assert(!(use && (modifiers != NULL)));
+   assert(!(use && (modifiers)));
 
    tex_usage = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
 
@@ -1271,7 +1271,7 @@ dri2_validate_usage(__DRIimage *image, unsigned int use)
     * once opened again in another process, which is the main use
     * case for this, so we have to lie.
     */
-   if (image != NULL)
+   if (image)
       return GL_TRUE;
    else
       return GL_FALSE;
@@ -1302,7 +1302,7 @@ dri2_from_names(__DRIscreen *screen, int width, int height, int format,
 
    img = dri2_create_image_from_winsys(screen, width, height, format,
                                        1, &whandle, loaderPrivate);
-   if (img == NULL)
+   if (!img)
       return NULL;
 
    img->dri_components = dri_components;
@@ -1314,14 +1314,14 @@ dri2_from_planar(__DRIimage *image, int plane, void *loaderPrivate)
 {
    __DRIimage *img;
 
-   if (plane != 0)
+   if (plane)
       return NULL;
 
    if (image->dri_components == 0)
       return NULL;
 
    img = dri2_dup_image(image, loaderPrivate);
-   if (img == NULL)
+   if (!img)
       return NULL;
 
    if (img->texture->screen->resource_changed)
@@ -1411,7 +1411,7 @@ dri2_from_fds(__DRIscreen *screen, int width, int height, int fourcc,
                                    DRM_FORMAT_MOD_INVALID, fds, num_fds,
                                    strides, offsets, NULL,
                                    &dri_components, loaderPrivate);
-   if (img == NULL)
+   if (!img)
       return NULL;
 
    img->dri_components = dri_components;
@@ -1481,7 +1481,7 @@ dri2_from_dma_bufs(__DRIscreen *screen,
                                    DRM_FORMAT_MOD_INVALID, fds, num_fds,
                                    strides, offsets, error,
                                    &dri_components, loaderPrivate);
-   if (img == NULL)
+   if (!img)
       return NULL;
 
    img->yuv_color_space = yuv_color_space;
@@ -1512,7 +1512,7 @@ dri2_from_dma_bufs2(__DRIscreen *screen,
    img = dri2_create_image_from_fd(screen, width, height, fourcc,
                                    modifier, fds, num_fds, strides, offsets,
                                    error, &dri_components, loaderPrivate);
-   if (img == NULL)
+   if (!img)
       return NULL;
 
    img->yuv_color_space = yuv_color_space;

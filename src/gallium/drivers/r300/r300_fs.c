@@ -64,17 +64,17 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
                 break;
 
             case TGSI_SEMANTIC_FOG:
-                assert(index == 0);
+                assert(!index);
                 fs_inputs->fog = i;
                 break;
 
             case TGSI_SEMANTIC_POSITION:
-                assert(index == 0);
+                assert(!index);
                 fs_inputs->wpos = i;
                 break;
 
             case TGSI_SEMANTIC_FACE:
-                assert(index == 0);
+                assert(!index);
                 fs_inputs->face = i;
                 break;
 

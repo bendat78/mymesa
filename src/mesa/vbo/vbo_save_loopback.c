@@ -106,7 +106,7 @@ static void loopback_prim( struct gl_context *ctx,
       CALL_Begin(GET_DISPATCH(), ( prim->mode ));
    }
    else {
-      assert(start == 0);
+      assert(!start);
       start += wrap_count;
    }
 

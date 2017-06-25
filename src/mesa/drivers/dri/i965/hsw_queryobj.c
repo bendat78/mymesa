@@ -159,7 +159,7 @@ shr_gpr0_by_2_bits(struct brw_context *brw)
 }
 
 /*
- * GPR0 = (GPR0 == 0) ? 0 : 1;
+ * GPR0 = (!GPR0) ? 0 : 1;
  */
 static void
 gpr0_to_bool(struct brw_context *brw)
@@ -420,7 +420,7 @@ set_predicate(struct brw_context *brw, struct brw_bo *query_bo)
                            I915_GEM_DOMAIN_INSTRUCTION, 0,
                            2 * sizeof(uint64_t));
 
-   /* predicate = !(query_availability == 0); */
+   /* predicate = !(!query_availability); */
    BEGIN_BATCH(1);
    OUT_BATCH(GEN7_MI_PREDICATE |
              MI_PREDICATE_LOADOP_LOADINV |

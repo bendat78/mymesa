@@ -462,7 +462,7 @@ static inline struct exec_node *
 exec_list_pop_head(struct exec_list *list)
 {
    struct exec_node *const n = exec_list_get_head(list);
-   if (n != NULL)
+   if (n)
       exec_node_remove(n);
 
    return n;

@@ -103,7 +103,7 @@ generate_entrypoint(unsigned int functionOffset)
    GLubyte * const code = (GLubyte *) u_execmem_alloc(DISPATCH_FUNCTION_SIZE);
 
 
-   if ( code != NULL ) {
+   if (code) {
       (void) memcpy(code, template_func, DISPATCH_FUNCTION_SIZE);
       fill_in_entrypoint_offset( (_glapi_proc) code, functionOffset );
    }

@@ -1,4 +1,4 @@
-#if (1 == 0) // dangerous comment
+#if (!1) // dangerous comment
 fail
 #else
 win

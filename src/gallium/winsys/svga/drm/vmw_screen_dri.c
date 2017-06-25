@@ -99,7 +99,7 @@ svga_drm_winsys_screen_create(int fd)
    drmVersionPtr ver;
 
    ver = drmGetVersion(fd);
-   if (ver == NULL)
+   if (!ver)
       return NULL;
 
    drm_ver.major = ver->version_major;

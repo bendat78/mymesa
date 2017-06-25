@@ -59,7 +59,7 @@ static bool amdgpu_bo_wait(struct pb_buffer *_buf, uint64_t timeout,
    struct amdgpu_winsys *ws = bo->ws;
    int64_t abs_timeout;
 
-   if (timeout == 0) {
+   if (!timeout) {
       if (p_atomic_read(&bo->num_active_ioctls))
          return false;
 
@@ -86,7 +86,7 @@ static bool amdgpu_bo_wait(struct pb_buffer *_buf, uint64_t timeout,
       return !buffer_busy;
    }
 
-   if (timeout == 0) {
+   if (!timeout) {
       unsigned idle_fences;
       bool buffer_idle;
 

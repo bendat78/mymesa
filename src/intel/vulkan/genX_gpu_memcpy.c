@@ -57,7 +57,7 @@ genX(cmd_buffer_gpu_memcpy)(struct anv_cmd_buffer *cmd_buffer,
                             struct anv_bo *src, uint32_t src_offset,
                             uint32_t size)
 {
-   if (size == 0)
+   if (!size)
       return;
 
    assert(dst_offset + size <= dst->size);

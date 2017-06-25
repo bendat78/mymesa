@@ -225,9 +225,9 @@ NineBuffer9_Lock( struct NineBuffer9 *This,
                             D3DLOCK_READONLY |
                             D3DLOCK_NOOVERWRITE)), D3DERR_INVALIDCALL);
 
-    if (SizeToLock == 0) {
+    if (!SizeToLock) {
         SizeToLock = This->size - OffsetToLock;
-        user_warn(OffsetToLock != 0);
+        user_warn(OffsetToLock);
     }
 
     u_box_1d(OffsetToLock, SizeToLock, &box);
@@ -284,7 +284,7 @@ NineBuffer9_Lock( struct NineBuffer9 *This,
         struct NineTransfer *newmaps =
             REALLOC(This->maps, sizeof(struct NineTransfer)*This->maxmaps,
                     sizeof(struct NineTransfer)*(This->maxmaps << 1));
-        if (newmaps == NULL)
+        if (!newmaps)
             return E_OUTOFMEMORY;
 
         This->maxmaps <<= 1;

@@ -78,7 +78,7 @@ public:
       /* If a variable is dereferenced at all, remove it from the set of
        * variables that are candidates for removal.
        */
-      if (entry != NULL)
+      if (entry)
          _mesa_set_remove(variables, entry);
 
       return visit_continue;
@@ -347,7 +347,7 @@ load_text_file(void *ctx, const char *file_name)
    fseek(fp, 0L, SEEK_SET);
 
    text = (char *) ralloc_size(ctx, size + 1);
-   if (text != NULL) {
+   if (text) {
       do {
          size_t bytes = fread(text + total_read,
                1, size - total_read, fp);
@@ -357,7 +357,7 @@ load_text_file(void *ctx, const char *file_name)
             goto error;
          }
 
-         if (bytes == 0) {
+         if (!bytes) {
             break;
          }
 
@@ -434,7 +434,7 @@ standalone_compile_shader(const struct standalone_options *_options,
    struct gl_shader_program *whole_program;
 
    whole_program = rzalloc (NULL, struct gl_shader_program);
-   assert(whole_program != NULL);
+   assert(whole_program);
    whole_program->data = rzalloc(whole_program, struct gl_shader_program_data);
    assert(whole_program->data != NULL);
    whole_program->data->InfoLog = ralloc_strdup(whole_program->data, "");

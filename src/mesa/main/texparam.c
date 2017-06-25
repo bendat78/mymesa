@@ -1365,7 +1365,7 @@ get_tex_level_parameter_image(struct gl_context *ctx,
 	    const GLenum f =
 	       _mesa_gl_compressed_format_base_format(img->InternalFormat);
 
-	    *params = (f != 0) ? f : img->InternalFormat;
+	    *params = (f) ? f : img->InternalFormat;
 	 }
          break;
       case GL_TEXTURE_BORDER:
@@ -1681,7 +1681,7 @@ get_tex_level_parameteriv(struct gl_context *ctx,
    }
 
    maxLevels = _mesa_max_texture_levels(ctx, target);
-   assert(maxLevels != 0);
+   assert(maxLevels);
 
    if (level < 0 || level >= maxLevels) {
       _mesa_error(ctx, GL_INVALID_VALUE,

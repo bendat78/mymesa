@@ -99,7 +99,7 @@ init_map(void)
 {
    exec_mem = VirtualAlloc(NULL, EXEC_MAP_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
-   return (exec_mem != NULL);
+   return (exec_mem);
 }
 
 
@@ -112,7 +112,7 @@ init_map(void)
 {
    exec_mem = malloc(EXEC_MAP_SIZE);
 
-   return (exec_mem != NULL);
+   return (exec_mem);
 }
 
 

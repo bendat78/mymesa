@@ -729,7 +729,7 @@ static inline uint32_t
 floor_pot(uint32_t n)
 {
 #if defined(PIPE_CC_GCC) && (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64))
-   if (n == 0)
+   if (!n)
       return 0;
 
    __asm__("bsr %1,%0"

@@ -68,9 +68,9 @@ vmw_winsys_create( int fd )
    struct vmw_winsys_screen *vws;
    struct stat stat_buf;
 
-   if (dev_hash == NULL) {
+   if (!dev_hash) {
       dev_hash = util_hash_table_create(vmw_dev_hash, vmw_dev_compare);
-      if (dev_hash == NULL)
+      if (!dev_hash)
          return NULL;
    }
 

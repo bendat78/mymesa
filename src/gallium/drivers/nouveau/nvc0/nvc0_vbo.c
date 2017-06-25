@@ -487,7 +487,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
 
          if (unlikely(vertex->instance_elts != nvc0->state.instance_elts)) {
             nvc0->state.instance_elts = vertex->instance_elts;
-            assert(n); /* if (n == 0), both masks should be 0 */
+            assert(n); /* if (!n), both masks should be 0 */
             PUSH_SPACE(push, 3);
             BEGIN_NVC0(push, NVC0_3D(MACRO_VERTEX_ARRAY_PER_INSTANCE), 2);
             PUSH_DATA (push, n);

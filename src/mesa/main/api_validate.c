@@ -858,7 +858,7 @@ validate_draw_arrays(struct gl_context *ctx, const char *func,
       xfb_obj->GlesRemainingPrims -= prim_count;
    }
 
-   if (count == 0)
+   if (!count)
       return false;
 
    return true;
@@ -1215,7 +1215,7 @@ _mesa_validate_MultiDrawArraysIndirect(struct gl_context *ctx,
    FLUSH_CURRENT(ctx, 0);
 
    /* caller has converted stride==0 to drawArraysNumParams * sizeof(GLuint) */
-   assert(stride != 0);
+   assert(stride);
 
    if (!valid_draw_indirect_multi(ctx, primcount, stride,
                                   "glMultiDrawArraysIndirect"))
@@ -1245,7 +1245,7 @@ _mesa_validate_MultiDrawElementsIndirect(struct gl_context *ctx,
    FLUSH_CURRENT(ctx, 0);
 
    /* caller has converted stride==0 to drawElementsNumParams * sizeof(GLuint) */
-   assert(stride != 0);
+   assert(stride);
 
    if (!valid_draw_indirect_multi(ctx, primcount, stride,
                                   "glMultiDrawElementsIndirect"))
@@ -1326,7 +1326,7 @@ _mesa_validate_MultiDrawArraysIndirectCount(struct gl_context *ctx,
    FLUSH_CURRENT(ctx, 0);
 
    /* caller has converted stride==0 to drawArraysNumParams * sizeof(GLuint) */
-   assert(stride != 0);
+   assert(stride);
 
    if (!valid_draw_indirect_multi(ctx, maxdrawcount, stride,
                                   "glMultiDrawArraysIndirectCountARB"))
@@ -1359,7 +1359,7 @@ _mesa_validate_MultiDrawElementsIndirectCount(struct gl_context *ctx,
    FLUSH_CURRENT(ctx, 0);
 
    /* caller has converted stride==0 to drawElementsNumParams * sizeof(GLuint) */
-   assert(stride != 0);
+   assert(stride);
 
    if (!valid_draw_indirect_multi(ctx, maxdrawcount, stride,
                                   "glMultiDrawElementsIndirectCountARB"))

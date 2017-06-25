@@ -468,7 +468,7 @@ vs30_output(struct svga_shader_emitter *emit,
    dcl.values[0] |= 1<<31;
 
    if (semantic.Name == TGSI_SEMANTIC_POSITION) {
-      assert(idx == 0);
+      assert(!idx);
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                             emit->nr_hw_temp++ );
       emit->temp_pos = emit->output_map[idx];

@@ -122,7 +122,7 @@ static inline void vl_rbsp_fillbits(struct vl_rbsp *rbsp)
  */
 static inline unsigned vl_rbsp_u(struct vl_rbsp *rbsp, unsigned n)
 {
-   if (n == 0)
+   if (!n)
       return 0;
 
    vl_rbsp_fillbits(rbsp);

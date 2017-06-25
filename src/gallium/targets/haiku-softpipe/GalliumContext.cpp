@@ -90,7 +90,7 @@ GalliumContext::CreateScreen()
 
 	fScreen = sw_screen_create(winsys);
 
-	if (fScreen == NULL) {
+	if (!fScreen) {
 		ERROR("%s: Couldn't create screen!\n", __FUNCTION__);
 		FREE(winsys);
 		return B_ERROR;

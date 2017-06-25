@@ -260,7 +260,7 @@ compile_vtx_fetch(struct fd2_compile_context *ctx)
 		ir2_reg_create(instr, i+1, "xyzw", 0);
 		ir2_reg_create(instr, 0, "x", 0);
 
-		if (i == 0)
+		if (!i)
 			instr->sync = true;
 
 		vfetch_instrs[i] = instr;

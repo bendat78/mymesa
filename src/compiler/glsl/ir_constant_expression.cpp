@@ -424,7 +424,7 @@ constant_referenced(const ir_dereference *deref,
    store = NULL;
    offset = 0;
 
-   if (variable_context == NULL)
+   if (!variable_context)
       return false;
 
    switch (deref->ir_type) {
@@ -483,7 +483,7 @@ constant_referenced(const ir_dereference *deref,
 
       /* Since we're dropping it on the floor...
        */
-      assert(suboffset == 0);
+      assert(!suboffset);
 
       store = substore->get_record_field(dr->field);
       break;
@@ -578,7 +578,7 @@ ldexp_flush_subnormal(double x, int exp)
 static uint32_t
 bitfield_extract_uint(uint32_t value, int offset, int bits)
 {
-   if (bits == 0)
+   if (!bits)
       return 0;
    else if (offset < 0 || bits < 0)
       return 0; /* Undefined, per spec. */
@@ -594,7 +594,7 @@ bitfield_extract_uint(uint32_t value, int offset, int bits)
 static int32_t
 bitfield_extract_int(int32_t value, int offset, int bits)
 {
-   if (bits == 0)
+   if (!bits)
       return 0;
    else if (offset < 0 || bits < 0)
       return 0; /* Undefined, per spec. */
@@ -610,7 +610,7 @@ bitfield_extract_int(int32_t value, int offset, int bits)
 static uint32_t
 bitfield_insert(uint32_t base, uint32_t insert, int offset, int bits)
 {
-   if (bits == 0)
+   if (!bits)
       return base;
    else if (offset < 0 || bits < 0)
       return 0; /* Undefined, per spec. */
@@ -711,7 +711,7 @@ ir_swizzle::constant_expression_value(struct hash_table *variable_context)
 {
    ir_constant *v = this->val->constant_expression_value(variable_context);
 
-   if (v != NULL) {
+   if (v) {
       ir_constant_data data = {};
 
       const unsigned swiz_idx[4] = {
@@ -768,7 +768,7 @@ ir_dereference_array::constant_expression_value(struct hash_table *variable_cont
    ir_constant *array = this->array->constant_expression_value(variable_context);
    ir_constant *idx = this->array_index->constant_expression_value(variable_context);
 
-   if ((array != NULL) && (idx != NULL)) {
+   if ((array) && (idx != NULL)) {
       void *ctx = ralloc_parent(this);
       if (array->type->is_matrix()) {
          /* Array access of a matrix results in a vector.
@@ -828,7 +828,7 @@ ir_dereference_record::constant_expression_value(struct hash_table *)
 {
    ir_constant *v = this->record->constant_expression_value();
 
-   return (v != NULL) ? v->get_record_field(this->field) : NULL;
+   return (v) ? v->get_record_field(this->field) : NULL;
 }
 
 
@@ -999,7 +999,7 @@ ir_function_signature::constant_expression_value(exec_list *actual_parameters, s
 
    foreach_in_list(ir_rvalue, n, actual_parameters) {
       ir_constant *constant = n->constant_expression_value(variable_context);
-      if (constant == NULL) {
+      if (!constant) {
          _mesa_hash_table_destroy(deref_hash, NULL);
          return NULL;
       }

@@ -646,7 +646,7 @@ ConstantFolding::expr(Instruction *i,
       int width = (b->data.u32 >> 8) & 0xff;
       int rshift = offset;
       int lshift = 0;
-      if (width == 0) {
+      if (!width) {
          res.data.u32 = 0;
          break;
       }
@@ -995,7 +995,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
          if (imm0.isNegative())
             i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
          i->op = i->src(t).mod.getOp();
-         if (s == 0) {
+         if (!s) {
             i->setSrc(0, i->getSrc(1));
             i->src(0).mod = i->src(1).mod;
             i->src(1).mod = 0;
@@ -1041,7 +1041,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
           (imm0.isInteger(1) || imm0.isInteger(-1))) {
          if (imm0.isNegative())
             i->src(t).mod = i->src(t).mod ^ Modifier(NV50_IR_MOD_NEG);
-         if (s == 0) {
+         if (!s) {
             i->setSrc(0, i->getSrc(1));
             i->src(0).mod = i->src(1).mod;
          }
@@ -1066,7 +1066,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       if (i->usesFlags())
          break;
       if (imm0.isInteger(0)) {
-         if (s == 0) {
+         if (!s) {
             i->setSrc(0, i->getSrc(1));
             i->src(0).mod = i->src(1).mod;
             if (i->op == OP_SUB)
@@ -1181,7 +1181,7 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       ccZ = (CondCode)((unsigned int)i->asCmp()->setCond & ~CC_U);
       // We do everything assuming var (cmp) 0, reverse the condition if 0 is
       // first.
-      if (s == 0)
+      if (!s)
          ccZ = reverseCondCode(ccZ);
       // If there is a negative modifier, we need to undo that, by flipping
       // the comparison to zero.
@@ -1562,7 +1562,7 @@ ModifierFolding::visit(BasicBlock *bb)
             mod = mod & Modifier(~(NV50_IR_MOD_NEG | NV50_IR_MOD_ABS));
          } else
          if ((i->op == OP_NEG) && mod.neg()) {
-            assert(s == 0);
+            assert(!s);
             // neg as both opcode and modifier on same insn is prohibited
             // neg neg abs = abs, neg neg = identity
             mod = mod & Modifier(~NV50_IR_MOD_NEG);

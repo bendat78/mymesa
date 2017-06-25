@@ -303,7 +303,7 @@ st_bufferobj_data(struct gl_context *ctx,
                    (int64_t) size, bind);
    }
 
-   if (size != 0) {
+   if (size) {
       struct pipe_resource buffer;
 
       memset(&buffer, 0, sizeof buffer);

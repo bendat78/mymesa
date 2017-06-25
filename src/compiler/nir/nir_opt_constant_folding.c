@@ -86,7 +86,7 @@ constant_fold_alu_instr(nir_alu_instr *instr, void *mem_ctx)
       assert(!instr->src[i].abs && !instr->src[i].negate);
    }
 
-   if (bit_size == 0)
+   if (!bit_size)
       bit_size = 32;
 
    /* We shouldn't have any saturate modifiers in the optimization loop. */

@@ -125,7 +125,7 @@ ir_print_visitor::unique_name(ir_variable *var)
    struct hash_entry * entry =
       _mesa_hash_table_search(this->printable_names, var);
 
-   if (entry != NULL) {
+   if (entry) {
       return (const char *) entry->data;
    }
 
@@ -476,7 +476,7 @@ void ir_print_visitor::visit(ir_constant *ir)
       }
    } else {
       for (unsigned i = 0; i < ir->type->components(); i++) {
-	 if (i != 0)
+	 if (i)
 	    fprintf(f, " ");
 	 switch (ir->type->base_type) {
 	 case GLSL_TYPE_UINT:  fprintf(f, "%u", ir->value.u[i]); break;

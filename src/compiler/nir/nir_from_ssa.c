@@ -259,7 +259,7 @@ static nir_parallel_copy_instr *
 get_parallel_copy_at_end_of_block(nir_block *block)
 {
    nir_instr *last_instr = nir_block_last_instr(block);
-   if (last_instr == NULL)
+   if (!last_instr)
       return NULL;
 
    /* The last instruction may be a jump in which case the parallel copy is
@@ -315,7 +315,7 @@ isolate_phi_nodes_block(nir_block *block, void *dead_ctx)
    }
 
    /* If we don't have any phis, then there's nothing for us to do. */
-   if (last_phi_instr == NULL)
+   if (!last_phi_instr)
       return true;
 
    /* If we have phi nodes, we need to create a parallel copy at the
@@ -594,7 +594,7 @@ resolve_parallel_copy(nir_parallel_copy_instr *pcopy,
       num_copies++;
    }
 
-   if (num_copies == 0) {
+   if (!num_copies) {
       /* Hooray, we don't need any copies! */
       nir_instr_remove(&pcopy->instr);
       return;
@@ -735,7 +735,7 @@ resolve_parallel_copies_block(nir_block *block, struct from_ssa_state *state)
     * first instruction.
     */
    nir_instr *first_instr = nir_block_first_instr(block);
-   if (first_instr == NULL)
+   if (!first_instr)
       return true; /* Empty, nothing to do. */
 
    if (first_instr->type == nir_instr_type_parallel_copy) {

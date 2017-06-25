@@ -203,7 +203,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
    GLuint i;
    gl_clip_plane *clip_planes;
 
-   if (sz == 0) {
+   if (!sz) {
       goto emit;
    }
 

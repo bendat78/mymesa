@@ -101,7 +101,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       __GLXDRIdrawable *pdraw;
 
       pdraw = dri2GetGlxDrawableFromXDrawableId(dpy, awire->drawable);
-      if (pdraw == NULL)
+      if (!pdraw)
          return False;
 
       /* Ignore swap events if we're not looking for them */
@@ -131,7 +131,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       aevent->msc = ((CARD64)awire->msc_hi << 32) | awire->msc_lo;
 
       glxDraw = GetGLXDrawable(dpy, pdraw->drawable);
-      if (glxDraw != NULL) {
+      if (glxDraw) {
          if (awire->sbc < glxDraw->lastEventSbc)
             glxDraw->eventSbcWrap += 0x100000000;
          glxDraw->lastEventSbc = awire->sbc;
@@ -287,7 +287,7 @@ DRI2Connect(Display * dpy, XID window, char **driverName, char **deviceName)
          uint32_t primeid;
          errno = 0;
          primeid = strtoul(prime, NULL, 0);
-         if (errno == 0)
+         if (!errno)
             req->driverType |=
                ((primeid & DRI2DriverPrimeMask) << DRI2DriverPrimeShift);
       }
@@ -434,7 +434,7 @@ DRI2GetBuffers(Display * dpy, XID drawable,
    *outCount = rep.count;
 
    buffers = malloc(rep.count * sizeof buffers[0]);
-   if (buffers == NULL) {
+   if (!buffers) {
       _XEatData(dpy, rep.count * sizeof repBuffer);
       UnlockDisplay(dpy);
       SyncHandle();
@@ -493,7 +493,7 @@ DRI2GetBuffersWithFormat(Display * dpy, XID drawable,
    *outCount = rep.count;
 
    buffers = malloc(rep.count * sizeof buffers[0]);
-   if (buffers == NULL) {
+   if (!buffers) {
       _XEatData(dpy, rep.count * sizeof repBuffer);
       UnlockDisplay(dpy);
       SyncHandle();
