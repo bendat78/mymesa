@@ -4461,9 +4461,8 @@ translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
        *
        * Gen8+ supports this natively.
        */
-         return TCM_HALF_BORDER;
-#endif
-
+      return TCM_HALF_BORDER;
+#else
       /* On Gen4-7.5, we clamp the coordinates in the fragment shader
        * and set clamp_border here, which gets the result desired.
        * We just use clamp(_to_edge) for nearest, because for nearest
@@ -4474,6 +4473,7 @@ translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
          return TCM_CLAMP;
       else
          return TCM_CLAMP_BORDER;
+#endif
    case GL_CLAMP_TO_EDGE:
       return TCM_CLAMP;
    case GL_CLAMP_TO_BORDER:
