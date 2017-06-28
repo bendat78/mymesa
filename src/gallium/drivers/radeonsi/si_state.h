@@ -234,15 +234,25 @@ struct si_descriptors {
 	/* The size of one descriptor. */
 	ubyte element_dw_size;
 	/* The maximum number of descriptors. */
-	ubyte num_elements;
+	uint32_t num_elements;
+
+	/* Offset in CE RAM */
+	uint16_t ce_offset;
+
+	/* Slots allocated in CE RAM. If we get active slots outside of this
+	 * range, direct uploads to memory will be used instead. This basically
+	 * governs switching between onchip (CE) and offchip (upload) modes.
+	 */
+	uint32_t first_ce_slot;
+	uint32_t num_ce_slots;
 
 	/* Slots that are used by currently-bound shaders.
 	 * With CE: It determines which slots are dumped to L2.
 	 *          It doesn't skip uploads to CE RAM.
 	 * Without CE: It determines which slots are uploaded.
 	 */
-	ubyte first_active_slot;
-	ubyte num_active_slots;
+	uint32_t first_active_slot;
+	uint32_t num_active_slots;
 
 	/* The SGPR index where the 64-bit pointer to the descriptor array will
 	 * be stored. */
