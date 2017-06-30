@@ -1,8 +1,8 @@
 AM_CFLAGS = \
-        $(PTHREAD_CFLAGS)
+	$(PTHREAD_CFLAGS)
 
 AM_CXXFLAGS = \
-        $(LLVM_CXXFLAGS)
+	$(LLVM_CXXFLAGS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gtest/include \
@@ -11,9 +11,9 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/src/mesa \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/include \
-        -I$(top_srcdir)/src/gallium/include \
-        -I$(top_srcdir)/src/gallium/auxiliary \
-	$(DEFINES) $(INCLUDE_DIRS)
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary \
+	$(DEFINES)
 
 TESTS = st-renumerate-test
 check_PROGRAMS = st-renumerate-test
@@ -22,19 +22,16 @@ st_renumerate_test_SOURCES =			\
 	test_glsl_to_tgsi_lifetime.cpp
 
 st_renumerate_test_LDFLAGS = \
-        $(LLVM_LDFLAGS)
+	$(LLVM_LDFLAGS)
 
 st_renumerate_test_LDADD = \
-        $(top_builddir)/src/mesa/libmesagallium.la \
-        $(top_builddir)/src/mapi/shared-glapi/libglapi.la \
-        $(top_builddir)/src/gallium/auxiliary/libgallium.la \
-        $(top_builddir)/src/util/libmesautil.la \
-        $(top_builddir)/src/gallium/drivers/trace/libtrace.la \
-        $(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
-        $(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \
-        $(top_builddir)/src/gtest/libgtest.la \
-        $(GALLIUM_COMMON_LIB_DEPS) \
-        $(LLVM_LIBS) \
+	$(top_builddir)/src/mesa/libmesagallium.la \
+	$(top_builddir)/src/mapi/shared-glapi/libglapi.la \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(top_builddir)/src/util/libmesautil.la \
+	$(top_builddir)/src/gtest/libgtest.la \
+	$(GALLIUM_COMMON_LIB_DEPS) \
+	$(LLVM_LIBS) \
 	$(PTHREAD_LIBS) \
-        $(DLOPEN_LIBS)
+	$(DLOPEN_LIBS)
 
