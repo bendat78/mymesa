@@ -21,94 +21,36 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#ifndef MESA_GLSL_TO_TGSI_TEMPRENAME_H
+#define MESA_GLSL_TO_TGSI_TEMPRENAME_H
+
 #include "st_glsl_to_tgsi_private.h"
-#include <memory>
-#include <map>
 
-class tgsi_temp_lifetime {
-public:
-
-   enum e_scope_type {
-      sct_outer,
-      sct_loop,
-      sct_if,
-      sct_else,
-      sct_switch,
-      sct_case,
-      sct_unknown
-   };
-
-   enum e_acc_type {
-      acc_read,
-      acc_write
-   };
-
-   class prog_scope {
-
-   public:
-      prog_scope(e_scope_type type, int id, int lvl, int s_begin);
-      prog_scope(std::shared_ptr<prog_scope> p, e_scope_type type, int id, int lvl, int s_begin);
-
-      e_scope_type type() const;
-      std::shared_ptr<prog_scope> parent() const;
-      int level() const;
-      int id() const;
-      int end() const;
-      int begin() const;
-      const prog_scope *in_ifelse() const;
-      const prog_scope *in_switchcase() const;
-      int loop_continue_idx() const;
-      bool in_loop() const;
-      const prog_scope *get_parent_loop() const;
-      bool is_conditional() const;
-      bool contains(const prog_scope& other) const;
-      void set_end(int end);
-      void set_previous(std::shared_ptr<prog_scope> prev);
-      void set_continue(std::weak_ptr<prog_scope> scope, int i);
-   private:
-      e_scope_type scope_type;
-      int scope_id;
-      int nested_level;
-      int scope_begin;
-      int scope_end;
-      int loop_continue;
-      std::weak_ptr<prog_scope> loop_to_continue_scope;
-      std::shared_ptr<prog_scope> previous;
-      std::shared_ptr<prog_scope> parent_scope;
-
-   };
-
-   class temp_access {
-
-   public:
-
-      void append(int index, e_acc_type rw, std::shared_ptr<prog_scope> pstate);
-      std::pair<int, int> get_required_lifetime() const;
-
-   private:
-
-      struct temp_access_record {
-         int index;
-         e_acc_type acc;
-         std::shared_ptr<prog_scope> pstate;
-      };
-
-      std::vector< temp_access_record > timeline;
-
-   };
-
-   tgsi_temp_lifetime(exec_list *instructions, int ntemps);
-
-   const std::vector<std::pair<int, int> >&  get_lifetimes() const;
-
-
-private:
-
-   void evaluate(exec_list *instructions);
-
-   std::vector<std::pair<int, int> > lifetimes;
+/** Storage to record the required life time of a temporary register
+ * begin == end == -1 indicates that the register can be reused without
+ * limitations. Otherwise, "begin" indicates the first instruction in which
+ * a write operation may target this temporary, and end indicates the
+ * last instruction in which a value can be read from this temporary.
+ * Hence, a register R2 can be merged with a register R1 if R1.end <= R2.begin.
+ */
+struct lifetime {
+   int begin;
+   int end;
 };
 
-void evaluate_remapping(const std::vector<std::pair<int, int>>& lt, std::vector<rename_reg_pair>& result);
+/** Evaluates the required life times of temporary registers in a shader
+ * @param[in] mem_ctx a memory context that can be used with the ralloc_* functions
+ * @param[in] instructions the shader to be anlzyed
+ * @param[in] ntemps number of temporaries reserved for this shader
+ * @param[in,out] lifetimes memory location to store the estimated required
+ *   life times for each temporary register. The parameter must point to
+ *   allocated memory that can hold ntemps lifetime structures. On output
+ *   the life times contains the life times for the registers with the
+ *   exception of TEMP[0].
+ */
+void
+get_temp_registers_required_lifetimes(void *mem_ctx, exec_list *instructions,
+                                      int ntemps, struct lifetime *lifetimes);
 
+#endif
 
