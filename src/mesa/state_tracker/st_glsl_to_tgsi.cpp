@@ -55,7 +55,7 @@
 #include "st_format.h"
 #include "st_nir.h"
 #include "st_shader_cache.h"
-#include "st_glsl_to_tgsi_private.h"
+#include "st_glsl_to_tgsi_temprename.h"
 
 #include "util/hash_table.h"
 #include <algorithm>
@@ -576,7 +576,7 @@ glsl_to_tgsi_visitor::emit_asm(ir_instruction *ir, unsigned op,
                if (swz > 1) {
                   dinst->src[j].double_reg2 = true;
                   dinst->src[j].index++;
-	       }
+               }
 
                if (swz & 1)
                   dinst->src[j].swizzle = MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_W, SWIZZLE_Z, SWIZZLE_W);
@@ -2556,8 +2556,8 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
    if (index) {
 
       if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
-	  src.file == PROGRAM_INPUT)
-	 element_size = attrib_type_size(ir->type, true);
+          src.file == PROGRAM_INPUT)
+         element_size = attrib_type_size(ir->type, true);
       if (is_2D) {
          src.index2D = index->value.i[0];
          src.has_index2 = true;
@@ -2842,8 +2842,8 @@ glsl_to_tgsi_visitor::emit_block_mov(ir_assignment *ir, const struct glsl_type *
    r->index++;
    if (type->is_dual_slot()) {
       l->index++;
-      if (!r->is_double_vertex_input)
-	 r->index++;
+      if (r->is_double_vertex_input == false)
+         r->index++;
    }
 }
 
@@ -5149,54 +5149,20 @@ glsl_to_tgsi_visitor::merge_registers_alternative(void)
 void
 glsl_to_tgsi_visitor::merge_registers(void)
 {
-   int *last_reads = ralloc_array(mem_ctx, int, this->next_temp);
-   int *first_writes = ralloc_array(mem_ctx, int, this->next_temp);
-   struct rename_reg_pair *renames = rzalloc_array(mem_ctx, struct rename_reg_pair, this->next_temp);
-   int i, j;
 
-   /* Read the indices of the last read and first write to each temp register
-    * into an array so that we don't have to traverse the instruction list as
-    * much. */
-   for (i = 0; i < this->next_temp; i++) {
-      last_reads[i] = -1;
-      first_writes[i] = -1;
-   }
-   get_last_temp_read_first_temp_write(last_reads, first_writes);
+   struct lifetime *lifetimes =
+         rzalloc_array(mem_ctx, struct lifetime, this->next_temp);
 
-   /* Start looking for registers with non-overlapping usages that can be
-    * merged together. */
-   for (i = 0; i < this->next_temp; i++) {
-      /* Don't touch unused registers. */
-      if (last_reads[i] < 0 || first_writes[i] < 0) continue;
-
-      for (j = 0; j < this->next_temp; j++) {
-         /* Don't touch unused registers. */
-         if (last_reads[j] < 0 || first_writes[j] < 0) continue;
-
-         /* We can merge the two registers if the first write to j is after or
-          * in the same instruction as the last read from i.  Note that the
-          * register at index i will always be used earlier or at the same time
-          * as the register at index j. */
-         if (first_writes[i] <= first_writes[j] &&
-             last_reads[i] <= first_writes[j]) {
-            renames[j].new_reg = i;
-            renames[j].valid = true;
-
-            /* Update the first_writes and last_reads arrays with the new
-             * values for the merged register index, and mark the newly unused
-             * register index as such. */
-            assert(last_reads[j] >= last_reads[i]);
-            last_reads[i] = last_reads[j];
-            first_writes[j] = -1;
-            last_reads[j] = -1;
-         }
-      }
+   if (get_temp_registers_required_lifetimes(mem_ctx, &this->instructions,
+                                             this->next_temp, lifetimes)) {
+      struct rename_reg_pair *renames =
+            rzalloc_array(mem_ctx, struct rename_reg_pair, this->next_temp);
+      get_temp_registers_remapping(mem_ctx, this->next_temp, lifetimes, renames);
+      rename_temp_registers(renames);
+      ralloc_free(renames);
    }
 
-   rename_temp_registers(renames);
-   ralloc_free(renames);
-   ralloc_free(last_reads);
-   ralloc_free(first_writes);
+   ralloc_free(lifetimes);
 }
 
 /* Reassign indices to temporary registers by reusing unused indices created
