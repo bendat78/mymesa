@@ -516,7 +516,6 @@ dri2_open_driver(_EGLDisplay *disp)
       /* not need continue to loop all paths once the driver is found */
       if (dri2_dpy->driver)
          break;
-
 #ifdef ANDROID
       snprintf(path, sizeof path, "%.*s/gallium_dri.so", len, p);
       dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);

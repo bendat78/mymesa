@@ -278,17 +278,20 @@ static struct intel_image_format intel_image_formats[] = {
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
        { 1, 1, 0, __DRI_IMAGE_FORMAT_GR88, 2 } } },
 
-   /* For YUYV buffers, we set up two overlapping DRI images and treat
-    * them as planar buffers in the compositors.  Plane 0 is GR88 and
-    * samples YU or YV pairs and places Y into the R component, while
-    * plane 1 is ARGB and samples YUYV clusters and places pairs and
-    * places U into the G component and V into A.  This lets the
-    * texture sampler interpolate the Y components correctly when
-    * sampling from plane 0, and interpolate U and V correctly when
-    * sampling from plane 1. */
+   /* For YUYV and UYVY buffers, we set up two overlapping DRI images
+    * and treat them as planar buffers in the compositors.
+    * Plane 0 is GR88 and samples YU or YV pairs and places Y into
+    * the R component, while plane 1 is ARGB/ABGR and samples YUYV/UYVY
+    * clusters and places pairs and places U into the G component and
+    * V into A.  This lets the texture sampler interpolate the Y
+    * components correctly when sampling from plane 0, and interpolate
+    * U and V correctly when sampling from plane 1. */
    { __DRI_IMAGE_FOURCC_YUYV, __DRI_IMAGE_COMPONENTS_Y_XUXV, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_GR88, 2 },
-       { 0, 1, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } }
+       { 0, 1, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } },
+   { __DRI_IMAGE_FOURCC_UYVY, __DRI_IMAGE_COMPONENTS_Y_UXVX, 2,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_GR88, 2 },
+       { 0, 1, 0, __DRI_IMAGE_FORMAT_ABGR8888, 4 } } }
 };
 
 static const struct {
@@ -1717,7 +1720,28 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    static const mesa_format formats[] = {
       MESA_FORMAT_B5G6R5_UNORM,
       MESA_FORMAT_B8G8R8A8_UNORM,
-      MESA_FORMAT_B8G8R8X8_UNORM
+      MESA_FORMAT_B8G8R8X8_UNORM,
+
+      /* The 32-bit RGBA format must not precede the 32-bit BGRA format.
+       * Likewise for RGBX and BGRX.  Otherwise, the GLX client and the GLX
+       * server may disagree on which format the GLXFBConfig represents,
+       * resulting in swapped color channels.
+       *
+       * The problem, as of 2017-05-30:
+       * When matching a GLXFBConfig to a __DRIconfig, GLX ignores the channel
+       * order and chooses the first __DRIconfig with the expected channel
+       * sizes. Specifically, GLX compares the GLXFBConfig's and __DRIconfig's
+       * __DRI_ATTRIB_{CHANNEL}_SIZE but ignores __DRI_ATTRIB_{CHANNEL}_MASK.
+       *
+       * EGL does not suffer from this problem. It correctly compares the
+       * channel masks when matching EGLConfig to __DRIconfig.
+       */
+
+      /* Required by Android, for HAL_PIXEL_FORMAT_RGBA_8888. */
+      MESA_FORMAT_R8G8B8A8_UNORM,
+
+      /* Required by Android, for HAL_PIXEL_FORMAT_RGBX_8888. */
+      MESA_FORMAT_R8G8B8X8_UNORM,
    };
 
    /* GLX_SWAP_COPY_OML is not supported due to page flipping. */

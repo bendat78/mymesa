@@ -2535,8 +2535,11 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	 * (after FMASK decompression). Shader write -> FB read transitions
 	 * cannot happen for MSAA textures, because MSAA shader images are
 	 * not supported.
+	 *
+	 * Only flush and wait for CB if there is actually a bound color buffer.
 	 */
-	if (sctx->framebuffer.nr_samples <= 1) {
+	if (sctx->framebuffer.nr_samples <= 1 &&
+	    sctx->framebuffer.state.nr_cbufs) {
 		sctx->b.flags |= SI_CONTEXT_INV_VMEM_L1 |
 				 SI_CONTEXT_INV_GLOBAL_L2 |
 				 SI_CONTEXT_FLUSH_AND_INV_CB;
@@ -3770,6 +3773,11 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 		if (elements[i].instance_divisor) {
 			v->uses_instance_divisors = true;
 			v->instance_divisors[i] = elements[i].instance_divisor;
+
+			if (v->instance_divisors[i] == 1)
+				v->instance_divisor_is_one |= 1u << i;
+			else
+				v->instance_divisor_is_fetched |= 1u << i;
 		}
 
 		if (!used[vbo_index]) {
@@ -3898,6 +3906,16 @@ static void si_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	     v->uses_instance_divisors || /* we don't check which divisors changed */
 	     memcmp(old->fix_fetch, v->fix_fetch, sizeof(v->fix_fetch[0]) * v->count)))
 		sctx->do_update_shaders = true;
+
+	if (v && v->instance_divisor_is_fetched) {
+		struct pipe_constant_buffer cb;
+
+		cb.buffer = NULL;
+		cb.user_buffer = v->instance_divisors;
+		cb.buffer_offset = 0;
+		cb.buffer_size = sizeof(uint32_t) * v->count;
+		si_set_rw_buffer(sctx, SI_VS_CONST_INSTANCE_DIVISORS, &cb);
+	}
 }
 
 static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
@@ -3972,7 +3990,8 @@ static void si_texture_barrier(struct pipe_context *ctx, unsigned flags)
 	struct si_context *sctx = (struct si_context *)ctx;
 
 	/* Multisample surfaces are flushed in si_decompress_textures. */
-	if (sctx->framebuffer.nr_samples <= 1) {
+	if (sctx->framebuffer.nr_samples <= 1 &&
+	    sctx->framebuffer.state.nr_cbufs) {
 		sctx->b.flags |= SI_CONTEXT_INV_VMEM_L1 |
 				 SI_CONTEXT_INV_GLOBAL_L2 |
 				 SI_CONTEXT_FLUSH_AND_INV_CB;
@@ -4018,7 +4037,8 @@ static void si_memory_barrier(struct pipe_context *ctx, unsigned flags)
 	 * si_decompress_textures when needed.
 	 */
 	if (flags & PIPE_BARRIER_FRAMEBUFFER &&
-	    sctx->framebuffer.nr_samples <= 1) {
+	    sctx->framebuffer.nr_samples <= 1 &&
+	    sctx->framebuffer.state.nr_cbufs) {
 		sctx->b.flags |= SI_CONTEXT_FLUSH_AND_INV_CB |
 				 SI_CONTEXT_WRITEBACK_GLOBAL_L2;
 	}

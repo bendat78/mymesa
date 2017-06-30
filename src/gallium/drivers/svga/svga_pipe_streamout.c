@@ -157,7 +157,6 @@ enum pipe_error
 svga_set_stream_output(struct svga_context *svga,
                        struct svga_stream_output *streamout)
 {
-   enum pipe_error ret = PIPE_OK;
    unsigned id = streamout ? streamout->id : SVGA3D_INVALID_ID;
 
    if (!svga_have_vgpu10(svga)) {
@@ -168,17 +167,15 @@ svga_set_stream_output(struct svga_context *svga,
             streamout, id);
 
    if (svga->current_so != streamout) {
-      /* Save current SO state */
-      svga->current_so = streamout;
-
-      ret = SVGA3D_vgpu10_SetStreamOutput(svga->swc, id);
+      enum pipe_error ret = SVGA3D_vgpu10_SetStreamOutput(svga->swc, id);
       if (ret != PIPE_OK) {
-         svga_context_flush(svga, NULL);
-         ret = SVGA3D_vgpu10_SetStreamOutput(svga->swc, id);
+         return ret;
       }
+
+      svga->current_so = streamout;
    }
 
-   return ret;
+   return PIPE_OK;
 }
 
 void
@@ -276,13 +273,14 @@ svga_set_stream_output_targets(struct pipe_context *pipe,
    for (i = 0; i < num_targets; i++) {
       struct svga_stream_output_target *sot
          = svga_stream_output_target(targets[i]);
-      struct svga_buffer *sbuf = svga_buffer(sot->base.buffer);
       unsigned size;
 
-      assert(sbuf->key.flags & SVGA3D_SURFACE_BIND_STREAM_OUTPUT);
-      (void) sbuf;
+      svga->so_surfaces[i] = svga_buffer_handle(svga, sot->base.buffer,
+                                                PIPE_BIND_STREAM_OUTPUT);
 
-      svga->so_surfaces[i] = svga_buffer_handle(svga, sot->base.buffer);
+      assert(svga_buffer(sot->base.buffer)->key.flags
+             & SVGA3D_SURFACE_BIND_STREAM_OUTPUT);
+
       svga->so_targets[i] = &sot->base;
       soBindings[i].offset = sot->base.buffer_offset;
 
