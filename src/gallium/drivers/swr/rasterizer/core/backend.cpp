@@ -30,14 +30,13 @@
 #include <smmintrin.h>
 
 #include "backend.h"
+#include "backend_impl.h"
 #include "tilemgr.h"
 #include "memory/tilingtraits.h"
 #include "core/multisample.h"
+#include "backends/gen_BackendPixelRate.hpp"
 
 #include <algorithm>
-
-typedef void(*PFN_CLEAR_TILES)(DRAW_CONTEXT*, SWR_RENDERTARGET_ATTACHMENT rt, uint32_t, uint32_t, DWORD[4], const SWR_RECT& rect);
-static PFN_CLEAR_TILES sClearTilesTable[NUM_SWR_FORMATS];
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -336,6 +335,7 @@ void ProcessClearBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, vo
 }
 
 void ProcessStoreTileBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, STORE_TILES_DESC* pDesc,
+
     SWR_RENDERTARGET_ATTACHMENT attachment)
 {
     SWR_CONTEXT *pContext = pDC->pContext;
@@ -368,7 +368,7 @@ void ProcessStoreTileBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile
         // clear if clear is pending (i.e., not rendered to), then mark as dirty for store.
         if (pHotTile->state == HOTTILE_CLEAR)
         {
-            PFN_CLEAR_TILES pfnClearTiles = sClearTilesTable[srcFormat];
+            PFN_CLEAR_TILES pfnClearTiles = gClearTilesTable[srcFormat];
             SWR_ASSERT(pfnClearTiles != nullptr);
 
             pfnClearTiles(pDC, attachment, macroTile, pHotTile->renderTargetArrayIndex, pHotTile->clearData, pDesc->rect);
@@ -429,6 +429,7 @@ void ProcessDiscardInvalidateTilesBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint3
     }
 }
 
+<<<<<<< HEAD
 #if KNOB_SIMD_WIDTH == 8
 const simdscalar vCenterOffsetsX = __m256{0.5, 1.5, 0.5, 1.5, 2.5, 3.5, 2.5, 3.5};
 const simdscalar vCenterOffsetsY = __m256{0.5, 0.5, 1.5, 1.5, 0.5, 0.5, 1.5, 1.5};
@@ -880,6 +881,8 @@ Endtile:
     AR_END(BESampleRateBackend, 0);
 }
 // optimized backend flow with NULL PS
+=======
+>>>>>>> f78aa2c9864d26e50df0729b94deb24701d95871
 template<uint32_t sampleCountT>
 void BackendNullPS(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t x, uint32_t y, SWR_TRIANGLE_DESC &work, RenderOutputBuffers &renderBuffers)
 {
@@ -977,7 +980,7 @@ void BackendNullPS(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t x, uint32_t y,
                     UPDATE_STAT_BE(DepthPassCount, statCount);
                 }
 
-Endtile:
+            Endtile:
                 ATTR_UNUSED;
                 work.coverageMask[sample] >>= (SIMD_TILE_Y_DIM * SIMD_TILE_X_DIM);
             }
@@ -994,17 +997,7 @@ Endtile:
     AR_END(BENullBackend, 0);
 }
 
-void InitClearTilesTable()
-{
-    memset(sClearTilesTable, 0, sizeof(sClearTilesTable));
-
-    sClearTilesTable[R8G8B8A8_UNORM] = ClearMacroTile<R8G8B8A8_UNORM>;
-    sClearTilesTable[B8G8R8A8_UNORM] = ClearMacroTile<B8G8R8A8_UNORM>;
-    sClearTilesTable[R32_FLOAT] = ClearMacroTile<R32_FLOAT>;
-    sClearTilesTable[R32G32B32A32_FLOAT] = ClearMacroTile<R32G32B32A32_FLOAT>;
-    sClearTilesTable[R8_UINT] = ClearMacroTile<R8_UINT>;
-}
-
+PFN_CLEAR_TILES gClearTilesTable[NUM_SWR_FORMATS] = {};
 PFN_BACKEND_FUNC gBackendNullPs[SWR_MULTISAMPLE_TYPE_COUNT];
 PFN_BACKEND_FUNC gBackendSingleSample[SWR_INPUT_COVERAGE_COUNT]
                                      [2] // centroid
@@ -1023,6 +1016,7 @@ PFN_BACKEND_FUNC gBackendSampleRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
                                         [2] // canEarlyZ
                                         = {};
 
+<<<<<<< HEAD
 // Recursive template used to auto-nest conditionals.  Converts dynamic enum function
 // arguments to static template arguments.
 template <uint32_t... ArgsT>
@@ -1128,8 +1122,12 @@ void InitBackendSampleFuncTable(PFN_BACKEND_FUNC (&table)[SWR_MULTISAMPLE_TYPE_C
 void InitBackendPixelRate0();
 void InitBackendFuncTables()
 {
+=======
+void InitBackendFuncTables()
+{    
+    InitBackendPixelRate();
+>>>>>>> f78aa2c9864d26e50df0729b94deb24701d95871
     InitBackendSingleFuncTable(gBackendSingleSample);
-    InitBackendPixelRate0();
     InitBackendSampleFuncTable(gBackendSampleRateTable);
 
     gBackendNullPs[SWR_MULTISAMPLE_1X] = &BackendNullPS < SWR_MULTISAMPLE_1X > ;

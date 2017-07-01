@@ -40,17 +40,6 @@ void ProcessClearBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, vo
 void ProcessStoreTilesBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, void *pData);
 void ProcessDiscardInvalidateTilesBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, void *pData);
 void ProcessShutdownBE(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTile, void *pUserData);
-void BackendNullPS(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t x, uint32_t y, SWR_TRIANGLE_DESC &work, RenderOutputBuffers &renderBuffers);
-simdmask ComputeUserClipMask(uint8_t clipMask, float* pUserClipBuffer, simdscalar vI, simdscalar vJ);
-void CalcSampleBarycentrics(const BarycentricCoeffs& coeffs, SWR_PS_CONTEXT &psContext);
-
-extern PFN_BACKEND_FUNC gBackendPixelRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
-                                              [2]   // isCenterPattern
-                                              [SWR_INPUT_COVERAGE_COUNT]
-                                              [2]  // centroid
-                                              [2]  // forcedSampleCount
-                                              [2]  // canEarlyZ
-                                              ;
 
 enum SWR_BACKEND_FUNCS
 {
@@ -1047,15 +1036,23 @@ Endtile:
     AR_END(BEPixelRateBackend, 0);
 }
 
-template<uint32_t sampleCountT = SWR_MULTISAMPLE_1X, uint32_t isCenter = 0,
-         uint32_t coverage = 0, uint32_t centroid = 0, uint32_t forced = 0, uint32_t canEarlyZ = 0
-    >
-struct SwrBackendTraits
-{
-    static const bool bIsCenterPattern = (isCenter == 1);
-    static const uint32_t InputCoverage = coverage;
-    static const bool bCentroidPos = (centroid == 1);
-    static const bool bForcedSampleCount = (forced == 1);
-    static const bool bCanEarlyZ = (canEarlyZ == 1);
-    typedef MultisampleTraits<(SWR_MULTISAMPLE_COUNT)sampleCountT, bIsCenterPattern> MultisampleT;
-};
+typedef void(*PFN_CLEAR_TILES)(DRAW_CONTEXT*, SWR_RENDERTARGET_ATTACHMENT rt, uint32_t, uint32_t, DWORD[4], const SWR_RECT& rect);
+
+extern PFN_CLEAR_TILES gClearTilesTable[NUM_SWR_FORMATS];
+extern PFN_BACKEND_FUNC gBackendNullPs[SWR_MULTISAMPLE_TYPE_COUNT];
+extern PFN_BACKEND_FUNC gBackendSingleSample[SWR_INPUT_COVERAGE_COUNT]
+                                     [2]  // centroid
+                                     [2]; // canEarlyZ
+extern PFN_BACKEND_FUNC gBackendPixelRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
+                                       [2] // isCenterPattern
+                                       [SWR_INPUT_COVERAGE_COUNT]
+                                       [2] // centroid
+                                       [2] // forcedSampleCount
+                                       [2] // canEarlyZ
+                                       ;
+extern PFN_BACKEND_FUNC gBackendSampleRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
+                                        [SWR_INPUT_COVERAGE_COUNT]
+                                        [2]  // centroid
+                                        [2]; // canEarlyZ
+
+

@@ -62,8 +62,8 @@ GCJFLAGS="-O3 -fstack-protector-strong" \
 LDFLAGS="-Wl,-Bsymbolic-functions -Wl,-z,relro" \
 OBJCFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security" \
 OBJCXXFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security" \
-CC=clang-5.0 \
-CXX=clang++-5.0
+CC=gcc \
+CXX=g++
 
 make -j4
 
