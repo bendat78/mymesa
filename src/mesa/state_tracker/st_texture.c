@@ -55,14 +55,14 @@
 struct pipe_resource *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,
-		  enum pipe_format format,
-		  GLuint last_level,
-		  GLuint width0,
-		  GLuint height0,
-		  GLuint depth0,
+                  enum pipe_format format,
+                  GLuint last_level,
+                  GLuint width0,
+                  GLuint height0,
+                  GLuint depth0,
                   GLuint layers,
                   GLuint nr_samples,
-                  GLuint bind )
+                  GLuint bind)
 {
    struct pipe_resource pt, *newtex;
    struct pipe_screen *screen = st->pipe->screen;
@@ -315,6 +315,7 @@ st_texture_image_unmap(struct st_context *st,
    *transfer = NULL;
 }
 
+
 /**
  * For debug only: get/print center pixel in the src resource.
  */
@@ -420,6 +421,7 @@ st_create_color_map_texture(struct gl_context *ctx)
                           texSize, texSize, 1, 1, 0, PIPE_BIND_SAMPLER_VIEW);
    return pt;
 }
+
 
 /**
  * Destroy bound texture handles for the given stage.
