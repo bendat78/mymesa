@@ -747,7 +747,6 @@ _vtn_block_load_store(struct vtn_builder *b, nir_intrinsic_op op, bool load,
                per_comp[i] = comp->def;
             }
 
-<<<<<<< HEAD
             if (load && type->row_major)
                *inout = vtn_ssa_transpose(b, *inout);
          } else if (type->row_major) {
@@ -798,15 +797,15 @@ _vtn_block_load_store(struct vtn_builder *b, nir_intrinsic_op op, bool load,
 
                   (*inout)->def = nir_vec(&b->nb, comps, num_comps);
                }
-=======
+
             if (load) {
                if (*inout == NULL)
                   *inout = vtn_create_ssa_value(b, type->type);
                (*inout)->def = nir_vec(&b->nb, per_comp, elems);
->>>>>>> 9ac55e8219e1f6abeab3c779c8fe710c2bc25f2b
+
             }
          }
-<<<<<<< HEAD
+
       } else if (!chain) {
          /* Single whole vector */
          assert(glsl_type_is_vector_or_scalar(type->type));
@@ -823,8 +822,7 @@ _vtn_block_load_store(struct vtn_builder *b, nir_intrinsic_op op, bool load,
                                access_offset, access_size,
                                NULL, 0,
                                type->array_element, inout);
-=======
->>>>>>> 9ac55e8219e1f6abeab3c779c8fe710c2bc25f2b
+
       }
       return;
 
