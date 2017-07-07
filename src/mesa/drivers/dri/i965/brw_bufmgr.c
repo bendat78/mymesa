@@ -204,7 +204,7 @@ brw_bo_busy(struct brw_bo *bo)
    busy.handle = bo->gem_handle;
 
    ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_BUSY, &busy);
-   if (!ret) {
+   if (ret == 0) {
       bo->idle = !busy.busy;
       return busy.busy;
    }
@@ -264,7 +264,7 @@ bo_alloc_internal(struct brw_bufmgr *bufmgr,
    /* If we don't have caching at this size, don't actually round the
     * allocation up.
     */
-   if (!bucket) {
+   if (bucket == NULL) {
       bo_size = size;
       if (bo_size < page_size)
          bo_size = page_size;
@@ -330,7 +330,7 @@ retry:
       create.size = bo_size;
 
       ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_CREATE, &create);
-      if (ret) {
+      if (ret != 0) {
          free(bo);
          goto err;
       }
@@ -454,7 +454,7 @@ brw_bo_gem_create_from_name(struct brw_bufmgr *bufmgr,
    memclear(open_arg);
    open_arg.name = handle;
    ret = drmIoctl(bufmgr->fd, DRM_IOCTL_GEM_OPEN, &open_arg);
-   if (ret) {
+   if (ret != 0) {
       DBG("Couldn't reference %s handle 0x%08x: %s\n",
           name, handle, strerror(errno));
       bo = NULL;
@@ -490,7 +490,7 @@ brw_bo_gem_create_from_name(struct brw_bufmgr *bufmgr,
    memclear(get_tiling);
    get_tiling.handle = bo->gem_handle;
    ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_GET_TILING, &get_tiling);
-   if (ret)
+   if (ret != 0)
       goto err_unref;
 
    bo->tiling_mode = get_tiling.tiling_mode;
@@ -539,7 +539,7 @@ bo_free(struct brw_bo *bo)
    memclear(close);
    close.handle = bo->gem_handle;
    ret = drmIoctl(bufmgr->fd, DRM_IOCTL_GEM_CLOSE, &close);
-   if (ret) {
+   if (ret != 0) {
       DBG("DRM_IOCTL_GEM_CLOSE %d failed (%s): %s\n",
           bo->gem_handle, bo->name, strerror(errno));
    }
@@ -597,7 +597,7 @@ bo_unreference_final(struct brw_bo *bo, time_t time)
 void
 brw_bo_unreference(struct brw_bo *bo)
 {
-   if (!bo)
+   if (bo == NULL)
       return;
 
    assert(p_atomic_read(&bo->refcount) > 0);
@@ -678,7 +678,7 @@ brw_bo_map_cpu(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
       mmap_arg.handle = bo->gem_handle;
       mmap_arg.size = bo->size;
       int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_MMAP, &mmap_arg);
-      if (ret) {
+      if (ret != 0) {
          ret = -errno;
          DBG("%s:%d: Error mapping buffer %d (%s): %s .\n",
              __FILE__, __LINE__, bo->gem_handle, bo->name, strerror(errno));
@@ -710,7 +710,7 @@ brw_bo_map_gtt(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
    struct brw_bufmgr *bufmgr = bo->bufmgr;
 
    /* Get a mapping of the buffer if we haven't before. */
-   if (!bo->map_gtt) {
+   if (bo->map_gtt == NULL) {
       struct drm_i915_gem_mmap_gtt mmap_arg;
       void *map;
 
@@ -721,7 +721,7 @@ brw_bo_map_gtt(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
 
       /* Get the fake offset back... */
       int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_MMAP_GTT, &mmap_arg);
-      if (ret) {
+      if (ret != 0) {
          DBG("%s:%d: Error preparing buffer map %d (%s): %s .\n",
              __FILE__, __LINE__, bo->gem_handle, bo->name, strerror(errno));
          pthread_mutex_unlock(&bufmgr->lock);
@@ -795,7 +795,7 @@ brw_bo_subdata(struct brw_bo *bo, uint64_t offset,
    pwrite.size = size;
    pwrite.data_ptr = (uint64_t) (uintptr_t) data;
    ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_PWRITE, &pwrite);
-   if (ret) {
+   if (ret != 0) {
       ret = -errno;
       DBG("%s:%d: Error writing data to buffer %d: "
           "(%"PRIu64" %"PRIu64") %s .\n",
@@ -819,7 +819,7 @@ brw_bo_get_subdata(struct brw_bo *bo, uint64_t offset,
    pread.size = size;
    pread.data_ptr = (uint64_t) (uintptr_t) data;
    ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_PREAD, &pread);
-   if (ret) {
+   if (ret != 0) {
       ret = -errno;
       DBG("%s:%d: Error reading data from buffer %d: "
           "(%"PRIu64" %"PRIu64") %s .\n",
@@ -1116,7 +1116,7 @@ brw_create_hw_context(struct brw_bufmgr *bufmgr)
 
    memclear(create);
    ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &create);
-   if (ret) {
+   if (ret != 0) {
       DBG("DRM_IOCTL_I915_GEM_CONTEXT_CREATE failed: %s\n", strerror(errno));
       return 0;
    }
@@ -1163,7 +1163,7 @@ brw_bufmgr_init(struct gen_device_info *devinfo, int fd, int batch_size)
    struct brw_bufmgr *bufmgr;
 
    bufmgr = calloc(1, sizeof(*bufmgr));
-   if (!bufmgr)
+   if (bufmgr == NULL)
       return NULL;
 
    /* Handles to buffer objects belong to the device fd and are not
