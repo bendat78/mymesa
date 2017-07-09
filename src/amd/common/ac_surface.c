@@ -152,10 +152,11 @@ static ADDR_E_RETURNCODE ADDR_API freeSysMem(const ADDR_FREESYSMEM_INPUT * pInpu
 ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
 			       const struct amdgpu_gpu_info *amdinfo)
 {
-	ADDR_CREATE_INPUT addrCreateInput = {};
-	ADDR_CREATE_OUTPUT addrCreateOutput = {};
-	ADDR_REGISTER_VALUE regValue = {};
-	ADDR_CREATE_FLAGS createFlags = {};
+	ADDR_CREATE_INPUT addrCreateInput = {0};
+	ADDR_CREATE_OUTPUT addrCreateOutput = {0};
+	ADDR_REGISTER_VALUE regValue = {0};
+	ADDR_CREATE_FLAGS createFlags = {{0}};
+	ADDR_GET_MAX_ALIGNMENTS_OUTPUT addrGetMaxAlignmentsOutput = {0};
 	ADDR_E_RETURNCODE addrRet;
 
 	addrCreateInput.size = sizeof(ADDR_CREATE_INPUT);
