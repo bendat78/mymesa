@@ -891,8 +891,8 @@ void anv_GetPhysicalDeviceProperties(
       .sparseProperties = {}, /* Broadwell doesn't do sparse. */
    };
 
-   snprintf(pProperties->deviceName, sizeof(pProperties->deviceName),
-            "%s", pdevice->name);
+   strncpy(pProperties->deviceName, pdevice->name,
+           VK_MAX_PHYSICAL_DEVICE_NAME_SIZE);
    memcpy(pProperties->pipelineCacheUUID,
           pdevice->pipeline_cache_uuid, VK_UUID_SIZE);
 }
