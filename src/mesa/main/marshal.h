@@ -253,4 +253,28 @@ void GLAPIENTRY
 _mesa_marshal_ClearBufferfv(GLenum buffer, GLint drawbuffer,
                             const GLfloat *value);
 
+void
+_mesa_unmarshal_ClearBufferiv(struct gl_context *ctx,
+                              const struct marshal_cmd_ClearBuffer *cmd);
+
+void GLAPIENTRY
+_mesa_marshal_ClearBufferiv(GLenum buffer, GLint drawbuffer,
+                            const GLint *value);
+
+void
+_mesa_unmarshal_ClearBufferuiv(struct gl_context *ctx,
+                               const struct marshal_cmd_ClearBuffer *cmd);
+
+void GLAPIENTRY
+_mesa_marshal_ClearBufferuiv(GLenum buffer, GLint drawbuffer,
+                             const GLuint *value);
+
+void
+_mesa_unmarshal_ClearBufferfi(struct gl_context *ctx,
+                              const struct marshal_cmd_ClearBuffer *cmd);
+
+void GLAPIENTRY
+_mesa_marshal_ClearBufferfi(GLenum buffer, GLint drawbuffer,
+                            const GLfloat depth, const GLint stencil);
+
 #endif /* MARSHAL_H */
