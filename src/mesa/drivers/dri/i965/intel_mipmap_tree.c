@@ -981,9 +981,89 @@ intel_miptree_create_for_bo(struct brw_context *brw,
    if (!(layout_flags & MIPTREE_LAYOUT_DISABLE_AUX)) {
       intel_miptree_choose_aux_usage(brw, mt);
 
-      /* Since CCS_E can compress more than just clear color, we create the
-       * CCS for it up-front.  For CCS_D which only compresses clears, we
-       * create the CCS on-demand when a clear occurs that wants one.
+   return mt;
+}
+
+static struct intel_mipmap_tree *
+miptree_create_for_planar_image(struct brw_context *brw,
+                                __DRIimage *image, GLenum target)
+{
+   struct intel_image_format *f = image->planar_format;
+   struct intel_mipmap_tree *planar_mt = NULL;
+
+   for (int i = 0; i < f->nplanes; i++) {
+      const int index = f->planes[i].buffer_index;
+      const uint32_t dri_format = f->planes[i].dri_format;
+      const mesa_format format = driImageFormatToGLFormat(dri_format);
+      const uint32_t width = image->width >> f->planes[i].width_shift;
+      const uint32_t height = image->height >> f->planes[i].height_shift;
+
+      /* Disable creation of the texture's aux buffers because the driver
+       * exposes no EGL API to manage them. That is, there is no API for
+       * resolving the aux buffer's content to the main buffer nor for
+       * invalidating the aux buffer's content.
+       */
+      struct intel_mipmap_tree *mt =
+         intel_miptree_create_for_bo(brw, image->bo, format,
+                                     image->offsets[index],
+                                     width, height, 1,
+                                     image->strides[index],
+                                     MIPTREE_LAYOUT_DISABLE_AUX);
+      if (mt == NULL)
+         return NULL;
+
+      mt->target = target;
+      mt->total_width = width;
+      mt->total_height = height;
+
+      if (i == 0)
+         planar_mt = mt;
+      else
+         planar_mt->plane[i - 1] = mt;
+   }
+
+   return planar_mt;
+}
+
+struct intel_mipmap_tree *
+intel_miptree_create_for_dri_image(struct brw_context *brw,
+                                   __DRIimage *image, GLenum target,
+                                   enum isl_colorspace colorspace,
+                                   bool is_winsys_image)
+{
+   if (image->planar_format && image->planar_format->nplanes > 0) {
+      assert(colorspace == ISL_COLORSPACE_NONE ||
+             colorspace == ISL_COLORSPACE_YUV);
+      return miptree_create_for_planar_image(brw, image, target);
+   }
+
+   mesa_format format = image->format;
+   switch (colorspace) {
+   case ISL_COLORSPACE_NONE:
+      /* Keep the image format unmodified */
+      break;
+
+   case ISL_COLORSPACE_LINEAR:
+      format =_mesa_get_srgb_format_linear(format);
+      break;
+
+   case ISL_COLORSPACE_SRGB:
+      format =_mesa_get_linear_format_srgb(format);
+      break;
+
+   default:
+      unreachable("Inalid colorspace for non-planar image");
+   }
+
+   if (!brw->ctx.TextureFormatSupported[format]) {
+      /* The texture storage paths in core Mesa detect if the driver does not
+       * support the user-requested format, and then searches for a
+       * fallback format. The DRIimage code bypasses core Mesa, though. So we
+       * do the fallbacks here for important formats.
+       *
+       * We must support DRM_FOURCC_XBGR8888 textures because the Android
+       * framework produces HAL_PIXEL_FORMAT_RGBX8888 winsys surfaces, which
+       * the Chrome OS compositor consumes as dma_buf EGLImages.
        */
       if (mt->aux_usage == ISL_AUX_USAGE_CCS_E) {
          if (!intel_miptree_alloc_ccs(brw, mt)) {
