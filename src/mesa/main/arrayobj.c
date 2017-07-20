@@ -494,18 +494,17 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
       struct gl_vertex_array_object *obj = _mesa_lookup_vao(ctx, ids[i]);
 
       if (obj) {
-	 assert( obj->Name == ids[i] );
+         assert(obj->Name == ids[i]);
 
-	 /* If the array object is currently bound, the spec says "the binding
-	  * for that object reverts to zero and the default vertex array
-	  * becomes current."
-	  */
-	 if ( obj == ctx->Array.VAO ) {
-	    _mesa_BindVertexArray(0);
-	 }
+         /* If the array object is currently bound, the spec says "the binding
+          * for that object reverts to zero and the default vertex array
+          * becomes current."
+          */
+         if (obj == ctx->Array.VAO)
+            _mesa_BindVertexArray(0);
 
-	 /* The ID is immediately freed for re-use */
-	 remove_array_object(ctx, obj);
+         /* The ID is immediately freed for re-use */
+         remove_array_object(ctx, obj);
 
          if (ctx->Array.LastLookedUpVAO == obj)
             _mesa_reference_vao(ctx, &ctx->Array.LastLookedUpVAO, NULL);
