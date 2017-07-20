@@ -76,8 +76,8 @@ struct QUEUE
         }
 
         // try to lock the FIFO
-        LONG initial = InterlockedCompareExchange(&mLock, 1, 0);
-        return (!initial);
+        long initial = InterlockedCompareExchange(&mLock, 1, 0);
+        return (initial == 0);
     }
         
     void unlock()
