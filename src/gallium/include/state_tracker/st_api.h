@@ -90,6 +90,7 @@ enum st_api_feature
 #define ST_CONTEXT_FLAG_FORWARD_COMPATIBLE  (1 << 1)
 #define ST_CONTEXT_FLAG_ROBUST_ACCESS       (1 << 2)
 #define ST_CONTEXT_FLAG_RESET_NOTIFICATION_ENABLED (1 << 3)
+#define ST_CONTEXT_FLAG_NO_ERROR            (1 << 4)
 
 /**
  * Reasons that context creation might fail.
@@ -309,6 +310,11 @@ struct st_framebuffer_iface
     * Atomic stamp which changes when framebuffers need to be updated.
     */
    int32_t stamp;
+
+   /**
+    * Identifier that uniquely identifies the framebuffer interface object.
+    */
+   uint32_t ID;
 
    /**
     * Available for the state tracker manager to use.

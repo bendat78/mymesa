@@ -895,7 +895,8 @@ void anv_GetPhysicalDeviceProperties(
       .sparseProperties = {}, /* Broadwell doesn't do sparse. */
    };
 
-   strcpy(pProperties->deviceName, pdevice->name);
+   strncpy(pProperties->deviceName, pdevice->name,
+           VK_MAX_PHYSICAL_DEVICE_NAME_SIZE);
    memcpy(pProperties->pipelineCacheUUID,
           pdevice->pipeline_cache_uuid, VK_UUID_SIZE);
 }
@@ -1750,7 +1751,7 @@ clflush_mapped_ranges(struct anv_device         *device,
       if (ranges[i].offset >= mem->map_size)
          continue;
 
-      anv_clflush_range(mem->map + ranges[i].offset,
+      gen_clflush_range(mem->map + ranges[i].offset,
                         MIN2(ranges[i].size, mem->map_size - ranges[i].offset));
    }
 }

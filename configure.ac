@@ -79,7 +79,6 @@ LIBDRM_INTEL_REQUIRED=2.4.75
 LIBDRM_NVVIEUX_REQUIRED=2.4.66
 LIBDRM_NOUVEAU_REQUIRED=2.4.66
 LIBDRM_FREEDRENO_REQUIRED=2.4.74
-LIBDRM_VC4_REQUIRED=2.4.69
 LIBDRM_ETNAVIV_REQUIRED=2.4.80
 
 dnl Versions for external dependencies
@@ -1292,6 +1291,9 @@ AM_CONDITIONAL(HAVE_OPENGL_ES2, test "x$enable_gles2" = xyes)
 AM_CONDITIONAL(NEED_OPENGL_COMMON, test "x$enable_opengl" = xyes -o \
                                         "x$enable_gles1" = xyes -o \
                                         "x$enable_gles2" = xyes)
+AM_CONDITIONAL(NEED_KHRPLATFORM, test "x$enable_egl" = xyes -o \
+                                      "x$enable_gles1" = xyes -o \
+                                      "x$enable_gles2" = xyes)
 
 # Validate GLX options
 if test "x$enable_glx" = xyes; then
@@ -2503,7 +2505,6 @@ if test -n "$with_gallium_drivers"; then
             ;;
         xvc4)
             HAVE_GALLIUM_VC4=yes
-            PKG_CHECK_MODULES([VC4], [libdrm >= $LIBDRM_VC4_REQUIRED libdrm_vc4 >= $LIBDRM_VC4_REQUIRED])
             require_libdrm "vc4"
 
             PKG_CHECK_MODULES([SIMPENROSE], [simpenrose],
