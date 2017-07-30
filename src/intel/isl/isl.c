@@ -73,6 +73,15 @@ isl_device_init(struct isl_device *dev,
    dev->ss.size = RENDER_SURFACE_STATE_length(info) * 4;
    dev->ss.align = isl_align(dev->ss.size, 32);
 
+   dev->ss.clear_value_size =
+      isl_align(RENDER_SURFACE_STATE_RedClearColor_bits(info) +
+                RENDER_SURFACE_STATE_GreenClearColor_bits(info) +
+                RENDER_SURFACE_STATE_BlueClearColor_bits(info) +
+                RENDER_SURFACE_STATE_AlphaClearColor_bits(info), 32) / 8;
+
+   dev->ss.clear_value_offset =
+      RENDER_SURFACE_STATE_RedClearColor_start(info) / 32 * 4;
+
    assert(RENDER_SURFACE_STATE_SurfaceBaseAddress_start(info) % 8 == 0);
    dev->ss.addr_offset =
       RENDER_SURFACE_STATE_SurfaceBaseAddress_start(info) / 8;
@@ -257,6 +266,33 @@ isl_tiling_get_info(enum isl_tiling tiling,
       .logical_extent_el = logical_el,
       .phys_extent_B = phys_B,
    };
+}
+
+bool
+isl_color_value_is_zero_one(union isl_color_value value,
+                            enum isl_format format)
+{
+   const struct isl_format_layout *fmtl = isl_format_get_layout(format);
+
+#define RETURN_FALSE_IF_NOT_0_1(c, i, field) \
+   if (fmtl->channels.c.bits && value.field[i] != 0 && value.field[i] != 1) \
+      return false
+
+   if (isl_format_has_int_channel(format)) {
+      RETURN_FALSE_IF_NOT_0_1(r, 0, u32);
+      RETURN_FALSE_IF_NOT_0_1(g, 1, u32);
+      RETURN_FALSE_IF_NOT_0_1(b, 2, u32);
+      RETURN_FALSE_IF_NOT_0_1(a, 3, u32);
+   } else {
+      RETURN_FALSE_IF_NOT_0_1(r, 0, f32);
+      RETURN_FALSE_IF_NOT_0_1(g, 1, f32);
+      RETURN_FALSE_IF_NOT_0_1(b, 2, f32);
+      RETURN_FALSE_IF_NOT_0_1(a, 3, f32);
+   }
+
+#undef RETURN_FALSE_IF_NOT_0_1
+
+   return true;
 }
 
 /**
@@ -548,7 +584,8 @@ isl_choose_image_alignment_el(const struct isl_device *dev,
 static enum isl_dim_layout
 isl_surf_choose_dim_layout(const struct isl_device *dev,
                            enum isl_surf_dim logical_dim,
-                           enum isl_tiling tiling)
+                           enum isl_tiling tiling,
+                           isl_surf_usage_flags_t usage)
 {
    /* Sandy bridge needs a special layout for HiZ and stencil. */
    if (ISL_DEV_GEN(dev) == 6 &&
@@ -584,6 +621,16 @@ isl_surf_choose_dim_layout(const struct isl_device *dev,
       switch (logical_dim) {
       case ISL_SURF_DIM_1D:
       case ISL_SURF_DIM_2D:
+         /* From the G45 PRM Vol. 1a, "6.17.4.1 Hardware Cube Map Layout":
+          *
+          * The cube face textures are stored in the same way as 3D surfaces
+          * are stored (see section 6.17.5 for details).  For cube surfaces,
+          * however, the depth is equal to the number of faces (always 6) and 
+          * is not reduced for each MIP.
+          */
+         if (ISL_DEV_GEN(dev) == 4 && (usage & ISL_SURF_USAGE_CUBE_BIT))
+            return ISL_DIM_LAYOUT_GEN4_3D;
+
          return ISL_DIM_LAYOUT_GEN4_2D;
       case ISL_SURF_DIM_3D:
          return ISL_DIM_LAYOUT_GEN4_3D;
@@ -635,8 +682,11 @@ isl_calc_phys_level0_extent_sa(const struct isl_device *dev,
       break;
 
    case ISL_SURF_DIM_2D:
-      assert(dim_layout == ISL_DIM_LAYOUT_GEN4_2D ||
-             dim_layout == ISL_DIM_LAYOUT_GEN6_STENCIL_HIZ);
+      if (ISL_DEV_GEN(dev) == 4 && (info->usage & ISL_SURF_USAGE_CUBE_BIT))
+         assert(dim_layout == ISL_DIM_LAYOUT_GEN4_3D);
+      else
+         assert(dim_layout == ISL_DIM_LAYOUT_GEN4_2D ||
+                dim_layout == ISL_DIM_LAYOUT_GEN6_STENCIL_HIZ);
 
       if (tiling == ISL_TILING_Ys && info->samples > 1)
          isl_finishme("%s:%s: multisample TileYs layout", __FILE__, __func__);
@@ -952,7 +1002,21 @@ isl_calc_phys_total_extent_el_gen4_3d(
    const struct isl_format_layout *fmtl = isl_format_get_layout(info->format);
 
    assert(info->samples == 1);
-   assert(phys_level0_sa->array_len == 1);
+
+   if (info->dim != ISL_SURF_DIM_3D) {
+      /* From the G45 PRM Vol. 1a, "6.17.4.1 Hardware Cube Map Layout":
+       *
+       * The cube face textures are stored in the same way as 3D surfaces
+       * are stored (see section 6.17.5 for details).  For cube surfaces,
+       * however, the depth is equal to the number of faces (always 6) and
+       * is not reduced for each MIP.
+       */
+      assert(ISL_DEV_GEN(dev) == 4);
+      assert(info->usage & ISL_SURF_USAGE_CUBE_BIT);
+      assert(phys_level0_sa->array_len == 6);
+   } else {
+      assert(phys_level0_sa->array_len == 1);
+   }
 
    uint32_t total_w = 0;
    uint32_t total_h = 0;
@@ -960,11 +1024,12 @@ isl_calc_phys_total_extent_el_gen4_3d(
    uint32_t W0 = phys_level0_sa->w;
    uint32_t H0 = phys_level0_sa->h;
    uint32_t D0 = phys_level0_sa->d;
+   uint32_t A0 = phys_level0_sa->a;
 
    for (uint32_t l = 0; l < info->levels; ++l) {
       uint32_t level_w = isl_align_npot(isl_minify(W0, l), image_align_sa->w);
       uint32_t level_h = isl_align_npot(isl_minify(H0, l), image_align_sa->h);
-      uint32_t level_d = isl_align_npot(isl_minify(D0, l), image_align_sa->d);
+      uint32_t level_d = info->dim == ISL_SURF_DIM_3D ? isl_minify(D0, l) : A0;
 
       uint32_t max_layers_horiz = MIN(level_d, 1u << l);
       uint32_t max_layers_vert = isl_align(level_d, 1u << l) / (1u << l);
@@ -1061,7 +1126,7 @@ isl_calc_phys_total_extent_el_gen9_1d(
 {
    MAYBE_UNUSED const struct isl_format_layout *fmtl = isl_format_get_layout(info->format);
 
-   assert(phys_level0_sa->height == 1);
+   assert(phys_level0_sa->height / fmtl->bh == 1);
    assert(phys_level0_sa->depth == 1);
    assert(info->samples == 1);
    assert(image_align_sa->w >= fmtl->bw);
@@ -1239,8 +1304,22 @@ isl_calc_row_pitch(const struct isl_device *dev,
                    const struct isl_extent2d *phys_total_el,
                    uint32_t *out_row_pitch)
 {
-   const uint32_t alignment =
+   uint32_t alignment =
       isl_calc_row_pitch_alignment(surf_info, tile_info);
+
+   /* If pitch isn't given and it can be chosen freely, align it by cache line
+    * allowing one to use blit engine on the surface.
+    */
+   if (surf_info->row_pitch == 0 && tile_info->tiling == ISL_TILING_LINEAR) {
+      /* From the Broadwell PRM docs for XY_SRC_COPY_BLT::SourceBaseAddress:
+       *
+       *    "Base address of the destination surface: X=0, Y=0. Lower 32bits
+       *    of the 48bit addressing. When Src Tiling is enabled (Bit_15
+       *    enabled), this address must be 4KB-aligned. When Tiling is not
+       *    enabled, this address should be CL (64byte) aligned."
+       */
+      alignment = MAX2(alignment, 64);
+   }
 
    const uint32_t min_row_pitch =
       isl_calc_min_row_pitch(dev, surf_info, tile_info, phys_total_el,
@@ -1427,7 +1506,7 @@ isl_surf_init_s(const struct isl_device *dev,
    isl_tiling_get_info(tiling, fmtl->bpb, &tile_info);
 
    const enum isl_dim_layout dim_layout =
-      isl_surf_choose_dim_layout(dev, info->dim, tiling);
+      isl_surf_choose_dim_layout(dev, info->dim, tiling, info->usage);
 
    enum isl_msaa_layout msaa_layout;
    if (!isl_choose_msaa_layout(dev, info, tiling, &msaa_layout))
@@ -1688,7 +1767,8 @@ isl_surf_get_mcs_surf(const struct isl_device *dev,
 bool
 isl_surf_get_ccs_surf(const struct isl_device *dev,
                       const struct isl_surf *surf,
-                      struct isl_surf *ccs_surf)
+                      struct isl_surf *ccs_surf,
+                      uint32_t row_pitch)
 {
    assert(surf->samples == 1 && surf->msaa_layout == ISL_MSAA_LAYOUT_NONE);
    assert(ISL_DEV_GEN(dev) >= 7);
@@ -1696,7 +1776,28 @@ isl_surf_get_ccs_surf(const struct isl_device *dev,
    if (surf->usage & ISL_SURF_USAGE_DISABLE_AUX_BIT)
       return false;
 
+   /* The PRM doesn't say this explicitly, but fast-clears don't appear to
+    * work for 3D textures until gen9 where the layout of 3D textures changes
+    * to match 2D array textures.
+    */
    if (ISL_DEV_GEN(dev) <= 8 && surf->dim != ISL_SURF_DIM_2D)
+      return false;
+
+   /* From the HSW PRM Volume 7: 3D-Media-GPGPU, page 652 (Color Clear of
+    * Non-MultiSampler Render Target Restrictions):
+    *
+    *    "Support is for non-mip-mapped and non-array surface types only."
+    *
+    * This restriction is lifted on gen8+.  Technically, it may be possible to
+    * create a CCS for an arrayed or mipmapped image and only enable CCS_D
+    * when rendering to the base slice.  However, there is no documentation
+    * tell us what the hardware would do in that case or what it does if you
+    * walk off the bases slice.  (Does it ignore CCS or does it start
+    * scribbling over random memory?)  We play it safe and just follow the
+    * docs and don't allow CCS_D for arrayed or mip-mapped surfaces.
+    */
+   if (ISL_DEV_GEN(dev) <= 7 &&
+       (surf->levels > 1 || surf->logical_level0_px.array_len > 1))
       return false;
 
    if (isl_format_is_compressed(surf->format))
@@ -1736,20 +1837,16 @@ isl_surf_get_ccs_surf(const struct isl_device *dev,
       return false;
    }
 
-   /* Multi-LOD and multi-layer CCS isn't supported on gen7. */
-   const uint8_t levels = ISL_DEV_GEN(dev) <= 7 ? 1 : surf->levels;
-   const uint32_t array_len = ISL_DEV_GEN(dev) <= 7 ?
-                              1 : surf->logical_level0_px.array_len;
-
    return isl_surf_init(dev, ccs_surf,
                         .dim = surf->dim,
                         .format = ccs_format,
                         .width = surf->logical_level0_px.width,
                         .height = surf->logical_level0_px.height,
                         .depth = surf->logical_level0_px.depth,
-                        .levels = levels,
-                        .array_len = array_len,
+                        .levels = surf->levels,
+                        .array_len = surf->logical_level0_px.array_len,
                         .samples = 1,
+                        .row_pitch = row_pitch,
                         .usage = ISL_SURF_USAGE_CCS_BIT,
                         .tiling_flags = ISL_TILING_CCS_BIT);
 }
@@ -2218,6 +2315,47 @@ isl_surf_get_image_offset_B_tile_sa(const struct isl_surf *surf,
    } else {
       assert(y_offset_el == 0);
    }
+}
+
+void
+isl_surf_get_image_surf(const struct isl_device *dev,
+                        const struct isl_surf *surf,
+                        uint32_t level,
+                        uint32_t logical_array_layer,
+                        uint32_t logical_z_offset_px,
+                        struct isl_surf *image_surf,
+                        uint32_t *offset_B,
+                        uint32_t *x_offset_sa,
+                        uint32_t *y_offset_sa)
+{
+   isl_surf_get_image_offset_B_tile_sa(surf,
+                                       level,
+                                       logical_array_layer,
+                                       logical_z_offset_px,
+                                       offset_B,
+                                       x_offset_sa,
+                                       y_offset_sa);
+
+   /* Even for cube maps there will be only single face, therefore drop the
+    * corresponding flag if present.
+    */
+   const isl_surf_usage_flags_t usage =
+      surf->usage & (~ISL_SURF_USAGE_CUBE_BIT);
+
+   bool ok UNUSED;
+   ok = isl_surf_init(dev, image_surf,
+                      .dim = ISL_SURF_DIM_2D,
+                      .format = surf->format,
+                      .width = isl_minify(surf->logical_level0_px.w, level),
+                      .height = isl_minify(surf->logical_level0_px.h, level),
+                      .depth = 1,
+                      .levels = 1,
+                      .array_len = 1,
+                      .samples = surf->samples,
+                      .row_pitch = surf->row_pitch,
+                      .usage = usage,
+                      .tiling_flags = (1 << surf->tiling));
+   assert(ok);
 }
 
 void

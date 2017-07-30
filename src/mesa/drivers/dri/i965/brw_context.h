@@ -373,7 +373,6 @@ struct brw_cache {
    GLuint size, n_items;
 
    uint32_t next_offset;
-   bool bo_used_by_gpu;
 };
 
 /* Considered adding a member to this struct to document which flags
@@ -458,11 +457,13 @@ struct intel_batchbuffer {
    struct drm_i915_gem_relocation_entry *relocs;
    int reloc_count;
    int reloc_array_size;
+
    /** The validation list */
-   struct drm_i915_gem_exec_object2 *exec_objects;
+   struct drm_i915_gem_exec_object2 *validation_list;
    struct brw_bo **exec_bos;
    int exec_count;
    int exec_array_size;
+
    /** The amount of aperture space (in bytes) used by all exec_bos */
    int aperture_space;
 

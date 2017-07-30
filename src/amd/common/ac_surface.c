@@ -257,6 +257,18 @@ static int gfx6_compute_level(ADDR_HANDLE addrlib,
 	AddrSurfInfoIn->width = u_minify(config->info.width, level);
 	AddrSurfInfoIn->height = u_minify(config->info.height, level);
 
+	/* Make GFX6 linear surfaces compatible with GFX9 for hybrid graphics,
+	 * because GFX9 needs linear alignment of 256 bytes.
+	 */
+	if (config->info.levels == 1 &&
+	    AddrSurfInfoIn->tileMode == ADDR_TM_LINEAR_ALIGNED &&
+	    AddrSurfInfoIn->bpp) {
+		unsigned alignment = 256 / (AddrSurfInfoIn->bpp / 8);
+
+		assert(util_is_power_of_two(AddrSurfInfoIn->bpp));
+		AddrSurfInfoIn->width = align(AddrSurfInfoIn->width, alignment);
+	}
+
 	if (config->is_3d)
 		AddrSurfInfoIn->numSlices = u_minify(config->info.depth, level);
 	else if (config->is_cube)
@@ -692,6 +704,20 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 		surf->htile_size *= 2;
 
 	surf->is_linear = surf->u.legacy.level[0].mode == RADEON_SURF_MODE_LINEAR_ALIGNED;
+
+	/* workout base swizzle */
+	if (!(surf->flags & RADEON_SURF_Z_OR_SBUFFER)) {
+		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {0};
+		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {0};
+
+		AddrBaseSwizzleIn.surfIndex = config->info.surf_index;
+		AddrBaseSwizzleIn.tileIndex = AddrSurfInfoIn.tileIndex;
+		AddrBaseSwizzleIn.macroModeIndex = AddrSurfInfoOut.macroModeIndex;
+		AddrBaseSwizzleIn.pTileInfo = AddrSurfInfoOut.pTileInfo;
+		AddrBaseSwizzleIn.tileMode = AddrSurfInfoOut.tileMode;
+		AddrComputeBaseSwizzle(addrlib, &AddrBaseSwizzleIn, &AddrBaseSwizzleOut);
+		surf->u.legacy.tile_swizzle = AddrBaseSwizzleOut.tileSwizzle;
+	}
 	return 0;
 }
 
@@ -947,7 +973,9 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 	AddrSurfInfoIn.flags.color = !(surf->flags & RADEON_SURF_Z_OR_SBUFFER);
 	AddrSurfInfoIn.flags.depth = (surf->flags & RADEON_SURF_ZBUFFER) != 0;
 	AddrSurfInfoIn.flags.display = (surf->flags & RADEON_SURF_SCANOUT) != 0;
-	AddrSurfInfoIn.flags.texture = 1;
+	/* flags.texture currently refers to TC-compatible HTILE */
+	AddrSurfInfoIn.flags.texture = AddrSurfInfoIn.flags.color ||
+				       surf->flags & RADEON_SURF_TC_COMPATIBLE_HTILE;
 	AddrSurfInfoIn.flags.opt4space = 1;
 
 	AddrSurfInfoIn.numMipLevels = config->info.levels;

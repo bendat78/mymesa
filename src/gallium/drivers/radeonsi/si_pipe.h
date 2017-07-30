@@ -83,6 +83,7 @@ struct si_screen {
 	bool				has_draw_indirect_multi;
 	bool				has_ds_bpermute;
 	bool				has_msaa_sample_loc_bug;
+	bool				llvm_has_working_vgpr_indexing;
 
 	/* Whether shaders are monolithic (1-part) or separate (3-part). */
 	bool				use_monolithic_shaders;
@@ -112,15 +113,21 @@ struct si_screen {
 
 	/* Shader compiler queue for multithreaded compilation. */
 	struct util_queue		shader_compiler_queue;
-	LLVMTargetMachineRef		tm[4]; /* used by the queue only */
+	/* Use at most 3 normal compiler threads on quadcore and better.
+	 * Hyperthreaded CPUs report the number of threads, but we want
+	 * the number of cores. */
+	LLVMTargetMachineRef		tm[3]; /* used by the queue only */
 
 	struct util_queue		shader_compiler_queue_low_priority;
-	LLVMTargetMachineRef		tm_low_priority[4];
+	/* Use at most 2 low priority threads on quadcore and better.
+	 * We want to minimize the impact on multithreaded Mesa. */
+	LLVMTargetMachineRef		tm_low_priority[2]; /* at most 2 threads */
 };
 
 struct si_blend_color {
 	struct r600_atom		atom;
 	struct pipe_blend_color		state;
+	bool				any_nonzeros;
 };
 
 struct si_sampler_view {
@@ -181,12 +188,12 @@ struct si_framebuffer {
 	ubyte				dirty_cbufs;
 	bool				dirty_zsbuf;
 	bool				any_dst_linear;
-	bool				do_update_surf_dirtiness;
 };
 
 struct si_clip_state {
 	struct r600_atom		atom;
 	struct pipe_clip_state		state;
+	bool				any_nonzeros;
 };
 
 struct si_sample_locs {

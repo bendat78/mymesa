@@ -194,8 +194,6 @@ intel_update_state(struct gl_context * ctx)
    if (new_state & _NEW_POLYGON)
       brw->polygon_front_bit = _mesa_polygon_get_front_bit(ctx);
 
-   intel_prepare_render(brw);
-
    if (new_state & _NEW_BUFFERS) {
       intel_update_framebuffer(ctx, ctx->DrawBuffer);
       if (ctx->DrawBuffer != ctx->ReadBuffer)
@@ -747,6 +745,9 @@ brw_process_driconf_options(struct brw_context *brw)
           brw->has_separate_stencil = false;
    }
 
+   if (driQueryOptionb(options, "mesa_no_error"))
+      ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_NO_ERROR_BIT_KHR;
+
    if (driQueryOptionb(options, "always_flush_batch")) {
       fprintf(stderr, "flushing batchbuffer before/after each draw call\n");
       brw->always_flush_batch = true;
@@ -813,8 +814,9 @@ brwCreateContext(gl_api api,
    /* Only allow the __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS flag if the kernel
     * provides us with context reset notifications.
     */
-   uint32_t allowed_flags = __DRI_CTX_FLAG_DEBUG
-      | __DRI_CTX_FLAG_FORWARD_COMPATIBLE;
+   uint32_t allowed_flags = __DRI_CTX_FLAG_DEBUG |
+                            __DRI_CTX_FLAG_FORWARD_COMPATIBLE |
+                            __DRI_CTX_FLAG_NO_ERROR;
 
    if (screen->has_context_reset_notification)
       allowed_flags |= __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS;
@@ -1217,7 +1219,7 @@ intel_resolve_for_dri2_flush(struct brw_context *brw,
       rb = intel_get_renderbuffer(fb, buffers[i]);
       if (rb == NULL || rb->mt == NULL)
          continue;
-      if (rb->mt->num_samples <= 1) {
+      if (rb->mt->surf.samples == 1) {
          assert(rb->mt_layer == 0 && rb->mt_level == 0 &&
                 rb->layer_count == 1);
          intel_miptree_prepare_access(brw, rb->mt, 0, 1, 0, 1, false, false);

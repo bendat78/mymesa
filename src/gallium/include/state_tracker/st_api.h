@@ -284,6 +284,7 @@ struct st_context_attribs
 };
 
 struct st_context_iface;
+struct st_manager;
 
 /**
  * Represent a windowing system drawable.
@@ -315,6 +316,11 @@ struct st_framebuffer_iface
     * Identifier that uniquely identifies the framebuffer interface object.
     */
    uint32_t ID;
+
+   /**
+    * The state tracker manager that manages this object.
+    */
+   struct st_manager *state_manager;
 
    /**
     * Available for the state tracker manager to use.
@@ -374,6 +380,11 @@ struct st_context_iface
     */
    void *st_context_private;
    void *st_manager_private;
+
+   /**
+    * The state tracker manager that manages this object.
+    */
+   struct st_manager *state_manager;
 
    /**
     * The CSO context associated with this context in case we need to draw
@@ -483,6 +494,16 @@ struct st_manager
     */
    void (*set_background_context)(struct st_context_iface *stctxi,
                                   struct util_queue_monitoring *queue_info);
+
+   /**
+    * Destroy any private data used by the state tracker manager.
+    */
+   void (*destroy)(struct st_manager *smapi);
+
+   /**
+    * Available for the state tracker manager to use.
+    */
+   void *st_manager_private;
 };
 
 /**
@@ -552,6 +573,13 @@ struct st_api
     * Get the currently bound context in the calling thread.
     */
    struct st_context_iface *(*get_current)(struct st_api *stapi);
+
+   /**
+    * Notify the st manager the framebuffer interface object
+    * is no longer valid.
+    */
+   void (*destroy_drawable)(struct st_api *stapi,
+                            struct st_framebuffer_iface *stfbi);
 };
 
 /**

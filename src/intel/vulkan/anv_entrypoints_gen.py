@@ -33,7 +33,12 @@ from mako.template import Template
 MAX_API_VERSION = 1.0
 
 SUPPORTED_EXTENSIONS = [
+    'VK_KHR_dedicated_allocation',
     'VK_KHR_descriptor_update_template',
+    'VK_KHR_external_memory',
+    'VK_KHR_external_memory_capabilities',
+    'VK_KHR_external_memory_fd',
+    'VK_KHR_get_memory_requirements2',
     'VK_KHR_get_physical_device_properties2',
     'VK_KHR_get_surface_capabilities2',
     'VK_KHR_incremental_present',
@@ -41,17 +46,13 @@ SUPPORTED_EXTENSIONS = [
     'VK_KHR_push_descriptor',
     'VK_KHR_sampler_mirror_clamp_to_edge',
     'VK_KHR_shader_draw_parameters',
+    'VK_KHR_storage_buffer_storage_class',
     'VK_KHR_surface',
     'VK_KHR_swapchain',
+    'VK_KHR_variable_pointers',
     'VK_KHR_wayland_surface',
     'VK_KHR_xcb_surface',
     'VK_KHR_xlib_surface',
-    'VK_KHX_external_memory',
-    'VK_KHX_external_memory_capabilities',
-    'VK_KHX_external_memory_fd',
-    'VK_KHX_external_semaphore',
-    'VK_KHX_external_semaphore_capabilities',
-    'VK_KHX_external_semaphore_fd',
     'VK_KHX_multiview',
 ]
 

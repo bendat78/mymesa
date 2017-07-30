@@ -1,35 +1,32 @@
-/**************************************************************************
- *
+/*
  * Copyright © 2007 Red Hat Inc.
- * Copyright © 2007-2012 Intel Corporation
- * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND., USA
+ * Copyright © 2007-2017 Intel Corporation
+ * Copyright © 2006 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * THE COPYRIGHT HOLDERS, AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
- * USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portions
- * of the Software.
- *
- *
- **************************************************************************/
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
 /*
- * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
- *          Keith Whitwell <keithw-at-tungstengraphics-dot-com>
+ * Authors: Thomas Hellström <thellstrom@vmware.com>
+ *          Keith Whitwell <keithw@vmware.com>
  *          Eric Anholt <eric@anholt.net>
  *          Dave Airlie <airlied@linux.ie>
  */
@@ -121,6 +118,7 @@ struct brw_bufmgr {
    struct hash_table *handle_table;
 
    bool has_llc:1;
+   bool has_mmap_wc:1;
    bool bo_reuse:1;
 };
 
@@ -265,9 +263,19 @@ bo_alloc_internal(struct brw_bufmgr *bufmgr,
    bool alloc_from_cache;
    uint64_t bo_size;
    bool for_render = false;
+   bool zeroed = false;
 
    if (flags & BO_ALLOC_FOR_RENDER)
       for_render = true;
+
+   if (flags & BO_ALLOC_ZEROED)
+      zeroed = true;
+
+   /* FOR_RENDER really means "I'm ok with a busy BO".  This doesn't really
+    * jive with ZEROED as we have to wait for it to be idle before we can
+    * memset.  Just disallow that combination.
+    */
+   assert(!(for_render && zeroed));
 
    /* Round the allocated size up to a power of two number of pages. */
    bucket = bucket_for_size(bufmgr, size);
@@ -288,10 +296,12 @@ bo_alloc_internal(struct brw_bufmgr *bufmgr,
 retry:
    alloc_from_cache = false;
    if (bucket != NULL && !list_empty(&bucket->head)) {
-      if (for_render) {
+      if (for_render && !zeroed) {
          /* Allocate new render-target BOs from the tail (MRU)
           * of the list, as it will likely be hot in the GPU
-          * cache and in the aperture for us.
+          * cache and in the aperture for us.  If the caller
+          * asked us to zero the buffer, we don't want this
+          * because we are going to mmap it.
           */
          bo = LIST_ENTRY(struct brw_bo, bucket->head.prev, head);
          list_del(&bo->head);
@@ -324,6 +334,15 @@ retry:
             bo_free(bo);
             goto retry;
          }
+
+         if (zeroed) {
+            void *map = brw_bo_map(NULL, bo, MAP_WRITE | MAP_RAW);
+            if (!map) {
+               bo_free(bo);
+               goto retry;
+            }
+            memset(map, 0, bo_size);
+         }
       }
    }
 
@@ -340,6 +359,9 @@ retry:
       memclear(create);
       create.size = bo_size;
 
+      /* All new BOs we get from the kernel are zeroed, so we don't need to
+       * worry about that here.
+       */
       ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_CREATE, &create);
       if (ret != 0) {
          free(bo);
@@ -357,6 +379,19 @@ retry:
       bo->stride = 0;
 
       if (bo_set_tiling_internal(bo, tiling_mode, stride))
+         goto err_free;
+
+      /* Calling set_domain() will allocate pages for the BO outside of the
+       * struct mutex lock in the kernel, which is more efficient than waiting
+       * to create them during the first execbuf that uses the BO.
+       */
+      struct drm_i915_gem_set_domain sd = {
+         .handle = bo->gem_handle,
+         .read_domains = I915_GEM_DOMAIN_CPU,
+         .write_domain = 0,
+      };
+
+      if (drmIoctl(bo->bufmgr->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN, &sd) != 0)
          goto err_free;
    }
 
@@ -633,22 +668,13 @@ brw_bo_unreference(struct brw_bo *bo)
 }
 
 static void
-set_domain(struct brw_context *brw, const char *action,
-           struct brw_bo *bo, uint32_t read_domains, uint32_t write_domain)
+bo_wait_with_stall_warning(struct brw_context *brw,
+                           struct brw_bo *bo,
+                           const char *action)
 {
-   struct drm_i915_gem_set_domain sd = {
-      .handle = bo->gem_handle,
-      .read_domains = read_domains,
-      .write_domain = write_domain,
-   };
-
    double elapsed = unlikely(brw && brw->perf_debug) ? -get_time() : 0.0;
 
-   if (drmIoctl(bo->bufmgr->fd, DRM_IOCTL_I915_GEM_SET_DOMAIN, &sd) != 0) {
-      DBG("%s:%d: Error setting memory domains %d (%08x %08x): %s.\n",
-          __FILE__, __LINE__, bo->gem_handle, read_domains, write_domain,
-          strerror(errno));
-   }
+   brw_bo_wait_rendering(bo);
 
    if (unlikely(brw && brw->perf_debug)) {
       elapsed += get_time();
@@ -718,8 +744,7 @@ brw_bo_map_cpu(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
    print_flags(flags);
 
    if (!(flags & MAP_ASYNC)) {
-      set_domain(brw, "CPU mapping", bo, I915_GEM_DOMAIN_CPU,
-                 flags & MAP_WRITE ? I915_GEM_DOMAIN_CPU : 0);
+      bo_wait_with_stall_warning(brw, bo, "CPU mapping");
    }
 
    if (!bo->cache_coherent) {
@@ -739,6 +764,74 @@ brw_bo_map_cpu(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
    return bo->map_cpu;
 }
 
+static void *
+brw_bo_map_wc(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
+{
+   struct brw_bufmgr *bufmgr = bo->bufmgr;
+
+   if (!bufmgr->has_mmap_wc)
+      return NULL;
+
+   if (!bo->map_wc) {
+      struct drm_i915_gem_mmap mmap_arg;
+      void *map;
+
+      DBG("brw_bo_map_wc: %d (%s)\n", bo->gem_handle, bo->name);
+
+      memclear(mmap_arg);
+      mmap_arg.handle = bo->gem_handle;
+      mmap_arg.size = bo->size;
+      mmap_arg.flags = I915_MMAP_WC;
+      int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_MMAP, &mmap_arg);
+      if (ret != 0) {
+         ret = -errno;
+         DBG("%s:%d: Error mapping buffer %d (%s): %s .\n",
+             __FILE__, __LINE__, bo->gem_handle, bo->name, strerror(errno));
+         return NULL;
+      }
+
+      map = (void *) (uintptr_t) mmap_arg.addr_ptr;
+      VG_DEFINED(map, bo->size);
+
+      if (p_atomic_cmpxchg(&bo->map_wc, NULL, map)) {
+         VG_NOACCESS(map, bo->size);
+         drm_munmap(map, bo->size);
+      }
+   }
+   assert(bo->map_wc);
+
+   DBG("brw_bo_map_wc: %d (%s) -> %p\n", bo->gem_handle, bo->name, bo->map_wc);
+   print_flags(flags);
+
+   if (!(flags & MAP_ASYNC)) {
+      bo_wait_with_stall_warning(brw, bo, "WC mapping");
+   }
+
+   return bo->map_wc;
+}
+
+/**
+ * Perform an uncached mapping via the GTT.
+ *
+ * Write access through the GTT is not quite fully coherent. On low power
+ * systems especially, like modern Atoms, we can observe reads from RAM before
+ * the write via GTT has landed. A write memory barrier that flushes the Write
+ * Combining Buffer (i.e. sfence/mfence) is not sufficient to order the later
+ * read after the write as the GTT write suffers a small delay through the GTT
+ * indirection. The kernel uses an uncached mmio read to ensure the GTT write
+ * is ordered with reads (either by the GPU, WB or WC) and unconditionally
+ * flushes prior to execbuf submission. However, if we are not informing the
+ * kernel about our GTT writes, it will not flush before earlier access, such
+ * as when using the cmdparser. Similarly, we need to be careful if we should
+ * ever issue a CPU read immediately following a GTT write.
+ *
+ * Telling the kernel about write access also has one more important
+ * side-effect. Upon receiving notification about the write, it cancels any
+ * scanout buffering for FBC/PSR and friends. Later FBC/PSR is then flushed by
+ * either SW_FINISH or DIRTYFB. The presumption is that we never write to the
+ * actual scanout via a mmaping, only to a backbuffer and so all the FBC/PSR
+ * tracking is handled on the buffer exchange instead.
+ */
 static void *
 brw_bo_map_gtt(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
 {
@@ -789,8 +882,7 @@ brw_bo_map_gtt(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
    print_flags(flags);
 
    if (!(flags & MAP_ASYNC)) {
-      set_domain(brw, "GTT mapping", bo,
-                 I915_GEM_DOMAIN_GTT, I915_GEM_DOMAIN_GTT);
+      bo_wait_with_stall_warning(brw, bo, "GTT mapping");
    }
 
    return bo->map_gtt;
@@ -824,10 +916,32 @@ brw_bo_map(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
 {
    if (bo->tiling_mode != I915_TILING_NONE && !(flags & MAP_RAW))
       return brw_bo_map_gtt(brw, bo, flags);
-   else if (can_map_cpu(bo, flags))
-      return brw_bo_map_cpu(brw, bo, flags);
+
+   void *map;
+
+   if (can_map_cpu(bo, flags))
+      map = brw_bo_map_cpu(brw, bo, flags);
    else
-      return brw_bo_map_gtt(brw, bo, flags);
+      map = brw_bo_map_wc(brw, bo, flags);
+
+   /* Allow the attempt to fail by falling back to the GTT where necessary.
+    *
+    * Not every buffer can be mmaped directly using the CPU (or WC), for
+    * example buffers that wrap stolen memory or are imported from other
+    * devices. For those, we have little choice but to use a GTT mmapping.
+    * However, if we use a slow GTT mmapping for reads where we expected fast
+    * access, that order of magnitude difference in throughput will be clearly
+    * expressed by angry users.
+    *
+    * We skip MAP_RAW because we want to avoid map_gtt's fence detiling.
+    */
+   if (!map && !(flags & MAP_RAW)) {
+      perf_debug("Fallback GTT mapping for %s with access flags %x\n",
+                 bo->name, flags);
+      map = brw_bo_map_gtt(brw, bo, flags);
+   }
+
+   return map;
 }
 
 int
@@ -897,6 +1011,10 @@ brw_bo_wait(struct brw_bo *bo, int64_t timeout_ns)
    struct brw_bufmgr *bufmgr = bo->bufmgr;
    struct drm_i915_gem_wait wait;
    int ret;
+
+   /* If we know it's idle, don't bother with the kernel round trip */
+   if (bo->idle && !bo->external)
+      return 0;
 
    memclear(wait);
    wait.bo_handle = bo->gem_handle;
@@ -1181,6 +1299,21 @@ brw_reg_read(struct brw_bufmgr *bufmgr, uint32_t offset, uint64_t *result)
    return ret;
 }
 
+static int
+gem_param(int fd, int name)
+{
+   drm_i915_getparam_t gp;
+   int v = -1; /* No param uses (yet) the sign bit, reserve it for errors */
+
+   memset(&gp, 0, sizeof(gp));
+   gp.param = name;
+   gp.value = &v;
+   if (drmIoctl(fd, DRM_IOCTL_I915_GETPARAM, &gp))
+      return -1;
+
+   return v;
+}
+
 /**
  * Initializes the GEM buffer manager, which uses the kernel to allocate, map,
  * and manage map buffer objections.
@@ -1213,6 +1346,7 @@ brw_bufmgr_init(struct gen_device_info *devinfo, int fd, int batch_size)
    }
 
    bufmgr->has_llc = devinfo->has_llc;
+   bufmgr->has_mmap_wc = gem_param(fd, I915_PARAM_MMAP_VERSION) > 0;
 
    init_cache_buckets(bufmgr);
 
