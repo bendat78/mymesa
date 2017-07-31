@@ -157,7 +157,7 @@ ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
 	ADDR_CREATE_OUTPUT addrCreateOutput = {};
 	ADDR_REGISTER_VALUE regValue = {};
 	ADDR_CREATE_FLAGS createFlags = {};
-	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {};
+	ADDR_GET_MAX_ALIGNMENTS_OUTPUT addrGetMaxAlignmentsOutput = {};
 	ADDR_E_RETURNCODE addrRet;
 
 	addrCreateInput.size = sizeof(ADDR_CREATE_INPUT);

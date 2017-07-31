@@ -813,11 +813,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
    case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
       v->value_int_n.n =
-<<<<<<< HEAD
-	 _mesa_get_compressed_formats(ctx, v->value_int_n.ints);
-=======
          _mesa_get_compressed_formats(ctx, v->value_int_n.ints);
->>>>>>> 7ea4cda2ab4ddaeabaf4fd1c3337f9894424ce92
       assert(v->value_int_n.n <= (int) ARRAY_SIZE(v->value_int_n.ints));
       break;
 

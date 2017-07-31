@@ -207,7 +207,7 @@ brw_buffer_data(struct gl_context *ctx,
       if (!intel_obj->buffer)
          return false;
 
-      if (data)
+      if (data) {
 	 brw_bo_subdata(intel_obj->buffer, 0, size, data);
          mark_buffer_valid_data(intel_obj, 0, size);
       }
