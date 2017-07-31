@@ -4614,6 +4614,7 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    mem_ctx = ralloc_context(NULL);
    ctx = NULL;
    prog = NULL;
+   precise = 0;
    shader_program = NULL;
    shader = NULL;
    options = NULL;
