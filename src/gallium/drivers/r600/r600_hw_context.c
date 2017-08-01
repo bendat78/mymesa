@@ -54,7 +54,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 
 		/* The number of dwords all the dirty states would take. */
 		mask = ctx->dirty_atoms;
-		while (mask != 0)
+		while (mask)
 			num_dw += ctx->atoms[u_bit_scan64(&mask)]->num_dw;
 
 		/* The upper-bound of how much space a draw command would take. */

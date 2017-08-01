@@ -416,7 +416,7 @@ wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
    /* Given the attribute list calculate a score for each pixelformat.
     */
    if (piAttribIList) {
-      while (*piAttribIList != 0) {
+      while (*piAttribIList) {
          if (!score_pixelformats(scores, count, piAttribIList[0],
                                  piAttribIList[1])) {
             FREE(scores);
@@ -426,7 +426,7 @@ wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
       }
    }
    if (pfAttribFList) {
-      while (*pfAttribFList != 0) {
+      while (*pfAttribFList) {
          if (!score_pixelformats(scores, count, (int) pfAttribFList[0],
                                  (int) pfAttribFList[1])) {
             FREE(scores);

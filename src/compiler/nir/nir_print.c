@@ -516,7 +516,7 @@ print_deref(nir_deref_var *deref, print_state *state)
 {
    nir_deref *tail = &deref->deref;
    nir_deref *pretail = NULL;
-   while (tail != NULL) {
+   while (tail) {
       switch (tail->deref_type) {
       case nir_deref_type_var:
          assert(pretail == NULL);

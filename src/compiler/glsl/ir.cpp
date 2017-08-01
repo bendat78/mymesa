@@ -73,7 +73,7 @@ ir_assignment::set_lhs(ir_rvalue *lhs)
    void *mem_ctx = this;
    bool swizzled = false;
 
-   while (lhs != NULL) {
+   while (lhs) {
       ir_swizzle *swiz = lhs->as_swizzle();
 
       if (!swiz)

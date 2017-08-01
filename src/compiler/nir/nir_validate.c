@@ -402,7 +402,7 @@ validate_deref_chain(nir_deref *deref, validate_state *state)
    validate_assert(state, deref->child == NULL || ralloc_parent(deref->child) == deref);
 
    nir_deref *parent = NULL;
-   while (deref != NULL) {
+   while (deref) {
       switch (deref->deref_type) {
       case nir_deref_type_array:
          validate_assert(state, deref->type == glsl_get_array_element(parent->type));

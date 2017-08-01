@@ -131,7 +131,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
 
    /* Loop back through the IR until we find the uniform block */
    ir_rvalue *ir = d;
-   while (ir != NULL) {
+   while (ir) {
       switch (ir->ir_type) {
       case ir_type_dereference_variable: {
          /* Exit loop */
@@ -171,7 +171,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
       }
    }
 
-   while (d != NULL) {
+   while (d) {
       switch (d->ir_type) {
       case ir_type_dereference_variable: {
          ir_dereference_variable *v = (ir_dereference_variable *) d;

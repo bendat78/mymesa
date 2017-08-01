@@ -397,7 +397,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	    brw_MOV(p, get_addr_reg(vtxPrev), get_addr_reg(vtx));
 	    brw_ADD(p, get_addr_reg(inlist_ptr), get_addr_reg(inlist_ptr), brw_imm_uw(sizeof(short)));
 
-	    /* while (--loopcount != 0)
+	    /* while (--loopcount)
 	     */
 	    brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
             brw_inst_set_cond_modifier(p->devinfo, brw_last_inst, BRW_CONDITIONAL_NZ);

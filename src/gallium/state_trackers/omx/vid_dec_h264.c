@@ -655,7 +655,7 @@ static void dec_ref_pic_marking(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
             if (memory_management_control_operation == 4)
                /* max_long_term_frame_idx_plus1 */
                vl_rbsp_ue(rbsp);
-         } while (memory_management_control_operation != 0);
+         } while (memory_management_control_operation);
       }
    }
 }

@@ -122,7 +122,7 @@ get_io_offset(nir_builder *b, nir_deref_var *deref,
    /* Just emit code and let constant-folding go to town */
    nir_ssa_def *offset = nir_imm_int(b, 0);
 
-   while (tail->child != NULL) {
+   while (tail->child) {
       const struct glsl_type *parent_type = tail->type;
       tail = tail->child;
 

@@ -212,7 +212,7 @@ brw_nir_analyze_ubo_ranges(const struct brw_compiler *compiler,
        *
        * Each of these will become a UBO range.
        */
-      while (offsets != 0) {
+      while (offsets) {
          /* Find the first 1 in the offsets bitfield.  This represents the
           * start of a range of interesting UBO data.  Make it zero-indexed.
           */

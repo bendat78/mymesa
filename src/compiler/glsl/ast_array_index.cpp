@@ -78,7 +78,7 @@ update_max_array_access(ir_rvalue *ir, int idx, YYLTYPE *loc,
          ir_dereference_array *deref_array =
             deref_record->record->as_dereference_array();
          ir_dereference_array *deref_array_prev = NULL;
-         while (deref_array != NULL) {
+         while (deref_array) {
             deref_array_prev = deref_array;
             deref_array = deref_array->array->as_dereference_array();
          }

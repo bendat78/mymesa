@@ -833,7 +833,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
 
       assert(op->type->is_scalar());
 
-      while (op != NULL) {
+      while (op) {
 	 switch (op->ir_type) {
 	 case ir_type_constant: {
 

@@ -1827,7 +1827,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	r600_flush_emit(rctx);
 
 	mask = rctx->dirty_atoms;
-	while (mask != 0) {
+	while (mask) {
 		r600_emit_atom(rctx, rctx->atoms[u_bit_scan64(&mask)]);
 	}
 

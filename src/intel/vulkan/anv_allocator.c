@@ -218,7 +218,7 @@ static bool
 anv_ptr_free_list_pop(void **list, void **elem)
 {
    void *current = *list;
-   while (PFL_PTR(current) != NULL) {
+   while (PFL_PTR(current)) {
       void **next_ptr = PFL_PTR(current);
       void *new_ptr = VG_NOACCESS_READ(next_ptr);
       unsigned new_count = PFL_COUNT(current) + 1;
@@ -894,7 +894,7 @@ void
 anv_state_stream_finish(struct anv_state_stream *stream)
 {
    struct anv_state_stream_block *next = stream->block_list;
-   while (next != NULL) {
+   while (next) {
       struct anv_state_stream_block sb = VG_NOACCESS_READ(next);
       VG(VALGRIND_MEMPOOL_FREE(stream, sb._vg_ptr));
       VG(VALGRIND_MAKE_MEM_UNDEFINED(next, stream->block_size));
@@ -984,7 +984,7 @@ anv_bo_pool_finish(struct anv_bo_pool *pool)
 {
    for (unsigned i = 0; i < ARRAY_SIZE(pool->free_list); i++) {
       struct bo_pool_bo_link *link = PFL_PTR(pool->free_list[i]);
-      while (link != NULL) {
+      while (link) {
          struct bo_pool_bo_link link_copy = VG_NOACCESS_READ(link);
 
          anv_gem_munmap(link_copy.bo.map, link_copy.bo.size);

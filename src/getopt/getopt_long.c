@@ -104,7 +104,7 @@ gcd(int a, int b)
 	int c;
 
 	c = a % b;
-	while (c != 0) {
+	while (c) {
 		a = b;
 		b = c;
 		c = a % b;

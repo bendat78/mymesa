@@ -639,7 +639,7 @@ force_unroll_array_access(loop_info_state *state, nir_shader *ns,
 {
    nir_deref *tail = &variable->deref;
 
-   while (tail->child != NULL) {
+   while (tail->child) {
       tail = tail->child;
 
       if (tail->deref_type == nir_deref_type_array) {

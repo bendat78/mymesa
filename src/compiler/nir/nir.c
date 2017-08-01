@@ -1226,7 +1226,7 @@ static bool
 visit_deref_src(nir_deref_var *deref, nir_foreach_src_cb cb, void *state)
 {
    nir_deref *cur = &deref->deref;
-   while (cur != NULL) {
+   while (cur) {
       if (cur->deref_type == nir_deref_type_array) {
          if (!visit_deref_array_src(nir_deref_as_array(cur), cb, state))
             return false;

@@ -70,7 +70,7 @@ is_extended_swizzle(ir_expression *ir)
    for (unsigned i = 0; i < ir->type->vector_elements; i++) {
       ir_rvalue *op = ir->operands[i];
 
-      while (op != NULL) {
+      while (op) {
 	 switch (op->ir_type) {
 	 case ir_type_constant: {
 	    const ir_constant *const c = op->as_constant();

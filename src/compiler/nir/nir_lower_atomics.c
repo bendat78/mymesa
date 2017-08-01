@@ -111,7 +111,7 @@ lower_instr(nir_intrinsic_instr *instr,
    nir_ssa_def *offset_def = &offset_const->def;
 
    nir_deref *tail = &instr->variables[0]->deref;
-   while (tail->child != NULL) {
+   while (tail->child) {
       nir_deref_array *deref_array = nir_deref_as_array(tail->child);
       tail = tail->child;
 

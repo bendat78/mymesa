@@ -83,7 +83,7 @@ create_passthrough_tcs(void *mem_ctx, const struct brw_compiler *compiler,
    /* Copy inputs to outputs. */
    uint64_t varyings = nir->info.inputs_read;
 
-   while (varyings != 0) {
+   while (varyings) {
       const int varying = ffsll(varyings) - 1;
 
       load = nir_intrinsic_instr_create(nir,

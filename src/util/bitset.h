@@ -110,7 +110,7 @@ __bitset_next_set(unsigned i, BITSET_WORD *tmp,
     * `word` will be 0 and we will go on to look at the second word.
     */
    word = BITSET_BITWORD(i);
-   while (*tmp == 0) {
+   while (!*tmp) {
       word++;
 
       if (word >= BITSET_WORDS(size))
