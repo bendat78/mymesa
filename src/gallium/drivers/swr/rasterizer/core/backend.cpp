@@ -563,7 +563,7 @@ PFN_BACKEND_FUNC gBackendSampleRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
                                         = {};
 
 void InitBackendFuncTables()
-{    
+{
     InitBackendPixelRate();
     InitBackendSingleFuncTable(gBackendSingleSample);
     InitBackendSampleFuncTable(gBackendSampleRateTable);

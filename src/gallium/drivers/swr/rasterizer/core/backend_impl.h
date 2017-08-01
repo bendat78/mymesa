@@ -156,7 +156,7 @@ struct generateInputCoverage
 
         simdscalari mask[2];
         simdscalari sampleCoverage[2];
-        
+
         if(T::bIsCenterPattern)
         {
             // center coverage is the same for all samples; just broadcast to the sample slots
@@ -233,7 +233,7 @@ struct generateInputCoverage
         }
 
     #if (KNOB_ARCH == KNOB_ARCH_AVX)
-        // pack lower 32 bits of each 128 bit lane into lower 64 bits of single 128 bit lane 
+        // pack lower 32 bits of each 128 bit lane into lower 64 bits of single 128 bit lane
         simdscalari hiToLow = _mm256_permute2f128_si256(packedCoverage0, packedCoverage0, 0x83);
         simdscalar shufRes = _mm256_shuffle_ps(_mm256_castsi256_ps(hiToLow), _mm256_castsi256_ps(hiToLow), _MM_SHUFFLE(1, 1, 0, 1));
         packedCoverage0 = _mm256_castps_si256(_mm256_blend_ps(_mm256_castsi256_ps(packedCoverage0), shufRes, 0xFE));
@@ -254,7 +254,7 @@ struct generateInputCoverage
         }
     #else
         simdscalari permMask = _simd_set_epi32(0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x4, 0x0);
-        // pack lower 32 bits of each 128 bit lane into lower 64 bits of single 128 bit lane 
+        // pack lower 32 bits of each 128 bit lane into lower 64 bits of single 128 bit lane
         packedCoverage0 = _mm256_permutevar8x32_epi32(packedCoverage0, permMask);
 
         simdscalari packedSampleCoverage;
@@ -327,12 +327,12 @@ struct generateInputCoverage<T, SWR_INPUT_COVERAGE_INNER_CONSERVATIVE>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Centroid behaves exactly as follows :
-// (1) If all samples in the primitive are covered, the attribute is evaluated at the pixel center (even if the sample pattern does not happen to 
+// (1) If all samples in the primitive are covered, the attribute is evaluated at the pixel center (even if the sample pattern does not happen to
 //     have a sample location there).
-// (2) Else the attribute is evaluated at the first covered sample, in increasing order of sample index, where sample coverage is after ANDing the 
+// (2) Else the attribute is evaluated at the first covered sample, in increasing order of sample index, where sample coverage is after ANDing the
 //     coverage with the SampleMask Rasterizer State.
-// (3) If no samples are covered, such as on helper pixels executed off the bounds of a primitive to fill out 2x2 pixel stamps, the attribute is 
-//     evaluated as follows : If the SampleMask Rasterizer state is a subset of the samples in the pixel, then the first sample covered by the 
+// (3) If no samples are covered, such as on helper pixels executed off the bounds of a primitive to fill out 2x2 pixel stamps, the attribute is
+//     evaluated as follows : If the SampleMask Rasterizer state is a subset of the samples in the pixel, then the first sample covered by the
 //     SampleMask Rasterizer State is the evaluation point.Otherwise (full SampleMask), the pixel center is the evaluation point.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename T>
@@ -356,7 +356,7 @@ INLINE void CalcCentroidPos(SWR_PS_CONTEXT &psContext, const SWR_MULTISAMPLE_POS
     (inputMask[6] > 0) ? (_BitScanForward(&sampleNum[6], inputMask[6])) : (sampleNum[6] = 0);
     (inputMask[7] > 0) ? (_BitScanForward(&sampleNum[7], inputMask[7])) : (sampleNum[7] = 0);
 
-    // look up and set the sample offsets from UL pixel corner for first covered sample 
+    // look up and set the sample offsets from UL pixel corner for first covered sample
     simdscalar vXSample = _simd_set_ps(samplePos.X(sampleNum[7]),
                                     samplePos.X(sampleNum[6]),
                                     samplePos.X(sampleNum[5]),
@@ -477,7 +477,7 @@ inline void SetupBarycentricCoeffs(BarycentricCoeffs *coeffs, const SWR_TRIANGLE
 
 inline void SetupRenderBuffers(uint8_t *pColorBuffer[SWR_NUM_RENDERTARGETS], uint8_t **pDepthBuffer, uint8_t **pStencilBuffer, uint32_t colorHotTileMask, RenderOutputBuffers &renderBuffers)
 {
-    
+
     DWORD index;
     while (_BitScanForward(&index, colorHotTileMask))
     {
@@ -566,7 +566,7 @@ struct PixelRateZTestLoop
                        clipDistanceMask(ClipDistanceMask), pDepthBuffer(depthBuffer), pStencilBuffer(stencilBuffer){};
 
     INLINE
-    uint32_t operator()(simdscalar& activeLanes, SWR_PS_CONTEXT& psContext, 
+    uint32_t operator()(simdscalar& activeLanes, SWR_PS_CONTEXT& psContext,
                         const CORE_BUCKETS BEDepthBucket, uint32_t currentSimdIn8x8 = 0)
     {
         SWR_CONTEXT *pContext = pDC->pContext;
@@ -639,7 +639,7 @@ struct PixelRateZTestLoop
             depthPassMask[sample] = vCoverageMask[sample];
             stencilPassMask[sample] = vCoverageMask[sample];
             depthPassMask[sample] = DepthStencilTest(&state, work.triFlags.frontFacing, work.triFlags.viewportIndex,
-                                                     vZ[sample], pDepthSample, vCoverageMask[sample], 
+                                                     vZ[sample], pDepthSample, vCoverageMask[sample],
                                                      pStencilSample, &stencilPassMask[sample]);
             //AR_END(BEDepthBucket, 0);
 
@@ -746,7 +746,7 @@ INLINE void OutputMerger4x2(SWR_PS_CONTEXT &psContext, uint8_t* (&pColorBase)[SW
             }
         }
 
-        // final write mask 
+        // final write mask
         simdscalari outputMask = _simd_castps_si(_simd_and_ps(coverageMask, depthPassMask));
 
         ///@todo can only use maskstore fast path if bpc is 32. Assuming hot tile is RGBA32_FLOAT.
@@ -833,7 +833,7 @@ INLINE void OutputMerger8x2(SWR_PS_CONTEXT &psContext, uint8_t* (&pColorBase)[SW
             }
         }
 
-        // final write mask 
+        // final write mask
         simdscalari outputMask = _simd_castps_si(_simd_and_ps(coverageMask, depthPassMask));
 
         ///@todo can only use maskstore fast path if bpc is 32. Assuming hot tile is RGBA32_FLOAT.
@@ -999,7 +999,7 @@ void BackendPixelRate(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t x, uint32_t
                         continue;
                     }
                 }
-                
+
                 // broadcast the results of the PS to all passing pixels
 #if USE_8x2_TILE_BACKEND
                 OutputMerger8x2(psContext, psContext.pColorBuffer, sample, &state.blendState,state.pfnBlendFunc, coverageMask, depthMask, state.psState.renderTargetMask, useAlternateOffset);

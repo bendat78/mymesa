@@ -563,17 +563,17 @@ compile_instruction(
 
    case OPCODE_SCS:
       dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XY );
-      ureg_insn( ureg, 
-                 translate_opcode( inst->Opcode ), 
-                 dst, num_dst, 
+      ureg_insn( ureg,
+                 translate_opcode( inst->Opcode ),
+                 dst, num_dst,
                  src, num_src, 0 );
       break;
 
    case OPCODE_XPD:
       dst[0] = ureg_writemask(dst[0], TGSI_WRITEMASK_XYZ );
-      ureg_insn( ureg, 
-                 translate_opcode( inst->Opcode ), 
-                 dst, num_dst, 
+      ureg_insn( ureg,
+                 translate_opcode( inst->Opcode ),
+                 dst, num_dst,
                  src, num_src, 0 );
       break;
 
@@ -590,9 +590,9 @@ compile_instruction(
       break;
 
    default:
-      ureg_insn( ureg, 
-                 translate_opcode( inst->Opcode ), 
-                 dst, num_dst, 
+      ureg_insn( ureg,
+                 translate_opcode( inst->Opcode ),
+                 dst, num_dst,
                  src, num_src, 0);
       break;
    }

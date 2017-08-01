@@ -136,25 +136,25 @@ INLINE uint64_t rasterizePartialTile(DRAW_CONTEXT *pDC, double startEdges[NumEdg
             UnrollerLMask<1, NumEdges, 1, EdgeMaskT::value>::step(update_lambda); \
             coverageMask |= (mask << bit);
 
-    // step in the +x direction to the next quad 
+    // step in the +x direction to the next quad
 #define INCX \
             UnrollerLMask<0, NumEdges, 1, EdgeMaskT::value>::step(incx_lambda);
 
-    // step in the +y direction to the next quad 
+    // step in the +y direction to the next quad
 #define INCY \
             UnrollerLMask<0, NumEdges, 1, EdgeMaskT::value>::step(incy_lambda);
 
-    // step in the -x direction to the next quad 
+    // step in the -x direction to the next quad
 #define DECX \
             UnrollerLMask<0, NumEdges, 1, EdgeMaskT::value>::step(decx_lambda);
 
-    // sweep 2x2 quad back and forth through the raster tile, 
+    // sweep 2x2 quad back and forth through the raster tile,
     // computing coverage masks for the entire tile
 
     // raster tile
-    // 0  1  2  3  4  5  6  7 
+    // 0  1  2  3  4  5  6  7
     // x  x
-    // x  x ------------------>  
+    // x  x ------------------>
     //                   x  x  |
     // <-----------------x  x  V
     // ..
@@ -261,8 +261,8 @@ INLINE uint64_t rasterizePartialTile(DRAW_CONTEXT *pDC, double startEdges[NumEdg
 // Left: if an edge is not horizontal, and it is on the left side of the triangle in pixel space, it is a 'left' edge
 // Top left: a sample is in if it is a top or left edge.
 // Out: !(horizontal && above) = !horizontal && below
-// Out: !horizontal && left = !(!horizontal && left) = horizontal and right 
-INLINE void adjustTopLeftRuleIntFix16(const __m128i vA, const __m128i vB, __m256d &vEdge) 
+// Out: !horizontal && left = !(!horizontal && left) = horizontal and right
+INLINE void adjustTopLeftRuleIntFix16(const __m128i vA, const __m128i vB, __m256d &vEdge)
 {
     // if vA < 0, vC--
     // if vA == 0 && vB < 0, vC--
@@ -295,7 +295,7 @@ constexpr int64_t ManhToEdgePrecisionAdjust()
 
 //////////////////////////////////////////////////////////////////////////
 /// @struct adjustEdgeConservative
-/// @brief Primary template definition used for partially specializing 
+/// @brief Primary template definition used for partially specializing
 /// the adjustEdgeConservative function. This struct should never
 /// be instantiated.
 /// @tparam RT: rasterizer traits
@@ -306,23 +306,23 @@ struct adjustEdgeConservative
     //////////////////////////////////////////////////////////////////////////
     /// @brief Performs calculations to adjust each edge of a triangle away
     /// from the pixel center by 1/2 pixel + uncertainty region in both the x and y
-    /// direction. 
+    /// direction.
     ///
     /// Uncertainty regions arise from fixed point rounding, which
     /// can snap a vertex +/- by min fixed point value.
     /// Adding 1/2 pixel in x/y bumps the edge equation tests out towards the pixel corners.
-    /// This allows the rasterizer to test for coverage only at the pixel center, 
+    /// This allows the rasterizer to test for coverage only at the pixel center,
     /// instead of having to test individual pixel corners for conservative coverage
     INLINE adjustEdgeConservative(const __m128i &vAi, const __m128i &vBi, __m256d &vEdge)
     {
-        // Assumes CCW winding order. Subtracting from the evaluated edge equation moves the edge away 
+        // Assumes CCW winding order. Subtracting from the evaluated edge equation moves the edge away
         // from the pixel center (in the direction of the edge normal A/B)
 
         // edge = Ax + Bx + C - (manh/e)
         // manh = manhattan distance = abs(A) + abs(B)
         // e = absolute rounding error from snapping from float to fixed point precision
 
-        // 'fixed point' multiply (in double to be avx1 friendly) 
+        // 'fixed point' multiply (in double to be avx1 friendly)
         // need doubles to hold result of a fixed multiply: 16.8 * 16.9 = 32.17, for example
         __m256d vAai = _mm256_cvtepi32_pd(_mm_abs_epi32(vAi)), vBai = _mm256_cvtepi32_pd(_mm_abs_epi32(vBi));
         __m256d manh = _mm256_add_pd(_mm256_mul_pd(vAai, _mm256_set1_pd(ConservativeEdgeOffsetT::value)),
@@ -351,7 +351,7 @@ struct adjustEdgeConservative<RT, std::integral_constant<int32_t, 0>>
 };
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief calculates the distance a degenerate BBox needs to be adjusted 
+/// @brief calculates the distance a degenerate BBox needs to be adjusted
 /// for conservative rast based on compile time trait values
 template<typename RT>
 constexpr int64_t ConservativeScissorOffset()
@@ -366,7 +366,7 @@ constexpr int64_t ConservativeScissorOffset()
 //////////////////////////////////////////////////////////////////////////
 /// @brief Performs calculations to adjust each a vector of evaluated edges out
 /// from the pixel center by 1/2 pixel + uncertainty region in both the x and y
-/// direction. 
+/// direction.
 template <typename RT>
 INLINE void adjustScissorEdge(const double a, const double b, __m256d &vEdge)
 {
@@ -378,7 +378,7 @@ INLINE void adjustScissorEdge(const double a, const double b, __m256d &vEdge)
 //////////////////////////////////////////////////////////////////////////
 /// @brief Performs calculations to adjust each a scalar evaluated edge out
 /// from the pixel center by 1/2 pixel + uncertainty region in both the x and y
-/// direction. 
+/// direction.
 template <typename RT, typename OffsetT>
 INLINE double adjustScalarEdge(const double a, const double b, const double Edge)
 {
@@ -552,8 +552,8 @@ void ComputeEdgeData(const POS& p0, const POS& p1, EDGE& edge)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Primary template definition used for partially specializing 
-/// the UpdateEdgeMasks function. Offset evaluated edges from UL pixel 
+/// @brief Primary template definition used for partially specializing
+/// the UpdateEdgeMasks function. Offset evaluated edges from UL pixel
 /// corner to sample position, and test for coverage
 /// @tparam sampleCount: multisample count
 template <typename NumSamplesT>
@@ -585,7 +585,7 @@ INLINE void UpdateEdgeMasks<SingleSampleT>(const __m256d(&)[3], const __m256d* v
 //////////////////////////////////////////////////////////////////////////
 /// @struct ComputeScissorEdges
 /// @brief Primary template definition. Allows the function to be generically
-/// called. When paired with below specializations, will result in an empty 
+/// called. When paired with below specializations, will result in an empty
 /// inlined function if scissor is not enabled
 /// @tparam RasterScissorEdgesT: is scissor enabled?
 /// @tparam IsConservativeT: is conservative rast enabled?
@@ -593,18 +593,18 @@ INLINE void UpdateEdgeMasks<SingleSampleT>(const __m256d(&)[3], const __m256d* v
 template <typename RasterScissorEdgesT, typename IsConservativeT, typename RT>
 struct ComputeScissorEdges
 {
-    INLINE ComputeScissorEdges(const SWR_RECT &triBBox, const SWR_RECT &scissorBBox, const int32_t x, const int32_t y, 
+    INLINE ComputeScissorEdges(const SWR_RECT &triBBox, const SWR_RECT &scissorBBox, const int32_t x, const int32_t y,
                               EDGE (&rastEdges)[RT::NumEdgesT::value], __m256d (&vEdgeFix16)[7]){};
 };
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief ComputeScissorEdges<std::true_type, std::true_type, RT> partial 
+/// @brief ComputeScissorEdges<std::true_type, std::true_type, RT> partial
 /// specialization. Instantiated when conservative rast and scissor are enabled
 template <typename RT>
 struct ComputeScissorEdges<std::true_type, std::true_type, RT>
 {
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Intersect tri bbox with scissor, compute scissor edge vectors, 
+    /// @brief Intersect tri bbox with scissor, compute scissor edge vectors,
     /// evaluate edge equations and offset them away from pixel center.
     INLINE ComputeScissorEdges(const SWR_RECT &triBBox, const SWR_RECT &scissorBBox, const int32_t x, const int32_t y,
                               EDGE (&rastEdges)[RT::NumEdgesT::value], __m256d (&vEdgeFix16)[7])
@@ -645,7 +645,7 @@ struct ComputeScissorEdges<std::true_type, std::true_type, RT>
 };
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief ComputeScissorEdges<std::true_type, std::false_type, RT> partial 
+/// @brief ComputeScissorEdges<std::true_type, std::false_type, RT> partial
 /// specialization. Instantiated when scissor is enabled and conservative rast
 /// is disabled.
 template <typename RT>
@@ -737,7 +737,7 @@ INLINE bool TrivialRejectTest<NoEdgesValidT>(const int, const int, const int)
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Primary function template for TrivialAcceptTest. Always returns
-/// false, since it will only be called for degenerate tris, and as such 
+/// false, since it will only be called for degenerate tris, and as such
 /// will never cover the entire raster tile
 template <typename ScissorEnableT>
 INLINE bool TrivialAcceptTest(const int, const int, const int)
@@ -765,7 +765,7 @@ struct GenerateSVInnerCoverage
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Specialization of GenerateSVInnerCoverage where all edges
-/// are non-degenerate and SVInnerCoverage is requested. Offsets the evaluated 
+/// are non-degenerate and SVInnerCoverage is requested. Offsets the evaluated
 /// edge values from OuterConservative to InnerConservative and rasterizes.
 template <typename RT>
 struct GenerateSVInnerCoverage<RT, AllEdgesValidT, InnerConservativeCoverageT>
@@ -799,8 +799,8 @@ struct UpdateEdgeMasksInnerConservative
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief Specialization of UpdateEdgeMasksInnerConservative where all edges
-/// are non-degenerate and SVInnerCoverage is requested. Offsets the edges 
-/// evaluated at raster tile corners to inner conservative position and 
+/// are non-degenerate and SVInnerCoverage is requested. Offsets the edges
+/// evaluated at raster tile corners to inner conservative position and
 /// updates edge masks
 template <typename RT>
 struct UpdateEdgeMasksInnerConservative<RT, AllEdgesValidT, InnerConservativeCoverageT>
@@ -810,7 +810,7 @@ struct UpdateEdgeMasksInnerConservative<RT, AllEdgesValidT, InnerConservativeCov
     {
         __m256d vTempEdge[3]{vEdgeFix16[0], vEdgeFix16[1], vEdgeFix16[2]};
 
-        // instead of keeping 2 copies of evaluated edges around, just compensate for the outer 
+        // instead of keeping 2 copies of evaluated edges around, just compensate for the outer
         // conservative evaluated edge when adjusting the edge in for inner conservative tests
         adjustEdgeConservative<RT, typename RT::InnerConservativeEdgeOffsetT>(vAi, vBi, vTempEdge[0]);
         adjustEdgeConservative<RT, typename RT::InnerConservativeEdgeOffsetT>(vAi, vBi, vTempEdge[1]);
@@ -821,8 +821,8 @@ struct UpdateEdgeMasksInnerConservative<RT, AllEdgesValidT, InnerConservativeCov
 };
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Specialization of UpdateEdgeMasksInnerConservative where SVInnerCoverage 
-/// is requested but at least one edge is degenerate. Since a degenerate triangle cannot 
+/// @brief Specialization of UpdateEdgeMasksInnerConservative where SVInnerCoverage
+/// is requested but at least one edge is degenerate. Since a degenerate triangle cannot
 /// cover an entire raster tile, set mask0 to 0 to force it down the
 /// rastierizePartialTile path
 template <typename RT, typename ValidEdgeMaskT>
@@ -858,7 +858,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
     triDesc.pUserClipBuffer = workDesc.pUserClipBuffer;
 
     __m128 vX, vY, vZ, vRecipW;
-    
+
     // pTriBuffer data layout: grouped components of the 3 triangle points and 1 don't care
     // eg: vX = [x0 x1 x2 dc]
     vX = _mm_load_ps(workDesc.pTriBuffer);
@@ -882,12 +882,12 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
 
     __m128i vAi, vBi;
     triangleSetupABInt(vXi, vYi, vAi, vBi);
-    
+
     // determinant
     float det = calcDeterminantInt(vAi, vBi);
 
     // Verts in Pixel Coordinate Space at this point
-    // Det > 0 = CW winding order 
+    // Det > 0 = CW winding order
     // Convert CW triangles to CCW
     if (det > 0.0)
     {
@@ -904,7 +904,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
 
     if(RT::ValidEdgeMaskT::value != ALL_EDGES_VALID)
     {
-        // If we have degenerate edge(s) to rasterize, set I and J coefs 
+        // If we have degenerate edge(s) to rasterize, set I and J coefs
         // to 0 for constant interpolation of attributes
         triDesc.I[0] = 0.0f;
         triDesc.I[1] = 0.0f;
@@ -918,7 +918,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
     }
     else
     {
-        // only extract coefs for 2 of the barycentrics; the 3rd can be 
+        // only extract coefs for 2 of the barycentrics; the 3rd can be
         // determined from the barycentric equation:
         // i + j + k = 1 <=> k = 1 - j - i
         _MM_EXTRACT_FLOAT(triDesc.I[0], vA, 1);
@@ -938,7 +938,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
     triDesc.OneOverW[1] = oneOverW[1] - oneOverW[2];
     triDesc.OneOverW[2] = oneOverW[2];
 
-    // calculate perspective correct coefs per vertex attrib 
+    // calculate perspective correct coefs per vertex attrib
     float* pPerspAttribs = perspAttribsTLS;
     float* pAttribs = workDesc.pAttribs;
     triDesc.pPerspAttribs = pPerspAttribs;
@@ -972,7 +972,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
     triDesc.Z[0] = a[0] - a[2];
     triDesc.Z[1] = a[1] - a[2];
     triDesc.Z[2] = a[2];
-        
+
     // add depth bias
     triDesc.Z[2] += ComputeDepthBias(&rastState, &triDesc, workDesc.pTriBuffer + 8);
 
@@ -1024,7 +1024,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
     uint32_t numTilesX = maxTileX - minTileX + 1;
     uint32_t numTilesY = maxTileY - minTileY + 1;
 
-    if (numTilesX == 0 || numTilesY == 0) 
+    if (numTilesX == 0 || numTilesY == 0)
     {
         RDTSC_EVENT(BEEmptyTriangle, 1, 0);
         AR_END(BERasterizeTriangle, 1);
@@ -1054,7 +1054,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
     __m128i vTopLeftY = _mm_set1_epi32(y);
 
     // evaluate edge equations at top-left pixel using 64bit math
-    // 
+    //
     // line = Ax + By + C
     // solving for C:
     // C = -Ax - By
@@ -1064,7 +1064,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
     // line = Ax - By - Ax0 - By0
     // line = A(x - x0) + B(y - y0)
     // dX = (x-x0), dY = (y-y0)
-    // so all this simplifies to 
+    // so all this simplifies to
     // edge = A(dX) + B(dY), our first test at the top left of the bbox we're rasterizing within
 
     __m128i vDeltaX = _mm_sub_epi32(vTopLeftX, vXi);
@@ -1187,7 +1187,7 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
                     //   2) raster tile is entirely within scissor/vp intersection rect
                     if (TrivialAcceptTest<typename RT::RasterizeScissorEdgesT>(mask0, mask1, mask2))
                     {
-                        // trivial accept, all 4 corners of all 3 edges are negative 
+                        // trivial accept, all 4 corners of all 3 edges are negative
                         // i.e. raster tile completely inside triangle
                         triDesc.anyCoveredSamples = triDesc.coverageMask[sampleNum];
                         if(std::is_same<typename RT::InputCoverageT, InnerConservativeCoverageT>::value)
@@ -1237,8 +1237,8 @@ void RasterizeTriangle(DRAW_CONTEXT* pDC, uint32_t workerId, uint32_t macroTile,
                         triDesc.coverageMask[sampleNum] = rasterizePartialTile<RT::NumEdgesT::value, typename RT::ValidEdgeMaskT>(pDC, startQuadEdges, rastEdges);
                         AR_END(BERasterizePartial, 0);
 
-                        triDesc.anyCoveredSamples |= triDesc.coverageMask[sampleNum]; 
-                        
+                        triDesc.anyCoveredSamples |= triDesc.coverageMask[sampleNum];
+
                         // Output SV InnerCoverage, if needed
                         GenerateSVInnerCoverage<RT, typename RT::ValidEdgeMaskT, typename RT::InputCoverageT>(pDC, workerId, rastEdges, startQuadEdges, triDesc.innerCoverageMask);
                     }
@@ -1316,11 +1316,11 @@ void GetRenderHotTiles(DRAW_CONTEXT *pDC, uint32_t macroID, uint32_t tileX, uint
     uint32_t colorHottileEnableMask = state.colorHottileEnable;
     while(_BitScanForward(&rtSlot, colorHottileEnableMask))
     {
-        HOTTILE *pColor = pContext->pHotTileMgr->GetHotTile(pContext, pDC, macroID, (SWR_RENDERTARGET_ATTACHMENT)(SWR_ATTACHMENT_COLOR0 + rtSlot), true, 
+        HOTTILE *pColor = pContext->pHotTileMgr->GetHotTile(pContext, pDC, macroID, (SWR_RENDERTARGET_ATTACHMENT)(SWR_ATTACHMENT_COLOR0 + rtSlot), true,
             numSamples, renderTargetArrayIndex);
         pColor->state = HOTTILE_DIRTY;
         renderBuffers.pColor[rtSlot] = pColor->pBuffer + offset;
-        
+
         colorHottileEnableMask &= ~(1 << rtSlot);
     }
     if(state.depthHottileEnable)
@@ -1328,7 +1328,7 @@ void GetRenderHotTiles(DRAW_CONTEXT *pDC, uint32_t macroID, uint32_t tileX, uint
         const uint32_t pitch = KNOB_MACROTILE_X_DIM * FormatTraits<KNOB_DEPTH_HOT_TILE_FORMAT>::bpp / 8;
         uint32_t offset = ComputeTileOffset2D<TilingTraits<SWR_TILE_SWRZ, FormatTraits<KNOB_DEPTH_HOT_TILE_FORMAT>::bpp> >(pitch, tileX, tileY);
         offset*=numSamples;
-        HOTTILE *pDepth = pContext->pHotTileMgr->GetHotTile(pContext, pDC, macroID, SWR_ATTACHMENT_DEPTH, true, 
+        HOTTILE *pDepth = pContext->pHotTileMgr->GetHotTile(pContext, pDC, macroID, SWR_ATTACHMENT_DEPTH, true,
             numSamples, renderTargetArrayIndex);
         pDepth->state = HOTTILE_DIRTY;
         SWR_ASSERT(pDepth->pBuffer != nullptr);
@@ -1339,7 +1339,7 @@ void GetRenderHotTiles(DRAW_CONTEXT *pDC, uint32_t macroID, uint32_t tileX, uint
         const uint32_t pitch = KNOB_MACROTILE_X_DIM * FormatTraits<KNOB_STENCIL_HOT_TILE_FORMAT>::bpp / 8;
         uint32_t offset = ComputeTileOffset2D<TilingTraits<SWR_TILE_SWRZ, FormatTraits<KNOB_STENCIL_HOT_TILE_FORMAT>::bpp> >(pitch, tileX, tileY);
         offset*=numSamples;
-        HOTTILE* pStencil = pContext->pHotTileMgr->GetHotTile(pContext, pDC, macroID, SWR_ATTACHMENT_STENCIL, true, 
+        HOTTILE* pStencil = pContext->pHotTileMgr->GetHotTile(pContext, pDC, macroID, SWR_ATTACHMENT_STENCIL, true,
             numSamples, renderTargetArrayIndex);
         pStencil->state = HOTTILE_DIRTY;
         SWR_ASSERT(pStencil->pBuffer != nullptr);
@@ -1356,7 +1356,7 @@ INLINE void StepRasterTileX(uint32_t colorHotTileMask, RenderOutputBuffers &buff
         colorHotTileMask &= ~(1 << rt);
         buffers.pColor[rt] += RT::colorRasterTileStep;
     }
-    
+
     buffers.pDepth += RT::depthRasterTileStep;
     buffers.pStencil += RT::stencilRasterTileStep;
 }

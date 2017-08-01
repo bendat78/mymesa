@@ -295,7 +295,7 @@ static SIMDINLINE simdscalar InterpolateComponent(simdscalar vI, simdscalar vJ, 
 
     simdscalar vk = _simd_sub_ps(_simd_sub_ps(_simd_set1_ps(1.0f), vI), vJ);
     vC = _simd_mul_ps(vk, vC);
-    
+
     return vplaneps(vA, vB, vC, vI, vJ);
 }
 
