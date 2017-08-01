@@ -1776,8 +1776,7 @@ bind_texture_unit(struct gl_context *ctx, GLuint unit, GLuint texture,
                      "glBindTextureUnit(non-gen name)");
          return;
       }
-
-      if (texObj->Target == 0) {
+      if (!texObj->Target) {
          /* Texture object was gen'd but never bound so the target is not set */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glBindTextureUnit(target)");
          return;

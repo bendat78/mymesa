@@ -1111,7 +1111,7 @@ _save_PrimitiveRestartNV(void)
    GET_CURRENT_CONTEXT(ctx);
    struct vbo_save_context *save = &vbo_context(ctx)->save;
 
-   if (save->prim_count == 0) {
+   if (!save->prim_count) {
       /* We're not inside a glBegin/End pair, so calling glPrimitiverRestartNV
        * is an error.
        */

@@ -1930,7 +1930,7 @@ static VkResult radv_alloc_sem_counts(struct radv_winsys_sem_counts *counts,
 {
 	int syncobj_idx = 0, sem_idx = 0;
 
-	if (num_sems == 0)
+	if (!num_sems)
 		return VK_SUCCESS;
 	for (uint32_t i = 0; i < num_sems; i++) {
 		RADV_FROM_HANDLE(radv_semaphore, sem, sems[i]);
@@ -3591,7 +3591,7 @@ VkResult radv_ImportSemaphoreFdKHR(VkDevice _device,
 	assert(pImportSemaphoreFdInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR);
 
 	int ret = device->ws->import_syncobj(device->ws, pImportSemaphoreFdInfo->fd, &syncobj_handle);
-	if (ret != 0)
+	if (ret)
 		return VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR;
 
 	if (pImportSemaphoreFdInfo->flags & VK_SEMAPHORE_IMPORT_TEMPORARY_BIT_KHR) {

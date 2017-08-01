@@ -3104,7 +3104,7 @@ genX(upload_push_constant_packets)(struct brw_context *brw)
                const struct brw_ubo_range *range =
                   &stage_state->prog_data->ubo_ranges[i];
 
-               if (range->length == 0)
+               if (!range->length)
                   continue;
 
                const struct gl_uniform_block *block =

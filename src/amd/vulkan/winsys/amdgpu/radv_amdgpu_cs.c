@@ -1156,7 +1156,7 @@ static int radv_amdgpu_cs_submit(struct radv_amdgpu_ctx *ctx,
 		}
 		num_chunks++;
 
-		if (sem_info->wait.sem_count == 0)
+		if (!sem_info->wait.sem_count)
 			sem_info->cs_emit_wait = false;
 
 	}

@@ -776,7 +776,7 @@ read_oa_samples_for_query(struct brw_context *brw,
 
    /* Map the BO once here and let accumulate_oa_reports() unmap
     * it. */
-   if (obj->oa.map == NULL)
+   if (!obj->oa.map)
       obj->oa.map = brw_bo_map(brw, obj->oa.bo, MAP_READ);
 
    start = last = obj->oa.map;
@@ -926,7 +926,7 @@ accumulate_oa_reports(struct brw_context *brw,
                    * We didn't *really* Switch AWAY in the case that we e.g.
                    * saw a single periodic report while idle...
                    */
-                  if (out_duration >= 1)
+                  if (out_duration)
                      add = false;
                } else if (in_ctx) {
                   assert(report[2] == ctx_id);
@@ -1167,7 +1167,7 @@ brw_begin_perf_query(struct gl_context *ctx,
                period_exponent = e + 1;
          }
 
-         if (period_exponent == 0) {
+         if (!period_exponent) {
             DBG("WARNING: enable to find a sampling exponent\n");
             return false;
          }

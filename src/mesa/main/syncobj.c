@@ -323,7 +323,7 @@ _mesa_FenceSync(GLenum condition, GLbitfield flags)
       return 0;
    }
 
-   if (flags != 0) {
+   if (flags) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glFenceSync(flags=0x%x)",
 		  condition);
       return 0;

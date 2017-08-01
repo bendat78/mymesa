@@ -71,11 +71,11 @@ cmp_ubo_range_entry(const void *va, const void *vb)
    int delta = score(b) - score(a);
 
    /* Then use the UBO block index as a tie-breaker */
-   if (delta == 0)
+   if (!delta)
       delta = b->range.block - a->range.block;
 
    /* Finally use the UBO offset as a second tie-breaker */
-   if (delta == 0)
+   if (!delta)
       delta = b->range.block - a->range.block;
 
    return delta;

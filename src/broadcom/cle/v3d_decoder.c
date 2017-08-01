@@ -140,7 +140,7 @@ fail(struct location *loc, const char *msg, ...)
 static void *
 fail_on_null(void *p)
 {
-        if (p == NULL) {
+        if (!p) {
                 fprintf(stderr, "aubinator: out of memory\n");
                 exit(EXIT_FAILURE);
         }
@@ -184,7 +184,7 @@ get_group_offset_count(const char **atts, uint32_t *offset, uint32_t *count,
         for (i = 0; atts[i]; i += 2) {
                 if (strcmp(atts[i], "count") == 0) {
                         *count = strtoul(atts[i + 1], &p, 0);
-                        if (*count == 0)
+                        if (!*count)
                                 *variable = true;
                 } else if (strcmp(atts[i], "start") == 0) {
                         *offset = strtoul(atts[i + 1], &p, 0);
@@ -430,12 +430,12 @@ start_element(void *data, const char *element_name, const char **atts)
         }
 
         if (strcmp(element_name, "vcxml") == 0) {
-                if (ver == NULL)
+                if (!ver)
                         fail(&ctx->loc, "no ver given");
 
                 int major, minor;
                 int n = sscanf(ver, "%d.%d", &major, &minor);
-                if (n == 0)
+                if (!n)
                         fail(&ctx->loc, "invalid ver given: %s", ver);
                 if (n == 1)
                         minor = 0;
@@ -564,7 +564,7 @@ static uint32_t zlib_inflate(const void *compressed_data,
                         break;
 
                 out = realloc(out, 2*zstream.total_out);
-                if (out == NULL) {
+                if (!out) {
                         inflateEnd(&zstream);
                         return 0;
                 }
@@ -594,7 +594,7 @@ v3d_spec_load(const struct v3d_device_info *devinfo)
                 }
         }
 
-        if (text_length == 0) {
+        if (!text_length) {
                 fprintf(stderr, "unable to find gen (%u) data\n", devinfo->ver);
                 return NULL;
         }
@@ -602,7 +602,7 @@ v3d_spec_load(const struct v3d_device_info *devinfo)
         memset(&ctx, 0, sizeof ctx);
         ctx.parser = XML_ParserCreate(NULL);
         XML_SetUserData(ctx.parser, &ctx);
-        if (ctx.parser == NULL) {
+        if (!ctx.parser) {
                 fprintf(stderr, "failed to create parser\n");
                 return NULL;
         }
@@ -821,7 +821,7 @@ v3d_field_iterator_next(struct v3d_field_iterator *iter)
         }
         }
 
-        if (strlen(iter->group->name) == 0) {
+        if (!strlen(iter->group->name)) {
                 int length = strlen(iter->name);
                 snprintf(iter->name + length, sizeof(iter->name) - length,
                          "[%i]", iter->group_iter);
