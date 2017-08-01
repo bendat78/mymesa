@@ -332,7 +332,7 @@ intel_miptree_blit(struct brw_context *brw,
       const unsigned h0 = src_mt->surf.phys_level0_sa.height;
       src_y = minify(h0, src_level - src_mt->first_level) - src_y - height;
    }
- 
+
    if (dst_flip) {
       const unsigned h0 = dst_mt->surf.phys_level0_sa.height;
       dst_y = minify(h0, dst_level - dst_mt->first_level) - dst_y - height;

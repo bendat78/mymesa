@@ -552,7 +552,7 @@ make_surface(struct brw_context *brw, GLenum target, mesa_format format,
       .array_len = target == GL_TEXTURE_3D ? 1 : depth0,
       .samples = num_samples,
       .row_pitch = row_pitch,
-      .usage = isl_usage_flags, 
+      .usage = isl_usage_flags,
       .tiling_flags = tiling_flags,
    };
 
@@ -628,7 +628,7 @@ make_separate_stencil_surface(struct brw_context *brw,
 
    if (!mt->stencil_mt)
       return false;
-   
+
    mt->stencil_mt->r8stencil_needs_update = true;
 
    return true;

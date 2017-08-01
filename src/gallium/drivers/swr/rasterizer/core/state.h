@@ -1056,7 +1056,7 @@ struct SWR_BACKEND_STATE
 
     bool readRenderTargetArrayIndex;    // Forward render target array index from last FE stage to the backend
     bool readViewportArrayIndex;        // Read viewport array index from last FE stage during binning
-    
+
 	// Offset to the start of the attributes of the input vertices, in simdvector units
     uint32_t vertexAttribOffset;
 };

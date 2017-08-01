@@ -625,7 +625,7 @@ isl_surf_choose_dim_layout(const struct isl_device *dev,
           *
           * The cube face textures are stored in the same way as 3D surfaces
           * are stored (see section 6.17.5 for details).  For cube surfaces,
-          * however, the depth is equal to the number of faces (always 6) and 
+          * however, the depth is equal to the number of faces (always 6) and
           * is not reduced for each MIP.
           */
          if (ISL_DEV_GEN(dev) == 4 && (usage & ISL_SURF_USAGE_CUBE_BIT))

@@ -41,9 +41,9 @@ typedef SIMD512                             SIMD16;
 #define _simd16_set_epi32                   SIMD16::set_epi32
 #define _simd16_load_ps                     SIMD16::load_ps
 #define _simd16_loadu_ps                    SIMD16::loadu_ps
-#if 1                                       
+#if 1
 #define _simd16_load1_ps                    SIMD16::broadcast_ss
-#endif                                      
+#endif
 #define _simd16_load_si                     SIMD16::load_si
 #define _simd16_loadu_si                    SIMD16::loadu_si
 #define _simd16_broadcast_ss(m)             SIMD16::broadcast_ss((float const*)m)
