@@ -700,8 +700,8 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 
 	/* workout base swizzle */
 	if (!(surf->flags & RADEON_SURF_Z_OR_SBUFFER)) {
-		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {0};
-		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {0};
+		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {};
+		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {};
 
 		AddrBaseSwizzleIn.surfIndex = config->info.surf_index;
 		AddrBaseSwizzleIn.tileIndex = AddrSurfInfoIn.tileIndex;

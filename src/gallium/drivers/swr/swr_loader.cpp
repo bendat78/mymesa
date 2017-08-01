@@ -31,7 +31,7 @@
 struct pipe_screen *
 swr_create_screen(struct sw_winsys *winsys)
 {
-   char filename[256] = { 0 };
+   char filename[256] = {};
    fprintf(stderr, "SWR detected ");
 
    util_dl_library *pLibrary = nullptr;
