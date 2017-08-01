@@ -387,7 +387,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
    /* There might be a buffer release already queued that wasn't processed */
    wl_display_dispatch_queue_pending(dri2_dpy->wl_dpy, dri2_surf->wl_queue);
 
-   while (dri2_surf->back == NULL) {
+   while (!dri2_surf->back) {
       for (int i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
          /* Get an unlocked buffer, preferrably one with a dri_buffer
           * already allocated. */
@@ -824,7 +824,7 @@ dri2_wl_swap_buffers_with_damage(_EGLDriver *drv,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
 
-   while (dri2_surf->throttle_callback != NULL)
+   while (dri2_surf->throttle_callback)
       if (wl_display_dispatch_queue(dri2_dpy->wl_dpy,
                                     dri2_surf->wl_queue) == -1)
          return -1;
@@ -1702,7 +1702,7 @@ dri2_wl_swrast_commit_backbuffer(struct dri2_egl_surface *dri2_surf)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(dri2_surf->base.Resource.Display);
 
-   while (dri2_surf->throttle_callback != NULL)
+   while (dri2_surf->throttle_callback)
       if (wl_display_dispatch_queue(dri2_dpy->wl_dpy,
                                     dri2_surf->wl_queue) == -1)
          return;

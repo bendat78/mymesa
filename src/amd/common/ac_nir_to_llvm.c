@@ -2505,7 +2505,7 @@ get_deref_offset(struct ac_nir_context *ctx, nir_deref_var *deref,
 		goto out;
 	}
 
-	while (tail->child != NULL) {
+	while (tail->child) {
 		const struct glsl_type *parent_type = tail->type;
 		tail = tail->child;
 
@@ -2913,7 +2913,7 @@ build_gep_for_deref(struct ac_nir_context *ctx,
 	assert(entry->data);
 	LLVMValueRef val = entry->data;
 	nir_deref *tail = deref->deref.child;
-	while (tail != NULL) {
+	while (tail) {
 		LLVMValueRef offset;
 		switch (tail->deref_type) {
 		case nir_deref_type_array: {

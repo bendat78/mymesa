@@ -334,10 +334,10 @@ __DRIconfig **driConcatConfigs(__DRIconfig **a,
        return a;
 
     i = 0;
-    while (a[i] != NULL)
+    while (a[i])
 	i++;
     j = 0;
-    while (b[j] != NULL)
+    while (b[j])
 	j++;
 
     all = malloc((i + j + 1) * sizeof *all);

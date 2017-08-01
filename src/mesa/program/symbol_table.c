@@ -303,7 +303,7 @@ _mesa_symbol_table_ctor(void)
 void
 _mesa_symbol_table_dtor(struct _mesa_symbol_table *table)
 {
-   while (table->current_scope != NULL) {
+   while (table->current_scope) {
       _mesa_symbol_table_pop_scope(table);
    }
 

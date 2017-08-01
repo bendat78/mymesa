@@ -480,7 +480,7 @@ _mesa_hash_string(const char *key)
 {
    uint32_t hash = _mesa_fnv32_1a_offset_bias;
 
-   while (*key != 0) {
+   while (*key) {
       hash = _mesa_fnv32_1a_accumulate(hash, *key);
       key++;
    }

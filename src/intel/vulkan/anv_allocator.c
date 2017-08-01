@@ -218,7 +218,7 @@ static bool
 anv_ptr_free_list_pop(void **list, void **elem)
 {
    void *current = *list;
-   while (PFL_PTR(current) != NULL) {
+   while (PFL_PTR(current)) {
       void **next_ptr = PFL_PTR(current);
       void *new_ptr = VG_NOACCESS_READ(next_ptr);
       unsigned new_count = PFL_COUNT(current) + 1;

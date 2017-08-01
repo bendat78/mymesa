@@ -263,7 +263,7 @@ unsafe_free(ralloc_header *info)
 {
    /* Recursively free any children...don't waste time unlinking them. */
    ralloc_header *temp;
-   while (info->child != NULL) {
+   while (info->child) {
       temp = info->child;
       info->child = temp->next;
       unsafe_free(temp);

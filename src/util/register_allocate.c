@@ -620,7 +620,7 @@ ra_select(struct ra_graph *g)
    if (g->select_reg_callback)
       select_regs = malloc(BITSET_WORDS(g->regs->count) * sizeof(BITSET_WORD));
 
-   while (g->stack_count != 0) {
+   while (g->stack_count) {
       unsigned int ri;
       unsigned int r = -1;
       int n = g->stack[g->stack_count - 1];

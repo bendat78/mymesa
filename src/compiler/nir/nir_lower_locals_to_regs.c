@@ -141,7 +141,7 @@ get_deref_reg_src(nir_deref_var *deref, nir_instr *instr,
       return src;
 
    nir_deref *tail = &deref->deref;
-   while (tail->child != NULL) {
+   while (tail->child) {
       const struct glsl_type *parent_type = tail->type;
       tail = tail->child;
 

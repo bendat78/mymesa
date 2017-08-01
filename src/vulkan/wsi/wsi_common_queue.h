@@ -128,7 +128,7 @@ wsi_queue_pull(struct wsi_queue *queue, uint32_t *index, uint64_t timeout)
    abstime.tv_nsec = abs_nsec;
    abstime.tv_sec = MIN2(abs_sec, INT_TYPE_MAX(abstime.tv_sec));
 
-   while (u_vector_length(&queue->vector) == 0) {
+   while (!u_vector_length(&queue->vector)) {
       ret = pthread_cond_timedwait(&queue->cond, &queue->mutex, &abstime);
       if (!ret) {
          continue;

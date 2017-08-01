@@ -727,7 +727,7 @@ deflate_and_write_to_disk(const void *in_data, size_t in_data_size, int dest,
             (void)deflateEnd(&strm);
             return 0;
          }
-      } while (strm.avail_out == 0);
+      } while (!strm.avail_out);
 
       /* all input should be used */
       assert(strm.avail_in == 0);

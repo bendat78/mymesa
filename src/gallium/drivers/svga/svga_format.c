@@ -2010,7 +2010,7 @@ svga_format_is_shareable(const struct svga_screen *ss,
       if (format_compats[i].pformat == pformat) {
          const SVGA3dSurfaceFormat *compat_format =
             format_compats[i].compat_format;
-         while (*compat_format != 0) {
+         while (*compat_format) {
             if (*compat_format == sformat)
                return true;
             compat_format++;

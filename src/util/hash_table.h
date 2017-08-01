@@ -118,7 +118,7 @@ _mesa_fnv32_1a_accumulate_block(uint32_t hash, const void *data, size_t size)
 {
    const uint8_t *bytes = (const uint8_t *)data;
 
-   while (size-- != 0) {
+   while (size--) {
       hash ^= *bytes;
       hash = hash * 0x01000193;
       bytes++;
