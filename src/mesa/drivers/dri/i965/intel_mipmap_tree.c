@@ -878,12 +878,12 @@ miptree_create_for_planar_image(struct brw_context *brw,
                                      width, height, 1,
                                      image->strides[index],
                                      MIPTREE_LAYOUT_DISABLE_AUX);
-      if (mt == NULL)
+      if (!mt)
          return NULL;
 
       mt->target = target;
 
-      if (i == 0)
+      if (!i)
          planar_mt = mt;
       else
          planar_mt->plane[i - 1] = mt;
@@ -957,7 +957,7 @@ intel_miptree_create_for_dri_image(struct brw_context *brw,
       intel_miptree_create_for_bo(brw, image->bo, format,
                                   image->offset, image->width, image->height, 1,
                                   image->pitch, mt_layout_flags);
-   if (mt == NULL)
+   if (!mt)
       return NULL;
 
    mt->target = target;

@@ -49,7 +49,7 @@ vc4_dump_cl(void *cl, uint32_t size, bool is_render)
                 uint8_t header = *p;
                 uint32_t length;
 
-                if (inst == NULL) {
+                if (!inst) {
                         fprintf(stderr, "0x%08x 0x%08x: Unknown packet 0x%02x (%d)!\n",
                                 offset, hw_offset, header, header);
                         return;

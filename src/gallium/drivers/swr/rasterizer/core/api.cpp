@@ -960,7 +960,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     uint32_t hotTileEnable = pState->state.psState.renderTargetMask;
 
     // Disable hottile for surfaces with no writes
-    if (psState.pfnPixelShader != nullptr)
+    if (psState.pfnPixelShader)
     {
         DWORD rt;
         uint32_t rtMask = pState->state.psState.renderTargetMask;

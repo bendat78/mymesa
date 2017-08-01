@@ -3681,7 +3681,7 @@ framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
       }
 
       att = get_attachment(ctx, fb, attachment, &is_color_attachment);
-      if (att == NULL) {
+      if (!att) {
          /*
           * From OpenGL 4.5 spec, section 9.2.7 "Attaching Renderbuffer Images
           * to a Framebuffer":

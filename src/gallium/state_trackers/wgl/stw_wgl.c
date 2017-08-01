@@ -257,7 +257,7 @@ wglUseFontBitmapsW(
       glNewList(listBase + i, GL_COMPILE);
 
       if (size != GDI_ERROR) {
-         if (size == 0) {
+         if (!size) {
             glBitmap(0, 0, -gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y,
                      gm.gmCellIncX, gm.gmCellIncY, NULL);
          }

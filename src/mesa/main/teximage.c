@@ -4461,7 +4461,7 @@ get_tex_images_for_clear(struct gl_context *ctx,
 
    for (i = 0; i < numFaces; i++) {
       texImages[i] = _mesa_select_tex_image(texObj, target + i, level);
-      if (texImages[i] == NULL) {
+      if (!texImages[i]) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "%s(invalid level)", function);
          return 0;
       }

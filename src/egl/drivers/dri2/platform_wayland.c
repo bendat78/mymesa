@@ -439,11 +439,11 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
                                          __DRI_IMAGE_USE_LINEAR,
                                          NULL);
       }
-      if (dri2_surf->back->linear_copy == NULL)
+      if (!dri2_surf->back->linear_copy)
           return -1;
    }
 
-   if (dri2_surf->back->dri_image == NULL) {
+   if (!dri2_surf->back->dri_image) {
       /* If our DRIImage implementation does not support
        * createImageWithModifiers, then fall back to the old createImage,
        * and hope it allocates an image which is acceptable to the winsys.
@@ -738,7 +738,7 @@ create_wl_buffer(struct dri2_egl_display *dri2_dpy,
          __DRIimage *p_image;
          int stride, offset, fd;
 
-         if (i == 0)
+         if (!i)
             p_image = image;
          else
             p_image = dri2_dpy->image->fromPlanar(image, i, NULL);

@@ -384,7 +384,7 @@ active_shader_program(struct gl_context *ctx, GLuint pipeline, GLuint program,
       } else {
          shProg = _mesa_lookup_shader_program_err(ctx, program,
                                                   "glActiveShaderProgram(program)");
-         if (shProg == NULL)
+         if (!shProg)
             return;
       }
    }

@@ -6233,7 +6233,7 @@ _mesa_glsl_has_builtin_function(_mesa_glsl_parse_state *state, const char *name)
    bool ret = false;
    mtx_lock(&builtins_lock);
    f = builtins.shader->symbols->get_function(name);
-   if (f != NULL) {
+   if (f) {
       foreach_in_list(ir_function_signature, sig, &f->signatures) {
          if (sig->is_builtin_available(state)) {
             ret = true;

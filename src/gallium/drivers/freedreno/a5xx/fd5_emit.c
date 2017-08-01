@@ -246,7 +246,7 @@ setup_border_colors(struct fd_texture_stateobj *tex, struct bcolor_entry *entrie
 				else
 					e->rgb10a2 |= (int)(f_u * 0x3ff) << (c * 10);
 				e->rgba4 |= (int)(f_u * 0xf) << (c * 4);
-				if (c == 0)
+				if (!c)
 					e->z24 = f_u * 0xffffff;
 			}
 		}

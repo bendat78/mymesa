@@ -466,7 +466,7 @@ VkResult radv_QueuePresentKHR(
 						  pPresentInfo->pWaitSemaphores,
 						  0,
 						  NULL);
-		if (pPresentInfo->pResults != NULL)
+		if (pPresentInfo->pResults)
 			pPresentInfo->pResults[i] = item_result;
 		result = result == VK_SUCCESS ? item_result : result;
 		if (item_result != VK_SUCCESS) {

@@ -321,7 +321,7 @@ struct BEChooserSampleRate
     template <typename... TArgsT>
     static PFN_BACKEND_FUNC GetFunc(bool tArg, TArgsT... remainingArgs)
     {
-        if (tArg == true)
+        if (tArg)
         {
             return BEChooserSampleRate<ArgsT..., 1>::GetFunc(remainingArgs...);
         }
