@@ -266,11 +266,13 @@ struct eg_packet3 {
                         while value[1] >= len(values_offsets):
                             values_offsets.append(-1)
                         values_offsets[value[1]] = strings.add(strip_prefix(value[0]))
-                    print '\t{%s, %s(~0u), %s, %s},' % (
-                        strings.add(field.name), field.s_name,
+                    print '\t{.name_offset\t= %s,\n\t .mask\t\t= %s(~0u),\
+                           \n\t .num_values\t= %s,\n\t .values_offset\t= %s},'\
+                           % (strings.add(field.name), field.s_name,
                         len(values_offsets), strings_offsets.add(values_offsets))
                 else:
-                    print '\t{%s, %s(~0u)},' % (strings.add(field.name), field.s_name)
+                    print '\t{.name_offset\t= %s,\n\t .mask\t\t= %s(~0u)},'\
+                           % (strings.add(field.name), field.s_name)
                 fields_idx += 1
 
     print '};'
@@ -279,10 +281,13 @@ struct eg_packet3 {
     print 'static const struct eg_reg egd_reg_table[] = {'
     for reg in regs:
         if len(reg.fields):
-            print '\t{%s, %s, %s, %s},' % (strings.add(reg.name), reg.r_name,
+            print '\t{.name_offset\t= %s,\n\t .offset\t= %s,\
+                   \n\t .num_fields\t= %s,\n\t .fields_offset\t= %s},'\
+                   % (strings.add(reg.name), reg.r_name,
                 len(reg.fields), reg.fields_idx if reg.own_fields else reg.fields_owner.fields_idx)
         else:
-            print '\t{%s, %s},' % (strings.add(reg.name), reg.r_name)
+            print '\t{.name_offset\t= %s,\n\t .offset\t= %s},'\
+                   % (strings.add(reg.name), reg.r_name)
     print '};'
     print
 
