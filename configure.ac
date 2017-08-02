@@ -260,6 +260,9 @@ dnl LIB_DIR - library basename
 LIB_DIR=`echo $libdir | $SED 's%.*/%%'`
 AC_SUBST([LIB_DIR])
 
+dnl set AR_FLAGS to silence warnings on ubuntu
+AR_FLAGS="cruU"
+
 dnl Cache LDFLAGS and CPPFLAGS so we can add to them and restore later
 _SAVE_LDFLAGS="$LDFLAGS"
 _SAVE_CPPFLAGS="$CPPFLAGS"

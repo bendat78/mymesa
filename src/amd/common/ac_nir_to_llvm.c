@@ -68,8 +68,6 @@ struct ac_nir_context {
 	int num_locals;
 	LLVMValueRef *locals;
 
-	LLVMValueRef ddxy_lds;
-
 	struct nir_to_llvm_context *nctx; /* TODO get rid of this */
 };
 
@@ -1187,7 +1185,17 @@ static LLVMValueRef emit_find_lsb(struct ac_llvm_context *ctx,
 		 */
 		LLVMConstInt(ctx->i1, 1, false),
 	};
-	return ac_build_intrinsic(ctx, "llvm.cttz.i32", ctx->i32, params, 2, AC_FUNC_ATTR_READNONE);
+
+	LLVMValueRef lsb = ac_build_intrinsic(ctx, "llvm.cttz.i32", ctx->i32,
+					      params, 2,
+					      AC_FUNC_ATTR_READNONE);
+
+	/* TODO: We need an intrinsic to skip this conditional. */
+	/* Check for zero: */
+	return LLVMBuildSelect(ctx->builder, LLVMBuildICmp(ctx->builder,
+							   LLVMIntEQ, src0,
+							   ctx->i32_0, ""),
+			       LLVMConstInt(ctx->i32, -1, 0), lsb, "");
 }
 
 static LLVMValueRef emit_ifind_msb(struct ac_llvm_context *ctx,
@@ -1453,11 +1461,6 @@ static LLVMValueRef emit_ddxy(struct ac_nir_context *ctx,
 	LLVMValueRef result;
 	bool has_ds_bpermute = ctx->abi->chip_class >= VI;
 
-	if (!ctx->ddxy_lds && !has_ds_bpermute)
-		ctx->ddxy_lds = LLVMAddGlobalInAddressSpace(ctx->ac.module,
-						       LLVMArrayType(ctx->ac.i32, 64),
-						       "ddxy_lds", LOCAL_ADDR_SPACE);
-
 	if (op == nir_op_fddx_fine || op == nir_op_fddx)
 		mask = AC_TID_MASK_LEFT;
 	else if (op == nir_op_fddy_fine || op == nir_op_fddy)
@@ -1474,7 +1477,7 @@ static LLVMValueRef emit_ddxy(struct ac_nir_context *ctx,
 		idx = 2;
 
 	result = ac_build_ddxy(&ctx->ac, has_ds_bpermute,
-			      mask, idx, ctx->ddxy_lds,
+			      mask, idx,
 			      src0);
 	return result;
 }
@@ -1885,7 +1888,7 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 						    LLVMVectorType(ctx->ac.i32, 2),
 						    "");
 		result = LLVMBuildExtractElement(ctx->ac.builder, tmp,
-						 ctx->ac.i32_0, "");
+						 ctx->ac.i32_1, "");
 		break;
 	}
 
@@ -4493,7 +4496,8 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 
 	/* Pack depth comparison value */
 	if (instr->is_shadow && comparator) {
-		LLVMValueRef z = llvm_extract_elem(&ctx->ac, comparator, 0);
+		LLVMValueRef z = to_float(&ctx->ac,
+		                          llvm_extract_elem(&ctx->ac, comparator, 0));
 
 		/* TC-compatible HTILE promotes Z16 and Z24 to Z32_FLOAT,
 		 * so the depth comparison value isn't clamped for Z16 and
