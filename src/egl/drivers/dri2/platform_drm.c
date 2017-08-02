@@ -583,13 +583,8 @@ swrast_get_image(__DRIdrawable *driDrawable,
       return;
 
    bo = gbm_dri_bo(dri2_surf->current->bo);
-<<<<<<< HEAD
-   if (!gbm_dri_bo_map_dumb(bo))
-=======
-
    bpp = gbm_bo_get_bpp(&bo->base);
    if (!bpp)
->>>>>>> 341578a6aea31c13bc4dd04011fb0e48ac7db19e
       return;
 
    x_bytes = x * (bpp >> 3);

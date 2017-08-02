@@ -663,13 +663,16 @@ void st_init_extensions(struct pipe_screen *screen,
    static const struct st_extension_format_mapping rendertarget_mapping[] = {
       { { o(ARB_texture_float) },
         { PIPE_FORMAT_R32G32B32A32_FLOAT,
-          PIPE_FORMAT_R16G16B16A16_FLOAT } },
+          PIPE_FORMAT_R16G16B16A16_FLOAT },
+         GL_FALSE },
 
       { { o(OES_texture_float) },
-        { PIPE_FORMAT_R32G32B32A32_FLOAT } },
+        { PIPE_FORMAT_R32G32B32A32_FLOAT },
+         GL_FALSE },
 
       { { o(OES_texture_half_float) },
-        { PIPE_FORMAT_R16G16B16A16_FLOAT } },
+        { PIPE_FORMAT_R16G16B16A16_FLOAT },
+         GL_FALSE },
 
       { { o(ARB_texture_rgb10_a2ui) },
         { PIPE_FORMAT_R10G10B10A2_UINT,
@@ -682,22 +685,26 @@ void st_init_extensions(struct pipe_screen *screen,
          GL_TRUE }, /* at least one format must be supported */
 
       { { o(EXT_packed_float) },
-        { PIPE_FORMAT_R11G11B10_FLOAT } },
+        { PIPE_FORMAT_R11G11B10_FLOAT },
+         GL_FALSE },
 
       { { o(EXT_texture_integer) },
         { PIPE_FORMAT_R32G32B32A32_UINT,
-          PIPE_FORMAT_R32G32B32A32_SINT } },
+          PIPE_FORMAT_R32G32B32A32_SINT },
+         GL_FALSE },
 
       { { o(ARB_texture_rg) },
         { PIPE_FORMAT_R8_UNORM,
-          PIPE_FORMAT_R8G8_UNORM } },
+          PIPE_FORMAT_R8G8_UNORM },
+         GL_FALSE },
    };
 
    /* Required: depth stencil and sampler support */
    static const struct st_extension_format_mapping depthstencil_mapping[] = {
       { { o(ARB_depth_buffer_float) },
         { PIPE_FORMAT_Z32_FLOAT,
-          PIPE_FORMAT_Z32_FLOAT_S8X24_UINT } },
+          PIPE_FORMAT_Z32_FLOAT_S8X24_UINT },
+         GL_FALSE },
    };
 
    /* Required: sampler support */
@@ -706,26 +713,30 @@ void st_init_extensions(struct pipe_screen *screen,
         { PIPE_FORMAT_RGTC1_UNORM,
           PIPE_FORMAT_RGTC1_SNORM,
           PIPE_FORMAT_RGTC2_UNORM,
-          PIPE_FORMAT_RGTC2_SNORM } },
+          PIPE_FORMAT_RGTC2_SNORM },
+         GL_FALSE },
 
       { { o(EXT_texture_compression_latc) },
         { PIPE_FORMAT_LATC1_UNORM,
           PIPE_FORMAT_LATC1_SNORM,
           PIPE_FORMAT_LATC2_UNORM,
-          PIPE_FORMAT_LATC2_SNORM } },
+          PIPE_FORMAT_LATC2_SNORM },
+         GL_FALSE },
 
       { { o(EXT_texture_compression_s3tc),
           o(ANGLE_texture_compression_dxt) },
         { PIPE_FORMAT_DXT1_RGB,
           PIPE_FORMAT_DXT1_RGBA,
           PIPE_FORMAT_DXT3_RGBA,
-          PIPE_FORMAT_DXT5_RGBA } },
+          PIPE_FORMAT_DXT5_RGBA },
+         GL_FALSE },
 
       { { o(ARB_texture_compression_bptc) },
         { PIPE_FORMAT_BPTC_RGBA_UNORM,
           PIPE_FORMAT_BPTC_SRGBA,
           PIPE_FORMAT_BPTC_RGB_FLOAT,
-          PIPE_FORMAT_BPTC_RGB_UFLOAT } },
+          PIPE_FORMAT_BPTC_RGB_UFLOAT },
+         GL_FALSE },
 
       { { o(KHR_texture_compression_astc_ldr) },
         { PIPE_FORMAT_ASTC_4x4,
@@ -755,13 +766,16 @@ void st_init_extensions(struct pipe_screen *screen,
           PIPE_FORMAT_ASTC_10x8_SRGB,
           PIPE_FORMAT_ASTC_10x10_SRGB,
           PIPE_FORMAT_ASTC_12x10_SRGB,
-          PIPE_FORMAT_ASTC_12x12_SRGB } },
+          PIPE_FORMAT_ASTC_12x12_SRGB },
+         GL_FALSE },
 
       { { o(EXT_texture_shared_exponent) },
-        { PIPE_FORMAT_R9G9B9E5_FLOAT } },
+        { PIPE_FORMAT_R9G9B9E5_FLOAT },
+         GL_FALSE },
 
       { { o(EXT_texture_snorm) },
-        { PIPE_FORMAT_R8G8B8A8_SNORM } },
+        { PIPE_FORMAT_R8G8B8A8_SNORM },
+         GL_FALSE },
 
       { { o(EXT_texture_sRGB),
           o(EXT_texture_sRGB_decode) },
@@ -770,7 +784,8 @@ void st_init_extensions(struct pipe_screen *screen,
         GL_TRUE }, /* at least one format must be supported */
 
       { { o(ATI_texture_compression_3dc) },
-        { PIPE_FORMAT_LATC2_UNORM } },
+        { PIPE_FORMAT_LATC2_UNORM },
+         GL_FALSE },
 
       { { o(MESA_ycbcr_texture) },
         { PIPE_FORMAT_UYVY,
@@ -792,7 +807,8 @@ void st_init_extensions(struct pipe_screen *screen,
    /* Required: vertex fetch support. */
    static const struct st_extension_format_mapping vertex_mapping[] = {
       { { o(EXT_vertex_array_bgra) },
-        { PIPE_FORMAT_B8G8R8A8_UNORM } },
+        { PIPE_FORMAT_B8G8R8A8_UNORM },
+         GL_FALSE },
       { { o(ARB_vertex_type_2_10_10_10_rev) },
         { PIPE_FORMAT_R10G10B10A2_UNORM,
           PIPE_FORMAT_B10G10R10A2_UNORM,
@@ -801,9 +817,11 @@ void st_init_extensions(struct pipe_screen *screen,
           PIPE_FORMAT_R10G10B10A2_USCALED,
           PIPE_FORMAT_B10G10R10A2_USCALED,
           PIPE_FORMAT_R10G10B10A2_SSCALED,
-          PIPE_FORMAT_B10G10R10A2_SSCALED } },
+          PIPE_FORMAT_B10G10R10A2_SSCALED },
+         GL_FALSE },
       { { o(ARB_vertex_type_10f_11f_11f_rev) },
-        { PIPE_FORMAT_R11G11B10_FLOAT } },
+        { PIPE_FORMAT_R11G11B10_FLOAT },
+         GL_FALSE },
    };
 
    static const struct st_extension_format_mapping tbo_rgb32[] = {
@@ -811,7 +829,8 @@ void st_init_extensions(struct pipe_screen *screen,
         { PIPE_FORMAT_R32G32B32_FLOAT,
           PIPE_FORMAT_R32G32B32_UINT,
           PIPE_FORMAT_R32G32B32_SINT,
-        } },
+        },
+         GL_FALSE },
    };
 
    /*
