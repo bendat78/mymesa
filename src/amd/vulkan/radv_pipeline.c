@@ -2070,7 +2070,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 	}
 
 	if (modules[MESA_SHADER_FRAGMENT]) {
-		union ac_shader_variant_key key = {0};
+		union ac_shader_variant_key key = {};
 		key.fs.col_format = pipeline->graphics.blend.spi_shader_col_format;
 
 		if (pipeline->device->physical_device->rad_info.chip_class < VI)
