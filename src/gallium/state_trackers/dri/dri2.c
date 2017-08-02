@@ -1941,10 +1941,10 @@ dri2GalliumConfigQueryb(__DRIscreen *sPriv, const char *var,
 {
    struct dri_screen *screen = dri_screen(sPriv);
 
-   if (!driCheckOption(&screen->optionCache, var, DRI_BOOL))
+   if (!driCheckOption(&screen->dev->option_cache, var, DRI_BOOL))
       return dri2ConfigQueryExtension.configQueryb(sPriv, var, val);
 
-   *val = driQueryOptionb(&screen->optionCache, var);
+   *val = driQueryOptionb(&screen->dev->option_cache, var);
 
    return 0;
 }
@@ -1957,11 +1957,11 @@ dri2GalliumConfigQueryi(__DRIscreen *sPriv, const char *var, int *val)
 {
    struct dri_screen *screen = dri_screen(sPriv);
 
-   if (!driCheckOption(&screen->optionCache, var, DRI_INT) &&
-       !driCheckOption(&screen->optionCache, var, DRI_ENUM))
+   if (!driCheckOption(&screen->dev->option_cache, var, DRI_INT) &&
+       !driCheckOption(&screen->dev->option_cache, var, DRI_ENUM))
       return dri2ConfigQueryExtension.configQueryi(sPriv, var, val);
 
-    *val = driQueryOptioni(&screen->optionCache, var);
+    *val = driQueryOptioni(&screen->dev->option_cache, var);
 
     return 0;
 }
@@ -1974,10 +1974,10 @@ dri2GalliumConfigQueryf(__DRIscreen *sPriv, const char *var, float *val)
 {
    struct dri_screen *screen = dri_screen(sPriv);
 
-   if (!driCheckOption(&screen->optionCache, var, DRI_FLOAT))
+   if (!driCheckOption(&screen->dev->option_cache, var, DRI_FLOAT))
       return dri2ConfigQueryExtension.configQueryf(sPriv, var, val);
 
-    *val = driQueryOptionf(&screen->optionCache, var);
+    *val = driQueryOptionf(&screen->dev->option_cache, var);
 
     return 0;
 }
@@ -2056,10 +2056,12 @@ dri2_init_screen(__DRIscreen * sPriv)
 
 
    if (pipe_loader_drm_probe_fd(&screen->dev, fd)) {
-      unsigned flags =
-         dri_init_options_get_screen_flags(screen, screen->dev->driver_name);
+      struct pipe_screen_config config = {};
 
-      pscreen = pipe_loader_create_screen(screen->dev, flags);
+      config.flags =
+         dri_init_options_get_screen_flags(screen);
+
+      pscreen = pipe_loader_create_screen(screen->dev, &config);
    }
 
    if (!pscreen)
@@ -2150,10 +2152,12 @@ dri_kms_init_screen(__DRIscreen * sPriv)
    if (screen->fd < 0 || (fd = fcntl(screen->fd, F_DUPFD_CLOEXEC, 3)) < 0)
       goto free_screen;
 
-   unsigned flags = dri_init_options_get_screen_flags(screen, "swrast");
+   struct pipe_screen_config config = {};
+
+   config.flags = dri_init_options_get_screen_flags(screen);
 
    if (pipe_loader_sw_probe_kms(&screen->dev, fd))
-      pscreen = pipe_loader_create_screen(screen->dev, flags);
+      pscreen = pipe_loader_create_screen(screen->dev, &config);
 
    if (!pscreen)
        goto release_pipe;
