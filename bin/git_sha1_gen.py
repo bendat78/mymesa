@@ -13,8 +13,8 @@ try:
         '--short=10',
         'HEAD',
     ], stderr=open(os.devnull, 'w'))
-except subprocess.CalledProcessError as e:
-    # don't print anything if git fails
+except:
+    # don't print anything if it fails
     pass
 else:
     sys.stdout.write('#define MESA_GIT_SHA1 "git-%s"\n' % git_sha1.rstrip())
