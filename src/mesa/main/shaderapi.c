@@ -1865,6 +1865,7 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
       sh = _mesa_lookup_shader_err(ctx, shaderObj, "glShaderSourceARB");
       if (!sh)
          return;
+   }
 
    if (!string) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
@@ -1977,6 +1978,7 @@ use_program(GLuint program, bool no_error)
                      "glUseProgram(transform feedback active)");
          return;
       }
+   }
 
       if (program) {
          shProg =
@@ -1995,7 +1997,6 @@ use_program(GLuint program, bool no_error)
             print_shader_info(shProg);
          }
       }
-   }
 
    /* The ARB_separate_shader_object spec says:
     *

@@ -2964,6 +2964,8 @@ radv_initialise_color_surface(struct radv_device *device,
 
 	va = device->ws->buffer_get_va(iview->bo) + iview->image->offset;
 
+	cb->cb_color_base = va >> 8;
+
 	if (device->physical_device->rad_info.chip_class >= GFX9) {
 		struct gfx9_surf_meta_flags meta;
 		if (iview->image->dcc_offset)
@@ -2976,12 +2978,14 @@ radv_initialise_color_surface(struct radv_device *device,
 			S_028C74_RB_ALIGNED(meta.rb_aligned) |
 			S_028C74_PIPE_ALIGNED(meta.pipe_aligned);
 
-		va += iview->image->surface.u.gfx9.surf_offset >> 8;
+		cb->cb_color_base += iview->image->surface.u.gfx9.surf_offset >> 8;
 	} else {
 		const struct legacy_surf_level *level_info = &surf->u.legacy.level[iview->base_mip];
 		unsigned pitch_tile_max, slice_tile_max, tile_mode_index;
 
-		va += level_info->offset;
+		cb->cb_color_base += level_info->offset >> 8;
+		if (level_info->mode == RADEON_SURF_MODE_2D)
+			cb->cb_color_base |= iview->image->surface.tile_swizzle;
 
 		pitch_tile_max = level_info->nblk_x / 8 - 1;
 		slice_tile_max = (level_info->nblk_x * level_info->nblk_y) / 64 - 1;
@@ -3008,9 +3012,6 @@ radv_initialise_color_surface(struct radv_device *device,
 		}
 	}
 
-	cb->cb_color_base = va >> 8;
-	if (device->physical_device->rad_info.chip_class < GFX9)
-		cb->cb_color_base |= iview->image->surface.u.legacy.tile_swizzle;
 	/* CMASK variables */
 	va = device->ws->buffer_get_va(iview->bo) + iview->image->offset;
 	va += iview->image->cmask.offset;
@@ -3020,7 +3021,7 @@ radv_initialise_color_surface(struct radv_device *device,
 	va += iview->image->dcc_offset;
 	cb->cb_dcc_base = va >> 8;
 	if (device->physical_device->rad_info.chip_class < GFX9)
-		cb->cb_dcc_base |= iview->image->surface.u.legacy.tile_swizzle;
+		cb->cb_dcc_base |= iview->image->surface.tile_swizzle;
 
 	uint32_t max_slice = radv_surface_layer_count(iview);
 	cb->cb_color_view = S_028C6C_SLICE_START(iview->base_layer) |
@@ -3037,7 +3038,7 @@ radv_initialise_color_surface(struct radv_device *device,
 		va = device->ws->buffer_get_va(iview->bo) + iview->image->offset + iview->image->fmask.offset;
 		cb->cb_color_fmask = va >> 8;
 		if (device->physical_device->rad_info.chip_class < GFX9)
-			cb->cb_color_fmask |= iview->image->surface.u.legacy.tile_swizzle;
+			cb->cb_color_fmask |= iview->image->surface.tile_swizzle;
 	} else {
 		cb->cb_color_fmask = cb->cb_color_base;
 	}
