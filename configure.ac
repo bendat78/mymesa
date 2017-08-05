@@ -1817,7 +1817,9 @@ if test "x$with_dri_drivers" = xno; then
 fi
 
 # Check for expat
-PKG_CHECK_MODULES([EXPAT], [expat])
+PKG_CHECK_MODULES([EXPAT], [expat],,
+    [PKG_CHECK_MODULES([EXPAT], [expat21])]
+)
 
 dnl If $with_dri_drivers is yes, drivers will be added through
 dnl platform checks. Set DEFINES and LIB_DEPS
