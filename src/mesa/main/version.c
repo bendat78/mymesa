@@ -388,7 +388,7 @@ compute_version(const struct gl_extensions *extensions,
    const bool ver_4_6 = (ver_4_5 &&
                          consts->GLSLVersion >= 460 &&
                          /* extensions->ARB_gl_spirv */ 0 &&
-                         /* extensions->ARB_gl_spirv_extensions */ 0 &&
+                         /* extensions->ARB_spirv_extensions */ 0 &&
                          extensions->ARB_indirect_parameters &&
                          extensions->ARB_pipeline_statistics_query &&
                          /* extensions->ARB_polygon_offset_clamp */ 0 &&
@@ -650,4 +650,17 @@ _mesa_compute_version(struct gl_context *ctx)
       create_version_string(ctx, "OpenGL ES ");
       break;
    }
+}
+
+
+void
+_mesa_get_driver_uuid(struct gl_context *ctx, GLint *uuid)
+{
+   ctx->Driver.GetDriverUuid(ctx, (char*) uuid);
+}
+
+void
+_mesa_get_device_uuid(struct gl_context *ctx, GLint *uuid)
+{
+   ctx->Driver.GetDeviceUuid(ctx, (char*) uuid);
 }

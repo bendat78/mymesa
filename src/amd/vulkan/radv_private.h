@@ -267,6 +267,7 @@ struct radv_physical_device {
 	struct radeon_info rad_info;
 	char                                        path[20];
 	const char *                                name;
+	uint8_t                                     driver_uuid[VK_UUID_SIZE];
 	uint8_t                                     device_uuid[VK_UUID_SIZE];
 	uint8_t                                     cache_uuid[VK_UUID_SIZE];
 
@@ -433,8 +434,6 @@ struct radv_meta_state {
 		VkPipelineLayout                          p_layout;
 
 		struct {
-			VkRenderPass srgb_render_pass;
-			VkPipeline   srgb_pipeline;
 			VkRenderPass render_pass[NUM_META_FS_KEYS];
 			VkPipeline   pipeline[NUM_META_FS_KEYS];
 		} rc[MAX_SAMPLES_LOG2];
