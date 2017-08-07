@@ -184,8 +184,8 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
 #endif
             }
             break;
-        case R16_UINT: 
-            indices = BITCAST(indices, Type::getInt16PtrTy(JM()->mContext, 0)); 
+        case R16_UINT:
+            indices = BITCAST(indices, Type::getInt16PtrTy(JM()->mContext, 0));
 #if USE_SIMD16_SHADERS
             indices2 = GEP(indices, C(8));
 #endif

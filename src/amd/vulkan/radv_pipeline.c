@@ -459,7 +459,7 @@ static struct radv_shader_variant *radv_shader_variant_create(struct radv_device
 
 	struct ac_shader_binary binary;
 	enum ac_target_machine_options tm_options = 0;
-	options.unsafe_math = !!(device->debug_flags & RADV_DEBUG_UNSAFE_MATH);
+	options.unsafe_math = (device->debug_flags & RADV_DEBUG_UNSAFE_MATH);
 	options.family = chip_family;
 	options.chip_class = device->physical_device->rad_info.chip_class;
 	options.supports_spill = device->llvm_supports_spill;
@@ -1336,8 +1336,8 @@ radv_pipeline_init_raster_state(struct radv_pipeline *pipeline,
 
 	raster->pa_su_sc_mode_cntl =
 		S_028814_FACE(vkraster->frontFace) |
-		S_028814_CULL_FRONT(!!(vkraster->cullMode & VK_CULL_MODE_FRONT_BIT)) |
-		S_028814_CULL_BACK(!!(vkraster->cullMode & VK_CULL_MODE_BACK_BIT)) |
+		S_028814_CULL_FRONT((vkraster->cullMode & VK_CULL_MODE_FRONT_BIT)) |
+		S_028814_CULL_BACK((vkraster->cullMode & VK_CULL_MODE_BACK_BIT)) |
 		S_028814_POLY_MODE(vkraster->polygonMode != VK_POLYGON_MODE_FILL) |
 		S_028814_POLYMODE_FRONT_PTYPE(si_translate_fill(vkraster->polygonMode)) |
 		S_028814_POLYMODE_BACK_PTYPE(si_translate_fill(vkraster->polygonMode)) |
@@ -2021,7 +2021,7 @@ static void calculate_ps_inputs(struct radv_pipeline *pipeline)
 			continue;
 		}
 
-		flat_shade = !!(ps->info.fs.flat_shaded_mask & (1u << ps_offset));
+		flat_shade = (ps->info.fs.flat_shaded_mask & (1u << ps_offset));
 
 		pipeline->graphics.ps_input_cntl[ps_offset] = offset_to_ps_input(vs_offset, flat_shade);
 		++ps_offset;
@@ -2156,7 +2156,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		pipeline->graphics.gs_out = V_028A6C_OUTPRIM_TYPE_TRISTRIP;
 		pipeline->graphics.can_use_guardband = true;
 	}
-	pipeline->graphics.prim_restart_enable = !!pCreateInfo->pInputAssemblyState->primitiveRestartEnable;
+	pipeline->graphics.prim_restart_enable = pCreateInfo->pInputAssemblyState->primitiveRestartEnable;
 	/* prim vertex count will need TESS changes */
 	pipeline->graphics.prim_vertex_count = prim_size_table[pipeline->graphics.prim];
 
@@ -2189,7 +2189,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 	pipeline->graphics.db_shader_control =
 		S_02880C_Z_EXPORT_ENABLE(ps->info.fs.writes_z) |
 		S_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(ps->info.fs.writes_stencil) |
-		S_02880C_KILL_ENABLE(!!ps->info.fs.can_discard) |
+		S_02880C_KILL_ENABLE(ps->info.fs.can_discard) |
 		S_02880C_MASK_EXPORT_ENABLE(ps->info.fs.writes_sample_mask) |
 		S_02880C_Z_ORDER(z_order) |
 		S_02880C_DEPTH_BEFORE_SHADER(ps->info.fs.early_fragment_test) |

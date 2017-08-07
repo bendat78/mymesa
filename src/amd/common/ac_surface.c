@@ -441,8 +441,8 @@ static int gfx6_surface_settings(ADDR_HANDLE addrlib,
 	    surf->u.legacy.level[0].mode == RADEON_SURF_MODE_2D &&
 	    !(surf->flags & (RADEON_SURF_Z_OR_SBUFFER | RADEON_SURF_SHAREABLE)) &&
 	    (config->info.samples > 1 || !(surf->flags & RADEON_SURF_SCANOUT))) {
-		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {0};
-		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {0};
+		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {};
+		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {};
 
 		AddrBaseSwizzleIn.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_INPUT);
 		AddrBaseSwizzleOut.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT);
@@ -712,7 +712,7 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 					surf->u.legacy.stencil_level[level].nblk_x;
 			}
 
-			if (!level == 0) {
+			if (level) {
 				if (only_stencil) {
 					r = gfx6_surface_settings(addrlib, info, config,
 								  &AddrSurfInfoOut, surf);

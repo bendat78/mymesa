@@ -192,7 +192,7 @@ debug_triangle(int tilex, int tiley,
    const struct lp_rast_triangle *tri = arg.triangle.tri;
    unsigned plane_mask = arg.triangle.plane_mask;
    const struct lp_rast_plane *tri_plane = GET_PLANES(tri);
-   struct lp_rast_plane plane[8];
+   struct lp_rast_plane plane[8] = {};
    int x, y;
    int count = 0;
    unsigned i, nr_planes = 0;

@@ -3328,7 +3328,7 @@ _mesa_MapNamedBuffer_no_error(GLuint buffer, GLenum access)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   GLbitfield accessFlags;
+   GLbitfield accessFlags = 0;
    get_map_buffer_access_flags(ctx, access, &accessFlags);
 
    struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, buffer);

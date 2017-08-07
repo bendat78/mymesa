@@ -2317,7 +2317,7 @@ get_tex_parameterIuiv(struct gl_context *ctx,
       break;
    default:
       {
-         GLint ip[4];
+         GLint ip[4] = {};
          get_tex_parameteriv(ctx, obj, pname, ip, dsa);
          params[0] = ip[0];
          if (pname == GL_TEXTURE_SWIZZLE_RGBA_EXT ||

@@ -213,7 +213,7 @@ struct GUARDBANDS
 struct PA_STATE;
 
 // function signature for pipeline stages that execute after primitive assembly
-typedef void(*PFN_PROCESS_PRIMS)(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simdvector prims[], 
+typedef void(*PFN_PROCESS_PRIMS)(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simdvector prims[],
     uint32_t primMask, simdscalari const &primID);
 
 #if ENABLE_AVX512_SIMD16

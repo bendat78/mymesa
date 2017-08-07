@@ -124,7 +124,7 @@ extern GlobalKnobs g_GlobalKnobs;
 % endfor
 
 <%!
-    # Globally available python 
+    # Globally available python
     max_len = 0
     def calc_max_knob_len(knobs):
         global max_len
