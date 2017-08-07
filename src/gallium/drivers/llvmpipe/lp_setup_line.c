@@ -290,7 +290,7 @@ try_setup_line( struct lp_setup_context *setup,
    float width = MAX2(1.0, setup->line_width);
    const struct u_rect *scissor;
    struct u_rect bbox, bboxpos;
-   boolean s_planes[4];
+   boolean s_planes[4] = {};
    unsigned tri_bytes;
    int x[4];
    int y[4];

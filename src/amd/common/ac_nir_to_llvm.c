@@ -2394,7 +2394,7 @@ static LLVMValueRef visit_atomic_ssbo(struct ac_nir_context *ctx,
 static LLVMValueRef visit_load_buffer(struct ac_nir_context *ctx,
                                       const nir_intrinsic_instr *instr)
 {
-	LLVMValueRef results[2];
+	LLVMValueRef results[2] = {};
 	int load_components;
 	int num_components = instr->num_components;
 	if (instr->dest.ssa.bit_size == 64)

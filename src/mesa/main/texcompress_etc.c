@@ -1277,7 +1277,7 @@ fetch_etc2_rgb8(const GLubyte *map,
                 GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    struct etc2_block block;
-   uint8_t dst[3]  = {};
+   uint8_t dst[3] = {};
    const uint8_t *src;
 
    src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
@@ -1298,7 +1298,7 @@ fetch_etc2_srgb8(const GLubyte *map,
                  GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    struct etc2_block block;
-   uint8_t dst[3]  = {};
+   uint8_t dst[3] = {};
    const uint8_t *src;
 
    src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;

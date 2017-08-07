@@ -828,7 +828,7 @@ ac_build_ddxy(struct ac_llvm_context *ctx,
 					  AC_FUNC_ATTR_READNONE |
 					  AC_FUNC_ATTR_CONVERGENT);
 	} else {
-		uint32_t masks[2];
+		uint32_t masks[2] = {};
 
 		switch (mask) {
 		case AC_TID_MASK_TOP_LEFT:
