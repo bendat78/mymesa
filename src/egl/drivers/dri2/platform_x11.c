@@ -223,11 +223,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    xcb_get_geometry_cookie_t cookie;
    xcb_get_geometry_reply_t *reply;
    xcb_generic_error_t *error;
-   xcb_drawable_t drawable;
    const __DRIconfig *config;
-
-   STATIC_ASSERT(sizeof(uintptr_t) == sizeof(native_surface));
-   drawable = (uintptr_t) native_surface;
 
    (void) drv;
 
@@ -247,14 +243,8 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
                        dri2_surf->drawable, dri2_dpy->screen->root,
 			dri2_surf->base.Width, dri2_surf->base.Height);
    } else {
-      if (!drawable) {
-         if (type == EGL_WINDOW_BIT)
-            _eglError(EGL_BAD_NATIVE_WINDOW, "dri2_create_surface");
-         else
-            _eglError(EGL_BAD_NATIVE_PIXMAP, "dri2_create_surface");
-         goto cleanup_surf;
-      }
-      dri2_surf->drawable = drawable;
+      STATIC_ASSERT(sizeof(uintptr_t) == sizeof(native_surface));
+      dri2_surf->drawable = (uintptr_t) native_surface;
    }
 
    config = dri2_get_dri_config(dri2_conf, type,
@@ -382,7 +372,7 @@ dri2_x11_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *disp,
                                 _EGLConfig *conf, const EGLint *attrib_list)
 {
    return dri2_x11_create_surface(drv, disp, EGL_PBUFFER_BIT, conf,
-                                  XCB_WINDOW_NONE, attrib_list);
+                                  NULL, attrib_list);
 }
 
 static EGLBoolean
@@ -1274,9 +1264,9 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
 }
 
 static void
-dri2_x11_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
+dri2_x11_setup_swap_interval(_EGLDisplay *disp)
 {
-   GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    int arbitrary_max_interval = 1000;
 
    /* default behavior for no SwapBuffers support: no vblank syncing
@@ -1289,34 +1279,9 @@ dri2_x11_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
       return;
 
    /* If we do have swapbuffers, then we can support pretty much any swap
-    * interval, but we allow driconf to override applications.
+    * interval.
     */
-   if (dri2_dpy->config)
-      dri2_dpy->config->configQueryi(dri2_dpy->dri_screen,
-                                     "vblank_mode", &vblank_mode);
-   switch (vblank_mode) {
-   case DRI_CONF_VBLANK_NEVER:
-      dri2_dpy->min_swap_interval = 0;
-      dri2_dpy->max_swap_interval = 0;
-      dri2_dpy->default_swap_interval = 0;
-      break;
-   case DRI_CONF_VBLANK_ALWAYS_SYNC:
-      dri2_dpy->min_swap_interval = 1;
-      dri2_dpy->max_swap_interval = arbitrary_max_interval;
-      dri2_dpy->default_swap_interval = 1;
-      break;
-   case DRI_CONF_VBLANK_DEF_INTERVAL_0:
-      dri2_dpy->min_swap_interval = 0;
-      dri2_dpy->max_swap_interval = arbitrary_max_interval;
-      dri2_dpy->default_swap_interval = 0;
-      break;
-   default:
-   case DRI_CONF_VBLANK_DEF_INTERVAL_1:
-      dri2_dpy->min_swap_interval = 0;
-      dri2_dpy->max_swap_interval = arbitrary_max_interval;
-      dri2_dpy->default_swap_interval = 1;
-      break;
-   }
+   dri2_setup_swap_interval(disp, arbitrary_max_interval);
 }
 
 #ifdef HAVE_DRI3
@@ -1360,7 +1325,7 @@ dri2_initialize_x11_dri3(_EGLDriver *drv, _EGLDisplay *disp)
 
    dri2_setup_screen(disp);
 
-   dri2_x11_setup_swap_interval(dri2_dpy);
+   dri2_x11_setup_swap_interval(disp);
 
    if (!dri2_dpy->is_different_gpu)
       disp->Extensions.KHR_image_pixmap = EGL_TRUE;
@@ -1460,7 +1425,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 
    dri2_setup_screen(disp);
 
-   dri2_x11_setup_swap_interval(dri2_dpy);
+   dri2_x11_setup_swap_interval(disp);
 
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
    disp->Extensions.NOK_swap_region = EGL_TRUE;

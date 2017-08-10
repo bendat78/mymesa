@@ -923,7 +923,7 @@ static void *
 _fixupNativeWindow(_EGLDisplay *disp, void *native_window)
 {
 #ifdef HAVE_X11_PLATFORM
-   if (disp->Platform == _EGL_PLATFORM_X11 && native_window != NULL) {
+   if (disp && disp->Platform == _EGL_PLATFORM_X11 && native_window != NULL) {
       /* The `native_window` parameter for the X11 platform differs between
        * eglCreateWindowSurface() and eglCreatePlatformPixmapSurfaceEXT(). In
        * eglCreateWindowSurface(), the type of `native_window` is an Xlib
@@ -985,7 +985,7 @@ _fixupNativePixmap(_EGLDisplay *disp, void *native_pixmap)
     * `Pixmap*`.  Convert `Pixmap*` to `Pixmap` because that's what
     * dri2_x11_create_pixmap_surface() expects.
     */
-   if (disp->Platform == _EGL_PLATFORM_X11 && native_pixmap != NULL)
+   if (disp && disp->Platform == _EGL_PLATFORM_X11 && native_pixmap != NULL)
       return (void *)(* (Pixmap*) native_pixmap);
 #endif
    return native_pixmap;
@@ -1020,6 +1020,9 @@ _eglCreatePixmapSurfaceCommon(_EGLDisplay *disp, EGLConfig config,
 
    if ((conf->SurfaceType & EGL_PIXMAP_BIT) == 0)
       RETURN_EGL_ERROR(disp, EGL_BAD_MATCH, EGL_NO_SURFACE);
+
+   if (native_pixmap == NULL)
+      RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_NO_SURFACE);
 
    surf = drv->API.CreatePixmapSurface(drv, disp, conf, native_pixmap,
                                        attrib_list);
