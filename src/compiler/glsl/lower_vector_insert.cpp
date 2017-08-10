@@ -65,8 +65,9 @@ vector_insert_visitor::handle_rvalue(ir_rvalue **rv)
 
    factory.mem_ctx = ralloc_parent(expr);
 
-   ir_constant *const idx = expr->operands[2]->constant_expression_value();
-   if (idx) {
+   ir_constant *const idx =
+      expr->operands[2]->constant_expression_value(factory.mem_ctx);
+   if (idx != NULL) {
       /* Replace (vector_insert (vec) (scalar) (index)) with a dereference of
        * a new temporary.  The new temporary gets assigned as
        *
