@@ -1207,9 +1207,9 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     const struct intel_image_format *f;
     __DRIimage *image;
 
-    if (parent == NULL) {
+    if (!parent) {
        return NULL;
-    } else if (parent->planar_format == NULL) {
+    } else if (!parent->planar_format) {
        const bool is_aux =
           isl_drm_modifier_has_aux(parent->modifier) && plane == 1;
        if (!is_aux)
