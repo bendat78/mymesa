@@ -912,7 +912,7 @@ create_ccs_buf_for_image(struct brw_context *brw,
    assert(temp_ccs_surf.size <= image->bo->size - image->aux_offset);
 
    mt->mcs_buf = calloc(sizeof(*mt->mcs_buf), 1);
-   if (mt->mcs_buf == NULL)
+   if (!mt->mcs_buf)
       return false;
 
    mt->aux_state = create_aux_state_map(mt, initial_state);
