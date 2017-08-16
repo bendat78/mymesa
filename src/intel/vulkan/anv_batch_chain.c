@@ -1081,7 +1081,7 @@ anv_execbuf_add_syncobj(struct anv_execbuf *exec,
       exec->fences = vk_realloc(alloc, exec->fences,
                                 new_len * sizeof(*exec->fences),
                                 8, VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
-      if (exec->fences == NULL)
+      if (!exec->fences)
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
       exec->fence_array_length = new_len;

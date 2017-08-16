@@ -159,7 +159,7 @@ VkResult anv_QueueSubmit(
    pthread_mutex_lock(&device->mutex);
 
    for (uint32_t i = 0; i < submitCount; i++) {
-      if (pSubmits[i].commandBufferCount == 0) {
+      if (!pSubmits[i].commandBufferCount) {
          /* If we don't have any command buffers, we need to submit a dummy
           * batch to give GEM something to wait on.  We could, potentially,
           * come up with something more efficient but this shouldn't be a
@@ -550,7 +550,7 @@ VkResult anv_CreateSemaphore(
     VkExternalSemaphoreHandleTypeFlagsKHR handleTypes =
       export ? export->handleTypes : 0;
 
-   if (handleTypes == 0) {
+   if (!handleTypes) {
       /* The DRM execbuffer ioctl always execute in-oder so long as you stay
        * on the same ring.  Since we don't expose the blit engine as a DMA
        * queue, a dummy no-op semaphore is a perfectly valid implementation.
