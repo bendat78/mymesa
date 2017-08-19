@@ -846,8 +846,6 @@ static void si_launch_grid(
 
 	si_emit_dispatch_packets(sctx, info);
 
-	si_ce_post_draw_synchronization(sctx);
-
 	if (unlikely(sctx->current_saved_cs))
 		si_trace_emit(sctx);
 

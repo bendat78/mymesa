@@ -1417,8 +1417,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		si_emit_draw_packets(sctx, info, indexbuf, index_size, index_offset);
 	}
 
-	si_ce_post_draw_synchronization(sctx);
-
 	if (unlikely(sctx->current_saved_cs))
 		si_trace_emit(sctx);
 
@@ -1461,20 +1459,6 @@ void si_trace_emit(struct si_context *sctx)
 	radeon_emit(cs, trace_id);
 	radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
 	radeon_emit(cs, AC_ENCODE_TRACE_POINT(trace_id));
-
-	if (sctx->ce_ib) {
-		struct radeon_winsys_cs *ce = sctx->ce_ib;
-
-		radeon_emit(ce, PKT3(PKT3_WRITE_DATA, 3, 0));
-		radeon_emit(ce, S_370_DST_SEL(V_370_MEM_ASYNC) |
-			    S_370_WR_CONFIRM(1) |
-			    S_370_ENGINE_SEL(V_370_CE));
-		radeon_emit(ce, va + 4);
-		radeon_emit(ce, (va + 4) >> 32);
-		radeon_emit(ce, trace_id);
-		radeon_emit(ce, PKT3(PKT3_NOP, 0, 0));
-		radeon_emit(ce, AC_ENCODE_TRACE_POINT(trace_id));
-	}
 
 	if (sctx->b.log)
 		u_log_flush(sctx->b.log);

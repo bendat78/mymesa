@@ -266,12 +266,10 @@ struct si_saved_cs {
 	struct pipe_reference	reference;
 	struct si_context	*ctx;
 	struct radeon_saved_cs	gfx;
-	struct radeon_saved_cs	ce;
 	struct r600_resource	*trace_buf;
 	unsigned		trace_id;
 
 	unsigned		gfx_last_dw;
-	unsigned		ce_last_dw;
 	bool			flushed;
 };
 

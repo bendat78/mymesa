@@ -120,20 +120,7 @@ static void si_init_descriptors(struct si_descriptors *desc,
 	desc->list = CALLOC(num_elements, element_dw_size * 4);
 	desc->element_dw_size = element_dw_size;
 	desc->num_elements = num_elements;
-	desc->first_ce_slot = sctx->ce_ib ? first_ce_slot : 0;
-	desc->num_ce_slots = sctx->ce_ib ? num_ce_slots : 0;
-	desc->dirty_mask = 0;
 	desc->shader_userdata_offset = shader_userdata_index * 4;
-
-	if (desc->num_ce_slots) {
-		assert(num_elements <= sizeof(desc->dirty_mask)*8);
-
-		desc->uses_ce = true;
-		desc->ce_offset = *ce_offset;
-		desc->dirty_mask = u_bit_consecutive64(0, num_elements);
-
-		*ce_offset += element_dw_size * desc->num_ce_slots * 4;
-	}
 }
 
 static void si_release_descriptors(struct si_descriptors *desc)
@@ -175,8 +162,6 @@ static bool si_upload_descriptors(struct si_context *sctx,
 
 	/* The shader pointer should point to slot 0. */
 	desc->buffer_offset -= first_slot_offset;
-
-	desc->dirty_mask = 0;
 
 	if (atom)
 		si_mark_atom_dirty(sctx, atom);
@@ -486,7 +471,6 @@ static void si_set_sampler_view(struct si_context *sctx,
 		views->enabled_mask &= ~(1u << slot);
 	}
 
-	descs->dirty_mask |= 1ull << desc_slot;
 	sctx->descriptors_dirty |= 1u << si_sampler_and_image_descriptors_idx(shader);
 }
 
@@ -638,8 +622,6 @@ si_disable_shader_image(struct si_context *ctx, unsigned shader, unsigned slot)
 
 		memcpy(descs->list + desc_slot*8, null_image_descriptor, 8*4);
 		images->enabled_mask &= ~(1u << slot);
-		/* two 8-byte images share one 16-byte slot */
-		descs->dirty_mask |= 1u << (desc_slot / 2);
 		ctx->descriptors_dirty |= 1u << si_sampler_and_image_descriptors_idx(shader);
 	}
 }
@@ -775,8 +757,6 @@ static void si_set_shader_image(struct si_context *ctx,
 	}
 
 	images->enabled_mask |= 1u << slot;
-	/* two 8-byte images share one 16-byte slot */
-	descs->dirty_mask |= 1u << (desc_slot / 2);
 	ctx->descriptors_dirty |= 1u << si_sampler_and_image_descriptors_idx(shader);
 
 	/* Since this can flush, it must be done after enabled_mask is updated. */
@@ -872,7 +852,6 @@ static void si_bind_sampler_states(struct pipe_context *ctx,
 			continue;
 
 		memcpy(desc->list + desc_slot * 16 + 12, sstates[i]->val, 4*4);
-		desc->dirty_mask |= 1ull << desc_slot;
 		sctx->descriptors_dirty |= 1u << si_sampler_and_image_descriptors_idx(shader);
 	}
 }
@@ -1160,7 +1139,6 @@ static void si_set_constant_buffer(struct si_context *sctx,
 		buffers->enabled_mask &= ~(1u << slot);
 	}
 
-	descs->dirty_mask |= 1u << slot;
 	sctx->descriptors_dirty |= 1u << descriptors_idx;
 }
 
@@ -1222,7 +1200,6 @@ static void si_set_shader_buffers(struct pipe_context *ctx,
 			pipe_resource_reference(&buffers->buffers[slot], NULL);
 			memset(desc, 0, sizeof(uint32_t) * 4);
 			buffers->enabled_mask &= ~(1u << slot);
-			descs->dirty_mask |= 1u << slot;
 			sctx->descriptors_dirty |=
 				1u << si_const_and_shader_buffer_descriptors_idx(shader);
 			continue;
@@ -1249,7 +1226,6 @@ static void si_set_shader_buffers(struct pipe_context *ctx,
 		buf->bind_history |= PIPE_BIND_SHADER_BUFFER;
 
 		buffers->enabled_mask |= 1u << slot;
-		descs->dirty_mask |= 1u << slot;
 		sctx->descriptors_dirty |=
 			1u << si_const_and_shader_buffer_descriptors_idx(shader);
 
@@ -1369,7 +1345,6 @@ void si_set_ring_buffer(struct pipe_context *ctx, uint slot,
 		buffers->enabled_mask &= ~(1u << slot);
 	}
 
-	descs->dirty_mask |= 1u << slot;
 	sctx->descriptors_dirty |= 1u << SI_DESCS_RW_BUFFERS;
 }
 
@@ -1474,7 +1449,6 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 						NULL);
 			buffers->enabled_mask &= ~(1u << bufidx);
 		}
-		descs->dirty_mask |= 1u << bufidx;
 	}
 	for (; i < old_num_targets; i++) {
 		bufidx = SI_VS_STREAMOUT_BUF0 + i;
@@ -1482,7 +1456,6 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 		memset(descs->list + bufidx*4, 0, sizeof(uint32_t) * 4);
 		pipe_resource_reference(&buffers->buffers[bufidx], NULL);
 		buffers->enabled_mask &= ~(1u << bufidx);
-		descs->dirty_mask |= 1u << bufidx;
 	}
 
 	sctx->descriptors_dirty |= 1u << SI_DESCS_RW_BUFFERS;
@@ -1601,7 +1574,6 @@ static void si_reset_buffer_resources(struct si_context *sctx,
 			si_desc_reset_buffer_offset(&sctx->b.b,
 						    descs->list + i*4,
 						    old_va, buf);
-			descs->dirty_mask |= 1u << i;
 			sctx->descriptors_dirty |= 1u << descriptors_idx;
 
 			radeon_add_to_buffer_list_check_mem(&sctx->b, &sctx->b.gfx,
@@ -1655,7 +1627,6 @@ static void si_rebind_buffer(struct pipe_context *ctx, struct pipe_resource *buf
 
 			si_desc_reset_buffer_offset(ctx, descs->list + i*4,
 						    old_va, buf);
-			descs->dirty_mask |= 1u << i;
 			sctx->descriptors_dirty |= 1u << SI_DESCS_RW_BUFFERS;
 
 			radeon_add_to_buffer_list_check_mem(&sctx->b, &sctx->b.gfx,
@@ -1710,7 +1681,6 @@ static void si_rebind_buffer(struct pipe_context *ctx, struct pipe_resource *buf
 								    descs->list +
 								    desc_slot * 16 + 4,
 								    old_va, buf);
-					descs->dirty_mask |= 1ull << desc_slot;
 					sctx->descriptors_dirty |=
 						1u << si_sampler_and_image_descriptors_idx(shader);
 
@@ -1743,8 +1713,6 @@ static void si_rebind_buffer(struct pipe_context *ctx, struct pipe_resource *buf
 					si_desc_reset_buffer_offset(
 						ctx, descs->list + desc_slot * 8 + 4,
 						old_va, buf);
-					/* two 8-byte images share one 16-byte slot */
-					descs->dirty_mask |= 1u << (desc_slot / 2);
 					sctx->descriptors_dirty |=
 						1u << si_sampler_and_image_descriptors_idx(shader);
 
@@ -2211,8 +2179,7 @@ static void si_init_bindless_descriptors(struct si_context *sctx,
 					 unsigned shader_userdata_index,
 					 unsigned num_elements)
 {
-	si_init_descriptors(sctx, desc, shader_userdata_index, 16, num_elements,
-			    0, 0, NULL);
+	si_init_descriptors(desc, shader_userdata_index, 16, num_elements);
 	sctx->bindless_descriptors.num_active_slots = num_elements;
 
 	/* The first bindless descriptor is stored at slot 1, because 0 is not
@@ -2648,6 +2615,11 @@ void si_init_all_descriptors(struct si_context *sctx)
 		bool gfx9_gs = false;
 		unsigned num_sampler_slots = SI_NUM_IMAGES / 2 + SI_NUM_SAMPLERS;
 		unsigned num_buffer_slots = SI_NUM_SHADER_BUFFERS + SI_NUM_CONST_BUFFERS;
+
+		if (sctx->b.chip_class >= GFX9) {
+			gfx9_tcs = i == PIPE_SHADER_TESS_CTRL;
+			gfx9_gs = i == PIPE_SHADER_GEOMETRY;
+		}
 
 		si_init_buffer_resources(&sctx->const_and_shader_buffers[i],
 					 si_const_and_shader_buffer_descriptors(sctx, i),
