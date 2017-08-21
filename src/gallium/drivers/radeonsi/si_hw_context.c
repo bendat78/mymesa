@@ -27,41 +27,10 @@
 #include "si_pipe.h"
 #include "radeon/r600_cs.h"
 
-static unsigned si_descriptor_list_cs_space(unsigned count, unsigned element_size)
-{
-	/* Ensure we have enough space to start a new range in a hole */
-	assert(element_size >= 3);
-
-	/* 5 dwords for write to L2 + 3 bytes for the packet header of
-	 * every disjoint range written to CE RAM.
-	 */
-	return 5 + (3 * count / 2) + count * element_size;
-}
-
-static unsigned si_ce_needed_cs_space(void)
-{
-	unsigned space = 0;
-
-	space += si_descriptor_list_cs_space(SI_NUM_SHADER_BUFFERS +
-					     SI_NUM_CONST_BUFFERS, 4);
-	/* two 8-byte images share one 16-byte slot */
-	space += si_descriptor_list_cs_space(SI_NUM_IMAGES / 2 +
-					     SI_NUM_SAMPLERS, 16);
-	space *= SI_NUM_SHADERS;
-
-	space += si_descriptor_list_cs_space(SI_NUM_RW_BUFFERS, 4);
-
-	/* Increment CE counter packet */
-	space += 2;
-
-	return space;
-}
-
 /* initialize */
 void si_need_cs_space(struct si_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->b.gfx.cs;
-	struct radeon_winsys_cs *ce_ib = ctx->ce_ib;
 
 	/* There is no need to flush the DMA IB here, because
 	 * r600_need_dma_space always flushes the GFX IB if there is
@@ -87,8 +56,7 @@ void si_need_cs_space(struct si_context *ctx)
 	/* If the CS is sufficiently large, don't count the space needed
 	 * and just flush if there is not enough space left.
 	 */
-	if (!ctx->b.ws->cs_check_space(cs, 2048) ||
-	    (ce_ib && !ctx->b.ws->cs_check_space(ce_ib, si_ce_needed_cs_space())))
+	if (!ctx->b.ws->cs_check_space(cs, 2048))
 		ctx->b.gfx.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 }
 
@@ -123,10 +91,6 @@ void si_context_gfx_flush(void *context, unsigned flags,
 
 	ctx->gfx_flush_in_progress = true;
 
-	/* This CE dump should be done in parallel with the last draw. */
-	if (ctx->ce_ib)
-		si_ce_save_all_descriptors_at_ib_end(ctx);
-
 	r600_preflush_suspend_features(&ctx->b);
 
 	ctx->b.flags |= SI_CONTEXT_CS_PARTIAL_FLUSH |
@@ -146,8 +110,6 @@ void si_context_gfx_flush(void *context, unsigned flags,
 		/* Save the IB for debug contexts. */
 		radeon_clear_saved_cs(&ctx->last_gfx);
 		radeon_save_cs(ws, cs, &ctx->last_gfx, true);
-		radeon_clear_saved_cs(&ctx->last_ce);
-		radeon_save_cs(ws, ctx->ce_ib, &ctx->last_ce, false);
 		r600_resource_reference(&ctx->last_trace_buf, ctx->trace_buf);
 		r600_resource_reference(&ctx->trace_buf, NULL);
 	}
@@ -175,13 +137,13 @@ void si_context_gfx_flush(void *context, unsigned flags,
 void si_begin_new_cs(struct si_context *ctx)
 {
 	if (ctx->is_debug) {
-		static const uint32_t zeros[2];
+		static const uint32_t zeros[1];
 
 		/* Create a buffer used for writing trace IDs and initialize it to 0. */
 		assert(!ctx->trace_buf);
 		ctx->trace_buf = (struct r600_resource*)
 				 pipe_buffer_create(ctx->b.b.screen, 0,
-						    PIPE_USAGE_STAGING, 8);
+						    PIPE_USAGE_STAGING, 4);
 		if (ctx->trace_buf)
 			pipe_buffer_write_nooverlap(&ctx->b.b, &ctx->trace_buf->b.b,
 						    0, sizeof(zeros), zeros);
@@ -207,14 +169,6 @@ void si_begin_new_cs(struct si_context *ctx)
 	si_pm4_emit(ctx, ctx->init_config);
 	if (ctx->init_config_gs_rings)
 		si_pm4_emit(ctx, ctx->init_config_gs_rings);
-
-	if (ctx->ce_preamble_ib)
-		si_ce_enable_loads(ctx->ce_preamble_ib);
-	else if (ctx->ce_ib)
-		si_ce_enable_loads(ctx->ce_ib);
-
-	if (ctx->ce_ib)
-		si_ce_restore_all_descriptors_at_ib_start(ctx);
 
 	if (ctx->queued.named.ls)
 		ctx->prefetch_L2_mask |= SI_PREFETCH_LS;

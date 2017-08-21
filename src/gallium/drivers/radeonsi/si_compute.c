@@ -840,11 +840,7 @@ static void si_launch_grid(
 	if (program->ir_type == PIPE_SHADER_IR_TGSI)
 		si_setup_tgsi_grid(sctx, info);
 
-	si_ce_pre_draw_synchronization(sctx);
-
 	si_emit_dispatch_packets(sctx, info);
-
-	si_ce_post_draw_synchronization(sctx);
 
 	sctx->compute_is_busy = true;
 	sctx->b.num_compute_calls++;
