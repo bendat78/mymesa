@@ -236,16 +236,6 @@ struct si_descriptors {
 	/* The maximum number of descriptors. */
 	ubyte num_elements;
 
-	/* Offset in CE RAM */
-	uint16_t ce_offset;
-
-	/* Slots allocated in CE RAM. If we get active slots outside of this
-	 * range, direct uploads to memory will be used instead. This basically
-	 * governs switching between onchip (CE) and offchip (upload) modes.
-	 */
-	ubyte first_ce_slot;
-	ubyte num_ce_slots;
-
 	/* Slots that are used by currently-bound shaders.
 	 * With CE: It determines which slots are dumped to L2.
 	 *          It doesn't skip uploads to CE RAM.
@@ -253,9 +243,6 @@ struct si_descriptors {
 	 */
 	ubyte first_active_slot;
 	ubyte num_active_slots;
-
-	/* Whether CE is used to upload this descriptor array. */
-	bool uses_ce;
 
 	/* The SGPR index where the 64-bit pointer to the descriptor array will
 	 * be stored. */
@@ -307,9 +294,6 @@ struct si_buffer_resources {
 	} while(0)
 
 /* si_descriptors.c */
-void si_ce_save_all_descriptors_at_ib_end(struct si_context* sctx);
-void si_ce_restore_all_descriptors_at_ib_start(struct si_context *sctx);
-void si_ce_enable_loads(struct radeon_winsys_cs *ib);
 void si_set_mutable_tex_desc_fields(struct si_screen *sscreen,
 				    struct r600_texture *tex,
 				    const struct legacy_surf_level *base_level_info,
@@ -401,8 +385,6 @@ void si_get_active_slot_masks(const struct tgsi_shader_info *info,
 /* si_state_draw.c */
 void si_init_ia_multi_vgt_param_table(struct si_context *sctx);
 void si_emit_cache_flush(struct si_context *sctx);
-void si_ce_pre_draw_synchronization(struct si_context *sctx);
-void si_ce_post_draw_synchronization(struct si_context *sctx);
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo);
 void si_trace_emit(struct si_context *sctx);
 

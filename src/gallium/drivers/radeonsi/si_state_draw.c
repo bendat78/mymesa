@@ -1140,27 +1140,6 @@ static void si_get_draw_start_count(struct si_context *sctx,
 	}
 }
 
-void si_ce_pre_draw_synchronization(struct si_context *sctx)
-{
-	if (sctx->ce_need_synchronization) {
-		radeon_emit(sctx->ce_ib, PKT3(PKT3_INCREMENT_CE_COUNTER, 0, 0));
-		radeon_emit(sctx->ce_ib, 1); /* 1 = increment CE counter */
-
-		radeon_emit(sctx->b.gfx.cs, PKT3(PKT3_WAIT_ON_CE_COUNTER, 0, 0));
-		radeon_emit(sctx->b.gfx.cs, 0); /* 0 = don't flush sL1 conditionally */
-	}
-}
-
-void si_ce_post_draw_synchronization(struct si_context *sctx)
-{
-	if (sctx->ce_need_synchronization) {
-		radeon_emit(sctx->b.gfx.cs, PKT3(PKT3_INCREMENT_DE_COUNTER, 0, 0));
-		radeon_emit(sctx->b.gfx.cs, 0); /* unused */
-
-		sctx->ce_need_synchronization = false;
-	}
-}
-
 static void si_emit_all_states(struct si_context *sctx, const struct pipe_draw_info *info,
 			       unsigned skip_atom_mask)
 {
@@ -1405,7 +1384,6 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 			sctx->dirty_atoms = 0;
 		}
 
-		si_ce_pre_draw_synchronization(sctx);
 		si_emit_draw_packets(sctx, info, indexbuf, index_size, index_offset);
 		/* <-- CUs are busy here. */
 
@@ -1428,11 +1406,8 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 			return;
 
 		si_emit_all_states(sctx, info, 0);
-		si_ce_pre_draw_synchronization(sctx);
 		si_emit_draw_packets(sctx, info, indexbuf, index_size, index_offset);
 	}
-
-	si_ce_post_draw_synchronization(sctx);
 
 	if (sctx->trace_buf)
 		si_trace_emit(sctx);
@@ -1478,18 +1453,4 @@ void si_trace_emit(struct si_context *sctx)
 	radeon_emit(cs, sctx->trace_id);
 	radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
 	radeon_emit(cs, AC_ENCODE_TRACE_POINT(sctx->trace_id));
-
-	if (sctx->ce_ib) {
-		struct radeon_winsys_cs *ce = sctx->ce_ib;
-
-		radeon_emit(ce, PKT3(PKT3_WRITE_DATA, 3, 0));
-		radeon_emit(ce, S_370_DST_SEL(V_370_MEM_ASYNC) |
-			    S_370_WR_CONFIRM(1) |
-			    S_370_ENGINE_SEL(V_370_CE));
-		radeon_emit(ce, sctx->trace_buf->gpu_address + 4);
-		radeon_emit(ce, (sctx->trace_buf->gpu_address + 4) >> 32);
-		radeon_emit(ce, sctx->trace_id);
-		radeon_emit(ce, PKT3(PKT3_NOP, 0, 0));
-		radeon_emit(ce, AC_ENCODE_TRACE_POINT(sctx->trace_id));
-	}
 }

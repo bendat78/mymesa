@@ -281,15 +281,7 @@ struct si_context {
 	struct si_shader_ctx_state	fixed_func_tcs_shader;
 	struct r600_resource		*wait_mem_scratch;
 	unsigned			wait_mem_number;
-
-	struct radeon_winsys_cs		*ce_ib;
-	struct radeon_winsys_cs		*ce_preamble_ib;
-	struct r600_resource		*ce_ram_saved_buffer;
-	struct u_suballocator		*ce_suballocator;
-	unsigned			ce_ram_saved_offset;
-	uint16_t			total_ce_ram_allocated;
 	uint16_t			prefetch_L2_mask;
-	bool				ce_need_synchronization:1;
 
 	bool				gfx_flush_in_progress:1;
 	bool				compute_is_busy:1;
@@ -420,7 +412,6 @@ struct si_context {
 	/* Debug state. */
 	bool			is_debug;
 	struct radeon_saved_cs	last_gfx;
-	struct radeon_saved_cs	last_ce;
 	struct r600_resource	*last_trace_buf;
 	struct r600_resource	*trace_buf;
 	unsigned		trace_id;
