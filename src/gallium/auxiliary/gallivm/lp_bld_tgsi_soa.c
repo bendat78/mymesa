@@ -3453,6 +3453,7 @@ brk_emit(
    lp_exec_break(&bld->exec_mask, bld_base);
 }
 
+static void
 if_emit(
    const struct lp_build_tgsi_action * action,
    struct lp_build_tgsi_context * bld_base,

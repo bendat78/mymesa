@@ -1473,12 +1473,8 @@ void si_trace_emit(struct si_context *sctx)
 	radeon_emit(cs, va >> 32);
 	radeon_emit(cs, trace_id);
 	radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
-<<<<<<< HEAD
-	radeon_emit(cs, AC_ENCODE_TRACE_POINT(sctx->trace_id));
-=======
 	radeon_emit(cs, AC_ENCODE_TRACE_POINT(trace_id));
 
 	if (sctx->b.log)
 		u_log_flush(sctx->b.log);
->>>>>>> 497506ad93d737db0c75f512626df2ae82c27560
 }
