@@ -224,8 +224,6 @@ struct si_descriptors {
 	uint32_t *list;
 	/* The list in mapped GPU memory. */
 	uint32_t *gpu_list;
-	/* Slots that have been changed and need to be uploaded. */
-	uint64_t dirty_mask;
 
 	/* The buffer where the descriptors have been uploaded. */
 	struct r600_resource *buffer;
@@ -234,15 +232,13 @@ struct si_descriptors {
 	/* The size of one descriptor. */
 	ubyte element_dw_size;
 	/* The maximum number of descriptors. */
-	ubyte num_elements;
+	uint32_t num_elements;
 
 	/* Slots that are used by currently-bound shaders.
-	 * With CE: It determines which slots are dumped to L2.
-	 *          It doesn't skip uploads to CE RAM.
-	 * Without CE: It determines which slots are uploaded.
+	 * It determines which slots are uploaded.
 	 */
-	ubyte first_active_slot;
-	ubyte num_active_slots;
+	uint32_t first_active_slot;
+	uint32_t num_active_slots;
 
 	/* The SGPR index where the 64-bit pointer to the descriptor array will
 	 * be stored. */

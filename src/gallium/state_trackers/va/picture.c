@@ -181,8 +181,8 @@ handlePictureParameterBuffer(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *
       if (!context->target)
          return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-      if (!context->templat.max_references) &&
-         format != PIPE_VIDEO_FORMAT_JPEG)
+      if ((!context->templat.max_references) &&
+         (format != PIPE_VIDEO_FORMAT_JPEG))
          return VA_STATUS_ERROR_INVALID_BUFFER;
 
       if (format == PIPE_VIDEO_FORMAT_MPEG4_AVC)

@@ -68,7 +68,6 @@
 #define SURFACE_SYNC_BUSY(x)	(((x) >> 21) & 0x1)
 #define DMA_BUSY(x)		(((x) >> 22) & 0x1)
 #define SCRATCH_RAM_BUSY(x)	(((x) >> 24) & 0x1)
-#define CE_BUSY(x)		(((x) >> 26) & 0x1)
 
 #define IDENTITY(x) x
 

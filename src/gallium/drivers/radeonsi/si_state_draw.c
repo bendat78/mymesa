@@ -30,6 +30,7 @@
 #include "gfx9d.h"
 
 #include "util/u_index_modify.h"
+#include "util/u_log.h"
 #include "util/u_upload_mgr.h"
 #include "util/u_prim.h"
 
@@ -194,7 +195,11 @@ static void si_emit_derived_tess_state(struct si_context *sctx,
 	 */
 	*num_patches = MIN2(*num_patches, 40);
 
-	if (sctx->b.chip_class == SI) {
+	if (sctx->b.chip_class == SI ||
+	    /* TODO: fix GFX9 where a threadgroup contains more than 1 wave and
+	     * LS vertices per patch > HS vertices per patch. Piglit: 16in-1out */
+	    (sctx->b.chip_class == GFX9 &&
+	     num_tcs_input_cp > num_tcs_output_cp)) {
 		/* SI bug workaround, related to power management. Limit LS-HS
 		 * threadgroups to only one wave.
 		 */
@@ -894,7 +899,8 @@ void si_emit_cache_flush(struct si_context *sctx)
 			/* Necessary for DCC */
 			if (rctx->chip_class == VI)
 				r600_gfx_write_event_eop(rctx, V_028A90_FLUSH_AND_INV_CB_DATA_TS,
-							 0, 0, NULL, 0, 0, 0);
+							 0, EOP_DATA_SEL_DISCARD, NULL,
+							 0, 0, R600_NOT_QUERY);
 		}
 		if (rctx->flags & SI_CONTEXT_FLUSH_AND_INV_DB)
 			cp_coher_cntl |= S_0085F0_DB_ACTION_ENA(1) |
@@ -970,17 +976,30 @@ void si_emit_cache_flush(struct si_context *sctx)
 			cb_db_event = V_028A90_CACHE_FLUSH_AND_INV_TS_EVENT;
 		}
 
-		/* TC    | TC_WB         = invalidate L2 data
-		 * TC_MD | TC_WB         = invalidate L2 metadata (DCC, etc.)
-		 * TC    | TC_WB | TC_MD = invalidate L2 data & metadata
+		/* These are the only allowed combinations. If you need to
+		 * do multiple operations at once, do them separately.
+		 * All operations that invalidate L2 also seem to invalidate
+		 * metadata. Volatile (VOL) and WC flushes are not listed here.
+		 *
+		 * TC    | TC_WB         = writeback & invalidate L2 & L1
+		 * TC    | TC_WB | TC_NC = writeback & invalidate L2 for MTYPE == NC
+		 *         TC_WB | TC_NC = writeback L2 for MTYPE == NC
+		 * TC            | TC_NC = invalidate L2 for MTYPE == NC
+		 * TC    | TC_MD         = writeback & invalidate L2 metadata (DCC, etc.)
+		 * TCL1                  = invalidate L1
 		 */
 		tc_flags = 0;
 
+		if (rctx->flags & SI_CONTEXT_INV_L2_METADATA) {
+			tc_flags = EVENT_TC_ACTION_ENA |
+				   EVENT_TC_MD_ACTION_ENA;
+		}
+
 		/* Ideally flush TC together with CB/DB. */
 		if (rctx->flags & SI_CONTEXT_INV_GLOBAL_L2) {
-			tc_flags |= EVENT_TC_ACTION_ENA |
-				    EVENT_TC_WB_ACTION_ENA |
-				    EVENT_TCL1_ACTION_ENA;
+			/* Writeback and invalidate everything in L2 & L1. */
+			tc_flags = EVENT_TC_ACTION_ENA |
+				   EVENT_TC_WB_ACTION_ENA;
 
 			/* Clear the flags. */
 			rctx->flags &= ~(SI_CONTEXT_INV_GLOBAL_L2 |
@@ -993,9 +1012,10 @@ void si_emit_cache_flush(struct si_context *sctx)
 		va = sctx->wait_mem_scratch->gpu_address;
 		sctx->wait_mem_number++;
 
-		r600_gfx_write_event_eop(rctx, cb_db_event, tc_flags, 1,
+		r600_gfx_write_event_eop(rctx, cb_db_event, tc_flags,
+					 EOP_DATA_SEL_VALUE_32BIT,
 					 sctx->wait_mem_scratch, va,
-					 sctx->wait_mem_number, 0);
+					 sctx->wait_mem_number, R600_NOT_QUERY);
 		r600_gfx_wait_fence(rctx, va, sctx->wait_mem_number, 0xffffffff);
 	}
 
@@ -1339,6 +1359,9 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	si_need_cs_space(sctx);
 
+	if (unlikely(sctx->b.log))
+		si_log_draw_state(sctx, sctx->b.log);
+
 	/* Since we've called r600_context_add_resource_size for vertex buffers,
 	 * this must be called after si_need_cs_space, because we must let
 	 * need_cs_space flush before we add buffers to the buffer list.
@@ -1409,7 +1432,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		si_emit_draw_packets(sctx, info, indexbuf, index_size, index_offset);
 	}
 
-	if (sctx->trace_buf)
+	if (unlikely(sctx->current_saved_cs))
 		si_trace_emit(sctx);
 
 	/* Workaround for a VGT hang when streamout is enabled.
@@ -1439,18 +1462,23 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 void si_trace_emit(struct si_context *sctx)
 {
 	struct radeon_winsys_cs *cs = sctx->b.gfx.cs;
-
-	sctx->trace_id++;
-	radeon_add_to_buffer_list(&sctx->b, &sctx->b.gfx, sctx->trace_buf,
-			      RADEON_USAGE_READWRITE, RADEON_PRIO_TRACE);
+	uint64_t va = sctx->current_saved_cs->trace_buf->gpu_address;
+	uint32_t trace_id = ++sctx->current_saved_cs->trace_id;
 
 	radeon_emit(cs, PKT3(PKT3_WRITE_DATA, 3, 0));
 	radeon_emit(cs, S_370_DST_SEL(V_370_MEMORY_SYNC) |
 		    S_370_WR_CONFIRM(1) |
 		    S_370_ENGINE_SEL(V_370_ME));
-	radeon_emit(cs, sctx->trace_buf->gpu_address);
-	radeon_emit(cs, sctx->trace_buf->gpu_address >> 32);
-	radeon_emit(cs, sctx->trace_id);
+	radeon_emit(cs, va);
+	radeon_emit(cs, va >> 32);
+	radeon_emit(cs, trace_id);
 	radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
+<<<<<<< HEAD
 	radeon_emit(cs, AC_ENCODE_TRACE_POINT(sctx->trace_id));
+=======
+	radeon_emit(cs, AC_ENCODE_TRACE_POINT(trace_id));
+
+	if (sctx->b.log)
+		u_log_flush(sctx->b.log);
+>>>>>>> 497506ad93d737db0c75f512626df2ae82c27560
 }
