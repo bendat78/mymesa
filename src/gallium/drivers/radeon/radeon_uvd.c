@@ -965,7 +965,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	size++;
 
 	for (i = 0; i < 4; ++i) {
-		if (pic->quantization_table.load_quantiser_table[i] == 0)
+		if (!pic->quantization_table.load_quantiser_table[i])
 			continue;
 
 		buf[size++] = i;
@@ -986,7 +986,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	size++;
 
 	for (i = 0; i < 2; ++i) {
-		if (pic->huffman_table.load_huffman_table[i] == 0)
+		if (!pic->huffman_table.load_huffman_table[i])
 			continue;
 
 		buf[size++] = 0x00 | i;
@@ -997,7 +997,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	}
 
 	for (i = 0; i < 2; ++i) {
-		if (pic->huffman_table.load_huffman_table[i] == 0)
+		if (!pic->huffman_table.load_huffman_table[i])
 			continue;
 
 		buf[size++] = 0x10 | i;
