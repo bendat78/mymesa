@@ -172,7 +172,7 @@ decode_type_from_blob(struct blob_reader *blob)
 {
    uint32_t u = blob_read_uint32(blob);
 
-   if (u == 0) {
+   if (!u) {
       return NULL;
    }
 

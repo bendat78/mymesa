@@ -786,7 +786,7 @@ bind_buffer_offset(struct gl_context *ctx,
 {
    struct gl_buffer_object *bufObj;
 
-   if (buffer == 0) {
+   if (!buffer) {
       bufObj = ctx->Shared->NullBufferObj;
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
