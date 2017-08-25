@@ -997,12 +997,8 @@ emit_fast_color_clear(struct radv_cmd_buffer *cmd_buffer,
 	    clear_rect->rect.extent.height != iview->image->info.height)
 		goto fail;
 
-<<<<<<< HEAD
-	if (clear_rect->baseArrayLayer)
-=======
 	if (view_mask && (iview->image->info.array_size >= 32 ||
 	                 (1u << iview->image->info.array_size) - 1u != view_mask))
->>>>>>> ddc9b4e823a9e788f530a17dcf260dcc9f26a156
 		goto fail;
 	if (!view_mask && clear_rect->baseArrayLayer != 0)
 		goto fail;
