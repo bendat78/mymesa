@@ -2202,7 +2202,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 	}
 
 	if (modules[MESA_SHADER_FRAGMENT]) {
-		struct ac_shader_variant_key key = {0};
+		struct ac_shader_variant_key key = {};
 		key.fs.col_format = pipeline->graphics.blend.spi_shader_col_format;
 		if (pCreateInfo->pMultisampleState &&
 		    pCreateInfo->pMultisampleState->rasterizationSamples > 1)
