@@ -35,6 +35,7 @@
 #include "main/errors.h"
 #include "main/shaderapi.h"
 #include "main/uniforms.h"
+#include "util/string_to_uint_map.h"
 
 #include "st_context.h"
 #include "st_program.h"
@@ -43,7 +44,6 @@
 #include "compiler/glsl_types.h"
 #include "compiler/glsl/glsl_to_nir.h"
 #include "compiler/glsl/ir.h"
-#include "compiler/glsl/string_to_uint_map.h"
 
 
 static int
@@ -81,7 +81,7 @@ static void
 st_nir_assign_vs_in_locations(struct gl_program *prog, nir_shader *nir)
 {
    unsigned attr, num_inputs = 0;
-   unsigned input_to_index[VERT_ATTRIB_MAX] = {};
+   unsigned input_to_index[VERT_ATTRIB_MAX] = {0};
 
    /* TODO de-duplicate w/ similar code in st_translate_vertex_program()? */
    for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
@@ -256,7 +256,7 @@ st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
       static const gl_state_index wposTransformState[STATE_LENGTH] = {
          STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM
       };
-      nir_lower_wpos_ytransform_options wpos_options = {};
+      nir_lower_wpos_ytransform_options wpos_options = { { 0 } };
       struct pipe_screen *pscreen = st->pipe->screen;
 
       memcpy(wpos_options.state_tokens, wposTransformState,
@@ -413,12 +413,12 @@ st_nir_get_mesa_program(struct gl_context *ctx,
    foreach_in_list(ir_instruction, node, shader->ir) {
       ir_variable *var = node->as_variable();
 
-      if ((!var) || (var->data.mode != ir_var_uniform) ||
+      if ((var == NULL) || (var->data.mode != ir_var_uniform) ||
           (strncmp(var->name, "gl_", 3) != 0))
          continue;
 
       const ir_state_slot *const slots = var->get_state_slots();
-      assert(slots);
+      assert(slots != NULL);
 
       for (unsigned int i = 0; i < var->get_num_state_slots(); i++) {
          _mesa_add_state_reference(prog->Parameters,
