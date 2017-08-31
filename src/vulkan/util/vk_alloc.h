@@ -42,7 +42,7 @@ vk_zalloc(const VkAllocationCallbacks *alloc,
           VkSystemAllocationScope scope)
 {
    void *mem = vk_alloc(alloc, size, align, scope);
-   if (mem == NULL)
+   if (!mem)
       return NULL;
 
    memset(mem, 0, size);

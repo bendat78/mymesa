@@ -268,7 +268,7 @@ VkResult anv_CreateFence(
 
    fence = vk_zalloc2(&device->alloc, pAllocator, sizeof(*fence), 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (fence == NULL)
+   if (!fence)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    if (device->instance->physicalDevice.has_syncobj_wait) {
