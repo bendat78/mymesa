@@ -65,7 +65,7 @@ OBJCXXFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security"
 CC=clang-5.0 \
 CXX=clang++-5.0
 
-make -j4
+make -j4 || exit 125
 
 sudo make install
 sudo ldconfig -v
