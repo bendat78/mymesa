@@ -143,13 +143,12 @@ class Field:
                 while value[1] >= len(values_offsets):
                     values_offsets.append(-1)
                 values_offsets[value[1]] = string_table.add(strip_prefix(value[0]))
-            return '\t{.name_offset\t= %s,\n\t .offset\t= %s,\
-                   \n\t .num_fields\t= %s,\n\t .fields_offset\t= %s},' % (
-                string_table.add(self.name), self.s_name,
+            return '{.mask\t= %s(~0u),\n\t .name_offset\t= %s,\n\t .num_values\t= %s,\n\t .values_offset\t= %s}' % (
+                self.s_name, string_table.add(self.name),
                 len(values_offsets), idx_table.add(values_offsets))
         else:
-            return '\t{.name_offset\t= %s,\n\t .offset\t= %s(~0)},' % (string_table.add(self.name), self.s_name)
-
+            return '{.mask\t= %s(~0u),\n\t .name_offset\t= %s}' % (self.s_name, string_table.add(self.name))
+#(~0u)
     def __eq__(self, other):
         return (self.s_name == other.s_name and
                 self.name == other.name and
@@ -342,15 +341,15 @@ def write_tables(asics, packets):
 #define SID_TABLES_H
 
 struct si_field {
-        unsigned name_offset;
         unsigned mask;
+        unsigned name_offset;
         unsigned num_values;
         unsigned values_offset; /* offset into sid_strings_offsets */
 };
 
 struct si_reg {
-        unsigned name_offset;
         unsigned offset;
+        unsigned name_offset;
         unsigned num_fields;
         unsigned fields_offset;
 };
@@ -378,13 +377,11 @@ struct si_packet3 {
                 continue
 
             if len(reg.fields):
-                print '\t{.name_offset\t= %s,\n\t .mask\t\t= %s(~0u),\
-                      \n\t .num_values\t= %s,\n\t .values_offset\t= %s},'\
-                      % (strings.add(reg.name), reg.r_name,
-                      len(reg.fields), fields.add(reg.fields))
+                print '\t{.offset\t= %s,\n\t .name_offset\t= %s,\n\t .num_fields\t= %s,\n\t .fields_offset\t= %s},' % (
+                      reg.r_name, strings.add(reg.name), len(reg.fields), fields.add(reg.fields))
             else:
-                print '\t{.name_offset\t= %s,\n\t .mask\t\t= %s(~0u)},'\
-                      % (strings.add(reg.name), reg.r_name)
+                print '\t{.offset\t= %s,\n\t .name_offset\t= %s},' % (
+                      reg.r_name, strings.add(reg.name))
                 regs[reg.r_name] = reg
         print '};'
         print
