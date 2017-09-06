@@ -667,7 +667,7 @@ draw_vgpu10(struct svga_hwtnl *hwtnl,
                                            &vbuffers[i],
                                            &svga->state.hw_draw.vbuffer_attrs[i],
                                            &svga->state.hw_draw.vbuffers[i]);
-                                               
+
                if (!emit && i == num_vbuffers-1) {
                   /* Include the last vertex buffer in the next emit
                    * if it is different.

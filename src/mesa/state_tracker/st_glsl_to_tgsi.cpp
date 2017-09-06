@@ -5754,7 +5754,7 @@ translate_dst(struct st_translate *t,
    if (saturate)
       dst = ureg_saturate(dst);
 
-   if (dst_reg->reladdr != NULL) {
+   if (dst_reg->reladdr) {
       assert(dst_reg->file != PROGRAM_TEMPORARY);
       dst = ureg_dst_indirect(dst, ureg_src(t->address[0]));
    }

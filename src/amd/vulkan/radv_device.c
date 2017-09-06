@@ -1796,7 +1796,7 @@ radv_get_preamble_cs(struct radv_queue *queue,
 			radeon_emit(cs, rsrc1);
 		}
 
-		if (i == 0) {
+		if (!i) {
 			si_cs_emit_cache_flush(cs,
 					       false,
 			                       queue->device->physical_device->rad_info.chip_class,

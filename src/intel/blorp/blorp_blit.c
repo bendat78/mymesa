@@ -2620,7 +2620,7 @@ blorp_buffer_copy(struct blorp_batch *batch,
    /* Now make a max-width copy */
    uint64_t height = copy_size / (max_surface_dim * bs);
    assert(height < max_surface_dim);
-   if (height != 0) {
+   if (height) {
       uint64_t rect_copy_size = height * max_surface_dim * bs;
       do_buffer_copy(batch, &src, &dst, max_surface_dim, height, bs);
       copy_size -= rect_copy_size;
@@ -2629,7 +2629,7 @@ blorp_buffer_copy(struct blorp_batch *batch,
    }
 
    /* Finally, make a small copy to finish it off */
-   if (copy_size != 0) {
+   if (copy_size) {
       do_buffer_copy(batch, &src, &dst, copy_size / bs, 1, bs);
    }
 }

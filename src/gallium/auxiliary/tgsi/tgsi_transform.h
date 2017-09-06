@@ -259,9 +259,9 @@ tgsi_transform_src_reg(struct tgsi_full_src_register *reg,
    }
 
    reg->Register.SwizzleX = swizzleX;
-   reg->Register.SwizzleY = swizzleY; 
-   reg->Register.SwizzleZ = swizzleZ; 
-   reg->Register.SwizzleW = swizzleW; 
+   reg->Register.SwizzleY = swizzleY;
+   reg->Register.SwizzleZ = swizzleZ;
+   reg->Register.SwizzleW = swizzleW;
 }
 
 /**

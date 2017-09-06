@@ -301,7 +301,7 @@ update_sampler_resources(struct svga_context *svga, unsigned dirty)
                    numSR++;
                    i++;
                 }
- 
+
                 if (emit) {
                    /* numSR can only be 0 if the first entry of the list
                     * is the same as the one in the device list.
