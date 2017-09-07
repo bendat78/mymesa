@@ -90,7 +90,7 @@ struct PA_STATE
 #endif
     virtual bool Assemble(uint32_t slot, simdvector verts[]) = 0;
 #if ENABLE_AVX512_SIMD16
-    virtual bool Assemble_simd16(uint32_t slot, simd16vector verts[]) = 0;
+    virtual bool Assemble(uint32_t slot, simd16vector verts[]) = 0;
 #endif
     virtual void AssembleSingle(uint32_t slot, uint32_t primIndex, simd4scalar verts[]) = 0;
     virtual bool NextPrim() = 0;
@@ -198,7 +198,7 @@ struct PA_STATE_OPT : public PA_STATE
     }
 
 #if ENABLE_AVX512_SIMD16
-    bool Assemble_simd16(uint32_t slot, simd16vector verts[])
+    bool Assemble(uint32_t slot, simd16vector verts[])
     {
         return this->pfnPaFunc_simd16(*this, slot, verts);
     }
@@ -719,7 +719,7 @@ struct PA_STATE_CUT : public PA_STATE
     }
 
 #if ENABLE_AVX512_SIMD16
-    bool Assemble_simd16(uint32_t slot, simd16vector verts[])
+    bool Assemble(uint32_t slot, simd16vector verts[])
     {
         // process any outstanding verts
         ProcessVerts();
@@ -1272,7 +1272,7 @@ struct PA_TESS : PA_STATE
     }
 
 #if ENABLE_AVX512_SIMD16
-    bool Assemble_simd16(uint32_t slot, simd16vector verts[])
+    bool Assemble(uint32_t slot, simd16vector verts[])
     {
         SWR_ASSERT(slot < m_numAttributes);
 

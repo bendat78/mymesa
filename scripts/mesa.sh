@@ -54,12 +54,12 @@ echo "17.3.0-dev-ben-$(date)" > VERSION
 --enable-gle \
 --with-vulkan-drivers=intel,radeon \
 CFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security -fno-omit-frame-pointer" \
-CPPFLAGS="-Wall -Wextra -D_FORTIFY_SOURCE=2" \
+CPPFLAGS="-Wall -Wextra -D_FORTIFY_SOURCE=2 -Wl,-fuse-ld=gold" \
 CXXFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security -fno-omit-frame-pointer" \
 FCFLAGS="-O3 -fstack-protector-strong" \
 FFLAGS="-O3 -fstack-protector-strong" \
 GCJFLAGS="-O3 -fstack-protector-strong" \
-LDFLAGS="-Wl,-Bsymbolic-functions -Wl,-z,relro" \
+LDFLAGS="-Bsymbolic-functions -z relro -fuse-ld=gold" \
 OBJCFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security" \
 OBJCXXFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security" \
 CC=gcc \
@@ -69,4 +69,4 @@ make -j4 || exit 125
 
 sudo make install
 sudo ldconfig -v
-rm -rf ~/.cache/mesa/
+rm -rf ~/.cache/mesa_shader_cache/

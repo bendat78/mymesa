@@ -2840,7 +2840,7 @@ glsl_to_tgsi_visitor::emit_block_mov(ir_assignment *ir, const struct glsl_type *
    r->index++;
    if (type->is_dual_slot()) {
       l->index++;
-      if (r->is_double_vertex_input == false)
+      if (!r->is_double_vertex_input)
          r->index++;
    }
 }
