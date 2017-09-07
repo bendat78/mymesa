@@ -103,7 +103,7 @@ INLINE void calcBoundingBoxIntVertical(const typename SIMD_T::Integer(&vX)[3], c
     vMaxY = SIMD_T::max_epi32(vMaxY, vY[1]);
     vMaxY = SIMD_T::max_epi32(vMaxY, vY[2]);
 
-    if (CT::BoundingBoxOffsetT::value != 0)
+    if (CT::BoundingBoxOffsetT::value)
     {
         /// Bounding box needs to be expanded by 1/512 before snapping to 16.8 for conservative rasterization
         /// expand bbox by 1/256; coverage will be correctly handled in the rasterizer.
