@@ -294,37 +294,36 @@ _eglError(EGLint errCode, const char *msg)
    return EGL_FALSE;
 }
 
-/**
- * Returns the label set for the current thread.
- */
-EGLLabelKHR
-_eglGetThreadLabel(void)
+void
+_eglDebugReport(EGLenum error, const char *funcName,
+      EGLint type, const char *message, ...)
 {
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   return t->Label;
-}
-
-static void
-_eglDebugReportFullv(EGLenum error, const char *command, const char *funcName,
-      EGLint type, EGLLabelKHR objectLabel, const char *message, va_list args)
-{
+   _EGLThreadInfo *thr = _eglGetCurrentThread();
    EGLDEBUGPROCKHR callback = NULL;
+   va_list args;
+
+   if (funcName == NULL)
+      funcName = thr->CurrentFuncName;
 
    mtx_lock(_eglGlobal.Mutex);
    if (_eglGlobal.debugTypesEnabled & DebugBitFromType(type)) {
       callback = _eglGlobal.debugCallback;
    }
+
    mtx_unlock(_eglGlobal.Mutex);
 
    if (callback) {
       char *buf = NULL;
 
-      if (message) {
+      if (message != NULL) {
+         va_start(args, message);
          if (vasprintf(&buf, message, args) < 0) {
             buf = NULL;
          }
+
+         va_end(args);
       }
-      callback(error, command, type, _eglGetThreadLabel(), objectLabel, buf);
+      callback(error, funcName, type, thr->Label, thr->CurrentObjectLabel, buf);
       free(buf);
    }
 
@@ -333,28 +332,3 @@ _eglDebugReportFullv(EGLenum error, const char *command, const char *funcName,
    }
 }
 
-void
-_eglDebugReportFull(EGLenum error, const char *command, const char *funcName,
-      EGLint type, EGLLabelKHR objectLabel, const char *message, ...)
-{
-   va_list args;
-   va_start(args, message);
-   _eglDebugReportFullv(error, command, funcName, type, objectLabel, message, args);
-   va_end(args);
-}
-
-void
-_eglDebugReport(EGLenum error, const char *funcName,
-      EGLint type, const char *message, ...)
-{
-   _EGLThreadInfo *thr = _eglGetCurrentThread();
-   va_list args;
-
-   if (!funcName) {
-      funcName = thr->CurrentFuncName;
-   }
-
-   va_start(args, message);
-   _eglDebugReportFullv(error, thr->CurrentFuncName, funcName, type, thr->CurrentObjectLabel, message, args);
-   va_end(args);
-}
