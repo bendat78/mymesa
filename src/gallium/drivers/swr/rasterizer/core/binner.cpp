@@ -710,7 +710,7 @@ void SIMDCALL BinTrianglesImpl(
     if (CT::IsConservativeT::value)
     {
         // in the case where a degenerate triangle is on a scissor edge, we need to make sure the primitive bbox has
-        // some area. Bump the xmax/ymax edges out 
+        // some area. Bump the xmax/ymax edges out
 
         typename SIMD_T::Integer topEqualsBottom = SIMD_T::cmpeq_epi32(bbox.ymin, bbox.ymax);
         bbox.ymax = SIMD_T::blendv_epi32(bbox.ymax, SIMD_T::add_epi32(bbox.ymax, SIMD_T::set1_epi32(1)), topEqualsBottom);
@@ -997,7 +997,7 @@ void BinPostSetupPointsImpl(
         primMask &= ~SIMD_T::movemask_ps(SIMD_T::castsi_ps(vXi));
         primMask &= ~SIMD_T::movemask_ps(SIMD_T::castsi_ps(vYi));
 
-        // compute macro tile coordinates 
+        // compute macro tile coordinates
         typename SIMD_T::Integer macroX = SIMD_T::template srai_epi32<KNOB_MACROTILE_X_DIM_FIXED_SHIFT>(vXi);
         typename SIMD_T::Integer macroY = SIMD_T::template srai_epi32<KNOB_MACROTILE_Y_DIM_FIXED_SHIFT>(vYi);
 
