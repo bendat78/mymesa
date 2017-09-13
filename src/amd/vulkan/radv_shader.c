@@ -82,7 +82,7 @@ VkResult radv_CreateShaderModule(
 	module = vk_alloc2(&device->alloc, pAllocator,
 			     sizeof(*module) + pCreateInfo->codeSize, 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (module == NULL)
+	if (!module)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	module->nir = NULL;
@@ -444,7 +444,7 @@ radv_shader_variant_create(struct radv_device *device,
 			   void **code_out,
 			   unsigned *code_size_out)
 {
-	struct ac_nir_compiler_options options = {0};
+	struct ac_nir_compiler_options options = {};
 
 	options.layout = layout;
 	if (key)
@@ -464,7 +464,7 @@ radv_create_gs_copy_shader(struct radv_device *device,
 			   unsigned *code_size_out,
 			   bool multiview)
 {
-	struct ac_nir_compiler_options options = {0};
+	struct ac_nir_compiler_options options = {};
 
 	options.key.has_multiview_view_index = multiview;
 
