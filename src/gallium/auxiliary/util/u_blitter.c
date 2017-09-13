@@ -375,7 +375,7 @@ static void bind_vs_passthrough_pos(struct blitter_context_priv *ctx)
 
    if (!ctx->vs_nogeneric) {
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION };
-      const uint semantic_indices[] = { 0 };
+      const uint semantic_indices[] = {};
 
       ctx->vs_nogeneric =
          util_make_vertex_passthrough_shader(pipe, 1,
