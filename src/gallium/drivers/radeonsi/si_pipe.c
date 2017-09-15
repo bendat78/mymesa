@@ -488,6 +488,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_NIR_SAMPLERS_AS_DEREF:
 	case PIPE_CAP_QUERY_SO_OVERFLOW:
 	case PIPE_CAP_MEMOBJ:
+	case PIPE_CAP_LOAD_CONSTBUF:
 		return 1;
 
 	case PIPE_CAP_INT64:
