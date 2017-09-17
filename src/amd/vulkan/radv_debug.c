@@ -616,7 +616,7 @@ radv_dump_device_name(struct radv_device *device, FILE *f)
 
 	chip_name = device->ws->get_chip_name(device->ws);
 
-	if (uname(&uname_data) == 0)
+	if (!uname(&uname_data))
 		snprintf(kernel_version, sizeof(kernel_version),
 			 " / %s", uname_data.release);
 

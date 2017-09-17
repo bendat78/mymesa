@@ -38,7 +38,7 @@ virgl_tgsi_transform_declaration(struct tgsi_transform_context *ctx,
    switch (decl->Declaration.File) {
    case TGSI_FILE_CONSTANT:
       if (decl->Declaration.Dimension) {
-         if (decl->Dim.Index2D == 0)
+         if (!decl->Dim.Index2D)
             decl->Declaration.Dimension = 0;
       }
       break;

@@ -707,7 +707,7 @@ public:
         // cull prims with NAN coords
         primMask &= ~ComputeNaNMask(prim);
 
-        // user cull distance cull 
+        // user cull distance cull
         if (state.backendState.cullDistanceMask)
         {
             primMask &= ~ComputeUserClipCullMask(pa, prim);
