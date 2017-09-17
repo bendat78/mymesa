@@ -243,7 +243,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    }
 
    void *map = brw_bo_map(brw, bo, MAP_WRITE | MAP_RAW);
-   if (map == NULL) {
+   if (!map) {
       DBG("%s: failed to map bo\n", __func__);
       return false;
    }

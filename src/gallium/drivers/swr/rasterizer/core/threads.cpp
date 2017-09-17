@@ -193,7 +193,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
             physId = std::strtoul(&line.c_str()[data_start], &c, 10);
             continue;
         }
-        if (line.length() == 0)
+        if (!line.length())
         {
             if (physId + 1 > out_nodes.size())
                 out_nodes.resize(physId + 1);
@@ -299,7 +299,7 @@ void bindThread(SWR_CONTEXT* pContext, uint32_t threadId, uint32_t procGroupId =
     CPU_SET(threadId, &cpuset);
 
     int err = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-    if (err != 0)
+    if (err)
     {
         fprintf(stderr, "pthread_setaffinity_np failure for tid %u: %s\n", threadId, strerror(err));
     }

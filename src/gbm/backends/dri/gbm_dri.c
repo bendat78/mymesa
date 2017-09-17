@@ -652,7 +652,7 @@ gbm_dri_get_format_modifier_plane_count(struct gbm_device *gbm,
       return -1;
 
    format = gbm_format_canonicalize(format);
-   if (gbm_format_to_dri_format(format) == 0)
+   if (!gbm_format_to_dri_format(format))
       return -1;
 
    if (!dri->image->queryDmaBufFormatModifierAttribs(
