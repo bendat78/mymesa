@@ -40,7 +40,7 @@ echo "17.3.0-dev-ben-$(date)" > VERSION
 --enable-xa \
 --enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-6.0 \
 --enable-vdpau \
---enable-omx \
+--enable-omx-bellagio \
 --enable-va \
 --enable-xvmc \
 --enable-opencl \
