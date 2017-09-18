@@ -45,6 +45,7 @@ class Extension:
             self.enable = enable;
 
 EXTENSIONS = [
+    Extension('VK_KHR_bind_memory2',                      1, True),
     Extension('VK_KHR_dedicated_allocation',              1, True),
     Extension('VK_KHR_descriptor_update_template',        1, True),
     Extension('VK_KHR_external_fence',                    1,
@@ -61,6 +62,7 @@ EXTENSIONS = [
     Extension('VK_KHR_get_memory_requirements2',          1, True),
     Extension('VK_KHR_get_physical_device_properties2',   1, True),
     Extension('VK_KHR_get_surface_capabilities2',         1, True),
+    Extension('VK_KHR_image_format_list',                 1, True),
     Extension('VK_KHR_incremental_present',               1, True),
     Extension('VK_KHR_maintenance1',                      1, True),
     Extension('VK_KHR_push_descriptor',                   1, True),
