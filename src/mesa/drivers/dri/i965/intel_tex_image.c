@@ -438,6 +438,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    }
 
    intel_miptree_prepare_external(brw, rb->mt);
+
    _mesa_lock_texture(&brw->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, 0);
    intel_set_texture_image_mt(brw, texImage, internal_format, rb->mt);
