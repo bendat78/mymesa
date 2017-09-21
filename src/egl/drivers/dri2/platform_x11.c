@@ -232,7 +232,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
       _eglError(EGL_BAD_ALLOC, "dri2_create_surface");
       return NULL;
    }
-   
+
    if (!dri2_init_surface(&dri2_surf->base, disp, type, conf, attrib_list, false))
       goto cleanup_surf;
 
