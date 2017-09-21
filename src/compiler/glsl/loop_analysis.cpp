@@ -101,7 +101,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       new(mem_ctx) ir_expression(ir_binop_div, sub->type, sub, increment);
 
    ir_constant *iter = div->constant_expression_value(mem_ctx);
-   if (iter == NULL) {
+   if (!iter) {
       ralloc_free(mem_ctx);
       return -1;
    }
