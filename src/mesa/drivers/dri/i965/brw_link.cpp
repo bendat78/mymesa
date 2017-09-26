@@ -272,7 +272,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
     if (first != last) {
        int next = last;
        for (int i = next - 1; i >= 0; i--) {
-          if (shProg->_LinkedShaders[i] == NULL)
+          if (!shProg->_LinkedShaders[i])
              continue;
 
             nir_shader *producer = shProg->_LinkedShaders[i]->Program->nir;

@@ -957,7 +957,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
         //  false - value of vInstanceStride has been initialialized to zero
         vOffsets = ADD(vOffsets, vInstanceStride);
 
-        // Packing and component control 
+        // Packing and component control
         ComponentEnable compMask = (ComponentEnable)ied.ComponentPacking;
         const ComponentControl compCtrl[4] { (ComponentControl)ied.ComponentControl0, (ComponentControl)ied.ComponentControl1,
                                              (ComponentControl)ied.ComponentControl2, (ComponentControl)ied.ComponentControl3};
