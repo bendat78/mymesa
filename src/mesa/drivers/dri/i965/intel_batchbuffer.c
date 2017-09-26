@@ -778,7 +778,7 @@ execbuffer(int fd,
 }
 
 static int
-do_flush_locked(struct brw_context *brw, int in_fence_fd, int *out_fence_fd)
+submit_batch(struct brw_context *brw, int in_fence_fd, int *out_fence_fd)
 {
    const struct gen_device_info *devinfo = &brw->screen->devinfo;
    __DRIscreen *dri_screen = brw->screen->driScrnPriv;
@@ -866,7 +866,8 @@ do_flush_locked(struct brw_context *brw, int in_fence_fd, int *out_fence_fd)
       brw_check_for_reset(brw);
 
    if (ret) {
-      fprintf(stderr, "intel_do_flush_locked failed: %s\n", strerror(-ret));
+      fprintf(stderr, "i965: Failed to submit batchbuffer: %s\n",
+              strerror(-ret));
       exit(1);
    }
 
@@ -915,7 +916,7 @@ _intel_batchbuffer_flush_fence(struct brw_context *brw,
               brw->batch.state_relocs.reloc_count);
    }
 
-   ret = do_flush_locked(brw, in_fence_fd, out_fence_fd);
+   ret = submit_batch(brw, in_fence_fd, out_fence_fd);
 
    if (unlikely(INTEL_DEBUG & DEBUG_SYNC)) {
       fprintf(stderr, "waiting for idle\n");
