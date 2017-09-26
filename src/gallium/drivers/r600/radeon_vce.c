@@ -288,7 +288,7 @@ static void rvce_begin_frame(struct pipe_video_codec *encoder,
 	else if (pic->picture_type == PIPE_H264_ENC_PICTURE_TYPE_P ||
 	         pic->picture_type == PIPE_H264_ENC_PICTURE_TYPE_B)
 		sort_cpb(enc);
-	
+
 	if (!enc->stream_handle) {
 		struct rvid_buffer fb;
 		enc->stream_handle = rvid_alloc_stream_handle();

@@ -1941,7 +1941,7 @@ void r600_query_fix_enabled_rb_mask(struct r600_common_screen *rscreen)
 			mask |= (1<<i);
 			backend_map >>= item_width;
 		}
-		if (mask != 0) {
+		if (mask) {
 			rscreen->info.enabled_rb_mask = mask;
 			return;
 		}

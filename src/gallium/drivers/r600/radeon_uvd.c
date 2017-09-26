@@ -612,7 +612,7 @@ static struct ruvd_h265 get_h265_msg(struct ruvd_decoder *dec, struct pipe_video
 	result.sps_info_flags |= pic->pps->sps->separate_colour_plane_flag << 8;
 	if (((struct r600_common_screen*)dec->screen)->family == CHIP_CARRIZO)
 		result.sps_info_flags |= 1 << 9;
-	if (pic->UseRefPicList == true)
+	if (pic->UseRefPicList)
 		result.sps_info_flags |= 1 << 10;
 
 	result.chroma_format = pic->pps->sps->chroma_format_idc;
@@ -965,7 +965,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	size++;
 
 	for (i = 0; i < 4; ++i) {
-		if (pic->quantization_table.load_quantiser_table[i] == 0)
+		if (!pic->quantization_table.load_quantiser_table[i])
 			continue;
 
 		buf[size++] = i;
@@ -986,7 +986,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	size++;
 
 	for (i = 0; i < 2; ++i) {
-		if (pic->huffman_table.load_huffman_table[i] == 0)
+		if (!pic->huffman_table.load_huffman_table[i])
 			continue;
 
 		buf[size++] = 0x00 | i;
@@ -997,7 +997,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	}
 
 	for (i = 0; i < 2; ++i) {
-		if (pic->huffman_table.load_huffman_table[i] == 0)
+		if (!pic->huffman_table.load_huffman_table[i])
 			continue;
 
 		buf[size++] = 0x10 | i;
@@ -1265,7 +1265,7 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder,
 
 	case PIPE_VIDEO_FORMAT_HEVC:
 		dec->msg->body.decode.codec.h265 = get_h265_msg(dec, target, (struct pipe_h265_picture_desc*)picture);
-		if (dec->ctx.res == NULL) {
+		if (!dec->ctx.res) {
 			unsigned ctx_size;
 			if (dec->base.profile == PIPE_VIDEO_PROFILE_HEVC_MAIN_10)
 				ctx_size = calc_ctx_size_h265_main10(dec, (struct pipe_h265_picture_desc*)picture);

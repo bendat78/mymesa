@@ -725,7 +725,7 @@ struct SWR_GS_STATE
 
     // Maximum number of verts that can be emitted by a single instance of the GS
     uint32_t maxNumVerts;
-    
+
     // Instance count
     uint32_t instanceCount;
 
