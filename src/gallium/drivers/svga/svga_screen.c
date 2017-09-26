@@ -502,12 +502,12 @@ vgpu9_get_shader_param(struct pipe_screen *screen,
          val = get_uint_cap(sws, SVGA3D_DEVCAP_MAX_FRAGMENT_SHADER_TEMPS, 32);
          return MIN2(val, SVGA3D_TEMPREG_MAX);
       case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
-	 /*
-	  * Although PS 3.0 has some addressing abilities it can only represent
-	  * loops that can be statically determined and unrolled. Given we can
-	  * only handle a subset of the cases that the state tracker already
-	  * does it is better to defer loop unrolling to the state tracker.
-	  */
+         /*
+          * Although PS 3.0 has some addressing abilities it can only represent
+          * loops that can be statically determined and unrolled. Given we can
+          * only handle a subset of the cases that the state tracker already
+          * does it is better to defer loop unrolling to the state tracker.
+          */
          return 0;
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
          return 0;
@@ -690,7 +690,7 @@ vgpu10_get_shader_param(struct pipe_screen *screen,
    case PIPE_SHADER_CAP_PREFERRED_IR:
       return PIPE_SHADER_IR_TGSI;
    case PIPE_SHADER_CAP_SUPPORTED_IRS:
-         return 0;
+      return 0;
    case PIPE_SHADER_CAP_TGSI_DROUND_SUPPORTED:
    case PIPE_SHADER_CAP_TGSI_DFRACEXP_DLDEXP_SUPPORTED:
    case PIPE_SHADER_CAP_TGSI_FMA_SUPPORTED:
@@ -1209,11 +1209,13 @@ error1:
    return NULL;
 }
 
+
 struct svga_winsys_screen *
 svga_winsys_screen(struct pipe_screen *screen)
 {
    return svga_screen(screen)->sws;
 }
+
 
 #ifdef DEBUG
 struct svga_screen *
