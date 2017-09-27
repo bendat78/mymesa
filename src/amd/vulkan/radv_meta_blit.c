@@ -1210,8 +1210,7 @@ VkResult
 radv_device_init_meta_blit_state(struct radv_device *device)
 {
 	VkResult result;
-	struct radv_shader_module vs = {};
-	zero(device->meta_state.blit);
+	struct radv_shader_module vs = {0};
 
 	VkDescriptorSetLayoutCreateInfo ds_layout_info = {
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
