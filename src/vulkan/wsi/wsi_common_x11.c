@@ -130,6 +130,8 @@ wsi_x11_connection_create(const VkAllocationCallbacks *alloc,
 {
    xcb_query_extension_cookie_t dri3_cookie, pres_cookie, amd_cookie, nv_cookie;
    xcb_query_extension_reply_t *dri3_reply, *pres_reply, *amd_reply, *nv_reply;
+   bool has_dri3_v1_2 = false;
+   bool has_present_v1_2 = false;
 
    struct wsi_x11_connection *wsi_conn =
       vk_alloc(alloc, sizeof(*wsi_conn), 8,
@@ -138,7 +140,7 @@ wsi_x11_connection_create(const VkAllocationCallbacks *alloc,
       return NULL;
 
    dri3_cookie = xcb_query_extension(conn, 4, "DRI3");
-   pres_cookie = xcb_query_extension(conn, 7, "PRESENT");
+   pres_cookie = xcb_query_extension(conn, 7, "Present");
 
    /* We try to be nice to users and emit a warning if they try to use a
     * Vulkan application on a system without DRI3 enabled.  However, this ends
@@ -172,12 +174,24 @@ wsi_x11_connection_create(const VkAllocationCallbacks *alloc,
 
       ver_cookie = xcb_dri3_query_version(conn, 1, 2);
       ver_reply = xcb_dri3_query_version_reply(conn, ver_cookie, NULL);
-      wsi_conn->has_dri3_modifiers =
+      has_dri3_v1_2 =
          (ver_reply->major_version > 1 || ver_reply->minor_version >= 2);
       free(ver_reply);
    }
 
    wsi_conn->has_present = pres_reply->present != 0;
+   if (wsi_conn->has_present) {
+      xcb_present_query_version_cookie_t ver_cookie;
+      xcb_present_query_version_reply_t *ver_reply;
+
+      ver_cookie = xcb_present_query_version(conn, 1, 2);
+      ver_reply = xcb_present_query_version_reply(conn, ver_cookie, NULL);
+      has_present_v1_2 =
+        (ver_reply->major_version > 1 || ver_reply->minor_version >= 2);
+      free(ver_reply);
+   }
+
+   wsi_conn->has_dri3_modifiers = has_dri3_v1_2 && has_present_v1_2;
    wsi_conn->is_proprietary_x11 = false;
    if (amd_reply && amd_reply->present)
       wsi_conn->is_proprietary_x11 = true;
@@ -649,12 +663,51 @@ struct x11_swapchain {
 
    bool                                         threaded;
    VkResult                                     status;
+   xcb_present_complete_mode_t                  last_present_mode;
    struct wsi_queue                             present_queue;
    struct wsi_queue                             acquire_queue;
    pthread_t                                    queue_manager;
 
    struct x11_image                             images[0];
 };
+
+/**
+ * Update the swapchain status with the result of an operation, and return
+ * the combined status. The chain status will eventually be returned from
+ * AcquireNextImage and QueuePresent.
+ *
+ * We make sure to 'stick' more pessimistic statuses: an out-of-date error
+ * is permanent once seen, and every subsequent call will return this. If
+ * this has not been seen, success will be returned.
+ */
+static VkResult
+x11_swapchain_result(struct x11_swapchain *chain, VkResult result)
+{
+   /* Prioritise returning existing errors for consistency. */
+   if (chain->status < 0)
+      return chain->status;
+
+   /* If we have a new error, mark it as permanent on the chain and return. */
+   if (result < 0) {
+      chain->status = result;
+      return result;
+   }
+
+   /* Return temporary errors, but don't persist them. */
+   if (result == VK_TIMEOUT || result == VK_NOT_READY)
+      return result;
+
+   /* Suboptimal isn't an error, but is a status which sticks to the swapchain
+    * and is always returned rather than success.
+    */
+   if (result == VK_SUBOPTIMAL_KHR) {
+      chain->status = result;
+      return result;
+   }
+
+   /* No changes, so return the last status. */
+   return chain->status;
+}
 
 static struct wsi_image *
 x11_get_wsi_image(struct wsi_swapchain *wsi_chain, uint32_t image_index)
@@ -697,7 +750,26 @@ x11_handle_dri3_present_event(struct x11_swapchain *chain,
       xcb_present_complete_notify_event_t *complete = (void *) event;
       if (complete->kind == XCB_PRESENT_COMPLETE_KIND_PIXMAP)
          chain->last_present_msc = complete->msc;
-      break;
+
+      VkResult result = VK_SUCCESS;
+
+      /* The winsys is now trying to flip directly and cannot due to our
+       * configuration. Request the user reallocate.
+       */
+      if (complete->mode == XCB_PRESENT_COMPLETE_MODE_SUBOPTIMAL_COPY &&
+          chain->last_present_mode != XCB_PRESENT_COMPLETE_MODE_SUBOPTIMAL_COPY)
+         result = VK_SUBOPTIMAL_KHR;
+
+      /* When we go from flipping to copying, the odds are very likely that
+       * we could reallocate in a more optimal way if we didn't have to care
+       * about scanout, so we always do this.
+       */
+      if (complete->mode == XCB_PRESENT_COMPLETE_MODE_COPY &&
+          chain->last_present_mode == XCB_PRESENT_COMPLETE_MODE_FLIP)
+         result = VK_SUBOPTIMAL_KHR;
+
+      chain->last_present_mode = complete->mode;
+      return result;
    }
 
    default:
@@ -825,6 +897,9 @@ x11_present_to_x11(struct x11_swapchain *chain, uint32_t image_index,
 
    if (chain->base.present_mode == VK_PRESENT_MODE_IMMEDIATE_KHR)
       options |= XCB_PRESENT_OPTION_ASYNC;
+
+   if (chain->has_dri3_modifiers)
+      options |= XCB_PRESENT_OPTION_SUBOPTIMAL;
 
    xshmfence_reset(image->shm_fence);
 
@@ -1217,6 +1292,18 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    chain->threaded = false;
    chain->status = VK_SUCCESS;
    chain->has_dri3_modifiers = wsi_conn->has_dri3_modifiers;
+
+   /* If we are reallocating from an old swapchain, then we inherit its
+    * last completion mode, to ensure we don't get into reallocation
+    * cycles. If we are starting anew, we set 'COPY', as that is the only
+    * mode which provokes reallocation when anything changes, to make
+    * sure we have the most optimal allocation.
+    */
+   struct x11_swapchain *old_chain = (void *) pCreateInfo->oldSwapchain;
+   if (old_chain)
+      chain->last_present_mode = old_chain->last_present_mode;
+   else
+      chain->last_present_mode = XCB_PRESENT_COMPLETE_MODE_COPY;
 
    if (!wsi_x11_check_dri3_compatible(conn, local_fd))
        chain->base.use_prime_blit = true;
