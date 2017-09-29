@@ -301,9 +301,11 @@ llvm_modules = ['bitwriter', 'engine', 'mcdisassembler', 'mcjit']
 if with_amd_vk
   llvm_modules += ['amdgpu', 'bitreader', 'ipo']
 endif
+
 dep_llvm = dependency(
-  'llvm', version : '>= 3.9.0', required : false, modules : llvm_modules,
+  'llvm', required : false, modules : llvm_modules,
 )
+
 if not dep_llvm.found()
   if with_amd_vk
     error('Radv requires llvm.')
