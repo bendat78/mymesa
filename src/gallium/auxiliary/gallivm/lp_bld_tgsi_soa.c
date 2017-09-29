@@ -1751,7 +1751,7 @@ emit_store_chan(
    struct lp_build_context *float_bld = &bld_base->base;
    struct lp_build_context *int_bld = &bld_base->int_bld;
    LLVMValueRef indirect_index = NULL;
-   enum tgsi_opcode_type dtype = tgsi_opcode_infer_dst_type(inst->Instruction.Opcode);
+   enum tgsi_opcode_type dtype = tgsi_opcode_infer_dst_type(inst->Instruction.Opcode, index);
 
    /*
     * Apply saturation.
@@ -1913,19 +1913,18 @@ emit_store(
    struct lp_build_tgsi_context * bld_base,
    const struct tgsi_full_instruction * inst,
    const struct tgsi_opcode_info * info,
+   unsigned index,
    LLVMValueRef dst[4])
 
 {
-   unsigned chan_index;
-   enum tgsi_opcode_type dtype = tgsi_opcode_infer_dst_type(inst->Instruction.Opcode);
+   enum tgsi_opcode_type dtype = tgsi_opcode_infer_dst_type(inst->Instruction.Opcode, index);
 
-   if(info->num_dst) {
-      TGSI_FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-
-         if (tgsi_type_is_64bit(dtype) && (chan_index == 1 || chan_index == 3))
-             continue;
-         emit_store_chan(bld_base, inst, 0, chan_index, dst[chan_index]);
-      }
+   unsigned writemask = inst->Dst[index].Register.WriteMask;
+   while (writemask) {
+      unsigned chan_index = u_bit_scan(&writemask);
+      if (tgsi_type_is_64bit(dtype) && (chan_index == 1 || chan_index == 3))
+          continue;
+      emit_store_chan(bld_base, inst, index, chan_index, dst[chan_index]);
    }
 }
 

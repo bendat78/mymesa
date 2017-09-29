@@ -1454,6 +1454,17 @@ micro_pow(
 }
 
 static void
+micro_ldexp(union tgsi_exec_channel *dst,
+            const union tgsi_exec_channel *src0,
+            const union tgsi_exec_channel *src1)
+{
+   dst->f[0] = ldexpf(src0->f[0], src1->i[0]);
+   dst->f[1] = ldexpf(src0->f[1], src1->i[1]);
+   dst->f[2] = ldexpf(src0->f[2], src1->i[2]);
+   dst->f[3] = ldexpf(src0->f[3], src1->i[3]);
+}
+
+static void
 micro_sub(union tgsi_exec_channel *dst,
           const union tgsi_exec_channel *src0,
           const union tgsi_exec_channel *src1)
@@ -3688,17 +3699,15 @@ exec_dfracexp(struct tgsi_exec_machine *mach,
    union tgsi_double_channel dst;
    union tgsi_exec_channel dst_exp;
 
-   if (((inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_XY) == TGSI_WRITEMASK_XY)) {
-      fetch_double_channel(mach, &src, &inst->Src[0], TGSI_CHAN_X, TGSI_CHAN_Y);
-      micro_dfracexp(&dst, &dst_exp, &src);
+   fetch_double_channel(mach, &src, &inst->Src[0], TGSI_CHAN_X, TGSI_CHAN_Y);
+   micro_dfracexp(&dst, &dst_exp, &src);
+   if ((inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_XY) == TGSI_WRITEMASK_XY)
       store_double_channel(mach, &dst, &inst->Dst[0], inst, TGSI_CHAN_X, TGSI_CHAN_Y);
-      store_dest(mach, &dst_exp, &inst->Dst[1], inst, ffs(inst->Dst[1].Register.WriteMask) - 1, TGSI_EXEC_DATA_INT);
-   }
-   if (((inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_ZW) == TGSI_WRITEMASK_ZW)) {
-      fetch_double_channel(mach, &src, &inst->Src[0], TGSI_CHAN_Z, TGSI_CHAN_W);
-      micro_dfracexp(&dst, &dst_exp, &src);
+   if ((inst->Dst[0].Register.WriteMask & TGSI_WRITEMASK_ZW) == TGSI_WRITEMASK_ZW)
       store_double_channel(mach, &dst, &inst->Dst[0], inst, TGSI_CHAN_Z, TGSI_CHAN_W);
-      store_dest(mach, &dst_exp, &inst->Dst[1], inst, ffs(inst->Dst[1].Register.WriteMask) - 1, TGSI_EXEC_DATA_INT);
+   for (unsigned chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+      if (inst->Dst[1].Register.WriteMask & (1 << chan))
+         store_dest(mach, &dst_exp, &inst->Dst[1], inst, chan, TGSI_EXEC_DATA_INT);
    }
 }
 
@@ -5082,6 +5091,10 @@ exec_instruction(
 
    case TGSI_OPCODE_POW:
       exec_scalar_binary(mach, inst, micro_pow, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
+      break;
+
+   case TGSI_OPCODE_LDEXP:
+      exec_scalar_binary(mach, inst, micro_ldexp, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_INT);
       break;
 
    case TGSI_OPCODE_COS:
