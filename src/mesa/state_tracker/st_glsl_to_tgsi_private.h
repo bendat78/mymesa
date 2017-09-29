@@ -46,6 +46,8 @@ public:
    st_src_reg(gl_register_file file, int index, enum glsl_base_type type, int index2D);
 
    st_src_reg();
+   st_src_reg(const st_src_reg &reg);
+   void operator=(const st_src_reg &reg);
 
    explicit st_src_reg(st_dst_reg reg);
 
@@ -80,6 +82,8 @@ public:
    st_dst_reg(gl_register_file file, int writemask, enum glsl_base_type type);
 
    st_dst_reg();
+   st_dst_reg(const st_dst_reg &reg);
+   void operator=(const st_dst_reg &reg);
 
    explicit st_dst_reg(st_src_reg reg);
 
