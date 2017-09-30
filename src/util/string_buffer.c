@@ -36,7 +36,7 @@ ensure_capacity(struct _mesa_string_buffer *str, uint32_t needed_capacity)
       new_capacity *= 2;
 
    str->buf = reralloc_array_size(str, str->buf, sizeof(char), new_capacity);
-   if (str->buf == NULL)
+   if (!str->buf)
       return false;
 
    str->capacity = new_capacity;
@@ -49,7 +49,7 @@ _mesa_string_buffer_create(void *mem_ctx, uint32_t initial_capacity)
    struct _mesa_string_buffer *str;
    str = ralloc(mem_ctx, struct _mesa_string_buffer);
 
-   if (str == NULL)
+   if (!str)
       return NULL;
 
    /* If no initial capacity is set then set it to something */

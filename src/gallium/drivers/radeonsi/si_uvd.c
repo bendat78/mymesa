@@ -64,20 +64,28 @@ struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 	template.width = align(tmpl->width, VL_MACROBLOCK_WIDTH);
 	template.height = align(tmpl->height / array_size, VL_MACROBLOCK_HEIGHT);
 
+	/* TODO: get tiling working */
+
+	assert(resource_formats[0] != PIPE_FORMAT_NONE);
+
 	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
 		if (resource_formats[i] != PIPE_FORMAT_NONE) {
 			vl_video_buffer_template(&templ, &template,
 			                         resource_formats[i], 1,
 			                         array_size, PIPE_USAGE_DEFAULT, i);
+			/* Set PIPE_BIND_SHARED to avoid reallocation in r600_texture_get_handle,
+			 * which can't handle joined surfaces. */
 			templ.bind = PIPE_BIND_LINEAR | PIPE_BIND_SHARED;
-			resources[i] = (struct r600_texture *) 
+			resources[i] = (struct r600_texture *)
 			                pipe->screen->resource_create(pipe->screen, &templ);
-			if (!resources[i]) goto error;
+			if (!resources[i])
+				goto error;
 		}
 	}
 
 	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
-		if (!resources[i]) continue;
+		if (!resources[i])
+			continue;
 
 		surfaces[i] = & resources[i]->surface;
 		pbs[i] = &resources[i]->resource.buf;
@@ -86,7 +94,8 @@ struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 	si_vid_join_surfaces(&ctx->b, pbs, surfaces);
 
 	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
-		if (!resources[i]) continue;
+		if (!resources[i])
+			continue;
 
 		/* reset the address */
 		resources[i]->resource.gpu_address = ctx->b.ws->buffer_get_virtual_address(
