@@ -1067,6 +1067,8 @@ ac_build_ddxy(struct ac_llvm_context *ctx,
 			masks[0] = 0x80a0;
 			masks[1] = 0x80f5;
 			break;
+		default:
+			assert(0);
 		}
 
 		args[0] = val;
