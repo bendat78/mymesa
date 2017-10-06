@@ -908,16 +908,15 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 		 * corruption in ARK: Survival Evolved, but that may just be
 		 * a coincidence and the root cause is elsewhere.
 		 *
-		 * The corruption can be fixed by putting the DB metadata flush
-		 * before or after the depth clear. (suprisingly)
+		 * The corruption can be fixed by putting the DB flush before
+		 * or after the depth clear. (suprisingly)
 		 *
 		 * https://bugs.freedesktop.org/show_bug.cgi?id=102955 (apitrace)
 		 *
-		 * This hack decreases back-to-back ClearDepth performance.
+		 * This hack massively decreases back-to-back ClearDepth performance.
 		 */
-		if (sctx->screen->clear_db_meta_before_clear)
-			sctx->b.flags |= SI_CONTEXT_FLUSH_AND_INV_DB_META |
-					 SI_CONTEXT_PS_PARTIAL_FLUSH;
+		if (sctx->screen->clear_db_cache_before_clear)
+			sctx->b.flags |= DB_META | PS_PARTIAL_FLUSH;
 	}
 
 	si_blitter_begin(ctx, SI_CLEAR);
