@@ -147,10 +147,6 @@ swr_is_format_supported(struct pipe_screen *_screen,
       return FALSE;
    }
 
-   if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
-      return util_format_s3tc_enabled;
-   }
-
    return TRUE;
 }
 
@@ -346,6 +342,7 @@ swr_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_QUERY_SO_OVERFLOW:
    case PIPE_CAP_MEMOBJ:
    case PIPE_CAP_LOAD_CONSTBUF:
+   case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
       return 0;
 
    case PIPE_CAP_VENDOR_ID:
@@ -1145,8 +1142,6 @@ swr_create_screen_internal(struct sw_winsys *winsys)
    screen->hJitMgr = JitCreateContext(KNOB_SIMD_WIDTH, "", "swr");
 
    swr_fence_init(&screen->base);
-
-   util_format_s3tc_init();
 
    swr_validate_env_options(screen);
 

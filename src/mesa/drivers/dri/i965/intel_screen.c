@@ -61,8 +61,6 @@ DRI_CONF_BEGIN
    DRI_CONF_SECTION_END
 
    DRI_CONF_SECTION_QUALITY
-      DRI_CONF_FORCE_S3TC_ENABLE("false")
-
       DRI_CONF_PRECISE_TRIG("false")
 
       DRI_CONF_OPT_BEGIN(clamp_max_samples, int, -1)
@@ -2197,8 +2195,11 @@ parse_devid_override(const char *devid_override)
       { "hsw", 0x0d2e },
       { "byt", 0x0f33 },
       { "bdw", 0x162e },
+      { "chv", 0x22B3 },
       { "skl", 0x1912 },
+      { "bxt", 0x5A85 },
       { "kbl", 0x5912 },
+      { "glk", 0x3185 },
       { "cnl", 0x5a52 },
    };
 

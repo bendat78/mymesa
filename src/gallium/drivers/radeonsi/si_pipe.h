@@ -81,6 +81,7 @@
 #define SI_PREFETCH_PS			(1 << 6)
 
 #define SI_MAX_BORDER_COLORS	4096
+#define SI_MAX_VIEWPORTS        16
 #define SIX_BITS		0x3F
 
 struct si_compute;
@@ -97,7 +98,7 @@ struct si_screen {
 	bool				has_out_of_order_rast;
 	bool				assume_no_z_fights;
 	bool				commutative_blend_add;
-	bool				clear_db_cache_before_clear;
+	bool				clear_db_meta_before_clear;
 	bool				has_msaa_sample_loc_bug;
 	bool				dpbb_allowed;
 	bool				dfsm_allowed;
@@ -181,13 +182,17 @@ struct si_cs_shader_state {
 	bool				uses_scratch;
 };
 
-struct si_textures_info {
-	struct si_sampler_views		views;
+struct si_samplers {
+	struct pipe_sampler_view	*views[SI_NUM_SAMPLERS];
+	struct si_sampler_state		*sampler_states[SI_NUM_SAMPLERS];
+
+	/* The i-th bit is set if that element is enabled (non-NULL resource). */
+	unsigned			enabled_mask;
 	uint32_t			needs_depth_decompress_mask;
 	uint32_t			needs_color_decompress_mask;
 };
 
-struct si_images_info {
+struct si_images {
 	struct pipe_image_view		views[SI_NUM_IMAGES];
 	uint32_t			needs_color_decompress_mask;
 	unsigned			enabled_mask;
@@ -211,6 +216,27 @@ struct si_framebuffer {
 	bool				any_dst_linear;
 	bool				CB_has_shader_readable_metadata;
 	bool				DB_has_shader_readable_metadata;
+};
+
+struct si_signed_scissor {
+	int minx;
+	int miny;
+	int maxx;
+	int maxy;
+};
+
+struct si_scissors {
+	struct r600_atom		atom;
+	unsigned			dirty_mask;
+	struct pipe_scissor_state	states[SI_MAX_VIEWPORTS];
+};
+
+struct si_viewports {
+	struct r600_atom		atom;
+	unsigned			dirty_mask;
+	unsigned			depth_range_dirty_mask;
+	struct pipe_viewport_state	states[SI_MAX_VIEWPORTS];
+	struct si_signed_scissor	as_scissor[SI_MAX_VIEWPORTS];
 };
 
 struct si_clip_state {
@@ -327,6 +353,8 @@ struct si_context {
 	struct si_shader_data		shader_pointers;
 	struct si_stencil_ref		stencil_ref;
 	struct r600_atom		spi_map;
+	struct si_scissors		scissors;
+	struct si_viewports		viewports;
 
 	/* Precomputed states. */
 	struct si_pm4_state		*init_config;
@@ -356,8 +384,8 @@ struct si_context {
 	unsigned			shader_needs_decompress_mask;
 	struct si_buffer_resources	rw_buffers;
 	struct si_buffer_resources	const_and_shader_buffers[SI_NUM_SHADERS];
-	struct si_textures_info		samplers[SI_NUM_SHADERS];
-	struct si_images_info		images[SI_NUM_SHADERS];
+	struct si_samplers		samplers[SI_NUM_SHADERS];
+	struct si_images		images[SI_NUM_SHADERS];
 
 	/* other shader resources */
 	struct pipe_constant_buffer	null_const_buf; /* used for set_constant_buffer(NULL) on CIK */
@@ -438,6 +466,9 @@ struct si_context {
 	/* Other state */
 	bool need_check_render_feedback;
 	bool			decompression_enabled;
+
+	bool			vs_writes_viewport_index;
+	bool			vs_disables_clipping_viewport;
 
 	/* Precomputed IA_MULTI_VGT_PARAM */
 	union si_vgt_param_key  ia_multi_vgt_param_key;
@@ -537,6 +568,11 @@ struct pipe_video_codec *si_uvd_create_decoder(struct pipe_context *context,
 
 struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 						 const struct pipe_video_buffer *tmpl);
+
+/* si_viewport.c */
+void si_update_vs_writes_viewport_index(struct si_context *ctx);
+void si_init_viewport_functions(struct si_context *ctx);
+
 
 /*
  * common helpers

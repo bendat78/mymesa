@@ -317,6 +317,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_QUERY_SO_OVERFLOW:
    case PIPE_CAP_MEMOBJ:
    case PIPE_CAP_LOAD_CONSTBUF:
+   case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
       return 0;
 
    case PIPE_CAP_MAX_VIEWPORTS:
@@ -627,8 +628,6 @@ i915_screen_create(struct i915_winsys *iws)
    i915_init_screen_resource_functions(is);
 
    i915_debug_init(is);
-
-   util_format_s3tc_init();
 
    return &is->base;
 }

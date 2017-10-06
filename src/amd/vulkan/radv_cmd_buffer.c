@@ -78,7 +78,7 @@ const struct radv_dynamic_state default_dynamic_state = {
 	},
 };
 
-void
+static void
 radv_dynamic_state_copy(struct radv_dynamic_state *dest,
 			const struct radv_dynamic_state *src,
 			uint32_t copy_mask)
@@ -2454,14 +2454,20 @@ void radv_CmdBindPipeline(
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	RADV_FROM_HANDLE(radv_pipeline, pipeline, _pipeline);
 
-	radv_mark_descriptor_sets_dirty(cmd_buffer);
-
 	switch (pipelineBindPoint) {
 	case VK_PIPELINE_BIND_POINT_COMPUTE:
+		if (cmd_buffer->state.compute_pipeline == pipeline)
+			return;
+		radv_mark_descriptor_sets_dirty(cmd_buffer);
+
 		cmd_buffer->state.compute_pipeline = pipeline;
 		cmd_buffer->push_constant_stages |= VK_SHADER_STAGE_COMPUTE_BIT;
 		break;
 	case VK_PIPELINE_BIND_POINT_GRAPHICS:
+		if (cmd_buffer->state.pipeline == pipeline)
+			return;
+		radv_mark_descriptor_sets_dirty(cmd_buffer);
+
 		cmd_buffer->state.pipeline = pipeline;
 		if (!pipeline)
 			break;
@@ -3445,8 +3451,7 @@ static void radv_handle_cmask_image_transition(struct radv_cmd_buffer *cmd_buffe
 					       VkImageLayout dst_layout,
 					       unsigned src_queue_mask,
 					       unsigned dst_queue_mask,
-					       const VkImageSubresourceRange *range,
-					       VkImageAspectFlags pending_clears)
+					       const VkImageSubresourceRange *range)
 {
 	if (src_layout == VK_IMAGE_LAYOUT_UNDEFINED) {
 		if (image->fmask.size)
@@ -3482,8 +3487,7 @@ static void radv_handle_dcc_image_transition(struct radv_cmd_buffer *cmd_buffer,
 					     VkImageLayout dst_layout,
 					     unsigned src_queue_mask,
 					     unsigned dst_queue_mask,
-					     const VkImageSubresourceRange *range,
-					     VkImageAspectFlags pending_clears)
+					     const VkImageSubresourceRange *range)
 {
 	if (src_layout == VK_IMAGE_LAYOUT_UNDEFINED) {
 		radv_initialize_dcc(cmd_buffer, image, 0x20202020u);
@@ -3531,14 +3535,12 @@ static void radv_handle_image_transition(struct radv_cmd_buffer *cmd_buffer,
 	if (image->cmask.size)
 		radv_handle_cmask_image_transition(cmd_buffer, image, src_layout,
 						   dst_layout, src_queue_mask,
-						   dst_queue_mask, range,
-						   pending_clears);
+						   dst_queue_mask, range);
 
 	if (image->surface.dcc_size)
 		radv_handle_dcc_image_transition(cmd_buffer, image, src_layout,
 						 dst_layout, src_queue_mask,
-						 dst_queue_mask, range,
-						 pending_clears);
+						 dst_queue_mask, range);
 }
 
 void radv_CmdPipelineBarrier(

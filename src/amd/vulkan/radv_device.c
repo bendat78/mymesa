@@ -178,6 +178,10 @@ static const VkExtensionProperties common_device_extensions[] = {
 		.extensionName = VK_KHR_BIND_MEMORY_2_EXTENSION_NAME,
 		.specVersion = 1,
 	},
+	{
+		.extensionName = VK_KHR_MAINTENANCE2_EXTENSION_NAME,
+		.specVersion = 1,
+	},
 };
 
 static const VkExtensionProperties rasterization_order_extension[] ={
@@ -864,6 +868,12 @@ void radv_GetPhysicalDeviceProperties2KHR(
 			VkPhysicalDeviceMultiviewPropertiesKHX *properties = (VkPhysicalDeviceMultiviewPropertiesKHX*)ext;
 			properties->maxMultiviewViewCount = MAX_VIEWS;
 			properties->maxMultiviewInstanceIndex = INT_MAX;
+			break;
+		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES_KHR: {
+			VkPhysicalDevicePointClippingPropertiesKHR *properties =
+			    (VkPhysicalDevicePointClippingPropertiesKHR*)ext;
+			properties->pointClippingBehavior = VK_POINT_CLIPPING_BEHAVIOR_ALL_CLIP_PLANES_KHR;
 			break;
 		}
 		default:
@@ -3140,7 +3150,7 @@ radv_initialise_color_surface(struct radv_device *device,
 	    !(device->debug_flags & RADV_DEBUG_NO_FAST_CLEARS))
 		cb->cb_color_info |= S_028C70_FAST_CLEAR(1);
 
-	if (iview->image->surface.dcc_size && iview->base_mip < surf->num_dcc_levels)
+	if (radv_vi_dcc_enabled(iview->image, iview->base_mip))
 		cb->cb_color_info |= S_028C70_DCC_ENABLE(1);
 
 	if (device->physical_device->rad_info.chip_class >= VI) {
@@ -3245,9 +3255,20 @@ radv_initialise_ds_surface(struct radv_device *device,
 		ds->db_depth_size = S_02801C_X_MAX(iview->image->info.width - 1) |
 			S_02801C_Y_MAX(iview->image->info.height - 1);
 
-		/* Only use HTILE for the first level. */
-		if (iview->image->surface.htile_size && !level) {
+		if (radv_htile_enabled(iview->image, level)) {
 			ds->db_z_info |= S_028038_TILE_SURFACE_ENABLE(1);
+
+			if (iview->image->tc_compatible_htile) {
+				unsigned max_zplanes = 4;
+
+				if (iview->vk_format == VK_FORMAT_D16_UNORM  &&
+				    iview->image->info.samples > 1)
+					max_zplanes = 2;
+
+				ds->db_z_info |= S_028038_DECOMPRESS_ON_N_ZPLANES(max_zplanes + 1) |
+					  S_028038_ITERATE_FLUSH(1);
+				ds->db_stencil_info |= S_02803C_ITERATE_FLUSH(1);
+			}
 
 			if (!iview->image->surface.has_stencil)
 				/* Use all of the htile_buffer for depth if there's no stencil. */
@@ -3268,7 +3289,7 @@ radv_initialise_ds_surface(struct radv_device *device,
 		z_offs += iview->image->surface.u.legacy.level[level].offset;
 		s_offs += iview->image->surface.u.legacy.stencil_level[level].offset;
 
-		ds->db_depth_info = S_02803C_ADDR5_SWIZZLE_MASK(1);
+		ds->db_depth_info = S_02803C_ADDR5_SWIZZLE_MASK(!iview->image->tc_compatible_htile);
 		ds->db_z_info = S_028040_FORMAT(format) | S_028040_ZRANGE_PRECISION(1);
 		ds->db_stencil_info = S_028044_FORMAT(stencil_format);
 
@@ -3309,10 +3330,11 @@ radv_initialise_ds_surface(struct radv_device *device,
 			S_028058_HEIGHT_TILE_MAX((level_info->nblk_y / 8) - 1);
 		ds->db_depth_slice = S_02805C_SLICE_TILE_MAX((level_info->nblk_x * level_info->nblk_y) / 64 - 1);
 
-		if (iview->image->surface.htile_size && !level) {
+		if (radv_htile_enabled(iview->image, level)) {
 			ds->db_z_info |= S_028040_TILE_SURFACE_ENABLE(1);
 
-			if (!iview->image->surface.has_stencil)
+			if (!iview->image->surface.has_stencil &&
+			    !iview->image->tc_compatible_htile)
 				/* Use all of the htile_buffer for depth if there's no stencil. */
 				ds->db_stencil_info |= S_028044_TILE_STENCIL_DISABLE(1);
 
@@ -3320,6 +3342,17 @@ radv_initialise_ds_surface(struct radv_device *device,
 				iview->image->htile_offset;
 			ds->db_htile_data_base = va >> 8;
 			ds->db_htile_surface = S_028ABC_FULL_CACHE(1);
+
+			if (iview->image->tc_compatible_htile) {
+				ds->db_htile_surface |= S_028ABC_TC_COMPATIBLE(1);
+
+				if (iview->image->info.samples <= 1)
+					ds->db_z_info |= S_028040_DECOMPRESS_ON_N_ZPLANES(5);
+				else if (iview->image->info.samples <= 4)
+					ds->db_z_info |= S_028040_DECOMPRESS_ON_N_ZPLANES(3);
+				else
+					ds->db_z_info|= S_028040_DECOMPRESS_ON_N_ZPLANES(2);
+			}
 		}
 	}
 

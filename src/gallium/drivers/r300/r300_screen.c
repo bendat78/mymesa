@@ -127,7 +127,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
         /* r300 cannot do swizzling of compressed textures. Supported otherwise. */
         case PIPE_CAP_TEXTURE_SWIZZLE:
-            return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;
+            return r300screen->caps.dxtc_swizzle;
 
         /* We don't support color clamping on r500, so that we can use color
          * intepolators for generic varyings. */
@@ -246,6 +246,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_QUERY_SO_OVERFLOW:
         case PIPE_CAP_MEMOBJ:
         case PIPE_CAP_LOAD_CONSTBUF:
+        case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
             return 0;
 
         /* SWTCL-only features. */
@@ -773,7 +774,6 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws,
 
     slab_create_parent(&r300screen->pool_transfers, sizeof(struct pipe_transfer), 64);
 
-    util_format_s3tc_init();
     (void) mtx_init(&r300screen->cmask_mutex, mtx_plain);
 
     return &r300screen->screen;

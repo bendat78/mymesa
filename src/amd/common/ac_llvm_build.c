@@ -252,6 +252,20 @@ void ac_build_type_name_for_intr(LLVMTypeRef type, char *buf, unsigned bufsize)
 	}
 }
 
+/**
+ * Helper function that builds an LLVM IR PHI node and immediately adds
+ * incoming edges.
+ */
+LLVMValueRef
+ac_build_phi(struct ac_llvm_context *ctx, LLVMTypeRef type,
+	     unsigned count_incoming, LLVMValueRef *values,
+	     LLVMBasicBlockRef *blocks)
+{
+	LLVMValueRef phi = LLVMBuildPhi(ctx->builder, type, "");
+	LLVMAddIncoming(phi, values, blocks, count_incoming);
+	return phi;
+}
+
 /* Prevent optimizations (at least of memory accesses) across the current
  * point in the program by emitting empty inline assembly that is marked as
  * having side effects.
@@ -746,10 +760,13 @@ ac_build_buffer_store_dword(struct ac_llvm_context *ctx,
 			    bool glc,
 			    bool slc,
 			    bool writeonly_memory,
-			    bool has_add_tid)
+			    bool swizzle_enable_hint)
 {
-	/* TODO: Fix stores with ADD_TID and remove the "has_add_tid" flag. */
-	if (!has_add_tid) {
+	/* SWIZZLE_ENABLE requires that soffset isn't folded into voffset
+	 * (voffset is swizzled, but soffset isn't swizzled).
+	 * llvm.amdgcn.buffer.store doesn't have a separate soffset parameter.
+	 */
+	if (!swizzle_enable_hint) {
 		/* Split 3 channel stores, becase LLVM doesn't support 3-channel
 		 * intrinsics. */
 		if (num_channels == 3) {
@@ -763,11 +780,11 @@ ac_build_buffer_store_dword(struct ac_llvm_context *ctx,
 
 			ac_build_buffer_store_dword(ctx, rsrc, v01, 2, voffset,
 						    soffset, inst_offset, glc, slc,
-						    writeonly_memory, has_add_tid);
+						    writeonly_memory, swizzle_enable_hint);
 			ac_build_buffer_store_dword(ctx, rsrc, v[2], 1, voffset,
 						    soffset, inst_offset + 8,
 						    glc, slc,
-						    writeonly_memory, has_add_tid);
+						    writeonly_memory, swizzle_enable_hint);
 			return;
 		}
 
@@ -1053,6 +1070,8 @@ ac_build_ddxy(struct ac_llvm_context *ctx,
 			masks[0] = 0x80a0;
 			masks[1] = 0x80f5;
 			break;
+		default:
+			assert(0);
 		}
 
 		args[0] = val;

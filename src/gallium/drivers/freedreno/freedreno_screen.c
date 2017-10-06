@@ -325,6 +325,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_QUERY_SO_OVERFLOW:
 	case PIPE_CAP_MEMOBJ:
 	case PIPE_CAP_LOAD_CONSTBUF:
+	case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
 		return 0;
 
 	case PIPE_CAP_MAX_VIEWPORTS:
@@ -883,8 +884,6 @@ fd_screen_create(struct fd_device *dev)
 	pscreen->fence_get_fd = fd_fence_get_fd;
 
 	slab_create_parent(&screen->transfer_pool, sizeof(struct fd_transfer), 16);
-
-	util_format_s3tc_init();
 
 	return pscreen;
 
