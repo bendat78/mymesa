@@ -416,7 +416,7 @@ anv_get_format_plane(const struct gen_device_info *devinfo, VkFormat vk_format,
       .isl_format = ISL_FORMAT_UNSUPPORTED,
    };
 
-   if (format == NULL)
+   if (!format)
       return plane_format;
 
    uint32_t plane = anv_image_aspect_to_plane(vk_format_aspects(vk_format), aspect);
@@ -547,7 +547,7 @@ anv_physical_device_get_format_properties(struct anv_physical_device *physical_d
 
    const struct anv_format *format = anv_get_format(vk_format);
    VkFormatFeatureFlags linear = 0, tiled = 0, buffer = 0;
-   if (format == NULL) {
+   if (!format) {
       /* Nothing to do here */
    } else if (vk_format_is_depth_or_stencil(vk_format)) {
       tiled |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -694,7 +694,7 @@ anv_get_image_format_properties(
    VkSampleCountFlags sampleCounts = VK_SAMPLE_COUNT_1_BIT;
    const struct anv_format *format = anv_get_format(info->format);
 
-   if (format == NULL)
+   if (!format)
       goto unsupported;
 
    anv_physical_device_get_format_properties(physical_device, info->format,

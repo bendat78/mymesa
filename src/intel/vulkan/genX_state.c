@@ -186,7 +186,7 @@ VkResult genX(CreateSampler)(
          ANV_FROM_HANDLE(anv_ycbcr_conversion, conversion,
                          pSamplerConversion->conversion);
 
-         if (conversion == NULL)
+         if (!conversion)
             break;
 
          sampler->n_planes = conversion->format->n_planes;

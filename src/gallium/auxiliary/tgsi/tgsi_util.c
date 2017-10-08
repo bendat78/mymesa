@@ -220,7 +220,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       break;
 
    case TGSI_OPCODE_TXQ:
-      if (src_idx == 0)
+      if (!src_idx)
          read_mask = TGSI_WRITEMASK_X;
       else
          read_mask = TGSI_WRITEMASK_XY;  /* bindless handle possible */
@@ -252,14 +252,14 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       break;
 
    case TGSI_OPCODE_DST:
-      if (src_idx == 0)
+      if (!src_idx)
          read_mask = TGSI_WRITEMASK_YZ;
       else
          read_mask = TGSI_WRITEMASK_YW;
       break;
 
    case TGSI_OPCODE_DLDEXP:
-      if (src_idx == 0) {
+      if (!src_idx) {
          read_mask = write_mask;
       } else {
          read_mask =
@@ -269,7 +269,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       break;
 
    case TGSI_OPCODE_READ_INVOC:
-      if (src_idx == 0)
+      if (!src_idx)
          read_mask = write_mask;
       else
          read_mask = TGSI_WRITEMASK_X;
@@ -349,7 +349,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    }
 
    case TGSI_OPCODE_LOAD:
-      if (src_idx == 0) {
+      if (!src_idx) {
          read_mask = TGSI_WRITEMASK_XY; /* bindless handle possible */
       } else {
          unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
@@ -358,7 +358,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       break;
 
    case TGSI_OPCODE_STORE:
-      if (src_idx == 0) {
+      if (!src_idx) {
          unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
          read_mask = u_bit_consecutive(0, dim);
       } else {
@@ -376,7 +376,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_ATOMUMAX:
    case TGSI_OPCODE_ATOMIMIN:
    case TGSI_OPCODE_ATOMIMAX:
-      if (src_idx == 0) {
+      if (!src_idx) {
          read_mask = TGSI_WRITEMASK_XY; /* bindless handle possible */
       } else if (src_idx == 1) {
          unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
@@ -389,7 +389,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_INTERP_CENTROID:
    case TGSI_OPCODE_INTERP_SAMPLE:
    case TGSI_OPCODE_INTERP_OFFSET:
-      if (src_idx == 0)
+      if (!src_idx)
          read_mask = write_mask;
       else if (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_OFFSET)
          read_mask = TGSI_WRITEMASK_XY; /* offset */

@@ -159,7 +159,7 @@ static void fetch_2d_texel_rgba_dxt5(GLint srcRowStride, const GLubyte *pixdata,
    const GLubyte code = (acodelow >> (bit_pos & 0x7) |
       (acodehigh  << (8 - (bit_pos & 0x7)))) & 0x7;
    dxt135_decode_imageblock(blksrc + 8, (i&3), (j&3), 2, texel);
-   if (code == 0)
+   if (!code)
       rgba[ACOMP] = UBYTE_TO_CHAN( alpha0 );
    else if (code == 1)
       rgba[ACOMP] = UBYTE_TO_CHAN( alpha1 );
@@ -257,7 +257,7 @@ static void fancybasecolorsearch( GLubyte *blkaddr, GLubyte srccolors[4][4][4], 
                pixerrorcolorbest[2] = pixerrorblue;
             }
          }
-         if (enc == 0) {
+         if (!enc) {
             for (z = 0; z < 3; z++) {
                blockerrlin[0][z] += 3 * pixerrorcolorbest[z];
             }
@@ -291,8 +291,8 @@ static void fancybasecolorsearch( GLubyte *blkaddr, GLubyte srccolors[4][4][4], 
          }
       }
    }
-   if (nrcolor[0] == 0) nrcolor[0] = 1;
-   if (nrcolor[1] == 0) nrcolor[1] = 1;
+   if (!nrcolor[0]) nrcolor[0] = 1;
+   if (!nrcolor[1]) nrcolor[1] = 1;
    for (j = 0; j < 2; j++) {
       for (i = 0; i < 3; i++) {
 	 GLint newvalue = testcolor[j][i] + blockerrlin[j][i] / nrcolor[j];
@@ -581,7 +581,7 @@ static void encodedxt5alpha(GLubyte *blkaddr, GLubyte srccolors[4][4][4],
    alphabase[0] = 0xff; alphabase[1] = 0x0;
    for (j = 0; j < numypixels; j++) {
       for (i = 0; i < numxpixels; i++) {
-         if (srccolors[j][i][3] == 0)
+         if (!srccolors[j][i][3])
             alphaabsmin = GL_TRUE;
          else if (srccolors[j][i][3] == 255)
             alphaabsmax = GL_TRUE;
@@ -696,7 +696,7 @@ static void encodedxt5alpha(GLubyte *blkaddr, GLubyte srccolors[4][4][4],
          for (i = 0; i < numxpixels; i++) {
              /* maybe it's overkill to have the most complicated calculation just for the error
                calculation which we only need to figure out if encoding1 or encoding2 is better... */
-            if (srccolors[j][i][3] == 0) {
+            if (!srccolors[j][i][3]) {
                alphaenc2[4*j + i] = 6;
                alphadist = 0;
             }
@@ -810,8 +810,8 @@ static void encodedxt5alpha(GLubyte *blkaddr, GLubyte srccolors[4][4][4],
             }
          }
          /* shouldn't happen often, needed to avoid div by zero */
-         if (nralphainrangelow == 0) nralphainrangelow = 1;
-         if (nralphainrangehigh == 0) nralphainrangehigh = 1;
+         if (!nralphainrangelow) nralphainrangelow = 1;
+         if (!nralphainrangehigh) nralphainrangehigh = 1;
          alphatest[0] = alphatest[0] + (blockerrlin1 / nralphainrangelow);
 /*         fprintf(stderr, "block err lin low %d, nr %d\n", blockerrlin1, nralphainrangelow);
          fprintf(stderr, "block err lin high %d, nr %d\n", blockerrlin2, nralphainrangehigh);*/
