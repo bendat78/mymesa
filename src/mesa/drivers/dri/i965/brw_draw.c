@@ -943,7 +943,7 @@ brw_draw_indirect_prims(struct gl_context *ctx,
    GLsizei i;
 
    prim = calloc(draw_count, sizeof(*prim));
-   if (prim == NULL) {
+   if (!prim) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "gl%sDraw%sIndirect%s",
                   (draw_count > 1) ? "Multi" : "",
                   ib ? "Elements" : "Arrays",

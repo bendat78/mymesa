@@ -173,7 +173,7 @@ process_assignment(void *lin_ctx, ir_assignment *ir, exec_list *assignments)
    bool progress = false;
    kill_for_derefs_visitor v(assignments);
 
-   if (ir->condition == NULL) {
+   if (!ir->condition) {
       /* If this is an assignment of the form "foo = foo;", remove the whole
        * instruction and be done with it.
        */

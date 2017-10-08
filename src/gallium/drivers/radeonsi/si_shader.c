@@ -489,7 +489,7 @@ void si_llvm_load_input_vs(
 						    LLVMIntNE, vertex_id,
 						    ctx->i32_1, "");
 
-		if (input_index == 0) {
+		if (!input_index) {
 			/* Position: */
 			LLVMValueRef x1y1 = LLVMGetParam(ctx->main_fn,
 							 ctx->param_vs_blit_inputs);

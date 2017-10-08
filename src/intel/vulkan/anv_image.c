@@ -113,7 +113,7 @@ add_surface(struct anv_image *image, struct anv_surface *surf, uint32_t plane)
    } else {
       surf->offset = align_u32(image->size, surf->isl.alignment);
       /* Determine plane's offset only once when the first surface is added. */
-      if (image->planes[plane].size == 0)
+      if (!image->planes[plane].size)
          image->planes[plane].offset = image->size;
    }
 

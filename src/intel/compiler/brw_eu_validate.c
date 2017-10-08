@@ -1140,7 +1140,7 @@ special_requirements_for_handling_double_precision_data_types(
       subreg = brw_inst_src ## n ## _da1_subreg_nr(devinfo, inst);             \
       address_mode = brw_inst_src ## n ## _address_mode(devinfo, inst)
 
-      if (i == 0) {
+      if (!i) {
          DO_SRC(0);
       } else {
          DO_SRC(1);

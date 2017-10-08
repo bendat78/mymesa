@@ -6603,7 +6603,7 @@ ast_case_statement_list::hir(exec_list *instructions,
          }
       }
 
-      if (cmp != NULL)
+      if (cmp)
          body.emit(assign(state->switch_state.run_default, logic_not(cmp)));
       else
          body.emit(assign(state->switch_state.run_default, body.constant(true)));
