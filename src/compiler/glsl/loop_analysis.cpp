@@ -472,7 +472,7 @@ loop_analysis::visit_leave(ir_loop *ir)
 
       ir_if *if_stmt = ((ir_instruction *) node)->as_if();
 
-      if (if_stmt != NULL)
+      if (if_stmt)
          try_add_loop_terminator(ls, if_stmt);
    }
 
