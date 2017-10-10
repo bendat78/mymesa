@@ -4151,6 +4151,7 @@ struct gl_extensions
    GLboolean EXT_texture_sRGB;
    GLboolean EXT_texture_sRGB_decode;
    GLboolean EXT_texture_swizzle;
+   GLboolean EXT_texture_type_2_10_10_10_REV;
    GLboolean EXT_transform_feedback;
    GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array_bgra;
@@ -4185,6 +4186,7 @@ struct gl_extensions
    GLboolean KHR_texture_compression_astc_hdr;
    GLboolean KHR_texture_compression_astc_ldr;
    GLboolean KHR_texture_compression_astc_sliced_3d;
+   GLboolean MESA_tile_raster_order;
    GLboolean MESA_pack_invert;
    GLboolean MESA_shader_framebuffer_fetch;
    GLboolean MESA_shader_framebuffer_fetch_non_coherent;
@@ -4435,6 +4437,9 @@ struct gl_driver_flags
 
    /** gl_context::RasterDiscard */
    uint64_t NewRasterizerDiscard;
+
+   /** gl_context::TileRasterOrder* */
+   uint64_t NewTileRasterOrder;
 
    /**
     * gl_context::UniformBufferBindings
@@ -4983,7 +4988,16 @@ struct gl_context
    bool _AttribZeroAliasesVertex;
 
    /**
-    * \name Hooks for module contexts.
+    * When set, TileRasterOrderIncreasingX/Y control the order that a tiled
+    * renderer's tiles should be excecuted, to meet the requirements of
+    * GL_MESA_tile_raster_order.
+    */
+   GLboolean TileRasterOrderFixed;
+   GLboolean TileRasterOrderIncreasingX;
+   GLboolean TileRasterOrderIncreasingY;
+
+   /**
+    * \name Hooks for module contexts.  
     *
     * These will eventually live in the driver or elsewhere.
     */

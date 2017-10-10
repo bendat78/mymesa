@@ -16,6 +16,10 @@ rm -f src/mapi/glapi/gen/*.pyc
 rm -f src/mesa/main/*.pyc
 rm -f src/gallium/auxiliary/util/*.pyc
 rm -f m4/libtool.m4 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4
+rm -rf *.lo
+rm -rf *.la
+rm -rf *.a
+rm -rf *.o
 
 echo "17.3.0-dev-ben-$(date)" > VERSION
 
@@ -65,7 +69,7 @@ OBJCXXFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security"
 CC=gcc \
 CXX=g++
 
-make -j4 || exit 125
+make -j16 || exit 125
 
 sudo make install
 sudo ldconfig -v
