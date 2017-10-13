@@ -3882,7 +3882,6 @@ genX(upload_ps)(struct brw_context *brw)
       else
          ps.PositionXYOffsetSelect = POSOFFSET_NONE;
 
-      ps.RenderTargetFastClearEnable = brw->wm.fast_clear_op;
       ps._8PixelDispatchEnable = prog_data->dispatch_8;
       ps._16PixelDispatchEnable = prog_data->dispatch_16;
       ps.DispatchGRFStartRegisterForConstantSetupData0 =
