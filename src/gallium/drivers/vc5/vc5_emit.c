@@ -31,7 +31,7 @@ static uint8_t
 vc5_factor(enum pipe_blendfactor factor)
 {
         /* We may get a bad blendfactor when blending is disabled. */
-        if (factor == 0)
+        if (!factor)
                 return V3D_BLEND_FACTOR_ZERO;
 
         switch (factor) {

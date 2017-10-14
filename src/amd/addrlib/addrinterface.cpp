@@ -1693,7 +1693,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2IsValidDisplaySwizzleMode(
 
     V2::Lib* pLib = V2::Lib::GetLib(hLib);
 
-    if (pLib != NULL)
+    if (pLib)
     {
         ADDR2_COMPUTE_SURFACE_INFO_INPUT in;
         in.swizzleMode = swizzleMode;

@@ -119,7 +119,7 @@ vec4_vs_visitor::emit_clip_distances(dst_reg reg, int offset)
 void
 vec4_vs_visitor::setup_uniform_clipplane_values()
 {
-   if (key->nr_userclip_plane_consts == 0)
+   if (!key->nr_userclip_plane_consts)
       return;
 
    assert(stage_prog_data->nr_params == (unsigned)this->uniforms * 4);

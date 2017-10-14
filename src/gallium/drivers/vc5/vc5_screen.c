@@ -535,13 +535,13 @@ vc5_get_device_info(struct vc5_screen *screen)
         int ret;
 
         ret = vc5_ioctl(screen->fd, DRM_IOCTL_VC5_GET_PARAM, &ident0);
-        if (ret != 0) {
+        if (ret) {
                 fprintf(stderr, "Couldn't get V3D core IDENT0: %s\n",
                         strerror(errno));
                 return false;
         }
         ret = vc5_ioctl(screen->fd, DRM_IOCTL_VC5_GET_PARAM, &ident1);
-        if (ret != 0) {
+        if (ret) {
                 fprintf(stderr, "Couldn't get V3D core IDENT1: %s\n",
                         strerror(errno));
                 return false;

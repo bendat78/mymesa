@@ -818,7 +818,7 @@ blorp_get_client_bo(struct brw_context *brw,
        */
       struct brw_bo *bo =
          brw_bo_alloc(brw->bufmgr, "tmp_tex_subimage_src", size, 64);
-      if (bo == NULL) {
+      if (!bo) {
          perf_debug("intel_texsubimage: temp bo creation failed: size = %u\n",
                     size);
          return NULL;
@@ -914,7 +914,7 @@ brw_blorp_upload_miptree(struct brw_context *brw,
                           target, format, type, pixels, packing,
                           &src_offset, &src_row_stride,
                           &src_image_stride, true);
-   if (src_bo == NULL)
+   if (!src_bo)
       return false;
 
    /* Now that source is offset to correct starting point, adjust the
@@ -1028,7 +1028,7 @@ brw_blorp_download_miptree(struct brw_context *brw,
                           target, format, type, pixels, packing,
                           &dst_offset, &dst_row_stride,
                           &dst_image_stride, false);
-   if (dst_bo == NULL)
+   if (!dst_bo)
       return false;
 
    /* Now that source is offset to correct starting point, adjust the

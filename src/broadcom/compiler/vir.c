@@ -244,13 +244,13 @@ vir_set_unpack(struct qinst *inst, int src,
         assert(src == 0 || src == 1);
 
         if (vir_is_add(inst)) {
-                if (src == 0)
+                if (!src)
                         inst->qpu.alu.add.a_unpack = unpack;
                 else
                         inst->qpu.alu.add.b_unpack = unpack;
         } else {
                 assert(vir_is_mul(inst));
-                if (src == 0)
+                if (!src)
                         inst->qpu.alu.mul.a_unpack = unpack;
                 else
                         inst->qpu.alu.mul.b_unpack = unpack;

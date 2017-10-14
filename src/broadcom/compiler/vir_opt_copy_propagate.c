@@ -105,12 +105,12 @@ vir_has_unpack(struct qinst *inst, int chan)
         assert(chan == 0 || chan == 1);
 
         if (vir_is_add(inst)) {
-                if (chan == 0)
+                if (!chan)
                         return inst->qpu.alu.add.a_unpack != V3D_QPU_UNPACK_NONE;
                 else
                         return inst->qpu.alu.add.b_unpack != V3D_QPU_UNPACK_NONE;
         } else {
-                if (chan == 0)
+                if (!chan)
                         return inst->qpu.alu.mul.a_unpack != V3D_QPU_UNPACK_NONE;
                 else
                         return inst->qpu.alu.mul.b_unpack != V3D_QPU_UNPACK_NONE;

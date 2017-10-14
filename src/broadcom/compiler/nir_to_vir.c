@@ -1317,7 +1317,7 @@ ntq_emit_vpm_read(struct v3d_compile *c,
 {
         struct qreg vpm = vir_reg(QFILE_VPM, vpm_index);
 
-        if (*num_components_queued != 0) {
+        if (*num_components_queued) {
                 (*num_components_queued)--;
                 c->num_inputs++;
                 return vir_MOV(c, vpm);
