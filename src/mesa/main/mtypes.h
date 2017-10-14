@@ -4973,7 +4973,7 @@ struct gl_context
    GLboolean TileRasterOrderIncreasingY;
 
    /**
-    * \name Hooks for module contexts.  
+    * \name Hooks for module contexts.
     *
     * These will eventually live in the driver or elsewhere.
     */

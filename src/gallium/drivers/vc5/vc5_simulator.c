@@ -193,7 +193,7 @@ vc5_create_simulator_bo(int fd, int handle, unsigned size)
         /* A handle of 0 is used for vc5_gem.c internal allocations that
          * don't need to go in the lookup table.
          */
-        if (handle != 0) {
+        if (handle) {
                 mtx_lock(&sim_state.mutex);
                 _mesa_hash_table_insert(file->bo_map, int_to_key(handle),
                                         sim_bo);
@@ -513,7 +513,7 @@ vc5_simulator_map_winsys_bo(int fd, struct vc5_simulator_bo *sim_bo)
                 .handle = sim_bo->handle,
         };
         ret = drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &map_dumb);
-        if (ret != 0) {
+        if (ret) {
                 fprintf(stderr, "map ioctl failure\n");
                 abort();
         }

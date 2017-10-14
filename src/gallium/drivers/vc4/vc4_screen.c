@@ -121,7 +121,7 @@ vc4_has_feature(struct vc4_screen *screen, uint32_t feature)
         };
         int ret = vc4_ioctl(screen->fd, DRM_IOCTL_VC4_GET_PARAM, &p);
 
-        if (ret != 0)
+        if (ret)
                 return false;
 
         return p.value;

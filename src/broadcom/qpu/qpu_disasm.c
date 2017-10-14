@@ -103,7 +103,7 @@ v3d_qpu_disasm_add(struct disasm_state *disasm,
                 append(disasm, v3d_qpu_pack_name(instr->alu.add.output_pack));
         }
 
-        if (num_src >= 1) {
+        if (num_src) {
                 if (has_dst)
                         append(disasm, ", ");
                 v3d_qpu_disasm_raddr(disasm, instr, instr->alu.add.a);
@@ -145,7 +145,7 @@ v3d_qpu_disasm_mul(struct disasm_state *disasm,
                 append(disasm, v3d_qpu_pack_name(instr->alu.mul.output_pack));
         }
 
-        if (num_src >= 1) {
+        if (num_src) {
                 if (has_dst)
                         append(disasm, ", ");
                 v3d_qpu_disasm_raddr(disasm, instr, instr->alu.mul.a);

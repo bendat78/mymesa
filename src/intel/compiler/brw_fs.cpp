@@ -1938,7 +1938,7 @@ set_push_pull_constant_loc(unsigned uniform, int *chunk_start,
 static int
 get_thread_local_id_param_index(const brw_stage_prog_data *prog_data)
 {
-   if (prog_data->nr_params == 0)
+   if (!prog_data->nr_params)
       return -1;
 
    /* The local thread id is always the last parameter in the list */

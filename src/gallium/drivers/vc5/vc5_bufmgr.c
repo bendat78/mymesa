@@ -160,7 +160,7 @@ vc5_bo_alloc(struct vc5_screen *screen, uint32_t size, const char *name)
         bo->handle = create.handle;
         bo->offset = create.offset;
 
-        if (ret != 0) {
+        if (ret) {
                 if (!list_empty(&screen->bo_cache.time_list) &&
                     !cleared_and_retried) {
                         cleared_and_retried = true;
@@ -213,7 +213,7 @@ vc5_bo_free(struct vc5_bo *bo)
         memset(&c, 0, sizeof(c));
         c.handle = bo->handle;
         int ret = vc5_ioctl(screen->fd, DRM_IOCTL_GEM_CLOSE, &c);
-        if (ret != 0)
+        if (ret)
                 fprintf(stderr, "close object %d: %s\n", bo->handle, strerror(errno));
 
         screen->bo_count--;
@@ -405,7 +405,7 @@ vc5_bo_get_dmabuf(struct vc5_bo *bo)
         int fd;
         int ret = drmPrimeHandleToFD(bo->screen->fd, bo->handle,
                                      O_CLOEXEC, &fd);
-        if (ret != 0) {
+        if (ret) {
                 fprintf(stderr, "Failed to export gem bo %d to dmabuf\n",
                         bo->handle);
                 return -1;
@@ -534,7 +534,7 @@ vc5_bo_map_unsynchronized(struct vc5_bo *bo)
         map.handle = bo->handle;
         ret = vc5_ioctl(bo->screen->fd, DRM_IOCTL_VC5_MMAP_BO, &map);
         offset = map.offset;
-        if (ret != 0) {
+        if (ret) {
                 fprintf(stderr, "map ioctl failure\n");
                 abort();
         }
