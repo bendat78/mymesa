@@ -451,11 +451,12 @@ brw_aux_surface_disabled(const struct brw_context *brw,
    return false;
 }
 
-void
+static void
 brw_update_texture_surface(struct gl_context *ctx,
                            unsigned unit,
                            uint32_t *surf_offset,
                            bool for_gather,
+                           bool for_txf,
                            uint32_t plane)
 {
    struct brw_context *brw = brw_context(ctx);
@@ -501,6 +502,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 
       mesa_format mesa_fmt = plane == 0 ? intel_obj->_Format : mt->format;
       enum isl_format format = translate_tex_format(brw, mesa_fmt,
+                                                    for_txf ? GL_DECODE_EXT :
                                                     sampler->sRGBDecode);
 
       /* Implement gen6 and gen7 gather work-around */
@@ -1152,10 +1154,12 @@ update_stage_texture_surfaces(struct brw_context *brw,
 
       if (prog->SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
+         const bool used_by_txf = prog->info.textures_used_by_txf & (1 << s);
 
          /* _NEW_TEXTURE */
          if (ctx->Texture.Unit[unit]._Current) {
-            brw_update_texture_surface(ctx, unit, surf_offset + s, for_gather, plane);
+            brw_update_texture_surface(ctx, unit, surf_offset + s, for_gather,
+                                       used_by_txf, plane);
          }
       }
    }
@@ -1281,7 +1285,7 @@ brw_upload_ubo_surfaces(struct brw_context *brw, struct gl_program *prog,
       &stage_state->surf_offset[prog_data->binding_table.ubo_start];
 
    for (int i = 0; i < prog->info.num_ubos; i++) {
-      struct gl_uniform_buffer_binding *binding =
+      struct gl_buffer_binding *binding =
          &ctx->UniformBufferBindings[prog->sh.UniformBlocks[i]->Binding];
 
       if (binding->BufferObject == ctx->Shared->NullBufferObj) {
@@ -1306,7 +1310,7 @@ brw_upload_ubo_surfaces(struct brw_context *brw, struct gl_program *prog,
       &stage_state->surf_offset[prog_data->binding_table.ssbo_start];
 
    for (int i = 0; i < prog->info.num_ssbos; i++) {
-      struct gl_shader_storage_buffer_binding *binding =
+      struct gl_buffer_binding *binding =
          &ctx->ShaderStorageBufferBindings[prog->sh.ShaderStorageBlocks[i]->Binding];
 
       if (binding->BufferObject == ctx->Shared->NullBufferObj) {
@@ -1388,7 +1392,7 @@ brw_upload_abo_surfaces(struct brw_context *brw,
 
    if (prog->info.num_abos) {
       for (unsigned i = 0; i < prog->info.num_abos; i++) {
-         struct gl_atomic_buffer_binding *binding =
+         struct gl_buffer_binding *binding =
             &ctx->AtomicBufferBindings[prog->sh.AtomicBuffers[i]->Binding];
          struct intel_buffer_object *intel_bo =
             intel_buffer_object(binding->BufferObject);
@@ -1626,7 +1630,7 @@ brw_upload_image_surfaces(struct brw_context *brw,
          update_image_surface(brw, u, prog->sh.ImageAccess[i],
                               surf_idx,
                               &stage_state->surf_offset[surf_idx],
-                              &prog_data->image_param[i]);
+                              &stage_state->image_param[i]);
       }
 
       brw->ctx.NewDriverState |= BRW_NEW_SURFACES;

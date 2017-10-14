@@ -1898,7 +1898,8 @@ dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
       return EGL_NO_IMAGE_KHR;
    }
 
-   if (dri2_dpy->image->base.version >= 17) {
+   if (dri2_dpy->image->base.version >= 17 &&
+       dri2_dpy->image->createImageFromRenderbuffer2) {
       unsigned error = ~0;
 
       dri_image = dri2_dpy->image->createImageFromRenderbuffer2(
@@ -2752,17 +2753,16 @@ dri2_wl_release_buffer(void *user_data, struct wl_drm_buffer *buffer)
    dri2_dpy->image->destroyImage(buffer->driver_buffer);
 }
 
-static struct wayland_drm_callbacks wl_drm_callbacks = {
-        .authenticate = NULL,
-        .reference_buffer = dri2_wl_reference_buffer,
-        .release_buffer = dri2_wl_release_buffer
-};
-
 static EGLBoolean
 dri2_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
                              struct wl_display *wl_dpy)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   const struct wayland_drm_callbacks wl_drm_callbacks = {
+      .authenticate = (int(*)(void *, uint32_t)) dri2_dpy->vtbl->authenticate,
+      .reference_buffer = dri2_wl_reference_buffer,
+      .release_buffer = dri2_wl_release_buffer
+   };
    int flags = 0;
    uint64_t cap;
 
@@ -2770,9 +2770,6 @@ dri2_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
 
    if (dri2_dpy->wl_server_drm)
            return EGL_FALSE;
-
-   wl_drm_callbacks.authenticate =
-      (int(*)(void *, uint32_t)) dri2_dpy->vtbl->authenticate;
 
    if (drmGetCap(dri2_dpy->fd, DRM_CAP_PRIME, &cap) == 0 &&
        cap == (DRM_PRIME_CAP_IMPORT | DRM_PRIME_CAP_EXPORT) &&
@@ -3186,14 +3183,6 @@ dri2_interop_export_object(_EGLDisplay *dpy, _EGLContext *ctx,
    return dri2_dpy->interop->export_object(dri2_ctx->dri_context, in, out);
 }
 
-static void
-dri2_unload(_EGLDriver *drv)
-{
-   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
-
-   free(dri2_drv);
-}
-
 static EGLBoolean
 dri2_load(_EGLDriver *drv)
 {
@@ -3280,7 +3269,6 @@ _eglBuiltInDriver(void)
    dri2_drv->base.API.DupNativeFenceFDANDROID = dri2_dup_native_fence_fd;
 
    dri2_drv->base.Name = "DRI2";
-   dri2_drv->base.Unload = dri2_unload;
 
    return &dri2_drv->base;
 }

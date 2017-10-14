@@ -371,7 +371,7 @@ intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz,
 
    const unsigned batch_used = USED_BATCH(*batch) * 4;
    if (batch_used + sz >= BATCH_SZ) {
-      if (!brw->no_batch_wrap) {
+      if (!batch->no_wrap) {
          intel_batchbuffer_flush(brw);
       } else {
          const unsigned new_size =
@@ -632,7 +632,7 @@ brw_finish_batch(struct brw_context *brw)
 {
    const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
-   brw->no_batch_wrap = true;
+   brw->batch.no_wrap = true;
 
    /* Capture the closing pipeline statistics register values necessary to
     * support query objects (in the non-hardware context world).
@@ -676,7 +676,7 @@ brw_finish_batch(struct brw_context *brw)
       intel_batchbuffer_emit_dword(&brw->batch, MI_NOOP);
    }
 
-   brw->no_batch_wrap = false;
+   brw->batch.no_wrap = false;
 }
 
 static void
@@ -892,7 +892,7 @@ _intel_batchbuffer_flush_fence(struct brw_context *brw,
       return 0;
 
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
-   assert(!brw->no_batch_wrap);
+   assert(!brw->batch.no_wrap);
 
    brw_finish_batch(brw);
    intel_upload_finish(brw);
@@ -1049,7 +1049,7 @@ brw_state_batch(struct brw_context *brw,
    uint32_t offset = ALIGN(batch->state_used, alignment);
 
    if (offset + size >= STATE_SZ) {
-      if (!brw->no_batch_wrap) {
+      if (!batch->no_wrap) {
          intel_batchbuffer_flush(brw);
          offset = ALIGN(batch->state_used, alignment);
       } else {

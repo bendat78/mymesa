@@ -1977,7 +1977,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    /* Generate the minimum possible set of configs that include an
     * accumulation buffer.
     */
-   for (unsigned i = 0; i < ARRAY_SIZE(formats); i++) {
+   for (unsigned i = 0; i < num_formats; i++) {
       __DRIconfig **new_configs;
 
       if (formats[i] == MESA_FORMAT_B5G6R5_UNORM) {
@@ -2009,7 +2009,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
     * supported.  Singlebuffer configs are not supported because no one wants
     * them.
     */
-   for (unsigned i = 0; i < ARRAY_SIZE(formats); i++) {
+   for (unsigned i = 0; i < num_formats; i++) {
       if (devinfo->gen < 6)
          break;
 
@@ -2511,6 +2511,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *dri_screen)
    screen->compiler->shader_debug_log = shader_debug_log_mesa;
    screen->compiler->shader_perf_log = shader_perf_log_mesa;
    screen->compiler->constant_buffer_0_is_relative = devinfo->gen < 8;
+   screen->compiler->supports_pull_constants = true;
 
    screen->has_exec_fence =
      intel_get_boolean(screen, I915_PARAM_HAS_EXEC_FENCE);
