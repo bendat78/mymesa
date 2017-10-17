@@ -5323,7 +5323,6 @@ glsl_to_tgsi_visitor::merge_registers_alternative(void)
 void
 glsl_to_tgsi_visitor::merge_registers(void)
 {
-   assert(need_uarl);
    struct lifetime *lifetimes =
          rzalloc_array(mem_ctx, struct lifetime, this->next_temp);
 
