@@ -44,6 +44,8 @@
 #include "egldriver.h"
 #include "egllog.h"
 
+#include "util/debug.h"
+
 static mtx_t _eglModuleMutex = _MTX_INITIALIZER_NP;
 static _EGLDriver *_eglDriver;
 
@@ -52,8 +54,12 @@ _eglGetDriver(void)
 {
    mtx_lock(&_eglModuleMutex);
 
-   if (!_eglDriver)
-      _eglDriver = _eglBuiltInDriver();
+   if (!_eglDriver) {
+      _eglDriver = calloc(1, sizeof(*_eglDriver));
+      if (!_eglDriver)
+         return NULL;
+      _eglInitDriver(_eglDriver);
+   }
 
    mtx_unlock(&_eglModuleMutex);
 
@@ -71,20 +77,19 @@ _eglMatchAndInitialize(_EGLDisplay *dpy)
 }
 
 /**
- * Match a display to a driver.  The display is initialized unless test_only is
- * true.  The matching is done by finding the first driver that can initialize
- * the display.
+ * Match a display to a driver.  The matching is done by finding the first
+ * driver that can initialize the display.
  */
 _EGLDriver *
-_eglMatchDriver(_EGLDisplay *dpy, EGLBoolean test_only)
+_eglMatchDriver(_EGLDisplay *dpy)
 {
    _EGLDriver *best_drv;
 
    assert(!dpy->Initialized);
 
    /* set options */
-   dpy->Options.TestOnly = test_only;
-   dpy->Options.UseFallback = EGL_FALSE;
+   dpy->Options.UseFallback =
+      env_var_as_boolean("LIBGL_ALWAYS_SOFTWARE", false);
 
    best_drv = _eglMatchAndInitialize(dpy);
    if (!best_drv) {
@@ -93,12 +98,8 @@ _eglMatchDriver(_EGLDisplay *dpy, EGLBoolean test_only)
    }
 
    if (best_drv) {
-      _eglLog(_EGL_DEBUG, "the best driver is %s%s",
-            best_drv->Name, (test_only) ? " (test only) " : "");
-      if (!test_only) {
-         dpy->Driver = best_drv;
-         dpy->Initialized = EGL_TRUE;
-      }
+      dpy->Driver = best_drv;
+      dpy->Initialized = EGL_TRUE;
    }
 
    return best_drv;

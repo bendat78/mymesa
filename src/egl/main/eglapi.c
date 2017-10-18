@@ -583,7 +583,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       RETURN_EGL_ERROR(NULL, EGL_BAD_DISPLAY, EGL_FALSE);
 
    if (!disp->Initialized) {
-      if (!_eglMatchDriver(disp, EGL_FALSE))
+      if (!_eglMatchDriver(disp))
          RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
 
       /* limit to APIs supported by core */
@@ -615,8 +615,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       _eglCreateExtensionsString(disp);
       _eglCreateAPIsString(disp);
       snprintf(disp->VersionString, sizeof(disp->VersionString),
-               "%d.%d (%s)", disp->Version / 10, disp->Version % 10,
-               disp->Driver->Name);
+               "%d.%d", disp->Version / 10, disp->Version % 10);
    }
 
    /* Update applications version of major and minor if not NULL */
