@@ -481,7 +481,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
                                     rb->Base.Base.Height,
                                     1, rb->mt->surf.row_pitch,
                                     MIPTREE_CREATE_DEFAULT);
-   if (mt == NULL)
+   if (!mt)
        return;
    mt->target = target;
 

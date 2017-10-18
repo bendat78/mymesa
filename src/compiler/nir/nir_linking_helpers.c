@@ -123,7 +123,7 @@ nir_remove_unused_varyings(nir_shader *producer, nir_shader *consumer)
    assert(producer->stage != MESA_SHADER_FRAGMENT);
    assert(consumer->stage != MESA_SHADER_VERTEX);
 
-   uint64_t read[4] = { 0 }, written[4] = { 0 };
+   uint64_t read[4] = {}, written[4] = {};
 
    nir_foreach_variable(var, &producer->outputs) {
       written[var->data.location_frac] |=
