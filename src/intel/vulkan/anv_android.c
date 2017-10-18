@@ -281,7 +281,7 @@ VkResult anv_GetSwapchainGrallocUsageANDROID(
    /* All VkImageUsageFlags not explicitly checked here are unsupported for
     * gralloc swapchains.
     */
-   if (imageUsage != 0) {
+   if (imageUsage) {
       return vk_errorf(device->instance, device, VK_ERROR_FORMAT_NOT_SUPPORTED,
                        "unsupported VkImageUsageFlags(0x%x) for gralloc "
                        "swapchain", imageUsage);
@@ -301,7 +301,7 @@ VkResult anv_GetSwapchainGrallocUsageANDROID(
                        GRALLOC_USAGE_EXTERNAL_DISP;
    }
 
-   if (*grallocUsage == 0)
+   if (!*grallocUsage)
       return VK_ERROR_FORMAT_NOT_SUPPORTED;
 
    return VK_SUCCESS;
@@ -391,7 +391,7 @@ anv_QueueSignalReleaseImageANDROID(
 {
    VkResult result;
 
-   if (waitSemaphoreCount == 0)
+   if (!waitSemaphoreCount)
       goto done;
 
    result = anv_QueueSubmit(queue, 1,

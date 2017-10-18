@@ -1569,11 +1569,11 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
                          struct ac_shader_variant_key *keys,
                          const VkPipelineShaderStageCreateInfo **pStages)
 {
-	struct radv_shader_module fs_m = {0};
+	struct radv_shader_module fs_m = {};
 	struct radv_shader_module *modules[MESA_SHADER_STAGES] = { 0, };
-	nir_shader *nir[MESA_SHADER_STAGES] = {0};
-	void *codes[MESA_SHADER_STAGES] = {0};
-	unsigned code_sizes[MESA_SHADER_STAGES] = {0};
+	nir_shader *nir[MESA_SHADER_STAGES] = {};
+	void *codes[MESA_SHADER_STAGES] = {};
+	unsigned code_sizes[MESA_SHADER_STAGES] = {};
 	unsigned char hash[20], gs_copy_hash[20];
 
 	for (unsigned i = 0; i < MESA_SHADER_STAGES; ++i) {
@@ -1591,7 +1591,7 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
 	gs_copy_hash[0] ^= 1;
 
 	if (modules[MESA_SHADER_GEOMETRY]) {
-		struct radv_shader_variant *variants[MESA_SHADER_STAGES] = {0};
+		struct radv_shader_variant *variants[MESA_SHADER_STAGES] = {};
 		radv_create_shader_variants_from_pipeline_cache(device, cache, gs_copy_hash, variants);
 		pipeline->gs_copy_shader = variants[MESA_SHADER_GEOMETRY];
 	}
@@ -1669,9 +1669,9 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
 		}
 
 		if (pipeline->gs_copy_shader) {
-			void *code[MESA_SHADER_STAGES] = {0};
-			unsigned code_size[MESA_SHADER_STAGES] = {0};
-			struct radv_shader_variant *variants[MESA_SHADER_STAGES] = {0};
+			void *code[MESA_SHADER_STAGES] = {};
+			unsigned code_size[MESA_SHADER_STAGES] = {};
+			struct radv_shader_variant *variants[MESA_SHADER_STAGES] = {};
 
 			code[MESA_SHADER_GEOMETRY] = gs_copy_code;
 			code_size[MESA_SHADER_GEOMETRY] = gs_copy_code_size;
