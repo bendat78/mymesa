@@ -419,8 +419,6 @@ void radv_GetPhysicalDeviceFeatures(
 	VkPhysicalDevice                            physicalDevice,
 	VkPhysicalDeviceFeatures*                   pFeatures)
 {
-	RADV_FROM_HANDLE(radv_physical_device, pdevice, physicalDevice);
-	bool is_gfx9 = pdevice->rad_info.chip_class >= GFX9;
 	memset(pFeatures, 0, sizeof(*pFeatures));
 
 	*pFeatures = (VkPhysicalDeviceFeatures) {
@@ -428,8 +426,8 @@ void radv_GetPhysicalDeviceFeatures(
 		.fullDrawIndexUint32                      = true,
 		.imageCubeArray                           = true,
 		.independentBlend                         = true,
-		.geometryShader                           = !is_gfx9,
-		.tessellationShader                       = !is_gfx9,
+		.geometryShader                           = true,
+		.tessellationShader                       = true,
 		.sampleRateShading                        = true,
 		.dualSrcBlend                             = true,
 		.logicOp                                  = true,
@@ -1580,19 +1578,31 @@ radv_get_preamble_cs(struct radv_queue *queue,
 		}
 
 		if (descriptor_bo) {
-			uint32_t regs[] = {R_00B030_SPI_SHADER_USER_DATA_PS_0,
-			                   R_00B130_SPI_SHADER_USER_DATA_VS_0,
-			                   R_00B230_SPI_SHADER_USER_DATA_GS_0,
-			                   R_00B330_SPI_SHADER_USER_DATA_ES_0,
-			                   R_00B430_SPI_SHADER_USER_DATA_HS_0,
-			                   R_00B530_SPI_SHADER_USER_DATA_LS_0};
-
 			uint64_t va = radv_buffer_get_va(descriptor_bo);
+			if (queue->device->physical_device->rad_info.chip_class >= GFX9) {
+				uint32_t regs[] = {R_00B030_SPI_SHADER_USER_DATA_PS_0,
+						R_00B130_SPI_SHADER_USER_DATA_VS_0,
+						R_00B208_SPI_SHADER_USER_DATA_ADDR_LO_GS,
+						R_00B408_SPI_SHADER_USER_DATA_ADDR_LO_HS};
 
-			for (int i = 0; i < ARRAY_SIZE(regs); ++i) {
-				radeon_set_sh_reg_seq(cs, regs[i], 2);
-				radeon_emit(cs, va);
-				radeon_emit(cs, va >> 32);
+				for (int i = 0; i < ARRAY_SIZE(regs); ++i) {
+					radeon_set_sh_reg_seq(cs, regs[i], 2);
+					radeon_emit(cs, va);
+					radeon_emit(cs, va >> 32);
+				}
+			} else {
+				uint32_t regs[] = {R_00B030_SPI_SHADER_USER_DATA_PS_0,
+						R_00B130_SPI_SHADER_USER_DATA_VS_0,
+						R_00B230_SPI_SHADER_USER_DATA_GS_0,
+						R_00B330_SPI_SHADER_USER_DATA_ES_0,
+						R_00B430_SPI_SHADER_USER_DATA_HS_0,
+						R_00B530_SPI_SHADER_USER_DATA_LS_0};
+
+				for (int i = 0; i < ARRAY_SIZE(regs); ++i) {
+					radeon_set_sh_reg_seq(cs, regs[i], 2);
+					radeon_emit(cs, va);
+					radeon_emit(cs, va >> 32);
+				}
 			}
 		}
 

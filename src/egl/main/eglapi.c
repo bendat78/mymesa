@@ -490,6 +490,8 @@ _eglCreateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(EXT_image_dma_buf_import_modifiers);
    _EGL_CHECK_EXTENSION(EXT_swap_buffers_with_damage);
 
+   _EGL_CHECK_EXTENSION(IMG_context_priority);
+
    _EGL_CHECK_EXTENSION(KHR_cl_event2);
    _EGL_CHECK_EXTENSION(KHR_config_attribs);
    _EGL_CHECK_EXTENSION(KHR_create_context);
@@ -615,7 +617,8 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       _eglCreateExtensionsString(disp);
       _eglCreateAPIsString(disp);
       snprintf(disp->VersionString, sizeof(disp->VersionString),
-               "%d.%d", disp->Version / 10, disp->Version % 10);
+               "%d.%d (%s)", disp->Version / 10, disp->Version % 10,
+               disp->Driver->Name);
    }
 
    /* Update applications version of major and minor if not NULL */

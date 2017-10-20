@@ -305,14 +305,21 @@ haiku_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 
 /**
  * This is the main entrypoint into the driver, called by libEGL.
- * Gets an _EGLDriver object and init its dispatch table.
+ * Create a new _EGLDriver object and init its dispatch table.
  */
 extern "C"
-void
-_eglInitDriver(_EGLDriver *driver)
+_EGLDriver*
+_eglBuiltInDriver(void)
 {
 	CALLED();
 
+	_EGLDriver* driver = calloc(1, sizeof(*driver));
+	if (!driver) {
+		_eglError(EGL_BAD_ALLOC, "_eglBuiltInDriverHaiku");
+		return NULL;
+	}
+
+	_eglInitDriverFallbacks(driver);
 	driver->API.Initialize = init_haiku;
 	driver->API.Terminate = haiku_terminate;
 	driver->API.CreateContext = haiku_create_context;
@@ -325,5 +332,9 @@ _eglInitDriver(_EGLDriver *driver)
 
 	driver->API.SwapBuffers = haiku_swap_buffers;
 
+	driver->Name = "Haiku";
+
 	TRACE("API Calls defined\n");
+
+	return driver;
 }

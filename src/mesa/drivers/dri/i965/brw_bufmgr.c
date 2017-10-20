@@ -669,11 +669,12 @@ bo_wait_with_stall_warning(struct brw_context *brw,
                            struct brw_bo *bo,
                            const char *action)
 {
-   double elapsed = unlikely(brw && brw->perf_debug) ? -get_time() : 0.0;
+   bool busy = brw && brw->perf_debug && !bo->idle;
+   double elapsed = unlikely(busy) ? -get_time() : 0.0;
 
    brw_bo_wait_rendering(bo);
 
-   if (unlikely(brw && brw->perf_debug)) {
+   if (unlikely(busy)) {
       elapsed += get_time();
       if (elapsed > 1e-5) /* 0.01ms */
          perf_debug("%s a busy \"%s\" BO stalled and took %.03f ms.\n",
@@ -1296,6 +1297,25 @@ brw_create_hw_context(struct brw_bufmgr *bufmgr)
    }
 
    return create.ctx_id;
+}
+
+int
+brw_hw_context_set_priority(struct brw_bufmgr *bufmgr,
+                            uint32_t ctx_id,
+                            int priority)
+{
+   struct drm_i915_gem_context_param p = {
+      .ctx_id = ctx_id,
+      .param = I915_CONTEXT_PARAM_PRIORITY,
+      .value = priority,
+   };
+   int err;
+
+   err = 0;
+   if (drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &p))
+      err = -errno;
+
+   return err;
 }
 
 void

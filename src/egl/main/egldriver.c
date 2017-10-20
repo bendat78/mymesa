@@ -54,12 +54,8 @@ _eglGetDriver(void)
 {
    mtx_lock(&_eglModuleMutex);
 
-   if (!_eglDriver) {
-      _eglDriver = calloc(1, sizeof(*_eglDriver));
-      if (!_eglDriver)
-         return NULL;
-      _eglInitDriver(_eglDriver);
-   }
+   if (!_eglDriver)
+      _eglDriver = _eglBuiltInDriver();
 
    mtx_unlock(&_eglModuleMutex);
 
@@ -98,6 +94,8 @@ _eglMatchDriver(_EGLDisplay *dpy)
    }
 
    if (best_drv) {
+      _eglLog(_EGL_DEBUG, "the best driver is %s",
+            best_drv->Name);
       dpy->Driver = best_drv;
       dpy->Initialized = EGL_TRUE;
    }

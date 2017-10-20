@@ -92,6 +92,8 @@
 #define DRM_FORMAT_MOD_INVALID ((1ULL<<56) - 1)
 #endif
 
+#define NUM_ATTRIBS 10
+
 static void
 dri_set_background_context(void *loaderPrivate)
 {
@@ -695,6 +697,11 @@ dri2_setup_screen(_EGLDisplay *disp)
    disp->Extensions.KHR_no_config_context = EGL_TRUE;
    disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
 
+   /* Report back to EGL the bitmask of priorities supported */
+   disp->Extensions.IMG_context_priority =
+      dri2_renderer_query_integer(dri2_dpy,
+                                  __DRI2_RENDERER_HAS_CONTEXT_PRIORITY);
+
    if (dri2_renderer_query_integer(dri2_dpy,
                                    __DRI2_RENDERER_HAS_FRAMEBUFFER_SRGB))
       disp->Extensions.KHR_gl_colorspace = EGL_TRUE;
@@ -1169,7 +1176,7 @@ dri2_fill_context_attribs(struct dri2_egl_context *dri2_ctx,
 {
    int pos = 0;
 
-   assert(*num_attribs >= 8);
+   assert(*num_attribs >= NUM_ATTRIBS);
 
    ctx_attribs[pos++] = __DRI_CTX_ATTRIB_MAJOR_VERSION;
    ctx_attribs[pos++] = dri2_ctx->base.ClientMajorVersion;
@@ -1204,6 +1211,28 @@ dri2_fill_context_attribs(struct dri2_egl_context *dri2_ctx,
 
       ctx_attribs[pos++] = __DRI_CTX_ATTRIB_RESET_STRATEGY;
       ctx_attribs[pos++] = __DRI_CTX_RESET_LOSE_CONTEXT;
+   }
+
+   if (dri2_ctx->base.ContextPriority != EGL_CONTEXT_PRIORITY_MEDIUM_IMG) {
+      unsigned val;
+
+      switch (dri2_ctx->base.ContextPriority) {
+      case EGL_CONTEXT_PRIORITY_HIGH_IMG:
+         val = __DRI_CTX_PRIORITY_HIGH;
+         break;
+      case EGL_CONTEXT_PRIORITY_MEDIUM_IMG:
+         val = __DRI_CTX_PRIORITY_MEDIUM;
+         break;
+      case EGL_CONTEXT_PRIORITY_LOW_IMG:
+         val = __DRI_CTX_PRIORITY_LOW;
+         break;
+      default:
+         _eglError(EGL_BAD_CONFIG, "eglCreateContext");
+         return false;
+      }
+
+      ctx_attribs[pos++] = __DRI_CTX_ATTRIB_PRIORITY;
+      ctx_attribs[pos++] = val;
    }
 
    *num_attribs = pos;
@@ -1320,8 +1349,8 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 
    if (dri2_dpy->image_driver) {
       unsigned error;
-      unsigned num_attribs = 8;
-      uint32_t ctx_attribs[8];
+      unsigned num_attribs = NUM_ATTRIBS;
+      uint32_t ctx_attribs[NUM_ATTRIBS];
 
       if (!dri2_fill_context_attribs(dri2_ctx, dri2_dpy, ctx_attribs,
                                         &num_attribs))
@@ -1340,8 +1369,8 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    } else if (dri2_dpy->dri2) {
       if (dri2_dpy->dri2->base.version >= 3) {
          unsigned error;
-         unsigned num_attribs = 8;
-         uint32_t ctx_attribs[8];
+         unsigned num_attribs = NUM_ATTRIBS;
+         uint32_t ctx_attribs[NUM_ATTRIBS];
 
          if (!dri2_fill_context_attribs(dri2_ctx, dri2_dpy, ctx_attribs,
                                         &num_attribs))
@@ -1369,8 +1398,8 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       assert(dri2_dpy->swrast);
       if (dri2_dpy->swrast->base.version >= 3) {
          unsigned error;
-         unsigned num_attribs = 8;
-         uint32_t ctx_attribs[8];
+         unsigned num_attribs = NUM_ATTRIBS;
+         uint32_t ctx_attribs[NUM_ATTRIBS];
 
          if (!dri2_fill_context_attribs(dri2_ctx, dri2_dpy, ctx_attribs,
                                         &num_attribs))
@@ -3199,11 +3228,16 @@ dri2_interop_export_object(_EGLDisplay *dpy, _EGLContext *ctx,
 
 /**
  * This is the main entrypoint into the driver, called by libEGL.
- * Gets an _EGLDriver object and init its dispatch table.
+ * Create a new _EGLDriver object and init its dispatch table.
  */
-void
-_eglInitDriver(_EGLDriver *dri2_drv)
+_EGLDriver *
+_eglBuiltInDriver(void)
 {
+   _EGLDriver *dri2_drv = calloc(1, sizeof *dri2_drv);
+   if (!dri2_drv)
+      return NULL;
+
+   _eglInitDriverFallbacks(dri2_drv);
    dri2_drv->API.Initialize = dri2_initialize;
    dri2_drv->API.Terminate = dri2_terminate;
    dri2_drv->API.CreateContext = dri2_create_context;
@@ -3252,4 +3286,8 @@ _eglInitDriver(_EGLDriver *dri2_drv)
    dri2_drv->API.GLInteropQueryDeviceInfo = dri2_interop_query_device_info;
    dri2_drv->API.GLInteropExportObject = dri2_interop_export_object;
    dri2_drv->API.DupNativeFenceFDANDROID = dri2_dup_native_fence_fd;
+
+   dri2_drv->Name = "DRI2";
+
+   return dri2_drv;
 }
