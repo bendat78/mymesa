@@ -2115,7 +2115,10 @@ VkResult radv_alloc_memory(VkDevice                        _device,
 	if (pAllocateInfo->memoryTypeIndex == RADV_MEM_TYPE_GTT_WRITE_COMBINE)
 		flags |= RADEON_FLAG_GTT_WC;
 
-	mem->bo = device->ws->buffer_create(device->ws, alloc_size, 65536,
+	if (mem_flags & RADV_MEM_IMPLICIT_SYNC)
+		flags |= RADEON_FLAG_IMPLICIT_SYNC;
+
+	mem->bo = device->ws->buffer_create(device->ws, alloc_size, device->physical_device->rad_info.max_alignment,
 					       domain, flags);
 
 	if (!mem->bo) {
