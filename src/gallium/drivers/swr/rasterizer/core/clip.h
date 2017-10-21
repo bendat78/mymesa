@@ -699,7 +699,7 @@ public:
         }
 
 
-        if (state.backendState.readViewportArrayIndex) // VPAIOffsets are guaranteed 0-15 -- no OOB issues if they are offsets from 0 
+        if (state.backendState.readViewportArrayIndex) // VPAIOffsets are guaranteed 0-15 -- no OOB issues if they are offsets from 0
         {
             // OOB indices => forced to zero.
             vpai = SIMD_T::max_epi32(vpai, SIMD_T::setzero_si());

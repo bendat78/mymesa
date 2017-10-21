@@ -699,7 +699,7 @@ void WorkOnCompute(
     for (uint64_t i = curDrawBE; IDComparesLess(i, drawEnqueued); ++i)
     {
         DRAW_CONTEXT *pDC = &pContext->dcRing[i % pContext->MAX_DRAWS_IN_FLIGHT];
-        if (pDC->isCompute == false) return;
+        if (!pDC->isCompute) return;
 
         // check dependencies
         if (CheckDependency(pContext, pDC, lastRetiredDraw))

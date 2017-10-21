@@ -75,7 +75,7 @@ HANDLE SwrCreateContext(
     pContext->privateStateSize = pCreateInfo->privateStateSize;
 
     pContext->MAX_DRAWS_IN_FLIGHT = KNOB_MAX_DRAWS_IN_FLIGHT;
-    if (pCreateInfo->MAX_DRAWS_IN_FLIGHT != 0)
+    if (pCreateInfo->MAX_DRAWS_IN_FLIGHT)
     {
         pContext->MAX_DRAWS_IN_FLIGHT = pCreateInfo->MAX_DRAWS_IN_FLIGHT;
     }

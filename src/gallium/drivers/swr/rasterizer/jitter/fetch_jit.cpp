@@ -1048,7 +1048,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
         vOffsets = ADD(vOffsets, vInstanceStride);
 
 #endif
-        // Packing and component control 
+        // Packing and component control
         ComponentEnable compMask = (ComponentEnable)ied.ComponentPacking;
         const ComponentControl compCtrl[4] { (ComponentControl)ied.ComponentControl0, (ComponentControl)ied.ComponentControl1,
                                              (ComponentControl)ied.ComponentControl2, (ComponentControl)ied.ComponentControl3};
@@ -1153,7 +1153,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                         vGatherResult2[1] = GATHERPS(gatherSrc2, pStreamBase, vOffsets2, vMask2, C((char)1));
                         // e.g. result of second 8x32bit integer gather for 16bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
+                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
                         //
                     }
 
@@ -1485,7 +1485,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                         Value* vGatherResult2 = GATHERDD(gatherSrc2, pStreamBase, vOffsets2, vGatherMask2, C((char)1));
                         // e.g. result of an 8x32bit integer gather for 8bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw 
+                        //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw
 
                         Shuffle8bpcArgs args = std::forward_as_tuple(vGatherResult, pVtxOut, extendCastType, conversionType,
                             currentVertexElement, outputElt, compMask, compCtrl, vVertexElements, info.swizzle);
@@ -1549,7 +1549,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                         vGatherResult2[1] = GATHERDD(gatherSrc2, pStreamBase, vOffsets2, vMask2, C((char)1));
                         // e.g. result of second 8x32bit integer gather for 16bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
+                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
                         //
                     }
 
@@ -1647,7 +1647,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                                 vVertexElements2[currentVertexElement] = pGather2;
                                 // e.g. result of a single 8x32bit integer gather for 32bit components
                                 // 256i - 0    1    2    3    4    5    6    7
-                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx 
+                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx
 
                                 currentVertexElement += 1;
 #else
@@ -1672,7 +1672,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                                 vVertexElements[currentVertexElement++] = pGather;
                                 // e.g. result of a single 8x32bit integer gather for 32bit components
                                 // 256i - 0    1    2    3    4    5    6    7
-                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx 
+                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx
 #endif
                             }
                             else

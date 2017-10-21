@@ -949,7 +949,7 @@ static void create_function(struct nir_to_llvm_context *ctx,
 							     const_array(ctx->v4i32, 16), "");
 		}
 	}
-	
+
 	/* For merged shaders the user SGPRs start at 8, with 8 system SGPRs in front (including
 	 * the rw_buffers at s0/s1. With user SGPR0 = s8, lets restart the count from 0 */
 	if (has_previous_stage)

@@ -1500,7 +1500,7 @@ void ProcessDraw(
     }
 
     // choose primitive assembler
-    
+
     PA_FACTORY<IsIndexedT, IsCutIndexEnabledT> paFactory(pDC, state.topology, work.numVerts, gpVertexStore, numVerts, state.frontendState.vsVertexSize, GetNumVerts(state.topology, 1));
     PA_STATE& pa = paFactory.GetPA();
 
