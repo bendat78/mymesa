@@ -523,7 +523,7 @@ VkResult radv_GetPipelineCacheData(
 	pthread_mutex_lock(&cache->mutex);
 
 	const size_t size = sizeof(*header) + cache->total_size;
-	if (pData == NULL) {
+	if (!pData) {
 		pthread_mutex_unlock(&cache->mutex);
 		*pDataSize = size;
 		return VK_SUCCESS;
