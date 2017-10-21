@@ -2008,8 +2008,6 @@ opt_shader_and_create_symbol_table(struct gl_context *ctx,
          break;
       }
    }
-
-   _mesa_glsl_initialize_derived_variables(ctx, shader);
 }
 
 void
