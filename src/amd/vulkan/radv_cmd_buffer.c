@@ -1719,11 +1719,11 @@ radv_flush_constants(struct radv_cmd_buffer *cmd_buffer,
 }
 
 static bool
-radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer)
+radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer, bool pipeline_is_dirty)
 {
 	struct radv_device *device = cmd_buffer->device;
 
-	if ((cmd_buffer->state.pipeline != cmd_buffer->state.emitted_pipeline || cmd_buffer->state.vb_dirty) &&
+	if ((pipeline_is_dirty || cmd_buffer->state.vb_dirty) &&
 	    cmd_buffer->state.pipeline->vertex_elements.count &&
 	    radv_get_vertex_shader(cmd_buffer->state.pipeline)->info.info.vs.has_vertex_buffers) {
 		struct radv_vertex_elements_info *velems = &cmd_buffer->state.pipeline->vertex_elements;
@@ -1771,9 +1771,9 @@ radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer)
 }
 
 static bool
-radv_upload_graphics_shader_descriptors(struct radv_cmd_buffer *cmd_buffer)
+radv_upload_graphics_shader_descriptors(struct radv_cmd_buffer *cmd_buffer, bool pipeline_is_dirty)
 {
-	if (!radv_cmd_buffer_update_vertex_descriptors(cmd_buffer))
+	if (!radv_cmd_buffer_update_vertex_descriptors(cmd_buffer, pipeline_is_dirty))
 		return false;
 
 	radv_flush_descriptors(cmd_buffer, VK_SHADER_STAGE_ALL_GRAPHICS);
@@ -2954,7 +2954,7 @@ radv_cs_emit_indirect_draw_packet(struct radv_cmd_buffer *cmd_buffer,
 	struct radeon_winsys_cs *cs = cmd_buffer->cs;
 	unsigned di_src_sel = indexed ? V_0287F0_DI_SRC_SEL_DMA
 	                              : V_0287F0_DI_SRC_SEL_AUTO_INDEX;
-	bool draw_id_enable = cmd_buffer->state.pipeline->shaders[MESA_SHADER_VERTEX]->info.info.vs.needs_draw_id;
+	bool draw_id_enable = radv_get_vertex_shader(cmd_buffer->state.pipeline)->info.info.vs.needs_draw_id;
 	uint32_t base_reg = cmd_buffer->state.pipeline->graphics.vtx_base_sgpr;
 	assert(base_reg);
 
@@ -3151,8 +3151,6 @@ radv_emit_all_graphics_states(struct radv_cmd_buffer *cmd_buffer,
 	radv_emit_draw_registers(cmd_buffer, info->indexed,
 				 info->instance_count > 1, info->indirect,
 				 info->indirect ? 0 : info->count);
-
-	cmd_buffer->state.dirty = 0;
 }
 
 static void
@@ -3186,7 +3184,7 @@ radv_draw(struct radv_cmd_buffer *cmd_buffer,
 		si_emit_cache_flush(cmd_buffer);
 		/* <-- CUs are idle here --> */
 
-		if (!radv_upload_graphics_shader_descriptors(cmd_buffer))
+		if (!radv_upload_graphics_shader_descriptors(cmd_buffer, pipeline_is_dirty))
 			return;
 
 		radv_emit_draw_packets(cmd_buffer, info);
@@ -3211,7 +3209,7 @@ radv_draw(struct radv_cmd_buffer *cmd_buffer,
 						   cmd_buffer->state.pipeline);
 		}
 
-		if (!radv_upload_graphics_shader_descriptors(cmd_buffer))
+		if (!radv_upload_graphics_shader_descriptors(cmd_buffer, pipeline_is_dirty))
 			return;
 
 		radv_emit_all_graphics_states(cmd_buffer, info);
