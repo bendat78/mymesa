@@ -1257,7 +1257,7 @@ LLVMValueRef ac_build_image_opcode(struct ac_llvm_context *ctx,
 	LLVMTypeRef dst_type;
 	LLVMValueRef args[11];
 	unsigned num_args = 0;
-	const char *name;
+	const char *name = NULL;
 	char intr_name[128], type[64];
 
 	if (HAVE_LLVM >= 0x0400) {
@@ -1405,20 +1405,26 @@ LLVMValueRef ac_build_cvt_pkrtz_f16(struct ac_llvm_context *ctx,
 				  AC_FUNC_ATTR_LEGACY);
 }
 
-/**
- * KILL, AKA discard in GLSL.
- *
- * \param value  kill if value < 0.0 or value == NULL.
- */
-void ac_build_kill(struct ac_llvm_context *ctx, LLVMValueRef value)
+LLVMValueRef ac_build_wqm_vote(struct ac_llvm_context *ctx, LLVMValueRef i1)
 {
-	if (value) {
-		ac_build_intrinsic(ctx, "llvm.AMDGPU.kill", ctx->voidt,
-				   &value, 1, AC_FUNC_ATTR_LEGACY);
-	} else {
-		ac_build_intrinsic(ctx, "llvm.AMDGPU.kilp", ctx->voidt,
-				   NULL, 0, AC_FUNC_ATTR_LEGACY);
+	assert(HAVE_LLVM >= 0x0600);
+	return ac_build_intrinsic(ctx, "llvm.amdgcn.wqm.vote", ctx->i1,
+				  &i1, 1, AC_FUNC_ATTR_READNONE);
+}
+
+void ac_build_kill_if_false(struct ac_llvm_context *ctx, LLVMValueRef i1)
+{
+	if (HAVE_LLVM >= 0x0600) {
+		ac_build_intrinsic(ctx, "llvm.amdgcn.kill", ctx->voidt,
+				   &i1, 1, 0);
+		return;
 	}
+
+	LLVMValueRef value = LLVMBuildSelect(ctx->builder, i1,
+					     LLVMConstReal(ctx->f32, 1),
+					     LLVMConstReal(ctx->f32, -1), "");
+	ac_build_intrinsic(ctx, "llvm.AMDGPU.kill", ctx->voidt,
+			   &value, 1, AC_FUNC_ATTR_LEGACY);
 }
 
 LLVMValueRef ac_build_bfe(struct ac_llvm_context *ctx, LLVMValueRef input,

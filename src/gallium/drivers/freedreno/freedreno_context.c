@@ -136,14 +136,15 @@ fd_context_destroy(struct pipe_context *pctx)
 
 	slab_destroy_child(&ctx->transfer_pool);
 
-	for (i = 0; i < ARRAY_SIZE(ctx->pipe); i++) {
-		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
+	for (i = 0; i < ARRAY_SIZE(ctx->vsc_pipe); i++) {
+		struct fd_vsc_pipe *pipe = &ctx->vsc_pipe[i];
 		if (!pipe->bo)
 			break;
 		fd_bo_del(pipe->bo);
 	}
 
 	fd_device_del(ctx->dev);
+	fd_pipe_del(ctx->pipe);
 
 	if (fd_mesa_debug & (FD_DBG_BSTAT | FD_DBG_MSGS)) {
 		printf("batch_total=%u, batch_sysmem=%u, batch_gmem=%u, batch_restore=%u\n",
@@ -244,13 +245,14 @@ fd_context_cleanup_common_vbos(struct fd_context *ctx)
 
 struct pipe_context *
 fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
-		const uint8_t *primtypes, void *priv)
+		const uint8_t *primtypes, void *priv, unsigned flags)
 {
 	struct fd_screen *screen = fd_screen(pscreen);
 	struct pipe_context *pctx;
 	int i;
 
 	ctx->screen = screen;
+	ctx->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
 
 	ctx->primtypes = primtypes;
 	ctx->primtype_mask = 0;

@@ -2542,6 +2542,7 @@ static LLVMValueRef visit_load_buffer(struct ac_nir_context *ctx,
 
 	}
 
+	assume(results[0]);
 	LLVMValueRef ret = results[0];
 	if (num_components > 4 || num_components == 3) {
 		LLVMValueRef masks[] = {
@@ -3779,14 +3780,10 @@ static void emit_discard_if(struct ac_nir_context *ctx,
 {
 	LLVMValueRef cond;
 
-	cond = LLVMBuildICmp(ctx->ac.builder, LLVMIntNE,
+	cond = LLVMBuildICmp(ctx->ac.builder, LLVMIntEQ,
 			     get_src(ctx, instr->src[0]),
 			     ctx->ac.i32_0, "");
-
-	cond = LLVMBuildSelect(ctx->ac.builder, cond,
-			       LLVMConstReal(ctx->ac.f32, -1.0f),
-			       ctx->ac.f32_0, "");
-	ac_build_kill(&ctx->ac, cond);
+	ac_build_kill_if_false(&ctx->ac, cond);
 }
 
 static LLVMValueRef
@@ -4021,7 +4018,7 @@ visit_emit_vertex(struct nir_to_llvm_context *ctx,
 		  const nir_intrinsic_instr *instr)
 {
 	LLVMValueRef gs_next_vertex;
-	LLVMValueRef can_emit, kill;
+	LLVMValueRef can_emit;
 	int idx;
 
 	assert(instr->const_index[0] == 0);
@@ -4037,11 +4034,7 @@ visit_emit_vertex(struct nir_to_llvm_context *ctx,
 	 */
 	can_emit = LLVMBuildICmp(ctx->builder, LLVMIntULT, gs_next_vertex,
 				 LLVMConstInt(ctx->i32, ctx->gs_max_out_vertices, false), "");
-
-	kill = LLVMBuildSelect(ctx->builder, can_emit,
-			       LLVMConstReal(ctx->f32, 1.0f),
-			       LLVMConstReal(ctx->f32, -1.0f), "");
-	ac_build_kill(&ctx->ac, kill);
+	ac_build_kill_if_false(&ctx->ac, can_emit);
 
 	/* loop num outputs */
 	idx = 0;
@@ -4653,14 +4646,14 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 		LLVMValueRef z = ac_to_float(&ctx->ac,
 		                             llvm_extract_elem(&ctx->ac, comparator, 0));
 
-		/* TC-compatible HTILE promotes Z16 and Z24 to Z32_FLOAT,
+		/* TC-compatible HTILE on radeonsi promotes Z16 and Z24 to Z32_FLOAT,
 		 * so the depth comparison value isn't clamped for Z16 and
 		 * Z24 anymore. Do it manually here.
 		 *
 		 * It's unnecessary if the original texture format was
 		 * Z32_FLOAT, but we don't know that here.
 		 */
-		if (ctx->ac.chip_class == VI)
+		if (ctx->ac.chip_class == VI && ctx->abi->clamp_shadow_reference)
 			z = ac_build_clamp(&ctx->ac, z);
 
 		address[count++] = z;
@@ -4748,7 +4741,9 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 				filler = LLVMConstReal(ctx->ac.f32, 0.5);
 
 			if (instr->sampler_dim == GLSL_SAMPLER_DIM_1D) {
-				if (instr->is_array) {
+				/* No nir_texop_lod, because it does not take a slice
+				 * even with array textures. */
+				if (instr->is_array && instr->op != nir_texop_lod ) {
 					address[count] = address[count - 1];
 					address[count - 1] = filler;
 					count++;
@@ -6167,8 +6162,8 @@ write_tess_factors(struct nir_to_llvm_context *ctx)
 					    stride - 4, byteoffset, tf_base,
 					    16 + tf_offset, 1, 0, true, false);
 
-	//TODO store to offchip for TES to read - only if TES reads them
-	if (1) {
+	//store to offchip for TES to read - only if TES reads them
+	if (ctx->options->key.tcs.tes_reads_tess_factors) {
 		LLVMValueRef inner_vec, outer_vec, tf_outer_offset;
 		LLVMValueRef tf_inner_offset;
 		unsigned param_outer, param_inner;
@@ -6599,6 +6594,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 	ctx.abi.emit_outputs = handle_shader_outputs_post;
 	ctx.abi.load_ssbo = radv_load_ssbo;
 	ctx.abi.load_sampler_desc = radv_get_sampler_desc;
+	ctx.abi.clamp_shadow_reference = false;
 
 	if (shader_count >= 2)
 		ac_init_exec_full_mask(&ctx.ac);

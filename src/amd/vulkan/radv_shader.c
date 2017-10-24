@@ -265,9 +265,7 @@ radv_shader_compile_to_nir(struct radv_device *device,
 		indirect_mask |= nir_var_shader_in;
 	}
 	if (!llvm_has_working_vgpr_indexing &&
-	    (nir->info.stage == MESA_SHADER_VERTEX ||
-	     nir->info.stage == MESA_SHADER_TESS_EVAL ||
-	     nir->info.stage == MESA_SHADER_FRAGMENT))
+	    nir->info.stage != MESA_SHADER_TESS_CTRL)
 		indirect_mask |= nir_var_shader_out;
 
 	/* TODO: We shouldn't need to do this, however LLVM isn't currently
@@ -292,9 +290,6 @@ radv_shader_compile_to_nir(struct radv_device *device,
 	nir_lower_global_vars_to_local(nir);
 	nir_remove_dead_variables(nir, nir_var_local);
 	radv_optimize_nir(nir);
-
-	if (device->instance->debug_flags & RADV_DEBUG_DUMP_SHADERS)
-		nir_print_shader(nir, stderr);
 
 	return nir;
 }

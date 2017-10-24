@@ -24,6 +24,7 @@
 #include "main/imports.h"
 #include "symbol_table.h"
 #include "../../util/hash_table.h"
+#include "util/u_string.h"
 
 struct symbol {
    /** Symbol name. */
@@ -192,8 +193,8 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
       new_sym->next_with_same_name = sym;
       new_sym->name = sym->name;
    } else {
-      new_sym->name = strdup(name);
-      if (!new_sym->name) {
+      new_sym->name = util_strdup(name);
+      if (new_sym->name == NULL) {
          free(new_sym);
          _mesa_error_no_memory(__func__);
          return -1;
@@ -264,8 +265,8 @@ _mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
 
       sym->name = inner_sym->name;
    } else {
-      sym->name = strdup(name);
-      if (!sym->name) {
+      sym->name = util_strdup(name);
+      if (sym->name == NULL) {
          free(sym);
          _mesa_error_no_memory(__func__);
          return -1;
