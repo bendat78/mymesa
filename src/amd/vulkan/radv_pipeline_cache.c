@@ -172,6 +172,75 @@ radv_pipeline_cache_search(struct radv_pipeline_cache *cache,
 	return entry;
 }
 
+static void
+radv_pipeline_cache_set_entry(struct radv_pipeline_cache *cache,
+			      struct cache_entry *entry)
+{
+	const uint32_t mask = cache->table_size - 1;
+	const uint32_t start = entry->sha1_dw[0];
+
+	/* We'll always be able to insert when we get here. */
+	assert(cache->kernel_count < cache->table_size / 2);
+
+	for (uint32_t i = 0; i < cache->table_size; i++) {
+		const uint32_t index = (start + i) & mask;
+		if (!cache->hash_table[index]) {
+			cache->hash_table[index] = entry;
+			break;
+		}
+	}
+
+	cache->total_size += entry_size(entry);
+	cache->kernel_count++;
+}
+
+
+static VkResult
+radv_pipeline_cache_grow(struct radv_pipeline_cache *cache)
+{
+	const uint32_t table_size = cache->table_size * 2;
+	const uint32_t old_table_size = cache->table_size;
+	const size_t byte_size = table_size * sizeof(cache->hash_table[0]);
+	struct cache_entry **table;
+	struct cache_entry **old_table = cache->hash_table;
+
+	table = malloc(byte_size);
+	if (table == NULL)
+		return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+	cache->hash_table = table;
+	cache->table_size = table_size;
+	cache->kernel_count = 0;
+	cache->total_size = 0;
+
+	memset(cache->hash_table, 0, byte_size);
+	for (uint32_t i = 0; i < old_table_size; i++) {
+		struct cache_entry *entry = old_table[i];
+		if (!entry)
+			continue;
+
+		radv_pipeline_cache_set_entry(cache, entry);
+	}
+
+	free(old_table);
+
+	return VK_SUCCESS;
+}
+
+static void
+radv_pipeline_cache_add_entry(struct radv_pipeline_cache *cache,
+			      struct cache_entry *entry)
+{
+	if (cache->kernel_count == cache->table_size / 2)
+		radv_pipeline_cache_grow(cache);
+
+	/* Failing to grow that hash table isn't fatal, but may mean we don't
+	 * have enough space to add this new kernel. Only add it if there's room.
+	 */
+	if (cache->kernel_count < cache->table_size / 2)
+		radv_pipeline_cache_set_entry(cache, entry);
+}
+
 bool
 radv_create_shader_variants_from_pipeline_cache(struct radv_device *device,
 					        struct radv_pipeline_cache *cache,
@@ -206,6 +275,8 @@ radv_create_shader_variants_from_pipeline_cache(struct radv_device *device,
 		if (!entry) {
 			pthread_mutex_unlock(&cache->mutex);
 			return false;
+		} else {
+			radv_pipeline_cache_add_entry(cache, entry);
 		}
 	}
 
@@ -249,76 +320,6 @@ radv_create_shader_variants_from_pipeline_cache(struct radv_device *device,
 	memcpy(variants, entry->variants, sizeof(entry->variants));
 	pthread_mutex_unlock(&cache->mutex);
 	return true;
-}
-
-
-static void
-radv_pipeline_cache_set_entry(struct radv_pipeline_cache *cache,
-			      struct cache_entry *entry)
-{
-	const uint32_t mask = cache->table_size - 1;
-	const uint32_t start = entry->sha1_dw[0];
-
-	/* We'll always be able to insert when we get here. */
-	assert(cache->kernel_count < cache->table_size / 2);
-
-	for (uint32_t i = 0; i < cache->table_size; i++) {
-		const uint32_t index = (start + i) & mask;
-		if (!cache->hash_table[index]) {
-			cache->hash_table[index] = entry;
-			break;
-		}
-	}
-
-	cache->total_size += entry_size(entry);
-	cache->kernel_count++;
-}
-
-
-static VkResult
-radv_pipeline_cache_grow(struct radv_pipeline_cache *cache)
-{
-	const uint32_t table_size = cache->table_size * 2;
-	const uint32_t old_table_size = cache->table_size;
-	const size_t byte_size = table_size * sizeof(cache->hash_table[0]);
-	struct cache_entry **table;
-	struct cache_entry **old_table = cache->hash_table;
-
-	table = malloc(byte_size);
-	if (!table)
-		return VK_ERROR_OUT_OF_HOST_MEMORY;
-
-	cache->hash_table = table;
-	cache->table_size = table_size;
-	cache->kernel_count = 0;
-	cache->total_size = 0;
-
-	memset(cache->hash_table, 0, byte_size);
-	for (uint32_t i = 0; i < old_table_size; i++) {
-		struct cache_entry *entry = old_table[i];
-		if (!entry)
-			continue;
-
-		radv_pipeline_cache_set_entry(cache, entry);
-	}
-
-	free(old_table);
-
-	return VK_SUCCESS;
-}
-
-static void
-radv_pipeline_cache_add_entry(struct radv_pipeline_cache *cache,
-			      struct cache_entry *entry)
-{
-	if (cache->kernel_count == cache->table_size / 2)
-		radv_pipeline_cache_grow(cache);
-
-	/* Failing to grow that hash table isn't fatal, but may mean we don't
-	 * have enough space to add this new kernel. Only add it if there's room.
-	 */
-	if (cache->kernel_count < cache->table_size / 2)
-		radv_pipeline_cache_set_entry(cache, entry);
 }
 
 void
