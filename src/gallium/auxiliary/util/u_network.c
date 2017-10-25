@@ -124,7 +124,7 @@ u_socket_connect(const char *hostname, uint16_t port)
    util_snprintf(portString, sizeof(portString), "%d", port);
 
    r = getaddrinfo(hostname, portString, NULL, &addr);
-   if (r != 0) {
+   if (r) {
       return -1;
    }
 
