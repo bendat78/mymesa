@@ -57,13 +57,13 @@ echo "17.3.0-dev-ben-$(date)" > VERSION
 --enable-gles2 \
 --enable-gle \
 --with-vulkan-drivers=intel,radeon \
-CFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security -fno-omit-frame-pointer -fdump-rtl-expand" \
-CPPFLAGS="-Wall -Wextra -D_FORTIFY_SOURCE=2 -Wl,-fuse-ld=gold" \
-CXXFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security -fno-omit-frame-pointer -fdump-rtl-expand" \
+CFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security -fno-omit-frame-pointer" \
+CPPFLAGS="-Wall -Wextra -D_FORTIFY_SOURCE=2" \
+CXXFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security -fno-omit-frame-pointer" \
 FCFLAGS="-O3 -fstack-protector-strong" \
 FFLAGS="-O3 -fstack-protector-strong" \
 GCJFLAGS="-O3 -fstack-protector-strong" \
-LDFLAGS="-Bsymbolic-functions -z relro -fuse-ld=gold" \
+LDFLAGS="-Bsymbolic-functions -z relro" \
 OBJCFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security" \
 OBJCXXFLAGS="-O3 -fstack-protector-strong -Wall -Wextra -Werror=format-security" \
 CC=gcc \

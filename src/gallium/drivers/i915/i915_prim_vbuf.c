@@ -323,8 +323,8 @@ i915_vbuf_ensure_index_bounds(struct vbuf_render *render,
 }
 
 static void
-i915_vbuf_render_set_primitive(struct vbuf_render *render,
-                               unsigned prim)
+i915_vbuf_render_set_primitive(struct vbuf_render *render, 
+                               enum pipe_prim_type prim)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    i915_render->prim = prim;
