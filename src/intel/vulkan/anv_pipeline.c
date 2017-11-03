@@ -538,7 +538,7 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_vs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         false, -1, NULL);
-      if (shader_code == NULL) {
+      if (!shader_code) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -700,7 +700,7 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
       shader_code =
          brw_compile_tcs(compiler, NULL, mem_ctx, &tcs_key, &tcs_prog_data,
                          tcs_nir, shader_time_index, NULL);
-      if (shader_code == NULL) {
+      if (!shader_code) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -721,7 +721,7 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
          brw_compile_tes(compiler, NULL, mem_ctx, &tes_key,
                          &tcs_prog_data.base.vue_map, &tes_prog_data, tes_nir,
                          NULL, shader_time_index, NULL);
-      if (shader_code == NULL) {
+      if (!shader_code) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -801,7 +801,7 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_gs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         NULL, -1, NULL);
-      if (shader_code == NULL) {
+      if (!shader_code) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -925,7 +925,7 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_fs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         NULL, -1, -1, true, false, NULL, NULL);
-      if (shader_code == NULL) {
+      if (!shader_code) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -997,7 +997,7 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_cs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         -1, NULL);
-      if (shader_code == NULL) {
+      if (!shader_code) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }

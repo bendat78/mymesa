@@ -1980,7 +1980,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		pStages[stage] = &pCreateInfo->pStages[i];
 	}
 
-	radv_create_shaders(pipeline, device, cache, 
+	radv_create_shaders(pipeline, device, cache,
 	                    radv_generate_graphics_pipeline_key(pipeline, pCreateInfo, has_view_index),
 	                    pStages);
 

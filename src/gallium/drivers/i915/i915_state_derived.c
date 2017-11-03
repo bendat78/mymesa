@@ -232,7 +232,7 @@ void i915_update_derived(struct i915_context *i915)
 
    if (!i915->depth_stencil)
       i915->dirty &= ~I915_NEW_DEPTH_STENCIL;
-   
+
    for (i = 0; atoms[i]; i++)
       if (atoms[i]->dirty & i915->dirty)
          atoms[i]->update(i915);

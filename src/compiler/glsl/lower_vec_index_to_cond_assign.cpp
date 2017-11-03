@@ -128,7 +128,7 @@ ir_vec_index_to_cond_assign_visitor::convert_vector_extract_to_cond_assign(ir_rv
 {
    ir_expression *const expr = ir->as_expression();
 
-   if (expr == NULL)
+   if (!expr)
       return ir;
 
    if (expr->operation == ir_unop_interpolate_at_centroid ||

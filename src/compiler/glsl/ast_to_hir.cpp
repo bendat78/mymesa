@@ -2370,7 +2370,7 @@ ast_type_specifier::glsl_type(const char **name,
 {
    const struct glsl_type *type;
 
-   if (this->type != NULL)
+   if (this->type)
       type = this->type;
    else if (structure)
       type = structure->type;

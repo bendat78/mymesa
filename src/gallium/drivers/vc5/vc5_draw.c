@@ -242,7 +242,7 @@ vc5_emit_gl_shader_state(struct vc5_context *vc5,
                 cl_emit_prepacked(&job->indirect, &attr_packed);
         }
 
-        if (vtx->num_elements == 0) {
+        if (!vtx->num_elements) {
                 /* GFXH-930: At least one attribute must be enabled and read
                  * by CS and VS.  If we have no attributes being consumed by
                  * the shader, set up a dummy to be loaded into the VPM.
