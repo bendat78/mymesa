@@ -331,7 +331,7 @@ create_and_append_field(struct parser_context *ctx,
    }
 
    field->next = list;
-   if (prev == NULL)
+   if (!prev)
       ctx->group->fields = field;
    else
       prev->next = field;
@@ -748,7 +748,7 @@ gen_group_get_length(struct gen_group *group, const uint32_t *p)
          else
             return -1;
       case 2: {
-         if (opcode == 0)
+         if (!opcode)
             return field_value(h, 0, 7) + 2;
          else if (opcode < 3)
             return field_value(h, 0, 15) + 2;

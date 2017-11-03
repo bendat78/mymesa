@@ -1620,7 +1620,7 @@ st_get_basic_variant(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    struct st_basic_variant *v;
    struct st_basic_variant_key key;
-   struct pipe_shader_state tgsi = {0};
+   struct pipe_shader_state tgsi = {};
    memset(&key, 0, sizeof(key));
    key.st = st->has_shareable_shaders ? NULL : st;
 

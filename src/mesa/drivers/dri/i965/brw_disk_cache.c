@@ -174,7 +174,7 @@ read_and_upload(struct brw_context *brw, struct disk_cache *cache,
 
    size_t buffer_size;
    uint8_t *buffer = disk_cache_get(cache, binary_sha1, &buffer_size);
-   if (buffer == NULL) {
+   if (!buffer) {
       if (brw->ctx._Shader->Flags & GLSL_CACHE_INFO) {
          char sha1_buf[41];
          _mesa_sha1_format(sha1_buf, binary_sha1);
@@ -267,11 +267,11 @@ bool
 brw_disk_cache_upload_program(struct brw_context *brw, gl_shader_stage stage)
 {
    struct disk_cache *cache = brw->ctx.Cache;
-   if (cache == NULL)
+   if (!cache)
       return false;
 
    struct gl_program *prog = brw->ctx._Shader->CurrentProgram[stage];
-   if (prog == NULL)
+   if (!prog)
       return false;
 
    /* FIXME: For now we don't read from the cache if transform feedback is
@@ -336,7 +336,7 @@ void
 brw_disk_cache_write_render_programs(struct brw_context *brw)
 {
    struct disk_cache *cache = brw->ctx.Cache;
-   if (cache == NULL)
+   if (!cache)
       return;
 
    struct gl_program *prog =
@@ -400,7 +400,7 @@ void
 brw_disk_cache_write_compute_program(struct brw_context *brw)
 {
    struct disk_cache *cache = brw->ctx.Cache;
-   if (cache == NULL)
+   if (!cache)
       return;
 
    struct gl_program *prog =

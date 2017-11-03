@@ -546,7 +546,7 @@ static int radv_amdgpu_create_bo_list(struct radv_amdgpu_winsys *ws,
 	} else if (count == 1 && !extra_bo && !extra_cs &&
 	           !radv_amdgpu_cs(cs_array[0])->num_virtual_buffers) {
 		struct radv_amdgpu_cs *cs = (struct radv_amdgpu_cs*)cs_array[0];
-		if (cs->num_buffers == 0) {
+		if (!cs->num_buffers) {
 			*bo_list = 0;
 			return 0;
 		}
@@ -565,7 +565,7 @@ static int radv_amdgpu_create_bo_list(struct radv_amdgpu_winsys *ws,
 		if (extra_cs) {
 			total_buffer_count += ((struct radv_amdgpu_cs*)extra_cs)->num_buffers;
 		}
-		if (total_buffer_count == 0) {
+		if (!total_buffer_count) {
 			*bo_list = 0;
 			return 0;
 		}

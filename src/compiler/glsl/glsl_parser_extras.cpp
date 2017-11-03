@@ -1876,7 +1876,7 @@ _mesa_glsl_copy_symbols_from_table(struct exec_list *shader_ir,
       }
    }
 
-   if (src != NULL) {
+   if (src) {
       /* Explicitly copy the gl_PerVertex interface definitions because these
        * are needed to check they are the same during the interstage link.
        * They can’t necessarily be found via the exec_list because the members
