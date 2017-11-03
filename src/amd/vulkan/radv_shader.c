@@ -680,7 +680,8 @@ radv_shader_dump_stats(struct radv_device *device,
 	generate_shader_stats(device, variant, stage, buf);
 
 	fprintf(file, "\n%s:\n", radv_get_shader_name(variant, stage));
-	fprintf(file, "\n%s:\n", buf->buf);
+
+	fprintf(file, "%s", buf->buf);
 
 	_mesa_string_buffer_destroy(buf);
 }
