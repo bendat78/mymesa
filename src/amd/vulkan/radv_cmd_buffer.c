@@ -476,6 +476,19 @@ radv_save_pipeline(struct radv_cmd_buffer *cmd_buffer,
 	radv_emit_write_data_packet(cs, va, 2, data);
 }
 
+void radv_set_descriptor_set(struct radv_cmd_buffer *cmd_buffer,
+			     struct radv_descriptor_set *set,
+			     unsigned idx)
+{
+	cmd_buffer->descriptors[idx] = set;
+	if (set)
+		cmd_buffer->state.valid_descriptors |= (1u << idx);
+	else
+		cmd_buffer->state.valid_descriptors &= ~(1u << idx);
+	cmd_buffer->state.descriptors_dirty |= (1u << idx);
+
+}
+
 static void
 radv_save_descriptors(struct radv_cmd_buffer *cmd_buffer)
 {
@@ -483,20 +496,14 @@ radv_save_descriptors(struct radv_cmd_buffer *cmd_buffer)
 	struct radeon_winsys_cs *cs = cmd_buffer->cs;
 	uint32_t data[MAX_SETS * 2] = {};
 	uint64_t va;
-
-	if (!device->trace_bo)
-		return;
-
+	unsigned i;
 	va = radv_buffer_get_va(device->trace_bo) + 24;
 
 	MAYBE_UNUSED unsigned cdw_max = radeon_check_space(device->ws,
 							   cmd_buffer->cs, 4 + MAX_SETS * 2);
 
-	for (int i = 0; i < MAX_SETS; i++) {
-		struct radv_descriptor_set *set = cmd_buffer->state.descriptors[i];
-		if (!set)
-			continue;
-
+	for_each_bit(i, cmd_buffer->state.valid_descriptors) {
+		struct radv_descriptor_set *set = cmd_buffer->descriptors[i];
 		data[i * 2] = (uintptr_t)set;
 		data[i * 2 + 1] = (uintptr_t)set >> 32;
 	}
@@ -1655,8 +1662,8 @@ radv_flush_indirect_descriptor_sets(struct radv_cmd_buffer *cmd_buffer)
 	for (unsigned i = 0; i < MAX_SETS; i++) {
 		uint32_t *uptr = ((uint32_t *)ptr) + i * 2;
 		uint64_t set_va = 0;
-		struct radv_descriptor_set *set = cmd_buffer->state.descriptors[i];
-		if (set)
+		struct radv_descriptor_set *set = cmd_buffer->descriptors[i];
+		if (cmd_buffer->state.valid_descriptors & (1u << i))
 			set_va = set->va;
 		uptr[0] = set_va & 0xffffffff;
 		uptr[1] = set_va >> 32;
@@ -1714,8 +1721,8 @@ radv_flush_descriptors(struct radv_cmd_buffer *cmd_buffer,
 	                                                   MAX_SETS * MESA_SHADER_STAGES * 4);
 
 	for_each_bit(i, cmd_buffer->state.descriptors_dirty) {
-		struct radv_descriptor_set *set = cmd_buffer->state.descriptors[i];
-		if (!set)
+		struct radv_descriptor_set *set = cmd_buffer->descriptors[i];
+		if (!(cmd_buffer->state.valid_descriptors & (1u << i)))
 			continue;
 
 		radv_emit_descriptor_set_userdata(cmd_buffer, stages, set, i);
@@ -1723,7 +1730,8 @@ radv_flush_descriptors(struct radv_cmd_buffer *cmd_buffer,
 	cmd_buffer->state.descriptors_dirty = 0;
 	cmd_buffer->state.push_descriptors_dirty = false;
 
-	radv_save_descriptors(cmd_buffer);
+	if (cmd_buffer->device->trace_bo)
+		radv_save_descriptors(cmd_buffer);
 
 	assert(cmd_buffer->cs->cdw <= cdw_max);
 }
@@ -1792,13 +1800,13 @@ radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer, bo
 			uint32_t *desc = &((uint32_t *)vb_ptr)[i * 4];
 			uint32_t offset;
 			int vb = velems->binding[i];
-			struct radv_buffer *buffer = cmd_buffer->state.vertex_bindings[vb].buffer;
+			struct radv_buffer *buffer = cmd_buffer->vertex_bindings[vb].buffer;
 			uint32_t stride = cmd_buffer->state.pipeline->binding_stride[vb];
 
 			device->ws->cs_add_buffer(cmd_buffer->cs, buffer->bo, 8);
 			va = radv_buffer_get_va(buffer->bo);
 
-			offset = cmd_buffer->state.vertex_bindings[vb].offset + velems->offset[i];
+			offset = cmd_buffer->vertex_bindings[vb].offset + velems->offset[i];
 			va += offset + buffer->offset;
 			desc[0] = va;
 			desc[1] = S_008F04_BASE_ADDRESS_HI(va >> 32) | S_008F04_STRIDE(stride);
@@ -2258,7 +2266,7 @@ void radv_CmdBindVertexBuffers(
 	const VkDeviceSize*                         pOffsets)
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
-	struct radv_vertex_binding *vb = cmd_buffer->state.vertex_bindings;
+	struct radv_vertex_binding *vb = cmd_buffer->vertex_bindings;
 	bool changed = false;
 
 	/* We have to defer setting up vertex buffer since we need the buffer
@@ -2321,8 +2329,7 @@ radv_bind_descriptor_set(struct radv_cmd_buffer *cmd_buffer,
 {
 	struct radeon_winsys *ws = cmd_buffer->device->ws;
 
-	cmd_buffer->state.descriptors[idx] = set;
-	cmd_buffer->state.descriptors_dirty |= (1u << idx);
+	radv_set_descriptor_set(cmd_buffer, set, idx);
 	if (!set)
 		return;
 
@@ -2434,8 +2441,7 @@ void radv_meta_push_descriptor_set(
 	                            radv_descriptor_set_to_handle(push_set),
 	                            descriptorWriteCount, pDescriptorWrites, 0, NULL);
 
-	cmd_buffer->state.descriptors[set] = push_set;
-	cmd_buffer->state.descriptors_dirty |= (1u << set);
+	radv_set_descriptor_set(cmd_buffer, push_set, set);
 }
 
 void radv_CmdPushDescriptorSetKHR(
@@ -2459,8 +2465,7 @@ void radv_CmdPushDescriptorSetKHR(
 	                            radv_descriptor_set_to_handle(push_set),
 	                            descriptorWriteCount, pDescriptorWrites, 0, NULL);
 
-	cmd_buffer->state.descriptors[set] = push_set;
-	cmd_buffer->state.descriptors_dirty |= (1u << set);
+	radv_set_descriptor_set(cmd_buffer, push_set, set);
 	cmd_buffer->state.push_descriptors_dirty = true;
 }
 
@@ -2483,8 +2488,7 @@ void radv_CmdPushDescriptorSetWithTemplateKHR(
 	radv_update_descriptor_set_with_template(cmd_buffer->device, cmd_buffer, push_set,
 						 descriptorUpdateTemplate, pData);
 
-	cmd_buffer->state.descriptors[set] = push_set;
-	cmd_buffer->state.descriptors_dirty |= (1u << set);
+	radv_set_descriptor_set(cmd_buffer, push_set, set);
 	cmd_buffer->state.push_descriptors_dirty = true;
 }
 
@@ -2510,6 +2514,8 @@ VkResult radv_EndCommandBuffer(
 			cmd_buffer->state.flush_bits |= RADV_CMD_FLAG_CS_PARTIAL_FLUSH | RADV_CMD_FLAG_PS_PARTIAL_FLUSH | RADV_CMD_FLAG_WRITEBACK_GLOBAL_L2;
 		si_emit_cache_flush(cmd_buffer);
 	}
+
+	vk_free(&cmd_buffer->pool->alloc, cmd_buffer->state.attachments);
 
 	if (!cmd_buffer->device->ws->cs_finalize(cmd_buffer->cs))
 		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -2567,10 +2573,7 @@ radv_emit_compute_pipeline(struct radv_cmd_buffer *cmd_buffer)
 
 static void radv_mark_descriptor_sets_dirty(struct radv_cmd_buffer *cmd_buffer)
 {
-	for (unsigned i = 0; i < MAX_SETS; i++) {
-		if (cmd_buffer->state.descriptors[i])
-			cmd_buffer->state.descriptors_dirty |= (1u << i);
-	}
+	cmd_buffer->state.descriptors_dirty |= cmd_buffer->state.valid_descriptors;
 }
 
 void radv_CmdBindPipeline(
