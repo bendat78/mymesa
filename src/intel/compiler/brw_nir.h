@@ -96,7 +96,7 @@ nir_shader *brw_preprocess_nir(const struct brw_compiler *compiler,
                                nir_shader *nir);
 
 bool brw_nir_lower_cs_intrinsics(nir_shader *nir,
-                                 struct brw_cs_prog_data *prog_data);
+                                 unsigned dispatch_width);
 void brw_nir_lower_vs_inputs(nir_shader *nir,
                              bool use_legacy_snorm_formula,
                              const uint8_t *vs_attrib_wa_flags);

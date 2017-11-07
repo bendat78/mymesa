@@ -92,7 +92,7 @@
 #define DRM_FORMAT_MOD_INVALID ((1ULL<<56) - 1)
 #endif
 
-#define NUM_ATTRIBS 10
+#define NUM_ATTRIBS 12
 
 static void
 dri_set_background_context(void *loaderPrivate)
@@ -457,6 +457,7 @@ static const struct dri2_extension_match optional_core_extensions[] = {
    { __DRI2_RENDERER_QUERY, 1, offsetof(struct dri2_egl_display, rendererQuery) },
    { __DRI2_INTEROP, 1, offsetof(struct dri2_egl_display, interop) },
    { __DRI_IMAGE, 1, offsetof(struct dri2_egl_display, image) },
+   { __DRI2_FLUSH_CONTROL, 1, offsetof(struct dri2_egl_display, flush_control) },
    { NULL, 0, 0 }
 };
 
@@ -774,6 +775,9 @@ dri2_setup_screen(_EGLDisplay *disp)
       }
 #endif
    }
+
+   if (dri2_dpy->flush_control)
+      disp->Extensions.KHR_context_flush_control = EGL_TRUE;
 }
 
 void
@@ -1235,6 +1239,11 @@ dri2_fill_context_attribs(struct dri2_egl_context *dri2_ctx,
       ctx_attribs[pos++] = val;
    }
 
+   if (dri2_ctx->base.ReleaseBehavior == EGL_CONTEXT_RELEASE_BEHAVIOR_NONE_KHR) {
+      ctx_attribs[pos++] = __DRI_CTX_ATTRIB_RELEASE_BEHAVIOR;
+      ctx_attribs[pos++] = __DRI_CTX_RELEASE_BEHAVIOR_NONE;
+   }
+
    *num_attribs = pos;
 
    return true;
@@ -1255,6 +1264,9 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    struct dri2_egl_config *dri2_config = dri2_egl_config(conf);
    const __DRIconfig *dri_config;
    int api;
+   unsigned error;
+   unsigned num_attribs = NUM_ATTRIBS;
+   uint32_t ctx_attribs[NUM_ATTRIBS];
 
    (void) drv;
 
@@ -1347,15 +1359,11 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    else
       dri_config = NULL;
 
+   if (!dri2_fill_context_attribs(dri2_ctx, dri2_dpy, ctx_attribs,
+                                  &num_attribs))
+      goto cleanup;
+
    if (dri2_dpy->image_driver) {
-      unsigned error;
-      unsigned num_attribs = NUM_ATTRIBS;
-      uint32_t ctx_attribs[NUM_ATTRIBS];
-
-      if (!dri2_fill_context_attribs(dri2_ctx, dri2_dpy, ctx_attribs,
-                                        &num_attribs))
-         goto cleanup;
-
       dri2_ctx->dri_context =
          dri2_dpy->image_driver->createContextAttribs(dri2_dpy->dri_screen,
                                                       api,
@@ -1368,14 +1376,6 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       dri2_create_context_attribs_error(error);
    } else if (dri2_dpy->dri2) {
       if (dri2_dpy->dri2->base.version >= 3) {
-         unsigned error;
-         unsigned num_attribs = NUM_ATTRIBS;
-         uint32_t ctx_attribs[NUM_ATTRIBS];
-
-         if (!dri2_fill_context_attribs(dri2_ctx, dri2_dpy, ctx_attribs,
-                                        &num_attribs))
-            goto cleanup;
-
          dri2_ctx->dri_context =
             dri2_dpy->dri2->createContextAttribs(dri2_dpy->dri_screen,
                                                  api,
@@ -1397,14 +1397,6 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    } else {
       assert(dri2_dpy->swrast);
       if (dri2_dpy->swrast->base.version >= 3) {
-         unsigned error;
-         unsigned num_attribs = NUM_ATTRIBS;
-         uint32_t ctx_attribs[NUM_ATTRIBS];
-
-         if (!dri2_fill_context_attribs(dri2_ctx, dri2_dpy, ctx_attribs,
-                                        &num_attribs))
-            goto cleanup;
-
          dri2_ctx->dri_context =
             dri2_dpy->swrast->createContextAttribs(dri2_dpy->dri_screen,
                                                    api,

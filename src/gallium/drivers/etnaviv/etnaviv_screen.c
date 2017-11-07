@@ -267,6 +267,7 @@ etna_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
    case PIPE_CAP_TILE_RASTER_ORDER:
    case PIPE_CAP_MAX_COMBINED_SHADER_OUTPUT_RESOURCES:
+   case PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET:
       return 0;
 
    /* Stream output. */
@@ -497,6 +498,10 @@ gpu_supports_texure_format(struct etna_screen *screen, uint32_t fmt,
        */
       if (util_format_is_etc(format))
          supported = VIV_FEATURE(screen, chipMinorFeatures2, HALTI1);
+   }
+
+   if (fmt & ASTC_FORMAT) {
+      supported = screen->specs.tex_astc;
    }
 
    if (!supported)
@@ -787,6 +792,8 @@ etna_get_specs(struct etna_screen *screen)
    screen->specs.single_buffer = VIV_FEATURE(screen, chipMinorFeatures4, SINGLE_BUFFER);
    if (screen->specs.single_buffer)
       DBG("etnaviv: Single buffer mode enabled with %d pixel pipes\n", screen->specs.pixel_pipes);
+
+   screen->specs.tex_astc = VIV_FEATURE(screen, chipMinorFeatures4, TEXTURE_ASTC);
 
    return true;
 

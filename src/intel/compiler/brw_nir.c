@@ -620,7 +620,6 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
 
    OPT(nir_lower_tex, &tex_options);
    OPT(nir_normalize_cubemap_coords);
-   OPT(nir_lower_read_invocation_to_scalar);
 
    OPT(nir_lower_global_vars_to_local);
 
@@ -636,6 +635,16 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
    OPT(nir_lower_var_copies);
 
    OPT(nir_lower_system_values);
+
+   const nir_lower_subgroups_options subgroups_options = {
+      .subgroup_size = nir->info.stage == MESA_SHADER_COMPUTE ? 32 :
+                       nir->info.stage == MESA_SHADER_FRAGMENT ? 16 : 8,
+      .ballot_bit_size = 32,
+      .lower_to_scalar = true,
+      .lower_subgroup_masks = true,
+      .lower_vote_trivial = !is_scalar,
+   };
+   OPT(nir_lower_subgroups, &subgroups_options);
 
    OPT(nir_lower_clip_cull_distance_arrays);
 
