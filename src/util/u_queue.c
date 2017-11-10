@@ -104,10 +104,10 @@ do_futex_fence_wait(struct util_queue_fence *fence,
    ts.tv_sec = abs_timeout / (1000*1000*1000);
    ts.tv_nsec = abs_timeout % (1000*1000*1000);
 
-   while (v != 0) {
+   while (v) {
       if (v != 2) {
          v = p_atomic_cmpxchg(&fence->val, 1, 2);
-         if (v == 0)
+         if (!v)
             return true;
       }
 

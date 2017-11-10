@@ -769,7 +769,7 @@ dri_create_context(gl_api api,
     (void) ctx_config->flags;
 
     /* The swrast driver doesn't understand any of the attributes */
-    if (ctx_config->attribute_mask != 0) {
+    if (ctx_config->attribute_mask) {
 	*error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
 	return false;
     }

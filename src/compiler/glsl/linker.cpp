@@ -5084,7 +5084,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     * due to packing and unpacking.
     */
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
+      if (!prog->_LinkedShaders[i])
          continue;
 
       optimize_swizzles(prog->_LinkedShaders[i]->ir);

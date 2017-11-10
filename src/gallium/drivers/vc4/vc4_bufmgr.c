@@ -159,7 +159,7 @@ vc4_bo_free(struct vc4_bo *bo)
         memset(&c, 0, sizeof(c));
         c.handle = bo->handle;
         int ret = vc4_ioctl(screen->fd, DRM_IOCTL_GEM_CLOSE, &c);
-        if (ret != 0)
+        if (ret)
                 fprintf(stderr, "close object %d: %s\n", bo->handle, strerror(errno));
 
         screen->bo_count--;

@@ -3239,14 +3239,14 @@ glsl_to_tgsi_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
          atomic_info[num_atomics].location = location->data.location;
          atomic_info[num_atomics].binding = location->data.binding;
          atomic_info[num_atomics].size = location->type->arrays_of_arrays_size();
-         if (atomic_info[num_atomics].size == 0)
+         if (!atomic_info[num_atomics].size)
             atomic_info[num_atomics].size = 1;
          atomic_info[num_atomics].array_id = 0;
          num_atomics++;
       }
 
       if (offset.file != PROGRAM_UNDEFINED) {
-         if (atomic_info[entry->index].array_id == 0) {
+         if (!atomic_info[entry->index].array_id) {
             num_atomic_arrays++;
             atomic_info[entry->index].array_id = num_atomic_arrays;
          }

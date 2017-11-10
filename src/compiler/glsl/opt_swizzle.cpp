@@ -69,7 +69,7 @@ ir_opt_swizzle_visitor::handle_rvalue(ir_rvalue **rvalue)
       int mask2[4];
 
       memset(&mask2, 0, sizeof(mask2));
-      if (swiz2->mask.num_components >= 1)
+      if (swiz2->mask.num_components)
          mask2[0] = swiz2->mask.x;
       if (swiz2->mask.num_components >= 2)
          mask2[1] = swiz2->mask.y;
@@ -78,7 +78,7 @@ ir_opt_swizzle_visitor::handle_rvalue(ir_rvalue **rvalue)
       if (swiz2->mask.num_components >= 4)
          mask2[3] = swiz2->mask.w;
 
-      if (swiz->mask.num_components >= 1)
+      if (swiz->mask.num_components)
          swiz->mask.x = mask2[swiz->mask.x];
       if (swiz->mask.num_components >= 2)
          swiz->mask.y = mask2[swiz->mask.y];

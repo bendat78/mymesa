@@ -6950,7 +6950,7 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
    }
 
    const unsigned *ret = NULL;
-   if (unlikely(cfg == NULL)) {
+   if (!unlikely(cfg)) {
       assert(fail_msg);
       if (error_str)
          *error_str = ralloc_strdup(mem_ctx, fail_msg);
