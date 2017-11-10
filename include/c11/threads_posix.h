@@ -240,7 +240,7 @@ mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
 #ifdef EMULATED_THREADS_USE_NATIVE_TIMEDLOCK
     int rt;
     rt = pthread_mutex_timedlock(mtx, ts);
-    if (rt == 0)
+    if (!rt)
         return thrd_success;
     return (rt == ETIMEDOUT) ? thrd_busy : thrd_error;
 #else

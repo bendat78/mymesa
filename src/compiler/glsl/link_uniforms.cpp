@@ -1360,7 +1360,7 @@ link_assign_uniform_storage(struct gl_context *ctx,
 
    union gl_constant_value *data;
 
-   if (prog->data->UniformStorage == NULL) {
+   if (!prog->data->UniformStorage) {
       prog->data->UniformStorage = rzalloc_array(prog->data,
                                                  struct gl_uniform_storage,
                                                  prog->data->NumUniformStorage);

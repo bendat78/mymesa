@@ -1005,7 +1005,7 @@ st_translate_mesa_program(struct gl_context *ctx,
    if (program->Parameters) {
       t->constants = calloc(program->Parameters->NumParameters,
                              sizeof t->constants[0]);
-      if (t->constants == NULL) {
+      if (!t->constants) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }

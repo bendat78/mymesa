@@ -46,7 +46,7 @@ enum { WAYLAND_DRM_PRIME = 0x01 };
 static inline struct wl_drm_buffer *
 wayland_drm_buffer_get(struct wl_drm *drm, struct wl_resource *resource)
 {
-	if (resource == NULL)
+	if (!resource)
 		return NULL;
 
 	if (wl_resource_instance_of(resource, &wl_buffer_interface,

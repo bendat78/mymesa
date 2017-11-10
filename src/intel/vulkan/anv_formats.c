@@ -416,7 +416,7 @@ anv_get_format_plane(const struct gen_device_info *devinfo, VkFormat vk_format,
       .isl_format = ISL_FORMAT_UNSUPPORTED,
    };
 
-   if (format == NULL)
+   if (!format)
       return unsupported;
 
    uint32_t plane = anv_image_aspect_to_plane(vk_format_aspects(vk_format), aspect);
@@ -474,7 +474,7 @@ get_image_format_features(const struct gen_device_info *devinfo,
 {
    VkFormatFeatureFlags flags = 0;
 
-   if (anv_format == NULL)
+   if (!anv_format)
       return 0;
 
    const VkImageAspectFlags aspects = vk_format_aspects(vk_format);
@@ -618,7 +618,7 @@ get_buffer_format_features(const struct gen_device_info *devinfo,
 {
    VkFormatFeatureFlags flags = 0;
 
-   if (anv_format == NULL)
+   if (!anv_format)
       return 0;
 
    const enum isl_format isl_format = anv_format->planes[0].isl_format;
