@@ -374,6 +374,8 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen,
    case PIPE_SHADER_CAP_SUPPORTED_IRS:
    case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
    case PIPE_SHADER_CAP_LOWER_IF_THRESHOLD:
+   case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
+   case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
       return 0;
    default:
       NOUVEAU_ERR("unknown PIPE_SHADER_CAP %d\n", param);
@@ -771,6 +773,11 @@ nv50_screen_init_hwctx(struct nv50_screen *screen)
       BEGIN_NV04(push, NV84_3D(VERTEX_ID_BASE), 1);
       PUSH_DATA (push, 0);
    }
+
+   BEGIN_NV04(push, NV50_3D(UNK0FDC), 1);
+   PUSH_DATA (push, 1);
+   BEGIN_NV04(push, NV50_3D(UNK19C0), 1);
+   PUSH_DATA (push, 1);
 
    PUSH_KICK (push);
 }

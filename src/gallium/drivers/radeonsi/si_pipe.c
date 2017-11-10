@@ -156,6 +156,21 @@ si_create_llvm_target_machine(struct si_screen *sscreen)
 	return ac_create_target_machine(sscreen->b.family, tm_options);
 }
 
+static void si_set_debug_callback(struct pipe_context *ctx,
+				  const struct pipe_debug_callback *cb)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_screen *screen = sctx->screen;
+
+	util_queue_finish(&screen->shader_compiler_queue);
+	util_queue_finish(&screen->shader_compiler_queue_low_priority);
+
+	if (cb)
+		sctx->debug = *cb;
+	else
+		memset(&sctx->debug, 0, sizeof(sctx->debug));
+}
+
 static void si_set_log_context(struct pipe_context *ctx,
 			       struct u_log_context *log)
 {
@@ -184,6 +199,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	sctx->b.b.priv = NULL;
 	sctx->b.b.destroy = si_destroy_context;
 	sctx->b.b.emit_string_marker = si_emit_string_marker;
+	sctx->b.b.set_debug_callback = si_set_debug_callback;
 	sctx->b.b.set_log_context = si_set_log_context;
 	sctx->b.set_atom_dirty = (void *)si_set_atom_dirty;
 	sctx->screen = sscreen; /* Easy accessing of screen/winsys. */
@@ -234,6 +250,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 		goto fail;
 
 	si_init_all_descriptors(sctx);
+	si_init_fence_functions(sctx);
 	si_init_state_functions(sctx);
 	si_init_shader_functions(sctx);
 	si_init_viewport_functions(sctx);
@@ -366,15 +383,8 @@ static struct pipe_context *si_pipe_create_context(struct pipe_screen *screen,
 	if (!(flags & PIPE_CONTEXT_PREFER_THREADED))
 		return ctx;
 
-	/* Clover (compute-only) is unsupported.
-	 *
-	 * Since the threaded context creates shader states from the non-driver
-	 * thread, asynchronous compilation is required for create_{shader}_-
-	 * state not to use pipe_context. Debug contexts (ddebug) disable
-	 * asynchronous compilation, so don't use the threaded context with
-	 * those.
-	 */
-	if (flags & (PIPE_CONTEXT_COMPUTE_ONLY | PIPE_CONTEXT_DEBUG))
+	/* Clover (compute-only) is unsupported. */
+	if (flags & PIPE_CONTEXT_COMPUTE_ONLY)
 		return ctx;
 
 	/* When shaders are logged to stderr, asynchronous compilation is
@@ -382,8 +392,11 @@ static struct pipe_context *si_pipe_create_context(struct pipe_screen *screen,
 	if (sscreen->b.debug_flags & DBG_ALL_SHADERS)
 		return ctx;
 
+	/* Use asynchronous flushes only on amdgpu, since the radeon
+	 * implementation for fence_server_sync is incomplete. */
 	return threaded_context_create(ctx, &sscreen->b.pool_transfers,
 				       si_replace_buffer_storage,
+				       sscreen->b.info.drm_major >= 3 ? si_create_fence : NULL,
 				       &((struct si_context*)ctx)->b.tc);
 }
 
@@ -781,6 +794,8 @@ static int si_get_shader_param(struct pipe_screen* pscreen,
 	/* Unsupported boolean features. */
 	case PIPE_SHADER_CAP_SUBROUTINES:
 	case PIPE_SHADER_CAP_SUPPORTED_IRS:
+	case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
+	case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
 		return 0;
 	}
 	return 0;
@@ -987,6 +1002,7 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 	sscreen->b.b.get_driver_uuid = radeonsi_get_driver_uuid;
 	sscreen->b.b.resource_create = si_resource_create_common;
 
+	si_init_screen_fence_functions(sscreen);
 	si_init_screen_state_functions(sscreen);
 
 	/* Set these flags in debug_flags early, so that the shader cache takes

@@ -21,7 +21,9 @@
 project(
   'mesa',
   ['c', 'cpp'],
-  version : '17.3.0-devel',
+  version : run_command(
+    [find_program('python', 'python2', 'python3'), 'bin/meson_get_version.py']
+  ).stdout(),
   license : 'MIT',
   meson_version : '>= 0.42',
   default_options : ['buildtype=debugoptimized', 'c_std=c99', 'cpp_std=c++11']
@@ -90,6 +92,18 @@ with_dri_r200 = false
 with_dri_nouveau = false
 with_dri_swrast = false
 _drivers = get_option('dri-drivers')
+if _drivers == 'auto'
+  # TODO: PPC, Sparc
+  if not ['darwin', 'windows'].contains(host_machine.system())
+    if ['x86', 'x86_64'].contains(host_machine.cpu_family())
+      _drivers = 'i915,i965,r100,r200,nouveau'
+    else
+      error('Unknown architecture. Please pass -Ddri-drivers to set driver options. Patches gladly accepted to fix this.')
+    endif
+  else
+    error('Unknown OS. Please pass -Ddri-drivers to set driver options. Patches gladly accepted to fix this.')
+  endif
+endif
 if _drivers != ''
   _split = _drivers.split(',')
   with_dri_i915 = _split.contains('i915')
@@ -112,6 +126,20 @@ with_gallium_vc5 = false
 with_gallium_etnaviv = false
 with_gallium_imx = false
 _drivers = get_option('gallium-drivers')
+if _drivers == 'auto'
+  if not ['darwin', 'windows'].contains(host_machine.system())
+    # TODO: PPC, Sparc
+    if ['x86', 'x86_64'].contains(host_machine.cpu_family())
+      _drivers = 'radeonsi,nouveau,swrast'
+    elif ['arm', 'aarch64'].contains(host_machine.cpu_family())
+      _drivers = 'pl111,vc4,vc5,freedreno,etnaviv,imx,swrast'
+    else
+      error('Unknown architecture. Please pass -Dgallium-drivers to set driver options. Patches gladly accepted to fix this.')
+    endif
+  else
+    error('Unknown OS. Please pass -Dgallium-drivers to set driver options. Patches gladly accepted to fix this.')
+  endif
+endif
 if _drivers != ''
   _split = _drivers.split(',')
   with_gallium_pl111 = _split.contains('pl111')
@@ -231,8 +259,12 @@ if with_glx != 'disabled'
 endif
 
 with_glvnd = get_option('glvnd')
-if with_glvnd and with_glx != 'dri'
-  message('glvnd requires dri based glx')
+if with_glvnd
+  if with_glx == 'xlib' or with_glx == 'gallium-xlib'
+    error('Cannot build glvnd support for GLX that is not DRI based.')
+  elif with_glx == 'disabled' and not with_egl
+    error('glvnd requires DRI based GLX and/or EGL')
+  endif
 endif
 
 # TODO: toggle for this
@@ -246,6 +278,18 @@ with_intel_vk = false
 with_amd_vk = false
 with_any_vk = false
 _vulkan_drivers = get_option('vulkan-drivers')
+if _vulkan_drivers == 'auto'
+  if not ['darwin', 'windows'].contains(host_machine.system())
+    if host_machine.cpu_family().startswith('x86')
+      _vulkan_drivers = 'amd,intel'
+    else
+      error('Unknown architecture. Please pass -Dvulkan-drivers to set driver options. Patches gladly accepted to fix this.')
+    endif
+  else
+    # No vulkan driver supports windows or macOS currently
+    _vulkan_drivers = ''
+  endif
+endif
 if _vulkan_drivers != ''
   _split = _vulkan_drivers.split(',')
   with_intel_vk = _split.contains('intel')
@@ -485,8 +529,8 @@ endif
 
 # FIXME: enable asm when cross compiler
 # This is doable (autotools does it), but it's not of immediate concern
-if meson.is_cross_build()
-  message('Cross compiling, disabling asm')
+if meson.is_cross_build() and host_machine.cpu_family().startswith('x86')
+  message('Cross compiling, disabling x86/x86_64 asm')
   with_asm = false
 endif
 
@@ -524,7 +568,7 @@ elif cc.has_header_symbol('sys/mkdev.h', 'major')
   pre_args += '-DMAJOR_IN_MKDEV'
 endif
 
-foreach h : ['xlocale.h', 'sys/sysctl.h']
+foreach h : ['xlocale.h', 'sys/sysctl.h', 'linux/futex.h']
   if cc.has_header(h)
     pre_args += '-DHAVE_@0@'.format(h.to_upper().underscorify())
   endif
@@ -658,10 +702,12 @@ if with_amd_vk
   llvm_modules += ['amdgpu', 'bitreader', 'ipo']
 endif
 
-dep_llvm = dependency(
-  'llvm', version : '>= 3.9.0', required : with_amd_vk, modules : llvm_modules,
-)
+dep_llvm = []
+
 if with_llvm
+  dep_llvm = dependency(
+    'llvm', version : '>= 3.9.0', required : with_amd_vk, modules : llvm_modules,
+  )
   if dep_llvm.found()
     _llvm_version = dep_llvm.version().split('.')
     # Development versions of LLVM have an 'svn' suffix, we don't want that for
@@ -691,7 +737,6 @@ if with_glvnd
   pre_args += '-DUSE_LIBGLVND=1'
 endif
 
-# TODO: make this conditional
 if with_valgrind != 'false'
   dep_valgrind = dependency('valgrind', required : with_valgrind == 'true')
   if dep_valgrind.found()

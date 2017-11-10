@@ -345,6 +345,7 @@ struct si_saved_cs {
 
 	unsigned		gfx_last_dw;
 	bool			flushed;
+	int64_t			time_flush;
 };
 
 struct si_context {
@@ -361,6 +362,7 @@ struct si_context {
 	void				*vs_blit_color_layered;
 	void				*vs_blit_texcoord;
 	struct si_screen		*screen;
+	struct pipe_debug_callback	debug;
 	LLVMTargetMachineRef		tm; /* only non-threaded compilation */
 	struct si_shader_ctx_state	fixed_func_tcs_shader;
 	struct r600_resource		*wait_mem_scratch;
@@ -599,6 +601,12 @@ bool si_replace_shader(unsigned num, struct ac_shader_binary *binary);
 
 /* si_dma.c */
 void si_init_dma_functions(struct si_context *sctx);
+
+/* si_fence.c */
+void si_init_fence_functions(struct si_context *ctx);
+void si_init_screen_fence_functions(struct si_screen *screen);
+struct pipe_fence_handle *si_create_fence(struct pipe_context *ctx,
+					  struct tc_unflushed_batch_token *tc_token);
 
 /* si_hw_context.c */
 void si_destroy_saved_cs(struct si_saved_cs *scs);

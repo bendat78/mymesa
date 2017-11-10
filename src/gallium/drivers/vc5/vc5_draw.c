@@ -93,6 +93,9 @@ vc5_start_draw(struct vc5_context *vc5)
         /* There's definitely nothing in the VCD cache we want. */
         cl_emit(&job->bcl, FLUSH_VCD_CACHE, bin);
 
+        /* Disable any leftover OQ state from another job. */
+        cl_emit(&job->bcl, OCCLUSION_QUERY_COUNTER, counter);
+
         /* "Binning mode lists must have a Start Tile Binning item (6) after
          *  any prefix state data before the binning list proper starts."
          */
@@ -267,6 +270,25 @@ vc5_emit_gl_shader_state(struct vc5_context *vc5,
         job->shader_rec_count++;
 }
 
+/**
+ * Computes the various transform feedback statistics, since they can't be
+ * recorded by CL packets.
+ */
+static void
+vc5_tf_statistics_record(struct vc5_context *vc5,
+                         const struct pipe_draw_info *info,
+                         bool prim_tf)
+{
+        uint32_t prims = u_prims_for_vertices(info->mode, info->count);
+
+        vc5->prims_generated += prims;
+
+        if (prim_tf) {
+                /* XXX: Only count if we didn't overflow. */
+                vc5->tf_prims_generated += prims;
+        }
+}
+
 static void
 vc5_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 {
@@ -357,8 +379,10 @@ vc5_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
          * flag set.
          */
         uint32_t prim_tf_enable = 0;
-        if (vc5->prog.bind_vs->num_tf_outputs)
+        if (vc5->streamout.num_targets)
                 prim_tf_enable = (V3D_PRIM_POINTS_TF - V3D_PRIM_POINTS);
+
+        vc5_tf_statistics_record(vc5, info, prim_tf_enable);
 
         /* Note that the primitive type fields match with OpenGL/gallium
          * definitions, up to but not including QUADS.
@@ -453,6 +477,12 @@ vc5_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
                 job->resolve |= bit;
                 vc5_job_add_bo(job, rsc->bo);
+        }
+
+        if (job->referenced_size > 768 * 1024 * 1024) {
+                perf_debug("Flushing job with %dkb to try to free up memory\n",
+                        job->referenced_size / 1024);
+                vc5_flush(pctx);
         }
 
         if (V3D_DEBUG & V3D_DEBUG_ALWAYS_FLUSH)

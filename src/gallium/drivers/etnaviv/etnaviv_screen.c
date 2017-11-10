@@ -38,7 +38,7 @@
 #include "etnaviv_resource.h"
 #include "etnaviv_translate.h"
 
-#include "os/os_time.h"
+#include "util/os_time.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -459,6 +459,8 @@ etna_screen_get_shader_param(struct pipe_screen *pscreen,
    case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
    case PIPE_SHADER_CAP_LOWER_IF_THRESHOLD:
    case PIPE_SHADER_CAP_TGSI_SKIP_MERGE_REGISTERS:
+   case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
+   case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
       return 0;
    }
 
