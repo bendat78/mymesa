@@ -198,12 +198,12 @@ static VkResult radv_create_cmd_buffer(
 {
 	struct radv_cmd_buffer *cmd_buffer;
 	unsigned ring;
-	cmd_buffer = vk_alloc(&pool->alloc, sizeof(*cmd_buffer), 8,
-				VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!cmd_buffer)
+
+	cmd_buffer = vk_zalloc(&pool->alloc, sizeof(*cmd_buffer), 8,
+			       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+	if (cmd_buffer == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
-	memset(cmd_buffer, 0, sizeof(*cmd_buffer));
 	cmd_buffer->_loader_data.loaderMagic = ICD_LOADER_MAGIC;
 	cmd_buffer->device = device;
 	cmd_buffer->pool = pool;
@@ -231,8 +231,6 @@ static VkResult radv_create_cmd_buffer(
 
 	*pCommandBuffer = radv_cmd_buffer_to_handle(cmd_buffer);
 
-	cmd_buffer->upload.offset = 0;
-	cmd_buffer->upload.size = 0;
 	list_inithead(&cmd_buffer->upload.list);
 
 	return VK_SUCCESS;
@@ -405,9 +403,6 @@ void radv_cmd_buffer_trace_emit(struct radv_cmd_buffer *cmd_buffer)
 	struct radeon_winsys_cs *cs = cmd_buffer->cs;
 	uint64_t va;
 
-	if (!device->trace_bo)
-		return;
-
 	va = radv_buffer_get_va(device->trace_bo);
 	if (cmd_buffer->level == VK_COMMAND_BUFFER_LEVEL_SECONDARY)
 		va += 4;
@@ -438,7 +433,8 @@ radv_cmd_buffer_after_draw(struct radv_cmd_buffer *cmd_buffer)
 				       flags);
 	}
 
-	radv_cmd_buffer_trace_emit(cmd_buffer);
+	if (unlikely(cmd_buffer->device->trace_bo))
+		radv_cmd_buffer_trace_emit(cmd_buffer);
 }
 
 static void
@@ -449,9 +445,6 @@ radv_save_pipeline(struct radv_cmd_buffer *cmd_buffer,
 	struct radeon_winsys_cs *cs = cmd_buffer->cs;
 	uint32_t data[2];
 	uint64_t va;
-
-	if (!device->trace_bo)
-		return;
 
 	va = radv_buffer_get_va(device->trace_bo);
 
@@ -660,6 +653,25 @@ radv_emit_graphics_raster_state(struct radv_cmd_buffer *cmd_buffer,
 			       raster->pa_su_sc_mode_cntl);
 }
 
+static inline void
+radv_emit_prefetch_TC_L2_async(struct radv_cmd_buffer *cmd_buffer, uint64_t va,
+			       unsigned size)
+{
+	if (cmd_buffer->device->physical_device->rad_info.chip_class >= CIK)
+		si_cp_dma_prefetch(cmd_buffer, va, size);
+}
+
+static void
+radv_emit_VBO_descriptors_prefetch(struct radv_cmd_buffer *cmd_buffer)
+{
+	if (cmd_buffer->state.vb_prefetch_dirty) {
+		radv_emit_prefetch_TC_L2_async(cmd_buffer,
+					       cmd_buffer->state.vb_va,
+					       cmd_buffer->state.vb_size);
+		cmd_buffer->state.vb_prefetch_dirty = false;
+	}
+}
+
 static void
 radv_emit_shader_prefetch(struct radv_cmd_buffer *cmd_buffer,
 			  struct radv_shader_variant *shader)
@@ -674,16 +686,16 @@ radv_emit_shader_prefetch(struct radv_cmd_buffer *cmd_buffer,
 	va = radv_buffer_get_va(shader->bo) + shader->bo_offset;
 
 	radv_cs_add_buffer(ws, cs, shader->bo, 8);
-	if (cmd_buffer->device->physical_device->rad_info.chip_class >= CIK)
-		si_cp_dma_prefetch(cmd_buffer, va, shader->code_size);
+	radv_emit_prefetch_TC_L2_async(cmd_buffer, va, shader->code_size);
 }
 
 static void
-radv_emit_shaders_prefetch(struct radv_cmd_buffer *cmd_buffer,
-			   struct radv_pipeline *pipeline)
+radv_emit_prefetch(struct radv_cmd_buffer *cmd_buffer,
+		   struct radv_pipeline *pipeline)
 {
 	radv_emit_shader_prefetch(cmd_buffer,
 				  pipeline->shaders[MESA_SHADER_VERTEX]);
+	radv_emit_VBO_descriptors_prefetch(cmd_buffer);
 	radv_emit_shader_prefetch(cmd_buffer,
 				  pipeline->shaders[MESA_SHADER_TESS_CTRL]);
 	radv_emit_shader_prefetch(cmd_buffer,
@@ -1068,7 +1080,8 @@ radv_emit_graphics_pipeline(struct radv_cmd_buffer *cmd_buffer)
 	}
 	radeon_set_context_reg(cmd_buffer->cs, R_028A6C_VGT_GS_OUT_PRIM_TYPE, pipeline->graphics.gs_out);
 
-	radv_save_pipeline(cmd_buffer, pipeline, RING_GFX);
+	if (unlikely(cmd_buffer->device->trace_bo))
+		radv_save_pipeline(cmd_buffer, pipeline, RING_GFX);
 
 	cmd_buffer->state.emitted_pipeline = pipeline;
 
@@ -1424,7 +1437,7 @@ radv_load_color_clear_regs(struct radv_cmd_buffer *cmd_buffer,
 	radeon_emit(cmd_buffer->cs, 0);
 }
 
-void
+static void
 radv_emit_framebuffer_state(struct radv_cmd_buffer *cmd_buffer)
 {
 	int i;
@@ -1715,7 +1728,7 @@ radv_flush_descriptors(struct radv_cmd_buffer *cmd_buffer,
 	cmd_buffer->state.descriptors_dirty = 0;
 	cmd_buffer->state.push_descriptors_dirty = false;
 
-	if (cmd_buffer->device->trace_bo)
+	if (unlikely(cmd_buffer->device->trace_bo))
 		radv_save_descriptors(cmd_buffer);
 
 	assert(cmd_buffer->cs->cdw <= cdw_max);
@@ -1807,6 +1820,10 @@ radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer, bo
 
 		radv_emit_userdata_address(cmd_buffer, cmd_buffer->state.pipeline, MESA_SHADER_VERTEX,
 					   AC_UD_VS_VERTEX_BUFFERS, va);
+
+		cmd_buffer->state.vb_va = va;
+		cmd_buffer->state.vb_size = count * 16;
+		cmd_buffer->state.vb_prefetch_dirty = true;
 	}
 	cmd_buffer->state.vb_dirty = false;
 
@@ -2121,9 +2138,6 @@ VkResult radv_AllocateCommandBuffers(
 	VkResult result = VK_SUCCESS;
 	uint32_t i;
 
-	memset(pCommandBuffers, 0,
-			sizeof(*pCommandBuffers)*pAllocateInfo->commandBufferCount);
-
 	for (i = 0; i < pAllocateInfo->commandBufferCount; i++) {
 
 		if (!list_empty(&pool->free_cmd_buffers)) {
@@ -2239,7 +2253,9 @@ VkResult radv_BeginCommandBuffer(
 		radv_cmd_buffer_set_subpass(cmd_buffer, subpass, false);
 	}
 
-	radv_cmd_buffer_trace_emit(cmd_buffer);
+	if (unlikely(cmd_buffer->device->trace_bo))
+		radv_cmd_buffer_trace_emit(cmd_buffer);
+
 	return result;
 }
 
@@ -2503,7 +2519,7 @@ VkResult radv_EndCommandBuffer(
 	vk_free(&cmd_buffer->pool->alloc, cmd_buffer->state.attachments);
 
 	if (!cmd_buffer->device->ws->cs_finalize(cmd_buffer->cs))
-		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+		return vk_error(VK_ERROR_OUT_OF_DEVICE_MEMORY);
 
 	return cmd_buffer->record_result;
 }
@@ -2553,7 +2569,9 @@ radv_emit_compute_pipeline(struct radv_cmd_buffer *cmd_buffer)
 		    S_00B81C_NUM_THREAD_FULL(compute_shader->info.cs.block_size[2]));
 
 	assert(cmd_buffer->cs->cdw <= cdw_max);
-	radv_save_pipeline(cmd_buffer, pipeline, RING_COMPUTE);
+
+	if (unlikely(cmd_buffer->device->trace_bo))
+		radv_save_pipeline(cmd_buffer, pipeline, RING_COMPUTE);
 }
 
 static void radv_mark_descriptor_sets_dirty(struct radv_cmd_buffer *cmd_buffer)
@@ -3250,8 +3268,8 @@ radv_draw(struct radv_cmd_buffer *cmd_buffer,
 		 * important.
 		 */
 		if (pipeline_is_dirty) {
-			radv_emit_shaders_prefetch(cmd_buffer,
-						   cmd_buffer->state.pipeline);
+			radv_emit_prefetch(cmd_buffer,
+					   cmd_buffer->state.pipeline);
 		}
 	} else {
 		/* If we don't wait for idle, start prefetches first, then set
@@ -3260,8 +3278,8 @@ radv_draw(struct radv_cmd_buffer *cmd_buffer,
 		si_emit_cache_flush(cmd_buffer);
 
 		if (pipeline_is_dirty) {
-			radv_emit_shaders_prefetch(cmd_buffer,
-						   cmd_buffer->state.pipeline);
+			radv_emit_prefetch(cmd_buffer,
+					   cmd_buffer->state.pipeline);
 		}
 
 		if (!radv_upload_graphics_shader_descriptors(cmd_buffer, pipeline_is_dirty))

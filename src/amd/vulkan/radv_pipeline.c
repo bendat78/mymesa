@@ -134,7 +134,7 @@ radv_pipeline_scratch_init(struct radv_device *device,
 	if (scratch_bytes_per_wave && max_waves < min_waves) {
 		/* Not really true at this moment, but will be true on first
 		 * execution. Avoid having hanging shaders. */
-		return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+		return vk_error(VK_ERROR_OUT_OF_DEVICE_MEMORY);
 	}
 	pipeline->scratch_bytes_per_wave = scratch_bytes_per_wave;
 	pipeline->max_waves = max_waves;
@@ -2312,12 +2312,11 @@ radv_graphics_pipeline_create(
 	struct radv_pipeline *pipeline;
 	VkResult result;
 
-	pipeline = vk_alloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
-			       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!pipeline)
+	pipeline = vk_zalloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
+			      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+	if (pipeline == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
-	memset(pipeline, 0, sizeof(*pipeline));
 	result = radv_pipeline_init(pipeline, device, cache,
 				    pCreateInfo, extra, pAllocator);
 	if (result != VK_SUCCESS) {
@@ -2369,12 +2368,11 @@ static VkResult radv_compute_pipeline_create(
 	struct radv_pipeline *pipeline;
 	VkResult result;
 
-	pipeline = vk_alloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
-			       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!pipeline)
+	pipeline = vk_zalloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
+			      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+	if (pipeline == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
-	memset(pipeline, 0, sizeof(*pipeline));
 	pipeline->device = device;
 	pipeline->layout = radv_pipeline_layout_from_handle(pCreateInfo->layout);
 
@@ -2396,6 +2394,7 @@ static VkResult radv_compute_pipeline_create(
 	}
 	return VK_SUCCESS;
 }
+
 VkResult radv_CreateComputePipelines(
 	VkDevice                                    _device,
 	VkPipelineCache                             pipelineCache,
