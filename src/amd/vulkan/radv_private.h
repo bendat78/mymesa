@@ -506,7 +506,7 @@ struct radv_queue {
 	struct radv_device *                         device;
 	struct radeon_winsys_ctx                    *hw_ctx;
 	enum radeon_ctx_priority                     priority;
-	int queue_family_index;
+	uint32_t queue_family_index;
 	int queue_idx;
 
 	uint32_t scratch_size;
@@ -701,8 +701,8 @@ enum radv_cmd_dirty_bits {
 	RADV_CMD_DIRTY_PIPELINE                          = 1 << 9,
 	RADV_CMD_DIRTY_INDEX_BUFFER                      = 1 << 10,
 	RADV_CMD_DIRTY_FRAMEBUFFER                       = 1 << 11,
+	RADV_CMD_DIRTY_VERTEX_BUFFER                     = 1 << 12,
 };
-typedef uint32_t radv_cmd_dirty_mask_t;
 
 enum radv_cmd_flush_bits {
 	RADV_CMD_FLAG_INV_ICACHE = 1 << 0,
@@ -810,14 +810,13 @@ struct radv_attachment_state {
 
 struct radv_cmd_state {
 	/* Vertex descriptors */
-	bool                                          vb_dirty;
 	bool                                          vb_prefetch_dirty;
 	uint64_t                                      vb_va;
 	unsigned                                      vb_size;
 
 	bool                                          push_descriptors_dirty;
 	bool predicating;
-	radv_cmd_dirty_mask_t                         dirty;
+	uint32_t                                      dirty;
 
 	struct radv_pipeline *                        pipeline;
 	struct radv_pipeline *                        emitted_pipeline;
@@ -1361,14 +1360,12 @@ struct radv_image_view {
 	uint32_t level_count;
 	VkExtent3D extent; /**< Extent of VkImageViewCreateInfo::baseMipLevel. */
 
-	uint32_t descriptor[8];
-	uint32_t fmask_descriptor[8];
+	uint32_t descriptor[16];
 
 	/* Descriptor for use as a storage image as opposed to a sampled image.
 	 * This has a few differences for cube maps (e.g. type).
 	 */
-	uint32_t storage_descriptor[8];
-	uint32_t storage_fmask_descriptor[8];
+	uint32_t storage_descriptor[16];
 };
 
 struct radv_image_create_info {

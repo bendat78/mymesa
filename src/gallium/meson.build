@@ -27,41 +27,44 @@ subdir('drivers/ddebug')
 subdir('drivers/noop')
 subdir('drivers/trace')
 subdir('drivers/rbug')
-subdir('drivers/radeon')
-subdir('drivers/radeonsi')
-subdir('drivers/nouveau')
-if with_gallium_freedreno
-  subdir('drivers/freedreno')
-endif
-subdir('drivers/softpipe')
-if with_gallium_vc4
-  subdir('drivers/vc4')
-endif
-if with_gallium_vc5
-  subdir('drivers/vc5')
-endif
-if with_gallium_etnaviv
-  subdir('drivers/etnaviv')
-endif
-subdir('drivers/llvmpipe')
 subdir('winsys/sw/null')
 subdir('winsys/sw/dri')
 subdir('winsys/sw/kms-dri')
 subdir('winsys/sw/wrapper')
-if with_gallium_vc4
+if with_gallium_softpipe
+  subdir('drivers/softpipe')
+  if with_llvm
+    subdir('drivers/llvmpipe')
+  endif
+endif
+if with_gallium_radeonsi
+  # TODO: some of these are needed by r300 and r600
+  subdir('drivers/radeon')
+  subdir('drivers/radeonsi')
+  subdir('winsys/radeon/drm')
+  subdir('winsys/amdgpu/drm')
+endif
+if with_gallium_nouveau
+  subdir('drivers/nouveau')
+  subdir('winsys/nouveau/drm')
+endif
+if with_gallium_freedreno
+  subdir('drivers/freedreno')
+  subdir('winsys/freedreno/drm')
+endif
+if with_gallium_pl111
   subdir('winsys/pl111/drm')
 endif
-subdir('winsys/radeon/drm')
-subdir('winsys/amdgpu/drm')
-subdir('winsys/nouveau/drm')
-subdir('winsys/freedreno/drm')
 if with_gallium_vc4
+  subdir('drivers/vc4')
   subdir('winsys/vc4/drm')
 endif
 if with_gallium_vc5
+  subdir('drivers/vc5')
   subdir('winsys/vc5/drm')
 endif
 if with_gallium_etnaviv
+  subdir('drivers/etnaviv')
   subdir('winsys/etnaviv/drm')
 endif
 if with_gallium_imx
@@ -70,7 +73,9 @@ endif
 if with_glx == 'gallium-xlib'
   subdir('winsys/sw/xlib')
 endif
-subdir('state_trackers/dri')
+if with_dri
+  subdir('state_trackers/dri')
+endif
 if with_osmesa == 'gallium'
   subdir('state_trackers/osmesa')
 endif
@@ -84,7 +89,7 @@ endif
 # TODO: SWR
 # TODO: virgl
 # TODO: clover
-if with_dri and with_gallium
+if with_dri
   subdir('targets/dri')
 endif
 if with_osmesa == 'gallium'

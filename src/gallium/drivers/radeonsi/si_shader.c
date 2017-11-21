@@ -759,8 +759,7 @@ static LLVMValueRef get_primitive_id(struct si_shader_context *ctx,
 		return LLVMGetParam(ctx->main_fn,
 				    ctx->param_tes_patch_id);
 	case PIPE_SHADER_GEOMETRY:
-		return LLVMGetParam(ctx->main_fn,
-				    ctx->param_gs_prim_id);
+		return ctx->abi.gs_prim_id;
 	default:
 		assert(0);
 		return ctx->i32_0;
@@ -1674,8 +1673,7 @@ void si_load_system_value(struct si_shader_context *ctx,
 		if (ctx->type == PIPE_SHADER_TESS_CTRL)
 			value = unpack_param(ctx, ctx->param_tcs_rel_ids, 8, 5);
 		else if (ctx->type == PIPE_SHADER_GEOMETRY)
-			value = LLVMGetParam(ctx->main_fn,
-					     ctx->param_gs_instance_id);
+			value = ctx->abi.gs_invocation_id;
 		else
 			assert(!"INVOCATIONID not implemented");
 		break;
@@ -4562,8 +4560,8 @@ static void create_function(struct si_shader_context *ctx)
 		/* VGPRs (first GS, then VS/TES) */
 		ctx->param_gs_vtx01_offset = add_arg(&fninfo, ARG_VGPR, ctx->i32);
 		ctx->param_gs_vtx23_offset = add_arg(&fninfo, ARG_VGPR, ctx->i32);
-		ctx->param_gs_prim_id = add_arg(&fninfo, ARG_VGPR, ctx->i32);
-		ctx->param_gs_instance_id = add_arg(&fninfo, ARG_VGPR, ctx->i32);
+		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->abi.gs_prim_id);
+		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->abi.gs_invocation_id);
 		ctx->param_gs_vtx45_offset = add_arg(&fninfo, ARG_VGPR, ctx->i32);
 
 		if (ctx->type == PIPE_SHADER_VERTEX) {
@@ -4613,12 +4611,12 @@ static void create_function(struct si_shader_context *ctx)
 		/* VGPRs */
 		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->gs_vtx_offset[0]);
 		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->gs_vtx_offset[1]);
-		ctx->param_gs_prim_id = add_arg(&fninfo, ARG_VGPR, ctx->i32);
+		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->abi.gs_prim_id);
 		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->gs_vtx_offset[2]);
 		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->gs_vtx_offset[3]);
 		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->gs_vtx_offset[4]);
 		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->gs_vtx_offset[5]);
-		ctx->param_gs_instance_id = add_arg(&fninfo, ARG_VGPR, ctx->i32);
+		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->abi.gs_invocation_id);
 		break;
 
 	case PIPE_SHADER_FRAGMENT:
@@ -5885,11 +5883,13 @@ static void si_get_vs_prolog_key(const struct tgsi_shader_info *info,
 	key->vs_prolog.num_input_sgprs = num_input_sgprs;
 	key->vs_prolog.last_input = MAX2(1, info->num_inputs) - 1;
 	key->vs_prolog.as_ls = shader_out->key.as_ls;
+	key->vs_prolog.as_es = shader_out->key.as_es;
 
 	if (shader_out->selector->type == PIPE_SHADER_TESS_CTRL) {
 		key->vs_prolog.as_ls = 1;
 		key->vs_prolog.num_merged_next_stage_vgprs = 2;
 	} else if (shader_out->selector->type == PIPE_SHADER_GEOMETRY) {
+		key->vs_prolog.as_es = 1;
 		key->vs_prolog.num_merged_next_stage_vgprs = 5;
 	}
 
@@ -6770,6 +6770,8 @@ si_get_shader_part(struct si_screen *sscreen,
 
 	switch (type) {
 	case PIPE_SHADER_VERTEX:
+		shader.key.as_ls = key->vs_prolog.as_ls;
+		shader.key.as_es = key->vs_prolog.as_es;
 		break;
 	case PIPE_SHADER_TESS_CTRL:
 		assert(!prolog);
@@ -6812,10 +6814,15 @@ out:
 static LLVMValueRef si_prolog_get_rw_buffers(struct si_shader_context *ctx)
 {
 	LLVMValueRef ptr[2], list;
+	bool is_merged_shader =
+		ctx->screen->b.chip_class >= GFX9 &&
+		(ctx->type == PIPE_SHADER_TESS_CTRL ||
+		 ctx->type == PIPE_SHADER_GEOMETRY ||
+		 ctx->shader->key.as_ls || ctx->shader->key.as_es);
 
 	/* Get the pointer to rw buffers. */
-	ptr[0] = LLVMGetParam(ctx->main_fn, SI_SGPR_RW_BUFFERS);
-	ptr[1] = LLVMGetParam(ctx->main_fn, SI_SGPR_RW_BUFFERS_HI);
+	ptr[0] = LLVMGetParam(ctx->main_fn, (is_merged_shader ? 8 : 0) + SI_SGPR_RW_BUFFERS);
+	ptr[1] = LLVMGetParam(ctx->main_fn, (is_merged_shader ? 8 : 0) + SI_SGPR_RW_BUFFERS_HI);
 	list = lp_build_gather_values(&ctx->gallivm, ptr, 2);
 	list = LLVMBuildBitCast(ctx->ac.builder, list, ctx->i64, "");
 	list = LLVMBuildIntToPtr(ctx->ac.builder, list,

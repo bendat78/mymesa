@@ -90,19 +90,9 @@ brw_reg_from_fs_reg(const struct gen_device_info *devinfo, fs_inst *inst,
           *       different execution size when the number of components
           *       written to each destination GRF is not the same.
           */
-         if (reg->stride > 4) {
-            /* For registers with an exceptionally large stride, we use a
-             * width of 1 and only use the vertical stride.  This only works
-             * for sources since destinations require hstride == 1.
-             */
-            assert(reg != &inst->dst);
-            brw_reg = brw_vec1_reg(brw_file_from_reg(reg), reg->nr, 0);
-            brw_reg = stride(brw_reg, reg->stride, 1, 0);
-         } else {
-            const unsigned width = MIN2(reg_width, phys_width);
-            brw_reg = brw_vecn_reg(width, brw_file_from_reg(reg), reg->nr, 0);
-            brw_reg = stride(brw_reg, width * reg->stride, width, reg->stride);
-         }
+         const unsigned width = MIN2(reg_width, phys_width);
+         brw_reg = brw_vecn_reg(width, brw_file_from_reg(reg), reg->nr, 0);
+         brw_reg = stride(brw_reg, width * reg->stride, width, reg->stride);
 
          if (devinfo->gen == 7 && !devinfo->is_haswell) {
             /* From the IvyBridge PRM (EU Changes by Processor Generation, page 13):
@@ -1648,8 +1638,7 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
    int spill_count = 0, fill_count = 0;
    int loop_count = 0;
 
-   struct annotation_info annotation;
-   memset(&annotation, 0, sizeof(annotation));
+   struct disasm_info *disasm_info = disasm_initialize(devinfo, cfg);
 
    foreach_block_and_inst (block, fs_inst, inst, cfg) {
       struct brw_reg src[3], dst;
@@ -1676,7 +1665,7 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
       }
 
       if (unlikely(debug_flag))
-         annotate(p->devinfo, &annotation, cfg, inst, p->next_insn_offset);
+         disasm_annotate(disasm_info, inst, p->next_insn_offset);
 
       /* If the instruction writes to more than one register, it needs to be
        * explicitly marked as compressed on Gen <= 5.  On Gen >= 6 the
@@ -2139,7 +2128,7 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
           */
          if (!patch_discard_jumps_to_fb_writes()) {
             if (unlikely(debug_flag)) {
-               annotation.ann_count--;
+               disasm_info->use_tail = true;
             }
          }
          break;
@@ -2199,24 +2188,22 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
    }
 
    brw_set_uip_jip(p, start_offset);
-   annotation_finalize(&annotation, p->next_insn_offset);
+
+   /* end of program sentinel */
+   disasm_new_inst_group(disasm_info, p->next_insn_offset);
 
 #ifndef NDEBUG
-   bool validated = brw_validate_instructions(devinfo, p->store,
-                                              start_offset,
-                                              p->next_insn_offset,
-                                              &annotation);
+   bool validated =
 #else
    if (unlikely(debug_flag))
+#endif
       brw_validate_instructions(devinfo, p->store,
                                 start_offset,
                                 p->next_insn_offset,
-                                &annotation);
-#endif
+                                disasm_info);
 
    int before_size = p->next_insn_offset - start_offset;
-   brw_compact_instructions(p, start_offset, annotation.ann_count,
-                            annotation.ann);
+   brw_compact_instructions(p, start_offset, disasm_info);
    int after_size = p->next_insn_offset - start_offset;
 
    if (unlikely(debug_flag)) {
@@ -2227,10 +2214,9 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
               spill_count, fill_count, promoted_constants, before_size, after_size,
               100.0f * (before_size - after_size) / before_size);
 
-      dump_assembly(p->store, annotation.ann_count, annotation.ann,
-                    p->devinfo);
-      ralloc_free(annotation.mem_ctx);
+      dump_assembly(p->store, disasm_info);
    }
+   ralloc_free(disasm_info);
    assert(validated);
 
    compiler->shader_debug_log(log_data,

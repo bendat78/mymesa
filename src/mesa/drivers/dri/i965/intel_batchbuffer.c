@@ -220,7 +220,7 @@ static void
 intel_batchbuffer_reset_and_clear_render_cache(struct brw_context *brw)
 {
    intel_batchbuffer_reset(brw);
-   brw_render_cache_set_clear(brw);
+   brw_cache_sets_clear(brw);
 }
 
 void
@@ -602,8 +602,10 @@ brw_new_batch(struct brw_context *brw)
     * would otherwise be stored in the context (which for all intents and
     * purposes means everything).
     */
-   if (!brw->hw_ctx)
+   if (brw->hw_ctx == 0) {
       brw->ctx.NewDriverState |= BRW_NEW_CONTEXT;
+      brw_upload_invariant_state(brw);
+   }
 
    brw->ctx.NewDriverState |= BRW_NEW_BATCH;
 
@@ -623,9 +625,7 @@ brw_new_batch(struct brw_context *brw)
  * sending it off.
  *
  * This function can emit state (say, to preserve registers that aren't saved
- * between batches).  All of this state MUST fit in the reserved space at the
- * end of the batchbuffer.  If you add more GPU state, increase the reserved
- * space by updating the BATCH_RESERVED macro.
+ * between batches).
  */
 static void
 brw_finish_batch(struct brw_context *brw)

@@ -1298,7 +1298,7 @@ radv_set_depth_clear_regs(struct radv_cmd_buffer *cmd_buffer,
 	va += image->offset + image->clear_value_offset;
 	unsigned reg_offset = 0, reg_count = 0;
 
-	if (!image->surface.htile_size || !aspects)
+	if (!image->surface.htile_size)
 		return;
 
 	if (aspects & VK_IMAGE_ASPECT_STENCIL_BIT) {
@@ -1309,8 +1309,6 @@ radv_set_depth_clear_regs(struct radv_cmd_buffer *cmd_buffer,
 	}
 	if (aspects & VK_IMAGE_ASPECT_DEPTH_BIT)
 		++reg_count;
-
-	radv_cs_add_buffer(cmd_buffer->device->ws, cmd_buffer->cs, image->bo, 8);
 
 	radeon_emit(cmd_buffer->cs, PKT3(PKT3_WRITE_DATA, 2 + reg_count, 0));
 	radeon_emit(cmd_buffer->cs, S_370_DST_SEL(V_370_MEM_ASYNC) |
@@ -1334,20 +1332,30 @@ static void
 radv_load_depth_clear_regs(struct radv_cmd_buffer *cmd_buffer,
 			   struct radv_image *image)
 {
+	VkImageAspectFlags aspects = vk_format_aspects(image->vk_format);
 	uint64_t va = radv_buffer_get_va(image->bo);
 	va += image->offset + image->clear_value_offset;
+	unsigned reg_offset = 0, reg_count = 0;
 
 	if (!image->surface.htile_size)
 		return;
 
+	if (aspects & VK_IMAGE_ASPECT_STENCIL_BIT) {
+		++reg_count;
+	} else {
+		++reg_offset;
+		va += 4;
+	}
+	if (aspects & VK_IMAGE_ASPECT_DEPTH_BIT)
+		++reg_count;
 
 	radeon_emit(cmd_buffer->cs, PKT3(PKT3_COPY_DATA, 4, 0));
 	radeon_emit(cmd_buffer->cs, COPY_DATA_SRC_SEL(COPY_DATA_MEM) |
 				    COPY_DATA_DST_SEL(COPY_DATA_REG) |
-				    COPY_DATA_COUNT_SEL);
+				    (reg_count == 2 ? COPY_DATA_COUNT_SEL : 0));
 	radeon_emit(cmd_buffer->cs, va);
 	radeon_emit(cmd_buffer->cs, va >> 32);
-	radeon_emit(cmd_buffer->cs, R_028028_DB_STENCIL_CLEAR >> 2);
+	radeon_emit(cmd_buffer->cs, (R_028028_DB_STENCIL_CLEAR + 4 * reg_offset) >> 2);
 	radeon_emit(cmd_buffer->cs, 0);
 
 	radeon_emit(cmd_buffer->cs, PKT3(PKT3_PFP_SYNC_ME, 0, 0));
@@ -1371,8 +1379,6 @@ radv_set_dcc_need_cmask_elim_pred(struct radv_cmd_buffer *cmd_buffer,
 	if (!image->surface.dcc_size)
 		return;
 
-	radv_cs_add_buffer(cmd_buffer->device->ws, cmd_buffer->cs, image->bo, 8);
-
 	radeon_emit(cmd_buffer->cs, PKT3(PKT3_WRITE_DATA, 4, 0));
 	radeon_emit(cmd_buffer->cs, S_370_DST_SEL(V_370_MEM_ASYNC) |
 				    S_370_WR_CONFIRM(1) |
@@ -1394,8 +1400,6 @@ radv_set_color_clear_regs(struct radv_cmd_buffer *cmd_buffer,
 
 	if (!image->cmask.size && !image->surface.dcc_size)
 		return;
-
-	radv_cs_add_buffer(cmd_buffer->device->ws, cmd_buffer->cs, image->bo, 8);
 
 	radeon_emit(cmd_buffer->cs, PKT3(PKT3_WRITE_DATA, 4, 0));
 	radeon_emit(cmd_buffer->cs, S_370_DST_SEL(V_370_MEM_ASYNC) |
@@ -1777,9 +1781,8 @@ radv_flush_constants(struct radv_cmd_buffer *cmd_buffer,
 static bool
 radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer, bool pipeline_is_dirty)
 {
-	struct radv_device *device = cmd_buffer->device;
-
-	if ((pipeline_is_dirty || cmd_buffer->state.vb_dirty) &&
+	if ((pipeline_is_dirty ||
+	    (cmd_buffer->state.dirty & RADV_CMD_DIRTY_VERTEX_BUFFER)) &&
 	    cmd_buffer->state.pipeline->vertex_elements.count &&
 	    radv_get_vertex_shader(cmd_buffer->state.pipeline)->info.info.vs.has_vertex_buffers) {
 		struct radv_vertex_elements_info *velems = &cmd_buffer->state.pipeline->vertex_elements;
@@ -1801,7 +1804,6 @@ radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer, bo
 			struct radv_buffer *buffer = cmd_buffer->vertex_bindings[vb].buffer;
 			uint32_t stride = cmd_buffer->state.pipeline->binding_stride[vb];
 
-			radv_cs_add_buffer(device->ws, cmd_buffer->cs, buffer->bo, 8);
 			va = radv_buffer_get_va(buffer->bo);
 
 			offset = cmd_buffer->vertex_bindings[vb].offset + velems->offset[i];
@@ -1825,7 +1827,7 @@ radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer, bo
 		cmd_buffer->state.vb_size = count * 16;
 		cmd_buffer->state.vb_prefetch_dirty = true;
 	}
-	cmd_buffer->state.vb_dirty = false;
+	cmd_buffer->state.dirty &= ~RADV_CMD_DIRTY_VERTEX_BUFFER;
 
 	return true;
 }
@@ -2285,6 +2287,9 @@ void radv_CmdBindVertexBuffers(
 
 		vb[idx].buffer = radv_buffer_from_handle(pBuffers[i]);
 		vb[idx].offset = pOffsets[i];
+
+		radv_cs_add_buffer(cmd_buffer->device->ws, cmd_buffer->cs,
+				   vb[idx].buffer->bo, 8);
 	}
 
 	if (!changed) {
@@ -2292,7 +2297,7 @@ void radv_CmdBindVertexBuffers(
 		return;
 	}
 
-	cmd_buffer->state.vb_dirty = true;
+	cmd_buffer->state.dirty |= RADV_CMD_DIRTY_VERTEX_BUFFER;
 }
 
 void radv_CmdBindIndexBuffer(

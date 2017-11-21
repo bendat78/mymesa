@@ -31,6 +31,9 @@ files_libradeon = files(
   'r600_texture.c',
   'radeon_uvd.c',
   'radeon_uvd.h',
+  'radeon_vcn_enc_1_2.c',
+  'radeon_vcn_enc.c',
+  'radeon_vcn_enc.h',
   'radeon_vcn_dec.c',
   'radeon_vcn_dec.h',
   'radeon_vce_40_2_2.c',
@@ -51,5 +54,4 @@ libradeon = static_library(
   include_directories : [
     inc_include, inc_src, inc_gallium, inc_gallium_aux, inc_gallium_drivers,
   ],
-  build_by_default : false,
 )
