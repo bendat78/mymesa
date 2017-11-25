@@ -2314,7 +2314,7 @@ radv_graphics_pipeline_create(
 
 	pipeline = vk_zalloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
 			      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (pipeline == NULL)
+	if (!pipeline)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	result = radv_pipeline_init(pipeline, device, cache,
@@ -2370,7 +2370,7 @@ static VkResult radv_compute_pipeline_create(
 
 	pipeline = vk_zalloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
 			      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (pipeline == NULL)
+	if (!pipeline)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	pipeline->device = device;

@@ -399,7 +399,7 @@ fd_gmem_render_tiles(struct fd_batch *batch)
 		}
 
 		/* For ARB_framebuffer_no_attachments: */
-		if ((pfb->nr_cbufs == 0) && !pfb->zsbuf) {
+		if (!(pfb->nr_cbufs) && !pfb->zsbuf) {
 			sysmem = true;
 		}
 	}

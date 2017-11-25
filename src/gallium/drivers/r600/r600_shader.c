@@ -2896,7 +2896,7 @@ static int r600_emit_tess_factor(struct r600_shader_ctx *ctx)
 		if (ctx->shader->tcs_prim_mode == PIPE_PRIM_LINES) {
 			if (out_comp == 1)
 				out_comp = 0;
-			else if (out_comp == 0)
+			else if (!out_comp)
 				out_comp = 1;
 		}
 
