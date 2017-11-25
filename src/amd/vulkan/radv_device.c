@@ -3543,7 +3543,7 @@ VkResult radv_GetMemoryFdKHR(VkDevice _device,
 	       VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR);
 
 	bool ret = radv_get_memory_fd(device, memory, pFD);
-	if (ret == false)
+	if (!ret)
 		return vk_error(VK_ERROR_OUT_OF_DEVICE_MEMORY);
 	return VK_SUCCESS;
 }
@@ -3572,7 +3572,7 @@ VkResult radv_ImportSemaphoreFdKHR(VkDevice _device,
 	assert(pImportSemaphoreFdInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR);
 
 	int ret = device->ws->import_syncobj(device->ws, pImportSemaphoreFdInfo->fd, &syncobj_handle);
-	if (ret != 0)
+	if (ret)
 		return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
 
 	if (pImportSemaphoreFdInfo->flags & VK_SEMAPHORE_IMPORT_TEMPORARY_BIT_KHR) {

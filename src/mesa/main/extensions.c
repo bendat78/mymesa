@@ -241,7 +241,7 @@ _mesa_one_time_init_extension_overrides(struct gl_context *ctx)
    /* Copy env_const because strtok() is destructive. */
    env = strdup(env_const);
 
-   if (env == NULL)
+   if (!env)
       return;
 
    for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
@@ -265,7 +265,7 @@ _mesa_one_time_init_extension_overrides(struct gl_context *ctx)
       i = name_to_index(ext);
       offset = set_extension(&_mesa_extension_override_enables, i, enable);
       offset = set_extension(&_mesa_extension_override_disables, i, !enable);
-      if (offset != 0)
+      if (offset)
          recognized = true;
       else
          recognized = false;
@@ -383,7 +383,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
          length += 1 + strlen(ctx->Extensions.unrecognized_extensions[k]); /* +1 for space */
 
    exts = calloc(ALIGN(length + 1, 4), sizeof(char));
-   if (exts == NULL) {
+   if (!exts) {
       return NULL;
    }
 

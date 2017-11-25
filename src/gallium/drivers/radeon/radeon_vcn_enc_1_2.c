@@ -74,7 +74,7 @@ static void radeon_enc_set_emulation_prevention(struct radeon_encoder *enc, bool
 
 static void radeon_enc_output_one_byte(struct radeon_encoder *enc, unsigned char byte)
 {
-	if (enc->byte_index == 0)
+	if (!enc->byte_index)
 		enc->cs->current.buf[enc->cs->current.cdw] = 0;
 	enc->cs->current.buf[enc->cs->current.cdw] |= ((unsigned int)(byte) << index_to_shifts[enc->byte_index]);
 	enc->byte_index++;
@@ -143,7 +143,7 @@ static void radeon_enc_byte_align(struct radeon_encoder *enc)
 
 static void radeon_enc_flush_headers(struct radeon_encoder *enc)
 {
-	if (enc->bits_in_shifter != 0) {
+	if (enc->bits_in_shifter) {
 		unsigned char output_byte = (unsigned char)(enc->shifter >> 24);
 		radeon_enc_emulation_prevention(enc, output_byte);
 		radeon_enc_output_one_byte(enc, output_byte);
@@ -178,7 +178,7 @@ static void radeon_enc_code_se(struct radeon_encoder *enc, int value)
 {
 	unsigned int v = 0;
 
-	if (value != 0)
+	if (value)
 		v = (value < 0 ? ((unsigned int)(0 - value) << 1) : (((unsigned int)(value) << 1) - 1));
 
 	radeon_enc_code_ue(enc, v);
@@ -391,7 +391,7 @@ static void radeon_enc_nalu_sps(struct radeon_encoder *enc)
 	radeon_enc_code_ue(enc, 1);
 	radeon_enc_code_ue(enc, enc->enc_pic.pic_order_cnt_type);
 
-	if (enc->enc_pic.pic_order_cnt_type == 0)
+	if (!enc->enc_pic.pic_order_cnt_type)
 		radeon_enc_code_ue(enc, 1);
 
 	radeon_enc_code_ue(enc, (enc->base.max_references + 1));
@@ -406,7 +406,7 @@ static void radeon_enc_nalu_sps(struct radeon_encoder *enc)
 
 	radeon_enc_code_fixed_bits(enc, 0x1, 1);
 
-	if ((enc->enc_pic.crop_left != 0) || (enc->enc_pic.crop_right != 0) ||
+	if ((enc->enc_pic.crop_left) || (enc->enc_pic.crop_right != 0) ||
 			(enc->enc_pic.crop_top != 0) || (enc->enc_pic.crop_bottom != 0)) {
 		radeon_enc_code_fixed_bits(enc, 0x1, 1);
 		radeon_enc_code_ue(enc, enc->enc_pic.crop_left);
@@ -479,8 +479,8 @@ static void radeon_enc_nalu_pps(struct radeon_encoder *enc)
 
 static void radeon_enc_slice_header(struct radeon_encoder *enc)
 {
-	uint32_t instruction[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {0};
-	uint32_t num_bits[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {0};
+	uint32_t instruction[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {};
+	uint32_t num_bits[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {};
 	unsigned int inst_index = 0;
 	unsigned int bit_index = 0;
 	unsigned int bits_copied = 0;
@@ -534,7 +534,7 @@ static void radeon_enc_slice_header(struct radeon_encoder *enc)
 
 	enc->enc_pic.is_even_frame = !enc->enc_pic.is_even_frame;
 
-	if (enc->enc_pic.pic_order_cnt_type == 0)
+	if (!enc->enc_pic.pic_order_cnt_type)
 		radeon_enc_code_fixed_bits(enc, enc->enc_pic.pic_order_cnt % 32, 5);
 
 	if (enc->enc_pic.picture_type != PIPE_H264_ENC_PICTURE_TYPE_IDR) {

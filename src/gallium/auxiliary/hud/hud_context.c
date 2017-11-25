@@ -1850,9 +1850,9 @@ hud_create(struct cso_context *cso, struct hud_context *share)
    }
 #endif
 
-   if (record_ctx == 0)
+   if (!record_ctx)
       hud_set_record_context(hud, cso_get_pipe_context(cso));
-   if (draw_ctx == 0)
+   if (!draw_ctx)
       hud_set_draw_context(hud, cso);
 
    hud_parse_env_var(hud, screen, env);

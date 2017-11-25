@@ -624,7 +624,7 @@ st_destroy_context(struct st_context *st)
 
    GET_CURRENT_CONTEXT(curctx);
 
-   if (curctx == NULL) {
+   if (!curctx) {
       /* No current context, but we need one to release
        * renderbuffer surface when we release framebuffer.
        * So temporarily bind the context.
