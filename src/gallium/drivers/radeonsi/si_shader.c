@@ -1090,17 +1090,19 @@ static LLVMValueRef lds_load(struct lp_build_tgsi_context *bld_base,
 					      TGSI_NUM_CHANNELS);
 	}
 
+	/* Split 64-bit loads. */
+	if (tgsi_type_is_64bit(type)) {
+		LLVMValueRef lo, hi;
+
+		lo = lds_load(bld_base, TGSI_TYPE_UNSIGNED, swizzle, dw_addr);
+		hi = lds_load(bld_base, TGSI_TYPE_UNSIGNED, swizzle + 1, dw_addr);
+		return si_llvm_emit_fetch_64bit(bld_base, type, lo, hi);
+	}
+
 	dw_addr = lp_build_add(&bld_base->uint_bld, dw_addr,
 			    LLVMConstInt(ctx->i32, swizzle, 0));
 
 	value = ac_lds_load(&ctx->ac, dw_addr);
-	if (tgsi_type_is_64bit(type)) {
-		LLVMValueRef value2;
-		dw_addr = lp_build_add(&bld_base->uint_bld, dw_addr,
-				       ctx->i32_1);
-		value2 = ac_lds_load(&ctx->ac, dw_addr);
-		return si_llvm_emit_fetch_64bit(bld_base, type, value, value2);
-	}
 
 	return bitcast(bld_base, type, value);
 }
@@ -1903,7 +1905,7 @@ void si_declare_compute_memory(struct si_shader_context *ctx,
 
 	assert(decl->Declaration.MemType == TGSI_MEMORY_TYPE_SHARED);
 	assert(decl->Range.First == decl->Range.Last);
-	assert(!ctx->shared_memory);
+	assert(!ctx->ac.lds);
 
 	var = LLVMAddGlobalInAddressSpace(ctx->ac.module,
 	                                  LLVMArrayType(ctx->i8, sel->local_size),
@@ -1911,7 +1913,7 @@ void si_declare_compute_memory(struct si_shader_context *ctx,
 	                                  LOCAL_ADDR_SPACE);
 	LLVMSetAlignment(var, 4);
 
-	ctx->shared_memory = LLVMBuildBitCast(ctx->ac.builder, var, i8p, "");
+	ctx->ac.lds = LLVMBuildBitCast(ctx->ac.builder, var, i8p, "");
 }
 
 static LLVMValueRef load_const_buffer_desc(struct si_shader_context *ctx, int i)
@@ -3174,6 +3176,9 @@ static void si_llvm_emit_ls_epilogue(struct lp_build_tgsi_context *bld_base)
 					LLVMConstInt(ctx->i32, param * 4, 0), "");
 
 		for (chan = 0; chan < 4; chan++) {
+			if (!(info->output_usagemask[i] & (1 << chan)))
+				continue;
+
 			lds_store(bld_base, chan, dw_addr,
 				  LLVMBuildLoad(ctx->ac.builder, out_ptr[chan], ""));
 		}
@@ -6544,7 +6549,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 				union si_shader_part_key vs_prolog_key;
 				si_get_vs_prolog_key(&es->info,
 						     shader->info.num_input_sgprs,
-						     &shader->key.part.tcs.ls_prolog,
+						     &shader->key.part.gs.vs_prolog,
 						     shader, &vs_prolog_key);
 				vs_prolog_key.vs_prolog.is_monolithic = true;
 				si_build_vs_prolog_function(&ctx, &vs_prolog_key);
