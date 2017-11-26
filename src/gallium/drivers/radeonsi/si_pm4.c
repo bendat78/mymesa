@@ -176,8 +176,8 @@ void si_pm4_upload_indirect_buffer(struct si_context *sctx,
 		return;
 
 	/* Pad the IB to 8 DWs to meet CP fetch alignment requirements. */
-	if (sctx->screen->b.info.gfx_ib_pad_with_type2) {
-		for (i = state->ndw; i < aligned_ndw; i++)
+	if (sctx->screen->info.gfx_ib_pad_with_type2) {
+		for (int i = state->ndw; i < aligned_ndw; i++)
 			state->pm4[i] = 0x80000000; /* type2 nop packet */
 	} else {
 		for (i = state->ndw; i < aligned_ndw; i++)
