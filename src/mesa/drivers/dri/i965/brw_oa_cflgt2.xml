@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
-<metrics version="1508421693" merge_md5="">
+<metrics version="1508421576" merge_md5="">
   <set name="Render Metrics Basic Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="render_basic"
-       hw_config_guid="4616d450-2393-4836-8146-53c5ed84d359"
-       chipset="SKLGT3"
+       hw_config_guid="2bceea0d-babc-48ba-9289-0d6997c93083"
+       chipset="CFLGT2"
        symbol_name="RenderBasic"
        >
     <counter name="GPU Core Clocks"
@@ -78,7 +78,7 @@
     <counter name="Sampler Cache Misses"
              description="The total number of sampler cache misses in all LODs in all sampler units."
              data_type="uint64"
-             equation="B 4 READ B 5 READ UADD 8 UMUL"
+             equation="B 4 READ 8 UMUL"
              underscore_name="sampler_l1_misses"
              units="messages"
              symbol_name="SamplerL1Misses"
@@ -727,11 +727,10 @@
         <register type="NOA" address="0x00009888" value="0x166C01E0" />
         <register type="NOA" address="0x00009888" value="0x12170280" />
         <register type="NOA" address="0x00009888" value="0x12370280" />
-        <register type="NOA" address="0x00009888" value="0x16EC01E0" />
         <register type="NOA" address="0x00009888" value="0x11930317" />
         <register type="NOA" address="0x00009888" value="0x159303DF" />
         <register type="NOA" address="0x00009888" value="0x3F900003" />
-        <register type="NOA" address="0x00009888" value="0x1A4E0380" />
+        <register type="NOA" address="0x00009888" value="0x1A4E0080" />
         <register type="NOA" address="0x00009888" value="0x0A6C0053" />
         <register type="NOA" address="0x00009888" value="0x106C0000" />
         <register type="NOA" address="0x00009888" value="0x1C6C0000" />
@@ -741,16 +740,14 @@
         <register type="NOA" address="0x00009888" value="0x042F1000" />
         <register type="NOA" address="0x00009888" value="0x004C4000" />
         <register type="NOA" address="0x00009888" value="0x0A4C8400" />
-        <register type="NOA" address="0x00009888" value="0x0C4C0002" />
         <register type="NOA" address="0x00009888" value="0x000D2000" />
         <register type="NOA" address="0x00009888" value="0x060D8000" />
         <register type="NOA" address="0x00009888" value="0x080DA000" />
-        <register type="NOA" address="0x00009888" value="0x0A0DA000" />
+        <register type="NOA" address="0x00009888" value="0x0A0D2000" />
         <register type="NOA" address="0x00009888" value="0x0C0F0400" />
         <register type="NOA" address="0x00009888" value="0x0E0F6600" />
-        <register type="NOA" address="0x00009888" value="0x100F0001" />
         <register type="NOA" address="0x00009888" value="0x002C8000" />
-        <register type="NOA" address="0x00009888" value="0x162CA200" />
+        <register type="NOA" address="0x00009888" value="0x162C2200" />
         <register type="NOA" address="0x00009888" value="0x062D8000" />
         <register type="NOA" address="0x00009888" value="0x082D8000" />
         <register type="NOA" address="0x00009888" value="0x00133000" />
@@ -763,16 +760,6 @@
         <register type="NOA" address="0x00009888" value="0x06370800" />
         <register type="NOA" address="0x00009888" value="0x08370840" />
         <register type="NOA" address="0x00009888" value="0x10370000" />
-        <register type="NOA" address="0x00009888" value="0x1ACE0200" />
-        <register type="NOA" address="0x00009888" value="0x0AEC5300" />
-        <register type="NOA" address="0x00009888" value="0x10EC0000" />
-        <register type="NOA" address="0x00009888" value="0x1CEC0000" />
-        <register type="NOA" address="0x00009888" value="0x0A9B8000" />
-        <register type="NOA" address="0x00009888" value="0x1C9C0002" />
-        <register type="NOA" address="0x00009888" value="0x0CCC0002" />
-        <register type="NOA" address="0x00009888" value="0x0A8D8000" />
-        <register type="NOA" address="0x00009888" value="0x108F0001" />
-        <register type="NOA" address="0x00009888" value="0x16AC8000" />
         <register type="NOA" address="0x00009888" value="0x0D933031" />
         <register type="NOA" address="0x00009888" value="0x0F933E3F" />
         <register type="NOA" address="0x00009888" value="0x01933D00" />
@@ -792,20 +779,20 @@
         <register type="NOA" address="0x00009888" value="0x17908000" />
         <register type="NOA" address="0x00009888" value="0x19908000" />
         <register type="NOA" address="0x00009888" value="0x1B908000" />
-        <register type="NOA" address="0x00009888" value="0x1190003F" />
-        <register type="NOA" address="0x00009888" value="0x51907710" />
-        <register type="NOA" address="0x00009888" value="0x419020A0" />
-        <register type="NOA" address="0x00009888" value="0x55901515" />
-        <register type="NOA" address="0x00009888" value="0x45900529" />
-        <register type="NOA" address="0x00009888" value="0x47901025" />
-        <register type="NOA" address="0x00009888" value="0x57907770" />
-        <register type="NOA" address="0x00009888" value="0x49902100" />
+        <register type="NOA" address="0x00009888" value="0x1190001F" />
+        <register type="NOA" address="0x00009888" value="0x51904400" />
+        <register type="NOA" address="0x00009888" value="0x41900020" />
+        <register type="NOA" address="0x00009888" value="0x55900000" />
+        <register type="NOA" address="0x00009888" value="0x45900C21" />
+        <register type="NOA" address="0x00009888" value="0x47900061" />
+        <register type="NOA" address="0x00009888" value="0x57904440" />
+        <register type="NOA" address="0x00009888" value="0x49900000" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
-        <register type="NOA" address="0x00009888" value="0x4B900108" />
-        <register type="NOA" address="0x00009888" value="0x59900007" />
-        <register type="NOA" address="0x00009888" value="0x43902108" />
-        <register type="NOA" address="0x00009888" value="0x53907777" />
+        <register type="NOA" address="0x00009888" value="0x4B900000" />
+        <register type="NOA" address="0x00009888" value="0x59900004" />
+        <register type="NOA" address="0x00009888" value="0x43900000" />
+        <register type="NOA" address="0x00009888" value="0x53904444" />
     </register_config>
     <register_config type="OA">
         <register type="OA" address="0x00002710" value="0x00000000" />
@@ -828,8 +815,8 @@
   <set name="Compute Metrics Basic Gen9"
        mdapi_supported_apis="OGL4 OCL IO BB"
        underscore_name="compute_basic"
-       hw_config_guid="4320492b-fd03-42ac-922f-dbe1ef3b7b58"
-       chipset="SKLGT3"
+       hw_config_guid="dc8cf7ea-26b4-4478-ac93-dab174f92ac0"
+       chipset="CFLGT2"
        symbol_name="ComputeBasic"
        >
     <counter name="GPU Core Clocks"
@@ -910,7 +897,7 @@
              units="percent"
              symbol_name="Fpu0Active"
              semantic_type="duration"
-             mdapi_supported_apis="OGL OCL IO BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Overview System Frame Batch Draw"
              mdapi_group="EU Array/Pipes"
              mdapi_hw_unit_type="gpu"
@@ -924,7 +911,7 @@
              units="percent"
              symbol_name="Fpu1Active"
              semantic_type="duration"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Overview System Frame Batch Draw"
              mdapi_group="EU Array/Pipes"
              mdapi_hw_unit_type="gpu"
@@ -951,7 +938,7 @@
              units="threads"
              symbol_name="GsThreads"
              semantic_type="event"
-             mdapi_supported_apis="OGL4 OCL IO BB"
+             mdapi_supported_apis="OGL4 IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="EU Array/Geometry Shader"
@@ -964,7 +951,7 @@
              units="pixels"
              symbol_name="HiDepthTestFails"
              semantic_type="event"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="3D Pipe/Rasterizer/Hi-Depth Test"
@@ -977,7 +964,7 @@
              units="threads"
              symbol_name="VsThreads"
              semantic_type="event"
-             mdapi_supported_apis="OGL OCL IO BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="EU Array/Vertex Shader"
@@ -990,7 +977,7 @@
              units="threads"
              symbol_name="PsThreads"
              semantic_type="event"
-             mdapi_supported_apis="OGL OCL IO BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="EU Array/Fragment Shader"
@@ -1029,7 +1016,7 @@
              units="pixels"
              symbol_name="PixelsFailingPostPsTests"
              semantic_type="event"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="3D Pipe/Output Merger"
@@ -1151,7 +1138,7 @@
              units="pixels"
              symbol_name="RasterizedPixels"
              semantic_type="event"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="3D Pipe/Rasterizer"
@@ -1178,7 +1165,7 @@
              units="threads"
              symbol_name="DsThreads"
              semantic_type="event"
-             mdapi_supported_apis="OGL4 OCL IO BB"
+             mdapi_supported_apis="OGL4 IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="EU Array/Domain Shader"
@@ -1192,7 +1179,7 @@
              units="percent"
              symbol_name="EuThreadOccupancy"
              semantic_type="duration"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier2 Overview System Frame Batch Draw"
              mdapi_group="EU Array"
              mdapi_hw_unit_type="gpu"
@@ -1219,7 +1206,7 @@
              units="pixels"
              symbol_name="SamplesBlended"
              semantic_type="event"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Overview Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="3D Pipe/Output Merger"
@@ -1232,7 +1219,7 @@
              units="pixels"
              symbol_name="EarlyDepthTestFails"
              semantic_type="event"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="3D Pipe/Rasterizer/Early Depth Test"
@@ -1258,7 +1245,7 @@
              units="threads"
              symbol_name="HsThreads"
              semantic_type="event"
-             mdapi_supported_apis="OGL4 OCL IO BB"
+             mdapi_supported_apis="OGL4 IO BB"
              mdapi_usage_flags="Tier3 Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="EU Array/Hull Shader"
@@ -1313,7 +1300,7 @@
              units="pixels"
              symbol_name="SamplesKilledInPs"
              semantic_type="event"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier4 Overview Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="3D Pipe/Fragment Shader"
@@ -1326,7 +1313,7 @@
              units="pixels"
              symbol_name="SamplesWritten"
              semantic_type="event"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Overview Frame Batch Draw"
              mdapi_hw_unit_type="gpu"
              mdapi_group="3D Pipe/Output Merger"
@@ -1353,7 +1340,7 @@
              units="percent"
              symbol_name="EuSendActive"
              semantic_type="duration"
-             mdapi_supported_apis="OGL IO OCL BB"
+             mdapi_supported_apis="OGL IO BB"
              mdapi_usage_flags="Tier3 Overview System Frame Batch Draw"
              mdapi_group="EU Array/Pipes"
              mdapi_hw_unit_type="gpu"
@@ -1428,15 +1415,15 @@
         <register type="NOA" address="0x00009888" value="0x51900000" />
         <register type="NOA" address="0x00009888" value="0x41900800" />
         <register type="NOA" address="0x00009888" value="0x55900000" />
-        <register type="NOA" address="0x00009888" value="0x45900863" />
+        <register type="NOA" address="0x00009888" value="0x45900821" />
         <register type="NOA" address="0x00009888" value="0x47900802" />
         <register type="NOA" address="0x00009888" value="0x57900000" />
         <register type="NOA" address="0x00009888" value="0x49900802" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
         <register type="NOA" address="0x00009888" value="0x4B900002" />
         <register type="NOA" address="0x00009888" value="0x59900000" />
-        <register type="NOA" address="0x00009888" value="0x43900C62" />
-        <register type="NOA" address="0x00009888" value="0x53903333" />
+        <register type="NOA" address="0x00009888" value="0x43900422" />
+        <register type="NOA" address="0x00009888" value="0x53904444" />
     </register_config>
     <register_config type="OA">
         <register type="OA" address="0x00002710" value="0x00000000" />
@@ -1459,8 +1446,8 @@
   <set name="Render Metrics for 3D Pipeline Profile Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="render_pipe_profile"
-       hw_config_guid="bd2d9cae-b9ec-4f5b-9d2f-934bed398a2d"
-       chipset="SKLGT3"
+       hw_config_guid="2221e4d5-ed7b-445e-b2cc-3de1b97f4d42"
+       chipset="CFLGT2"
        symbol_name="RenderPipeProfile"
        >
     <counter name="GPU Core Clocks"
@@ -2153,19 +2140,19 @@
         <register type="NOA" address="0x00009888" value="0x19908000" />
         <register type="NOA" address="0x00009888" value="0x1B904000" />
         <register type="NOA" address="0x00009888" value="0x1190C080" />
-        <register type="NOA" address="0x00009888" value="0x51901150" />
-        <register type="NOA" address="0x00009888" value="0x41901400" />
-        <register type="NOA" address="0x00009888" value="0x55905111" />
-        <register type="NOA" address="0x00009888" value="0x45901400" />
-        <register type="NOA" address="0x00009888" value="0x479004A5" />
-        <register type="NOA" address="0x00009888" value="0x57903455" />
-        <register type="NOA" address="0x00009888" value="0x49900000" />
+        <register type="NOA" address="0x00009888" value="0x51900000" />
+        <register type="NOA" address="0x00009888" value="0x41900440" />
+        <register type="NOA" address="0x00009888" value="0x55900000" />
+        <register type="NOA" address="0x00009888" value="0x45900400" />
+        <register type="NOA" address="0x00009888" value="0x47900C21" />
+        <register type="NOA" address="0x00009888" value="0x57900400" />
+        <register type="NOA" address="0x00009888" value="0x49900042" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
-        <register type="NOA" address="0x00009888" value="0x4B9000A0" />
-        <register type="NOA" address="0x00009888" value="0x59900001" />
-        <register type="NOA" address="0x00009888" value="0x43900005" />
-        <register type="NOA" address="0x00009888" value="0x53900455" />
+        <register type="NOA" address="0x00009888" value="0x4B900024" />
+        <register type="NOA" address="0x00009888" value="0x59900000" />
+        <register type="NOA" address="0x00009888" value="0x43900841" />
+        <register type="NOA" address="0x00009888" value="0x53900400" />
     </register_config>
     <register_config type="OA">
         <register type="OA" address="0x00002724" value="0xF0800000" />
@@ -2204,8 +2191,8 @@
   <set name="Memory Reads Distribution Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="memory_reads"
-       hw_config_guid="4ca0f3fe-7fd3-4924-98cb-1807d9879767"
-       chipset="SKLGT3"
+       hw_config_guid="82096a90-e2fa-4f38-ac14-562b2496933a"
+       chipset="CFLGT2"
        symbol_name="MemoryReads"
        >
     <counter name="GPU Core Clocks"
@@ -2844,8 +2831,8 @@
   <set name="Memory Writes Distribution Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="memory_writes"
-       hw_config_guid="a0c0172c-ee13-403d-99ff-2bdf6936cf14"
-       chipset="SKLGT3"
+       hw_config_guid="9f638880-02e9-4a8d-896a-7670a3bf0d35"
+       chipset="CFLGT2"
        symbol_name="MemoryWrites"
        >
     <counter name="GPU Core Clocks"
@@ -3485,8 +3472,8 @@
   <set name="Compute Metrics Extended Gen9"
        mdapi_supported_apis="OGL4 OCL IO BB"
        underscore_name="compute_extended"
-       hw_config_guid="52435e0b-f188-42ea-8680-21a56ee20dee"
-       chipset="SKLGT3"
+       hw_config_guid="8d4ad934-7c16-43d5-845a-51067a4c8e2f"
+       chipset="CFLGT2"
        symbol_name="ComputeExtended"
        >
     <counter name="GPU Core Clocks"
@@ -4106,8 +4093,8 @@
   <set name="Compute Metrics L3 Cache Gen9"
        mdapi_supported_apis="OGL4 OCL IO BB"
        underscore_name="compute_l3_cache"
-       hw_config_guid="27076eeb-49f3-4fed-8423-c66506005c63"
-       chipset="SKLGT3"
+       hw_config_guid="4389cf07-1424-4963-b2d2-64fcec75406d"
+       chipset="CFLGT2"
        symbol_name="ComputeL3Cache"
        >
     <counter name="GPU Core Clocks"
@@ -4895,15 +4882,15 @@
         <register type="NOA" address="0x00009888" value="0x51900000" />
         <register type="NOA" address="0x00009888" value="0x41900000" />
         <register type="NOA" address="0x00009888" value="0x55900000" />
-        <register type="NOA" address="0x00009888" value="0x45900063" />
+        <register type="NOA" address="0x00009888" value="0x45900021" />
         <register type="NOA" address="0x00009888" value="0x47900000" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
         <register type="NOA" address="0x00009888" value="0x57900000" />
         <register type="NOA" address="0x00009888" value="0x4B900000" />
         <register type="NOA" address="0x00009888" value="0x59900000" />
-        <register type="NOA" address="0x00009888" value="0x53903333" />
-        <register type="NOA" address="0x00009888" value="0x43900840" />
+        <register type="NOA" address="0x00009888" value="0x53904444" />
+        <register type="NOA" address="0x00009888" value="0x43900000" />
     </register_config>
     <register_config type="OA">
         <register type="OA" address="0x00002710" value="0x00000000" />
@@ -4934,8 +4921,8 @@
   <set name="Metric set HDCAndSF"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="hdc_and_sf"
-       hw_config_guid="8071b409-c39a-4674-94d7-32962ecfb512"
-       chipset="SKLGT3"
+       hw_config_guid="1c003bbe-ca7f-49d0-bb0f-2f0096147a00"
+       chipset="CFLGT2"
        symbol_name="HDCAndSF"
        >
     <counter name="GPU Core Clocks"
@@ -5514,8 +5501,8 @@
         <register type="NOA" address="0x00009888" value="0x31904000" />
         <register type="NOA" address="0x00009888" value="0x1190FC00" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
-        <register type="NOA" address="0x00009888" value="0x59900005" />
-        <register type="NOA" address="0x00009888" value="0x4B900000" />
+        <register type="NOA" address="0x00009888" value="0x59900000" />
+        <register type="NOA" address="0x00009888" value="0x4B900040" />
         <register type="NOA" address="0x00009888" value="0x51900000" />
         <register type="NOA" address="0x00009888" value="0x41900800" />
         <register type="NOA" address="0x00009888" value="0x43900842" />
@@ -5547,8 +5534,8 @@
   <set name="Metric set L3_1"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="l3_1"
-       hw_config_guid="5e0b391e-9ea8-4901-b2ff-b64ff616c7ed"
-       chipset="SKLGT3"
+       hw_config_guid="2a208cb2-0f82-4518-844d-c4c4699659a1"
+       chipset="CFLGT2"
        symbol_name="L3_1"
        >
     <counter name="GPU Core Clocks"
@@ -6192,8 +6179,8 @@
   <set name="Metric set L3_2"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="l3_2"
-       hw_config_guid="25dc828e-1d2d-426e-9546-a1d4233cdf16"
-       chipset="SKLGT3"
+       hw_config_guid="bf38efc7-7a5c-4cc9-87ff-cbb4b954b4ec"
+       chipset="CFLGT2"
        symbol_name="L3_2"
        >
     <counter name="GPU Core Clocks"
@@ -6772,8 +6759,8 @@
   <set name="Metric set L3_3"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="l3_3"
-       hw_config_guid="3dba9405-2d7e-4d70-8199-e734e82fd6bf"
-       chipset="SKLGT3"
+       hw_config_guid="a9cf8100-606e-4cb1-a509-e69f8588c050"
+       chipset="CFLGT2"
        symbol_name="L3_3"
        >
     <counter name="GPU Core Clocks"
@@ -7351,8 +7338,8 @@
   <set name="Metric set RasterizerAndPixelBackend"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="rasterizer_and_pixel_backend"
-       hw_config_guid="76935d7b-09c9-46bf-87f1-c18b4a86ebe5"
-       chipset="SKLGT3"
+       hw_config_guid="4905b811-fbb0-4f51-aacd-3d46555aad3d"
+       chipset="CFLGT2"
        symbol_name="RasterizerAndPixelBackend"
        >
     <counter name="GPU Core Clocks"
@@ -7959,8 +7946,8 @@
   <set name="Metric set Sampler"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="sampler"
-       hw_config_guid="1b34c0d6-4f4c-4d7b-833f-4aaf236d87a6"
-       chipset="SKLGT3"
+       hw_config_guid="00defd09-c283-4d34-a3c5-e2c4f9120adf"
+       chipset="CFLGT2"
        symbol_name="Sampler"
        >
     <counter name="GPU Core Clocks"
@@ -8622,8 +8609,8 @@
   <set name="Metric set TDL_1"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="tdl_1"
-       hw_config_guid="b375c985-9953-455b-bda2-b03f7594e9db"
-       chipset="SKLGT3"
+       hw_config_guid="87b33db5-ad38-4a08-a9e7-5f807dee1a45"
+       chipset="CFLGT2"
        symbol_name="TDL_1"
        >
     <counter name="GPU Core Clocks"
@@ -9290,8 +9277,8 @@
   <set name="Metric set TDL_2"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="tdl_2"
-       hw_config_guid="3e2be2bb-884a-49bb-82c5-2358e6bd5f2d"
-       chipset="SKLGT3"
+       hw_config_guid="fbf2fbc7-c1ce-4b7a-8f32-cf60eb947fa5"
+       chipset="CFLGT2"
        symbol_name="TDL_2"
        >
     <counter name="GPU Core Clocks"
@@ -9920,8 +9907,8 @@
   <set name="Compute Metrics Extra Gen9"
        mdapi_supported_apis="OGL4 OCL IO BB"
        underscore_name="compute_extra"
-       hw_config_guid="2d80a648-7b5a-4e92-bbe7-3b5c76f2e221"
-       chipset="SKLGT3"
+       hw_config_guid="5f679fb0-909e-4c0e-b4b2-8e801f83e71b"
+       chipset="CFLGT2"
        symbol_name="ComputeExtra"
        >
     <counter name="GPU Core Clocks"
@@ -9982,7 +9969,7 @@
              description="The percentage of time in which EU FPU1 pipeline was actively processing including Extended Math processing"
              data_type="float"
              max_equation="100"
-             equation="A 8 READ  C 5 READ C 6 READ FADD C 7 READ FADD C 2 READ FADD C 3 READ FADD C 4 READ FADD 8 FMUL FADD 100 FMUL $EuCoresTotalCount FDIV $GpuCoreClocks FDIV"
+             equation="A 8 READ  C 7 READ C 6 READ FADD C 5 READ FADD 8 FMUL FADD 100 FMUL $EuCoresTotalCount FDIV $GpuCoreClocks FDIV"
              underscore_name="fpu1_active_adjusted"
              units="percent"
              symbol_name="Fpu1ActiveAdjusted"
@@ -9997,24 +9984,11 @@
         <register type="NOA" address="0x00009888" value="0x121203E0" />
         <register type="NOA" address="0x00009888" value="0x123203E0" />
         <register type="NOA" address="0x00009888" value="0x125203E0" />
-        <register type="NOA" address="0x00009888" value="0x129203E0" />
-        <register type="NOA" address="0x00009888" value="0x12B203E0" />
-        <register type="NOA" address="0x00009888" value="0x12D203E0" />
-        <register type="NOA" address="0x00009888" value="0x024EC000" />
-        <register type="NOA" address="0x00009888" value="0x044EC000" />
-        <register type="NOA" address="0x00009888" value="0x064EC000" />
         <register type="NOA" address="0x00009888" value="0x022F4000" />
-        <register type="NOA" address="0x00009888" value="0x084CA000" />
-        <register type="NOA" address="0x00009888" value="0x0A4C0042" />
-        <register type="NOA" address="0x00009888" value="0x000D8000" />
-        <register type="NOA" address="0x00009888" value="0x020DA000" />
+        <register type="NOA" address="0x00009888" value="0x0A4C0040" />
         <register type="NOA" address="0x00009888" value="0x040DA000" />
         <register type="NOA" address="0x00009888" value="0x060D2000" />
-        <register type="NOA" address="0x00009888" value="0x0C0F5000" />
-        <register type="NOA" address="0x00009888" value="0x0E0F006D" />
-        <register type="NOA" address="0x00009888" value="0x022C8000" />
-        <register type="NOA" address="0x00009888" value="0x042C8000" />
-        <register type="NOA" address="0x00009888" value="0x062C8000" />
+        <register type="NOA" address="0x00009888" value="0x0E0F006C" />
         <register type="NOA" address="0x00009888" value="0x0C2C8000" />
         <register type="NOA" address="0x00009888" value="0x042D8000" />
         <register type="NOA" address="0x00009888" value="0x06104000" />
@@ -10032,44 +10006,37 @@
         <register type="NOA" address="0x00009888" value="0x04520033" />
         <register type="NOA" address="0x00009888" value="0x00520000" />
         <register type="NOA" address="0x00009888" value="0x04531000" />
-        <register type="NOA" address="0x00009888" value="0x00AF8000" />
-        <register type="NOA" address="0x00009888" value="0x0ACC0001" />
-        <register type="NOA" address="0x00009888" value="0x008D8000" />
-        <register type="NOA" address="0x00009888" value="0x028DA000" />
-        <register type="NOA" address="0x00009888" value="0x0C8FB000" />
-        <register type="NOA" address="0x00009888" value="0x0E8F0001" />
-        <register type="NOA" address="0x00009888" value="0x06AC8000" />
-        <register type="NOA" address="0x00009888" value="0x02AD4000" />
-        <register type="NOA" address="0x00009888" value="0x02908000" />
-        <register type="NOA" address="0x00009888" value="0x02918000" />
-        <register type="NOA" address="0x00009888" value="0x02921980" />
-        <register type="NOA" address="0x00009888" value="0x00920000" />
-        <register type="NOA" address="0x00009888" value="0x02934000" />
-        <register type="NOA" address="0x00009888" value="0x02B04000" />
-        <register type="NOA" address="0x00009888" value="0x02B14000" />
-        <register type="NOA" address="0x00009888" value="0x02B20033" />
-        <register type="NOA" address="0x00009888" value="0x00B20000" />
-        <register type="NOA" address="0x00009888" value="0x02B31000" />
-        <register type="NOA" address="0x00009888" value="0x00D08000" />
-        <register type="NOA" address="0x00009888" value="0x00D18000" />
-        <register type="NOA" address="0x00009888" value="0x00D21980" />
-        <register type="NOA" address="0x00009888" value="0x00D34000" />
-        <register type="NOA" address="0x00009888" value="0x1190FC00" />
+        <register type="NOA" address="0x00009888" value="0x1190E000" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
-        <register type="NOA" address="0x00009888" value="0x51900000" />
-        <register type="NOA" address="0x00009888" value="0x41900C00" />
-        <register type="NOA" address="0x00009888" value="0x43900402" />
-        <register type="NOA" address="0x00009888" value="0x53901550" />
-        <register type="NOA" address="0x00009888" value="0x45900080" />
+        <register type="NOA" address="0x00009888" value="0x53900000" />
+        <register type="NOA" address="0x00009888" value="0x43900C00" />
+        <register type="NOA" address="0x00009888" value="0x45900002" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
+    </register_config>
+    <register_config type="OA">
+        <register type="OA" address="0x00002740" value="0x00000000" />
+        <register type="OA" address="0x00002744" value="0x00800000" />
+        <register type="OA" address="0x00002710" value="0x00000000" />
+        <register type="OA" address="0x00002714" value="0x00800000" />
+        <register type="OA" address="0x00002720" value="0x00000000" />
+        <register type="OA" address="0x00002724" value="0x00800000" />
+    </register_config>
+    <register_config type="FLEX">
+        <register type="FLEX" address="0x0000E458" value="0x00001000" />
+        <register type="FLEX" address="0x0000E558" value="0x00003002" />
+        <register type="FLEX" address="0x0000E658" value="0x00005004" />
+        <register type="FLEX" address="0x0000E758" value="0x00011010" />
+        <register type="FLEX" address="0x0000E45C" value="0x00050012" />
+        <register type="FLEX" address="0x0000E55C" value="0x00052051" />
+        <register type="FLEX" address="0x0000E65C" value="0x00000008" />
     </register_config>
   </set>
 
   <set name="Media Vme Pipe Gen9"
        mdapi_supported_apis="MEDIA IO BB"
        underscore_name="vme_pipe"
-       hw_config_guid="cfae9232-6ffc-42cc-a703-9790016925f0"
-       chipset="SKLGT3"
+       hw_config_guid="0d09ba9a-1d1c-457d-83e2-74ac448014d6"
+       chipset="CFLGT2"
        symbol_name="VMEPipe"
        >
     <counter name="GPU Core Clocks"
@@ -10215,29 +10182,28 @@
         <register type="NOA" address="0x00009888" value="0x161A00C0" />
         <register type="NOA" address="0x00009888" value="0x12180240" />
         <register type="NOA" address="0x00009888" value="0x14180002" />
-        <register type="NOA" address="0x00009888" value="0x149A5800" />
-        <register type="NOA" address="0x00009888" value="0x169A00C0" />
-        <register type="NOA" address="0x00009888" value="0x12980240" />
-        <register type="NOA" address="0x00009888" value="0x14980002" />
-        <register type="NOA" address="0x00009888" value="0x1A4E3FC0" />
+        <register type="NOA" address="0x00009888" value="0x143A5800" />
+        <register type="NOA" address="0x00009888" value="0x163A00C0" />
+        <register type="NOA" address="0x00009888" value="0x12380240" />
+        <register type="NOA" address="0x00009888" value="0x14380002" />
         <register type="NOA" address="0x00009888" value="0x002F1000" />
         <register type="NOA" address="0x00009888" value="0x022F8000" />
         <register type="NOA" address="0x00009888" value="0x042F3000" />
         <register type="NOA" address="0x00009888" value="0x004C4000" />
-        <register type="NOA" address="0x00009888" value="0x0A4C9500" />
-        <register type="NOA" address="0x00009888" value="0x0C4C002A" />
+        <register type="NOA" address="0x00009888" value="0x0A4C1500" />
         <register type="NOA" address="0x00009888" value="0x000D2000" />
         <register type="NOA" address="0x00009888" value="0x060D8000" />
         <register type="NOA" address="0x00009888" value="0x080DA000" />
         <register type="NOA" address="0x00009888" value="0x0A0DA000" />
         <register type="NOA" address="0x00009888" value="0x0C0DA000" />
         <register type="NOA" address="0x00009888" value="0x0C0F0400" />
-        <register type="NOA" address="0x00009888" value="0x0E0F5500" />
-        <register type="NOA" address="0x00009888" value="0x100F0015" />
+        <register type="NOA" address="0x00009888" value="0x0E0F9500" />
+        <register type="NOA" address="0x00009888" value="0x100F002A" />
         <register type="NOA" address="0x00009888" value="0x002C8000" />
         <register type="NOA" address="0x00009888" value="0x0E2C8000" />
-        <register type="NOA" address="0x00009888" value="0x162CAA00" />
-        <register type="NOA" address="0x00009888" value="0x182C000A" />
+        <register type="NOA" address="0x00009888" value="0x162C0A00" />
+        <register type="NOA" address="0x00009888" value="0x0A2DC000" />
+        <register type="NOA" address="0x00009888" value="0x0C2DC000" />
         <register type="NOA" address="0x00009888" value="0x04193000" />
         <register type="NOA" address="0x00009888" value="0x081A28C1" />
         <register type="NOA" address="0x00009888" value="0x001A0000" />
@@ -10252,35 +10218,25 @@
         <register type="NOA" address="0x00009888" value="0x08180000" />
         <register type="NOA" address="0x00009888" value="0x02180000" />
         <register type="NOA" address="0x00009888" value="0x04183000" />
-        <register type="NOA" address="0x00009888" value="0x04AFC000" />
-        <register type="NOA" address="0x00009888" value="0x06AF3000" />
-        <register type="NOA" address="0x00009888" value="0x0ACC4000" />
-        <register type="NOA" address="0x00009888" value="0x0CCC0015" />
-        <register type="NOA" address="0x00009888" value="0x0A8DA000" />
-        <register type="NOA" address="0x00009888" value="0x0C8DA000" />
-        <register type="NOA" address="0x00009888" value="0x0E8F4000" />
-        <register type="NOA" address="0x00009888" value="0x108F0015" />
-        <register type="NOA" address="0x00009888" value="0x16ACA000" />
-        <register type="NOA" address="0x00009888" value="0x18AC000A" />
-        <register type="NOA" address="0x00009888" value="0x06993000" />
-        <register type="NOA" address="0x00009888" value="0x0C9A28C1" />
-        <register type="NOA" address="0x00009888" value="0x009A0000" />
-        <register type="NOA" address="0x00009888" value="0x0A93F000" />
-        <register type="NOA" address="0x00009888" value="0x0C93F000" />
-        <register type="NOA" address="0x00009888" value="0x0A97A000" />
-        <register type="NOA" address="0x00009888" value="0x0C97A000" />
-        <register type="NOA" address="0x00009888" value="0x0A980977" />
-        <register type="NOA" address="0x00009888" value="0x08980000" />
-        <register type="NOA" address="0x00009888" value="0x04980000" />
-        <register type="NOA" address="0x00009888" value="0x06983000" />
+        <register type="NOA" address="0x00009888" value="0x06393000" />
+        <register type="NOA" address="0x00009888" value="0x0C3A28C1" />
+        <register type="NOA" address="0x00009888" value="0x003A0000" />
+        <register type="NOA" address="0x00009888" value="0x0A33F000" />
+        <register type="NOA" address="0x00009888" value="0x0C33F000" />
+        <register type="NOA" address="0x00009888" value="0x0A37A000" />
+        <register type="NOA" address="0x00009888" value="0x0C37A000" />
+        <register type="NOA" address="0x00009888" value="0x0A380977" />
+        <register type="NOA" address="0x00009888" value="0x08380000" />
+        <register type="NOA" address="0x00009888" value="0x04380000" />
+        <register type="NOA" address="0x00009888" value="0x06383000" />
         <register type="NOA" address="0x00009888" value="0x119000FF" />
-        <register type="NOA" address="0x00009888" value="0x51900050" />
-        <register type="NOA" address="0x00009888" value="0x41900000" />
-        <register type="NOA" address="0x00009888" value="0x55900115" />
-        <register type="NOA" address="0x00009888" value="0x45900000" />
-        <register type="NOA" address="0x00009888" value="0x47900884" />
+        <register type="NOA" address="0x00009888" value="0x51900000" />
+        <register type="NOA" address="0x00009888" value="0x41900040" />
+        <register type="NOA" address="0x00009888" value="0x55900000" />
+        <register type="NOA" address="0x00009888" value="0x45900800" />
+        <register type="NOA" address="0x00009888" value="0x47901000" />
         <register type="NOA" address="0x00009888" value="0x57900000" />
-        <register type="NOA" address="0x00009888" value="0x49900002" />
+        <register type="NOA" address="0x00009888" value="0x49900844" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
     </register_config>
@@ -10309,198 +10265,11 @@
     </register_config>
   </set>
 
-  <set name="Gpu Rings Busyness"
-       mdapi_supported_apis="OGL OCL MEDIA IO BB"
-       underscore_name="gpu_busyness"
-       hw_config_guid="0c5058ff-fdf4-4e0d-81fb-c0310fb76525"
-       chipset="SKLGT3"
-       symbol_name="GpuBusyness"
-       >
-    <counter name="GPU Core Clocks"
-             description="The total number of GPU core clocks elapsed during the measurement."
-             data_type="uint64"
-             equation="GPU_CLOCK 0 READ"
-             underscore_name="gpu_core_clocks"
-             units="cycles"
-             symbol_name="GpuCoreClocks"
-             semantic_type="event"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="Tier1 Frame Batch Draw"
-             mdapi_hw_unit_type="gpu"
-             mdapi_group="GPU"
-             />
-    <counter name="Vebox Ring Busy"
-             description="The percentage of time when vebox command streamer was busy."
-             data_type="float"
-             max_equation="100"
-             equation="C 4 READ 100 UMUL $GpuCoreClocks FDIV"
-             underscore_name="vebox_busy"
-             units="percent"
-             symbol_name="VeboxBusy"
-             semantic_type="duration"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="System Frame Batch"
-             mdapi_group="GPU"
-             mdapi_hw_unit_type="gpu"
-             />
-    <counter name="GPU Time Elapsed"
-             description="Time elapsed on the GPU during the measurement."
-             data_type="uint64"
-             equation="GPU_TIME 0 READ 1000000000 UMUL $GpuTimestampFrequency UDIV"
-             underscore_name="gpu_time"
-             units="ns"
-             symbol_name="GpuTime"
-             semantic_type="duration"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="Tier1 Overview System Frame Batch Draw"
-             mdapi_hw_unit_type="gpu"
-             mdapi_group="GPU"
-             />
-    <counter name="AVG GPU Core Frequency"
-             description="Average GPU Core Frequency in the measurement."
-             data_type="uint64"
-             max_equation="$GpuMaxFrequency"
-             equation="$GpuCoreClocks 1000000000 UMUL $GpuTime UDIV"
-             underscore_name="avg_gpu_core_frequency"
-             units="hz"
-             symbol_name="AvgGpuCoreFrequency"
-             semantic_type="event"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="Tier1 Overview System Frame Batch Draw"
-             mdapi_group="GPU"
-             mdapi_hw_unit_type="gpu"
-             />
-    <counter name="Render Ring Busy"
-             description="The percentage of time when render command streamer was busy."
-             data_type="float"
-             max_equation="100"
-             equation="C 7 READ 100 UMUL $GpuCoreClocks FDIV"
-             underscore_name="render_busy"
-             units="percent"
-             symbol_name="RenderBusy"
-             semantic_type="duration"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="System Frame Batch"
-             mdapi_group="GPU"
-             mdapi_hw_unit_type="gpu"
-             />
-    <counter name="Vdbox0 Ring Busy"
-             description="The percentage of time when Vdbox0 command streamer was busy."
-             data_type="float"
-             max_equation="100"
-             equation="C 6 READ 100 UMUL $GpuCoreClocks FDIV"
-             underscore_name="vdbox0_busy"
-             units="percent"
-             symbol_name="Vdbox0Busy"
-             semantic_type="duration"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="System Frame Batch"
-             mdapi_group="GPU"
-             mdapi_hw_unit_type="gpu"
-             />
-    <counter name="Blitter Ring Busy"
-             description="The percentage of time when blitter command streamer was busy."
-             data_type="float"
-             max_equation="100"
-             equation="C 3 READ 100 UMUL $GpuCoreClocks FDIV"
-             underscore_name="blitter_busy"
-             units="percent"
-             symbol_name="BlitterBusy"
-             semantic_type="duration"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="System Frame Batch"
-             mdapi_group="GPU"
-             mdapi_hw_unit_type="gpu"
-             />
-    <counter name="AnyRingBusy"
-             description="The percentage of time when any command streamer was busy."
-             data_type="float"
-             max_equation="100"
-             equation="B 0 READ 100 UMUL $GpuCoreClocks FDIV"
-             underscore_name="any_ring_busy"
-             units="percent"
-             symbol_name="AnyRingBusy"
-             semantic_type="duration"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="Frame Batch Draw"
-             mdapi_group="GPU"
-             mdapi_hw_unit_type="gpu"
-             />
-    <counter name="Vdbox1 Ring Busy"
-             description="The percentage of time when Vdbox1 command streamer was busy."
-             data_type="float"
-             max_equation="100"
-             equation="C 5 READ 100 UMUL $GpuCoreClocks FDIV"
-             underscore_name="vdbox1_busy"
-             units="percent"
-             symbol_name="Vdbox1Busy"
-             semantic_type="duration"
-             mdapi_supported_apis=""
-             mdapi_usage_flags="System Frame Batch"
-             mdapi_group="GPU"
-             mdapi_hw_unit_type="gpu"
-             />
-    <register_config type="NOA">
-        <register type="NOA" address="0x00009840" value="0x00000080" />
-        <register type="NOA" address="0x00009888" value="0x21D05800" />
-        <register type="NOA" address="0x00009888" value="0x13805800" />
-        <register type="NOA" address="0x00009888" value="0x05962C25" />
-        <register type="NOA" address="0x00009888" value="0x19950016" />
-        <register type="NOA" address="0x00009888" value="0x21C05800" />
-        <register type="NOA" address="0x00009888" value="0x09D000A5" />
-        <register type="NOA" address="0x00009888" value="0x11D00000" />
-        <register type="NOA" address="0x00009888" value="0x05D00000" />
-        <register type="NOA" address="0x00009888" value="0x09D54000" />
-        <register type="NOA" address="0x00009888" value="0x07800035" />
-        <register type="NOA" address="0x00009888" value="0x11800000" />
-        <register type="NOA" address="0x00009888" value="0x1D810400" />
-        <register type="NOA" address="0x00009888" value="0x21960000" />
-        <register type="NOA" address="0x00009888" value="0x0996C000" />
-        <register type="NOA" address="0x00009888" value="0x0B964000" />
-        <register type="NOA" address="0x00009888" value="0x19938000" />
-        <register type="NOA" address="0x00009888" value="0x1B930068" />
-        <register type="NOA" address="0x00009888" value="0x15948000" />
-        <register type="NOA" address="0x00009888" value="0x1B94000C" />
-        <register type="NOA" address="0x00009888" value="0x03957500" />
-        <register type="NOA" address="0x00009888" value="0x1D950000" />
-        <register type="NOA" address="0x00009888" value="0x17950000" />
-        <register type="NOA" address="0x00009888" value="0x07E54000" />
-        <register type="NOA" address="0x00009888" value="0x07928000" />
-        <register type="NOA" address="0x00009888" value="0x03988000" />
-        <register type="NOA" address="0x00009888" value="0x17908000" />
-        <register type="NOA" address="0x00009888" value="0x19904000" />
-        <register type="NOA" address="0x00009888" value="0x1B908000" />
-        <register type="NOA" address="0x00009888" value="0x1D908000" />
-        <register type="NOA" address="0x00009888" value="0x1F908000" />
-        <register type="NOA" address="0x00009888" value="0x09978000" />
-        <register type="NOA" address="0x00009888" value="0x0BC000A5" />
-        <register type="NOA" address="0x00009888" value="0x11C00000" />
-        <register type="NOA" address="0x00009888" value="0x05C00000" />
-        <register type="NOA" address="0x00009888" value="0x0BC54000" />
-        <register type="NOA" address="0x00009888" value="0x11900000" />
-        <register type="NOA" address="0x00009888" value="0x37900000" />
-        <register type="NOA" address="0x00009888" value="0x51900000" />
-        <register type="NOA" address="0x00009888" value="0x43900463" />
-        <register type="NOA" address="0x00009888" value="0x53900000" />
-        <register type="NOA" address="0x00009888" value="0x45900040" />
-        <register type="NOA" address="0x00009888" value="0x33900000" />
-    </register_config>
-    <register_config type="OA">
-        <register type="OA" address="0x00002740" value="0x00000000" />
-        <register type="OA" address="0x00002710" value="0x00000000" />
-        <register type="OA" address="0x00002714" value="0x10800000" />
-        <register type="OA" address="0x00002720" value="0x00000000" />
-        <register type="OA" address="0x00002724" value="0x00800000" />
-        <register type="OA" address="0x00002770" value="0x0007C000" />
-        <register type="OA" address="0x00002774" value="0x000007FF" />
-    </register_config>
-  </set>
-
-  <set name="MDAPI testing set Gen9"
+  <set name="MDAPI testing set Gen9.5"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="test_oa"
-       hw_config_guid="2b985803-d3c9-4629-8a4f-634bfecba0e8"
-       chipset="SKLGT3"
+       hw_config_guid="74fb4902-d3d3-4237-9e90-cbdc68d0a446"
+       chipset="CFLGT2"
        symbol_name="TestOa"
        >
     <counter name="TestCounter7"

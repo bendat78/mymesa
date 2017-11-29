@@ -18,43 +18,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-sid_tables_h = custom_target(
-  'sid_tables_h',
-  input : ['sid_tables.py', 'sid.h', 'gfx9d.h'],
-  output : 'sid_tables.h',
-  command : [prog_python2, '@INPUT@'],
-  capture : true,
+files_libvirgl = files(
+  'virgl_buffer.c',
+  'virgl_context.c',
+  'virgl_encode.c',
+  'virgl_query.c',
+  'virgl_resource.c',
+  'virgl_screen.c',
+  'virgl_streamout.c',
+  'virgl_texture.c',
+  'virgl_tgsi.c',
 )
 
-amd_common_files = files(
-  'ac_binary.c',
-  'ac_binary.h',
-  'ac_exp_param.h',
-  'ac_llvm_build.c',
-  'ac_llvm_build.h',
-  'ac_llvm_helper.cpp',
-  'ac_llvm_util.c',
-  'ac_llvm_util.h',
-  'ac_shader_abi.h',
-  'ac_shader_info.c',
-  'ac_shader_info.h',
-  'ac_nir_to_llvm.c',
-  'ac_nir_to_llvm.h',
-  'ac_gpu_info.c',
-  'ac_gpu_info.h',
-  'ac_surface.c',
-  'ac_surface.h',
-  'ac_debug.c',
-  'ac_debug.h',
-)
-
-libamd_common = static_library(
-  'amd_common',
-  [amd_common_files, sid_tables_h, nir_opcodes_h],
-  include_directories : [inc_common, inc_compiler, inc_nir, inc_mesa, inc_mapi,
-                         inc_amd],
-  dependencies : [dep_llvm, dep_thread, dep_elf, dep_libdrm_amdgpu,
-                  dep_valgrind],
-  c_args : [c_vis_args],
-  cpp_args : [cpp_vis_args],
+libvirgl = static_library(
+  'virgl',
+  files_libvirgl,
+  c_args : c_vis_args,
+  include_directories : inc_common,
+  dependencies : dep_libdrm,
 )

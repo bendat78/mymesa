@@ -18,43 +18,28 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-sid_tables_h = custom_target(
-  'sid_tables_h',
-  input : ['sid_tables.py', 'sid.h', 'gfx9d.h'],
-  output : 'sid_tables.h',
-  command : [prog_python2, '@INPUT@'],
-  capture : true,
+files_svgadrm = files(
+  'pb_buffer_simple_fenced.c',
+  'vmw_buffer.c',
+  'vmw_context.c',
+  'vmw_fence.c',
+  'vmw_screen.c',
+  'vmw_screen_dri.c',
+  'vmw_screen_ioctl.c',
+  'vmw_screen_pools.c',
+  'vmw_screen_svga.c',
+  'vmw_surface.c',
+  'vmw_shader.c',
+  'vmw_query.c',
 )
 
-amd_common_files = files(
-  'ac_binary.c',
-  'ac_binary.h',
-  'ac_exp_param.h',
-  'ac_llvm_build.c',
-  'ac_llvm_build.h',
-  'ac_llvm_helper.cpp',
-  'ac_llvm_util.c',
-  'ac_llvm_util.h',
-  'ac_shader_abi.h',
-  'ac_shader_info.c',
-  'ac_shader_info.h',
-  'ac_nir_to_llvm.c',
-  'ac_nir_to_llvm.h',
-  'ac_gpu_info.c',
-  'ac_gpu_info.h',
-  'ac_surface.c',
-  'ac_surface.h',
-  'ac_debug.c',
-  'ac_debug.h',
-)
-
-libamd_common = static_library(
-  'amd_common',
-  [amd_common_files, sid_tables_h, nir_opcodes_h],
-  include_directories : [inc_common, inc_compiler, inc_nir, inc_mesa, inc_mapi,
-                         inc_amd],
-  dependencies : [dep_llvm, dep_thread, dep_elf, dep_libdrm_amdgpu,
-                  dep_valgrind],
-  c_args : [c_vis_args],
-  cpp_args : [cpp_vis_args],
+libsvgadrm = static_library(
+  'svgadrm',
+  files_svgadrm,
+  c_args : [c_vis_args, c_msvc_compat_args],
+  include_directories : [
+    inc_src, inc_include, inc_gallium, inc_gallium_aux,
+    include_directories('../../../drivers/svga', '../../../drivers/svga/include'),
+  ],
+  dependencies : dep_libdrm,
 )

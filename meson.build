@@ -112,6 +112,8 @@ endif
 with_gallium = false
 with_gallium_pl111 = false
 with_gallium_radeonsi = false
+with_gallium_r300 = false
+with_gallium_r600 = false
 with_gallium_nouveau = false
 with_gallium_freedreno = false
 with_gallium_softpipe = false
@@ -119,14 +121,17 @@ with_gallium_vc4 = false
 with_gallium_vc5 = false
 with_gallium_etnaviv = false
 with_gallium_imx = false
+with_gallium_i915 = false
+with_gallium_svga = false
+with_gallium_virgl = false
 _drivers = get_option('gallium-drivers')
 if _drivers == 'auto'
   if not ['darwin', 'windows'].contains(host_machine.system())
     # TODO: PPC, Sparc
     if ['x86', 'x86_64'].contains(host_machine.cpu_family())
-      _drivers = 'radeonsi,nouveau,swrast'
+      _drivers = 'r300,r600,radeonsi,nouveau,virgl,svga,swrast'
     elif ['arm', 'aarch64'].contains(host_machine.cpu_family())
-      _drivers = 'pl111,vc4,vc5,freedreno,etnaviv,imx,swrast'
+      _drivers = 'pl111,vc4,vc5,freedreno,etnaviv,imx,virgl,svga,swrast'
     else
       error('Unknown architecture. Please pass -Dgallium-drivers to set driver options. Patches gladly accepted to fix this.')
     endif
@@ -138,6 +143,8 @@ if _drivers != ''
   _split = _drivers.split(',')
   with_gallium_pl111 = _split.contains('pl111')
   with_gallium_radeonsi = _split.contains('radeonsi')
+  with_gallium_r300 = _split.contains('r300')
+  with_gallium_r600 = _split.contains('r600')
   with_gallium_nouveau = _split.contains('nouveau')
   with_gallium_freedreno = _split.contains('freedreno')
   with_gallium_softpipe = _split.contains('swrast')
@@ -145,6 +152,9 @@ if _drivers != ''
   with_gallium_vc5 = _split.contains('vc5')
   with_gallium_etnaviv = _split.contains('etnaviv')
   with_gallium_imx = _split.contains('imx')
+  with_gallium_i915 = _split.contains('i915')
+  with_gallium_svga = _split.contains('svga')
+  with_gallium_virgl = _split.contains('virgl')
   with_gallium = true
 endif
 
@@ -174,12 +184,15 @@ endif
 if with_dri_swrast and with_gallium_softpipe
   error('Only one swrast provider can be built')
 endif
+if with_dri_i915 and with_gallium_i915
+  error('Only one i915 provider can be built')
+endif
 if with_gallium_imx and not with_gallium_etnaviv
   error('IMX driver requires etnaviv driver')
 endif
 
 dep_libdrm_intel = []
-if with_dri_i915
+if with_dri_i915 or with_gallium_i915
   dep_libdrm_intel = dependency('libdrm_intel', version : '>= 2.4.75')
 endif
 
@@ -275,9 +288,13 @@ else
   with_egl = false
 endif
 
-# TODO: or virgl
-if with_egl and with_gallium_radeonsi and not (with_platform_drm or with_platform_surfaceless)
-  error('RadeonSI requires drm or surfaceless platform when using EGL')
+if with_egl and not (with_platform_drm or with_platform_surfaceless)
+  if with_gallium_radeonsi
+    error('RadeonSI requires drm or surfaceless platform when using EGL')
+  endif
+  if with_gallium_virgl
+    error('Virgl requires drm or surfaceless platform when using EGL')
+  endif
 endif
 
 pre_args += '-DGLX_USE_TLS'
@@ -695,9 +712,13 @@ dep_thread = dependency('threads')
 if dep_thread.found() and host_machine.system() != 'windows'
   pre_args += '-DHAVE_PTHREAD'
 endif
-dep_elf = dependency('libelf', required : false)
-if not dep_elf.found() and (with_amd_vk or with_gallium_radeonsi) # TODO: clover, r600
-  dep_elf = cc.find_library('elf')
+if with_amd_vk or with_gallium_radeonsi or with_gallium_r600 # TODO: clover
+  dep_elf = dependency('libelf', required : false)
+  if not dep_elf.found()
+    dep_elf = cc.find_library('elf')
+  endif
+else
+  dep_elf = []
 endif
 dep_expat = dependency('expat')
 # this only exists on linux so either this is linux and it will be found, or
@@ -712,7 +733,8 @@ dep_libdrm_freedreno = []
 if with_amd_vk or with_gallium_radeonsi
   dep_libdrm_amdgpu = dependency('libdrm_amdgpu', version : '>= 2.4.88')
 endif
-if with_gallium_radeonsi or with_dri_r100 or with_dri_r200
+if (with_gallium_radeonsi or with_dri_r100 or with_dri_r200 or
+    with_gallium_r300 or with_gallium_r600)
   dep_libdrm_radeon = dependency('libdrm_radeon', version : '>= 2.4.71')
 endif
 if with_gallium_nouveau or with_dri_nouveau
@@ -726,8 +748,11 @@ if with_gallium_freedreno
 endif
 
 llvm_modules = ['bitwriter', 'engine', 'mcdisassembler', 'mcjit']
-if with_amd_vk or with_gallium_radeonsi
+if with_amd_vk or with_gallium_radeonsi or with_gallium_r600
   llvm_modules += ['amdgpu', 'bitreader', 'ipo']
+  if with_gallium_r600
+    llvm_modules += 'asmparser'
+  endif
 endif
 
 _llvm = get_option('llvm')

@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
-<metrics version="1508421693" merge_md5="">
+<metrics version="1508342573" merge_md5="">
   <set name="Render Metrics Basic Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="render_basic"
-       hw_config_guid="4616d450-2393-4836-8146-53c5ed84d359"
-       chipset="SKLGT3"
+       hw_config_guid="80b55814-32e9-4988-95fd-77aded3ac0fe"
+       chipset="CFLGT3"
        symbol_name="RenderBasic"
        >
     <counter name="GPU Core Clocks"
@@ -685,7 +685,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -793,19 +793,19 @@
         <register type="NOA" address="0x00009888" value="0x19908000" />
         <register type="NOA" address="0x00009888" value="0x1B908000" />
         <register type="NOA" address="0x00009888" value="0x1190003F" />
-        <register type="NOA" address="0x00009888" value="0x51907710" />
-        <register type="NOA" address="0x00009888" value="0x419020A0" />
-        <register type="NOA" address="0x00009888" value="0x55901515" />
-        <register type="NOA" address="0x00009888" value="0x45900529" />
-        <register type="NOA" address="0x00009888" value="0x47901025" />
-        <register type="NOA" address="0x00009888" value="0x57907770" />
-        <register type="NOA" address="0x00009888" value="0x49902100" />
+        <register type="NOA" address="0x00009888" value="0x51902240" />
+        <register type="NOA" address="0x00009888" value="0x41900C00" />
+        <register type="NOA" address="0x00009888" value="0x55900242" />
+        <register type="NOA" address="0x00009888" value="0x45900084" />
+        <register type="NOA" address="0x00009888" value="0x47901400" />
+        <register type="NOA" address="0x00009888" value="0x57902220" />
+        <register type="NOA" address="0x00009888" value="0x49900C60" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
-        <register type="NOA" address="0x00009888" value="0x4B900108" />
-        <register type="NOA" address="0x00009888" value="0x59900007" />
-        <register type="NOA" address="0x00009888" value="0x43902108" />
-        <register type="NOA" address="0x00009888" value="0x53907777" />
+        <register type="NOA" address="0x00009888" value="0x4B900063" />
+        <register type="NOA" address="0x00009888" value="0x59900002" />
+        <register type="NOA" address="0x00009888" value="0x43900C63" />
+        <register type="NOA" address="0x00009888" value="0x53902222" />
     </register_config>
     <register_config type="OA">
         <register type="OA" address="0x00002710" value="0x00000000" />
@@ -828,8 +828,8 @@
   <set name="Compute Metrics Basic Gen9"
        mdapi_supported_apis="OGL4 OCL IO BB"
        underscore_name="compute_basic"
-       hw_config_guid="4320492b-fd03-42ac-922f-dbe1ef3b7b58"
-       chipset="SKLGT3"
+       hw_config_guid="607f9cc8-e026-4d5f-bfad-45c77eabc150"
+       chipset="CFLGT3"
        symbol_name="ComputeBasic"
        >
     <counter name="GPU Core Clocks"
@@ -1294,7 +1294,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -1428,15 +1428,15 @@
         <register type="NOA" address="0x00009888" value="0x51900000" />
         <register type="NOA" address="0x00009888" value="0x41900800" />
         <register type="NOA" address="0x00009888" value="0x55900000" />
-        <register type="NOA" address="0x00009888" value="0x45900863" />
+        <register type="NOA" address="0x00009888" value="0x45900821" />
         <register type="NOA" address="0x00009888" value="0x47900802" />
         <register type="NOA" address="0x00009888" value="0x57900000" />
         <register type="NOA" address="0x00009888" value="0x49900802" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
         <register type="NOA" address="0x00009888" value="0x4B900002" />
         <register type="NOA" address="0x00009888" value="0x59900000" />
-        <register type="NOA" address="0x00009888" value="0x43900C62" />
-        <register type="NOA" address="0x00009888" value="0x53903333" />
+        <register type="NOA" address="0x00009888" value="0x43900422" />
+        <register type="NOA" address="0x00009888" value="0x53904444" />
     </register_config>
     <register_config type="OA">
         <register type="OA" address="0x00002710" value="0x00000000" />
@@ -1459,8 +1459,8 @@
   <set name="Render Metrics for 3D Pipeline Profile Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="render_pipe_profile"
-       hw_config_guid="bd2d9cae-b9ec-4f5b-9d2f-934bed398a2d"
-       chipset="SKLGT3"
+       hw_config_guid="9875e050-b1bc-45e6-a6ab-665594601df9"
+       chipset="CFLGT3"
        symbol_name="RenderPipeProfile"
        >
     <counter name="GPU Core Clocks"
@@ -2001,7 +2001,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -2153,19 +2153,19 @@
         <register type="NOA" address="0x00009888" value="0x19908000" />
         <register type="NOA" address="0x00009888" value="0x1B904000" />
         <register type="NOA" address="0x00009888" value="0x1190C080" />
-        <register type="NOA" address="0x00009888" value="0x51901150" />
-        <register type="NOA" address="0x00009888" value="0x41901400" />
-        <register type="NOA" address="0x00009888" value="0x55905111" />
-        <register type="NOA" address="0x00009888" value="0x45901400" />
-        <register type="NOA" address="0x00009888" value="0x479004A5" />
-        <register type="NOA" address="0x00009888" value="0x57903455" />
-        <register type="NOA" address="0x00009888" value="0x49900000" />
+        <register type="NOA" address="0x00009888" value="0x51900000" />
+        <register type="NOA" address="0x00009888" value="0x41900440" />
+        <register type="NOA" address="0x00009888" value="0x55900000" />
+        <register type="NOA" address="0x00009888" value="0x45900400" />
+        <register type="NOA" address="0x00009888" value="0x47900C21" />
+        <register type="NOA" address="0x00009888" value="0x57900400" />
+        <register type="NOA" address="0x00009888" value="0x49900042" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
-        <register type="NOA" address="0x00009888" value="0x4B9000A0" />
-        <register type="NOA" address="0x00009888" value="0x59900001" />
-        <register type="NOA" address="0x00009888" value="0x43900005" />
-        <register type="NOA" address="0x00009888" value="0x53900455" />
+        <register type="NOA" address="0x00009888" value="0x4B900024" />
+        <register type="NOA" address="0x00009888" value="0x59900000" />
+        <register type="NOA" address="0x00009888" value="0x43900841" />
+        <register type="NOA" address="0x00009888" value="0x53900400" />
     </register_config>
     <register_config type="OA">
         <register type="OA" address="0x00002724" value="0xF0800000" />
@@ -2204,8 +2204,8 @@
   <set name="Memory Reads Distribution Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="memory_reads"
-       hw_config_guid="4ca0f3fe-7fd3-4924-98cb-1807d9879767"
-       chipset="SKLGT3"
+       hw_config_guid="49c65f34-e625-4ca4-86b7-88693e624d4c"
+       chipset="CFLGT3"
        symbol_name="MemoryReads"
        >
     <counter name="GPU Core Clocks"
@@ -2844,8 +2844,8 @@
   <set name="Memory Writes Distribution Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="memory_writes"
-       hw_config_guid="a0c0172c-ee13-403d-99ff-2bdf6936cf14"
-       chipset="SKLGT3"
+       hw_config_guid="45c9e8ee-2998-4d83-88e8-9cb7e03287bf"
+       chipset="CFLGT3"
        symbol_name="MemoryWrites"
        >
     <counter name="GPU Core Clocks"
@@ -3338,7 +3338,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -3485,8 +3485,8 @@
   <set name="Compute Metrics Extended Gen9"
        mdapi_supported_apis="OGL4 OCL IO BB"
        underscore_name="compute_extended"
-       hw_config_guid="52435e0b-f188-42ea-8680-21a56ee20dee"
-       chipset="SKLGT3"
+       hw_config_guid="bac415ce-d7a2-4f8d-9b16-834deba7330e"
+       chipset="CFLGT3"
        symbol_name="ComputeExtended"
        >
     <counter name="GPU Core Clocks"
@@ -3957,7 +3957,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -4106,8 +4106,8 @@
   <set name="Compute Metrics L3 Cache Gen9"
        mdapi_supported_apis="OGL4 OCL IO BB"
        underscore_name="compute_l3_cache"
-       hw_config_guid="27076eeb-49f3-4fed-8423-c66506005c63"
-       chipset="SKLGT3"
+       hw_config_guid="a8cfca44-0e74-4338-9e57-3daad98957dd"
+       chipset="CFLGT3"
        symbol_name="ComputeL3Cache"
        >
     <counter name="GPU Core Clocks"
@@ -4777,7 +4777,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -4895,15 +4895,15 @@
         <register type="NOA" address="0x00009888" value="0x51900000" />
         <register type="NOA" address="0x00009888" value="0x41900000" />
         <register type="NOA" address="0x00009888" value="0x55900000" />
-        <register type="NOA" address="0x00009888" value="0x45900063" />
+        <register type="NOA" address="0x00009888" value="0x45900021" />
         <register type="NOA" address="0x00009888" value="0x47900000" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
         <register type="NOA" address="0x00009888" value="0x57900000" />
         <register type="NOA" address="0x00009888" value="0x4B900000" />
         <register type="NOA" address="0x00009888" value="0x59900000" />
-        <register type="NOA" address="0x00009888" value="0x53903333" />
-        <register type="NOA" address="0x00009888" value="0x43900840" />
+        <register type="NOA" address="0x00009888" value="0x53904444" />
+        <register type="NOA" address="0x00009888" value="0x43900000" />
     </register_config>
     <register_config type="OA">
         <register type="OA" address="0x00002710" value="0x00000000" />
@@ -4934,8 +4934,8 @@
   <set name="Metric set HDCAndSF"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="hdc_and_sf"
-       hw_config_guid="8071b409-c39a-4674-94d7-32962ecfb512"
-       chipset="SKLGT3"
+       hw_config_guid="3d9acca5-8d39-4c34-89ee-f921848d8562"
+       chipset="CFLGT3"
        symbol_name="HDCAndSF"
        >
     <counter name="GPU Core Clocks"
@@ -5415,7 +5415,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -5514,8 +5514,8 @@
         <register type="NOA" address="0x00009888" value="0x31904000" />
         <register type="NOA" address="0x00009888" value="0x1190FC00" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
-        <register type="NOA" address="0x00009888" value="0x59900005" />
-        <register type="NOA" address="0x00009888" value="0x4B900000" />
+        <register type="NOA" address="0x00009888" value="0x59900000" />
+        <register type="NOA" address="0x00009888" value="0x4B900040" />
         <register type="NOA" address="0x00009888" value="0x51900000" />
         <register type="NOA" address="0x00009888" value="0x41900800" />
         <register type="NOA" address="0x00009888" value="0x43900842" />
@@ -5528,6 +5528,7 @@
         <register type="OA" address="0x00002744" value="0x00800000" />
         <register type="OA" address="0x00002710" value="0x00000000" />
         <register type="OA" address="0x00002714" value="0x10800000" />
+        <register type="OA" address="0x00002740" value="0x00000000" />
         <register type="OA" address="0x00002720" value="0x00000000" />
         <register type="OA" address="0x00002724" value="0x00800000" />
         <register type="OA" address="0x00002770" value="0x00000002" />
@@ -5547,8 +5548,8 @@
   <set name="Metric set L3_1"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="l3_1"
-       hw_config_guid="5e0b391e-9ea8-4901-b2ff-b64ff616c7ed"
-       chipset="SKLGT3"
+       hw_config_guid="93e582ea-de69-46e3-81b5-73386164c047"
+       chipset="CFLGT3"
        symbol_name="L3_1"
        >
     <counter name="GPU Core Clocks"
@@ -6044,7 +6045,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -6192,8 +6193,8 @@
   <set name="Metric set L3_2"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="l3_2"
-       hw_config_guid="25dc828e-1d2d-426e-9546-a1d4233cdf16"
-       chipset="SKLGT3"
+       hw_config_guid="6e3680f3-8347-4e26-b930-3900d18d1322"
+       chipset="CFLGT3"
        symbol_name="L3_2"
        >
     <counter name="GPU Core Clocks"
@@ -6659,7 +6660,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -6772,8 +6773,8 @@
   <set name="Metric set L3_3"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="l3_3"
-       hw_config_guid="3dba9405-2d7e-4d70-8199-e734e82fd6bf"
-       chipset="SKLGT3"
+       hw_config_guid="1f513186-11d6-422d-a879-be86f2d08414"
+       chipset="CFLGT3"
        symbol_name="L3_3"
        >
     <counter name="GPU Core Clocks"
@@ -7239,7 +7240,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -7351,8 +7352,8 @@
   <set name="Metric set RasterizerAndPixelBackend"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="rasterizer_and_pixel_backend"
-       hw_config_guid="76935d7b-09c9-46bf-87f1-c18b4a86ebe5"
-       chipset="SKLGT3"
+       hw_config_guid="d37d4266-b749-48b2-9652-c24b91784fc6"
+       chipset="CFLGT3"
        symbol_name="RasterizerAndPixelBackend"
        >
     <counter name="GPU Core Clocks"
@@ -7848,7 +7849,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -7959,8 +7960,8 @@
   <set name="Metric set Sampler"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="sampler"
-       hw_config_guid="1b34c0d6-4f4c-4d7b-833f-4aaf236d87a6"
-       chipset="SKLGT3"
+       hw_config_guid="5951c1d7-feef-4981-b0b5-4e4983023119"
+       chipset="CFLGT3"
        symbol_name="Sampler"
        >
     <counter name="GPU Core Clocks"
@@ -8486,7 +8487,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -8622,8 +8623,8 @@
   <set name="Metric set TDL_1"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="tdl_1"
-       hw_config_guid="b375c985-9953-455b-bda2-b03f7594e9db"
-       chipset="SKLGT3"
+       hw_config_guid="bf279ed6-b3dd-43f3-9810-cb55cb78fc62"
+       chipset="CFLGT3"
        symbol_name="TDL_1"
        >
     <counter name="GPU Core Clocks"
@@ -9134,7 +9135,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -9290,8 +9291,8 @@
   <set name="Metric set TDL_2"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="tdl_2"
-       hw_config_guid="3e2be2bb-884a-49bb-82c5-2358e6bd5f2d"
-       chipset="SKLGT3"
+       hw_config_guid="a70c3fa2-e705-4f5a-8883-2ebd0feef1d2"
+       chipset="CFLGT3"
        symbol_name="TDL_2"
        >
     <counter name="GPU Core Clocks"
@@ -9787,7 +9788,7 @@
     <counter name="L3 Shader Throughput"
              description="The total number of GPU memory bytes transferred between shaders and L3 caches w/o URB."
              data_type="uint64"
-             max_equation="$GpuCoreClocks 64 UMUL $EuSubslicesTotalCount UMUL"
+             max_equation="$GpuCoreClocks 64 UMUL $EuSlicesTotalCount UMUL"
              equation="A 30 READ  A 31 READ $ShaderMemoryAccesses 64 UMUL UADD UADD"
              underscore_name="l3_shader_throughput"
              units="bytes"
@@ -9920,8 +9921,8 @@
   <set name="Compute Metrics Extra Gen9"
        mdapi_supported_apis="OGL4 OCL IO BB"
        underscore_name="compute_extra"
-       hw_config_guid="2d80a648-7b5a-4e92-bbe7-3b5c76f2e221"
-       chipset="SKLGT3"
+       hw_config_guid="e61ae394-9d9e-4204-a735-1dad7e44d953"
+       chipset="CFLGT3"
        symbol_name="ComputeExtra"
        >
     <counter name="GPU Core Clocks"
@@ -10058,9 +10059,9 @@
         <register type="NOA" address="0x00009888" value="0x37900000" />
         <register type="NOA" address="0x00009888" value="0x51900000" />
         <register type="NOA" address="0x00009888" value="0x41900C00" />
-        <register type="NOA" address="0x00009888" value="0x43900402" />
-        <register type="NOA" address="0x00009888" value="0x53901550" />
-        <register type="NOA" address="0x00009888" value="0x45900080" />
+        <register type="NOA" address="0x00009888" value="0x43900002" />
+        <register type="NOA" address="0x00009888" value="0x53900420" />
+        <register type="NOA" address="0x00009888" value="0x459000A1" />
         <register type="NOA" address="0x00009888" value="0x33900000" />
     </register_config>
   </set>
@@ -10068,8 +10069,8 @@
   <set name="Media Vme Pipe Gen9"
        mdapi_supported_apis="MEDIA IO BB"
        underscore_name="vme_pipe"
-       hw_config_guid="cfae9232-6ffc-42cc-a703-9790016925f0"
-       chipset="SKLGT3"
+       hw_config_guid="94272ad9-45ee-4e34-b7a7-51546cd6405c"
+       chipset="CFLGT3"
        symbol_name="VMEPipe"
        >
     <counter name="GPU Core Clocks"
@@ -10274,11 +10275,11 @@
         <register type="NOA" address="0x00009888" value="0x04980000" />
         <register type="NOA" address="0x00009888" value="0x06983000" />
         <register type="NOA" address="0x00009888" value="0x119000FF" />
-        <register type="NOA" address="0x00009888" value="0x51900050" />
-        <register type="NOA" address="0x00009888" value="0x41900000" />
-        <register type="NOA" address="0x00009888" value="0x55900115" />
-        <register type="NOA" address="0x00009888" value="0x45900000" />
-        <register type="NOA" address="0x00009888" value="0x47900884" />
+        <register type="NOA" address="0x00009888" value="0x51900040" />
+        <register type="NOA" address="0x00009888" value="0x41900020" />
+        <register type="NOA" address="0x00009888" value="0x55900004" />
+        <register type="NOA" address="0x00009888" value="0x45900400" />
+        <register type="NOA" address="0x00009888" value="0x479008A5" />
         <register type="NOA" address="0x00009888" value="0x57900000" />
         <register type="NOA" address="0x00009888" value="0x49900002" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
@@ -10312,8 +10313,8 @@
   <set name="Gpu Rings Busyness"
        mdapi_supported_apis="OGL OCL MEDIA IO BB"
        underscore_name="gpu_busyness"
-       hw_config_guid="0c5058ff-fdf4-4e0d-81fb-c0310fb76525"
-       chipset="SKLGT3"
+       hw_config_guid="22b7e0c2-cade-425f-b099-34479768c72a"
+       chipset="CFLGT3"
        symbol_name="GpuBusyness"
        >
     <counter name="GPU Core Clocks"
@@ -10442,14 +10443,13 @@
              />
     <register_config type="NOA">
         <register type="NOA" address="0x00009840" value="0x00000080" />
-        <register type="NOA" address="0x00009888" value="0x21D05800" />
+        <register type="NOA" address="0x00009888" value="0x19D05800" />
         <register type="NOA" address="0x00009888" value="0x13805800" />
         <register type="NOA" address="0x00009888" value="0x05962C25" />
         <register type="NOA" address="0x00009888" value="0x19950016" />
-        <register type="NOA" address="0x00009888" value="0x21C05800" />
-        <register type="NOA" address="0x00009888" value="0x09D000A5" />
-        <register type="NOA" address="0x00009888" value="0x11D00000" />
-        <register type="NOA" address="0x00009888" value="0x05D00000" />
+        <register type="NOA" address="0x00009888" value="0x19C05800" />
+        <register type="NOA" address="0x00009888" value="0x05D00085" />
+        <register type="NOA" address="0x00009888" value="0x25D00000" />
         <register type="NOA" address="0x00009888" value="0x09D54000" />
         <register type="NOA" address="0x00009888" value="0x07800035" />
         <register type="NOA" address="0x00009888" value="0x11800000" />
@@ -10473,9 +10473,9 @@
         <register type="NOA" address="0x00009888" value="0x1D908000" />
         <register type="NOA" address="0x00009888" value="0x1F908000" />
         <register type="NOA" address="0x00009888" value="0x09978000" />
-        <register type="NOA" address="0x00009888" value="0x0BC000A5" />
-        <register type="NOA" address="0x00009888" value="0x11C00000" />
-        <register type="NOA" address="0x00009888" value="0x05C00000" />
+        <register type="NOA" address="0x00009888" value="0x05C08500" />
+        <register type="NOA" address="0x00009888" value="0x25C00000" />
+        <register type="NOA" address="0x00009888" value="0x1BC00000" />
         <register type="NOA" address="0x00009888" value="0x0BC54000" />
         <register type="NOA" address="0x00009888" value="0x11900000" />
         <register type="NOA" address="0x00009888" value="0x37900000" />
@@ -10499,8 +10499,8 @@
   <set name="MDAPI testing set Gen9"
        mdapi_supported_apis="OGL OCL IO BB"
        underscore_name="test_oa"
-       hw_config_guid="2b985803-d3c9-4629-8a4f-634bfecba0e8"
-       chipset="SKLGT3"
+       hw_config_guid="577e8e2c-3fa0-4875-8743-3538d585e3b0"
+       chipset="CFLGT3"
        symbol_name="TestOa"
        >
     <counter name="TestCounter7"
