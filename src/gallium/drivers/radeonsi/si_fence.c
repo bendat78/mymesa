@@ -67,7 +67,7 @@ static void si_fence_reference(struct pipe_screen *screen,
 			       struct pipe_fence_handle **dst,
 			       struct pipe_fence_handle *src)
 {
-	struct radeon_winsys *ws = ((struct r600_common_screen*)screen)->ws;
+	struct radeon_winsys *ws = ((struct si_screen*)screen)->ws;
 	struct si_multi_fence **rdst = (struct si_multi_fence **)dst;
 	struct si_multi_fence *rsrc = (struct si_multi_fence *)src;
 
@@ -186,7 +186,7 @@ static boolean si_fence_finish(struct pipe_screen *screen,
 			       struct pipe_fence_handle *fence,
 			       uint64_t timeout)
 {
-	struct radeon_winsys *rws = ((struct r600_common_screen*)screen)->ws;
+	struct radeon_winsys *rws = ((struct si_screen*)screen)->ws;
 	struct si_multi_fence *rfence = (struct si_multi_fence *)fence;
 	int64_t abs_timeout = os_time_get_absolute_timeout(timeout);
 
@@ -271,7 +271,7 @@ static boolean si_fence_finish(struct pipe_screen *screen,
 			 * not going to wait.
 			 */
 			threaded_context_unwrap_sync(ctx);
-			sctx->b.gfx.flush(&sctx->b, timeout ? 0 : RADEON_FLUSH_ASYNC, NULL);
+			sctx->b.gfx.flush(&sctx->b, timeout ? 0 : PIPE_FLUSH_ASYNC, NULL);
 			rfence->gfx_unflushed.ctx = NULL;
 
 			if (!timeout)
@@ -300,13 +300,13 @@ static boolean si_fence_finish(struct pipe_screen *screen,
 static void si_create_fence_fd(struct pipe_context *ctx,
 			       struct pipe_fence_handle **pfence, int fd)
 {
-	struct r600_common_screen *rscreen = (struct r600_common_screen*)ctx->screen;
-	struct radeon_winsys *ws = rscreen->ws;
+	struct si_screen *sscreen = (struct si_screen*)ctx->screen;
+	struct radeon_winsys *ws = sscreen->ws;
 	struct si_multi_fence *rfence;
 
 	*pfence = NULL;
 
-	if (!rscreen->info.has_sync_file)
+	if (!sscreen->info.has_sync_file)
 		return;
 
 	rfence = si_create_multi_fence();
@@ -325,12 +325,12 @@ static void si_create_fence_fd(struct pipe_context *ctx,
 static int si_fence_get_fd(struct pipe_screen *screen,
 			   struct pipe_fence_handle *fence)
 {
-	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
-	struct radeon_winsys *ws = rscreen->ws;
+	struct si_screen *sscreen = (struct si_screen*)screen;
+	struct radeon_winsys *ws = sscreen->ws;
 	struct si_multi_fence *rfence = (struct si_multi_fence *)fence;
 	int gfx_fd = -1, sdma_fd = -1;
 
-	if (!rscreen->info.has_sync_file)
+	if (!sscreen->info.has_sync_file)
 		return -1;
 
 	util_queue_fence_wait(&rfence->ready);
@@ -378,10 +378,10 @@ static void si_flush_from_st(struct pipe_context *ctx,
 	struct pipe_fence_handle *sdma_fence = NULL;
 	bool deferred_fence = false;
 	struct si_fine_fence fine = {};
-	unsigned rflags = RADEON_FLUSH_ASYNC;
+	unsigned rflags = PIPE_FLUSH_ASYNC;
 
 	if (flags & PIPE_FLUSH_END_OF_FRAME)
-		rflags |= RADEON_FLUSH_END_OF_FRAME;
+		rflags |= PIPE_FLUSH_END_OF_FRAME;
 
 	if (flags & (PIPE_FLUSH_TOP_OF_PIPE | PIPE_FLUSH_BOTTOM_OF_PIPE)) {
 		assert(flags & PIPE_FLUSH_DEFERRED);
@@ -470,7 +470,7 @@ void si_init_fence_functions(struct si_context *ctx)
 
 void si_init_screen_fence_functions(struct si_screen *screen)
 {
-	screen->b.b.fence_finish = si_fence_finish;
-	screen->b.b.fence_reference = si_fence_reference;
-	screen->b.b.fence_get_fd = si_fence_get_fd;
+	screen->b.fence_finish = si_fence_finish;
+	screen->b.fence_reference = si_fence_reference;
+	screen->b.fence_get_fd = si_fence_get_fd;
 }
