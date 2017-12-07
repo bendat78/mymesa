@@ -42,7 +42,8 @@
 #include "cso_cache/cso_context.h"
 
 
-static GLuint translate_fill( GLenum mode )
+static GLuint
+translate_fill(GLenum mode)
 {
    switch (mode) {
    case GL_POINT:
@@ -60,8 +61,8 @@ static GLuint translate_fill( GLenum mode )
 }
 
 
-
-void st_update_rasterizer( struct st_context *st )
+void
+st_update_rasterizer(struct st_context *st)
 {
    struct gl_context *ctx = st->ctx;
    struct pipe_rasterizer_state *raster = &st->state.rasterizer;
@@ -111,13 +112,13 @@ void st_update_rasterizer( struct st_context *st )
    if (ctx->Polygon.CullFlag) {
       switch (ctx->Polygon.CullFaceMode) {
       case GL_FRONT:
-	 raster->cull_face = PIPE_FACE_FRONT;
+         raster->cull_face = PIPE_FACE_FRONT;
          break;
       case GL_BACK:
-	 raster->cull_face = PIPE_FACE_BACK;
+         raster->cull_face = PIPE_FACE_BACK;
          break;
       case GL_FRONT_AND_BACK:
-	 raster->cull_face = PIPE_FACE_FRONT_AND_BACK;
+         raster->cull_face = PIPE_FACE_FRONT_AND_BACK;
          break;
       }
    }
@@ -133,18 +134,18 @@ void st_update_rasterizer( struct st_context *st )
          raster->fill_back = PIPE_POLYGON_MODE_LINE;
       }
       else {
-         raster->fill_front = translate_fill( ctx->Polygon.FrontMode );
-         raster->fill_back = translate_fill( ctx->Polygon.BackMode );
+         raster->fill_front = translate_fill(ctx->Polygon.FrontMode);
+         raster->fill_back = translate_fill(ctx->Polygon.BackMode);
       }
 
       /* Simplify when culling is active:
        */
       if (raster->cull_face & PIPE_FACE_FRONT) {
-	 raster->fill_front = raster->fill_back;
+         raster->fill_front = raster->fill_back;
       }
 
       if (raster->cull_face & PIPE_FACE_BACK) {
-	 raster->fill_back = raster->fill_front;
+         raster->fill_back = raster->fill_front;
       }
    }
 
@@ -271,6 +272,7 @@ void st_update_rasterizer( struct st_context *st )
    raster->half_pixel_center = 1;
    if (st->state.fb_orientation == Y_0_TOP)
       raster->bottom_edge_rule = 1;
+
    /* _NEW_TRANSFORM */
    if (ctx->Transform.ClipOrigin == GL_UPPER_LEFT)
       raster->bottom_edge_rule ^= 1;
