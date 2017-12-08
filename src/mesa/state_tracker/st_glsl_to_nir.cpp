@@ -535,7 +535,7 @@ st_link_nir(struct gl_context *ctx,
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *shader = shader_program->_LinkedShaders[i];
-      if (shader == NULL)
+      if (!shader)
          continue;
 
       st_nir_get_mesa_program(ctx, shader_program, shader);
@@ -560,7 +560,7 @@ st_link_nir(struct gl_context *ctx,
    int next = last;
    for (int i = next - 1; i >= 0; i--) {
       struct gl_linked_shader *shader = shader_program->_LinkedShaders[i];
-      if (shader == NULL)
+      if (!shader)
          continue;
 
       st_nir_link_shaders(&shader->Program->nir,
@@ -571,7 +571,7 @@ st_link_nir(struct gl_context *ctx,
    int prev = -1;
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *shader = shader_program->_LinkedShaders[i];
-      if (shader == NULL)
+      if (!shader)
          continue;
 
       nir_shader *nir = shader->Program->nir;
@@ -581,7 +581,7 @@ st_link_nir(struct gl_context *ctx,
          static const gl_state_index wposTransformState[STATE_LENGTH] = {
             STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM
          };
-         nir_lower_wpos_ytransform_options wpos_options = { { 0 } };
+         nir_lower_wpos_ytransform_options wpos_options = {};
          struct pipe_screen *pscreen = st->pipe->screen;
 
          memcpy(wpos_options.state_tokens, wposTransformState,

@@ -391,7 +391,7 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
    if (psc)
       config = glx_config_find_visual(psc->visuals, vis->visualid);
 
-   if (config == NULL) {
+   if (!config) {
       __glXSendError(dpy, BadValue, vis->visualid, X_GLXCreateContext, True);
       return None;
    }
@@ -2423,7 +2423,7 @@ __glXBindTexImageEXT(Display * dpy,
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc->vtable->bind_tex_image == NULL)
+   if (!gc->vtable->bind_tex_image)
       return;
 
    gc->vtable->bind_tex_image(dpy, drawable, buffer, attrib_list);
@@ -2434,7 +2434,7 @@ __glXReleaseTexImageEXT(Display * dpy, GLXDrawable drawable, int buffer)
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc->vtable->release_tex_image == NULL)
+   if (!gc->vtable->release_tex_image)
       return;
 
    gc->vtable->release_tex_image(dpy, drawable, buffer);

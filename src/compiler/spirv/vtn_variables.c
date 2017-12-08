@@ -189,7 +189,7 @@ vtn_ssa_offset_pointer_dereference(struct vtn_builder *b,
          vtn_assert(base->var && base->type);
          nir_ssa_def *desc_arr_idx;
          if (glsl_type_is_array(type->type)) {
-            if (deref_chain->length >= 1) {
+            if (deref_chain->length) {
                desc_arr_idx =
                   vtn_access_link_as_ssa(b, deref_chain->link[0], 1);
                idx++;

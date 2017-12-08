@@ -227,7 +227,7 @@ brw_bo_busy(struct brw_bo *bo)
    struct drm_i915_gem_busy busy = { .handle = bo->gem_handle };
 
    int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_BUSY, &busy);
-   if (ret == 0) {
+   if (!ret) {
       bo->idle = !busy.busy;
       return busy.busy;
    }
@@ -507,7 +507,7 @@ brw_bo_gem_create_from_name(struct brw_bufmgr *bufmgr,
 
    struct drm_gem_open open_arg = { .name = handle };
    int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_GEM_OPEN, &open_arg);
-   if (ret != 0) {
+   if (ret) {
       DBG("Couldn't reference %s handle 0x%08x: %s\n",
           name, handle, strerror(errno));
       bo = NULL;
@@ -594,7 +594,7 @@ bo_free(struct brw_bo *bo)
    /* Close this object */
    struct drm_gem_close close = { .handle = bo->gem_handle };
    int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_GEM_CLOSE, &close);
-   if (ret != 0) {
+   if (ret) {
       DBG("DRM_IOCTL_GEM_CLOSE %d failed (%s): %s\n",
           bo->gem_handle, bo->name, strerror(errno));
    }
@@ -848,7 +848,7 @@ brw_bo_map_gtt(struct brw_context *brw, struct brw_bo *bo, unsigned flags)
    struct brw_bufmgr *bufmgr = bo->bufmgr;
 
    /* Get a mapping of the buffer if we haven't before. */
-   if (bo->map_gtt == NULL) {
+   if (!bo->map_gtt) {
       DBG("bo_map_gtt: mmap %d (%s)\n", bo->gem_handle, bo->name);
 
       struct drm_i915_gem_mmap_gtt mmap_arg = { .handle = bo->gem_handle };
@@ -974,7 +974,7 @@ brw_bo_subdata(struct brw_bo *bo, uint64_t offset,
    };
 
    int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_PWRITE, &pwrite);
-   if (ret != 0) {
+   if (ret) {
       ret = -errno;
       DBG("%s:%d: Error writing data to buffer %d: "
           "(%"PRIu64" %"PRIu64") %s .\n",
@@ -1035,7 +1035,7 @@ brw_bo_wait(struct brw_bo *bo, int64_t timeout_ns)
       .timeout_ns = timeout_ns,
    };
    int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_WAIT, &wait);
-   if (ret != 0)
+   if (ret)
       return -errno;
 
    bo->idle = true;
@@ -1301,7 +1301,7 @@ brw_create_hw_context(struct brw_bufmgr *bufmgr)
 {
    struct drm_i915_gem_context_create create = { };
    int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &create);
-   if (ret != 0) {
+   if (ret) {
       DBG("DRM_IOCTL_I915_GEM_CONTEXT_CREATE failed: %s\n", strerror(errno));
       return 0;
    }

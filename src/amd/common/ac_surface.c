@@ -920,8 +920,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		if (!(surf->flags & RADEON_SURF_DISABLE_DCC) &&
 		    !compressed &&
 		    in->swizzleMode != ADDR_SW_LINEAR) {
-			ADDR2_COMPUTE_DCCINFO_INPUT din = {0};
-			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {0};
+			ADDR2_COMPUTE_DCCINFO_INPUT din = {};
+			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {};
 			ADDR2_META_MIP_INFO meta_mip_info[RADEON_SURF_MAX_LEVELS] = {};
 
 			din.size = sizeof(ADDR2_COMPUTE_DCCINFO_INPUT);

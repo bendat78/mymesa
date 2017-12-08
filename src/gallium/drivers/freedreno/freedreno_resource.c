@@ -522,7 +522,7 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 
 		if (needs_flush) {
 			if (usage & PIPE_TRANSFER_WRITE) {
-				struct fd_batch *batch, *batches[32] = {0};
+				struct fd_batch *batch, *batches[32] = {};
 				uint32_t batch_mask;
 
 				/* This is a bit awkward, probably a fd_batch_flush_locked()

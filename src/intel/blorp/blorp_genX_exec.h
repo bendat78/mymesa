@@ -1369,7 +1369,7 @@ blorp_emit_surface_states(struct blorp_batch *batch,
                                   surface_maps[BLORP_RENDERBUFFER_BT_INDEX],
                                   surface_offsets[BLORP_RENDERBUFFER_BT_INDEX],
                                   params->color_write_disable, true);
-         if (params->dst.clear_color_addr.buffer != NULL)
+         if (params->dst.clear_color_addr.buffer)
             has_indirect_clear_color = true;
       } else {
          assert(params->depth.enabled || params->stencil.enabled);
@@ -1384,7 +1384,7 @@ blorp_emit_surface_states(struct blorp_batch *batch,
                                   surface_maps[BLORP_TEXTURE_BT_INDEX],
                                   surface_offsets[BLORP_TEXTURE_BT_INDEX],
                                   NULL, false);
-         if (params->src.clear_color_addr.buffer != NULL)
+         if (params->src.clear_color_addr.buffer)
             has_indirect_clear_color = true;
       }
    }

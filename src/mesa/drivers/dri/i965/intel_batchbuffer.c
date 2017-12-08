@@ -915,7 +915,7 @@ _intel_batchbuffer_flush_fence(struct brw_context *brw,
    brw_finish_batch(brw);
    intel_upload_finish(brw);
 
-   if (brw->throttle_batch[0] == NULL) {
+   if (!brw->throttle_batch[0]) {
       brw->throttle_batch[0] = brw->batch.batch.bo;
       brw_bo_reference(brw->throttle_batch[0]);
    }

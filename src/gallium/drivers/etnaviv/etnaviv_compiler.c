@@ -2590,7 +2590,7 @@ etna_link_shader(struct etna_shader_link_info *info,
       if (fsio->semantic.Name == TGSI_SEMANTIC_PCOORD) {
          info->pcoord_varying_comp_ofs = comp_ofs;
       } else {
-         if (vsio == NULL) { /* not found -- link error */
+         if (!vsio) { /* not found -- link error */
             BUG("Semantic %d value %d not found in vertex shader outputs\n", fsio->semantic.Name, fsio->semantic.Index);
             return true;
          }

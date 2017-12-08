@@ -1053,7 +1053,7 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    xcb_get_geometry_reply_t *geometry =
       xcb_get_geometry_reply(conn, xcb_get_geometry(conn, window), NULL);
 
-   if (geometry == NULL)
+   if (!geometry)
       return VK_ERROR_SURFACE_LOST_KHR;
    const uint32_t bit_depth = geometry->depth;
    free(geometry);
@@ -1061,7 +1061,7 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    size_t size = sizeof(*chain) + num_images * sizeof(chain->images[0]);
    chain = vk_alloc(pAllocator, size, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (chain == NULL)
+   if (!chain)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    result = wsi_swapchain_init(wsi_device, &chain->base, device,

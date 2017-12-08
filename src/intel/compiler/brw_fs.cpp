@@ -819,7 +819,7 @@ fs_inst::size_read(int arg) const
    case FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET:
    case SHADER_OPCODE_BYTE_SCATTERED_WRITE:
    case SHADER_OPCODE_BYTE_SCATTERED_READ:
-      if (arg == 0)
+      if (!arg)
          return mlen * REG_SIZE;
       break;
 

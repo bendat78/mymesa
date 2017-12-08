@@ -3639,7 +3639,7 @@ si_make_texture_descriptor(struct si_screen *screen,
 	}
 
 	data_format = si_translate_texformat(&screen->b, pipe_format, desc, first_non_void);
-	if (data_format == ~0) {
+	if (data_format == (~0u)) {
 		data_format = 0;
 	}
 
@@ -4603,7 +4603,7 @@ static void si_set_grbm_gfx_index(struct si_context *sctx,
 static void si_set_grbm_gfx_index_se(struct si_context *sctx,
 				     struct si_pm4_state *pm4, unsigned se)
 {
-	assert(se == ~0 || se < sctx->screen->info.max_se);
+	assert(se == (~0u) || se < sctx->screen->info.max_se);
 	si_set_grbm_gfx_index(sctx, pm4,
 			      (se == (~0u) ? S_030800_SE_BROADCAST_WRITES(1) :
 					  S_030800_SE_INDEX(se)) |
