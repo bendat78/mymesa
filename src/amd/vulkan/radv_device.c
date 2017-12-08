@@ -75,32 +75,43 @@ radv_get_device_uuid(struct radeon_info *info, void *uuid)
 	ac_compute_device_uuid(info, uuid, VK_UUID_SIZE);
 }
 
-static const char *
-get_chip_name(enum radeon_family family)
+static void
+radv_get_device_name(enum radeon_family family, char *name, size_t name_len)
 {
+	const char *chip_string;
+	char llvm_string[32] = {};
+
 	switch (family) {
-	case CHIP_TAHITI: return "AMD RADV TAHITI";
-	case CHIP_PITCAIRN: return "AMD RADV PITCAIRN";
-	case CHIP_VERDE: return "AMD RADV CAPE VERDE";
-	case CHIP_OLAND: return "AMD RADV OLAND";
-	case CHIP_HAINAN: return "AMD RADV HAINAN";
-	case CHIP_BONAIRE: return "AMD RADV BONAIRE";
-	case CHIP_KAVERI: return "AMD RADV KAVERI";
-	case CHIP_KABINI: return "AMD RADV KABINI";
-	case CHIP_HAWAII: return "AMD RADV HAWAII";
-	case CHIP_MULLINS: return "AMD RADV MULLINS";
-	case CHIP_TONGA: return "AMD RADV TONGA";
-	case CHIP_ICELAND: return "AMD RADV ICELAND";
-	case CHIP_CARRIZO: return "AMD RADV CARRIZO";
-	case CHIP_FIJI: return "AMD RADV FIJI";
-	case CHIP_POLARIS10: return "AMD RADV POLARIS10";
-	case CHIP_POLARIS11: return "AMD RADV POLARIS11";
-	case CHIP_POLARIS12: return "AMD RADV POLARIS12";
-	case CHIP_STONEY: return "AMD RADV STONEY";
-	case CHIP_VEGA10: return "AMD RADV VEGA";
-	case CHIP_RAVEN: return "AMD RADV RAVEN";
-	default: return "AMD RADV unknown";
+	case CHIP_TAHITI: chip_string = "AMD RADV TAHITI"; break;
+	case CHIP_PITCAIRN: chip_string = "AMD RADV PITCAIRN"; break;
+	case CHIP_VERDE: chip_string = "AMD RADV CAPE VERDE"; break;
+	case CHIP_OLAND: chip_string = "AMD RADV OLAND"; break;
+	case CHIP_HAINAN: chip_string = "AMD RADV HAINAN"; break;
+	case CHIP_BONAIRE: chip_string = "AMD RADV BONAIRE"; break;
+	case CHIP_KAVERI: chip_string = "AMD RADV KAVERI"; break;
+	case CHIP_KABINI: chip_string = "AMD RADV KABINI"; break;
+	case CHIP_HAWAII: chip_string = "AMD RADV HAWAII"; break;
+	case CHIP_MULLINS: chip_string = "AMD RADV MULLINS"; break;
+	case CHIP_TONGA: chip_string = "AMD RADV TONGA"; break;
+	case CHIP_ICELAND: chip_string = "AMD RADV ICELAND"; break;
+	case CHIP_CARRIZO: chip_string = "AMD RADV CARRIZO"; break;
+	case CHIP_FIJI: chip_string = "AMD RADV FIJI"; break;
+	case CHIP_POLARIS10: chip_string = "AMD RADV POLARIS10"; break;
+	case CHIP_POLARIS11: chip_string = "AMD RADV POLARIS11"; break;
+	case CHIP_POLARIS12: chip_string = "AMD RADV POLARIS12"; break;
+	case CHIP_STONEY: chip_string = "AMD RADV STONEY"; break;
+	case CHIP_VEGA10: chip_string = "AMD RADV VEGA"; break;
+	case CHIP_RAVEN: chip_string = "AMD RADV RAVEN"; break;
+	default: chip_string = "AMD RADV unknown"; break;
 	}
+
+	if (HAVE_LLVM > 0) {
+		snprintf(llvm_string, sizeof(llvm_string),
+			 " (LLVM %i.%i.%i)", (HAVE_LLVM >> 8) & 0xff,
+			 HAVE_LLVM & 0xff, MESA_LLVM_VERSION_PATCH);
+	}
+
+	snprintf(name, name_len, "%s%s", chip_string, llvm_string);
 }
 
 static void
@@ -214,16 +225,10 @@ radv_physical_device_init(struct radv_physical_device *device,
 
 	device->local_fd = fd;
 	device->ws->query_info(device->ws, &device->rad_info);
-	result = radv_init_wsi(device);
-	if (result != VK_SUCCESS) {
-		device->ws->destroy(device->ws);
-		goto fail;
-	}
 
-	device->name = get_chip_name(device->rad_info.family);
+	radv_get_device_name(device->rad_info.family, device->name, sizeof(device->name));
 
 	if (radv_device_get_cache_uuid(device->rad_info.family, device->cache_uuid)) {
-		radv_finish_wsi(device);
 		device->ws->destroy(device->ws);
 		result = vk_errorf(VK_ERROR_INITIALIZATION_FAILED,
 				   "cannot generate UUID");
@@ -259,6 +264,13 @@ radv_physical_device_init(struct radv_physical_device *device,
 	device->has_clear_state = device->rad_info.chip_class >= CIK;
 
 	radv_physical_device_init_mem_types(device);
+
+	result = radv_init_wsi(device);
+	if (result != VK_SUCCESS) {
+		device->ws->destroy(device->ws);
+		goto fail;
+	}
+
 	return VK_SUCCESS;
 
 fail:
@@ -2007,6 +2019,8 @@ VkResult radv_QueueSubmit(
 			cs_array[j] = cmd_buffer->cs;
 			if ((cmd_buffer->usage_flags & VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT))
 				can_patch = false;
+
+			cmd_buffer->status = RADV_CMD_BUFFER_STATUS_PENDING;
 		}
 
 		for (uint32_t j = 0; j < pSubmits[i].commandBufferCount; j += advance) {
@@ -2125,13 +2139,11 @@ bool radv_get_memory_fd(struct radv_device *device,
 					 pFD);
 }
 
-VkResult radv_alloc_memory(VkDevice                        _device,
-			   const VkMemoryAllocateInfo*     pAllocateInfo,
-			   const VkAllocationCallbacks*    pAllocator,
-			   enum radv_mem_flags_bits        mem_flags,
-			   VkDeviceMemory*                 pMem)
+static VkResult radv_alloc_memory(struct radv_device *device,
+				  const VkMemoryAllocateInfo*     pAllocateInfo,
+				  const VkAllocationCallbacks*    pAllocator,
+				  VkDeviceMemory*                 pMem)
 {
-	RADV_FROM_HANDLE(radv_device, device, _device);
 	struct radv_device_memory *mem;
 	VkResult result;
 	enum radeon_bo_domain domain;
@@ -2151,10 +2163,16 @@ VkResult radv_alloc_memory(VkDevice                        _device,
 	const VkMemoryDedicatedAllocateInfoKHR *dedicate_info =
 		vk_find_struct_const(pAllocateInfo->pNext, MEMORY_DEDICATED_ALLOCATE_INFO_KHR);
 
+	const struct wsi_memory_allocate_info *wsi_info =
+		vk_find_struct_const(pAllocateInfo->pNext, WSI_MEMORY_ALLOCATE_INFO_MESA);
+
 	mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
 			  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
 	if (!mem)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
+
+	if (wsi_info && wsi_info->implicit_sync)
+		flags |= RADEON_FLAG_IMPLICIT_SYNC;
 
 	if (dedicate_info) {
 		mem->image = radv_image_from_handle(dedicate_info->image);
@@ -2166,7 +2184,9 @@ VkResult radv_alloc_memory(VkDevice                        _device,
 
 	if (import_info) {
 		assert(import_info->handleType ==
-		       VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR);
+		       VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
+		       import_info->handleType ==
+		       VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
 		mem->bo = device->ws->buffer_from_fd(device->ws, import_info->fd,
 						     NULL, NULL);
 		if (!mem->bo) {
@@ -2192,9 +2212,6 @@ VkResult radv_alloc_memory(VkDevice                        _device,
 
 	if (mem_type_index == RADV_MEM_TYPE_GTT_WRITE_COMBINE)
 		flags |= RADEON_FLAG_GTT_WC;
-
-	if (mem_flags & RADV_MEM_IMPLICIT_SYNC)
-		flags |= RADEON_FLAG_IMPLICIT_SYNC;
 
 	if (!dedicate_info && !import_info)
 		flags |= RADEON_FLAG_NO_INTERPROCESS_SHARING;
@@ -2224,7 +2241,8 @@ VkResult radv_AllocateMemory(
 	const VkAllocationCallbacks*                pAllocator,
 	VkDeviceMemory*                             pMem)
 {
-	return radv_alloc_memory(_device, pAllocateInfo, pAllocator, 0, pMem);
+	RADV_FROM_HANDLE(radv_device, device, _device);
+	return radv_alloc_memory(device, pAllocateInfo, pAllocator, pMem);
 }
 
 void radv_FreeMemory(
@@ -2945,7 +2963,6 @@ radv_initialise_color_surface(struct radv_device *device,
 		cb->cb_color_cmask_slice = iview->image->cmask.slice_tile_max;
 
 		cb->cb_color_attrib |= S_028C74_TILE_MODE_INDEX(tile_mode_index);
-		cb->micro_tile_mode = iview->image->surface.micro_tile_mode;
 
 		if (iview->image->fmask.size) {
 			if (device->physical_device->rad_info.chip_class >= CIK)
@@ -3077,9 +3094,6 @@ radv_initialise_color_surface(struct radv_device *device,
 		cb->cb_color_attrib2 = S_028C68_MIP0_WIDTH(iview->extent.width - 1) |
 			S_028C68_MIP0_HEIGHT(iview->extent.height - 1) |
 			S_028C68_MAX_MIP(iview->image->info.levels - 1);
-
-		cb->gfx9_epitch = S_0287A0_EPITCH(iview->image->surface.u.gfx9.surf.epitch);
-
 	}
 }
 
@@ -3443,7 +3457,7 @@ radv_init_sampler(struct radv_device *device,
 			     S_008F38_XY_MIN_FILTER(radv_tex_filter(pCreateInfo->minFilter, max_aniso)) |
 			     S_008F38_MIP_FILTER(radv_tex_mipfilter(pCreateInfo->mipmapMode)) |
 			     S_008F38_MIP_POINT_PRECLAMP(0) |
-			     S_008F38_DISABLE_LSB_CEIL(1) |
+			     S_008F38_DISABLE_LSB_CEIL(device->physical_device->rad_info.chip_class <= VI) |
 			     S_008F38_FILTER_PREC_FIX(1) |
 			     S_008F38_ANISO_OVERRIDE(is_vi));
 	sampler->state[3] = (S_008F3C_BORDER_COLOR_PTR(0) |
@@ -3538,9 +3552,11 @@ VkResult radv_GetMemoryFdKHR(VkDevice _device,
 
 	assert(pGetFdInfo->sType == VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR);
 
-	/* We support only one handle type. */
+	/* At the moment, we support only the below handle types. */
 	assert(pGetFdInfo->handleType ==
-	       VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR);
+	       VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
+	       pGetFdInfo->handleType ==
+	       VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
 
 	bool ret = radv_get_memory_fd(device, memory, pFD);
 	if (!ret)
@@ -3553,13 +3569,21 @@ VkResult radv_GetMemoryFdPropertiesKHR(VkDevice _device,
 				       int fd,
 				       VkMemoryFdPropertiesKHR *pMemoryFdProperties)
 {
-   /* The valid usage section for this function says:
-    *
-    *    "handleType must not be one of the handle types defined as opaque."
-    *
-    * Since we only handle opaque handles for now, there are no FD properties.
-    */
-   return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
+   switch (handleType) {
+   case VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT:
+      pMemoryFdProperties->memoryTypeBits = (1 << RADV_MEM_TYPE_COUNT) - 1;
+      return VK_SUCCESS;
+
+   default:
+      /* The valid usage section for this function says:
+       *
+       *    "handleType must not be one of the handle types defined as
+       *    opaque."
+       *
+       * So opaque handle types fall into the default "unsupported" case.
+       */
+      return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
+   }
 }
 
 VkResult radv_ImportSemaphoreFdKHR(VkDevice _device,

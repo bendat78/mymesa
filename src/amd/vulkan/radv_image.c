@@ -416,6 +416,12 @@ si_make_texture_descriptor(struct radv_device *device,
 		data_format = 0;
 	}
 
+	/* S8 with Z32 HTILE needs a special format. */
+	if (device->physical_device->rad_info.chip_class >= GFX9 &&
+	    vk_format == VK_FORMAT_S8_UINT &&
+	    image->tc_compatible_htile)
+		data_format = V_008F14_IMG_DATA_FORMAT_S8_32;
+
 	type = radv_tex_dim(image->type, view_type, image->info.array_size, image->info.samples,
 			    is_storage_image, device->physical_device->rad_info.chip_class >= GFX9);
 	if (type == V_008F1C_SQ_RSRC_IMG_1D_ARRAY) {
@@ -806,6 +812,16 @@ radv_image_alloc_htile(struct radv_image *image)
 static inline bool
 radv_image_can_enable_dcc_or_cmask(struct radv_image *image)
 {
+	if (image->info.samples <= 1 &&
+	    image->info.width <= 512 && image->info.height <= 512) {
+		/* Do not enable CMASK or DCC for small surfaces where the cost
+		 * of the eliminate pass can be higher than the benefit of fast
+		 * clear. RadeonSI does this, but the image threshold is
+		 * different.
+		 */
+		return false;
+	}
+
 	return image->usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT &&
 	       (image->exclusive || image->queue_family_mask == 1);
 }
@@ -1111,11 +1127,15 @@ radv_CreateImage(VkDevice device,
 		 const VkAllocationCallbacks *pAllocator,
 		 VkImage *pImage)
 {
+	const struct wsi_image_create_info *wsi_info =
+		vk_find_struct_const(pCreateInfo->pNext, WSI_IMAGE_CREATE_INFO_MESA);
+	bool scanout = wsi_info && wsi_info->scanout;
+
 	return radv_image_create(device,
 				 &(struct radv_image_create_info) {
 					 .vk_info = pCreateInfo,
-						 .scanout = false,
-						 },
+					 .scanout = scanout,
+				 },
 				 pAllocator,
 				 pImage);
 }

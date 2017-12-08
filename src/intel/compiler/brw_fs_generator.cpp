@@ -573,6 +573,19 @@ fs_generator::generate_urb_write(fs_inst *inst, struct brw_reg payload)
 {
    brw_inst *insn;
 
+    /* WaClearTDRRegBeforeEOTForNonPS.
+     *
+     *   WA: Clear tdr register before send EOT in all non-PS shader kernels
+     *
+     *   mov(8) tdr0:ud 0x0:ud {NoMask}"
+     */
+   if (inst->eot && p->devinfo->gen == 10) {
+      brw_push_insn_state(p);
+      brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+      brw_MOV(p, brw_tdr_reg(), brw_imm_uw(0));
+      brw_pop_insn_state(p);
+   }
+
    insn = brw_next_insn(p, BRW_OPCODE_SEND);
 
    brw_set_dest(p, insn, brw_null_reg());
@@ -2073,6 +2086,18 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
                                    inst->mlen, src[2].ud);
          break;
 
+      case SHADER_OPCODE_BYTE_SCATTERED_READ:
+         assert(src[2].file == BRW_IMMEDIATE_VALUE);
+         brw_byte_scattered_read(p, dst, src[0], src[1],
+                                 inst->mlen, src[2].ud);
+         break;
+
+      case SHADER_OPCODE_BYTE_SCATTERED_WRITE:
+         assert(src[2].file == BRW_IMMEDIATE_VALUE);
+         brw_byte_scattered_write(p, src[0], src[1],
+                                  inst->mlen, src[2].ud);
+         break;
+
       case SHADER_OPCODE_TYPED_ATOMIC:
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
          brw_typed_atomic(p, dst, src[0], src[1],
@@ -2161,6 +2186,11 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
          assert(src[0].type == BRW_REGISTER_TYPE_DF);
          assert(dst.type == BRW_REGISTER_TYPE_DF);
          brw_DIM(p, dst, retype(src[0], BRW_REGISTER_TYPE_F));
+         break;
+
+      case SHADER_OPCODE_RND_MODE:
+         assert(src[0].file == BRW_IMMEDIATE_VALUE);
+         brw_rounding_mode(p, (brw_rnd_mode) src[0].d);
          break;
 
       default:

@@ -140,6 +140,8 @@ LIBGLSL_FILES = \
 	glsl/propagate_invariance.cpp \
 	glsl/s_expression.cpp \
 	glsl/s_expression.h \
+	glsl/serialize.cpp \
+	glsl/serialize.h \
 	glsl/string_to_uint_map.cpp \
 	glsl/string_to_uint_map.h
 
@@ -226,6 +228,7 @@ NIR_FILES = \
 	nir/nir_lower_indirect_derefs.c \
 	nir/nir_lower_int64.c \
 	nir/nir_lower_io.c \
+	nir/nir_lower_io_arrays_to_elements.c \
 	nir/nir_lower_io_to_temporaries.c \
 	nir/nir_lower_io_to_scalar.c \
 	nir/nir_lower_io_types.c \

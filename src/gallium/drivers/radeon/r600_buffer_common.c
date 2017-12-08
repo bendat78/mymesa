@@ -159,7 +159,7 @@ void si_init_resource_fields(struct si_screen *sscreen,
 
 	/* Tiled textures are unmappable. Always put them in VRAM. */
 	if ((res->b.b.target != PIPE_BUFFER && !rtex->surface.is_linear) ||
-	    res->flags & R600_RESOURCE_FLAG_UNMAPPABLE) {
+	    res->b.b.flags & R600_RESOURCE_FLAG_UNMAPPABLE) {
 		res->domains = RADEON_DOMAIN_VRAM;
 		res->flags |= RADEON_FLAG_NO_CPU_ACCESS |
 			 RADEON_FLAG_GTT_WC;
@@ -171,22 +171,11 @@ void si_init_resource_fields(struct si_screen *sscreen,
 	else
 		res->flags |= RADEON_FLAG_NO_INTERPROCESS_SHARING;
 
-	/* If VRAM is just stolen system memory, allow both VRAM and
-	 * GTT, whichever has free space. If a buffer is evicted from
-	 * VRAM to GTT, it will stay there.
-	 *
-	 * DRM 3.6.0 has good BO move throttling, so we can allow VRAM-only
-	 * placements even with a low amount of stolen VRAM.
-	 */
-	if (!sscreen->info.has_dedicated_vram &&
-	    (sscreen->info.drm_major < 3 || sscreen->info.drm_minor < 6) &&
-	    res->domains == RADEON_DOMAIN_VRAM) {
-		res->domains = RADEON_DOMAIN_VRAM_GTT;
-		res->flags &= ~RADEON_FLAG_NO_CPU_ACCESS; /* disallowed with VRAM_GTT */
-	}
-
 	if (sscreen->debug_flags & DBG(NO_WC))
 		res->flags &= ~RADEON_FLAG_GTT_WC;
+
+	if (res->b.b.flags & R600_RESOURCE_FLAG_READ_ONLY)
+		res->flags |= RADEON_FLAG_READ_ONLY;
 
 	/* Set expected VRAM and GART usage for the buffer. */
 	res->vram_usage = 0;
@@ -623,6 +612,9 @@ static struct pipe_resource *si_buffer_create(struct pipe_screen *screen,
 {
 	struct si_screen *sscreen = (struct si_screen*)screen;
 	struct r600_resource *rbuffer = r600_alloc_buffer_struct(screen, templ);
+
+	if (templ->flags & PIPE_RESOURCE_FLAG_SPARSE)
+		rbuffer->b.b.flags |= R600_RESOURCE_FLAG_UNMAPPABLE;
 
 	si_init_resource_fields(sscreen, rbuffer, templ->width0, alignment);
 

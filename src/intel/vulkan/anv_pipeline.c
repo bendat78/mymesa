@@ -132,20 +132,24 @@ anv_shader_compile_to_nir(struct anv_pipeline *pipeline,
       }
    }
 
-   const struct nir_spirv_supported_extensions supported_ext = {
-      .float64 = device->instance->physicalDevice.info.gen >= 8,
-      .int64 = device->instance->physicalDevice.info.gen >= 8,
-      .tessellation = true,
-      .draw_parameters = true,
-      .image_write_without_format = true,
-      .multiview = true,
-      .variable_pointers = true,
+   struct spirv_to_nir_options spirv_options = {
+      .lower_workgroup_access_to_offsets = true,
+      .caps = {
+         .float64 = device->instance->physicalDevice.info.gen >= 8,
+         .int64 = device->instance->physicalDevice.info.gen >= 8,
+         .tessellation = true,
+         .draw_parameters = true,
+         .image_write_without_format = true,
+         .multiview = true,
+         .variable_pointers = true,
+         .storage_16bit = device->instance->physicalDevice.info.gen >= 8,
+      },
    };
 
    nir_function *entry_point =
       spirv_to_nir(spirv, module->size / 4,
                    spec_entries, num_spec_entries,
-                   stage, entrypoint_name, &supported_ext, nir_options);
+                   stage, entrypoint_name, &spirv_options, nir_options);
    nir_shader *nir = entry_point->shader;
    assert(nir->info.stage == stage);
    nir_validate_shader(nir);
@@ -398,10 +402,8 @@ anv_pipeline_compile(struct anv_pipeline *pipeline,
    if (stage != MESA_SHADER_COMPUTE)
       NIR_PASS_V(nir, anv_nir_lower_multiview, pipeline->subpass->view_mask);
 
-   if (stage == MESA_SHADER_COMPUTE) {
-      NIR_PASS_V(nir, brw_nir_lower_cs_shared);
+   if (stage == MESA_SHADER_COMPUTE)
       prog_data->total_shared = nir->num_shared;
-   }
 
    nir_shader_gather_info(nir, nir_shader_get_entrypoint(nir));
 

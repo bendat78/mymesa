@@ -28,6 +28,8 @@
 #ifndef _VTN_PRIVATE_H_
 #define _VTN_PRIVATE_H_
 
+#include <setjmp.h>
+
 #include "nir/nir.h"
 #include "nir/nir_builder.h"
 #include "util/u_dynarray.h"
@@ -36,6 +38,60 @@
 
 struct vtn_builder;
 struct vtn_decoration;
+
+void vtn_log(struct vtn_builder *b, enum nir_spirv_debug_level level,
+             size_t spirv_offset, const char *message);
+
+void vtn_logf(struct vtn_builder *b, enum nir_spirv_debug_level level,
+              size_t spirv_offset, const char *fmt, ...) PRINTFLIKE(4, 5);
+
+#define vtn_info(...) vtn_logf(b, NIR_SPIRV_DEBUG_LEVEL_INFO, 0, __VA_ARGS__)
+
+void _vtn_warn(struct vtn_builder *b, const char *file, unsigned line,
+               const char *fmt, ...) PRINTFLIKE(4, 5);
+#define vtn_warn(...) _vtn_warn(b, __FILE__, __LINE__, __VA_ARGS__)
+
+/** Fail SPIR-V parsing
+ *
+ * This function logs an error and then bails out of the shader compile using
+ * longjmp.  This being safe relies on two things:
+ *
+ *  1) We must guarantee that setjmp is called after allocating the builder
+ *     and setting up b->debug (so that logging works) but before before any
+ *     errors have a chance to occur.
+ *
+ *  2) While doing the SPIR-V -> NIR conversion, we need to be careful to
+ *     ensure that all heap allocations happen through ralloc and are parented
+ *     to the builder.  This way they will get properly cleaned up on error.
+ *
+ *  3) We must ensure that _vtn_fail is never called while a mutex lock or a
+ *     reference to any other resource is held with the exception of ralloc
+ *     objects which are parented to the builder.
+ *
+ * So long as these two things continue to hold, we can easily longjmp back to
+ * spirv_to_nir(), clean up the builder, and return NULL.
+ */
+void _vtn_fail(struct vtn_builder *b, const char *file, unsigned line,
+               const char *fmt, ...) NORETURN PRINTFLIKE(4, 5);
+#define vtn_fail(...) _vtn_fail(b, __FILE__, __LINE__, __VA_ARGS__)
+
+/** Fail if the given expression evaluates to true */
+#define vtn_fail_if(expr, ...) \
+   do { \
+      if (unlikely(expr)) \
+         vtn_fail(__VA_ARGS__); \
+   } while (0)
+
+/** Assert that a condition is true and, if it isn't, vtn_fail
+ *
+ * This macro is transitional only and should not be used in new code.  Use
+ * vtn_fail_if and provide a real message instead.
+ */
+#define vtn_assert(expr) \
+   do { \
+      if (!likely(expr)) \
+         vtn_fail("%s", #expr); \
+   } while (0)
 
 enum vtn_value_type {
    vtn_value_type_invalid = 0,
@@ -159,6 +215,9 @@ struct vtn_block {
 struct vtn_function {
    struct exec_node node;
 
+   bool referenced;
+   bool emitted;
+
    nir_function_impl *impl;
    struct vtn_block *start_block;
 
@@ -217,7 +276,10 @@ struct vtn_type {
    /* The value that declares this type.  Used for finding decorations */
    struct vtn_value *val;
 
-   /* Specifies the length of complex types. */
+   /* Specifies the length of complex types.
+    *
+    * For Workgroup pointers, this is the size of the referenced type.
+    */
    unsigned length;
 
    /* for arrays, matrices and pointers, the array stride */
@@ -268,6 +330,9 @@ struct vtn_type {
 
          /* Storage class for pointers */
          SpvStorageClass storage_class;
+
+         /* Required alignment for pointers */
+         uint32_t align;
       };
 
       /* Members for image types */
@@ -369,13 +434,6 @@ struct vtn_pointer {
    struct nir_ssa_def *offset;
 };
 
-static inline bool
-vtn_pointer_uses_ssa_offset(struct vtn_pointer *ptr)
-{
-   return ptr->mode == vtn_variable_mode_ubo ||
-          ptr->mode == vtn_variable_mode_ssbo;
-}
-
 struct vtn_variable {
    enum vtn_variable_mode mode;
 
@@ -388,6 +446,8 @@ struct vtn_variable {
 
    nir_variable *var;
    nir_variable **members;
+
+   int shared_location;
 
    /**
     * In some early released versions of GLSLang, it implemented all function
@@ -463,14 +523,19 @@ struct vtn_decoration {
 struct vtn_builder {
    nir_builder nb;
 
+   /* Used by vtn_fail to jump back to the beginning of SPIR-V compilation */
+   jmp_buf fail_jump;
+
+   const uint32_t *spirv;
+
    nir_shader *shader;
-   nir_function_impl *impl;
-   const struct nir_spirv_supported_extensions *ext;
+   const struct spirv_to_nir_options *options;
    struct vtn_block *block;
 
-   /* Current file, line, and column.  Useful for debugging.  Set
+   /* Current offset, file, line, and column.  Useful for debugging.  Set
     * automatically by vtn_foreach_instruction.
     */
+   size_t spirv_offset;
    char *file;
    int line, col;
 
@@ -558,9 +623,6 @@ vtn_value(struct vtn_builder *b, uint32_t value_id,
    return val;
 }
 
-void _vtn_warn(const char *file, int line, const char *msg, ...);
-#define vtn_warn(...) _vtn_warn(__FILE__, __LINE__, __VA_ARGS__)
-
 struct vtn_ssa_value *vtn_ssa_value(struct vtn_builder *b, uint32_t value_id);
 
 struct vtn_ssa_value *vtn_create_ssa_value(struct vtn_builder *b,
@@ -622,7 +684,8 @@ typedef void (*vtn_execution_mode_foreach_cb)(struct vtn_builder *,
 void vtn_foreach_execution_mode(struct vtn_builder *b, struct vtn_value *value,
                                 vtn_execution_mode_foreach_cb cb, void *data);
 
-nir_op vtn_nir_alu_op_for_spirv_opcode(SpvOp opcode, bool *swap,
+nir_op vtn_nir_alu_op_for_spirv_opcode(struct vtn_builder *b,
+                                       SpvOp opcode, bool *swap,
                                        nir_alu_type src, nir_alu_type dst);
 
 void vtn_handle_alu(struct vtn_builder *b, SpvOp opcode,
@@ -630,6 +693,13 @@ void vtn_handle_alu(struct vtn_builder *b, SpvOp opcode,
 
 bool vtn_handle_glsl450_instruction(struct vtn_builder *b, uint32_t ext_opcode,
                                     const uint32_t *words, unsigned count);
+
+static inline uint32_t
+vtn_align_u32(uint32_t v, uint32_t a)
+{
+   assert(a != 0 && a == (a & -a));
+   return (v + a - 1) & ~(a - 1);
+}
 
 static inline uint64_t
 vtn_u64_literal(const uint32_t *w)

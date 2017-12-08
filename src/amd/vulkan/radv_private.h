@@ -106,11 +106,6 @@ enum radv_mem_type {
 	RADV_MEM_TYPE_COUNT
 };
 
-enum radv_mem_flags_bits {
-	/* enable implicit synchronization when accessing the underlying bo */
-	RADV_MEM_IMPLICIT_SYNC = 1 << 0,
-};
-
 #define radv_printflike(a, b) __attribute__((__format__(__printf__, a, b)))
 
 static inline uint32_t
@@ -266,7 +261,7 @@ struct radv_physical_device {
 	struct radeon_winsys *ws;
 	struct radeon_info rad_info;
 	char                                        path[20];
-	const char *                                name;
+	char                                        name[VK_MAX_PHYSICAL_DEVICE_NAME_SIZE];
 	uint8_t                                     driver_uuid[VK_UUID_SIZE];
 	uint8_t                                     device_uuid[VK_UUID_SIZE];
 	uint8_t                                     cache_uuid[VK_UUID_SIZE];
@@ -835,6 +830,7 @@ struct radv_cmd_state {
 	uint32_t                                     index_type;
 	uint32_t                                     max_index_count;
 	uint64_t                                     index_va;
+	int32_t                                      last_index_type;
 
 	int32_t                                      last_primitive_reset_en;
 	uint32_t                                     last_primitive_reset_index;
@@ -862,6 +858,14 @@ struct radv_cmd_buffer_upload {
 	struct list_head list;
 };
 
+enum radv_cmd_buffer_status {
+	RADV_CMD_BUFFER_STATUS_INVALID,
+	RADV_CMD_BUFFER_STATUS_INITIAL,
+	RADV_CMD_BUFFER_STATUS_RECORDING,
+	RADV_CMD_BUFFER_STATUS_EXECUTABLE,
+	RADV_CMD_BUFFER_STATUS_PENDING,
+};
+
 struct radv_cmd_buffer {
 	VK_LOADER_DATA                               _loader_data;
 
@@ -872,6 +876,7 @@ struct radv_cmd_buffer {
 
 	VkCommandBufferUsageFlags                    usage_flags;
 	VkCommandBufferLevel                         level;
+	enum radv_cmd_buffer_status status;
 	struct radeon_winsys_cs *cs;
 	struct radv_cmd_state state;
 	struct radv_vertex_binding                   vertex_bindings[MAX_VBS];
@@ -988,11 +993,6 @@ void radv_cmd_buffer_trace_emit(struct radv_cmd_buffer *cmd_buffer);
 bool radv_get_memory_fd(struct radv_device *device,
 			struct radv_device_memory *memory,
 			int *pFD);
-VkResult radv_alloc_memory(VkDevice _device,
-			   const VkMemoryAllocateInfo* pAllocateInfo,
-			   const VkAllocationCallbacks* pAllocator,
-			   enum radv_mem_flags_bits flags,
-			   VkDeviceMemory* pMem);
 
 /*
  * Takes x,y,z as exact numbers of invocations, instead of blocks.
@@ -1455,8 +1455,6 @@ struct radv_color_buffer_info {
 	uint32_t cb_color_fmask_slice;
 	uint32_t cb_clear_value0;
 	uint32_t cb_clear_value1;
-	uint32_t micro_tile_mode;
-	uint32_t gfx9_epitch;
 };
 
 struct radv_ds_buffer_info {

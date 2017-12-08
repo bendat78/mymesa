@@ -696,12 +696,12 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 		return false;
 
 	rctx->b.stream_uploader = u_upload_create(&rctx->b, 1024 * 1024,
-						  0, PIPE_USAGE_STREAM);
+						  0, PIPE_USAGE_STREAM, 0);
 	if (!rctx->b.stream_uploader)
 		return false;
 
 	rctx->b.const_uploader = u_upload_create(&rctx->b, 128 * 1024,
-						 0, PIPE_USAGE_DEFAULT);
+						 0, PIPE_USAGE_DEFAULT, 0);
 	if (!rctx->b.const_uploader)
 		return false;
 
@@ -993,6 +993,10 @@ const char *r600_get_llvm_processor_name(enum radeon_family family)
 static unsigned get_max_threads_per_block(struct r600_common_screen *screen,
 					  enum pipe_shader_ir ir_type)
 {
+	if (ir_type != PIPE_SHADER_IR_TGSI)
+		return 256;
+	if (screen->chip_class >= EVERGREEN)
+		return 2048;
 	return 256;
 }
 

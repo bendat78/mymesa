@@ -79,6 +79,7 @@ static const struct debug_named_value debug_options[] = {
 		{"bstat",     FD_DBG_BSTAT,  "Print batch stats at context destroy"},
 		{"nogrow",    FD_DBG_NOGROW, "Disable \"growable\" cmdstream buffers, even if kernel supports it"},
 		{"lrz",       FD_DBG_LRZ,    "Enable experimental LRZ support (a5xx+)"},
+		{"noindirect",FD_DBG_NOINDR, "Disable hw indirect draws (emulate on CPU)"},
 		DEBUG_NAMED_VALUE_END
 };
 
@@ -245,10 +246,17 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_TEXTURE_FLOAT_LINEAR:
 	case PIPE_CAP_CUBE_MAP_ARRAY:
-	case PIPE_CAP_START_INSTANCE:
 	case PIPE_CAP_SAMPLER_VIEW_TARGET:
 	case PIPE_CAP_TEXTURE_QUERY_LOD:
 		return is_a4xx(screen) || is_a5xx(screen);
+
+	case PIPE_CAP_START_INSTANCE:
+		/* Note that a5xx can do this, it just can't (at least with
+		 * current firmware) do draw_indirect with base_instance.
+		 * Since draw_indirect is needed sooner (gles31 and gl40 vs
+		 * gl42), hide base_instance on a5xx.  :-/
+		 */
+		return is_a4xx(screen);
 
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
 		return 64;

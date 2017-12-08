@@ -345,8 +345,8 @@ _mesa_compute_max_transform_feedback_vertices(struct gl_context *ctx,
          unsigned max_for_this_buffer;
 
          /* Skip any inactive buffers, which have a stride of 0. */
-         if (!stride)
-	    continue;
+         if (stride == 0)
+            continue;
 
          max_for_this_buffer = obj->Size[i] / (4 * stride);
          max_index = MIN2(max_index, max_for_this_buffer);
@@ -732,13 +732,13 @@ _mesa_TransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer)
 
    obj = lookup_transform_feedback_object_err(ctx, xfb,
                                               "glTransformFeedbackBufferBase");
-   if(!obj) {
+   if (!obj) {
       return;
    }
 
    bufObj = lookup_transform_feedback_bufferobj_err(ctx, buffer,
                                               "glTransformFeedbackBufferBase");
-   if(!bufObj) {
+   if (!bufObj) {
       return;
    }
 
@@ -755,13 +755,13 @@ _mesa_TransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer,
 
    obj = lookup_transform_feedback_object_err(ctx, xfb,
                                               "glTransformFeedbackBufferRange");
-   if(!obj) {
+   if (!obj) {
       return;
    }
 
    bufObj = lookup_transform_feedback_bufferobj_err(ctx, buffer,
                                               "glTransformFeedbackBufferRange");
-   if(!bufObj) {
+   if (!bufObj) {
       return;
    }
 
@@ -1337,7 +1337,7 @@ _mesa_GetTransformFeedbackiv(GLuint xfb, GLenum pname, GLint *param)
 
     obj = lookup_transform_feedback_object_err(ctx, xfb,
                                                "glGetTransformFeedbackiv");
-    if(!obj) {
+    if (!obj) {
        return;
     }
 
@@ -1363,7 +1363,7 @@ _mesa_GetTransformFeedbacki_v(GLuint xfb, GLenum pname, GLuint index,
 
    obj = lookup_transform_feedback_object_err(ctx, xfb,
                                               "glGetTransformFeedbacki_v");
-   if(!obj) {
+   if (!obj) {
       return;
    }
 
@@ -1392,7 +1392,7 @@ _mesa_GetTransformFeedbacki64_v(GLuint xfb, GLenum pname, GLuint index,
 
    obj = lookup_transform_feedback_object_err(ctx, xfb,
                                               "glGetTransformFeedbacki64_v");
-   if(!obj) {
+   if (!obj) {
       return;
    }
 

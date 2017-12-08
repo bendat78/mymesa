@@ -34,9 +34,6 @@
 #include "main/state.h"
 
 #include "brw_context.h"
-#if GEN_GEN == 6
-#include "brw_defines.h"
-#endif
 #include "brw_draw.h"
 #include "brw_multisample_state.h"
 #include "brw_state.h"
@@ -3298,7 +3295,8 @@ genX(upload_multisample_state)(struct brw_context *brw)
 
 static const struct brw_tracked_state genX(multisample_state) = {
    .dirty = {
-      .mesa = _NEW_MULTISAMPLE,
+      .mesa = _NEW_MULTISAMPLE |
+              (GEN_GEN == 10 ? _NEW_BUFFERS : 0),
       .brw = BRW_NEW_BLORP |
              BRW_NEW_CONTEXT |
              BRW_NEW_NUM_SAMPLES,
@@ -4170,6 +4168,18 @@ genX(upload_cs_state)(struct brw_context *brw)
 
    uint32_t *bind = brw_state_batch(brw, prog_data->binding_table.size_bytes,
                                     32, &stage_state->bind_bo_offset);
+
+   /* The MEDIA_VFE_STATE documentation for Gen8+ says:
+    *
+    * "A stalling PIPE_CONTROL is required before MEDIA_VFE_STATE unless
+    *  the only bits that are changed are scoreboard related: Scoreboard
+    *  Enable, Scoreboard Type, Scoreboard Mask, Scoreboard * Delta. For
+    *  these scoreboard related states, a MEDIA_STATE_FLUSH is sufficient."
+    *
+    * Earlier generations say "MI_FLUSH" instead of "stalling PIPE_CONTROL",
+    * but MI_FLUSH isn't really a thing, so we assume they meant PIPE_CONTROL.
+    */
+   brw_emit_pipe_control_flush(brw, PIPE_CONTROL_CS_STALL);
 
    brw_batch_emit(brw, GENX(MEDIA_VFE_STATE), vfe) {
       if (prog_data->total_scratch) {

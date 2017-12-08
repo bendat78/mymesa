@@ -191,14 +191,21 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(const fs_builder &bld,
                             vec4_result, surf_index, vec4_offset);
    inst->size_written = 4 * vec4_result.component_size(inst->exec_size);
 
-   if (type_sz(dst.type) == 8) {
-      shuffle_32bit_load_result_to_64bit_data(
-         bld, retype(vec4_result, dst.type), vec4_result, 2);
+   fs_reg dw = offset(vec4_result, bld, (const_offset & 0xf) / 4);
+   switch (type_sz(dst.type)) {
+   case 2:
+      shuffle_32bit_load_result_to_16bit_data(bld, dst, dw, 1);
+      bld.MOV(dst, subscript(dw, dst.type, (const_offset / 2) & 1));
+      break;
+   case 4:
+      bld.MOV(dst, retype(dw, dst.type));
+      break;
+   case 8:
+      shuffle_32bit_load_result_to_64bit_data(bld, dst, dw, 1);
+      break;
+   default:
+      unreachable("Unsupported bit_size");
    }
-
-   vec4_result.type = dst.type;
-   bld.MOV(dst, offset(vec4_result, bld,
-                       (const_offset & 0xf) / type_sz(vec4_result.type)));
 }
 
 /**
@@ -250,6 +257,8 @@ fs_inst::is_send_from_grf() const
    case SHADER_OPCODE_UNTYPED_ATOMIC:
    case SHADER_OPCODE_UNTYPED_SURFACE_READ:
    case SHADER_OPCODE_UNTYPED_SURFACE_WRITE:
+   case SHADER_OPCODE_BYTE_SCATTERED_WRITE:
+   case SHADER_OPCODE_BYTE_SCATTERED_READ:
    case SHADER_OPCODE_TYPED_ATOMIC:
    case SHADER_OPCODE_TYPED_SURFACE_READ:
    case SHADER_OPCODE_TYPED_SURFACE_WRITE:
@@ -454,6 +463,10 @@ type_size_scalar(const struct glsl_type *type)
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
       return type->components();
+   case GLSL_TYPE_UINT16:
+   case GLSL_TYPE_INT16:
+   case GLSL_TYPE_FLOAT16:
+      return DIV_ROUND_UP(type->components(), 2);
    case GLSL_TYPE_DOUBLE:
    case GLSL_TYPE_UINT64:
    case GLSL_TYPE_INT64:
@@ -745,6 +758,23 @@ fs_inst::components_read(unsigned i) const
       else
          return 1;
 
+   case SHADER_OPCODE_BYTE_SCATTERED_READ_LOGICAL:
+      /* Scattered logical opcodes use the following params:
+       * src[0] Surface coordinates
+       * src[1] Surface operation source (ignored for reads)
+       * src[2] Surface
+       * src[3] IMM with always 1 dimension.
+       * src[4] IMM with arg bitsize for scattered read/write 8, 16, 32
+       */
+      assert(src[3].file == IMM &&
+             src[4].file == IMM);
+      return i == 1 ? 0 : 1;
+
+   case SHADER_OPCODE_BYTE_SCATTERED_WRITE_LOGICAL:
+      assert(src[3].file == IMM &&
+             src[4].file == IMM);
+      return 1;
+
    case SHADER_OPCODE_UNTYPED_ATOMIC_LOGICAL:
    case SHADER_OPCODE_TYPED_ATOMIC_LOGICAL: {
       assert(src[3].file == IMM &&
@@ -787,7 +817,9 @@ fs_inst::size_read(int arg) const
    case SHADER_OPCODE_TYPED_SURFACE_READ:
    case SHADER_OPCODE_TYPED_SURFACE_WRITE:
    case FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET:
-      if (!arg)
+   case SHADER_OPCODE_BYTE_SCATTERED_WRITE:
+   case SHADER_OPCODE_BYTE_SCATTERED_READ:
+      if (arg == 0)
          return mlen * REG_SIZE;
       break;
 
@@ -3088,6 +3120,42 @@ fs_visitor::remove_duplicate_mrf_writes()
    return progress;
 }
 
+/**
+ * Rounding modes for conversion instructions are included for each
+ * conversion, but right now it is a state. So once it is set,
+ * we don't need to call it again for subsequent calls.
+ *
+ * This is useful for vector/matrices conversions, as setting the
+ * mode once is enough for the full vector/matrix
+ */
+bool
+fs_visitor::remove_extra_rounding_modes()
+{
+   bool progress = false;
+
+   foreach_block (block, cfg) {
+      brw_rnd_mode prev_mode = BRW_RND_MODE_UNSPECIFIED;
+
+      foreach_inst_in_block_safe (fs_inst, inst, block) {
+         if (inst->opcode == SHADER_OPCODE_RND_MODE) {
+            assert(inst->src[0].file == BRW_IMMEDIATE_VALUE);
+            const brw_rnd_mode mode = (brw_rnd_mode) inst->src[0].d;
+            if (mode == prev_mode) {
+               inst->remove(block);
+               progress = true;
+            } else {
+               prev_mode = mode;
+            }
+         }
+      }
+   }
+
+   if (progress)
+      invalidate_live_intervals();
+
+   return progress;
+}
+
 static void
 clear_deps_for_inst_src(fs_inst *inst, bool *deps, int first_grf, int grf_len)
 {
@@ -4498,6 +4566,18 @@ fs_visitor::lower_logical_sends()
                                     ibld.sample_mask_reg());
          break;
 
+      case SHADER_OPCODE_BYTE_SCATTERED_READ_LOGICAL:
+         lower_surface_logical_send(ibld, inst,
+                                    SHADER_OPCODE_BYTE_SCATTERED_READ,
+                                    fs_reg());
+         break;
+
+      case SHADER_OPCODE_BYTE_SCATTERED_WRITE_LOGICAL:
+         lower_surface_logical_send(ibld, inst,
+                                    SHADER_OPCODE_BYTE_SCATTERED_WRITE,
+                                    ibld.sample_mask_reg());
+         break;
+
       case SHADER_OPCODE_UNTYPED_ATOMIC_LOGICAL:
          lower_surface_logical_send(ibld, inst,
                                     SHADER_OPCODE_UNTYPED_ATOMIC,
@@ -4982,6 +5062,8 @@ get_lowered_simd_width(const struct gen_device_info *devinfo,
    case SHADER_OPCODE_UNTYPED_ATOMIC_LOGICAL:
    case SHADER_OPCODE_UNTYPED_SURFACE_READ_LOGICAL:
    case SHADER_OPCODE_UNTYPED_SURFACE_WRITE_LOGICAL:
+   case SHADER_OPCODE_BYTE_SCATTERED_WRITE_LOGICAL:
+   case SHADER_OPCODE_BYTE_SCATTERED_READ_LOGICAL:
       return MIN2(16, inst->exec_size);
 
    case SHADER_OPCODE_URB_READ_SIMD8:
@@ -5804,6 +5886,7 @@ fs_visitor::optimize()
    int pass_num = 0;
 
    OPT(opt_drop_redundant_mov_to_flags);
+   OPT(remove_extra_rounding_modes);
 
    do {
       progress = false;
@@ -5981,6 +6064,8 @@ fs_visitor::allocate_registers(unsigned min_dispatch_width, bool allow_spilling)
 
    if (failed)
       return;
+
+   opt_bank_conflicts();
 
    schedule_instructions(SCHEDULE_POST);
 
