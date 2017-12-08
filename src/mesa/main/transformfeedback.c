@@ -345,7 +345,7 @@ _mesa_compute_max_transform_feedback_vertices(struct gl_context *ctx,
          unsigned max_for_this_buffer;
 
          /* Skip any inactive buffers, which have a stride of 0. */
-         if (stride == 0)
+         if (!stride)
             continue;
 
          max_for_this_buffer = obj->Size[i] / (4 * stride);

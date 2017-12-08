@@ -5522,7 +5522,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 					       stream);
 		}
 
-		if (stream == 0)
+		if (!stream)
 			si_llvm_export_vs(&ctx, outputs, gsinfo->num_outputs);
 
 		LLVMBuildBr(builder, end_bb);

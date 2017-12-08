@@ -3659,7 +3659,7 @@ spirv_to_nir(const uint32_t *words, size_t word_count,
    words = vtn_foreach_instruction(b, words, word_end,
                                    vtn_handle_preamble_instruction);
 
-   if (b->entry_point == NULL) {
+   if (!b->entry_point) {
       vtn_fail("Entry point not found");
       ralloc_free(b);
       return NULL;

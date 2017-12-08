@@ -933,7 +933,7 @@ void bc_finalizer::cf_peephole() {
 		cf_node *c = static_cast<cf_node*>(*I);
 
 		if (c->jump_after_target) {
-			if (c->jump_target->next == NULL) {
+			if (!c->jump_target->next) {
 				c->jump_target->insert_after(sh.create_cf(CF_OP_NOP));
 				if (last_cf == c->jump_target)
 					last_cf = static_cast<cf_node*>(c->jump_target->next);

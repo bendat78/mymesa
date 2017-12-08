@@ -835,7 +835,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
       *params = shProg->BinaryRetreivableHint;
       return;
    case GL_PROGRAM_BINARY_LENGTH:
-      if (ctx->Const.NumProgramBinaryFormats == 0) {
+      if (!ctx->Const.NumProgramBinaryFormats) {
          *params = 0;
       } else {
          _mesa_get_program_binary_length(ctx, shProg, params);
@@ -2199,7 +2199,7 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
       return;
    }
 
-   if (ctx->Const.NumProgramBinaryFormats == 0) {
+   if (!ctx->Const.NumProgramBinaryFormats) {
       *length = 0;
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetProgramBinary(driver supports zero binary formats)");

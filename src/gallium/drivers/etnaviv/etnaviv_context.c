@@ -348,7 +348,7 @@ etna_cmd_stream_reset_notify(struct etna_cmd_stream *stream, void *priv)
    etna_set_state(stream, VIVS_PS_CONTROL_EXT, 0x00000000);
 
    /* There is no HALTI0 specific state */
-   if (ctx->specs.halti >= 1) { /* Only on HALTI1+ */
+   if (ctx->specs.halti) { /* Only on HALTI1+ */
       etna_set_state(stream, VIVS_VS_HALTI1_UNK00884, 0x00000808);
    }
    if (ctx->specs.halti >= 2) { /* Only on HALTI2+ */

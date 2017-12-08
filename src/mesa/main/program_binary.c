@@ -102,7 +102,7 @@ simple_header_checks(const struct program_binary_header *hdr, unsigned length)
    if (hdr == NULL || length < sizeof(*hdr))
       return false;
 
-   if (hdr->internal_format != 0)
+   if (hdr->internal_format)
       return false;
 
    return true;
@@ -274,7 +274,7 @@ _mesa_program_binary(struct gl_context *ctx, struct gl_shader_program *sh_prog,
    const void *payload = get_program_binary_payload(binary_format, driver_sha1,
                                                     binary, length);
 
-   if (payload == NULL) {
+   if (!payload) {
       sh_prog->data->LinkStatus = linking_failure;
       return;
    }

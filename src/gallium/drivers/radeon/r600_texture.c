@@ -1423,7 +1423,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 					const struct pipe_resource *templ)
 {
 	struct si_screen *sscreen = (struct si_screen*)screen;
-	struct radeon_surf surface = {0};
+	struct radeon_surf surface = {};
 	bool is_flushed_depth = templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH;
 	bool tc_compatible_htile =
 		sscreen->info.chip_class >= VI &&

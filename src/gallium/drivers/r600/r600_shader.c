@@ -4046,14 +4046,14 @@ static int tgsi_op2_64_params(struct r600_shader_ctx *ctx, bool singledest, bool
 			}
 			break;
 		case 0x4:
-			if (swizzle_x == 0) {
+			if (!swizzle_x) {
 				write_mask = 0x3;
 				use_tmp = 1;
 			} else
 				write_mask = 0xc;
 			break;
 		case 0x8:
-			if (swizzle_x == 0) {
+			if (!swizzle_x) {
 				write_mask = 0x3;
 				use_tmp = 1;
 			} else {
@@ -8209,7 +8209,7 @@ static int tgsi_load_lds(struct r600_shader_ctx *ctx)
 	struct r600_bytecode_alu alu;
 	int r;
 	int temp_reg = r600_get_temp(ctx);
-	
+
 	memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 	alu.op = ALU_OP1_MOV;
 	r600_bytecode_src(&alu.src[0], &ctx->src[1], 0);
@@ -8219,7 +8219,7 @@ static int tgsi_load_lds(struct r600_shader_ctx *ctx)
 	r = r600_bytecode_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;
-	
+
 	r = do_lds_fetch_values(ctx, temp_reg,
 				ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index, inst->Dst[0].Register.WriteMask);
 	if (r)

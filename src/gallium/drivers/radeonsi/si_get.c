@@ -959,7 +959,7 @@ static void si_init_renderer_string(struct si_screen *sscreen)
 	else
 		chip_name = si_get_family_name(sscreen);
 
-	if (uname(&uname_data) == 0)
+	if (!uname(&uname_data))
 		snprintf(kernel_version, sizeof(kernel_version),
 			 " / %s", uname_data.release);
 
