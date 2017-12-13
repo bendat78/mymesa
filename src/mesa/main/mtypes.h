@@ -98,6 +98,7 @@ struct st_context;
 struct gl_uniform_storage;
 struct prog_instruction;
 struct gl_program_parameter_list;
+struct gl_shader_spirv_data;
 struct set;
 struct vbo_context;
 /*@}*/
@@ -2645,6 +2646,9 @@ struct gl_shader
    GLuint TransformFeedbackBufferStride[MAX_FEEDBACK_BUFFERS];
 
    struct gl_shader_info info;
+
+   /* ARB_gl_spirv related data */
+   struct gl_shader_spirv_data *spirv_data;
 };
 
 
@@ -4074,6 +4078,7 @@ struct gl_extensions
    GLboolean ARB_enhanced_layouts;
    GLboolean ARB_explicit_attrib_location;
    GLboolean ARB_explicit_uniform_location;
+   GLboolean ARB_gl_spirv;
    GLboolean ARB_gpu_shader5;
    GLboolean ARB_gpu_shader_fp64;
    GLboolean ARB_gpu_shader_int64;

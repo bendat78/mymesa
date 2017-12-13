@@ -1802,6 +1802,7 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		result = LLVMBuildUIToFP(ctx->ac.builder, src[0], ac_to_float_type(&ctx->ac, def_type), "");
 		break;
 	case nir_op_f2f64:
+		src[0] = ac_to_float(&ctx->ac, src[0]);
 		result = LLVMBuildFPExt(ctx->ac.builder, src[0], ac_to_float_type(&ctx->ac, def_type), "");
 		break;
 	case nir_op_f2f32:
@@ -2227,7 +2228,18 @@ static LLVMValueRef visit_vulkan_resource_index(struct nir_to_llvm_context *ctx,
 	desc_ptr = cast_ptr(ctx, desc_ptr, ctx->ac.v4i32);
 	LLVMSetMetadata(desc_ptr, ctx->ac.uniform_md_kind, ctx->ac.empty_md);
 
-	return LLVMBuildLoad(ctx->builder, desc_ptr, "");
+	return desc_ptr;
+}
+
+static LLVMValueRef visit_vulkan_resource_reindex(struct nir_to_llvm_context *ctx,
+                                                  nir_intrinsic_instr *instr)
+{
+	LLVMValueRef ptr = get_src(ctx->nir, instr->src[0]);
+	LLVMValueRef index = get_src(ctx->nir, instr->src[1]);
+
+	LLVMValueRef result = LLVMBuildGEP(ctx->builder, ptr, &index, 1, "");
+	LLVMSetMetadata(result, ctx->ac.uniform_md_kind, ctx->ac.empty_md);
+	return result;
 }
 
 static LLVMValueRef visit_load_push_constant(struct nir_to_llvm_context *ctx,
@@ -2247,9 +2259,9 @@ static LLVMValueRef visit_load_push_constant(struct nir_to_llvm_context *ctx,
 static LLVMValueRef visit_get_buffer_size(struct ac_nir_context *ctx,
                                           const nir_intrinsic_instr *instr)
 {
-	LLVMValueRef desc = get_src(ctx, instr->src[0]);
+	LLVMValueRef ptr = get_src(ctx, instr->src[0]);
 
-	return get_buffer_size(ctx, desc, false);
+	return get_buffer_size(ctx, LLVMBuildLoad(ctx->ac.builder, ptr, ""), false);
 }
 static void visit_store_ssbo(struct ac_nir_context *ctx,
                              nir_intrinsic_instr *instr)
@@ -4124,6 +4136,9 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 	case nir_intrinsic_vulkan_resource_index:
 		result = visit_vulkan_resource_index(ctx->nctx, instr);
 		break;
+	case nir_intrinsic_vulkan_resource_reindex:
+		result = visit_vulkan_resource_reindex(ctx->nctx, instr);
+		break;
 	case nir_intrinsic_store_ssbo:
 		visit_store_ssbo(ctx, instr);
 		break;
@@ -4234,14 +4249,21 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 }
 
 static LLVMValueRef radv_load_ssbo(struct ac_shader_abi *abi,
-				   LLVMValueRef buffer, bool write)
+				   LLVMValueRef buffer_ptr, bool write)
 {
 	struct nir_to_llvm_context *ctx = nir_to_llvm_context_from_abi(abi);
 
 	if (write && ctx->stage == MESA_SHADER_FRAGMENT)
 		ctx->shader_info->fs.writes_memory = true;
 
-	return buffer;
+	return LLVMBuildLoad(ctx->builder, buffer_ptr, "");
+}
+
+static LLVMValueRef radv_load_ubo(struct ac_shader_abi *abi, LLVMValueRef buffer_ptr)
+{
+	struct nir_to_llvm_context *ctx = nir_to_llvm_context_from_abi(abi);
+
+	return LLVMBuildLoad(ctx->builder, buffer_ptr, "");
 }
 
 static LLVMValueRef radv_get_sampler_desc(struct ac_shader_abi *abi,
@@ -6542,6 +6564,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 	ctx.abi.inputs = &ctx.inputs[0];
 	ctx.abi.emit_outputs = handle_shader_outputs_post;
 	ctx.abi.emit_vertex = visit_emit_vertex;
+	ctx.abi.load_ubo = radv_load_ubo;
 	ctx.abi.load_ssbo = radv_load_ssbo;
 	ctx.abi.load_sampler_desc = radv_get_sampler_desc;
 	ctx.abi.clamp_shadow_reference = false;
