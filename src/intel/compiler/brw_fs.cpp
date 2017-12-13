@@ -2015,7 +2015,7 @@ mark_uniform_slots_read(struct uniform_slot_info *slots,
          slots[i].contiguous = true;
 
       align.offset = (i * UNIFORM_SLOT_SIZE) & (align.mul - 1);
-      if (slots[i].align.mul == 0) {
+      if (!slots[i].align.mul) {
          slots[i].align = align;
       } else {
          slots[i].align = cplx_align_combine(slots[i].align, align);
