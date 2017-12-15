@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright 2012 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,25 +21,25 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef GEN_DISASM_H
-#define GEN_DISASM_H
+#include "ac_shader_util.h"
+#include "sid.h"
 
-#include "intel/common/gen_device_info.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct gen_disasm;
-
-struct gen_disasm *gen_disasm_create(const struct gen_device_info *devinfo);
-void gen_disasm_disassemble(struct gen_disasm *disasm,
-                            void *assembly, int start, FILE *out);
-
-void gen_disasm_destroy(struct gen_disasm *disasm);
-
-#ifdef __cplusplus
+unsigned
+ac_get_spi_shader_z_format(bool writes_z, bool writes_stencil,
+			   bool writes_samplemask)
+{
+	if (writes_z) {
+		/* Z needs 32 bits. */
+		if (writes_samplemask)
+			return V_028710_SPI_SHADER_32_ABGR;
+		else if (writes_stencil)
+			return V_028710_SPI_SHADER_32_GR;
+		else
+			return V_028710_SPI_SHADER_32_R;
+	} else if (writes_stencil || writes_samplemask) {
+		/* Both stencil and sample mask need only 16 bits. */
+		return V_028710_SPI_SHADER_UINT16_ABGR;
+	} else {
+		return V_028710_SPI_SHADER_ZERO;
+	}
 }
-#endif
-
-#endif /* GEN_DISASM_H */

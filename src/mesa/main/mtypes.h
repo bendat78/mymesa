@@ -3310,6 +3310,14 @@ struct gl_shared_state
    /** EXT_external_objects */
    struct _mesa_HashTable *MemoryObjects;
 
+   /**
+    * Some context in this share group was affected by a disjoint
+    * operation. This operation can be anything that has effects on
+    * values of timer queries in such manner that they become invalid for
+    * performance metrics. As example gpu reset, counter overflow or gpu
+    * frequency changes.
+    */
+   bool DisjointOperation;
 };
 
 
@@ -4160,6 +4168,7 @@ struct gl_extensions
    GLboolean EXT_blend_func_separate;
    GLboolean EXT_blend_minmax;
    GLboolean EXT_depth_bounds_test;
+   GLboolean EXT_disjoint_timer_query;
    GLboolean EXT_draw_buffers2;
    GLboolean EXT_framebuffer_multisample;
    GLboolean EXT_framebuffer_multisample_blit_scaled;
