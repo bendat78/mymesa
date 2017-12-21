@@ -1308,7 +1308,7 @@ static bool radv_amdgpu_wait_syncobj(struct radeon_winsys *_ws,
 					 DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT |
 					 DRM_SYNCOBJ_WAIT_FLAGS_WAIT_ALL,
 					 &tmp);
-	if (ret == 0) {
+	if (!ret) {
 		return true;
 	} else if (ret == -1 && errno == ETIME) {
 		return false;

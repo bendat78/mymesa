@@ -42,7 +42,7 @@ gen_batch_decode_ctx_init(struct gen_batch_decode_ctx *ctx,
    ctx->fp = fp;
    ctx->flags = flags;
 
-   if (xml_path == NULL)
+   if (!xml_path)
       ctx->spec = gen_spec_load(devinfo);
    else
       ctx->spec = gen_spec_load_from_path(devinfo, xml_path);
@@ -91,7 +91,7 @@ ctx_get_bo(struct gen_batch_decode_ctx *ctx, uint64_t addr)
       bo.addr &= (~0ull >> 16);
 
    /* We may actually have an offset into the bo */
-   if (bo.map != NULL) {
+   if (bo.map) {
       assert(bo.addr <= addr);
       uint64_t offset = addr - bo.addr;
       bo.map += offset;
@@ -190,7 +190,7 @@ dump_binding_table(struct gen_batch_decode_ctx *ctx, uint32_t offset, int count)
 {
    struct gen_group *strct =
       gen_spec_find_struct(ctx->spec, "RENDER_SURFACE_STATE");
-   if (strct == NULL) {
+   if (!strct) {
       fprintf(ctx->fp, "did not find RENDER_SURFACE_STATE info\n");
       return;
    }
@@ -199,7 +199,7 @@ dump_binding_table(struct gen_batch_decode_ctx *ctx, uint32_t offset, int count)
    if (count < 0)
       count = 8;
 
-   if (ctx->surface_base.map == NULL) {
+   if (!ctx->surface_base.map) {
       fprintf(ctx->fp, "  binding table unavailable\n");
       return;
    }
@@ -212,7 +212,7 @@ dump_binding_table(struct gen_batch_decode_ctx *ctx, uint32_t offset, int count)
 
    const uint32_t *pointers = ctx->surface_base.map + offset;
    for (int i = 0; i < count; i++) {
-      if (pointers[i] == 0)
+      if (!pointers[i])
          continue;
 
       if (pointers[i] % 32 != 0 ||
@@ -236,7 +236,7 @@ dump_samplers(struct gen_batch_decode_ctx *ctx, uint32_t offset, int count)
    if (count < 0)
       count = 4;
 
-   if (ctx->dynamic_base.map == NULL) {
+   if (!ctx->dynamic_base.map) {
       fprintf(ctx->fp, "  samplers unavailable\n");
       return;
    }
@@ -260,7 +260,7 @@ static void
 handle_media_interface_descriptor_load(struct gen_batch_decode_ctx *ctx,
                                        const uint32_t *p)
 {
-   if (ctx->dynamic_base.map == NULL)
+   if (!ctx->dynamic_base.map)
       return;
 
    struct gen_group *inst = gen_spec_find_instruction(ctx->spec, p);
@@ -353,7 +353,7 @@ handle_3dstate_vertex_buffers(struct gen_batch_decode_ctx *ctx,
 
       fprintf(ctx->fp, "vertex buffer %d, size %d\n", index, vb_size);
 
-      if (vb.map == NULL) {
+      if (!vb.map) {
          fprintf(ctx->fp, "  buffer contents unavailable\n");
          continue;
       }
@@ -393,7 +393,7 @@ handle_3dstate_index_buffer(struct gen_batch_decode_ctx *ctx,
       }
    } while (gen_field_iterator_next(&iter));
 
-   if (ib.map == NULL) {
+   if (!ib.map) {
       fprintf(ctx->fp, "  buffer contents unavailable\n");
       return;
    }
@@ -647,7 +647,7 @@ decode_load_register_imm(struct gen_batch_decode_ctx *ctx, const uint32_t *p)
 {
    struct gen_group *reg = gen_spec_find_register(ctx->spec, p[1]);
 
-   if (reg != NULL) {
+   if (reg) {
       fprintf(ctx->fp, "register %s (0x%x): 0x%x\n",
               reg->name, reg->register_offset, p[2]);
       ctx_print_group(ctx, reg, reg->register_offset, &p[2]);
@@ -729,7 +729,7 @@ gen_print_batch(struct gen_batch_decode_ctx *ctx,
       length = gen_group_get_length(inst, p);
       assert(inst == NULL || length > 0);
       length = MAX2(1, length);
-      if (inst == NULL) {
+      if (!inst) {
          fprintf(ctx->fp, "unknown instruction %08x\n", p[0]);
          continue;
       }
@@ -786,7 +786,7 @@ gen_print_batch(struct gen_batch_decode_ctx *ctx,
             }
          } while (gen_field_iterator_next(&iter));
 
-         if (next_batch.map == NULL) {
+         if (!next_batch.map) {
             fprintf(ctx->fp, "Secondary batch at 0x%08"PRIx64" unavailable",
                     next_batch.addr);
          }

@@ -888,7 +888,7 @@ void BinPostSetupPointsImpl(
 
         // store render target array index
         const uint32_t *aRTAI = reinterpret_cast<const uint32_t *>(&rtIdx);
-        
+
         uint32_t *pPrimID = (uint32_t *)&primID;
         DWORD primIndex = 0;
 
