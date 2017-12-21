@@ -303,7 +303,7 @@ static void
 fd_blit_staging(struct fd_context *ctx, struct fd_transfer *trans)
 {
 	struct pipe_resource *dst = trans->base.resource;
-	struct pipe_blit_info blit = {0};
+	struct pipe_blit_info blit = {};
 
 	blit.dst.resource = dst;
 	blit.dst.format   = dst->format;
@@ -351,7 +351,7 @@ flush_resource(struct fd_context *ctx, struct fd_resource *rsc, unsigned usage)
 	fd_batch_reference(&write_batch, rsc->write_batch);
 
 	if (usage & PIPE_TRANSFER_WRITE) {
-		struct fd_batch *batch, *batches[32] = {0};
+		struct fd_batch *batch, *batches[32] = {};
 		uint32_t batch_mask;
 
 		/* This is a bit awkward, probably a fd_batch_flush_locked()

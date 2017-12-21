@@ -627,7 +627,7 @@ namespace SwrJit
                 // pointer to the value to load if we're masking off a component
                 Value *maskLoadAddress = GEP(vSrcPtr,{C(0), C(i)});
                 Value *selMask = VEXTRACT(vMask,C(i));
-                // switch in a safe address to load if we're trying to access a vertex 
+                // switch in a safe address to load if we're trying to access a vertex
                 Value *validAddress = SELECT(selMask, loadAddress, maskLoadAddress);
                 Value *val = LOAD(validAddress);
                 vGather = VINSERT(vGather,val,C(i));
@@ -710,7 +710,7 @@ namespace SwrJit
                 // pointer to the value to load if we're masking off a component
                 Value *maskLoadAddress = GEP(vSrcPtr, {C(0), C(i)});
                 Value *selMask = VEXTRACT(vMask, C(i));
-                // switch in a safe address to load if we're trying to access a vertex 
+                // switch in a safe address to load if we're trying to access a vertex
                 Value *validAddress = SELECT(selMask, loadAddress, maskLoadAddress);
                 Value *val = LOAD(validAddress, C(0));
                 vGather = VINSERT(vGather, val, C(i));
@@ -807,7 +807,7 @@ namespace SwrJit
 #if USE_SIMD16_BUILDER
     Value *Builder::EXTRACT2(Value *x, uint32_t imm)
     {
-        if (imm == 0)
+        if (!imm)
             return VSHUFFLE(x, UndefValue::get(x->getType()), {0, 1, 2, 3, 4, 5, 6, 7});
         else
             return VSHUFFLE(x, UndefValue::get(x->getType()), {8, 9, 10, 11, 12, 13, 14, 15});
@@ -1087,7 +1087,7 @@ namespace SwrJit
         }
     }
 
-    void Builder::GATHER4PS(const SWR_FORMAT_INFO &info, Value* pSrcBase, Value* byteOffsets, 
+    void Builder::GATHER4PS(const SWR_FORMAT_INFO &info, Value* pSrcBase, Value* byteOffsets,
                             Value* vMask, Value* vGatherComponents[], bool bPackedOutput)
     {
         switch(info.bpp / info.numComps)

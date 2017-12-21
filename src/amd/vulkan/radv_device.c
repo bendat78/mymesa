@@ -3688,7 +3688,7 @@ static VkResult radv_import_opaque_fd(struct radv_device *device,
 {
 	uint32_t syncobj_handle = 0;
 	int ret = device->ws->import_syncobj(device->ws, fd, &syncobj_handle);
-	if (ret != 0)
+	if (ret)
 		return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
 
 	if (*syncobj)
@@ -3718,7 +3718,7 @@ static VkResult radv_import_sync_fd(struct radv_device *device,
 		device->ws->signal_syncobj(device->ws, syncobj_handle);
 	} else {
 		int ret = device->ws->import_syncobj_from_sync_file(device->ws, syncobj_handle, fd);
-	if (ret != 0)
+	if (ret)
 		return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
 	}
 
@@ -3791,7 +3791,7 @@ void radv_GetPhysicalDeviceExternalSemaphorePropertiesKHR(
 
 	/* Require has_syncobj_wait for the syncobj signal ioctl introduced at virtually the same time */
 	if (pdevice->rad_info.has_syncobj_wait &&
-	    (pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR || 
+	    (pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
 	     pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR)) {
 		pExternalSemaphoreProperties->exportFromImportedHandleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
 		pExternalSemaphoreProperties->compatibleHandleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
@@ -3871,7 +3871,7 @@ void radv_GetPhysicalDeviceExternalFencePropertiesKHR(
 	RADV_FROM_HANDLE(radv_physical_device, pdevice, physicalDevice);
 
 	if (pdevice->rad_info.has_syncobj_wait &&
-	    (pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR || 
+	    (pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
 	     pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR)) {
 		pExternalFenceProperties->exportFromImportedHandleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
 		pExternalFenceProperties->compatibleHandleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR;

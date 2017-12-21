@@ -1333,7 +1333,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
                         vGatherResult2[1] = GATHERPS(gatherSrc2, pStreamBase, vOffsets2, vGatherMask2);
                         // e.g. result of second 8x32bit integer gather for 16bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
+                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
                         //
                     }
                     else
@@ -1710,7 +1710,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
 
                         // e.g. result of an 8x32bit integer gather for 8bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw 
+                        //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw
 
 #else
                         Value* vGatherResult = GATHERDD(gatherSrc, pStreamBase, vOffsets, vGatherMask);
@@ -1789,7 +1789,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
 
                         // e.g. result of second 8x32bit integer gather for 16bit components
                         // 256i - 0    1    2    3    4    5    6    7
-                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
+                        //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
                         //
                     }
                     else
@@ -2969,7 +2969,7 @@ void FetchJit::Shuffle16bpcGather2(Shuffle16bpcArgs &args)
 
                     // after pshufb mask for x channel; z uses the same shuffle from the second gather
                     // 256i - 0    1    2    3    4    5    6    7
-                    //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00 
+                    //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00
 
                     // denormalize if needed
                     if (conversionType != CONVERT_NONE)

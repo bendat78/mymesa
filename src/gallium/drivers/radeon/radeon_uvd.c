@@ -680,12 +680,12 @@ static struct ruvd_h265 get_h265_msg(struct ruvd_decoder *dec, struct pipe_video
 				break;
 			if (j == 15)
 				dec->render_pic_list[i] = NULL;
-			else if (pic->ref[j+1] == NULL)
+			else if (!pic->ref[j+1])
 				dec->render_pic_list[i] = NULL;
 		}
 	}
 	for (i = 0 ; i < 16 ; i++) {
-		if (dec->render_pic_list[i] == NULL) {
+		if (!dec->render_pic_list[i]) {
 			dec->render_pic_list[i] = target;
 			result.curr_idx = i;
 			break;
