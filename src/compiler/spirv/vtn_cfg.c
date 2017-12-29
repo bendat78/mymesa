@@ -549,19 +549,19 @@ vtn_cfg_walk_blocks(struct vtn_builder *b, struct list_head *cf_list,
             struct vtn_block *case_block =
                vtn_value(b, *w, vtn_value_type_block)->block;
 
-            if (case_block == break_block)
-               continue;
-
-            vtn_assert(case_block->switch_case);
-
-            vtn_order_case(swtch, case_block->switch_case);
-
             if (bitsize <= 32) {
                w += 2;
             } else {
                assert(bitsize == 64);
                w += 3;
             }
+
+            if (case_block == break_block)
+               continue;
+
+            vtn_assert(case_block->switch_case);
+
+            vtn_order_case(swtch, case_block->switch_case);
          }
 
          enum vtn_branch_type branch_type =

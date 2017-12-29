@@ -3425,68 +3425,9 @@ static void si_export_mrt_z(struct lp_build_tgsi_context *bld_base,
 			    LLVMValueRef samplemask, struct si_ps_exports *exp)
 {
 	struct si_shader_context *ctx = si_shader_context(bld_base);
-	struct lp_build_context *base = &bld_base->base;
 	struct ac_export_args args;
-	unsigned mask = 0;
-	unsigned format = ac_get_spi_shader_z_format(depth != NULL,
-						     stencil != NULL,
-						     samplemask != NULL);
 
-	assert(depth || stencil || samplemask);
-
-	args.valid_mask = 1; /* whether the EXEC mask is valid */
-	args.done = 1; /* DONE bit */
-
-	/* Specify the target we are exporting */
-	args.target = V_008DFC_SQ_EXP_MRTZ;
-
-	args.compr = 0; /* COMP flag */
-	args.out[0] = base->undef; /* R, depth */
-	args.out[1] = base->undef; /* G, stencil test value[0:7], stencil op value[8:15] */
-	args.out[2] = base->undef; /* B, sample mask */
-	args.out[3] = base->undef; /* A, alpha to mask */
-
-	if (format == V_028710_SPI_SHADER_UINT16_ABGR) {
-		assert(!depth);
-		args.compr = 1; /* COMPR flag */
-
-		if (stencil) {
-			/* Stencil should be in X[23:16]. */
-			stencil = ac_to_integer(&ctx->ac, stencil);
-			stencil = LLVMBuildShl(ctx->ac.builder, stencil,
-					       LLVMConstInt(ctx->i32, 16, 0), "");
-			args.out[0] = ac_to_float(&ctx->ac, stencil);
-			mask |= 0x3;
-		}
-		if (samplemask) {
-			/* SampleMask should be in Y[15:0]. */
-			args.out[1] = samplemask;
-			mask |= 0xc;
-		}
-	} else {
-		if (depth) {
-			args.out[0] = depth;
-			mask |= 0x1;
-		}
-		if (stencil) {
-			args.out[1] = stencil;
-			mask |= 0x2;
-		}
-		if (samplemask) {
-			args.out[2] = samplemask;
-			mask |= 0x4;
-		}
-	}
-
-	/* SI (except OLAND and HAINAN) has a bug that it only looks
-	 * at the X writemask component. */
-	if (ctx->screen->info.chip_class == SI &&
-	    ctx->screen->info.family != CHIP_OLAND &&
-	    ctx->screen->info.family != CHIP_HAINAN)
-		mask |= 0x1;
-
-	/* Specify which components to enable */
-	args.enabled_channels = mask;
+	ac_export_mrt_z(&ctx->ac, depth, stencil, samplemask, &args);
 
 	memcpy(&exp->args[exp->num++], &args, sizeof(args));
 }
@@ -5732,14 +5673,6 @@ static void si_count_scratch_private_memory(struct si_shader_context *ctx)
 	}
 }
 
-static void si_init_exec_full_mask(struct si_shader_context *ctx)
-{
-	LLVMValueRef full_mask = LLVMConstInt(ctx->i64, ~0ull, 0);
-	lp_build_intrinsic(ctx->ac.builder,
-			   "llvm.amdgcn.init.exec", ctx->voidt,
-			   &full_mask, 1, LP_FUNC_ATTR_CONVERGENT);
-}
-
 static void si_init_exec_from_input(struct si_shader_context *ctx,
 				    unsigned param, unsigned bitoffset)
 {
@@ -5842,7 +5775,7 @@ static bool si_compile_tgsi_main(struct si_shader_context *ctx,
 		} else if (ctx->type == PIPE_SHADER_TESS_CTRL ||
 			   ctx->type == PIPE_SHADER_GEOMETRY) {
 			if (!is_monolithic)
-				si_init_exec_full_mask(ctx);
+				ac_init_exec_full_mask(&ctx->ac);
 
 			/* The barrier must execute for all shaders in a
 			 * threadgroup.
@@ -6132,7 +6065,7 @@ static void si_build_gs_prolog_function(struct si_shader_context *ctx,
 	 * mask.
 	 */
 	if (ctx->screen->info.chip_class >= GFX9 && !key->gs_prolog.is_monolithic)
-		si_init_exec_full_mask(ctx);
+		ac_init_exec_full_mask(&ctx->ac);
 
 	/* Copy inputs to outputs. This should be no-op, as the registers match,
 	 * but it will prevent the compiler from overwriting them unintentionally.
@@ -6284,7 +6217,7 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 			   si_get_max_workgroup_size(ctx->shader));
 
 	if (is_merged_shader(ctx->shader))
-		si_init_exec_full_mask(ctx);
+		ac_init_exec_full_mask(&ctx->ac);
 
 	/* Record the arguments of the function as if they were an output of
 	 * a previous part.

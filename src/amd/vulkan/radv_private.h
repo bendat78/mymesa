@@ -353,6 +353,38 @@ radv_pipeline_cache_insert_shaders(struct radv_device *device,
 				   const void *const *codes,
 				   const unsigned *code_sizes);
 
+enum radv_blit_ds_layout {
+	RADV_BLIT_DS_LAYOUT_TILE_ENABLE,
+	RADV_BLIT_DS_LAYOUT_TILE_DISABLE,
+	RADV_BLIT_DS_LAYOUT_COUNT,
+};
+
+static inline enum radv_blit_ds_layout radv_meta_blit_ds_to_type(VkImageLayout layout)
+{
+	return (layout == VK_IMAGE_LAYOUT_GENERAL) ? RADV_BLIT_DS_LAYOUT_TILE_DISABLE : RADV_BLIT_DS_LAYOUT_TILE_ENABLE;
+}
+
+static inline VkImageLayout radv_meta_blit_ds_to_layout(enum radv_blit_ds_layout ds_layout)
+{
+	return ds_layout == RADV_BLIT_DS_LAYOUT_TILE_ENABLE ? VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL;
+}
+
+enum radv_meta_dst_layout {
+	RADV_META_DST_LAYOUT_GENERAL,
+	RADV_META_DST_LAYOUT_OPTIMAL,
+	RADV_META_DST_LAYOUT_COUNT,
+};
+
+static inline enum radv_meta_dst_layout radv_meta_dst_layout_from_layout(VkImageLayout layout)
+{
+	return (layout == VK_IMAGE_LAYOUT_GENERAL) ? RADV_META_DST_LAYOUT_GENERAL : RADV_META_DST_LAYOUT_OPTIMAL;
+}
+
+static inline VkImageLayout radv_meta_dst_layout_to_layout(enum radv_meta_dst_layout layout)
+{
+	return layout == RADV_META_DST_LAYOUT_OPTIMAL ? VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL;
+}
+
 struct radv_meta_state {
 	VkAllocationCallbacks alloc;
 
@@ -374,7 +406,7 @@ struct radv_meta_state {
 	VkPipelineLayout                          clear_color_p_layout;
 	VkPipelineLayout                          clear_depth_p_layout;
 	struct {
-		VkRenderPass render_pass[NUM_META_FS_KEYS];
+		VkRenderPass render_pass[NUM_META_FS_KEYS][RADV_META_DST_LAYOUT_COUNT];
 
 		/** Pipeline that blits from a 1D image. */
 		VkPipeline pipeline_1d_src[NUM_META_FS_KEYS];
@@ -385,12 +417,12 @@ struct radv_meta_state {
 		/** Pipeline that blits from a 3D image. */
 		VkPipeline pipeline_3d_src[NUM_META_FS_KEYS];
 
-		VkRenderPass depth_only_rp;
+		VkRenderPass depth_only_rp[RADV_BLIT_DS_LAYOUT_COUNT];
 		VkPipeline depth_only_1d_pipeline;
 		VkPipeline depth_only_2d_pipeline;
 		VkPipeline depth_only_3d_pipeline;
 
-		VkRenderPass stencil_only_rp;
+		VkRenderPass stencil_only_rp[RADV_BLIT_DS_LAYOUT_COUNT];
 		VkPipeline stencil_only_1d_pipeline;
 		VkPipeline stencil_only_2d_pipeline;
 		VkPipeline stencil_only_3d_pipeline;
@@ -399,38 +431,42 @@ struct radv_meta_state {
 	} blit;
 
 	struct {
-		VkRenderPass render_passes[NUM_META_FS_KEYS];
+		VkRenderPass render_passes[NUM_META_FS_KEYS][RADV_META_DST_LAYOUT_COUNT];
 
-		VkPipelineLayout p_layouts[2];
-		VkDescriptorSetLayout ds_layouts[2];
-		VkPipeline pipelines[2][NUM_META_FS_KEYS];
+		VkPipelineLayout p_layouts[3];
+		VkDescriptorSetLayout ds_layouts[3];
+		VkPipeline pipelines[3][NUM_META_FS_KEYS];
 
-		VkRenderPass depth_only_rp;
-		VkPipeline depth_only_pipeline[2];
+		VkRenderPass depth_only_rp[RADV_BLIT_DS_LAYOUT_COUNT];
+		VkPipeline depth_only_pipeline[3];
 
-		VkRenderPass stencil_only_rp;
-		VkPipeline stencil_only_pipeline[2];
+		VkRenderPass stencil_only_rp[RADV_BLIT_DS_LAYOUT_COUNT];
+		VkPipeline stencil_only_pipeline[3];
 	} blit2d;
 
 	struct {
 		VkPipelineLayout                          img_p_layout;
 		VkDescriptorSetLayout                     img_ds_layout;
 		VkPipeline pipeline;
+		VkPipeline pipeline_3d;
 	} itob;
 	struct {
 		VkPipelineLayout                          img_p_layout;
 		VkDescriptorSetLayout                     img_ds_layout;
 		VkPipeline pipeline;
+		VkPipeline pipeline_3d;
 	} btoi;
 	struct {
 		VkPipelineLayout                          img_p_layout;
 		VkDescriptorSetLayout                     img_ds_layout;
 		VkPipeline pipeline;
+		VkPipeline pipeline_3d;
 	} itoi;
 	struct {
 		VkPipelineLayout                          img_p_layout;
 		VkDescriptorSetLayout                     img_ds_layout;
 		VkPipeline pipeline;
+		VkPipeline pipeline_3d;
 	} cleari;
 
 	struct {
@@ -454,7 +490,7 @@ struct radv_meta_state {
 		VkPipelineLayout                          p_layout;
 
 		struct {
-			VkRenderPass render_pass[NUM_META_FS_KEYS];
+			VkRenderPass render_pass[NUM_META_FS_KEYS][RADV_META_DST_LAYOUT_COUNT];
 			VkPipeline   pipeline[NUM_META_FS_KEYS];
 		} rc[MAX_SAMPLES_LOG2];
 	} resolve_fragment;
@@ -470,7 +506,12 @@ struct radv_meta_state {
 		VkPipelineLayout                          p_layout;
 		VkPipeline                                cmask_eliminate_pipeline;
 		VkPipeline                                fmask_decompress_pipeline;
+		VkPipeline                                dcc_decompress_pipeline;
 		VkRenderPass                              pass;
+
+		VkDescriptorSetLayout                     dcc_decompress_compute_ds_layout;
+		VkPipelineLayout                          dcc_decompress_compute_p_layout;
+		VkPipeline                                dcc_decompress_compute_pipeline;
 	} fast_clear_flush;
 
 	struct {
@@ -1311,6 +1352,10 @@ bool radv_layout_is_htile_compressed(const struct radv_image *image,
                                      unsigned queue_mask);
 
 bool radv_layout_can_fast_clear(const struct radv_image *image,
+			        VkImageLayout layout,
+			        unsigned queue_mask);
+
+bool radv_layout_dcc_compressed(const struct radv_image *image,
 			        VkImageLayout layout,
 			        unsigned queue_mask);
 

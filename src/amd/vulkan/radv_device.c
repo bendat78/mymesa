@@ -343,6 +343,7 @@ radv_get_debug_option_name(int id)
 static const struct debug_control radv_perftest_options[] = {
 	{"nobatchchain", RADV_PERFTEST_NO_BATCHCHAIN},
 	{"sisched", RADV_PERFTEST_SISCHED},
+	{"localbos", RADV_PERFTEST_LOCAL_BOS},
 	{NULL, 0}
 };
 
@@ -3002,9 +3003,9 @@ si_tile_mode_index(const struct radv_image *image, unsigned level, bool stencil)
 		return image->surface.u.legacy.tiling_index[level];
 }
 
-static uint32_t radv_surface_layer_count(struct radv_image_view *iview)
+static uint32_t radv_surface_max_layer_count(struct radv_image_view *iview)
 {
-	return iview->type == VK_IMAGE_VIEW_TYPE_3D ? iview->extent.depth : iview->layer_count;
+	return iview->type == VK_IMAGE_VIEW_TYPE_3D ? iview->extent.depth : (iview->base_layer + iview->layer_count);
 }
 
 static void
@@ -3085,9 +3086,9 @@ radv_initialise_color_surface(struct radv_device *device,
 	cb->cb_dcc_base = va >> 8;
 	cb->cb_dcc_base |= iview->image->surface.tile_swizzle;
 
-	uint32_t max_slice = radv_surface_layer_count(iview);
+	uint32_t max_slice = radv_surface_max_layer_count(iview) - 1;
 	cb->cb_color_view = S_028C6C_SLICE_START(iview->base_layer) |
-		S_028C6C_SLICE_MAX(iview->base_layer + max_slice - 1);
+		S_028C6C_SLICE_MAX(max_slice);
 
 	if (iview->image->info.samples > 1) {
 		unsigned log_samples = util_logbase2(iview->image->info.samples);
@@ -3162,16 +3163,35 @@ radv_initialise_color_surface(struct radv_device *device,
 		cb->cb_color_info |= S_028C70_DCC_ENABLE(1);
 
 	if (device->physical_device->rad_info.chip_class >= VI) {
-		unsigned max_uncompressed_block_size = 2;
+		unsigned max_uncompressed_block_size = V_028C78_MAX_BLOCK_SIZE_256B;
+		unsigned min_compressed_block_size = V_028C78_MIN_BLOCK_SIZE_32B;
+		unsigned independent_64b_blocks = 0;
+		unsigned max_compressed_block_size;
+
+		/* amdvlk: [min-compressed-block-size] should be set to 32 for dGPU and
+		   64 for APU because all of our APUs to date use DIMMs which have
+		   a request granularity size of 64B while all other chips have a
+		   32B request size */
+		if (!device->physical_device->rad_info.has_dedicated_vram)
+			min_compressed_block_size = V_028C78_MIN_BLOCK_SIZE_64B;
+
 		if (iview->image->info.samples > 1) {
 			if (iview->image->surface.bpe == 1)
-				max_uncompressed_block_size = 0;
+				max_uncompressed_block_size = V_028C78_MAX_BLOCK_SIZE_64B;
 			else if (iview->image->surface.bpe == 2)
-				max_uncompressed_block_size = 1;
+				max_uncompressed_block_size = V_028C78_MAX_BLOCK_SIZE_128B;
 		}
 
+		if (iview->image->usage & (VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)) {
+			independent_64b_blocks = 1;
+			max_compressed_block_size = V_028C78_MAX_BLOCK_SIZE_64B;
+		} else
+			max_compressed_block_size = max_uncompressed_block_size;
+
 		cb->cb_dcc_control = S_028C78_MAX_UNCOMPRESSED_BLOCK_SIZE(max_uncompressed_block_size) |
-			S_028C78_INDEPENDENT_64B_BLOCKS(1);
+			S_028C78_MAX_COMPRESSED_BLOCK_SIZE(max_compressed_block_size) |
+			S_028C78_MIN_COMPRESSED_BLOCK_SIZE(min_compressed_block_size) |
+			S_028C78_INDEPENDENT_64B_BLOCKS(independent_64b_blocks);
 	}
 
 	/* This must be set for fast clear to work without FMASK. */
@@ -3232,9 +3252,9 @@ radv_initialise_ds_surface(struct radv_device *device,
 	stencil_format = iview->image->surface.has_stencil ?
 		V_028044_STENCIL_8 : V_028044_STENCIL_INVALID;
 
-	uint32_t max_slice = radv_surface_layer_count(iview);
+	uint32_t max_slice = radv_surface_max_layer_count(iview) - 1;
 	ds->db_depth_view = S_028008_SLICE_START(iview->base_layer) |
-		S_028008_SLICE_MAX(iview->base_layer + max_slice - 1);
+		S_028008_SLICE_MAX(max_slice);
 
 	ds->db_htile_data_base = 0;
 	ds->db_htile_surface = 0;
@@ -3398,7 +3418,7 @@ VkResult radv_CreateFramebuffer(
 		}
 		framebuffer->width = MIN2(framebuffer->width, iview->extent.width);
 		framebuffer->height = MIN2(framebuffer->height, iview->extent.height);
-		framebuffer->layers = MIN2(framebuffer->layers, radv_surface_layer_count(iview));
+		framebuffer->layers = MIN2(framebuffer->layers, radv_surface_max_layer_count(iview));
 	}
 
 	*pFramebuffer = radv_framebuffer_to_handle(framebuffer);
