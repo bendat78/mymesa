@@ -81,6 +81,7 @@ typedef uint32_t xcb_window_t;
 #define MAX_RTS          8
 #define MAX_VIEWPORTS   16
 #define MAX_SCISSORS    16
+#define MAX_DISCARD_RECTANGLES 4
 #define MAX_PUSH_CONSTANTS_SIZE 128
 #define MAX_PUSH_DESCRIPTORS 32
 #define MAX_DYNAMIC_BUFFERS 16
@@ -272,6 +273,8 @@ struct radv_physical_device {
 	bool has_rbplus; /* if RB+ register exist */
 	bool rbplus_allowed; /* if RB+ is allowed */
 	bool has_clear_state;
+	bool cpdma_prefetch_writes_memory;
+	bool has_scissor_bug;
 
 	/* This is the drivers on-disk cache used as a fallback as opposed to
 	 * the pipeline cache defined by apps.
@@ -583,6 +586,7 @@ struct radv_device {
 
 	bool llvm_supports_spill;
 	bool has_distributed_tess;
+	bool pbb_allowed;
 	bool dfsm_allowed;
 	uint32_t tess_offchip_block_dw_size;
 	uint32_t scratch_waves;
@@ -726,22 +730,38 @@ struct radv_buffer {
 	bool shareable;
 };
 
+enum radv_dynamic_state_bits {
+	RADV_DYNAMIC_VIEWPORT             = 1 << 0,
+	RADV_DYNAMIC_SCISSOR              = 1 << 1,
+	RADV_DYNAMIC_LINE_WIDTH           = 1 << 2,
+	RADV_DYNAMIC_DEPTH_BIAS           = 1 << 3,
+	RADV_DYNAMIC_BLEND_CONSTANTS      = 1 << 4,
+	RADV_DYNAMIC_DEPTH_BOUNDS         = 1 << 5,
+	RADV_DYNAMIC_STENCIL_COMPARE_MASK = 1 << 6,
+	RADV_DYNAMIC_STENCIL_WRITE_MASK   = 1 << 7,
+	RADV_DYNAMIC_STENCIL_REFERENCE    = 1 << 8,
+	RADV_DYNAMIC_DISCARD_RECTANGLE    = 1 << 9,
+	RADV_DYNAMIC_ALL                  = (1 << 10) - 1,
+};
 
 enum radv_cmd_dirty_bits {
-	RADV_CMD_DIRTY_DYNAMIC_VIEWPORT                  = 1 << 0, /* VK_DYNAMIC_STATE_VIEWPORT */
-	RADV_CMD_DIRTY_DYNAMIC_SCISSOR                   = 1 << 1, /* VK_DYNAMIC_STATE_SCISSOR */
-	RADV_CMD_DIRTY_DYNAMIC_LINE_WIDTH                = 1 << 2, /* VK_DYNAMIC_STATE_LINE_WIDTH */
-	RADV_CMD_DIRTY_DYNAMIC_DEPTH_BIAS                = 1 << 3, /* VK_DYNAMIC_STATE_DEPTH_BIAS */
-	RADV_CMD_DIRTY_DYNAMIC_BLEND_CONSTANTS           = 1 << 4, /* VK_DYNAMIC_STATE_BLEND_CONSTANTS */
-	RADV_CMD_DIRTY_DYNAMIC_DEPTH_BOUNDS              = 1 << 5, /* VK_DYNAMIC_STATE_DEPTH_BOUNDS */
-	RADV_CMD_DIRTY_DYNAMIC_STENCIL_COMPARE_MASK      = 1 << 6, /* VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK */
-	RADV_CMD_DIRTY_DYNAMIC_STENCIL_WRITE_MASK        = 1 << 7, /* VK_DYNAMIC_STATE_STENCIL_WRITE_MASK */
-	RADV_CMD_DIRTY_DYNAMIC_STENCIL_REFERENCE         = 1 << 8, /* VK_DYNAMIC_STATE_STENCIL_REFERENCE */
-	RADV_CMD_DIRTY_DYNAMIC_ALL                       = (1 << 9) - 1,
-	RADV_CMD_DIRTY_PIPELINE                          = 1 << 9,
-	RADV_CMD_DIRTY_INDEX_BUFFER                      = 1 << 10,
-	RADV_CMD_DIRTY_FRAMEBUFFER                       = 1 << 11,
-	RADV_CMD_DIRTY_VERTEX_BUFFER                     = 1 << 12,
+	/* Keep the dynamic state dirty bits in sync with
+	 * enum radv_dynamic_state_bits */
+	RADV_CMD_DIRTY_DYNAMIC_VIEWPORT                  = 1 << 0,
+	RADV_CMD_DIRTY_DYNAMIC_SCISSOR                   = 1 << 1,
+	RADV_CMD_DIRTY_DYNAMIC_LINE_WIDTH                = 1 << 2,
+	RADV_CMD_DIRTY_DYNAMIC_DEPTH_BIAS                = 1 << 3,
+	RADV_CMD_DIRTY_DYNAMIC_BLEND_CONSTANTS           = 1 << 4,
+	RADV_CMD_DIRTY_DYNAMIC_DEPTH_BOUNDS              = 1 << 5,
+	RADV_CMD_DIRTY_DYNAMIC_STENCIL_COMPARE_MASK      = 1 << 6,
+	RADV_CMD_DIRTY_DYNAMIC_STENCIL_WRITE_MASK        = 1 << 7,
+	RADV_CMD_DIRTY_DYNAMIC_STENCIL_REFERENCE         = 1 << 8,
+	RADV_CMD_DIRTY_DYNAMIC_DISCARD_RECTANGLE         = 1 << 9,
+	RADV_CMD_DIRTY_DYNAMIC_ALL                       = (1 << 10) - 1,
+	RADV_CMD_DIRTY_PIPELINE                          = 1 << 10,
+	RADV_CMD_DIRTY_INDEX_BUFFER                      = 1 << 11,
+	RADV_CMD_DIRTY_FRAMEBUFFER                       = 1 << 12,
+	RADV_CMD_DIRTY_VERTEX_BUFFER                     = 1 << 13,
 };
 
 enum radv_cmd_flush_bits {
@@ -786,6 +806,11 @@ struct radv_scissor_state {
 	VkRect2D                                          scissors[MAX_SCISSORS];
 };
 
+struct radv_discard_rectangle_state {
+	uint32_t                                          count;
+	VkRect2D                                          rectangles[MAX_DISCARD_RECTANGLES];
+};
+
 struct radv_dynamic_state {
 	/**
 	 * Bitmask of (1 << VK_DYNAMIC_STATE_*).
@@ -826,6 +851,8 @@ struct radv_dynamic_state {
 		uint32_t                                  front;
 		uint32_t                                  back;
 	} stencil_reference;
+
+	struct radv_discard_rectangle_state               discard_rectangle;
 };
 
 extern const struct radv_dynamic_state default_dynamic_state;
@@ -1165,6 +1192,11 @@ struct radv_vs_state {
 	uint32_t vgt_reuse_off;
 };
 
+struct radv_binning_state {
+	uint32_t pa_sc_binner_cntl_0;
+	uint32_t db_dfsm_control;
+};
+
 #define SI_GS_PER_ES 128
 
 struct radv_pipeline {
@@ -1193,6 +1225,7 @@ struct radv_pipeline {
 			struct radv_tessellation_state tess;
 			struct radv_gs_state gs;
 			struct radv_vs_state vs;
+			struct radv_binning_state bin;
 			uint32_t db_shader_control;
 			uint32_t shader_z_format;
 			unsigned prim;
@@ -1216,6 +1249,7 @@ struct radv_pipeline {
 			uint32_t vtx_reuse_depth;
 			struct radv_prim_vertex_count prim_vertex_count;
  			bool can_use_guardband;
+			uint32_t pa_sc_cliprect_rule;
 		} graphics;
 	};
 
@@ -1501,8 +1535,6 @@ struct radv_color_buffer_info {
 	uint32_t cb_dcc_control;
 	uint32_t cb_color_cmask_slice;
 	uint32_t cb_color_fmask_slice;
-	uint32_t cb_clear_value0;
-	uint32_t cb_clear_value1;
 };
 
 struct radv_ds_buffer_info {

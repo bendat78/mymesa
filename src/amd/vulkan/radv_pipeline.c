@@ -984,11 +984,40 @@ static unsigned si_map_swizzle(unsigned swizzle)
 	}
 }
 
+
+static unsigned radv_dynamic_state_mask(VkDynamicState state)
+{
+	switch(state) {
+	case VK_DYNAMIC_STATE_VIEWPORT:
+		return RADV_DYNAMIC_VIEWPORT;
+	case VK_DYNAMIC_STATE_SCISSOR:
+		return RADV_DYNAMIC_SCISSOR;
+	case VK_DYNAMIC_STATE_LINE_WIDTH:
+		return RADV_DYNAMIC_LINE_WIDTH;
+	case VK_DYNAMIC_STATE_DEPTH_BIAS:
+		return RADV_DYNAMIC_DEPTH_BIAS;
+	case VK_DYNAMIC_STATE_BLEND_CONSTANTS:
+		return RADV_DYNAMIC_BLEND_CONSTANTS;
+	case VK_DYNAMIC_STATE_DEPTH_BOUNDS:
+		return RADV_DYNAMIC_DEPTH_BOUNDS;
+	case VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK:
+		return RADV_DYNAMIC_STENCIL_COMPARE_MASK;
+	case VK_DYNAMIC_STATE_STENCIL_WRITE_MASK:
+		return RADV_DYNAMIC_STENCIL_WRITE_MASK;
+	case VK_DYNAMIC_STATE_STENCIL_REFERENCE:
+		return RADV_DYNAMIC_STENCIL_REFERENCE;
+	case VK_DYNAMIC_STATE_DISCARD_RECTANGLE_EXT:
+		return RADV_DYNAMIC_DISCARD_RECTANGLE;
+	default:
+		unreachable("Unhandled dynamic state");
+	}
+}
+
 static void
 radv_pipeline_init_dynamic_state(struct radv_pipeline *pipeline,
 				 const VkGraphicsPipelineCreateInfo *pCreateInfo)
 {
-	uint32_t states = RADV_CMD_DIRTY_DYNAMIC_ALL;
+	uint32_t states = RADV_DYNAMIC_ALL;
 	RADV_FROM_HANDLE(radv_render_pass, pass, pCreateInfo->renderPass);
 	struct radv_subpass *subpass = &pass->subpasses[pCreateInfo->subpass];
 
@@ -998,7 +1027,7 @@ radv_pipeline_init_dynamic_state(struct radv_pipeline *pipeline,
 		/* Remove all of the states that are marked as dynamic */
 		uint32_t count = pCreateInfo->pDynamicState->dynamicStateCount;
 		for (uint32_t s = 0; s < count; s++)
-			states &= ~(1 << pCreateInfo->pDynamicState->pDynamicStates[s]);
+			states &= ~radv_dynamic_state_mask(pCreateInfo->pDynamicState->pDynamicStates[s]);
 	}
 
 	struct radv_dynamic_state *dynamic = &pipeline->dynamic_state;
@@ -1012,26 +1041,26 @@ radv_pipeline_init_dynamic_state(struct radv_pipeline *pipeline,
 		assert(pCreateInfo->pViewportState);
 
 		dynamic->viewport.count = pCreateInfo->pViewportState->viewportCount;
-		if (states & (1 << VK_DYNAMIC_STATE_VIEWPORT)) {
+		if (states & RADV_DYNAMIC_VIEWPORT) {
 			typed_memcpy(dynamic->viewport.viewports,
 				     pCreateInfo->pViewportState->pViewports,
 				     pCreateInfo->pViewportState->viewportCount);
 		}
 
 		dynamic->scissor.count = pCreateInfo->pViewportState->scissorCount;
-		if (states & (1 << VK_DYNAMIC_STATE_SCISSOR)) {
+		if (states & RADV_DYNAMIC_SCISSOR) {
 			typed_memcpy(dynamic->scissor.scissors,
 				     pCreateInfo->pViewportState->pScissors,
 				     pCreateInfo->pViewportState->scissorCount);
 		}
 	}
 
-	if (states & (1 << VK_DYNAMIC_STATE_LINE_WIDTH)) {
+	if (states & RADV_DYNAMIC_LINE_WIDTH) {
 		assert(pCreateInfo->pRasterizationState);
 		dynamic->line_width = pCreateInfo->pRasterizationState->lineWidth;
 	}
 
-	if (states & (1 << VK_DYNAMIC_STATE_DEPTH_BIAS)) {
+	if (states & RADV_DYNAMIC_DEPTH_BIAS) {
 		assert(pCreateInfo->pRasterizationState);
 		dynamic->depth_bias.bias =
 			pCreateInfo->pRasterizationState->depthBiasConstantFactor;
@@ -1055,7 +1084,7 @@ radv_pipeline_init_dynamic_state(struct radv_pipeline *pipeline,
 		}
 	}
 
-	if (uses_color_att && states & (1 << VK_DYNAMIC_STATE_BLEND_CONSTANTS)) {
+	if (uses_color_att && states & RADV_DYNAMIC_BLEND_CONSTANTS) {
 		assert(pCreateInfo->pColorBlendState);
 		typed_memcpy(dynamic->blend_constants,
 			     pCreateInfo->pColorBlendState->blendConstants, 4);
@@ -1077,28 +1106,28 @@ radv_pipeline_init_dynamic_state(struct radv_pipeline *pipeline,
 	    subpass->depth_stencil_attachment.attachment != VK_ATTACHMENT_UNUSED) {
 		assert(pCreateInfo->pDepthStencilState);
 
-		if (states & (1 << VK_DYNAMIC_STATE_DEPTH_BOUNDS)) {
+		if (states & RADV_DYNAMIC_DEPTH_BOUNDS) {
 			dynamic->depth_bounds.min =
 				pCreateInfo->pDepthStencilState->minDepthBounds;
 			dynamic->depth_bounds.max =
 				pCreateInfo->pDepthStencilState->maxDepthBounds;
 		}
 
-		if (states & (1 << VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK)) {
+		if (states & RADV_DYNAMIC_STENCIL_COMPARE_MASK) {
 			dynamic->stencil_compare_mask.front =
 				pCreateInfo->pDepthStencilState->front.compareMask;
 			dynamic->stencil_compare_mask.back =
 				pCreateInfo->pDepthStencilState->back.compareMask;
 		}
 
-		if (states & (1 << VK_DYNAMIC_STATE_STENCIL_WRITE_MASK)) {
+		if (states & RADV_DYNAMIC_STENCIL_WRITE_MASK) {
 			dynamic->stencil_write_mask.front =
 				pCreateInfo->pDepthStencilState->front.writeMask;
 			dynamic->stencil_write_mask.back =
 				pCreateInfo->pDepthStencilState->back.writeMask;
 		}
 
-		if (states & (1 << VK_DYNAMIC_STATE_STENCIL_REFERENCE)) {
+		if (states & RADV_DYNAMIC_STENCIL_REFERENCE) {
 			dynamic->stencil_reference.front =
 				pCreateInfo->pDepthStencilState->front.reference;
 			dynamic->stencil_reference.back =
@@ -1106,6 +1135,39 @@ radv_pipeline_init_dynamic_state(struct radv_pipeline *pipeline,
 		}
 	}
 
+	const  VkPipelineDiscardRectangleStateCreateInfoEXT *discard_rectangle_info =
+			vk_find_struct_const(pCreateInfo->pNext, PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT);
+	if (discard_rectangle_info) {
+		dynamic->discard_rectangle.count = discard_rectangle_info->discardRectangleCount;
+		typed_memcpy(dynamic->discard_rectangle.rectangles,
+		             discard_rectangle_info->pDiscardRectangles,
+		             discard_rectangle_info->discardRectangleCount);
+
+		unsigned mask = 0;
+
+		for (unsigned i = 0; i < (1u << MAX_DISCARD_RECTANGLES); ++i) {
+			/* Interpret i as a bitmask, and then set the bit in the mask if
+			 * that combination of rectangles in which the pixel is contained
+			 * should pass the cliprect test. */
+			unsigned relevant_subset = i & ((1u << discard_rectangle_info->discardRectangleCount) - 1);
+
+			if (discard_rectangle_info->discardRectangleMode == VK_DISCARD_RECTANGLE_MODE_INCLUSIVE_EXT &&
+			    !relevant_subset)
+				continue;
+
+			if (discard_rectangle_info->discardRectangleMode == VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT &&
+			    relevant_subset)
+				continue;
+
+			mask |= 1u << i;
+		}
+		pipeline->graphics.pa_sc_cliprect_rule = mask;
+	} else {
+		states &= ~RADV_DYNAMIC_DISCARD_RECTANGLE;
+
+		/* Allow from all rectangle combinations */
+		pipeline->graphics.pa_sc_cliprect_rule = 0xffff;
+	}
 	pipeline->dynamic_state.mask = states;
 }
 
@@ -2002,6 +2064,329 @@ radv_pipeline_stage_to_user_data_0(struct radv_pipeline *pipeline,
 	}
 }
 
+struct radv_bin_size_entry {
+	unsigned bpp;
+	VkExtent2D extent;
+};
+
+static VkExtent2D
+radv_compute_bin_size(struct radv_pipeline *pipeline, const VkGraphicsPipelineCreateInfo *pCreateInfo)
+{
+	static const struct radv_bin_size_entry color_size_table[][3][9] = {
+		{
+			/* One RB / SE */
+			{
+				/* One shader engine */
+				{        0, {128,  128}},
+				{        1, { 64,  128}},
+				{        2, { 32,  128}},
+				{        3, { 16,  128}},
+				{       17, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				/* Two shader engines */
+				{        0, {128,  128}},
+				{        2, { 64,  128}},
+				{        3, { 32,  128}},
+				{        5, { 16,  128}},
+				{       17, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				/* Four shader engines */
+				{        0, {128,  128}},
+				{        3, { 64,  128}},
+				{        5, { 16,  128}},
+				{       17, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+		},
+		{
+			/* Two RB / SE */
+			{
+				/* One shader engine */
+				{        0, {128,  128}},
+				{        2, { 64,  128}},
+				{        3, { 32,  128}},
+				{        5, { 16,  128}},
+				{       33, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				/* Two shader engines */
+				{        0, {128,  128}},
+				{        3, { 64,  128}},
+				{        5, { 32,  128}},
+				{        9, { 16,  128}},
+				{       33, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				/* Four shader engines */
+				{        0, {256,  256}},
+				{        2, {128,  256}},
+				{        3, {128,  128}},
+				{        5, { 64,  128}},
+				{        9, { 16,  128}},
+				{       33, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+		},
+		{
+			/* Four RB / SE */
+			{
+				/* One shader engine */
+				{        0, {128,  256}},
+				{        2, {128,  128}},
+				{        3, { 64,  128}},
+				{        5, { 32,  128}},
+				{        9, { 16,  128}},
+				{       33, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				/* Two shader engines */
+				{        0, {256,  256}},
+				{        2, {128,  256}},
+				{        3, {128,  128}},
+				{        5, { 64,  128}},
+				{        9, { 32,  128}},
+				{       17, { 16,  128}},
+				{       33, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				/* Four shader engines */
+				{        0, {256,  512}},
+				{        2, {256,  256}},
+				{        3, {128,  256}},
+				{        5, {128,  128}},
+				{        9, { 64,  128}},
+				{       17, { 16,  128}},
+				{       33, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+		},
+	};
+	static const struct radv_bin_size_entry ds_size_table[][3][9] = {
+		{
+			// One RB / SE
+			{
+				// One shader engine
+				{        0, {128,  256}},
+				{        2, {128,  128}},
+				{        4, { 64,  128}},
+				{        7, { 32,  128}},
+				{       13, { 16,  128}},
+				{       49, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				// Two shader engines
+				{        0, {256,  256}},
+				{        2, {128,  256}},
+				{        4, {128,  128}},
+				{        7, { 64,  128}},
+				{       13, { 32,  128}},
+				{       25, { 16,  128}},
+				{       49, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				// Four shader engines
+				{        0, {256,  512}},
+				{        2, {256,  256}},
+				{        4, {128,  256}},
+				{        7, {128,  128}},
+				{       13, { 64,  128}},
+				{       25, { 16,  128}},
+				{       49, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+		},
+		{
+			// Two RB / SE
+			{
+				// One shader engine
+				{        0, {256,  256}},
+				{        2, {128,  256}},
+				{        4, {128,  128}},
+				{        7, { 64,  128}},
+				{       13, { 32,  128}},
+				{       25, { 16,  128}},
+				{       97, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				// Two shader engines
+				{        0, {256,  512}},
+				{        2, {256,  256}},
+				{        4, {128,  256}},
+				{        7, {128,  128}},
+				{       13, { 64,  128}},
+				{       25, { 32,  128}},
+				{       49, { 16,  128}},
+				{       97, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				// Four shader engines
+				{        0, {512,  512}},
+				{        2, {256,  512}},
+				{        4, {256,  256}},
+				{        7, {128,  256}},
+				{       13, {128,  128}},
+				{       25, { 64,  128}},
+				{       49, { 16,  128}},
+				{       97, {  0,    0}},
+				{ UINT_MAX, {  0,    0}},
+			},
+		},
+		{
+			// Four RB / SE
+			{
+				// One shader engine
+				{        0, {256,  512}},
+				{        2, {256,  256}},
+				{        4, {128,  256}},
+				{        7, {128,  128}},
+				{       13, { 64,  128}},
+				{       25, { 32,  128}},
+				{       49, { 16,  128}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				// Two shader engines
+				{        0, {512,  512}},
+				{        2, {256,  512}},
+				{        4, {256,  256}},
+				{        7, {128,  256}},
+				{       13, {128,  128}},
+				{       25, { 64,  128}},
+				{       49, { 32,  128}},
+				{       97, { 16,  128}},
+				{ UINT_MAX, {  0,    0}},
+			},
+			{
+				// Four shader engines
+				{        0, {512,  512}},
+				{        4, {256,  512}},
+				{        7, {256,  256}},
+				{       13, {128,  256}},
+				{       25, {128,  128}},
+				{       49, { 64,  128}},
+				{       97, { 16,  128}},
+				{ UINT_MAX, {  0,    0}},
+			},
+		},
+	};
+
+	RADV_FROM_HANDLE(radv_render_pass, pass, pCreateInfo->renderPass);
+	struct radv_subpass *subpass = pass->subpasses + pCreateInfo->subpass;
+	VkExtent2D extent = {512, 512};
+
+	unsigned log_num_rb_per_se =
+	    util_logbase2_ceil(pipeline->device->physical_device->rad_info.num_render_backends /
+	                       pipeline->device->physical_device->rad_info.max_se);
+	unsigned log_num_se = util_logbase2_ceil(pipeline->device->physical_device->rad_info.max_se);
+
+	unsigned total_samples = 1u << G_028BE0_MSAA_NUM_SAMPLES(pipeline->graphics.ms.pa_sc_mode_cntl_1);
+	unsigned ps_iter_samples = 1u << G_028804_PS_ITER_SAMPLES(pipeline->graphics.ms.db_eqaa);
+	unsigned effective_samples = total_samples;
+	unsigned cb_target_mask = pipeline->graphics.blend.cb_target_mask;
+	unsigned color_bytes_per_pixel = 0;
+
+	for (unsigned i = 0; i < subpass->color_count; i++) {
+		if (!(cb_target_mask & (0xf << (i * 4))))
+			continue;
+
+		if (subpass->color_attachments[i].attachment == VK_ATTACHMENT_UNUSED)
+			continue;
+
+		VkFormat format = pass->attachments[subpass->color_attachments[i].attachment].format;
+		color_bytes_per_pixel += vk_format_get_blocksize(format);
+	}
+
+	/* MSAA images typically don't use all samples all the time. */
+	if (effective_samples >= 2 && ps_iter_samples <= 1)
+		effective_samples = 2;
+	color_bytes_per_pixel *= effective_samples;
+
+	const struct radv_bin_size_entry *color_entry = color_size_table[log_num_rb_per_se][log_num_se];
+	while(color_entry->bpp <= color_bytes_per_pixel)
+		++color_entry;
+
+	extent = color_entry->extent;
+
+	if (subpass->depth_stencil_attachment.attachment != VK_ATTACHMENT_UNUSED) {
+		struct radv_render_pass_attachment *attachment = pass->attachments + subpass->depth_stencil_attachment.attachment;
+
+		/* Coefficients taken from AMDVLK */
+		unsigned depth_coeff = vk_format_is_depth(attachment->format) ? 5 : 0;
+		unsigned stencil_coeff = vk_format_is_stencil(attachment->format) ? 1 : 0;
+		unsigned ds_bytes_per_pixel = 4 * (depth_coeff + stencil_coeff) * total_samples;
+
+		const struct radv_bin_size_entry *ds_entry = ds_size_table[log_num_rb_per_se][log_num_se];
+		while(ds_entry->bpp <= ds_bytes_per_pixel)
+			++ds_entry;
+
+		extent.width = MIN2(extent.width, ds_entry->extent.width);
+		extent.height = MIN2(extent.height, ds_entry->extent.height);
+	}
+
+	return extent;
+}
+
+static void
+radv_compute_binning_state(struct radv_pipeline *pipeline, const VkGraphicsPipelineCreateInfo *pCreateInfo)
+{
+	pipeline->graphics.bin.pa_sc_binner_cntl_0 =
+	                S_028C44_BINNING_MODE(V_028C44_DISABLE_BINNING_USE_LEGACY_SC) |
+	                S_028C44_DISABLE_START_OF_PRIM(1);
+	pipeline->graphics.bin.db_dfsm_control = S_028060_PUNCHOUT_MODE(V_028060_FORCE_OFF);
+
+	if (!pipeline->device->pbb_allowed)
+		return;
+
+	VkExtent2D bin_size = radv_compute_bin_size(pipeline, pCreateInfo);
+	if (!bin_size.width || !bin_size.height)
+		return;
+
+	unsigned context_states_per_bin; /* allowed range: [1, 6] */
+	unsigned persistent_states_per_bin; /* allowed range: [1, 32] */
+	unsigned fpovs_per_batch; /* allowed range: [0, 255], 0 = unlimited */
+
+	switch (pipeline->device->physical_device->rad_info.family) {
+	case CHIP_VEGA10:
+		context_states_per_bin = 1;
+		persistent_states_per_bin = 1;
+		fpovs_per_batch = 63;
+		break;
+	case CHIP_RAVEN:
+		context_states_per_bin = 6;
+		persistent_states_per_bin = 32;
+		fpovs_per_batch = 63;
+		break;
+	default:
+		unreachable("unhandled family while determining binning state.");
+	}
+
+	pipeline->graphics.bin.pa_sc_binner_cntl_0 =
+	                S_028C44_BINNING_MODE(V_028C44_BINNING_ALLOWED) |
+	                S_028C44_BIN_SIZE_X(bin_size.width == 16) |
+	                S_028C44_BIN_SIZE_Y(bin_size.height == 16) |
+	                S_028C44_BIN_SIZE_X_EXTEND(util_logbase2(MAX2(bin_size.width, 32)) - 5) |
+	                S_028C44_BIN_SIZE_Y_EXTEND(util_logbase2(MAX2(bin_size.height, 32)) - 5) |
+	                S_028C44_CONTEXT_STATES_PER_BIN(context_states_per_bin - 1) |
+	                S_028C44_PERSISTENT_STATES_PER_BIN(persistent_states_per_bin - 1) |
+	                S_028C44_DISABLE_START_OF_PRIM(1) |
+	                S_028C44_FPOVS_PER_BATCH(fpovs_per_batch) |
+	                S_028C44_OPTIMAL_BIN_SELECTION(1);
+
+	/* DFSM is not implemented yet */
+	assert(!pipeline->device->dfsm_allowed);
+}
 
 static VkResult
 radv_pipeline_init(struct radv_pipeline *pipeline,
@@ -2191,12 +2576,12 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 	if (pipeline->shaders[MESA_SHADER_FRAGMENT]->info.fs.prim_id_input)
 		pipeline->graphics.ia_switch_on_eoi = true;
 	if (radv_pipeline_has_gs(pipeline) &&
-	    pipeline->shaders[MESA_SHADER_GEOMETRY]->info.gs.uses_prim_id)
+	    pipeline->shaders[MESA_SHADER_GEOMETRY]->info.info.uses_prim_id)
 		pipeline->graphics.ia_switch_on_eoi = true;
 	if (radv_pipeline_has_tess(pipeline)) {
 		/* SWITCH_ON_EOI must be set if PrimID is used. */
-		if (pipeline->shaders[MESA_SHADER_TESS_CTRL]->info.tcs.uses_prim_id ||
-		    radv_get_tess_eval_shader(pipeline)->info.tes.uses_prim_id)
+		if (pipeline->shaders[MESA_SHADER_TESS_CTRL]->info.info.uses_prim_id ||
+		    radv_get_tess_eval_shader(pipeline)->info.info.uses_prim_id)
 			pipeline->graphics.ia_switch_on_eoi = true;
 	}
 
@@ -2289,6 +2674,8 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 	if (device->instance->debug_flags & RADV_DEBUG_DUMP_SHADER_STATS) {
 		radv_dump_pipeline_stats(device, pipeline);
 	}
+
+	radv_compute_binning_state(pipeline, pCreateInfo);
 
 	result = radv_pipeline_scratch_init(device, pipeline);
 	return result;

@@ -91,80 +91,91 @@ radv_bind_dynamic_state(struct radv_cmd_buffer *cmd_buffer,
 	 */
 	dest->viewport.count = src->viewport.count;
 	dest->scissor.count = src->scissor.count;
+	dest->discard_rectangle.count = src->discard_rectangle.count;
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_VIEWPORT)) {
+	if (copy_mask & RADV_DYNAMIC_VIEWPORT) {
 		if (memcmp(&dest->viewport.viewports, &src->viewport.viewports,
 			   src->viewport.count * sizeof(VkViewport))) {
 			typed_memcpy(dest->viewport.viewports,
 				     src->viewport.viewports,
 				     src->viewport.count);
-			dest_mask |= 1 << VK_DYNAMIC_STATE_VIEWPORT;
+			dest_mask |= RADV_DYNAMIC_VIEWPORT;
 		}
 	}
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_SCISSOR)) {
+	if (copy_mask & RADV_DYNAMIC_SCISSOR) {
 		if (memcmp(&dest->scissor.scissors, &src->scissor.scissors,
 			   src->scissor.count * sizeof(VkRect2D))) {
 			typed_memcpy(dest->scissor.scissors,
 				     src->scissor.scissors, src->scissor.count);
-			dest_mask |= 1 << VK_DYNAMIC_STATE_SCISSOR;
+			dest_mask |= RADV_DYNAMIC_SCISSOR;
 		}
 	}
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_LINE_WIDTH)) {
+	if (copy_mask & RADV_DYNAMIC_LINE_WIDTH) {
 		if (dest->line_width != src->line_width) {
 			dest->line_width = src->line_width;
-			dest_mask |= 1 << VK_DYNAMIC_STATE_LINE_WIDTH;
+			dest_mask |= RADV_DYNAMIC_LINE_WIDTH;
 		}
 	}
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_DEPTH_BIAS)) {
+	if (copy_mask & RADV_DYNAMIC_DEPTH_BIAS) {
 		if (memcmp(&dest->depth_bias, &src->depth_bias,
 			   sizeof(src->depth_bias))) {
 			dest->depth_bias = src->depth_bias;
-			dest_mask |= 1 << VK_DYNAMIC_STATE_DEPTH_BIAS;
+			dest_mask |= RADV_DYNAMIC_DEPTH_BIAS;
 		}
 	}
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_BLEND_CONSTANTS)) {
+	if (copy_mask & RADV_DYNAMIC_BLEND_CONSTANTS) {
 		if (memcmp(&dest->blend_constants, &src->blend_constants,
 			   sizeof(src->blend_constants))) {
 			typed_memcpy(dest->blend_constants,
 				     src->blend_constants, 4);
-			dest_mask |= 1 << VK_DYNAMIC_STATE_BLEND_CONSTANTS;
+			dest_mask |= RADV_DYNAMIC_BLEND_CONSTANTS;
 		}
 	}
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_DEPTH_BOUNDS)) {
+	if (copy_mask & RADV_DYNAMIC_DEPTH_BOUNDS) {
 		if (memcmp(&dest->depth_bounds, &src->depth_bounds,
 			   sizeof(src->depth_bounds))) {
 			dest->depth_bounds = src->depth_bounds;
-			dest_mask |= 1 << VK_DYNAMIC_STATE_DEPTH_BOUNDS;
+			dest_mask |= RADV_DYNAMIC_DEPTH_BOUNDS;
 		}
 	}
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK)) {
+	if (copy_mask & RADV_DYNAMIC_STENCIL_COMPARE_MASK) {
 		if (memcmp(&dest->stencil_compare_mask,
 			   &src->stencil_compare_mask,
 			   sizeof(src->stencil_compare_mask))) {
 			dest->stencil_compare_mask = src->stencil_compare_mask;
-			dest_mask |= 1 << VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK;
+			dest_mask |= RADV_DYNAMIC_STENCIL_COMPARE_MASK;
 		}
 	}
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_STENCIL_WRITE_MASK)) {
+	if (copy_mask & RADV_DYNAMIC_STENCIL_WRITE_MASK) {
 		if (memcmp(&dest->stencil_write_mask, &src->stencil_write_mask,
 			   sizeof(src->stencil_write_mask))) {
 			dest->stencil_write_mask = src->stencil_write_mask;
-			dest_mask |= 1 << VK_DYNAMIC_STATE_STENCIL_WRITE_MASK;
+			dest_mask |= RADV_DYNAMIC_STENCIL_WRITE_MASK;
 		}
 	}
 
-	if (copy_mask & (1 << VK_DYNAMIC_STATE_STENCIL_REFERENCE)) {
+	if (copy_mask & RADV_DYNAMIC_STENCIL_REFERENCE) {
 		if (memcmp(&dest->stencil_reference, &src->stencil_reference,
 			   sizeof(src->stencil_reference))) {
 			dest->stencil_reference = src->stencil_reference;
-			dest_mask |= 1 << VK_DYNAMIC_STATE_STENCIL_REFERENCE;
+			dest_mask |= RADV_DYNAMIC_STENCIL_REFERENCE;
+		}
+	}
+
+	if (copy_mask & RADV_DYNAMIC_DISCARD_RECTANGLE) {
+		if (memcmp(&dest->discard_rectangle.rectangles, &src->discard_rectangle.rectangles,
+			   src->discard_rectangle.count * sizeof(VkRect2D))) {
+			typed_memcpy(dest->discard_rectangle.rectangles,
+				     src->discard_rectangle.rectangles,
+				     src->discard_rectangle.count);
+			dest_mask |= RADV_DYNAMIC_DISCARD_RECTANGLE;
 		}
 	}
 
@@ -1044,6 +1055,21 @@ radv_emit_vgt_vertex_reuse(struct radv_cmd_buffer *cmd_buffer,
 }
 
 static void
+radv_emit_binning_state(struct radv_cmd_buffer *cmd_buffer,
+			   struct radv_pipeline *pipeline)
+{
+	struct radeon_winsys_cs *cs = cmd_buffer->cs;
+
+	if (cmd_buffer->device->physical_device->rad_info.chip_class < GFX9)
+		return;
+
+	radeon_set_context_reg(cs, R_028C44_PA_SC_BINNER_CNTL_0,
+			       pipeline->graphics.bin.pa_sc_binner_cntl_0);
+	radeon_set_context_reg(cs, R_028060_DB_DFSM_CONTROL,
+			       pipeline->graphics.bin.db_dfsm_control);
+}
+
+static void
 radv_emit_graphics_pipeline(struct radv_cmd_buffer *cmd_buffer)
 {
 	struct radv_pipeline *pipeline = cmd_buffer->state.pipeline;
@@ -1060,6 +1086,7 @@ radv_emit_graphics_pipeline(struct radv_cmd_buffer *cmd_buffer)
 	radv_emit_geometry_shader(cmd_buffer, pipeline);
 	radv_emit_fragment_shader(cmd_buffer, pipeline);
 	radv_emit_vgt_vertex_reuse(cmd_buffer, pipeline);
+	radv_emit_binning_state(cmd_buffer, pipeline);
 
 	cmd_buffer->scratch_size_needed =
 	                          MAX2(cmd_buffer->scratch_size_needed,
@@ -1083,6 +1110,8 @@ radv_emit_graphics_pipeline(struct radv_cmd_buffer *cmd_buffer)
 	}
 	radeon_set_context_reg(cmd_buffer->cs, R_028A6C_VGT_GS_OUT_PRIM_TYPE, pipeline->graphics.gs_out);
 
+	radeon_set_context_reg(cmd_buffer->cs, R_02820C_PA_SC_CLIPRECT_RULE, pipeline->graphics.pa_sc_cliprect_rule);
+
 	if (unlikely(cmd_buffer->device->trace_bo))
 		radv_save_pipeline(cmd_buffer, pipeline, RING_GFX);
 
@@ -1103,7 +1132,11 @@ radv_emit_scissor(struct radv_cmd_buffer *cmd_buffer)
 {
 	uint32_t count = cmd_buffer->state.dynamic.scissor.count;
 
-	if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9) {
+	/* Vega10/Raven scissor bug workaround. This must be done before VPORT
+	 * scissor registers are changed. There is also a more efficient but
+	 * more involved alternative workaround.
+	 */
+	if (cmd_buffer->device->physical_device->has_scissor_bug) {
 		cmd_buffer->state.flush_bits |= RADV_CMD_FLAG_PS_PARTIAL_FLUSH;
 		si_emit_cache_flush(cmd_buffer);
 	}
@@ -1113,6 +1146,22 @@ radv_emit_scissor(struct radv_cmd_buffer *cmd_buffer)
 			  cmd_buffer->state.emitted_pipeline->graphics.can_use_guardband);
 	radeon_set_context_reg(cmd_buffer->cs, R_028A48_PA_SC_MODE_CNTL_0,
 			       cmd_buffer->state.pipeline->graphics.ms.pa_sc_mode_cntl_0 | S_028A48_VPORT_SCISSOR_ENABLE(count ? 1 : 0));
+}
+
+static void
+radv_emit_discard_rectangle(struct radv_cmd_buffer *cmd_buffer)
+{
+	if (!cmd_buffer->state.dynamic.discard_rectangle.count)
+		return;
+
+	radeon_set_context_reg_seq(cmd_buffer->cs, R_028210_PA_SC_CLIPRECT_0_TL,
+	                           cmd_buffer->state.dynamic.discard_rectangle.count * 2);
+	for (unsigned i = 0; i < cmd_buffer->state.dynamic.discard_rectangle.count; ++i) {
+		VkRect2D rect = cmd_buffer->state.dynamic.discard_rectangle.rectangles[i];
+		radeon_emit(cmd_buffer->cs, S_028210_TL_X(rect.offset.x) | S_028210_TL_Y(rect.offset.y));
+		radeon_emit(cmd_buffer->cs, S_028214_BR_X(rect.offset.x + rect.extent.width) |
+		                            S_028214_BR_Y(rect.offset.y + rect.extent.height));
+	}
 }
 
 static void
@@ -1164,7 +1213,7 @@ radv_emit_depth_bounds(struct radv_cmd_buffer *cmd_buffer)
 }
 
 static void
-radv_emit_depth_biais(struct radv_cmd_buffer *cmd_buffer)
+radv_emit_depth_bias(struct radv_cmd_buffer *cmd_buffer)
 {
 	struct radv_raster_state *raster = &cmd_buffer->state.pipeline->graphics.raster;
 	struct radv_dynamic_state *d = &cmd_buffer->state.dynamic;
@@ -1606,7 +1655,10 @@ radv_cmd_buffer_flush_dynamic_state(struct radv_cmd_buffer *cmd_buffer)
 
 	if (cmd_buffer->state.dirty & (RADV_CMD_DIRTY_PIPELINE |
 				       RADV_CMD_DIRTY_DYNAMIC_DEPTH_BIAS))
-		radv_emit_depth_biais(cmd_buffer);
+		radv_emit_depth_bias(cmd_buffer);
+
+	if (cmd_buffer->state.dirty & RADV_CMD_DIRTY_DYNAMIC_DISCARD_RECTANGLE)
+		radv_emit_discard_rectangle(cmd_buffer);
 
 	cmd_buffer->state.dirty &= ~RADV_CMD_DIRTY_DYNAMIC_ALL;
 }
@@ -1999,11 +2051,11 @@ radv_dst_access_flush(struct radv_cmd_buffer *cmd_buffer,
 		switch ((VkAccessFlagBits)(1 << b)) {
 		case VK_ACCESS_INDIRECT_COMMAND_READ_BIT:
 		case VK_ACCESS_INDEX_READ_BIT:
-		case VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT:
 			break;
 		case VK_ACCESS_UNIFORM_READ_BIT:
 			flush_bits |= RADV_CMD_FLAG_INV_VMEM_L1 | RADV_CMD_FLAG_INV_SMEM_L1;
 			break;
+		case VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT:
 		case VK_ACCESS_SHADER_READ_BIT:
 		case VK_ACCESS_TRANSFER_READ_BIT:
 		case VK_ACCESS_INPUT_ATTACHMENT_READ_BIT:
@@ -2714,15 +2766,28 @@ void radv_CmdSetViewport(
 	const VkViewport*                           pViewports)
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
+	struct radv_cmd_state *state = &cmd_buffer->state;
 	MAYBE_UNUSED const uint32_t total_count = firstViewport + viewportCount;
 
 	assert(firstViewport < MAX_VIEWPORTS);
 	assert(total_count >= 1 && total_count <= MAX_VIEWPORTS);
 
-	memcpy(cmd_buffer->state.dynamic.viewport.viewports + firstViewport,
-	       pViewports, viewportCount * sizeof(*pViewports));
+	if (cmd_buffer->device->physical_device->has_scissor_bug) {
+		/* Try to skip unnecessary PS partial flushes when the viewports
+		 * don't change.
+		 */
+		if (!(state->dirty & (RADV_CMD_DIRTY_DYNAMIC_VIEWPORT |
+				      RADV_CMD_DIRTY_DYNAMIC_SCISSOR)) &&
+		    !memcmp(state->dynamic.viewport.viewports + firstViewport,
+			    pViewports, viewportCount * sizeof(*pViewports))) {
+			return;
+		}
+	}
 
-	cmd_buffer->state.dirty |= RADV_CMD_DIRTY_DYNAMIC_VIEWPORT;
+	memcpy(state->dynamic.viewport.viewports + firstViewport, pViewports,
+	       viewportCount * sizeof(*pViewports));
+
+	state->dirty |= RADV_CMD_DIRTY_DYNAMIC_VIEWPORT;
 }
 
 void radv_CmdSetScissor(
@@ -2732,14 +2797,28 @@ void radv_CmdSetScissor(
 	const VkRect2D*                             pScissors)
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
+	struct radv_cmd_state *state = &cmd_buffer->state;
 	MAYBE_UNUSED const uint32_t total_count = firstScissor + scissorCount;
 
 	assert(firstScissor < MAX_SCISSORS);
 	assert(total_count >= 1 && total_count <= MAX_SCISSORS);
 
-	memcpy(cmd_buffer->state.dynamic.scissor.scissors + firstScissor,
-	       pScissors, scissorCount * sizeof(*pScissors));
-	cmd_buffer->state.dirty |= RADV_CMD_DIRTY_DYNAMIC_SCISSOR;
+	if (cmd_buffer->device->physical_device->has_scissor_bug) {
+		/* Try to skip unnecessary PS partial flushes when the scissors
+		 * don't change.
+		 */
+		if (!(state->dirty & (RADV_CMD_DIRTY_DYNAMIC_VIEWPORT |
+				      RADV_CMD_DIRTY_DYNAMIC_SCISSOR)) &&
+		    !memcmp(state->dynamic.scissor.scissors + firstScissor,
+			    pScissors, scissorCount * sizeof(*pScissors))) {
+			return;
+		}
+	}
+
+	memcpy(state->dynamic.scissor.scissors + firstScissor, pScissors,
+	       scissorCount * sizeof(*pScissors));
+
+	state->dirty |= RADV_CMD_DIRTY_DYNAMIC_SCISSOR;
 }
 
 void radv_CmdSetLineWidth(
@@ -2834,6 +2913,25 @@ void radv_CmdSetStencilReference(
 		cmd_buffer->state.dynamic.stencil_reference.back = reference;
 
 	cmd_buffer->state.dirty |= RADV_CMD_DIRTY_DYNAMIC_STENCIL_REFERENCE;
+}
+
+void radv_CmdSetDiscardRectangleEXT(
+	VkCommandBuffer                             commandBuffer,
+	uint32_t                                    firstDiscardRectangle,
+	uint32_t                                    discardRectangleCount,
+	const VkRect2D*                             pDiscardRectangles)
+{
+	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
+	struct radv_cmd_state *state = &cmd_buffer->state;
+	MAYBE_UNUSED const uint32_t total_count = firstDiscardRectangle + discardRectangleCount;
+
+	assert(firstDiscardRectangle < MAX_DISCARD_RECTANGLES);
+	assert(total_count >= 1 && total_count <= MAX_DISCARD_RECTANGLES);
+
+	typed_memcpy(&state->dynamic.discard_rectangle.rectangles[firstDiscardRectangle],
+	             pDiscardRectangles, discardRectangleCount);
+
+	state->dirty |= RADV_CMD_DIRTY_DYNAMIC_DISCARD_RECTANGLE;
 }
 
 void radv_CmdExecuteCommands(
@@ -3766,7 +3864,8 @@ void radv_CmdEndRenderPass(
 
 /*
  * For HTILE we have the following interesting clear words:
- *   0x0000030f: Uncompressed.
+ *   0x0000030f: Uncompressed for depth+stencil HTILE.
+ *   0x0000000f: Uncompressed for depth only HTILE.
  *   0xfffffff0: Clear depth to 1.0
  *   0x00000000: Clear depth to 0.0
  */
@@ -3814,7 +3913,8 @@ static void radv_handle_depth_image_transition(struct radv_cmd_buffer *cmd_buffe
 		radv_initialize_htile(cmd_buffer, image, range, 0);
 	} else if (!radv_layout_is_htile_compressed(image, src_layout, src_queue_mask) &&
 	           radv_layout_is_htile_compressed(image, dst_layout, dst_queue_mask)) {
-		radv_initialize_htile(cmd_buffer, image, range, 0xffffffff);
+		uint32_t clear_value = vk_format_is_stencil(image->vk_format) ? 0x30f : 0xf;
+		radv_initialize_htile(cmd_buffer, image, range, clear_value);
 	} else if (radv_layout_is_htile_compressed(image, src_layout, src_queue_mask) &&
 	           !radv_layout_is_htile_compressed(image, dst_layout, dst_queue_mask)) {
 		VkImageSubresourceRange local_range = *range;

@@ -263,6 +263,12 @@ radv_physical_device_init(struct radv_physical_device *device,
 	 */
 	device->has_clear_state = device->rad_info.chip_class >= CIK;
 
+	device->cpdma_prefetch_writes_memory = device->rad_info.chip_class <= VI;
+
+	/* Vega10/Raven need a special workaround for a hardware bug. */
+	device->has_scissor_bug = device->rad_info.family == CHIP_VEGA10 ||
+				  device->rad_info.family == CHIP_RAVEN;
+
 	radv_physical_device_init_mem_types(device);
 
 	result = radv_init_wsi(device);
@@ -344,6 +350,7 @@ static const struct debug_control radv_perftest_options[] = {
 	{"nobatchchain", RADV_PERFTEST_NO_BATCHCHAIN},
 	{"sisched", RADV_PERFTEST_SISCHED},
 	{"localbos", RADV_PERFTEST_LOCAL_BOS},
+	{"binning", RADV_PERFTEST_BINNING},
 	{NULL, 0}
 };
 
@@ -620,8 +627,8 @@ void radv_GetPhysicalDeviceProperties(
 	 * there is no set limit, so we just set a pipeline limit. I don't think
 	 * any app is going to hit this soon. */
 	size_t max_descriptor_set_size = ((1ull << 31) - 16 * MAX_DYNAMIC_BUFFERS) /
-	          (32 /* uniform buffer, 32 due to potential space wasted on alignement */ +
-	           32 /* storage buffer, 32 due to potential space wasted on alignement */ +
+	          (32 /* uniform buffer, 32 due to potential space wasted on alignment */ +
+	           32 /* storage buffer, 32 due to potential space wasted on alignment */ +
 	           32 /* sampler, largest when combined with image */ +
 	           64 /* sampled image */ +
 	           64 /* storage image */);
@@ -785,6 +792,12 @@ void radv_GetPhysicalDeviceProperties2KHR(
 			VkPhysicalDevicePointClippingPropertiesKHR *properties =
 			    (VkPhysicalDevicePointClippingPropertiesKHR*)ext;
 			properties->pointClippingBehavior = VK_POINT_CLIPPING_BEHAVIOR_ALL_CLIP_PLANES_KHR;
+			break;
+		}
+		case  VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT: {
+			VkPhysicalDeviceDiscardRectanglePropertiesEXT *properties =
+			    (VkPhysicalDeviceDiscardRectanglePropertiesEXT*)ext;
+			properties->maxDiscardRectangles = MAX_DISCARD_RECTANGLES;
 			break;
 		}
 		default:
@@ -1079,6 +1092,13 @@ VkResult radv_CreateDevice(
 				goto fail;
 		}
 	}
+
+	device->pbb_allowed = device->physical_device->rad_info.chip_class >= GFX9 &&
+	                      (device->instance->perftest_flags & RADV_PERFTEST_BINNING);
+
+	/* Disabled and not implemented for now. */
+	device->dfsm_allowed = device->pbb_allowed && false;
+
 
 #if HAVE_LLVM < 0x0400
 	device->llvm_supports_spill = false;
@@ -1595,7 +1615,9 @@ radv_get_preamble_cs(struct radv_queue *queue,
 		                                                 size,
 		                                                 4096,
 		                                                 RADEON_DOMAIN_VRAM,
-		                                                 RADEON_FLAG_CPU_ACCESS|RADEON_FLAG_NO_INTERPROCESS_SHARING);
+		                                                 RADEON_FLAG_CPU_ACCESS |
+								 RADEON_FLAG_NO_INTERPROCESS_SHARING |
+								 RADEON_FLAG_READ_ONLY);
 		if (!descriptor_bo)
 			goto fail;
 	} else
@@ -3182,7 +3204,8 @@ radv_initialise_color_surface(struct radv_device *device,
 				max_uncompressed_block_size = V_028C78_MAX_BLOCK_SIZE_128B;
 		}
 
-		if (iview->image->usage & (VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)) {
+		if (iview->image->usage & (VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+		                           VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT)) {
 			independent_64b_blocks = 1;
 			max_compressed_block_size = V_028C78_MAX_BLOCK_SIZE_64B;
 		} else
@@ -3810,9 +3833,9 @@ void radv_GetPhysicalDeviceExternalSemaphorePropertiesKHR(
 {
 	RADV_FROM_HANDLE(radv_physical_device, pdevice, physicalDevice);
 
-	/* Require has_syncobj_wait for the syncobj signal ioctl introduced at virtually the same time */
-	if (pdevice->rad_info.has_syncobj_wait &&
-	    (pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
+	/* Require has_syncobj_wait_for_submit for the syncobj signal ioctl introduced at virtually the same time */
+	if (pdevice->rad_info.has_syncobj_wait_for_submit &&
+	    (pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR || 
 	     pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR)) {
 		pExternalSemaphoreProperties->exportFromImportedHandleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
 		pExternalSemaphoreProperties->compatibleHandleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
@@ -3891,8 +3914,8 @@ void radv_GetPhysicalDeviceExternalFencePropertiesKHR(
 {
 	RADV_FROM_HANDLE(radv_physical_device, pdevice, physicalDevice);
 
-	if (pdevice->rad_info.has_syncobj_wait &&
-	    (pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
+	if (pdevice->rad_info.has_syncobj_wait_for_submit &&
+	    (pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR || 
 	     pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR)) {
 		pExternalFenceProperties->exportFromImportedHandleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
 		pExternalFenceProperties->compatibleHandleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR;

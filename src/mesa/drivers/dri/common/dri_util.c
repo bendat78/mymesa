@@ -144,6 +144,10 @@ driCreateNewScreen2(int scrn, int fd,
     psp->fd = fd;
     psp->myNum = scrn;
 
+    /* Option parsing before ->InitScreen(), as some options apply there. */
+    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions);
+    driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum, "dri2");
+
     *driver_configs = psp->driver->InitScreen(psp);
     if (!*driver_configs) {
 	free(psp);
@@ -178,10 +182,6 @@ driCreateNewScreen2(int scrn, int fd,
        psp->api_mask |= (1 << __DRI_API_GLES2);
     if (psp->max_gl_es2_version >= 30)
        psp->api_mask |= (1 << __DRI_API_GLES3);
-
-    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions);
-    driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum, "dri2");
-
 
     return psp;
 }
