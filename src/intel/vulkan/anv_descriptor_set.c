@@ -103,7 +103,7 @@ VkResult anv_CreateDescriptorSetLayout(
       if (!binding)
          continue;
 
-      if (binding->descriptorCount == 0)
+      if (!binding->descriptorCount)
          continue;
 
 #ifndef NDEBUG

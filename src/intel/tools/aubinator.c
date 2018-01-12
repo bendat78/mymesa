@@ -213,7 +213,7 @@ handle_trace_header(uint32_t *p)
    if (end > &p[12] && p[12] > 0)
       sscanf((char *)&p[13], "PCI-ID=%i", &aub_pci_id);
 
-   if (pci_id == 0)
+   if (!pci_id)
       pci_id = aub_pci_id;
 
    char app_name[33];
@@ -235,7 +235,7 @@ handle_memtrace_version(uint32_t *p)
    strncpy(app_name, (char *)&p[5], app_name_len);
    app_name[app_name_len] = 0;
    sscanf(app_name, "PCI-ID=%i %n", &aub_pci_id, &pci_id_len);
-   if (pci_id == 0)
+   if (!pci_id)
       pci_id = aub_pci_id;
    aubinator_init(aub_pci_id, app_name + pci_id_len);
 }

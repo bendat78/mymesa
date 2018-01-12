@@ -1264,7 +1264,7 @@ _mesa_meta_get_temp_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->TempTex;
 
-   if (tex->tex_obj == NULL) {
+   if (!tex->tex_obj) {
       init_temp_texture(ctx, tex);
    }
 
@@ -1282,7 +1282,7 @@ get_bitmap_temp_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->Bitmap.Tex;
 
-   if (tex->tex_obj == NULL) {
+   if (!tex->tex_obj) {
       init_temp_texture(ctx, tex);
    }
 
@@ -1298,7 +1298,7 @@ _mesa_meta_get_temp_depth_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->Blit.depthTex;
 
-   if (tex->tex_obj == NULL) {
+   if (!tex->tex_obj) {
       init_temp_texture(ctx, tex);
    }
 

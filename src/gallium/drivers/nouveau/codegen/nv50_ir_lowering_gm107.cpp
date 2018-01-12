@@ -122,7 +122,7 @@ GM107LoweringPass::handleManualTXD(TexInstruction *i)
       Value *lane = bld.mkImm(l);
       bld.mkOp(OP_QUADON, TYPE_NONE, NULL);
       // Make sure lane 0 has the appropriate array/depth compare values
-      if (l != 0) {
+      if (l) {
          if (array)
             bld.mkOp3(OP_SHFL, TYPE_F32, arr, i->getSrc(0), lane, quad);
          if (i->tex.target.isShadow())
@@ -167,7 +167,7 @@ GM107LoweringPass::handleManualTXD(TexInstruction *i)
 
       // texture
       bld.insert(tex = cloneForward(func, i));
-      if (l != 0) {
+      if (l) {
          if (array)
             tex->setSrc(0, arr);
          if (i->tex.target.isShadow())
@@ -176,7 +176,7 @@ GM107LoweringPass::handleManualTXD(TexInstruction *i)
       for (c = 0; c < dim; ++c)
          tex->setSrc(c + array, src[c]);
       // broadcast results from lane 0 to all lanes
-      if (l != 0)
+      if (l)
          for (c = 0; i->defExists(c); ++c)
             bld.mkOp3(OP_SHFL, TYPE_F32, tex->getDef(c), tex->getDef(c), bld.mkImm(0), quad);
       bld.mkOp(OP_QUADPOP, TYPE_NONE, NULL);

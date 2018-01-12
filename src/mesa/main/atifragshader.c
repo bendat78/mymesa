@@ -455,7 +455,7 @@ _mesa_PassTexCoordATI(GLuint dst, GLuint coord, GLenum swizzle)
       _mesa_error(ctx, GL_INVALID_ENUM, "glPassTexCoordATI(coord)");
       return;
    }
-   if ((new_pass == 0) && (coord >= GL_REG_0_ATI)) {
+   if (!(new_pass) && (coord >= GL_REG_0_ATI)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glPassTexCoordATI(coord)");
       return;
    }
@@ -529,7 +529,7 @@ _mesa_SampleMapATI(GLuint dst, GLuint interp, GLenum swizzle)
       _mesa_error(ctx, GL_INVALID_ENUM, "glSampleMapATI(interp)");
       return;
    }
-   if ((new_pass == 0) && (interp >= GL_REG_0_ATI)) {
+   if (!(new_pass) && (interp >= GL_REG_0_ATI)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleMapATI(interp)");
       return;
    }
@@ -591,7 +591,7 @@ _mesa_FragmentOpXATI(GLint optype, GLuint arg_count, GLenum op, GLuint dst,
       return;
    }
 
-   if (curProg->cur_pass == 0)
+   if (!curProg->cur_pass)
       new_pass = 1;
    else if (curProg->cur_pass == 2)
       new_pass = 3;

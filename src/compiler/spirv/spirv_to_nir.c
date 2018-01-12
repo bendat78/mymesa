@@ -108,7 +108,7 @@ vtn_dump_shader(struct vtn_builder *b, const char *path, const char *prefix)
       return;
 
    FILE *f = fopen(filename, "w");
-   if (f == NULL)
+   if (!f)
       return;
 
    fwrite(b->spirv, sizeof(*b->spirv), b->spirv_word_count, f);
