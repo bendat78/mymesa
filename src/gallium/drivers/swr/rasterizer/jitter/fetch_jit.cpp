@@ -1693,7 +1693,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
 
                                 // e.g. result of a single 8x32bit integer gather for 32bit components
                                 // 256i - 0    1    2    3    4    5    6    7
-                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx 
+                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx
 #else
                                 Value* pGather = GATHERDD(gatherSrc, pStreamBase, vOffsets, vGatherMask);
 
@@ -2785,13 +2785,13 @@ Value *FetchJit::GenerateCompCtrlVector16(const ComponentControl ctrl)
 {
     switch (ctrl)
     {
-        case NoStore:   
+        case NoStore:
             return VUNDEF_I_16();
-        case Store0:    
+        case Store0:
             return VIMMED1_16(0);
-        case Store1Fp:  
+        case Store1Fp:
             return VIMMED1_16(1.0f);
-        case Store1Int: 
+        case Store1Int:
             return VIMMED1_16(1);
         case StoreVertexId:
         {
@@ -2808,7 +2808,7 @@ Value *FetchJit::GenerateCompCtrlVector16(const ComponentControl ctrl)
             return VBROADCAST_16(pId);
         }
         case StoreSrc:
-        default:        
+        default:
             SWR_INVALID("Invalid component control");
             return VUNDEF_I_16();
     }

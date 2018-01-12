@@ -696,7 +696,7 @@ radv_decompress_dcc_compute(struct radv_cmd_buffer *cmd_buffer,
                             const VkImageSubresourceRange *subresourceRange)
 {
 	struct radv_meta_saved_state saved_state;
-	struct radv_image_view iview = {0};
+	struct radv_image_view iview = {};
 	struct radv_device *device = cmd_buffer->device;
 
 	/* This assumes the image is 2d with 1 layer and 1 mipmap level */

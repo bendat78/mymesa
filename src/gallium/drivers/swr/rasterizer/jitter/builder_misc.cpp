@@ -799,7 +799,7 @@ namespace SwrJit
 
     Value *Builder::EXTRACT_16(Value *x, uint32_t imm)
     {
-        if (imm == 0)
+        if (!imm)
         {
             return VSHUFFLE(x, UndefValue::get(x->getType()), { 0, 1, 2, 3, 4, 5, 6, 7 });
         }

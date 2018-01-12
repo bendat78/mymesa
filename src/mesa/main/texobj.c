@@ -1707,7 +1707,7 @@ _mesa_bind_texture(struct gl_context *ctx, GLenum target,
 
    assert(targetIndex >= 0 && targetIndex < NUM_TEXTURE_TARGETS);
 
-   if (tex_obj->Target == 0)
+   if (!tex_obj->Target)
       finish_texture_init(ctx, target, tex_obj, targetIndex);
 
    assert(tex_obj->Target == target);

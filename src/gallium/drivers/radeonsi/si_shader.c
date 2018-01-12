@@ -1465,7 +1465,7 @@ static void si_nir_store_output_tcs(struct ac_shader_abi *abi,
 		param_index = LLVMBuildAdd(ctx->ac.builder, param_index,
 					   LLVMConstInt(ctx->i32, const_index, 0), "");
 	} else {
-		if (const_index != 0)
+		if (const_index)
 			param_index = LLVMConstInt(ctx->i32, const_index, 0);
 	}
 
