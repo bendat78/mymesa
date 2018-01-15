@@ -6425,8 +6425,6 @@ handle_fs_outputs_post(struct nir_to_llvm_context *ctx)
 		si_export_mrt_color(ctx, NULL, V_008DFC_SQ_EXP_NULL, true, &color_args[0]);
 		ac_build_export(&ctx->ac, &color_args[0]);
 	}
-
-	ctx->shader_info->fs.output_mask = index ? ((1ull << index) - 1) : 0;
 }
 
 static void
@@ -6746,8 +6744,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 			ctx.abi.load_patch_vertices_in = load_patch_vertices_in;
 		} else if (shaders[i]->info.stage == MESA_SHADER_VERTEX) {
 			if (shader_info->info.vs.needs_instance_id) {
-				if (ctx.ac.chip_class == GFX9 &&
-				    shaders[shader_count - 1]->info.stage == MESA_SHADER_TESS_CTRL) {
+				if (ctx.options->key.vs.as_ls) {
 					ctx.shader_info->vs.vgpr_comp_cnt =
 						MAX2(2, ctx.shader_info->vs.vgpr_comp_cnt);
 				} else {

@@ -33,6 +33,9 @@
  */
 
 
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#endif
 #include "crc32.h"
 
 
@@ -111,7 +114,7 @@ util_crc32_table[256] = {
 uint32_t
 util_hash_crc32(const void *data, size_t size)
 {
-   uint8_t *p = (uint8_t *)data;
+   const uint8_t *p = data;
    uint32_t crc = 0xffffffff;
 
    while (size--)
