@@ -324,7 +324,7 @@ static void
 fd_blit_to_staging(struct fd_context *ctx, struct fd_transfer *trans)
 {
 	struct pipe_resource *src = trans->base.resource;
-	struct pipe_blit_info blit = {0};
+	struct pipe_blit_info blit = {};
 
 	blit.src.resource = src;
 	blit.src.format   = src->format;

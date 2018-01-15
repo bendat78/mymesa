@@ -115,7 +115,7 @@ v3d_register_allocate(struct v3d_compile *c)
          */
         int thread_index = ffs(c->threads) - 1;
         if (c->devinfo->ver >= 40) {
-                if (thread_index >= 1)
+                if (thread_index)
                         thread_index--;
         }
 
