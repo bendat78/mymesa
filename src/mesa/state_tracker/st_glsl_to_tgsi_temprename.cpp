@@ -26,9 +26,10 @@
  */
 
 #include "st_glsl_to_tgsi_temprename.h"
-#include <tgsi/tgsi_info.h>
-#include <tgsi/tgsi_strings.h>
-#include <program/prog_instruction.h>
+#include "tgsi/tgsi_info.h"
+#include "tgsi/tgsi_strings.h"
+#include "program/prog_instruction.h"
+#include "util/bitscan.h"
 #include <limits>
 #include <cstdlib>
 
@@ -41,8 +42,8 @@
 #ifndef NDEBUG
 #include <iostream>
 #include <iomanip>
-#include <program/prog_print.h>
-#include <util/debug.h>
+#include "program/prog_print.h"
+#include "util/debug.h"
 using std::cerr;
 using std::setw;
 #endif
