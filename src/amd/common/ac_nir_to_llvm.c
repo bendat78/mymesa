@@ -352,6 +352,9 @@ create_llvm_function(LLVMContextRef ctx, LLVMModuleRef module,
 		LLVMAddTargetDependentFunctionAttr(main_function,
 						   "unsafe-fp-math",
 						   "true");
+		LLVMAddTargetDependentFunctionAttr(main_function,
+					   "no-signed-zeros-fp-math",
+					   "true");
 	}
 	return main_function;
 }
@@ -2839,24 +2842,36 @@ get_dw_address(struct nir_to_llvm_context *ctx,
 }
 
 static LLVMValueRef
-load_tcs_input(struct ac_shader_abi *abi,
-	       LLVMValueRef vertex_index,
-	       LLVMValueRef indir_index,
-	       unsigned const_index,
-	       unsigned location,
-	       unsigned driver_location,
-	       unsigned component,
-	       unsigned num_components,
-	       bool is_patch,
-	       bool is_compact)
+load_tcs_varyings(struct ac_shader_abi *abi,
+		  LLVMValueRef vertex_index,
+		  LLVMValueRef indir_index,
+		  unsigned const_index,
+		  unsigned location,
+		  unsigned driver_location,
+		  unsigned component,
+		  unsigned num_components,
+		  bool is_patch,
+		  bool is_compact,
+		  bool load_input)
 {
 	struct nir_to_llvm_context *ctx = nir_to_llvm_context_from_abi(abi);
 	LLVMValueRef dw_addr, stride;
 	LLVMValueRef value[4], result;
 	unsigned param = shader_io_get_unique_index(location);
 
-	stride = unpack_param(&ctx->ac, ctx->tcs_in_layout, 13, 8);
-	dw_addr = get_tcs_in_current_patch_offset(ctx);
+	if (load_input) {
+		stride = unpack_param(&ctx->ac, ctx->tcs_in_layout, 13, 8);
+		dw_addr = get_tcs_in_current_patch_offset(ctx);
+	} else {
+		if (!is_patch) {
+			stride = unpack_param(&ctx->ac, ctx->tcs_out_layout, 13, 8);
+			dw_addr = get_tcs_out_current_patch_offset(ctx);
+		} else {
+			dw_addr = get_tcs_out_current_patch_data_offset(ctx);
+			stride = NULL;
+		}
+	}
+
 	dw_addr = get_dw_address(ctx, dw_addr, param, const_index, is_compact, vertex_index, stride,
 				 indir_index);
 
@@ -2866,45 +2881,6 @@ load_tcs_input(struct ac_shader_abi *abi,
 				       ctx->ac.i32_1, "");
 	}
 	result = ac_build_varying_gather_values(&ctx->ac, value, num_components, component);
-	return result;
-}
-
-static LLVMValueRef
-load_tcs_output(struct nir_to_llvm_context *ctx,
-	       nir_intrinsic_instr *instr)
-{
-	LLVMValueRef dw_addr;
-	LLVMValueRef stride = NULL;
-	LLVMValueRef value[4], result;
-	LLVMValueRef vertex_index = NULL;
-	LLVMValueRef indir_index = NULL;
-	unsigned const_index = 0;
-	unsigned param;
-	const bool per_vertex = nir_is_per_vertex_io(instr->variables[0]->var, ctx->stage);
-	const bool is_compact = instr->variables[0]->var->data.compact;
-	param = shader_io_get_unique_index(instr->variables[0]->var->data.location);
-	get_deref_offset(ctx->nir, instr->variables[0],
-			 false, NULL, per_vertex ? &vertex_index : NULL,
-			 &const_index, &indir_index);
-
-	if (!instr->variables[0]->var->data.patch) {
-		stride = unpack_param(&ctx->ac, ctx->tcs_out_layout, 13, 8);
-		dw_addr = get_tcs_out_current_patch_offset(ctx);
-	} else {
-		dw_addr = get_tcs_out_current_patch_data_offset(ctx);
-	}
-
-	dw_addr = get_dw_address(ctx, dw_addr, param, const_index, is_compact, vertex_index, stride,
-				 indir_index);
-
-	unsigned comp = instr->variables[0]->var->data.location_frac;
-	for (unsigned i = comp; i < instr->num_components + comp; i++) {
-		value[i] = ac_lds_load(&ctx->ac, dw_addr);
-		dw_addr = LLVMBuildAdd(ctx->builder, dw_addr,
-				       ctx->ac.i32_1, "");
-	}
-	result = ac_build_varying_gather_values(&ctx->ac, value, instr->num_components, comp);
-	result = LLVMBuildBitCast(ctx->builder, result, get_def_type(ctx->nir, &instr->dest.ssa), "");
 	return result;
 }
 
@@ -2997,7 +2973,8 @@ load_tes_input(struct ac_shader_abi *abi,
 	       unsigned component,
 	       unsigned num_components,
 	       bool is_patch,
-	       bool is_compact)
+	       bool is_compact,
+	       bool load_input)
 {
 	struct nir_to_llvm_context *ctx = nir_to_llvm_context_from_abi(abi);
 	LLVMValueRef buf_addr;
@@ -3111,6 +3088,31 @@ build_gep_for_deref(struct ac_nir_context *ctx,
 	return val;
 }
 
+static LLVMValueRef load_tess_varyings(struct ac_nir_context *ctx,
+				       nir_intrinsic_instr *instr,
+				       bool load_inputs)
+{
+	LLVMValueRef result;
+	LLVMValueRef vertex_index = NULL;
+	LLVMValueRef indir_index = NULL;
+	unsigned const_index = 0;
+	unsigned location = instr->variables[0]->var->data.location;
+	unsigned driver_location = instr->variables[0]->var->data.driver_location;
+	const bool is_patch =  instr->variables[0]->var->data.patch;
+	const bool is_compact = instr->variables[0]->var->data.compact;
+
+	get_deref_offset(ctx, instr->variables[0],
+			 false, NULL, is_patch ? NULL : &vertex_index,
+			 &const_index, &indir_index);
+
+	result = ctx->abi->load_tess_varyings(ctx->abi, vertex_index, indir_index,
+					      const_index, location, driver_location,
+					      instr->variables[0]->var->data.location_frac,
+					      instr->num_components,
+					      is_patch, is_compact, load_inputs);
+	return LLVMBuildBitCast(ctx->ac.builder, result, get_def_type(ctx, &instr->dest.ssa), "");
+}
+
 static LLVMValueRef visit_load_var(struct ac_nir_context *ctx,
 				   nir_intrinsic_instr *instr)
 {
@@ -3134,25 +3136,7 @@ static LLVMValueRef visit_load_var(struct ac_nir_context *ctx,
 	case nir_var_shader_in:
 		if (ctx->stage == MESA_SHADER_TESS_CTRL ||
 		    ctx->stage == MESA_SHADER_TESS_EVAL) {
-			LLVMValueRef result;
-			LLVMValueRef vertex_index = NULL;
-			LLVMValueRef indir_index = NULL;
-			unsigned const_index = 0;
-			unsigned location = instr->variables[0]->var->data.location;
-			unsigned driver_location = instr->variables[0]->var->data.driver_location;
-			const bool is_patch =  instr->variables[0]->var->data.patch;
-			const bool is_compact = instr->variables[0]->var->data.compact;
-
-			get_deref_offset(ctx, instr->variables[0],
-					 false, NULL, is_patch ? NULL : &vertex_index,
-					 &const_index, &indir_index);
-
-			result = ctx->abi->load_tess_inputs(ctx->abi, vertex_index, indir_index,
-							    const_index, location, driver_location,
-							    instr->variables[0]->var->data.location_frac,
-							    instr->num_components,
-							    is_patch, is_compact);
-			return LLVMBuildBitCast(ctx->ac.builder, result, get_def_type(ctx, &instr->dest.ssa), "");
+			return load_tess_varyings(ctx, instr, true);
 		}
 
 		if (ctx->stage == MESA_SHADER_GEOMETRY) {
@@ -3212,8 +3196,9 @@ static LLVMValueRef visit_load_var(struct ac_nir_context *ctx,
 					"");
 	}
 	case nir_var_shader_out:
-		if (ctx->stage == MESA_SHADER_TESS_CTRL)
-			return load_tcs_output(ctx->nctx, instr);
+		if (ctx->stage == MESA_SHADER_TESS_CTRL) {
+			return load_tess_varyings(ctx, instr, false);
+		}
 
 		for (unsigned chan = comp; chan < ve + comp; chan++) {
 			if (indir_index) {
@@ -3868,14 +3853,20 @@ static void emit_barrier(struct ac_llvm_context *ac, gl_shader_stage stage)
 			   ac->voidt, NULL, 0, AC_FUNC_ATTR_CONVERGENT);
 }
 
-static void emit_discard_if(struct ac_nir_context *ctx,
-			    const nir_intrinsic_instr *instr)
+static void emit_discard(struct ac_nir_context *ctx,
+			 const nir_intrinsic_instr *instr)
 {
 	LLVMValueRef cond;
 
-	cond = LLVMBuildICmp(ctx->ac.builder, LLVMIntEQ,
-			     get_src(ctx, instr->src[0]),
-			     ctx->ac.i32_0, "");
+	if (instr->intrinsic == nir_intrinsic_discard_if) {
+		cond = LLVMBuildICmp(ctx->ac.builder, LLVMIntEQ,
+				     get_src(ctx, instr->src[0]),
+				     ctx->ac.i32_0, "");
+	} else {
+		assert(instr->intrinsic == nir_intrinsic_discard);
+		cond = LLVMConstInt(ctx->ac.i1, false, 0);
+	}
+
 	ac_build_kill_if_false(&ctx->ac, cond);
 }
 
@@ -4349,12 +4340,8 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 		result = visit_image_size(ctx, instr);
 		break;
 	case nir_intrinsic_discard:
-		ac_build_intrinsic(&ctx->ac, "llvm.AMDGPU.kilp",
-				   LLVMVoidTypeInContext(ctx->ac.context),
-				   NULL, 0, AC_FUNC_ATTR_LEGACY);
-		break;
 	case nir_intrinsic_discard_if:
-		emit_discard_if(ctx, instr);
+		emit_discard(ctx, instr);
 		break;
 	case nir_intrinsic_memory_barrier:
 	case nir_intrinsic_group_memory_barrier:
@@ -6682,7 +6669,11 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 	LLVMDisposeTargetData(data_layout);
 	LLVMDisposeMessage(data_layout_str);
 
-	ctx.builder = LLVMCreateBuilderInContext(ctx.context);
+	enum ac_float_mode float_mode =
+		options->unsafe_math ? AC_FLOAT_MODE_UNSAFE_FP_MATH :
+				       AC_FLOAT_MODE_DEFAULT;
+
+	ctx.builder = ac_create_builder(ctx.context, float_mode);
 	ctx.ac.builder = ctx.builder;
 
 	memset(shader_info, 0, sizeof(*shader_info));
@@ -6734,12 +6725,12 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 		} else if (shaders[i]->info.stage == MESA_SHADER_TESS_CTRL) {
 			ctx.tcs_outputs_read = shaders[i]->info.outputs_read;
 			ctx.tcs_patch_outputs_read = shaders[i]->info.patch_outputs_read;
-			ctx.abi.load_tess_inputs = load_tcs_input;
+			ctx.abi.load_tess_varyings = load_tcs_varyings;
 			ctx.abi.load_patch_vertices_in = load_patch_vertices_in;
 			ctx.abi.store_tcs_outputs = store_tcs_output;
 		} else if (shaders[i]->info.stage == MESA_SHADER_TESS_EVAL) {
 			ctx.tes_primitive_mode = shaders[i]->info.tess.primitive_mode;
-			ctx.abi.load_tess_inputs = load_tes_input;
+			ctx.abi.load_tess_varyings = load_tes_input;
 			ctx.abi.load_tess_coord = load_tess_coord;
 			ctx.abi.load_patch_vertices_in = load_patch_vertices_in;
 		} else if (shaders[i]->info.stage == MESA_SHADER_VERTEX) {
@@ -7094,7 +7085,11 @@ void ac_create_gs_copy_shader(LLVMTargetMachineRef tm,
 	ctx.is_gs_copy_shader = true;
 	LLVMSetTarget(ctx.module, "amdgcn--");
 
-	ctx.builder = LLVMCreateBuilderInContext(ctx.context);
+	enum ac_float_mode float_mode =
+		options->unsafe_math ? AC_FLOAT_MODE_UNSAFE_FP_MATH :
+				       AC_FLOAT_MODE_DEFAULT;
+
+	ctx.builder = ac_create_builder(ctx.context, float_mode);
 	ctx.ac.builder = ctx.builder;
 	ctx.stage = MESA_SHADER_VERTEX;
 
