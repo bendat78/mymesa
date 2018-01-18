@@ -305,21 +305,21 @@ struct gl_config
 #define MAT_BIT_BACK_INDEXES          (1<<MAT_ATTRIB_BACK_INDEXES)
 
 
-#define FRONT_MATERIAL_BITS	(MAT_BIT_FRONT_EMISSION | 	\
-				 MAT_BIT_FRONT_AMBIENT |	\
-				 MAT_BIT_FRONT_DIFFUSE | 	\
-				 MAT_BIT_FRONT_SPECULAR |	\
-				 MAT_BIT_FRONT_SHININESS | 	\
-				 MAT_BIT_FRONT_INDEXES)
+#define FRONT_MATERIAL_BITS   (MAT_BIT_FRONT_EMISSION | \
+                               MAT_BIT_FRONT_AMBIENT | \
+                               MAT_BIT_FRONT_DIFFUSE | \
+                               MAT_BIT_FRONT_SPECULAR | \
+                               MAT_BIT_FRONT_SHININESS | \
+                               MAT_BIT_FRONT_INDEXES)
 
-#define BACK_MATERIAL_BITS	(MAT_BIT_BACK_EMISSION |	\
-				 MAT_BIT_BACK_AMBIENT |		\
-				 MAT_BIT_BACK_DIFFUSE |		\
-				 MAT_BIT_BACK_SPECULAR |	\
-				 MAT_BIT_BACK_SHININESS |	\
-				 MAT_BIT_BACK_INDEXES)
+#define BACK_MATERIAL_BITS    (MAT_BIT_BACK_EMISSION | \
+                               MAT_BIT_BACK_AMBIENT | \
+                               MAT_BIT_BACK_DIFFUSE | \
+                               MAT_BIT_BACK_SPECULAR | \
+                               MAT_BIT_BACK_SHININESS | \
+                               MAT_BIT_BACK_INDEXES)
 
-#define ALL_MATERIAL_BITS	(FRONT_MATERIAL_BITS | BACK_MATERIAL_BITS)
+#define ALL_MATERIAL_BITS     (FRONT_MATERIAL_BITS | BACK_MATERIAL_BITS)
 /*@}*/
 
 
@@ -389,7 +389,7 @@ struct gl_lightmodel
    GLboolean LocalViewer;	/**< Local (or infinite) view point? */
    GLboolean TwoSide;		/**< Two (or one) sided lighting? */
    GLenum ColorControl;		/**< either GL_SINGLE_COLOR
-				 *    or GL_SEPARATE_SPECULAR_COLOR */
+                                     or GL_SEPARATE_SPECULAR_COLOR */
 };
 
 
@@ -830,6 +830,8 @@ struct gl_scissor_rect
    GLint X, Y;			/**< Lower left corner of box */
    GLsizei Width, Height;	/**< Size of box */
 };
+
+
 struct gl_scissor_attrib
 {
    GLbitfield EnableFlags;	/**< Scissor test enabled? */
@@ -1200,13 +1202,13 @@ struct gl_tex_env_combine_packed
 #define TEXGEN_REFLECTION_MAP_NV 0x8
 #define TEXGEN_NORMAL_MAP_NV     0x10
 
-#define TEXGEN_NEED_NORMALS      (TEXGEN_SPHERE_MAP        | \
-				  TEXGEN_REFLECTION_MAP_NV | \
-				  TEXGEN_NORMAL_MAP_NV)
-#define TEXGEN_NEED_EYE_COORD    (TEXGEN_SPHERE_MAP        | \
-				  TEXGEN_REFLECTION_MAP_NV | \
-				  TEXGEN_NORMAL_MAP_NV     | \
-				  TEXGEN_EYE_LINEAR)
+#define TEXGEN_NEED_NORMALS   (TEXGEN_SPHERE_MAP        | \
+                               TEXGEN_REFLECTION_MAP_NV | \
+                               TEXGEN_NORMAL_MAP_NV)
+#define TEXGEN_NEED_EYE_COORD (TEXGEN_SPHERE_MAP        | \
+                               TEXGEN_REFLECTION_MAP_NV | \
+                               TEXGEN_NORMAL_MAP_NV     | \
+                               TEXGEN_EYE_LINEAR)
 /*@}*/
 
 
@@ -1359,10 +1361,10 @@ struct gl_viewport_attrib
 };
 
 
-typedef enum {
+typedef enum
+{
    MAP_USER,
    MAP_INTERNAL,
-
    MAP_COUNT
 } gl_map_buffer_index;
 
@@ -1370,7 +1372,8 @@ typedef enum {
 /**
  * Fields describing a mapped buffer range.
  */
-struct gl_buffer_mapping {
+struct gl_buffer_mapping
+{
    GLbitfield AccessFlags; /**< Mask of GL_MAP_x_BIT flags */
    GLvoid *Pointer;     /**< User-space address of mapping */
    GLintptr Offset;     /**< Mapped offset */
@@ -1381,7 +1384,8 @@ struct gl_buffer_mapping {
 /**
  * Usages we've seen for a buffer object.
  */
-typedef enum {
+typedef enum
+{
    USAGE_UNIFORM_BUFFER = 0x1,
    USAGE_TEXTURE_BUFFER = 0x2,
    USAGE_ATOMIC_COUNTER_BUFFER = 0x4,
@@ -1562,15 +1566,18 @@ struct gl_vertex_array_object
 };
 
 
-/** Used to signal when transitioning from one kind of drawing method
+/**
+ * Used to signal when transitioning from one kind of drawing method
  * to another.
  */
-typedef enum {
+typedef enum
+{
    DRAW_NONE,          /**< Initial value only */
    DRAW_BEGIN_END,
    DRAW_DISPLAY_LIST,
    DRAW_ARRAYS
 } gl_draw_method;
+
 
 /**
  * Enum for the OpenGL APIs we know about and may support.
@@ -1586,6 +1593,7 @@ typedef enum
    API_OPENGL_CORE,
    API_OPENGL_LAST = API_OPENGL_CORE
 } gl_api;
+
 
 /**
  * Vertex array state
@@ -2019,6 +2027,7 @@ struct gl_bindless_sampler
    GLvoid *data;
 };
 
+
 /**
  * A bindless image object.
  */
@@ -2036,6 +2045,7 @@ struct gl_bindless_image
    /** Pointer to the base of the data. */
    GLvoid *data;
 };
+
 
 /**
  * Names of the various vertex/fragment program register files, etc.
@@ -3207,8 +3217,8 @@ struct gl_sync_object
    GLint RefCount;            /**< Reference count */
    GLchar *Label;             /**< GL_KHR_debug */
    GLboolean DeletePending;   /**< Object was deleted while there were still
-			       * live references (e.g., sync not yet finished)
-			       */
+                               * live references (e.g., sync not yet finished)
+                               */
    GLenum SyncCondition;
    GLbitfield Flags;          /**< Flags passed to glFenceSync */
    GLuint StatusFlag:1;       /**< Has the sync object been signaled? */
@@ -4286,9 +4296,10 @@ struct gl_matrix_stack
 
 
 /** Pixel Transfer ops */
-#define IMAGE_BITS (IMAGE_SCALE_BIAS_BIT |			\
-		    IMAGE_SHIFT_OFFSET_BIT |			\
-		    IMAGE_MAP_COLOR_BIT)
+#define IMAGE_BITS (IMAGE_SCALE_BIAS_BIT | \
+                    IMAGE_SHIFT_OFFSET_BIT | \
+                    IMAGE_MAP_COLOR_BIT)
+
 
 /**
  * \name Bits to indicate what state has changed.
@@ -4407,7 +4418,8 @@ struct gl_dlist_state
  * to small enums suitable for use as an array index.
  */
 
-enum mesa_debug_source {
+enum mesa_debug_source
+{
    MESA_DEBUG_SOURCE_API,
    MESA_DEBUG_SOURCE_WINDOW_SYSTEM,
    MESA_DEBUG_SOURCE_SHADER_COMPILER,
@@ -4417,7 +4429,8 @@ enum mesa_debug_source {
    MESA_DEBUG_SOURCE_COUNT
 };
 
-enum mesa_debug_type {
+enum mesa_debug_type
+{
    MESA_DEBUG_TYPE_ERROR,
    MESA_DEBUG_TYPE_DEPRECATED,
    MESA_DEBUG_TYPE_UNDEFINED,
@@ -4430,7 +4443,8 @@ enum mesa_debug_type {
    MESA_DEBUG_TYPE_COUNT
 };
 
-enum mesa_debug_severity {
+enum mesa_debug_severity
+{
    MESA_DEBUG_SEVERITY_LOW,
    MESA_DEBUG_SEVERITY_MEDIUM,
    MESA_DEBUG_SEVERITY_HIGH,
