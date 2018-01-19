@@ -331,8 +331,8 @@ handleVASliceDataBufferType(vlVaContext *context, vlVaBuffer *buf)
       vlVaDecoderFixMPEG4Startcode(context);
       buffers[num_buffers] = (void *)context->mpeg4.start_code;
       sizes[num_buffers++] = context->mpeg4.start_code_size;
+      break;
    case PIPE_VIDEO_FORMAT_JPEG:
-      /* TODO */
       break;
    default:
       break;

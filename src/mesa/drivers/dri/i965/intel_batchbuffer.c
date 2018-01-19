@@ -83,12 +83,12 @@ intel_batchbuffer_init(struct brw_context *brw)
    struct intel_batchbuffer *batch = &brw->batch;
    const struct gen_device_info *devinfo = &screen->devinfo;
 
-   if (!devinfo->has_llc) {
-      batch->batch.cpu_map = malloc(BATCH_SZ);
-      batch->batch.map = batch->batch.cpu_map;
+   batch->use_shadow_copy = !devinfo->has_llc;
+
+   if (batch->use_shadow_copy) {
+      batch->batch.map = malloc(BATCH_SZ);
       batch->map_next = batch->batch.map;
-      batch->state.cpu_map = malloc(STATE_SZ);
-      batch->state.map = batch->state.cpu_map;
+      batch->state.map = malloc(STATE_SZ);
    }
 
    init_reloc_list(&batch->batch_relocs, 250);
@@ -161,32 +161,36 @@ add_exec_bo(struct intel_batchbuffer *batch, struct brw_bo *bo)
 }
 
 static void
-intel_batchbuffer_reset(struct brw_context *brw)
+recreate_growing_buffer(struct brw_context *brw,
+                        struct brw_growing_bo *grow,
+                        const char *name, unsigned size)
 {
    struct intel_screen *screen = brw->screen;
    struct intel_batchbuffer *batch = &brw->batch;
    struct brw_bufmgr *bufmgr = screen->bufmgr;
 
-   if (batch->last_bo) {
+   grow->bo = brw_bo_alloc(bufmgr, name, size, 4096);
+   grow->bo->kflags = can_do_exec_capture(screen) ? EXEC_OBJECT_CAPTURE : 0;
+
+   if (!batch->use_shadow_copy)
+      grow->map = brw_bo_map(brw, grow->bo, MAP_READ | MAP_WRITE);
+}
+
+static void
+intel_batchbuffer_reset(struct brw_context *brw)
+{
+   struct intel_batchbuffer *batch = &brw->batch;
+
+   if (batch->last_bo != NULL) {
       brw_bo_unreference(batch->last_bo);
       batch->last_bo = NULL;
    }
    batch->last_bo = batch->batch.bo;
 
-   batch->batch.bo = brw_bo_alloc(bufmgr, "batchbuffer", BATCH_SZ, 4096);
-   if (!batch->batch.cpu_map) {
-      batch->batch.map =
-         brw_bo_map(brw, batch->batch.bo, MAP_READ | MAP_WRITE);
-   }
+   recreate_growing_buffer(brw, &batch->batch, "batchbuffer", BATCH_SZ);
    batch->map_next = batch->batch.map;
 
-   batch->state.bo = brw_bo_alloc(bufmgr, "statebuffer", STATE_SZ, 4096);
-   batch->state.bo->kflags =
-      can_do_exec_capture(screen) ? EXEC_OBJECT_CAPTURE : 0;
-   if (!batch->state.cpu_map) {
-      batch->state.map =
-         brw_bo_map(brw, batch->state.bo, MAP_READ | MAP_WRITE);
-   }
+   recreate_growing_buffer(brw, &batch->state, "statebuffer", STATE_SZ);
 
    /* Avoid making 0 a valid state offset - otherwise the decoder will try
     * and decode data when we use offset 0 as a null pointer.
@@ -243,8 +247,10 @@ intel_batchbuffer_reset_to_saved(struct brw_context *brw)
 void
 intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
-   free(batch->batch.cpu_map);
-   free(batch->state.cpu_map);
+   if (batch->use_shadow_copy) {
+      free(batch->batch.map);
+      free(batch->state.map);
+   }
 
    for (int i = 0; i < batch->exec_count; i++) {
       brw_bo_unreference(batch->exec_bos[i]);
@@ -282,17 +288,16 @@ replace_bo_in_reloc_list(struct brw_reloc_list *rlist,
  */
 static void
 grow_buffer(struct brw_context *brw,
-            struct brw_bo **bo_ptr,
-            uint32_t **map_ptr,
-            uint32_t **cpu_map_ptr,
+            struct brw_growing_bo *grow,
             unsigned existing_bytes,
             unsigned new_size)
 {
    struct intel_batchbuffer *batch = &brw->batch;
    struct brw_bufmgr *bufmgr = brw->bufmgr;
+   struct brw_bo *bo = grow->bo;
 
-   uint32_t *old_map = *map_ptr;
-   struct brw_bo *old_bo = *bo_ptr;
+   uint32_t *old_map = grow->map;
+   struct brw_bo *old_bo = grow->bo;
 
    struct brw_bo *new_bo =
       brw_bo_alloc(bufmgr, old_bo->name, new_size, old_bo->align);
@@ -301,8 +306,8 @@ grow_buffer(struct brw_context *brw,
    perf_debug("Growing %s - ran out of space\n", old_bo->name);
 
    /* Copy existing data to the new larger buffer */
-   if (*cpu_map_ptr) {
-      *cpu_map_ptr = new_map = realloc(*cpu_map_ptr, new_size);
+   if (batch->use_shadow_copy) {
+      new_map = realloc(old_map, new_size);
    } else {
       new_map = brw_bo_map(brw, new_bo, MAP_READ | MAP_WRITE);
       memcpy(new_map, old_map, existing_bytes);
@@ -348,8 +353,8 @@ grow_buffer(struct brw_context *brw,
    /* Drop the *bo_ptr reference.  This should free the old BO. */
    brw_bo_unreference(old_bo);
 
-   *bo_ptr = new_bo;
-   *map_ptr = new_map;
+   grow->bo = new_bo;
+   grow->map = new_map;
 }
 
 void
@@ -372,8 +377,7 @@ intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz,
       const unsigned new_size =
          MIN2(batch->batch.bo->size + batch->batch.bo->size / 2,
               MAX_BATCH_SIZE);
-      grow_buffer(brw, &batch->batch.bo, &batch->batch.map,
-                  &batch->batch.cpu_map, batch_used, new_size);
+      grow_buffer(brw, &batch->batch, batch_used, new_size);
       batch->map_next = (void *) batch->batch.map + batch_used;
       assert(batch_used + sz < batch->batch.bo->size);
    }
@@ -806,14 +810,12 @@ submit_batch(struct brw_context *brw, int in_fence_fd, int *out_fence_fd)
    struct intel_batchbuffer *batch = &brw->batch;
    int ret = 0;
 
-   if (batch->batch.cpu_map) {
+   if (batch->use_shadow_copy) {
       void *bo_map = brw_bo_map(brw, batch->batch.bo, MAP_WRITE);
-      memcpy(bo_map, batch->batch.cpu_map, 4 * USED_BATCH(*batch));
-   }
+      memcpy(bo_map, batch->batch.map, 4 * USED_BATCH(*batch));
 
-   if (batch->state.cpu_map) {
-      void *bo_map = brw_bo_map(brw, batch->state.bo, MAP_WRITE);
-      memcpy(bo_map, batch->state.cpu_map, batch->state_used);
+      bo_map = brw_bo_map(brw, batch->state.bo, MAP_WRITE);
+      memcpy(bo_map, batch->state.map, batch->state_used);
    }
 
    brw_bo_unmap(batch->batch.bo);
@@ -1076,8 +1078,7 @@ brw_state_batch(struct brw_context *brw,
       const unsigned new_size =
          MIN2(batch->state.bo->size + batch->state.bo->size / 2,
               MAX_STATE_SIZE);
-      grow_buffer(brw, &batch->state.bo, &batch->state.map,
-                  &batch->state.cpu_map, batch->state_used, new_size);
+      grow_buffer(brw, &batch->state, batch->state_used, new_size);
       assert(offset + size < batch->state.bo->size);
    }
 
