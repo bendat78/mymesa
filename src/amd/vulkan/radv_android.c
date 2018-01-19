@@ -251,7 +251,7 @@ VkResult radv_GetSwapchainGrallocUsageANDROID(
 	/* All VkImageUsageFlags not explicitly checked here are unsupported for
 	 * gralloc swapchains.
 	 */
-	if (imageUsage != 0) {
+	if (imageUsage) {
 	return vk_errorf(VK_ERROR_FORMAT_NOT_SUPPORTED,
 	                "unsupported VkImageUsageFlags(0x%x) for gralloc "
 	                "swapchain", imageUsage);
@@ -269,7 +269,7 @@ VkResult radv_GetSwapchainGrallocUsageANDROID(
 		                 GRALLOC_USAGE_EXTERNAL_DISP;
 	}
 
-	if (*grallocUsage == 0)
+	if (!*grallocUsage)
 		return VK_ERROR_FORMAT_NOT_SUPPORTED;
 
 	return VK_SUCCESS;
@@ -325,7 +325,7 @@ radv_QueueSignalReleaseImageANDROID(
 	RADV_FROM_HANDLE(radv_queue, queue, _queue);
 	VkResult result = VK_SUCCESS;
 
-	if (waitSemaphoreCount == 0) {
+	if (!waitSemaphoreCount) {
 		if (pNativeFenceFd)
 			*pNativeFenceFd = -1;
 		return VK_SUCCESS;

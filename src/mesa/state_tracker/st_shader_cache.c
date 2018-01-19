@@ -120,7 +120,7 @@ st_store_tgsi_in_disk_cache(struct st_context *st, struct gl_program *prog)
    /* Exit early when we are dealing with a ff shader with no source file to
     * generate a source from.
     */
-   static const char zero[sizeof(prog->sh.data->sha1)] = {0};
+   static const char zero[sizeof(prog->sh.data->sha1)] = {};
    if (memcmp(prog->sh.data->sha1, zero, sizeof(prog->sh.data->sha1)) == 0)
       return;
 
@@ -293,7 +293,7 @@ st_load_tgsi_from_disk_cache(struct gl_context *ctx,
       return false;
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
+      if (!prog->_LinkedShaders[i])
          continue;
 
       struct gl_program *glprog = prog->_LinkedShaders[i]->Program;

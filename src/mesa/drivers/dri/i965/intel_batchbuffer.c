@@ -181,7 +181,7 @@ intel_batchbuffer_reset(struct brw_context *brw)
 {
    struct intel_batchbuffer *batch = &brw->batch;
 
-   if (batch->last_bo != NULL) {
+   if (batch->last_bo) {
       brw_bo_unreference(batch->last_bo);
       batch->last_bo = NULL;
    }
