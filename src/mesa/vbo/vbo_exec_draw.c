@@ -101,7 +101,7 @@ vbo_copy_vertices(struct vbo_exec_context *exec)
          memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
       return i;
    case GL_LINE_STRIP:
-      if (nr == 0) {
+      if (!nr) {
          return 0;
       }
       else {
@@ -123,7 +123,7 @@ vbo_copy_vertices(struct vbo_exec_context *exec)
       /* fall-through */
    case GL_TRIANGLE_FAN:
    case GL_POLYGON:
-      if (nr == 0) {
+      if (!nr) {
          return 0;
       }
       else if (nr == 1) {

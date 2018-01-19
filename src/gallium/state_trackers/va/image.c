@@ -548,7 +548,7 @@ vlVaPutImage(VADriverContextP ctx, VASurfaceID surface, VAImageID image,
                                           PIPE_TRANSFER_WRITE |
                                           PIPE_TRANSFER_DISCARD_RANGE,
                                           &dst_box, &transfer);
-            if (map == NULL) {
+            if (!map) {
                mtx_unlock(&drv->mutex);
                return VA_STATUS_ERROR_OPERATION_FAILED;
             }
