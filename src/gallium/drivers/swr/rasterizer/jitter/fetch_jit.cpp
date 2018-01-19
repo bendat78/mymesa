@@ -2891,6 +2891,10 @@ bool isComponentEnabled(ComponentEnable enableMask, uint8_t component)
     }
 }
 
+// Don't want two threads compiling the same fetch shader simultaneously
+// Has problems in the JIT cache implementation
+// This is only a problem for fetch right now.
+static std::mutex gFetchCodegenMutex;
 
 //////////////////////////////////////////////////////////////////////////
 /// @brief JITs from fetch shader IR
@@ -2903,6 +2907,7 @@ PFN_FETCH_FUNC JitFetchFunc(HANDLE hJitMgr, const HANDLE hFunc)
     JitManager* pJitMgr = reinterpret_cast<JitManager*>(hJitMgr);
     PFN_FETCH_FUNC pfnFetch;
 
+    gFetchCodegenMutex.lock();
     pfnFetch = (PFN_FETCH_FUNC)(pJitMgr->mpExec->getFunctionAddress(func->getName().str()));
     // MCJIT finalizes modules the first time you JIT code from them. After finalized, you cannot add new IR to the module
     pJitMgr->mIsModuleFinalized = true;
@@ -2917,6 +2922,7 @@ PFN_FETCH_FUNC JitFetchFunc(HANDLE hJitMgr, const HANDLE hFunc)
 #endif
 
     pJitMgr->DumpAsm(const_cast<llvm::Function*>(func), "final");
+    gFetchCodegenMutex.unlock();
 
 
 
