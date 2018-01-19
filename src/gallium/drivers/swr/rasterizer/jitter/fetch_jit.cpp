@@ -127,6 +127,7 @@ struct FetchJit : public Builder
     void CreateGatherOddFormats(SWR_FORMAT format, Value* pMask, Value* pBase, Value* offsets, Value* result[4]);
     void ConvertFormat(SWR_FORMAT format, Value *texels[4]);
 
+    Value* mpPrivateContext;
     Value* mpFetchInfo;
 };
 
@@ -145,6 +146,9 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
     auto    argitr = fetch->arg_begin();
 
     // Fetch shader arguments
+    mpPrivateContext = &*argitr; ++argitr;
+    mpPrivateContext->setName("privateContext");
+
     mpFetchInfo = &*argitr; ++argitr;
     mpFetchInfo->setName("fetchInfo");
     Value*    pVtxOut = &*argitr;
@@ -2807,6 +2811,8 @@ Value *FetchJit::GenerateCompCtrlVector16(const ComponentControl ctrl)
             Value *pId = BITCAST(LOAD(GEP(mpFetchInfo, { 0, SWR_FETCH_CONTEXT_CurInstance })), mFP32Ty);
             return VBROADCAST_16(pId);
         }
+
+
         case StoreSrc:
         default:
             SWR_INVALID("Invalid component control");
@@ -2823,15 +2829,15 @@ Value *FetchJit::GenerateCompCtrlVector(const ComponentControl ctrl)
 {
     switch (ctrl)
     {
-        case NoStore:
-            return VUNDEF_I();
-        case Store0:
-            return VIMMED1(0);
-        case Store1Fp:
-            return VIMMED1(1.0f);
-        case Store1Int:
-            return VIMMED1(1);
-        case StoreVertexId:
+    case NoStore:
+        return VUNDEF_I();
+    case Store0:
+        return VIMMED1(0);
+    case Store1Fp:
+        return VIMMED1(1.0f);
+    case Store1Int:
+        return VIMMED1(1);
+    case StoreVertexId:
         {
 #if USE_SIMD16_SHADERS
             Value *pId;
@@ -2848,15 +2854,17 @@ Value *FetchJit::GenerateCompCtrlVector(const ComponentControl ctrl)
 #endif
             return pId;
         }
-        case StoreInstanceId:
+    case StoreInstanceId:
         {
             Value *pId = BITCAST(LOAD(GEP(mpFetchInfo, { 0, SWR_FETCH_CONTEXT_CurInstance })), mFP32Ty);
             return VBROADCAST(pId);
         }
-        case StoreSrc:
-        default:
-            SWR_INVALID("Invalid component control");
-            return VUNDEF_I();
+
+
+    case StoreSrc:
+    default:
+        SWR_INVALID("Invalid component control");
+        return VUNDEF_I();
     }
 }
 
@@ -2908,6 +2916,7 @@ PFN_FETCH_FUNC JitFetchFunc(HANDLE hJitMgr, const HANDLE hFunc)
 #endif
 
     pJitMgr->DumpAsm(const_cast<llvm::Function*>(func), "final");
+
 
     return pfnFetch;
 }
