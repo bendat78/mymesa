@@ -582,7 +582,7 @@ VkResult anv_CreateInstance(
       if (!anv_entrypoint_is_enabled(i, instance->apiVersion,
                                      &instance->enabled_extensions, NULL)) {
          instance->dispatch.entrypoints[i] = NULL;
-      } else if (anv_dispatch_table.entrypoints[i] != NULL) {
+      } else if (anv_dispatch_table.entrypoints[i]) {
          instance->dispatch.entrypoints[i] = anv_dispatch_table.entrypoints[i];
       } else {
          instance->dispatch.entrypoints[i] =
@@ -1088,7 +1088,7 @@ PFN_vkVoidFunction anv_GetInstanceProcAddr(
     * when we have to return valid function pointers, NULL, or it's left
     * undefined.  See the table for exact details.
     */
-   if (pName == NULL)
+   if (!pName)
       return NULL;
 
 #define LOOKUP_ANV_ENTRYPOINT(entrypoint) \
@@ -1101,7 +1101,7 @@ PFN_vkVoidFunction anv_GetInstanceProcAddr(
 
 #undef LOOKUP_ANV_ENTRYPOINT
 
-   if (instance == NULL)
+   if (!instance)
       return NULL;
 
    int idx = anv_get_entrypoint_index(pName);
