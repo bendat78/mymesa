@@ -1042,7 +1042,7 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
       image->bo = brw_bo_gem_create_from_prime(screen->bufmgr, fds[0]);
    }
 
-   if (image->bo == NULL) {
+   if (!image->bo) {
       free(image);
       return NULL;
    }

@@ -1044,7 +1044,7 @@ intel_miptree_create_for_dri_image(struct brw_context *brw,
       intel_miptree_create_for_bo(brw, image->bo, format,
                                   image->offset, image->width, image->height, 1,
                                   image->pitch, tiling, mt_create_flags);
-   if (mt == NULL)
+   if (!mt)
       return NULL;
 
    mt->target = target;

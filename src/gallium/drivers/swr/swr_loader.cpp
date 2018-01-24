@@ -37,7 +37,7 @@ swr_initialize_screen_interface(struct swr_screen *screen, const char arch[])
    screen->pfnSwrGetInterface = SwrGetInterface;
    fprintf(stderr, "(using: builtin).\n");
 #else
-   char filename[256] = { 0 };
+   char filename[256] = {};
    sprintf(filename, "%sswr%s%s", UTIL_DL_PREFIX, arch, UTIL_DL_EXT);
 
    screen->pLibrary = util_dl_open(filename);
