@@ -35,7 +35,7 @@
 #include "main/transformfeedback.h"
 #include "main/framebuffer.h"
 #include "tnl/tnl.h"
-#include "vbo/vbo_context.h"
+#include "vbo/vbo.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "drivers/common/meta.h"
@@ -482,8 +482,10 @@ brw_predraw_resolve_inputs(struct brw_context *brw, bool rendering)
             tex_obj = intel_texture_object(u->TexObj);
 
             if (tex_obj && tex_obj->mt) {
-               intel_disable_rb_aux_buffer(brw, tex_obj->mt, 0, ~0,
-                                           "as a shader image");
+               if (rendering) {
+                  intel_disable_rb_aux_buffer(brw, tex_obj->mt, 0, ~0,
+                                              "as a shader image");
+               }
 
                intel_miptree_prepare_image(brw, tex_obj->mt);
 
@@ -904,6 +906,22 @@ retry:
    return;
 }
 
+
+static bool
+all_varyings_in_vbos(const struct gl_vertex_array *arrays[])
+{
+   GLuint i;
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      if (arrays[i]->StrideB &&
+          arrays[i]->BufferObj->Name == 0)
+         return false;
+
+   return true;
+}
+
+
+
 void
 brw_draw_prims(struct gl_context *ctx,
                const struct _mesa_prim *prims,
@@ -949,7 +967,7 @@ brw_draw_prims(struct gl_context *ctx,
     * get the minimum and maximum of their index buffer so we know what range
     * to upload.
     */
-   if (!index_bounds_valid && !vbo_all_varyings_in_vbos(arrays)) {
+   if (!index_bounds_valid && !all_varyings_in_vbos(arrays)) {
       perf_debug("Scanning index buffer to compute index buffer bounds.  "
                  "Use glDrawRangeElements() to avoid this.\n");
       vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index, nr_prims);
@@ -1055,12 +1073,11 @@ void
 brw_draw_init(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
-   struct vbo_context *vbo = vbo_context(ctx);
 
    /* Register our drawing function:
     */
-   vbo->draw_prims = brw_draw_prims;
-   vbo->draw_indirect_prims = brw_draw_indirect_prims;
+   vbo_set_draw_func(ctx, brw_draw_prims);
+   vbo_set_indirect_draw_func(ctx, brw_draw_indirect_prims);
 
    for (int i = 0; i < VERT_ATTRIB_MAX; i++)
       brw->vb.inputs[i].buffer = -1;
