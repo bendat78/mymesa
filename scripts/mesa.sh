@@ -21,7 +21,7 @@ rm -rf *.la
 rm -rf *.a
 rm -rf *.o
 
-echo "17.3.0-dev-ben-$(date)" > VERSION
+echo "18.1.0-dev-ben-$(date)" > VERSION
 
 ./autogen.sh \
 --prefix=/usr/local \
@@ -42,7 +42,7 @@ echo "17.3.0-dev-ben-$(date)" > VERSION
 --enable-dri3 \
 --with-platforms="x11 wayland drm" \
 --enable-xa \
---enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-6.0 \
+--enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-5.0 \
 --enable-vdpau \
 --enable-omx-bellagio \
 --enable-va \
