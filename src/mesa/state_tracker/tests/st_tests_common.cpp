@@ -183,7 +183,7 @@ static int swizzle_from_char(const char *sw)
       default:
          assert(!"This test uses an unknown swizzle character");
       }
-      if (isw[1] != 0)
+      if (isw[1])
          ++isw;
    }
    return swizzle;
