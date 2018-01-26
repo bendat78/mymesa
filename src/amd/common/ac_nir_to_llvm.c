@@ -326,6 +326,7 @@ create_llvm_function(LLVMContextRef ctx, LLVMModuleRef module,
 		if (args->array_params_mask & (1 << i)) {
 			LLVMValueRef P = LLVMGetParam(main_function, i);
 			ac_add_function_attr(ctx, main_function, i + 1, AC_FUNC_ATTR_BYVAL);
+			ac_add_function_attr(ctx, main_function, i + 1, AC_FUNC_ATTR_NOALIAS);
 			ac_add_attr_dereferenceable(P, UINT64_MAX);
 		}
 		else {
@@ -1913,18 +1914,24 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 	case nir_op_fmax:
 		result = emit_intrin_2f_param(&ctx->ac, "llvm.maxnum",
 		                              ac_to_float_type(&ctx->ac, def_type), src[0], src[1]);
-		if (instr->dest.dest.ssa.bit_size == 32)
+		if (ctx->ac.chip_class < GFX9 &&
+		    instr->dest.dest.ssa.bit_size == 32) {
+			/* Only pre-GFX9 chips do not flush denorms. */
 			result = emit_intrin_1f_param(&ctx->ac, "llvm.canonicalize",
 						      ac_to_float_type(&ctx->ac, def_type),
 						      result);
+		}
 		break;
 	case nir_op_fmin:
 		result = emit_intrin_2f_param(&ctx->ac, "llvm.minnum",
 		                              ac_to_float_type(&ctx->ac, def_type), src[0], src[1]);
-		if (instr->dest.dest.ssa.bit_size == 32)
+		if (ctx->ac.chip_class < GFX9 &&
+		    instr->dest.dest.ssa.bit_size == 32) {
+			/* Only pre-GFX9 chips do not flush denorms. */
 			result = emit_intrin_1f_param(&ctx->ac, "llvm.canonicalize",
 						      ac_to_float_type(&ctx->ac, def_type),
 						      result);
+		}
 		break;
 	case nir_op_ffma:
 		result = emit_intrin_3f_param(&ctx->ac, "llvm.fmuladd",
@@ -2309,10 +2316,13 @@ static LLVMValueRef build_tex_intrinsic(struct ac_nir_context *ctx,
 					struct ac_image_args *args)
 {
 	if (instr->sampler_dim == GLSL_SAMPLER_DIM_BUF) {
+		unsigned mask = nir_ssa_def_components_read(&instr->dest.ssa);
+
 		return ac_build_buffer_load_format(&ctx->ac,
 						   args->resource,
 						   args->addr,
 						   ctx->ac.i32_0,
+						   util_last_bit(mask),
 						   true);
 	}
 
@@ -4552,18 +4562,27 @@ static LLVMValueRef radv_load_ssbo(struct ac_shader_abi *abi,
 				   LLVMValueRef buffer_ptr, bool write)
 {
 	struct nir_to_llvm_context *ctx = nir_to_llvm_context_from_abi(abi);
+	LLVMValueRef result;
 
-	if (write && ctx->stage == MESA_SHADER_FRAGMENT)
-		ctx->shader_info->fs.writes_memory = true;
+	LLVMSetMetadata(buffer_ptr, ctx->ac.uniform_md_kind, ctx->ac.empty_md);
 
-	return LLVMBuildLoad(ctx->builder, buffer_ptr, "");
+	result = LLVMBuildLoad(ctx->builder, buffer_ptr, "");
+	LLVMSetMetadata(result, ctx->ac.invariant_load_md_kind, ctx->ac.empty_md);
+
+	return result;
 }
 
 static LLVMValueRef radv_load_ubo(struct ac_shader_abi *abi, LLVMValueRef buffer_ptr)
 {
 	struct nir_to_llvm_context *ctx = nir_to_llvm_context_from_abi(abi);
+	LLVMValueRef result;
 
-	return LLVMBuildLoad(ctx->builder, buffer_ptr, "");
+	LLVMSetMetadata(buffer_ptr, ctx->ac.uniform_md_kind, ctx->ac.empty_md);
+
+	result = LLVMBuildLoad(ctx->builder, buffer_ptr, "");
+	LLVMSetMetadata(result, ctx->ac.invariant_load_md_kind, ctx->ac.empty_md);
+
+	return result;
 }
 
 static LLVMValueRef radv_get_sampler_desc(struct ac_shader_abi *abi,
@@ -4585,9 +4604,6 @@ static LLVMValueRef radv_get_sampler_desc(struct ac_shader_abi *abi,
 	LLVMTypeRef type;
 
 	assert(base_index < layout->binding_count);
-
-	if (write && ctx->stage == MESA_SHADER_FRAGMENT)
-		ctx->shader_info->fs.writes_memory = true;
 
 	switch (desc_type) {
 	case AC_DESC_IMAGE:
@@ -5362,7 +5378,7 @@ handle_vs_input_decl(struct nir_to_llvm_context *ctx,
 		input = ac_build_buffer_load_format(&ctx->ac, t_list,
 						    buffer_index,
 						    ctx->ac.i32_0,
-						    true);
+						    4, true);
 
 		for (unsigned chan = 0; chan < 4; chan++) {
 			LLVMValueRef llvm_chan = LLVMConstInt(ctx->ac.i32, chan, false);
