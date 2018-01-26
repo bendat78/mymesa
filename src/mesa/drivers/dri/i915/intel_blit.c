@@ -603,7 +603,8 @@ intel_emit_linear_blit(struct intel_context *intel,
    size -= pitch * height;
    assert (size < (1 << 15));
    pitch = ALIGN(size, 4);
-   if (size != 0) {
+
+   if (size) {
       ok = emit_copy_blit(intel, 1,
                           pitch, src_bo, src_offset, I915_TILING_NONE,
                           pitch, dst_bo, dst_offset, I915_TILING_NONE,
