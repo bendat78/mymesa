@@ -274,8 +274,8 @@ _mesa_program_binary(struct gl_context *ctx, struct gl_shader_program *sh_prog,
    const void *payload = get_program_binary_payload(binary_format, driver_sha1,
                                                     binary, length);
 
-   if (!payload) {
-      sh_prog->data->LinkStatus = linking_failure;
+   if (payload == NULL) {
+      sh_prog->data->LinkStatus = LINKING_FAILURE;
       return;
    }
 
@@ -283,9 +283,9 @@ _mesa_program_binary(struct gl_context *ctx, struct gl_shader_program *sh_prog,
    blob_reader_init(&blob, payload, length - header_size);
 
    if (!read_program_payload(ctx, &blob, binary_format, sh_prog)) {
-      sh_prog->data->LinkStatus = linking_failure;
+      sh_prog->data->LinkStatus = LINKING_FAILURE;
       return;
    }
 
-   sh_prog->data->LinkStatus = linking_success;
+   sh_prog->data->LinkStatus = LINKING_SUCCESS;
 }

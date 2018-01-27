@@ -99,11 +99,6 @@ static void si_build_ps_epilog_function(struct si_shader_context *ctx,
  */
 #define PS_EPILOG_SAMPLEMASK_MIN_LOC 14
 
-enum {
-	CONST_ADDR_SPACE = 2,
-	LOCAL_ADDR_SPACE = 3,
-};
-
 static bool llvm_type_is_64bit(struct si_shader_context *ctx,
 			       LLVMTypeRef type)
 {
@@ -2224,7 +2219,7 @@ void si_declare_compute_memory(struct si_shader_context *ctx,
 {
 	struct si_shader_selector *sel = ctx->shader->selector;
 
-	LLVMTypeRef i8p = LLVMPointerType(ctx->i8, LOCAL_ADDR_SPACE);
+	LLVMTypeRef i8p = LLVMPointerType(ctx->i8, AC_LOCAL_ADDR_SPACE);
 	LLVMValueRef var;
 
 	assert(decl->Declaration.MemType == TGSI_MEMORY_TYPE_SHARED);
@@ -2234,7 +2229,7 @@ void si_declare_compute_memory(struct si_shader_context *ctx,
 	var = LLVMAddGlobalInAddressSpace(ctx->ac.module,
 	                                  LLVMArrayType(ctx->i8, sel->local_size),
 	                                  "compute_lds",
-	                                  LOCAL_ADDR_SPACE);
+	                                  AC_LOCAL_ADDR_SPACE);
 	LLVMSetAlignment(var, 4);
 
 	ctx->ac.lds = LLVMBuildBitCast(ctx->ac.builder, var, i8p, "");
@@ -3950,12 +3945,6 @@ static void clock_emit(
 		LLVMBuildExtractElement(ctx->ac.builder, tmp, ctx->i32_1, "");
 }
 
-LLVMTypeRef si_const_array(LLVMTypeRef elem_type, int num_elements)
-{
-	return LLVMPointerType(LLVMArrayType(elem_type, num_elements),
-			       CONST_ADDR_SPACE);
-}
-
 static void si_llvm_emit_ddxy(
 	const struct lp_build_tgsi_action *action,
 	struct lp_build_tgsi_context *bld_base,
@@ -4452,18 +4441,18 @@ static void si_create_function(struct si_shader_context *ctx,
 		LLVMValueRef P = LLVMGetParam(ctx->main_fn, i);
 
 		/* The combination of:
-		 * - ByVal
+		 * - noalias
 		 * - dereferenceable
 		 * - invariant.load
 		 * allows the optimization passes to move loads and reduces
 		 * SGPR spilling significantly.
 		 */
+		lp_add_function_attr(ctx->main_fn, i + 1, LP_FUNC_ATTR_INREG);
+
 		if (LLVMGetTypeKind(LLVMTypeOf(P)) == LLVMPointerTypeKind) {
-			lp_add_function_attr(ctx->main_fn, i + 1, LP_FUNC_ATTR_BYVAL);
 			lp_add_function_attr(ctx->main_fn, i + 1, LP_FUNC_ATTR_NOALIAS);
 			ac_add_attr_dereferenceable(P, UINT64_MAX);
-		} else
-			lp_add_function_attr(ctx->main_fn, i + 1, LP_FUNC_ATTR_INREG);
+		}
 	}
 
 	for (i = 0; i < fninfo->num_params; ++i) {
@@ -4567,12 +4556,11 @@ static void declare_per_stage_desc_pointers(struct si_shader_context *ctx,
 
 	unsigned const_and_shader_buffers =
 		add_arg(fninfo, ARG_SGPR,
-			si_const_array(const_shader_buf_type, 0));
+			ac_array_in_const_addr_space(const_shader_buf_type));
 
 	unsigned samplers_and_images =
 		add_arg(fninfo, ARG_SGPR,
-			si_const_array(ctx->v8i32,
-				       SI_NUM_IMAGES + SI_NUM_SAMPLERS * 2));
+			ac_array_in_const_addr_space(ctx->v8i32));
 
 	if (assign_params) {
 		ctx->param_const_and_shader_buffers = const_and_shader_buffers;
@@ -4584,16 +4572,16 @@ static void declare_global_desc_pointers(struct si_shader_context *ctx,
 					 struct si_function_info *fninfo)
 {
 	ctx->param_rw_buffers = add_arg(fninfo, ARG_SGPR,
-		si_const_array(ctx->v4i32, SI_NUM_RW_BUFFERS));
+		ac_array_in_const_addr_space(ctx->v4i32));
 	ctx->param_bindless_samplers_and_images = add_arg(fninfo, ARG_SGPR,
-		si_const_array(ctx->v8i32, 0));
+		ac_array_in_const_addr_space(ctx->v8i32));
 }
 
 static void declare_vs_specific_input_sgprs(struct si_shader_context *ctx,
 					    struct si_function_info *fninfo)
 {
 	ctx->param_vertex_buffers = add_arg(fninfo, ARG_SGPR,
-		si_const_array(ctx->v4i32, SI_NUM_VERTEX_BUFFERS));
+		ac_array_in_const_addr_space(ctx->v4i32));
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.base_vertex);
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.start_instance);
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.draw_id);
@@ -6595,15 +6583,8 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 			param_size = ac_get_type_size(param_type) / 4;
 			is_sgpr = ac_is_sgpr_param(param);
 
-			if (is_sgpr) {
-#if HAVE_LLVM < 0x0400
-				LLVMRemoveAttribute(param, LLVMByValAttribute);
-#else
-				unsigned kind_id = LLVMGetEnumAttributeKindForName("byval", 5);
-				LLVMRemoveEnumAttributeAtIndex(parts[part], param_idx + 1, kind_id);
-#endif
+			if (is_sgpr)
 				lp_add_function_attr(parts[part], param_idx + 1, LP_FUNC_ATTR_INREG);
-			}
 
 			assert(out_idx + param_size <= (is_sgpr ? num_out_sgpr : num_out));
 			assert(is_sgpr || out_idx >= num_out_sgpr);
@@ -7095,7 +7076,7 @@ static LLVMValueRef si_prolog_get_rw_buffers(struct si_shader_context *ctx)
 	list = lp_build_gather_values(&ctx->gallivm, ptr, 2);
 	list = LLVMBuildBitCast(ctx->ac.builder, list, ctx->i64, "");
 	list = LLVMBuildIntToPtr(ctx->ac.builder, list,
-				 si_const_array(ctx->v4i32, SI_NUM_RW_BUFFERS), "");
+				 ac_array_in_const_addr_space(ctx->v4i32), "");
 	return list;
 }
 
