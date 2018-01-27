@@ -274,7 +274,7 @@ _mesa_program_binary(struct gl_context *ctx, struct gl_shader_program *sh_prog,
    const void *payload = get_program_binary_payload(binary_format, driver_sha1,
                                                     binary, length);
 
-   if (payload == NULL) {
+   if (!payload) {
       sh_prog->data->LinkStatus = LINKING_FAILURE;
       return;
    }

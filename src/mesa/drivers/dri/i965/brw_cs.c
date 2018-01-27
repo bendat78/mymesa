@@ -93,7 +93,8 @@ brw_codegen_cs_prog(struct brw_context *brw,
    program = brw_compile_cs(brw->screen->compiler, brw, mem_ctx, key,
                             &prog_data, cp->program.nir, st_index,
                             &error_str);
-   if (program == NULL) {
+
+   if (!program) {
       cp->program.sh.data->LinkStatus = LINKING_FAILURE;
       ralloc_strcat(&cp->program.sh.data->InfoLog, error_str);
       _mesa_problem(NULL, "Failed to compile compute shader: %s\n", error_str);
