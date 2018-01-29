@@ -10398,7 +10398,7 @@ static int egcm_u64div(struct r600_shader_ctx *ctx)
 	/* make sure we are dividing my a const with 0 in the high bits */
 	if (ctx->src[1].sel != V_SQ_ALU_SRC_LITERAL)
 		return -1;
-	if (ctx->src[1].value[ctx->src[1].swizzle[1]] != 0)
+	if (ctx->src[1].value[ctx->src[1].swizzle[1]])
 		return -1;
 	/* make sure we are doing one division */
 	if (inst->Dst[0].Register.WriteMask != 0x3)
