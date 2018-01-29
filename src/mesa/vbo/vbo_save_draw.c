@@ -34,6 +34,7 @@
 #include "main/macros.h"
 #include "main/light.h"
 #include "main/state.h"
+#include "main/varray.h"
 #include "util/bitscan.h"
 
 #include "vbo_private.h"
@@ -164,15 +165,16 @@ bind_vertex_list(struct gl_context *ctx,
    }
 
    /* Overlay other active attributes */
-   switch (get_program_mode(ctx)) {
-   case VP_NONE:
+   switch (get_vp_mode(ctx)) {
+   case VP_FF:
+      /* Point the generic attributes at the legacy material values */
       for (attr = 0; attr < MAT_ATTRIB_MAX; attr++) {
          save->inputs[VERT_ATTRIB_GENERIC(attr)] =
             &vbo->currval[VBO_ATTRIB_MAT_FRONT_AMBIENT+attr];
       }
       map = vbo->map_vp_none;
       break;
-   case VP_ARB:
+   case VP_SHADER:
       for (attr = 0; attr < VERT_ATTRIB_GENERIC_MAX; attr++) {
          save->inputs[VERT_ATTRIB_GENERIC(attr)] =
             &vbo->currval[VBO_ATTRIB_GENERIC0+attr];
@@ -266,7 +268,8 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 {
    const struct vbo_save_vertex_list *node =
       (const struct vbo_save_vertex_list *) data;
-   struct vbo_save_context *save = &vbo_context(ctx)->save;
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_save_context *save = &vbo->save;
    GLboolean remap_vertex_store = GL_FALSE;
 
    if (save->vertex_store && save->vertex_store->buffer_map) {
@@ -317,7 +320,7 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
 
       bind_vertex_list(ctx, node);
 
-      vbo_draw_method(vbo_context(ctx), DRAW_DISPLAY_LIST);
+      _mesa_set_drawing_arrays(ctx, vbo->save.inputs);
 
       /* Again...
        */
