@@ -222,7 +222,7 @@ _mesa_reference_vao_(struct gl_context *ctx,
 
 
 /**
- * Initialize attribtes of a vertex array within a vertex array object.
+ * Initialize attributes of a vertex array within a vertex array object.
  * \param vao  the container vertex array object
  * \param index  which array in the VAO to initialize
  * \param size  number of components (1, 2, 3 or 4) per attribute
@@ -231,9 +231,11 @@ _mesa_reference_vao_(struct gl_context *ctx,
 static void
 init_array(struct gl_context *ctx,
            struct gl_vertex_array_object *vao,
-           GLuint index, GLint size, GLint type)
+           gl_vert_attrib index, GLint size, GLint type)
 {
+   assert(index < ARRAY_SIZE(vao->VertexAttrib));
    struct gl_array_attributes *array = &vao->VertexAttrib[index];
+   assert(index < ARRAY_SIZE(vao->BufferBinding));
    struct gl_vertex_buffer_binding *binding = &vao->BufferBinding[index];
 
    array->Size = size;
@@ -247,6 +249,8 @@ init_array(struct gl_context *ctx,
    array->Integer = GL_FALSE;
    array->Doubles = GL_FALSE;
    array->_ElementSize = size * _mesa_sizeof_type(type);
+   ASSERT_BITFIELD_SIZE(struct gl_array_attributes, BufferBindingIndex,
+                        VERT_ATTRIB_MAX - 1);
    array->BufferBindingIndex = index;
 
    binding->Offset = 0;
@@ -311,8 +315,8 @@ _mesa_initialize_vao(struct gl_context *ctx,
  * or a gl_vertex_buffer_binding has changed.
  */
 void
-_mesa_update_vao_client_arrays(struct gl_context *ctx,
-                               struct gl_vertex_array_object *vao)
+_mesa_update_vao_derived_arrays(struct gl_context *ctx,
+                                struct gl_vertex_array_object *vao)
 {
    GLbitfield arrays = vao->NewArrays;
 
@@ -324,7 +328,7 @@ _mesa_update_vao_client_arrays(struct gl_context *ctx,
       const struct gl_vertex_buffer_binding *buffer_binding =
          &vao->BufferBinding[attrib_array->BufferBindingIndex];
 
-      _mesa_update_client_array(ctx, client_array, attrib_array,
+      _mesa_update_vertex_array(ctx, client_array, attrib_array,
                                 buffer_binding);
    }
 }

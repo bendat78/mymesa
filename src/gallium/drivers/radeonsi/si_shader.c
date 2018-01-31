@@ -1848,7 +1848,7 @@ void si_llvm_load_input_fs(
 	interp_fs_input(ctx, input_index, semantic_name,
 			semantic_index, 0, /* this param is unused */
 			shader->selector->info.colors_read, interp_param,
-			LLVMGetParam(main_fn, SI_PARAM_PRIM_MASK),
+			ctx->abi.prim_mask,
 			LLVMGetParam(main_fn, SI_PARAM_FRONT_FACE),
 			&out[0]);
 }
@@ -1879,8 +1879,9 @@ static LLVMValueRef buffer_load_const(struct si_shader_context *ctx,
 				    0, 0, 0, true, true);
 }
 
-static LLVMValueRef load_sample_position(struct si_shader_context *ctx, LLVMValueRef sample_id)
+static LLVMValueRef load_sample_position(struct ac_shader_abi *abi, LLVMValueRef sample_id)
 {
+	struct si_shader_context *ctx = si_shader_context_from_abi(abi);
 	struct lp_build_context *uint_bld = &ctx->bld_base.uint_bld;
 	LLVMValueRef desc = LLVMGetParam(ctx->main_fn, ctx->param_rw_buffers);
 	LLVMValueRef buf_index = LLVMConstInt(ctx->i32, SI_PS_CONST_SAMPLE_POSITIONS, 0);
@@ -4046,7 +4047,7 @@ static void interp_fetch_args(
 
 			sample_position = lp_build_gather_values(&ctx->gallivm, center, 4);
 		} else {
-			sample_position = load_sample_position(ctx, sample_id);
+			sample_position = load_sample_position(&ctx->abi, sample_id);
 		}
 
 		emit_data->args[0] = LLVMBuildExtractElement(ctx->ac.builder,
@@ -4075,7 +4076,7 @@ static void build_interp_intrinsic(const struct lp_build_tgsi_action *action,
 	int input_base, input_array_size;
 	int chan;
 	int i;
-	LLVMValueRef prim_mask = LLVMGetParam(ctx->main_fn, SI_PARAM_PRIM_MASK);
+	LLVMValueRef prim_mask = ctx->abi.prim_mask;
 	LLVMValueRef array_idx;
 	int interp_param_idx;
 	unsigned interp;
@@ -4878,7 +4879,8 @@ static void create_function(struct si_shader_context *ctx)
 		declare_global_desc_pointers(ctx, &fninfo);
 		declare_per_stage_desc_pointers(ctx, &fninfo, true);
 		add_arg_checked(&fninfo, ARG_SGPR, ctx->f32, SI_PARAM_ALPHA_REF);
-		add_arg_checked(&fninfo, ARG_SGPR, ctx->i32, SI_PARAM_PRIM_MASK);
+		add_arg_assign_checked(&fninfo, ARG_SGPR, ctx->i32,
+				       &ctx->abi.prim_mask, SI_PARAM_PRIM_MASK);
 
 		add_arg_checked(&fninfo, ARG_VGPR, ctx->v2i32, SI_PARAM_PERSP_SAMPLE);
 		add_arg_checked(&fninfo, ARG_VGPR, ctx->v2i32, SI_PARAM_PERSP_CENTER);
@@ -5360,16 +5362,11 @@ static void si_shader_dump_disassembly(const struct ac_shader_binary *binary,
 	}
 }
 
-static void si_shader_dump_stats(struct si_screen *sscreen,
-				 const struct si_shader *shader,
-			         struct pipe_debug_callback *debug,
-			         unsigned processor,
-				 FILE *file,
-				 bool check_debug_option)
+static void si_calculate_max_simd_waves(struct si_shader *shader)
 {
-	const struct si_shader_config *conf = &shader->config;
-	unsigned num_inputs = shader->selector ? shader->selector->info.num_inputs : 0;
-	unsigned code_size = si_get_shader_binary_size(shader);
+	struct si_screen *sscreen = shader->selector->screen;
+	struct si_shader_config *conf = &shader->config;
+	unsigned num_inputs = shader->selector->info.num_inputs;
 	unsigned lds_increment = sscreen->info.chip_class >= CIK ? 512 : 256;
 	unsigned lds_per_wave = 0;
 	unsigned max_simd_waves;
@@ -5386,7 +5383,7 @@ static void si_shader_dump_stats(struct si_screen *sscreen,
 	}
 
 	/* Compute LDS usage for PS. */
-	switch (processor) {
+	switch (shader->selector->type) {
 	case PIPE_SHADER_FRAGMENT:
 		/* The minimum usage per wave is (num_inputs * 48). The maximum
 		 * usage is (num_inputs * 48 * 16).
@@ -5427,6 +5424,33 @@ static void si_shader_dump_stats(struct si_screen *sscreen,
 	if (lds_per_wave)
 		max_simd_waves = MIN2(max_simd_waves, 16384 / lds_per_wave);
 
+	conf->max_simd_waves = max_simd_waves;
+}
+
+void si_shader_dump_stats_for_shader_db(const struct si_shader *shader,
+					struct pipe_debug_callback *debug)
+{
+	const struct si_shader_config *conf = &shader->config;
+
+	pipe_debug_message(debug, SHADER_INFO,
+			   "Shader Stats: SGPRS: %d VGPRS: %d Code Size: %d "
+			   "LDS: %d Scratch: %d Max Waves: %d Spilled SGPRs: %d "
+			   "Spilled VGPRs: %d PrivMem VGPRs: %d",
+			   conf->num_sgprs, conf->num_vgprs,
+			   si_get_shader_binary_size(shader),
+			   conf->lds_size, conf->scratch_bytes_per_wave,
+			   conf->max_simd_waves, conf->spilled_sgprs,
+			   conf->spilled_vgprs, conf->private_mem_vgprs);
+}
+
+static void si_shader_dump_stats(struct si_screen *sscreen,
+				 const struct si_shader *shader,
+			         unsigned processor,
+				 FILE *file,
+				 bool check_debug_option)
+{
+	const struct si_shader_config *conf = &shader->config;
+
 	if (!check_debug_option ||
 	    si_can_dump_shader(sscreen, processor)) {
 		if (processor == PIPE_SHADER_FRAGMENT) {
@@ -5449,19 +5473,11 @@ static void si_shader_dump_stats(struct si_screen *sscreen,
 			"********************\n\n\n",
 			conf->num_sgprs, conf->num_vgprs,
 			conf->spilled_sgprs, conf->spilled_vgprs,
-			conf->private_mem_vgprs, code_size,
+			conf->private_mem_vgprs,
+			si_get_shader_binary_size(shader),
 			conf->lds_size, conf->scratch_bytes_per_wave,
-			max_simd_waves);
+			conf->max_simd_waves);
 	}
-
-	pipe_debug_message(debug, SHADER_INFO,
-			   "Shader Stats: SGPRS: %d VGPRS: %d Code Size: %d "
-			   "LDS: %d Scratch: %d Max Waves: %d Spilled SGPRs: %d "
-			   "Spilled VGPRs: %d PrivMem VGPRs: %d",
-			   conf->num_sgprs, conf->num_vgprs, code_size,
-			   conf->lds_size, conf->scratch_bytes_per_wave,
-			   max_simd_waves, conf->spilled_sgprs,
-			   conf->spilled_vgprs, conf->private_mem_vgprs);
 }
 
 const char *si_get_shader_name(const struct si_shader *shader, unsigned processor)
@@ -5539,7 +5555,7 @@ void si_shader_dump(struct si_screen *sscreen, const struct si_shader *shader,
 		fprintf(file, "\n");
 	}
 
-	si_shader_dump_stats(sscreen, shader, debug, processor, file,
+	si_shader_dump_stats(sscreen, shader, processor, file,
 			     check_debug_option);
 }
 
@@ -6026,6 +6042,8 @@ static bool si_compile_tgsi_main(struct si_shader_context *ctx,
 		ctx->load_input = declare_input_fs;
 		ctx->abi.emit_outputs = si_llvm_return_fs_outputs;
 		bld_base->emit_epilogue = si_tgsi_emit_epilogue;
+		ctx->abi.lookup_interp_param = si_nir_lookup_interp_param;
+		ctx->abi.load_sample_position = load_sample_position;
 		break;
 	case PIPE_SHADER_COMPUTE:
 		break;
@@ -6967,6 +6985,8 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			shader->info.num_input_vgprs += 1;
 	}
 
+	si_calculate_max_simd_waves(shader);
+	si_shader_dump_stats_for_shader_db(shader, debug);
 	return 0;
 }
 
@@ -8040,6 +8060,7 @@ int si_shader_create(struct si_screen *sscreen, LLVMTargetMachineRef tm,
 			shader->config.num_vgprs = MAX2(shader->config.num_vgprs,
 							shader->epilog->config.num_vgprs);
 		}
+		si_calculate_max_simd_waves(shader);
 	}
 
 	si_fix_resource_usage(sscreen, shader);

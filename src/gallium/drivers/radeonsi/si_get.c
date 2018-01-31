@@ -272,6 +272,9 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_CONTEXT_PRIORITY_MASK:
 		return 0;
 
+	case PIPE_CAP_FENCE_SIGNAL:
+		return sscreen->info.has_syncobj;
+
 	case PIPE_CAP_NATIVE_FENCE_FD:
 		return sscreen->info.has_fence_to_handle;
 
