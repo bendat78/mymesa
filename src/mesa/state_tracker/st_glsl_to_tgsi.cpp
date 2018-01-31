@@ -99,7 +99,7 @@ public:
 
 class immediate_storage : public exec_node {
 public:
-   immediate_storage(gl_constant_value *values, int size32, int type)
+   immediate_storage(gl_constant_value *values, int size32, GLenum type)
    {
       memcpy(this->values, values, size32 * sizeof(gl_constant_value));
       this->size32 = size32;
@@ -109,7 +109,7 @@ public:
    /* doubles are stored across 2 gl_constant_values */
    gl_constant_value values[4];
    int size32; /**< Number of 32-bit components (1-4) */
-   int type; /**< GL_DOUBLE, GL_FLOAT, GL_INT, GL_BOOL, or GL_UNSIGNED_INT */
+   GLenum type; /**< GL_DOUBLE, GL_FLOAT, GL_INT, GL_BOOL, or GL_UNSIGNED_INT */
 };
 
 static const st_src_reg undef_src = st_src_reg(PROGRAM_UNDEFINED, 0, GLSL_TYPE_ERROR);
@@ -208,7 +208,7 @@ public:
    variable_storage *find_variable_storage(ir_variable *var);
 
    int add_constant(gl_register_file file, gl_constant_value values[8],
-                    int size, int datatype, uint16_t *swizzle_out);
+                    int size, GLenum datatype, uint16_t *swizzle_out);
 
    st_src_reg get_temp(const glsl_type *type);
    void reladdr_to_temp(ir_instruction *ir, st_src_reg *reg, int *num_reladdr);
@@ -828,7 +828,8 @@ glsl_to_tgsi_visitor::emit_arl(ir_instruction *ir,
 
 int
 glsl_to_tgsi_visitor::add_constant(gl_register_file file,
-                                   gl_constant_value values[8], int size, int datatype,
+                                   gl_constant_value values[8], int size,
+                                   GLenum datatype,
                                    uint16_t *swizzle_out)
 {
    if (file == PROGRAM_CONSTANT) {
@@ -5498,7 +5499,7 @@ _mesa_sysval_to_semantic(unsigned sysval)
 static struct ureg_src
 emit_immediate(struct st_translate *t,
                gl_constant_value values[4],
-               int type, int size)
+               GLenum type, int size)
 {
    struct ureg_program *ureg = t->ureg;
 
