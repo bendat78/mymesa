@@ -549,7 +549,7 @@ radv_pipeline_init_blend_state(struct radv_pipeline *pipeline,
 {
 	const VkPipelineColorBlendStateCreateInfo *vkblend = pCreateInfo->pColorBlendState;
 	const VkPipelineMultisampleStateCreateInfo *vkms = pCreateInfo->pMultisampleState;
-	struct radv_blend_state blend = {0};
+	struct radv_blend_state blend = {};
 	unsigned mode = V_028808_CB_NORMAL;
 	uint32_t blend_enable = 0, blend_need_alpha = 0;
 	bool blend_mrt0_is_dual_src = false;
@@ -1138,7 +1138,7 @@ static struct radv_gs_state
 calculate_gs_info(const VkGraphicsPipelineCreateInfo *pCreateInfo,
                        const struct radv_pipeline *pipeline)
 {
-	struct radv_gs_state gs = {0};
+	struct radv_gs_state gs = {};
 	struct ac_shader_variant_info *gs_info = &pipeline->shaders[MESA_SHADER_GEOMETRY]->info;
 	struct ac_es_output_info *es_info;
 	if (pipeline->device->physical_device->rad_info.chip_class >= GFX9)
@@ -1331,7 +1331,7 @@ calculate_tess_state(struct radv_pipeline *pipeline,
 	unsigned lds_size, hardware_lds_size;
 	unsigned perpatch_output_offset;
 	unsigned num_patches;
-	struct radv_tessellation_state tess = {0};
+	struct radv_tessellation_state tess = {};
 
 	/* This calculates how shader inputs and outputs among VS, TCS, and TES
 	 * are laid out in LDS. */
@@ -2990,7 +2990,7 @@ radv_compute_ia_multi_vgt_param_helpers(struct radv_pipeline *pipeline,
                                         const struct radv_tessellation_state *tess,
                                         uint32_t prim)
 {
-	struct radv_ia_multi_vgt_param_helpers ia_multi_vgt_param = {0};
+	struct radv_ia_multi_vgt_param_helpers ia_multi_vgt_param = {};
 	const struct radv_device *device = pipeline->device;
 
 	if (radv_pipeline_has_tess(pipeline))
@@ -3132,7 +3132,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 	struct radv_subpass *subpass = pass->subpasses + pCreateInfo->subpass;
 	if (subpass->view_mask)
 		has_view_index = true;
-	if (alloc == NULL)
+	if (!alloc)
 		alloc = &device->alloc;
 
 	pipeline->device = device;
@@ -3147,7 +3147,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		pStages[stage] = &pCreateInfo->pStages[i];
 	}
 
-	radv_create_shaders(pipeline, device, cache, 
+	radv_create_shaders(pipeline, device, cache,
 	                    radv_generate_graphics_pipeline_key(pipeline, pCreateInfo, &blend, has_view_index),
 	                    pStages);
 
@@ -3200,13 +3200,13 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		}
 	}
 
-	struct radv_gs_state gs = {0};
+	struct radv_gs_state gs = {};
 	if (radv_pipeline_has_gs(pipeline)) {
 		gs = calculate_gs_info(pCreateInfo, pipeline);
 		calculate_gs_ring_sizes(pipeline, &gs);
 	}
 
-	struct radv_tessellation_state tess = {0};
+	struct radv_tessellation_state tess = {};
 	if (radv_pipeline_has_tess(pipeline)) {
 		if (prim == V_008958_DI_PT_PATCH) {
 			pipeline->graphics.prim_vertex_count.min = pCreateInfo->pTessellationState->patchControlPoints;
