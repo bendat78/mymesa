@@ -4784,7 +4784,7 @@ glsl_to_tgsi_visitor::get_first_temp_write(int *first_writes)
       }
 
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (depth++ == 0)
+         if (!depth++)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
          if (!--depth)
@@ -4816,7 +4816,7 @@ glsl_to_tgsi_visitor::get_first_temp_read(int *first_reads)
          }
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (depth++ == 0)
+         if (!depth++)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
          if (!--depth)
@@ -4851,7 +4851,7 @@ glsl_to_tgsi_visitor::get_last_temp_read_first_temp_write(int *last_reads, int *
             last_reads[inst->tex_offsets[j].index] = (depth == 0) ? i : -2;
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (depth++ == 0)
+         if (!depth++)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
          if (!--depth) {
