@@ -141,6 +141,9 @@ LLVMValueRef
 ac_build_gather_values(struct ac_llvm_context *ctx,
 		       LLVMValueRef *values,
 		       unsigned value_count);
+LLVMValueRef ac_build_expand_to_vec4(struct ac_llvm_context *ctx,
+				     LLVMValueRef value,
+				     unsigned num_channels);
 
 LLVMValueRef
 ac_build_fdiv(struct ac_llvm_context *ctx,
@@ -216,6 +219,7 @@ LLVMValueRef ac_build_buffer_load_format(struct ac_llvm_context *ctx,
 					 LLVMValueRef vindex,
 					 LLVMValueRef voffset,
 					 unsigned num_channels,
+					 bool glc,
 					 bool can_speculate);
 
 LLVMValueRef

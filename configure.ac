@@ -689,6 +689,19 @@ LDFLAGS=$save_LDFLAGS
 AM_CONDITIONAL(HAVE_LD_DYNAMIC_LIST, test "$have_ld_dynamic_list" = "yes")
 
 dnl
+dnl OSX linker does not support build-id
+dnl
+case "$host_os" in
+darwin*)
+    LD_BUILD_ID=""
+    ;;
+*)
+    LD_BUILD_ID="-Wl,--build-id=sha1"
+    ;;
+esac
+AC_SUBST([LD_BUILD_ID])
+
+dnl
 dnl compatibility symlinks
 dnl
 case "$host_os" in
@@ -1273,10 +1286,10 @@ AC_ARG_ENABLE([xa],
     [enable_xa=no])
 AC_ARG_ENABLE([gbm],
    [AS_HELP_STRING([--enable-gbm],
-         [enable gbm library @<:@default=yes except cygwin@:>@])],
+         [enable gbm library @<:@default=yes except cygwin and macOS@:>@])],
    [enable_gbm="$enableval"],
    [case "$host_os" in
-       cygwin*)
+       cygwin* | darwin*)
           enable_gbm=no
           ;;
        *)
