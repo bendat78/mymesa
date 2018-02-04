@@ -348,7 +348,7 @@ vc5_get_ub_pad(struct vc5_resource *rsc, uint32_t height)
         uint32_t height_offset_in_pc = height_ub % PAGE_CACHE_UB_ROWS;
 
         /* For the perfectly-aligned-for-UIF-XOR case, don't add any pad. */
-        if (height_offset_in_pc == 0)
+        if (!height_offset_in_pc)
                 return 0;
 
         /* Try padding up to where we're offset by at least half a page. */
