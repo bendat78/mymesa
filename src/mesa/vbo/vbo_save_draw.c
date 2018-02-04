@@ -152,7 +152,7 @@ bind_vertex_list(struct gl_context *ctx,
       const GLuint src = map[array_map[attr]];
       const GLubyte size = node->attrsz[src];
 
-      if (size == 0) {
+      if (!size) {
          save->inputs[attr] = &vbo->currval[map[attr]];
       } else {
          struct gl_vertex_array *array = &arrays[attr];

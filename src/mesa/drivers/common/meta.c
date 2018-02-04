@@ -880,7 +880,7 @@ _mesa_meta_end(struct gl_context *ctx)
       for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
          if (GET_COLORMASK(ctx->Color.ColorMask, i) !=
              GET_COLORMASK(save->ColorMask, i)) {
-            if (i == 0) {
+            if (!i) {
                _mesa_ColorMask(GET_COLORMASK_BIT(save->ColorMask, i, 0),
                                GET_COLORMASK_BIT(save->ColorMask, i, 1),
                                GET_COLORMASK_BIT(save->ColorMask, i, 2),

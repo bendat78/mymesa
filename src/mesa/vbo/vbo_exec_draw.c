@@ -188,7 +188,7 @@ vbo_exec_bind_arrays(struct gl_context *ctx)
       const GLuint src = map[array_map[attr]];
       const GLubyte size = exec->vtx.attrsz[src];
 
-      if (size == 0) {
+      if (!size) {
          exec->vtx.inputs[attr] = &vbo->currval[map[attr]];
       } else {
          GLsizeiptr offset = (GLbyte *)exec->vtx.attrptr[src] -
