@@ -270,6 +270,7 @@ typedef struct {
       struct pipe_h265_picture_desc h265;
       struct pipe_mjpeg_picture_desc mjpeg;
       struct pipe_h264_enc_picture_desc h264enc;
+      struct pipe_h265_enc_picture_desc h265enc;
    } desc;
 
    struct {
@@ -426,5 +427,17 @@ void vlVaHandlePictureParameterBufferMJPEG(vlVaDriver *drv, vlVaContext *context
 void vlVaHandleIQMatrixBufferMJPEG(vlVaContext *context, vlVaBuffer *buf);
 void vlVaHandleHuffmanTableBufferType(vlVaContext *context, vlVaBuffer *buf);
 void vlVaHandleSliceParameterBufferMJPEG(vlVaContext *context, vlVaBuffer *buf);
+void getEncParamPresetH264(vlVaContext *context);
+void getEncParamPresetH265(vlVaContext *context);
+VAStatus vlVaHandleVAEncPictureParameterBufferTypeH264(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *buf);
+VAStatus vlVaHandleVAEncSliceParameterBufferTypeH264(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *buf);
+VAStatus vlVaHandleVAEncSequenceParameterBufferTypeH264(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *buf);
+VAStatus vlVaHandleVAEncMiscParameterTypeRateControlH264(vlVaContext *context, VAEncMiscParameterBuffer *buf);
+VAStatus vlVaHandleVAEncMiscParameterTypeFrameRateH264(vlVaContext *context, VAEncMiscParameterBuffer *buf);
+VAStatus vlVaHandleVAEncPictureParameterBufferTypeHEVC(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *buf);
+VAStatus vlVaHandleVAEncSliceParameterBufferTypeHEVC(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *buf);
+VAStatus vlVaHandleVAEncSequenceParameterBufferTypeHEVC(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *buf);
+VAStatus vlVaHandleVAEncMiscParameterTypeRateControlHEVC(vlVaContext *context, VAEncMiscParameterBuffer *buf);
+VAStatus vlVaHandleVAEncMiscParameterTypeFrameRateHEVC(vlVaContext *context, VAEncMiscParameterBuffer *buf);
 
 #endif //VA_PRIVATE_H
