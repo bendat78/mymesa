@@ -123,18 +123,6 @@ vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
    }
 
    if (context->decoder->entrypoint == PIPE_VIDEO_ENTRYPOINT_ENCODE) {
-<<<<<<< HEAD
-      int frame_diff;
-      if (context->desc.h264enc.frame_num_cnt >= surf->frame_num_cnt)
-         frame_diff = context->desc.h264enc.frame_num_cnt - surf->frame_num_cnt;
-      else
-         frame_diff = 0xFFFFFFFF - surf->frame_num_cnt + 1 + context->desc.h264enc.frame_num_cnt;
-      if (!(frame_diff) &&
-          (surf->force_flushed == false) &&
-          (context->desc.h264enc.frame_num_cnt % 2 != 0)) {
-         context->decoder->flush(context->decoder);
-         context->first_single_submitted = true;
-=======
       if (u_reduce_video_profile(context->templat.profile) == PIPE_VIDEO_FORMAT_MPEG4_AVC) {
          int frame_diff;
          if (context->desc.h264enc.frame_num_cnt >= surf->frame_num_cnt)
@@ -147,7 +135,6 @@ vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
             context->decoder->flush(context->decoder);
             context->first_single_submitted = true;
          }
->>>>>>> e2b31e9acf034407cc020d8956b06bd0995fe809
       }
       context->decoder->get_feedback(context->decoder, surf->feedback, &(surf->coded_buf->coded_size));
       surf->feedback = NULL;
