@@ -617,6 +617,8 @@ if with_platform_x11
     endif
     if with_dri_platform == 'drm'
       pre_args += '-DGLX_USE_DRM'
+    elif with_dri_platform == 'apple'
+      pre_args += '-DGLX_USE_APPLEGL'
     elif with_dri_platform == 'windows'
       pre_args += '-DGLX_USE_WINDOWSGL'
     endif
@@ -906,6 +908,10 @@ if cc.links('int main() { return 0; }',
               join_paths(meson.source_root(), 'build-support/conftest.dyn')),
             name : 'dynamic-list')
   with_ld_dynamic_list = true
+endif
+ld_args_build_id = []
+if build_machine.system() != 'darwin'
+   ld_args_build_id += '-Wl,--build-id=sha1'
 endif
 
 # check for dl support
