@@ -2213,7 +2213,7 @@ static int emit_streamout(struct r600_shader_ctx *ctx, struct pipe_stream_output
 	for (i = 0; i < so->num_outputs; i++) {
 		struct r600_bytecode_output output;
 
-		if (stream != -1 && stream != so->output[i].output_buffer)
+		if (stream != -1 && stream != so->output[i].stream)
 			continue;
 
 		memset(&output, 0, sizeof(struct r600_bytecode_output));
@@ -3247,7 +3247,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 		break;
 	case PIPE_SHADER_COMPUTE:
 		shader->rat_base = 0;
-		shader->image_size_const_offset = 0;
+		shader->image_size_const_offset = ctx.info.file_count[TGSI_FILE_SAMPLER];
 		break;
 	default:
 		break;
@@ -3875,6 +3875,17 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 					output[j].array_base = shader->output[i].sid;
 					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 					shader->nr_ps_color_exports++;
+					shader->ps_color_export_mask |= (0xf << (shader->output[i].sid * 4));
+
+					/* If the i-th target format is set, all previous target formats must
+					 * be non-zero to avoid hangs. - from radeonsi, seems to apply to eg as well.
+					 */
+					if (shader->output[i].sid > 0)
+						for (unsigned x = 0; x < shader->output[i].sid; x++)
+							shader->ps_color_export_mask |= (1 << (x*4));
+
+					if (shader->output[i].sid > shader->ps_export_highest)
+						shader->ps_export_highest = shader->output[i].sid;
 					if (shader->fs_write_all && (rscreen->b.chip_class >= EVERGREEN)) {
 						for (k = 1; k < max_color_exports; k++) {
 							j++;
@@ -3890,6 +3901,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 							output[j].op = CF_OP_EXPORT;
 							output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 							shader->nr_ps_color_exports++;
+							shader->ps_color_export_mask |= (0xf << (j * 4));
 						}
 					}
 				} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
@@ -3978,6 +3990,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 			output[j].op = CF_OP_EXPORT;
 			j++;
 			shader->nr_ps_color_exports++;
+			shader->ps_color_export_mask = 0xf;
 		}
 
 		noutput = j;
@@ -7009,7 +7022,7 @@ static int do_vtx_fetch_inst(struct r600_shader_ctx *ctx, boolean src_requires_l
 	return 0;
 }
 
-static int r600_do_buffer_txq(struct r600_shader_ctx *ctx, int reg_idx, int offset)
+static int r600_do_buffer_txq(struct r600_shader_ctx *ctx, int reg_idx, int offset, int eg_buffer_base)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	int r;
@@ -7035,7 +7048,7 @@ static int r600_do_buffer_txq(struct r600_shader_ctx *ctx, int reg_idx, int offs
 		struct r600_bytecode_vtx vtx;
 		memset(&vtx, 0, sizeof(vtx));
 		vtx.op = FETCH_OP_GET_BUFFER_RESINFO;
-		vtx.buffer_id = id + R600_MAX_CONST_BUFFERS;
+		vtx.buffer_id = id + eg_buffer_base;
 		vtx.fetch_type = SQ_VTX_FETCH_NO_INDEX_OFFSET;
 		vtx.src_gpr = 0;
 		vtx.mega_fetch_count = 16; /* no idea here really... */
@@ -7109,7 +7122,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		if (inst->Instruction.Opcode == TGSI_OPCODE_TXQ) {
 			if (ctx->bc->chip_class < EVERGREEN)
 				ctx->shader->uses_tex_buffers = true;
-			return r600_do_buffer_txq(ctx, 1, 0);
+			return r600_do_buffer_txq(ctx, 1, 0, R600_MAX_CONST_BUFFERS);
 		}
 		else if (inst->Instruction.Opcode == TGSI_OPCODE_TXF) {
 			if (ctx->bc->chip_class < EVERGREEN)
@@ -8679,6 +8692,33 @@ static int tgsi_atomic_op_gds(struct r600_shader_ctx *ctx)
 	if (r)
 		return r;
 
+	if (gds_op == FETCH_OP_GDS_CMP_XCHG_RET) {
+		if (inst->Src[3].Register.File == TGSI_FILE_IMMEDIATE) {
+			int value = (ctx->literals[4 * inst->Src[3].Register.Index + inst->Src[3].Register.SwizzleX]);
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.op = ALU_OP1_MOV;
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = is_cm ? 2 : 1;
+			alu.src[0].sel = V_SQ_ALU_SRC_LITERAL;
+			alu.src[0].value = value;
+			alu.last = 1;
+			alu.dst.write = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		} else {
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.op = ALU_OP1_MOV;
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = is_cm ? 2 : 1;
+			r600_bytecode_src(&alu.src[0], &ctx->src[3], 0);
+			alu.last = 1;
+			alu.dst.write = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+	}
 	if (inst->Src[2].Register.File == TGSI_FILE_IMMEDIATE) {
 		int value = (ctx->literals[4 * inst->Src[2].Register.Index + inst->Src[2].Register.SwizzleX]);
 		int abs_value = abs(value);
@@ -8718,7 +8758,10 @@ static int tgsi_atomic_op_gds(struct r600_shader_ctx *ctx)
 	gds.src_gpr2 = 0;
 	gds.src_sel_x = is_cm ? 0 : 4;
 	gds.src_sel_y = is_cm ? 1 : 0;
-	gds.src_sel_z = 7;
+	if (gds_op == FETCH_OP_GDS_CMP_XCHG_RET)
+		gds.src_sel_z = is_cm ? 2 : 1;
+	else
+		gds.src_sel_z = 7;
 	gds.dst_sel_x = 0;
 	gds.dst_sel_y = 7;
 	gds.dst_sel_z = 7;
@@ -8823,10 +8866,11 @@ static int tgsi_resq(struct r600_shader_ctx *ctx)
 	    (inst->Src[0].Register.File == TGSI_FILE_IMAGE && inst->Memory.Texture == TGSI_TEXTURE_BUFFER)) {
 		if (ctx->bc->chip_class < EVERGREEN)
 			ctx->shader->uses_tex_buffers = true;
-		unsigned offset = 0;
-		if (inst->Src[0].Register.File == TGSI_FILE_IMAGE)
-			offset += R600_IMAGE_REAL_RESOURCE_OFFSET - R600_MAX_CONST_BUFFERS + ctx->shader->image_size_const_offset;
-		return r600_do_buffer_txq(ctx, 0, offset);
+		unsigned eg_buffer_base = 0;
+		eg_buffer_base = R600_IMAGE_REAL_RESOURCE_OFFSET;
+		if (inst->Src[0].Register.File == TGSI_FILE_BUFFER)
+			eg_buffer_base += ctx->info.file_count[TGSI_FILE_IMAGE];
+		return r600_do_buffer_txq(ctx, 0, ctx->shader->image_size_const_offset, eg_buffer_base);
 	}
 
 	if (inst->Memory.Texture == TGSI_TEXTURE_CUBE_ARRAY &&
