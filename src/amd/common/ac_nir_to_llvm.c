@@ -90,9 +90,6 @@ struct nir_to_llvm_context {
 	LLVMValueRef ring_offsets;
 	LLVMValueRef push_constants;
 	LLVMValueRef view_index;
-	LLVMValueRef num_work_groups;
-	LLVMValueRef workgroup_ids[3];
-	LLVMValueRef local_invocation_ids;
 	LLVMValueRef tg_size;
 
 	LLVMValueRef vertex_buffers;
@@ -782,21 +779,21 @@ static void create_function(struct nir_to_llvm_context *ctx,
 
 		if (ctx->shader_info->info.cs.uses_grid_size) {
 			add_arg(&args, ARG_SGPR, ctx->ac.v3i32,
-				&ctx->num_work_groups);
+				&ctx->abi.num_work_groups);
 		}
 
 		for (int i = 0; i < 3; i++) {
-			ctx->workgroup_ids[i] = NULL;
+			ctx->abi.workgroup_ids[i] = NULL;
 			if (ctx->shader_info->info.cs.uses_block_id[i]) {
 				add_arg(&args, ARG_SGPR, ctx->ac.i32,
-					&ctx->workgroup_ids[i]);
+					&ctx->abi.workgroup_ids[i]);
 			}
 		}
 
 		if (ctx->shader_info->info.cs.uses_local_invocation_idx)
 			add_arg(&args, ARG_SGPR, ctx->ac.i32, &ctx->tg_size);
 		add_arg(&args, ARG_VGPR, ctx->ac.v3i32,
-			&ctx->local_invocation_ids);
+			&ctx->abi.local_invocation_ids);
 		break;
 	case MESA_SHADER_VERTEX:
 		declare_global_input_sgprs(ctx, stage, has_previous_stage,
@@ -4300,8 +4297,8 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 		LLVMValueRef values[3];
 
 		for (int i = 0; i < 3; i++) {
-			values[i] = ctx->nctx->workgroup_ids[i] ?
-				    ctx->nctx->workgroup_ids[i] : ctx->ac.i32_0;
+			values[i] = ctx->abi->workgroup_ids[i] ?
+				    ctx->abi->workgroup_ids[i] : ctx->ac.i32_0;
 		}
 
 		result = ac_build_gather_values(&ctx->ac, values, 3);
@@ -4311,12 +4308,15 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 		result = ctx->abi->base_vertex;
 		break;
 	}
+	case nir_intrinsic_load_local_group_size:
+		result = ctx->abi->load_local_group_size(ctx->abi);
+		break;
 	case nir_intrinsic_load_vertex_id_zero_base: {
 		result = ctx->abi->vertex_id;
 		break;
 	}
 	case nir_intrinsic_load_local_invocation_id: {
-		result = ctx->nctx->local_invocation_ids;
+		result = ctx->abi->local_invocation_ids;
 		break;
 	}
 	case nir_intrinsic_load_base_instance:
@@ -4376,7 +4376,7 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 		result = ctx->abi->instance_id;
 		break;
 	case nir_intrinsic_load_num_work_groups:
-		result = ctx->nctx->num_work_groups;
+		result = ctx->abi->num_work_groups;
 		break;
 	case nir_intrinsic_load_local_invocation_index:
 		result = visit_load_local_invocation_index(ctx->nctx);
@@ -4438,6 +4438,9 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 		break;
 	case nir_intrinsic_image_size:
 		result = visit_image_size(ctx, instr);
+		break;
+	case nir_intrinsic_shader_clock:
+		result = ac_build_shader_clock(&ctx->ac);
 		break;
 	case nir_intrinsic_discard:
 	case nir_intrinsic_discard_if:
@@ -6752,8 +6755,9 @@ void ac_nir_translate(struct ac_llvm_context *ac, struct ac_shader_abi *abi,
 	visit_cf_list(&ctx, &func->impl->body);
 	phi_post_pass(&ctx);
 
-	ctx.abi->emit_outputs(ctx.abi, RADEON_LLVM_MAX_OUTPUTS,
-			      ctx.outputs);
+	if (nir->info.stage != MESA_SHADER_COMPUTE)
+		ctx.abi->emit_outputs(ctx.abi, RADEON_LLVM_MAX_OUTPUTS,
+				      ctx.outputs);
 
 	free(ctx.locals);
 	ralloc_free(ctx.defs);
