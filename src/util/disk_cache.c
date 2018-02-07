@@ -77,6 +77,7 @@
 struct disk_cache {
    /* The path to the cache directory. */
    char *path;
+   bool path_init_failed;
 
    /* Thread queue for compressing and writing cache entries to disk */
    struct util_queue cache_queue;
@@ -100,6 +101,9 @@ struct disk_cache {
    /* Driver cache keys. */
    uint8_t *driver_keys_blob;
    size_t driver_keys_blob_size;
+
+   disk_cache_put_cb blob_put_cb;
+   disk_cache_get_cb blob_get_cb;
 };
 
 struct disk_cache_put_job {
@@ -178,35 +182,18 @@ concatenate_and_mkdir(void *ctx, const char *path, const char *name)
       return NULL;
 }
 
-#define DRV_KEY_CPY(_dst, _src, _src_size) \
-do {                                       \
-   memcpy(_dst, _src, _src_size);          \
-   _dst += _src_size;                      \
-} while (0);
-
-struct disk_cache *
-disk_cache_create(const char *gpu_name, const char *timestamp,
-                  uint64_t driver_flags)
+static bool
+disk_cache_path_init(struct disk_cache *cache)
 {
-   void *local;
-   struct disk_cache *cache = NULL;
-   char *path, *max_size_str;
-   uint64_t max_size;
+   void *local = NULL;
+   char *path;
    int fd = -1;
    struct stat sb;
    size_t size;
 
-   /* If running as a users other than the real user disable cache */
-   if (geteuid() != getuid())
-      return NULL;
-
    /* A ralloc context for transient data during this invocation. */
    local = ralloc_context(NULL);
    if (!local)
-      goto fail;
-
-   /* At user request, disable shader cache entirely. */
-   if (env_var_as_boolean("MESA_GLSL_CACHE_DISABLE", false))
       goto fail;
 
    /* Determine path for cache based on the first defined name as follows:
@@ -273,10 +260,6 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
          goto fail;
    }
 
-   cache = ralloc(NULL, struct disk_cache);
-   if (!cache)
-      goto fail;
-
    cache->path = ralloc_strdup(cache, path);
    if (!cache->path)
       goto fail;
@@ -325,6 +308,58 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
    cache->size = (uint64_t *) cache->index_mmap;
    cache->stored_keys = cache->index_mmap + sizeof(uint64_t);
 
+   /* 1 thread was chosen because we don't really care about getting things
+    * to disk quickly just that it's not blocking other tasks.
+    *
+    * The queue will resize automatically when it's full, so adding new jobs
+    * doesn't stall.
+    */
+   util_queue_init(&cache->cache_queue, "disk_cache", 32, 1,
+                   UTIL_QUEUE_INIT_RESIZE_IF_FULL |
+                   UTIL_QUEUE_INIT_USE_MINIMUM_PRIORITY);
+
+   ralloc_free(local);
+
+   return true;
+
+ fail:
+   if (fd != -1)
+      close(fd);
+
+   if (local)
+      ralloc_free(local);
+
+   cache->path_init_failed = true;
+
+   return false;
+}
+
+#define DRV_KEY_CPY(_dst, _src, _src_size) \
+do {                                       \
+   memcpy(_dst, _src, _src_size);          \
+   _dst += _src_size;                      \
+} while (0);
+
+struct disk_cache *
+disk_cache_create(const char *gpu_name, const char *timestamp,
+                  uint64_t driver_flags)
+{
+   struct disk_cache *cache = NULL;
+   char *max_size_str;
+   uint64_t max_size;
+
+   /* If running as a users other than the real user disable cache */
+   if (geteuid() != getuid())
+      return NULL;
+
+   /* At user request, disable shader cache entirely. */
+   if (env_var_as_boolean("MESA_GLSL_CACHE_DISABLE", false))
+      return NULL;
+
+   cache = rzalloc(NULL, struct disk_cache);
+   if (cache == NULL)
+      return NULL;
+
    max_size = 0;
 
    max_size_str = getenv("MESA_GLSL_CACHE_MAX_SIZE");
@@ -360,16 +395,6 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
 
    cache->max_size = max_size;
 
-   /* 1 thread was chosen because we don't really care about getting things
-    * to disk quickly just that it's not blocking other tasks.
-    *
-    * The queue will resize automatically when it's full, so adding new jobs
-    * doesn't stall.
-    */
-   util_queue_init(&cache->cache_queue, "disk_cache", 32, 1,
-                   UTIL_QUEUE_INIT_RESIZE_IF_FULL |
-                   UTIL_QUEUE_INIT_USE_MINIMUM_PRIORITY);
-
    uint8_t cache_version = CACHE_VERSION;
    size_t cv_size = sizeof(cache_version);
    cache->driver_keys_blob_size = cv_size;
@@ -392,8 +417,10 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
 
    cache->driver_keys_blob =
       ralloc_size(cache, cache->driver_keys_blob_size);
-   if (!cache->driver_keys_blob)
-      goto fail;
+   if (!cache->driver_keys_blob) {
+      ralloc_free(cache);
+      return NULL;
+   }
 
    uint8_t *drv_key_blob = cache->driver_keys_blob;
    DRV_KEY_CPY(drv_key_blob, &cache_version, cv_size)
@@ -405,24 +432,13 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
    /* Seed our rand function */
    s_rand_xorshift128plus(cache->seed_xorshift128plus, true);
 
-   ralloc_free(local);
-
    return cache;
-
- fail:
-   if (fd != -1)
-      close(fd);
-   if (cache)
-      ralloc_free(cache);
-   ralloc_free(local);
-
-   return NULL;
 }
 
 void
 disk_cache_destroy(struct disk_cache *cache)
 {
-   if (cache) {
+   if (cache && cache->index_mmap) {
       util_queue_destroy(&cache->cache_queue);
       munmap(cache->index_mmap, cache->index_mmap_size);
    }
@@ -440,6 +456,9 @@ get_cache_file(struct disk_cache *cache, const cache_key key)
 {
    char buf[41];
    char *filename;
+
+   if (!cache->path)
+      return NULL;
 
    _mesa_sha1_format(buf, key);
    if (asprintf(&filename, "%s/%c%c/%s", cache->path, buf[0],
@@ -996,6 +1015,16 @@ disk_cache_put(struct disk_cache *cache, const cache_key key,
                const void *data, size_t size,
                struct cache_item_metadata *cache_item_metadata)
 {
+   if (cache->blob_put_cb) {
+      cache->blob_put_cb(key, CACHE_KEY_SIZE, data, size);
+      return;
+   }
+
+   /* Initialize path if not initialized yet. */
+   if (cache->path_init_failed ||
+       (!cache->path && !disk_cache_path_init(cache)))
+      return;
+
    struct disk_cache_put_job *dc_job =
       create_put_job(cache, key, data, size, cache_item_metadata);
 
@@ -1057,6 +1086,28 @@ disk_cache_get(struct disk_cache *cache, const cache_key key, size_t *size)
 
    if (size)
       *size = 0;
+
+   if (cache->blob_get_cb) {
+      /* This is what Android EGL defines as the maxValueSize in egl_cache_t
+       * class implementation.
+       */
+      const signed long max_blob_size = 64 * 1024;
+      void *blob = malloc(max_blob_size);
+      if (!blob)
+         return NULL;
+
+      signed long bytes =
+         cache->blob_get_cb(key, CACHE_KEY_SIZE, blob, max_blob_size);
+
+      if (!bytes) {
+         free(blob);
+         return NULL;
+      }
+
+      if (size)
+         *size = bytes;
+      return blob;
+   }
 
    filename = get_cache_file(cache, key);
    if (!filename)
@@ -1173,6 +1224,16 @@ disk_cache_put_key(struct disk_cache *cache, const cache_key key)
    int i = CPU_TO_LE32(*key_chunk) & CACHE_INDEX_KEY_MASK;
    unsigned char *entry;
 
+   if (cache->blob_put_cb) {
+      cache->blob_put_cb(key, CACHE_KEY_SIZE, key_chunk, sizeof(uint32_t));
+      return;
+   }
+
+   if (!cache->path) {
+      assert(!"disk_cache_put_key called with no path set");
+      return;
+   }
+
    entry = &cache->stored_keys[i * CACHE_KEY_SIZE];
 
    memcpy(entry, key, CACHE_KEY_SIZE);
@@ -1192,6 +1253,16 @@ disk_cache_has_key(struct disk_cache *cache, const cache_key key)
    int i = CPU_TO_LE32(*key_chunk) & CACHE_INDEX_KEY_MASK;
    unsigned char *entry;
 
+   if (cache->blob_get_cb) {
+      uint32_t blob;
+      return cache->blob_get_cb(key, CACHE_KEY_SIZE, &blob, sizeof(uint32_t));
+   }
+
+   /* Initialize path if not initialized yet. */
+   if (cache->path_init_failed ||
+       (!cache->path && !disk_cache_path_init(cache)))
+      return false;
+
    entry = &cache->stored_keys[i * CACHE_KEY_SIZE];
 
    return memcmp(entry, key, CACHE_KEY_SIZE) == 0;
@@ -1208,6 +1279,14 @@ disk_cache_compute_key(struct disk_cache *cache, const void *data, size_t size,
                      cache->driver_keys_blob_size);
    _mesa_sha1_update(&ctx, data, size);
    _mesa_sha1_final(&ctx, key);
+}
+
+void
+disk_cache_set_callbacks(struct disk_cache *cache, disk_cache_put_cb put,
+                         disk_cache_get_cb get)
+{
+   cache->blob_put_cb = put;
+   cache->blob_get_cb = get;
 }
 
 #endif /* ENABLE_SHADER_CACHE */
