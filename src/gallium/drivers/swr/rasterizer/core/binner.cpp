@@ -648,7 +648,6 @@ void SIMDCALL BinTrianglesImpl(
     typename SIMD_T::Integer const &viewportIdx,
     typename SIMD_T::Integer const &rtIdx)
 {
-    SWR_CONTEXT *pContext = pDC->pContext;
     const uint32_t *aRTAI = reinterpret_cast<const uint32_t *>(&rtIdx);
 
     RDTSC_BEGIN(FEBinTriangles, pDC->drawId);
@@ -1195,8 +1194,6 @@ void BinPostSetupPointsImpl(
     typename SIMD_T::Integer const &viewportIdx,
     typename SIMD_T::Integer const &rtIdx)
 {
-    SWR_CONTEXT *pContext = pDC->pContext;
-
     RDTSC_BEGIN(FEBinPoints, pDC->drawId);
 
     typename SIMD_T::Vec4 &primVerts = prim[0];
@@ -1606,7 +1603,6 @@ void BinPostSetupLinesImpl(
     typename SIMD_T::Integer const &viewportIdx,
     typename SIMD_T::Integer const &rtIdx)
 {
-    SWR_CONTEXT *pContext = pDC->pContext;
     const uint32_t *aRTAI = reinterpret_cast<const uint32_t *>(&rtIdx);
 
     RDTSC_BEGIN(FEBinLines, pDC->drawId);
