@@ -89,7 +89,13 @@ static struct VADriverVTable vtable =
    &vlVaQuerySurfaceAttributes,
    &vlVaAcquireBufferHandle,
    &vlVaReleaseBufferHandle,
-#if 0
+#if VA_CHECK_VERSION(1, 1, 0)
+   NULL, /* vaCreateMFContext */
+   NULL, /* vaMFAddContext */
+   NULL, /* vaMFReleaseContext */
+   NULL, /* vaMFSubmit */
+   NULL, /* vaCreateBuffer2 */
+   NULL, /* vaQueryProcessingRate */
    &vlVaExportSurfaceHandle,
 #endif
 };
@@ -175,7 +181,11 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
    ctx->max_image_formats = VL_VA_MAX_IMAGE_FORMATS;
    ctx->max_subpic_formats = 1;
    ctx->max_display_attributes = 1;
-   ctx->str_vendor = "mesa gallium vaapi";
+
+   snprintf(drv->vendor_string, sizeof(drv->vendor_string),
+            "Mesa Gallium driver " PACKAGE_VERSION " for %s",
+            drv->vscreen->pscreen->get_name(drv->vscreen->pscreen));
+   ctx->str_vendor = drv->vendor_string;
 
    return VA_STATUS_SUCCESS;
 

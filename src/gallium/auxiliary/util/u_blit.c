@@ -180,14 +180,14 @@ set_fragment_shader(struct blit_state *ctx,
       assert(stype == TGSI_RETURN_TYPE_FLOAT);
       idx = 3;
       if (!ctx->fs[pipe_tex][idx]) {
-         enum tgsi_texture_type tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex, 0);
+         enum tgsi_texture_type tgsi_tex =
+            util_pipe_tex_to_tgsi_tex(pipe_tex, 0);
          ctx->fs[pipe_tex][idx] =
             util_make_fragment_tex_shader_xrbias(ctx->pipe, tgsi_tex);
       }
    }
-
    else if (!ctx->fs[pipe_tex][idx]) {
-      unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex, 0);
+      enum tgsi_texture_type tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex, 0);
 
       /* OpenGL does not allow blits from signed to unsigned integer
        * or vice versa. */
@@ -228,7 +228,7 @@ set_vertex_shader(struct blit_state *ctx)
  * Get offset of next free slot in vertex buffer for quad vertices.
  */
 static unsigned
-get_next_slot( struct blit_state *ctx )
+get_next_slot(struct blit_state *ctx)
 {
    const unsigned max_slots = 4096 / sizeof ctx->vertices;
 
@@ -259,7 +259,7 @@ get_next_slot( struct blit_state *ctx )
  */
 static unsigned
 setup_vertex_data_tex(struct blit_state *ctx,
-                      unsigned src_target,
+                      enum pipe_texture_target src_target,
                       unsigned src_face,
                       float x0, float y0, float x1, float y1,
                       float s0, float t0, float s1, float t1,
@@ -298,14 +298,15 @@ setup_vertex_data_tex(struct blit_state *ctx,
    if (src_target == PIPE_TEXTURE_CUBE ||
        src_target == PIPE_TEXTURE_CUBE_ARRAY) {
       /* Map cubemap texture coordinates inplace. */
-      const unsigned stride = sizeof ctx->vertices[0] / sizeof ctx->vertices[0][0][0];
+      const unsigned stride =
+         sizeof ctx->vertices[0] / sizeof ctx->vertices[0][0][0];
       util_map_texcoords2d_onto_cubemap(src_face,
                                         &ctx->vertices[0][1][0], stride,
                                         &ctx->vertices[0][1][0], stride,
                                         TRUE);
    }
 
-   offset = get_next_slot( ctx );
+   offset = get_next_slot(ctx);
 
    if (ctx->vbuf) {
       pipe_buffer_write_nooverlap(ctx->pipe, ctx->vbuf,
@@ -380,7 +381,8 @@ util_blit_pixels(struct blit_state *ctx,
                  struct pipe_surface *dst,
                  int dstX0, int dstY0,
                  int dstX1, int dstY1,
-                 MAYBE_UNUSED float z, uint filter,
+                 MAYBE_UNUSED float z,
+                 enum pipe_tex_filter filter,
                  uint writemask)
 {
    struct pipe_context *pipe = ctx->pipe;
@@ -514,7 +516,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
                      struct pipe_surface *dst,
                      int dstX0, int dstY0,
                      int dstX1, int dstY1,
-                     float z, uint filter,
+                     float z, enum pipe_tex_filter filter,
                      boolean src_xrbias)
 {
    boolean normalized = src_sampler_view->texture->target != PIPE_TEXTURE_RECT;
@@ -535,8 +537,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    t0 = (float) srcY0;
    t1 = (float) srcY1;
 
-   if(normalized)
-   {
+   if (normalized) {
       /* normalize according to the mipmap level's size */
       int level = src_sampler_view->u.tex.first_level;
       float w = (float) u_minify(tex->width0, level);
@@ -603,8 +604,8 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_sampler_views(ctx->cso, PIPE_SHADER_FRAGMENT, 1, &src_sampler_view);
 
    /* shaders */
-   set_fragment_shader(ctx, src_xrbias,
-                       src_sampler_view->format,
+   set_fragment_shader(ctx, src_sampler_view->format,
+                       src_xrbias,
                        src_sampler_view->texture->target);
    set_vertex_shader(ctx);
    cso_set_tessctrl_shader_handle(ctx->cso, NULL);

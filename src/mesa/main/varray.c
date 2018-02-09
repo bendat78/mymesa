@@ -168,6 +168,8 @@ vertex_attrib_binding(struct gl_context *ctx,
 
       if (_mesa_is_bufferobj(vao->BufferBinding[bindingIndex].BufferObj))
          vao->VertexAttribBufferMask |= array_bit;
+      else
+         vao->VertexAttribBufferMask &= ~array_bit;
 
       FLUSH_VERTICES(ctx, _NEW_ARRAY);
 
@@ -176,7 +178,7 @@ vertex_attrib_binding(struct gl_context *ctx,
 
       array->BufferBindingIndex = bindingIndex;
 
-      vao->NewArrays |= array_bit;
+      vao->NewArrays |= vao->_Enabled & array_bit;
    }
 }
 
@@ -211,7 +213,7 @@ _mesa_bind_vertex_buffer(struct gl_context *ctx,
       else
          vao->VertexAttribBufferMask |= binding->_BoundArrays;
 
-      vao->NewArrays |= binding->_BoundArrays;
+      vao->NewArrays |= vao->_Enabled & binding->_BoundArrays;
    }
 }
 
@@ -232,7 +234,7 @@ vertex_binding_divisor(struct gl_context *ctx,
    if (binding->InstanceDivisor != divisor) {
       FLUSH_VERTICES(ctx, _NEW_ARRAY);
       binding->InstanceDivisor = divisor;
-      vao->NewArrays |= binding->_BoundArrays;
+      vao->NewArrays |= vao->_Enabled & binding->_BoundArrays;
    }
 }
 
@@ -342,7 +344,7 @@ _mesa_update_array_format(struct gl_context *ctx,
    array->RelativeOffset = relativeOffset;
    array->_ElementSize = elementSize;
 
-   vao->NewArrays |= VERT_BIT(attrib);
+   vao->NewArrays |= vao->_Enabled & VERT_BIT(attrib);
    ctx->NewState |= _NEW_ARRAY;
 }
 
