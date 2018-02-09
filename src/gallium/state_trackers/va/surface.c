@@ -129,7 +129,7 @@ vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
             frame_diff = context->desc.h264enc.frame_num_cnt - surf->frame_num_cnt;
          else
             frame_diff = 0xFFFFFFFF - surf->frame_num_cnt + 1 + context->desc.h264enc.frame_num_cnt;
-         if ((frame_diff == 0) &&
+         if (!(frame_diff) &&
              (surf->force_flushed == false) &&
              (context->desc.h264enc.frame_num_cnt % 2 != 0)) {
             context->decoder->flush(context->decoder);

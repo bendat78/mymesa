@@ -930,8 +930,8 @@ static void radeon_enc_slice_header(struct radeon_encoder *enc)
 
 static void radeon_enc_slice_header_hevc(struct radeon_encoder *enc)
 {
-	uint32_t instruction[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {0};
-	uint32_t num_bits[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {0};
+	uint32_t instruction[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {};
+	uint32_t num_bits[RENCODE_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {};
 	unsigned int inst_index = 0;
 	unsigned int bit_index = 0;
 	unsigned int bits_copied = 0;

@@ -141,7 +141,7 @@ set_src(struct v3d_qpu_instr *instr, enum v3d_qpu_mux *mux, struct qpu_reg src)
 static bool
 is_no_op_mov(struct qinst *qinst)
 {
-        static const struct v3d_qpu_sig no_sig = {0};
+        static const struct v3d_qpu_sig no_sig = {};
 
         /* Make sure it's just a lone MOV. */
         if (qinst->qpu.type != V3D_QPU_INSTR_TYPE_ALU ||
