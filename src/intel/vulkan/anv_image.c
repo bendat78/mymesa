@@ -901,7 +901,7 @@ anv_layout_to_fast_clear_type(const struct gen_device_info * const devinfo,
    uint32_t plane = anv_image_aspect_to_plane(image->aspects, aspect);
 
    /* If there is no auxiliary surface allocated, there are no fast-clears */
-   if (image->planes[plane].aux_surface.isl.size == 0)
+   if (!image->planes[plane].aux_surface.isl.size)
       return ANV_FAST_CLEAR_NONE;
 
    /* All images that use an auxiliary surface are required to be tiled. */

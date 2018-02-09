@@ -91,7 +91,7 @@ static void scan_instruction(struct tgsi_shader_info *info,
 			break;
 		case nir_intrinsic_load_local_group_size:
 			/* The block size is translated to IMM with a fixed block size. */
-			if (info->properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH] == 0)
+			if (!info->properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH])
 				info->uses_block_size = true;
 			break;
 		case nir_intrinsic_load_local_invocation_id:

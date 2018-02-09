@@ -3396,7 +3396,7 @@ void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader
 	}
 	shader->nr_ps_color_outputs = num_cout;
 	shader->ps_color_export_mask = rshader->ps_color_export_mask;
-	if (ninterp == 0) {
+	if (!ninterp) {
 		ninterp = 1;
 		have_perspective = TRUE;
 	}

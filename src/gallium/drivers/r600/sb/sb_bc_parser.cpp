@@ -843,7 +843,7 @@ int bc_parser::prepare_ir() {
 				} else {
 					c->src.resize(4);
 
-				
+
 					for(int s = 0; s < 4; ++s) {
 						if (c->bc.comp_mask & (1 << s))
 							c->src[s] =

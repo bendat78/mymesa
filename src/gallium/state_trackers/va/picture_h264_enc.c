@@ -39,7 +39,7 @@ vlVaHandleVAEncPictureParameterBufferTypeH264(vlVaDriver *drv, vlVaContext *cont
    context->desc.h264enc.frame_num = h264->frame_num;
    context->desc.h264enc.not_referenced = false;
    context->desc.h264enc.pic_order_cnt = h264->CurrPic.TopFieldOrderCnt;
-   if (context->desc.h264enc.gop_cnt == 0)
+   if (!context->desc.h264enc.gop_cnt)
       context->desc.h264enc.i_remain = context->gop_coeff;
    else if (context->desc.h264enc.frame_num == 1)
       context->desc.h264enc.i_remain--;
@@ -95,7 +95,7 @@ vlVaHandleVAEncSliceParameterBufferTypeH264(vlVaDriver *drv, vlVaContext *contex
 
    if (h264->slice_type == 1)
       context->desc.h264enc.picture_type = PIPE_H264_ENC_PICTURE_TYPE_B;
-   else if (h264->slice_type == 0)
+   else if (!h264->slice_type)
       context->desc.h264enc.picture_type = PIPE_H264_ENC_PICTURE_TYPE_P;
    else if (h264->slice_type == 2) {
       if (context->desc.h264enc.picture_type == PIPE_H264_ENC_PICTURE_TYPE_IDR)

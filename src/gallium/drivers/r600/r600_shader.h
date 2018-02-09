@@ -176,7 +176,7 @@ struct r600_pipe_shader {
 	unsigned		pa_cl_vs_out_cntl;
 	unsigned		nr_ps_color_outputs;
 	unsigned                ps_color_export_mask;
-	
+
 	union r600_shader_key	key;
 	unsigned		db_shader_control;
 	unsigned		ps_depth_export;

@@ -221,7 +221,7 @@ update_textures_local(struct st_context *st,
                       enum pipe_shader_type shader_stage,
                       const struct gl_program *prog)
 {
-   struct pipe_sampler_view *local_views[PIPE_MAX_SAMPLERS] = {0};
+   struct pipe_sampler_view *local_views[PIPE_MAX_SAMPLERS] = {};
 
    update_textures(st, shader_stage, prog, local_views);
 

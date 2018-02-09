@@ -217,7 +217,7 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
       goto fail;
 
    cache = rzalloc(NULL, struct disk_cache);
-   if (cache == NULL)
+   if (!cache)
       goto fail;
 
    /* Assume failure. */
@@ -235,7 +235,7 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
          goto path_fail;
 
       path = concatenate_and_mkdir(local, path, CACHE_DIR_NAME);
-      if (path == NULL)
+      if (!path)
          goto path_fail;
    }
 
@@ -247,7 +247,7 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
             goto path_fail;
 
          path = concatenate_and_mkdir(local, xdg_cache_home, CACHE_DIR_NAME);
-         if (path == NULL)
+         if (!path)
             goto path_fail;
       }
    }
@@ -279,20 +279,20 @@ disk_cache_create(const char *gpu_name, const char *timestamp,
       }
 
       path = concatenate_and_mkdir(local, pwd.pw_dir, ".cache");
-      if (path == NULL)
+      if (!path)
          goto path_fail;
 
       path = concatenate_and_mkdir(local, path, CACHE_DIR_NAME);
-      if (path == NULL)
+      if (!path)
          goto path_fail;
    }
 
    cache->path = ralloc_strdup(cache, path);
-   if (cache->path == NULL)
+   if (!cache->path)
       goto path_fail;
 
    path = ralloc_asprintf(local, "%s/index", cache->path);
-   if (path == NULL)
+   if (!path)
       goto path_fail;
 
    fd = open(path, O_RDWR | O_CREAT | O_CLOEXEC, 0644);

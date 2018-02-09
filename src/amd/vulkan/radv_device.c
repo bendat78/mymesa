@@ -2436,7 +2436,7 @@ void radv_UnmapMemory(
 	if (!mem)
 		return;
 
-	if (mem->user_ptr == NULL)
+	if (!mem->user_ptr)
 		device->ws->buffer_unmap(mem->bo);
 }
 

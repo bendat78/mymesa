@@ -893,7 +893,7 @@ static void choose_spill_arrays(struct r600_shader_ctx *ctx, int *regno, unsigne
 		narrays_left --;
 	}
 
-	if (narrays_left == 0) {
+	if (!narrays_left) {
 		ctx->info.indirect_files &= ~(1 << TGSI_FILE_TEMPORARY);
 	}
 }
@@ -1328,7 +1328,7 @@ static int load_sample_position(struct r600_shader_ctx *ctx, struct r600_shader_
 	vtx.op = FETCH_OP_VFETCH;
 	vtx.buffer_id = R600_BUFFER_INFO_CONST_BUFFER;
 	vtx.fetch_type = SQ_VTX_FETCH_NO_INDEX_OFFSET;
-	if (sample_id == NULL) {
+	if (!sample_id) {
 		assert(ctx->fixed_pt_position_gpr != -1);
 		vtx.src_gpr = ctx->fixed_pt_position_gpr; // SAMPLEID is in .w;
 		vtx.src_sel_x = 3;
@@ -4841,7 +4841,7 @@ static int egcm_int_to_double(struct r600_shader_ctx *ctx)
 					alu.last = i == dchan + 1;
 				else
 					alu.last = 1; /* trans only ops on evergreen */
-				
+
 				r = r600_bytecode_add_alu(ctx->bc, &alu);
 				if (r)
 					return r;
