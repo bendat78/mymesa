@@ -279,6 +279,25 @@ void si_nir_scan_shader(const struct nir_shader *nir,
 	if (nir->info.stage == MESA_SHADER_FRAGMENT) {
 		info->properties[TGSI_PROPERTY_FS_EARLY_DEPTH_STENCIL] = nir->info.fs.early_fragment_tests;
 		info->properties[TGSI_PROPERTY_FS_POST_DEPTH_COVERAGE] = nir->info.fs.post_depth_coverage;
+
+		if (nir->info.fs.depth_layout != FRAG_DEPTH_LAYOUT_NONE) {
+			switch (nir->info.fs.depth_layout) {
+			case FRAG_DEPTH_LAYOUT_ANY:
+				info->properties[TGSI_PROPERTY_FS_DEPTH_LAYOUT] = TGSI_FS_DEPTH_LAYOUT_ANY;
+				break;
+			case FRAG_DEPTH_LAYOUT_GREATER:
+				info->properties[TGSI_PROPERTY_FS_DEPTH_LAYOUT] = TGSI_FS_DEPTH_LAYOUT_GREATER;
+				break;
+			case FRAG_DEPTH_LAYOUT_LESS:
+				info->properties[TGSI_PROPERTY_FS_DEPTH_LAYOUT] = TGSI_FS_DEPTH_LAYOUT_LESS;
+				break;
+			case FRAG_DEPTH_LAYOUT_UNCHANGED:
+				info->properties[TGSI_PROPERTY_FS_DEPTH_LAYOUT] = TGSI_FS_DEPTH_LAYOUT_UNCHANGED;
+				break;
+			default:
+				unreachable("Unknow depth layout");
+			}
+		}
 	}
 
 	if (nir->info.stage == MESA_SHADER_COMPUTE) {
@@ -516,6 +535,12 @@ void si_nir_scan_shader(const struct nir_shader *nir,
 			default:
 				info->reads_pervertex_outputs = true;
 			}
+		}
+
+		unsigned loc = variable->data.location;
+		if (loc == FRAG_RESULT_COLOR &&
+		    nir->info.outputs_written & (1ull << loc)) {
+			info->properties[TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS] = true;
 		}
 	}
 

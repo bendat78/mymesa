@@ -598,15 +598,15 @@ static int r600_get_shader_param(struct pipe_screen* pscreen,
 	case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
 		return 16;
         case PIPE_SHADER_CAP_PREFERRED_IR:
-		if (shader == PIPE_SHADER_COMPUTE) {
-			return PIPE_SHADER_IR_NATIVE;
-		} else {
-			return PIPE_SHADER_IR_TGSI;
-		}
-	case PIPE_SHADER_CAP_SUPPORTED_IRS:
+		return PIPE_SHADER_IR_TGSI;
+	case PIPE_SHADER_CAP_SUPPORTED_IRS: {
+		int ir = 0;
+		if (shader == PIPE_SHADER_COMPUTE)
+			ir = 1 << PIPE_SHADER_IR_NATIVE;
 		if (rscreen->b.family >= CHIP_CEDAR)
-			return (1 << PIPE_SHADER_IR_TGSI);
-		return 0;
+			ir |= 1 << PIPE_SHADER_IR_TGSI;
+		return ir;
+	}
 	case PIPE_SHADER_CAP_TGSI_FMA_SUPPORTED:
 		if (rscreen->b.family == CHIP_ARUBA ||
 		    rscreen->b.family == CHIP_CAYMAN ||
