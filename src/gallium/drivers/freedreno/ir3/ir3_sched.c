@@ -711,7 +711,7 @@ sched_intra_block(struct ir3_sched_ctx *ctx, struct ir3_block *block)
 
 int ir3_sched(struct ir3 *ir)
 {
-	struct ir3_sched_ctx ctx = {0};
+	struct ir3_sched_ctx ctx = {};
 
 	ir3_clear_mark(ir);
 

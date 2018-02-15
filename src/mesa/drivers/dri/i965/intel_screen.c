@@ -1316,7 +1316,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     int width, height, offset, stride, dri_format;
     __DRIimage *image;
 
-    if (parent == NULL)
+    if (!parent)
        return NULL;
 
     width = parent->width;
@@ -1332,7 +1332,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
        int index = f->planes[plane].buffer_index;
        offset = parent->offsets[index];
        stride = parent->strides[index];
-    } else if (plane == 0) {
+    } else if (!plane) {
        /* The only plane of a non-planar image: copy the parent definition
         * directly. */
        dri_format = parent->dri_format;

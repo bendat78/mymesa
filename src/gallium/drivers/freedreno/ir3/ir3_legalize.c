@@ -387,7 +387,7 @@ resolve_jump(struct ir3_instruction *instr)
 	 * then we can just drop the jump.
 	 */
 	unsigned next_block;
-	if (instr->cat0.inv == true)
+	if (instr->cat0.inv)
 		next_block = 2;
 	else
 		next_block = 1;

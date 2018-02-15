@@ -2374,7 +2374,7 @@ radv_load_resource(struct ac_shader_abi *abi, LLVMValueRef index,
 	offset = LLVMConstInt(ctx->ac.i32, base_offset, false);
 	index = LLVMBuildMul(ctx->ac.builder, index, stride, "");
 	offset = LLVMBuildAdd(ctx->ac.builder, offset, index, "");
-	
+
 	desc_ptr = ac_build_gep0(&ctx->ac, desc_ptr, offset);
 	desc_ptr = cast_ptr(&ctx->ac, desc_ptr, ctx->ac.v4i32);
 	LLVMSetMetadata(desc_ptr, ctx->ac.uniform_md_kind, ctx->ac.empty_md);
@@ -3791,7 +3791,7 @@ static LLVMValueRef visit_image_samples(struct ac_nir_context *ctx,
 		  glsl_get_sampler_dim(type) == GLSL_SAMPLER_DIM_CUBE ||
 		  glsl_get_sampler_dim(type) == GLSL_SAMPLER_DIM_3D;
 
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 	args.da = da;
 	args.dmask = 0xf;
 	args.resource = get_sampler_desc(ctx, instr->variables[0],
@@ -6815,7 +6815,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
                                        struct ac_shader_variant_info *shader_info,
                                        const struct ac_nir_compiler_options *options)
 {
-	struct radv_shader_context ctx = {0};
+	struct radv_shader_context ctx = {};
 	unsigned i;
 	ctx.options = options;
 	ctx.shader_info = shader_info;
@@ -7235,7 +7235,7 @@ void ac_create_gs_copy_shader(LLVMTargetMachineRef tm,
 			      const struct ac_nir_compiler_options *options,
 			      bool dump_shader)
 {
-	struct radv_shader_context ctx = {0};
+	struct radv_shader_context ctx = {};
 	ctx.context = LLVMContextCreate();
 	ctx.options = options;
 	ctx.shader_info = shader_info;
