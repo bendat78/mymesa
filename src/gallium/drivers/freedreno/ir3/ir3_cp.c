@@ -314,7 +314,7 @@ unuse(struct ir3_instruction *instr)
 {
 	debug_assert(instr->use_count > 0);
 
-	if (--instr->use_count == 0) {
+	if (!--instr->use_count) {
 		struct ir3_block *block = instr->block;
 
 		instr->barrier_class = 0;

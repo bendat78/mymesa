@@ -386,7 +386,7 @@ int main(int argc, char **argv)
 				errx(1, "in TGSI mode, only a single file may be specified");
 			s.from_tgsi = true;
 		} else if (strcmp(ext, ".spv") == 0) {
-			if (num_files != 0)
+			if (num_files)
 				errx(1, "in SPIR-V mode, only a single file may be specified");
 			stage = MESA_SHADER_COMPUTE;
 			from_spirv = true;
