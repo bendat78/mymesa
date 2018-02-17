@@ -48,7 +48,7 @@ pkg.generate(
   description : 'Mesa OpenGL ES 2.0 library',
   version : meson.project_version(),
   libraries : libgles2,
-  libraries_private : '-lm -ldl -lpthread -pthread',
+  libraries_private : gl_priv_libs,
 )
 
 if with_tests

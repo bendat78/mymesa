@@ -22,6 +22,7 @@ i965_FILES = \
 	brw_ff_gs_emit.c \
 	brw_ff_gs.h \
 	brw_formatquery.c \
+	brw_generate_mipmap.c \
 	brw_gs.c \
 	brw_gs.h \
 	brw_gs_surface_state.c \
@@ -147,6 +148,10 @@ i965_gen9_FILES = \
 	genX_state_upload.c
 
 i965_gen10_FILES = \
+	genX_blorp_exec.c \
+	genX_state_upload.c
+
+i965_gen11_FILES = \
 	genX_blorp_exec.c \
 	genX_state_upload.c
 

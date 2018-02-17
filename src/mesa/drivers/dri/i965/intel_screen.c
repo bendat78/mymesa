@@ -751,6 +751,7 @@ intel_create_image_common(__DRIscreen *dri_screen,
    if (aux_surf.size) {
       image->aux_offset = surf.size;
       image->aux_pitch = aux_surf.row_pitch;
+      image->aux_size = aux_surf.size;
    }
 
    return image;
@@ -1138,6 +1139,8 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
          return NULL;
       }
 
+      image->aux_size = aux_surf.size;
+
       const int end = image->aux_offset + aux_surf.size;
       if (size < end)
          size = end;
@@ -1313,7 +1316,7 @@ intel_query_dma_buf_modifiers(__DRIscreen *_screen, int fourcc, int max,
 static __DRIimage *
 intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
 {
-    int width, height, offset, stride, dri_format;
+    int width, height, offset, stride, size, dri_format;
     __DRIimage *image;
 
     if (!parent)
@@ -1332,24 +1335,27 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
        int index = f->planes[plane].buffer_index;
        offset = parent->offsets[index];
        stride = parent->strides[index];
-    } else if (!plane) {
+       size = height * stride;
+    } else if (plane == 0) {
        /* The only plane of a non-planar image: copy the parent definition
         * directly. */
        dri_format = parent->dri_format;
        offset = parent->offset;
        stride = parent->pitch;
+       size = height * stride;
     } else if (plane == 1 && parent->modifier != DRM_FORMAT_MOD_INVALID &&
                isl_drm_modifier_has_aux(parent->modifier)) {
        /* Auxiliary plane */
        dri_format = parent->dri_format;
        offset = parent->aux_offset;
        stride = parent->aux_pitch;
+       size = parent->aux_size;
     } else {
        return NULL;
     }
 
-    if (offset + height * stride > parent->bo->size) {
-       _mesa_warning(NULL, "intel_create_sub_image: subimage out of bounds");
+    if (offset + size > parent->bo->size) {
+       _mesa_warning(NULL, "intel_from_planar: subimage out of bounds");
        return NULL;
     }
 
@@ -2251,6 +2257,7 @@ set_max_gl_versions(struct intel_screen *screen)
    const bool has_astc = screen->devinfo.gen >= 9;
 
    switch (screen->devinfo.gen) {
+   case 11:
    case 10:
    case 9:
    case 8:

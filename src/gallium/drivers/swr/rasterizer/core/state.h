@@ -228,8 +228,8 @@ struct SWR_VS_CONTEXT
 #if USE_SIMD16_FRONTEND
     uint32_t AlternateOffset;   // IN: amount to offset for interleaving even/odd simd8 in simd16vertex output
 #if USE_SIMD16_VS
-    simd16scalari mask16;	// IN: Active mask for shader (16-wide)
-    simd16scalari VertexID16;	// IN: Vertex ID (16-wide)
+    simd16scalari mask16;       // IN: Active mask for shader (16-wide)
+    simd16scalari VertexID16;   // IN: Vertex ID (16-wide)
 #endif
 #endif
 };
@@ -553,11 +553,10 @@ struct SWR_SURFACE_STATE
 // in the fetch shader jit
 struct SWR_VERTEX_BUFFER_STATE
 {
+    gfxptr_t xpData;
     uint32_t index;
     uint32_t pitch;
-    const uint8_t *pData;
     uint32_t size;
-    uint32_t numaNode;
     uint32_t minVertex;             // min vertex (for bounds checking)
     uint32_t maxVertex;             // size / pitch.  precalculated value used by fetch shader for OOB checks
     uint32_t partialInboundsSize;   // size % pitch.  precalculated value used by fetch shader for partially OOB vertices
@@ -565,9 +564,9 @@ struct SWR_VERTEX_BUFFER_STATE
 
 struct SWR_INDEX_BUFFER_STATE
 {
+    const void *pIndices;
     // Format type for indices (e.g. UINT16, UINT32, etc.)
     SWR_FORMAT format; // @llvm_enum
-    const void *pIndices;
     uint32_t size;
 };
 
@@ -646,11 +645,14 @@ OSALIGNLINE(struct) SWR_STATS_FE
 
 struct SWR_STREAMOUT_BUFFER
 {
-    bool enable;
-    bool soWriteEnable;
-
     // Pointers to streamout buffers.
     uint32_t* pBuffer;
+
+    // Offset to the SO write offset. If not null then we update offset here.
+    uint32_t* pWriteOffset;
+
+    bool enable;
+    bool soWriteEnable;
 
     // Size of buffer in dwords.
     uint32_t bufferSize;
@@ -660,10 +662,6 @@ struct SWR_STREAMOUT_BUFFER
 
     // Offset into buffer in dwords. SOS will increment this offset.
     uint32_t streamOffset;
-
-    // Offset to the SO write offset. If not null then we update offset here.
-    uint32_t* pWriteOffset;
-
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -718,6 +716,11 @@ struct SWR_GS_STATE
 {
     bool gsEnable;
 
+    // If true, geometry shader emits a single stream, with separate cut buffer.
+    // If false, geometry shader emits vertices for multiple streams to the stream buffer, with a separate StreamID buffer
+    // to map vertices to streams
+    bool isSingleStream;
+
     // Number of input attributes per vertex. Used by the frontend to
     // optimize assembling primitives for GS
     uint32_t numInputAttribs;
@@ -733,11 +736,6 @@ struct SWR_GS_STATE
 
     // Instance count
     uint32_t instanceCount;
-
-    // If true, geometry shader emits a single stream, with separate cut buffer.
-    // If false, geometry shader emits vertices for multiple streams to the stream buffer, with a separate StreamID buffer
-    // to map vertices to streams
-    bool isSingleStream;
 
     // When single stream is enabled, singleStreamID dictates which stream is being output.
     // field ignored if isSingleStream is false
@@ -768,7 +766,11 @@ struct SWR_GS_STATE
     // Set this to non-zero to indicate that the shader outputs a static number of verts. If zero, shader is
     // expected to store the final vertex count in the first dword of the gs output stream.
     uint32_t staticVertexCount;
+
+    uint32_t pad;
 };
+static_assert(sizeof(SWR_GS_STATE) == 64,
+    "Adjust padding to keep size (or remove this assert)");
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -814,6 +816,7 @@ enum SWR_TS_DOMAIN
 struct SWR_TS_STATE
 {
     bool                    tsEnable;
+
     SWR_TS_OUTPUT_TOPOLOGY  tsOutputTopology;   // @llvm_enum
     SWR_TS_PARTITIONING     partitioning;       // @llvm_enum
     SWR_TS_DOMAIN           domain;             // @llvm_enum
@@ -1092,27 +1095,33 @@ struct SWR_BACKEND_STATE
     uint32_t constantInterpolationMask;     // bitmask indicating which attributes have constant interpolation
     uint32_t pointSpriteTexCoordMask;       // bitmask indicating the attribute(s) which should be interpreted as tex coordinates
 
-    uint8_t numAttributes;                  // total number of attributes to send to backend (up to 32)
-    uint8_t numComponents[32];              // number of components to setup per attribute, this reduces some calculations for unneeded components
-
     bool swizzleEnable;                 // when enabled, core will parse the swizzle map when
                                         // setting up attributes for the backend, otherwise
                                         // all attributes up to numAttributes will be sent
-    SWR_ATTRIB_SWIZZLE swizzleMap[32];
+    uint8_t numAttributes;                  // total number of attributes to send to backend (up to 32)
+    uint8_t numComponents[32];              // number of components to setup per attribute, this reduces some calculations for unneeded components
 
     bool readRenderTargetArrayIndex;    // Forward render target array index from last FE stage to the backend
     bool readViewportArrayIndex;        // Read viewport array index from last FE stage during binning
-
-	// Offset to the start of the attributes of the input vertices, in simdvector units
-    uint32_t vertexAttribOffset;
 
     // User clip/cull distance enables
     uint8_t cullDistanceMask;
     uint8_t clipDistanceMask;
 
+    // padding to ensure swizzleMap starts 64B offset from start of the struct
+    // and that the next fields are dword aligned.
+    uint8_t pad[10];
+
+        // Offset to the start of the attributes of the input vertices, in simdvector units
+    uint32_t vertexAttribOffset;
+
     // Offset to clip/cull attrib section of the vertex, in simdvector units
     uint32_t vertexClipCullOffset;
+
+    SWR_ATTRIB_SWIZZLE swizzleMap[32];
 };
+static_assert(sizeof(SWR_BACKEND_STATE) == 128,
+    "Adjust padding to keep size (or remove this assert)");
 
 
 union SWR_DEPTH_STENCIL_STATE

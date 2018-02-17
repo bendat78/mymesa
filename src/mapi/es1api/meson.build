@@ -48,7 +48,7 @@ pkg.generate(
   description : 'Mesa OpenGL ES 1.1 CM library',
   version : meson.project_version(),
   libraries : libglesv1_cm,
-  libraries_private : '-lm -ldl -lpthread -pthread',
+  libraries_private : gl_priv_libs,
 )
 
 if with_tests

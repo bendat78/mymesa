@@ -42,6 +42,7 @@ files_i965 = files(
   'brw_ff_gs_emit.c',
   'brw_ff_gs.h',
   'brw_formatquery.c',
+  'brw_generate_mipmap.c',
   'brw_gs.c',
   'brw_gs.h',
   'brw_gs_surface_state.c',
@@ -135,7 +136,7 @@ files_i965 = files(
 )
 
 i965_gen_libs = []
-foreach v : ['40', '45', '50', '60', '70', '75', '80', '90', '100']
+foreach v : ['40', '45', '50', '60', '70', '75', '80', '90', '100', '110']
   i965_gen_libs += static_library(
     'libi965_gen@0@'.format(v),
     ['genX_blorp_exec.c', 'genX_state_upload.c', gen_xml_pack],
