@@ -42,7 +42,7 @@ echo "18.1.0-dev-ben-$(date)" > VERSION
 --enable-dri3 \
 --with-platforms="x11 wayland drm" \
 --enable-xa \
---enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-7.0 \
+--enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-4.0 \
 --enable-vdpau \
 --enable-omx-bellagio \
 --enable-va \
