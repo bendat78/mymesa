@@ -1207,7 +1207,7 @@ void BinPostSetupPointsImpl(
         primMask &= ~SIMD_T::movemask_ps(SIMD_T::castsi_ps(vXi));
         primMask &= ~SIMD_T::movemask_ps(SIMD_T::castsi_ps(vYi));
 
-        // compute macro tile coordinates 
+        // compute macro tile coordinates
         Integer<SIMD_T> macroX = SIMD_T::template srai_epi32<KNOB_MACROTILE_X_DIM_FIXED_SHIFT>(vXi);
         Integer<SIMD_T> macroY = SIMD_T::template srai_epi32<KNOB_MACROTILE_Y_DIM_FIXED_SHIFT>(vYi);
 

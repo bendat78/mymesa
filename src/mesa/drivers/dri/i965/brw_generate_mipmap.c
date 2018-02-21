@@ -55,7 +55,7 @@ brw_generate_mipmap(struct gl_context *ctx, GLenum target,
    /* find expected last mipmap level to generate */
    last_level = _mesa_compute_num_levels(ctx, tex_obj, target) - 1;
 
-   if (last_level == 0)
+   if (!last_level)
       return;
 
    /* The texture isn't in a "complete" state yet so set the expected

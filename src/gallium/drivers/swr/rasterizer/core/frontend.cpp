@@ -1259,7 +1259,7 @@ static void TessellationStages(
     for (uint32_t p = 0; p < numPrims; ++p)
     {
         // Run Tessellator
-        SWR_TS_TESSELLATED_DATA tsData = { 0 };
+        SWR_TS_TESSELLATED_DATA tsData = {};
         RDTSC_BEGIN(FETessellation, pDC->drawId);
         TSTessellate(tsCtx, hsContext.pCPout[p].tessFactors, tsData);
         AR_EVENT(TessPrimCount(1));

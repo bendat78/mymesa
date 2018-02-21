@@ -28,7 +28,7 @@
 
 #if !defined(SIMD_ARCH)
 #define SIMD_ARCH KNOB_ARCH
-#endif 
+#endif
 
 #include "simdlib_types.hpp"
 
