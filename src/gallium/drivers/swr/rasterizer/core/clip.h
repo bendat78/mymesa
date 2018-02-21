@@ -393,7 +393,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 Float<SIMD_T> vCullComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vCullComp = vClipCullDistLo[e][component];
                 }
@@ -421,7 +421,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 Float<SIMD_T> vClipComp;
-                if (slot == 0)
+                if (!slot)
                 {
                     vClipComp = vClipCullDistLo[e][component];
                 }
@@ -702,7 +702,7 @@ public:
         // cull prims with NAN coords
         primMask &= ~ComputeNaNMask(prim);
 
-        // user cull distance cull 
+        // user cull distance cull
         if (state.backendState.cullDistanceMask | state.backendState.clipDistanceMask)
         {
             primMask &= ~ComputeUserClipCullMask(pa, prim);

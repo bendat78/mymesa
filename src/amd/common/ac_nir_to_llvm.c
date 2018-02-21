@@ -3802,7 +3802,7 @@ static LLVMValueRef visit_image_samples(struct ac_nir_context *ctx,
 	const nir_variable *var = instr->variables[0]->var;
 	const struct glsl_type *type = glsl_without_array(var->type);
 
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 	args.da = glsl_is_array_image(type);
 	args.dmask = 0xf;
 	args.resource = get_sampler_desc(ctx, instr->variables[0],

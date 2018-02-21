@@ -931,7 +931,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     }
 
     // Disable rasterizer and backend if no pixel, no depth/stencil, and no attributes
-    if ((pState->state.psState.pfnPixelShader == nullptr) &&
+    if (!(pState->state.psState.pfnPixelShader) &&
         (pState->state.depthStencilState.depthTestEnable == FALSE) &&
         (pState->state.depthStencilState.depthWriteEnable == FALSE) &&
         (pState->state.depthStencilState.stencilTestEnable == FALSE) &&

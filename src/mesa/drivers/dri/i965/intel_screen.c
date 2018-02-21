@@ -1336,7 +1336,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
        offset = parent->offsets[index];
        stride = parent->strides[index];
        size = height * stride;
-    } else if (plane == 0) {
+    } else if (!plane) {
        /* The only plane of a non-planar image: copy the parent definition
         * directly. */
        dri_format = parent->dri_format;
