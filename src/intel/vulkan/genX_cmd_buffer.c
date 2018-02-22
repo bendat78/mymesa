@@ -3438,9 +3438,12 @@ cmd_buffer_begin_subpass(struct anv_cmd_buffer *cmd_buffer,
                                                      VK_IMAGE_ASPECT_STENCIL_BIT)) {
          if (att_state->fast_clear) {
             /* We currently only support HiZ for single-layer images */
-            assert(iview->planes[0].isl.base_level == 0);
-            assert(iview->planes[0].isl.base_array_layer == 0);
-            assert(fb->layers == 1);
+            if (att_state->pending_clear_aspects & VK_IMAGE_ASPECT_DEPTH_BIT) {
+               assert(iview->image->planes[0].aux_usage == ISL_AUX_USAGE_HIZ);
+               assert(iview->planes[0].isl.base_level == 0);
+               assert(iview->planes[0].isl.base_array_layer == 0);
+               assert(fb->layers == 1);
+            }
 
             anv_image_hiz_clear(cmd_buffer, image,
                                 att_state->pending_clear_aspects,
@@ -3462,7 +3465,10 @@ cmd_buffer_begin_subpass(struct anv_cmd_buffer *cmd_buffer,
          assert(att_state->pending_clear_aspects == 0);
       }
 
-      if (att_state->pending_load_aspects & VK_IMAGE_ASPECT_ANY_COLOR_BIT_ANV) {
+      if ((att_state->pending_load_aspects & VK_IMAGE_ASPECT_ANY_COLOR_BIT_ANV) &&
+          image->planes[0].aux_surface.isl.size > 0 &&
+          iview->planes[0].isl.base_level == 0 &&
+          iview->planes[0].isl.base_array_layer == 0) {
          if (att_state->aux_usage != ISL_AUX_USAGE_NONE) {
             genX(copy_fast_clear_dwords)(cmd_buffer, att_state->color.state,
                                          image, VK_IMAGE_ASPECT_COLOR_BIT,
