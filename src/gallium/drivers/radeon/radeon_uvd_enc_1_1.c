@@ -77,7 +77,7 @@ static void
 radeon_uvd_enc_output_one_byte(struct radeon_uvd_encoder *enc,
                                unsigned char byte)
 {
-   if (enc->byte_index == 0)
+   if (!enc->byte_index)
       enc->cs->current.buf[enc->cs->current.cdw] = 0;
    enc->cs->current.buf[enc->cs->current.cdw] |=
       ((unsigned int) (byte) << index_to_shifts[enc->byte_index]);
@@ -159,7 +159,7 @@ radeon_uvd_enc_byte_align(struct radeon_uvd_encoder *enc)
 static void
 radeon_uvd_enc_flush_headers(struct radeon_uvd_encoder *enc)
 {
-   if (enc->bits_in_shifter != 0) {
+   if (enc->bits_in_shifter) {
       unsigned char output_byte = (unsigned char) (enc->shifter >> 24);
       radeon_uvd_enc_emulation_prevention(enc, output_byte);
       radeon_uvd_enc_output_one_byte(enc, output_byte);
@@ -196,7 +196,7 @@ radeon_uvd_enc_code_se(struct radeon_uvd_encoder *enc, int value)
 {
    unsigned int v = 0;
 
-   if (value != 0)
+   if (value)
       v = (value < 0 ? ((unsigned int) (0 - value) << 1)
            : (((unsigned int) (value) << 1) - 1));
 
@@ -706,8 +706,8 @@ radeon_uvd_enc_nalu_aud_hevc(struct radeon_uvd_encoder *enc)
 static void
 radeon_uvd_enc_slice_header_hevc(struct radeon_uvd_encoder *enc)
 {
-   uint32_t instruction[RENC_UVD_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = { 0 };
-   uint32_t num_bits[RENC_UVD_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = { 0 };
+   uint32_t instruction[RENC_UVD_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {};
+   uint32_t num_bits[RENC_UVD_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {};
    unsigned int inst_index = 0;
    unsigned int bit_index = 0;
    unsigned int bits_copied = 0;

@@ -221,7 +221,7 @@ wsi_create_native_image(const struct wsi_swapchain *chain,
    uint32_t image_modifier_count = 0, modifier_prop_count = 0;
    struct wsi_format_modifier_properties *modifier_props = NULL;
    uint64_t *image_modifiers = NULL;
-   if (num_modifier_lists == 0) {
+   if (!num_modifier_lists) {
       /* If we don't have modifiers, fall back to the legacy "scanout" flag */
       image_wsi_info.scanout = true;
    } else {
@@ -394,7 +394,7 @@ wsi_create_native_image(const struct wsi_swapchain *chain,
          image->sizes[p] = image_layout.size;
          image->row_pitches[p] = image_layout.rowPitch;
          image->offsets[p] = image_layout.offset;
-         if (p == 0) {
+         if (!p) {
             image->fds[p] = fd;
          } else {
             image->fds[p] = dup(fd);

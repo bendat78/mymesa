@@ -249,7 +249,7 @@ dmabuf_handle_modifier(void *data, struct zwp_linux_dmabuf_v1 *dmabuf,
    uint64_t *mod = NULL;
 
    /* If we're not fetching formats, don't fetch modifiers either. */
-   if (display->formats.element_size == 0)
+   if (!display->formats.element_size)
       return;
 
    if (modifier_hi == (DRM_FORMAT_MOD_INVALID >> 32) &&

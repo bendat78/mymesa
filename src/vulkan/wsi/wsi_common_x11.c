@@ -774,7 +774,7 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
          if (!event) {
             int ret;
 
-            if (timeout == 0)
+            if (!timeout)
                return x11_swapchain_result(chain, VK_NOT_READY);
 
             atimeout = wsi_get_absolute_timeout(timeout);
@@ -783,7 +783,7 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
             pfds.events = POLLIN;
             ret = poll(&pfds, 1, timeout / 1000 / 1000);
 
-            if (ret == 0)
+            if (!ret)
                return x11_swapchain_result(chain, VK_TIMEOUT);
 
             if (ret == -1)

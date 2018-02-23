@@ -761,7 +761,7 @@ vc4_resource_from_handle(struct pipe_screen *pscreen,
         rsc->vc4_format = get_resource_texture_format(prsc);
         vc4_setup_slices(rsc, "import");
 
-        if (whandle->offset != 0) {
+        if (whandle->offset) {
                 if (rsc->tiled) {
                         fprintf(stderr,
                                 "Attempt to import unsupported "
