@@ -10408,17 +10408,22 @@ static int tgsi_else(struct r600_shader_ctx *ctx)
 
 static int tgsi_endif(struct r600_shader_ctx *ctx)
 {
+	int offset = 2;
 	pops(ctx, 1);
 	if (ctx->bc->fc_stack[ctx->bc->fc_sp - 1].type != FC_IF) {
 		R600_ERR("if/endif unbalanced in shader\n");
 		return -1;
 	}
 
+	/* ALU_EXTENDED needs 4 DWords instead of two, adjust jump target offset accordingly */
+	if (ctx->bc->cf_last->eg_alu_extended)
+			offset += 2;
+
 	if (ctx->bc->fc_stack[ctx->bc->fc_sp - 1].mid == NULL) {
-		ctx->bc->fc_stack[ctx->bc->fc_sp - 1].start->cf_addr = ctx->bc->cf_last->id + 2;
+		ctx->bc->fc_stack[ctx->bc->fc_sp - 1].start->cf_addr = ctx->bc->cf_last->id + offset;
 		ctx->bc->fc_stack[ctx->bc->fc_sp - 1].start->pop_count = 1;
 	} else {
-		ctx->bc->fc_stack[ctx->bc->fc_sp - 1].mid[0]->cf_addr = ctx->bc->cf_last->id + 2;
+		ctx->bc->fc_stack[ctx->bc->fc_sp - 1].mid[0]->cf_addr = ctx->bc->cf_last->id + offset;
 	}
 	fc_poplevel(ctx);
 
@@ -10736,6 +10741,7 @@ static int tgsi_clock(struct r600_shader_ctx *ctx)
 	alu.op = ALU_OP1_MOV;
 	tgsi_dst(ctx, &inst->Dst[0], 1, &alu.dst);
 	alu.src[0].sel = EG_V_SQ_ALU_SRC_TIME_HI;
+	alu.last = 1;
 	r = r600_bytecode_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;

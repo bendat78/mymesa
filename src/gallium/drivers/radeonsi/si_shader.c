@@ -1291,7 +1291,11 @@ static LLVMValueRef si_nir_load_tcs_varyings(struct ac_shader_abi *abi,
 
 	LLVMValueRef value[4];
 	for (unsigned i = 0; i < num_components + component; i++) {
-		value[i] = lds_load(bld_base, type, i, dw_addr);
+		unsigned offset = i;
+		if (llvm_type_is_64bit(ctx, type))
+			offset *= 2;
+
+		value[i] = lds_load(bld_base, type, offset, dw_addr);
 	}
 
 	return ac_build_varying_gather_values(&ctx->ac, value, num_components, component);
@@ -1374,7 +1378,11 @@ LLVMValueRef si_nir_load_input_tes(struct ac_shader_abi *abi,
 	 */
 	LLVMValueRef value[4];
 	for (unsigned i = component; i < num_components + component; i++) {
-		value[i] = buffer_load(&ctx->bld_base, type, i,
+		unsigned offset = i;
+		if (llvm_type_is_64bit(ctx, type))
+			offset *= 2;
+
+		value[i] = buffer_load(&ctx->bld_base, type, offset,
 				       ctx->tess_offchip_ring, base, addr, true);
 	}
 
@@ -1563,7 +1571,7 @@ static void si_nir_store_output_tcs(struct ac_shader_abi *abi,
 
 		/* Skip LDS stores if there is no LDS read of this output. */
 		if (!skip_lds_store)
-			ac_lds_store(&ctx->ac, dw_addr, value);
+			lds_store(ctx, chan, dw_addr, value);
 
 		value = ac_to_integer(&ctx->ac, value);
 		values[chan] = value;
@@ -3422,7 +3430,12 @@ static void si_set_es_return_value_for_gs(struct si_shader_context *ctx)
 				  8 + GFX9_SGPR_2ND_SAMPLERS_AND_IMAGES);
 #endif
 
-	unsigned vgpr = 8 + GFX9_GS_NUM_USER_SGPR;
+	unsigned vgpr;
+	if (ctx->type == PIPE_SHADER_VERTEX)
+		vgpr = 8 + GFX9_VSGS_NUM_USER_SGPR;
+	else
+		vgpr = 8 + GFX9_TESGS_NUM_USER_SGPR;
+
 	for (unsigned i = 0; i < 5; i++) {
 		unsigned param = ctx->param_gs_vtx01_offset + i;
 		ret = si_insert_input_ret_float(ctx, ret, param, vgpr++);
@@ -4550,8 +4563,6 @@ static void declare_global_desc_pointers(struct si_shader_context *ctx,
 static void declare_vs_specific_input_sgprs(struct si_shader_context *ctx,
 					    struct si_function_info *fninfo)
 {
-	ctx->param_vertex_buffers = add_arg(fninfo, ARG_SGPR,
-		ac_array_in_const32_addr_space(ctx->v4i32));
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.base_vertex);
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.start_instance);
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.draw_id);
@@ -4653,6 +4664,8 @@ static void create_function(struct si_shader_context *ctx)
 
 		declare_per_stage_desc_pointers(ctx, &fninfo, true);
 		declare_vs_specific_input_sgprs(ctx, &fninfo);
+		ctx->param_vertex_buffers = add_arg(&fninfo, ARG_SGPR,
+			ac_array_in_const32_addr_space(ctx->v4i32));
 
 		if (shader->key.as_es) {
 			ctx->param_es2gs_offset = add_arg(&fninfo, ARG_SGPR, ctx->i32);
@@ -4725,6 +4738,10 @@ static void create_function(struct si_shader_context *ctx)
 		ctx->param_tcs_offchip_layout = add_arg(&fninfo, ARG_SGPR, ctx->i32);
 		ctx->param_tcs_out_lds_offsets = add_arg(&fninfo, ARG_SGPR, ctx->i32);
 		ctx->param_tcs_out_lds_layout = add_arg(&fninfo, ARG_SGPR, ctx->i32);
+		if (!HAVE_32BIT_POINTERS) /* Align to 2 dwords. */
+			add_arg(&fninfo, ARG_SGPR, ctx->i32); /* unused */
+		ctx->param_vertex_buffers = add_arg(&fninfo, ARG_SGPR,
+			ac_array_in_const32_addr_space(ctx->v4i32));
 
 		/* VGPRs (first TCS, then VS) */
 		add_arg_assign(&fninfo, ARG_VGPR, ctx->i32, &ctx->abi.tcs_patch_id);
@@ -4777,20 +4794,22 @@ static void create_function(struct si_shader_context *ctx)
 		if (ctx->type == PIPE_SHADER_VERTEX) {
 			declare_vs_specific_input_sgprs(ctx, &fninfo);
 		} else {
-			/* TESS_EVAL (and also GEOMETRY):
-			 * Declare as many input SGPRs as the VS has. */
 			ctx->param_tcs_offchip_layout = add_arg(&fninfo, ARG_SGPR, ctx->i32);
 			ctx->param_tes_offchip_addr = add_arg(&fninfo, ARG_SGPR, ctx->i32);
-			add_arg(&fninfo, ARG_SGPR, ctx->i32); /* unused */
-			add_arg(&fninfo, ARG_SGPR, ctx->i32); /* unused */
-			if (!HAVE_32BIT_POINTERS)
+			if (!HAVE_32BIT_POINTERS) {
+				/* Declare as many input SGPRs as the VS has. */
 				add_arg(&fninfo, ARG_SGPR, ctx->i32); /* unused */
-			ctx->param_vs_state_bits = add_arg(&fninfo, ARG_SGPR, ctx->i32); /* unused */
+				ctx->param_vs_state_bits = add_arg(&fninfo, ARG_SGPR, ctx->i32); /* unused */
+			}
 		}
 
 		if (!HAVE_32BIT_POINTERS) {
 			declare_samplers_and_images(ctx, &fninfo,
 						    ctx->type == PIPE_SHADER_GEOMETRY);
+		}
+		if (ctx->type == PIPE_SHADER_VERTEX) {
+			ctx->param_vertex_buffers = add_arg(&fninfo, ARG_SGPR,
+				ac_array_in_const32_addr_space(ctx->v4i32));
 		}
 
 		/* VGPRs (first GS, then VS/TES) */
@@ -4809,8 +4828,15 @@ static void create_function(struct si_shader_context *ctx)
 
 		if (ctx->type == PIPE_SHADER_VERTEX ||
 		    ctx->type == PIPE_SHADER_TESS_EVAL) {
+			unsigned num_user_sgprs;
+
+			if (ctx->type == PIPE_SHADER_VERTEX)
+				num_user_sgprs = GFX9_VSGS_NUM_USER_SGPR;
+			else
+				num_user_sgprs = GFX9_TESGS_NUM_USER_SGPR;
+
 			/* ES return values are inputs to GS. */
-			for (i = 0; i < 8 + GFX9_GS_NUM_USER_SGPR; i++)
+			for (i = 0; i < 8 + num_user_sgprs; i++)
 				returns[num_returns++] = ctx->i32; /* SGPRs */
 			for (i = 0; i < 5; i++)
 				returns[num_returns++] = ctx->f32; /* VGPRs */
@@ -6329,7 +6355,10 @@ static void si_build_gs_prolog_function(struct si_shader_context *ctx,
 	si_init_function_info(&fninfo);
 
 	if (ctx->screen->info.chip_class >= GFX9) {
-		num_sgprs = 8 + GFX9_GS_NUM_USER_SGPR;
+		if (key->gs_prolog.states.gfx9_prev_is_vs)
+			num_sgprs = 8 + GFX9_VSGS_NUM_USER_SGPR;
+		else
+			num_sgprs = 8 + GFX9_TESGS_NUM_USER_SGPR;
 		num_vgprs = 5; /* ES inputs are not needed by GS */
 	} else {
 		num_sgprs = GFX6_GS_NUM_USER_SGPR + 2;
@@ -6592,9 +6621,13 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 
 			if (is_sgpr)
 				lp_add_function_attr(parts[part], param_idx + 1, LP_FUNC_ATTR_INREG);
+			else if (out_idx < num_out_sgpr) {
+				/* Skip returned SGPRs the current part doesn't
+				 * declare on the input. */
+				out_idx = num_out_sgpr;
+			}
 
 			assert(out_idx + param_size <= (is_sgpr ? num_out_sgpr : num_out));
-			assert(is_sgpr || out_idx >= num_out_sgpr);
 
 			if (param_size == 1)
 				arg = out[out_idx];
@@ -6738,18 +6771,6 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			si_build_tcs_epilog_function(&ctx, &tcs_epilog_key);
 			parts[3] = ctx.main_fn;
 
-			/* VS prolog */
-			if (vs_needs_prolog) {
-				union si_shader_part_key vs_prolog_key;
-				si_get_vs_prolog_key(&ls->info,
-						     shader->info.num_input_sgprs,
-						     &shader->key.part.tcs.ls_prolog,
-						     shader, &vs_prolog_key);
-				vs_prolog_key.vs_prolog.is_monolithic = true;
-				si_build_vs_prolog_function(&ctx, &vs_prolog_key);
-				parts[0] = ctx.main_fn;
-			}
-
 			/* VS as LS main part */
 			struct si_shader shader_ls = {};
 			shader_ls.selector = ls;
@@ -6764,6 +6785,18 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			}
 			shader->info.uses_instanceid |= ls->info.uses_instanceid;
 			parts[1] = ctx.main_fn;
+
+			/* LS prolog */
+			if (vs_needs_prolog) {
+				union si_shader_part_key vs_prolog_key;
+				si_get_vs_prolog_key(&ls->info,
+						     shader_ls.info.num_input_sgprs,
+						     &shader->key.part.tcs.ls_prolog,
+						     shader, &vs_prolog_key);
+				vs_prolog_key.vs_prolog.is_monolithic = true;
+				si_build_vs_prolog_function(&ctx, &vs_prolog_key);
+				parts[0] = ctx.main_fn;
+			}
 
 			/* Reset the shader context. */
 			ctx.shader = shader;
@@ -6802,18 +6835,6 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			si_build_gs_prolog_function(&ctx, &gs_prolog_key);
 			gs_prolog = ctx.main_fn;
 
-			/* ES prolog */
-			if (es->vs_needs_prolog) {
-				union si_shader_part_key vs_prolog_key;
-				si_get_vs_prolog_key(&es->info,
-						     shader->info.num_input_sgprs,
-						     &shader->key.part.gs.vs_prolog,
-						     shader, &vs_prolog_key);
-				vs_prolog_key.vs_prolog.is_monolithic = true;
-				si_build_vs_prolog_function(&ctx, &vs_prolog_key);
-				es_prolog = ctx.main_fn;
-			}
-
 			/* ES main part */
 			struct si_shader shader_es = {};
 			shader_es.selector = es;
@@ -6828,6 +6849,18 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			}
 			shader->info.uses_instanceid |= es->info.uses_instanceid;
 			es_main = ctx.main_fn;
+
+			/* ES prolog */
+			if (es->vs_needs_prolog) {
+				union si_shader_part_key vs_prolog_key;
+				si_get_vs_prolog_key(&es->info,
+						     shader_es.info.num_input_sgprs,
+						     &shader->key.part.gs.vs_prolog,
+						     shader, &vs_prolog_key);
+				vs_prolog_key.vs_prolog.is_monolithic = true;
+				si_build_vs_prolog_function(&ctx, &vs_prolog_key);
+				es_prolog = ctx.main_fn;
+			}
 
 			/* Reset the shader context. */
 			ctx.shader = shader;
@@ -7308,7 +7341,6 @@ static void si_build_tcs_epilog_function(struct si_shader_context *ctx,
 		add_arg(&fninfo, ARG_SGPR, ctx->i32);
 		add_arg(&fninfo, ARG_SGPR, ctx->i32);
 		add_arg(&fninfo, ARG_SGPR, ctx->i32);
-		add_arg(&fninfo, ARG_SGPR, ctx->ac.intptr);
 		add_arg(&fninfo, ARG_SGPR, ctx->ac.intptr);
 		add_arg(&fninfo, ARG_SGPR, ctx->ac.intptr);
 		add_arg(&fninfo, ARG_SGPR, ctx->ac.intptr);
