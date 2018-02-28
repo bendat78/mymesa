@@ -1908,6 +1908,25 @@ static LLVMValueRef get_sample_id(struct si_shader_context *ctx)
 	return unpack_param(ctx, SI_PARAM_ANCILLARY, 8, 4);
 }
 
+static LLVMValueRef get_base_vertex(struct ac_shader_abi *abi)
+{
+	struct si_shader_context *ctx = si_shader_context_from_abi(abi);
+
+	/* For non-indexed draws, the base vertex set by the driver
+	 * (for direct draws) or the CP (for indirect draws) is the
+	 * first vertex ID, but GLSL expects 0 to be returned.
+	 */
+	LLVMValueRef vs_state = LLVMGetParam(ctx->main_fn,
+					     ctx->param_vs_state_bits);
+	LLVMValueRef indexed;
+
+	indexed = LLVMBuildLShr(ctx->ac.builder, vs_state, ctx->i32_1, "");
+	indexed = LLVMBuildTrunc(ctx->ac.builder, indexed, ctx->i1, "");
+
+	return LLVMBuildSelect(ctx->ac.builder, indexed, ctx->abi.base_vertex,
+			       ctx->i32_0, "");
+}
+
 static LLVMValueRef get_block_size(struct ac_shader_abi *abi)
 {
 	struct si_shader_context *ctx = si_shader_context_from_abi(abi);
@@ -2068,21 +2087,8 @@ void si_load_system_value(struct si_shader_context *ctx,
 		break;
 
 	case TGSI_SEMANTIC_BASEVERTEX:
-	{
-		/* For non-indexed draws, the base vertex set by the driver
-		 * (for direct draws) or the CP (for indirect draws) is the
-		 * first vertex ID, but GLSL expects 0 to be returned.
-		 */
-		LLVMValueRef vs_state = LLVMGetParam(ctx->main_fn, ctx->param_vs_state_bits);
-		LLVMValueRef indexed;
-
-		indexed = LLVMBuildLShr(ctx->ac.builder, vs_state, ctx->i32_1, "");
-		indexed = LLVMBuildTrunc(ctx->ac.builder, indexed, ctx->i1, "");
-
-		value = LLVMBuildSelect(ctx->ac.builder, indexed,
-					ctx->abi.base_vertex, ctx->i32_0, "");
+		value = get_base_vertex(&ctx->abi);
 		break;
-	}
 
 	case TGSI_SEMANTIC_BASEINSTANCE:
 		value = ctx->abi.start_instance;
@@ -6015,6 +6021,7 @@ static bool si_compile_tgsi_main(struct si_shader_context *ctx,
 		else
 			ctx->abi.emit_outputs = si_llvm_emit_vs_epilogue;
 		bld_base->emit_epilogue = si_tgsi_emit_epilogue;
+		ctx->abi.load_base_vertex = get_base_vertex;
 		break;
 	case PIPE_SHADER_TESS_CTRL:
 		bld_base->emit_fetch_funcs[TGSI_FILE_INPUT] = fetch_input_tcs;

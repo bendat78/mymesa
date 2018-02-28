@@ -24,9 +24,67 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "gen_device_info.h"
 #include "compiler/shader_enums.h"
 #include "util/macros.h"
+
+/**
+ * Get the PCI ID for the device name.
+ *
+ * Returns -1 if the device is not known.
+ */
+int
+gen_device_name_to_pci_device_id(const char *name)
+{
+   static const struct {
+      const char *name;
+      int pci_id;
+   } name_map[] = {
+      { "brw", 0x2a02 },
+      { "g4x", 0x2a42 },
+      { "ilk", 0x0042 },
+      { "snb", 0x0126 },
+      { "ivb", 0x016a },
+      { "hsw", 0x0d2e },
+      { "byt", 0x0f33 },
+      { "bdw", 0x162e },
+      { "chv", 0x22B3 },
+      { "skl", 0x1912 },
+      { "bxt", 0x5A85 },
+      { "kbl", 0x5912 },
+      { "glk", 0x3185 },
+      { "cnl", 0x5a52 },
+   };
+
+   for (unsigned i = 0; i < ARRAY_SIZE(name_map); i++) {
+      if (!strcmp(name_map[i].name, name))
+         return name_map[i].pci_id;
+   }
+
+   return -1;
+}
+
+/**
+ * Get the overridden PCI ID for the device. This is set with the
+ * INTEL_DEVID_OVERRIDE environment variable.
+ *
+ * Returns -1 if the override is not set.
+ */
+int
+gen_get_pci_device_id_override(void)
+{
+   if (geteuid() == getuid()) {
+      const char *devid_override = getenv("INTEL_DEVID_OVERRIDE");
+      if (devid_override) {
+         const int id = gen_device_name_to_pci_device_id(devid_override);
+         return id >= 0 ? id : strtol(devid_override, NULL, 0);
+      }
+   }
+
+   return -1;
+}
 
 static const struct gen_device_info gen_device_info_i965 = {
    .gen = 4,
