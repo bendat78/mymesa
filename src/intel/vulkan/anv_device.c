@@ -37,6 +37,7 @@
 #include "util/build_id.h"
 #include "util/mesa-sha1.h"
 #include "vk_util.h"
+#include "common/gen_defines.h"
 
 #include "genxml/gen7_pack.h"
 
@@ -373,6 +374,7 @@ anv_physical_device_init(struct anv_physical_device *device,
    device->has_syncobj = anv_gem_get_param(fd, I915_PARAM_HAS_EXEC_FENCE_ARRAY);
    device->has_syncobj_wait = device->has_syncobj &&
                               anv_gem_supports_syncobj_wait(fd);
+   device->has_context_priority = anv_gem_has_context_priority(fd);
 
    bool swizzled = anv_gem_get_bit6_swizzle(fd, I915_TILING_X);
 
@@ -791,10 +793,11 @@ void anv_GetPhysicalDeviceFeatures2KHR(
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR: {
          VkPhysicalDevice16BitStorageFeaturesKHR *features =
             (VkPhysicalDevice16BitStorageFeaturesKHR *)ext;
+         ANV_FROM_HANDLE(anv_physical_device, pdevice, physicalDevice);
 
-         features->storageBuffer16BitAccess = false;
-         features->uniformAndStorageBuffer16BitAccess = false;
-         features->storagePushConstant16 = false;
+         features->storageBuffer16BitAccess = pdevice->info.gen >= 8;
+         features->uniformAndStorageBuffer16BitAccess = pdevice->info.gen >= 8;
+         features->storagePushConstant16 = pdevice->info.gen >= 8;
          features->storageInputOutput16 = false;
          break;
       }
@@ -1324,6 +1327,23 @@ anv_device_init_dispatch(struct anv_device *device)
    }
 }
 
+static int
+vk_priority_to_gen(int priority)
+{
+   switch (priority) {
+   case VK_QUEUE_GLOBAL_PRIORITY_LOW_EXT:
+      return GEN_CONTEXT_LOW_PRIORITY;
+   case VK_QUEUE_GLOBAL_PRIORITY_MEDIUM_EXT:
+      return GEN_CONTEXT_MEDIUM_PRIORITY;
+   case VK_QUEUE_GLOBAL_PRIORITY_HIGH_EXT:
+      return GEN_CONTEXT_HIGH_PRIORITY;
+   case VK_QUEUE_GLOBAL_PRIORITY_REALTIME_EXT:
+      return GEN_CONTEXT_REALTIME_PRIORITY;
+   default:
+      unreachable("Invalid priority");
+   }
+}
+
 VkResult anv_CreateDevice(
     VkPhysicalDevice                            physicalDevice,
     const VkDeviceCreateInfo*                   pCreateInfo,
@@ -1367,6 +1387,15 @@ VkResult anv_CreateDevice(
       }
    }
 
+   /* Check if client specified queue priority. */
+   const VkDeviceQueueGlobalPriorityCreateInfoEXT *queue_priority =
+      vk_find_struct_const(pCreateInfo->pQueueCreateInfos[0].pNext,
+                           DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_EXT);
+
+   VkQueueGlobalPriorityEXT priority =
+      queue_priority ? queue_priority->globalPriority :
+         VK_QUEUE_GLOBAL_PRIORITY_MEDIUM_EXT;
+
    device = vk_alloc2(&physical_device->instance->alloc, pAllocator,
                        sizeof(*device), 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
@@ -1395,6 +1424,21 @@ VkResult anv_CreateDevice(
    if (device->context_id == -1) {
       result = vk_error(VK_ERROR_INITIALIZATION_FAILED);
       goto fail_fd;
+   }
+
+   /* As per spec, the driver implementation may deny requests to acquire
+    * a priority above the default priority (MEDIUM) if the caller does not
+    * have sufficient privileges. In this scenario VK_ERROR_NOT_PERMITTED_EXT
+    * is returned.
+    */
+   if (physical_device->has_context_priority) {
+      int err = anv_gem_set_context_param(device->fd, device->context_id,
+                                          I915_CONTEXT_PARAM_PRIORITY,
+                                          vk_priority_to_gen(priority));
+      if (err != 0 && priority > VK_QUEUE_GLOBAL_PRIORITY_MEDIUM_EXT) {
+         result = vk_error(VK_ERROR_NOT_PERMITTED_EXT);
+         goto fail_fd;
+      }
    }
 
    device->info = physical_device->info;
@@ -2112,6 +2156,17 @@ void anv_GetBufferMemoryRequirements(
 
    pMemoryRequirements->size = buffer->size;
    pMemoryRequirements->alignment = alignment;
+
+   /* Storage and Uniform buffers should have their size aligned to
+    * 32-bits to avoid boundary checks when last DWord is not complete.
+    * This would ensure that not internal padding would be needed for
+    * 16-bit types.
+    */
+   if (device->robust_buffer_access &&
+       (buffer->usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ||
+        buffer->usage & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+      pMemoryRequirements->size = align_u64(buffer->size, 4);
+
    pMemoryRequirements->memoryTypeBits = memory_types;
 }
 

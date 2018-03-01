@@ -646,9 +646,9 @@ fs_generator::generate_barrier(fs_inst *inst, struct brw_reg src)
    brw_WAIT(p);
 }
 
-void
+bool
 fs_generator::generate_linterp(fs_inst *inst,
-			     struct brw_reg dst, struct brw_reg *src)
+                               struct brw_reg dst, struct brw_reg *src)
 {
    /* PLN reads:
     *                      /   in SIMD16   \
@@ -673,13 +673,68 @@ fs_generator::generate_linterp(fs_inst *inst,
    struct brw_reg delta_x = src[0];
    struct brw_reg delta_y = offset(src[0], inst->exec_size / 8);
    struct brw_reg interp = src[1];
+   brw_inst *i[4];
 
-   if (devinfo->has_pln &&
-       (devinfo->gen >= 7 || (delta_x.nr & 1) == 0)) {
+   if (devinfo->gen >= 11) {
+      struct brw_reg acc = retype(brw_acc_reg(8), BRW_REGISTER_TYPE_NF);
+      struct brw_reg dwP = suboffset(interp, 0);
+      struct brw_reg dwQ = suboffset(interp, 1);
+      struct brw_reg dwR = suboffset(interp, 3);
+
+      brw_set_default_exec_size(p, BRW_EXECUTE_8);
+
+      if (inst->exec_size == 8) {
+         i[0] = brw_MAD(p,            acc, dwR, offset(delta_x, 0), dwP);
+         i[1] = brw_MAD(p, offset(dst, 0), acc, offset(delta_y, 0), dwQ);
+
+         brw_inst_set_cond_modifier(p->devinfo, i[1], inst->conditional_mod);
+
+         /* brw_set_default_saturate() is called before emitting instructions,
+          * so the saturate bit is set in each instruction, so we need to unset
+          * it on the first instruction of each pair.
+          */
+         brw_inst_set_saturate(p->devinfo, i[0], false);
+      } else {
+         brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
+         i[0] = brw_MAD(p,            acc, dwR, offset(delta_x, 0), dwP);
+         i[1] = brw_MAD(p, offset(dst, 0), acc, offset(delta_x, 1), dwQ);
+
+         brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
+         i[2] = brw_MAD(p,            acc, dwR, offset(delta_y, 0), dwP);
+         i[3] = brw_MAD(p, offset(dst, 1), acc, offset(delta_y, 1), dwQ);
+
+         brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+
+         brw_inst_set_cond_modifier(p->devinfo, i[1], inst->conditional_mod);
+         brw_inst_set_cond_modifier(p->devinfo, i[3], inst->conditional_mod);
+
+         /* brw_set_default_saturate() is called before emitting instructions,
+          * so the saturate bit is set in each instruction, so we need to unset
+          * it on the first instruction of each pair.
+          */
+         brw_inst_set_saturate(p->devinfo, i[0], false);
+         brw_inst_set_saturate(p->devinfo, i[2], false);
+      }
+
+      return true;
+   } else if (devinfo->has_pln &&
+              (devinfo->gen >= 7 || (delta_x.nr & 1) == 0)) {
       brw_PLN(p, dst, interp, delta_x);
+
+      return false;
    } else {
-      brw_LINE(p, brw_null_reg(), interp, delta_x);
-      brw_MAC(p, dst, suboffset(interp, 1), delta_y);
+      i[0] = brw_LINE(p, brw_null_reg(), interp, delta_x);
+      i[1] = brw_MAC(p, dst, suboffset(interp, 1), delta_y);
+
+      brw_inst_set_cond_modifier(p->devinfo, i[1], inst->conditional_mod);
+
+      /* brw_set_default_saturate() is called before emitting instructions, so
+       * the saturate bit is set in each instruction, so we need to unset it on
+       * the first instruction.
+       */
+      brw_inst_set_saturate(p->devinfo, i[0], false);
+
+      return true;
    }
 }
 
@@ -1093,12 +1148,12 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
  * appropriate swizzling.
  */
 void
-fs_generator::generate_ddx(enum opcode opcode,
+fs_generator::generate_ddx(const fs_inst *inst,
                            struct brw_reg dst, struct brw_reg src)
 {
    unsigned vstride, width;
 
-   if (opcode == FS_OPCODE_DDX_FINE) {
+   if (inst->opcode == FS_OPCODE_DDX_FINE) {
       /* produce accurate derivatives */
       vstride = BRW_VERTICAL_STRIDE_2;
       width = BRW_WIDTH_2;
@@ -1108,20 +1163,17 @@ fs_generator::generate_ddx(enum opcode opcode,
       width = BRW_WIDTH_4;
    }
 
-   struct brw_reg src0 = brw_reg(src.file, src.nr, 1,
-                                 src.negate, src.abs,
-				 BRW_REGISTER_TYPE_F,
-				 vstride,
-				 width,
-				 BRW_HORIZONTAL_STRIDE_0,
-				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
-   struct brw_reg src1 = brw_reg(src.file, src.nr, 0,
-                                 src.negate, src.abs,
-				 BRW_REGISTER_TYPE_F,
-				 vstride,
-				 width,
-				 BRW_HORIZONTAL_STRIDE_0,
-				 BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+   struct brw_reg src0 = src;
+   struct brw_reg src1 = src;
+
+   src0.subnr   = sizeof(float);
+   src0.vstride = vstride;
+   src0.width   = width;
+   src0.hstride = BRW_HORIZONTAL_STRIDE_0;
+   src1.vstride = vstride;
+   src1.width   = width;
+   src1.hstride = BRW_HORIZONTAL_STRIDE_0;
+
    brw_ADD(p, dst, src0, negate(src1));
 }
 
@@ -1130,45 +1182,57 @@ fs_generator::generate_ddx(enum opcode opcode,
  * left.
  */
 void
-fs_generator::generate_ddy(enum opcode opcode,
+fs_generator::generate_ddy(const fs_inst *inst,
                            struct brw_reg dst, struct brw_reg src)
 {
-   if (opcode == FS_OPCODE_DDY_FINE) {
+   if (inst->opcode == FS_OPCODE_DDY_FINE) {
       /* produce accurate derivatives */
-      struct brw_reg src0 = brw_reg(src.file, src.nr, 0,
-                                    src.negate, src.abs,
-                                    BRW_REGISTER_TYPE_F,
-                                    BRW_VERTICAL_STRIDE_4,
-                                    BRW_WIDTH_4,
-                                    BRW_HORIZONTAL_STRIDE_1,
-                                    BRW_SWIZZLE_XYXY, WRITEMASK_XYZW);
-      struct brw_reg src1 = brw_reg(src.file, src.nr, 0,
-                                    src.negate, src.abs,
-                                    BRW_REGISTER_TYPE_F,
-                                    BRW_VERTICAL_STRIDE_4,
-                                    BRW_WIDTH_4,
-                                    BRW_HORIZONTAL_STRIDE_1,
-                                    BRW_SWIZZLE_ZWZW, WRITEMASK_XYZW);
-      brw_push_insn_state(p);
-      brw_set_default_access_mode(p, BRW_ALIGN_16);
-      brw_ADD(p, dst, negate(src0), src1);
-      brw_pop_insn_state(p);
+      if (devinfo->gen >= 11) {
+         src = stride(src, 0, 2, 1);
+         struct brw_reg src_0  = byte_offset(src,  0 * sizeof(float));
+         struct brw_reg src_2  = byte_offset(src,  2 * sizeof(float));
+         struct brw_reg src_4  = byte_offset(src,  4 * sizeof(float));
+         struct brw_reg src_6  = byte_offset(src,  6 * sizeof(float));
+         struct brw_reg src_8  = byte_offset(src,  8 * sizeof(float));
+         struct brw_reg src_10 = byte_offset(src, 10 * sizeof(float));
+         struct brw_reg src_12 = byte_offset(src, 12 * sizeof(float));
+         struct brw_reg src_14 = byte_offset(src, 14 * sizeof(float));
+
+         struct brw_reg dst_0  = byte_offset(dst,  0 * sizeof(float));
+         struct brw_reg dst_4  = byte_offset(dst,  4 * sizeof(float));
+         struct brw_reg dst_8  = byte_offset(dst,  8 * sizeof(float));
+         struct brw_reg dst_12 = byte_offset(dst, 12 * sizeof(float));
+
+         brw_push_insn_state(p);
+         brw_set_default_exec_size(p, BRW_EXECUTE_4);
+
+         brw_ADD(p, dst_0, negate(src_0), src_2);
+         brw_ADD(p, dst_4, negate(src_4), src_6);
+
+         if (inst->exec_size == 16) {
+            brw_ADD(p, dst_8,  negate(src_8),  src_10);
+            brw_ADD(p, dst_12, negate(src_12), src_14);
+         }
+
+         brw_pop_insn_state(p);
+      } else {
+         struct brw_reg src0 = stride(src, 4, 4, 1);
+         struct brw_reg src1 = stride(src, 4, 4, 1);
+         src0.swizzle = BRW_SWIZZLE_XYXY;
+         src1.swizzle = BRW_SWIZZLE_ZWZW;
+
+         brw_push_insn_state(p);
+         brw_set_default_access_mode(p, BRW_ALIGN_16);
+         brw_ADD(p, dst, negate(src0), src1);
+         brw_pop_insn_state(p);
+      }
    } else {
       /* replicate the derivative at the top-left pixel to other pixels */
-      struct brw_reg src0 = brw_reg(src.file, src.nr, 0,
-                                    src.negate, src.abs,
-                                    BRW_REGISTER_TYPE_F,
-                                    BRW_VERTICAL_STRIDE_4,
-                                    BRW_WIDTH_4,
-                                    BRW_HORIZONTAL_STRIDE_0,
-                                    BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
-      struct brw_reg src1 = brw_reg(src.file, src.nr, 2,
-                                    src.negate, src.abs,
-                                    BRW_REGISTER_TYPE_F,
-                                    BRW_VERTICAL_STRIDE_4,
-                                    BRW_WIDTH_4,
-                                    BRW_HORIZONTAL_STRIDE_0,
-                                    BRW_SWIZZLE_XYZW, WRITEMASK_XYZW);
+      struct brw_reg src0 = stride(src, 4, 4, 0);
+      struct brw_reg src1 = stride(src, 4, 4, 0);
+      src0.subnr = 0 * sizeof(float);
+      src1.subnr = 2 * sizeof(float);
+
       brw_ADD(p, dst, negate(src0), src1);
    }
 }
@@ -1762,7 +1826,7 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
 	 break;
 
       case BRW_OPCODE_LRP:
-         assert(devinfo->gen >= 6);
+         assert(devinfo->gen >= 6 && devinfo->gen <= 10);
          if (devinfo->gen < 10)
             brw_set_default_access_mode(p, BRW_ALIGN_16);
          brw_LRP(p, dst, src[0], src[1], src[2]);
@@ -1954,7 +2018,7 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
 	 brw_MOV(p, dst, src[0]);
 	 break;
       case FS_OPCODE_LINTERP:
-	 generate_linterp(inst, dst, src);
+	 multiple_instructions_emitted = generate_linterp(inst, dst, src);
 	 break;
       case FS_OPCODE_PIXEL_X:
          assert(src[0].type == BRW_REGISTER_TYPE_UW);
@@ -1989,11 +2053,11 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
 	 break;
       case FS_OPCODE_DDX_COARSE:
       case FS_OPCODE_DDX_FINE:
-         generate_ddx(inst->opcode, dst, src[0]);
+         generate_ddx(inst, dst, src[0]);
          break;
       case FS_OPCODE_DDY_COARSE:
       case FS_OPCODE_DDY_FINE:
-         generate_ddy(inst->opcode, dst, src[0]);
+         generate_ddy(inst, dst, src[0]);
 	 break;
 
       case SHADER_OPCODE_GEN4_SCRATCH_WRITE:

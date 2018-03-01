@@ -409,7 +409,7 @@ private:
    void generate_urb_write(fs_inst *inst, struct brw_reg payload);
    void generate_cs_terminate(fs_inst *inst, struct brw_reg payload);
    void generate_barrier(fs_inst *inst, struct brw_reg src);
-   void generate_linterp(fs_inst *inst, struct brw_reg dst,
+   bool generate_linterp(fs_inst *inst, struct brw_reg dst,
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
                      struct brw_reg surface_index,
@@ -417,8 +417,10 @@ private:
    void generate_get_buffer_size(fs_inst *inst, struct brw_reg dst,
                                  struct brw_reg src,
                                  struct brw_reg surf_index);
-   void generate_ddx(enum opcode op, struct brw_reg dst, struct brw_reg src);
-   void generate_ddy(enum opcode op, struct brw_reg dst, struct brw_reg src);
+   void generate_ddx(const fs_inst *inst,
+                     struct brw_reg dst, struct brw_reg src);
+   void generate_ddy(const fs_inst *inst,
+                     struct brw_reg dst, struct brw_reg src);
    void generate_scratch_write(fs_inst *inst, struct brw_reg src);
    void generate_scratch_read(fs_inst *inst, struct brw_reg dst);
    void generate_scratch_read_gen7(fs_inst *inst, struct brw_reg dst);
@@ -503,6 +505,7 @@ fs_reg shuffle_64bit_data_for_32bit_write(const brw::fs_builder &bld,
 void shuffle_32bit_load_result_to_16bit_data(const brw::fs_builder &bld,
                                              const fs_reg &dst,
                                              const fs_reg &src,
+                                             uint32_t first_component,
                                              uint32_t components);
 
 void shuffle_16bit_data_for_32bit_write(const brw::fs_builder &bld,

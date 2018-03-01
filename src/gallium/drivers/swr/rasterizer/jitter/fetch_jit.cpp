@@ -1830,17 +1830,13 @@ Value* FetchJit::GetSimdValid16bitIndices(Value* pIndices, Value* pLastIndex)
     Value* pZeroIndex = ALLOCA(mInt16Ty);
     STORE(C((uint16_t)0), pZeroIndex);
 
-    pLastIndex = TRANSLATE_ADDRESS(pLastIndex);
-
     // Load a SIMD of index pointers
     for(int64_t lane = 0; lane < mVWidth; lane++)
     {
         // Calculate the address of the requested index
         Value *pIndex = GEP(pIndices, C(lane));
 
-        pIndex = TRANSLATE_ADDRESS(pIndex);
-
-        // check if the address is less than the max index,
+        // check if the address is less than the max index, 
         Value* mask = ICMP_ULT(pIndex, pLastIndex);
 
         // if valid, load the index. if not, load 0 from the stack
@@ -1881,7 +1877,7 @@ Value* FetchJit::GetSimdValid32bitIndices(Value* pIndices, Value* pLastIndex)
     //     vIndexMask    -1-1-1-1 0 0 0 0 : offsets < max pass
     //     vLoadedIndices 0 1 2 3 0 0 0 0 : offsets >= max masked to 0
     Value* vMaxIndex = VBROADCAST(numIndicesLeft);
-    Value* vIndexMask = VPCMPGTD(vMaxIndex,vIndexOffsets);
+    Value* vIndexMask = VPCMPGTD(vMaxIndex, vIndexOffsets);
 
     // VMASKLOAD takes an *i8 src pointer
     pIndices = BITCAST(pIndices,PointerType::get(mInt8Ty,0));

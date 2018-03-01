@@ -194,7 +194,7 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(const fs_builder &bld,
    fs_reg dw = offset(vec4_result, bld, (const_offset & 0xf) / 4);
    switch (type_sz(dst.type)) {
    case 2:
-      shuffle_32bit_load_result_to_16bit_data(bld, dst, dw, 1);
+      shuffle_32bit_load_result_to_16bit_data(bld, dst, dw, 0, 1);
       bld.MOV(dst, subscript(dw, dst.type, (const_offset / 2) & 1));
       break;
    case 4:
@@ -3549,11 +3549,7 @@ fs_visitor::lower_integer_multiplication()
               inst->dst.type != BRW_REGISTER_TYPE_UD))
             continue;
 
-         /* Gen8's MUL instruction can do a 32-bit x 32-bit -> 32-bit
-          * operation directly, but CHV/BXT cannot.
-          */
-         if (devinfo->gen >= 8 &&
-             !devinfo->is_cherryview && !gen_device_info_is_9lp(devinfo))
+         if (devinfo->has_integer_dword_mul)
             continue;
 
          if (inst->src[1].file == IMM &&

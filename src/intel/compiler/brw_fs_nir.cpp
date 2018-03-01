@@ -2304,28 +2304,51 @@ do_untyped_vector_read(const fs_builder &bld,
 {
    if (type_sz(dest.type) <= 2) {
       assert(dest.stride == 1);
+      boolean is_const_offset = offset_reg.file == BRW_IMMEDIATE_VALUE;
 
-      if (num_components > 1) {
-         /* Pairs of 16-bit components can be read with untyped read, for 16-bit
-          * vec3 4th component is ignored.
+      if (is_const_offset) {
+         uint32_t start = offset_reg.ud & ~3;
+         uint32_t end = offset_reg.ud + num_components * type_sz(dest.type);
+         end = ALIGN(end, 4);
+         assert (end - start <= 16);
+
+         /* At this point we have 16-bit component/s that have constant
+          * offset aligned to 4-bytes that can be read with untyped_reads.
+          * untyped_read message requires 32-bit aligned offsets.
           */
+         unsigned first_component = (offset_reg.ud & 3) / type_sz(dest.type);
+         unsigned num_components_32bit = (end - start) / 4;
+
          fs_reg read_result =
-            emit_untyped_read(bld, surf_index, offset_reg,
-                              1 /* dims */, DIV_ROUND_UP(num_components, 2),
+            emit_untyped_read(bld, surf_index, brw_imm_ud(start),
+                              1 /* dims */,
+                              num_components_32bit,
                               BRW_PREDICATE_NONE);
          shuffle_32bit_load_result_to_16bit_data(bld,
                retype(dest, BRW_REGISTER_TYPE_W),
                retype(read_result, BRW_REGISTER_TYPE_D),
-               num_components);
+               first_component, num_components);
       } else {
-         assert(num_components == 1);
-         /* scalar 16-bit are read using one byte_scattered_read message */
-         fs_reg read_result =
-            emit_byte_scattered_read(bld, surf_index, offset_reg,
-                                     1 /* dims */, 1,
-                                     type_sz(dest.type) * 8 /* bit_size */,
-                                     BRW_PREDICATE_NONE);
-         bld.MOV(dest, subscript(read_result, dest.type, 0));
+         fs_reg read_offset = bld.vgrf(BRW_REGISTER_TYPE_UD);
+         for (unsigned i = 0; i < num_components; i++) {
+            if (i == 0) {
+               bld.MOV(read_offset, offset_reg);
+            } else {
+               bld.ADD(read_offset, offset_reg,
+                       brw_imm_ud(i * type_sz(dest.type)));
+            }
+            /* Non constant offsets are not guaranteed to be aligned 32-bits
+             * so they are read using one byte_scattered_read message
+             * for each component.
+             */
+            fs_reg read_result =
+               emit_byte_scattered_read(bld, surf_index, read_offset,
+                                        1 /* dims */, 1,
+                                        type_sz(dest.type) * 8 /* bit_size */,
+                                        BRW_PREDICATE_NONE);
+            bld.MOV(offset(dest, bld, i),
+                    subscript (read_result, dest.type, 0));
+         }
       }
    } else if (type_sz(dest.type) == 4) {
       fs_reg read_result = emit_untyped_read(bld, surf_index, offset_reg,
@@ -3859,16 +3882,21 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       break;
 
    case nir_intrinsic_load_uniform: {
-      /* Offsets are in bytes but they should always be multiples of 4 */
-      assert(instr->const_index[0] % 4 == 0);
+      /* Offsets are in bytes but they should always aligned to
+       * the type size
+       */
+      assert(instr->const_index[0] % 4 == 0 ||
+             instr->const_index[0] % type_sz(dest.type) == 0);
 
       fs_reg src(UNIFORM, instr->const_index[0] / 4, dest.type);
 
       nir_const_value *const_offset = nir_src_as_const_value(instr->src[0]);
       if (const_offset) {
-         /* Offsets are in bytes but they should always be multiples of 4 */
-         assert(const_offset->u32[0] % 4 == 0);
-         src.offset = const_offset->u32[0];
+         assert(const_offset->u32[0] % type_sz(dest.type) == 0);
+         /* For 16-bit types we add the module of the const_index[0]
+          * offset to access to not 32-bit aligned element
+          */
+         src.offset = const_offset->u32[0] + instr->const_index[0] % 4;
 
          for (unsigned j = 0; j < instr->num_components; j++) {
             bld.MOV(offset(dest, bld, j), offset(src, bld, j));
@@ -4107,6 +4135,8 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
          unsigned num_components = ffs(~(writemask >> first_component)) - 1;
          fs_reg write_src = offset(val_reg, bld, first_component);
 
+         nir_const_value *const_offset = nir_src_as_const_value(instr->src[2]);
+
          if (type_size > 4) {
             /* We can't write more than 2 64-bit components at once. Limit
              * the num_components of the write to what we can do and let the next
@@ -4122,14 +4152,19 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
              * 32-bit-aligned we need to use byte-scattered writes because
              * untyped writes works with 32-bit components with 32-bit
              * alignment. byte_scattered_write messages only support one
-             * 16-bit component at a time.
+             * 16-bit component at a time. As VK_KHR_relaxed_block_layout
+             * could be enabled we can not guarantee that not constant offsets
+             * to be 32-bit aligned for 16-bit types. For example an array, of
+             * 16-bit vec3 with array element stride of 6.
              *
-             * For example, if there is a 3-components vector we submit one
-             * untyped-write message of 32-bit (first two components), and one
-             * byte-scattered write message (the last component).
+             * In the case of 32-bit aligned constant offsets if there is
+             * a 3-components vector we submit one untyped-write message
+             * of 32-bit (first two components), and one byte-scattered
+             * write message (the last component).
              */
 
-            if (first_component % 2) {
+            if ( !const_offset || ((const_offset->u32[0] +
+                                   type_size * first_component) % 4)) {
                /* If we use a .yz writemask we also need to emit 2
                 * byte-scattered write messages because of y-component not
                 * being aligned to 32-bit.
@@ -4155,7 +4190,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
          }
 
          fs_reg offset_reg;
-         nir_const_value *const_offset = nir_src_as_const_value(instr->src[2]);
+
          if (const_offset) {
             offset_reg = brw_imm_ud(const_offset->u32[0] +
                                     type_size * first_component);
@@ -4194,7 +4229,8 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
          } else {
             assert(num_components * type_size <= 16);
             assert((num_components * type_size) % 4 == 0);
-            assert((first_component * type_size) % 4 == 0);
+            assert(offset_reg.file != BRW_IMMEDIATE_VALUE ||
+                   offset_reg.ud % 4 == 0);
             unsigned num_slots = (num_components * type_size) / 4;
 
             emit_untyped_write(bld, surf_index, offset_reg,
@@ -4290,7 +4326,36 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       inst->mlen = 1;
       inst->size_written = 4 * REG_SIZE;
 
-      bld.MOV(retype(dest, ret_payload.type), component(ret_payload, 0));
+      /* SKL PRM, vol07, 3D Media GPGPU Engine, Bounds Checking and Faulting:
+       *
+       * "Out-of-bounds checking is always performed at a DWord granularity. If
+       * any part of the DWord is out-of-bounds then the whole DWord is
+       * considered out-of-bounds."
+       *
+       * This implies that types with size smaller than 4-bytes need to be
+       * padded if they don't complete the last dword of the buffer. But as we
+       * need to maintain the original size we need to reverse the padding
+       * calculation to return the correct size to know the number of elements
+       * of an unsized array. As we stored in the last two bits of the surface
+       * size the needed padding for the buffer, we calculate here the
+       * original buffer_size reversing the surface_size calculation:
+       *
+       * surface_size = isl_align(buffer_size, 4) +
+       *                (isl_align(buffer_size) - buffer_size)
+       *
+       * buffer_size = surface_size & ~3 - surface_size & 3
+       */
+
+      fs_reg size_aligned4 = ubld.vgrf(BRW_REGISTER_TYPE_UD);
+      fs_reg size_padding = ubld.vgrf(BRW_REGISTER_TYPE_UD);
+      fs_reg buffer_size = ubld.vgrf(BRW_REGISTER_TYPE_UD);
+
+      ubld.AND(size_padding, ret_payload, brw_imm_ud(3));
+      ubld.AND(size_aligned4, ret_payload, brw_imm_ud(~3));
+      ubld.ADD(buffer_size, size_aligned4, negate(size_padding));
+
+      bld.MOV(retype(dest, ret_payload.type), component(buffer_size, 0));
+
       brw_mark_surface_used(prog_data, index);
       break;
    }
@@ -4883,6 +4948,7 @@ void
 shuffle_32bit_load_result_to_16bit_data(const fs_builder &bld,
                                         const fs_reg &dst,
                                         const fs_reg &src,
+                                        uint32_t first_component,
                                         uint32_t components)
 {
    assert(type_sz(src.type) == 4);
@@ -4897,7 +4963,8 @@ shuffle_32bit_load_result_to_16bit_data(const fs_builder &bld,
 
    for (unsigned i = 0; i < components; i++) {
       const fs_reg component_i =
-         subscript(offset(src, bld, i / 2), dst.type, i % 2);
+         subscript(offset(src, bld, (first_component + i) / 2), dst.type,
+                   (first_component + i) % 2);
 
       bld.MOV(offset(tmp, bld, i % 2), component_i);
 
