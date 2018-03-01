@@ -2331,7 +2331,7 @@ do_untyped_vector_read(const fs_builder &bld,
       } else {
          fs_reg read_offset = bld.vgrf(BRW_REGISTER_TYPE_UD);
          for (unsigned i = 0; i < num_components; i++) {
-            if (i == 0) {
+            if (!i) {
                bld.MOV(read_offset, offset_reg);
             } else {
                bld.ADD(read_offset, offset_reg,

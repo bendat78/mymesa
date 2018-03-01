@@ -1800,7 +1800,7 @@ vbo_destroy_vertex_list(struct gl_context *ctx, void *data)
    for (gl_vertex_processing_mode vpm = VP_MODE_FF; vpm < VP_MODE_MAX; ++vpm)
       _mesa_reference_vao(ctx, &node->VAO[vpm], NULL);
 
-   if (--node->prim_store->refcount == 0)
+   if (!--node->prim_store->refcount)
       free(node->prim_store);
 
    free(node->current_data);

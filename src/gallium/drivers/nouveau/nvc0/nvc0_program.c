@@ -137,7 +137,7 @@ nvc0_fp_assign_output_slots(struct nv50_ir_prog_info *info)
    /* Compute the relative position of each color output, since skipped MRT
     * positions will not have registers allocated to them.
     */
-   unsigned colors[8] = {0};
+   unsigned colors[8] = {};
    for (i = 0; i < info->numOutputs; ++i)
       if (info->out[i].sn == TGSI_SEMANTIC_COLOR)
          colors[info->out[i].si] = 1;

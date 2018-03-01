@@ -1836,7 +1836,7 @@ Value* FetchJit::GetSimdValid16bitIndices(Value* pIndices, Value* pLastIndex)
         // Calculate the address of the requested index
         Value *pIndex = GEP(pIndices, C(lane));
 
-        // check if the address is less than the max index, 
+        // check if the address is less than the max index,
         Value* mask = ICMP_ULT(pIndex, pLastIndex);
 
         // if valid, load the index. if not, load 0 from the stack

@@ -40,7 +40,7 @@ anv_device_execbuf(struct anv_device *device,
                    struct anv_bo **execbuf_bos)
 {
    int ret = device->no_hw ? 0 : anv_gem_execbuffer(device, execbuf);
-   if (ret != 0) {
+   if (ret) {
       /* We don't know the real error. */
       device->lost = true;
       return vk_errorf(device->instance, device, VK_ERROR_DEVICE_LOST,

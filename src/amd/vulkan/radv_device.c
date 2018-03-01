@@ -1595,7 +1595,7 @@ radv_get_preamble_cs(struct radv_queue *queue,
 	struct radeon_winsys_bo *esgs_ring_bo = NULL;
 	struct radeon_winsys_bo *gsvs_ring_bo = NULL;
 	struct radeon_winsys_bo *tess_rings_bo = NULL;
-	struct radeon_winsys_cs *dest_cs[3] = {0};
+	struct radeon_winsys_cs *dest_cs[3] = {};
 
 	bool add_tess_rings = false, add_sample_positions = false;
 	unsigned tess_factor_ring_size = 0, tess_offchip_ring_size = 0;
