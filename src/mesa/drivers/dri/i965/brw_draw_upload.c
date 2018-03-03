@@ -411,7 +411,7 @@ copy_array_to_vbo_array(struct brw_context *brw,
     * attribute once and set the buffer's stride to 0.  There's no need
     * to replicate it out.
     */
-   if (src_stride == 0) {
+   if (!src_stride) {
       brw_upload_data(&brw->upload, element->glarray->Ptr,
                       element->glarray->_ElementSize,
                       element->glarray->_ElementSize,
