@@ -101,7 +101,7 @@ __gen_combine_address(struct brw_context *brw, void *location,
    }
 }
 
-static struct brw_address
+UNUSED static struct brw_address
 rw_bo(struct brw_bo *bo, uint32_t offset)
 {
    return (struct brw_address) {
@@ -117,6 +117,26 @@ ro_bo(struct brw_bo *bo, uint32_t offset)
    return (struct brw_address) {
             .bo = bo,
             .offset = offset,
+   };
+}
+
+static struct brw_address
+rw_32_bo(struct brw_bo *bo, uint32_t offset)
+{
+   return (struct brw_address) {
+            .bo = bo,
+            .offset = offset,
+            .reloc_flags = RELOC_WRITE | RELOC_32BIT,
+   };
+}
+
+static struct brw_address
+ro_32_bo(struct brw_bo *bo, uint32_t offset)
+{
+   return (struct brw_address) {
+            .bo = bo,
+            .offset = offset,
+            .reloc_flags = RELOC_32BIT,
    };
 }
 
@@ -138,7 +158,7 @@ KSP(struct brw_context *brw, uint32_t offset)
 }
 #else
 static uint32_t
-KSP(struct brw_context *brw, uint32_t offset)
+KSP(UNUSED struct brw_context *brw, uint32_t offset)
 {
    return offset;
 }
@@ -310,14 +330,22 @@ genX(emit_vertex_buffer_state)(struct brw_context *brw,
                                unsigned buffer_nr,
                                struct brw_bo *bo,
                                unsigned start_offset,
-                               unsigned end_offset,
+                               MAYBE_UNUSED unsigned end_offset,
                                unsigned stride,
-                               unsigned step_rate)
+                               MAYBE_UNUSED unsigned step_rate)
 {
    struct GENX(VERTEX_BUFFER_STATE) buf_state = {
       .VertexBufferIndex = buffer_nr,
       .BufferPitch = stride,
-      .BufferStartingAddress = ro_bo(bo, start_offset),
+
+      /* The VF cache designers apparently cut corners, and made the cache
+       * only consider the bottom 32 bits of memory addresses.  If you happen
+       * to have two vertex buffers which get placed exactly 4 GiB apart and
+       * use them in back-to-back draw calls, you can get collisions.  To work
+       * around this problem, we restrict vertex buffers to the low 32 bits of
+       * the address space.
+       */
+      .BufferStartingAddress = ro_32_bo(bo, start_offset),
 #if GEN_GEN >= 8
       .BufferSize = end_offset - start_offset,
 #endif
@@ -858,7 +886,15 @@ genX(emit_index_buffer)(struct brw_context *brw)
       ib.CutIndexEnable = brw->prim_restart.enable_cut_index;
 #endif
       ib.IndexFormat = brw_get_index_type(index_buffer->index_size);
-      ib.BufferStartingAddress = ro_bo(brw->ib.bo, 0);
+
+      /* The VF cache designers apparently cut corners, and made the cache
+       * only consider the bottom 32 bits of memory addresses.  If you happen
+       * to have two index buffers which get placed exactly 4 GiB apart and
+       * use them in back-to-back draw calls, you can get collisions.  To work
+       * around this problem, we restrict index buffers to the low 32 bits of
+       * the address space.
+       */
+      ib.BufferStartingAddress = ro_32_bo(brw->ib.bo, 0);
 #if GEN_GEN >= 8
       ib.IndexBufferMOCS = GEN_GEN >= 9 ? SKL_MOCS_WB : BDW_MOCS_WB;
       ib.BufferSize = brw->ib.size;
@@ -1895,7 +1931,7 @@ genX(upload_wm)(struct brw_context *brw)
 #endif
 
       if (wm_prog_data->base.total_scratch) {
-         wm.ScratchSpaceBasePointer = rw_bo(stage_state->scratch_bo, 0);
+         wm.ScratchSpaceBasePointer = rw_32_bo(stage_state->scratch_bo, 0);
          wm.PerThreadScratchSpace =
             ffs(stage_state->per_thread_scratch) - 11;
       }
@@ -2014,6 +2050,14 @@ static const struct brw_tracked_state genX(wm_state) = {
 
 /* ---------------------------------------------------------------------- */
 
+/* We restrict scratch buffers to the bottom 32 bits of the address space
+ * by using rw_32_bo().
+ *
+ * General State Base Address is a bit broken.  If the address + size as
+ * seen by STATE_BASE_ADDRESS overflows 48 bits, the GPU appears to treat
+ * all accesses to the buffer as being out of bounds and returns zero.
+ */
+
 #define INIT_THREAD_DISPATCH_FIELDS(pkt, prefix) \
    pkt.KernelStartPointer = KSP(brw, stage_state->prog_offset);           \
    pkt.SamplerCount       =                                               \
@@ -2023,7 +2067,7 @@ static const struct brw_tracked_state genX(wm_state) = {
    pkt.FloatingPointMode  = stage_prog_data->use_alt_mode;                \
                                                                           \
    if (stage_prog_data->total_scratch) {                                  \
-      pkt.ScratchSpaceBasePointer = rw_bo(stage_state->scratch_bo, 0);    \
+      pkt.ScratchSpaceBasePointer = rw_32_bo(stage_state->scratch_bo, 0); \
       pkt.PerThreadScratchSpace =                                         \
          ffs(stage_state->per_thread_scratch) - 11;                       \
    }                                                                      \
@@ -3894,8 +3938,8 @@ genX(upload_ps)(struct brw_context *brw)
 
       if (prog_data->base.total_scratch) {
          ps.ScratchSpaceBasePointer =
-            rw_bo(stage_state->scratch_bo,
-                  ffs(stage_state->per_thread_scratch) - 11);
+            rw_32_bo(stage_state->scratch_bo,
+                     ffs(stage_state->per_thread_scratch) - 11);
       }
    }
 }
@@ -4216,7 +4260,7 @@ genX(upload_cs_state)(struct brw_context *brw)
              */
             per_thread_scratch_value = stage_state->per_thread_scratch / 1024 - 1;
          }
-         vfe.ScratchSpaceBasePointer = rw_bo(stage_state->scratch_bo, 0);
+         vfe.ScratchSpaceBasePointer = rw_32_bo(stage_state->scratch_bo, 0);
          vfe.PerThreadScratchSpace = per_thread_scratch_value;
       }
 
@@ -4688,8 +4732,8 @@ genX(emit_mi_report_perf_count)(struct brw_context *brw,
  * Emit a 3DSTATE_SAMPLER_STATE_POINTERS_{VS,HS,GS,DS,PS} packet.
  */
 static void
-genX(emit_sampler_state_pointers_xs)(struct brw_context *brw,
-                                     struct brw_stage_state *stage_state)
+genX(emit_sampler_state_pointers_xs)(MAYBE_UNUSED struct brw_context *brw,
+                                     MAYBE_UNUSED struct brw_stage_state *stage_state)
 {
 #if GEN_GEN >= 7
    static const uint16_t packet_headers[] = {
@@ -4729,7 +4773,7 @@ has_component(mesa_format format, int i)
 static void
 genX(upload_default_color)(struct brw_context *brw,
                            const struct gl_sampler_object *sampler,
-                           mesa_format format, GLenum base_format,
+                           MAYBE_UNUSED mesa_format format, GLenum base_format,
                            bool is_integer_format, bool is_stencil_sampling,
                            uint32_t *sdc_offset)
 {
@@ -4905,7 +4949,7 @@ genX(upload_default_color)(struct brw_context *brw,
 }
 
 static uint32_t
-translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
+translate_wrap_mode(GLenum wrap, MAYBE_UNUSED bool using_nearest)
 {
    switch (wrap) {
    case GL_REPEAT:
@@ -4970,8 +5014,7 @@ genX(update_sampler_state)(struct brw_context *brw,
                            mesa_format format, GLenum base_format,
                            const struct gl_texture_object *texObj,
                            const struct gl_sampler_object *sampler,
-                           uint32_t *sampler_state,
-                           uint32_t batch_offset_for_sampler_state)
+                           uint32_t *sampler_state)
 {
    struct GENX(SAMPLER_STATE) samp_st = {};
 
@@ -5039,9 +5082,9 @@ genX(update_sampler_state)(struct brw_context *brw,
 
    bool either_nearest =
       sampler->MinFilter == GL_NEAREST || sampler->MagFilter == GL_NEAREST;
-   unsigned wrap_s = translate_wrap_mode(brw, sampler->WrapS, either_nearest);
-   unsigned wrap_t = translate_wrap_mode(brw, sampler->WrapT, either_nearest);
-   unsigned wrap_r = translate_wrap_mode(brw, sampler->WrapR, either_nearest);
+   unsigned wrap_s = translate_wrap_mode(sampler->WrapS, either_nearest);
+   unsigned wrap_t = translate_wrap_mode(sampler->WrapT, either_nearest);
+   unsigned wrap_r = translate_wrap_mode(sampler->WrapR, either_nearest);
 
    if (target == GL_TEXTURE_CUBE_MAP ||
        target == GL_TEXTURE_CUBE_MAP_ARRAY) {
@@ -5134,8 +5177,7 @@ genX(update_sampler_state)(struct brw_context *brw,
 static void
 update_sampler_state(struct brw_context *brw,
                      int unit,
-                     uint32_t *sampler_state,
-                     uint32_t batch_offset_for_sampler_state)
+                     uint32_t *sampler_state)
 {
    struct gl_context *ctx = &brw->ctx;
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -5152,7 +5194,7 @@ update_sampler_state(struct brw_context *brw,
                               texUnit->LodBias,
                               firstImage->TexFormat, firstImage->_BaseFormat,
                               texObj, sampler,
-                              sampler_state, batch_offset_for_sampler_state);
+                              sampler_state);
 }
 
 static void
@@ -5177,19 +5219,15 @@ genX(upload_sampler_state_table)(struct brw_context *brw,
                                              32, &stage_state->sampler_offset);
    /* memset(sampler_state, 0, sampler_count * size_in_bytes); */
 
-   uint32_t batch_offset_for_sampler_state = stage_state->sampler_offset;
-
    for (unsigned s = 0; s < sampler_count; s++) {
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._Current) {
-            update_sampler_state(brw, unit, sampler_state,
-                                 batch_offset_for_sampler_state);
+            update_sampler_state(brw, unit, sampler_state);
          }
       }
 
       sampler_state += dwords;
-      batch_offset_for_sampler_state += size_in_bytes;
    }
 
    if (GEN_GEN >= 7 && stage_state->stage != MESA_SHADER_COMPUTE) {

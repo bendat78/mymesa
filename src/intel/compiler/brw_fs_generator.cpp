@@ -1001,19 +1001,13 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
     * we need to set it up explicitly and load the offset bitfield.
     * Otherwise, we can use an implied move from g0 to the first message reg.
     */
-   if (inst->header_size) {
+   if (inst->header_size != 0 && devinfo->gen < 7) {
       if (devinfo->gen < 6 && !inst->offset) {
          /* Set up an implied move from g0 to the MRF. */
          src = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
       } else {
-         struct brw_reg header_reg;
-
-         if (devinfo->gen >= 7) {
-            header_reg = src;
-         } else {
-            assert(inst->base_mrf != -1);
-            header_reg = brw_message_reg(inst->base_mrf);
-         }
+         assert(inst->base_mrf != -1);
+         struct brw_reg header_reg = brw_message_reg(inst->base_mrf);
 
          brw_push_insn_state(p);
          brw_set_default_exec_size(p, BRW_EXECUTE_8);
@@ -1027,17 +1021,8 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
             /* Set the offset bits in DWord 2. */
             brw_MOV(p, get_element_ud(header_reg, 2),
                        brw_imm_ud(inst->offset));
-         } else if (stage != MESA_SHADER_VERTEX &&
-                    stage != MESA_SHADER_FRAGMENT) {
-            /* The vertex and fragment stages have g0.2 set to 0, so
-             * header0.2 is 0 when g0 is copied. Other stages may not, so we
-             * must set it to 0 to avoid setting undesirable bits in the
-             * message.
-             */
-            brw_MOV(p, get_element_ud(header_reg, 2), brw_imm_ud(0));
          }
 
-         brw_adjust_sampler_state_pointer(p, header_reg, sampler_index);
          brw_pop_insn_state(p);
       }
    }
@@ -1523,7 +1508,7 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
 void
 fs_generator::generate_mov_dispatch_to_flags(fs_inst *inst)
 {
-   struct brw_reg flags = brw_flag_reg(0, inst->flag_subreg);
+   struct brw_reg flags = brw_flag_subreg(inst->flag_subreg);
    struct brw_reg dispatch_mask;
 
    if (devinfo->gen >= 6)
@@ -1779,7 +1764,7 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
       brw_set_default_access_mode(p, BRW_ALIGN_1);
       brw_set_default_predicate_control(p, inst->predicate);
       brw_set_default_predicate_inverse(p, inst->predicate_inverse);
-      brw_set_default_flag_reg(p, 0, inst->flag_subreg);
+      brw_set_default_flag_reg(p, inst->flag_subreg / 2, inst->flag_subreg % 2);
       brw_set_default_saturate(p, inst->saturate);
       brw_set_default_mask_control(p, inst->force_writemask_all);
       brw_set_default_acc_write_control(p, inst->writes_accumulator);
@@ -2133,10 +2118,12 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
       case SHADER_OPCODE_UNTYPED_ATOMIC:
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
          brw_untyped_atomic(p, dst, src[0], src[1], src[2].ud,
-                            inst->mlen, !inst->dst.is_null());
+                            inst->mlen, !inst->dst.is_null(),
+                            inst->header_size);
          break;
 
       case SHADER_OPCODE_UNTYPED_SURFACE_READ:
+         assert(!inst->header_size);
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
          brw_untyped_surface_read(p, dst, src[0], src[1],
                                   inst->mlen, src[2].ud);
@@ -2145,10 +2132,12 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
       case SHADER_OPCODE_UNTYPED_SURFACE_WRITE:
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
          brw_untyped_surface_write(p, src[0], src[1],
-                                   inst->mlen, src[2].ud);
+                                   inst->mlen, src[2].ud,
+                                   inst->header_size);
          break;
 
       case SHADER_OPCODE_BYTE_SCATTERED_READ:
+         assert(!inst->header_size);
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
          brw_byte_scattered_read(p, dst, src[0], src[1],
                                  inst->mlen, src[2].ud);
@@ -2157,24 +2146,28 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
       case SHADER_OPCODE_BYTE_SCATTERED_WRITE:
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
          brw_byte_scattered_write(p, src[0], src[1],
-                                  inst->mlen, src[2].ud);
+                                  inst->mlen, src[2].ud,
+                                  inst->header_size);
          break;
 
       case SHADER_OPCODE_TYPED_ATOMIC:
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
          brw_typed_atomic(p, dst, src[0], src[1],
-                          src[2].ud, inst->mlen, !inst->dst.is_null());
+                          src[2].ud, inst->mlen, !inst->dst.is_null(),
+                          inst->header_size);
          break;
 
       case SHADER_OPCODE_TYPED_SURFACE_READ:
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
          brw_typed_surface_read(p, dst, src[0], src[1],
-                                inst->mlen, src[2].ud);
+                                inst->mlen, src[2].ud,
+                                inst->header_size);
          break;
 
       case SHADER_OPCODE_TYPED_SURFACE_WRITE:
          assert(src[2].file == BRW_IMMEDIATE_VALUE);
-         brw_typed_surface_write(p, src[0], src[1], inst->mlen, src[2].ud);
+         brw_typed_surface_write(p, src[0], src[1], inst->mlen, src[2].ud,
+                                 inst->header_size);
          break;
 
       case SHADER_OPCODE_MEMORY_FENCE:
@@ -2325,7 +2318,7 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
 }
 
 const unsigned *
-fs_generator::get_assembly(unsigned int *assembly_size)
+fs_generator::get_assembly()
 {
-   return brw_get_program(p, assembly_size);
+   return brw_get_program(p, &prog_data->program_size);
 }

@@ -931,7 +931,8 @@ fs_inst::flags_written() const
    if ((conditional_mod && (opcode != BRW_OPCODE_SEL &&
                             opcode != BRW_OPCODE_IF &&
                             opcode != BRW_OPCODE_WHILE)) ||
-       opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS) {
+       opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS ||
+       opcode == SHADER_OPCODE_FIND_LIVE_CHANNEL) {
       return flag_mask(this);
    } else {
       return flag_mask(dst, size_written);
@@ -4192,17 +4193,15 @@ lower_sampler_logical_send_gen7(const fs_builder &bld, fs_inst *inst, opcode op,
        op == SHADER_OPCODE_SAMPLEINFO ||
        is_high_sampler(devinfo, sampler)) {
       /* For general texture offsets (no txf workaround), we need a header to
-       * put them in.  Note that we're only reserving space for it in the
-       * message payload as it will be initialized implicitly by the
-       * generator.
+       * put them in.
        *
        * TG4 needs to place its channel select in the header, for interaction
        * with ARB_texture_swizzle.  The sampler index is only 4-bits, so for
        * larger sampler numbers we need to offset the Sampler State Pointer in
        * the header.
        */
+      fs_reg header = retype(sources[0], BRW_REGISTER_TYPE_UD);
       header_size = 1;
-      sources[0] = fs_reg();
       length++;
 
       /* If we're requesting fewer than four channels worth of response,
@@ -4213,6 +4212,40 @@ lower_sampler_logical_send_gen7(const fs_builder &bld, fs_inst *inst, opcode op,
          assert(regs_written(inst) % reg_width == 0);
          unsigned mask = ~((1 << (regs_written(inst) / reg_width)) - 1) & 0xf;
          inst->offset |= mask << 12;
+      }
+
+      /* Build the actual header */
+      const fs_builder ubld = bld.exec_all().group(8, 0);
+      const fs_builder ubld1 = ubld.group(1, 0);
+      ubld.MOV(header, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+      if (inst->offset) {
+         ubld1.MOV(component(header, 2), brw_imm_ud(inst->offset));
+      } else if (bld.shader->stage != MESA_SHADER_VERTEX &&
+                 bld.shader->stage != MESA_SHADER_FRAGMENT) {
+         /* The vertex and fragment stages have g0.2 set to 0, so
+          * header0.2 is 0 when g0 is copied. Other stages may not, so we
+          * must set it to 0 to avoid setting undesirable bits in the
+          * message.
+          */
+         ubld1.MOV(component(header, 2), brw_imm_ud(0));
+      }
+
+      if (is_high_sampler(devinfo, sampler)) {
+         if (sampler.file == BRW_IMMEDIATE_VALUE) {
+            assert(sampler.ud >= 16);
+            const int sampler_state_size = 16; /* 16 bytes */
+
+            ubld1.ADD(component(header, 3),
+                      retype(brw_vec1_grf(0, 3), BRW_REGISTER_TYPE_UD),
+                      brw_imm_ud(16 * (sampler.ud / 16) * sampler_state_size));
+         } else {
+            fs_reg tmp = ubld1.vgrf(BRW_REGISTER_TYPE_UD);
+            ubld1.AND(tmp, sampler, brw_imm_ud(0x0f0));
+            ubld1.SHL(tmp, tmp, brw_imm_ud(4));
+            ubld1.ADD(component(header, 3),
+                      retype(brw_vec1_grf(0, 3), BRW_REGISTER_TYPE_UD),
+                      tmp);
+         }
       }
    }
 
@@ -4427,6 +4460,8 @@ static void
 lower_surface_logical_send(const fs_builder &bld, fs_inst *inst, opcode op,
                            const fs_reg &sample_mask)
 {
+   const gen_device_info *devinfo = bld.shader->devinfo;
+
    /* Get the logical send arguments. */
    const fs_reg &addr = inst->src[0];
    const fs_reg &src = inst->src[1];
@@ -4437,7 +4472,20 @@ lower_surface_logical_send(const fs_builder &bld, fs_inst *inst, opcode op,
    /* Calculate the total number of components of the payload. */
    const unsigned addr_sz = inst->components_read(0);
    const unsigned src_sz = inst->components_read(1);
-   const unsigned header_sz = (sample_mask.file == BAD_FILE ? 0 : 1);
+   /* From the BDW PRM Volume 7, page 147:
+    *
+    *  "For the Data Cache Data Port*, the header must be present for the
+    *   following message types: [...] Typed read/write/atomics"
+    *
+    * Earlier generations have a similar wording.  Because of this restriction
+    * we don't attempt to implement sample masks via predication for such
+    * messages prior to Gen9, since we have to provide a header anyway.  On
+    * Gen11+ the header has been removed so we can only use predication.
+    */
+   const unsigned header_sz = devinfo->gen < 9 &&
+                              (op == SHADER_OPCODE_TYPED_SURFACE_READ ||
+                               op == SHADER_OPCODE_TYPED_SURFACE_WRITE ||
+                               op == SHADER_OPCODE_TYPED_ATOMIC) ? 1 : 0;
    const unsigned sz = header_sz + addr_sz + src_sz;
 
    /* Allocate space for the payload. */
@@ -4456,6 +4504,32 @@ lower_surface_logical_send(const fs_builder &bld, fs_inst *inst, opcode op,
       components[n++] = offset(src, bld, i);
 
    bld.LOAD_PAYLOAD(payload, components, sz, header_sz);
+
+   /* Predicate the instruction on the sample mask if no header is
+    * provided.
+    */
+   if (!header_sz && sample_mask.file != BAD_FILE &&
+       sample_mask.file != IMM) {
+      const fs_builder ubld = bld.group(1, 0).exec_all();
+      if (inst->predicate) {
+         assert(inst->predicate == BRW_PREDICATE_NORMAL);
+         assert(!inst->predicate_inverse);
+         assert(inst->flag_subreg < 2);
+         /* Combine the sample mask with the existing predicate by using a
+          * vertical predication mode.
+          */
+         inst->predicate = BRW_PREDICATE_ALIGN1_ALLV;
+         ubld.MOV(retype(brw_flag_subreg(inst->flag_subreg + 2),
+                         sample_mask.type),
+                  sample_mask);
+      } else {
+         inst->flag_subreg = 2;
+         inst->predicate = BRW_PREDICATE_NORMAL;
+         inst->predicate_inverse = false;
+         ubld.MOV(retype(brw_flag_subreg(inst->flag_subreg), sample_mask.type),
+                  sample_mask);
+      }
+   }
 
    /* Update the original instruction. */
    inst->opcode = op;
@@ -5456,9 +5530,10 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
    fs_inst *inst = (fs_inst *)be_inst;
 
    if (inst->predicate) {
-      fprintf(file, "(%cf0.%d) ",
-             inst->predicate_inverse ? '-' : '+',
-             inst->flag_subreg);
+      fprintf(file, "(%cf%d.%d) ",
+              inst->predicate_inverse ? '-' : '+',
+              inst->flag_subreg / 2,
+              inst->flag_subreg % 2);
    }
 
    fprintf(file, "%s", brw_instruction_name(devinfo, inst->opcode));
@@ -5470,7 +5545,8 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
           (devinfo->gen < 5 || (inst->opcode != BRW_OPCODE_SEL &&
                                 inst->opcode != BRW_OPCODE_IF &&
                                 inst->opcode != BRW_OPCODE_WHILE))) {
-         fprintf(file, ".f0.%d", inst->flag_subreg);
+         fprintf(file, ".f%d.%d", inst->flag_subreg / 2,
+                 inst->flag_subreg % 2);
       }
    }
    fprintf(file, "(%d) ", inst->exec_size);
@@ -5856,7 +5932,7 @@ fs_visitor::calculate_register_pressure()
 bool
 fs_visitor::opt_drop_redundant_mov_to_flags()
 {
-   bool flag_mov_found[2] = {false};
+   bool flag_mov_found[4] = {false};
    bool progress = false;
 
    /* Instructions removed by this pass can only be added if this were true */
@@ -6882,7 +6958,7 @@ brw_compile_fs(const struct brw_compiler *compiler, void *log_data,
       prog_data->reg_blocks_0 = brw_register_blocks(simd16_grf_used);
    }
 
-   return g.get_assembly(&prog_data->base.program_size);
+   return g.get_assembly();
 }
 
 fs_reg *
@@ -7105,7 +7181,7 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
 
       g.generate_code(cfg, prog_data->simd_size);
 
-      ret = g.get_assembly(&prog_data->base.program_size);
+      ret = g.get_assembly();
    }
 
    delete v8;
