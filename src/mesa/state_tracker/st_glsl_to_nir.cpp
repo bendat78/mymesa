@@ -127,7 +127,7 @@ st_nir_assign_var_locations(struct exec_list *var_list, unsigned *size,
 {
    unsigned location = 0;
    unsigned assigned_locations[VARYING_SLOT_TESS_MAX];
-   uint64_t processed_locs[2] = {0};
+   uint64_t processed_locs[2] = {};
 
    const int base = stage == MESA_SHADER_FRAGMENT ?
       (int) FRAG_RESULT_DATA0 : (int) VARYING_SLOT_VAR0;
