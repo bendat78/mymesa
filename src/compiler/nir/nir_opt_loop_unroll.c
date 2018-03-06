@@ -36,7 +36,7 @@
  * This was bumped to 96 because it unrolled more loops with a positive
  * effect (vulkan ssao demo).
  */
-#define LOOP_UNROLL_LIMIT 96
+#define LOOP_UNROLL_LIMIT 26
 
 /* Prepare this loop for unrolling by first converting to lcssa and then
  * converting the phis from the loops first block and the block that follows
