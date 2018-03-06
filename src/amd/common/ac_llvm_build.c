@@ -1686,6 +1686,74 @@ void ac_build_waitcnt(struct ac_llvm_context *ctx, unsigned simm16)
 			   ctx->voidt, args, 1, 0);
 }
 
+LLVMValueRef ac_build_fract(struct ac_llvm_context *ctx, LLVMValueRef src0,
+			    unsigned bitsize)
+{
+	LLVMTypeRef type;
+	char *intr;
+
+	if (bitsize == 32) {
+		intr = "llvm.floor.f32";
+		type = ctx->f32;
+	} else {
+		intr = "llvm.floor.f64";
+		type = ctx->f64;
+	}
+
+	LLVMValueRef params[] = {
+		src0,
+	};
+	LLVMValueRef floor = ac_build_intrinsic(ctx, intr, type, params, 1,
+						AC_FUNC_ATTR_READNONE);
+	return LLVMBuildFSub(ctx->builder, src0, floor, "");
+}
+
+LLVMValueRef ac_build_isign(struct ac_llvm_context *ctx, LLVMValueRef src0,
+			    unsigned bitsize)
+{
+	LLVMValueRef cmp, val, zero, one;
+	LLVMTypeRef type;
+
+	if (bitsize == 32) {
+		type = ctx->i32;
+		zero = ctx->i32_0;
+		one = ctx->i32_1;
+	} else {
+		type = ctx->i64;
+		zero = ctx->i64_0;
+		one = ctx->i64_1;
+	}
+
+	cmp = LLVMBuildICmp(ctx->builder, LLVMIntSGT, src0, zero, "");
+	val = LLVMBuildSelect(ctx->builder, cmp, one, src0, "");
+	cmp = LLVMBuildICmp(ctx->builder, LLVMIntSGE, val, zero, "");
+	val = LLVMBuildSelect(ctx->builder, cmp, val, LLVMConstInt(type, -1, true), "");
+	return val;
+}
+
+LLVMValueRef ac_build_fsign(struct ac_llvm_context *ctx, LLVMValueRef src0,
+			    unsigned bitsize)
+{
+	LLVMValueRef cmp, val, zero, one;
+	LLVMTypeRef type;
+
+	if (bitsize == 32) {
+		type = ctx->f32;
+		zero = ctx->f32_0;
+		one = ctx->f32_1;
+	} else {
+		type = ctx->f64;
+		zero = ctx->f64_0;
+		one = ctx->f64_1;
+	}
+
+	cmp = LLVMBuildFCmp(ctx->builder, LLVMRealOGT, src0, zero, "");
+	val = LLVMBuildSelect(ctx->builder, cmp, one, src0, "");
+	cmp = LLVMBuildFCmp(ctx->builder, LLVMRealOGE, val, zero, "");
+	val = LLVMBuildSelect(ctx->builder, cmp, val, LLVMConstReal(type, -1.0), "");
+	return val;
+}
+
 void ac_get_image_intr_name(const char *base_name,
 			    LLVMTypeRef data_type,
 			    LLVMTypeRef coords_type,
