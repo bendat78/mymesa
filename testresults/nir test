@@ -1,0 +1,95 @@
+6.3.18
+
+BioShock Infinite Steam Launcher Options:
+R600_DEBUG=nir %command% DefaultPCBenchmarkMap.xcmap -unattended -fullscreen -noPauseOnLossOfFocus
+
+Phorononix System Information (!! = incorrectly detected)
+
+  PROCESSOR:          Intel Xeon E31260L @ 3.30GHz
+    Core Count:       4
+    Thread Count:     8
+    Extensions:       SSE 4.2 + AVX
+    Cache Size:       8192 KB
+    Microcode:        0x29
+    Scaling Driver:   intel_pstate powersave
+
+  GRAPHICS:           MSI AMD Radeon 4096MB
+!!    OpenGL:           4.5 Mesa 18.1.0-dev-ben-Mo 5. Mr 09:17:09 CET 2018 (git-b352b692d2) (LLVM 5.0.0) !! (actually oibaf for 32-bit)
+    Vulkan:           1.0.49
+    OpenCL:           OpenCL 1.1 Mesa 18.1.0-dev-ben-Mo 5. Mr 09:17:09 CET 2018 (git-b352b692d2)
+    Display Driver:   modesetting 1.19.5
+    Monitor:          BenQ G2412HD
+    Screen:           1920x1080
+
+  MOTHERBOARD:        Intel DQ67OW
+    BIOS Version:     SWQ6710H.86A.0068.2017.0601.1423
+    Chipset:          Intel Xeon E3-1200 Family DRAM
+    Audio:            Realtek ALC888
+    Network:          Intel 82579LM Gigabit Connection
+
+  MEMORY:             8192MB
+
+  DISK:               960GB OCZ TRION100
+    File-System:      ext4
+    Mount Options:    data=ordered errors=remount-ro relatime rw
+    Disk Scheduler:   CFQ
+
+  OPERATING SYSTEM:   Ubuntu 17.10
+    Kernel:           4.16.0-rc4 (x86_64) 20180305
+    Desktop:          GNOME Shell 3.26.2
+!!    Compiler:         Clang 4.0.1-6 + LLVM 5.0.0 !! (actually ccache and gcc 7.2.0)
+    Security:         KPTI + __user pointer sanitization + Full generic retpoline Protection
+
+
+5.3.18
+
+Dead Island crashes while generating shaders
+
+The Valley - works
+
+SpecOps the Line - works nonir 53 to 60 fps, nir 37 to 60 fps
+
+Dying Light - works, nonir 29 to 51, nir 31 to 52 one crash during shader generation
+
+3.3.18
+
+Tested on Ubuntu 17.10 with mesa git of today 
+(oibaf for 32 bit, mine with LLVM5.0 on 64 bit because I cant figure out how to build 32bit drivers on ubuntu :( )
+Xeon 1260l and 8GB DDR3-10600 with RX460 4GB
+
+works means no obvious visual artifacts etc.
+
+Alien Isolation - works
+
+Bioshock Infinite - works nonir Overall avg 45.58, min 9.81, max 104.49; nir avg 31.47 min 8.35 max 94.19
+
+CAT Interstellar (UE4) - works
+
+Dead Island Definitive - works
+
+Dead Island Riptide Definitive - works
+
+Deus Ex: Mankind Divided - works, nonir low 8.3 avg 24.2 high 37.6; nir low 1 avg 22.8 high 35.8
+	but shadergeneration crashes two times: once around half the loader bar with complete system freeze and then again around the end but only exiting the application
+
+Mad Max[vulcan beta] - works, nir seems be a bit slower except for one benchmark
+	benchmark 1
+	nonir	43/45/47
+	nir	10/46/50
+	benchmark 2
+	nonir	14/37/41
+	nir	24/36/40
+	benchmark 3
+	nonir	8/43/61
+	nir	5/41/61
+	benchmark 4
+	nonir	9/49/78
+	nir	4/47/74
+
+Tomb Raider - TressFX doesn't work: hair flickering and is riddled with small green block artifacts, smoothing is missing; speed is the same 28.6 ish
+
+Hitman GO (Unity) - works
+
+Unity of Command (PyGame,SDL) - works
+
+Talos Principle Benchmark nir 64.7 nonir 67
