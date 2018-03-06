@@ -1,8 +1,5 @@
 /**************************************************************************
  *
- * Copyright 2013 Advanced Micro Devices, Inc.
- * All Rights Reserved.
- *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,24 +22,27 @@
  *
  **************************************************************************/
 
-/*
- * Authors:
- *      Christian König <christian.koenig@amd.com>
- *
- */
+#ifndef H264DINPORT_DECLS_H
+#define H264DINPORT_DECLS_H
 
-#ifndef OMX_ENTRYPOINT_H
-#define OMX_ENTRYPOINT_H
+#include <OMX_TizoniaExt.h>
+#include <OMX_Types.h>
 
-#include <bellagio/st_static_component_loader.h>
+#include <tizavcport_decls.h>
 
-#include "vl/vl_winsys.h"
+typedef struct h264d_inport h264d_inport_t;
+struct h264d_inport
+{
+   /* Object */
+   const tiz_avcport_t _;
+};
 
-PUBLIC extern int omx_component_library_Setup(stLoaderComponentType **stComponents);
+typedef struct h264d_inport_class h264d_inport_class_t;
+struct h264d_inport_class
+{
+   /* Class */
+   const tiz_avcport_class_t _;
+   /* NOTE: Class methods might be added in the future */
+};
 
-struct vl_screen *omx_get_screen(void);
-void omx_put_screen(void);
-
-OMX_ERRORTYPE omx_workaround_Destructor(OMX_COMPONENTTYPE *comp);
-
-#endif
+#endif /* H264DINPORT_DECLS_H */

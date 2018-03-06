@@ -464,30 +464,38 @@ endif
 
 _omx = get_option('gallium-omx')
 if not system_has_kms_drm
-  if _omx == 'true'
+  if _omx != 'disabled'
     error('OMX state tracker can only be built on unix-like OSes.')
   else
-    _omx = 'false'
+    _omx = 'disabled'
   endif
 elif not (with_platform_x11 or with_platform_drm)
-  if _omx == 'true'
+  if _omx != 'disabled'
     error('OMX state tracker requires X11 or drm platform support.')
   else
-    _omx = 'false'
+    _omx = 'disabled'
   endif
 elif not (with_gallium_r600 or with_gallium_radeonsi or with_gallium_nouveau)
-  if _omx == 'true'
+  if _omx != 'disabled'
     error('OMX state tracker requires at least one of the following gallium drivers: r600, radeonsi, nouveau.')
   else
-    _omx = 'false'
+    _omx = 'disabled'
   endif
-elif _omx == 'auto'
-  _omx = 'true'
 endif
-with_gallium_omx = _omx == 'true'
+with_gallium_omx = _omx != 'disabled'
+gallium_omx = _omx
 dep_omx = []
-if with_gallium_omx
+dep_omx_other = []
+if gallium_omx == 'bellagio'
+  pre_args += '-DENABLE_ST_OMX_BELLAGIO'
   dep_omx = dependency('libomxil-bellagio')
+elif gallium_omx == 'tizonia'
+  pre_args += '-DENABLE_ST_OMX_TIZONIA'
+  dep_omx = dependency('libtizonia', version : '>= 0.10.0')
+  dep_omx_other = [
+    dependency('libtizplatform'),
+    dependency('tizilheaders')
+  ]
 endif
 
 omx_drivers_path = get_option('omx-libs-path')

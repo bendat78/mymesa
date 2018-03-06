@@ -5801,11 +5801,12 @@ setup_shared(struct ac_nir_context *ctx,
 static void
 si_llvm_init_export_args(struct radv_shader_context *ctx,
 			 LLVMValueRef *values,
+			 unsigned enabled_channels,
 			 unsigned target,
 			 struct ac_export_args *args)
 {
-	/* Default is 0xf. Adjusted below depending on the format. */
-	args->enabled_channels = 0xf;
+	/* Specify the channels that are enabled. */
+	args->enabled_channels = enabled_channels;
 
 	/* Specify whether the EXEC mask represents the valid mask */
 	args->valid_mask = 0;
@@ -5918,17 +5919,21 @@ si_llvm_init_export_args(struct radv_shader_context *ctx,
 
 	memcpy(&args->out[0], values, sizeof(values[0]) * 4);
 
-	for (unsigned i = 0; i < 4; ++i)
+	for (unsigned i = 0; i < 4; ++i) {
+		if (!(args->enabled_channels & (1 << i)))
+			continue;
+
 		args->out[i] = ac_to_float(&ctx->ac, args->out[i]);
+	}
 }
 
 static void
 radv_export_param(struct radv_shader_context *ctx, unsigned index,
-		  LLVMValueRef *values)
+		  LLVMValueRef *values, unsigned enabled_channels)
 {
 	struct ac_export_args args;
 
-	si_llvm_init_export_args(ctx, values,
+	si_llvm_init_export_args(ctx, values, enabled_channels,
 				 V_008DFC_SQ_EXP_PARAM + index, &args);
 	ac_build_export(&ctx->ac, &args);
 }
@@ -5985,13 +5990,13 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 
 		if (ctx->num_output_clips + ctx->num_output_culls > 4) {
 			target = V_008DFC_SQ_EXP_POS + 3;
-			si_llvm_init_export_args(ctx, &slots[4], target, &args);
+			si_llvm_init_export_args(ctx, &slots[4], 0xf, target, &args);
 			memcpy(&pos_args[target - V_008DFC_SQ_EXP_POS],
 			       &args, sizeof(args));
 		}
 
 		target = V_008DFC_SQ_EXP_POS + 2;
-		si_llvm_init_export_args(ctx, &slots[0], target, &args);
+		si_llvm_init_export_args(ctx, &slots[0], 0xf, target, &args);
 		memcpy(&pos_args[target - V_008DFC_SQ_EXP_POS],
 		       &args, sizeof(args));
 
@@ -6002,7 +6007,7 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 		for (unsigned j = 0; j < 4; j++)
 			pos_values[j] = radv_load_output(ctx, VARYING_SLOT_POS, j);
 	}
-	si_llvm_init_export_args(ctx, pos_values, V_008DFC_SQ_EXP_POS, &pos_args[0]);
+	si_llvm_init_export_args(ctx, pos_values, 0xf, V_008DFC_SQ_EXP_POS, &pos_args[0]);
 
 	if (ctx->output_mask & (1ull << VARYING_SLOT_PSIZ)) {
 		outinfo->writes_pointsize = true;
@@ -6088,7 +6093,23 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 		for (unsigned j = 0; j < 4; j++)
 			values[j] = ac_to_float(&ctx->ac, radv_load_output(ctx, i, j));
 
-		radv_export_param(ctx, param_count, values);
+		unsigned output_usage_mask;
+
+		if (ctx->stage == MESA_SHADER_VERTEX &&
+		    !ctx->is_gs_copy_shader) {
+			output_usage_mask =
+				ctx->shader_info->info.vs.output_usage_mask[i];
+		} else if (ctx->stage == MESA_SHADER_TESS_EVAL) {
+			output_usage_mask =
+				ctx->shader_info->info.tes.output_usage_mask[i];
+		} else {
+			/* Enable all channels for the GS copy shader because
+			 * we don't know the output usage mask currently.
+			 */
+			output_usage_mask = 0xf;
+		}
+
+		radv_export_param(ctx, param_count, values, output_usage_mask);
 
 		outinfo->vs_output_param_offset[i] = param_count++;
 	}
@@ -6102,7 +6123,7 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 		for (unsigned j = 1; j < 4; j++)
 			values[j] = ctx->ac.f32_0;
 
-		radv_export_param(ctx, param_count, values);
+		radv_export_param(ctx, param_count, values, 0xf);
 
 		outinfo->vs_output_param_offset[VARYING_SLOT_PRIMITIVE_ID] = param_count++;
 		outinfo->export_prim_id = true;
@@ -6470,7 +6491,7 @@ si_export_mrt_color(struct radv_shader_context *ctx,
 		    struct ac_export_args *args)
 {
 	/* Export */
-	si_llvm_init_export_args(ctx, color,
+	si_llvm_init_export_args(ctx, color, 0xf,
 				 V_008DFC_SQ_EXP_MRT + index, args);
 
 	if (is_last) {
@@ -6780,7 +6801,8 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
                                        struct nir_shader *const *shaders,
                                        int shader_count,
                                        struct ac_shader_variant_info *shader_info,
-                                       const struct ac_nir_compiler_options *options)
+                                       const struct ac_nir_compiler_options *options,
+				       bool dump_shader)
 {
 	struct radv_shader_context ctx = {};
 	unsigned i;
@@ -6946,6 +6968,11 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 
 	if (shader_count == 1)
 		ac_nir_eliminate_const_vs_outputs(&ctx);
+
+	if (dump_shader) {
+		ctx.shader_info->private_mem_vgprs =
+			ac_count_scratch_private_memory(ctx.main_function);
+	}
 
 	return ctx.ac.module;
 }
@@ -7140,7 +7167,7 @@ void ac_compile_nir_shader(LLVMTargetMachineRef tm,
 {
 
 	LLVMModuleRef llvm_module = ac_translate_nir_to_llvm(tm, nir, nir_count, shader_info,
-	                                                     options);
+	                                                     options, dump_shader);
 
 	ac_compile_llvm_module(tm, llvm_module, binary, config, shader_info, nir[0]->info.stage, dump_shader, options->supports_spill);
 	for (int i = 0; i < nir_count; ++i)
