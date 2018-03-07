@@ -1,3 +1,10 @@
+7.3.18
+
+Limiting the loop unrolling has resolved the performance problem for bioshock infinite
+
+comparing the CPU load of TGSI and NIR it doesnt seem to be an issue
+does NIR generate inefficent shaders making framerate GPU bound more often?
+
 6.3.18
 
 Deus Ex: when using nir crashes three times during shader generation:
