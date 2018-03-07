@@ -53,6 +53,7 @@ static const struct nir_shader_compiler_options nir_options = {
 	.lower_scmp = true,
 	.lower_flrp32 = true,
 	.lower_flrp64 = true,
+	.lower_device_index_to_zero = true,
 	.lower_fsat = true,
 	.lower_fdiv = true,
 	.lower_sub = true,
@@ -203,6 +204,7 @@ radv_shader_compile_to_nir(struct radv_device *device,
 		}
 		const struct spirv_to_nir_options spirv_options = {
 			.caps = {
+				.device_group = true,
 				.draw_parameters = true,
 				.float64 = true,
 				.image_read_without_format = true,
@@ -210,6 +212,7 @@ radv_shader_compile_to_nir(struct radv_device *device,
 				.tessellation = true,
 				.int64 = true,
 				.multiview = true,
+				.subgroup_basic = true,
 				.variable_pointers = true,
 			},
 		};
@@ -266,6 +269,15 @@ radv_shader_compile_to_nir(struct radv_device *device,
 	nir_lower_global_vars_to_local(nir);
 	nir_remove_dead_variables(nir, nir_var_local);
 	ac_lower_indirect_derefs(nir, device->physical_device->rad_info.chip_class);
+	nir_lower_subgroups(nir, &(struct nir_lower_subgroups_options) {
+			.subgroup_size = 64,
+			.ballot_bit_size = 64,
+			.lower_to_scalar = 1,
+			.lower_subgroup_masks = 1,
+			.lower_shuffle = 1,
+			.lower_quad =  1,
+		});
+
 	radv_optimize_nir(nir);
 
 	return nir;

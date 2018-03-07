@@ -31,7 +31,7 @@ import xml.etree.cElementTree as et
 
 from mako.template import Template
 
-MAX_API_VERSION = '1.0.57'
+MAX_API_VERSION = '1.1.0'
 
 class Extension:
     def __init__(self, name, ext_version, enable):
@@ -54,6 +54,8 @@ EXTENSIONS = [
     Extension('VK_KHR_bind_memory2',                      1, True),
     Extension('VK_KHR_dedicated_allocation',              1, True),
     Extension('VK_KHR_descriptor_update_template',        1, True),
+    Extension('VK_KHR_device_group',                      1, True),
+    Extension('VK_KHR_device_group_creation',             1, True),
     Extension('VK_KHR_external_fence',                    1, 'device->rad_info.has_syncobj_wait_for_submit'),
     Extension('VK_KHR_external_fence_capabilities',       1, True),
     Extension('VK_KHR_external_fence_fd',                 1, 'device->rad_info.has_syncobj_wait_for_submit'),
@@ -70,6 +72,7 @@ EXTENSIONS = [
     Extension('VK_KHR_incremental_present',               1, 'RADV_HAS_SURFACE'),
     Extension('VK_KHR_maintenance1',                      1, True),
     Extension('VK_KHR_maintenance2',                      1, True),
+    Extension('VK_KHR_maintenance3',                      1, True),
     Extension('VK_KHR_push_descriptor',                   1, True),
     Extension('VK_KHR_relaxed_block_layout',              1, True),
     Extension('VK_KHR_sampler_mirror_clamp_to_edge',      1, True),
@@ -259,10 +262,19 @@ void radv_fill_device_extension_table(const struct radv_physical_device *device,
 %endfor
 }
 
+VkResult radv_EnumerateInstanceVersion(
+    uint32_t*                                   pApiVersion)
+{
+    *pApiVersion = ${MAX_API_VERSION.c_vk_version()};
+    return VK_SUCCESS;
+}
+
 uint32_t
 radv_physical_device_api_version(struct radv_physical_device *dev)
 {
-    return ${MAX_API_VERSION.c_vk_version()};
+    if (!ANDROID && dev->rad_info.has_syncobj_wait_for_submit)
+        return VK_MAKE_VERSION(1, 1, 0);
+    return VK_MAKE_VERSION(1, 0, 68);
 }
 """)
 

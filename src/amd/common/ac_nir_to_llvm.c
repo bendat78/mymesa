@@ -3885,6 +3885,46 @@ visit_load_local_invocation_index(struct ac_nir_context *ctx)
 }
 
 static LLVMValueRef
+visit_load_subgroup_id(struct ac_nir_context *ctx)
+{
+	if (ctx->stage == MESA_SHADER_COMPUTE) {
+		LLVMValueRef result;
+		result = LLVMBuildAnd(ctx->ac.builder, ctx->abi->tg_size,
+				LLVMConstInt(ctx->ac.i32, 0xfc0, false), "");
+		return LLVMBuildLShr(ctx->ac.builder, result,  LLVMConstInt(ctx->ac.i32, 6, false), "");
+	} else {
+		return LLVMConstInt(ctx->ac.i32, 0, false);
+	}
+}
+
+static LLVMValueRef
+visit_load_num_subgroups(struct ac_nir_context *ctx)
+{
+	if (ctx->stage == MESA_SHADER_COMPUTE) {
+		return LLVMBuildAnd(ctx->ac.builder, ctx->abi->tg_size,
+		                    LLVMConstInt(ctx->ac.i32, 0x3f, false), "");
+	} else {
+		return LLVMConstInt(ctx->ac.i32, 1, false);
+	}
+}
+
+static LLVMValueRef
+visit_first_invocation(struct ac_nir_context *ctx)
+{
+	LLVMValueRef active_set = ac_build_ballot(&ctx->ac, ctx->ac.i32_1);
+
+	/* The second argument is whether cttz(0) should be defined, but we do not care. */
+	LLVMValueRef args[] = {active_set, LLVMConstInt(ctx->ac.i1, 0, false)};
+	LLVMValueRef result =  ac_build_intrinsic(&ctx->ac,
+	                                          "llvm.cttz.i64",
+	                                          ctx->ac.i64, args, 2,
+	                                          AC_FUNC_ATTR_NOUNWIND |
+	                                          AC_FUNC_ATTR_READNONE);
+
+	return LLVMBuildTrunc(ctx->ac.builder, result, ctx->ac.i32, "");
+}
+
+static LLVMValueRef
 visit_load_shared(struct ac_nir_context *ctx,
 		   const nir_intrinsic_instr *instr)
 {
@@ -4412,6 +4452,15 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 	case nir_intrinsic_load_local_invocation_index:
 		result = visit_load_local_invocation_index(ctx);
 		break;
+	case nir_intrinsic_load_subgroup_id:
+		result = visit_load_subgroup_id(ctx);
+		break;
+	case nir_intrinsic_load_num_subgroups:
+		result = visit_load_num_subgroups(ctx);
+		break;
+	case nir_intrinsic_first_invocation:
+		result = visit_first_invocation(ctx);
+		break;
 	case nir_intrinsic_load_push_constant:
 		result = visit_load_push_constant(ctx, instr);
 		break;
@@ -4561,11 +4610,6 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 	}
 	case nir_intrinsic_vote_any: {
 		LLVMValueRef tmp = ac_build_vote_any(&ctx->ac, get_src(ctx, instr->src[0]));
-		result = LLVMBuildSExt(ctx->ac.builder, tmp, ctx->ac.i32, "");
-		break;
-	}
-	case nir_intrinsic_vote_ieq: {
-		LLVMValueRef tmp = ac_build_vote_eq(&ctx->ac, get_src(ctx, instr->src[0]));
 		result = LLVMBuildSExt(ctx->ac.builder, tmp, ctx->ac.i32, "");
 		break;
 	}
@@ -6757,6 +6801,9 @@ void ac_nir_translate(struct ac_llvm_context *ac, struct ac_shader_abi *abi,
 {
 	struct ac_nir_context ctx = {};
 	struct nir_function *func;
+
+	/* Last minute passes for both radv & radeonsi */
+	ac_lower_subgroups(nir);
 
 	ctx.ac = *ac;
 	ctx.abi = abi;
