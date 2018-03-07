@@ -700,7 +700,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       priv->codec_data.h264.idr_pic_id = idr_pic_id;
    }
 
-   if (sps->pic_order_cnt_type == 0) {
+   if (!sps->pic_order_cnt_type) {
       /* pic_order_cnt_lsb */
       unsigned log2_max_pic_order_cnt_lsb = sps->log2_max_pic_order_cnt_lsb_minus4 + 4;
       unsigned max_pic_order_cnt_lsb = 1 << log2_max_pic_order_cnt_lsb;

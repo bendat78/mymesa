@@ -210,12 +210,12 @@ static OMX_ERRORTYPE h264e_manage_buffers(vid_enc_PrivateType* priv) {
    out_buf->nTimeStamp = in_buf->nTimeStamp;
 
    /* Release input buffer if possible */
-   if (in_buf->nFilledLen == 0) {
+   if (!in_buf->nFilledLen) {
       r = h264e_buffer_emptied(priv, in_buf);
    }
 
    /* Realase output buffer if filled or eos */
-   if ((out_buf->nFilledLen != 0) || priv->eos_) {
+   if ((out_buf->nFilledLen) || priv->eos_) {
       r = h264e_buffer_filled(priv, out_buf);
    }
 
@@ -312,7 +312,7 @@ static OMX_ERRORTYPE encode_frame(vid_enc_PrivateType * priv, OMX_BUFFERHEADERTY
       return OMX_ErrorInsufficientResources;
 
    /* EOS */
-   if (in_buf->nFilledLen == 0) {
+   if (!in_buf->nFilledLen) {
       if (in_buf->nFlags & OMX_BUFFERFLAG_EOS) {
          in_buf->nFilledLen = in_buf->nAllocLen;
          enc_ClearBframes(priv, inp);
