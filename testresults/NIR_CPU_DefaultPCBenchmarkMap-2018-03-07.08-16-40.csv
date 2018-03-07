@@ -1,0 +1,291 @@
+Per Scene Stats:
+Scene Duration (seconds), Average FPS, Min FPS, Max FPS, Scene Name
+32.54, 37.90, 9.16, 114.89, Welcome Center
+7.21, 30.42, 14.94, 42.98, Scene Change: Disregard Performance In This Section
+21.48, 22.53, 12.56, 46.10, Town Center
+8.38, 21.99, 16.75, 30.53, Raffle
+9.27, 41.58, 8.30, 62.68, Monument Island
+3.04, 51.31, 45.01, 61.84, Benchmark Finished: Disregard Performance In This Section
+81.91, 32.57, 8.30, 114.89, Overall
+
+
+Elapsed Time (seconds), Average FPS, Min FPS, Max FPS, Scene Name
+0.00, 53.32, 40.32, 78.11, Welcome Center
+0.51, 54.12, 38.27, 114.89, Welcome Center
+1.02, 53.04, 51.66, 54.37, Welcome Center
+1.53, 52.75, 47.84, 58.76, Welcome Center
+2.04, 52.18, 49.69, 55.27, Welcome Center
+2.56, 51.47, 50.26, 53.09, Welcome Center
+3.07, 50.70, 48.23, 53.90, Welcome Center
+3.58, 50.28, 49.08, 51.45, Welcome Center
+4.10, 48.41, 46.96, 50.22, Welcome Center
+4.61, 45.16, 42.85, 48.02, Welcome Center
+5.12, 27.46, 9.16, 42.00, Welcome Center
+5.63, 40.86, 31.27, 44.53, Welcome Center
+6.15, 38.29, 27.04, 57.43, Welcome Center
+6.67, 23.11, 17.85, 36.33, Welcome Center
+7.19, 23.73, 17.10, 30.60, Welcome Center
+7.69, 24.46, 20.67, 31.08, Welcome Center
+8.23, 20.59, 16.85, 22.73, Welcome Center
+8.76, 21.36, 16.28, 23.48, Welcome Center
+9.27, 20.73, 13.35, 23.78, Welcome Center
+9.81, 20.50, 18.06, 21.99, Welcome Center
+10.34, 23.16, 19.88, 26.54, Welcome Center
+10.86, 26.21, 22.80, 28.12, Welcome Center
+11.39, 26.97, 20.90, 30.14, Welcome Center
+11.91, 27.63, 20.04, 30.79, Welcome Center
+12.42, 26.64, 20.12, 29.38, Welcome Center
+12.95, 26.98, 17.46, 29.54, Welcome Center
+13.50, 26.49, 22.41, 29.47, Welcome Center
+14.03, 27.56, 23.22, 28.53, Welcome Center
+14.54, 25.00, 22.07, 26.75, Welcome Center
+15.06, 23.35, 17.95, 40.71, Welcome Center
+15.57, 50.93, 41.71, 56.56, Welcome Center
+16.08, 47.95, 40.45, 56.13, Welcome Center
+16.58, 53.15, 45.66, 59.14, Welcome Center
+17.09, 55.03, 44.23, 60.19, Welcome Center
+17.60, 37.70, 21.15, 53.45, Welcome Center
+18.10, 21.07, 18.06, 26.45, Welcome Center
+18.63, 25.88, 23.55, 29.29, Welcome Center
+19.13, 45.01, 20.40, 64.09, Welcome Center
+19.64, 57.70, 44.47, 73.43, Welcome Center
+20.14, 63.93, 56.62, 73.38, Welcome Center
+20.66, 62.93, 58.23, 67.70, Welcome Center
+21.17, 64.80, 54.45, 75.92, Welcome Center
+21.68, 65.89, 58.25, 72.31, Welcome Center
+22.18, 59.03, 31.37, 70.57, Welcome Center
+22.68, 56.47, 42.48, 66.18, Welcome Center
+23.20, 61.03, 58.64, 65.88, Welcome Center
+23.71, 57.50, 35.57, 72.98, Welcome Center
+24.21, 24.28, 15.88, 30.54, Welcome Center
+24.75, 26.89, 26.01, 28.12, Welcome Center
+25.27, 26.47, 23.36, 31.40, Welcome Center
+25.80, 32.80, 23.62, 38.06, Welcome Center
+26.31, 32.13, 20.98, 36.21, Welcome Center
+26.84, 30.82, 20.22, 35.80, Welcome Center
+27.36, 29.79, 27.92, 31.45, Welcome Center
+27.87, 27.74, 22.86, 31.03, Welcome Center
+28.37, 30.12, 28.14, 31.54, Welcome Center
+28.90, 28.94, 26.17, 30.85, Welcome Center
+29.42, 28.28, 23.31, 30.67, Welcome Center
+29.95, 29.81, 28.61, 30.73, Welcome Center
+30.45, 29.24, 25.29, 31.51, Welcome Center
+30.97, 28.49, 23.68, 31.44, Welcome Center
+31.49, 30.80, 26.78, 32.51, Welcome Center
+32.01, 32.50, 29.15, 38.60, Welcome Center
+32.54, 35.98, 31.16, 40.28, Scene Change: Disregard Performance In This Section
+33.04, 36.20, 31.49, 40.04, Scene Change: Disregard Performance In This Section
+33.56, 37.53, 32.07, 40.79, Scene Change: Disregard Performance In This Section
+34.07, 38.62, 35.71, 42.33, Scene Change: Disregard Performance In This Section
+34.58, 39.12, 36.42, 41.85, Scene Change: Disregard Performance In This Section
+35.10, 39.68, 35.39, 42.36, Scene Change: Disregard Performance In This Section
+35.60, 40.11, 35.61, 42.98, Scene Change: Disregard Performance In This Section
+36.12, 34.71, 16.13, 42.53, Scene Change: Disregard Performance In This Section
+36.64, 21.53, 14.94, 41.97, Scene Change: Disregard Performance In This Section
+37.15, 20.95, 18.46, 22.33, Scene Change: Disregard Performance In This Section
+37.68, 21.55, 17.13, 27.05, Scene Change: Disregard Performance In This Section
+38.19, 20.45, 17.60, 25.08, Scene Change: Disregard Performance In This Section
+38.73, 19.92, 16.15, 24.85, Scene Change: Disregard Performance In This Section
+39.23, 19.53, 16.25, 23.20, Scene Change: Disregard Performance In This Section
+39.74, 18.89, 16.57, 24.02, Town Center
+40.27, 18.67, 16.62, 22.51, Town Center
+40.81, 17.60, 13.93, 21.23, Town Center
+41.32, 17.95, 15.11, 21.47, Town Center
+41.82, 17.57, 16.13, 21.00, Town Center
+42.33, 16.68, 16.15, 17.03, Town Center
+42.87, 16.37, 13.96, 18.83, Town Center
+43.42, 16.48, 16.03, 16.66, Town Center
+43.97, 17.35, 16.72, 17.95, Town Center
+44.48, 18.63, 16.45, 21.62, Town Center
+45.02, 19.84, 17.87, 22.15, Town Center
+45.53, 22.97, 19.18, 29.31, Town Center
+46.05, 24.21, 23.81, 24.56, Town Center
+46.58, 23.97, 21.23, 28.39, Town Center
+47.09, 24.35, 20.18, 31.30, Town Center
+47.62, 24.12, 21.36, 29.45, Town Center
+48.16, 24.53, 21.30, 28.70, Town Center
+48.69, 24.72, 22.42, 28.05, Town Center
+49.21, 20.72, 12.56, 28.03, Town Center
+49.75, 24.73, 20.97, 27.87, Town Center
+50.27, 25.50, 17.16, 32.36, Town Center
+50.78, 25.23, 22.47, 28.57, Town Center
+51.30, 24.80, 17.64, 35.16, Town Center
+51.82, 24.48, 23.92, 25.05, Town Center
+52.35, 24.02, 17.76, 31.68, Town Center
+52.89, 24.87, 23.88, 27.26, Town Center
+53.41, 26.29, 22.04, 30.06, Town Center
+53.95, 26.57, 21.89, 30.88, Town Center
+54.47, 26.54, 20.09, 46.10, Town Center
+55.00, 26.76, 19.08, 45.13, Town Center
+55.52, 27.00, 26.23, 29.50, Town Center
+56.04, 26.51, 24.50, 28.45, Town Center
+56.57, 26.61, 24.30, 29.38, Town Center
+57.10, 25.95, 23.84, 28.05, Town Center
+57.60, 24.63, 22.82, 26.36, Town Center
+58.13, 24.41, 22.72, 26.23, Town Center
+58.66, 23.23, 21.01, 26.14, Town Center
+59.18, 23.10, 20.68, 25.85, Town Center
+59.70, 20.96, 16.79, 32.23, Town Center
+60.22, 17.96, 14.93, 20.08, Town Center
+60.72, 17.98, 14.41, 21.38, Town Center
+61.22, 20.50, 16.75, 26.33, Raffle
+61.76, 23.74, 19.60, 29.76, Raffle
+62.26, 23.04, 21.44, 24.84, Raffle
+62.78, 21.77, 18.21, 25.96, Raffle
+63.34, 21.72, 19.06, 23.97, Raffle
+63.84, 20.96, 18.57, 23.01, Raffle
+64.37, 20.74, 19.48, 22.00, Raffle
+64.90, 20.27, 18.83, 22.66, Raffle
+65.44, 20.55, 18.01, 24.12, Raffle
+65.98, 21.09, 20.07, 22.08, Raffle
+66.50, 20.99, 18.64, 25.44, Raffle
+67.02, 21.34, 19.24, 23.53, Raffle
+67.54, 23.03, 20.06, 25.96, Raffle
+68.06, 22.54, 22.01, 23.43, Raffle
+68.59, 23.93, 21.81, 26.07, Raffle
+69.09, 25.70, 21.85, 30.53, Raffle
+69.60, 23.66, 8.30, 30.00, Monument Island
+70.10, 24.42, 14.19, 30.51, Monument Island
+70.64, 28.29, 25.68, 32.04, Monument Island
+71.17, 28.12, 24.26, 32.62, Monument Island
+71.70, 30.31, 27.88, 32.49, Monument Island
+72.23, 33.01, 23.55, 53.95, Monument Island
+72.74, 36.27, 33.18, 45.03, Monument Island
+73.27, 42.17, 36.24, 51.75, Monument Island
+73.79, 47.58, 40.12, 54.71, Monument Island
+74.29, 49.86, 42.05, 62.68, Monument Island
+74.79, 50.77, 43.34, 60.25, Monument Island
+75.31, 50.78, 45.11, 59.78, Monument Island
+75.82, 49.01, 39.86, 58.60, Monument Island
+76.33, 50.56, 43.09, 60.59, Monument Island
+76.84, 49.96, 45.17, 58.47, Monument Island
+77.34, 51.34, 47.92, 56.66, Monument Island
+77.85, 51.11, 49.62, 52.59, Monument Island
+78.36, 51.15, 46.45, 53.38, Monument Island
+78.87, 51.11, 49.55, 53.36, Benchmark Finished: Disregard Performance In This Section
+79.38, 50.81, 45.62, 57.84, Benchmark Finished: Disregard Performance In This Section
+79.89, 51.54, 48.41, 58.30, Benchmark Finished: Disregard Performance In This Section
+80.39, 51.35, 45.01, 61.84, Benchmark Finished: Disregard Performance In This Section
+80.90, 51.67, 47.77, 58.82, Benchmark Finished: Disregard Performance In This Section
+81.40, 51.40, 45.12, 56.28, Benchmark Finished: Disregard Performance In This Section
+
+
+Version Info: 32Bit Exe - 1.0.1642943 3/14/2014 12:00:00 AM
+Commandline Used: DefaultPCBenchmarkMap.xcmap -unattended -fullscreen -noPauseOnLossOfFocus -DEFENGINEINI=..\..\XGame\Config\DefaultEngineSteamworks.ini
+
+Settings Used:
+[SystemSettings]
+StaticDecals=true
+DynamicDecals=true
+UnbatchedDecals=true
+DynamicShadows=true
+DirectionalLightmaps=true
+DepthOfField=true
+DiffusionDepthOfField=false
+Bloom=true
+Distortion=true
+FilteredDistortion=true
+DropParticleDistortion=false
+bAllowDownsampledTranslucency=true
+bUseMaxQualityMode=false
+OnlyStreamInTextures=false
+LensFlares=true
+OneFrameThreadLag=true
+UseVsync=false
+VsyncTo60WhenUnder30=false
+UpscaleScreenPercentage=true
+AllowD3D10=true
+AllowD3D11=true
+AllowRadialBlur=true
+EnableSoftwareOcclusion=false
+EnableGPUOcclusionQueries=true
+EnableDepthPrePass=false
+bAllowWholeSceneDominantShadows=true
+bForceCPUAccessToGPUSkinVerts=false
+bDisableSkeletalInstanceWeights=false
+EnableScreenSpaceAmbientShadows=true
+EnableSPUScreenSpaceAmbientShadows=true
+UseHighQualityLightShaftRendering=false
+EnableSM5ShadowSystem=true
+EnableSM5ShadowBlur=true
+EnableLightShafts=true
+EnableFXAA=true
+EnableSM5FXAA=false
+EnableHDAO=true
+HDAOHighQuality=true
+DisableAOFiltering=false
+UseLowPrecisionColorBuffer=true
+UseHalfResAmbientShadows=false
+UseComputeShaderAmbientShadows=true
+bInitializeShadersOnDemand=true
+bEnableParallelApexClothingFetch=false
+SkeletalMeshLODBias=0
+ParticleLODBias=0
+DetailMode=2
+ShadowFilterQualityBias=3
+MaxAnisotropy=16
+MinShadowResolution=64
+MaxShadowResolution=2048
+MaxPerObjectShadowResolution=2048
+CullCastersSmallerThanTexels=0
+ResX=1920
+ResY=1080
+UnbuiltNumWholeSceneDynamicShadowCascades=3
+ShadowFadeResolution=128
+LightFadeResolution=0
+LightMinResolution=0
+GraphicsQualityLevel=5
+DisplayMode=1
+MaxPrecachePrimitivesPerFrame=50
+ApexDestructionMaxChunkIslandCount=2147483647
+ApexDestructionMaxShapeCount=2147483647
+ApexClothingAvgSimFrequencyWindow=60
+ScreenPercentage=100.000
+SceneCaptureStreamingMultiplier=1.000
+ShadowTexelsPerPixel=1.273
+ShadowDepthBias=0.012
+ShadowDepthBiasWorstCase=0.003
+CSMSplitSoftTransitionDistanceScale=4.000
+CSMSplitDepthBiasScale=0.500
+UnbuiltWholeSceneDynamicShadowRadius=20000.000
+ShadowFadeExponent=0.700
+LightFadeExponent=1.000
+DecalCullDistanceScale=1.000
+SM5ShadowSunWidth=0.100
+SM5ShadowSunWidthWorstCase=50.000
+NewShadowPenumbra=8.000
+NewShadowSplitPenumbraScale=0.500
+NewShadowFilterWidth=2.000
+ShadowCascadeScale=1.000
+NewCSMSoftTransitionDistance=600.000
+NewNonCSMSoftTransitionDistance=60.000
+MassiveLODDistanceBias=0.100
+CullDistanceBias=0.100
+StaticMeshLODDistanceBias=0.100
+SkeletalMeshLODDistanceBias=0.100
+ParticleSystemLODDistanceBias=0.100
+DistortionFadeResolution=1.000
+DistortionMinResolution=0.000
+SM5DiffusionNearBlurScale=0.600
+SM5DiffusionFarBlurScale=0.350
+OverallTextureStreamingBias=1.000
+ParticleCountHardLimitScaleFactor=10.000
+MaxDistanceToApplyOcclusionRotationalScaling=5000.000
+ApexLODResourceBudget=1000000020040877300000.000
+ApexDestructionMaxChunkSeparationLOD=1.000
+
+[MachineInfo]
+OS: 	Windows XP Service Pack 3
+GraphicsVendor: 00000001 ()
+DeviceID: 00000001
+DeviceName: BenQ G2412HD 24"
+IsDX11: 1
+DriverVer: 0.0.0.1
+Physical Mem: 7924MB
+CPUName:          Intel(R) Xeon(R) CPU E31260L @ 2.40GHz
+Hyperthreaded: 1
+NumProcessorsPerCPU: 1
+NumLogicalProcessors: 8
+NumPhysicalProcessors: 8
+CoresPerProcessor: 8
+

@@ -1,5 +1,8 @@
 6.3.18
 
+Deus Ex: when using nir crashes three times during shader generation:
+	half way (harddrive is active: writes crashdump?), 3/4 (crash dump?, kills steam), 99% full system freeze
+
 BioShock Infinite Steam Launcher Options:
 R600_DEBUG=nir %command% DefaultPCBenchmarkMap.xcmap -unattended -fullscreen -noPauseOnLossOfFocus
 
