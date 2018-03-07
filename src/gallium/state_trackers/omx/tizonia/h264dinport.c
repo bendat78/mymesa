@@ -78,9 +78,9 @@ static OMX_ERRORTYPE h264d_inport_SetParameter(const void * ap_obj, OMX_HANDLETY
          return err;
 
       /* Set some default values if not set */
-      if (i_def->format.video.nStride == 0)
+      if (!i_def->format.video.nStride)
          i_def->format.video.nStride = i_def->format.video.nFrameWidth;
-      if (i_def->format.video.nSliceHeight == 0)
+      if (!i_def->format.video.nSliceHeight)
          i_def->format.video.nSliceHeight = i_def->format.video.nFrameHeight;
 
       err = super_SetParameter(typeOf (ap_obj, "h264dinport"), ap_obj,

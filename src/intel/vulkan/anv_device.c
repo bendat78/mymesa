@@ -675,7 +675,7 @@ VkResult anv_EnumeratePhysicalDevices(
    if (result != VK_SUCCESS)
       return result;
 
-   if (instance->physicalDeviceCount == 0)
+   if (!instance->physicalDeviceCount)
       return VK_SUCCESS;
 
    assert(instance->physicalDeviceCount == 1);
@@ -699,7 +699,7 @@ VkResult anv_EnumeratePhysicalDeviceGroups(
    if (result != VK_SUCCESS)
       return result;
 
-   if (instance->physicalDeviceCount == 0)
+   if (!instance->physicalDeviceCount)
       return VK_SUCCESS;
 
    assert(instance->physicalDeviceCount == 1);
@@ -1474,7 +1474,7 @@ VkResult anv_CreateDevice(
     */
    assert(pCreateInfo->queueCreateInfoCount > 0);
    for (uint32_t i = 0; i < pCreateInfo->queueCreateInfoCount; i++) {
-      if (pCreateInfo->pQueueCreateInfos[i].flags != 0)
+      if (pCreateInfo->pQueueCreateInfos[i].flags)
          return vk_error(VK_ERROR_INITIALIZATION_FAILED);
    }
 

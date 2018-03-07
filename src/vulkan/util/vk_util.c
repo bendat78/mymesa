@@ -51,7 +51,7 @@ uint32_t vk_get_driver_version(void)
 uint32_t vk_get_version_override(void)
 {
    const char *str = getenv("MESA_VK_VERSION_OVERRIDE");
-   if (str == NULL)
+   if (!str)
       return 0;
 
    const char *minor_str = strchr(str, '.');

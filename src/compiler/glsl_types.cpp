@@ -422,27 +422,27 @@ _mesa_glsl_release_types(void)
     * object, or if process terminates), so no mutex-locking should be
     * necessary.
     */
-   if (glsl_type::array_types != NULL) {
+   if (glsl_type::array_types) {
       _mesa_hash_table_destroy(glsl_type::array_types, hash_free_type_function);
       glsl_type::array_types = NULL;
    }
 
-   if (glsl_type::record_types != NULL) {
+   if (glsl_type::record_types) {
       _mesa_hash_table_destroy(glsl_type::record_types, hash_free_type_function);
       glsl_type::record_types = NULL;
    }
 
-   if (glsl_type::interface_types != NULL) {
+   if (glsl_type::interface_types) {
       _mesa_hash_table_destroy(glsl_type::interface_types, hash_free_type_function);
       glsl_type::interface_types = NULL;
    }
 
-   if (glsl_type::function_types != NULL) {
+   if (glsl_type::function_types) {
       _mesa_hash_table_destroy(glsl_type::function_types, hash_free_type_function);
       glsl_type::function_types = NULL;
    }
 
-   if (glsl_type::subroutine_types != NULL) {
+   if (glsl_type::subroutine_types) {
       _mesa_hash_table_destroy(glsl_type::subroutine_types, hash_free_type_function);
       glsl_type::subroutine_types = NULL;
    }
