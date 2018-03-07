@@ -96,7 +96,13 @@ static uint32_t null_image_descriptor[8] = {
 
 static uint64_t si_desc_extract_buffer_address(uint32_t *desc)
 {
-	return desc[0] | ((uint64_t)G_008F04_BASE_ADDRESS_HI(desc[1]) << 32);
+	uint64_t va = desc[0] |
+		      ((uint64_t)G_008F04_BASE_ADDRESS_HI(desc[1]) << 32);
+
+	/* Sign-extend the 48-bit address. */
+	if (va & (1ull << 47))
+		va |= 0xffffull << 48;
+	return va;
 }
 
 static void si_init_descriptor_list(uint32_t *desc_list,
@@ -161,11 +167,10 @@ static bool si_upload_descriptors(struct si_context *sctx,
 	}
 
 	uint32_t *ptr;
-	int buffer_offset;
-	u_upload_alloc(sctx->b.b.const_uploader, 0, upload_size,
+	unsigned buffer_offset;
+	u_upload_alloc(sctx->b.b.const_uploader, first_slot_offset, upload_size,
 		       si_optimal_tcc_alignment(sctx, upload_size),
-		       (unsigned*)&buffer_offset,
-		       (struct pipe_resource**)&desc->buffer,
+		       &buffer_offset, (struct pipe_resource**)&desc->buffer,
 		       (void**)&ptr);
 	if (!desc->buffer) {
 		desc->gpu_address = 0;
@@ -182,6 +187,10 @@ static bool si_upload_descriptors(struct si_context *sctx,
 	/* The shader pointer should point to slot 0. */
 	buffer_offset -= first_slot_offset;
 	desc->gpu_address = desc->buffer->gpu_address + buffer_offset;
+
+	assert(desc->buffer->flags & RADEON_FLAG_32BIT);
+	assert((desc->buffer->gpu_address >> 32) == sctx->screen->info.address32_hi);
+	assert((desc->gpu_address >> 32) == sctx->screen->info.address32_hi);
 
 	si_mark_atom_dirty(sctx, &sctx->shader_pointers.atom);
 	return true;
@@ -1064,9 +1073,9 @@ bool si_upload_vertex_buffer_descriptors(struct si_context *sctx)
 			continue;
 		}
 
-		int offset = (int)vb->buffer_offset + (int)velems->src_offset[i];
-		int64_t va = (int64_t)rbuffer->gpu_address + offset;
-		assert(va > 0);
+		int64_t offset = (int64_t)((int)vb->buffer_offset) +
+				 velems->src_offset[i];
+		uint64_t va = rbuffer->gpu_address + offset;
 
 		int64_t num_records = (int64_t)rbuffer->b.b.width0 - offset;
 		if (sctx->b.chip_class != VI && vb->stride) {
@@ -2011,7 +2020,7 @@ static void si_emit_shader_pointer_body(struct si_screen *sscreen,
 	radeon_emit(cs, va);
 
 	if (HAVE_32BIT_POINTERS)
-		assert((va >> 32) == sscreen->info.address32_hi);
+		assert(va == 0 || (va >> 32) == sscreen->info.address32_hi);
 	else
 		radeon_emit(cs, va >> 32);
 }
