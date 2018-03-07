@@ -310,6 +310,22 @@ fs_inst::has_source_and_destination_hazard() const
    case FS_OPCODE_PACK_HALF_2x16_SPLIT:
       /* Multiple partial writes to the destination */
       return true;
+   case SHADER_OPCODE_SHUFFLE:
+      /* This instruction returns an arbitrary channel from the source and
+       * gets split into smaller instructions in the generator.  It's possible
+       * that one of the instructions will read from a channel corresponding
+       * to an earlier instruction.
+       */
+   case SHADER_OPCODE_SEL_EXEC:
+      /* This is implemented as
+       *
+       * mov(16)      g4<1>D      0D            { align1 WE_all 1H };
+       * mov(16)      g4<1>D      g5<8,8,1>D    { align1 1H }
+       *
+       * Because the source is only read in the second instruction, the first
+       * may stomp all over it.
+       */
+      return true;
    default:
       /* The SIMD16 compressed instruction
        *
@@ -2527,6 +2543,20 @@ fs_visitor::opt_algebraic()
             inst->src[0] = component(inst->src[0], comp);
             inst->sources = 1;
             inst->force_writemask_all = true;
+            progress = true;
+         }
+         break;
+
+      case SHADER_OPCODE_SHUFFLE:
+         if (is_uniform(inst->src[0])) {
+            inst->opcode = BRW_OPCODE_MOV;
+            inst->sources = 1;
+            progress = true;
+         } else if (inst->src[1].file == IMM) {
+            inst->opcode = BRW_OPCODE_MOV;
+            inst->src[0] = component(inst->src[0],
+                                     inst->src[1].ud);
+            inst->sources = 1;
             progress = true;
          }
          break;
@@ -5017,6 +5047,8 @@ get_lowered_simd_width(const struct gen_device_info *devinfo,
    case BRW_OPCODE_MAD:
    case BRW_OPCODE_LRP:
    case FS_OPCODE_PACK:
+   case SHADER_OPCODE_SEL_EXEC:
+   case SHADER_OPCODE_CLUSTER_BROADCAST:
       return get_fpu_lowered_simd_width(devinfo, inst);
 
    case BRW_OPCODE_CMP: {
@@ -5200,6 +5232,9 @@ get_lowered_simd_width(const struct gen_device_info *devinfo,
    case SHADER_OPCODE_URB_WRITE_SIMD8_MASKED:
    case SHADER_OPCODE_URB_WRITE_SIMD8_MASKED_PER_SLOT:
       return MIN2(8, inst->exec_size);
+
+   case SHADER_OPCODE_QUAD_SWIZZLE:
+      return 8;
 
    case SHADER_OPCODE_MOV_INDIRECT: {
       /* From IVB and HSW PRMs:

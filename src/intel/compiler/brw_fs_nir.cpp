@@ -3722,6 +3722,71 @@ fs_visitor::nir_emit_cs_intrinsic(const fs_builder &bld,
    }
 }
 
+static fs_reg
+brw_nir_reduction_op_identity(const fs_builder &bld,
+                              nir_op op, brw_reg_type type)
+{
+   nir_const_value value = nir_alu_binop_identity(op, type_sz(type) * 8);
+   switch (type_sz(type)) {
+   case 2:
+      assert(type != BRW_REGISTER_TYPE_HF);
+      return retype(brw_imm_uw(value.u16[0]), type);
+   case 4:
+      return retype(brw_imm_ud(value.u32[0]), type);
+   case 8:
+      if (type == BRW_REGISTER_TYPE_DF)
+         return setup_imm_df(bld, value.f64[0]);
+      else
+         return retype(brw_imm_u64(value.u64[0]), type);
+   default:
+      unreachable("Invalid type size");
+   }
+}
+
+static opcode
+brw_op_for_nir_reduction_op(nir_op op)
+{
+   switch (op) {
+   case nir_op_iadd: return BRW_OPCODE_ADD;
+   case nir_op_fadd: return BRW_OPCODE_ADD;
+   case nir_op_imul: return BRW_OPCODE_MUL;
+   case nir_op_fmul: return BRW_OPCODE_MUL;
+   case nir_op_imin: return BRW_OPCODE_SEL;
+   case nir_op_umin: return BRW_OPCODE_SEL;
+   case nir_op_fmin: return BRW_OPCODE_SEL;
+   case nir_op_imax: return BRW_OPCODE_SEL;
+   case nir_op_umax: return BRW_OPCODE_SEL;
+   case nir_op_fmax: return BRW_OPCODE_SEL;
+   case nir_op_iand: return BRW_OPCODE_AND;
+   case nir_op_ior:  return BRW_OPCODE_OR;
+   case nir_op_ixor: return BRW_OPCODE_XOR;
+   default:
+      unreachable("Invalid reduction operation");
+   }
+}
+
+static brw_conditional_mod
+brw_cond_mod_for_nir_reduction_op(nir_op op)
+{
+   switch (op) {
+   case nir_op_iadd: return BRW_CONDITIONAL_NONE;
+   case nir_op_fadd: return BRW_CONDITIONAL_NONE;
+   case nir_op_imul: return BRW_CONDITIONAL_NONE;
+   case nir_op_fmul: return BRW_CONDITIONAL_NONE;
+   case nir_op_imin: return BRW_CONDITIONAL_L;
+   case nir_op_umin: return BRW_CONDITIONAL_L;
+   case nir_op_fmin: return BRW_CONDITIONAL_L;
+   case nir_op_imax: return BRW_CONDITIONAL_GE;
+   case nir_op_umax: return BRW_CONDITIONAL_GE;
+   case nir_op_fmax: return BRW_CONDITIONAL_GE;
+   case nir_op_iand: return BRW_CONDITIONAL_NONE;
+   case nir_op_ior:  return BRW_CONDITIONAL_NONE;
+   case nir_op_ixor: return BRW_CONDITIONAL_NONE;
+   default:
+      unreachable("Invalid reduction operation");
+   }
+}
+
 void
 fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr)
 {
@@ -4423,8 +4488,14 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       bld.MOV(retype(dest, BRW_REGISTER_TYPE_D), component(res1, 0));
       break;
    }
-   case nir_intrinsic_vote_eq: {
+   case nir_intrinsic_vote_feq:
+   case nir_intrinsic_vote_ieq: {
       fs_reg value = get_nir_src(instr->src[0]);
+      if (instr->intrinsic == nir_intrinsic_vote_feq) {
+         const unsigned bit_size = nir_src_bit_size(instr->src[0]);
+         value.type = brw_reg_type_from_bit_size(bit_size, BRW_REGISTER_TYPE_F);
+      }
+
       fs_reg uniformized = bld.emit_uniformize(value);
       const fs_builder ubld = bld.exec_all().group(1, 0);
 
@@ -4498,6 +4569,205 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
    case nir_intrinsic_read_first_invocation: {
       const fs_reg value = get_nir_src(instr->src[0]);
       bld.MOV(retype(dest, value.type), bld.emit_uniformize(value));
+      break;
+   }
+
+   case nir_intrinsic_shuffle: {
+      const fs_reg value = get_nir_src(instr->src[0]);
+      const fs_reg index = get_nir_src(instr->src[1]);
+
+      bld.emit(SHADER_OPCODE_SHUFFLE, retype(dest, value.type), value, index);
+      break;
+   }
+
+   case nir_intrinsic_first_invocation: {
+      fs_reg tmp = bld.vgrf(BRW_REGISTER_TYPE_UD);
+      bld.exec_all().emit(SHADER_OPCODE_FIND_LIVE_CHANNEL, tmp);
+      bld.MOV(retype(dest, BRW_REGISTER_TYPE_UD),
+              fs_reg(component(tmp, 0)));
+      break;
+   }
+
+   case nir_intrinsic_quad_broadcast: {
+      const fs_reg value = get_nir_src(instr->src[0]);
+      nir_const_value *index = nir_src_as_const_value(instr->src[1]);
+      assert(nir_src_bit_size(instr->src[1]) == 32);
+
+      bld.emit(SHADER_OPCODE_CLUSTER_BROADCAST, retype(dest, value.type),
+               value, brw_imm_ud(index->u32[0]), brw_imm_ud(4));
+      break;
+   }
+
+   case nir_intrinsic_quad_swap_horizontal: {
+      const fs_reg value = get_nir_src(instr->src[0]);
+      const fs_reg tmp = bld.vgrf(value.type);
+      const fs_builder ubld = bld.exec_all().group(dispatch_width / 2, 0);
+
+      const fs_reg src_left = horiz_stride(value, 2);
+      const fs_reg src_right = horiz_stride(horiz_offset(value, 1), 2);
+      const fs_reg tmp_left = horiz_stride(tmp, 2);
+      const fs_reg tmp_right = horiz_stride(horiz_offset(tmp, 1), 2);
+
+      /* From the Cherryview PRM Vol. 7, "Register Region Restrictiosn":
+       *
+       *    "When source or destination datatype is 64b or operation is
+       *    integer DWord multiply, regioning in Align1 must follow
+       *    these rules:
+       *
+       *    [...]
+       *
+       *    3. Source and Destination offset must be the same, except
+       *       the case of scalar source."
+       *
+       * In order to work around this, we have to emit two 32-bit MOVs instead
+       * of a single 64-bit MOV to do the shuffle.
+       */
+      if (type_sz(value.type) > 4 &&
+          (devinfo->is_cherryview || gen_device_info_is_9lp(devinfo))) {
+         ubld.MOV(subscript(tmp_left, BRW_REGISTER_TYPE_D, 0),
+                  subscript(src_right, BRW_REGISTER_TYPE_D, 0));
+         ubld.MOV(subscript(tmp_left, BRW_REGISTER_TYPE_D, 1),
+                  subscript(src_right, BRW_REGISTER_TYPE_D, 1));
+         ubld.MOV(subscript(tmp_right, BRW_REGISTER_TYPE_D, 0),
+                  subscript(src_left, BRW_REGISTER_TYPE_D, 0));
+         ubld.MOV(subscript(tmp_right, BRW_REGISTER_TYPE_D, 1),
+                  subscript(src_left, BRW_REGISTER_TYPE_D, 1));
+      } else {
+         ubld.MOV(tmp_left, src_right);
+         ubld.MOV(tmp_right, src_left);
+      }
+      bld.MOV(retype(dest, value.type), tmp);
+      break;
+   }
+
+   case nir_intrinsic_quad_swap_vertical: {
+      const fs_reg value = get_nir_src(instr->src[0]);
+      if (nir_src_bit_size(instr->src[0]) == 32) {
+         /* For 32-bit, we can use a SIMD4x2 instruction to do this easily */
+         const fs_reg tmp = bld.vgrf(value.type);
+         const fs_builder ubld = bld.exec_all();
+         ubld.emit(SHADER_OPCODE_QUAD_SWIZZLE, tmp, value,
+                   brw_imm_ud(BRW_SWIZZLE4(2,3,0,1)));
+         bld.MOV(retype(dest, value.type), tmp);
+      } else {
+         /* For larger data types, we have to either emit dispatch_width many
+          * MOVs or else fall back to doing indirects.
+          */
+         fs_reg idx = bld.vgrf(BRW_REGISTER_TYPE_W);
+         bld.XOR(idx, nir_system_values[SYSTEM_VALUE_SUBGROUP_INVOCATION],
+                      brw_imm_w(0x2));
+         bld.emit(SHADER_OPCODE_SHUFFLE, retype(dest, value.type), value, idx);
+      }
+      break;
+   }
+
+   case nir_intrinsic_quad_swap_diagonal: {
+      const fs_reg value = get_nir_src(instr->src[0]);
+      if (nir_src_bit_size(instr->src[0]) == 32) {
+         /* For 32-bit, we can use a SIMD4x2 instruction to do this easily */
+         const fs_reg tmp = bld.vgrf(value.type);
+         const fs_builder ubld = bld.exec_all();
+         ubld.emit(SHADER_OPCODE_QUAD_SWIZZLE, tmp, value,
+                   brw_imm_ud(BRW_SWIZZLE4(3,2,1,0)));
+         bld.MOV(retype(dest, value.type), tmp);
+      } else {
+         /* For larger data types, we have to either emit dispatch_width many
+          * MOVs or else fall back to doing indirects.
+          */
+         fs_reg idx = bld.vgrf(BRW_REGISTER_TYPE_W);
+         bld.XOR(idx, nir_system_values[SYSTEM_VALUE_SUBGROUP_INVOCATION],
+                      brw_imm_w(0x3));
+         bld.emit(SHADER_OPCODE_SHUFFLE, retype(dest, value.type), value, idx);
+      }
+      break;
+   }
+
+   case nir_intrinsic_reduce: {
+      fs_reg src = get_nir_src(instr->src[0]);
+      nir_op redop = (nir_op)nir_intrinsic_reduction_op(instr);
+      unsigned cluster_size = nir_intrinsic_cluster_size(instr);
+      if (cluster_size == 0 || cluster_size > dispatch_width)
+         cluster_size = dispatch_width;
+
+      /* Figure out the source type */
+      src.type = brw_type_for_nir_type(devinfo,
+         (nir_alu_type)(nir_op_infos[redop].input_types[0] |
+                        nir_src_bit_size(instr->src[0])));
+
+      fs_reg identity = brw_nir_reduction_op_identity(bld, redop, src.type);
+      opcode brw_op = brw_op_for_nir_reduction_op(redop);
+      brw_conditional_mod cond_mod = brw_cond_mod_for_nir_reduction_op(redop);
+
+      /* Set up a register for all of our scratching around and initialize it
+       * to reduction operation's identity value.
+       */
+      fs_reg scan = bld.vgrf(src.type);
+      bld.exec_all().emit(SHADER_OPCODE_SEL_EXEC, scan, src, identity);
+
+      bld.emit_scan(brw_op, scan, cluster_size, cond_mod);
+
+      dest.type = src.type;
+      if (cluster_size * type_sz(src.type) >= REG_SIZE * 2) {
+         /* In this case, CLUSTER_BROADCAST instruction isn't needed because
+          * the distance between clusters is at least 2 GRFs.  In this case,
+          * we don't need the weird striding of the CLUSTER_BROADCAST
+          * instruction and can just do regular MOVs.
+          */
+         assert((cluster_size * type_sz(src.type)) % (REG_SIZE * 2) == 0);
+         const unsigned groups =
+            (dispatch_width * type_sz(src.type)) / (REG_SIZE * 2);
+         const unsigned group_size = dispatch_width / groups;
+         for (unsigned i = 0; i < groups; i++) {
+            const unsigned cluster = (i * group_size) / cluster_size;
+            const unsigned comp = cluster * cluster_size + (cluster_size - 1);
+            bld.group(group_size, i).MOV(horiz_offset(dest, i * group_size),
+                                         component(scan, comp));
+         }
+      } else {
+         bld.emit(SHADER_OPCODE_CLUSTER_BROADCAST, dest, scan,
+                  brw_imm_ud(cluster_size - 1), brw_imm_ud(cluster_size));
+      }
+      break;
+   }
+
+   case nir_intrinsic_inclusive_scan:
+   case nir_intrinsic_exclusive_scan: {
+      fs_reg src = get_nir_src(instr->src[0]);
+      nir_op redop = (nir_op)nir_intrinsic_reduction_op(instr);
+
+      /* Figure out the source type */
+      src.type = brw_type_for_nir_type(devinfo,
+         (nir_alu_type)(nir_op_infos[redop].input_types[0] |
+                        nir_src_bit_size(instr->src[0])));
+
+      fs_reg identity = brw_nir_reduction_op_identity(bld, redop, src.type);
+      opcode brw_op = brw_op_for_nir_reduction_op(redop);
+      brw_conditional_mod cond_mod = brw_cond_mod_for_nir_reduction_op(redop);
+
+      /* Set up a register for all of our scratching around and initialize it
+       * to reduction operation's identity value.
+       */
+      fs_reg scan = bld.vgrf(src.type);
+      const fs_builder allbld = bld.exec_all();
+      allbld.emit(SHADER_OPCODE_SEL_EXEC, scan, src, identity);
+
+      if (instr->intrinsic == nir_intrinsic_exclusive_scan) {
+         /* Exclusive scan is a bit harder because we have to do an annoying
+          * shift of the contents before we can begin.  To make things worse,
+          * we can't do this with a normal stride; we have to use indirects.
+          */
+         fs_reg shifted = bld.vgrf(src.type);
+         fs_reg idx = bld.vgrf(BRW_REGISTER_TYPE_W);
+         allbld.ADD(idx, nir_system_values[SYSTEM_VALUE_SUBGROUP_INVOCATION],
+                         brw_imm_w(-1));
+         allbld.emit(SHADER_OPCODE_SHUFFLE, shifted, scan, idx);
+         allbld.group(1, 0).MOV(component(shifted, 0), identity);
+         scan = shifted;
+      }
+
+      bld.emit_scan(brw_op, scan, dispatch_width, cond_mod);
+
+      bld.MOV(retype(dest, src.type), scan);
       break;
    }
 

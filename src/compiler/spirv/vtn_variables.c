@@ -1293,8 +1293,48 @@ vtn_get_builtin_location(struct vtn_builder *b,
       *location = SYSTEM_VALUE_DRAW_ID;
       set_mode_system_value(b, mode);
       break;
+   case SpvBuiltInSubgroupSize:
+      *location = SYSTEM_VALUE_SUBGROUP_SIZE;
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInSubgroupId:
+      *location = SYSTEM_VALUE_SUBGROUP_ID;
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInSubgroupLocalInvocationId:
+      *location = SYSTEM_VALUE_SUBGROUP_INVOCATION;
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInNumSubgroups:
+      *location = SYSTEM_VALUE_NUM_SUBGROUPS;
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInDeviceIndex:
+      *location = SYSTEM_VALUE_DEVICE_INDEX;
+      set_mode_system_value(b, mode);
+      break;
    case SpvBuiltInViewIndex:
       *location = SYSTEM_VALUE_VIEW_INDEX;
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInSubgroupEqMask:
+      *location = SYSTEM_VALUE_SUBGROUP_EQ_MASK,
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInSubgroupGeMask:
+      *location = SYSTEM_VALUE_SUBGROUP_GE_MASK,
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInSubgroupGtMask:
+      *location = SYSTEM_VALUE_SUBGROUP_GT_MASK,
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInSubgroupLeMask:
+      *location = SYSTEM_VALUE_SUBGROUP_LE_MASK,
+      set_mode_system_value(b, mode);
+      break;
+   case SpvBuiltInSubgroupLtMask:
+      *location = SYSTEM_VALUE_SUBGROUP_LT_MASK,
       set_mode_system_value(b, mode);
       break;
    default:

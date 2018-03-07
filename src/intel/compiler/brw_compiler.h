@@ -113,6 +113,14 @@ struct brw_compiler {
    bool supports_pull_constants;
 };
 
+/**
+ * We use a constant subgroup size of 32.  It really only needs to be a
+ * maximum and, since we do SIMD32 for compute shaders in some cases, it
+ * needs to be at least 32.  SIMD8 and SIMD16 shaders will still claim a
+ * subgroup size of 32 but will act as if 16 or 24 of those channels are
+ * disabled.
+ */
+#define BRW_SUBGROUP_SIZE 32
 
 /**
  * Program key structures.
@@ -551,6 +559,9 @@ enum brw_param_builtin {
    BRW_PARAM_BUILTIN_TESS_LEVEL_INNER_X,
    BRW_PARAM_BUILTIN_TESS_LEVEL_INNER_Y,
 
+   BRW_PARAM_BUILTIN_BASE_WORK_GROUP_ID_X,
+   BRW_PARAM_BUILTIN_BASE_WORK_GROUP_ID_Y,
+   BRW_PARAM_BUILTIN_BASE_WORK_GROUP_ID_Z,
    BRW_PARAM_BUILTIN_SUBGROUP_ID,
 };
 
