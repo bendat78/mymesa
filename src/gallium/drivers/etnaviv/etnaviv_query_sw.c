@@ -147,7 +147,7 @@ etna_sw_get_driver_query_group_info(struct pipe_screen *pscreen,
    if (!info)
       return ARRAY_SIZE(list);
 
-   if (index != 0)
+   if (index)
       return 0;
 
    info->name = "driver";
