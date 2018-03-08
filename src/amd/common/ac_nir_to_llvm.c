@@ -1603,6 +1603,10 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 	case nir_op_unpack_half_2x16:
 		src_components = 1;
 		break;
+	case nir_op_cube_face_coord:
+	case nir_op_cube_face_index:
+		src_components = 3;
+		break;
 	default:
 		src_components = num_components;
 		break;
@@ -2012,6 +2016,30 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		tmp = LLVMBuildInsertElement(ctx->ac.builder, tmp,
 					     src[1], ctx->ac.i32_1, "");
 		result = LLVMBuildBitCast(ctx->ac.builder, tmp, ctx->ac.i64, "");
+		break;
+	}
+
+	case nir_op_cube_face_coord: {
+		src[0] = ac_to_float(&ctx->ac, src[0]);
+		LLVMValueRef results[2];
+		LLVMValueRef in[3];
+		for (unsigned chan = 0; chan < 3; chan++)
+			in[chan] = ac_llvm_extract_elem(&ctx->ac, src[0], chan);
+		results[0] = ac_build_intrinsic(&ctx->ac, "llvm.amdgcn.cubetc",
+						ctx->ac.f32, in, 3, AC_FUNC_ATTR_READNONE);
+		results[1] = ac_build_intrinsic(&ctx->ac, "llvm.amdgcn.cubesc",
+						ctx->ac.f32, in, 3, AC_FUNC_ATTR_READNONE);
+		result = ac_build_gather_values(&ctx->ac, results, 2);
+		break;
+	}
+
+	case nir_op_cube_face_index: {
+		src[0] = ac_to_float(&ctx->ac, src[0]);
+		LLVMValueRef in[3];
+		for (unsigned chan = 0; chan < 3; chan++)
+			in[chan] = ac_llvm_extract_elem(&ctx->ac, src[0], chan);
+		result = ac_build_intrinsic(&ctx->ac,  "llvm.amdgcn.cubeid",
+						ctx->ac.f32, in, 3, AC_FUNC_ATTR_READNONE);
 		break;
 	}
 
@@ -3845,6 +3873,12 @@ static void emit_barrier(struct ac_llvm_context *ac, gl_shader_stage stage)
 			   ac->voidt, NULL, 0, AC_FUNC_ATTR_CONVERGENT);
 }
 
+static void radv_emit_kill(struct ac_shader_abi *abi, LLVMValueRef visible)
+{
+	struct radv_shader_context *ctx = radv_shader_context_from_abi(abi);
+	ac_build_kill_if_false(&ctx->ac, visible);
+}
+
 static void emit_discard(struct ac_nir_context *ctx,
 			 const nir_intrinsic_instr *instr)
 {
@@ -3859,7 +3893,7 @@ static void emit_discard(struct ac_nir_context *ctx,
 		cond = LLVMConstInt(ctx->ac.i1, false, 0);
 	}
 
-	ac_build_kill_if_false(&ctx->ac, cond);
+	ctx->abi->emit_kill(ctx->abi, cond);
 }
 
 static LLVMValueRef
@@ -5273,17 +5307,15 @@ static void visit_ssa_undef(struct ac_nir_context *ctx,
 	_mesa_hash_table_insert(ctx->defs, &instr->def, undef);
 }
 
-static void visit_jump(struct ac_nir_context *ctx,
+static void visit_jump(struct ac_llvm_context *ctx,
 		       const nir_jump_instr *instr)
 {
 	switch (instr->type) {
 	case nir_jump_break:
-		LLVMBuildBr(ctx->ac.builder, ctx->break_block);
-		LLVMClearInsertionPosition(ctx->ac.builder);
+		ac_build_break(ctx);
 		break;
 	case nir_jump_continue:
-		LLVMBuildBr(ctx->ac.builder, ctx->continue_block);
-		LLVMClearInsertionPosition(ctx->ac.builder);
+		ac_build_continue(ctx);
 		break;
 	default:
 		fprintf(stderr, "Unknown NIR jump instr: ");
@@ -5321,7 +5353,7 @@ static void visit_block(struct ac_nir_context *ctx, nir_block *block)
 			visit_ssa_undef(ctx, nir_instr_as_ssa_undef(instr));
 			break;
 		case nir_instr_type_jump:
-			visit_jump(ctx, nir_instr_as_jump(instr));
+			visit_jump(&ctx->ac, nir_instr_as_jump(instr));
 			break;
 		default:
 			fprintf(stderr, "Unknown NIR instr type: ");
@@ -5338,56 +5370,34 @@ static void visit_if(struct ac_nir_context *ctx, nir_if *if_stmt)
 {
 	LLVMValueRef value = get_src(ctx, if_stmt->condition);
 
-	LLVMValueRef fn = LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->ac.builder));
-	LLVMBasicBlockRef merge_block =
-	    LLVMAppendBasicBlockInContext(ctx->ac.context, fn, "");
-	LLVMBasicBlockRef if_block =
-	    LLVMAppendBasicBlockInContext(ctx->ac.context, fn, "");
-	LLVMBasicBlockRef else_block = merge_block;
-	if (!exec_list_is_empty(&if_stmt->else_list))
-		else_block = LLVMAppendBasicBlockInContext(
-		    ctx->ac.context, fn, "");
+	nir_block *then_block =
+		(nir_block *) exec_list_get_head(&if_stmt->then_list);
 
-	LLVMValueRef cond = LLVMBuildICmp(ctx->ac.builder, LLVMIntNE, value,
-	                                  ctx->ac.i32_0, "");
-	LLVMBuildCondBr(ctx->ac.builder, cond, if_block, else_block);
+	ac_build_uif(&ctx->ac, value, then_block->index);
 
-	LLVMPositionBuilderAtEnd(ctx->ac.builder, if_block);
 	visit_cf_list(ctx, &if_stmt->then_list);
-	if (LLVMGetInsertBlock(ctx->ac.builder))
-		LLVMBuildBr(ctx->ac.builder, merge_block);
 
 	if (!exec_list_is_empty(&if_stmt->else_list)) {
-		LLVMPositionBuilderAtEnd(ctx->ac.builder, else_block);
+		nir_block *else_block =
+			(nir_block *) exec_list_get_head(&if_stmt->else_list);
+
+		ac_build_else(&ctx->ac, else_block->index);
 		visit_cf_list(ctx, &if_stmt->else_list);
-		if (LLVMGetInsertBlock(ctx->ac.builder))
-			LLVMBuildBr(ctx->ac.builder, merge_block);
 	}
 
-	LLVMPositionBuilderAtEnd(ctx->ac.builder, merge_block);
+	ac_build_endif(&ctx->ac, then_block->index);
 }
 
 static void visit_loop(struct ac_nir_context *ctx, nir_loop *loop)
 {
-	LLVMValueRef fn = LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->ac.builder));
-	LLVMBasicBlockRef continue_parent = ctx->continue_block;
-	LLVMBasicBlockRef break_parent = ctx->break_block;
+	nir_block *first_loop_block =
+		(nir_block *) exec_list_get_head(&loop->body);
 
-	ctx->continue_block =
-	    LLVMAppendBasicBlockInContext(ctx->ac.context, fn, "");
-	ctx->break_block =
-	    LLVMAppendBasicBlockInContext(ctx->ac.context, fn, "");
+	ac_build_bgnloop(&ctx->ac, first_loop_block->index);
 
-	LLVMBuildBr(ctx->ac.builder, ctx->continue_block);
-	LLVMPositionBuilderAtEnd(ctx->ac.builder, ctx->continue_block);
 	visit_cf_list(ctx, &loop->body);
 
-	if (LLVMGetInsertBlock(ctx->ac.builder))
-		LLVMBuildBr(ctx->ac.builder, ctx->continue_block);
-	LLVMPositionBuilderAtEnd(ctx->ac.builder, ctx->break_block);
-
-	ctx->continue_block = continue_parent;
-	ctx->break_block = break_parent;
+	ac_build_endloop(&ctx->ac, first_loop_block->index);
 }
 
 static void visit_cf_list(struct ac_nir_context *ctx,
@@ -6530,17 +6540,13 @@ handle_tcs_outputs_post(struct radv_shader_context *ctx)
 
 static bool
 si_export_mrt_color(struct radv_shader_context *ctx,
-		    LLVMValueRef *color, unsigned index, bool is_last,
+		    LLVMValueRef *color, unsigned index,
 		    struct ac_export_args *args)
 {
 	/* Export */
 	si_llvm_init_export_args(ctx, color, 0xf,
 				 V_008DFC_SQ_EXP_MRT + index, args);
-
-	if (is_last) {
-		args->valid_mask = 1; /* whether the EXEC mask is valid */
-		args->done = 1; /* DONE bit */
-	} else if (!args->enabled_channels)
+	if (!args->enabled_channels)
 		return false; /* unnecessary NULL export */
 
 	return true;
@@ -6567,7 +6573,6 @@ handle_fs_outputs_post(struct radv_shader_context *ctx)
 
 	for (unsigned i = 0; i < AC_LLVM_MAX_OUTPUTS; ++i) {
 		LLVMValueRef values[4];
-		bool last = false;
 
 		if (!(ctx->output_mask & (1ull << i)))
 			continue;
@@ -6579,14 +6584,9 @@ handle_fs_outputs_post(struct radv_shader_context *ctx)
 			values[j] = ac_to_float(&ctx->ac,
 						radv_load_output(ctx, i, j));
 
-		if (!ctx->shader_info->info.ps.writes_z &&
-		    !ctx->shader_info->info.ps.writes_stencil &&
-		    !ctx->shader_info->info.ps.writes_sample_mask)
-			last = ctx->output_mask <= ((1ull << (i + 1)) - 1);
-
 		bool ret = si_export_mrt_color(ctx, values,
 					       i - FRAG_RESULT_DATA0,
-					       last, &color_args[index]);
+					       &color_args[index]);
 		if (ret)
 			index++;
 	}
@@ -6603,6 +6603,19 @@ handle_fs_outputs_post(struct radv_shader_context *ctx)
 	if (ctx->shader_info->info.ps.writes_sample_mask) {
 		samplemask = ac_to_float(&ctx->ac,
 					 radv_load_output(ctx, FRAG_RESULT_SAMPLE_MASK, 0));
+	}
+
+	/* Set the DONE bit on last non-null color export only if Z isn't
+	 * exported.
+	 */
+	if (index > 0 &&
+	    !ctx->shader_info->info.ps.writes_z &&
+	    !ctx->shader_info->info.ps.writes_stencil &&
+	    !ctx->shader_info->info.ps.writes_sample_mask) {
+		unsigned last = index - 1;
+
+               color_args[last].valid_mask = 1; /* whether the EXEC mask is valid */
+               color_args[last].done = 1; /* DONE bit */
 	}
 
 	/* Export PS outputs. */
@@ -6682,6 +6695,8 @@ static void ac_llvm_finalize_module(struct radv_shader_context *ctx)
 
 	LLVMDisposeBuilder(ctx->ac.builder);
 	LLVMDisposePassManager(passmgr);
+
+	ac_llvm_context_dispose(&ctx->ac);
 }
 
 static void
@@ -6950,6 +6965,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
 			ctx.abi.lookup_interp_param = lookup_interp_param;
 			ctx.abi.load_sample_position = load_sample_position;
 			ctx.abi.load_sample_mask_in = load_sample_mask_in;
+			ctx.abi.emit_kill = radv_emit_kill;
 		}
 
 		if (i)
