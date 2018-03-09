@@ -78,6 +78,7 @@
 #define VC4_DIRTY_COMPILED_VS   (1 << 24)
 #define VC4_DIRTY_COMPILED_FS   (1 << 25)
 #define VC4_DIRTY_FS_INPUTS     (1 << 26)
+#define VC4_DIRTY_UBO_1_SIZE    (1 << 27)
 
 struct vc4_sampler_view {
         struct pipe_sampler_view base;
@@ -375,6 +376,10 @@ struct vc4_context {
         uint64_t last_emit_seqno;
 
         struct u_upload_mgr *uploader;
+
+        struct pipe_shader_state *yuv_linear_blit_vs;
+        struct pipe_shader_state *yuv_linear_blit_fs_8bit;
+        struct pipe_shader_state *yuv_linear_blit_fs_16bit;
 
         /** @{ Current pipeline state objects */
         struct pipe_scissor_state scissor;

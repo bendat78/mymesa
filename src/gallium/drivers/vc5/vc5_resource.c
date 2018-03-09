@@ -22,6 +22,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "pipe/p_defines.h"
 #include "util/u_blit.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
@@ -37,10 +38,6 @@
 #include "vc5_resource.h"
 #include "vc5_tiling.h"
 #include "broadcom/cle/v3d_packet_v33_pack.h"
-
-#ifndef DRM_FORMAT_MOD_INVALID
-#define DRM_FORMAT_MOD_INVALID ((1ULL << 56) - 1)
-#endif
 
 static void
 vc5_debug_resource_layout(struct vc5_resource *rsc, const char *caller)

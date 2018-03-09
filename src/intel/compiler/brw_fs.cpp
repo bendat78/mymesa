@@ -945,6 +945,7 @@ unsigned
 fs_inst::flags_written() const
 {
    if ((conditional_mod && (opcode != BRW_OPCODE_SEL &&
+                            opcode != BRW_OPCODE_CSEL &&
                             opcode != BRW_OPCODE_IF &&
                             opcode != BRW_OPCODE_WHILE)) ||
        opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS ||
@@ -2840,6 +2841,106 @@ mask_relative_to(const fs_reg &r, const fs_reg &s, unsigned ds)
    assert(reg_space(r) == reg_space(s) &&
           shift >= 0 && shift < int(8 * sizeof(unsigned)));
    return ((1 << n) - 1) << shift;
+}
+
+bool
+fs_visitor::opt_peephole_csel()
+{
+   if (devinfo->gen < 8)
+      return false;
+
+   bool progress = false;
+
+   foreach_block_reverse(block, cfg) {
+      int ip = block->end_ip + 1;
+
+      foreach_inst_in_block_reverse_safe(fs_inst, inst, block) {
+         ip--;
+
+         if (inst->opcode != BRW_OPCODE_SEL ||
+             inst->predicate != BRW_PREDICATE_NORMAL ||
+             (inst->dst.type != BRW_REGISTER_TYPE_F &&
+              inst->dst.type != BRW_REGISTER_TYPE_D &&
+              inst->dst.type != BRW_REGISTER_TYPE_UD))
+            continue;
+
+         /* Because it is a 3-src instruction, CSEL cannot have an immediate
+          * value as a source, but we can sometimes handle zero.
+          */
+         if ((inst->src[0].file != VGRF && inst->src[0].file != ATTR &&
+              inst->src[0].file != UNIFORM) ||
+             (inst->src[1].file != VGRF && inst->src[1].file != ATTR &&
+              inst->src[1].file != UNIFORM && !inst->src[1].is_zero()))
+            continue;
+
+         foreach_inst_in_block_reverse_starting_from(fs_inst, scan_inst, inst) {
+            if (!scan_inst->flags_written())
+               continue;
+
+            if ((scan_inst->opcode != BRW_OPCODE_CMP &&
+                 scan_inst->opcode != BRW_OPCODE_MOV) ||
+                scan_inst->predicate != BRW_PREDICATE_NONE ||
+                (scan_inst->src[0].file != VGRF &&
+                 scan_inst->src[0].file != ATTR &&
+                 scan_inst->src[0].file != UNIFORM) ||
+                scan_inst->src[0].type != BRW_REGISTER_TYPE_F)
+               break;
+
+            if (scan_inst->opcode == BRW_OPCODE_CMP && !scan_inst->src[1].is_zero())
+               break;
+
+            const brw::fs_builder ibld(this, block, inst);
+
+            const enum brw_conditional_mod cond =
+               inst->predicate_inverse
+               ? brw_negate_cmod(scan_inst->conditional_mod)
+               : scan_inst->conditional_mod;
+
+            fs_inst *csel_inst = NULL;
+
+            if (inst->src[1].file != IMM) {
+               csel_inst = ibld.CSEL(inst->dst,
+                                     inst->src[0],
+                                     inst->src[1],
+                                     scan_inst->src[0],
+                                     cond);
+            } else if (cond == BRW_CONDITIONAL_NZ) {
+               /* Consider the sequence
+                *
+                * cmp.nz.f0  null<1>F   g3<8,8,1>F   0F
+                * (+f0) sel  g124<1>UD  g2<8,8,1>UD  0x00000000UD
+                *
+                * The sel will pick the immediate value 0 if r0 is ±0.0.
+                * Therefore, this sequence is equivalent:
+                *
+                * cmp.nz.f0  null<1>F   g3<8,8,1>F   0F
+                * (+f0) sel  g124<1>F   g2<8,8,1>F   (abs)g3<8,8,1>F
+                *
+                * The abs is ensures that the result is 0UD when g3 is -0.0F.
+                * By normal cmp-sel merging, this is also equivalent:
+                *
+                * csel.nz    g124<1>F   g2<4,4,1>F   (abs)g3<4,4,1>F  g3<4,4,1>F
+                */
+               csel_inst = ibld.CSEL(inst->dst,
+                                     inst->src[0],
+                                     scan_inst->src[0],
+                                     scan_inst->src[0],
+                                     cond);
+
+               csel_inst->src[1].abs = true;
+            }
+
+            if (csel_inst != NULL) {
+               progress = true;
+               inst->remove(block);
+            }
+
+            break;
+         }
+      }
+   }
+
+   return progress;
 }
 
 bool
@@ -5578,6 +5679,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
       fprintf(file, "%s", conditional_modifier[inst->conditional_mod]);
       if (!inst->predicate &&
           (devinfo->gen < 5 || (inst->opcode != BRW_OPCODE_SEL &&
+                                inst->opcode != BRW_OPCODE_CSEL &&
                                 inst->opcode != BRW_OPCODE_IF &&
                                 inst->opcode != BRW_OPCODE_WHILE))) {
          fprintf(file, ".f%d.%d", inst->flag_subreg / 2,
@@ -6075,6 +6177,12 @@ fs_visitor::optimize()
 
       OPT(compact_virtual_grfs);
    } while (progress);
+
+   /* Do this after cmod propagation has had every possible opportunity to
+    * propagate results into SEL instructions.
+    */
+   if (OPT(opt_peephole_csel))
+      OPT(dead_code_eliminate);
 
    progress = false;
    pass_num = 0;

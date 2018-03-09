@@ -1076,12 +1076,26 @@ uint32_t MaxVertsPerDraw(
 {
     API_STATE& state = pDC->pState->state;
 
-    uint32_t vertsPerDraw = totalVerts;
-
+    // We can not split draws that have streamout enabled because there is no practical way
+    // to support multiple threads generating SO data for a single set of buffers.
     if (state.soState.soEnable)
     {
         return totalVerts;
     }
+
+    // The Primitive Assembly code can only handle 1 RECT at a time. Specified with only 3 verts.
+    if (topology == TOP_RECT_LIST)
+    {
+        return 3;
+    }
+
+    // Is split drawing disabled?
+    if (KNOB_DISABLE_SPLIT_DRAW)
+    {
+        return totalVerts;
+    }
+
+    uint32_t vertsPerDraw = totalVerts;
 
     switch (topology)
     {
@@ -1128,12 +1142,6 @@ uint32_t MaxVertsPerDraw(
             vertsPerDraw = vertsPerPrim * KNOB_MAX_TESS_PRIMS_PER_DRAW;
         }
         break;
-
-    // The Primitive Assembly code can only handle 1 RECT at a time.
-    case TOP_RECT_LIST:
-        vertsPerDraw = 3;
-        break;
-
     default:
         // We are not splitting up draws for other topologies.
         break;
@@ -1168,7 +1176,6 @@ void DrawInstanced(
     DRAW_CONTEXT* pDC = GetDrawContext(pContext);
 
     RDTSC_BEGIN(APIDraw, pDC->drawId);
-    AR_API_EVENT(DrawInstancedEvent(pDC->drawId, topology, numVertices, startVertex, numInstances, startInstance));
 
     uint32_t maxVertsPerDraw = MaxVertsPerDraw(pDC, numVertices, topology);
     uint32_t primsPerDraw = GetNumPrims(topology, maxVertsPerDraw);
@@ -1220,7 +1227,8 @@ void DrawInstanced(
         //enqueue DC
         QueueDraw(pContext);
 
-        AR_API_EVENT(DrawInstancedSplitEvent(pDC->drawId));
+        AR_API_EVENT(DrawInstancedEvent(pDC->drawId, topology, numVertsForDraw, startVertex, numInstances,
+            startInstance, pState->tsState.tsEnable, pState->gsState.gsEnable, pState->soState.soEnable, pState->gsState.outputTopology, draw));
 
         remainingVerts -= numVertsForDraw;
         draw++;
@@ -1296,7 +1304,6 @@ void DrawIndexedInstance(
     API_STATE* pState = &pDC->pState->state;
 
     RDTSC_BEGIN(APIDrawIndexed, pDC->drawId);
-    AR_API_EVENT(DrawIndexedInstancedEvent(pDC->drawId, topology, numIndices, indexOffset, baseVertex, numInstances, startInstance));
 
     uint32_t maxIndicesPerDraw = MaxVertsPerDraw(pDC, numIndices, topology);
     uint32_t primsPerDraw = GetNumPrims(topology, maxIndicesPerDraw);
@@ -1365,7 +1372,8 @@ void DrawIndexedInstance(
         //enqueue DC
         QueueDraw(pContext);
 
-        AR_API_EVENT(DrawIndexedInstancedSplitEvent(pDC->drawId));
+        AR_API_EVENT(DrawIndexedInstancedEvent(pDC->drawId, topology, numIndicesForDraw, indexOffset, baseVertex,
+            numInstances, startInstance, pState->tsState.tsEnable, pState->gsState.gsEnable, pState->soState.soEnable, pState->gsState.outputTopology, draw));
 
         pIB += maxIndicesPerDraw * indexSize;
         remainingIndices -= numIndicesForDraw;
