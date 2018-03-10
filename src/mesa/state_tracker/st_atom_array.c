@@ -347,13 +347,8 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
       if (!stride)
          return false;
 
-<<<<<<< HEAD
-      bufObj = array->BufferObj;
-      if (!attr) {
-=======
       bufObj = binding->BufferObj;
       if (attr == 0) {
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
          /* save info about the first array */
          firstStride = stride;
          firstPtr = ptr;
@@ -649,13 +644,8 @@ setup_non_interleaved_attribs(struct st_context *st,
             binding->Offset + attrib->RelativeOffset;
       }
       else {
-<<<<<<< HEAD
-         if (!stride) {
-            unsigned size = array->_ElementSize;
-=======
          if (stride == 0) {
             unsigned size = attrib->_ElementSize;
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
             /* This is optimal for GPU cache line usage if the upload size
              * is <= cache line size.
              */

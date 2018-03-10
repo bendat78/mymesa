@@ -190,21 +190,12 @@ static void _tnl_import_array( struct gl_context *ctx,
       GLubyte *buf = get_space(ctx, count * sz * sizeof(GLfloat));
       GLfloat *fptr = (GLfloat *)buf;
 
-<<<<<<< HEAD
-      switch (input->Type) {
-      case GL_BYTE:
-	 CONVERT(GLbyte, BYTE_TO_FLOAT);
-	 break;
-      case GL_UNSIGNED_BYTE:
-         if (input->Format == GL_BGRA) {
-=======
       switch (attrib->Type) {
       case GL_BYTE: 
 	 CONVERT(GLbyte, BYTE_TO_FLOAT); 
 	 break;
       case GL_UNSIGNED_BYTE: 
          if (attrib->Format == GL_BGRA) {
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
             /* See GL_EXT_vertex_array_bgra */
             convert_bgra_to_float(binding, attrib, ptr, fptr, count);
          }
@@ -251,19 +242,11 @@ static void _tnl_import_array( struct gl_context *ctx,
 
    /* This should die, but so should the whole GLvector4f concept:
     */
-<<<<<<< HEAD
-   VB->AttribPtr[attrib]->flags = (((1<<input->Size)-1) |
-				   VEC_NOT_WRITEABLE |
-				   (stride == 4*sizeof(GLfloat) ? 0 : VEC_BAD_STRIDE));
-
-   VB->AttribPtr[attrib]->storage = NULL;
-=======
    VB->AttribPtr[attr]->flags = (((1<<attrib->Size)-1) |
 				   VEC_NOT_WRITEABLE |
 				   (stride == 4*sizeof(GLfloat) ? 0 : VEC_BAD_STRIDE));
    
    VB->AttribPtr[attr]->storage = NULL;
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
 }
 
 #define CLIPVERTS  ((6 + MAX_CLIP_PLANES) * 2)
@@ -288,13 +271,8 @@ static GLboolean *_tnl_import_edgeflag( struct gl_context *ctx,
 }
 
 
-<<<<<<< HEAD
-static void bind_inputs( struct gl_context *ctx,
-			 const struct gl_vertex_array *inputs[],
-=======
 static void bind_inputs( struct gl_context *ctx, 
 			 const struct gl_vertex_array *inputs,
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
 			 GLint count,
 			 struct gl_buffer_object **bo,
 			 GLuint *nr_bo )
@@ -311,35 +289,20 @@ static void bind_inputs( struct gl_context *ctx,
       const struct gl_array_attributes *attrib = array->VertexAttrib;
       const void *ptr;
 
-<<<<<<< HEAD
-      if (inputs[i]->BufferObj->Name) {
-	 if (!inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer) {
-	    bo[*nr_bo] = inputs[i]->BufferObj;
-=======
       if (_mesa_is_bufferobj(binding->BufferObj)) {
 	 if (!binding->BufferObj->Mappings[MAP_INTERNAL].Pointer) {
 	    bo[*nr_bo] = binding->BufferObj;
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
 	    (*nr_bo)++;
 	    ctx->Driver.MapBufferRange(ctx, 0, binding->BufferObj->Size,
 				       GL_MAP_READ_BIT,
                                        binding->BufferObj,
                                        MAP_INTERNAL);
-<<<<<<< HEAD
-
-	    assert(inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer);
-	 }
-
-	 ptr = ADD_POINTERS(inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer,
-			    inputs[i]->Ptr);
-=======
 	    
             assert(binding->BufferObj->Mappings[MAP_INTERNAL].Pointer);
 	 }
 	 
          ptr = ADD_POINTERS(binding->BufferObj->Mappings[MAP_INTERNAL].Pointer,
                             binding->Offset + attrib->RelativeOffset);
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
       }
       else
          ptr = attrib->Ptr;

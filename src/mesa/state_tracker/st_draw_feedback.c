@@ -241,19 +241,12 @@ st_feedback_draw_vbo(struct gl_context *ctx,
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = attr;
       velements[attr].src_format =
-<<<<<<< HEAD
-         st_pipe_vertex_format(arrays[mesaAttr]->Type,
-                               arrays[mesaAttr]->Size,
-                               arrays[mesaAttr]->Format,
-                               arrays[mesaAttr]->Normalized,
-                               arrays[mesaAttr]->Integer);
-=======
          st_pipe_vertex_format(attrib->Type,
                                attrib->Size,
                                attrib->Format,
                                attrib->Normalized,
                                attrib->Integer);
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
+
       assert(velements[attr].src_format);
 
       /* tell draw about this attribute */

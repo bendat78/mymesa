@@ -440,13 +440,8 @@ replay_init(struct copy_context *copy)
       const struct gl_vertex_array *array = &copy->array[i];
       const struct gl_vertex_buffer_binding *binding = array->BufferBinding;
 
-<<<<<<< HEAD
-      if (!copy->array[i]->StrideB) {
-         copy->dstarray_ptr[i] = copy->array[i];
-=======
       if (binding->Stride == 0) {
          _mesa_copy_vertex_array(&copy->dstarray[i], array);
->>>>>>> 64d2a20480547d5897fd9d7b8fd306f2625138cb
       }
       else {
          const struct gl_array_attributes *attrib = array->VertexAttrib;
