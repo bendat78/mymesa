@@ -246,6 +246,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
                                attrib->Format,
                                attrib->Normalized,
                                attrib->Integer);
+
       assert(velements[attr].src_format);
 
       /* tell draw about this attribute */
