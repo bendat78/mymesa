@@ -51,7 +51,7 @@ enum radeon_bo_flag { /* bitfield */
     RADEON_FLAG_NO_CPU_ACCESS = (1 << 1),
     RADEON_FLAG_NO_SUBALLOC =   (1 << 2),
     RADEON_FLAG_SPARSE =        (1 << 3),
-    RADEON_FLAG_NO_INTERPROCESS_SHARING = (1 << 4),
+    RADEON_FLAG_NO_INTERPROCESS_SHARING = 0; //(1 << 4),
     RADEON_FLAG_READ_ONLY =     (1 << 5),
     RADEON_FLAG_32BIT =    (1 << 6),
 };
