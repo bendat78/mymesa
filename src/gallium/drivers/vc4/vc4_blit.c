@@ -392,7 +392,7 @@ vc4_yuv_blit(struct pipe_context *pctx, const struct pipe_blit_info *info)
         util_blitter_restore_textures(vc4->blitter);
         util_blitter_restore_constant_buffer_state(vc4->blitter);
         /* Restore cb1 (util_blitter doesn't handle this one). */
-        struct pipe_constant_buffer cb_disabled = { 0 };
+        struct pipe_constant_buffer cb_disabled = {};
         pctx->set_constant_buffer(pctx, PIPE_SHADER_FRAGMENT, 1, &cb_disabled);
 
         pipe_surface_reference(&dst_surf, NULL);

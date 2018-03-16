@@ -523,7 +523,7 @@ radv_shader_variant_create(struct radv_device *device,
 			   void **code_out,
 			   unsigned *code_size_out)
 {
-	struct radv_nir_compiler_options options = {0};
+	struct radv_nir_compiler_options options = {};
 
 	options.layout = layout;
 	if (key)
@@ -543,7 +543,7 @@ radv_create_gs_copy_shader(struct radv_device *device,
 			   unsigned *code_size_out,
 			   bool multiview)
 {
-	struct radv_nir_compiler_options options = {0};
+	struct radv_nir_compiler_options options = {};
 
 	options.key.has_multiview_view_index = multiview;
 

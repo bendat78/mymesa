@@ -85,10 +85,10 @@ namespace ArchRast
 
         virtual void Handle(const DrawInstancedEvent& event)
         {
-            DrawInfoEvent e(event.data.drawId, ArchRast::Instanced, event.data.topology, 
-                event.data.numVertices, 0, 0, event.data.startVertex, event.data.numInstances, 
+            DrawInfoEvent e(event.data.drawId, ArchRast::Instanced, event.data.topology,
+                event.data.numVertices, 0, 0, event.data.startVertex, event.data.numInstances,
                 event.data.startInstance, event.data.tsEnable, event.data.gsEnable, event.data.soEnable, event.data.soTopology, event.data.splitId);
-            
+
             EventHandlerFile::Handle(e);
         }
 

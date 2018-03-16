@@ -2933,7 +2933,7 @@ fs_visitor::opt_peephole_csel()
                csel_inst->src[1].abs = true;
             }
 
-            if (csel_inst != NULL) {
+            if (csel_inst) {
                progress = true;
                inst->remove(block);
             }
