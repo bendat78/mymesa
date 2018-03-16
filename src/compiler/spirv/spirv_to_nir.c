@@ -376,7 +376,7 @@ vtn_handle_extension(struct vtn_builder *b, SpvOp opcode,
       if (strcmp((const char *)&w[2], "GLSL.std.450") == 0) {
          val->ext_handler = vtn_handle_glsl450_instruction;
       } else if ((strcmp((const char *)&w[2], "SPV_AMD_gcn_shader") == 0)
-                && (b->options && b->options->exts.AMD_gcn_shader)) {
+                && (b->options && b->options->caps.gcn_shader)) {
          val->ext_handler = vtn_handle_amd_gcn_shader_instruction;
       } else {
          vtn_fail("Unsupported extension");
@@ -1725,8 +1725,8 @@ vtn_handle_constant(struct vtn_builder *b, SpvOp opcode,
          };
 
          nir_op op = vtn_nir_alu_op_for_spirv_opcode(b, opcode, &swap,
-                                                     src_alu_type,
-                                                     dst_alu_type);
+                                                     nir_alu_type_get_type_size(src_alu_type),
+                                                     nir_alu_type_get_type_size(dst_alu_type));
          nir_const_value src[4];
 
          for (unsigned i = 0; i < count - 4; i++) {
