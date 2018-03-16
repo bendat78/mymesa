@@ -1056,7 +1056,7 @@ static LLVMValueRef lower_gather4_integer(struct ac_llvm_context *ctx,
 
 	//TODO Rect
 	{
-		struct ac_image_args txq_args = { 0 };
+		struct ac_image_args txq_args = {};
 
 		txq_args.da = instr->is_array || instr->sampler_dim == GLSL_SAMPLER_DIM_CUBE;
 		txq_args.opcode = ac_image_get_resinfo;
@@ -1359,7 +1359,7 @@ static void visit_store_ssbo(struct ac_nir_context *ctx,
 		data = extract_vector_range(&ctx->ac, base_data, start, count);
 
 		offset = base_offset;
-		if (start != 0) {
+		if (start) {
 			offset = LLVMBuildAdd(ctx->ac.builder, offset, LLVMConstInt(ctx->ac.i32, start * 4, false), "");
 		}
 		params[0] = data;
@@ -1544,7 +1544,7 @@ get_deref_offset(struct ac_nir_context *ctx, nir_deref_var *deref,
 		goto out;
 	}
 
-	while (tail->child != NULL) {
+	while (tail->child) {
 		const struct glsl_type *parent_type = tail->type;
 		tail = tail->child;
 
@@ -1595,7 +1595,7 @@ build_gep_for_deref(struct ac_nir_context *ctx,
 	assert(entry->data);
 	LLVMValueRef val = entry->data;
 	nir_deref *tail = deref->deref.child;
-	while (tail != NULL) {
+	while (tail) {
 		LLVMValueRef offset;
 		switch (tail->deref_type) {
 		case nir_deref_type_array: {
@@ -1975,7 +1975,7 @@ static LLVMValueRef adjust_sample_index_using_fmask(struct ac_llvm_context *ctx,
 		fmask_load_address[3] = LLVMGetUndef(ctx->i32);
 	}
 
-	struct ac_image_args args = {0};
+	struct ac_image_args args = {};
 
 	args.opcode = ac_image_load;
 	args.da = coord_z ? true : false;
@@ -2304,7 +2304,7 @@ static LLVMValueRef visit_image_samples(struct ac_nir_context *ctx,
 	const nir_variable *var = instr->variables[0]->var;
 	const struct glsl_type *type = glsl_without_array(var->type);
 
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 	args.da = glsl_is_array_image(type);
 	args.dmask = 0xf;
 	args.resource = get_sampler_desc(ctx, instr->variables[0],
@@ -2327,7 +2327,7 @@ static LLVMValueRef visit_image_size(struct ac_nir_context *ctx,
 			get_sampler_desc(ctx, instr->variables[0],
 					 AC_DESC_BUFFER, NULL, true, false), true);
 
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 
 	args.da = glsl_is_array_image(type);
 	args.dmask = 0xf;
@@ -3158,7 +3158,7 @@ static LLVMValueRef apply_round_slice(struct ac_llvm_context *ctx,
 static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 {
 	LLVMValueRef result = NULL;
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 	unsigned dmask = 0xf;
 	LLVMValueRef address[16];
 	LLVMValueRef coords[5];
@@ -3409,7 +3409,7 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 
 	if (instr->op == nir_texop_samples_identical) {
 		LLVMValueRef txf_address[4];
-		struct ac_image_args txf_args = { 0 };
+		struct ac_image_args txf_args = {};
 		unsigned txf_count = count;
 		memcpy(txf_address, address, sizeof(txf_address));
 

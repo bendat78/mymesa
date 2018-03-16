@@ -191,10 +191,10 @@ static void _tnl_import_array( struct gl_context *ctx,
       GLfloat *fptr = (GLfloat *)buf;
 
       switch (attrib->Type) {
-      case GL_BYTE: 
-	 CONVERT(GLbyte, BYTE_TO_FLOAT); 
+      case GL_BYTE:
+	 CONVERT(GLbyte, BYTE_TO_FLOAT);
 	 break;
-      case GL_UNSIGNED_BYTE: 
+      case GL_UNSIGNED_BYTE:
          if (attrib->Format == GL_BGRA) {
             /* See GL_EXT_vertex_array_bgra */
             convert_bgra_to_float(binding, attrib, ptr, fptr, count);
@@ -245,7 +245,7 @@ static void _tnl_import_array( struct gl_context *ctx,
    VB->AttribPtr[attr]->flags = (((1<<attrib->Size)-1) |
 				   VEC_NOT_WRITEABLE |
 				   (stride == 4*sizeof(GLfloat) ? 0 : VEC_BAD_STRIDE));
-   
+
    VB->AttribPtr[attr]->storage = NULL;
 }
 
@@ -271,7 +271,7 @@ static GLboolean *_tnl_import_edgeflag( struct gl_context *ctx,
 }
 
 
-static void bind_inputs( struct gl_context *ctx, 
+static void bind_inputs( struct gl_context *ctx,
 			 const struct gl_vertex_array *inputs,
 			 GLint count,
 			 struct gl_buffer_object **bo,
@@ -297,10 +297,10 @@ static void bind_inputs( struct gl_context *ctx,
 				       GL_MAP_READ_BIT,
                                        binding->BufferObj,
                                        MAP_INTERNAL);
-	    
+
             assert(binding->BufferObj->Mappings[MAP_INTERNAL].Pointer);
 	 }
-	 
+
          ptr = ADD_POINTERS(binding->BufferObj->Mappings[MAP_INTERNAL].Pointer,
                             binding->Offset + attrib->RelativeOffset);
       }

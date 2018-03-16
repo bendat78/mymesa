@@ -2272,11 +2272,11 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 		pos_args[1].out[2] = ctx->ac.f32_0; /* Z */
 		pos_args[1].out[3] = ctx->ac.f32_0;  /* W */
 
-		if (outinfo->writes_pointsize == true)
+		if (outinfo->writes_pointsize)
 			pos_args[1].out[0] = psize_value;
-		if (outinfo->writes_layer == true)
+		if (outinfo->writes_layer)
 			pos_args[1].out[2] = layer_value;
-		if (outinfo->writes_viewport_index == true) {
+		if (outinfo->writes_viewport_index) {
 			if (ctx->options->chip_class >= GFX9) {
 				/* GFX9 has the layer in out.z[10:0] and the viewport
 				 * index in out.z[19:16].
@@ -3002,7 +3002,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
                                        struct radv_shader_variant_info *shader_info,
                                        const struct radv_nir_compiler_options *options)
 {
-	struct radv_shader_context ctx = {0};
+	struct radv_shader_context ctx = {};
 	unsigned i;
 	ctx.options = options;
 	ctx.shader_info = shader_info;
@@ -3450,7 +3450,7 @@ radv_compile_gs_copy_shader(LLVMTargetMachineRef tm,
 			    struct radv_shader_variant_info *shader_info,
 			    const struct radv_nir_compiler_options *options)
 {
-	struct radv_shader_context ctx = {0};
+	struct radv_shader_context ctx = {};
 	ctx.context = LLVMContextCreate();
 	ctx.options = options;
 	ctx.shader_info = shader_info;

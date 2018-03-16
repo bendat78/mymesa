@@ -1121,7 +1121,7 @@ static struct radv_gs_state
 calculate_gs_info(const VkGraphicsPipelineCreateInfo *pCreateInfo,
                        const struct radv_pipeline *pipeline)
 {
-	struct radv_gs_state gs = {0};
+	struct radv_gs_state gs = {};
 	struct radv_shader_variant_info *gs_info = &pipeline->shaders[MESA_SHADER_GEOMETRY]->info;
 	struct radv_es_output_info *es_info;
 
@@ -1606,11 +1606,11 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
                          struct radv_pipeline_key key,
                          const VkPipelineShaderStageCreateInfo **pStages)
 {
-	struct radv_shader_module fs_m = {0};
+	struct radv_shader_module fs_m = {};
 	struct radv_shader_module *modules[MESA_SHADER_STAGES] = { 0, };
-	nir_shader *nir[MESA_SHADER_STAGES] = {0};
-	void *codes[MESA_SHADER_STAGES] = {0};
-	unsigned code_sizes[MESA_SHADER_STAGES] = {0};
+	nir_shader *nir[MESA_SHADER_STAGES] = {};
+	void *codes[MESA_SHADER_STAGES] = {};
+	unsigned code_sizes[MESA_SHADER_STAGES] = {};
 	struct radv_shader_variant_key keys[MESA_SHADER_STAGES] = {{{{0}}}};
 	unsigned char hash[20], gs_copy_hash[20];
 
