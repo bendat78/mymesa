@@ -313,6 +313,7 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 	info->has_syncobj_wait_for_submit = info->has_syncobj && info->drm_minor >= 20;
 	info->has_fence_to_handle = info->has_syncobj && info->drm_minor >= 21;
 	info->has_ctx_priority = info->drm_minor >= 22;
+	info->has_local_buffers = info->drm_minor >= 20;
 	info->num_render_backends = amdinfo->rb_pipes;
 	info->clock_crystal_freq = amdinfo->gpu_counter_freq;
 	if (!info->clock_crystal_freq) {
