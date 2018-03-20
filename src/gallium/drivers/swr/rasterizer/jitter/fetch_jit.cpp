@@ -1956,8 +1956,8 @@ void FetchJit::Shuffle8bpcGatherd16(Shuffle8bpcArgs &args)
         Value *vi128XY_hi = nullptr;
         if (isComponentEnabled(compMask, 0) || isComponentEnabled(compMask, 1))
         {
-            vi128XY_lo = BITCAST(PERMD(vShufResult_lo, C<int32_t>({ 0, 4, 0, 0, 1, 5, 0, 0 })), v128Ty);
-            vi128XY_hi = BITCAST(PERMD(vShufResult_hi, C<int32_t>({ 0, 4, 0, 0, 1, 5, 0, 0 })), v128Ty);
+            vi128XY_lo = BITCAST(VPERMD(vShufResult_lo, C<int32_t>({ 0, 4, 0, 0, 1, 5, 0, 0 })), v128Ty);
+            vi128XY_hi = BITCAST(VPERMD(vShufResult_hi, C<int32_t>({ 0, 4, 0, 0, 1, 5, 0, 0 })), v128Ty);
 
             // after PERMD: move and pack xy and zw components in low 64 bits of each 128bit lane
             // 256i - 0    1    2    3    4    5    6    7
@@ -1969,8 +1969,8 @@ void FetchJit::Shuffle8bpcGatherd16(Shuffle8bpcArgs &args)
         Value *vi128ZW_hi = nullptr;
         if (isComponentEnabled(compMask, 2) || isComponentEnabled(compMask, 3))
         {
-            vi128ZW_lo = BITCAST(PERMD(vShufResult_lo, C<int32_t>({ 2, 6, 0, 0, 3, 7, 0, 0 })), v128Ty);
-            vi128ZW_hi = BITCAST(PERMD(vShufResult_hi, C<int32_t>({ 2, 6, 0, 0, 3, 7, 0, 0 })), v128Ty);
+            vi128ZW_lo = BITCAST(VPERMD(vShufResult_lo, C<int32_t>({ 2, 6, 0, 0, 3, 7, 0, 0 })), v128Ty);
+            vi128ZW_hi = BITCAST(VPERMD(vShufResult_hi, C<int32_t>({ 2, 6, 0, 0, 3, 7, 0, 0 })), v128Ty);
         }
 
         // init denormalize variables if needed
@@ -2307,8 +2307,8 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs &args)
             // 256i - 0    1    2    3    4    5    6    7
             //        xxxx xxxx yyyy yyyy xxxx xxxx yyyy yyyy
 
-            vi128XY_lo = BITCAST(PERMD(vShufResult_lo, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
-            vi128XY_hi = BITCAST(PERMD(vShufResult_hi, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
+            vi128XY_lo = BITCAST(VPERMD(vShufResult_lo, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
+            vi128XY_hi = BITCAST(VPERMD(vShufResult_hi, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
 
             // after PERMD: move and pack xy components into each 128bit lane
             // 256i - 0    1    2    3    4    5    6    7
@@ -2326,8 +2326,8 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs &args)
             Value *vShufResult_lo = BITCAST(PSHUFB(BITCAST(vGatherResult_lo, v32x8Ty), vConstMask), vGatherTy);
             Value *vShufResult_hi = BITCAST(PSHUFB(BITCAST(vGatherResult_hi, v32x8Ty), vConstMask), vGatherTy);
 
-            vi128ZW_lo = BITCAST(PERMD(vShufResult_lo, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
-            vi128ZW_hi = BITCAST(PERMD(vShufResult_hi, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
+            vi128ZW_lo = BITCAST(VPERMD(vShufResult_lo, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
+            vi128ZW_hi = BITCAST(VPERMD(vShufResult_hi, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
         }
 
         // init denormalize variables if needed
@@ -2548,7 +2548,7 @@ void FetchJit::Shuffle16bpcGather(Shuffle16bpcArgs &args)
             // 256i - 0    1    2    3    4    5    6    7
             //        xxxx xxxx yyyy yyyy xxxx xxxx yyyy yyyy
 
-            vi128XY = BITCAST(PERMD(vShufResult, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
+            vi128XY = BITCAST(VPERMD(vShufResult, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
             // after PERMD: move and pack xy components into each 128bit lane
             // 256i - 0    1    2    3    4    5    6    7
             //        xxxx xxxx xxxx xxxx yyyy yyyy yyyy yyyy
@@ -2558,7 +2558,7 @@ void FetchJit::Shuffle16bpcGather(Shuffle16bpcArgs &args)
         Value* vi128ZW = nullptr;
         if (isComponentEnabled(compMask, 2) || isComponentEnabled(compMask, 3)) {
             Value* vShufResult = BITCAST(PSHUFB(BITCAST(vGatherResult[1], v32x8Ty), vConstMask), vGatherTy);
-            vi128ZW = BITCAST(PERMD(vShufResult, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
+            vi128ZW = BITCAST(VPERMD(vShufResult, C<int32_t>({ 0, 1, 4, 5, 2, 3, 6, 7 })), v128bitTy);
         }
 
         // init denormalize variables if needed
