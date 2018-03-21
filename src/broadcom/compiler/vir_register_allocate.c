@@ -174,7 +174,7 @@ v3d_spill_reg(struct v3d_compile *c, int spill_temp)
         uint32_t spill_offset = c->spill_size;
         c->spill_size += 16 * sizeof(uint32_t);
 
-        if (spill_offset == 0)
+        if (!spill_offset)
                 v3d_setup_spill_base(c);
 
         struct qinst *last_thrsw = c->last_thrsw;
@@ -465,7 +465,7 @@ v3d_register_allocate(struct v3d_compile *c, bool *spilled)
         bool ok = ra_allocate(g);
         if (!ok) {
                 /* Try to spill, if we can't reduce threading first. */
-                if (thread_index == 0) {
+                if (!thread_index) {
                         int node = v3d_choose_spill_node(c, g, temp_to_node);
 
                         if (node != -1) {
