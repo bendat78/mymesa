@@ -269,7 +269,7 @@ tgsi_transform_src_reg(struct tgsi_full_src_register *reg,
  */
 static inline void
 tgsi_transform_op1_inst(struct tgsi_transform_context *ctx,
-                        unsigned opcode,
+                        enum tgsi_opcode opcode,
                         unsigned dst_file,
                         unsigned dst_index,
                         unsigned dst_writemask,
@@ -293,7 +293,7 @@ tgsi_transform_op1_inst(struct tgsi_transform_context *ctx,
 
 static inline void
 tgsi_transform_op2_inst(struct tgsi_transform_context *ctx,
-                        unsigned opcode,
+                        enum tgsi_opcode opcode,
                         unsigned dst_file,
                         unsigned dst_index,
                         unsigned dst_writemask,
@@ -322,7 +322,7 @@ tgsi_transform_op2_inst(struct tgsi_transform_context *ctx,
 
 static inline void
 tgsi_transform_op3_inst(struct tgsi_transform_context *ctx,
-                        unsigned opcode,
+                        enum tgsi_opcode opcode,
                         unsigned dst_file,
                         unsigned dst_index,
                         unsigned dst_writemask,
@@ -353,7 +353,7 @@ tgsi_transform_op3_inst(struct tgsi_transform_context *ctx,
 
 static inline void
 tgsi_transform_op1_swz_inst(struct tgsi_transform_context *ctx,
-                            unsigned opcode,
+                            enum tgsi_opcode opcode,
                             unsigned dst_file,
                             unsigned dst_index,
                             unsigned dst_writemask,
@@ -394,7 +394,7 @@ tgsi_transform_op1_swz_inst(struct tgsi_transform_context *ctx,
 
 static inline void
 tgsi_transform_op2_swz_inst(struct tgsi_transform_context *ctx,
-                            unsigned opcode,
+                            enum tgsi_opcode opcode,
                             unsigned dst_file,
                             unsigned dst_index,
                             unsigned dst_writemask,
@@ -445,7 +445,7 @@ tgsi_transform_op2_swz_inst(struct tgsi_transform_context *ctx,
 
 static inline void
 tgsi_transform_op3_swz_inst(struct tgsi_transform_context *ctx,
-                            unsigned opcode,
+                            enum tgsi_opcode opcode,
                             unsigned dst_file,
                             unsigned dst_index,
                             unsigned dst_writemask,

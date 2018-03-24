@@ -52,7 +52,8 @@
  * Pass the given program parameters to the graphics pipe as a
  * constant buffer.
  */
-void st_upload_constants(struct st_context *st, struct gl_program *prog)
+void
+st_upload_constants(struct st_context *st, struct gl_program *prog)
 {
    gl_shader_stage stage = prog->info.stage;
    struct gl_program_parameter_list *params = prog->Parameters;
@@ -77,7 +78,8 @@ void st_upload_constants(struct st_context *st, struct gl_program *prog)
                    ati_fs->Constants[c], sizeof(GLfloat) * 4);
          else
             memcpy(params->ParameterValues + offset,
-                   st->ctx->ATIFragmentShader.GlobalConstants[c], sizeof(GLfloat) * 4);
+                   st->ctx->ATIFragmentShader.GlobalConstants[c],
+                   sizeof(GLfloat) * 4);
       }
    }
 
@@ -132,7 +134,8 @@ void st_upload_constants(struct st_context *st, struct gl_program *prog)
 /**
  * Vertex shader:
  */
-void st_update_vs_constants(struct st_context *st )
+void
+st_update_vs_constants(struct st_context *st)
 {
    st_upload_constants(st, &st->vp->Base);
 }
@@ -140,7 +143,8 @@ void st_update_vs_constants(struct st_context *st )
 /**
  * Fragment shader:
  */
-void st_update_fs_constants(struct st_context *st )
+void
+st_update_fs_constants(struct st_context *st)
 {
    st_upload_constants(st, &st->fp->Base);
 }
@@ -148,7 +152,8 @@ void st_update_fs_constants(struct st_context *st )
 
 /* Geometry shader:
  */
-void st_update_gs_constants(struct st_context *st )
+void
+st_update_gs_constants(struct st_context *st)
 {
    struct st_common_program *gp = st->gp;
 
@@ -158,7 +163,8 @@ void st_update_gs_constants(struct st_context *st )
 
 /* Tessellation control shader:
  */
-void st_update_tcs_constants(struct st_context *st )
+void
+st_update_tcs_constants(struct st_context *st)
 {
    struct st_common_program *tcp = st->tcp;
 
@@ -168,7 +174,8 @@ void st_update_tcs_constants(struct st_context *st )
 
 /* Tessellation evaluation shader:
  */
-void st_update_tes_constants(struct st_context *st )
+void
+st_update_tes_constants(struct st_context *st)
 {
    struct st_common_program *tep = st->tep;
 
@@ -178,7 +185,8 @@ void st_update_tes_constants(struct st_context *st )
 
 /* Compute shader:
  */
-void st_update_cs_constants(struct st_context *st )
+void
+st_update_cs_constants(struct st_context *st)
 {
    struct st_compute_program *cp = st->cp;
 
@@ -186,8 +194,9 @@ void st_update_cs_constants(struct st_context *st )
       st_upload_constants(st, &cp->Base);
 }
 
-static void st_bind_ubos(struct st_context *st, struct gl_program *prog,
-                         unsigned shader_type)
+static void
+st_bind_ubos(struct st_context *st, struct gl_program *prog,
+             enum pipe_shader_type shader_type)
 {
    unsigned i;
    struct pipe_constant_buffer cb = {};
@@ -224,7 +233,8 @@ static void st_bind_ubos(struct st_context *st, struct gl_program *prog,
    }
 }
 
-void st_bind_vs_ubos(struct st_context *st)
+void
+st_bind_vs_ubos(struct st_context *st)
 {
    struct gl_program *prog =
       st->ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
@@ -232,7 +242,8 @@ void st_bind_vs_ubos(struct st_context *st)
    st_bind_ubos(st, prog, PIPE_SHADER_VERTEX);
 }
 
-void st_bind_fs_ubos(struct st_context *st)
+void
+st_bind_fs_ubos(struct st_context *st)
 {
    struct gl_program *prog =
       st->ctx->_Shader->CurrentProgram[MESA_SHADER_FRAGMENT];
@@ -240,7 +251,8 @@ void st_bind_fs_ubos(struct st_context *st)
    st_bind_ubos(st, prog, PIPE_SHADER_FRAGMENT);
 }
 
-void st_bind_gs_ubos(struct st_context *st)
+void
+st_bind_gs_ubos(struct st_context *st)
 {
    struct gl_program *prog =
       st->ctx->_Shader->CurrentProgram[MESA_SHADER_GEOMETRY];
@@ -248,7 +260,8 @@ void st_bind_gs_ubos(struct st_context *st)
    st_bind_ubos(st, prog, PIPE_SHADER_GEOMETRY);
 }
 
-void st_bind_tcs_ubos(struct st_context *st)
+void
+st_bind_tcs_ubos(struct st_context *st)
 {
    struct gl_program *prog =
       st->ctx->_Shader->CurrentProgram[MESA_SHADER_TESS_CTRL];
@@ -256,7 +269,8 @@ void st_bind_tcs_ubos(struct st_context *st)
    st_bind_ubos(st, prog, PIPE_SHADER_TESS_CTRL);
 }
 
-void st_bind_tes_ubos(struct st_context *st)
+void
+st_bind_tes_ubos(struct st_context *st)
 {
    struct gl_program *prog =
       st->ctx->_Shader->CurrentProgram[MESA_SHADER_TESS_EVAL];
@@ -264,7 +278,8 @@ void st_bind_tes_ubos(struct st_context *st)
    st_bind_ubos(st, prog, PIPE_SHADER_TESS_EVAL);
 }
 
-void st_bind_cs_ubos(struct st_context *st)
+void
+st_bind_cs_ubos(struct st_context *st)
 {
    struct gl_program *prog =
       st->ctx->_Shader->CurrentProgram[MESA_SHADER_COMPUTE];
