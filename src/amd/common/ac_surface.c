@@ -135,6 +135,10 @@ static void addrlib_family_rev_id(enum radeon_family family,
 		*addrlib_family = FAMILY_AI;
 		*addrlib_revid = get_first(AMDGPU_VEGA10_RANGE);
 		break;
+	case CHIP_VEGA12:
+		*addrlib_family = FAMILY_AI;
+		*addrlib_revid = get_first(AMDGPU_VEGA12_RANGE);
+		break;
 	case CHIP_RAVEN:
 		*addrlib_family = FAMILY_RV;
 		*addrlib_revid = get_first(AMDGPU_RAVEN_RANGE);
@@ -159,11 +163,19 @@ ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
 			       const struct amdgpu_gpu_info *amdinfo,
 			       uint64_t *max_alignment)
 {
+<<<<<<< HEAD
 	ADDR_CREATE_INPUT addrCreateInput = {};
 	ADDR_CREATE_OUTPUT addrCreateOutput = {};
 	ADDR_REGISTER_VALUE regValue = {};
 	ADDR_CREATE_FLAGS createFlags = {};
 	ADDR_GET_MAX_ALIGNMENTS_OUTPUT addrGetMaxAlignmentsOutput = {};
+=======
+	ADDR_CREATE_INPUT addrCreateInput = {0};
+	ADDR_CREATE_OUTPUT addrCreateOutput = {0};
+	ADDR_REGISTER_VALUE regValue = {0};
+	ADDR_CREATE_FLAGS createFlags = {{0}};
+	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {0};
+>>>>>>> e45fe0ed66af32a36b03d5a5141e68fad0d15e6a
 	ADDR_E_RETURNCODE addrRet;
 
 	addrCreateInput.size = sizeof(ADDR_CREATE_INPUT);
@@ -905,8 +917,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		hin.size = sizeof(ADDR2_COMPUTE_HTILE_INFO_INPUT);
 		hout.size = sizeof(ADDR2_COMPUTE_HTILE_INFO_OUTPUT);
 
-		hin.hTileFlags.pipeAligned = 1;
-		hin.hTileFlags.rbAligned = 1;
+		hin.hTileFlags.pipeAligned = !in->flags.metaPipeUnaligned;
+		hin.hTileFlags.rbAligned = !in->flags.metaRbUnaligned;
 		hin.depthFlags = in->flags;
 		hin.swizzleMode = in->swizzleMode;
 		hin.unalignedWidth = in->width;
@@ -967,8 +979,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 			dout.size = sizeof(ADDR2_COMPUTE_DCCINFO_OUTPUT);
 			dout.pMipInfo = meta_mip_info;
 
-			din.dccKeyFlags.pipeAligned = 1;
-			din.dccKeyFlags.rbAligned = 1;
+			din.dccKeyFlags.pipeAligned = !in->flags.metaPipeUnaligned;
+			din.dccKeyFlags.rbAligned = !in->flags.metaRbUnaligned;
 			din.colorFlags = in->flags;
 			din.resourceType = in->resourceType;
 			din.swizzleMode = in->swizzleMode;
@@ -1088,8 +1100,14 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 			cin.size = sizeof(ADDR2_COMPUTE_CMASK_INFO_INPUT);
 			cout.size = sizeof(ADDR2_COMPUTE_CMASK_INFO_OUTPUT);
 
-			cin.cMaskFlags.pipeAligned = 1;
-			cin.cMaskFlags.rbAligned = 1;
+			if (in->numSamples) {
+				/* FMASK is always aligned. */
+				cin.cMaskFlags.pipeAligned = 1;
+				cin.cMaskFlags.rbAligned = 1;
+			} else {
+				cin.cMaskFlags.pipeAligned = !in->flags.metaPipeUnaligned;
+				cin.cMaskFlags.rbAligned = !in->flags.metaRbUnaligned;
+			}
 			cin.colorFlags = in->flags;
 			cin.resourceType = in->resourceType;
 			cin.unalignedWidth = in->width;
@@ -1116,6 +1134,7 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 }
 
 static int gfx9_compute_surface(ADDR_HANDLE addrlib,
+				const struct radeon_info *info,
 				const struct ac_surf_config *config,
 				enum radeon_surf_mode mode,
 				struct radeon_surf *surf)
@@ -1146,18 +1165,25 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 	} else {
 		switch (surf->bpe) {
 		case 1:
+			assert(!(surf->flags & RADEON_SURF_ZBUFFER));
 			AddrSurfInfoIn.format = ADDR_FMT_8;
 			break;
 		case 2:
+			assert(surf->flags & RADEON_SURF_ZBUFFER ||
+			       !(surf->flags & RADEON_SURF_SBUFFER));
 			AddrSurfInfoIn.format = ADDR_FMT_16;
 			break;
 		case 4:
+			assert(surf->flags & RADEON_SURF_ZBUFFER ||
+			       !(surf->flags & RADEON_SURF_SBUFFER));
 			AddrSurfInfoIn.format = ADDR_FMT_32;
 			break;
 		case 8:
+			assert(!(surf->flags & RADEON_SURF_Z_OR_SBUFFER));
 			AddrSurfInfoIn.format = ADDR_FMT_32_32;
 			break;
 		case 16:
+			assert(!(surf->flags & RADEON_SURF_Z_OR_SBUFFER));
 			AddrSurfInfoIn.format = ADDR_FMT_32_32_32_32;
 			break;
 		default:
@@ -1195,6 +1221,10 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 		AddrSurfInfoIn.numSlices = 6;
 	else
 		AddrSurfInfoIn.numSlices = config->info.array_size;
+
+	/* This is propagated to HTILE/DCC/CMASK. */
+	AddrSurfInfoIn.flags.metaPipeUnaligned = 0;
+	AddrSurfInfoIn.flags.metaRbUnaligned = 0;
 
 	switch (mode) {
 	case RADEON_SURF_MODE_LINEAR_ALIGNED:
@@ -1243,6 +1273,7 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 	if (surf->flags & RADEON_SURF_SBUFFER) {
 		AddrSurfInfoIn.flags.stencil = 1;
 		AddrSurfInfoIn.bpp = 8;
+		AddrSurfInfoIn.format = ADDR_FMT_8;
 
 		if (!AddrSurfInfoIn.flags.depth) {
 			r = gfx9_get_preferred_swizzle_mode(addrlib, &AddrSurfInfoIn, false,
@@ -1321,6 +1352,10 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 			assert(0);
 	}
 
+	/* Temporary workaround to prevent VM faults and hangs. */
+	if (info->family == CHIP_VEGA12)
+		surf->u.gfx9.fmask_size *= 8;
+
 	return 0;
 }
 
@@ -1336,7 +1371,7 @@ int ac_compute_surface(ADDR_HANDLE addrlib, const struct radeon_info *info,
 		return r;
 
 	if (info->chip_class >= GFX9)
-		return gfx9_compute_surface(addrlib, config, mode, surf);
+		return gfx9_compute_surface(addrlib, info, config, mode, surf);
 	else
 		return gfx6_compute_surface(addrlib, info, config, mode, surf);
 }
