@@ -827,13 +827,8 @@ blorp_get_client_bo(struct brw_context *brw,
        * data which we need to copy into a BO.
        */
       struct brw_bo *bo =
-<<<<<<< HEAD
-         brw_bo_alloc(brw->bufmgr, "tmp_tex_subimage_src", size, 64);
-      if (!bo) {
-=======
          brw_bo_alloc(brw->bufmgr, "tmp_tex_subimage_src", size);
       if (bo == NULL) {
->>>>>>> e45fe0ed66af32a36b03d5a5141e68fad0d15e6a
          perf_debug("intel_texsubimage: temp bo creation failed: size = %u\n",
                     size);
          return NULL;

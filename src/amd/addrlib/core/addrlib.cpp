@@ -286,16 +286,11 @@ ADDR_E_RETURNCODE Lib::Create(
         pCreateOut->numEquations =
             pLib->HwlGetEquationTableInfo(&pCreateOut->pEquationTable);
 
-<<<<<<< HEAD
-    if (!(pLib) &&
-        (returnCode == ADDR_OK))
-=======
         pLib->SetMaxAlignments();
 
     }
     else if ((pLib == NULL) &&
              (returnCode == ADDR_OK))
->>>>>>> e45fe0ed66af32a36b03d5a5141e68fad0d15e6a
     {
         // Unknown failures, we return the general error code
         returnCode = ADDR_ERROR;

@@ -236,11 +236,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileInfo(
         align = Max(align, GetBlockSize(pIn->swizzleMode));
     }
 
-<<<<<<< HEAD
-    if (!(IsXor(pIn->swizzleMode)) && (numPipeTotal > 2))
-=======
     if (m_settings.htileAlignFix)
->>>>>>> e45fe0ed66af32a36b03d5a5141e68fad0d15e6a
     {
         const INT_32 metaBlkSizeLog2        = numCompressBlkPerMetaBlkLog2 + 2;
         const INT_32 htileCachelineSizeLog2 = 11;

@@ -3502,9 +3502,6 @@ UINT_32 SiLib::HwlComputeMaxBaseAlignments() const
         }
     }
 
-<<<<<<< HEAD
-    if (pOut)
-=======
     return maxBaseAlign;
 }
 
@@ -3523,7 +3520,6 @@ UINT_32 SiLib::HwlComputeMaxMetaBaseAlignments() const
     UINT_32 maxPipe = 1;
 
     for (UINT_32 i = 0; i < m_noOfEntries; i++)
->>>>>>> e45fe0ed66af32a36b03d5a5141e68fad0d15e6a
     {
         maxPipe = Max(maxPipe, HwlGetPipes(&m_tileTable[i].info));
     }

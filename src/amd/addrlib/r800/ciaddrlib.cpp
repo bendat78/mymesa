@@ -2186,9 +2186,6 @@ UINT_32 CiLib::HwlComputeMaxBaseAlignments() const
         }
     }
 
-<<<<<<< HEAD
-    if (pOut)
-=======
     return maxBaseAlign;
 }
 
@@ -2207,7 +2204,6 @@ UINT_32 CiLib::HwlComputeMaxMetaBaseAlignments() const
     UINT_32 maxBank = 1;
 
     for (UINT_32 i = 0; i < m_noOfMacroEntries; i++)
->>>>>>> e45fe0ed66af32a36b03d5a5141e68fad0d15e6a
     {
         if ((m_settings.isVolcanicIslands) && IsMacroTiled(m_tileTable[i].mode))
         {
