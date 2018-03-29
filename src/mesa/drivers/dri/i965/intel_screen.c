@@ -1908,11 +1908,11 @@ intel_detect_pipelined_register(struct intel_screen *screen,
 
    /* Create a zero'ed temporary buffer for reading our results */
    results = brw_bo_alloc(screen->bufmgr, "registers", 4096);
-   if (results == NULL)
+   if (!results)
       goto err;
 
    bo = brw_bo_alloc(screen->bufmgr, "batchbuffer", 4096);
-   if (bo == NULL)
+   if (!bo)
       goto err_results;
 
    map = brw_bo_map(NULL, bo, MAP_WRITE);

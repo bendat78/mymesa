@@ -167,7 +167,7 @@ namespace {
 
       for (auto &opt: opts) {
          auto pos = opt.find(search);
-         if (pos == 0){
+         if (!pos){
             const auto ver = opt.substr(pos + search.size());
             const auto device_ver = get_cl_version(device_version);
             const auto requested = get_cl_version(ver);

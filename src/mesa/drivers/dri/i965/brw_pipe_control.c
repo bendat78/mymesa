@@ -573,7 +573,7 @@ brw_init_pipe_control(struct brw_context *brw,
     * the buffer, and the kernel doesn't let us write to the batch.
     */
    brw->workaround_bo = brw_bo_alloc(brw->bufmgr, "workaround", 4096);
-   if (brw->workaround_bo == NULL)
+   if (!brw->workaround_bo)
       return -ENOMEM;
 
    brw->pipe_controls_since_last_cs_stall = 0;

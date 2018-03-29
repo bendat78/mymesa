@@ -1091,7 +1091,7 @@ ADDR_E_RETURNCODE ADDR_API AddrGetMaxMetaAlignments(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib != NULL)
+    if (pLib)
     {
         returnCode = pLib->GetMaxMetaAlignments(pOut);
     }

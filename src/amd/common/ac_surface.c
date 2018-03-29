@@ -163,11 +163,11 @@ ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
 			       const struct amdgpu_gpu_info *amdinfo,
 			       uint64_t *max_alignment)
 {
-	ADDR_CREATE_INPUT addrCreateInput = {0};
-	ADDR_CREATE_OUTPUT addrCreateOutput = {0};
-	ADDR_REGISTER_VALUE regValue = {0};
-	ADDR_CREATE_FLAGS createFlags = {{0}};
-	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {0};
+	ADDR_CREATE_INPUT addrCreateInput = {};
+	ADDR_CREATE_OUTPUT addrCreateOutput = {};
+	ADDR_REGISTER_VALUE regValue = {};
+	ADDR_CREATE_FLAGS createFlags = {};
+	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {};
 	ADDR_E_RETURNCODE addrRet;
 
 	addrCreateInput.size = sizeof(ADDR_CREATE_INPUT);
@@ -936,8 +936,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		    !out.mipChainInTail &&
 		    !(surf->flags & RADEON_SURF_SHAREABLE) &&
 		    (in->numSamples > 1 || !(surf->flags & RADEON_SURF_SCANOUT))) {
-			ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {0};
-			ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {0};
+			ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {};
+			ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {};
 
 			xin.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_INPUT);
 			xout.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT);
@@ -1059,8 +1059,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 			if (config->info.fmask_surf_index &&
 			    fin.swizzleMode >= ADDR_SW_64KB_Z_T &&
 			    !(surf->flags & RADEON_SURF_SHAREABLE)) {
-				ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {0};
-				ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {0};
+				ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {};
+				ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {};
 
 				xin.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_INPUT);
 				xout.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT);
