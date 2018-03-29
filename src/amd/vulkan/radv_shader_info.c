@@ -64,7 +64,7 @@ static void get_deref_offset(nir_deref_var *deref, unsigned *const_out)
 		return;
 	}
 
-	while (tail->child != NULL) {
+	while (tail->child) {
 		const struct glsl_type *parent_type = tail->type;
 		tail = tail->child;
 

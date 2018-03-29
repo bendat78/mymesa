@@ -141,7 +141,7 @@ nir_instr_worklist_pop_head(nir_instr_worklist *wl)
 {
    struct nir_instr **vec_instr = u_vector_remove(&wl->instr_vec);
 
-   if (vec_instr == NULL)
+   if (!vec_instr)
       return NULL;
 
    return *vec_instr;

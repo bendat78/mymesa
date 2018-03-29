@@ -224,7 +224,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileInfo(
     const UINT_32 metaBlkSize = numCompressBlkPerMetaBlk << 2;
     UINT_32       align       = numPipeTotal * numRbTotal * m_pipeInterleaveBytes;
 
-    if ((IsXor(pIn->swizzleMode) == FALSE) && (numPipeTotal > 2))
+    if (!(IsXor(pIn->swizzleMode)) && (numPipeTotal > 2))
     {
         align *= (numPipeTotal >> 1);
     }
@@ -3365,7 +3365,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
             addrPreferredSwSet.value = AddrSwSetZ;
             addrValidSwSet.value     = AddrSwSetZ;
 
-            if (pIn->flags.noMetadata == FALSE)
+            if (!pIn->flags.noMetadata)
             {
                 if (pIn->flags.depth &&
                     pIn->flags.texture &&
