@@ -719,6 +719,16 @@ void vtn_handle_subgroup(struct vtn_builder *b, SpvOp opcode,
 bool vtn_handle_glsl450_instruction(struct vtn_builder *b, uint32_t ext_opcode,
                                     const uint32_t *words, unsigned count);
 
+struct vtn_builder* vtn_create_builder(const uint32_t *words, size_t word_count,
+                                       gl_shader_stage stage, const char *entry_point_name,
+                                       const struct spirv_to_nir_options *options);
+
+void vtn_handle_entry_point(struct vtn_builder *b, const uint32_t *w,
+                            unsigned count);
+
+void vtn_handle_decoration(struct vtn_builder *b, SpvOp opcode,
+                           const uint32_t *w, unsigned count);
+
 static inline uint32_t
 vtn_align_u32(uint32_t v, uint32_t a)
 {
