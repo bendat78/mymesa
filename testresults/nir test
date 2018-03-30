@@ -1,3 +1,21 @@
+30.3.18
+uneven results with shader-db, it seems on the whole nir could be better than tgsi, but there are some shaders with significant regressions
+see run directory for comparisons of tgsi vs nir for different versions of llvm and tgsi/nir with different llvm backends also includes complete shader db out put (around 50k shaders)
+overall nir gets better with every version increase of llvm, which optimizes for code size (why not speed ?)
+
+XCom doesnt start
+Workaround: create steam_appid.txt in binaries directory and start binaries/linux/game.x86_64 directly
+otherwise fine
+
+XCom 2 works fine
+
+X3: Albion Prelude doesnt start
+Workaround start X3AP_main directly
+otherwise fine
+
+Euro Truck Simulator 2 works fine
+
+
 29.3.18
 Empire: Total War
 Fonts in Menus are garbled independent of nir
@@ -5,6 +23,7 @@ Workaround:
 gedit ~/.local/share/feral-interactive/Empire/preferences
 change UsePBOSurfaces from 1 to 0
 Bug ?
+otherwise fine
 
 Medieval II: Total War
 Fullscreen works only if the window doesnt have focus - so unplayable
@@ -12,8 +31,9 @@ Workaround:
 gedit ~/.local/share/feral-interactive/Medieval\ II\ Total\ War/preferences
 change Fullscreen from 1 to 0
 Bug ?
+otherwise fine
 
-Total War: Shogun 2 works fine
+Total War: Shogun 2 works
 
 Total War: WARHAMMER requires workaround to start:
 sudo ln -s /usr/lib/x86_64-linux-gnu/librtmp.so.1 /usr/lib/x86_64-linux-gnu/librtmp.so.0
@@ -40,6 +60,16 @@ Date:   Wed Feb 14 20:13:40 2018 +0100
 :040000 040000 e77355f4d5979f42b5e8f55dd6c6ea62cba32ff3 24f0fe1b3e5f9d1daa801a706299f0115f9d8f2d M	docs
 :040000 040000 89d6cc6fe13b05f4625fb48abbb94050f0cb5c96 3b91e5c0091caf1426b09568846f8f2b3bc64803 M	src
 'bisect run' erfolgreich ausgeführt
+
+17.3.18
+
+Talos principle benchmark llvm 5.0.1 all options ultra, resolution 1920x1080 (render and display)
+TGSI avg 36.7/37.3/37.1
+NIR avg 35.7/36.8/37
+
+Talos principle benchmark llvm 7 git all options ultra, resolution 1920x1080 (render and display)
+TGSI avg 37.6/38.2/38
+NIR avg 36.6/37.3/37.5
 
 7.3.18
 
