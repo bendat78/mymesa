@@ -19,6 +19,10 @@ Non-debug build TGSI
 shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 20 Code Size: 456 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
 shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 16 Code Size: 76 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
 
+Also lots of these:
+shaders/csgo/595.shader_test - LLVM diagnostic (remark): <unknown>:0:0: 75 instructions in function
+tried debug build of mesa doesnt go away - Meaning?
+
 30.3.18
 uneven results with shader-db, it seems on the whole nir could be better than tgsi, but there are some shaders with significant regressions
 see run directory for comparisons of tgsi vs nir for different versions of llvm and tgsi/nir with different llvm backends also includes complete shader db out put (around 50k shaders)
