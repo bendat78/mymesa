@@ -1,3 +1,24 @@
+31.3.18
+With a debug build of mesa -O0 and --enable-debug instead of release with -O3 only a part of the available shaders is compiled (~12%). Bug ?
+
+Also some shaders are compiled twice with different results (both debug and non-debug build) also happens with tgsi: Bug ?
+
+Non-debug build NIR
+shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 20 Code Size: 444 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
+shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 16 Code Size: 72 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
+
+Debug build NIR
+shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 20 Code Size: 444 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
+shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 16 Code Size: 72 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
+
+Debug build TGSI
+shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 20 Code Size: 456 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
+shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 16 Code Size: 76 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
+
+Non-debug build TGSI
+shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 20 Code Size: 456 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
+shaders/csgo/595.shader_test - Shader Stats: SGPRS: 16 VGPRS: 16 Code Size: 76 LDS: 0 Scratch: 0 Max Waves: 8 Spilled SGPRs: 0 Spilled VGPRs: 0 PrivMem VGPRs: 0
+
 30.3.18
 uneven results with shader-db, it seems on the whole nir could be better than tgsi, but there are some shaders with significant regressions
 see run directory for comparisons of tgsi vs nir for different versions of llvm and tgsi/nir with different llvm backends also includes complete shader db out put (around 50k shaders)
