@@ -1,0 +1,17 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+Mesa: User error: GL_INVALID_OPERATION in glProgramStringARB(syntax error, unexpected $undefined, expecting $end)
+
+ERROR: shaders/csgo/fp-1.shader_test failed to compile
+run: ../../../../src/util/bitscan.h:263: u_bit_consecutive: Assertion `start + count <= 32' failed.
+
+ => CRASHED <= while processing these shaders:
+
+    shaders/w40kdawn3/1088.shader_test
+    shaders/w40kdawn3/1968.shader_test
+    shaders/w40kdawn3/1102.shader_test
+    shaders/w40kdawn3/1068.shader_test
+    shaders/w40kdawn3/958.shader_test
+    shaders/w40kdawn3/980.shader_test
+    shaders/w40kdawn3/1504.shader_test
+    shaders/w40kdawn3/950.shader_test
+

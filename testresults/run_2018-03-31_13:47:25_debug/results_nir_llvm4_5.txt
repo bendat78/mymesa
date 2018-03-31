@@ -1,0 +1,333 @@
+6388 shaders in 5371 tests
+Totals:
+SGPRS: 273816 -> 256656 (-6.27 %)
+VGPRS: 168368 -> 162768 (-3.33 %)
+Spilled SGPRs: 12 -> 245 (1941.67 %)
+Spilled VGPRs: 0 -> 0 (0.00 %)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 20 -> 0 (-100.00 %) dwords per thread
+Code Size: 5319684 -> 5084004 (-4.43 %) bytes
+LDS: 6 -> 6 (0.00 %) blocks
+Max Waves: 48623 -> 49643 (2.10 %)
+Wait states: 0 -> 0 (0.00 %)
+
+Totals from affected shaders:
+SGPRS: 253520 -> 236360 (-6.77 %)
+VGPRS: 154912 -> 149312 (-3.61 %)
+Spilled SGPRs: 12 -> 245 (1941.67 %)
+Spilled VGPRs: 0 -> 0 (0.00 %)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 20 -> 0 (-100.00 %) dwords per thread
+Code Size: 5156256 -> 4920576 (-4.57 %) bytes
+LDS: 6 -> 6 (0.00 %) blocks
+Max Waves: 41823 -> 42843 (2.44 %)
+Wait states: 0 -> 0 (0.00 %)
+
+Increases:
+SGPRS: 1064 (0.17 %)
+VGPRS: 995 (0.16 %)
+Spilled SGPRs: 16 (0.00 %)
+Spilled VGPRs: 0 (0.00 %)
+Private memory VGPRs: 0 (0.00 %)
+Scratch size: 0 (0.00 %)
+Code Size: 397 (0.06 %)
+LDS: 0 (0.00 %)
+Max Waves: 792 (0.12 %)
+Wait states: 0 (0.00 %)
+
+Decreases:
+SGPRS: 1905 (0.30 %)
+VGPRS: 1564 (0.24 %)
+Spilled SGPRs: 2 (0.00 %)
+Spilled VGPRs: 0 (0.00 %)
+Private memory VGPRs: 0 (0.00 %)
+Scratch size: 2 (0.00 %)
+Code Size: 4943 (0.77 %)
+LDS: 0 (0.00 %)
+Max Waves: 102 (0.02 %)
+Wait states: 0 (0.00 %)
+
+*** BY PERCENTAGE ***
+
+Max Increase:
+
+SGPRS: 32 -> 80 (150.00 %) (in shaders/dyinglight/6174.shader_test)
+VGPRS: 16 -> 32 (100.00 %) (in shaders/w40kdawn3/870.shader_test)
+Spilled SGPRs: 0 -> 10 (0.00 %) (in shaders/csgo/4167.shader_test)
+Spilled VGPRs: 0 -> 0 (0.00 %)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 0 -> 0 (0.00 %) dwords per thread
+Code Size: 224 -> 240 (7.14 %) bytes (in shaders/soma/272.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 4 -> 8 (100.00 %) (in shaders/csgo/4140.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+Max Decrease:
+
+SGPRS: 72 -> 24 (-66.67 %) (in shaders/warsow/184.shader_test)
+VGPRS: 40 -> 20 (-50.00 %) (in shaders/w40kdawn3/1386.shader_test)
+Spilled SGPRs: 8 -> 0 (-100.00 %) (in shaders/madmax/918.shader_test)
+Spilled VGPRs: 0 -> 0 (0.00 %)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 8 -> 0 (-100.00 %) dwords per thread (in shaders/madmax/798.shader_test)
+Code Size: 992 -> 720 (-27.42 %) bytes (in shaders/dyinglight/2750.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 8 -> 5 (-37.50 %) (in shaders/madmax/2900.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+*** BY UNIT ***
+
+Max Increase:
+
+SGPRS: 32 -> 80 (150.00 %) (in shaders/dyinglight/6174.shader_test)
+VGPRS: 16 -> 32 (100.00 %) (in shaders/w40kdawn3/870.shader_test)
+Spilled SGPRs: 0 -> 40 (0.00 %) (in shaders/madmax/608.shader_test)
+Spilled VGPRs: 0 -> 0 (0.00 %)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 0 -> 0 (0.00 %) dwords per thread
+Code Size: 3400 -> 3572 (5.06 %) bytes (in shaders/csgo/1438.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 4 -> 8 (100.00 %) (in shaders/csgo/4140.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+Max Decrease:
+
+SGPRS: 96 -> 40 (-58.33 %) (in shaders/madmax/2842.shader_test)
+VGPRS: 96 -> 68 (-29.17 %) (in shaders/madmax/720.shader_test)
+Spilled SGPRs: 8 -> 0 (-100.00 %) (in shaders/madmax/918.shader_test)
+Spilled VGPRs: 0 -> 0 (0.00 %)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 12 -> 0 (-100.00 %) dwords per thread (in shaders/madmax/918.shader_test)
+Code Size: 4400 -> 3572 (-18.82 %) bytes (in shaders/soma/96.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 8 -> 5 (-37.50 %) (in shaders/madmax/2900.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+[1;33m WORST VGPR SPILLS (not deltas)                                        VGPRs SpillVGPR  PrivVGPR ScratchSize[0m
+
+[1;33m VGPR SPILLING APPS   Shaders SpillVGPR  PrivVGPR ScratchSize[0m
+
+[1;33m WORST SGPR SPILLS (not deltas)                                        SGPRs SpillSGPR[0m
+ shaders/madmax/608.shader_test [0]                                      104        40
+ shaders/madmax/606.shader_test [0]                                      104        36
+ shaders/csgo/1452.shader_test [0]                                       104        24
+ shaders/csgo/1438.shader_test [1]                                       104        20
+ shaders/csgo/4174.shader_test [0]                                       104        14
+ shaders/madmax/1974.shader_test [0]                                     104        14
+ shaders/csgo/805.shader_test [1]                                        104        12
+ shaders/csgo/4171.shader_test [0]                                       104        10
+ shaders/csgo/4167.shader_test [0]                                       104        10
+ shaders/csgo/774.shader_test [1]                                        104        10
+ shaders/csgo/4168.shader_test [1]                                       104        10
+ shaders/csgo/4151.shader_test [1]                                       104        10
+ shaders/madmax/720.shader_test [0]                                      104         8
+ shaders/csgo/1453.shader_test [0]                                       104         8
+ shaders/csgo/1423.shader_test [0]                                       104         8
+ shaders/csgo/4114.shader_test [1]                                       104         8
+ shaders/madmax/798.shader_test [0]                                      104         3
+
+[1;33m SGPR SPILLING APPS   Shaders SpillSGPR AvgPerSh[0m
+ csgo                    1178       144      0.1
+ madmax                   289       101      0.3
+
+[1;33m WORST REGRESSIONS - SGPRS                                            Before     After     Delta Percentage[0m
+ shaders/dyinglight/6174.shader_test [0]                                  32        80[31m        48[0m[31m  150.00 %[0m
+ shaders/soma/248.shader_test [0]                                         32        72[31m        40[0m[31m  125.00 %[0m
+ shaders/csgo/2138.shader_test [0]                                        56        96[31m        40[0m[31m   71.43 %[0m
+ shaders/csgo/4114.shader_test [1]                                        64       104[31m        40[0m[31m   62.50 %[0m
+ shaders/csgo/2137.shader_test [1]                                        56        96[31m        40[0m[31m   71.43 %[0m
+ shaders/csgo/2139.shader_test [0]                                        56        96[31m        40[0m[31m   71.43 %[0m
+ shaders/csgo/1438.shader_test [1]                                        72       104[31m        32[0m[31m   44.44 %[0m
+ shaders/dyinglight/1036.shader_test [0]                                  48        80[31m        32[0m[31m   66.67 %[0m
+ shaders/csgo/4160.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/csgo/4115.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/csgo/2435.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/csgo/4140.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/unity/59-DeferredPoint.shader_test [0]                           40        72[31m        32[0m[31m   80.00 %[0m
+ shaders/dyinglight/2590.shader_test [0]                                  32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/dyinglight/9178.shader_test [0]                                  32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/dyinglight/8039.shader_test [0]                                  32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/dyinglight/863.shader_test [0]                                   32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/csgo/4136.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/madmax/922.shader_test [0]                                       48        80[31m        32[0m[31m   66.67 %[0m
+ shaders/csgo/4127.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/csgo/4130.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/csgo/4148.shader_test [1]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/unity/27-Tree.shader_test [0]                                    32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/dyinglight/1903.shader_test [0]                                  32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/dyinglight/1767.shader_test [0]                                  32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/csgo/2434.shader_test [1]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/dyinglight/5210.shader_test [0]                                  32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/csgo/4143.shader_test [1]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/dyinglight/10595.shader_test [0]                                 32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/dyinglight/7603.shader_test [0]                                  24        56[31m        32[0m[31m  133.33 %[0m
+ shaders/csgo/4129.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/dyinglight/1880.shader_test [0]                                  32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/dyinglight/8396.shader_test [0]                                  56        88[31m        32[0m[31m   57.14 %[0m
+ shaders/dyinglight/624.shader_test [0]                                   32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/dyinglight/49.shader_test [0]                                    56        88[31m        32[0m[31m   57.14 %[0m
+ shaders/dyinglight/6431.shader_test [0]                                  24        56[31m        32[0m[31m  133.33 %[0m
+ shaders/unity/24-Tree.shader_test [0]                                    24        56[31m        32[0m[31m  133.33 %[0m
+ shaders/dyinglight/2700.shader_test [0]                                  48        80[31m        32[0m[31m   66.67 %[0m
+ shaders/csgo/2465.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+ shaders/csgo/4194.shader_test [0]                                        64        96[31m        32[0m[31m   50.00 %[0m
+
+[1;33m WORST REGRESSIONS - VGPRS                                            Before     After     Delta Percentage[0m
+ shaders/w40kdawn3/870.shader_test [0]                                    16        32[31m        16[0m[31m  100.00 %[0m
+ shaders/madmax/2900.shader_test [0]                                      32        48[31m        16[0m[31m   50.00 %[0m
+ shaders/soma/332.shader_test [0]                                         24        36[31m        12[0m[31m   50.00 %[0m
+ shaders/soma/335.shader_test [0]                                         24        36[31m        12[0m[31m   50.00 %[0m
+ shaders/soma/316.shader_test [0]                                         16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/dyinglight/6437.shader_test [0]                                  24        32[31m         8[0m[31m   33.33 %[0m
+ shaders/dyinglight/5876.shader_test [0]                                  20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/dyinglight/4301.shader_test [0]                                  20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/dyinglight/3388.shader_test [0]                                  24        32[31m         8[0m[31m   33.33 %[0m
+ shaders/dyinglight/6409.shader_test [0]                                  24        32[31m         8[0m[31m   33.33 %[0m
+ shaders/dyinglight/3961.shader_test [0]                                  24        32[31m         8[0m[31m   33.33 %[0m
+ shaders/dyinglight/8156.shader_test [0]                                  20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/csgo/1408.shader_test [0]                                        24        32[31m         8[0m[31m   33.33 %[0m
+ shaders/madmax/70.shader_test [0]                                        16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/warsow/76.shader_test [0]                                        20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/dyinglight/2200.shader_test [0]                                  16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/dyinglight/5257.shader_test [0]                                  16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/soma/251.shader_test [0]                                         20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/dyinglight/10559.shader_test [0]                                 28        36[31m         8[0m[31m   28.57 %[0m
+ shaders/madmax/718.shader_test [0]                                       52        60[31m         8[0m[31m   15.38 %[0m
+ shaders/soma/275.shader_test [0]                                         32        40[31m         8[0m[31m   25.00 %[0m
+ shaders/soma/167.shader_test [0]                                         16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/soma/418.shader_test [0]                                         20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/dyinglight/9144.shader_test [0]                                  20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/madmax/236.shader_test [0]                                       16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/dyinglight/4930.shader_test [0]                                  24        32[31m         8[0m[31m   33.33 %[0m
+ shaders/dyinglight/7578.shader_test [0]                                  20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/csgo/4171.shader_test [0]                                        68        76[31m         8[0m[31m   11.76 %[0m
+ shaders/dyinglight/2485.shader_test [0]                                  24        32[31m         8[0m[31m   33.33 %[0m
+ shaders/dyinglight/6967.shader_test [0]                                  24        32[31m         8[0m[31m   33.33 %[0m
+ shaders/dyinglight/10772.shader_test [0]                                 28        36[31m         8[0m[31m   28.57 %[0m
+ shaders/dyinglight/6352.shader_test [0]                                  20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/csgo/4174.shader_test [0]                                        68        76[31m         8[0m[31m   11.76 %[0m
+ shaders/madmax/390.shader_test [0]                                       16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/soma/108.shader_test [0]                                         16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/dyinglight/6174.shader_test [0]                                  16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/dyinglight/5024.shader_test [0]                                  20        28[31m         8[0m[31m   40.00 %[0m
+ shaders/madmax/288.shader_test [0]                                       16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/dyinglight/5477.shader_test [0]                                  16        24[31m         8[0m[31m   50.00 %[0m
+ shaders/soma/244.shader_test [0]                                         16        24[31m         8[0m[31m   50.00 %[0m
+
+[1;33m WORST REGRESSIONS - Spilled SGPRs                                    Before     After     Delta Percentage[0m
+ shaders/madmax/608.shader_test [0]                                        0        40[31m        40[0m[31m     inf %[0m
+ shaders/madmax/606.shader_test [0]                                        0        36[31m        36[0m[31m     inf %[0m
+ shaders/csgo/1452.shader_test [0]                                         0        24[31m        24[0m[31m     inf %[0m
+ shaders/csgo/1438.shader_test [1]                                         0        20[31m        20[0m[31m     inf %[0m
+ shaders/csgo/4174.shader_test [0]                                         0        14[31m        14[0m[31m     inf %[0m
+ shaders/madmax/1974.shader_test [0]                                       0        14[31m        14[0m[31m     inf %[0m
+ shaders/csgo/805.shader_test [1]                                          0        12[31m        12[0m[31m     inf %[0m
+ shaders/csgo/4171.shader_test [0]                                         0        10[31m        10[0m[31m     inf %[0m
+ shaders/csgo/4167.shader_test [0]                                         0        10[31m        10[0m[31m     inf %[0m
+ shaders/csgo/774.shader_test [1]                                          0        10[31m        10[0m[31m     inf %[0m
+ shaders/csgo/4168.shader_test [1]                                         0        10[31m        10[0m[31m     inf %[0m
+ shaders/csgo/4151.shader_test [1]                                         0        10[31m        10[0m[31m     inf %[0m
+ shaders/madmax/720.shader_test [0]                                        0         8[31m         8[0m[31m     inf %[0m
+ shaders/csgo/1453.shader_test [0]                                         0         8[31m         8[0m[31m     inf %[0m
+ shaders/csgo/1423.shader_test [0]                                         0         8[31m         8[0m[31m     inf %[0m
+ shaders/csgo/4114.shader_test [1]                                         0         8[31m         8[0m[31m     inf %[0m
+
+[1;33m WORST REGRESSIONS - Code Size                                        Before     After     Delta Percentage[0m
+ shaders/csgo/1438.shader_test [1]                                      3400      3572[31m       172[0m[31m    5.06 %[0m
+ shaders/csgo/1452.shader_test [0]                                      4316      4480[31m       164[0m[31m    3.80 %[0m
+ shaders/madmax/720.shader_test [0]                                     4912      5008[31m        96[0m[31m    1.95 %[0m
+ shaders/madmax/608.shader_test [0]                                     7864      7944[31m        80[0m[31m    1.02 %[0m
+ shaders/soma/518.shader_test [1]                                       1552      1624[31m        72[0m[31m    4.64 %[0m
+ shaders/soma/582.shader_test [1]                                       1768      1836[31m        68[0m[31m    3.85 %[0m
+ shaders/madmax/606.shader_test [0]                                     7840      7892[31m        52[0m[31m    0.66 %[0m
+ shaders/soma/111.shader_test [0]                                       1028      1072[31m        44[0m[31m    4.28 %[0m
+ shaders/csgo/1221.shader_test [0]                                      1600      1644[31m        44[0m[31m    2.75 %[0m
+ shaders/csgo/1828.shader_test [0]                                      1768      1812[31m        44[0m[31m    2.49 %[0m
+ shaders/soma/113.shader_test [0]                                       1028      1072[31m        44[0m[31m    4.28 %[0m
+ shaders/csgo/1236.shader_test [0]                                      1612      1652[31m        40[0m[31m    2.48 %[0m
+ shaders/soma/414.shader_test [0]                                       1332      1368[31m        36[0m[31m    2.70 %[0m
+ shaders/csgo/1389.shader_test [0]                                      1228      1264[31m        36[0m[31m    2.93 %[0m
+ shaders/csgo/1383.shader_test [0]                                      1076      1108[31m        32[0m[31m    2.97 %[0m
+ shaders/csgo/1384.shader_test [0]                                      1076      1108[31m        32[0m[31m    2.97 %[0m
+ shaders/w40kdawn3/2104.shader_test [0]                                 2552      2580[31m        28[0m[31m    1.10 %[0m
+ shaders/csgo/1266.shader_test [0]                                      1120      1144[31m        24[0m[31m    2.14 %[0m
+ shaders/csgo/4185.shader_test [0]                                      1480      1504[31m        24[0m[31m    1.62 %[0m
+ shaders/csgo/4138.shader_test [0]                                      1164      1188[31m        24[0m[31m    2.06 %[0m
+ shaders/csgo/4149.shader_test [0]                                      1120      1144[31m        24[0m[31m    2.14 %[0m
+ shaders/csgo/1481.shader_test [0]                                      1120      1144[31m        24[0m[31m    2.14 %[0m
+ shaders/csgo/4118.shader_test [0]                                      1120      1144[31m        24[0m[31m    2.14 %[0m
+ shaders/csgo/2296.shader_test [0]                                      1468      1492[31m        24[0m[31m    1.63 %[0m
+ shaders/csgo/4148.shader_test [0]                                      1312      1336[31m        24[0m[31m    1.83 %[0m
+ shaders/csgo/4170.shader_test [0]                                      1120      1144[31m        24[0m[31m    2.14 %[0m
+ shaders/csgo/1394.shader_test [0]                                      1356      1380[31m        24[0m[31m    1.77 %[0m
+ shaders/csgo/4120.shader_test [0]                                      1120      1144[31m        24[0m[31m    2.14 %[0m
+ shaders/csgo/4169.shader_test [0]                                      1164      1188[31m        24[0m[31m    2.06 %[0m
+ shaders/csgo/1265.shader_test [0]                                      1120      1144[31m        24[0m[31m    2.14 %[0m
+ shaders/csgo/4122.shader_test [0]                                      1120      1144[31m        24[0m[31m    2.14 %[0m
+ shaders/csgo/4114.shader_test [0]                                      1368      1392[31m        24[0m[31m    1.75 %[0m
+ shaders/csgo/4159.shader_test [0]                                      1164      1188[31m        24[0m[31m    2.06 %[0m
+ shaders/csgo/2276.shader_test [0]                                      1468      1492[31m        24[0m[31m    1.63 %[0m
+ shaders/soma/482.shader_test [0]                                       1432      1452[31m        20[0m[31m    1.40 %[0m
+ shaders/w40kdawn3/872.shader_test [0]                                  1892      1912[31m        20[0m[31m    1.06 %[0m
+ shaders/csgo/2258.shader_test [0]                                      1520      1540[31m        20[0m[31m    1.32 %[0m
+ shaders/csgo/1280.shader_test [0]                                      1096      1116[31m        20[0m[31m    1.82 %[0m
+ shaders/soma/93.shader_test [0]                                         520       540[31m        20[0m[31m    3.85 %[0m
+ shaders/dyinglight/9224.shader_test [0]                                1952      1972[31m        20[0m[31m    1.02 %[0m
+
+[1;33m WORST REGRESSIONS - Max Waves                                        Before     After     Delta Percentage[0m
+ shaders/madmax/2900.shader_test [0]                                       8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/soma/275.shader_test [0]                                          8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/soma/332.shader_test [0]                                          8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/1162.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/8675.shader_test [0]                                   7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/dyinglight/5490.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/8755.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/10267.shader_test [0]                                  8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/5702.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/madmax/1118.shader_test [0]                                       7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/dyinglight/4186.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/6499.shader_test [0]                                   7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/dyinglight/7630.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/3828.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/1882.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/soma/542.shader_test [0]                                          6         5[31m        -1[0m[31m  -16.67 %[0m
+ shaders/w40kdawn3/2110.shader_test [0]                                    5         4[31m        -1[0m[31m  -20.00 %[0m
+ shaders/dyinglight/1613.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/8466.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/10363.shader_test [0]                                  6         5[31m        -1[0m[31m  -16.67 %[0m
+ shaders/csgo/877.shader_test [0]                                          7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/dyinglight/748.shader_test [0]                                    8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/csgo/4164.shader_test [0]                                         5         4[31m        -1[0m[31m  -20.00 %[0m
+ shaders/madmax/172.shader_test [0]                                        6         5[31m        -1[0m[31m  -16.67 %[0m
+ shaders/dyinglight/1589.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/4028.shader_test [0]                                   7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/madmax/2874.shader_test [0]                                       8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/7646.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/881.shader_test [0]                                    6         5[31m        -1[0m[31m  -16.67 %[0m
+ shaders/dyinglight/10557.shader_test [0]                                  7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/dyinglight/398.shader_test [0]                                    8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/dyinglight/2642.shader_test [0]                                   8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/soma/299.shader_test [0]                                          7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/dyinglight/2142.shader_test [0]                                   7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/dyinglight/10813.shader_test [0]                                  6         5[31m        -1[0m[31m  -16.67 %[0m
+ shaders/dyinglight/11293.shader_test [0]                                  7         6[31m        -1[0m[31m  -14.29 %[0m
+ shaders/dyinglight/11593.shader_test [0]                                  8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/soma/509.shader_test [0]                                          6         5[31m        -1[0m[31m  -16.67 %[0m
+ shaders/soma/386.shader_test [0]                                          8         7[31m        -1[0m[31m  -12.50 %[0m
+ shaders/unity/41.shader_test [1]                                          8         7[31m        -1[0m[31m  -12.50 %[0m
+
+[1;33m PERCENTAGE DELTAS    Shaders     SGPRs     VGPRs SpillSGPR SpillVGPR  PrivVGPR   Scratch  CodeSize  MaxWaves     Waits[0m
+ anholt                    10[1;32m   -2.78 %[0m     .         .         .         .         .       -0.49 %     .         .    
+ csgo                    1178[1;32m   -1.00 %[0m[1;32m   -7.73 %[0m[31m     inf %[0m     .         .         .    [1;32m   -2.91 %[0m[1;32m    3.97 %[0m     .    
+ dyinglight              3984[1;32m   -7.75 %[0m[1;32m   -2.33 %[0m     .         .         .         .    [1;32m   -5.62 %[0m[1;32m    1.76 %[0m     .    
+ madmax                   289[1;32m   -8.20 %[0m[1;32m   -5.67 %[0m[31m  741.67 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -4.75 %[0m[1;32m    3.27 %[0m     .    
+ soma                     592[1;32m   -5.43 %[0m[1;32m   -1.51 %[0m     .         .         .         .    [1;32m   -1.87 %[0m[1;32m    1.01 %[0m     .    
+ unity                     72   -0.25 %[1;32m   -3.09 %[0m     .         .         .         .    [1;32m   -3.16 %[0m[1;32m    1.43 %[0m     .    
+ w40kdawn3                 83    0.25 %[1;32m   -1.40 %[0m     .         .         .         .    [1;32m   -3.66 %[0m[1;32m    0.63 %[0m     .    
+ warsow                   176[1;32m   -5.33 %[0m[1;32m   -2.07 %[0m     .         .         .         .    [1;32m   -2.81 %[0m[1;32m    0.57 %[0m     .    
+ warzone2100                4[1;32m   -4.55 %[0m[31m    4.55 %[0m     .         .         .         .    [31m    0.57 %[0m     .         .    
+ ----------------------------------------------------------------------------------------------------------------------
+ All affected            5538[1;32m   -6.77 %[0m[1;32m   -3.61 %[0m[31m 1941.67 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -4.57 %[0m[1;32m    2.44 %[0m     .    
+ ----------------------------------------------------------------------------------------------------------------------
+ Total                   6388[1;32m   -6.27 %[0m[1;32m   -3.33 %[0m[31m 1941.67 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -4.43 %[0m[1;32m    2.10 %[0m     .    
+
