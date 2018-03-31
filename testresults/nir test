@@ -1,4 +1,10 @@
 31.3.18
+Routing shader-db's run stderr to /dev/null makes no sense. 	Change README ?
+No need to enable debug build for radeonsi.			Change README ?
+
+No synchronization between shader-db's run and si-report.py: premature end cannot be detected
+How about run emits Done when its done and si-report looks for that?
+
 With a debug build of mesa -O0 and --enable-debug instead of release with -O3 only a part of the available shaders is compiled (~12%). Bug ?
 
 Also some shaders are compiled twice with different results (both debug and non-debug build) also happens with tgsi: Bug ?
