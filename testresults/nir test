@@ -1,4 +1,148 @@
+1.4.18
+
+Patch to disable bindless textures
+From 816be20dcbede41cfd40c1a1067c0cfbe5a7b000 Mon Sep 17 00:00:00 2001
+From: Benedikt Schemmer <ben@besd.de>
+Date: Sun, 1 Apr 2018 13:18:02 +0200
+Subject: [PATCH] Disable bindless textures with radeonsi NIR until there is
+ support for them. 
+
+Allows to build and use a debug build of mesa with
+ shader-db (crashes otherwise with affected shaders)
+
+---
+ src/gallium/drivers/radeonsi/si_get.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/gallium/drivers/radeonsi/si_get.c b/src/gallium/drivers/radeonsi/si_get.c
+index b567f3aa7e..4f309d0ced 100755
+--- a/src/gallium/drivers/radeonsi/si_get.c
++++ b/src/gallium/drivers/radeonsi/si_get.c
+@@ -176,7 +176,6 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
+ 	case PIPE_CAP_DOUBLES:
+ 	case PIPE_CAP_TGSI_TEX_TXF_LZ:
+ 	case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
+-	case PIPE_CAP_BINDLESS_TEXTURE:
+ 	case PIPE_CAP_QUERY_TIMESTAMP:
+ 	case PIPE_CAP_QUERY_TIME_ELAPSED:
+ 	case PIPE_CAP_NIR_SAMPLERS_AS_DEREF:
+@@ -257,6 +256,11 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
+ 			return 1;
+ 		return 0;
+ 
++	case PIPE_CAP_BINDLESS_TEXTURE:
++		if (sscreen->debug_flags & DBG(NIR))
++			return 0;
++		return 1;
++
+ 	/* Unsupported features. */
+ 	case PIPE_CAP_BUFFER_SAMPLER_VIEW_RGBA_ONLY:
+ 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+-- 
+2.14.1
+
+
+Not documented on the mesa website:
+
+debug_get_flags_option: help for R600_DEBUG:
+|                vs [0x0000000000000001] Print vertex shaders
+|                ps [0x0000000000000002] Print pixel shaders
+|                gs [0x0000000000000004] Print geometry shaders
+|               tcs [0x0000000000000008] Print tessellation control shaders
+|               tes [0x0000000000000010] Print tessellation evaluation shaders
+|                cs [0x0000000000000020] Print compute shaders
+|              noir [0x0000000000000040] Don't print the LLVM IR
+|            notgsi [0x0000000000000080] Don't print the TGSI
+|             noasm [0x0000000000000100] Don't print disassembled shaders
+|          preoptir [0x0000000000000200] Print the LLVM IR before initial optimizations
+|        unsafemath [0x0000000000000800] Enable unsafe math shader optimizations
+|           sisched [0x0000000000001000] Enable LLVM SI Machine Instruction Scheduler.
+|           checkir [0x0000000000002000] Enable additional sanity checks on shader IR
+|               nir [0x0000000000004000] Enable experimental NIR shaders
+|              mono [0x0000000000008000] Use old-style monolithic shaders compiled on demand
+|      nooptvariant [0x0000000000010000] Disable compiling optimized shader variants.
+|              info [0x0000000000020000] Print driver information
+|               tex [0x0000000000040000] Print texture info
+|           compute [0x0000000000080000] Print compute info
+|                vm [0x0000000000100000] Print virtual addresses when creating resources
+|          forcedma [0x0000000000200000] Use asynchronous DMA for all operations when possible.
+|             nodma [0x0000000000400000] Disable asynchronous DMA
+|              nowc [0x0000000000800000] Disable GTT write combining
+|          check_vm [0x0000000001000000] Check VM faults and dump debug info.
+|      reserve_vmid [0x0000000002000000] Force VMID reservation per context.
+|     switch_on_eop [0x0000000004000000] Program WD/IA to switch on end-of-packet.
+|      nooutoforder [0x0000000008000000] Disable out-of-order rasterization
+|            nodpbb [0x0000000010000000] Disable DPBB.
+|            nodfsm [0x0000000020000000] Disable DFSM.
+|              dpbb [0x0000000040000000] Enable DPBB.
+|              dfsm [0x0000000080000000] Enable DFSM.
+|          nohyperz [0x0000000100000000] Disable Hyper-Z
+|          norbplus [0x0000000200000000] Disable RB+.
+|              no2d [0x0000000400000000] Disable 2D tiling
+|          notiling [0x0000000800000000] Disable tiling
+|             nodcc [0x0000001000000000] Disable DCC.
+|        nodccclear [0x0000002000000000] Disable DCC fast clear.
+|           nodccfb [0x0000004000000000] Disable separate DCC on the main framebuffer
+|         nodccmsaa [0x0000008000000000] Disable DCC for MSAA
+|           dccmsaa [0x0000010000000000] Enable DCC for MSAA
+|           testdma [0x0000020000000000] Invoke SDMA tests and exit.
+|     testvmfaultcp [0x0000040000000000] Invoke a CP VM fault test and exit.
+|   testvmfaultsdma [0x0000080000000000] Invoke a SDMA VM fault test and exit.
+| testvmfaultshader [0x0000100000000000] Invoke a shader VM fault test and exit.
+
+useful website
+https://blogs.igalia.com/apinheiro/2015/09/14/optimizing-shader-assembly-instruction-on-mesa-using-shader-db/
+
+
+Really difficult to compare the shaders as the results are so different :(
+
+R600_DEBUG=vs,ps,gs,tcs,tes,cs,preoptir,nir ./run shaders/csgo/4189.shader_test 2> 4189nir
+
+when comparing shaders preoptir NIR seems to do a lot of unnessecary bitcasting:
+  %55 = extractelement <4 x float> %54, i32 0
+  %56 = extractelement <4 x float> %54, i32 1
+  %57 = extractelement <4 x float> %54, i32 2
+  %58 = extractelement <4 x float> %54, i32 3
+  %59 = bitcast float %55 to i32
+  %60 = bitcast float %56 to i32
+  %61 = bitcast float %57 to i32
+  %62 = bitcast float %58 to i32
+  %63 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 1, !amdgpu.uniform !0
+
+and unnecessary stores
+  store float 0.000000e+00, float addrspace(5)* %51
+  store float undef, float addrspace(5)* %51
+
+NIR doesnt declare float
+define amdgpu_vs void @main([0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceabl
+
+R600_DEBUG=vs,ps,gs,tcs,tes,cs,preoptir ./run shaders/csgo/4189.shader_test 2> 4189tgsi
+
+compared to tgsi 
+  %711 = extractelement <4 x float> %710, i32 0
+  %712 = extractelement <4 x float> %710, i32 1
+  %713 = extractelement <4 x float> %710, i32 2
+  %714 = extractelement <4 x float> %710, i32 3
+  %715 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 1, !amdgpu.uniform !0
+
+  store float 0.000000e+00, float addrspace(5)* %683
+
+define amdgpu_vs void @main([0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x float] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceabl
+
 31.3.18
+Collisions doesnt start - requires libphysfs and run.sh must be copied from love-10.2-amd64/bin/ to main directory
+otherwise fun ;)
+
+Penumbra Necrologue - works fine but scary
+
+Guns of Icarus online - works
+
+Strafe: Millenium Edition - works
+
+Axis Game Factory 3-0 - graphics fine, rest works kind of but DLC not really
+
+Shader-db related stuff:
+
 Routing shader-db's run stderr to /dev/null makes no sense. 	Change README ?
 No need to enable debug build for radeonsi.			Change README ?
 
