@@ -44,7 +44,6 @@
 #include <llvm-c/Transforms/Utils.h>
 #endif
 
-
 enum si_llvm_calling_convention {
 	RADEON_LLVM_AMDGPU_VS = 87,
 	RADEON_LLVM_AMDGPU_GS = 88,
