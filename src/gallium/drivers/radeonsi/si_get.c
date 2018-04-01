@@ -176,7 +176,6 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_DOUBLES:
 	case PIPE_CAP_TGSI_TEX_TXF_LZ:
 	case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
-	case PIPE_CAP_BINDLESS_TEXTURE:
 	case PIPE_CAP_QUERY_TIMESTAMP:
 	case PIPE_CAP_QUERY_TIME_ELAPSED:
 	case PIPE_CAP_NIR_SAMPLERS_AS_DEREF:
@@ -256,6 +255,11 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		if (sscreen->debug_flags & DBG(NIR))
 			return 1;
 		return 0;
+
+	case PIPE_CAP_BINDLESS_TEXTURE:
+		if (sscreen->debug_flags & DBG(NIR))
+			return 0;
+		return 1;
 
 	/* Unsupported features. */
 	case PIPE_CAP_BUFFER_SAMPLER_VIEW_RGBA_ONLY:
