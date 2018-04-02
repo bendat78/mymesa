@@ -1,4 +1,28 @@
+2.4.18
+
+instead of
+number.shader_test -> hash.shader_test
+so that is easier to determine if shaders are the same for different developers 
+and also spot duplicates
+
+MESA_SHADER_CAPTURE_PATH
+
+
+run 
+fdupes ./ -rdN
+in shaders directory because about half are duplicates
+
 1.4.18
+
+Dirt Rally doesnt care about bindless
+Warhammer 40k Dawn 3 does and crashes with nir when ARB_bindless_texture is reported
+
+
+compare the words used in shaders dumped with preoptir
+
+cat nir | tr -s " " "\n" | sort | uniq -c | sort -b -n > n
+cat tgsi | tr -s " " "\n" | sort | uniq -c | sort -b -n > t
+
 
 Patch to disable bindless textures
 From 816be20dcbede41cfd40c1a1067c0cfbe5a7b000 Mon Sep 17 00:00:00 2001
