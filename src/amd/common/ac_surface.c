@@ -807,7 +807,8 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 static int
 gfx9_get_preferred_swizzle_mode(ADDR_HANDLE addrlib,
 				ADDR2_COMPUTE_SURFACE_INFO_INPUT *in,
-				bool is_fmask, AddrSwizzleMode *swizzle_mode)
+				bool is_fmask, unsigned flags,
+				AddrSwizzleMode *swizzle_mode)
 {
 	ADDR_E_RETURNCODE ret;
 	ADDR2_GET_PREFERRED_SURF_SETTING_INPUT sin = {};
@@ -831,6 +832,13 @@ gfx9_get_preferred_swizzle_mode(ADDR_HANDLE addrlib,
 	sin.numMipLevels = in->numMipLevels;
 	sin.numSamples = in->numSamples;
 	sin.numFrags = in->numFrags;
+
+	if (flags & RADEON_SURF_SCANOUT)
+		sin.preferredSwSet.sw_D = 1;
+	else if (in->flags.depth || in->flags.stencil || is_fmask)
+		sin.preferredSwSet.sw_Z = 1;
+	else
+		sin.preferredSwSet.sw_S = 1;
 
 	if (is_fmask) {
 		sin.flags.color = 0;
@@ -1029,7 +1037,9 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 			fin.size = sizeof(ADDR2_COMPUTE_FMASK_INFO_INPUT);
 			fout.size = sizeof(ADDR2_COMPUTE_FMASK_INFO_OUTPUT);
 
-			ret = gfx9_get_preferred_swizzle_mode(addrlib, in, true, &fin.swizzleMode);
+			ret = gfx9_get_preferred_swizzle_mode(addrlib, in,
+							      true, surf->flags,
+							      &fin.swizzleMode);
 			if (ret != ADDR_OK)
 				return ret;
 
@@ -1225,7 +1235,8 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 			break;
 		}
 
-		r = gfx9_get_preferred_swizzle_mode(addrlib, &AddrSurfInfoIn, false,
+		r = gfx9_get_preferred_swizzle_mode(addrlib, &AddrSurfInfoIn,
+						    false, surf->flags,
 						    &AddrSurfInfoIn.swizzleMode);
 		if (r)
 			return r;
@@ -1261,7 +1272,8 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 		AddrSurfInfoIn.format = ADDR_FMT_8;
 
 		if (!AddrSurfInfoIn.flags.depth) {
-			r = gfx9_get_preferred_swizzle_mode(addrlib, &AddrSurfInfoIn, false,
+			r = gfx9_get_preferred_swizzle_mode(addrlib, &AddrSurfInfoIn,
+							    false, surf->flags,
 							    &AddrSurfInfoIn.swizzleMode);
 			if (r)
 				return r;
