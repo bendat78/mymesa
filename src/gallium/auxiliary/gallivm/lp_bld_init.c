@@ -41,7 +41,9 @@
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/BitWriter.h>
-
+#if HAVE_LLVM >= 0x0700
+#include <llvm-c/Transforms/Utils.h>
+#endif
 
 /* Only MCJIT is available as of LLVM SVN r216982 */
 #if HAVE_LLVM >= 0x0306
