@@ -1,5 +1,17 @@
 2.4.18
 
+bindless textures have to be enable in the
+preferences
+file in the respective game directory
+.local/share/feral-interactive
+
+                        <value name="EnableBindlessTexture" type="integer">1</value>
+
+Deus Ex: Mankind Divided - with bindless 18.2/7.1/28.7//17.9/8.7/26.7 without 19.8/8.2/31.5//21.8/8.8/34.7 -> faster without bindless
+HITMAN - crashes with bindless before even starting benchmark
+DiRT Rally without 54/37-41/71-83 with bindless 52/39/69 - faster without bindless?
+Mad Max - works, no benchmark available
+
 instead of
 number.shader_test -> hash.shader_test
 so that is easier to determine if shaders are the same for different developers 

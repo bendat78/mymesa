@@ -285,6 +285,7 @@ struct si_framebuffer {
 	ubyte				nr_samples:5; /* at most 16xAA */
 	ubyte				log_samples:3; /* at most 4 = 16xAA */
 	ubyte				compressed_cb_mask;
+	ubyte				uncompressed_cb_mask;
 	ubyte				color_is_int8;
 	ubyte				color_is_int10;
 	ubyte				dirty_cbufs;
@@ -531,6 +532,7 @@ struct si_context {
 
 	/* MSAA config state. */
 	int				ps_iter_samples;
+	bool				ps_uses_fbfetch;
 	bool				smoothing_enabled;
 
 	/* DB render state. */
@@ -928,6 +930,14 @@ vi_tc_compat_htile_enabled(struct r600_texture *tex, unsigned level)
 {
 	assert(!tex->tc_compatible_htile || tex->htile_offset);
 	return tex->tc_compatible_htile && level == 0;
+}
+
+static inline unsigned si_get_ps_iter_samples(struct si_context *sctx)
+{
+	if (sctx->ps_uses_fbfetch)
+		return sctx->framebuffer.nr_samples;
+
+	return sctx->ps_iter_samples;
 }
 
 #endif

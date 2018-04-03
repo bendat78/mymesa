@@ -2784,8 +2784,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	 *
 	 * Only flush and wait for CB if there is actually a bound color buffer.
 	 */
-	if (sctx->framebuffer.nr_samples <= 1 &&
-	    sctx->framebuffer.state.nr_cbufs)
+	if (sctx->framebuffer.uncompressed_cb_mask)
 		si_make_CB_shader_coherent(sctx, sctx->framebuffer.nr_samples,
 					   sctx->framebuffer.CB_has_shader_readable_metadata);
 
@@ -2829,6 +2828,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	sctx->framebuffer.color_is_int10 = 0;
 
 	sctx->framebuffer.compressed_cb_mask = 0;
+	sctx->framebuffer.uncompressed_cb_mask = 0;
 	sctx->framebuffer.nr_samples = util_framebuffer_get_num_samples(state);
 	sctx->framebuffer.log_samples = util_logbase2(sctx->framebuffer.nr_samples);
 	sctx->framebuffer.any_dst_linear = false;
@@ -2861,9 +2861,10 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		if (surf->color_is_int10)
 			sctx->framebuffer.color_is_int10 |= 1 << i;
 
-		if (rtex->fmask.size) {
+		if (rtex->fmask.size)
 			sctx->framebuffer.compressed_cb_mask |= 1 << i;
-		}
+		else
+			sctx->framebuffer.uncompressed_cb_mask |= 1 << i;
 
 		if (rtex->surface.is_linear)
 			sctx->framebuffer.any_dst_linear = true;
@@ -2898,6 +2899,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		si_context_add_resource_size(ctx, surf->base.texture);
 	}
 
+	si_update_ps_colorbuf0_slot(sctx);
 	si_update_poly_offset_state(sctx);
 	si_mark_atom_dirty(sctx, &sctx->cb_render_state);
 	si_mark_atom_dirty(sctx, &sctx->framebuffer.atom);
@@ -3360,8 +3362,9 @@ static void si_emit_msaa_config(struct si_context *sctx, struct r600_atom *atom)
 			8, /* 16x MSAA */
 		};
 		unsigned log_samples = util_logbase2(setup_samples);
+		unsigned ps_iter_samples = si_get_ps_iter_samples(sctx);
 		unsigned log_ps_iter_samples =
-			util_logbase2(util_next_power_of_two(sctx->ps_iter_samples));
+			util_logbase2(util_next_power_of_two(ps_iter_samples));
 
 		radeon_set_context_reg_seq(cs, R_028BDC_PA_SC_LINE_CNTL, 2);
 		radeon_emit(cs, sc_line_cntl |
@@ -3379,7 +3382,7 @@ static void si_emit_msaa_config(struct si_context *sctx, struct r600_atom *atom)
 					       S_028804_HIGH_QUALITY_INTERSECTIONS(1) |
 					       S_028804_STATIC_ANCHOR_ASSOCIATIONS(1));
 			radeon_set_context_reg(cs, R_028A4C_PA_SC_MODE_CNTL_1,
-					       S_028A4C_PS_ITER_SAMPLE(sctx->ps_iter_samples > 1) |
+					       S_028A4C_PS_ITER_SAMPLE(ps_iter_samples > 1) |
 					       sc_mode_cntl_1);
 		} else if (sctx->smoothing_enabled) {
 			radeon_set_context_reg(cs, R_028804_DB_EQAA,
@@ -3408,6 +3411,14 @@ static void si_emit_msaa_config(struct si_context *sctx, struct r600_atom *atom)
 	}
 }
 
+void si_update_ps_iter_samples(struct si_context *sctx)
+{
+	if (sctx->framebuffer.nr_samples > 1)
+		si_mark_atom_dirty(sctx, &sctx->msaa_config);
+	if (sctx->screen->dpbb_allowed)
+		si_mark_atom_dirty(sctx, &sctx->dpbb_state);
+}
+
 static void si_set_min_samples(struct pipe_context *ctx, unsigned min_samples)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
@@ -3418,10 +3429,7 @@ static void si_set_min_samples(struct pipe_context *ctx, unsigned min_samples)
 	sctx->ps_iter_samples = min_samples;
 	sctx->do_update_shaders = true;
 
-	if (sctx->framebuffer.nr_samples > 1)
-		si_mark_atom_dirty(sctx, &sctx->msaa_config);
-	if (sctx->screen->dpbb_allowed)
-		si_mark_atom_dirty(sctx, &sctx->dpbb_state);
+	si_update_ps_iter_samples(sctx);
 }
 
 /*
@@ -4449,8 +4457,7 @@ static void si_texture_barrier(struct pipe_context *ctx, unsigned flags)
 	si_update_fb_dirtiness_after_rendering(sctx);
 
 	/* Multisample surfaces are flushed in si_decompress_textures. */
-	if (sctx->framebuffer.nr_samples <= 1 &&
-	    sctx->framebuffer.state.nr_cbufs)
+	if (sctx->framebuffer.uncompressed_cb_mask)
 		si_make_CB_shader_coherent(sctx, sctx->framebuffer.nr_samples,
 					   sctx->framebuffer.CB_has_shader_readable_metadata);
 }
@@ -4493,8 +4500,7 @@ static void si_memory_barrier(struct pipe_context *ctx, unsigned flags)
 	 * si_decompress_textures when needed.
 	 */
 	if (flags & PIPE_BARRIER_FRAMEBUFFER &&
-	    sctx->framebuffer.nr_samples <= 1 &&
-	    sctx->framebuffer.state.nr_cbufs) {
+	    sctx->framebuffer.uncompressed_cb_mask) {
 		sctx->b.flags |= SI_CONTEXT_FLUSH_AND_INV_CB;
 
 		if (sctx->b.chip_class <= VI)
