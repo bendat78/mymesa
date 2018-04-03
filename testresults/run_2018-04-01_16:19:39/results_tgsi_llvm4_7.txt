@@ -1,0 +1,460 @@
+51060 shaders in 32346 tests
+Totals:
+SGPRS: 2014656 -> 1946152 (-3.40 %)
+VGPRS: 1312848 -> 1282524 (-2.31 %)
+Spilled SGPRs: 2722 -> 8687 (219.14 %)
+Spilled VGPRs: 146 -> 85 (-41.78 %)
+Private memory VGPRs: 532 -> 532 (0.00 %)
+Scratch size: 3768 -> 668 (-82.27 %) dwords per thread
+Code Size: 53277900 -> 44024104 (-17.37 %) bytes
+LDS: 1149 -> 1149 (0.00 %) blocks
+Max Waves: 384544 -> 392121 (1.97 %)
+Wait states: 0 -> 0 (0.00 %)
+
+Totals from affected shaders:
+SGPRS: 2003552 -> 1935048 (-3.42 %)
+VGPRS: 1306096 -> 1275772 (-2.32 %)
+Spilled SGPRs: 2722 -> 8687 (219.14 %)
+Spilled VGPRs: 146 -> 85 (-41.78 %)
+Private memory VGPRs: 532 -> 532 (0.00 %)
+Scratch size: 3768 -> 668 (-82.27 %) dwords per thread
+Code Size: 53114596 -> 43860800 (-17.42 %) bytes
+LDS: 1143 -> 1143 (0.00 %) blocks
+Max Waves: 381404 -> 388981 (1.99 %)
+Wait states: 0 -> 0 (0.00 %)
+
+Increases:
+SGPRS: 9893 (0.19 %)
+VGPRS: 9387 (0.18 %)
+Spilled SGPRs: 350 (0.01 %)
+Spilled VGPRs: 1 (0.00 %)
+Private memory VGPRs: 0 (0.00 %)
+Scratch size: 1 (0.00 %)
+Code Size: 3113 (0.06 %)
+LDS: 0 (0.00 %)
+Max Waves: 5131 (0.10 %)
+Wait states: 0 (0.00 %)
+
+Decreases:
+SGPRS: 15908 (0.31 %)
+VGPRS: 9221 (0.18 %)
+Spilled SGPRs: 62 (0.00 %)
+Spilled VGPRs: 3 (0.00 %)
+Private memory VGPRs: 0 (0.00 %)
+Scratch size: 143 (0.00 %)
+Code Size: 44988 (0.88 %)
+LDS: 0 (0.00 %)
+Max Waves: 652 (0.01 %)
+Wait states: 0 (0.00 %)
+
+*** BY PERCENTAGE ***
+
+Max Increase:
+
+SGPRS: 24 -> 64 (166.67 %) (in shaders/unity/24-Tree.shader_test)
+VGPRS: 16 -> 188 (1075.00 %) (in shaders/cat/2031.shader_test)
+Spilled SGPRs: 0 -> 28 (0.00 %) (in shaders/dirtrallye/1268.shader_test)
+Spilled VGPRs: 49 -> 71 (44.90 %) (in shaders/dirtrallye/1264.shader_test)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 36 -> 48 (33.33 %) dwords per thread (in shaders/dirtrallye/1264.shader_test)
+Code Size: 3968 -> 6024 (51.81 %) bytes (in shaders/talos/1950.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 1 -> 3 (200.00 %) (in shaders/metro2033redux/9718.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+Max Decrease:
+
+SGPRS: 88 -> 24 (-72.73 %) (in shaders/metro2033redux/10305.shader_test)
+VGPRS: 96 -> 40 (-58.33 %) (in shaders/w40kdawn2/420.shader_test)
+Spilled SGPRs: 9 -> 0 (-100.00 %) (in shaders/witcher2/986.shader_test)
+Spilled VGPRs: 41 -> 0 (-100.00 %) (in shaders/dirtrallye/700.shader_test)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 24 -> 0 (-100.00 %) dwords per thread (in shaders/f1_2015/416.shader_test)
+Code Size: 3612 -> 1548 (-57.14 %) bytes (in shaders/f1_2015/1464.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 8 -> 1 (-87.50 %) (in shaders/cat/2031.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+*** BY UNIT ***
+
+Max Increase:
+
+SGPRS: 40 -> 104 (160.00 %) (in shaders/alien_isolation/5237.shader_test)
+VGPRS: 16 -> 188 (1075.00 %) (in shaders/cat/2031.shader_test)
+Spilled SGPRs: 0 -> 152 (0.00 %) (in shaders/talos/1950.shader_test)
+Spilled VGPRs: 49 -> 71 (44.90 %) (in shaders/dirtrallye/1264.shader_test)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 36 -> 48 (33.33 %) dwords per thread (in shaders/dirtrallye/1264.shader_test)
+Code Size: 3968 -> 6024 (51.81 %) bytes (in shaders/talos/1950.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 3 -> 8 (166.67 %) (in shaders/tombraider/4652.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+Max Decrease:
+
+SGPRS: 88 -> 24 (-72.73 %) (in shaders/metro2033redux/10305.shader_test)
+VGPRS: 196 -> 88 (-55.10 %) (in shaders/cat/1997.shader_test)
+Spilled SGPRs: 322 -> 0 (-100.00 %) (in shaders/total_war_warhammer/3274.shader_test)
+Spilled VGPRs: 41 -> 0 (-100.00 %) (in shaders/dirtrallye/700.shader_test)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 268 -> 0 (-100.00 %) dwords per thread (in shaders/total_war_warhammer/3274.shader_test)
+Code Size: 20948 -> 15336 (-26.79 %) bytes (in shaders/w40kdawn3/1070.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 8 -> 1 (-87.50 %) (in shaders/cat/2031.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+[1;33m WORST VGPR SPILLS (not deltas)                                        VGPRs SpillVGPR  PrivVGPR ScratchSize[0m
+ shaders/soma/96.shader_test [0]                                          44         0        48        52
+ shaders/soma/98.shader_test [0]                                          44         0        48        52
+ shaders/dirtrallye/1264.shader_test [0]                                  64        71         0        48
+ shaders/bioshock_infinite/2024.shader_test [0]                           24         0        32        36
+ shaders/bioshock_infinite/710.shader_test [0]                            16         0        32        36
+ shaders/bioshock_infinite/2020.shader_test [0]                           16         0        32        36
+ shaders/bioshock_infinite/2028.shader_test [0]                           24         0        32        36
+ shaders/bioshock_infinite/1926.shader_test [0]                           24         0        28        32
+ shaders/bioshock_infinite/2030.shader_test [0]                           16         0        28        32
+ shaders/bioshock_infinite/1922.shader_test [0]                           24         0        28        32
+ shaders/bioshock_infinite/2016.shader_test [0]                           16         0        28        32
+ shaders/bioshock_infinite/2032.shader_test [0]                           16         0        24        28
+ shaders/bioshock_infinite/1916.shader_test [0]                           24         0        24        28
+ shaders/bioshock_infinite/2012.shader_test [0]                           16         0        24        28
+ shaders/bioshock_infinite/1920.shader_test [0]                           24         0        24        28
+ shaders/bioshock_infinite/2010.shader_test [0]                           16         0        20        24
+ shaders/bioshock_infinite/1914.shader_test [0]                           24         0        20        24
+ shaders/bioshock_infinite/2006.shader_test [0]                           16         0        20        24
+ shaders/bioshock_infinite/1910.shader_test [0]                           24         0        20        24
+ shaders/xcom2/1420.shader_test [0]                                       28         0        20        20
+ shaders/alien_isolation/6065.shader_test [0]                             64         7         0         8
+ shaders/alien_isolation/788.shader_test [0]                              64         7         0         8
+
+[1;33m VGPR SPILLING APPS   Shaders SpillVGPR  PrivVGPR ScratchSize[0m
+ alien_isolation         2012        14         0        16
+ bioshock_infinite       1621         0       416       480
+ dirtrallye               785        71         0        48
+ soma                     592         0        96       104
+ xcom2                   1489         0        20        20
+
+[1;33m WORST SGPR SPILLS (not deltas)                                        SGPRs SpillSGPR[0m
+ shaders/talos/1950.shader_test [1]                                      104       152
+ shaders/talos/1995.shader_test [1]                                      104       124
+ shaders/talos/1949.shader_test [1]                                      104       108
+ shaders/talos/2037.shader_test [1]                                      104       104
+ shaders/talos/2029.shader_test [1]                                      104       104
+ shaders/talos/2036.shader_test [1]                                      104       104
+ shaders/talos/1945.shader_test [1]                                      104       104
+ shaders/talos/2035.shader_test [1]                                      104        88
+ shaders/talos/2084.shader_test [1]                                      104        88
+ shaders/talos/2046.shader_test [1]                                      104        88
+ shaders/talos/2085.shader_test [1]                                      104        88
+ shaders/talos/2059.shader_test [1]                                      104        84
+ shaders/w40kdawn2/416.shader_test [1]                                   104        68
+ shaders/w40kdawn2/415.shader_test [0]                                   104        68
+ shaders/dirtrallye/1852.shader_test [0]                                 104        66
+ shaders/dirtrallye/1722.shader_test [0]                                 104        64
+ shaders/dirtrallye/1096.shader_test [0]                                 104        64
+ shaders/total_war_shogun_2/762.shader_test [0]                          104        60
+ shaders/dirtrallye/1782.shader_test [0]                                 104        58
+ shaders/dirtrallye/948.shader_test [0]                                  104        56
+ shaders/dirtrallye/490.shader_test [0]                                  104        56
+ shaders/w40kdawn2/413.shader_test [0]                                   104        56
+ shaders/f1_2015/1560.shader_test [0]                                    104        56
+ shaders/dirtrallye/670.shader_test [0]                                  104        54
+ shaders/dirtrallye/1172.shader_test [0]                                 104        54
+ shaders/total_war_shogun_2/758.shader_test [0]                          104        54
+ shaders/total_war_shogun_2/1082.shader_test [0]                         104        52
+ shaders/cat/1772.shader_test [1]                                        104        50
+ shaders/madmax/608.shader_test [0]                                      104        50
+ shaders/f1_2015/1514.shader_test [0]                                    104        48
+ shaders/metro2033redux/6783.shader_test [1]                             104        46
+ shaders/dirtrallye/710.shader_test [0]                                  104        46
+ shaders/metro2033redux/13646.shader_test [1]                            104        46
+ shaders/metro2033redux/2334.shader_test [1]                             104        46
+ shaders/metro2033redux/9718.shader_test [1]                             104        46
+ shaders/w40kdawn2/420.shader_test [0]                                   104        44
+ shaders/dirtrallye/1056.shader_test [0]                                 104        44
+ shaders/dirtrallye/186.shader_test [0]                                  104        44
+ shaders/dirtrallye/80.shader_test [0]                                   104        44
+ shaders/dirtrallye/2480.shader_test [0]                                 104        40
+
+[1;33m SGPR SPILLING APPS   Shaders SpillSGPR AvgPerSh[0m
+ alien_isolation         2012       104      0.1
+ cat                      573       200      0.3
+ csgo                    1178       160      0.1
+ deadisland_definitive   1766        62      0.0
+ dirtrallye               785      2994      3.8
+ f1_2015                  778      1434      1.8
+ madmax                   289        86      0.3
+ metro2033redux         25962       248      0.0
+ serioussam2017           368       263      0.7
+ talos                    774      2258      2.9
+ tombraider              2647       286      0.1
+ total_war_shogun_2       176       234      1.3
+ w40kdawn2               1207       342      0.3
+ w40kdawn3                166        14      0.1
+ xcom2                   1489         2      0.0
+
+[1;33m WORST REGRESSIONS - SGPRS                                            Before     After     Delta Percentage[0m
+ shaders/alien_isolation/5237.shader_test [1]                             40       104[31m        64[0m[31m  160.00 %[0m
+ shaders/alien_isolation/3084.shader_test [1]                             48       104[31m        56[0m[31m  116.67 %[0m
+ shaders/alien_isolation/6059.shader_test [0]                             40        88[31m        48[0m[31m  120.00 %[0m
+ shaders/deadisland_definitive/452.shader_test [0]                        48        96[31m        48[0m[31m  100.00 %[0m
+ shaders/alien_isolation/5297.shader_test [1]                             48        96[31m        48[0m[31m  100.00 %[0m
+ shaders/dyinglight/6174.shader_test [0]                                  32        80[31m        48[0m[31m  150.00 %[0m
+ shaders/alien_isolation/782.shader_test [0]                              40        88[31m        48[0m[31m  120.00 %[0m
+ shaders/deadisland_definitive/1477.shader_test [0]                       32        80[31m        48[0m[31m  150.00 %[0m
+ shaders/serioussam2017/2263.shader_test [0]                              56       104[31m        48[0m[31m   85.71 %[0m
+ shaders/serioussam2017/2160.shader_test [0]                              56       104[31m        48[0m[31m   85.71 %[0m
+ shaders/xcom2/1245.shader_test [0]                                       48        96[31m        48[0m[31m  100.00 %[0m
+ shaders/serioussam2017/2260.shader_test [0]                              56       104[31m        48[0m[31m   85.71 %[0m
+ shaders/alien_isolation/3055.shader_test [1]                             56       104[31m        48[0m[31m   85.71 %[0m
+ shaders/alien_isolation/2968.shader_test [1]                             56       104[31m        48[0m[31m   85.71 %[0m
+ shaders/alien_isolation/5207.shader_test [1]                             40        88[31m        48[0m[31m  120.00 %[0m
+ shaders/serioussam2017/2221.shader_test [0]                              56       104[31m        48[0m[31m   85.71 %[0m
+ shaders/deadisland_definitive/2226.shader_test [0]                       32        80[31m        48[0m[31m  150.00 %[0m
+ shaders/xcom/1032.shader_test [0]                                        40        88[31m        48[0m[31m  120.00 %[0m
+ shaders/alien_isolation/5260.shader_test [1]                             40        80[31m        40[0m[31m  100.00 %[0m
+ shaders/talos/1985.shader_test [0]                                       64       104[31m        40[0m[31m   62.50 %[0m
+ shaders/alien_isolation/3062.shader_test [1]                             48        88[31m        40[0m[31m   83.33 %[0m
+ shaders/csgo/2274.shader_test [0]                                        32        72[31m        40[0m[31m  125.00 %[0m
+ shaders/csgo/4185.shader_test [0]                                        40        80[31m        40[0m[31m  100.00 %[0m
+ shaders/dyinglight/3890.shader_test [0]                                  32        72[31m        40[0m[31m  125.00 %[0m
+ shaders/talos/1986.shader_test [0]                                       64       104[31m        40[0m[31m   62.50 %[0m
+ shaders/f1_2015/1428.shader_test [0]                                     48        88[31m        40[0m[31m   83.33 %[0m
+ shaders/alien_isolation/745.shader_test [0]                              40        80[31m        40[0m[31m  100.00 %[0m
+ shaders/total_war_warhammer/236.shader_test [0]                          40        80[31m        40[0m[31m  100.00 %[0m
+ shaders/alien_isolation/2867.shader_test [1]                             56        96[31m        40[0m[31m   71.43 %[0m
+ shaders/cat/1835.shader_test [0]                                         56        96[31m        40[0m[31m   71.43 %[0m
+ shaders/csgo/2279.shader_test [0]                                        32        72[31m        40[0m[31m  125.00 %[0m
+ shaders/tombraider/2182.shader_test [0]                                  48        88[31m        40[0m[31m   83.33 %[0m
+ shaders/csgo/2138.shader_test [0]                                        56        96[31m        40[0m[31m   71.43 %[0m
+ shaders/alien_isolation/747.shader_test [0]                              32        72[31m        40[0m[31m  125.00 %[0m
+ shaders/alien_isolation/2932.shader_test [1]                             64       104[31m        40[0m[31m   62.50 %[0m
+ shaders/dyinglight/10869.shader_test [0]                                 48        88[31m        40[0m[31m   83.33 %[0m
+ shaders/alien_isolation/5276.shader_test [1]                             48        88[31m        40[0m[31m   83.33 %[0m
+ shaders/unity/24-Tree.shader_test [0]                                    24        64[31m        40[0m[31m  166.67 %[0m
+ shaders/madmax/1894.shader_test [0]                                      48        88[31m        40[0m[31m   83.33 %[0m
+ shaders/alien_isolation/5930.shader_test [0]                             40        80[31m        40[0m[31m  100.00 %[0m
+
+[1;33m WORST REGRESSIONS - VGPRS                                            Before     After     Delta Percentage[0m
+ shaders/cat/2031.shader_test [0]                                         16       188[31m       172[0m[31m 1075.00 %[0m
+ shaders/cat/1826.shader_test [1]                                         32        64[31m        32[0m[31m  100.00 %[0m
+ shaders/cat/1996.shader_test [0]                                         36        64[31m        28[0m[31m   77.78 %[0m
+ shaders/madmax/608.shader_test [0]                                       88       116[31m        28[0m[31m   31.82 %[0m
+ shaders/csgo/805.shader_test [1]                                         68        92[31m        24[0m[31m   35.29 %[0m
+ shaders/cat/1995.shader_test [0]                                         36        60[31m        24[0m[31m   66.67 %[0m
+ shaders/talos/1560.shader_test [1]                                       36        60[31m        24[0m[31m   66.67 %[0m
+ shaders/w40kdawn3/1462.shader_test [0]                                   88       112[31m        24[0m[31m   27.27 %[0m
+ shaders/talos/1548.shader_test [0]                                       36        60[31m        24[0m[31m   66.67 %[0m
+ shaders/csgo/774.shader_test [1]                                         64        84[31m        20[0m[31m   31.25 %[0m
+ shaders/borderlands2/2608.shader_test [0]                                36        56[31m        20[0m[31m   55.56 %[0m
+ shaders/serioussam2017/2244.shader_test [0]                              36        56[31m        20[0m[31m   55.56 %[0m
+ shaders/total_war_shogun_2/1108.shader_test [0]                          44        64[31m        20[0m[31m   45.45 %[0m
+ shaders/talos/1513.shader_test [1]                                       40        60[31m        20[0m[31m   50.00 %[0m
+ shaders/talos/1546.shader_test [1]                                       40        60[31m        20[0m[31m   50.00 %[0m
+ shaders/cat/2021.shader_test [0]                                         48        68[31m        20[0m[31m   41.67 %[0m
+ shaders/dirtrallye/2530.shader_test [0]                                  40        60[31m        20[0m[31m   50.00 %[0m
+ shaders/xcom2/1137.shader_test [1]                                       32        52[31m        20[0m[31m   62.50 %[0m
+ shaders/bioshock_infinite/96.shader_test [0]                             44        60[31m        16[0m[31m   36.36 %[0m
+ shaders/dyinglight/10576.shader_test [0]                                 16        32[31m        16[0m[31m  100.00 %[0m
+ shaders/madmax/2706.shader_test [0]                                      36        52[31m        16[0m[31m   44.44 %[0m
+ shaders/csgo/4167.shader_test [1]                                        56        72[31m        16[0m[31m   28.57 %[0m
+ shaders/dyinglight/11490.shader_test [0]                                 36        52[31m        16[0m[31m   44.44 %[0m
+ shaders/deadisland_definitive/4379.shader_test [0]                       16        32[31m        16[0m[31m  100.00 %[0m
+ shaders/dyinglight/11724.shader_test [0]                                 24        40[31m        16[0m[31m   66.67 %[0m
+ shaders/xcom2/1101.shader_test [1]                                       32        48[31m        16[0m[31m   50.00 %[0m
+ shaders/deadisland_definitive/2760.shader_test [0]                       36        52[31m        16[0m[31m   44.44 %[0m
+ shaders/xcom2/1428.shader_test [0]                                       48        64[31m        16[0m[31m   33.33 %[0m
+ shaders/f1_2015/2072.shader_test [0]                                     24        40[31m        16[0m[31m   66.67 %[0m
+ shaders/dyinglight/10294.shader_test [0]                                 16        32[31m        16[0m[31m  100.00 %[0m
+ shaders/f1_2015/1062.shader_test [0]                                     24        40[31m        16[0m[31m   66.67 %[0m
+ shaders/xcom2/1524.shader_test [0]                                       48        64[31m        16[0m[31m   33.33 %[0m
+ shaders/cat/1993.shader_test [1]                                         32        48[31m        16[0m[31m   50.00 %[0m
+ shaders/csgo/4168.shader_test [1]                                        60        76[31m        16[0m[31m   26.67 %[0m
+ shaders/borderlands2/3724.shader_test [0]                                36        52[31m        16[0m[31m   44.44 %[0m
+ shaders/csgo/4151.shader_test [1]                                        56        72[31m        16[0m[31m   28.57 %[0m
+ shaders/csgo/4134.shader_test [0]                                        36        48[31m        12[0m[31m   33.33 %[0m
+ shaders/tombraider/4488.shader_test [0]                                  28        40[31m        12[0m[31m   42.86 %[0m
+ shaders/csgo/4171.shader_test [1]                                        68        80[31m        12[0m[31m   17.65 %[0m
+ shaders/dyinglight/8156.shader_test [0]                                  20        32[31m        12[0m[31m   60.00 %[0m
+
+[1;33m WORST REGRESSIONS - Spilled SGPRs                                    Before     After     Delta Percentage[0m
+ shaders/talos/1950.shader_test [1]                                        0       152[31m       152[0m[31m     inf %[0m
+ shaders/talos/1995.shader_test [1]                                        0       124[31m       124[0m[31m     inf %[0m
+ shaders/talos/1949.shader_test [1]                                        0       108[31m       108[0m[31m     inf %[0m
+ shaders/talos/2037.shader_test [1]                                       10       104[31m        94[0m[31m  940.00 %[0m
+ shaders/talos/2029.shader_test [1]                                       10       104[31m        94[0m[31m  940.00 %[0m
+ shaders/talos/2036.shader_test [1]                                       10       104[31m        94[0m[31m  940.00 %[0m
+ shaders/talos/1945.shader_test [1]                                       10       104[31m        94[0m[31m  940.00 %[0m
+ shaders/dirtrallye/1852.shader_test [0]                                   0        66[31m        66[0m[31m     inf %[0m
+ shaders/talos/2035.shader_test [1]                                       24        88[31m        64[0m[31m  266.67 %[0m
+ shaders/dirtrallye/1722.shader_test [0]                                   0        64[31m        64[0m[31m     inf %[0m
+ shaders/dirtrallye/1096.shader_test [0]                                   0        64[31m        64[0m[31m     inf %[0m
+ shaders/talos/2084.shader_test [1]                                       24        88[31m        64[0m[31m  266.67 %[0m
+ shaders/talos/2046.shader_test [1]                                       24        88[31m        64[0m[31m  266.67 %[0m
+ shaders/talos/2085.shader_test [1]                                       24        88[31m        64[0m[31m  266.67 %[0m
+ shaders/w40kdawn2/416.shader_test [1]                                     8        68[31m        60[0m[31m  750.00 %[0m
+ shaders/w40kdawn2/415.shader_test [0]                                     8        68[31m        60[0m[31m  750.00 %[0m
+ shaders/talos/2059.shader_test [1]                                       26        84[31m        58[0m[31m  223.08 %[0m
+ shaders/dirtrallye/1782.shader_test [0]                                   0        58[31m        58[0m[31m     inf %[0m
+ shaders/total_war_shogun_2/762.shader_test [0]                            3        60[31m        57[0m[31m 1900.00 %[0m
+ shaders/dirtrallye/948.shader_test [0]                                    0        56[31m        56[0m[31m     inf %[0m
+ shaders/dirtrallye/490.shader_test [0]                                    0        56[31m        56[0m[31m     inf %[0m
+ shaders/w40kdawn2/413.shader_test [0]                                     0        56[31m        56[0m[31m     inf %[0m
+ shaders/f1_2015/1560.shader_test [0]                                      0        56[31m        56[0m[31m     inf %[0m
+ shaders/dirtrallye/670.shader_test [0]                                    0        54[31m        54[0m[31m     inf %[0m
+ shaders/dirtrallye/1172.shader_test [0]                                   0        54[31m        54[0m[31m     inf %[0m
+ shaders/total_war_shogun_2/758.shader_test [0]                            1        54[31m        53[0m[31m 5300.00 %[0m
+ shaders/total_war_shogun_2/1082.shader_test [0]                           0        52[31m        52[0m[31m     inf %[0m
+ shaders/f1_2015/1514.shader_test [0]                                      0        48[31m        48[0m[31m     inf %[0m
+ shaders/metro2033redux/6783.shader_test [1]                               0        46[31m        46[0m[31m     inf %[0m
+ shaders/dirtrallye/710.shader_test [0]                                    0        46[31m        46[0m[31m     inf %[0m
+ shaders/metro2033redux/13646.shader_test [1]                              0        46[31m        46[0m[31m     inf %[0m
+ shaders/metro2033redux/2334.shader_test [1]                               0        46[31m        46[0m[31m     inf %[0m
+ shaders/metro2033redux/9718.shader_test [1]                               0        46[31m        46[0m[31m     inf %[0m
+ shaders/dirtrallye/1056.shader_test [0]                                   0        44[31m        44[0m[31m     inf %[0m
+ shaders/dirtrallye/186.shader_test [0]                                    0        44[31m        44[0m[31m     inf %[0m
+ shaders/dirtrallye/80.shader_test [0]                                     0        44[31m        44[0m[31m     inf %[0m
+ shaders/dirtrallye/588.shader_test [0]                                    0        40[31m        40[0m[31m     inf %[0m
+ shaders/dirtrallye/3516.shader_test [0]                                   0        40[31m        40[0m[31m     inf %[0m
+ shaders/w40kdawn2/420.shader_test [0]                                     5        44[31m        39[0m[31m  780.00 %[0m
+ shaders/dirtrallye/1766.shader_test [0]                                   0        38[31m        38[0m[31m     inf %[0m
+
+[1;33m WORST REGRESSIONS - Spilled VGPRs                                    Before     After     Delta Percentage[0m
+ shaders/dirtrallye/1264.shader_test [0]                                  49        71[31m        22[0m[31m   44.90 %[0m
+
+[1;33m WORST REGRESSIONS - Scratch size                                     Before     After     Delta Percentage[0m
+ shaders/dirtrallye/1264.shader_test [0]                                  36        48[31m        12[0m[31m   33.33 %[0m
+
+[1;33m WORST REGRESSIONS - Code Size                                        Before     After     Delta Percentage[0m
+ shaders/talos/1950.shader_test [1]                                     3968      6024[31m      2056[0m[31m   51.81 %[0m
+ shaders/talos/1995.shader_test [1]                                     3776      5384[31m      1608[0m[31m   42.58 %[0m
+ shaders/talos/1949.shader_test [1]                                     3528      4820[31m      1292[0m[31m   36.62 %[0m
+ shaders/f1_2015/1560.shader_test [0]                                   2588      3608[31m      1020[0m[31m   39.41 %[0m
+ shaders/talos/2037.shader_test [1]                                     4060      5000[31m       940[0m[31m   23.15 %[0m
+ shaders/talos/2029.shader_test [1]                                     4060      5000[31m       940[0m[31m   23.15 %[0m
+ shaders/talos/2036.shader_test [1]                                     4060      5000[31m       940[0m[31m   23.15 %[0m
+ shaders/talos/1945.shader_test [1]                                     4060      5000[31m       940[0m[31m   23.15 %[0m
+ shaders/f1_2015/1514.shader_test [0]                                   2536      3424[31m       888[0m[31m   35.02 %[0m
+ shaders/total_war_shogun_2/758.shader_test [0]                         2704      3444[31m       740[0m[31m   27.37 %[0m
+ shaders/metro2033redux/6783.shader_test [1]                            5948      6608[31m       660[0m[31m   11.10 %[0m
+ shaders/metro2033redux/13646.shader_test [1]                           5948      6608[31m       660[0m[31m   11.10 %[0m
+ shaders/metro2033redux/2334.shader_test [1]                            5948      6608[31m       660[0m[31m   11.10 %[0m
+ shaders/metro2033redux/9718.shader_test [1]                            5948      6608[31m       660[0m[31m   11.10 %[0m
+ shaders/f1_2015/1522.shader_test [0]                                   2220      2876[31m       656[0m[31m   29.55 %[0m
+ shaders/total_war_shogun_2/1082.shader_test [0]                        3064      3700[31m       636[0m[31m   20.76 %[0m
+ shaders/f1_2015/1566.shader_test [0]                                   2220      2824[31m       604[0m[31m   27.21 %[0m
+ shaders/f1_2015/1546.shader_test [0]                                   2220      2820[31m       600[0m[31m   27.03 %[0m
+ shaders/dirtrallye/1852.shader_test [0]                                3204      3788[31m       584[0m[31m   18.23 %[0m
+ shaders/total_war_shogun_2/762.shader_test [0]                         3472      4052[31m       580[0m[31m   16.71 %[0m
+ shaders/dirtrallye/1722.shader_test [0]                                3260      3808[31m       548[0m[31m   16.81 %[0m
+ shaders/dirtrallye/1096.shader_test [0]                                3260      3796[31m       536[0m[31m   16.44 %[0m
+ shaders/w40kdawn2/413.shader_test [0]                                  3272      3784[31m       512[0m[31m   15.65 %[0m
+ shaders/f1_2015/1576.shader_test [0]                                   2292      2804[31m       512[0m[31m   22.34 %[0m
+ shaders/w40kdawn2/416.shader_test [1]                                  3664      4164[31m       500[0m[31m   13.65 %[0m
+ shaders/w40kdawn2/415.shader_test [0]                                  3664      4164[31m       500[0m[31m   13.65 %[0m
+ shaders/talos/2035.shader_test [1]                                     5412      5884[31m       472[0m[31m    8.72 %[0m
+ shaders/talos/2084.shader_test [1]                                     5412      5884[31m       472[0m[31m    8.72 %[0m
+ shaders/talos/2046.shader_test [1]                                     5412      5884[31m       472[0m[31m    8.72 %[0m
+ shaders/talos/2085.shader_test [1]                                     5412      5884[31m       472[0m[31m    8.72 %[0m
+ shaders/dirtrallye/670.shader_test [0]                                 3048      3452[31m       404[0m[31m   13.25 %[0m
+ shaders/dirtrallye/1172.shader_test [0]                                3340      3684[31m       344[0m[31m   10.30 %[0m
+ shaders/f1_2015/1490.shader_test [0]                                   2768      3096[31m       328[0m[31m   11.85 %[0m
+ shaders/talos/2059.shader_test [1]                                     5328      5640[31m       312[0m[31m    5.86 %[0m
+ shaders/w40kdawn2/414.shader_test [0]                                  2880      3120[31m       240[0m[31m    8.33 %[0m
+ shaders/w40kdawn2/420.shader_test [0]                                  3216      3440[31m       224[0m[31m    6.97 %[0m
+ shaders/metro2033redux/5961.shader_test [1]                            5536      5752[31m       216[0m[31m    3.90 %[0m
+ shaders/metro2033redux/1082.shader_test [1]                            5536      5752[31m       216[0m[31m    3.90 %[0m
+ shaders/metro2033redux/8628.shader_test [1]                            5536      5752[31m       216[0m[31m    3.90 %[0m
+ shaders/metro2033redux/12948.shader_test [1]                           5536      5752[31m       216[0m[31m    3.90 %[0m
+
+[1;33m WORST REGRESSIONS - Max Waves                                        Before     After     Delta Percentage[0m
+ shaders/cat/2031.shader_test [0]                                          8         1[31m        -7[0m[31m  -87.50 %[0m
+ shaders/cat/1826.shader_test [1]                                          8         4[31m        -4[0m[31m  -50.00 %[0m
+ shaders/xcom2/1137.shader_test [1]                                        8         4[31m        -4[0m[31m  -50.00 %[0m
+ shaders/cat/1995.shader_test [0]                                          7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/madmax/2706.shader_test [0]                                       7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/alien_isolation/2932.shader_test [1]                              8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/dyinglight/11490.shader_test [0]                                  7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/cat/1996.shader_test [0]                                          7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/bioshock_infinite/1562.shader_test [0]                            8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/talos/1560.shader_test [1]                                        7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/talos/1589.shader_test [0]                                        8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/borderlands2/2608.shader_test [0]                                 7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/xcom2/1101.shader_test [1]                                        8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/alien_isolation/2933.shader_test [0]                              8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/deadisland_definitive/2760.shader_test [0]                        7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/serioussam2017/2244.shader_test [0]                               7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/talos/1541.shader_test [0]                                        8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/talos/1548.shader_test [0]                                        7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/talos/2087.shader_test [0]                                        8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/cat/1993.shader_test [1]                                          8         5[31m        -3[0m[31m  -37.50 %[0m
+ shaders/borderlands2/3724.shader_test [0]                                 7         4[31m        -3[0m[31m  -42.86 %[0m
+ shaders/csgo/4134.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/tombraider/4488.shader_test [0]                                   8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/alien_isolation/5277.shader_test [1]                              8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/csgo/4146.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/csgo/2417.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/alien_isolation/2905.shader_test [1]                              7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/deadisland_definitive/452.shader_test [0]                         8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/csgo/2427.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/bioshock_infinite/1614.shader_test [0]                            8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/serioussam2017/2278.shader_test [0]                               8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/deadisland_definitive/2275.shader_test [0]                        7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/csgo/2277.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/dyinglight/10869.shader_test [0]                                  8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/csgo/4130.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/csgo/4127.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/csgo/4129.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+ shaders/alien_isolation/5276.shader_test [1]                              8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/tombraider/4492.shader_test [0]                                   8         6[31m        -2[0m[31m  -25.00 %[0m
+ shaders/csgo/2297.shader_test [0]                                         7         5[31m        -2[0m[31m  -28.57 %[0m
+
+[1;33m PERCENTAGE DELTAS    Shaders     SGPRs     VGPRs SpillSGPR SpillVGPR  PrivVGPR   Scratch  CodeSize  MaxWaves     Waits[0m
+ 0ad                        6[1;32m   -3.57 %[0m     .         .         .         .         .    [1;32m  -17.67 %[0m     .         .    
+ alien_isolation         2012[31m    1.97 %[0m[1;32m   -1.73 %[0m[31m     inf %[0m[1;32m  -75.00 %[0m     .    [1;32m  -75.00 %[0m[1;32m  -11.41 %[0m   -0.25 %     .    
+ anholt                    10[1;32m  -11.11 %[0m[1;32m   -2.50 %[0m     .         .         .         .    [1;32m  -16.42 %[0m     .         .    
+ bioshock_infinite       1621[1;32m   -6.16 %[0m[1;32m   -0.65 %[0m     .         .         .         .    [1;32m  -15.30 %[0m[1;32m    1.43 %[0m     .    
+ borderlands2             512[1;32m   -4.91 %[0m   -0.04 %     .         .         .         .    [1;32m  -17.92 %[0m    0.42 %     .    
+ cat                      573[1;32m   -3.78 %[0m[1;32m   -5.97 %[0m[31m  270.37 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -12.81 %[0m[1;32m    2.89 %[0m     .    
+ csgo                    1178[1;32m   -1.82 %[0m    0.13 %[31m     inf %[0m     .         .         .    [1;32m  -20.69 %[0m[1;32m    1.15 %[0m     .    
+ deadisland_definitive   1766[31m    5.73 %[0m[31m    5.15 %[0m[31m     inf %[0m     .         .         .    [1;32m   -7.33 %[0m    0.43 %     .    
+ dirtrallye               785[31m    3.06 %[0m[1;32m  -10.20 %[0m[31m27118.18 %[0m[1;32m  -21.11 %[0m     .    [1;32m  -52.00 %[0m[1;32m  -14.73 %[0m[1;32m    4.48 %[0m     .    
+ dolphin                   22[31m    4.60 %[0m[31m    2.47 %[0m     .         .         .         .    [1;32m  -28.20 %[0m     .         .    
+ dyinglight              3984[31m    3.60 %[0m[31m    6.64 %[0m     .         .         .         .    [1;32m   -7.99 %[0m[1;32m    0.52 %[0m     .    
+ eurotruck2               288[1;32m   -5.87 %[0m   -0.20 %     .         .         .         .    [1;32m  -19.61 %[0m[1;32m    2.09 %[0m     .    
+ f1_2015                  778[31m    1.53 %[0m[1;32m   -4.43 %[0m[31m   62.22 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -9.04 %[0m[1;32m    2.21 %[0m     .    
+ glamor                    16     .         .         .         .         .         .    [1;32m  -13.83 %[0m     .         .    
+ humus-celshading           4[1;32m  -16.67 %[0m     .         .         .         .         .    [1;32m  -22.48 %[0m     .         .    
+ humus-domino               6[1;32m  -11.11 %[0m     .         .         .         .         .    [1;32m  -14.61 %[0m     .         .    
+ humus-dynamicbranching    24[1;32m   -3.88 %[0m[1;32m   -3.47 %[0m     .         .         .         .    [1;32m  -11.15 %[0m[1;32m    1.60 %[0m     .    
+ humus-hdr                 10[1;32m   -9.38 %[0m     .         .         .         .         .    [1;32m   -4.79 %[0m     .         .    
+ humus-portals              2[1;32m  -30.00 %[0m[31m   10.00 %[0m     .         .         .         .    [1;32m  -12.24 %[0m     .         .    
+ humus-volumetricfog..      6[1;32m  -31.82 %[0m[1;32m   -3.85 %[0m     .         .         .         .    [1;32m  -14.44 %[0m     .         .    
+ madmax                   289[1;32m   -5.14 %[0m[1;32m   -5.50 %[0m[31m    3.61 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -14.66 %[0m[1;32m    4.28 %[0m     .    
+ metro2033redux         25962[1;32m   -6.20 %[0m[1;32m   -3.79 %[0m[31m     inf %[0m     .         .         .    [1;32m  -20.81 %[0m[1;32m    2.82 %[0m     .    
+ nexuiz                    80[1;32m  -12.17 %[0m[31m    1.75 %[0m     .         .         .         .    [1;32m  -15.13 %[0m     .         .    
+ sauerbraten                7[1;32m  -29.41 %[0m[31m    3.85 %[0m     .         .         .         .    [1;32m  -29.08 %[0m     .         .    
+ serioussam2017           368[31m    3.35 %[0m[1;32m   -7.59 %[0m[1;32m  -57.10 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -22.49 %[0m[1;32m    3.42 %[0m     .    
+ soma                     592[1;32m   -6.61 %[0m[1;32m   -3.27 %[0m     .         .         .         .    [1;32m   -9.99 %[0m[1;32m    1.86 %[0m     .    
+ supertuxkart               4[1;32m  -10.00 %[0m[31m    8.33 %[0m     .         .         .         .    [31m    2.14 %[0m     .         .    
+ talos                    774[31m    3.98 %[0m[1;32m   -9.08 %[0m[31m  281.42 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -18.60 %[0m[1;32m    4.69 %[0m     .    
+ tesseract                430[1;32m  -10.70 %[0m[31m    1.72 %[0m     .         .         .         .    [1;32m  -15.06 %[0m     .         .    
+ tombraider              2647[31m    1.41 %[0m[31m    1.81 %[0m[31m  125.20 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -17.45 %[0m    0.31 %     .    
+ total_war_shogun_2       176     .    [1;32m   -5.28 %[0m[31m 5750.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -10.55 %[0m[1;32m    2.01 %[0m     .    
+ total_war_warhammer      259   -0.15 %[1;32m  -11.00 %[0m[1;32m -100.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -10.58 %[0m[1;32m    3.17 %[0m     .    
+ ubershaders               54     .    [1;32m   -3.25 %[0m     .         .         .         .    [1;32m  -16.60 %[0m[1;32m    8.57 %[0m     .    
+ unity                     72[31m    8.03 %[0m[1;32m   -3.16 %[0m     .         .         .         .    [1;32m  -15.23 %[0m[1;32m    1.42 %[0m     .    
+ w40kdawn2               1207[1;32m  -10.98 %[0m[1;32m   -2.76 %[0m[31m 1528.57 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -21.07 %[0m[1;32m    1.34 %[0m     .    
+ w40kdawn3                166[1;32m   -6.18 %[0m[1;32m   -2.59 %[0m[31m     inf %[0m     .         .         .    [1;32m  -15.60 %[0m[1;32m    2.52 %[0m     .    
+ warsow                   176[1;32m   -4.83 %[0m[31m    6.18 %[0m     .         .         .         .    [1;32m  -17.05 %[0m     .         .    
+ warzone2100                4[1;32m   -5.00 %[0m     .         .         .         .         .    [1;32m  -24.72 %[0m     .         .    
+ witcher2                 928[1;32m   -9.65 %[0m[31m    0.81 %[0m[1;32m -100.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m  -19.99 %[0m   -0.19 %     .    
+ x3_albion                641[1;32m   -6.89 %[0m[1;32m   -6.02 %[0m     .         .         .         .    [1;32m  -14.14 %[0m[1;32m    0.83 %[0m     .    
+ xcom                    1050[1;32m  -10.14 %[0m[1;32m   -2.46 %[0m     .         .         .         .    [1;32m  -20.50 %[0m[1;32m    1.53 %[0m     .    
+ xcom2                   1489[1;32m   -1.67 %[0m[1;32m   -0.98 %[0m     .         .         .    [1;32m  -16.67 %[0m[1;32m  -18.53 %[0m[1;32m    0.99 %[0m     .    
+ yofrankie                 82   -0.22 %[1;32m   -4.58 %[0m     .         .         .         .    [1;32m  -18.12 %[0m[1;32m    1.56 %[0m     .    
+ ----------------------------------------------------------------------------------------------------------------------
+ All affected           50667[1;32m   -3.42 %[0m[1;32m   -2.32 %[0m[31m  219.14 %[0m[1;32m  -41.78 %[0m     .    [1;32m  -82.27 %[0m[1;32m  -17.42 %[0m[1;32m    1.99 %[0m     .    
+ ----------------------------------------------------------------------------------------------------------------------
+ Total                  51060[1;32m   -3.40 %[0m[1;32m   -2.31 %[0m[31m  219.14 %[0m[1;32m  -41.78 %[0m     .    [1;32m  -82.27 %[0m[1;32m  -17.37 %[0m[1;32m    1.97 %[0m     .    
+

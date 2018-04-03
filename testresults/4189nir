@@ -1,0 +1,793 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+shader: MESA_SHADER_VERTEX
+name: GLSL1
+inputs: 3
+outputs: 9
+uniforms: 102
+shared: 0
+decl_var uniform INTERP_MODE_NONE vec4[97] vc (0, 0, 0)
+decl_var uniform INTERP_MODE_NONE vec4[3] vcbones (1, 97, 0)
+decl_var uniform INTERP_MODE_NONE vec4 vcscreen (2, 100, 0)
+decl_var uniform INTERP_MODE_NONE int i0 (3, 101, 0)
+decl_var shader_in INTERP_MODE_NONE vec4 v0 (VERT_ATTRIB_GENERIC0, 0, 0)
+decl_var shader_in INTERP_MODE_NONE vec4 v3 (VERT_ATTRIB_GENERIC3, 4, 0)
+decl_var shader_in INTERP_MODE_NONE vec4 v5 (VERT_ATTRIB_GENERIC5, 8, 0)
+decl_var shader_out INTERP_MODE_NONE vec4 gl_Position (VARYING_SLOT_POS, 0, 0)
+decl_var shader_out INTERP_MODE_NONE vec4 gl_ClipVertex (VARYING_SLOT_CLIP_VERTEX, 4, 0)
+decl_var shader_out INTERP_MODE_NONE float oT0 (VARYING_SLOT_VAR0.x, 8, 0)
+decl_var shader_out INTERP_MODE_NONE float oT0@0 (VARYING_SLOT_VAR0.y, 8, 0)
+decl_var shader_out INTERP_MODE_NONE float oT6 (VARYING_SLOT_VAR0.z, 8, 0)
+decl_var shader_out INTERP_MODE_NONE float oT7 (VARYING_SLOT_VAR0.w, 8, 0)
+decl_var shader_out INTERP_MODE_NONE float oT3 (VARYING_SLOT_VAR1.x, 12, 0)
+decl_var shader_out INTERP_MODE_NONE float oT3@1 (VARYING_SLOT_VAR1.y, 12, 0)
+decl_var shader_out INTERP_MODE_NONE float oT3@2 (VARYING_SLOT_VAR1.z, 12, 0)
+decl_var  INTERP_MODE_NONE vec4 v1
+decl_var  INTERP_MODE_NONE vec4 v2
+decl_var  INTERP_MODE_NONE vec4 v4
+decl_var  INTERP_MODE_NONE vec4 v6
+decl_function main returning void
+
+impl main {
+	decl_var  INTERP_MODE_NONE vec4 oTempT7
+	decl_var  INTERP_MODE_NONE vec4 oTempT4
+	decl_var  INTERP_MODE_NONE vec4 oTempT1
+	decl_var  INTERP_MODE_NONE vec4 vTempPos
+	decl_var  INTERP_MODE_NONE vec4 r8
+	decl_var  INTERP_MODE_NONE vec4 r7
+	decl_var  INTERP_MODE_NONE vec4 r6
+	decl_var  INTERP_MODE_NONE vec4 r5
+	decl_var  INTERP_MODE_NONE vec4 r4
+	decl_var  INTERP_MODE_NONE vec4 r3
+	decl_var  INTERP_MODE_NONE vec4 r2
+	decl_var  INTERP_MODE_NONE vec4 r1
+	decl_var  INTERP_MODE_NONE vec4 r0
+	decl_var  INTERP_MODE_NONE vec4 va_r
+	decl_var  INTERP_MODE_NONE vec4 const_temp
+	decl_var  INTERP_MODE_NONE vec4 const_temp@3
+	decl_var  INTERP_MODE_NONE vec4 const_temp@4
+	decl_var  INTERP_MODE_NONE vec2 const_temp@5
+	decl_var  INTERP_MODE_NONE vec2 const_temp@6
+	decl_var  INTERP_MODE_NONE vec2 const_temp@7
+	decl_var  INTERP_MODE_NONE float const_temp@8
+	decl_var  INTERP_MODE_NONE float const_temp@9
+	decl_var  INTERP_MODE_NONE float const_temp@10
+	decl_var  INTERP_MODE_NONE vec2 const_temp@11
+	decl_var  INTERP_MODE_NONE vec2 const_temp@12
+	decl_var  INTERP_MODE_NONE float const_temp@13
+	decl_var  INTERP_MODE_NONE float const_temp@14
+	decl_var  INTERP_MODE_NONE int i
+	decl_var  INTERP_MODE_NONE vec3 const_temp@15
+	decl_var  INTERP_MODE_NONE int const_temp@16
+	decl_var  INTERP_MODE_NONE float const_temp@17
+	decl_var  INTERP_MODE_NONE int const_temp@18
+	decl_var  INTERP_MODE_NONE int const_temp@19
+	decl_var  INTERP_MODE_NONE int const_temp@20
+	decl_var  INTERP_MODE_NONE int const_temp@21
+	decl_var  INTERP_MODE_NONE int const_temp@22
+	decl_var  INTERP_MODE_NONE int const_temp@23
+	decl_var  INTERP_MODE_NONE int const_temp@24
+	decl_var  INTERP_MODE_NONE int const_temp@25
+	decl_var  INTERP_MODE_NONE float const_temp@26
+	decl_var  INTERP_MODE_NONE int const_temp@27
+	decl_var  INTERP_MODE_NONE int const_temp@28
+	decl_var  INTERP_MODE_NONE int const_temp@29
+	decl_var  INTERP_MODE_NONE int const_temp@30
+	decl_var  INTERP_MODE_NONE int const_temp@31
+	decl_var  INTERP_MODE_NONE int const_temp@32
+	decl_var  INTERP_MODE_NONE int const_temp@33
+	decl_var  INTERP_MODE_NONE int i@34
+	decl_var  INTERP_MODE_NONE int const_temp@35
+	decl_var  INTERP_MODE_NONE float const_temp@36
+	decl_var  INTERP_MODE_NONE int const_temp@37
+	decl_var  INTERP_MODE_NONE int const_temp@38
+	decl_var  INTERP_MODE_NONE int const_temp@39
+	decl_var  INTERP_MODE_NONE int const_temp@40
+	decl_var  INTERP_MODE_NONE int const_temp@41
+	decl_var  INTERP_MODE_NONE int const_temp@42
+	decl_var  INTERP_MODE_NONE int const_temp@43
+	decl_var  INTERP_MODE_NONE int const_temp@44
+	decl_var  INTERP_MODE_NONE float const_temp@45
+	decl_var  INTERP_MODE_NONE int const_temp@46
+	decl_var  INTERP_MODE_NONE int const_temp@47
+	decl_var  INTERP_MODE_NONE int const_temp@48
+	decl_var  INTERP_MODE_NONE int const_temp@49
+	decl_var  INTERP_MODE_NONE int const_temp@50
+	decl_var  INTERP_MODE_NONE int const_temp@51
+	decl_var  INTERP_MODE_NONE int const_temp@52
+	decl_var  INTERP_MODE_NONE vec4 in@v0-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v6-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v4-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v2-temp
+	decl_var  INTERP_MODE_NONE vec4 out@oT6-temp
+	decl_var  INTERP_MODE_NONE vec4 out@oT7-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v1-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v5-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v3-temp
+	decl_var  INTERP_MODE_NONE vec4 out@oT0-temp
+	decl_var  INTERP_MODE_NONE vec4 out@gl_Position-temp
+	decl_var  INTERP_MODE_NONE vec4 out@gl_ClipVertex-temp
+	decl_var  INTERP_MODE_NONE vec4 out@oT3-temp
+	decl_var  INTERP_MODE_NONE float oT0@53
+	decl_var  INTERP_MODE_NONE float oT6@54
+	decl_var  INTERP_MODE_NONE float oT6@55
+	decl_var  INTERP_MODE_NONE float oT7@56
+	decl_var  INTERP_MODE_NONE float oT6@57
+	decl_var  INTERP_MODE_NONE float oT7@58
+	decl_var  INTERP_MODE_NONE float oT0@59
+	decl_var  INTERP_MODE_NONE float oT7@60
+	decl_var  INTERP_MODE_NONE float oT3@61
+	block block_0:
+	/* preds: */
+	vec4 32 ssa_0 = intrinsic load_var () (v5) ()
+	vec4 32 ssa_1 = intrinsic load_var () (v3) ()
+	vec4 32 ssa_2 = intrinsic load_var () (v0) ()
+	vec1 32 ssa_3 = load_const (0x00000000 /* 0.000000 */)
+	vec1 32 ssa_4 = load_const (0x000000d0 /* 0.000000 */)
+	vec4 32 ssa_5 = intrinsic load_ubo (ssa_3, ssa_4) () ()
+	vec1 32 ssa_6 = fmul ssa_0.x, ssa_5.x
+	vec1 32 ssa_7 = fmul ssa_0.y, ssa_5.x
+	vec1 32 ssa_8 = fmul ssa_0.z, ssa_5.x
+	vec1 32 ssa_9 = fadd ssa_6, ssa_2.x
+	vec1 32 ssa_10 = fadd ssa_7, ssa_2.y
+	vec1 32 ssa_11 = fadd ssa_8, ssa_2.z
+	vec1 32 ssa_12 = load_const (0x00000610 /* 0.000000 */)
+	vec4 32 ssa_13 = intrinsic load_ubo (ssa_3, ssa_12) () ()
+	vec1 32 ssa_14 = fmul ssa_9, ssa_13.x
+	vec1 32 ssa_15 = fmul ssa_10, ssa_13.y
+	vec1 32 ssa_16 = fadd ssa_14, ssa_15
+	vec1 32 ssa_17 = fmul ssa_11, ssa_13.z
+	vec1 32 ssa_18 = fadd ssa_16, ssa_17
+	vec1 32 ssa_19 = fmul ssa_2.w, ssa_13.w
+	vec1 32 ssa_20 = fadd ssa_18, ssa_19
+	vec1 32 ssa_21 = load_const (0x00000620 /* 0.000000 */)
+	vec4 32 ssa_22 = intrinsic load_ubo (ssa_3, ssa_21) () ()
+	vec1 32 ssa_23 = fmul ssa_9, ssa_22.x
+	vec1 32 ssa_24 = fmul ssa_10, ssa_22.y
+	vec1 32 ssa_25 = fadd ssa_23, ssa_24
+	vec1 32 ssa_26 = fmul ssa_11, ssa_22.z
+	vec1 32 ssa_27 = fadd ssa_25, ssa_26
+	vec1 32 ssa_28 = fmul ssa_2.w, ssa_22.w
+	vec1 32 ssa_29 = fadd ssa_27, ssa_28
+	vec1 32 ssa_30 = load_const (0x00000630 /* 0.000000 */)
+	vec4 32 ssa_31 = intrinsic load_ubo (ssa_3, ssa_30) () ()
+	vec1 32 ssa_32 = fmul ssa_9, ssa_31.x
+	vec1 32 ssa_33 = fmul ssa_10, ssa_31.y
+	vec1 32 ssa_34 = fadd ssa_32, ssa_33
+	vec1 32 ssa_35 = fmul ssa_11, ssa_31.z
+	vec1 32 ssa_36 = fadd ssa_34, ssa_35
+	vec1 32 ssa_37 = fmul ssa_2.w, ssa_31.w
+	vec1 32 ssa_38 = fadd ssa_36, ssa_37
+	vec1 32 ssa_39 = load_const (0x00000300 /* 0.000000 */)
+	vec4 32 ssa_40 = intrinsic load_ubo (ssa_3, ssa_39) () ()
+	vec1 32 ssa_41 = fmul ssa_1.x, ssa_40.x
+	vec1 32 ssa_42 = fmul ssa_1.y, ssa_40.y
+	vec1 32 ssa_43 = fadd ssa_41, ssa_42
+	vec1 32 ssa_44 = fmul ssa_1.z, ssa_40.z
+	vec1 32 ssa_45 = fadd ssa_43, ssa_44
+	vec1 32 ssa_46 = fmul ssa_1.w, ssa_40.w
+	vec1 32 ssa_47 = fadd ssa_45, ssa_46
+	vec1 32 ssa_48 = load_const (0x00000310 /* 0.000000 */)
+	vec4 32 ssa_49 = intrinsic load_ubo (ssa_3, ssa_48) () ()
+	vec1 32 ssa_50 = fmul ssa_1.x, ssa_49.x
+	vec1 32 ssa_51 = fmul ssa_1.y, ssa_49.y
+	vec1 32 ssa_52 = fadd ssa_50, ssa_51
+	vec1 32 ssa_53 = fmul ssa_1.z, ssa_49.z
+	vec1 32 ssa_54 = fadd ssa_52, ssa_53
+	vec1 32 ssa_55 = fmul ssa_1.w, ssa_49.w
+	vec1 32 ssa_56 = fadd ssa_54, ssa_55
+	vec4 32 ssa_57 = intrinsic load_ubo (ssa_3, ssa_3) () ()
+	vec1 32 ssa_58 = load_const (0x00000080 /* 0.000000 */)
+	vec4 32 ssa_59 = intrinsic load_ubo (ssa_3, ssa_58) () ()
+	vec1 32 ssa_60 = fmul ssa_20, ssa_59.x
+	vec1 32 ssa_61 = fmul ssa_29, ssa_59.y
+	vec1 32 ssa_62 = fadd ssa_60, ssa_61
+	vec1 32 ssa_63 = fmul ssa_38, ssa_59.z
+	vec1 32 ssa_64 = fadd ssa_62, ssa_63
+	vec1 32 ssa_65 = fmul ssa_57.y, ssa_59.w
+	vec1 32 ssa_66 = fadd ssa_64, ssa_65
+	vec1 32 ssa_67 = load_const (0x00000090 /* 0.000000 */)
+	vec4 32 ssa_68 = intrinsic load_ubo (ssa_3, ssa_67) () ()
+	vec1 32 ssa_69 = fmul ssa_20, ssa_68.x
+	vec1 32 ssa_70 = fmul ssa_29, ssa_68.y
+	vec1 32 ssa_71 = fadd ssa_69, ssa_70
+	vec1 32 ssa_72 = fmul ssa_38, ssa_68.z
+	vec1 32 ssa_73 = fadd ssa_71, ssa_72
+	vec1 32 ssa_74 = fmul ssa_57.y, ssa_68.w
+	vec1 32 ssa_75 = fadd ssa_73, ssa_74
+	vec1 32 ssa_76 = load_const (0x000000a0 /* 0.000000 */)
+	vec4 32 ssa_77 = intrinsic load_ubo (ssa_3, ssa_76) () ()
+	vec1 32 ssa_78 = fmul ssa_20, ssa_77.x
+	vec1 32 ssa_79 = fmul ssa_29, ssa_77.y
+	vec1 32 ssa_80 = fadd ssa_78, ssa_79
+	vec1 32 ssa_81 = fmul ssa_38, ssa_77.z
+	vec1 32 ssa_82 = fadd ssa_80, ssa_81
+	vec1 32 ssa_83 = fmul ssa_57.y, ssa_77.w
+	vec1 32 ssa_84 = fadd ssa_82, ssa_83
+	vec1 32 ssa_85 = load_const (0x000000b0 /* 0.000000 */)
+	vec4 32 ssa_86 = intrinsic load_ubo (ssa_3, ssa_85) () ()
+	vec1 32 ssa_87 = fmul ssa_20, ssa_86.x
+	vec1 32 ssa_88 = fmul ssa_29, ssa_86.y
+	vec1 32 ssa_89 = fadd ssa_87, ssa_88
+	vec1 32 ssa_90 = fmul ssa_38, ssa_86.z
+	vec1 32 ssa_91 = fadd ssa_89, ssa_90
+	vec1 32 ssa_92 = fmul ssa_57.y, ssa_86.w
+	vec1 32 ssa_93 = fadd ssa_91, ssa_92
+	vec1 32 ssa_94 = fmul ssa_84, ssa_57.z
+	vec1 32 ssa_95 = fneg ssa_93
+	vec1 32 ssa_96 = fadd ssa_94, ssa_95
+	vec1 32 ssa_97 = fneg ssa_75
+	vec1 32 ssa_98 = load_const (0x00000640 /* 0.000000 */)
+	vec4 32 ssa_99 = intrinsic load_ubo (ssa_3, ssa_98) () ()
+	vec1 32 ssa_100 = fmul ssa_99.x, ssa_93
+	vec1 32 ssa_101 = fmul ssa_99.y, ssa_93
+	vec1 32 ssa_102 = fadd ssa_66, ssa_100
+	vec1 32 ssa_103 = fadd ssa_97, ssa_101
+	vec4 32 ssa_104 = vec4 ssa_102, ssa_103, ssa_96, ssa_93
+	intrinsic store_var (ssa_104) (gl_Position) (15) /* wrmask=xyzw */
+	vec4 32 ssa_105 = vec4 ssa_66, ssa_75, ssa_84, ssa_93
+	intrinsic store_var (ssa_105) (gl_ClipVertex) (15) /* wrmask=xyzw */
+	intrinsic store_var (ssa_47) (oT0) (1) /* wrmask=x */
+	intrinsic store_var (ssa_56) (oT0@0) (1) /* wrmask=x */
+	intrinsic store_var (ssa_20) (oT3) (1) /* wrmask=x */
+	intrinsic store_var (ssa_29) (oT3@1) (1) /* wrmask=x */
+	intrinsic store_var (ssa_38) (oT3@2) (1) /* wrmask=x */
+	vec1 32 ssa_106 = imov ssa_57.x
+	intrinsic store_var (ssa_106) (oT6) (1) /* wrmask=x */
+	intrinsic store_var (ssa_84) (oT7) (1) /* wrmask=x */
+	/* succs: block_0 */
+	block block_0:
+}
+
+radeonsi: Compiling shader 1
+TGSI shader LLVM IR:
+
+; ModuleID = 'tgsi'
+source_filename = "tgsi"
+target datalayout = "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5"
+target triple = "amdgcn--"
+
+define amdgpu_vs void @main([0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), i32 inreg, i32 inreg, i32 inreg, i32 inreg, [0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), i32, i32, i32, i32, i32, i32, i32) #0 {
+main_body:
+  %16 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 0, !amdgpu.uniform !0
+  %17 = load <4 x i32>, <4 x i32> addrspace(6)* %16, align 16, !invariant.load !0
+  %18 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %17, i32 %13, i32 0, i1 false, i1 false) #2
+  %19 = extractelement <4 x float> %18, i32 0
+  %20 = extractelement <4 x float> %18, i32 1
+  %21 = extractelement <4 x float> %18, i32 2
+  %22 = extractelement <4 x float> %18, i32 3
+  %23 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 1, !amdgpu.uniform !0
+  %24 = load <4 x i32>, <4 x i32> addrspace(6)* %23, align 16, !invariant.load !0
+  %25 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %24, i32 %14, i32 0, i1 false, i1 false) #2
+  %26 = extractelement <4 x float> %25, i32 0
+  %27 = extractelement <4 x float> %25, i32 1
+  %28 = extractelement <4 x float> %25, i32 2
+  %29 = extractelement <4 x float> %25, i32 3
+  %30 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 2, !amdgpu.uniform !0
+  %31 = load <4 x i32>, <4 x i32> addrspace(6)* %30, align 16, !invariant.load !0
+  %32 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %31, i32 %15, i32 0, i1 false, i1 false) #2
+  %33 = extractelement <4 x float> %32, i32 0
+  %34 = extractelement <4 x float> %32, i32 1
+  %35 = extractelement <4 x float> %32, i32 2
+  %36 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %37 = load <4 x i32>, <4 x i32> addrspace(6)* %36, align 16, !invariant.load !0
+  %38 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 208)
+  %39 = fmul nsz float %33, %38
+  %40 = fmul nsz float %34, %38
+  %41 = fmul nsz float %35, %38
+  %42 = fadd nsz float %39, %19
+  %43 = fadd nsz float %40, %20
+  %44 = fadd nsz float %41, %21
+  %45 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1552)
+  %46 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1556)
+  %47 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1560)
+  %48 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1564)
+  %49 = fmul nsz float %42, %45
+  %50 = fmul nsz float %43, %46
+  %51 = fadd nsz float %49, %50
+  %52 = fmul nsz float %44, %47
+  %53 = fadd nsz float %51, %52
+  %54 = fmul nsz float %22, %48
+  %55 = fadd nsz float %53, %54
+  %56 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1568)
+  %57 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1572)
+  %58 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1576)
+  %59 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1580)
+  %60 = fmul nsz float %42, %56
+  %61 = fmul nsz float %43, %57
+  %62 = fadd nsz float %60, %61
+  %63 = fmul nsz float %44, %58
+  %64 = fadd nsz float %62, %63
+  %65 = fmul nsz float %22, %59
+  %66 = fadd nsz float %64, %65
+  %67 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1584)
+  %68 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1588)
+  %69 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1592)
+  %70 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1596)
+  %71 = fmul nsz float %42, %67
+  %72 = fmul nsz float %43, %68
+  %73 = fadd nsz float %71, %72
+  %74 = fmul nsz float %44, %69
+  %75 = fadd nsz float %73, %74
+  %76 = fmul nsz float %22, %70
+  %77 = fadd nsz float %75, %76
+  %78 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 768)
+  %79 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 772)
+  %80 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 776)
+  %81 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 780)
+  %82 = fmul nsz float %26, %78
+  %83 = fmul nsz float %27, %79
+  %84 = fadd nsz float %82, %83
+  %85 = fmul nsz float %28, %80
+  %86 = fadd nsz float %84, %85
+  %87 = fmul nsz float %29, %81
+  %88 = fadd nsz float %86, %87
+  %89 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 784)
+  %90 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 788)
+  %91 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 792)
+  %92 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 796)
+  %93 = fmul nsz float %26, %89
+  %94 = fmul nsz float %27, %90
+  %95 = fadd nsz float %93, %94
+  %96 = fmul nsz float %28, %91
+  %97 = fadd nsz float %95, %96
+  %98 = fmul nsz float %29, %92
+  %99 = fadd nsz float %97, %98
+  %100 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 0)
+  %101 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 4)
+  %102 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 8)
+  %103 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 128)
+  %104 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 132)
+  %105 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 136)
+  %106 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 140)
+  %107 = fmul nsz float %55, %103
+  %108 = fmul nsz float %66, %104
+  %109 = fadd nsz float %107, %108
+  %110 = fmul nsz float %77, %105
+  %111 = fadd nsz float %109, %110
+  %112 = fmul nsz float %101, %106
+  %113 = fadd nsz float %111, %112
+  %114 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 144)
+  %115 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 148)
+  %116 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 152)
+  %117 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 156)
+  %118 = fmul nsz float %55, %114
+  %119 = fmul nsz float %66, %115
+  %120 = fadd nsz float %118, %119
+  %121 = fmul nsz float %77, %116
+  %122 = fadd nsz float %120, %121
+  %123 = fmul nsz float %101, %117
+  %124 = fadd nsz float %122, %123
+  %125 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 160)
+  %126 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 164)
+  %127 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 168)
+  %128 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 172)
+  %129 = fmul nsz float %55, %125
+  %130 = fmul nsz float %66, %126
+  %131 = fadd nsz float %129, %130
+  %132 = fmul nsz float %77, %127
+  %133 = fadd nsz float %131, %132
+  %134 = fmul nsz float %101, %128
+  %135 = fadd nsz float %133, %134
+  %136 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 176)
+  %137 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 180)
+  %138 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 184)
+  %139 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 188)
+  %140 = fmul nsz float %55, %136
+  %141 = fmul nsz float %66, %137
+  %142 = fadd nsz float %140, %141
+  %143 = fmul nsz float %77, %138
+  %144 = fadd nsz float %142, %143
+  %145 = fmul nsz float %101, %139
+  %146 = fadd nsz float %144, %145
+  %147 = fmul nsz float %135, %102
+  %148 = fsub nsz float %147, %146
+  %149 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1600)
+  %150 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %37, i32 1604)
+  %151 = fmul nsz float %149, %146
+  %152 = fmul nsz float %150, %146
+  %153 = fadd nsz float %113, %151
+  %154 = fsub nsz float %152, %124
+  %155 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %0, i32 0, i32 9, !amdgpu.uniform !0
+  %156 = load <4 x i32>, <4 x i32> addrspace(6)* %155, align 16, !invariant.load !0
+  %157 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 0)
+  %158 = fmul nsz float %157, %113
+  %159 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 4)
+  %160 = fmul nsz float %159, %124
+  %161 = fadd nsz float %158, %160
+  %162 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 8)
+  %163 = fmul nsz float %162, %135
+  %164 = fadd nsz float %161, %163
+  %165 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 12)
+  %166 = fmul nsz float %165, %146
+  %167 = fadd nsz float %164, %166
+  %168 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 16)
+  %169 = fmul nsz float %168, %113
+  %170 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 20)
+  %171 = fmul nsz float %170, %124
+  %172 = fadd nsz float %169, %171
+  %173 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 24)
+  %174 = fmul nsz float %173, %135
+  %175 = fadd nsz float %172, %174
+  %176 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 28)
+  %177 = fmul nsz float %176, %146
+  %178 = fadd nsz float %175, %177
+  %179 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 32)
+  %180 = fmul nsz float %179, %113
+  %181 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 36)
+  %182 = fmul nsz float %181, %124
+  %183 = fadd nsz float %180, %182
+  %184 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 40)
+  %185 = fmul nsz float %184, %135
+  %186 = fadd nsz float %183, %185
+  %187 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 44)
+  %188 = fmul nsz float %187, %146
+  %189 = fadd nsz float %186, %188
+  %190 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 48)
+  %191 = fmul nsz float %190, %113
+  %192 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 52)
+  %193 = fmul nsz float %192, %124
+  %194 = fadd nsz float %191, %193
+  %195 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 56)
+  %196 = fmul nsz float %195, %135
+  %197 = fadd nsz float %194, %196
+  %198 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 60)
+  %199 = fmul nsz float %198, %146
+  %200 = fadd nsz float %197, %199
+  %201 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 64)
+  %202 = fmul nsz float %201, %113
+  %203 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 68)
+  %204 = fmul nsz float %203, %124
+  %205 = fadd nsz float %202, %204
+  %206 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 72)
+  %207 = fmul nsz float %206, %135
+  %208 = fadd nsz float %205, %207
+  %209 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 76)
+  %210 = fmul nsz float %209, %146
+  %211 = fadd nsz float %208, %210
+  %212 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 80)
+  %213 = fmul nsz float %212, %113
+  %214 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 84)
+  %215 = fmul nsz float %214, %124
+  %216 = fadd nsz float %213, %215
+  %217 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 88)
+  %218 = fmul nsz float %217, %135
+  %219 = fadd nsz float %216, %218
+  %220 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 92)
+  %221 = fmul nsz float %220, %146
+  %222 = fadd nsz float %219, %221
+  %223 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 96)
+  %224 = fmul nsz float %223, %113
+  %225 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 100)
+  %226 = fmul nsz float %225, %124
+  %227 = fadd nsz float %224, %226
+  %228 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 104)
+  %229 = fmul nsz float %228, %135
+  %230 = fadd nsz float %227, %229
+  %231 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 108)
+  %232 = fmul nsz float %231, %146
+  %233 = fadd nsz float %230, %232
+  %234 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 112)
+  %235 = fmul nsz float %234, %113
+  %236 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 116)
+  %237 = fmul nsz float %236, %124
+  %238 = fadd nsz float %235, %237
+  %239 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 120)
+  %240 = fmul nsz float %239, %135
+  %241 = fadd nsz float %238, %240
+  %242 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %156, i32 124)
+  %243 = fmul nsz float %242, %146
+  %244 = fadd nsz float %241, %243
+  call void @llvm.amdgcn.exp.f32(i32 12, i32 15, float %153, float %154, float %148, float %146, i1 false, i1 false) #3
+  call void @llvm.amdgcn.exp.f32(i32 13, i32 15, float %167, float %178, float %189, float %200, i1 false, i1 false) #3
+  call void @llvm.amdgcn.exp.f32(i32 14, i32 15, float %211, float %222, float %233, float %244, i1 true, i1 false) #3
+  call void @llvm.amdgcn.exp.f32(i32 32, i32 15, float %88, float %99, float %100, float %135, i1 false, i1 false) #3
+  call void @llvm.amdgcn.exp.f32(i32 33, i32 15, float %55, float %66, float %77, float undef, i1 false, i1 false) #3
+  ret void
+}
+
+; Function Attrs: nounwind readonly
+declare <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32>, i32, i32, i1, i1) #1
+
+; Function Attrs: nounwind readnone
+declare float @llvm.SI.load.const.v4i32(<4 x i32>, i32) #2
+
+; Function Attrs: nounwind
+declare void @llvm.amdgcn.exp.f32(i32, i32, float, float, float, float, i1, i1) #3
+
+attributes #0 = { "no-signed-zeros-fp-math"="true" }
+attributes #1 = { nounwind readonly }
+attributes #2 = { nounwind readnone }
+attributes #3 = { nounwind }
+
+!0 = !{}
+
+shader: MESA_SHADER_FRAGMENT
+name: GLSL1
+inputs: 7
+outputs: 1
+uniforms: 31
+shared: 0
+decl_var uniform INTERP_MODE_NONE vec4[31] pc (4, 0, 0)
+decl_var uniform INTERP_MODE_NONE sampler2D sampler0 (5, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT0 (VARYING_SLOT_VAR0.x, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT0@0 (VARYING_SLOT_VAR0.y, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT6 (VARYING_SLOT_VAR0.z, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT7 (VARYING_SLOT_VAR0.w, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT3 (VARYING_SLOT_VAR1.x, 4, 0)
+decl_var shader_in INTERP_MODE_NONE float oT3@1 (VARYING_SLOT_VAR1.y, 4, 0)
+decl_var shader_in INTERP_MODE_NONE float oT3@2 (VARYING_SLOT_VAR1.z, 4, 0)
+decl_var shader_out INTERP_MODE_NONE vec4 gl_out_FragData0 (FRAG_RESULT_DATA0, 0, 0)
+decl_function main returning void
+
+impl main {
+	decl_var  INTERP_MODE_NONE vec4 r2
+	decl_var  INTERP_MODE_NONE vec4 r1
+	decl_var  INTERP_MODE_NONE vec4 r0
+	decl_var  INTERP_MODE_NONE vec4 atomic_temp_var
+	decl_var  INTERP_MODE_NONE vec4 compiler_temp
+	decl_var  INTERP_MODE_NONE float const_temp
+	decl_var  INTERP_MODE_NONE vec2 const_temp@3
+	decl_var  INTERP_MODE_NONE float const_temp@4
+	decl_var  INTERP_MODE_NONE float compiler_temp@5
+	decl_var  INTERP_MODE_NONE bool compiler_temp@6
+	decl_var  INTERP_MODE_NONE float const_temp@7
+	decl_var  INTERP_MODE_NONE bool compiler_temp@8
+	decl_var  INTERP_MODE_NONE vec3 const_temp@9
+	decl_var  INTERP_MODE_NONE vec3 const_temp@10
+	decl_var  INTERP_MODE_NONE vec4 out@gl_out_FragData0-temp
+	block block_0:
+	/* preds: */
+	vec1 32 ssa_0 = load_const (0xbf800000 /* -1.000000 */)
+	vec1 32 ssa_1 = load_const (0x3f800000 /* 1.000000 */)
+	vec3 32 ssa_2 = load_const (0xbf800000 /* -1.000000 */, 0xbf800000 /* -1.000000 */, 0xbf800000 /* -1.000000 */)
+	vec3 32 ssa_3 = load_const (0x3f800000 /* 1.000000 */, 0x3f800000 /* 1.000000 */, 0x3f800000 /* 1.000000 */)
+	vec1 32 ssa_4 = intrinsic load_var () (oT0) ()
+	vec1 32 ssa_5 = intrinsic load_var () (oT0@0) ()
+	vec2 32 ssa_6 = vec2 ssa_4, ssa_5
+	vec4 32 ssa_7 = tex ssa_6 (coord), sampler0 (texture)sampler0 (sampler)
+	vec1 32 ssa_8 = fadd ssa_7.w, ssa_0
+	vec1 32 ssa_9 = load_const (0x00000000 /* 0.000000 */)
+	vec1 32 ssa_10 = load_const (0x00000140 /* 0.000000 */)
+	vec4 32 ssa_11 = intrinsic load_ubo (ssa_9, ssa_10) () ()
+	vec1 32 ssa_12 = fmul ssa_11.w, ssa_8
+	vec1 32 ssa_13 = fadd ssa_12, ssa_1
+	vec1 32 ssa_14 = load_const (0x00000010 /* 0.000000 */)
+	vec4 32 ssa_15 = intrinsic load_ubo (ssa_9, ssa_14) () ()
+	vec1 32 ssa_16 = fmul ssa_13, ssa_15.w
+	vec1 32 ssa_17 = intrinsic load_var () (oT6) ()
+	vec1 32 ssa_18 = fmul ssa_16, ssa_17
+	vec1 32 ssa_19 = fneg ssa_16
+	vec1 32 ssa_20 = fadd ssa_18, ssa_19
+	vec1 32 ssa_21 = load_const (0x000000c0 /* 0.000000 */)
+	vec4 32 ssa_22 = intrinsic load_ubo (ssa_9, ssa_21) () ()
+	vec1 32 ssa_23 = fmul ssa_22.w, ssa_20
+	vec1 32 ssa_24 = fadd ssa_23, ssa_16
+	vec1 32 ssa_25 = load_const (0x000001d0 /* 0.000000 */)
+	vec4 32 ssa_26 = intrinsic load_ubo (ssa_9, ssa_25) () ()
+	vec1 32 ssa_27 = intrinsic load_var () (oT7) ()
+	vec1 32 ssa_28 = fmul ssa_26.w, ssa_27
+	vec1 32 ssa_29 = feq ssa_22.y, ssa_9
+	vec1 32 ssa_30 = bcsel ssa_29, ssa_24, ssa_28
+	vec1 32 ssa_31 = fadd ssa_7.w, ssa_22.x
+	vec1 32 ssa_32 = fmax ssa_31, ssa_9
+	vec1 32 ssa_33 = fmin ssa_32, ssa_1
+	vec1 32 ssa_34 = fadd ssa_2.x, ssa_15.x
+	vec1 32 ssa_35 = fadd ssa_2.y, ssa_15.y
+	vec1 32 ssa_36 = fadd ssa_2.z, ssa_15.z
+	vec1 32 ssa_37 = fmul ssa_33, ssa_34
+	vec1 32 ssa_38 = fmul ssa_33, ssa_35
+	vec1 32 ssa_39 = fmul ssa_33, ssa_36
+	vec1 32 ssa_40 = fadd ssa_37, ssa_3.x
+	vec1 32 ssa_41 = fadd ssa_38, ssa_3.y
+	vec1 32 ssa_42 = fadd ssa_39, ssa_3.z
+	vec1 32 ssa_43 = fmul ssa_7.x, ssa_40
+	vec1 32 ssa_44 = fmul ssa_7.y, ssa_41
+	vec1 32 ssa_45 = fmul ssa_7.z, ssa_42
+	vec1 32 ssa_46 = load_const (0x000001e0 /* 0.000000 */)
+	vec4 32 ssa_47 = intrinsic load_ubo (ssa_9, ssa_46) () ()
+	vec1 32 ssa_48 = fmul ssa_43, ssa_47.x
+	vec1 32 ssa_49 = fmul ssa_44, ssa_47.x
+	vec1 32 ssa_50 = fmul ssa_45, ssa_47.x
+	vec1 32 ssa_51 = fneg ssa_48
+	vec1 32 ssa_52 = fneg ssa_49
+	vec1 32 ssa_53 = fneg ssa_50
+	vec1 32 ssa_54 = fadd ssa_51, ssa_26.x
+	vec1 32 ssa_55 = fadd ssa_52, ssa_26.y
+	vec1 32 ssa_56 = fadd ssa_53, ssa_26.z
+	vec1 32 ssa_57 = intrinsic load_var () (oT3) ()
+	vec1 32 ssa_58 = intrinsic load_var () (oT3@1) ()
+	vec1 32 ssa_59 = intrinsic load_var () (oT3@2) ()
+	vec1 32 ssa_60 = fneg ssa_57
+	vec1 32 ssa_61 = fneg ssa_58
+	vec1 32 ssa_62 = fneg ssa_59
+	vec1 32 ssa_63 = fadd ssa_11.x, ssa_60
+	vec1 32 ssa_64 = fadd ssa_11.y, ssa_61
+	vec1 32 ssa_65 = fadd ssa_11.z, ssa_62
+	vec1 32 ssa_66 = fmul ssa_63, ssa_63
+	vec1 32 ssa_67 = fmul ssa_64, ssa_64
+	vec1 32 ssa_68 = fadd ssa_66, ssa_67
+	vec1 32 ssa_69 = fmul ssa_65, ssa_65
+	vec1 32 ssa_70 = fadd ssa_68, ssa_69
+	vec1 32 ssa_71 = fsqrt ssa_70
+	vec1 32 ssa_72 = load_const (0x00000150 /* 0.000000 */)
+	vec4 32 ssa_73 = intrinsic load_ubo (ssa_9, ssa_72) () ()
+	vec1 32 ssa_74 = fmul ssa_71, ssa_73.w
+	vec1 32 ssa_75 = fadd ssa_74, ssa_73.x
+	vec1 32 ssa_76 = fmax ssa_75, ssa_9
+	vec1 32 ssa_77 = fmin ssa_76, ssa_1
+	vec1 32 ssa_78 = fmin ssa_77, ssa_73.z
+	vec1 32 ssa_79 = fmul ssa_78, ssa_78
+	vec1 32 ssa_80 = fmul ssa_79, ssa_54
+	vec1 32 ssa_81 = fmul ssa_79, ssa_55
+	vec1 32 ssa_82 = fmul ssa_79, ssa_56
+	vec1 32 ssa_83 = fadd ssa_80, ssa_48
+	vec1 32 ssa_84 = fadd ssa_81, ssa_49
+	vec1 32 ssa_85 = fadd ssa_82, ssa_50
+	vec4 32 ssa_86 = vec4 ssa_83, ssa_84, ssa_85, ssa_30
+	intrinsic store_var (ssa_86) (gl_out_FragData0) (15) /* wrmask=xyzw */
+	/* succs: block_0 */
+	block block_0:
+}
+
+radeonsi: Compiling shader 2
+TGSI shader LLVM IR:
+
+; ModuleID = 'tgsi'
+source_filename = "tgsi"
+target datalayout = "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5"
+target triple = "amdgcn--"
+
+define amdgpu_ps <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> @main([0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, i32, i32, float, i32) #0 {
+main_body:
+  %22 = bitcast <2 x i32> %7 to <2 x float>
+  %23 = extractelement <2 x float> %22, i32 0
+  %24 = extractelement <2 x float> %22, i32 1
+  %25 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 0, i32 0, i32 %5) #3
+  %26 = call nsz float @llvm.amdgcn.interp.p2(float %25, float %24, i32 0, i32 0, i32 %5) #3
+  %27 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 1, i32 0, i32 %5) #3
+  %28 = call nsz float @llvm.amdgcn.interp.p2(float %27, float %24, i32 1, i32 0, i32 %5) #3
+  %29 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 2, i32 0, i32 %5) #3
+  %30 = call nsz float @llvm.amdgcn.interp.p2(float %29, float %24, i32 2, i32 0, i32 %5) #3
+  %31 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 3, i32 0, i32 %5) #3
+  %32 = call nsz float @llvm.amdgcn.interp.p2(float %31, float %24, i32 3, i32 0, i32 %5) #3
+  %33 = bitcast float %26 to i32
+  %34 = bitcast float %28 to i32
+  %35 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 0, i32 1, i32 %5) #3
+  %36 = call nsz float @llvm.amdgcn.interp.p2(float %35, float %24, i32 0, i32 1, i32 %5) #3
+  %37 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 1, i32 1, i32 %5) #3
+  %38 = call nsz float @llvm.amdgcn.interp.p2(float %37, float %24, i32 1, i32 1, i32 %5) #3
+  %39 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 2, i32 1, i32 %5) #3
+  %40 = call nsz float @llvm.amdgcn.interp.p2(float %39, float %24, i32 2, i32 1, i32 %5) #3
+  %41 = insertelement <2 x i32> undef, i32 %33, i32 0
+  %42 = insertelement <2 x i32> %41, i32 %34, i32 1
+  %43 = getelementptr [0 x <8 x i32>], [0 x <8 x i32>] addrspace(6)* %3, i32 0, i32 16, !amdgpu.uniform !0
+  %44 = load <8 x i32>, <8 x i32> addrspace(6)* %43, align 32, !invariant.load !0
+  %45 = bitcast [0 x <8 x i32>] addrspace(6)* %3 to [0 x <4 x i32>] addrspace(6)*
+  %46 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %45, i32 0, i32 35, !amdgpu.uniform !0
+  %47 = load <4 x i32>, <4 x i32> addrspace(6)* %46, align 16, !invariant.load !0
+  %48 = bitcast <2 x i32> %42 to <2 x float>
+  %49 = call nsz <4 x float> @llvm.amdgcn.image.sample.v4f32.v2f32.v8i32(<2 x float> %48, <8 x i32> %44, <4 x i32> %47, i32 15, i1 false, i1 false, i1 false, i1 false, i1 false) #3
+  %50 = extractelement <4 x float> %49, i32 3
+  %51 = fadd nsz float %50, -1.000000e+00
+  %52 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %53 = load <4 x i32>, <4 x i32> addrspace(6)* %52, align 16, !invariant.load !0
+  %54 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 320)
+  %55 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 324)
+  %56 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 328)
+  %57 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 332)
+  %58 = fmul nsz float %57, %51
+  %59 = fadd nsz float %58, 1.000000e+00
+  %60 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 16)
+  %61 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 20)
+  %62 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 24)
+  %63 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 28)
+  %64 = fmul nsz float %59, %63
+  %65 = fmul nsz float %64, %30
+  %66 = fsub nsz float %65, %64
+  %67 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 192)
+  %68 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 196)
+  %69 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 204)
+  %70 = fmul nsz float %69, %66
+  %71 = fadd nsz float %70, %64
+  %72 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 464)
+  %73 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 468)
+  %74 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 472)
+  %75 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 476)
+  %76 = fmul nsz float %75, %32
+  %77 = fcmp nsz oeq float %68, 0.000000e+00
+  %.v = select i1 %77, float %71, float %76
+  %78 = fadd nsz float %50, %67
+  %79 = call nsz float @llvm.maxnum.f32(float %78, float 0.000000e+00) #3
+  %80 = call nsz float @llvm.canonicalize.f32(float %79) #3
+  %81 = call nsz float @llvm.minnum.f32(float %80, float 1.000000e+00) #3
+  %82 = call nsz float @llvm.canonicalize.f32(float %81) #3
+  %83 = fadd nsz float %60, -1.000000e+00
+  %84 = fadd nsz float %61, -1.000000e+00
+  %85 = fadd nsz float %62, -1.000000e+00
+  %86 = fmul nsz float %82, %83
+  %87 = fmul nsz float %82, %84
+  %88 = fmul nsz float %82, %85
+  %89 = fadd nsz float %86, 1.000000e+00
+  %90 = fadd nsz float %87, 1.000000e+00
+  %91 = fadd nsz float %88, 1.000000e+00
+  %92 = extractelement <4 x float> %49, i32 0
+  %93 = fmul nsz float %92, %89
+  %94 = extractelement <4 x float> %49, i32 1
+  %95 = fmul nsz float %94, %90
+  %96 = extractelement <4 x float> %49, i32 2
+  %97 = fmul nsz float %96, %91
+  %98 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 480)
+  %99 = fmul nsz float %93, %98
+  %100 = fmul nsz float %95, %98
+  %101 = fmul nsz float %97, %98
+  %102 = fsub nsz float %72, %99
+  %103 = fsub nsz float %73, %100
+  %104 = fsub nsz float %74, %101
+  %105 = fsub nsz float %54, %36
+  %106 = fsub nsz float %55, %38
+  %107 = fsub nsz float %56, %40
+  %108 = fmul nsz float %105, %105
+  %109 = fmul nsz float %106, %106
+  %110 = fadd nsz float %108, %109
+  %111 = fmul nsz float %107, %107
+  %112 = fadd nsz float %110, %111
+  %113 = call nsz float @llvm.sqrt.f32(float %112) #3
+  %114 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 336)
+  %115 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 344)
+  %116 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %53, i32 348)
+  %117 = fmul nsz float %113, %116
+  %118 = fadd nsz float %117, %114
+  %119 = call nsz float @llvm.maxnum.f32(float %118, float 0.000000e+00) #3
+  %120 = call nsz float @llvm.canonicalize.f32(float %119) #3
+  %121 = call nsz float @llvm.minnum.f32(float %120, float 1.000000e+00) #3
+  %122 = call nsz float @llvm.canonicalize.f32(float %121) #3
+  %123 = call nsz float @llvm.minnum.f32(float %122, float %115) #3
+  %124 = call nsz float @llvm.canonicalize.f32(float %123) #3
+  %125 = fmul nsz float %124, %124
+  %126 = fmul nsz float %125, %102
+  %127 = fmul nsz float %125, %103
+  %128 = fmul nsz float %125, %104
+  %129 = fadd nsz float %126, %99
+  %130 = fadd nsz float %127, %100
+  %131 = fadd nsz float %128, %101
+  %132 = bitcast float %4 to i32
+  %133 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> undef, i32 %132, 4
+  %134 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %133, float %129, 5
+  %135 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %134, float %130, 6
+  %136 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %135, float %131, 7
+  %137 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %136, float %.v, 8
+  %138 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %137, float %20, 19
+  ret <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %138
+}
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.amdgcn.interp.p1(float, i32, i32, i32) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.amdgcn.interp.p2(float, float, i32, i32, i32) #1
+
+; Function Attrs: nounwind readonly
+declare <4 x float> @llvm.amdgcn.image.sample.v4f32.v2f32.v8i32(<2 x float>, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #2
+
+; Function Attrs: nounwind readnone
+declare float @llvm.SI.load.const.v4i32(<4 x i32>, i32) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.maxnum.f32(float, float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.canonicalize.f32(float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.minnum.f32(float, float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.sqrt.f32(float) #1
+
+attributes #0 = { "InitialPSInputAddr"="0xb077" "no-signed-zeros-fp-math"="true" }
+attributes #1 = { nounwind readnone speculatable }
+attributes #2 = { nounwind readonly }
+attributes #3 = { nounwind readnone }
+
+!0 = !{}
+
