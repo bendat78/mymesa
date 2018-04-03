@@ -1,3 +1,9 @@
+3.4.18
+Unigine		TGSI			NIR
+Valley		776/18.5/9.7/37.1	800/19.1/10/37.4
+Heaven		676/26.8/8.0/59.8	686/27.2/7.2/66.9	Artifact in top right corner for both TGSI and NIR (pointcloud of wireframe of rendered structures?)
+Superposition	3138/19.6/23.4/29.8	3055/19.0/22.8/29.2
+
 2.4.18
 
 bindless textures have to be enable in the
