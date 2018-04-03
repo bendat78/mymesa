@@ -1,0 +1,2871 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+shader: MESA_SHADER_VERTEX
+name: GLSL1
+inputs: 3
+outputs: 9
+uniforms: 102
+shared: 0
+decl_var uniform INTERP_MODE_NONE vec4[97] vc (0, 0, 0)
+decl_var uniform INTERP_MODE_NONE vec4[3] vcbones (1, 97, 0)
+decl_var uniform INTERP_MODE_NONE vec4 vcscreen (2, 100, 0)
+decl_var uniform INTERP_MODE_NONE int i0 (3, 101, 0)
+decl_var shader_in INTERP_MODE_NONE vec4 v0 (VERT_ATTRIB_GENERIC0, 0, 0)
+decl_var shader_in INTERP_MODE_NONE vec4 v3 (VERT_ATTRIB_GENERIC3, 4, 0)
+decl_var shader_in INTERP_MODE_NONE vec4 v5 (VERT_ATTRIB_GENERIC5, 8, 0)
+decl_var shader_out INTERP_MODE_NONE vec4 gl_Position (VARYING_SLOT_POS, 0, 0)
+decl_var shader_out INTERP_MODE_NONE vec4 gl_ClipVertex (VARYING_SLOT_CLIP_VERTEX, 4, 0)
+decl_var shader_out INTERP_MODE_NONE float oT0 (VARYING_SLOT_VAR0.x, 8, 0)
+decl_var shader_out INTERP_MODE_NONE float oT0@0 (VARYING_SLOT_VAR0.y, 8, 0)
+decl_var shader_out INTERP_MODE_NONE float oT6 (VARYING_SLOT_VAR0.z, 8, 0)
+decl_var shader_out INTERP_MODE_NONE float oT7 (VARYING_SLOT_VAR0.w, 8, 0)
+decl_var shader_out INTERP_MODE_NONE float oT3 (VARYING_SLOT_VAR1.x, 12, 0)
+decl_var shader_out INTERP_MODE_NONE float oT3@1 (VARYING_SLOT_VAR1.y, 12, 0)
+decl_var shader_out INTERP_MODE_NONE float oT3@2 (VARYING_SLOT_VAR1.z, 12, 0)
+decl_var  INTERP_MODE_NONE vec4 v1
+decl_var  INTERP_MODE_NONE vec4 v2
+decl_var  INTERP_MODE_NONE vec4 v4
+decl_var  INTERP_MODE_NONE vec4 v6
+decl_function main returning void
+
+impl main {
+	decl_var  INTERP_MODE_NONE vec4 oTempT7
+	decl_var  INTERP_MODE_NONE vec4 oTempT4
+	decl_var  INTERP_MODE_NONE vec4 oTempT1
+	decl_var  INTERP_MODE_NONE vec4 vTempPos
+	decl_var  INTERP_MODE_NONE vec4 r8
+	decl_var  INTERP_MODE_NONE vec4 r7
+	decl_var  INTERP_MODE_NONE vec4 r6
+	decl_var  INTERP_MODE_NONE vec4 r5
+	decl_var  INTERP_MODE_NONE vec4 r4
+	decl_var  INTERP_MODE_NONE vec4 r3
+	decl_var  INTERP_MODE_NONE vec4 r2
+	decl_var  INTERP_MODE_NONE vec4 r1
+	decl_var  INTERP_MODE_NONE vec4 r0
+	decl_var  INTERP_MODE_NONE vec4 va_r
+	decl_var  INTERP_MODE_NONE vec4 const_temp
+	decl_var  INTERP_MODE_NONE vec4 const_temp@3
+	decl_var  INTERP_MODE_NONE vec4 const_temp@4
+	decl_var  INTERP_MODE_NONE vec2 const_temp@5
+	decl_var  INTERP_MODE_NONE vec2 const_temp@6
+	decl_var  INTERP_MODE_NONE vec2 const_temp@7
+	decl_var  INTERP_MODE_NONE float const_temp@8
+	decl_var  INTERP_MODE_NONE float const_temp@9
+	decl_var  INTERP_MODE_NONE float const_temp@10
+	decl_var  INTERP_MODE_NONE vec2 const_temp@11
+	decl_var  INTERP_MODE_NONE vec2 const_temp@12
+	decl_var  INTERP_MODE_NONE float const_temp@13
+	decl_var  INTERP_MODE_NONE float const_temp@14
+	decl_var  INTERP_MODE_NONE int i
+	decl_var  INTERP_MODE_NONE vec3 const_temp@15
+	decl_var  INTERP_MODE_NONE int const_temp@16
+	decl_var  INTERP_MODE_NONE float const_temp@17
+	decl_var  INTERP_MODE_NONE int const_temp@18
+	decl_var  INTERP_MODE_NONE int const_temp@19
+	decl_var  INTERP_MODE_NONE int const_temp@20
+	decl_var  INTERP_MODE_NONE int const_temp@21
+	decl_var  INTERP_MODE_NONE int const_temp@22
+	decl_var  INTERP_MODE_NONE int const_temp@23
+	decl_var  INTERP_MODE_NONE int const_temp@24
+	decl_var  INTERP_MODE_NONE int const_temp@25
+	decl_var  INTERP_MODE_NONE float const_temp@26
+	decl_var  INTERP_MODE_NONE int const_temp@27
+	decl_var  INTERP_MODE_NONE int const_temp@28
+	decl_var  INTERP_MODE_NONE int const_temp@29
+	decl_var  INTERP_MODE_NONE int const_temp@30
+	decl_var  INTERP_MODE_NONE int const_temp@31
+	decl_var  INTERP_MODE_NONE int const_temp@32
+	decl_var  INTERP_MODE_NONE int const_temp@33
+	decl_var  INTERP_MODE_NONE int i@34
+	decl_var  INTERP_MODE_NONE int const_temp@35
+	decl_var  INTERP_MODE_NONE float const_temp@36
+	decl_var  INTERP_MODE_NONE int const_temp@37
+	decl_var  INTERP_MODE_NONE int const_temp@38
+	decl_var  INTERP_MODE_NONE int const_temp@39
+	decl_var  INTERP_MODE_NONE int const_temp@40
+	decl_var  INTERP_MODE_NONE int const_temp@41
+	decl_var  INTERP_MODE_NONE int const_temp@42
+	decl_var  INTERP_MODE_NONE int const_temp@43
+	decl_var  INTERP_MODE_NONE int const_temp@44
+	decl_var  INTERP_MODE_NONE float const_temp@45
+	decl_var  INTERP_MODE_NONE int const_temp@46
+	decl_var  INTERP_MODE_NONE int const_temp@47
+	decl_var  INTERP_MODE_NONE int const_temp@48
+	decl_var  INTERP_MODE_NONE int const_temp@49
+	decl_var  INTERP_MODE_NONE int const_temp@50
+	decl_var  INTERP_MODE_NONE int const_temp@51
+	decl_var  INTERP_MODE_NONE int const_temp@52
+	decl_var  INTERP_MODE_NONE vec4 in@v3-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v4-temp
+	decl_var  INTERP_MODE_NONE vec4 out@gl_Position-temp
+	decl_var  INTERP_MODE_NONE vec4 out@gl_ClipVertex-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v6-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v2-temp
+	decl_var  INTERP_MODE_NONE vec4 out@oT0-temp
+	decl_var  INTERP_MODE_NONE vec4 out@oT7-temp
+	decl_var  INTERP_MODE_NONE vec4 out@oT3-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v0-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v5-temp
+	decl_var  INTERP_MODE_NONE vec4 out@oT6-temp
+	decl_var  INTERP_MODE_NONE vec4 in@v1-temp
+	decl_var  INTERP_MODE_NONE float oT0@53
+	decl_var  INTERP_MODE_NONE float oT6@54
+	decl_var  INTERP_MODE_NONE float oT6@55
+	decl_var  INTERP_MODE_NONE float oT0@56
+	decl_var  INTERP_MODE_NONE float oT3@57
+	decl_var  INTERP_MODE_NONE float oT7@58
+	decl_var  INTERP_MODE_NONE float oT6@59
+	decl_var  INTERP_MODE_NONE float oT7@60
+	decl_var  INTERP_MODE_NONE float oT7@61
+	block block_0:
+	/* preds: */
+	vec4 32 ssa_0 = intrinsic load_var () (v5) ()
+	vec4 32 ssa_1 = intrinsic load_var () (v3) ()
+	vec4 32 ssa_2 = intrinsic load_var () (v0) ()
+	vec1 32 ssa_3 = load_const (0x00000000 /* 0.000000 */)
+	vec1 32 ssa_4 = load_const (0x000000d0 /* 0.000000 */)
+	vec4 32 ssa_5 = intrinsic load_ubo (ssa_3, ssa_4) () ()
+	vec1 32 ssa_6 = fmul ssa_0.x, ssa_5.x
+	vec1 32 ssa_7 = fmul ssa_0.y, ssa_5.x
+	vec1 32 ssa_8 = fmul ssa_0.z, ssa_5.x
+	vec1 32 ssa_9 = fadd ssa_6, ssa_2.x
+	vec1 32 ssa_10 = fadd ssa_7, ssa_2.y
+	vec1 32 ssa_11 = fadd ssa_8, ssa_2.z
+	vec1 32 ssa_12 = load_const (0x00000610 /* 0.000000 */)
+	vec4 32 ssa_13 = intrinsic load_ubo (ssa_3, ssa_12) () ()
+	vec1 32 ssa_14 = fmul ssa_9, ssa_13.x
+	vec1 32 ssa_15 = fmul ssa_10, ssa_13.y
+	vec1 32 ssa_16 = fadd ssa_14, ssa_15
+	vec1 32 ssa_17 = fmul ssa_11, ssa_13.z
+	vec1 32 ssa_18 = fadd ssa_16, ssa_17
+	vec1 32 ssa_19 = fmul ssa_2.w, ssa_13.w
+	vec1 32 ssa_20 = fadd ssa_18, ssa_19
+	vec1 32 ssa_21 = load_const (0x00000620 /* 0.000000 */)
+	vec4 32 ssa_22 = intrinsic load_ubo (ssa_3, ssa_21) () ()
+	vec1 32 ssa_23 = fmul ssa_9, ssa_22.x
+	vec1 32 ssa_24 = fmul ssa_10, ssa_22.y
+	vec1 32 ssa_25 = fadd ssa_23, ssa_24
+	vec1 32 ssa_26 = fmul ssa_11, ssa_22.z
+	vec1 32 ssa_27 = fadd ssa_25, ssa_26
+	vec1 32 ssa_28 = fmul ssa_2.w, ssa_22.w
+	vec1 32 ssa_29 = fadd ssa_27, ssa_28
+	vec1 32 ssa_30 = load_const (0x00000630 /* 0.000000 */)
+	vec4 32 ssa_31 = intrinsic load_ubo (ssa_3, ssa_30) () ()
+	vec1 32 ssa_32 = fmul ssa_9, ssa_31.x
+	vec1 32 ssa_33 = fmul ssa_10, ssa_31.y
+	vec1 32 ssa_34 = fadd ssa_32, ssa_33
+	vec1 32 ssa_35 = fmul ssa_11, ssa_31.z
+	vec1 32 ssa_36 = fadd ssa_34, ssa_35
+	vec1 32 ssa_37 = fmul ssa_2.w, ssa_31.w
+	vec1 32 ssa_38 = fadd ssa_36, ssa_37
+	vec1 32 ssa_39 = load_const (0x00000300 /* 0.000000 */)
+	vec4 32 ssa_40 = intrinsic load_ubo (ssa_3, ssa_39) () ()
+	vec1 32 ssa_41 = fmul ssa_1.x, ssa_40.x
+	vec1 32 ssa_42 = fmul ssa_1.y, ssa_40.y
+	vec1 32 ssa_43 = fadd ssa_41, ssa_42
+	vec1 32 ssa_44 = fmul ssa_1.z, ssa_40.z
+	vec1 32 ssa_45 = fadd ssa_43, ssa_44
+	vec1 32 ssa_46 = fmul ssa_1.w, ssa_40.w
+	vec1 32 ssa_47 = fadd ssa_45, ssa_46
+	vec1 32 ssa_48 = load_const (0x00000310 /* 0.000000 */)
+	vec4 32 ssa_49 = intrinsic load_ubo (ssa_3, ssa_48) () ()
+	vec1 32 ssa_50 = fmul ssa_1.x, ssa_49.x
+	vec1 32 ssa_51 = fmul ssa_1.y, ssa_49.y
+	vec1 32 ssa_52 = fadd ssa_50, ssa_51
+	vec1 32 ssa_53 = fmul ssa_1.z, ssa_49.z
+	vec1 32 ssa_54 = fadd ssa_52, ssa_53
+	vec1 32 ssa_55 = fmul ssa_1.w, ssa_49.w
+	vec1 32 ssa_56 = fadd ssa_54, ssa_55
+	vec4 32 ssa_57 = intrinsic load_ubo (ssa_3, ssa_3) () ()
+	vec1 32 ssa_58 = load_const (0x00000080 /* 0.000000 */)
+	vec4 32 ssa_59 = intrinsic load_ubo (ssa_3, ssa_58) () ()
+	vec1 32 ssa_60 = fmul ssa_20, ssa_59.x
+	vec1 32 ssa_61 = fmul ssa_29, ssa_59.y
+	vec1 32 ssa_62 = fadd ssa_60, ssa_61
+	vec1 32 ssa_63 = fmul ssa_38, ssa_59.z
+	vec1 32 ssa_64 = fadd ssa_62, ssa_63
+	vec1 32 ssa_65 = fmul ssa_57.y, ssa_59.w
+	vec1 32 ssa_66 = fadd ssa_64, ssa_65
+	vec1 32 ssa_67 = load_const (0x00000090 /* 0.000000 */)
+	vec4 32 ssa_68 = intrinsic load_ubo (ssa_3, ssa_67) () ()
+	vec1 32 ssa_69 = fmul ssa_20, ssa_68.x
+	vec1 32 ssa_70 = fmul ssa_29, ssa_68.y
+	vec1 32 ssa_71 = fadd ssa_69, ssa_70
+	vec1 32 ssa_72 = fmul ssa_38, ssa_68.z
+	vec1 32 ssa_73 = fadd ssa_71, ssa_72
+	vec1 32 ssa_74 = fmul ssa_57.y, ssa_68.w
+	vec1 32 ssa_75 = fadd ssa_73, ssa_74
+	vec1 32 ssa_76 = load_const (0x000000a0 /* 0.000000 */)
+	vec4 32 ssa_77 = intrinsic load_ubo (ssa_3, ssa_76) () ()
+	vec1 32 ssa_78 = fmul ssa_20, ssa_77.x
+	vec1 32 ssa_79 = fmul ssa_29, ssa_77.y
+	vec1 32 ssa_80 = fadd ssa_78, ssa_79
+	vec1 32 ssa_81 = fmul ssa_38, ssa_77.z
+	vec1 32 ssa_82 = fadd ssa_80, ssa_81
+	vec1 32 ssa_83 = fmul ssa_57.y, ssa_77.w
+	vec1 32 ssa_84 = fadd ssa_82, ssa_83
+	vec1 32 ssa_85 = load_const (0x000000b0 /* 0.000000 */)
+	vec4 32 ssa_86 = intrinsic load_ubo (ssa_3, ssa_85) () ()
+	vec1 32 ssa_87 = fmul ssa_20, ssa_86.x
+	vec1 32 ssa_88 = fmul ssa_29, ssa_86.y
+	vec1 32 ssa_89 = fadd ssa_87, ssa_88
+	vec1 32 ssa_90 = fmul ssa_38, ssa_86.z
+	vec1 32 ssa_91 = fadd ssa_89, ssa_90
+	vec1 32 ssa_92 = fmul ssa_57.y, ssa_86.w
+	vec1 32 ssa_93 = fadd ssa_91, ssa_92
+	vec1 32 ssa_94 = fmul ssa_84, ssa_57.z
+	vec1 32 ssa_95 = fneg ssa_93
+	vec1 32 ssa_96 = fadd ssa_94, ssa_95
+	vec1 32 ssa_97 = fneg ssa_75
+	vec1 32 ssa_98 = load_const (0x00000640 /* 0.000000 */)
+	vec4 32 ssa_99 = intrinsic load_ubo (ssa_3, ssa_98) () ()
+	vec1 32 ssa_100 = fmul ssa_99.x, ssa_93
+	vec1 32 ssa_101 = fmul ssa_99.y, ssa_93
+	vec1 32 ssa_102 = fadd ssa_66, ssa_100
+	vec1 32 ssa_103 = fadd ssa_97, ssa_101
+	vec4 32 ssa_104 = vec4 ssa_102, ssa_103, ssa_96, ssa_93
+	intrinsic store_var (ssa_104) (gl_Position) (15) /* wrmask=xyzw */
+	vec4 32 ssa_105 = vec4 ssa_66, ssa_75, ssa_84, ssa_93
+	intrinsic store_var (ssa_105) (gl_ClipVertex) (15) /* wrmask=xyzw */
+	intrinsic store_var (ssa_47) (oT0) (1) /* wrmask=x */
+	intrinsic store_var (ssa_56) (oT0@0) (1) /* wrmask=x */
+	intrinsic store_var (ssa_20) (oT3) (1) /* wrmask=x */
+	intrinsic store_var (ssa_29) (oT3@1) (1) /* wrmask=x */
+	intrinsic store_var (ssa_38) (oT3@2) (1) /* wrmask=x */
+	vec1 32 ssa_106 = imov ssa_57.x
+	intrinsic store_var (ssa_106) (oT6) (1) /* wrmask=x */
+	intrinsic store_var (ssa_84) (oT7) (1) /* wrmask=x */
+	/* succs: block_0 */
+	block block_0:
+}
+
+; ModuleID = 'tgsi'
+source_filename = "tgsi"
+target datalayout = "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5"
+target triple = "amdgcn--"
+
+define amdgpu_vs void @main([0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), i32 inreg, i32 inreg, i32 inreg, i32 inreg, [0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), i32, i32, i32, i32, i32, i32, i32) #0 {
+main_body:
+  %temp351 = alloca float, addrspace(5)
+  %temp350 = alloca float, addrspace(5)
+  %temp349 = alloca float, addrspace(5)
+  %temp348 = alloca float, addrspace(5)
+  %temp347 = alloca float, addrspace(5)
+  %temp346 = alloca float, addrspace(5)
+  %temp345 = alloca float, addrspace(5)
+  %temp344 = alloca float, addrspace(5)
+  %temp343 = alloca float, addrspace(5)
+  %temp342 = alloca float, addrspace(5)
+  %temp341 = alloca float, addrspace(5)
+  %temp340 = alloca float, addrspace(5)
+  %temp339 = alloca float, addrspace(5)
+  %temp338 = alloca float, addrspace(5)
+  %temp337 = alloca float, addrspace(5)
+  %temp336 = alloca float, addrspace(5)
+  %temp335 = alloca float, addrspace(5)
+  %temp334 = alloca float, addrspace(5)
+  %temp333 = alloca float, addrspace(5)
+  %temp332 = alloca float, addrspace(5)
+  %temp331 = alloca float, addrspace(5)
+  %temp330 = alloca float, addrspace(5)
+  %temp329 = alloca float, addrspace(5)
+  %temp328 = alloca float, addrspace(5)
+  %temp327 = alloca float, addrspace(5)
+  %temp326 = alloca float, addrspace(5)
+  %temp325 = alloca float, addrspace(5)
+  %temp324 = alloca float, addrspace(5)
+  %temp323 = alloca float, addrspace(5)
+  %temp322 = alloca float, addrspace(5)
+  %temp321 = alloca float, addrspace(5)
+  %temp320 = alloca float, addrspace(5)
+  %temp319 = alloca float, addrspace(5)
+  %temp318 = alloca float, addrspace(5)
+  %temp317 = alloca float, addrspace(5)
+  %temp316 = alloca float, addrspace(5)
+  %temp315 = alloca float, addrspace(5)
+  %temp314 = alloca float, addrspace(5)
+  %temp313 = alloca float, addrspace(5)
+  %temp312 = alloca float, addrspace(5)
+  %temp311 = alloca float, addrspace(5)
+  %temp310 = alloca float, addrspace(5)
+  %temp309 = alloca float, addrspace(5)
+  %temp308 = alloca float, addrspace(5)
+  %temp307 = alloca float, addrspace(5)
+  %temp306 = alloca float, addrspace(5)
+  %temp305 = alloca float, addrspace(5)
+  %temp304 = alloca float, addrspace(5)
+  %temp303 = alloca float, addrspace(5)
+  %temp302 = alloca float, addrspace(5)
+  %temp301 = alloca float, addrspace(5)
+  %temp300 = alloca float, addrspace(5)
+  %temp299 = alloca float, addrspace(5)
+  %temp298 = alloca float, addrspace(5)
+  %temp297 = alloca float, addrspace(5)
+  %temp296 = alloca float, addrspace(5)
+  %temp295 = alloca float, addrspace(5)
+  %temp294 = alloca float, addrspace(5)
+  %temp293 = alloca float, addrspace(5)
+  %temp292 = alloca float, addrspace(5)
+  %temp291 = alloca float, addrspace(5)
+  %temp290 = alloca float, addrspace(5)
+  %temp289 = alloca float, addrspace(5)
+  %temp288 = alloca float, addrspace(5)
+  %temp287 = alloca float, addrspace(5)
+  %temp286 = alloca float, addrspace(5)
+  %temp285 = alloca float, addrspace(5)
+  %temp284 = alloca float, addrspace(5)
+  %temp283 = alloca float, addrspace(5)
+  %temp282 = alloca float, addrspace(5)
+  %temp281 = alloca float, addrspace(5)
+  %temp280 = alloca float, addrspace(5)
+  %temp279 = alloca float, addrspace(5)
+  %temp278 = alloca float, addrspace(5)
+  %temp277 = alloca float, addrspace(5)
+  %temp276 = alloca float, addrspace(5)
+  %temp275 = alloca float, addrspace(5)
+  %temp274 = alloca float, addrspace(5)
+  %temp273 = alloca float, addrspace(5)
+  %temp272 = alloca float, addrspace(5)
+  %temp271 = alloca float, addrspace(5)
+  %temp270 = alloca float, addrspace(5)
+  %temp269 = alloca float, addrspace(5)
+  %temp268 = alloca float, addrspace(5)
+  %temp267 = alloca float, addrspace(5)
+  %temp266 = alloca float, addrspace(5)
+  %temp265 = alloca float, addrspace(5)
+  %temp264 = alloca float, addrspace(5)
+  %temp263 = alloca float, addrspace(5)
+  %temp262 = alloca float, addrspace(5)
+  %temp261 = alloca float, addrspace(5)
+  %temp260 = alloca float, addrspace(5)
+  %temp259 = alloca float, addrspace(5)
+  %temp258 = alloca float, addrspace(5)
+  %temp257 = alloca float, addrspace(5)
+  %temp256 = alloca float, addrspace(5)
+  %temp255 = alloca float, addrspace(5)
+  %temp254 = alloca float, addrspace(5)
+  %temp253 = alloca float, addrspace(5)
+  %temp252 = alloca float, addrspace(5)
+  %temp251 = alloca float, addrspace(5)
+  %temp250 = alloca float, addrspace(5)
+  %temp249 = alloca float, addrspace(5)
+  %temp248 = alloca float, addrspace(5)
+  %temp247 = alloca float, addrspace(5)
+  %temp246 = alloca float, addrspace(5)
+  %temp245 = alloca float, addrspace(5)
+  %temp244 = alloca float, addrspace(5)
+  %temp243 = alloca float, addrspace(5)
+  %temp242 = alloca float, addrspace(5)
+  %temp241 = alloca float, addrspace(5)
+  %temp240 = alloca float, addrspace(5)
+  %temp239 = alloca float, addrspace(5)
+  %temp238 = alloca float, addrspace(5)
+  %temp237 = alloca float, addrspace(5)
+  %temp236 = alloca float, addrspace(5)
+  %temp235 = alloca float, addrspace(5)
+  %temp234 = alloca float, addrspace(5)
+  %temp233 = alloca float, addrspace(5)
+  %temp232 = alloca float, addrspace(5)
+  %temp231 = alloca float, addrspace(5)
+  %temp230 = alloca float, addrspace(5)
+  %temp229 = alloca float, addrspace(5)
+  %temp228 = alloca float, addrspace(5)
+  %temp227 = alloca float, addrspace(5)
+  %temp226 = alloca float, addrspace(5)
+  %temp225 = alloca float, addrspace(5)
+  %temp224 = alloca float, addrspace(5)
+  %temp223 = alloca float, addrspace(5)
+  %temp222 = alloca float, addrspace(5)
+  %temp221 = alloca float, addrspace(5)
+  %temp220 = alloca float, addrspace(5)
+  %temp219 = alloca float, addrspace(5)
+  %temp218 = alloca float, addrspace(5)
+  %temp217 = alloca float, addrspace(5)
+  %temp216 = alloca float, addrspace(5)
+  %temp215 = alloca float, addrspace(5)
+  %temp214 = alloca float, addrspace(5)
+  %temp213 = alloca float, addrspace(5)
+  %temp212 = alloca float, addrspace(5)
+  %temp211 = alloca float, addrspace(5)
+  %temp210 = alloca float, addrspace(5)
+  %temp209 = alloca float, addrspace(5)
+  %temp208 = alloca float, addrspace(5)
+  %temp207 = alloca float, addrspace(5)
+  %temp206 = alloca float, addrspace(5)
+  %temp205 = alloca float, addrspace(5)
+  %temp204 = alloca float, addrspace(5)
+  %temp203 = alloca float, addrspace(5)
+  %temp202 = alloca float, addrspace(5)
+  %temp201 = alloca float, addrspace(5)
+  %temp200 = alloca float, addrspace(5)
+  %temp199 = alloca float, addrspace(5)
+  %temp198 = alloca float, addrspace(5)
+  %temp197 = alloca float, addrspace(5)
+  %temp196 = alloca float, addrspace(5)
+  %temp195 = alloca float, addrspace(5)
+  %temp194 = alloca float, addrspace(5)
+  %temp193 = alloca float, addrspace(5)
+  %temp192 = alloca float, addrspace(5)
+  %temp191 = alloca float, addrspace(5)
+  %temp190 = alloca float, addrspace(5)
+  %temp189 = alloca float, addrspace(5)
+  %temp188 = alloca float, addrspace(5)
+  %temp187 = alloca float, addrspace(5)
+  %temp186 = alloca float, addrspace(5)
+  %temp185 = alloca float, addrspace(5)
+  %temp184 = alloca float, addrspace(5)
+  %temp183 = alloca float, addrspace(5)
+  %temp182 = alloca float, addrspace(5)
+  %temp181 = alloca float, addrspace(5)
+  %temp180 = alloca float, addrspace(5)
+  %temp179 = alloca float, addrspace(5)
+  %temp178 = alloca float, addrspace(5)
+  %temp177 = alloca float, addrspace(5)
+  %temp176 = alloca float, addrspace(5)
+  %temp175 = alloca float, addrspace(5)
+  %temp174 = alloca float, addrspace(5)
+  %temp173 = alloca float, addrspace(5)
+  %temp172 = alloca float, addrspace(5)
+  %temp171 = alloca float, addrspace(5)
+  %temp170 = alloca float, addrspace(5)
+  %temp169 = alloca float, addrspace(5)
+  %temp168 = alloca float, addrspace(5)
+  %temp167 = alloca float, addrspace(5)
+  %temp166 = alloca float, addrspace(5)
+  %temp165 = alloca float, addrspace(5)
+  %temp164 = alloca float, addrspace(5)
+  %temp163 = alloca float, addrspace(5)
+  %temp162 = alloca float, addrspace(5)
+  %temp161 = alloca float, addrspace(5)
+  %temp160 = alloca float, addrspace(5)
+  %temp159 = alloca float, addrspace(5)
+  %temp158 = alloca float, addrspace(5)
+  %temp157 = alloca float, addrspace(5)
+  %temp156 = alloca float, addrspace(5)
+  %temp155 = alloca float, addrspace(5)
+  %temp154 = alloca float, addrspace(5)
+  %temp153 = alloca float, addrspace(5)
+  %temp152 = alloca float, addrspace(5)
+  %temp151 = alloca float, addrspace(5)
+  %temp150 = alloca float, addrspace(5)
+  %temp149 = alloca float, addrspace(5)
+  %temp148 = alloca float, addrspace(5)
+  %temp147 = alloca float, addrspace(5)
+  %temp146 = alloca float, addrspace(5)
+  %temp145 = alloca float, addrspace(5)
+  %temp144 = alloca float, addrspace(5)
+  %temp143 = alloca float, addrspace(5)
+  %temp142 = alloca float, addrspace(5)
+  %temp141 = alloca float, addrspace(5)
+  %temp140 = alloca float, addrspace(5)
+  %temp139 = alloca float, addrspace(5)
+  %temp138 = alloca float, addrspace(5)
+  %temp137 = alloca float, addrspace(5)
+  %temp136 = alloca float, addrspace(5)
+  %temp135 = alloca float, addrspace(5)
+  %temp134 = alloca float, addrspace(5)
+  %temp133 = alloca float, addrspace(5)
+  %temp132 = alloca float, addrspace(5)
+  %temp131 = alloca float, addrspace(5)
+  %temp130 = alloca float, addrspace(5)
+  %temp129 = alloca float, addrspace(5)
+  %temp128 = alloca float, addrspace(5)
+  %temp127 = alloca float, addrspace(5)
+  %temp126 = alloca float, addrspace(5)
+  %temp125 = alloca float, addrspace(5)
+  %temp124 = alloca float, addrspace(5)
+  %temp123 = alloca float, addrspace(5)
+  %temp122 = alloca float, addrspace(5)
+  %temp121 = alloca float, addrspace(5)
+  %temp120 = alloca float, addrspace(5)
+  %temp119 = alloca float, addrspace(5)
+  %temp118 = alloca float, addrspace(5)
+  %temp117 = alloca float, addrspace(5)
+  %temp116 = alloca float, addrspace(5)
+  %temp115 = alloca float, addrspace(5)
+  %temp114 = alloca float, addrspace(5)
+  %temp113 = alloca float, addrspace(5)
+  %temp112 = alloca float, addrspace(5)
+  %temp111 = alloca float, addrspace(5)
+  %temp110 = alloca float, addrspace(5)
+  %temp109 = alloca float, addrspace(5)
+  %temp108 = alloca float, addrspace(5)
+  %temp107 = alloca float, addrspace(5)
+  %temp106 = alloca float, addrspace(5)
+  %temp105 = alloca float, addrspace(5)
+  %temp104 = alloca float, addrspace(5)
+  %temp103 = alloca float, addrspace(5)
+  %temp102 = alloca float, addrspace(5)
+  %temp101 = alloca float, addrspace(5)
+  %temp100 = alloca float, addrspace(5)
+  %temp99 = alloca float, addrspace(5)
+  %temp98 = alloca float, addrspace(5)
+  %temp97 = alloca float, addrspace(5)
+  %temp96 = alloca float, addrspace(5)
+  %temp95 = alloca float, addrspace(5)
+  %temp94 = alloca float, addrspace(5)
+  %temp93 = alloca float, addrspace(5)
+  %temp92 = alloca float, addrspace(5)
+  %temp91 = alloca float, addrspace(5)
+  %temp90 = alloca float, addrspace(5)
+  %temp89 = alloca float, addrspace(5)
+  %temp88 = alloca float, addrspace(5)
+  %temp87 = alloca float, addrspace(5)
+  %temp86 = alloca float, addrspace(5)
+  %temp85 = alloca float, addrspace(5)
+  %temp84 = alloca float, addrspace(5)
+  %temp83 = alloca float, addrspace(5)
+  %temp82 = alloca float, addrspace(5)
+  %temp81 = alloca float, addrspace(5)
+  %temp80 = alloca float, addrspace(5)
+  %temp79 = alloca float, addrspace(5)
+  %temp78 = alloca float, addrspace(5)
+  %temp77 = alloca float, addrspace(5)
+  %temp76 = alloca float, addrspace(5)
+  %temp75 = alloca float, addrspace(5)
+  %temp74 = alloca float, addrspace(5)
+  %temp73 = alloca float, addrspace(5)
+  %temp72 = alloca float, addrspace(5)
+  %temp71 = alloca float, addrspace(5)
+  %temp70 = alloca float, addrspace(5)
+  %temp69 = alloca float, addrspace(5)
+  %temp68 = alloca float, addrspace(5)
+  %temp67 = alloca float, addrspace(5)
+  %temp66 = alloca float, addrspace(5)
+  %temp65 = alloca float, addrspace(5)
+  %temp64 = alloca float, addrspace(5)
+  %temp63 = alloca float, addrspace(5)
+  %temp62 = alloca float, addrspace(5)
+  %temp61 = alloca float, addrspace(5)
+  %temp60 = alloca float, addrspace(5)
+  %temp59 = alloca float, addrspace(5)
+  %temp58 = alloca float, addrspace(5)
+  %temp57 = alloca float, addrspace(5)
+  %temp56 = alloca float, addrspace(5)
+  %temp55 = alloca float, addrspace(5)
+  %temp54 = alloca float, addrspace(5)
+  %temp53 = alloca float, addrspace(5)
+  %temp52 = alloca float, addrspace(5)
+  %temp51 = alloca float, addrspace(5)
+  %temp50 = alloca float, addrspace(5)
+  %temp49 = alloca float, addrspace(5)
+  %temp48 = alloca float, addrspace(5)
+  %temp47 = alloca float, addrspace(5)
+  %temp46 = alloca float, addrspace(5)
+  %temp45 = alloca float, addrspace(5)
+  %temp44 = alloca float, addrspace(5)
+  %temp43 = alloca float, addrspace(5)
+  %temp42 = alloca float, addrspace(5)
+  %temp41 = alloca float, addrspace(5)
+  %temp40 = alloca float, addrspace(5)
+  %temp39 = alloca float, addrspace(5)
+  %temp38 = alloca float, addrspace(5)
+  %temp37 = alloca float, addrspace(5)
+  %temp36 = alloca float, addrspace(5)
+  %temp35 = alloca float, addrspace(5)
+  %temp34 = alloca float, addrspace(5)
+  %temp33 = alloca float, addrspace(5)
+  %temp32 = alloca float, addrspace(5)
+  %temp31 = alloca float, addrspace(5)
+  %temp30 = alloca float, addrspace(5)
+  %temp29 = alloca float, addrspace(5)
+  %temp28 = alloca float, addrspace(5)
+  %temp27 = alloca float, addrspace(5)
+  %temp26 = alloca float, addrspace(5)
+  %temp25 = alloca float, addrspace(5)
+  %temp24 = alloca float, addrspace(5)
+  %temp23 = alloca float, addrspace(5)
+  %temp22 = alloca float, addrspace(5)
+  %temp21 = alloca float, addrspace(5)
+  %temp20 = alloca float, addrspace(5)
+  %temp19 = alloca float, addrspace(5)
+  %temp18 = alloca float, addrspace(5)
+  %temp17 = alloca float, addrspace(5)
+  %temp16 = alloca float, addrspace(5)
+  %temp15 = alloca float, addrspace(5)
+  %temp14 = alloca float, addrspace(5)
+  %temp13 = alloca float, addrspace(5)
+  %temp12 = alloca float, addrspace(5)
+  %temp11 = alloca float, addrspace(5)
+  %temp10 = alloca float, addrspace(5)
+  %temp9 = alloca float, addrspace(5)
+  %temp8 = alloca float, addrspace(5)
+  %temp7 = alloca float, addrspace(5)
+  %temp6 = alloca float, addrspace(5)
+  %temp5 = alloca float, addrspace(5)
+  %temp4 = alloca float, addrspace(5)
+  %temp3 = alloca float, addrspace(5)
+  %temp2 = alloca float, addrspace(5)
+  %temp1 = alloca float, addrspace(5)
+  %temp = alloca float, addrspace(5)
+  %16 = alloca float, addrspace(5)
+  %17 = alloca float, addrspace(5)
+  %18 = alloca float, addrspace(5)
+  %19 = alloca float, addrspace(5)
+  %20 = alloca float, addrspace(5)
+  %21 = alloca float, addrspace(5)
+  %22 = alloca float, addrspace(5)
+  %23 = alloca float, addrspace(5)
+  %24 = alloca float, addrspace(5)
+  %25 = alloca float, addrspace(5)
+  %26 = alloca float, addrspace(5)
+  %27 = alloca float, addrspace(5)
+  %28 = alloca float, addrspace(5)
+  %29 = alloca float, addrspace(5)
+  %30 = alloca float, addrspace(5)
+  %31 = alloca float, addrspace(5)
+  %32 = alloca float, addrspace(5)
+  %33 = alloca float, addrspace(5)
+  %34 = alloca float, addrspace(5)
+  %35 = alloca float, addrspace(5)
+  %36 = alloca float, addrspace(5)
+  %37 = alloca float, addrspace(5)
+  %38 = alloca float, addrspace(5)
+  %39 = alloca float, addrspace(5)
+  %40 = alloca float, addrspace(5)
+  %41 = alloca float, addrspace(5)
+  %42 = alloca float, addrspace(5)
+  %43 = alloca float, addrspace(5)
+  %44 = alloca float, addrspace(5)
+  %45 = alloca float, addrspace(5)
+  %46 = alloca float, addrspace(5)
+  %47 = alloca float, addrspace(5)
+  %48 = alloca float, addrspace(5)
+  %49 = alloca float, addrspace(5)
+  %50 = alloca float, addrspace(5)
+  %51 = alloca float, addrspace(5)
+  %52 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 0, !amdgpu.uniform !0
+  %53 = load <4 x i32>, <4 x i32> addrspace(6)* %52, !invariant.load !0
+  %54 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %53, i32 %13, i32 0, i1 false, i1 false) #2
+  %55 = extractelement <4 x float> %54, i32 0
+  %56 = extractelement <4 x float> %54, i32 1
+  %57 = extractelement <4 x float> %54, i32 2
+  %58 = extractelement <4 x float> %54, i32 3
+  %59 = bitcast float %55 to i32
+  %60 = bitcast float %56 to i32
+  %61 = bitcast float %57 to i32
+  %62 = bitcast float %58 to i32
+  %63 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 1, !amdgpu.uniform !0
+  %64 = load <4 x i32>, <4 x i32> addrspace(6)* %63, !invariant.load !0
+  %65 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %64, i32 %14, i32 0, i1 false, i1 false) #2
+  %66 = extractelement <4 x float> %65, i32 0
+  %67 = extractelement <4 x float> %65, i32 1
+  %68 = extractelement <4 x float> %65, i32 2
+  %69 = extractelement <4 x float> %65, i32 3
+  %70 = bitcast float %66 to i32
+  %71 = bitcast float %67 to i32
+  %72 = bitcast float %68 to i32
+  %73 = bitcast float %69 to i32
+  %74 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 2, !amdgpu.uniform !0
+  %75 = load <4 x i32>, <4 x i32> addrspace(6)* %74, !invariant.load !0
+  %76 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %75, i32 %15, i32 0, i1 false, i1 false) #2
+  %77 = extractelement <4 x float> %76, i32 0
+  %78 = extractelement <4 x float> %76, i32 1
+  %79 = extractelement <4 x float> %76, i32 2
+  %80 = extractelement <4 x float> %76, i32 3
+  %81 = bitcast float %77 to i32
+  %82 = bitcast float %78 to i32
+  %83 = bitcast float %79 to i32
+  %84 = bitcast float %80 to i32
+  store float 0.000000e+00, float addrspace(5)* %51
+  store float undef, float addrspace(5)* %51
+  store float 0.000000e+00, float addrspace(5)* %50
+  store float undef, float addrspace(5)* %50
+  store float 0.000000e+00, float addrspace(5)* %49
+  store float undef, float addrspace(5)* %49
+  store float 0.000000e+00, float addrspace(5)* %48
+  store float undef, float addrspace(5)* %48
+  store float 0.000000e+00, float addrspace(5)* %47
+  store float undef, float addrspace(5)* %47
+  store float 0.000000e+00, float addrspace(5)* %46
+  store float undef, float addrspace(5)* %46
+  store float 0.000000e+00, float addrspace(5)* %45
+  store float undef, float addrspace(5)* %45
+  store float 0.000000e+00, float addrspace(5)* %44
+  store float undef, float addrspace(5)* %44
+  store float 0.000000e+00, float addrspace(5)* %43
+  store float undef, float addrspace(5)* %43
+  store float 0.000000e+00, float addrspace(5)* %42
+  store float undef, float addrspace(5)* %42
+  store float 0.000000e+00, float addrspace(5)* %41
+  store float undef, float addrspace(5)* %41
+  store float 0.000000e+00, float addrspace(5)* %40
+  store float undef, float addrspace(5)* %40
+  store float 0.000000e+00, float addrspace(5)* %39
+  store float undef, float addrspace(5)* %39
+  store float 0.000000e+00, float addrspace(5)* %38
+  store float undef, float addrspace(5)* %38
+  store float 0.000000e+00, float addrspace(5)* %37
+  store float undef, float addrspace(5)* %37
+  store float 0.000000e+00, float addrspace(5)* %36
+  store float undef, float addrspace(5)* %36
+  store float 0.000000e+00, float addrspace(5)* %35
+  store float undef, float addrspace(5)* %35
+  store float 0.000000e+00, float addrspace(5)* %34
+  store float undef, float addrspace(5)* %34
+  store float 0.000000e+00, float addrspace(5)* %33
+  store float undef, float addrspace(5)* %33
+  store float 0.000000e+00, float addrspace(5)* %32
+  store float undef, float addrspace(5)* %32
+  store float 0.000000e+00, float addrspace(5)* %31
+  store float undef, float addrspace(5)* %31
+  store float 0.000000e+00, float addrspace(5)* %30
+  store float undef, float addrspace(5)* %30
+  store float 0.000000e+00, float addrspace(5)* %29
+  store float undef, float addrspace(5)* %29
+  store float 0.000000e+00, float addrspace(5)* %28
+  store float undef, float addrspace(5)* %28
+  store float 0.000000e+00, float addrspace(5)* %27
+  store float undef, float addrspace(5)* %27
+  store float 0.000000e+00, float addrspace(5)* %26
+  store float undef, float addrspace(5)* %26
+  store float 0.000000e+00, float addrspace(5)* %25
+  store float undef, float addrspace(5)* %25
+  store float 0.000000e+00, float addrspace(5)* %24
+  store float undef, float addrspace(5)* %24
+  store float 0.000000e+00, float addrspace(5)* %23
+  store float undef, float addrspace(5)* %23
+  store float 0.000000e+00, float addrspace(5)* %22
+  store float undef, float addrspace(5)* %22
+  store float 0.000000e+00, float addrspace(5)* %21
+  store float undef, float addrspace(5)* %21
+  store float 0.000000e+00, float addrspace(5)* %20
+  store float undef, float addrspace(5)* %20
+  store float 0.000000e+00, float addrspace(5)* %19
+  store float undef, float addrspace(5)* %19
+  store float 0.000000e+00, float addrspace(5)* %18
+  store float undef, float addrspace(5)* %18
+  store float 0.000000e+00, float addrspace(5)* %17
+  store float undef, float addrspace(5)* %17
+  store float 0.000000e+00, float addrspace(5)* %16
+  store float undef, float addrspace(5)* %16
+  store float 0.000000e+00, float addrspace(5)* %temp
+  store float undef, float addrspace(5)* %temp
+  store float 0.000000e+00, float addrspace(5)* %temp1
+  store float undef, float addrspace(5)* %temp1
+  store float 0.000000e+00, float addrspace(5)* %temp2
+  store float undef, float addrspace(5)* %temp2
+  store float 0.000000e+00, float addrspace(5)* %temp3
+  store float undef, float addrspace(5)* %temp3
+  store float 0.000000e+00, float addrspace(5)* %temp4
+  store float undef, float addrspace(5)* %temp4
+  store float 0.000000e+00, float addrspace(5)* %temp5
+  store float undef, float addrspace(5)* %temp5
+  store float 0.000000e+00, float addrspace(5)* %temp6
+  store float undef, float addrspace(5)* %temp6
+  store float 0.000000e+00, float addrspace(5)* %temp7
+  store float undef, float addrspace(5)* %temp7
+  store float 0.000000e+00, float addrspace(5)* %temp8
+  store float undef, float addrspace(5)* %temp8
+  store float 0.000000e+00, float addrspace(5)* %temp9
+  store float undef, float addrspace(5)* %temp9
+  store float 0.000000e+00, float addrspace(5)* %temp10
+  store float undef, float addrspace(5)* %temp10
+  store float 0.000000e+00, float addrspace(5)* %temp11
+  store float undef, float addrspace(5)* %temp11
+  store float 0.000000e+00, float addrspace(5)* %temp12
+  store float undef, float addrspace(5)* %temp12
+  store float 0.000000e+00, float addrspace(5)* %temp13
+  store float undef, float addrspace(5)* %temp13
+  store float 0.000000e+00, float addrspace(5)* %temp14
+  store float undef, float addrspace(5)* %temp14
+  store float 0.000000e+00, float addrspace(5)* %temp15
+  store float undef, float addrspace(5)* %temp15
+  store float 0.000000e+00, float addrspace(5)* %temp16
+  store float undef, float addrspace(5)* %temp16
+  store float 0.000000e+00, float addrspace(5)* %temp17
+  store float undef, float addrspace(5)* %temp17
+  store float 0.000000e+00, float addrspace(5)* %temp18
+  store float undef, float addrspace(5)* %temp18
+  store float 0.000000e+00, float addrspace(5)* %temp19
+  store float undef, float addrspace(5)* %temp19
+  store float 0.000000e+00, float addrspace(5)* %temp20
+  store float undef, float addrspace(5)* %temp20
+  store float 0.000000e+00, float addrspace(5)* %temp21
+  store float undef, float addrspace(5)* %temp21
+  store float 0.000000e+00, float addrspace(5)* %temp22
+  store float undef, float addrspace(5)* %temp22
+  store float 0.000000e+00, float addrspace(5)* %temp23
+  store float undef, float addrspace(5)* %temp23
+  store float 0.000000e+00, float addrspace(5)* %temp24
+  store float undef, float addrspace(5)* %temp24
+  store float 0.000000e+00, float addrspace(5)* %temp25
+  store float undef, float addrspace(5)* %temp25
+  store float 0.000000e+00, float addrspace(5)* %temp26
+  store float undef, float addrspace(5)* %temp26
+  store float 0.000000e+00, float addrspace(5)* %temp27
+  store float undef, float addrspace(5)* %temp27
+  store float 0.000000e+00, float addrspace(5)* %temp28
+  store float undef, float addrspace(5)* %temp28
+  store float 0.000000e+00, float addrspace(5)* %temp29
+  store float undef, float addrspace(5)* %temp29
+  store float 0.000000e+00, float addrspace(5)* %temp30
+  store float undef, float addrspace(5)* %temp30
+  store float 0.000000e+00, float addrspace(5)* %temp31
+  store float undef, float addrspace(5)* %temp31
+  store float 0.000000e+00, float addrspace(5)* %temp32
+  store float undef, float addrspace(5)* %temp32
+  store float 0.000000e+00, float addrspace(5)* %temp33
+  store float undef, float addrspace(5)* %temp33
+  store float 0.000000e+00, float addrspace(5)* %temp34
+  store float undef, float addrspace(5)* %temp34
+  store float 0.000000e+00, float addrspace(5)* %temp35
+  store float undef, float addrspace(5)* %temp35
+  store float 0.000000e+00, float addrspace(5)* %temp36
+  store float undef, float addrspace(5)* %temp36
+  store float 0.000000e+00, float addrspace(5)* %temp37
+  store float undef, float addrspace(5)* %temp37
+  store float 0.000000e+00, float addrspace(5)* %temp38
+  store float undef, float addrspace(5)* %temp38
+  store float 0.000000e+00, float addrspace(5)* %temp39
+  store float undef, float addrspace(5)* %temp39
+  store float 0.000000e+00, float addrspace(5)* %temp40
+  store float undef, float addrspace(5)* %temp40
+  store float 0.000000e+00, float addrspace(5)* %temp41
+  store float undef, float addrspace(5)* %temp41
+  store float 0.000000e+00, float addrspace(5)* %temp42
+  store float undef, float addrspace(5)* %temp42
+  store float 0.000000e+00, float addrspace(5)* %temp43
+  store float undef, float addrspace(5)* %temp43
+  store float 0.000000e+00, float addrspace(5)* %temp44
+  store float undef, float addrspace(5)* %temp44
+  store float 0.000000e+00, float addrspace(5)* %temp45
+  store float undef, float addrspace(5)* %temp45
+  store float 0.000000e+00, float addrspace(5)* %temp46
+  store float undef, float addrspace(5)* %temp46
+  store float 0.000000e+00, float addrspace(5)* %temp47
+  store float undef, float addrspace(5)* %temp47
+  store float 0.000000e+00, float addrspace(5)* %temp48
+  store float undef, float addrspace(5)* %temp48
+  store float 0.000000e+00, float addrspace(5)* %temp49
+  store float undef, float addrspace(5)* %temp49
+  store float 0.000000e+00, float addrspace(5)* %temp50
+  store float undef, float addrspace(5)* %temp50
+  store float 0.000000e+00, float addrspace(5)* %temp51
+  store float undef, float addrspace(5)* %temp51
+  store float 0.000000e+00, float addrspace(5)* %temp52
+  store float undef, float addrspace(5)* %temp52
+  store float 0.000000e+00, float addrspace(5)* %temp53
+  store float undef, float addrspace(5)* %temp53
+  store float 0.000000e+00, float addrspace(5)* %temp54
+  store float undef, float addrspace(5)* %temp54
+  store float 0.000000e+00, float addrspace(5)* %temp55
+  store float undef, float addrspace(5)* %temp55
+  store float 0.000000e+00, float addrspace(5)* %temp56
+  store float undef, float addrspace(5)* %temp56
+  store float 0.000000e+00, float addrspace(5)* %temp57
+  store float undef, float addrspace(5)* %temp57
+  store float 0.000000e+00, float addrspace(5)* %temp58
+  store float undef, float addrspace(5)* %temp58
+  store float 0.000000e+00, float addrspace(5)* %temp59
+  store float undef, float addrspace(5)* %temp59
+  store float 0.000000e+00, float addrspace(5)* %temp60
+  store float undef, float addrspace(5)* %temp60
+  store float 0.000000e+00, float addrspace(5)* %temp61
+  store float undef, float addrspace(5)* %temp61
+  store float 0.000000e+00, float addrspace(5)* %temp62
+  store float undef, float addrspace(5)* %temp62
+  store float 0.000000e+00, float addrspace(5)* %temp63
+  store float undef, float addrspace(5)* %temp63
+  store float 0.000000e+00, float addrspace(5)* %temp64
+  store float undef, float addrspace(5)* %temp64
+  store float 0.000000e+00, float addrspace(5)* %temp65
+  store float undef, float addrspace(5)* %temp65
+  store float 0.000000e+00, float addrspace(5)* %temp66
+  store float undef, float addrspace(5)* %temp66
+  store float 0.000000e+00, float addrspace(5)* %temp67
+  store float undef, float addrspace(5)* %temp67
+  store float 0.000000e+00, float addrspace(5)* %temp68
+  store float undef, float addrspace(5)* %temp68
+  store float 0.000000e+00, float addrspace(5)* %temp69
+  store float undef, float addrspace(5)* %temp69
+  store float 0.000000e+00, float addrspace(5)* %temp70
+  store float undef, float addrspace(5)* %temp70
+  store float 0.000000e+00, float addrspace(5)* %temp71
+  store float undef, float addrspace(5)* %temp71
+  store float 0.000000e+00, float addrspace(5)* %temp72
+  store float undef, float addrspace(5)* %temp72
+  store float 0.000000e+00, float addrspace(5)* %temp73
+  store float undef, float addrspace(5)* %temp73
+  store float 0.000000e+00, float addrspace(5)* %temp74
+  store float undef, float addrspace(5)* %temp74
+  store float 0.000000e+00, float addrspace(5)* %temp75
+  store float undef, float addrspace(5)* %temp75
+  store float 0.000000e+00, float addrspace(5)* %temp76
+  store float undef, float addrspace(5)* %temp76
+  store float 0.000000e+00, float addrspace(5)* %temp77
+  store float undef, float addrspace(5)* %temp77
+  store float 0.000000e+00, float addrspace(5)* %temp78
+  store float undef, float addrspace(5)* %temp78
+  store float 0.000000e+00, float addrspace(5)* %temp79
+  store float undef, float addrspace(5)* %temp79
+  store float 0.000000e+00, float addrspace(5)* %temp80
+  store float undef, float addrspace(5)* %temp80
+  store float 0.000000e+00, float addrspace(5)* %temp81
+  store float undef, float addrspace(5)* %temp81
+  store float 0.000000e+00, float addrspace(5)* %temp82
+  store float undef, float addrspace(5)* %temp82
+  store float 0.000000e+00, float addrspace(5)* %temp83
+  store float undef, float addrspace(5)* %temp83
+  store float 0.000000e+00, float addrspace(5)* %temp84
+  store float undef, float addrspace(5)* %temp84
+  store float 0.000000e+00, float addrspace(5)* %temp85
+  store float undef, float addrspace(5)* %temp85
+  store float 0.000000e+00, float addrspace(5)* %temp86
+  store float undef, float addrspace(5)* %temp86
+  store float 0.000000e+00, float addrspace(5)* %temp87
+  store float undef, float addrspace(5)* %temp87
+  store float 0.000000e+00, float addrspace(5)* %temp88
+  store float undef, float addrspace(5)* %temp88
+  store float 0.000000e+00, float addrspace(5)* %temp89
+  store float undef, float addrspace(5)* %temp89
+  store float 0.000000e+00, float addrspace(5)* %temp90
+  store float undef, float addrspace(5)* %temp90
+  store float 0.000000e+00, float addrspace(5)* %temp91
+  store float undef, float addrspace(5)* %temp91
+  store float 0.000000e+00, float addrspace(5)* %temp92
+  store float undef, float addrspace(5)* %temp92
+  store float 0.000000e+00, float addrspace(5)* %temp93
+  store float undef, float addrspace(5)* %temp93
+  store float 0.000000e+00, float addrspace(5)* %temp94
+  store float undef, float addrspace(5)* %temp94
+  store float 0.000000e+00, float addrspace(5)* %temp95
+  store float undef, float addrspace(5)* %temp95
+  store float 0.000000e+00, float addrspace(5)* %temp96
+  store float undef, float addrspace(5)* %temp96
+  store float 0.000000e+00, float addrspace(5)* %temp97
+  store float undef, float addrspace(5)* %temp97
+  store float 0.000000e+00, float addrspace(5)* %temp98
+  store float undef, float addrspace(5)* %temp98
+  store float 0.000000e+00, float addrspace(5)* %temp99
+  store float undef, float addrspace(5)* %temp99
+  store float 0.000000e+00, float addrspace(5)* %temp100
+  store float undef, float addrspace(5)* %temp100
+  store float 0.000000e+00, float addrspace(5)* %temp101
+  store float undef, float addrspace(5)* %temp101
+  store float 0.000000e+00, float addrspace(5)* %temp102
+  store float undef, float addrspace(5)* %temp102
+  store float 0.000000e+00, float addrspace(5)* %temp103
+  store float undef, float addrspace(5)* %temp103
+  store float 0.000000e+00, float addrspace(5)* %temp104
+  store float undef, float addrspace(5)* %temp104
+  store float 0.000000e+00, float addrspace(5)* %temp105
+  store float undef, float addrspace(5)* %temp105
+  store float 0.000000e+00, float addrspace(5)* %temp106
+  store float undef, float addrspace(5)* %temp106
+  store float 0.000000e+00, float addrspace(5)* %temp107
+  store float undef, float addrspace(5)* %temp107
+  store float 0.000000e+00, float addrspace(5)* %temp108
+  store float undef, float addrspace(5)* %temp108
+  store float 0.000000e+00, float addrspace(5)* %temp109
+  store float undef, float addrspace(5)* %temp109
+  store float 0.000000e+00, float addrspace(5)* %temp110
+  store float undef, float addrspace(5)* %temp110
+  store float 0.000000e+00, float addrspace(5)* %temp111
+  store float undef, float addrspace(5)* %temp111
+  store float 0.000000e+00, float addrspace(5)* %temp112
+  store float undef, float addrspace(5)* %temp112
+  store float 0.000000e+00, float addrspace(5)* %temp113
+  store float undef, float addrspace(5)* %temp113
+  store float 0.000000e+00, float addrspace(5)* %temp114
+  store float undef, float addrspace(5)* %temp114
+  store float 0.000000e+00, float addrspace(5)* %temp115
+  store float undef, float addrspace(5)* %temp115
+  store float 0.000000e+00, float addrspace(5)* %temp116
+  store float undef, float addrspace(5)* %temp116
+  store float 0.000000e+00, float addrspace(5)* %temp117
+  store float undef, float addrspace(5)* %temp117
+  store float 0.000000e+00, float addrspace(5)* %temp118
+  store float undef, float addrspace(5)* %temp118
+  store float 0.000000e+00, float addrspace(5)* %temp119
+  store float undef, float addrspace(5)* %temp119
+  store float 0.000000e+00, float addrspace(5)* %temp120
+  store float undef, float addrspace(5)* %temp120
+  store float 0.000000e+00, float addrspace(5)* %temp121
+  store float undef, float addrspace(5)* %temp121
+  store float 0.000000e+00, float addrspace(5)* %temp122
+  store float undef, float addrspace(5)* %temp122
+  store float 0.000000e+00, float addrspace(5)* %temp123
+  store float undef, float addrspace(5)* %temp123
+  store float 0.000000e+00, float addrspace(5)* %temp124
+  store float undef, float addrspace(5)* %temp124
+  store float 0.000000e+00, float addrspace(5)* %temp125
+  store float undef, float addrspace(5)* %temp125
+  store float 0.000000e+00, float addrspace(5)* %temp126
+  store float undef, float addrspace(5)* %temp126
+  store float 0.000000e+00, float addrspace(5)* %temp127
+  store float undef, float addrspace(5)* %temp127
+  store float 0.000000e+00, float addrspace(5)* %temp128
+  store float undef, float addrspace(5)* %temp128
+  store float 0.000000e+00, float addrspace(5)* %temp129
+  store float undef, float addrspace(5)* %temp129
+  store float 0.000000e+00, float addrspace(5)* %temp130
+  store float undef, float addrspace(5)* %temp130
+  store float 0.000000e+00, float addrspace(5)* %temp131
+  store float undef, float addrspace(5)* %temp131
+  store float 0.000000e+00, float addrspace(5)* %temp132
+  store float undef, float addrspace(5)* %temp132
+  store float 0.000000e+00, float addrspace(5)* %temp133
+  store float undef, float addrspace(5)* %temp133
+  store float 0.000000e+00, float addrspace(5)* %temp134
+  store float undef, float addrspace(5)* %temp134
+  store float 0.000000e+00, float addrspace(5)* %temp135
+  store float undef, float addrspace(5)* %temp135
+  store float 0.000000e+00, float addrspace(5)* %temp136
+  store float undef, float addrspace(5)* %temp136
+  store float 0.000000e+00, float addrspace(5)* %temp137
+  store float undef, float addrspace(5)* %temp137
+  store float 0.000000e+00, float addrspace(5)* %temp138
+  store float undef, float addrspace(5)* %temp138
+  store float 0.000000e+00, float addrspace(5)* %temp139
+  store float undef, float addrspace(5)* %temp139
+  store float 0.000000e+00, float addrspace(5)* %temp140
+  store float undef, float addrspace(5)* %temp140
+  store float 0.000000e+00, float addrspace(5)* %temp141
+  store float undef, float addrspace(5)* %temp141
+  store float 0.000000e+00, float addrspace(5)* %temp142
+  store float undef, float addrspace(5)* %temp142
+  store float 0.000000e+00, float addrspace(5)* %temp143
+  store float undef, float addrspace(5)* %temp143
+  store float 0.000000e+00, float addrspace(5)* %temp144
+  store float undef, float addrspace(5)* %temp144
+  store float 0.000000e+00, float addrspace(5)* %temp145
+  store float undef, float addrspace(5)* %temp145
+  store float 0.000000e+00, float addrspace(5)* %temp146
+  store float undef, float addrspace(5)* %temp146
+  store float 0.000000e+00, float addrspace(5)* %temp147
+  store float undef, float addrspace(5)* %temp147
+  store float 0.000000e+00, float addrspace(5)* %temp148
+  store float undef, float addrspace(5)* %temp148
+  store float 0.000000e+00, float addrspace(5)* %temp149
+  store float undef, float addrspace(5)* %temp149
+  store float 0.000000e+00, float addrspace(5)* %temp150
+  store float undef, float addrspace(5)* %temp150
+  store float 0.000000e+00, float addrspace(5)* %temp151
+  store float undef, float addrspace(5)* %temp151
+  store float 0.000000e+00, float addrspace(5)* %temp152
+  store float undef, float addrspace(5)* %temp152
+  store float 0.000000e+00, float addrspace(5)* %temp153
+  store float undef, float addrspace(5)* %temp153
+  store float 0.000000e+00, float addrspace(5)* %temp154
+  store float undef, float addrspace(5)* %temp154
+  store float 0.000000e+00, float addrspace(5)* %temp155
+  store float undef, float addrspace(5)* %temp155
+  store float 0.000000e+00, float addrspace(5)* %temp156
+  store float undef, float addrspace(5)* %temp156
+  store float 0.000000e+00, float addrspace(5)* %temp157
+  store float undef, float addrspace(5)* %temp157
+  store float 0.000000e+00, float addrspace(5)* %temp158
+  store float undef, float addrspace(5)* %temp158
+  store float 0.000000e+00, float addrspace(5)* %temp159
+  store float undef, float addrspace(5)* %temp159
+  store float 0.000000e+00, float addrspace(5)* %temp160
+  store float undef, float addrspace(5)* %temp160
+  store float 0.000000e+00, float addrspace(5)* %temp161
+  store float undef, float addrspace(5)* %temp161
+  store float 0.000000e+00, float addrspace(5)* %temp162
+  store float undef, float addrspace(5)* %temp162
+  store float 0.000000e+00, float addrspace(5)* %temp163
+  store float undef, float addrspace(5)* %temp163
+  store float 0.000000e+00, float addrspace(5)* %temp164
+  store float undef, float addrspace(5)* %temp164
+  store float 0.000000e+00, float addrspace(5)* %temp165
+  store float undef, float addrspace(5)* %temp165
+  store float 0.000000e+00, float addrspace(5)* %temp166
+  store float undef, float addrspace(5)* %temp166
+  store float 0.000000e+00, float addrspace(5)* %temp167
+  store float undef, float addrspace(5)* %temp167
+  store float 0.000000e+00, float addrspace(5)* %temp168
+  store float undef, float addrspace(5)* %temp168
+  store float 0.000000e+00, float addrspace(5)* %temp169
+  store float undef, float addrspace(5)* %temp169
+  store float 0.000000e+00, float addrspace(5)* %temp170
+  store float undef, float addrspace(5)* %temp170
+  store float 0.000000e+00, float addrspace(5)* %temp171
+  store float undef, float addrspace(5)* %temp171
+  store float 0.000000e+00, float addrspace(5)* %temp172
+  store float undef, float addrspace(5)* %temp172
+  store float 0.000000e+00, float addrspace(5)* %temp173
+  store float undef, float addrspace(5)* %temp173
+  store float 0.000000e+00, float addrspace(5)* %temp174
+  store float undef, float addrspace(5)* %temp174
+  store float 0.000000e+00, float addrspace(5)* %temp175
+  store float undef, float addrspace(5)* %temp175
+  store float 0.000000e+00, float addrspace(5)* %temp176
+  store float undef, float addrspace(5)* %temp176
+  store float 0.000000e+00, float addrspace(5)* %temp177
+  store float undef, float addrspace(5)* %temp177
+  store float 0.000000e+00, float addrspace(5)* %temp178
+  store float undef, float addrspace(5)* %temp178
+  store float 0.000000e+00, float addrspace(5)* %temp179
+  store float undef, float addrspace(5)* %temp179
+  store float 0.000000e+00, float addrspace(5)* %temp180
+  store float undef, float addrspace(5)* %temp180
+  store float 0.000000e+00, float addrspace(5)* %temp181
+  store float undef, float addrspace(5)* %temp181
+  store float 0.000000e+00, float addrspace(5)* %temp182
+  store float undef, float addrspace(5)* %temp182
+  store float 0.000000e+00, float addrspace(5)* %temp183
+  store float undef, float addrspace(5)* %temp183
+  store float 0.000000e+00, float addrspace(5)* %temp184
+  store float undef, float addrspace(5)* %temp184
+  store float 0.000000e+00, float addrspace(5)* %temp185
+  store float undef, float addrspace(5)* %temp185
+  store float 0.000000e+00, float addrspace(5)* %temp186
+  store float undef, float addrspace(5)* %temp186
+  store float 0.000000e+00, float addrspace(5)* %temp187
+  store float undef, float addrspace(5)* %temp187
+  store float 0.000000e+00, float addrspace(5)* %temp188
+  store float undef, float addrspace(5)* %temp188
+  store float 0.000000e+00, float addrspace(5)* %temp189
+  store float undef, float addrspace(5)* %temp189
+  store float 0.000000e+00, float addrspace(5)* %temp190
+  store float undef, float addrspace(5)* %temp190
+  store float 0.000000e+00, float addrspace(5)* %temp191
+  store float undef, float addrspace(5)* %temp191
+  store float 0.000000e+00, float addrspace(5)* %temp192
+  store float undef, float addrspace(5)* %temp192
+  store float 0.000000e+00, float addrspace(5)* %temp193
+  store float undef, float addrspace(5)* %temp193
+  store float 0.000000e+00, float addrspace(5)* %temp194
+  store float undef, float addrspace(5)* %temp194
+  store float 0.000000e+00, float addrspace(5)* %temp195
+  store float undef, float addrspace(5)* %temp195
+  store float 0.000000e+00, float addrspace(5)* %temp196
+  store float undef, float addrspace(5)* %temp196
+  store float 0.000000e+00, float addrspace(5)* %temp197
+  store float undef, float addrspace(5)* %temp197
+  store float 0.000000e+00, float addrspace(5)* %temp198
+  store float undef, float addrspace(5)* %temp198
+  store float 0.000000e+00, float addrspace(5)* %temp199
+  store float undef, float addrspace(5)* %temp199
+  store float 0.000000e+00, float addrspace(5)* %temp200
+  store float undef, float addrspace(5)* %temp200
+  store float 0.000000e+00, float addrspace(5)* %temp201
+  store float undef, float addrspace(5)* %temp201
+  store float 0.000000e+00, float addrspace(5)* %temp202
+  store float undef, float addrspace(5)* %temp202
+  store float 0.000000e+00, float addrspace(5)* %temp203
+  store float undef, float addrspace(5)* %temp203
+  store float 0.000000e+00, float addrspace(5)* %temp204
+  store float undef, float addrspace(5)* %temp204
+  store float 0.000000e+00, float addrspace(5)* %temp205
+  store float undef, float addrspace(5)* %temp205
+  store float 0.000000e+00, float addrspace(5)* %temp206
+  store float undef, float addrspace(5)* %temp206
+  store float 0.000000e+00, float addrspace(5)* %temp207
+  store float undef, float addrspace(5)* %temp207
+  store float 0.000000e+00, float addrspace(5)* %temp208
+  store float undef, float addrspace(5)* %temp208
+  store float 0.000000e+00, float addrspace(5)* %temp209
+  store float undef, float addrspace(5)* %temp209
+  store float 0.000000e+00, float addrspace(5)* %temp210
+  store float undef, float addrspace(5)* %temp210
+  store float 0.000000e+00, float addrspace(5)* %temp211
+  store float undef, float addrspace(5)* %temp211
+  store float 0.000000e+00, float addrspace(5)* %temp212
+  store float undef, float addrspace(5)* %temp212
+  store float 0.000000e+00, float addrspace(5)* %temp213
+  store float undef, float addrspace(5)* %temp213
+  store float 0.000000e+00, float addrspace(5)* %temp214
+  store float undef, float addrspace(5)* %temp214
+  store float 0.000000e+00, float addrspace(5)* %temp215
+  store float undef, float addrspace(5)* %temp215
+  store float 0.000000e+00, float addrspace(5)* %temp216
+  store float undef, float addrspace(5)* %temp216
+  store float 0.000000e+00, float addrspace(5)* %temp217
+  store float undef, float addrspace(5)* %temp217
+  store float 0.000000e+00, float addrspace(5)* %temp218
+  store float undef, float addrspace(5)* %temp218
+  store float 0.000000e+00, float addrspace(5)* %temp219
+  store float undef, float addrspace(5)* %temp219
+  store float 0.000000e+00, float addrspace(5)* %temp220
+  store float undef, float addrspace(5)* %temp220
+  store float 0.000000e+00, float addrspace(5)* %temp221
+  store float undef, float addrspace(5)* %temp221
+  store float 0.000000e+00, float addrspace(5)* %temp222
+  store float undef, float addrspace(5)* %temp222
+  store float 0.000000e+00, float addrspace(5)* %temp223
+  store float undef, float addrspace(5)* %temp223
+  store float 0.000000e+00, float addrspace(5)* %temp224
+  store float undef, float addrspace(5)* %temp224
+  store float 0.000000e+00, float addrspace(5)* %temp225
+  store float undef, float addrspace(5)* %temp225
+  store float 0.000000e+00, float addrspace(5)* %temp226
+  store float undef, float addrspace(5)* %temp226
+  store float 0.000000e+00, float addrspace(5)* %temp227
+  store float undef, float addrspace(5)* %temp227
+  store float 0.000000e+00, float addrspace(5)* %temp228
+  store float undef, float addrspace(5)* %temp228
+  store float 0.000000e+00, float addrspace(5)* %temp229
+  store float undef, float addrspace(5)* %temp229
+  store float 0.000000e+00, float addrspace(5)* %temp230
+  store float undef, float addrspace(5)* %temp230
+  store float 0.000000e+00, float addrspace(5)* %temp231
+  store float undef, float addrspace(5)* %temp231
+  store float 0.000000e+00, float addrspace(5)* %temp232
+  store float undef, float addrspace(5)* %temp232
+  store float 0.000000e+00, float addrspace(5)* %temp233
+  store float undef, float addrspace(5)* %temp233
+  store float 0.000000e+00, float addrspace(5)* %temp234
+  store float undef, float addrspace(5)* %temp234
+  store float 0.000000e+00, float addrspace(5)* %temp235
+  store float undef, float addrspace(5)* %temp235
+  store float 0.000000e+00, float addrspace(5)* %temp236
+  store float undef, float addrspace(5)* %temp236
+  store float 0.000000e+00, float addrspace(5)* %temp237
+  store float undef, float addrspace(5)* %temp237
+  store float 0.000000e+00, float addrspace(5)* %temp238
+  store float undef, float addrspace(5)* %temp238
+  store float 0.000000e+00, float addrspace(5)* %temp239
+  store float undef, float addrspace(5)* %temp239
+  store float 0.000000e+00, float addrspace(5)* %temp240
+  store float undef, float addrspace(5)* %temp240
+  store float 0.000000e+00, float addrspace(5)* %temp241
+  store float undef, float addrspace(5)* %temp241
+  store float 0.000000e+00, float addrspace(5)* %temp242
+  store float undef, float addrspace(5)* %temp242
+  store float 0.000000e+00, float addrspace(5)* %temp243
+  store float undef, float addrspace(5)* %temp243
+  store float 0.000000e+00, float addrspace(5)* %temp244
+  store float undef, float addrspace(5)* %temp244
+  store float 0.000000e+00, float addrspace(5)* %temp245
+  store float undef, float addrspace(5)* %temp245
+  store float 0.000000e+00, float addrspace(5)* %temp246
+  store float undef, float addrspace(5)* %temp246
+  store float 0.000000e+00, float addrspace(5)* %temp247
+  store float undef, float addrspace(5)* %temp247
+  store float 0.000000e+00, float addrspace(5)* %temp248
+  store float undef, float addrspace(5)* %temp248
+  store float 0.000000e+00, float addrspace(5)* %temp249
+  store float undef, float addrspace(5)* %temp249
+  store float 0.000000e+00, float addrspace(5)* %temp250
+  store float undef, float addrspace(5)* %temp250
+  store float 0.000000e+00, float addrspace(5)* %temp251
+  store float undef, float addrspace(5)* %temp251
+  store float 0.000000e+00, float addrspace(5)* %temp252
+  store float undef, float addrspace(5)* %temp252
+  store float 0.000000e+00, float addrspace(5)* %temp253
+  store float undef, float addrspace(5)* %temp253
+  store float 0.000000e+00, float addrspace(5)* %temp254
+  store float undef, float addrspace(5)* %temp254
+  store float 0.000000e+00, float addrspace(5)* %temp255
+  store float undef, float addrspace(5)* %temp255
+  store float 0.000000e+00, float addrspace(5)* %temp256
+  store float undef, float addrspace(5)* %temp256
+  store float 0.000000e+00, float addrspace(5)* %temp257
+  store float undef, float addrspace(5)* %temp257
+  store float 0.000000e+00, float addrspace(5)* %temp258
+  store float undef, float addrspace(5)* %temp258
+  store float 0.000000e+00, float addrspace(5)* %temp259
+  store float undef, float addrspace(5)* %temp259
+  store float 0.000000e+00, float addrspace(5)* %temp260
+  store float undef, float addrspace(5)* %temp260
+  store float 0.000000e+00, float addrspace(5)* %temp261
+  store float undef, float addrspace(5)* %temp261
+  store float 0.000000e+00, float addrspace(5)* %temp262
+  store float undef, float addrspace(5)* %temp262
+  store float 0.000000e+00, float addrspace(5)* %temp263
+  store float undef, float addrspace(5)* %temp263
+  store float 0.000000e+00, float addrspace(5)* %temp264
+  store float undef, float addrspace(5)* %temp264
+  store float 0.000000e+00, float addrspace(5)* %temp265
+  store float undef, float addrspace(5)* %temp265
+  store float 0.000000e+00, float addrspace(5)* %temp266
+  store float undef, float addrspace(5)* %temp266
+  store float 0.000000e+00, float addrspace(5)* %temp267
+  store float undef, float addrspace(5)* %temp267
+  store float 0.000000e+00, float addrspace(5)* %temp268
+  store float undef, float addrspace(5)* %temp268
+  store float 0.000000e+00, float addrspace(5)* %temp269
+  store float undef, float addrspace(5)* %temp269
+  store float 0.000000e+00, float addrspace(5)* %temp270
+  store float undef, float addrspace(5)* %temp270
+  store float 0.000000e+00, float addrspace(5)* %temp271
+  store float undef, float addrspace(5)* %temp271
+  store float 0.000000e+00, float addrspace(5)* %temp272
+  store float undef, float addrspace(5)* %temp272
+  store float 0.000000e+00, float addrspace(5)* %temp273
+  store float undef, float addrspace(5)* %temp273
+  store float 0.000000e+00, float addrspace(5)* %temp274
+  store float undef, float addrspace(5)* %temp274
+  store float 0.000000e+00, float addrspace(5)* %temp275
+  store float undef, float addrspace(5)* %temp275
+  store float 0.000000e+00, float addrspace(5)* %temp276
+  store float undef, float addrspace(5)* %temp276
+  store float 0.000000e+00, float addrspace(5)* %temp277
+  store float undef, float addrspace(5)* %temp277
+  store float 0.000000e+00, float addrspace(5)* %temp278
+  store float undef, float addrspace(5)* %temp278
+  store float 0.000000e+00, float addrspace(5)* %temp279
+  store float undef, float addrspace(5)* %temp279
+  store float 0.000000e+00, float addrspace(5)* %temp280
+  store float undef, float addrspace(5)* %temp280
+  store float 0.000000e+00, float addrspace(5)* %temp281
+  store float undef, float addrspace(5)* %temp281
+  store float 0.000000e+00, float addrspace(5)* %temp282
+  store float undef, float addrspace(5)* %temp282
+  store float 0.000000e+00, float addrspace(5)* %temp283
+  store float undef, float addrspace(5)* %temp283
+  store float 0.000000e+00, float addrspace(5)* %temp284
+  store float undef, float addrspace(5)* %temp284
+  store float 0.000000e+00, float addrspace(5)* %temp285
+  store float undef, float addrspace(5)* %temp285
+  store float 0.000000e+00, float addrspace(5)* %temp286
+  store float undef, float addrspace(5)* %temp286
+  store float 0.000000e+00, float addrspace(5)* %temp287
+  store float undef, float addrspace(5)* %temp287
+  store float 0.000000e+00, float addrspace(5)* %temp288
+  store float undef, float addrspace(5)* %temp288
+  store float 0.000000e+00, float addrspace(5)* %temp289
+  store float undef, float addrspace(5)* %temp289
+  store float 0.000000e+00, float addrspace(5)* %temp290
+  store float undef, float addrspace(5)* %temp290
+  store float 0.000000e+00, float addrspace(5)* %temp291
+  store float undef, float addrspace(5)* %temp291
+  store float 0.000000e+00, float addrspace(5)* %temp292
+  store float undef, float addrspace(5)* %temp292
+  store float 0.000000e+00, float addrspace(5)* %temp293
+  store float undef, float addrspace(5)* %temp293
+  store float 0.000000e+00, float addrspace(5)* %temp294
+  store float undef, float addrspace(5)* %temp294
+  store float 0.000000e+00, float addrspace(5)* %temp295
+  store float undef, float addrspace(5)* %temp295
+  store float 0.000000e+00, float addrspace(5)* %temp296
+  store float undef, float addrspace(5)* %temp296
+  store float 0.000000e+00, float addrspace(5)* %temp297
+  store float undef, float addrspace(5)* %temp297
+  store float 0.000000e+00, float addrspace(5)* %temp298
+  store float undef, float addrspace(5)* %temp298
+  store float 0.000000e+00, float addrspace(5)* %temp299
+  store float undef, float addrspace(5)* %temp299
+  store float 0.000000e+00, float addrspace(5)* %temp300
+  store float undef, float addrspace(5)* %temp300
+  store float 0.000000e+00, float addrspace(5)* %temp301
+  store float undef, float addrspace(5)* %temp301
+  store float 0.000000e+00, float addrspace(5)* %temp302
+  store float undef, float addrspace(5)* %temp302
+  store float 0.000000e+00, float addrspace(5)* %temp303
+  store float undef, float addrspace(5)* %temp303
+  store float 0.000000e+00, float addrspace(5)* %temp304
+  store float undef, float addrspace(5)* %temp304
+  store float 0.000000e+00, float addrspace(5)* %temp305
+  store float undef, float addrspace(5)* %temp305
+  store float 0.000000e+00, float addrspace(5)* %temp306
+  store float undef, float addrspace(5)* %temp306
+  store float 0.000000e+00, float addrspace(5)* %temp307
+  store float undef, float addrspace(5)* %temp307
+  store float 0.000000e+00, float addrspace(5)* %temp308
+  store float undef, float addrspace(5)* %temp308
+  store float 0.000000e+00, float addrspace(5)* %temp309
+  store float undef, float addrspace(5)* %temp309
+  store float 0.000000e+00, float addrspace(5)* %temp310
+  store float undef, float addrspace(5)* %temp310
+  store float 0.000000e+00, float addrspace(5)* %temp311
+  store float undef, float addrspace(5)* %temp311
+  store float 0.000000e+00, float addrspace(5)* %temp312
+  store float undef, float addrspace(5)* %temp312
+  store float 0.000000e+00, float addrspace(5)* %temp313
+  store float undef, float addrspace(5)* %temp313
+  store float 0.000000e+00, float addrspace(5)* %temp314
+  store float undef, float addrspace(5)* %temp314
+  store float 0.000000e+00, float addrspace(5)* %temp315
+  store float undef, float addrspace(5)* %temp315
+  store float 0.000000e+00, float addrspace(5)* %temp316
+  store float undef, float addrspace(5)* %temp316
+  store float 0.000000e+00, float addrspace(5)* %temp317
+  store float undef, float addrspace(5)* %temp317
+  store float 0.000000e+00, float addrspace(5)* %temp318
+  store float undef, float addrspace(5)* %temp318
+  store float 0.000000e+00, float addrspace(5)* %temp319
+  store float undef, float addrspace(5)* %temp319
+  store float 0.000000e+00, float addrspace(5)* %temp320
+  store float undef, float addrspace(5)* %temp320
+  store float 0.000000e+00, float addrspace(5)* %temp321
+  store float undef, float addrspace(5)* %temp321
+  store float 0.000000e+00, float addrspace(5)* %temp322
+  store float undef, float addrspace(5)* %temp322
+  store float 0.000000e+00, float addrspace(5)* %temp323
+  store float undef, float addrspace(5)* %temp323
+  store float 0.000000e+00, float addrspace(5)* %temp324
+  store float undef, float addrspace(5)* %temp324
+  store float 0.000000e+00, float addrspace(5)* %temp325
+  store float undef, float addrspace(5)* %temp325
+  store float 0.000000e+00, float addrspace(5)* %temp326
+  store float undef, float addrspace(5)* %temp326
+  store float 0.000000e+00, float addrspace(5)* %temp327
+  store float undef, float addrspace(5)* %temp327
+  store float 0.000000e+00, float addrspace(5)* %temp328
+  store float undef, float addrspace(5)* %temp328
+  store float 0.000000e+00, float addrspace(5)* %temp329
+  store float undef, float addrspace(5)* %temp329
+  store float 0.000000e+00, float addrspace(5)* %temp330
+  store float undef, float addrspace(5)* %temp330
+  store float 0.000000e+00, float addrspace(5)* %temp331
+  store float undef, float addrspace(5)* %temp331
+  store float 0.000000e+00, float addrspace(5)* %temp332
+  store float undef, float addrspace(5)* %temp332
+  store float 0.000000e+00, float addrspace(5)* %temp333
+  store float undef, float addrspace(5)* %temp333
+  store float 0.000000e+00, float addrspace(5)* %temp334
+  store float undef, float addrspace(5)* %temp334
+  store float 0.000000e+00, float addrspace(5)* %temp335
+  store float undef, float addrspace(5)* %temp335
+  store float 0.000000e+00, float addrspace(5)* %temp336
+  store float undef, float addrspace(5)* %temp336
+  store float 0.000000e+00, float addrspace(5)* %temp337
+  store float undef, float addrspace(5)* %temp337
+  store float 0.000000e+00, float addrspace(5)* %temp338
+  store float undef, float addrspace(5)* %temp338
+  store float 0.000000e+00, float addrspace(5)* %temp339
+  store float undef, float addrspace(5)* %temp339
+  store float 0.000000e+00, float addrspace(5)* %temp340
+  store float undef, float addrspace(5)* %temp340
+  store float 0.000000e+00, float addrspace(5)* %temp341
+  store float undef, float addrspace(5)* %temp341
+  store float 0.000000e+00, float addrspace(5)* %temp342
+  store float undef, float addrspace(5)* %temp342
+  store float 0.000000e+00, float addrspace(5)* %temp343
+  store float undef, float addrspace(5)* %temp343
+  store float 0.000000e+00, float addrspace(5)* %temp344
+  store float undef, float addrspace(5)* %temp344
+  store float 0.000000e+00, float addrspace(5)* %temp345
+  store float undef, float addrspace(5)* %temp345
+  store float 0.000000e+00, float addrspace(5)* %temp346
+  store float undef, float addrspace(5)* %temp346
+  store float 0.000000e+00, float addrspace(5)* %temp347
+  store float undef, float addrspace(5)* %temp347
+  store float 0.000000e+00, float addrspace(5)* %temp348
+  store float undef, float addrspace(5)* %temp348
+  store float 0.000000e+00, float addrspace(5)* %temp349
+  store float undef, float addrspace(5)* %temp349
+  store float 0.000000e+00, float addrspace(5)* %temp350
+  store float undef, float addrspace(5)* %temp350
+  store float 0.000000e+00, float addrspace(5)* %temp351
+  store float undef, float addrspace(5)* %temp351
+  %85 = insertelement <4 x i32> undef, i32 %81, i32 0
+  %86 = insertelement <4 x i32> %85, i32 %82, i32 1
+  %87 = insertelement <4 x i32> %86, i32 %83, i32 2
+  %88 = insertelement <4 x i32> %87, i32 %84, i32 3
+  %89 = insertelement <4 x i32> undef, i32 %70, i32 0
+  %90 = insertelement <4 x i32> %89, i32 %71, i32 1
+  %91 = insertelement <4 x i32> %90, i32 %72, i32 2
+  %92 = insertelement <4 x i32> %91, i32 %73, i32 3
+  %93 = insertelement <4 x i32> undef, i32 %59, i32 0
+  %94 = insertelement <4 x i32> %93, i32 %60, i32 1
+  %95 = insertelement <4 x i32> %94, i32 %61, i32 2
+  %96 = insertelement <4 x i32> %95, i32 %62, i32 3
+  %97 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %98 = load <4 x i32>, <4 x i32> addrspace(6)* %97, !invariant.load !0
+  %99 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %98, i32 208)
+  %100 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %98, i32 212)
+  %101 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %98, i32 216)
+  %102 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %98, i32 220)
+  %103 = insertelement <4 x float> undef, float %99, i32 0
+  %104 = insertelement <4 x float> %103, float %100, i32 1
+  %105 = insertelement <4 x float> %104, float %101, i32 2
+  %106 = insertelement <4 x float> %105, float %102, i32 3
+  %107 = bitcast <4 x float> %106 to <4 x i32>
+  %108 = extractelement <4 x i32> %88, i32 0
+  %109 = extractelement <4 x i32> %107, i32 0
+  %110 = bitcast i32 %108 to float
+  %111 = bitcast i32 %109 to float
+  %112 = fmul nsz float %110, %111
+  %113 = bitcast float %112 to i32
+  %114 = extractelement <4 x i32> %88, i32 1
+  %115 = extractelement <4 x i32> %107, i32 0
+  %116 = bitcast i32 %114 to float
+  %117 = bitcast i32 %115 to float
+  %118 = fmul nsz float %116, %117
+  %119 = bitcast float %118 to i32
+  %120 = extractelement <4 x i32> %88, i32 2
+  %121 = extractelement <4 x i32> %107, i32 0
+  %122 = bitcast i32 %120 to float
+  %123 = bitcast i32 %121 to float
+  %124 = fmul nsz float %122, %123
+  %125 = bitcast float %124 to i32
+  %126 = extractelement <4 x i32> %96, i32 0
+  %127 = bitcast i32 %113 to float
+  %128 = bitcast i32 %126 to float
+  %129 = fadd nsz float %127, %128
+  %130 = bitcast float %129 to i32
+  %131 = extractelement <4 x i32> %96, i32 1
+  %132 = bitcast i32 %119 to float
+  %133 = bitcast i32 %131 to float
+  %134 = fadd nsz float %132, %133
+  %135 = bitcast float %134 to i32
+  %136 = extractelement <4 x i32> %96, i32 2
+  %137 = bitcast i32 %125 to float
+  %138 = bitcast i32 %136 to float
+  %139 = fadd nsz float %137, %138
+  %140 = bitcast float %139 to i32
+  %141 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %142 = load <4 x i32>, <4 x i32> addrspace(6)* %141, !invariant.load !0
+  %143 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %142, i32 1552)
+  %144 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %142, i32 1556)
+  %145 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %142, i32 1560)
+  %146 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %142, i32 1564)
+  %147 = insertelement <4 x float> undef, float %143, i32 0
+  %148 = insertelement <4 x float> %147, float %144, i32 1
+  %149 = insertelement <4 x float> %148, float %145, i32 2
+  %150 = insertelement <4 x float> %149, float %146, i32 3
+  %151 = bitcast <4 x float> %150 to <4 x i32>
+  %152 = extractelement <4 x i32> %151, i32 0
+  %153 = bitcast i32 %130 to float
+  %154 = bitcast i32 %152 to float
+  %155 = fmul nsz float %153, %154
+  %156 = bitcast float %155 to i32
+  %157 = extractelement <4 x i32> %151, i32 1
+  %158 = bitcast i32 %135 to float
+  %159 = bitcast i32 %157 to float
+  %160 = fmul nsz float %158, %159
+  %161 = bitcast float %160 to i32
+  %162 = bitcast i32 %156 to float
+  %163 = bitcast i32 %161 to float
+  %164 = fadd nsz float %162, %163
+  %165 = bitcast float %164 to i32
+  %166 = extractelement <4 x i32> %151, i32 2
+  %167 = bitcast i32 %140 to float
+  %168 = bitcast i32 %166 to float
+  %169 = fmul nsz float %167, %168
+  %170 = bitcast float %169 to i32
+  %171 = bitcast i32 %165 to float
+  %172 = bitcast i32 %170 to float
+  %173 = fadd nsz float %171, %172
+  %174 = bitcast float %173 to i32
+  %175 = extractelement <4 x i32> %96, i32 3
+  %176 = extractelement <4 x i32> %151, i32 3
+  %177 = bitcast i32 %175 to float
+  %178 = bitcast i32 %176 to float
+  %179 = fmul nsz float %177, %178
+  %180 = bitcast float %179 to i32
+  %181 = bitcast i32 %174 to float
+  %182 = bitcast i32 %180 to float
+  %183 = fadd nsz float %181, %182
+  %184 = bitcast float %183 to i32
+  %185 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %186 = load <4 x i32>, <4 x i32> addrspace(6)* %185, !invariant.load !0
+  %187 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %186, i32 1568)
+  %188 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %186, i32 1572)
+  %189 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %186, i32 1576)
+  %190 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %186, i32 1580)
+  %191 = insertelement <4 x float> undef, float %187, i32 0
+  %192 = insertelement <4 x float> %191, float %188, i32 1
+  %193 = insertelement <4 x float> %192, float %189, i32 2
+  %194 = insertelement <4 x float> %193, float %190, i32 3
+  %195 = bitcast <4 x float> %194 to <4 x i32>
+  %196 = extractelement <4 x i32> %195, i32 0
+  %197 = bitcast i32 %130 to float
+  %198 = bitcast i32 %196 to float
+  %199 = fmul nsz float %197, %198
+  %200 = bitcast float %199 to i32
+  %201 = extractelement <4 x i32> %195, i32 1
+  %202 = bitcast i32 %135 to float
+  %203 = bitcast i32 %201 to float
+  %204 = fmul nsz float %202, %203
+  %205 = bitcast float %204 to i32
+  %206 = bitcast i32 %200 to float
+  %207 = bitcast i32 %205 to float
+  %208 = fadd nsz float %206, %207
+  %209 = bitcast float %208 to i32
+  %210 = extractelement <4 x i32> %195, i32 2
+  %211 = bitcast i32 %140 to float
+  %212 = bitcast i32 %210 to float
+  %213 = fmul nsz float %211, %212
+  %214 = bitcast float %213 to i32
+  %215 = bitcast i32 %209 to float
+  %216 = bitcast i32 %214 to float
+  %217 = fadd nsz float %215, %216
+  %218 = bitcast float %217 to i32
+  %219 = extractelement <4 x i32> %96, i32 3
+  %220 = extractelement <4 x i32> %195, i32 3
+  %221 = bitcast i32 %219 to float
+  %222 = bitcast i32 %220 to float
+  %223 = fmul nsz float %221, %222
+  %224 = bitcast float %223 to i32
+  %225 = bitcast i32 %218 to float
+  %226 = bitcast i32 %224 to float
+  %227 = fadd nsz float %225, %226
+  %228 = bitcast float %227 to i32
+  %229 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %230 = load <4 x i32>, <4 x i32> addrspace(6)* %229, !invariant.load !0
+  %231 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %230, i32 1584)
+  %232 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %230, i32 1588)
+  %233 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %230, i32 1592)
+  %234 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %230, i32 1596)
+  %235 = insertelement <4 x float> undef, float %231, i32 0
+  %236 = insertelement <4 x float> %235, float %232, i32 1
+  %237 = insertelement <4 x float> %236, float %233, i32 2
+  %238 = insertelement <4 x float> %237, float %234, i32 3
+  %239 = bitcast <4 x float> %238 to <4 x i32>
+  %240 = extractelement <4 x i32> %239, i32 0
+  %241 = bitcast i32 %130 to float
+  %242 = bitcast i32 %240 to float
+  %243 = fmul nsz float %241, %242
+  %244 = bitcast float %243 to i32
+  %245 = extractelement <4 x i32> %239, i32 1
+  %246 = bitcast i32 %135 to float
+  %247 = bitcast i32 %245 to float
+  %248 = fmul nsz float %246, %247
+  %249 = bitcast float %248 to i32
+  %250 = bitcast i32 %244 to float
+  %251 = bitcast i32 %249 to float
+  %252 = fadd nsz float %250, %251
+  %253 = bitcast float %252 to i32
+  %254 = extractelement <4 x i32> %239, i32 2
+  %255 = bitcast i32 %140 to float
+  %256 = bitcast i32 %254 to float
+  %257 = fmul nsz float %255, %256
+  %258 = bitcast float %257 to i32
+  %259 = bitcast i32 %253 to float
+  %260 = bitcast i32 %258 to float
+  %261 = fadd nsz float %259, %260
+  %262 = bitcast float %261 to i32
+  %263 = extractelement <4 x i32> %96, i32 3
+  %264 = extractelement <4 x i32> %239, i32 3
+  %265 = bitcast i32 %263 to float
+  %266 = bitcast i32 %264 to float
+  %267 = fmul nsz float %265, %266
+  %268 = bitcast float %267 to i32
+  %269 = bitcast i32 %262 to float
+  %270 = bitcast i32 %268 to float
+  %271 = fadd nsz float %269, %270
+  %272 = bitcast float %271 to i32
+  %273 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %274 = load <4 x i32>, <4 x i32> addrspace(6)* %273, !invariant.load !0
+  %275 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %274, i32 768)
+  %276 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %274, i32 772)
+  %277 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %274, i32 776)
+  %278 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %274, i32 780)
+  %279 = insertelement <4 x float> undef, float %275, i32 0
+  %280 = insertelement <4 x float> %279, float %276, i32 1
+  %281 = insertelement <4 x float> %280, float %277, i32 2
+  %282 = insertelement <4 x float> %281, float %278, i32 3
+  %283 = bitcast <4 x float> %282 to <4 x i32>
+  %284 = extractelement <4 x i32> %92, i32 0
+  %285 = extractelement <4 x i32> %283, i32 0
+  %286 = bitcast i32 %284 to float
+  %287 = bitcast i32 %285 to float
+  %288 = fmul nsz float %286, %287
+  %289 = bitcast float %288 to i32
+  %290 = extractelement <4 x i32> %92, i32 1
+  %291 = extractelement <4 x i32> %283, i32 1
+  %292 = bitcast i32 %290 to float
+  %293 = bitcast i32 %291 to float
+  %294 = fmul nsz float %292, %293
+  %295 = bitcast float %294 to i32
+  %296 = bitcast i32 %289 to float
+  %297 = bitcast i32 %295 to float
+  %298 = fadd nsz float %296, %297
+  %299 = bitcast float %298 to i32
+  %300 = extractelement <4 x i32> %92, i32 2
+  %301 = extractelement <4 x i32> %283, i32 2
+  %302 = bitcast i32 %300 to float
+  %303 = bitcast i32 %301 to float
+  %304 = fmul nsz float %302, %303
+  %305 = bitcast float %304 to i32
+  %306 = bitcast i32 %299 to float
+  %307 = bitcast i32 %305 to float
+  %308 = fadd nsz float %306, %307
+  %309 = bitcast float %308 to i32
+  %310 = extractelement <4 x i32> %92, i32 3
+  %311 = extractelement <4 x i32> %283, i32 3
+  %312 = bitcast i32 %310 to float
+  %313 = bitcast i32 %311 to float
+  %314 = fmul nsz float %312, %313
+  %315 = bitcast float %314 to i32
+  %316 = bitcast i32 %309 to float
+  %317 = bitcast i32 %315 to float
+  %318 = fadd nsz float %316, %317
+  %319 = bitcast float %318 to i32
+  %320 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %321 = load <4 x i32>, <4 x i32> addrspace(6)* %320, !invariant.load !0
+  %322 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %321, i32 784)
+  %323 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %321, i32 788)
+  %324 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %321, i32 792)
+  %325 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %321, i32 796)
+  %326 = insertelement <4 x float> undef, float %322, i32 0
+  %327 = insertelement <4 x float> %326, float %323, i32 1
+  %328 = insertelement <4 x float> %327, float %324, i32 2
+  %329 = insertelement <4 x float> %328, float %325, i32 3
+  %330 = bitcast <4 x float> %329 to <4 x i32>
+  %331 = extractelement <4 x i32> %92, i32 0
+  %332 = extractelement <4 x i32> %330, i32 0
+  %333 = bitcast i32 %331 to float
+  %334 = bitcast i32 %332 to float
+  %335 = fmul nsz float %333, %334
+  %336 = bitcast float %335 to i32
+  %337 = extractelement <4 x i32> %92, i32 1
+  %338 = extractelement <4 x i32> %330, i32 1
+  %339 = bitcast i32 %337 to float
+  %340 = bitcast i32 %338 to float
+  %341 = fmul nsz float %339, %340
+  %342 = bitcast float %341 to i32
+  %343 = bitcast i32 %336 to float
+  %344 = bitcast i32 %342 to float
+  %345 = fadd nsz float %343, %344
+  %346 = bitcast float %345 to i32
+  %347 = extractelement <4 x i32> %92, i32 2
+  %348 = extractelement <4 x i32> %330, i32 2
+  %349 = bitcast i32 %347 to float
+  %350 = bitcast i32 %348 to float
+  %351 = fmul nsz float %349, %350
+  %352 = bitcast float %351 to i32
+  %353 = bitcast i32 %346 to float
+  %354 = bitcast i32 %352 to float
+  %355 = fadd nsz float %353, %354
+  %356 = bitcast float %355 to i32
+  %357 = extractelement <4 x i32> %92, i32 3
+  %358 = extractelement <4 x i32> %330, i32 3
+  %359 = bitcast i32 %357 to float
+  %360 = bitcast i32 %358 to float
+  %361 = fmul nsz float %359, %360
+  %362 = bitcast float %361 to i32
+  %363 = bitcast i32 %356 to float
+  %364 = bitcast i32 %362 to float
+  %365 = fadd nsz float %363, %364
+  %366 = bitcast float %365 to i32
+  %367 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %368 = load <4 x i32>, <4 x i32> addrspace(6)* %367, !invariant.load !0
+  %369 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %368, i32 0)
+  %370 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %368, i32 4)
+  %371 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %368, i32 8)
+  %372 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %368, i32 12)
+  %373 = insertelement <4 x float> undef, float %369, i32 0
+  %374 = insertelement <4 x float> %373, float %370, i32 1
+  %375 = insertelement <4 x float> %374, float %371, i32 2
+  %376 = insertelement <4 x float> %375, float %372, i32 3
+  %377 = bitcast <4 x float> %376 to <4 x i32>
+  %378 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %379 = load <4 x i32>, <4 x i32> addrspace(6)* %378, !invariant.load !0
+  %380 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %379, i32 128)
+  %381 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %379, i32 132)
+  %382 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %379, i32 136)
+  %383 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %379, i32 140)
+  %384 = insertelement <4 x float> undef, float %380, i32 0
+  %385 = insertelement <4 x float> %384, float %381, i32 1
+  %386 = insertelement <4 x float> %385, float %382, i32 2
+  %387 = insertelement <4 x float> %386, float %383, i32 3
+  %388 = bitcast <4 x float> %387 to <4 x i32>
+  %389 = extractelement <4 x i32> %388, i32 0
+  %390 = bitcast i32 %184 to float
+  %391 = bitcast i32 %389 to float
+  %392 = fmul nsz float %390, %391
+  %393 = bitcast float %392 to i32
+  %394 = extractelement <4 x i32> %388, i32 1
+  %395 = bitcast i32 %228 to float
+  %396 = bitcast i32 %394 to float
+  %397 = fmul nsz float %395, %396
+  %398 = bitcast float %397 to i32
+  %399 = bitcast i32 %393 to float
+  %400 = bitcast i32 %398 to float
+  %401 = fadd nsz float %399, %400
+  %402 = bitcast float %401 to i32
+  %403 = extractelement <4 x i32> %388, i32 2
+  %404 = bitcast i32 %272 to float
+  %405 = bitcast i32 %403 to float
+  %406 = fmul nsz float %404, %405
+  %407 = bitcast float %406 to i32
+  %408 = bitcast i32 %402 to float
+  %409 = bitcast i32 %407 to float
+  %410 = fadd nsz float %408, %409
+  %411 = bitcast float %410 to i32
+  %412 = extractelement <4 x i32> %377, i32 1
+  %413 = extractelement <4 x i32> %388, i32 3
+  %414 = bitcast i32 %412 to float
+  %415 = bitcast i32 %413 to float
+  %416 = fmul nsz float %414, %415
+  %417 = bitcast float %416 to i32
+  %418 = bitcast i32 %411 to float
+  %419 = bitcast i32 %417 to float
+  %420 = fadd nsz float %418, %419
+  %421 = bitcast float %420 to i32
+  %422 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %423 = load <4 x i32>, <4 x i32> addrspace(6)* %422, !invariant.load !0
+  %424 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %423, i32 144)
+  %425 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %423, i32 148)
+  %426 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %423, i32 152)
+  %427 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %423, i32 156)
+  %428 = insertelement <4 x float> undef, float %424, i32 0
+  %429 = insertelement <4 x float> %428, float %425, i32 1
+  %430 = insertelement <4 x float> %429, float %426, i32 2
+  %431 = insertelement <4 x float> %430, float %427, i32 3
+  %432 = bitcast <4 x float> %431 to <4 x i32>
+  %433 = extractelement <4 x i32> %432, i32 0
+  %434 = bitcast i32 %184 to float
+  %435 = bitcast i32 %433 to float
+  %436 = fmul nsz float %434, %435
+  %437 = bitcast float %436 to i32
+  %438 = extractelement <4 x i32> %432, i32 1
+  %439 = bitcast i32 %228 to float
+  %440 = bitcast i32 %438 to float
+  %441 = fmul nsz float %439, %440
+  %442 = bitcast float %441 to i32
+  %443 = bitcast i32 %437 to float
+  %444 = bitcast i32 %442 to float
+  %445 = fadd nsz float %443, %444
+  %446 = bitcast float %445 to i32
+  %447 = extractelement <4 x i32> %432, i32 2
+  %448 = bitcast i32 %272 to float
+  %449 = bitcast i32 %447 to float
+  %450 = fmul nsz float %448, %449
+  %451 = bitcast float %450 to i32
+  %452 = bitcast i32 %446 to float
+  %453 = bitcast i32 %451 to float
+  %454 = fadd nsz float %452, %453
+  %455 = bitcast float %454 to i32
+  %456 = extractelement <4 x i32> %377, i32 1
+  %457 = extractelement <4 x i32> %432, i32 3
+  %458 = bitcast i32 %456 to float
+  %459 = bitcast i32 %457 to float
+  %460 = fmul nsz float %458, %459
+  %461 = bitcast float %460 to i32
+  %462 = bitcast i32 %455 to float
+  %463 = bitcast i32 %461 to float
+  %464 = fadd nsz float %462, %463
+  %465 = bitcast float %464 to i32
+  %466 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %467 = load <4 x i32>, <4 x i32> addrspace(6)* %466, !invariant.load !0
+  %468 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %467, i32 160)
+  %469 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %467, i32 164)
+  %470 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %467, i32 168)
+  %471 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %467, i32 172)
+  %472 = insertelement <4 x float> undef, float %468, i32 0
+  %473 = insertelement <4 x float> %472, float %469, i32 1
+  %474 = insertelement <4 x float> %473, float %470, i32 2
+  %475 = insertelement <4 x float> %474, float %471, i32 3
+  %476 = bitcast <4 x float> %475 to <4 x i32>
+  %477 = extractelement <4 x i32> %476, i32 0
+  %478 = bitcast i32 %184 to float
+  %479 = bitcast i32 %477 to float
+  %480 = fmul nsz float %478, %479
+  %481 = bitcast float %480 to i32
+  %482 = extractelement <4 x i32> %476, i32 1
+  %483 = bitcast i32 %228 to float
+  %484 = bitcast i32 %482 to float
+  %485 = fmul nsz float %483, %484
+  %486 = bitcast float %485 to i32
+  %487 = bitcast i32 %481 to float
+  %488 = bitcast i32 %486 to float
+  %489 = fadd nsz float %487, %488
+  %490 = bitcast float %489 to i32
+  %491 = extractelement <4 x i32> %476, i32 2
+  %492 = bitcast i32 %272 to float
+  %493 = bitcast i32 %491 to float
+  %494 = fmul nsz float %492, %493
+  %495 = bitcast float %494 to i32
+  %496 = bitcast i32 %490 to float
+  %497 = bitcast i32 %495 to float
+  %498 = fadd nsz float %496, %497
+  %499 = bitcast float %498 to i32
+  %500 = extractelement <4 x i32> %377, i32 1
+  %501 = extractelement <4 x i32> %476, i32 3
+  %502 = bitcast i32 %500 to float
+  %503 = bitcast i32 %501 to float
+  %504 = fmul nsz float %502, %503
+  %505 = bitcast float %504 to i32
+  %506 = bitcast i32 %499 to float
+  %507 = bitcast i32 %505 to float
+  %508 = fadd nsz float %506, %507
+  %509 = bitcast float %508 to i32
+  %510 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %511 = load <4 x i32>, <4 x i32> addrspace(6)* %510, !invariant.load !0
+  %512 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %511, i32 176)
+  %513 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %511, i32 180)
+  %514 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %511, i32 184)
+  %515 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %511, i32 188)
+  %516 = insertelement <4 x float> undef, float %512, i32 0
+  %517 = insertelement <4 x float> %516, float %513, i32 1
+  %518 = insertelement <4 x float> %517, float %514, i32 2
+  %519 = insertelement <4 x float> %518, float %515, i32 3
+  %520 = bitcast <4 x float> %519 to <4 x i32>
+  %521 = extractelement <4 x i32> %520, i32 0
+  %522 = bitcast i32 %184 to float
+  %523 = bitcast i32 %521 to float
+  %524 = fmul nsz float %522, %523
+  %525 = bitcast float %524 to i32
+  %526 = extractelement <4 x i32> %520, i32 1
+  %527 = bitcast i32 %228 to float
+  %528 = bitcast i32 %526 to float
+  %529 = fmul nsz float %527, %528
+  %530 = bitcast float %529 to i32
+  %531 = bitcast i32 %525 to float
+  %532 = bitcast i32 %530 to float
+  %533 = fadd nsz float %531, %532
+  %534 = bitcast float %533 to i32
+  %535 = extractelement <4 x i32> %520, i32 2
+  %536 = bitcast i32 %272 to float
+  %537 = bitcast i32 %535 to float
+  %538 = fmul nsz float %536, %537
+  %539 = bitcast float %538 to i32
+  %540 = bitcast i32 %534 to float
+  %541 = bitcast i32 %539 to float
+  %542 = fadd nsz float %540, %541
+  %543 = bitcast float %542 to i32
+  %544 = extractelement <4 x i32> %377, i32 1
+  %545 = extractelement <4 x i32> %520, i32 3
+  %546 = bitcast i32 %544 to float
+  %547 = bitcast i32 %545 to float
+  %548 = fmul nsz float %546, %547
+  %549 = bitcast float %548 to i32
+  %550 = bitcast i32 %543 to float
+  %551 = bitcast i32 %549 to float
+  %552 = fadd nsz float %550, %551
+  %553 = bitcast float %552 to i32
+  %554 = extractelement <4 x i32> %377, i32 2
+  %555 = bitcast i32 %509 to float
+  %556 = bitcast i32 %554 to float
+  %557 = fmul nsz float %555, %556
+  %558 = bitcast float %557 to i32
+  %559 = bitcast i32 %553 to float
+  %560 = fsub nsz float -0.000000e+00, %559
+  %561 = bitcast float %560 to i32
+  %562 = bitcast i32 %558 to float
+  %563 = bitcast i32 %561 to float
+  %564 = fadd nsz float %562, %563
+  %565 = bitcast float %564 to i32
+  %566 = bitcast i32 %465 to float
+  %567 = fsub nsz float -0.000000e+00, %566
+  %568 = bitcast float %567 to i32
+  %569 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %570 = load <4 x i32>, <4 x i32> addrspace(6)* %569, !invariant.load !0
+  %571 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %570, i32 1600)
+  %572 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %570, i32 1604)
+  %573 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %570, i32 1608)
+  %574 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %570, i32 1612)
+  %575 = insertelement <4 x float> undef, float %571, i32 0
+  %576 = insertelement <4 x float> %575, float %572, i32 1
+  %577 = insertelement <4 x float> %576, float %573, i32 2
+  %578 = insertelement <4 x float> %577, float %574, i32 3
+  %579 = bitcast <4 x float> %578 to <4 x i32>
+  %580 = extractelement <4 x i32> %579, i32 0
+  %581 = bitcast i32 %580 to float
+  %582 = bitcast i32 %553 to float
+  %583 = fmul nsz float %581, %582
+  %584 = bitcast float %583 to i32
+  %585 = extractelement <4 x i32> %579, i32 1
+  %586 = bitcast i32 %585 to float
+  %587 = bitcast i32 %553 to float
+  %588 = fmul nsz float %586, %587
+  %589 = bitcast float %588 to i32
+  %590 = bitcast i32 %421 to float
+  %591 = bitcast i32 %584 to float
+  %592 = fadd nsz float %590, %591
+  %593 = bitcast float %592 to i32
+  %594 = bitcast i32 %568 to float
+  %595 = bitcast i32 %589 to float
+  %596 = fadd nsz float %594, %595
+  %597 = bitcast float %596 to i32
+  %598 = insertelement <4 x i32> undef, i32 %593, i32 0
+  %599 = insertelement <4 x i32> %598, i32 %597, i32 1
+  %600 = insertelement <4 x i32> %599, i32 %565, i32 2
+  %601 = insertelement <4 x i32> %600, i32 %553, i32 3
+  %602 = bitcast <4 x i32> %601 to <4 x float>
+  %603 = extractelement <4 x float> %602, i32 0
+  store float %603, float addrspace(5)* %51
+  %604 = extractelement <4 x float> %602, i32 1
+  store float %604, float addrspace(5)* %50
+  %605 = extractelement <4 x float> %602, i32 2
+  store float %605, float addrspace(5)* %49
+  %606 = extractelement <4 x float> %602, i32 3
+  store float %606, float addrspace(5)* %48
+  %607 = insertelement <4 x i32> undef, i32 %421, i32 0
+  %608 = insertelement <4 x i32> %607, i32 %465, i32 1
+  %609 = insertelement <4 x i32> %608, i32 %509, i32 2
+  %610 = insertelement <4 x i32> %609, i32 %553, i32 3
+  %611 = bitcast <4 x i32> %610 to <4 x float>
+  %612 = extractelement <4 x float> %611, i32 0
+  store float %612, float addrspace(5)* %47
+  %613 = extractelement <4 x float> %611, i32 1
+  store float %613, float addrspace(5)* %46
+  %614 = extractelement <4 x float> %611, i32 2
+  store float %614, float addrspace(5)* %45
+  %615 = extractelement <4 x float> %611, i32 3
+  store float %615, float addrspace(5)* %44
+  %616 = bitcast i32 %319 to float
+  store float %616, float addrspace(5)* %31
+  %617 = bitcast i32 %366 to float
+  store float %617, float addrspace(5)* %30
+  %618 = bitcast i32 %184 to float
+  store float %618, float addrspace(5)* %19
+  %619 = bitcast i32 %228 to float
+  store float %619, float addrspace(5)* %18
+  %620 = bitcast i32 %272 to float
+  store float %620, float addrspace(5)* %17
+  %621 = extractelement <4 x i32> %377, i32 0
+  %622 = bitcast i32 %621 to float
+  store float %622, float addrspace(5)* %29
+  %623 = bitcast i32 %509 to float
+  store float %623, float addrspace(5)* %28
+  %624 = load float, float addrspace(5)* %51
+  %625 = load float, float addrspace(5)* %50
+  %626 = load float, float addrspace(5)* %49
+  %627 = load float, float addrspace(5)* %48
+  %628 = load float, float addrspace(5)* %47
+  %629 = load float, float addrspace(5)* %46
+  %630 = load float, float addrspace(5)* %45
+  %631 = load float, float addrspace(5)* %44
+  %632 = load float, float addrspace(5)* %31
+  %633 = load float, float addrspace(5)* %30
+  %634 = load float, float addrspace(5)* %29
+  %635 = load float, float addrspace(5)* %28
+  %636 = load float, float addrspace(5)* %19
+  %637 = load float, float addrspace(5)* %18
+  %638 = load float, float addrspace(5)* %17
+  %639 = load float, float addrspace(5)* %16
+  %640 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %0, i32 0, i32 9, !amdgpu.uniform !0
+  %641 = load <4 x i32>, <4 x i32> addrspace(6)* %640, !invariant.load !0
+  %642 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 0)
+  %643 = fmul nsz float %642, %628
+  %644 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 4)
+  %645 = fmul nsz float %644, %629
+  %646 = fadd nsz float %643, %645
+  %647 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 8)
+  %648 = fmul nsz float %647, %630
+  %649 = fadd nsz float %646, %648
+  %650 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 12)
+  %651 = fmul nsz float %650, %631
+  %652 = fadd nsz float %649, %651
+  %653 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 16)
+  %654 = fmul nsz float %653, %628
+  %655 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 20)
+  %656 = fmul nsz float %655, %629
+  %657 = fadd nsz float %654, %656
+  %658 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 24)
+  %659 = fmul nsz float %658, %630
+  %660 = fadd nsz float %657, %659
+  %661 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 28)
+  %662 = fmul nsz float %661, %631
+  %663 = fadd nsz float %660, %662
+  %664 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 32)
+  %665 = fmul nsz float %664, %628
+  %666 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 36)
+  %667 = fmul nsz float %666, %629
+  %668 = fadd nsz float %665, %667
+  %669 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 40)
+  %670 = fmul nsz float %669, %630
+  %671 = fadd nsz float %668, %670
+  %672 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 44)
+  %673 = fmul nsz float %672, %631
+  %674 = fadd nsz float %671, %673
+  %675 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 48)
+  %676 = fmul nsz float %675, %628
+  %677 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 52)
+  %678 = fmul nsz float %677, %629
+  %679 = fadd nsz float %676, %678
+  %680 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 56)
+  %681 = fmul nsz float %680, %630
+  %682 = fadd nsz float %679, %681
+  %683 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 60)
+  %684 = fmul nsz float %683, %631
+  %685 = fadd nsz float %682, %684
+  %686 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 64)
+  %687 = fmul nsz float %686, %628
+  %688 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 68)
+  %689 = fmul nsz float %688, %629
+  %690 = fadd nsz float %687, %689
+  %691 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 72)
+  %692 = fmul nsz float %691, %630
+  %693 = fadd nsz float %690, %692
+  %694 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 76)
+  %695 = fmul nsz float %694, %631
+  %696 = fadd nsz float %693, %695
+  %697 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 80)
+  %698 = fmul nsz float %697, %628
+  %699 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 84)
+  %700 = fmul nsz float %699, %629
+  %701 = fadd nsz float %698, %700
+  %702 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 88)
+  %703 = fmul nsz float %702, %630
+  %704 = fadd nsz float %701, %703
+  %705 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 92)
+  %706 = fmul nsz float %705, %631
+  %707 = fadd nsz float %704, %706
+  %708 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 96)
+  %709 = fmul nsz float %708, %628
+  %710 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 100)
+  %711 = fmul nsz float %710, %629
+  %712 = fadd nsz float %709, %711
+  %713 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 104)
+  %714 = fmul nsz float %713, %630
+  %715 = fadd nsz float %712, %714
+  %716 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 108)
+  %717 = fmul nsz float %716, %631
+  %718 = fadd nsz float %715, %717
+  %719 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 112)
+  %720 = fmul nsz float %719, %628
+  %721 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 116)
+  %722 = fmul nsz float %721, %629
+  %723 = fadd nsz float %720, %722
+  %724 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 120)
+  %725 = fmul nsz float %724, %630
+  %726 = fadd nsz float %723, %725
+  %727 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %641, i32 124)
+  %728 = fmul nsz float %727, %631
+  %729 = fadd nsz float %726, %728
+  call void @llvm.amdgcn.exp.f32(i32 12, i32 15, float %624, float %625, float %626, float %627, i1 false, i1 false) #3
+  call void @llvm.amdgcn.exp.f32(i32 13, i32 15, float %652, float %663, float %674, float %685, i1 false, i1 false) #3
+  call void @llvm.amdgcn.exp.f32(i32 14, i32 15, float %696, float %707, float %718, float %729, i1 true, i1 false) #3
+  call void @llvm.amdgcn.exp.f32(i32 32, i32 15, float %632, float %633, float %634, float %635, i1 false, i1 false) #3
+  call void @llvm.amdgcn.exp.f32(i32 33, i32 15, float %636, float %637, float %638, float %639, i1 false, i1 false) #3
+  ret void
+}
+
+; Function Attrs: nounwind readonly
+declare <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32>, i32, i32, i1, i1) #1
+
+; Function Attrs: nounwind readnone
+declare float @llvm.SI.load.const.v4i32(<4 x i32>, i32) #2
+
+; Function Attrs: nounwind
+declare void @llvm.amdgcn.exp.f32(i32, i32, float, float, float, float, i1, i1) #3
+
+attributes #0 = { "no-signed-zeros-fp-math"="true" }
+attributes #1 = { nounwind readonly }
+attributes #2 = { nounwind readnone }
+attributes #3 = { nounwind }
+
+!0 = !{}
+radeonsi: Compiling shader 1
+shader: MESA_SHADER_FRAGMENT
+name: GLSL1
+inputs: 7
+outputs: 1
+uniforms: 31
+shared: 0
+decl_var uniform INTERP_MODE_NONE vec4[31] pc (4, 0, 0)
+decl_var uniform INTERP_MODE_NONE sampler2D sampler0 (5, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT0 (VARYING_SLOT_VAR0.x, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT0@0 (VARYING_SLOT_VAR0.y, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT6 (VARYING_SLOT_VAR0.z, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT7 (VARYING_SLOT_VAR0.w, 0, 0)
+decl_var shader_in INTERP_MODE_NONE float oT3 (VARYING_SLOT_VAR1.x, 4, 0)
+decl_var shader_in INTERP_MODE_NONE float oT3@1 (VARYING_SLOT_VAR1.y, 4, 0)
+decl_var shader_in INTERP_MODE_NONE float oT3@2 (VARYING_SLOT_VAR1.z, 4, 0)
+decl_var shader_out INTERP_MODE_NONE vec4 gl_out_FragData0 (FRAG_RESULT_DATA0, 0, 0)
+decl_function main returning void
+
+impl main {
+	decl_var  INTERP_MODE_NONE vec4 r2
+	decl_var  INTERP_MODE_NONE vec4 r1
+	decl_var  INTERP_MODE_NONE vec4 r0
+	decl_var  INTERP_MODE_NONE vec4 atomic_temp_var
+	decl_var  INTERP_MODE_NONE vec4 compiler_temp
+	decl_var  INTERP_MODE_NONE float const_temp
+	decl_var  INTERP_MODE_NONE vec2 const_temp@3
+	decl_var  INTERP_MODE_NONE float const_temp@4
+	decl_var  INTERP_MODE_NONE float compiler_temp@5
+	decl_var  INTERP_MODE_NONE bool compiler_temp@6
+	decl_var  INTERP_MODE_NONE float const_temp@7
+	decl_var  INTERP_MODE_NONE bool compiler_temp@8
+	decl_var  INTERP_MODE_NONE vec3 const_temp@9
+	decl_var  INTERP_MODE_NONE vec3 const_temp@10
+	decl_var  INTERP_MODE_NONE vec4 out@gl_out_FragData0-temp
+	block block_0:
+	/* preds: */
+	vec1 32 ssa_0 = load_const (0xbf800000 /* -1.000000 */)
+	vec1 32 ssa_1 = load_const (0x3f800000 /* 1.000000 */)
+	vec3 32 ssa_2 = load_const (0xbf800000 /* -1.000000 */, 0xbf800000 /* -1.000000 */, 0xbf800000 /* -1.000000 */)
+	vec3 32 ssa_3 = load_const (0x3f800000 /* 1.000000 */, 0x3f800000 /* 1.000000 */, 0x3f800000 /* 1.000000 */)
+	vec1 32 ssa_4 = intrinsic load_var () (oT0) ()
+	vec1 32 ssa_5 = intrinsic load_var () (oT0@0) ()
+	vec2 32 ssa_6 = vec2 ssa_4, ssa_5
+	vec4 32 ssa_7 = tex ssa_6 (coord), sampler0 (texture)sampler0 (sampler)
+	vec1 32 ssa_8 = fadd ssa_7.w, ssa_0
+	vec1 32 ssa_9 = load_const (0x00000000 /* 0.000000 */)
+	vec1 32 ssa_10 = load_const (0x00000140 /* 0.000000 */)
+	vec4 32 ssa_11 = intrinsic load_ubo (ssa_9, ssa_10) () ()
+	vec1 32 ssa_12 = fmul ssa_11.w, ssa_8
+	vec1 32 ssa_13 = fadd ssa_12, ssa_1
+	vec1 32 ssa_14 = load_const (0x00000010 /* 0.000000 */)
+	vec4 32 ssa_15 = intrinsic load_ubo (ssa_9, ssa_14) () ()
+	vec1 32 ssa_16 = fmul ssa_13, ssa_15.w
+	vec1 32 ssa_17 = intrinsic load_var () (oT6) ()
+	vec1 32 ssa_18 = fmul ssa_16, ssa_17
+	vec1 32 ssa_19 = fneg ssa_16
+	vec1 32 ssa_20 = fadd ssa_18, ssa_19
+	vec1 32 ssa_21 = load_const (0x000000c0 /* 0.000000 */)
+	vec4 32 ssa_22 = intrinsic load_ubo (ssa_9, ssa_21) () ()
+	vec1 32 ssa_23 = fmul ssa_22.w, ssa_20
+	vec1 32 ssa_24 = fadd ssa_23, ssa_16
+	vec1 32 ssa_25 = load_const (0x000001d0 /* 0.000000 */)
+	vec4 32 ssa_26 = intrinsic load_ubo (ssa_9, ssa_25) () ()
+	vec1 32 ssa_27 = intrinsic load_var () (oT7) ()
+	vec1 32 ssa_28 = fmul ssa_26.w, ssa_27
+	vec1 32 ssa_29 = feq ssa_22.y, ssa_9
+	vec1 32 ssa_30 = bcsel ssa_29, ssa_24, ssa_28
+	vec1 32 ssa_31 = fadd ssa_7.w, ssa_22.x
+	vec1 32 ssa_32 = fmax ssa_31, ssa_9
+	vec1 32 ssa_33 = fmin ssa_32, ssa_1
+	vec1 32 ssa_34 = fadd ssa_2.x, ssa_15.x
+	vec1 32 ssa_35 = fadd ssa_2.y, ssa_15.y
+	vec1 32 ssa_36 = fadd ssa_2.z, ssa_15.z
+	vec1 32 ssa_37 = fmul ssa_33, ssa_34
+	vec1 32 ssa_38 = fmul ssa_33, ssa_35
+	vec1 32 ssa_39 = fmul ssa_33, ssa_36
+	vec1 32 ssa_40 = fadd ssa_37, ssa_3.x
+	vec1 32 ssa_41 = fadd ssa_38, ssa_3.y
+	vec1 32 ssa_42 = fadd ssa_39, ssa_3.z
+	vec1 32 ssa_43 = fmul ssa_7.x, ssa_40
+	vec1 32 ssa_44 = fmul ssa_7.y, ssa_41
+	vec1 32 ssa_45 = fmul ssa_7.z, ssa_42
+	vec1 32 ssa_46 = load_const (0x000001e0 /* 0.000000 */)
+	vec4 32 ssa_47 = intrinsic load_ubo (ssa_9, ssa_46) () ()
+	vec1 32 ssa_48 = fmul ssa_43, ssa_47.x
+	vec1 32 ssa_49 = fmul ssa_44, ssa_47.x
+	vec1 32 ssa_50 = fmul ssa_45, ssa_47.x
+	vec1 32 ssa_51 = fneg ssa_48
+	vec1 32 ssa_52 = fneg ssa_49
+	vec1 32 ssa_53 = fneg ssa_50
+	vec1 32 ssa_54 = fadd ssa_51, ssa_26.x
+	vec1 32 ssa_55 = fadd ssa_52, ssa_26.y
+	vec1 32 ssa_56 = fadd ssa_53, ssa_26.z
+	vec1 32 ssa_57 = intrinsic load_var () (oT3) ()
+	vec1 32 ssa_58 = intrinsic load_var () (oT3@1) ()
+	vec1 32 ssa_59 = intrinsic load_var () (oT3@2) ()
+	vec1 32 ssa_60 = fneg ssa_57
+	vec1 32 ssa_61 = fneg ssa_58
+	vec1 32 ssa_62 = fneg ssa_59
+	vec1 32 ssa_63 = fadd ssa_11.x, ssa_60
+	vec1 32 ssa_64 = fadd ssa_11.y, ssa_61
+	vec1 32 ssa_65 = fadd ssa_11.z, ssa_62
+	vec1 32 ssa_66 = fmul ssa_63, ssa_63
+	vec1 32 ssa_67 = fmul ssa_64, ssa_64
+	vec1 32 ssa_68 = fadd ssa_66, ssa_67
+	vec1 32 ssa_69 = fmul ssa_65, ssa_65
+	vec1 32 ssa_70 = fadd ssa_68, ssa_69
+	vec1 32 ssa_71 = fsqrt ssa_70
+	vec1 32 ssa_72 = load_const (0x00000150 /* 0.000000 */)
+	vec4 32 ssa_73 = intrinsic load_ubo (ssa_9, ssa_72) () ()
+	vec1 32 ssa_74 = fmul ssa_71, ssa_73.w
+	vec1 32 ssa_75 = fadd ssa_74, ssa_73.x
+	vec1 32 ssa_76 = fmax ssa_75, ssa_9
+	vec1 32 ssa_77 = fmin ssa_76, ssa_1
+	vec1 32 ssa_78 = fmin ssa_77, ssa_73.z
+	vec1 32 ssa_79 = fmul ssa_78, ssa_78
+	vec1 32 ssa_80 = fmul ssa_79, ssa_54
+	vec1 32 ssa_81 = fmul ssa_79, ssa_55
+	vec1 32 ssa_82 = fmul ssa_79, ssa_56
+	vec1 32 ssa_83 = fadd ssa_80, ssa_48
+	vec1 32 ssa_84 = fadd ssa_81, ssa_49
+	vec1 32 ssa_85 = fadd ssa_82, ssa_50
+	vec4 32 ssa_86 = vec4 ssa_83, ssa_84, ssa_85, ssa_30
+	intrinsic store_var (ssa_86) (gl_out_FragData0) (15) /* wrmask=xyzw */
+	/* succs: block_0 */
+	block block_0:
+}
+
+; ModuleID = 'tgsi'
+source_filename = "tgsi"
+target datalayout = "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5"
+target triple = "amdgcn--"
+
+define amdgpu_ps <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> @main([0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, i32, i32, float, i32) #0 {
+main_body:
+  %temp59 = alloca float, addrspace(5)
+  %temp58 = alloca float, addrspace(5)
+  %temp57 = alloca float, addrspace(5)
+  %temp56 = alloca float, addrspace(5)
+  %temp55 = alloca float, addrspace(5)
+  %temp54 = alloca float, addrspace(5)
+  %temp53 = alloca float, addrspace(5)
+  %temp52 = alloca float, addrspace(5)
+  %temp51 = alloca float, addrspace(5)
+  %temp50 = alloca float, addrspace(5)
+  %temp49 = alloca float, addrspace(5)
+  %temp48 = alloca float, addrspace(5)
+  %temp47 = alloca float, addrspace(5)
+  %temp46 = alloca float, addrspace(5)
+  %temp45 = alloca float, addrspace(5)
+  %temp44 = alloca float, addrspace(5)
+  %temp43 = alloca float, addrspace(5)
+  %temp42 = alloca float, addrspace(5)
+  %temp41 = alloca float, addrspace(5)
+  %temp40 = alloca float, addrspace(5)
+  %temp39 = alloca float, addrspace(5)
+  %temp38 = alloca float, addrspace(5)
+  %temp37 = alloca float, addrspace(5)
+  %temp36 = alloca float, addrspace(5)
+  %temp35 = alloca float, addrspace(5)
+  %temp34 = alloca float, addrspace(5)
+  %temp33 = alloca float, addrspace(5)
+  %temp32 = alloca float, addrspace(5)
+  %temp31 = alloca float, addrspace(5)
+  %temp30 = alloca float, addrspace(5)
+  %temp29 = alloca float, addrspace(5)
+  %temp28 = alloca float, addrspace(5)
+  %temp27 = alloca float, addrspace(5)
+  %temp26 = alloca float, addrspace(5)
+  %temp25 = alloca float, addrspace(5)
+  %temp24 = alloca float, addrspace(5)
+  %temp23 = alloca float, addrspace(5)
+  %temp22 = alloca float, addrspace(5)
+  %temp21 = alloca float, addrspace(5)
+  %temp20 = alloca float, addrspace(5)
+  %temp19 = alloca float, addrspace(5)
+  %temp18 = alloca float, addrspace(5)
+  %temp17 = alloca float, addrspace(5)
+  %temp16 = alloca float, addrspace(5)
+  %temp15 = alloca float, addrspace(5)
+  %temp14 = alloca float, addrspace(5)
+  %temp13 = alloca float, addrspace(5)
+  %temp12 = alloca float, addrspace(5)
+  %temp11 = alloca float, addrspace(5)
+  %temp10 = alloca float, addrspace(5)
+  %temp9 = alloca float, addrspace(5)
+  %temp8 = alloca float, addrspace(5)
+  %temp7 = alloca float, addrspace(5)
+  %temp6 = alloca float, addrspace(5)
+  %temp5 = alloca float, addrspace(5)
+  %temp4 = alloca float, addrspace(5)
+  %temp3 = alloca float, addrspace(5)
+  %temp2 = alloca float, addrspace(5)
+  %temp1 = alloca float, addrspace(5)
+  %temp = alloca float, addrspace(5)
+  %22 = alloca float, addrspace(5)
+  %23 = alloca float, addrspace(5)
+  %24 = alloca float, addrspace(5)
+  %25 = alloca float, addrspace(5)
+  %26 = bitcast <2 x i32> %7 to <2 x float>
+  %27 = extractelement <2 x float> %26, i32 0
+  %28 = extractelement <2 x float> %26, i32 1
+  %29 = call nsz float @llvm.amdgcn.interp.p1(float %27, i32 0, i32 0, i32 %5) #3
+  %30 = call nsz float @llvm.amdgcn.interp.p2(float %29, float %28, i32 0, i32 0, i32 %5) #3
+  %31 = call nsz float @llvm.amdgcn.interp.p1(float %27, i32 1, i32 0, i32 %5) #3
+  %32 = call nsz float @llvm.amdgcn.interp.p2(float %31, float %28, i32 1, i32 0, i32 %5) #3
+  %33 = call nsz float @llvm.amdgcn.interp.p1(float %27, i32 2, i32 0, i32 %5) #3
+  %34 = call nsz float @llvm.amdgcn.interp.p2(float %33, float %28, i32 2, i32 0, i32 %5) #3
+  %35 = call nsz float @llvm.amdgcn.interp.p1(float %27, i32 3, i32 0, i32 %5) #3
+  %36 = call nsz float @llvm.amdgcn.interp.p2(float %35, float %28, i32 3, i32 0, i32 %5) #3
+  %37 = bitcast float %30 to i32
+  %38 = bitcast float %32 to i32
+  %39 = bitcast float %34 to i32
+  %40 = bitcast float %36 to i32
+  %41 = bitcast <2 x i32> %7 to <2 x float>
+  %42 = extractelement <2 x float> %41, i32 0
+  %43 = extractelement <2 x float> %41, i32 1
+  %44 = call nsz float @llvm.amdgcn.interp.p1(float %42, i32 0, i32 1, i32 %5) #3
+  %45 = call nsz float @llvm.amdgcn.interp.p2(float %44, float %43, i32 0, i32 1, i32 %5) #3
+  %46 = call nsz float @llvm.amdgcn.interp.p1(float %42, i32 1, i32 1, i32 %5) #3
+  %47 = call nsz float @llvm.amdgcn.interp.p2(float %46, float %43, i32 1, i32 1, i32 %5) #3
+  %48 = call nsz float @llvm.amdgcn.interp.p1(float %42, i32 2, i32 1, i32 %5) #3
+  %49 = call nsz float @llvm.amdgcn.interp.p2(float %48, float %43, i32 2, i32 1, i32 %5) #3
+  %50 = call nsz float @llvm.amdgcn.interp.p1(float %42, i32 3, i32 1, i32 %5) #3
+  %51 = call nsz float @llvm.amdgcn.interp.p2(float %50, float %43, i32 3, i32 1, i32 %5) #3
+  %52 = bitcast float %45 to i32
+  %53 = bitcast float %47 to i32
+  %54 = bitcast float %49 to i32
+  %55 = bitcast float %51 to i32
+  store float 0.000000e+00, float addrspace(5)* %25
+  store float undef, float addrspace(5)* %25
+  store float 0.000000e+00, float addrspace(5)* %24
+  store float undef, float addrspace(5)* %24
+  store float 0.000000e+00, float addrspace(5)* %23
+  store float undef, float addrspace(5)* %23
+  store float 0.000000e+00, float addrspace(5)* %22
+  store float undef, float addrspace(5)* %22
+  store float 0.000000e+00, float addrspace(5)* %temp
+  store float undef, float addrspace(5)* %temp
+  store float 0.000000e+00, float addrspace(5)* %temp1
+  store float undef, float addrspace(5)* %temp1
+  store float 0.000000e+00, float addrspace(5)* %temp2
+  store float undef, float addrspace(5)* %temp2
+  store float 0.000000e+00, float addrspace(5)* %temp3
+  store float undef, float addrspace(5)* %temp3
+  store float 0.000000e+00, float addrspace(5)* %temp4
+  store float undef, float addrspace(5)* %temp4
+  store float 0.000000e+00, float addrspace(5)* %temp5
+  store float undef, float addrspace(5)* %temp5
+  store float 0.000000e+00, float addrspace(5)* %temp6
+  store float undef, float addrspace(5)* %temp6
+  store float 0.000000e+00, float addrspace(5)* %temp7
+  store float undef, float addrspace(5)* %temp7
+  store float 0.000000e+00, float addrspace(5)* %temp8
+  store float undef, float addrspace(5)* %temp8
+  store float 0.000000e+00, float addrspace(5)* %temp9
+  store float undef, float addrspace(5)* %temp9
+  store float 0.000000e+00, float addrspace(5)* %temp10
+  store float undef, float addrspace(5)* %temp10
+  store float 0.000000e+00, float addrspace(5)* %temp11
+  store float undef, float addrspace(5)* %temp11
+  store float 0.000000e+00, float addrspace(5)* %temp12
+  store float undef, float addrspace(5)* %temp12
+  store float 0.000000e+00, float addrspace(5)* %temp13
+  store float undef, float addrspace(5)* %temp13
+  store float 0.000000e+00, float addrspace(5)* %temp14
+  store float undef, float addrspace(5)* %temp14
+  store float 0.000000e+00, float addrspace(5)* %temp15
+  store float undef, float addrspace(5)* %temp15
+  store float 0.000000e+00, float addrspace(5)* %temp16
+  store float undef, float addrspace(5)* %temp16
+  store float 0.000000e+00, float addrspace(5)* %temp17
+  store float undef, float addrspace(5)* %temp17
+  store float 0.000000e+00, float addrspace(5)* %temp18
+  store float undef, float addrspace(5)* %temp18
+  store float 0.000000e+00, float addrspace(5)* %temp19
+  store float undef, float addrspace(5)* %temp19
+  store float 0.000000e+00, float addrspace(5)* %temp20
+  store float undef, float addrspace(5)* %temp20
+  store float 0.000000e+00, float addrspace(5)* %temp21
+  store float undef, float addrspace(5)* %temp21
+  store float 0.000000e+00, float addrspace(5)* %temp22
+  store float undef, float addrspace(5)* %temp22
+  store float 0.000000e+00, float addrspace(5)* %temp23
+  store float undef, float addrspace(5)* %temp23
+  store float 0.000000e+00, float addrspace(5)* %temp24
+  store float undef, float addrspace(5)* %temp24
+  store float 0.000000e+00, float addrspace(5)* %temp25
+  store float undef, float addrspace(5)* %temp25
+  store float 0.000000e+00, float addrspace(5)* %temp26
+  store float undef, float addrspace(5)* %temp26
+  store float 0.000000e+00, float addrspace(5)* %temp27
+  store float undef, float addrspace(5)* %temp27
+  store float 0.000000e+00, float addrspace(5)* %temp28
+  store float undef, float addrspace(5)* %temp28
+  store float 0.000000e+00, float addrspace(5)* %temp29
+  store float undef, float addrspace(5)* %temp29
+  store float 0.000000e+00, float addrspace(5)* %temp30
+  store float undef, float addrspace(5)* %temp30
+  store float 0.000000e+00, float addrspace(5)* %temp31
+  store float undef, float addrspace(5)* %temp31
+  store float 0.000000e+00, float addrspace(5)* %temp32
+  store float undef, float addrspace(5)* %temp32
+  store float 0.000000e+00, float addrspace(5)* %temp33
+  store float undef, float addrspace(5)* %temp33
+  store float 0.000000e+00, float addrspace(5)* %temp34
+  store float undef, float addrspace(5)* %temp34
+  store float 0.000000e+00, float addrspace(5)* %temp35
+  store float undef, float addrspace(5)* %temp35
+  store float 0.000000e+00, float addrspace(5)* %temp36
+  store float undef, float addrspace(5)* %temp36
+  store float 0.000000e+00, float addrspace(5)* %temp37
+  store float undef, float addrspace(5)* %temp37
+  store float 0.000000e+00, float addrspace(5)* %temp38
+  store float undef, float addrspace(5)* %temp38
+  store float 0.000000e+00, float addrspace(5)* %temp39
+  store float undef, float addrspace(5)* %temp39
+  store float 0.000000e+00, float addrspace(5)* %temp40
+  store float undef, float addrspace(5)* %temp40
+  store float 0.000000e+00, float addrspace(5)* %temp41
+  store float undef, float addrspace(5)* %temp41
+  store float 0.000000e+00, float addrspace(5)* %temp42
+  store float undef, float addrspace(5)* %temp42
+  store float 0.000000e+00, float addrspace(5)* %temp43
+  store float undef, float addrspace(5)* %temp43
+  store float 0.000000e+00, float addrspace(5)* %temp44
+  store float undef, float addrspace(5)* %temp44
+  store float 0.000000e+00, float addrspace(5)* %temp45
+  store float undef, float addrspace(5)* %temp45
+  store float 0.000000e+00, float addrspace(5)* %temp46
+  store float undef, float addrspace(5)* %temp46
+  store float 0.000000e+00, float addrspace(5)* %temp47
+  store float undef, float addrspace(5)* %temp47
+  store float 0.000000e+00, float addrspace(5)* %temp48
+  store float undef, float addrspace(5)* %temp48
+  store float 0.000000e+00, float addrspace(5)* %temp49
+  store float undef, float addrspace(5)* %temp49
+  store float 0.000000e+00, float addrspace(5)* %temp50
+  store float undef, float addrspace(5)* %temp50
+  store float 0.000000e+00, float addrspace(5)* %temp51
+  store float undef, float addrspace(5)* %temp51
+  store float 0.000000e+00, float addrspace(5)* %temp52
+  store float undef, float addrspace(5)* %temp52
+  store float 0.000000e+00, float addrspace(5)* %temp53
+  store float undef, float addrspace(5)* %temp53
+  store float 0.000000e+00, float addrspace(5)* %temp54
+  store float undef, float addrspace(5)* %temp54
+  store float 0.000000e+00, float addrspace(5)* %temp55
+  store float undef, float addrspace(5)* %temp55
+  store float 0.000000e+00, float addrspace(5)* %temp56
+  store float undef, float addrspace(5)* %temp56
+  store float 0.000000e+00, float addrspace(5)* %temp57
+  store float undef, float addrspace(5)* %temp57
+  store float 0.000000e+00, float addrspace(5)* %temp58
+  store float undef, float addrspace(5)* %temp58
+  store float 0.000000e+00, float addrspace(5)* %temp59
+  store float undef, float addrspace(5)* %temp59
+  %56 = insertelement <2 x i32> undef, i32 %37, i32 0
+  %57 = insertelement <2 x i32> %56, i32 %38, i32 1
+  %58 = getelementptr [0 x <8 x i32>], [0 x <8 x i32>] addrspace(6)* %3, i32 0, i32 16, !amdgpu.uniform !0
+  %59 = load <8 x i32>, <8 x i32> addrspace(6)* %58, !invariant.load !0
+  %60 = bitcast [0 x <8 x i32>] addrspace(6)* %3 to [0 x <4 x i32>] addrspace(6)*
+  %61 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %60, i32 0, i32 35, !amdgpu.uniform !0
+  %62 = load <4 x i32>, <4 x i32> addrspace(6)* %61, !invariant.load !0
+  %63 = extractelement <2 x i32> %57, i32 0
+  %64 = extractelement <2 x i32> %57, i32 1
+  %65 = insertelement <2 x i32> undef, i32 %63, i32 0
+  %66 = insertelement <2 x i32> %65, i32 %64, i32 1
+  %67 = bitcast <2 x i32> %66 to <2 x float>
+  %68 = call nsz <4 x float> @llvm.amdgcn.image.sample.v4f32.v2f32.v8i32(<2 x float> %67, <8 x i32> %59, <4 x i32> %62, i32 15, i1 false, i1 false, i1 false, i1 false, i1 false) #3
+  %69 = bitcast <4 x float> %68 to <4 x i32>
+  %70 = extractelement <4 x i32> %69, i32 3
+  %71 = bitcast i32 %70 to float
+  %72 = fadd nsz float %71, -1.000000e+00
+  %73 = bitcast float %72 to i32
+  %74 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %75 = load <4 x i32>, <4 x i32> addrspace(6)* %74, !invariant.load !0
+  %76 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %75, i32 320)
+  %77 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %75, i32 324)
+  %78 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %75, i32 328)
+  %79 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %75, i32 332)
+  %80 = insertelement <4 x float> undef, float %76, i32 0
+  %81 = insertelement <4 x float> %80, float %77, i32 1
+  %82 = insertelement <4 x float> %81, float %78, i32 2
+  %83 = insertelement <4 x float> %82, float %79, i32 3
+  %84 = bitcast <4 x float> %83 to <4 x i32>
+  %85 = extractelement <4 x i32> %84, i32 3
+  %86 = bitcast i32 %85 to float
+  %87 = bitcast i32 %73 to float
+  %88 = fmul nsz float %86, %87
+  %89 = bitcast float %88 to i32
+  %90 = bitcast i32 %89 to float
+  %91 = fadd nsz float %90, 1.000000e+00
+  %92 = bitcast float %91 to i32
+  %93 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %94 = load <4 x i32>, <4 x i32> addrspace(6)* %93, !invariant.load !0
+  %95 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %94, i32 16)
+  %96 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %94, i32 20)
+  %97 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %94, i32 24)
+  %98 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %94, i32 28)
+  %99 = insertelement <4 x float> undef, float %95, i32 0
+  %100 = insertelement <4 x float> %99, float %96, i32 1
+  %101 = insertelement <4 x float> %100, float %97, i32 2
+  %102 = insertelement <4 x float> %101, float %98, i32 3
+  %103 = bitcast <4 x float> %102 to <4 x i32>
+  %104 = extractelement <4 x i32> %103, i32 3
+  %105 = bitcast i32 %92 to float
+  %106 = bitcast i32 %104 to float
+  %107 = fmul nsz float %105, %106
+  %108 = bitcast float %107 to i32
+  %109 = bitcast i32 %108 to float
+  %110 = bitcast i32 %39 to float
+  %111 = fmul nsz float %109, %110
+  %112 = bitcast float %111 to i32
+  %113 = bitcast i32 %108 to float
+  %114 = fsub nsz float -0.000000e+00, %113
+  %115 = bitcast float %114 to i32
+  %116 = bitcast i32 %112 to float
+  %117 = bitcast i32 %115 to float
+  %118 = fadd nsz float %116, %117
+  %119 = bitcast float %118 to i32
+  %120 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %121 = load <4 x i32>, <4 x i32> addrspace(6)* %120, !invariant.load !0
+  %122 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %121, i32 192)
+  %123 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %121, i32 196)
+  %124 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %121, i32 200)
+  %125 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %121, i32 204)
+  %126 = insertelement <4 x float> undef, float %122, i32 0
+  %127 = insertelement <4 x float> %126, float %123, i32 1
+  %128 = insertelement <4 x float> %127, float %124, i32 2
+  %129 = insertelement <4 x float> %128, float %125, i32 3
+  %130 = bitcast <4 x float> %129 to <4 x i32>
+  %131 = extractelement <4 x i32> %130, i32 3
+  %132 = bitcast i32 %131 to float
+  %133 = bitcast i32 %119 to float
+  %134 = fmul nsz float %132, %133
+  %135 = bitcast float %134 to i32
+  %136 = bitcast i32 %135 to float
+  %137 = bitcast i32 %108 to float
+  %138 = fadd nsz float %136, %137
+  %139 = bitcast float %138 to i32
+  %140 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %141 = load <4 x i32>, <4 x i32> addrspace(6)* %140, !invariant.load !0
+  %142 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %141, i32 464)
+  %143 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %141, i32 468)
+  %144 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %141, i32 472)
+  %145 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %141, i32 476)
+  %146 = insertelement <4 x float> undef, float %142, i32 0
+  %147 = insertelement <4 x float> %146, float %143, i32 1
+  %148 = insertelement <4 x float> %147, float %144, i32 2
+  %149 = insertelement <4 x float> %148, float %145, i32 3
+  %150 = bitcast <4 x float> %149 to <4 x i32>
+  %151 = extractelement <4 x i32> %150, i32 3
+  %152 = bitcast i32 %151 to float
+  %153 = bitcast i32 %40 to float
+  %154 = fmul nsz float %152, %153
+  %155 = bitcast float %154 to i32
+  %156 = extractelement <4 x i32> %130, i32 1
+  %157 = bitcast i32 %156 to float
+  %158 = fcmp nsz oeq float %157, 0.000000e+00
+  %159 = select i1 %158, i32 -1, i32 0
+  %160 = icmp ne i32 %159, 0
+  %161 = select i1 %160, i32 %139, i32 %155
+  %162 = extractelement <4 x i32> %69, i32 3
+  %163 = extractelement <4 x i32> %130, i32 0
+  %164 = bitcast i32 %162 to float
+  %165 = bitcast i32 %163 to float
+  %166 = fadd nsz float %164, %165
+  %167 = bitcast float %166 to i32
+  %168 = bitcast i32 %167 to float
+  %169 = call nsz float @llvm.maxnum.f32(float %168, float 0.000000e+00) #3
+  %170 = call nsz float @llvm.canonicalize.f32(float %169) #3
+  %171 = bitcast float %170 to i32
+  %172 = bitcast i32 %171 to float
+  %173 = call nsz float @llvm.minnum.f32(float %172, float 1.000000e+00) #3
+  %174 = call nsz float @llvm.canonicalize.f32(float %173) #3
+  %175 = bitcast float %174 to i32
+  %176 = extractelement <4 x i32> %103, i32 0
+  %177 = bitcast i32 %176 to float
+  %178 = fadd nsz float -1.000000e+00, %177
+  %179 = bitcast float %178 to i32
+  %180 = extractelement <4 x i32> %103, i32 1
+  %181 = bitcast i32 %180 to float
+  %182 = fadd nsz float -1.000000e+00, %181
+  %183 = bitcast float %182 to i32
+  %184 = extractelement <4 x i32> %103, i32 2
+  %185 = bitcast i32 %184 to float
+  %186 = fadd nsz float -1.000000e+00, %185
+  %187 = bitcast float %186 to i32
+  %188 = bitcast i32 %175 to float
+  %189 = bitcast i32 %179 to float
+  %190 = fmul nsz float %188, %189
+  %191 = bitcast float %190 to i32
+  %192 = bitcast i32 %175 to float
+  %193 = bitcast i32 %183 to float
+  %194 = fmul nsz float %192, %193
+  %195 = bitcast float %194 to i32
+  %196 = bitcast i32 %175 to float
+  %197 = bitcast i32 %187 to float
+  %198 = fmul nsz float %196, %197
+  %199 = bitcast float %198 to i32
+  %200 = bitcast i32 %191 to float
+  %201 = fadd nsz float %200, 1.000000e+00
+  %202 = bitcast float %201 to i32
+  %203 = bitcast i32 %195 to float
+  %204 = fadd nsz float %203, 1.000000e+00
+  %205 = bitcast float %204 to i32
+  %206 = bitcast i32 %199 to float
+  %207 = fadd nsz float %206, 1.000000e+00
+  %208 = bitcast float %207 to i32
+  %209 = extractelement <4 x i32> %69, i32 0
+  %210 = bitcast i32 %209 to float
+  %211 = bitcast i32 %202 to float
+  %212 = fmul nsz float %210, %211
+  %213 = bitcast float %212 to i32
+  %214 = extractelement <4 x i32> %69, i32 1
+  %215 = bitcast i32 %214 to float
+  %216 = bitcast i32 %205 to float
+  %217 = fmul nsz float %215, %216
+  %218 = bitcast float %217 to i32
+  %219 = extractelement <4 x i32> %69, i32 2
+  %220 = bitcast i32 %219 to float
+  %221 = bitcast i32 %208 to float
+  %222 = fmul nsz float %220, %221
+  %223 = bitcast float %222 to i32
+  %224 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %225 = load <4 x i32>, <4 x i32> addrspace(6)* %224, !invariant.load !0
+  %226 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %225, i32 480)
+  %227 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %225, i32 484)
+  %228 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %225, i32 488)
+  %229 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %225, i32 492)
+  %230 = insertelement <4 x float> undef, float %226, i32 0
+  %231 = insertelement <4 x float> %230, float %227, i32 1
+  %232 = insertelement <4 x float> %231, float %228, i32 2
+  %233 = insertelement <4 x float> %232, float %229, i32 3
+  %234 = bitcast <4 x float> %233 to <4 x i32>
+  %235 = extractelement <4 x i32> %234, i32 0
+  %236 = bitcast i32 %213 to float
+  %237 = bitcast i32 %235 to float
+  %238 = fmul nsz float %236, %237
+  %239 = bitcast float %238 to i32
+  %240 = extractelement <4 x i32> %234, i32 0
+  %241 = bitcast i32 %218 to float
+  %242 = bitcast i32 %240 to float
+  %243 = fmul nsz float %241, %242
+  %244 = bitcast float %243 to i32
+  %245 = extractelement <4 x i32> %234, i32 0
+  %246 = bitcast i32 %223 to float
+  %247 = bitcast i32 %245 to float
+  %248 = fmul nsz float %246, %247
+  %249 = bitcast float %248 to i32
+  %250 = bitcast i32 %239 to float
+  %251 = fsub nsz float -0.000000e+00, %250
+  %252 = bitcast float %251 to i32
+  %253 = bitcast i32 %244 to float
+  %254 = fsub nsz float -0.000000e+00, %253
+  %255 = bitcast float %254 to i32
+  %256 = bitcast i32 %249 to float
+  %257 = fsub nsz float -0.000000e+00, %256
+  %258 = bitcast float %257 to i32
+  %259 = extractelement <4 x i32> %150, i32 0
+  %260 = bitcast i32 %252 to float
+  %261 = bitcast i32 %259 to float
+  %262 = fadd nsz float %260, %261
+  %263 = bitcast float %262 to i32
+  %264 = extractelement <4 x i32> %150, i32 1
+  %265 = bitcast i32 %255 to float
+  %266 = bitcast i32 %264 to float
+  %267 = fadd nsz float %265, %266
+  %268 = bitcast float %267 to i32
+  %269 = extractelement <4 x i32> %150, i32 2
+  %270 = bitcast i32 %258 to float
+  %271 = bitcast i32 %269 to float
+  %272 = fadd nsz float %270, %271
+  %273 = bitcast float %272 to i32
+  %274 = bitcast i32 %52 to float
+  %275 = fsub nsz float -0.000000e+00, %274
+  %276 = bitcast float %275 to i32
+  %277 = bitcast i32 %53 to float
+  %278 = fsub nsz float -0.000000e+00, %277
+  %279 = bitcast float %278 to i32
+  %280 = bitcast i32 %54 to float
+  %281 = fsub nsz float -0.000000e+00, %280
+  %282 = bitcast float %281 to i32
+  %283 = extractelement <4 x i32> %84, i32 0
+  %284 = bitcast i32 %283 to float
+  %285 = bitcast i32 %276 to float
+  %286 = fadd nsz float %284, %285
+  %287 = bitcast float %286 to i32
+  %288 = extractelement <4 x i32> %84, i32 1
+  %289 = bitcast i32 %288 to float
+  %290 = bitcast i32 %279 to float
+  %291 = fadd nsz float %289, %290
+  %292 = bitcast float %291 to i32
+  %293 = extractelement <4 x i32> %84, i32 2
+  %294 = bitcast i32 %293 to float
+  %295 = bitcast i32 %282 to float
+  %296 = fadd nsz float %294, %295
+  %297 = bitcast float %296 to i32
+  %298 = bitcast i32 %287 to float
+  %299 = bitcast i32 %287 to float
+  %300 = fmul nsz float %298, %299
+  %301 = bitcast float %300 to i32
+  %302 = bitcast i32 %292 to float
+  %303 = bitcast i32 %292 to float
+  %304 = fmul nsz float %302, %303
+  %305 = bitcast float %304 to i32
+  %306 = bitcast i32 %301 to float
+  %307 = bitcast i32 %305 to float
+  %308 = fadd nsz float %306, %307
+  %309 = bitcast float %308 to i32
+  %310 = bitcast i32 %297 to float
+  %311 = bitcast i32 %297 to float
+  %312 = fmul nsz float %310, %311
+  %313 = bitcast float %312 to i32
+  %314 = bitcast i32 %309 to float
+  %315 = bitcast i32 %313 to float
+  %316 = fadd nsz float %314, %315
+  %317 = bitcast float %316 to i32
+  %318 = bitcast i32 %317 to float
+  %319 = call nsz float @llvm.sqrt.f32(float %318) #3
+  %320 = bitcast float %319 to i32
+  %321 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %2, i32 0, i32 16, !amdgpu.uniform !0
+  %322 = load <4 x i32>, <4 x i32> addrspace(6)* %321, !invariant.load !0
+  %323 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %322, i32 336)
+  %324 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %322, i32 340)
+  %325 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %322, i32 344)
+  %326 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %322, i32 348)
+  %327 = insertelement <4 x float> undef, float %323, i32 0
+  %328 = insertelement <4 x float> %327, float %324, i32 1
+  %329 = insertelement <4 x float> %328, float %325, i32 2
+  %330 = insertelement <4 x float> %329, float %326, i32 3
+  %331 = bitcast <4 x float> %330 to <4 x i32>
+  %332 = extractelement <4 x i32> %331, i32 3
+  %333 = bitcast i32 %320 to float
+  %334 = bitcast i32 %332 to float
+  %335 = fmul nsz float %333, %334
+  %336 = bitcast float %335 to i32
+  %337 = extractelement <4 x i32> %331, i32 0
+  %338 = bitcast i32 %336 to float
+  %339 = bitcast i32 %337 to float
+  %340 = fadd nsz float %338, %339
+  %341 = bitcast float %340 to i32
+  %342 = bitcast i32 %341 to float
+  %343 = call nsz float @llvm.maxnum.f32(float %342, float 0.000000e+00) #3
+  %344 = call nsz float @llvm.canonicalize.f32(float %343) #3
+  %345 = bitcast float %344 to i32
+  %346 = bitcast i32 %345 to float
+  %347 = call nsz float @llvm.minnum.f32(float %346, float 1.000000e+00) #3
+  %348 = call nsz float @llvm.canonicalize.f32(float %347) #3
+  %349 = bitcast float %348 to i32
+  %350 = extractelement <4 x i32> %331, i32 2
+  %351 = bitcast i32 %349 to float
+  %352 = bitcast i32 %350 to float
+  %353 = call nsz float @llvm.minnum.f32(float %351, float %352) #3
+  %354 = call nsz float @llvm.canonicalize.f32(float %353) #3
+  %355 = bitcast float %354 to i32
+  %356 = bitcast i32 %355 to float
+  %357 = bitcast i32 %355 to float
+  %358 = fmul nsz float %356, %357
+  %359 = bitcast float %358 to i32
+  %360 = bitcast i32 %359 to float
+  %361 = bitcast i32 %263 to float
+  %362 = fmul nsz float %360, %361
+  %363 = bitcast float %362 to i32
+  %364 = bitcast i32 %359 to float
+  %365 = bitcast i32 %268 to float
+  %366 = fmul nsz float %364, %365
+  %367 = bitcast float %366 to i32
+  %368 = bitcast i32 %359 to float
+  %369 = bitcast i32 %273 to float
+  %370 = fmul nsz float %368, %369
+  %371 = bitcast float %370 to i32
+  %372 = bitcast i32 %363 to float
+  %373 = bitcast i32 %239 to float
+  %374 = fadd nsz float %372, %373
+  %375 = bitcast float %374 to i32
+  %376 = bitcast i32 %367 to float
+  %377 = bitcast i32 %244 to float
+  %378 = fadd nsz float %376, %377
+  %379 = bitcast float %378 to i32
+  %380 = bitcast i32 %371 to float
+  %381 = bitcast i32 %249 to float
+  %382 = fadd nsz float %380, %381
+  %383 = bitcast float %382 to i32
+  %384 = insertelement <4 x i32> undef, i32 %375, i32 0
+  %385 = insertelement <4 x i32> %384, i32 %379, i32 1
+  %386 = insertelement <4 x i32> %385, i32 %383, i32 2
+  %387 = insertelement <4 x i32> %386, i32 %161, i32 3
+  %388 = bitcast <4 x i32> %387 to <4 x float>
+  %389 = extractelement <4 x float> %388, i32 0
+  store float %389, float addrspace(5)* %25
+  %390 = extractelement <4 x float> %388, i32 1
+  store float %390, float addrspace(5)* %24
+  %391 = extractelement <4 x float> %388, i32 2
+  store float %391, float addrspace(5)* %23
+  %392 = extractelement <4 x float> %388, i32 3
+  store float %392, float addrspace(5)* %22
+  %393 = load float, float addrspace(5)* %25
+  %394 = load float, float addrspace(5)* %24
+  %395 = load float, float addrspace(5)* %23
+  %396 = load float, float addrspace(5)* %22
+  %397 = bitcast float %4 to i32
+  %398 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> undef, i32 %397, 4
+  %399 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %398, float %393, 5
+  %400 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %399, float %394, 6
+  %401 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %400, float %395, 7
+  %402 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %401, float %396, 8
+  %403 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %402, float %20, 19
+  ret <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %403
+}
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.amdgcn.interp.p1(float, i32, i32, i32) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.amdgcn.interp.p2(float, float, i32, i32, i32) #1
+
+; Function Attrs: nounwind readonly
+declare <4 x float> @llvm.amdgcn.image.sample.v4f32.v2f32.v8i32(<2 x float>, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #2
+
+; Function Attrs: nounwind readnone
+declare float @llvm.SI.load.const.v4i32(<4 x i32>, i32) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.maxnum.f32(float, float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.canonicalize.f32(float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.minnum.f32(float, float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.sqrt.f32(float) #1
+
+attributes #0 = { "InitialPSInputAddr"="0xb077" "no-signed-zeros-fp-math"="true" }
+attributes #1 = { nounwind readnone speculatable }
+attributes #2 = { nounwind readonly }
+attributes #3 = { nounwind readnone }
+
+!0 = !{}
+radeonsi: Compiling shader 2

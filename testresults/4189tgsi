@@ -1,0 +1,1274 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+VERT
+PROPERTY NEXT_SHADER FRAG
+DCL IN[0]
+DCL IN[1]
+DCL IN[2]
+DCL IN[3]
+DCL IN[4]
+DCL IN[5]
+DCL IN[6]
+DCL OUT[0], POSITION
+DCL OUT[1], CLIPVERTEX
+DCL OUT[2], GENERIC[0]
+DCL OUT[3], GENERIC[1]
+DCL OUT[4], GENERIC[2]
+DCL OUT[5], GENERIC[3]
+DCL CONST[0][0..101]
+DCL TEMP[0..165], LOCAL
+IMM[0] FLT32 {    0.0000,     1.0000,  -128.0000,   -64.0000}
+IMM[1] FLT32 {    0.0159,    -0.0159,    -2.0000,     2.2000}
+IMM[2] INT32 {0, 29, 28, 27}
+IMM[3] FLT32 {    5.0000,     0.0001,     0.0000,     0.0000}
+IMM[4] INT32 {31, 30, 1, 23}
+IMM[5] INT32 {21, 25, 0, 0}
+  0: MOV TEMP[0], IMM[0].xxxx
+  1: MOV TEMP[1], IMM[0].xxxx
+  2: MOV TEMP[2], IMM[0].xxxx
+  3: MOV TEMP[3].x, |CONST[0][50].xxxx|
+  4: FSLT TEMP[4].x, -TEMP[3].xxxx, TEMP[3].xxxx
+  5: AND TEMP[5].x, TEMP[4].xxxx, IMM[0].yyyy
+  6: MOV TEMP[3].y, TEMP[5].xxxx
+  7: ADD TEMP[6].xy, IMM[0].zzzz, IN[1].xyyy
+  8: FSLT TEMP[7].xy, TEMP[6].xyyy, CONST[0][0].xxxx
+  9: AND TEMP[8].xy, TEMP[7].xyyy, IMM[0].yyyy
+ 10: MOV TEMP[9].xy, |TEMP[6].xyyy|
+ 11: ADD TEMP[10].xy, TEMP[9].xyyy, -TEMP[8].xyyy
+ 12: ADD TEMP[11].xy, TEMP[10].xyyy, IMM[0].wwww
+ 13: FSLT TEMP[12].xy, TEMP[11].xyyy, CONST[0][0].xxxx
+ 14: AND TEMP[13].xy, TEMP[12].xyyy, IMM[0].yyyy
+ 15: MOV TEMP[14].xy, |TEMP[11].xyyy|
+ 16: ADD TEMP[15].xy, TEMP[14].xyyy, -TEMP[13].xyyy
+ 17: MUL TEMP[16].xy, TEMP[15].xyyy, IMM[1].xxxx
+ 18: MAD TEMP[17].x, TEMP[15].xxxx, IMM[1].yyyy, IMM[0].yyyy
+ 19: MAD TEMP[18].x, TEMP[15].yyyy, IMM[1].yyyy, TEMP[17].xxxx
+ 20: MOV TEMP[16].z, TEMP[18].xxxx
+ 21: DP3 TEMP[19].x, TEMP[16].xyzz, TEMP[16].xyzz
+ 22: RSQ TEMP[20].x, TEMP[19].xxxx
+ 23: MUL TEMP[21].xyz, TEMP[16].xyzz, TEMP[20].xxxx
+ 24: MAD TEMP[22].xy, TEMP[13].xyyy, IMM[1].zzzz, IMM[0].yyyy
+ 25: MOV TEMP[3].w, TEMP[22].yyxy
+ 26: MUL TEMP[16].xy, TEMP[22].xyyy, TEMP[21].xyyy
+ 27: MAD TEMP[23].x, TEMP[8].xxxx, IMM[1].zzzz, IMM[0].yyyy
+ 28: MOV TEMP[3].z, TEMP[23].xxxx
+ 29: MUL TEMP[24].x, TEMP[23].xxxx, TEMP[21].zzzz
+ 30: MOV TEMP[16].z, TEMP[24].xxxx
+ 31: MOV TEMP[8].w, IN[0].wwww
+ 32: MAD TEMP[8].xyz, IN[5].xyzz, CONST[0][13].xxxx, IN[0].xyzz
+ 33: MAD TEMP[16].xyz, IN[6].xyzz, CONST[0][13].xxxx, TEMP[16].xyzz
+ 34: DP4 TEMP[21].x, TEMP[8], CONST[0][97]
+ 35: DP4 TEMP[25].x, TEMP[8], CONST[0][98]
+ 36: MOV TEMP[21].y, TEMP[25].xxxx
+ 37: DP4 TEMP[26].x, TEMP[8], CONST[0][99]
+ 38: MOV TEMP[21].z, TEMP[26].xxxx
+ 39: DP3 TEMP[8].x, TEMP[16].xyzz, CONST[0][97].xyzz
+ 40: DP3 TEMP[27].x, TEMP[16].xyzz, CONST[0][98].xyzz
+ 41: MOV TEMP[8].y, TEMP[27].xxxx
+ 42: DP3 TEMP[28].x, TEMP[16].xyzz, CONST[0][99].xyzz
+ 43: MOV TEMP[8].z, TEMP[28].xxxx
+ 44: DP3 TEMP[29].x, TEMP[8].xyzz, TEMP[8].xyzz
+ 45: RSQ TEMP[30].x, TEMP[29].xxxx
+ 46: MUL TEMP[16].xyz, TEMP[8].xyzz, TEMP[30].xxxx
+ 47: FSLT TEMP[31].x, -TEMP[3].xxxx, TEMP[3].xxxx
+ 48: UIF TEMP[31].xxxx
+ 49:   ADD TEMP[32].xyz, IN[2].xyzz, IN[2].xyzz
+ 50:   MOV TEMP[3].zw, TEMP[32].xxyz
+ 51:   LG2 TEMP[8].x, TEMP[32].xxxx
+ 52:   LG2 TEMP[33].x, TEMP[32].yyyy
+ 53:   MOV TEMP[8].y, TEMP[33].xxxx
+ 54:   LG2 TEMP[34].x, TEMP[32].zzzz
+ 55:   MOV TEMP[8].z, TEMP[34].xxxx
+ 56:   MUL TEMP[35].xyz, TEMP[8].xyzz, IMM[1].wwww
+ 57:   MOV TEMP[3].zw, TEMP[35].xxyz
+ 58:   EX2 TEMP[3].x, TEMP[35].xxxx
+ 59:   EX2 TEMP[36].x, TEMP[35].yyyy
+ 60:   MOV TEMP[3].z, TEMP[36].xxxx
+ 61:   EX2 TEMP[37].x, TEMP[35].zzzz
+ 62:   MOV TEMP[3].w, TEMP[37].xxxx
+ 63:   MOV TEMP[8].z, CONST[0][0].yyyy
+ 64:   MOV TEMP[38].x, CONST[0][0].yyyy
+ 65:   MOV TEMP[39].xyz, TEMP[3].xzwx
+ 66:   MOV TEMP[8].x, CONST[0][0].xxxx
+ 67:   MOV TEMP[40].x, IMM[2].xxxx
+ 68:   BGNLOOP
+ 69:     ISGE TEMP[41].x, TEMP[40].xxxx, CONST[0][101].xxxx
+ 70:     UIF TEMP[41].xxxx
+ 71:       BRK
+ 72:     ENDIF
+ 73:     MUL TEMP[42].x, TEMP[8].xxxx, IMM[3].xxxx
+ 74:     MOV TEMP[43].x, TEMP[42].xxxx
+ 75:     F2I TEMP[44].x, TEMP[42].xxxx
+ 76:     UADD TEMP[45].x, TEMP[44].xxxx, IMM[2].yyyy
+ 77:     ADD TEMP[46].xyz, -TEMP[21].xyzz, CONST[0][TEMP[45].x].xyzz
+ 78:     DP3 TEMP[47].x, TEMP[46].xyzz, TEMP[46].xyzz
+ 79:     RSQ TEMP[48].x, TEMP[47].xxxx
+ 80:     MOV TEMP[8].y, TEMP[48].xxxx
+ 81:     MUL TEMP[49].xyz, TEMP[48].xxxx, TEMP[46].xyzz
+ 82:     F2I TEMP[50].x, TEMP[42].xxxx
+ 83:     UADD TEMP[51].x, TEMP[50].xxxx, IMM[2].zzzz
+ 84:     MAD TEMP[46].xyz, TEMP[46].xyzz, -TEMP[48].xxxx, -CONST[0][TEMP[51].x].xyzz
+ 85:     F2I TEMP[52].x, TEMP[42].xxxx
+ 86:     UADD TEMP[53].x, TEMP[52].xxxx, IMM[2].wwww
+ 87:     MAD TEMP[46].xyz, CONST[0][TEMP[53].x].wwww, TEMP[46].xyzz, TEMP[49].xyzz
+ 88:     DP3 TEMP[54].x, TEMP[16].xyzz, TEMP[46].xyzz
+ 89:     MAX TEMP[55].x, TEMP[54].xxxx, CONST[0][0].xxxx
+ 90:     MAD TEMP[56].x, TEMP[55].xxxx, TEMP[55].xxxx, TEMP[55].xxxx
+ 91:     MUL TEMP[57].x, TEMP[56].xxxx, CONST[0][0].wwww
+ 92:     F2I TEMP[58].x, TEMP[42].xxxx
+ 93:     UADD TEMP[59].x, TEMP[58].xxxx, IMM[2].wwww
+ 94:     MUL TEMP[46].xyz, TEMP[57].xxxx, CONST[0][TEMP[59].x].xyzz
+ 95:     MUL TEMP[60].xy, TEMP[8].yzzz, TEMP[47].xxxx
+ 96:     MOV TEMP[38].yz, TEMP[60].yxyy
+ 97:     F2I TEMP[61].x, TEMP[42].xxxx
+ 98:     UADD TEMP[62].x, TEMP[61].xxxx, IMM[4].xxxx
+ 99:     DP3 TEMP[63].x, CONST[0][TEMP[62].x].xyzz, TEMP[38].xyzz
+100:     RCP TEMP[64].x, TEMP[63].xxxx
+101:     F2I TEMP[65].x, TEMP[42].xxxx
+102:     UADD TEMP[66].x, TEMP[65].xxxx, IMM[2].zzzz
+103:     DP3 TEMP[67].x, CONST[0][TEMP[66].x].xyzz, -TEMP[49].xyzz
+104:     F2I TEMP[68].x, TEMP[42].xxxx
+105:     UADD TEMP[69].x, TEMP[68].xxxx, IMM[4].yyyy
+106:     ADD TEMP[70].x, TEMP[67].xxxx, -CONST[0][TEMP[69].x].zzzz
+107:     F2I TEMP[71].x, TEMP[42].xxxx
+108:     UADD TEMP[72].x, TEMP[71].xxxx, IMM[4].yyyy
+109:     MUL TEMP[73].x, TEMP[70].xxxx, CONST[0][TEMP[72].x].wwww
+110:     MAX TEMP[74].x, TEMP[73].xxxx, IMM[3].yyyy
+111:     F2I TEMP[75].x, TEMP[42].xxxx
+112:     UADD TEMP[76].x, TEMP[75].xxxx, IMM[4].yyyy
+113:     POW TEMP[77].x, TEMP[74].xxxx, CONST[0][TEMP[76].x].xxxx
+114:     MOV TEMP[16].w, TEMP[77].xxxx
+115:     MIN TEMP[78].x, TEMP[77].xxxx, CONST[0][0].yyyy
+116:     MAD TEMP[79].x, TEMP[64].xxxx, TEMP[78].xxxx, -TEMP[64].xxxx
+117:     F2I TEMP[80].x, TEMP[42].xxxx
+118:     UADD TEMP[81].x, TEMP[80].xxxx, IMM[2].zzzz
+119:     MAD TEMP[82].x, CONST[0][TEMP[81].x].wwww, TEMP[79].xxxx, TEMP[64].xxxx
+120:     ADD TEMP[83].x, -TEMP[82].xxxx, CONST[0][0].yyyy
+121:     MOV TEMP[8].w, TEMP[83].xxxx
+122:     F2I TEMP[84].x, TEMP[42].xxxx
+123:     UADD TEMP[85].x, TEMP[84].xxxx, IMM[2].wwww
+124:     MAD TEMP[86].x, CONST[0][TEMP[85].x].wwww, TEMP[83].xxxx, TEMP[82].xxxx
+125:     MOV TEMP[8].y, TEMP[86].xxxx
+126:     MAD TEMP[39].xyz, TEMP[46].xyzz, TEMP[86].xxxx, TEMP[39].xyzz
+127:     ADD TEMP[8].x, TEMP[8].xxxx, CONST[0][0].yyyy
+128:     UADD TEMP[40].x, TEMP[40].xxxx, IMM[4].zzzz
+129:   ENDLOOP
+130:   MUL TEMP[87].xyz, TEMP[16].xyzz, TEMP[16].xyzz
+131:   FSLT TEMP[88].xyz, TEMP[16].xyzz, CONST[0][0].xxxx
+132:   AND TEMP[8].xyz, TEMP[88].xyzz, IMM[0].yyyy
+133:   MOV TEMP[43].xy, TEMP[8].xyxx
+134:   F2I TEMP[89].x, TEMP[8].yyyy
+135:   UADD TEMP[90].x, TEMP[89].xxxx, IMM[4].wwww
+136:   MUL TEMP[91].xyz, TEMP[87].yyyy, CONST[0][TEMP[90].x].xyzz
+137:   F2I TEMP[92].x, TEMP[43].xxxx
+138:   UADD TEMP[93].x, TEMP[92].xxxx, IMM[5].xxxx
+139:   MAD TEMP[94].xyz, TEMP[87].xxxx, CONST[0][TEMP[93].x].xyzz, TEMP[91].xyzz
+140:   MOV TEMP[8].xyw, TEMP[94].xyxz
+141:   MOV TEMP[43].x, TEMP[8].zzzz
+142:   F2I TEMP[95].x, TEMP[8].zzzz
+143:   UADD TEMP[96].x, TEMP[95].xxxx, IMM[5].yyyy
+144:   MAD TEMP[97].xyz, TEMP[87].zzzz, CONST[0][TEMP[96].x].xyzz, TEMP[94].xyzz
+145:   ADD TEMP[98].xyz, TEMP[97].xyzz, TEMP[39].xyzz
+146:   MOV TEMP[3].xzw, TEMP[98].xxyz
+147: ELSE
+148:   MOV TEMP[8].z, CONST[0][0].yyyy
+149:   MOV TEMP[38].x, CONST[0][0].yyyy
+150:   MOV TEMP[39].xyz, CONST[0][0].xxxx
+151:   MOV TEMP[46].xyz, CONST[0][0].xxxx
+152:   MOV TEMP[8].x, CONST[0][0].xxxx
+153:   MOV TEMP[99].x, IMM[2].xxxx
+154:   BGNLOOP
+155:     ISGE TEMP[100].x, TEMP[99].xxxx, CONST[0][101].xxxx
+156:     UIF TEMP[100].xxxx
+157:       BRK
+158:     ENDIF
+159:     MUL TEMP[101].x, TEMP[8].xxxx, IMM[3].xxxx
+160:     MOV TEMP[43].x, TEMP[101].xxxx
+161:     F2I TEMP[102].x, TEMP[101].xxxx
+162:     UADD TEMP[103].x, TEMP[102].xxxx, IMM[2].yyyy
+163:     ADD TEMP[49].xyz, -TEMP[21].xyzz, CONST[0][TEMP[103].x].xyzz
+164:     DP3 TEMP[104].x, TEMP[49].xyzz, TEMP[49].xyzz
+165:     RSQ TEMP[105].x, TEMP[104].xxxx
+166:     MOV TEMP[8].y, TEMP[105].xxxx
+167:     MUL TEMP[106].xyz, TEMP[105].xxxx, TEMP[49].xyzz
+168:     F2I TEMP[107].x, TEMP[101].xxxx
+169:     UADD TEMP[108].x, TEMP[107].xxxx, IMM[2].zzzz
+170:     MAD TEMP[49].xyz, TEMP[49].xyzz, -TEMP[105].xxxx, -CONST[0][TEMP[108].x].xyzz
+171:     F2I TEMP[109].x, TEMP[101].xxxx
+172:     UADD TEMP[110].x, TEMP[109].xxxx, IMM[2].wwww
+173:     MAD TEMP[49].xyz, CONST[0][TEMP[110].x].wwww, TEMP[49].xyzz, TEMP[106].xyzz
+174:     DP3 TEMP[111].x, TEMP[16].xyzz, TEMP[49].xyzz
+175:     MAX TEMP[112].x, TEMP[111].xxxx, CONST[0][0].xxxx
+176:     MAD TEMP[113].x, TEMP[112].xxxx, TEMP[112].xxxx, TEMP[112].xxxx
+177:     MUL TEMP[114].x, TEMP[113].xxxx, CONST[0][0].wwww
+178:     F2I TEMP[115].x, TEMP[101].xxxx
+179:     UADD TEMP[116].x, TEMP[115].xxxx, IMM[2].wwww
+180:     MUL TEMP[49].xyz, TEMP[114].xxxx, CONST[0][TEMP[116].x].xyzz
+181:     MUL TEMP[117].xy, TEMP[8].yzzz, TEMP[104].xxxx
+182:     MOV TEMP[38].yz, TEMP[117].yxyy
+183:     F2I TEMP[118].x, TEMP[101].xxxx
+184:     UADD TEMP[119].x, TEMP[118].xxxx, IMM[4].xxxx
+185:     DP3 TEMP[120].x, CONST[0][TEMP[119].x].xyzz, TEMP[38].xyzz
+186:     RCP TEMP[121].x, TEMP[120].xxxx
+187:     F2I TEMP[122].x, TEMP[101].xxxx
+188:     UADD TEMP[123].x, TEMP[122].xxxx, IMM[2].zzzz
+189:     DP3 TEMP[124].x, CONST[0][TEMP[123].x].xyzz, -TEMP[106].xyzz
+190:     F2I TEMP[125].x, TEMP[101].xxxx
+191:     UADD TEMP[126].x, TEMP[125].xxxx, IMM[4].yyyy
+192:     ADD TEMP[127].x, TEMP[124].xxxx, -CONST[0][TEMP[126].x].zzzz
+193:     F2I TEMP[128].x, TEMP[101].xxxx
+194:     UADD TEMP[129].x, TEMP[128].xxxx, IMM[4].yyyy
+195:     MUL TEMP[130].x, TEMP[127].xxxx, CONST[0][TEMP[129].x].wwww
+196:     MAX TEMP[131].x, TEMP[130].xxxx, IMM[3].yyyy
+197:     F2I TEMP[132].x, TEMP[101].xxxx
+198:     UADD TEMP[133].x, TEMP[132].xxxx, IMM[4].yyyy
+199:     POW TEMP[134].x, TEMP[131].xxxx, CONST[0][TEMP[133].x].xxxx
+200:     MOV TEMP[16].w, TEMP[134].xxxx
+201:     MIN TEMP[135].x, TEMP[134].xxxx, CONST[0][0].yyyy
+202:     MAD TEMP[136].x, TEMP[121].xxxx, TEMP[135].xxxx, -TEMP[121].xxxx
+203:     F2I TEMP[137].x, TEMP[101].xxxx
+204:     UADD TEMP[138].x, TEMP[137].xxxx, IMM[2].zzzz
+205:     MAD TEMP[139].x, CONST[0][TEMP[138].x].wwww, TEMP[136].xxxx, TEMP[121].xxxx
+206:     ADD TEMP[140].x, -TEMP[139].xxxx, CONST[0][0].yyyy
+207:     MOV TEMP[8].w, TEMP[140].xxxx
+208:     F2I TEMP[141].x, TEMP[101].xxxx
+209:     UADD TEMP[142].x, TEMP[141].xxxx, IMM[2].wwww
+210:     MAD TEMP[143].x, CONST[0][TEMP[142].x].wwww, TEMP[140].xxxx, TEMP[139].xxxx
+211:     MUL TEMP[144].xyz, TEMP[143].xxxx, TEMP[49].xyzz
+212:     MOV TEMP[38].yzw, TEMP[144].yxyz
+213:     FSGE TEMP[145].x, -TEMP[8].xxxx, TEMP[8].xxxx
+214:     AND TEMP[146].x, TEMP[145].xxxx, IMM[0].yyyy
+215:     MAD TEMP[39].xyz, TEMP[146].xxxx, TEMP[144].xyzz, TEMP[39].xyzz
+216:     FSLT TEMP[147].x, -TEMP[8].xxxx, TEMP[8].xxxx
+217:     AND TEMP[148].x, TEMP[147].xxxx, IMM[0].yyyy
+218:     MOV TEMP[8].y, TEMP[148].xxxx
+219:     MAD TEMP[46].xyz, TEMP[144].xyzz, TEMP[148].xxxx, TEMP[46].xyzz
+220:     ADD TEMP[8].x, TEMP[8].xxxx, CONST[0][0].yyyy
+221:     UADD TEMP[99].x, TEMP[99].xxxx, IMM[4].zzzz
+222:   ENDLOOP
+223:   MUL TEMP[8].xyz, TEMP[16].xyzz, TEMP[16].xyzz
+224:   FSLT TEMP[149].xyz, TEMP[16].xyzz, CONST[0][0].xxxx
+225:   AND TEMP[38].xyz, TEMP[149].xyzz, IMM[0].yyyy
+226:   MOV TEMP[43].x, TEMP[38].xyxx
+227:   F2I TEMP[150].x, TEMP[38].yyyy
+228:   UADD TEMP[151].x, TEMP[150].xxxx, IMM[4].wwww
+229:   MUL TEMP[152].xyz, TEMP[8].yyyy, CONST[0][TEMP[151].x].xyzz
+230:   F2I TEMP[153].x, TEMP[43].xxxx
+231:   UADD TEMP[154].x, TEMP[153].xxxx, IMM[5].xxxx
+232:   MAD TEMP[155].xyz, TEMP[8].xxxx, CONST[0][TEMP[154].x].xyzz, TEMP[152].xyzz
+233:   F2I TEMP[156].x, TEMP[38].zzzz
+234:   UADD TEMP[157].x, TEMP[156].xxxx, IMM[5].yyyy
+235:   MAD TEMP[8].xyz, TEMP[8].zzzz, CONST[0][TEMP[157].x].xyzz, TEMP[155].xyzz
+236:   ADD TEMP[158].xyz, TEMP[8].xyzz, TEMP[46].xyzz
+237:   MOV TEMP[3].xzw, TEMP[158].xxyz
+238: ENDIF
+239: DP4 TEMP[0].x, IN[3], CONST[0][48]
+240: DP4 TEMP[159].x, IN[3], CONST[0][49]
+241: MOV TEMP[0].y, TEMP[159].xxxx
+242: MOV TEMP[21].w, CONST[0][0].yyyy
+243: DP4 TEMP[8].x, TEMP[21], CONST[0][8]
+244: DP4 TEMP[160].x, TEMP[21], CONST[0][9]
+245: MOV TEMP[8].y, TEMP[160].xxxx
+246: DP4 TEMP[161].x, TEMP[21], CONST[0][10]
+247: MOV TEMP[8].z, TEMP[161].xxxx
+248: DP4 TEMP[162].x, TEMP[21], CONST[0][11]
+249: MOV TEMP[8].w, TEMP[162].xxxx
+250: MOV TEMP[163].xw, TEMP[8].xxxw
+251: MUL TEMP[164].xy, CONST[0][0].xyyy, IN[4].xxxx
+252: MOV TEMP[0].zw, TEMP[164].yyxy
+253: MOV TEMP[1].xyz, TEMP[21].xyzx
+254: MOV TEMP[1].w, CONST[0][0].xxxx
+255: MOV TEMP[2].xyz, TEMP[3].xzwx
+256: MOV TEMP[2].w, CONST[0][0].xxxx
+257: MOV OUT[1], TEMP[8]
+258: MAD TEMP[165].x, TEMP[161].xxxx, CONST[0][0].zzzz, -TEMP[162].xxxx
+259: MOV TEMP[163].z, TEMP[165].xxxx
+260: MOV TEMP[163].y, -TEMP[160].xxxx
+261: MAD TEMP[163].xy, CONST[0][100].xyyy, TEMP[162].xxxx, TEMP[163].xyyy
+262: MOV OUT[0], TEMP[163]
+263: MOV OUT[2], TEMP[0]
+264: MOV OUT[3], TEMP[1]
+265: MOV OUT[4], TEMP[2]
+266: MOV OUT[5], TEMP[8]
+267: END
+radeonsi: Compiling shader 1
+TGSI shader LLVM IR:
+
+; ModuleID = 'tgsi'
+source_filename = "tgsi"
+target datalayout = "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5"
+target triple = "amdgcn--"
+
+define amdgpu_vs void @main([0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x float] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), i32 inreg, i32 inreg, i32 inreg, i32 inreg, [0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32) #0 {
+main_body:
+  %20 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 0, !amdgpu.uniform !0
+  %21 = load <4 x i32>, <4 x i32> addrspace(6)* %20, align 16, !invariant.load !0
+  %22 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %21, i32 %13, i32 0, i1 false, i1 false) #2
+  %23 = extractelement <4 x float> %22, i32 0
+  %24 = extractelement <4 x float> %22, i32 1
+  %25 = extractelement <4 x float> %22, i32 2
+  %26 = extractelement <4 x float> %22, i32 3
+  %27 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 1, !amdgpu.uniform !0
+  %28 = load <4 x i32>, <4 x i32> addrspace(6)* %27, align 16, !invariant.load !0
+  %29 = call nsz <2 x float> @llvm.amdgcn.buffer.load.format.v2f32(<4 x i32> %28, i32 %14, i32 0, i1 false, i1 false) #2
+  %30 = extractelement <2 x float> %29, i32 0
+  %31 = extractelement <2 x float> %29, i32 1
+  %32 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 2, !amdgpu.uniform !0
+  %33 = load <4 x i32>, <4 x i32> addrspace(6)* %32, align 16, !invariant.load !0
+  %34 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %33, i32 %15, i32 0, i1 false, i1 false) #2
+  %35 = extractelement <4 x float> %34, i32 0
+  %36 = extractelement <4 x float> %34, i32 1
+  %37 = extractelement <4 x float> %34, i32 2
+  %38 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 3, !amdgpu.uniform !0
+  %39 = load <4 x i32>, <4 x i32> addrspace(6)* %38, align 16, !invariant.load !0
+  %40 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %39, i32 %16, i32 0, i1 false, i1 false) #2
+  %41 = extractelement <4 x float> %40, i32 0
+  %42 = extractelement <4 x float> %40, i32 1
+  %43 = extractelement <4 x float> %40, i32 2
+  %44 = extractelement <4 x float> %40, i32 3
+  %45 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 4, !amdgpu.uniform !0
+  %46 = load <4 x i32>, <4 x i32> addrspace(6)* %45, align 16, !invariant.load !0
+  %47 = call nsz float @llvm.amdgcn.buffer.load.format.f32(<4 x i32> %46, i32 %17, i32 0, i1 false, i1 false) #2
+  %48 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 5, !amdgpu.uniform !0
+  %49 = load <4 x i32>, <4 x i32> addrspace(6)* %48, align 16, !invariant.load !0
+  %50 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %49, i32 %18, i32 0, i1 false, i1 false) #2
+  %51 = extractelement <4 x float> %50, i32 0
+  %52 = extractelement <4 x float> %50, i32 1
+  %53 = extractelement <4 x float> %50, i32 2
+  %54 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %8, i32 0, i32 6, !amdgpu.uniform !0
+  %55 = load <4 x i32>, <4 x i32> addrspace(6)* %54, align 16, !invariant.load !0
+  %56 = call nsz <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32> %55, i32 %19, i32 0, i1 false, i1 false) #2
+  %57 = extractelement <4 x float> %56, i32 0
+  %58 = extractelement <4 x float> %56, i32 1
+  %59 = extractelement <4 x float> %56, i32 2
+  %60 = ptrtoint [0 x float] addrspace(6)* %2 to i32
+  %61 = insertelement <4 x i32> <i32 undef, i32 0, i32 1632, i32 163756>, i32 %60, i32 0
+  %62 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 800)
+  %63 = call nsz float @llvm.fabs.f32(float %62) #4
+  %64 = fadd nsz float %30, -1.280000e+02
+  %65 = fadd nsz float %31, -1.280000e+02
+  %66 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 0)
+  %67 = fcmp nsz olt float %64, %66
+  %68 = fcmp nsz olt float %65, %66
+  %69 = select i1 %67, float 1.000000e+00, float 0.000000e+00
+  %70 = call nsz float @llvm.fabs.f32(float %64) #4
+  %71 = call nsz float @llvm.fabs.f32(float %65) #4
+  %72 = fsub nsz float %70, %69
+  %73 = select i1 %68, float -1.000000e+00, float -0.000000e+00
+  %74 = fadd nsz float %71, %73
+  %75 = fadd nsz float %72, -6.400000e+01
+  %76 = fadd nsz float %74, -6.400000e+01
+  %77 = fcmp nsz olt float %75, %66
+  %78 = fcmp nsz olt float %76, %66
+  %79 = select i1 %77, float 1.000000e+00, float 0.000000e+00
+  %80 = select i1 %78, float 1.000000e+00, float 0.000000e+00
+  %81 = call nsz float @llvm.fabs.f32(float %75) #4
+  %82 = call nsz float @llvm.fabs.f32(float %76) #4
+  %83 = fsub nsz float %81, %79
+  %84 = fsub nsz float %82, %80
+  %85 = fmul nsz float %83, 0x3F90410420000000
+  %86 = fmul nsz float %84, 0x3F90410420000000
+  %87 = fmul nsz float %83, 0xBF90410420000000
+  %88 = fadd nsz float %87, 1.000000e+00
+  %89 = fmul nsz float %84, 0xBF90410420000000
+  %90 = fadd nsz float %89, %88
+  %91 = fmul nsz float %85, %85
+  %92 = fmul nsz float %86, %86
+  %93 = fadd nsz float %92, %91
+  %94 = fmul nsz float %90, %90
+  %95 = fadd nsz float %93, %94
+  %96 = call nsz float @llvm.sqrt.f32(float %95) #2
+  %97 = fdiv nsz float 1.000000e+00, %96, !fpmath !1
+  %98 = fmul nsz float %85, %97
+  %99 = fmul nsz float %86, %97
+  %100 = fmul nsz float %90, %97
+  %101 = fmul nsz float %79, -2.000000e+00
+  %102 = fadd nsz float %101, 1.000000e+00
+  %103 = fmul nsz float %80, -2.000000e+00
+  %104 = fadd nsz float %103, 1.000000e+00
+  %105 = fmul nsz float %102, %98
+  %106 = fmul nsz float %104, %99
+  %107 = fmul nsz float %69, -2.000000e+00
+  %108 = fadd nsz float %107, 1.000000e+00
+  %109 = fmul nsz float %108, %100
+  %110 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 208)
+  %111 = fmul nsz float %51, %110
+  %112 = fadd nsz float %111, %23
+  %113 = fmul nsz float %52, %110
+  %114 = fadd nsz float %113, %24
+  %115 = fmul nsz float %53, %110
+  %116 = fadd nsz float %115, %25
+  %117 = fmul nsz float %57, %110
+  %118 = fadd nsz float %117, %105
+  %119 = fmul nsz float %58, %110
+  %120 = fadd nsz float %119, %106
+  %121 = fmul nsz float %59, %110
+  %122 = fadd nsz float %121, %109
+  %123 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1552)
+  %124 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1556)
+  %125 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1560)
+  %126 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1564)
+  %127 = fmul nsz float %112, %123
+  %128 = fmul nsz float %114, %124
+  %129 = fadd nsz float %127, %128
+  %130 = fmul nsz float %116, %125
+  %131 = fadd nsz float %129, %130
+  %132 = fmul nsz float %26, %126
+  %133 = fadd nsz float %131, %132
+  %134 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1568)
+  %135 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1572)
+  %136 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1576)
+  %137 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1580)
+  %138 = fmul nsz float %112, %134
+  %139 = fmul nsz float %114, %135
+  %140 = fadd nsz float %138, %139
+  %141 = fmul nsz float %116, %136
+  %142 = fadd nsz float %140, %141
+  %143 = fmul nsz float %26, %137
+  %144 = fadd nsz float %142, %143
+  %145 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1584)
+  %146 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1588)
+  %147 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1592)
+  %148 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1596)
+  %149 = fmul nsz float %112, %145
+  %150 = fmul nsz float %114, %146
+  %151 = fadd nsz float %149, %150
+  %152 = fmul nsz float %116, %147
+  %153 = fadd nsz float %151, %152
+  %154 = fmul nsz float %26, %148
+  %155 = fadd nsz float %153, %154
+  %156 = fmul nsz float %118, %123
+  %157 = fmul nsz float %120, %124
+  %158 = fadd nsz float %157, %156
+  %159 = fmul nsz float %122, %125
+  %160 = fadd nsz float %158, %159
+  %161 = fmul nsz float %118, %134
+  %162 = fmul nsz float %120, %135
+  %163 = fadd nsz float %162, %161
+  %164 = fmul nsz float %122, %136
+  %165 = fadd nsz float %163, %164
+  %166 = fmul nsz float %118, %145
+  %167 = fmul nsz float %120, %146
+  %168 = fadd nsz float %167, %166
+  %169 = fmul nsz float %122, %147
+  %170 = fadd nsz float %168, %169
+  %171 = fmul nsz float %160, %160
+  %172 = fmul nsz float %165, %165
+  %173 = fadd nsz float %172, %171
+  %174 = fmul nsz float %170, %170
+  %175 = fadd nsz float %173, %174
+  %176 = call nsz float @llvm.sqrt.f32(float %175) #2
+  %177 = fdiv nsz float 1.000000e+00, %176, !fpmath !1
+  %178 = fmul nsz float %160, %177
+  %179 = fmul nsz float %165, %177
+  %180 = fmul nsz float %170, %177
+  %181 = fsub nsz float -0.000000e+00, %63
+  %182 = fcmp nsz ogt float %63, %181
+  br i1 %182, label %if48, label %else147
+
+if48:                                             ; preds = %main_body
+  %183 = fadd nsz float %35, %35
+  %184 = fadd nsz float %36, %36
+  %185 = fadd nsz float %37, %37
+  %186 = call nsz float @llvm.log2.f32(float %183) #2
+  %187 = call nsz float @llvm.log2.f32(float %184) #2
+  %188 = call nsz float @llvm.log2.f32(float %185) #2
+  %189 = fmul nsz float %186, 0x40019999A0000000
+  %190 = fmul nsz float %187, 0x40019999A0000000
+  %191 = fmul nsz float %188, 0x40019999A0000000
+  %192 = call nsz float @llvm.exp2.f32(float %189) #2
+  %193 = call nsz float @llvm.exp2.f32(float %190) #2
+  %194 = call nsz float @llvm.exp2.f32(float %191) #2
+  %195 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 4)
+  %196 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1616)
+  %197 = bitcast float %196 to i32
+  br label %loop68
+
+loop68:                                           ; preds = %endif72, %if48
+  %198 = phi i32 [ 0, %if48 ], [ %313, %endif72 ]
+  %.09 = phi float [ %194, %if48 ], [ %311, %endif72 ]
+  %.07 = phi float [ %193, %if48 ], [ %309, %endif72 ]
+  %.05 = phi float [ %192, %if48 ], [ %307, %endif72 ]
+  %.04 = phi float [ %66, %if48 ], [ %312, %endif72 ]
+  %199 = icmp slt i32 %198, %197
+  br i1 %199, label %endif72, label %endloop129
+
+endif72:                                          ; preds = %loop68
+  %200 = fmul nsz float %.04, 5.000000e+00
+  %201 = fptosi float %200 to i32
+  %202 = shl i32 %201, 4
+  %203 = add i32 %202, 464
+  %204 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %203)
+  %205 = fsub nsz float %204, %133
+  %206 = add i32 %202, 468
+  %207 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %206)
+  %208 = fsub nsz float %207, %144
+  %209 = add i32 %202, 472
+  %210 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %209)
+  %211 = fsub nsz float %210, %155
+  %212 = fmul nsz float %205, %205
+  %213 = fmul nsz float %208, %208
+  %214 = fadd nsz float %213, %212
+  %215 = fmul nsz float %211, %211
+  %216 = fadd nsz float %214, %215
+  %217 = call nsz float @llvm.sqrt.f32(float %216) #2
+  %218 = fdiv nsz float 1.000000e+00, %217, !fpmath !1
+  %219 = fmul nsz float %218, %205
+  %220 = fmul nsz float %218, %208
+  %221 = fmul nsz float %218, %211
+  %222 = fsub nsz float -0.000000e+00, %218
+  %223 = shl i32 %201, 4
+  %224 = add i32 %223, 448
+  %225 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %224)
+  %226 = fmul nsz float %205, %222
+  %227 = fsub nsz float %226, %225
+  %228 = add i32 %223, 452
+  %229 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %228)
+  %230 = fmul nsz float %208, %222
+  %231 = fsub nsz float %230, %229
+  %232 = add i32 %223, 456
+  %233 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %232)
+  %234 = fmul nsz float %211, %222
+  %235 = fsub nsz float %234, %233
+  %236 = shl i32 %201, 4
+  %237 = add i32 %236, 432
+  %238 = add i32 %236, 444
+  %239 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %238)
+  %240 = fmul nsz float %239, %227
+  %241 = fadd nsz float %240, %219
+  %242 = fmul nsz float %239, %231
+  %243 = fadd nsz float %242, %220
+  %244 = fmul nsz float %239, %235
+  %245 = fadd nsz float %244, %221
+  %246 = fmul nsz float %178, %241
+  %247 = fmul nsz float %179, %243
+  %248 = fadd nsz float %247, %246
+  %249 = fmul nsz float %180, %245
+  %250 = fadd nsz float %248, %249
+  %251 = call nsz float @llvm.maxnum.f32(float %250, float %66) #2
+  %252 = fmul nsz float %251, %251
+  %253 = fadd nsz float %252, %251
+  %254 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 12)
+  %255 = fmul nsz float %253, %254
+  %256 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %237)
+  %257 = fmul nsz float %255, %256
+  %258 = add i32 %236, 436
+  %259 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %258)
+  %260 = fmul nsz float %255, %259
+  %261 = add i32 %236, 440
+  %262 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %261)
+  %263 = fmul nsz float %255, %262
+  %264 = fmul nsz float %218, %216
+  %265 = fmul nsz float %195, %216
+  %266 = shl i32 %201, 4
+  %267 = add i32 %266, 496
+  %268 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %267)
+  %269 = add i32 %266, 500
+  %270 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %269)
+  %271 = add i32 %266, 504
+  %272 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %271)
+  %273 = fmul nsz float %268, %195
+  %274 = fmul nsz float %270, %264
+  %275 = fadd nsz float %274, %273
+  %276 = fmul nsz float %272, %265
+  %277 = fadd nsz float %275, %276
+  %278 = fdiv nsz float 1.000000e+00, %277, !fpmath !1
+  %279 = fmul nsz float %219, %225
+  %280 = fsub nsz float -0.000000e+00, %279
+  %281 = fmul nsz float %220, %229
+  %282 = fsub nsz float %280, %281
+  %283 = fmul nsz float %221, %233
+  %284 = fsub nsz float %282, %283
+  %285 = shl i32 %201, 4
+  %286 = add i32 %285, 480
+  %287 = add i32 %285, 488
+  %288 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %287)
+  %289 = fsub nsz float %284, %288
+  %290 = add i32 %285, 492
+  %291 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %290)
+  %292 = fmul nsz float %289, %291
+  %293 = call nsz float @llvm.maxnum.f32(float %292, float 0x3F1A36E2E0000000) #2
+  %294 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %286)
+  %295 = call nsz float @llvm.pow.f32(float %293, float %294) #2
+  %296 = call nsz float @llvm.minnum.f32(float %295, float %195) #2
+  %297 = fmul nsz float %278, %296
+  %298 = fsub nsz float %297, %278
+  %299 = add i32 %223, 460
+  %300 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %299)
+  %301 = fmul nsz float %300, %298
+  %302 = fadd nsz float %301, %278
+  %303 = fsub nsz float %195, %302
+  %304 = fmul nsz float %239, %303
+  %305 = fadd nsz float %304, %302
+  %306 = fmul nsz float %257, %305
+  %307 = fadd nsz float %306, %.05
+  %308 = fmul nsz float %260, %305
+  %309 = fadd nsz float %308, %.07
+  %310 = fmul nsz float %263, %305
+  %311 = fadd nsz float %310, %.09
+  %312 = fadd nsz float %.04, %195
+  %313 = add i32 %198, 1
+  br label %loop68
+
+endloop129:                                       ; preds = %loop68
+  %314 = fmul nsz float %178, %178
+  %315 = fmul nsz float %179, %179
+  %316 = fmul nsz float %180, %180
+  %317 = fcmp nsz olt float %178, %66
+  %318 = fcmp nsz olt float %179, %66
+  %319 = fcmp nsz olt float %180, %66
+  %320 = select i1 %318, i32 384, i32 368
+  %321 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %320)
+  %322 = fmul nsz float %315, %321
+  %323 = or i32 %320, 4
+  %324 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %323)
+  %325 = fmul nsz float %315, %324
+  %326 = or i32 %320, 8
+  %327 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %326)
+  %328 = fmul nsz float %315, %327
+  %329 = select i1 %317, i32 352, i32 336
+  %330 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %329)
+  %331 = fmul nsz float %314, %330
+  %332 = fadd nsz float %331, %322
+  %333 = or i32 %329, 4
+  %334 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %333)
+  %335 = fmul nsz float %314, %334
+  %336 = fadd nsz float %335, %325
+  %337 = or i32 %329, 8
+  %338 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %337)
+  %339 = fmul nsz float %314, %338
+  %340 = fadd nsz float %339, %328
+  %341 = select i1 %319, i32 416, i32 400
+  %342 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %341)
+  %343 = fmul nsz float %316, %342
+  %344 = fadd nsz float %343, %332
+  %345 = or i32 %341, 4
+  %346 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %345)
+  %347 = fmul nsz float %316, %346
+  %348 = fadd nsz float %347, %336
+  %349 = or i32 %341, 8
+  %350 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %349)
+  %351 = fmul nsz float %316, %350
+  %352 = fadd nsz float %351, %340
+  %353 = fadd nsz float %344, %.05
+  %354 = fadd nsz float %348, %.07
+  %355 = fadd nsz float %352, %.09
+  br label %endif238
+
+else147:                                          ; preds = %main_body
+  %356 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 4)
+  %357 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1616)
+  %358 = bitcast float %357 to i32
+  br label %loop154
+
+loop154:                                          ; preds = %endif158, %else147
+  %359 = phi i32 [ 0, %else147 ], [ %480, %endif158 ]
+  %.014 = phi float [ %66, %else147 ], [ %478, %endif158 ]
+  %.013 = phi float [ %66, %else147 ], [ %476, %endif158 ]
+  %.012 = phi float [ %66, %else147 ], [ %474, %endif158 ]
+  %.1 = phi float [ %66, %else147 ], [ %479, %endif158 ]
+  %360 = icmp slt i32 %359, %358
+  br i1 %360, label %endif158, label %endloop222
+
+endif158:                                         ; preds = %loop154
+  %361 = fmul nsz float %.1, 5.000000e+00
+  %362 = fptosi float %361 to i32
+  %363 = shl i32 %362, 4
+  %364 = add i32 %363, 464
+  %365 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %364)
+  %366 = fsub nsz float %365, %133
+  %367 = add i32 %363, 468
+  %368 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %367)
+  %369 = fsub nsz float %368, %144
+  %370 = add i32 %363, 472
+  %371 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %370)
+  %372 = fsub nsz float %371, %155
+  %373 = fmul nsz float %366, %366
+  %374 = fmul nsz float %369, %369
+  %375 = fadd nsz float %374, %373
+  %376 = fmul nsz float %372, %372
+  %377 = fadd nsz float %375, %376
+  %378 = call nsz float @llvm.sqrt.f32(float %377) #2
+  %379 = fdiv nsz float 1.000000e+00, %378, !fpmath !1
+  %380 = fmul nsz float %379, %366
+  %381 = fmul nsz float %379, %369
+  %382 = fmul nsz float %379, %372
+  %383 = fsub nsz float -0.000000e+00, %379
+  %384 = shl i32 %362, 4
+  %385 = add i32 %384, 448
+  %386 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %385)
+  %387 = fmul nsz float %366, %383
+  %388 = fsub nsz float %387, %386
+  %389 = add i32 %384, 452
+  %390 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %389)
+  %391 = fmul nsz float %369, %383
+  %392 = fsub nsz float %391, %390
+  %393 = add i32 %384, 456
+  %394 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %393)
+  %395 = fmul nsz float %372, %383
+  %396 = fsub nsz float %395, %394
+  %397 = shl i32 %362, 4
+  %398 = add i32 %397, 432
+  %399 = add i32 %397, 444
+  %400 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %399)
+  %401 = fmul nsz float %400, %388
+  %402 = fadd nsz float %401, %380
+  %403 = fmul nsz float %400, %392
+  %404 = fadd nsz float %403, %381
+  %405 = fmul nsz float %400, %396
+  %406 = fadd nsz float %405, %382
+  %407 = fmul nsz float %178, %402
+  %408 = fmul nsz float %179, %404
+  %409 = fadd nsz float %408, %407
+  %410 = fmul nsz float %180, %406
+  %411 = fadd nsz float %409, %410
+  %412 = call nsz float @llvm.maxnum.f32(float %411, float %66) #2
+  %413 = fmul nsz float %412, %412
+  %414 = fadd nsz float %413, %412
+  %415 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 12)
+  %416 = fmul nsz float %414, %415
+  %417 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %398)
+  %418 = fmul nsz float %416, %417
+  %419 = add i32 %397, 436
+  %420 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %419)
+  %421 = fmul nsz float %416, %420
+  %422 = add i32 %397, 440
+  %423 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %422)
+  %424 = fmul nsz float %416, %423
+  %425 = fmul nsz float %379, %377
+  %426 = fmul nsz float %356, %377
+  %427 = shl i32 %362, 4
+  %428 = add i32 %427, 496
+  %429 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %428)
+  %430 = add i32 %427, 500
+  %431 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %430)
+  %432 = add i32 %427, 504
+  %433 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %432)
+  %434 = fmul nsz float %429, %356
+  %435 = fmul nsz float %431, %425
+  %436 = fadd nsz float %435, %434
+  %437 = fmul nsz float %433, %426
+  %438 = fadd nsz float %436, %437
+  %439 = fdiv nsz float 1.000000e+00, %438, !fpmath !1
+  %440 = fmul nsz float %380, %386
+  %441 = fsub nsz float -0.000000e+00, %440
+  %442 = fmul nsz float %381, %390
+  %443 = fsub nsz float %441, %442
+  %444 = fmul nsz float %382, %394
+  %445 = fsub nsz float %443, %444
+  %446 = shl i32 %362, 4
+  %447 = add i32 %446, 480
+  %448 = add i32 %446, 488
+  %449 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %448)
+  %450 = fsub nsz float %445, %449
+  %451 = add i32 %446, 492
+  %452 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %451)
+  %453 = fmul nsz float %450, %452
+  %454 = call nsz float @llvm.maxnum.f32(float %453, float 0x3F1A36E2E0000000) #2
+  %455 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %447)
+  %456 = call nsz float @llvm.pow.f32(float %454, float %455) #2
+  %457 = call nsz float @llvm.minnum.f32(float %456, float %356) #2
+  %458 = fmul nsz float %439, %457
+  %459 = fsub nsz float %458, %439
+  %460 = add i32 %384, 460
+  %461 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %460)
+  %462 = fmul nsz float %461, %459
+  %463 = fadd nsz float %462, %439
+  %464 = fsub nsz float %356, %463
+  %465 = fmul nsz float %400, %464
+  %466 = fadd nsz float %465, %463
+  %467 = fmul nsz float %466, %418
+  %468 = fmul nsz float %466, %421
+  %469 = fmul nsz float %466, %424
+  %470 = fsub nsz float -0.000000e+00, %.1
+  %471 = fcmp nsz ogt float %.1, %470
+  %472 = select i1 %471, float 1.000000e+00, float 0.000000e+00
+  %473 = fmul nsz float %467, %472
+  %474 = fadd nsz float %473, %.012
+  %475 = fmul nsz float %468, %472
+  %476 = fadd nsz float %475, %.013
+  %477 = fmul nsz float %469, %472
+  %478 = fadd nsz float %477, %.014
+  %479 = fadd nsz float %.1, %356
+  %480 = add i32 %359, 1
+  br label %loop154
+
+endloop222:                                       ; preds = %loop154
+  %481 = fmul nsz float %178, %178
+  %482 = fmul nsz float %179, %179
+  %483 = fmul nsz float %180, %180
+  %484 = fcmp nsz olt float %178, %66
+  %485 = fcmp nsz olt float %179, %66
+  %486 = fcmp nsz olt float %180, %66
+  %487 = select i1 %485, i32 384, i32 368
+  %488 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %487)
+  %489 = fmul nsz float %482, %488
+  %490 = or i32 %487, 4
+  %491 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %490)
+  %492 = fmul nsz float %482, %491
+  %493 = or i32 %487, 8
+  %494 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %493)
+  %495 = fmul nsz float %482, %494
+  %496 = select i1 %484, i32 352, i32 336
+  %497 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %496)
+  %498 = fmul nsz float %481, %497
+  %499 = fadd nsz float %498, %489
+  %500 = or i32 %496, 4
+  %501 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %500)
+  %502 = fmul nsz float %481, %501
+  %503 = fadd nsz float %502, %492
+  %504 = or i32 %496, 8
+  %505 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %504)
+  %506 = fmul nsz float %481, %505
+  %507 = fadd nsz float %506, %495
+  %508 = select i1 %486, i32 416, i32 400
+  %509 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %508)
+  %510 = fmul nsz float %483, %509
+  %511 = fadd nsz float %510, %499
+  %512 = or i32 %508, 4
+  %513 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %512)
+  %514 = fmul nsz float %483, %513
+  %515 = fadd nsz float %514, %503
+  %516 = or i32 %508, 8
+  %517 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 %516)
+  %518 = fmul nsz float %483, %517
+  %519 = fadd nsz float %518, %507
+  %520 = fadd nsz float %511, %.012
+  %521 = fadd nsz float %515, %.013
+  %522 = fadd nsz float %519, %.014
+  br label %endif238
+
+endif238:                                         ; preds = %endloop222, %endloop129
+  %.03 = phi float [ %355, %endloop129 ], [ %522, %endloop222 ]
+  %.02 = phi float [ %354, %endloop129 ], [ %521, %endloop222 ]
+  %.0 = phi float [ %353, %endloop129 ], [ %520, %endloop222 ]
+  %523 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 768)
+  %524 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 772)
+  %525 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 776)
+  %526 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 780)
+  %527 = fmul nsz float %41, %523
+  %528 = fmul nsz float %42, %524
+  %529 = fadd nsz float %527, %528
+  %530 = fmul nsz float %43, %525
+  %531 = fadd nsz float %529, %530
+  %532 = fmul nsz float %44, %526
+  %533 = fadd nsz float %531, %532
+  %534 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 784)
+  %535 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 788)
+  %536 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 792)
+  %537 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 796)
+  %538 = fmul nsz float %41, %534
+  %539 = fmul nsz float %42, %535
+  %540 = fadd nsz float %538, %539
+  %541 = fmul nsz float %43, %536
+  %542 = fadd nsz float %540, %541
+  %543 = fmul nsz float %44, %537
+  %544 = fadd nsz float %542, %543
+  %545 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 4)
+  %546 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 128)
+  %547 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 132)
+  %548 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 136)
+  %549 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 140)
+  %550 = fmul nsz float %133, %546
+  %551 = fmul nsz float %144, %547
+  %552 = fadd nsz float %550, %551
+  %553 = fmul nsz float %155, %548
+  %554 = fadd nsz float %552, %553
+  %555 = fmul nsz float %545, %549
+  %556 = fadd nsz float %554, %555
+  %557 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 144)
+  %558 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 148)
+  %559 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 152)
+  %560 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 156)
+  %561 = fmul nsz float %133, %557
+  %562 = fmul nsz float %144, %558
+  %563 = fadd nsz float %561, %562
+  %564 = fmul nsz float %155, %559
+  %565 = fadd nsz float %563, %564
+  %566 = fmul nsz float %545, %560
+  %567 = fadd nsz float %565, %566
+  %568 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 160)
+  %569 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 164)
+  %570 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 168)
+  %571 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 172)
+  %572 = fmul nsz float %133, %568
+  %573 = fmul nsz float %144, %569
+  %574 = fadd nsz float %572, %573
+  %575 = fmul nsz float %155, %570
+  %576 = fadd nsz float %574, %575
+  %577 = fmul nsz float %545, %571
+  %578 = fadd nsz float %576, %577
+  %579 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 176)
+  %580 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 180)
+  %581 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 184)
+  %582 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 188)
+  %583 = fmul nsz float %133, %579
+  %584 = fmul nsz float %144, %580
+  %585 = fadd nsz float %583, %584
+  %586 = fmul nsz float %155, %581
+  %587 = fadd nsz float %585, %586
+  %588 = fmul nsz float %545, %582
+  %589 = fadd nsz float %587, %588
+  %590 = fmul nsz float %66, %47
+  %591 = fmul nsz float %545, %47
+  %592 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 8)
+  %593 = fmul nsz float %578, %592
+  %594 = fsub nsz float %593, %589
+  %595 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1600)
+  %596 = fmul nsz float %595, %589
+  %597 = fadd nsz float %596, %556
+  %598 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %61, i32 1604)
+  %599 = fmul nsz float %598, %589
+  %600 = fsub nsz float %599, %567
+  %601 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %0, i32 0, i32 9, !amdgpu.uniform !0
+  %602 = load <4 x i32>, <4 x i32> addrspace(6)* %601, align 16, !invariant.load !0
+  %603 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 0)
+  %604 = fmul nsz float %603, %556
+  %605 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 4)
+  %606 = fmul nsz float %605, %567
+  %607 = fadd nsz float %604, %606
+  %608 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 8)
+  %609 = fmul nsz float %608, %578
+  %610 = fadd nsz float %607, %609
+  %611 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 12)
+  %612 = fmul nsz float %611, %589
+  %613 = fadd nsz float %610, %612
+  %614 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 16)
+  %615 = fmul nsz float %614, %556
+  %616 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 20)
+  %617 = fmul nsz float %616, %567
+  %618 = fadd nsz float %615, %617
+  %619 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 24)
+  %620 = fmul nsz float %619, %578
+  %621 = fadd nsz float %618, %620
+  %622 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 28)
+  %623 = fmul nsz float %622, %589
+  %624 = fadd nsz float %621, %623
+  %625 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 32)
+  %626 = fmul nsz float %625, %556
+  %627 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 36)
+  %628 = fmul nsz float %627, %567
+  %629 = fadd nsz float %626, %628
+  %630 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 40)
+  %631 = fmul nsz float %630, %578
+  %632 = fadd nsz float %629, %631
+  %633 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 44)
+  %634 = fmul nsz float %633, %589
+  %635 = fadd nsz float %632, %634
+  %636 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 48)
+  %637 = fmul nsz float %636, %556
+  %638 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 52)
+  %639 = fmul nsz float %638, %567
+  %640 = fadd nsz float %637, %639
+  %641 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 56)
+  %642 = fmul nsz float %641, %578
+  %643 = fadd nsz float %640, %642
+  %644 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 60)
+  %645 = fmul nsz float %644, %589
+  %646 = fadd nsz float %643, %645
+  %647 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 64)
+  %648 = fmul nsz float %647, %556
+  %649 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 68)
+  %650 = fmul nsz float %649, %567
+  %651 = fadd nsz float %648, %650
+  %652 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 72)
+  %653 = fmul nsz float %652, %578
+  %654 = fadd nsz float %651, %653
+  %655 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 76)
+  %656 = fmul nsz float %655, %589
+  %657 = fadd nsz float %654, %656
+  %658 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 80)
+  %659 = fmul nsz float %658, %556
+  %660 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 84)
+  %661 = fmul nsz float %660, %567
+  %662 = fadd nsz float %659, %661
+  %663 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 88)
+  %664 = fmul nsz float %663, %578
+  %665 = fadd nsz float %662, %664
+  %666 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 92)
+  %667 = fmul nsz float %666, %589
+  %668 = fadd nsz float %665, %667
+  %669 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 96)
+  %670 = fmul nsz float %669, %556
+  %671 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 100)
+  %672 = fmul nsz float %671, %567
+  %673 = fadd nsz float %670, %672
+  %674 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 104)
+  %675 = fmul nsz float %674, %578
+  %676 = fadd nsz float %673, %675
+  %677 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 108)
+  %678 = fmul nsz float %677, %589
+  %679 = fadd nsz float %676, %678
+  %680 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 112)
+  %681 = fmul nsz float %680, %556
+  %682 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 116)
+  %683 = fmul nsz float %682, %567
+  %684 = fadd nsz float %681, %683
+  %685 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 120)
+  %686 = fmul nsz float %685, %578
+  %687 = fadd nsz float %684, %686
+  %688 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %602, i32 124)
+  %689 = fmul nsz float %688, %589
+  %690 = fadd nsz float %687, %689
+  call void @llvm.amdgcn.exp.f32(i32 12, i32 15, float %597, float %600, float %594, float %589, i1 false, i1 false) #4
+  call void @llvm.amdgcn.exp.f32(i32 13, i32 15, float %613, float %624, float %635, float %646, i1 false, i1 false) #4
+  call void @llvm.amdgcn.exp.f32(i32 14, i32 15, float %657, float %668, float %679, float %690, i1 true, i1 false) #4
+  call void @llvm.amdgcn.exp.f32(i32 32, i32 15, float %533, float %544, float %590, float %591, i1 false, i1 false) #4
+  call void @llvm.amdgcn.exp.f32(i32 33, i32 15, float %133, float %144, float %155, float %66, i1 false, i1 false) #4
+  call void @llvm.amdgcn.exp.f32(i32 34, i32 15, float %.0, float %.02, float %.03, float %66, i1 false, i1 false) #4
+  call void @llvm.amdgcn.exp.f32(i32 35, i32 15, float %556, float %567, float %578, float %589, i1 false, i1 false) #4
+  ret void
+}
+
+; Function Attrs: nounwind readonly
+declare <4 x float> @llvm.amdgcn.buffer.load.format.v4f32(<4 x i32>, i32, i32, i1, i1) #1
+
+; Function Attrs: nounwind readonly
+declare <2 x float> @llvm.amdgcn.buffer.load.format.v2f32(<4 x i32>, i32, i32, i1, i1) #1
+
+; Function Attrs: nounwind readonly
+declare float @llvm.amdgcn.buffer.load.format.f32(<4 x i32>, i32, i32, i1, i1) #1
+
+; Function Attrs: nounwind readnone
+declare float @llvm.SI.load.const.v4i32(<4 x i32>, i32) #2
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.fabs.f32(float) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.sqrt.f32(float) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.log2.f32(float) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.exp2.f32(float) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.maxnum.f32(float, float) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.pow.f32(float, float) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.minnum.f32(float, float) #3
+
+; Function Attrs: nounwind
+declare void @llvm.amdgcn.exp.f32(i32, i32, float, float, float, float, i1, i1) #4
+
+attributes #0 = { "no-signed-zeros-fp-math"="true" }
+attributes #1 = { nounwind readonly }
+attributes #2 = { nounwind readnone }
+attributes #3 = { nounwind readnone speculatable }
+attributes #4 = { nounwind }
+
+!0 = !{}
+!1 = !{float 2.500000e+00}
+
+FRAG
+DCL IN[0], GENERIC[0], PERSPECTIVE
+DCL IN[1], GENERIC[1], PERSPECTIVE
+DCL IN[2], GENERIC[2], PERSPECTIVE
+DCL IN[3], GENERIC[3], PERSPECTIVE
+DCL OUT[0], COLOR
+DCL SAMP[0]
+DCL SVIEW[0], 2D, FLOAT
+DCL CONST[0][0..30]
+DCL TEMP[0..19], LOCAL
+IMM[0] FLT32 {   -1.0000,     1.0000,     0.0000,     0.0000}
+  0: MOV TEMP[0].xy, IN[0].xyyy
+  1: TEX TEMP[1], TEMP[0], SAMP[0], 2D
+  2: ADD TEMP[2].x, TEMP[1].wwww, IMM[0].xxxx
+  3: MAD TEMP[2].x, CONST[0][20].wwww, TEMP[2].xxxx, IMM[0].yyyy
+  4: MUL TEMP[2].x, TEMP[2].xxxx, CONST[0][1].wwww
+  5: MAD TEMP[3].x, TEMP[2].xxxx, IN[2].wwww, -TEMP[2].xxxx
+  6: MAD TEMP[2].x, CONST[0][12].wwww, TEMP[3].xxxx, TEMP[2].xxxx
+  7: MOV TEMP[4].x, |CONST[0][12].yyyy|
+  8: MUL TEMP[5].x, CONST[0][29].wwww, IN[3].zzzz
+  9: FSGE TEMP[6].x, -TEMP[4].xxxx, IMM[0].zzzz
+ 10: UCMP TEMP[7].x, TEMP[6].xxxx, TEMP[2].xxxx, TEMP[7]
+ 11: NOT TEMP[8].x, TEMP[6].xxxx
+ 12: UCMP TEMP[7].x, TEMP[8].xxxx, TEMP[5].xxxx, TEMP[7]
+ 13: MOV OUT[0].w, TEMP[7].xxxx
+ 14: ADD TEMP[9].x, TEMP[1].wwww, CONST[0][12].xxxx
+ 15: MOV_SAT TEMP[10].x, TEMP[9].xxxx
+ 16: ADD TEMP[2].xyz, IMM[0].xxxx, CONST[0][1].xyzz
+ 17: MAD TEMP[2].xyz, TEMP[10].xxxx, TEMP[2].xyzz, IMM[0].yyyy
+ 18: MUL TEMP[11].xyz, TEMP[1].xyzz, TEMP[2].xyzz
+ 19: MUL TEMP[2].xyz, TEMP[11].xyzz, CONST[0][30].xxxx
+ 20: MAD TEMP[11].xyz, TEMP[11].xyzz, -CONST[0][30].xxxx, CONST[0][29].xyzz
+ 21: ADD TEMP[12].xyz, CONST[0][20].xyzz, -IN[1].xyzz
+ 22: DP3 TEMP[13].x, TEMP[12].xyzz, TEMP[12].xyzz
+ 23: RSQ TEMP[14].x, TEMP[13].xxxx
+ 24: RCP TEMP[15].x, TEMP[14].xxxx
+ 25: MAD TEMP[16].x, TEMP[15].xxxx, CONST[0][21].wwww, CONST[0][21].xxxx
+ 26: MOV_SAT TEMP[17].x, TEMP[16].xxxx
+ 27: MIN TEMP[18].x, TEMP[17].xxxx, CONST[0][21].zzzz
+ 28: MUL TEMP[19].x, TEMP[18].xxxx, TEMP[18].xxxx
+ 29: MAD OUT[0].xyz, TEMP[19].xxxx, TEMP[11].xyzz, TEMP[2].xyzz
+ 30: END
+radeonsi: Compiling shader 2
+TGSI shader LLVM IR:
+
+; ModuleID = 'tgsi'
+source_filename = "tgsi"
+target datalayout = "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5"
+target triple = "amdgcn--"
+
+define amdgpu_ps <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> @main([0 x <4 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x float] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), [0 x <8 x i32>] addrspace(6)* inreg noalias dereferenceable(18446744073709551615), float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, i32, i32, float, i32) #0 {
+main_body:
+  %22 = bitcast <2 x i32> %7 to <2 x float>
+  %23 = extractelement <2 x float> %22, i32 0
+  %24 = extractelement <2 x float> %22, i32 1
+  %25 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 0, i32 0, i32 %5) #3
+  %26 = call nsz float @llvm.amdgcn.interp.p2(float %25, float %24, i32 0, i32 0, i32 %5) #3
+  %27 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 1, i32 0, i32 %5) #3
+  %28 = call nsz float @llvm.amdgcn.interp.p2(float %27, float %24, i32 1, i32 0, i32 %5) #3
+  %29 = getelementptr [0 x <8 x i32>], [0 x <8 x i32>] addrspace(6)* %3, i32 0, i32 16, !amdgpu.uniform !0
+  %30 = load <8 x i32>, <8 x i32> addrspace(6)* %29, align 32, !invariant.load !0
+  %31 = bitcast [0 x <8 x i32>] addrspace(6)* %3 to [0 x <4 x i32>] addrspace(6)*
+  %32 = getelementptr [0 x <4 x i32>], [0 x <4 x i32>] addrspace(6)* %31, i32 0, i32 35, !amdgpu.uniform !0
+  %33 = load <4 x i32>, <4 x i32> addrspace(6)* %32, align 16, !invariant.load !0
+  %34 = bitcast float %26 to i32
+  %35 = bitcast float %28 to i32
+  %36 = insertelement <2 x i32> undef, i32 %34, i32 0
+  %37 = insertelement <2 x i32> %36, i32 %35, i32 1
+  %38 = bitcast <2 x i32> %37 to <2 x float>
+  %39 = call nsz <4 x float> @llvm.amdgcn.image.sample.v4f32.v2f32.v8i32(<2 x float> %38, <8 x i32> %30, <4 x i32> %33, i32 15, i1 false, i1 false, i1 false, i1 false, i1 false) #3
+  %40 = extractelement <4 x float> %39, i32 0
+  %41 = extractelement <4 x float> %39, i32 1
+  %42 = extractelement <4 x float> %39, i32 2
+  %43 = extractelement <4 x float> %39, i32 3
+  %44 = fadd nsz float %43, -1.000000e+00
+  %45 = ptrtoint [0 x float] addrspace(6)* %2 to i32
+  %46 = insertelement <4 x i32> <i32 undef, i32 0, i32 496, i32 163756>, i32 %45, i32 0
+  %47 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 332)
+  %48 = fmul nsz float %47, %44
+  %49 = fadd nsz float %48, 1.000000e+00
+  %50 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 28)
+  %51 = fmul nsz float %49, %50
+  %52 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 3, i32 2, i32 %5) #3
+  %53 = call nsz float @llvm.amdgcn.interp.p2(float %52, float %24, i32 3, i32 2, i32 %5) #3
+  %54 = fmul nsz float %51, %53
+  %55 = fsub nsz float %54, %51
+  %56 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 204)
+  %57 = fmul nsz float %56, %55
+  %58 = fadd nsz float %57, %51
+  %59 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 196)
+  %60 = call nsz float @llvm.fabs.f32(float %59) #4
+  %61 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 476)
+  %62 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 2, i32 3, i32 %5) #3
+  %63 = call nsz float @llvm.amdgcn.interp.p2(float %62, float %24, i32 2, i32 3, i32 %5) #3
+  %64 = fmul nsz float %61, %63
+  %65 = fcmp ugt float %60, -0.000000e+00
+  %66 = select i1 %65, float %64, float %58
+  %67 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 192)
+  %68 = fadd nsz float %43, %67
+  %69 = call nsz float @llvm.maxnum.f32(float %68, float 0.000000e+00) #3
+  %70 = call nsz float @llvm.minnum.f32(float %69, float 1.000000e+00) #3
+  %71 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 16)
+  %72 = fadd nsz float %71, -1.000000e+00
+  %73 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 20)
+  %74 = fadd nsz float %73, -1.000000e+00
+  %75 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 24)
+  %76 = fadd nsz float %75, -1.000000e+00
+  %77 = fmul nsz float %70, %72
+  %78 = fadd nsz float %77, 1.000000e+00
+  %79 = fmul nsz float %70, %74
+  %80 = fadd nsz float %79, 1.000000e+00
+  %81 = fmul nsz float %70, %76
+  %82 = fadd nsz float %81, 1.000000e+00
+  %83 = fmul nsz float %40, %78
+  %84 = fmul nsz float %41, %80
+  %85 = fmul nsz float %42, %82
+  %86 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 480)
+  %87 = fmul nsz float %83, %86
+  %88 = fmul nsz float %84, %86
+  %89 = fmul nsz float %85, %86
+  %90 = fsub nsz float -0.000000e+00, %86
+  %91 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 464)
+  %92 = fmul nsz float %83, %90
+  %93 = fadd nsz float %92, %91
+  %94 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 468)
+  %95 = fmul nsz float %84, %90
+  %96 = fadd nsz float %95, %94
+  %97 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 472)
+  %98 = fmul nsz float %85, %90
+  %99 = fadd nsz float %98, %97
+  %100 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 320)
+  %101 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 0, i32 1, i32 %5) #3
+  %102 = call nsz float @llvm.amdgcn.interp.p2(float %101, float %24, i32 0, i32 1, i32 %5) #3
+  %103 = fsub nsz float %100, %102
+  %104 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 324)
+  %105 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 1, i32 1, i32 %5) #3
+  %106 = call nsz float @llvm.amdgcn.interp.p2(float %105, float %24, i32 1, i32 1, i32 %5) #3
+  %107 = fsub nsz float %104, %106
+  %108 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 328)
+  %109 = call nsz float @llvm.amdgcn.interp.p1(float %23, i32 2, i32 1, i32 %5) #3
+  %110 = call nsz float @llvm.amdgcn.interp.p2(float %109, float %24, i32 2, i32 1, i32 %5) #3
+  %111 = fsub nsz float %108, %110
+  %112 = fmul nsz float %103, %103
+  %113 = fmul nsz float %107, %107
+  %114 = fadd nsz float %113, %112
+  %115 = fmul nsz float %111, %111
+  %116 = fadd nsz float %114, %115
+  %117 = call nsz float @llvm.sqrt.f32(float %116) #3
+  %118 = fdiv nsz float 1.000000e+00, %117, !fpmath !1
+  %119 = fdiv nsz float 1.000000e+00, %118, !fpmath !1
+  %120 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 348)
+  %121 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 336)
+  %122 = fmul nsz float %119, %120
+  %123 = fadd nsz float %122, %121
+  %124 = call nsz float @llvm.maxnum.f32(float %123, float 0.000000e+00) #3
+  %125 = call nsz float @llvm.minnum.f32(float %124, float 1.000000e+00) #3
+  %126 = call nsz float @llvm.SI.load.const.v4i32(<4 x i32> %46, i32 344)
+  %127 = call nsz float @llvm.minnum.f32(float %125, float %126) #3
+  %128 = fmul nsz float %127, %127
+  %129 = fmul nsz float %128, %93
+  %130 = fadd nsz float %129, %87
+  %131 = fmul nsz float %128, %96
+  %132 = fadd nsz float %131, %88
+  %133 = fmul nsz float %128, %99
+  %134 = fadd nsz float %133, %89
+  %135 = bitcast float %4 to i32
+  %136 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> undef, i32 %135, 4
+  %137 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %136, float %130, 5
+  %138 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %137, float %132, 6
+  %139 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %138, float %134, 7
+  %140 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %139, float %66, 8
+  %141 = insertvalue <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %140, float %20, 19
+  ret <{ i32, i32, i32, i32, i32, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float }> %141
+}
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.amdgcn.interp.p1(float, i32, i32, i32) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.amdgcn.interp.p2(float, float, i32, i32, i32) #1
+
+; Function Attrs: nounwind readonly
+declare <4 x float> @llvm.amdgcn.image.sample.v4f32.v2f32.v8i32(<2 x float>, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #2
+
+; Function Attrs: nounwind readnone
+declare float @llvm.SI.load.const.v4i32(<4 x i32>, i32) #3
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.fabs.f32(float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.maxnum.f32(float, float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.minnum.f32(float, float) #1
+
+; Function Attrs: nounwind readnone speculatable
+declare float @llvm.sqrt.f32(float) #1
+
+attributes #0 = { "InitialPSInputAddr"="0xb077" "no-signed-zeros-fp-math"="true" }
+attributes #1 = { nounwind readnone speculatable }
+attributes #2 = { nounwind readonly }
+attributes #3 = { nounwind readnone }
+attributes #4 = { nounwind }
+
+!0 = !{}
+!1 = !{float 2.500000e+00}
+
