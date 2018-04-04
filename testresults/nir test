@@ -1,3 +1,33 @@
+4.4.18
+
+Dead Island and Metro 2033 Redux crash before the actual game starts (menus or earlier)
+apitraces cause them to crash even earlier
+
+Bioshock, Tombraider, CAT Interstellar no problems with or without apitrace
+
+Unigine Superposition runs with and without apitrace 1080p Extreme, hangs at the end or am I not patient enough to wait for it to finish the trace to disk?
+
+App IDs
+Dead Island 91310
+War Hammer 40k: Dawn of War 3 285190
+Deus Ex: Mankind divided 337000
+
+
+cmake -H. -Bbuild32 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_GUI=FALSE -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/local/lib -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32
+make -C build32
+sudo make install
+
+Steam Launch options
+apitrace trace --output=/home/nano/deadbeaf5  %command%
+
+Trace is in the directory of the game executable
+
+
+Dead Island
+missing dependency ? works without
+http://de.archive.ubuntu.com/ubuntu/pool/main/g/glew/libglew1.13_1.13.0-2_i386.deb
+sudo ln -sf /usr/lib/i386-linux-gnu/libGLEW.so.1.13.0 /usr/lib/i386-linux-gnu/libGLEW.so.1.10
+
 3.4.18
 Unigine		TGSI			NIR
 Valley		776/18.5/9.7/37.1	800/19.1/10/37.4
