@@ -65,6 +65,121 @@
 #include "util/mesa-sha1.h"
 #include "util/crc32.h"
 
+
+#ifdef ENABLE_SHADER_CACHE
+/**
+ * Generate a SHA-1 hash value string for given source string.
+ */
+static void
+generate_sha1(const char *source, char sha_str[64])
+{
+   unsigned char sha[20];
+   _mesa_sha1_compute(source, strlen(source), sha);
+   _mesa_sha1_format(sha_str, sha);
+}
+
+/**
+ * Construct a full path for shader replacement functionality using
+ * following format:
+ *
+ * <path>/<stage prefix>_<CHECKSUM>.glsl
+ */
+static char *
+construct_name(const gl_shader_stage stage, const char *source,
+               const char *path)
+{
+   char sha[64];
+   static const char *types[] = {
+      "VS", "TC", "TE", "GS", "FS", "CS",
+   };
+
+   generate_sha1(source, sha);
+   return ralloc_asprintf(NULL, "%s/%s_%s.glsl", path, types[stage], sha);
+}
+
+/**
+ * Write given shader source to a file in MESA_SHADER_DUMP_PATH.
+ */
+static void
+dump_shader(const gl_shader_stage stage, const char *source)
+{
+   static bool path_exists = true;
+   char *dump_path;
+   FILE *f;
+
+   if (!path_exists)
+      return;
+
+   dump_path = getenv("MESA_SHADER_DUMP_PATH");
+   if (!dump_path) {
+      path_exists = false;
+      return;
+   }
+
+   char *name = construct_name(stage, source, dump_path);
+
+   f = fopen(name, "w");
+   if (f) {
+      fputs(source, f);
+      fclose(f);
+   } else {
+      GET_CURRENT_CONTEXT(ctx);
+      _mesa_warning(ctx, "could not open %s for dumping shader (%s)", name,
+                    strerror(errno));
+   }
+   ralloc_free(name);
+}
+
+/**
+ * Read shader source code from a file.
+ * Useful for debugging to override an app's shader.
+ */
+static GLcharARB *
+read_shader(const gl_shader_stage stage, const char *source)
+{
+   char *read_path;
+   static bool path_exists = true;
+   int len, shader_size = 0;
+   GLcharARB *buffer;
+   FILE *f;
+
+   if (!path_exists)
+      return NULL;
+
+   read_path = getenv("MESA_SHADER_READ_PATH");
+   if (!read_path) {
+      path_exists = false;
+      return NULL;
+   }
+
+   char *name = construct_name(stage, source, read_path);
+   f = fopen(name, "r");
+   ralloc_free(name);
+   if (!f)
+      return NULL;
+
+   /* allocate enough room for the entire shader */
+   fseek(f, 0, SEEK_END);
+   shader_size = ftell(f);
+   rewind(f);
+   assert(shader_size);
+
+   /* add one for terminating zero */
+   shader_size++;
+
+   buffer = malloc(shader_size);
+   assert(buffer);
+
+   len = fread(buffer, 1, shader_size, f);
+   buffer[len] = 0;
+
+   fclose(f);
+
+   return buffer;
+}
+
+#endif /* ENABLE_SHADER_CACHE */
+
 /**
  * Return mask of GLSL_x flags by examining the MESA_GLSL env var.
  */
@@ -1228,9 +1343,21 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
    /* Capture .shader_test files. */
    const char *capture_path = _mesa_get_shader_capture_path();
    if (shProg->Name != 0 && shProg->Name != ~0 && capture_path != NULL) {
+
       FILE *file;
-      char *filename = ralloc_asprintf(NULL, "%s/%u.shader_test",
-                                       capture_path, shProg->Name);
+      char *filename;
+      char *fsource;
+
+      for (unsigned i = 0; i < shProg->NumShaders; i++) {
+         int k = asprintf(&fsource, "[%s shader]\n%s\n",
+                          _mesa_shader_stage_to_string(shProg->Shaders[i]->Stage),
+                          shProg->Shaders[i]->Source);
+      }
+
+      char shabuf[64] = {};
+      generate_sha1(fsource, shabuf);
+
+      int j = asprintf(&filename, "%s/%s.shader_test", capture_path, shabuf);
       file = fopen(filename, "w");
       if (file) {
          fprintf(file, "[require]\nGLSL%s >= %u.%02u\n",
@@ -1238,19 +1365,14 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
                  shProg->data->Version / 100, shProg->data->Version % 100);
          if (shProg->SeparateShader)
             fprintf(file, "GL_ARB_separate_shader_objects\nSSO ENABLED\n");
-         fprintf(file, "\n");
-
-         for (unsigned i = 0; i < shProg->NumShaders; i++) {
-            fprintf(file, "[%s shader]\n%s\n",
-                    _mesa_shader_stage_to_string(shProg->Shaders[i]->Stage),
-                    shProg->Shaders[i]->Source);
-         }
+         fprintf(file, "\n%s", fsource);
          fclose(file);
       } else {
          _mesa_warning(ctx, "Failed to open %s", filename);
       }
 
-      ralloc_free(filename);
+      free(fsource);
+      free(filename);
    }
 
    if (shProg->data->LinkStatus == LINKING_FAILURE &&
@@ -1776,119 +1898,7 @@ _mesa_LinkProgram(GLuint programObj)
    link_program_error(ctx, shProg);
 }
 
-#ifdef ENABLE_SHADER_CACHE
-/**
- * Generate a SHA-1 hash value string for given source string.
- */
-static void
-generate_sha1(const char *source, char sha_str[64])
-{
-   unsigned char sha[20];
-   _mesa_sha1_compute(source, strlen(source), sha);
-   _mesa_sha1_format(sha_str, sha);
-}
 
-/**
- * Construct a full path for shader replacement functionality using
- * following format:
- *
- * <path>/<stage prefix>_<CHECKSUM>.glsl
- */
-static char *
-construct_name(const gl_shader_stage stage, const char *source,
-               const char *path)
-{
-   char sha[64];
-   static const char *types[] = {
-      "VS", "TC", "TE", "GS", "FS", "CS",
-   };
-
-   generate_sha1(source, sha);
-   return ralloc_asprintf(NULL, "%s/%s_%s.glsl", path, types[stage], sha);
-}
-
-/**
- * Write given shader source to a file in MESA_SHADER_DUMP_PATH.
- */
-static void
-dump_shader(const gl_shader_stage stage, const char *source)
-{
-   static bool path_exists = true;
-   char *dump_path;
-   FILE *f;
-
-   if (!path_exists)
-      return;
-
-   dump_path = getenv("MESA_SHADER_DUMP_PATH");
-   if (!dump_path) {
-      path_exists = false;
-      return;
-   }
-
-   char *name = construct_name(stage, source, dump_path);
-
-   f = fopen(name, "w");
-   if (f) {
-      fputs(source, f);
-      fclose(f);
-   } else {
-      GET_CURRENT_CONTEXT(ctx);
-      _mesa_warning(ctx, "could not open %s for dumping shader (%s)", name,
-                    strerror(errno));
-   }
-   ralloc_free(name);
-}
-
-/**
- * Read shader source code from a file.
- * Useful for debugging to override an app's shader.
- */
-static GLcharARB *
-read_shader(const gl_shader_stage stage, const char *source)
-{
-   char *read_path;
-   static bool path_exists = true;
-   int len, shader_size = 0;
-   GLcharARB *buffer;
-   FILE *f;
-
-   if (!path_exists)
-      return NULL;
-
-   read_path = getenv("MESA_SHADER_READ_PATH");
-   if (!read_path) {
-      path_exists = false;
-      return NULL;
-   }
-
-   char *name = construct_name(stage, source, read_path);
-   f = fopen(name, "r");
-   ralloc_free(name);
-   if (!f)
-      return NULL;
-
-   /* allocate enough room for the entire shader */
-   fseek(f, 0, SEEK_END);
-   shader_size = ftell(f);
-   rewind(f);
-   assert(shader_size);
-
-   /* add one for terminating zero */
-   shader_size++;
-
-   buffer = malloc(shader_size);
-   assert(buffer);
-
-   len = fread(buffer, 1, shader_size, f);
-   buffer[len] = 0;
-
-   fclose(f);
-
-   return buffer;
-}
-
-#endif /* ENABLE_SHADER_CACHE */
 
 /**
  * Called via glShaderSource() and glShaderSourceARB() API functions.
