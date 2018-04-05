@@ -637,7 +637,7 @@ radv_pipeline_init_blend_state(struct radv_pipeline *pipeline,
 		}
 
 		if (is_dual_src(srcRGB) || is_dual_src(dstRGB) || is_dual_src(srcA) || is_dual_src(dstA))
-			if (i == 0)
+			if (!i)
 				blend.mrt0_is_dual_src = true;
 
 		if (eqRGB == VK_BLEND_OP_MIN || eqRGB == VK_BLEND_OP_MAX) {
