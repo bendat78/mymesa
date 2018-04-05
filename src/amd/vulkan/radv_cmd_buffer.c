@@ -37,6 +37,20 @@
 
 #include "ac_debug.h"
 
+enum {
+	RADV_PREFETCH_VBO_DESCRIPTORS	= (1 << 0),
+	RADV_PREFETCH_VS		= (1 << 1),
+	RADV_PREFETCH_TCS		= (1 << 2),
+	RADV_PREFETCH_TES		= (1 << 3),
+	RADV_PREFETCH_GS		= (1 << 4),
+	RADV_PREFETCH_PS		= (1 << 5),
+	RADV_PREFETCH_SHADERS		= (RADV_PREFETCH_VS  |
+					   RADV_PREFETCH_TCS |
+					   RADV_PREFETCH_TES |
+					   RADV_PREFETCH_GS  |
+					   RADV_PREFETCH_PS)
+};
+
 static void radv_handle_image_transition(struct radv_cmd_buffer *cmd_buffer,
 					 struct radv_image *image,
 					 VkImageLayout src_layout,
@@ -608,27 +622,6 @@ radv_update_multisample_state(struct radv_cmd_buffer *cmd_buffer,
 	}
 }
 
-
-
-static inline void
-radv_emit_prefetch_TC_L2_async(struct radv_cmd_buffer *cmd_buffer, uint64_t va,
-			       unsigned size)
-{
-	if (cmd_buffer->device->physical_device->rad_info.chip_class >= CIK)
-		si_cp_dma_prefetch(cmd_buffer, va, size);
-}
-
-static void
-radv_emit_VBO_descriptors_prefetch(struct radv_cmd_buffer *cmd_buffer)
-{
-	if (cmd_buffer->state.vb_prefetch_dirty) {
-		radv_emit_prefetch_TC_L2_async(cmd_buffer,
-					       cmd_buffer->state.vb_va,
-					       cmd_buffer->state.vb_size);
-		cmd_buffer->state.vb_prefetch_dirty = false;
-	}
-}
-
 static void
 radv_emit_shader_prefetch(struct radv_cmd_buffer *cmd_buffer,
 			  struct radv_shader_variant *shader)
@@ -643,25 +636,53 @@ radv_emit_shader_prefetch(struct radv_cmd_buffer *cmd_buffer,
 	va = radv_buffer_get_va(shader->bo) + shader->bo_offset;
 
 	radv_cs_add_buffer(ws, cs, shader->bo, 8);
-	radv_emit_prefetch_TC_L2_async(cmd_buffer, va, shader->code_size);
+	si_cp_dma_prefetch(cmd_buffer, va, shader->code_size);
 }
 
 static void
-radv_emit_prefetch(struct radv_cmd_buffer *cmd_buffer,
-		   struct radv_pipeline *pipeline)
+radv_emit_prefetch_L2(struct radv_cmd_buffer *cmd_buffer,
+		      struct radv_pipeline *pipeline,
+		      bool vertex_stage_only)
 {
-	radv_emit_shader_prefetch(cmd_buffer,
-				  pipeline->shaders[MESA_SHADER_VERTEX]);
-	radv_emit_VBO_descriptors_prefetch(cmd_buffer);
-	radv_emit_shader_prefetch(cmd_buffer,
-				  pipeline->shaders[MESA_SHADER_TESS_CTRL]);
-	radv_emit_shader_prefetch(cmd_buffer,
-				  pipeline->shaders[MESA_SHADER_TESS_EVAL]);
-	radv_emit_shader_prefetch(cmd_buffer,
-				  pipeline->shaders[MESA_SHADER_GEOMETRY]);
-	radv_emit_shader_prefetch(cmd_buffer, pipeline->gs_copy_shader);
-	radv_emit_shader_prefetch(cmd_buffer,
-				  pipeline->shaders[MESA_SHADER_FRAGMENT]);
+	struct radv_cmd_state *state = &cmd_buffer->state;
+	uint32_t mask = state->prefetch_L2_mask;
+
+	if (cmd_buffer->device->physical_device->rad_info.chip_class < CIK)
+		return;
+
+	if (vertex_stage_only) {
+		/* Fast prefetch path for starting draws as soon as possible.
+		 */
+		mask = state->prefetch_L2_mask & (RADV_PREFETCH_VS |
+						  RADV_PREFETCH_VBO_DESCRIPTORS);
+	}
+
+	if (mask & RADV_PREFETCH_VS)
+		radv_emit_shader_prefetch(cmd_buffer,
+					  pipeline->shaders[MESA_SHADER_VERTEX]);
+
+	if (mask & RADV_PREFETCH_VBO_DESCRIPTORS)
+		si_cp_dma_prefetch(cmd_buffer, state->vb_va, state->vb_size);
+
+	if (mask & RADV_PREFETCH_TCS)
+		radv_emit_shader_prefetch(cmd_buffer,
+					  pipeline->shaders[MESA_SHADER_TESS_CTRL]);
+
+	if (mask & RADV_PREFETCH_TES)
+		radv_emit_shader_prefetch(cmd_buffer,
+					  pipeline->shaders[MESA_SHADER_TESS_EVAL]);
+
+	if (mask & RADV_PREFETCH_GS) {
+		radv_emit_shader_prefetch(cmd_buffer,
+					  pipeline->shaders[MESA_SHADER_GEOMETRY]);
+		radv_emit_shader_prefetch(cmd_buffer, pipeline->gs_copy_shader);
+	}
+
+	if (mask & RADV_PREFETCH_PS)
+		radv_emit_shader_prefetch(cmd_buffer,
+					  pipeline->shaders[MESA_SHADER_FRAGMENT]);
+
+	state->prefetch_L2_mask &= ~mask;
 }
 
 static void
@@ -1506,7 +1527,7 @@ radv_cmd_buffer_update_vertex_descriptors(struct radv_cmd_buffer *cmd_buffer, bo
 
 		cmd_buffer->state.vb_va = va;
 		cmd_buffer->state.vb_size = count * 16;
-		cmd_buffer->state.vb_prefetch_dirty = true;
+		cmd_buffer->state.prefetch_L2_mask |= RADV_PREFETCH_VBO_DESCRIPTORS;
 	}
 	cmd_buffer->state.dirty &= ~RADV_CMD_DIRTY_VERTEX_BUFFER;
 
@@ -2312,6 +2333,9 @@ void radv_CmdBindPipeline(
 		cmd_buffer->state.last_first_instance = -1;
 		cmd_buffer->state.last_vertex_offset = -1;
 
+		/* Prefetch all pipeline shaders at first draw time. */
+		cmd_buffer->state.prefetch_L2_mask |= RADV_PREFETCH_SHADERS;
+
 		radv_bind_dynamic_state(cmd_buffer, &pipeline->dynamic_state);
 
 		if (pipeline->graphics.esgs_ring_size > cmd_buffer->esgs_ring_size_needed)
@@ -3055,9 +3079,9 @@ radv_draw(struct radv_cmd_buffer *cmd_buffer,
 		 * run in parallel, but starting the draw first is more
 		 * important.
 		 */
-		if (pipeline_is_dirty) {
-			radv_emit_prefetch(cmd_buffer,
-					   cmd_buffer->state.pipeline);
+		if (cmd_buffer->state.prefetch_L2_mask) {
+			radv_emit_prefetch_L2(cmd_buffer,
+					      cmd_buffer->state.pipeline, false);
 		}
 	} else {
 		/* If we don't wait for idle, start prefetches first, then set
@@ -3065,9 +3089,12 @@ radv_draw(struct radv_cmd_buffer *cmd_buffer,
 		 */
 		si_emit_cache_flush(cmd_buffer);
 
-		if (pipeline_is_dirty) {
-			radv_emit_prefetch(cmd_buffer,
-					   cmd_buffer->state.pipeline);
+		if (cmd_buffer->state.prefetch_L2_mask) {
+			/* Only prefetch the vertex shader and VBO descriptors
+			 * in order to start the draw as soon as possible.
+			 */
+			radv_emit_prefetch_L2(cmd_buffer,
+					      cmd_buffer->state.pipeline, true);
 		}
 
 		if (!radv_upload_graphics_shader_descriptors(cmd_buffer, pipeline_is_dirty))
@@ -3075,6 +3102,14 @@ radv_draw(struct radv_cmd_buffer *cmd_buffer,
 
 		radv_emit_all_graphics_states(cmd_buffer, info);
 		radv_emit_draw_packets(cmd_buffer, info);
+
+		/* Prefetch the remaining shaders after the draw has been
+		 * started.
+		 */
+		if (cmd_buffer->state.prefetch_L2_mask) {
+			radv_emit_prefetch_L2(cmd_buffer,
+					      cmd_buffer->state.pipeline, false);
+		}
 	}
 
 	assert(cmd_buffer->cs->cdw <= cdw_max);
