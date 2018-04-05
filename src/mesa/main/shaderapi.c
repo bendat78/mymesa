@@ -66,7 +66,6 @@
 #include "util/crc32.h"
 
 
-#ifdef ENABLE_SHADER_CACHE
 /**
  * Generate a SHA-1 hash value string for given source string.
  */
@@ -78,6 +77,8 @@ generate_sha1(const char *source, char sha_str[64])
    _mesa_sha1_format(sha_str, sha);
 }
 
+
+#ifdef ENABLE_SHADER_CACHE
 /**
  * Construct a full path for shader replacement functionality using
  * following format:

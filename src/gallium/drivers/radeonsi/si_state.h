@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
+ * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -337,7 +338,7 @@ void si_get_shader_buffers(struct si_context *sctx,
 			   enum pipe_shader_type shader,
 			   uint start_slot, uint count,
 			   struct pipe_shader_buffer *sbuf);
-void si_set_ring_buffer(struct pipe_context *ctx, uint slot,
+void si_set_ring_buffer(struct si_context *sctx, uint slot,
 			struct pipe_resource *buffer,
 			unsigned stride, unsigned num_records,
 			bool add_tid, bool swizzle,
@@ -369,7 +370,8 @@ struct pb_slab *si_bindless_descriptor_slab_alloc(void *priv, unsigned heap,
 						  unsigned entry_size,
 						  unsigned group_index);
 void si_bindless_descriptor_slab_free(void *priv, struct pb_slab *pslab);
-
+void si_rebind_buffer(struct si_context *sctx, struct pipe_resource *buf,
+		      uint64_t old_va);
 /* si_state.c */
 struct si_shader_selector;
 
@@ -403,6 +405,9 @@ si_create_sampler_view_custom(struct pipe_context *ctx,
 			      unsigned force_level);
 void si_update_fb_dirtiness_after_rendering(struct si_context *sctx);
 void si_update_ps_iter_samples(struct si_context *sctx);
+void si_save_qbo_state(struct si_context *sctx, struct si_qbo_state *st);
+void si_set_occlusion_query_state(struct si_context *sctx,
+				  bool old_perfect_enable);
 
 /* si_state_binning.c */
 void si_emit_dpbb_state(struct si_context *sctx, struct r600_atom *state);
