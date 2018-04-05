@@ -1341,36 +1341,34 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
 
    /* Capture .shader_test files. */
    const char *capture_path = _mesa_get_shader_capture_path();
-   if (shProg->Name != 0 && shProg->Name != ~0 && capture_path != NULL ) {
+   if (shProg->Name != 0 && shProg->Name != ~0 && capture_path != NULL) {
 
       FILE *file;
       char *filename = NULL;
       char *fsource = NULL;
       char *ftemp = NULL;
 
-      asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n",
-                 shProg->IsES ? " ES" : "",
-                 shProg->data->Version / 100, shProg->data->Version % 100);
+      asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n", shProg->IsES ? " ES" : "",
+               shProg->data->Version / 100, shProg->data->Version % 100);
 
       if (shProg->SeparateShader) {
          ftemp = fsource;
          asprintf(&fsource, "%sGL_ARB_separate_shader_objects\nSSO ENABLED\n", ftemp);
-         if (ftemp != NULL) free(ftemp);
+         free(ftemp);
       }
 
       for (unsigned i = 0; i < shProg->NumShaders; i++) {
           ftemp = fsource;
-          asprintf(&fsource, "%s\n[%s shader]\n%s\n",
-                           ftemp,
-                           _mesa_shader_stage_to_string(shProg->Shaders[i]->Stage),
-                           shProg->Shaders[i]->Source);
-          if (ftemp != NULL) free(ftemp);
+          asprintf(&fsource, "%s\n[%s shader]\n%s\n", ftemp,
+                   _mesa_shader_stage_to_string(shProg->Shaders[i]->Stage),
+                   shProg->Shaders[i]->Source);
+          free(ftemp);
       }
 
       char shabuf[64] = {"mylittlebunny"};
       generate_sha1(fsource, shabuf);
 
-      asprintf(&filename, "%s/%s%u.shader_test", capture_path, shabuf,shProg->Name);
+      asprintf(&filename, "%s/%s_%u.shader_test", capture_path, shabuf,shProg->Name);
       file = fopen(filename, "w");
       if (file) {
          fprintf(file, "%s", fsource);
@@ -1379,8 +1377,8 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
          _mesa_warning(ctx, "Failed to open %s", filename);
       }
 
-      if (fsource != NULL) free(fsource);
-      if (filename != NULL) free(filename);
+      free(filename);
+      free(fsource);
    }
 
    if (shProg->data->LinkStatus == LINKING_FAILURE &&
