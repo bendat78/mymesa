@@ -2087,7 +2087,7 @@ vtn_handle_texture(struct vtn_builder *b, SpvOp opcode,
          (*p++) = vtn_tex_src(b, w[idx++], nir_tex_src_offset);
 
       if (operands & SpvImageOperandsConstOffsetsMask) {
-         nir_tex_src none = {0};
+         nir_tex_src none = {};
          gather_offsets = vtn_ssa_value(b, w[idx++]);
          (*p++) = none;
       }
@@ -4026,7 +4026,7 @@ spirv_to_nir(const uint32_t *words, size_t word_count,
                                               stage, entry_point_name,
                                               options);
 
-   if (b == NULL)
+   if (!b)
       return NULL;
 
    /* See also _vtn_fail() */

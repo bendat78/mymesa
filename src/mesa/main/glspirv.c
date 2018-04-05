@@ -311,7 +311,7 @@ _mesa_SpecializeShaderARB(GLuint shader,
    }
 
    for (unsigned i = 0; i < numSpecializationConstants; ++i) {
-      if (spec_entries[i].defined_on_module == false) {
+      if (!spec_entries[i].defined_on_module) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glSpecializeShaderARB(constant \"%i\" does not exist "
                      "in shader)", spec_entries[i].id);

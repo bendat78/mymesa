@@ -290,7 +290,7 @@ _vbo_draw_indirect(struct gl_context *ctx, GLuint mode,
                     indirect_draw_count_offset, ib, space);
    } else {
       struct _mesa_prim *space = calloc(draw_count, sizeof(struct _mesa_prim));
-      if (space == NULL) {
+      if (!space) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "gl%sDraw%sIndirect%s",
                      (draw_count > 1) ? "Multi" : "",
                      ib ? "Elements" : "Arrays",

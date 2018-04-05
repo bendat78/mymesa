@@ -234,7 +234,7 @@ gl_spirv_validation(const uint32_t *words, size_t word_count,
                                               stage, entry_point_name,
                                               &options);
 
-   if (b == NULL)
+   if (!b)
       return false;
 
    /* See also _vtn_fail() */
@@ -250,7 +250,7 @@ gl_spirv_validation(const uint32_t *words, size_t word_count,
    words = vtn_foreach_instruction(b, words, word_end,
                                    vtn_validate_preamble_instruction);
 
-   if (b->entry_point == NULL) {
+   if (!b->entry_point) {
       ralloc_free(b);
       return false;
    }

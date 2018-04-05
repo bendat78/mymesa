@@ -857,7 +857,7 @@ radv_emit_fb_color_state(struct radv_cmd_buffer *cmd_buffer,
 		radeon_emit(cmd_buffer->cs, cb->cb_dcc_base);
 
 		radeon_emit(cmd_buffer->cs, S_028C98_BASE_256B(cb->cb_dcc_base >> 32));
-		
+
 		radeon_set_context_reg(cmd_buffer->cs, R_0287A0_CB_MRT0_EPITCH + index * 4,
 				       S_0287A0_EPITCH(att->attachment->image->surface.u.gfx9.surf.epitch));
 	} else {

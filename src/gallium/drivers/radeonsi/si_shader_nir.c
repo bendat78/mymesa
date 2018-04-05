@@ -619,7 +619,7 @@ void si_nir_scan_shader(const struct nir_shader *nir,
 		 * uniforms) its really only used for getting the buffer count
 		 * so we don't need to worry about the ordering.
 		 */
-		if (variable->interface_type != NULL) {
+		if (variable->interface_type) {
 			if (variable->data.mode == nir_var_uniform) {
 
 				unsigned block_count;
