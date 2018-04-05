@@ -267,8 +267,12 @@ add_aux_state_tracking_buffer(struct anv_image *image,
              (image->planes[plane].offset + image->planes[plane].size));
    }
 
+   const unsigned clear_color_state_size = device->info.gen >= 10 ?
+      device->isl_dev.ss.clear_color_state_size :
+      device->isl_dev.ss.clear_value_size;
+
    /* Clear color and fast clear type */
-   unsigned state_size = device->isl_dev.ss.clear_value_size + 4;
+   unsigned state_size = clear_color_state_size + 4;
 
    /* We only need to track compression on CCS_E surfaces. */
    if (image->planes[plane].aux_usage == ISL_AUX_USAGE_CCS_E) {
@@ -1055,6 +1059,17 @@ anv_image_fill_surface_state(struct anv_device *device,
    const uint64_t aux_address = aux_usage == ISL_AUX_USAGE_NONE ?
       0 : (image->planes[plane].bo_offset + aux_surface->offset);
 
+   struct anv_address clear_address = { .bo = NULL };
+   state_inout->clear_address = 0;
+
+   if (device->info.gen >= 10 && aux_usage != ISL_AUX_USAGE_NONE) {
+      if (aux_usage == ISL_AUX_USAGE_HIZ) {
+         clear_address = (struct anv_address) { .bo = &device->hiz_clear_bo };
+      } else {
+         clear_address = anv_image_get_clear_color_addr(device, image, aspect);
+      }
+   }
+
    if (view_usage == ISL_SURF_USAGE_STORAGE_BIT &&
        !(flags & ANV_IMAGE_VIEW_STATE_STORAGE_WRITE_ONLY) &&
        !isl_has_matching_typed_storage_image_format(&device->info,
@@ -1072,6 +1087,7 @@ anv_image_fill_surface_state(struct anv_device *device,
                             .mocs = device->default_mocs);
       state_inout->address = address,
       state_inout->aux_address = 0;
+      state_inout->clear_address = 0;
    } else {
       if (view_usage == ISL_SURF_USAGE_STORAGE_BIT &&
           !(flags & ANV_IMAGE_VIEW_STATE_STORAGE_WRITE_ONLY)) {
@@ -1145,22 +1161,28 @@ anv_image_fill_surface_state(struct anv_device *device,
                           .aux_surf = &aux_surface->isl,
                           .aux_usage = aux_usage,
                           .aux_address = aux_address,
+                          .clear_address = clear_address.offset,
+                          .use_clear_address = clear_address.bo != NULL,
                           .mocs = device->default_mocs,
                           .x_offset_sa = tile_x_sa,
                           .y_offset_sa = tile_y_sa);
       state_inout->address = address + offset_B;
-      if (device->info.gen >= 8) {
-         state_inout->aux_address = aux_address;
-      } else {
-         /* On gen7 and prior, the bottom 12 bits of the MCS base address are
-          * used to store other information.  This should be ok, however,
-          * because surface buffer addresses are always 4K page alinged.
-          */
-         uint32_t *aux_addr_dw = state_inout->state.map +
-                                 device->isl_dev.ss.aux_addr_offset;
-         assert((aux_address & 0xfff) == 0);
-         assert(aux_address == (*aux_addr_dw & 0xfffff000));
-         state_inout->aux_address = *aux_addr_dw;
+
+      /* With the exception of gen8, the bottom 12 bits of the MCS base address
+       * are used to store other information.  This should be ok, however,
+       * because the surface buffer addresses are always 4K page aligned.
+       */
+      uint32_t *aux_addr_dw = state_inout->state.map +
+         device->isl_dev.ss.aux_addr_offset;
+      assert((aux_address & 0xfff) == 0);
+      assert(aux_address == (*aux_addr_dw & 0xfffff000));
+      state_inout->aux_address = *aux_addr_dw;
+
+      if (device->info.gen >= 10 && clear_address.bo) {
+         uint32_t *clear_addr_dw = state_inout->state.map +
+                                   device->isl_dev.ss.clear_color_state_offset;
+         assert((clear_address.offset & 0x3f) == 0);
+         state_inout->clear_address = *clear_addr_dw;
       }
    }
 
