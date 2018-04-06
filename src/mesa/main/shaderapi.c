@@ -255,7 +255,7 @@ _mesa_init_shader_state(struct gl_context *ctx)
 
    ctx->Shader.Flags = _mesa_get_shader_flags();
 
-   if (ctx->Shader.Flags != 0)
+   if (ctx->Shader.Flags)
       ctx->Const.GenerateTemporaryNames = true;
 
    /* Extended for ARB_separate_shader_objects */
@@ -772,7 +772,8 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
               GLint *params)
 {
    struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program_err(ctx, program, "glGetProgramiv(program)");
+      = _mesa_lookup_shader_program_err(ctx, program,
+                                        "glGetProgramiv(program)");
 
    /* Is transform feedback available in this context?
     */
@@ -954,7 +955,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
       *params = shProg->BinaryRetreivableHint;
       return;
    case GL_PROGRAM_BINARY_LENGTH:
-      if (ctx->Const.NumProgramBinaryFormats == 0) {
+      if (!ctx->Const.NumProgramBinaryFormats) {
          *params = 0;
       } else {
          _mesa_get_program_binary_length(ctx, shProg, params);
@@ -975,7 +976,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
                      "linked)");
          return;
       }
-      if (shProg->_LinkedShaders[MESA_SHADER_COMPUTE] == NULL) {
+      if (!shProg->_LinkedShaders[MESA_SHADER_COMPUTE]) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramiv(no compute "
                      "shaders)");
          return;
@@ -1373,7 +1374,7 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       generate_sha1(fsource, shabuf);
 
       asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
-               shabuf,shProg->Name);
+               shabuf, shProg->Name);
       file = fopen(filename, "w");
       if (file) {
          fprintf(file, "%s", fsource);
@@ -1478,7 +1479,7 @@ void
 _mesa_active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
 		     const char *caller)
 {
-   if ((shProg != NULL) && !shProg->data->LinkStatus) {
+   if ((shProg) && !shProg->data->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
 		  "%s(program %u not linked)", caller, shProg->Name);
       return;
@@ -1812,7 +1813,7 @@ void GLAPIENTRY
 _mesa_GetObjectParameterfvARB(GLhandleARB object, GLenum pname,
                               GLfloat *params)
 {
-   GLint iparams[1] = {0};  /* XXX is one element enough? */
+   GLint iparams[1] = {};  /* XXX is one element enough? */
    _mesa_GetObjectParameterivARB(object, pname, iparams);
    params[0] = (GLfloat) iparams[0];
 }
@@ -1930,7 +1931,7 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
       if (!sh)
          return;
 
-      if (string == NULL) {
+      if (!string) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
          return;
       }
@@ -1943,7 +1944,7 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
     * last element will be set to the total length of the source code.
     */
    offsets = malloc(count * sizeof(GLint));
-   if (offsets == NULL) {
+   if (!offsets) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
    }
@@ -1970,7 +1971,7 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
     */
    totalLength = offsets[count - 1] + 2;
    source = malloc(totalLength * sizeof(GLcharARB));
-   if (source == NULL) {
+   if (!source) {
       free((GLvoid *) offsets);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
@@ -2263,7 +2264,7 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
     * Ensure that length always points to valid storage to avoid multiple NULL
     * pointer checks below.
     */
-   if (length == NULL)
+   if (!length)
       length = &length_dummy;
 
 
@@ -2281,7 +2282,7 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
       return;
    }
 
-   if (ctx->Const.NumProgramBinaryFormats == 0) {
+   if (!ctx->Const.NumProgramBinaryFormats) {
       *length = 0;
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetProgramBinary(driver supports zero binary formats)");
@@ -2876,7 +2877,7 @@ _mesa_UniformSubroutinesuiv(GLenum shadertype, GLsizei count,
    bool flushed = false;
    do {
       struct gl_uniform_storage *uni = p->sh.SubroutineUniformRemapTable[i];
-      if (uni == NULL) {
+      if (!uni) {
          i++;
          continue;
       }
@@ -3072,7 +3073,7 @@ _mesa_shader_write_subroutine_index(struct gl_context *ctx,
 {
    int i, j;
 
-   if (p->sh.NumSubroutineUniformRemapTable == 0)
+   if (!p->sh.NumSubroutineUniformRemapTable)
       return;
 
    i = 0;
