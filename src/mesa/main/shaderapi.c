@@ -255,7 +255,7 @@ _mesa_init_shader_state(struct gl_context *ctx)
 
    ctx->Shader.Flags = _mesa_get_shader_flags();
 
-   if (ctx->Shader.Flags)
+   if (ctx->Shader.Flags != 0)
       ctx->Const.GenerateTemporaryNames = true;
 
    /* Extended for ARB_separate_shader_objects */
@@ -954,7 +954,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
       *params = shProg->BinaryRetreivableHint;
       return;
    case GL_PROGRAM_BINARY_LENGTH:
-      if (!ctx->Const.NumProgramBinaryFormats) {
+      if (ctx->Const.NumProgramBinaryFormats == 0) {
          *params = 0;
       } else {
          _mesa_get_program_binary_length(ctx, shProg, params);
@@ -975,7 +975,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
                      "linked)");
          return;
       }
-      if (!shProg->_LinkedShaders[MESA_SHADER_COMPUTE]) {
+      if (shProg->_LinkedShaders[MESA_SHADER_COMPUTE] == NULL) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramiv(no compute "
                      "shaders)");
          return;
@@ -1235,7 +1235,7 @@ _mesa_compile_shader(struct gl_context *ctx, struct gl_shader *sh)
    } else {
       if (ctx->_Shader->Flags & GLSL_DUMP) {
          _mesa_log("GLSL source for %s shader %d:\n",
-                 _mesa_shader_stage_to_string(sh->Stage), sh->Name);
+                   _mesa_shader_stage_to_string(sh->Stage), sh->Name);
          _mesa_log("%s\n", sh->Source);
       }
 
@@ -1282,6 +1282,7 @@ _mesa_compile_shader(struct gl_context *ctx, struct gl_shader *sh)
       }
    }
 }
+
 
 /**
  * Link a program's shaders.
@@ -1349,12 +1350,14 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       char *fsource = NULL;
       char *ftemp = NULL;
 
-      asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n", shProg->IsES ? " ES" : "",
+      asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n",
+               shProg->IsES ? " ES" : "",
                shProg->data->Version / 100, shProg->data->Version % 100);
 
       if (shProg->SeparateShader) {
          ftemp = fsource;
-         asprintf(&fsource, "%sGL_ARB_separate_shader_objects\nSSO ENABLED\n", ftemp);
+         asprintf(&fsource, "%sGL_ARB_separate_shader_objects\nSSO ENABLED\n",
+                  ftemp);
          free(ftemp);
       }
 
@@ -1369,7 +1372,8 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       char shabuf[64] = {"mylittlebunny"};
       generate_sha1(fsource, shabuf);
 
-      asprintf(&filename, "%s/%s_%u.shader_test", capture_path, shabuf,shProg->Name);
+      asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
+               shabuf,shProg->Name);
       file = fopen(filename, "w");
       if (file) {
          fprintf(file, "%s", fsource);
@@ -1395,13 +1399,13 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       GLuint i;
 
       printf("Link %u shaders in program %u: %s\n",
-                   shProg->NumShaders, shProg->Name,
-                   shProg->data->LinkStatus ? "Success" : "Failed");
+             shProg->NumShaders, shProg->Name,
+             shProg->data->LinkStatus ? "Success" : "Failed");
 
       for (i = 0; i < shProg->NumShaders; i++) {
          printf(" shader %u, stage %u\n",
-                      shProg->Shaders[i]->Name,
-                      shProg->Shaders[i]->Stage);
+                shProg->Shaders[i]->Name,
+                shProg->Shaders[i]->Stage);
       }
    }
 }
@@ -1474,7 +1478,7 @@ void
 _mesa_active_program(struct gl_context *ctx, struct gl_shader_program *shProg,
 		     const char *caller)
 {
-   if ((shProg) && !shProg->data->LinkStatus) {
+   if ((shProg != NULL) && !shProg->data->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
 		  "%s(program %u not linked)", caller, shProg->Name);
       return;
@@ -1808,7 +1812,7 @@ void GLAPIENTRY
 _mesa_GetObjectParameterfvARB(GLhandleARB object, GLenum pname,
                               GLfloat *params)
 {
-   GLint iparams[1] = {};  /* XXX is one element enough? */
+   GLint iparams[1] = {0};  /* XXX is one element enough? */
    _mesa_GetObjectParameterivARB(object, pname, iparams);
    params[0] = (GLfloat) iparams[0];
 }
@@ -1925,11 +1929,11 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
       sh = _mesa_lookup_shader_err(ctx, shaderObj, "glShaderSourceARB");
       if (!sh)
          return;
-   }
 
-   if (!string) {
+      if (string == NULL) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
          return;
+      }
    } else {
       sh = _mesa_lookup_shader(ctx, shaderObj);
    }
@@ -1939,13 +1943,13 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
     * last element will be set to the total length of the source code.
     */
    offsets = malloc(count * sizeof(GLint));
-   if (!offsets) {
+   if (offsets == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
    }
 
    for (i = 0; i < count; i++) {
-      if (!no_error && !string[i]) {
+      if (!no_error && string[i] == NULL) {
          free((GLvoid *) offsets);
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glShaderSourceARB(null string)");
@@ -1966,7 +1970,7 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
     */
    totalLength = offsets[count - 1] + 2;
    source = malloc(totalLength * sizeof(GLcharARB));
-   if (!source) {
+   if (source == NULL) {
       free((GLvoid *) offsets);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
@@ -2038,7 +2042,6 @@ use_program(GLuint program, bool no_error)
                      "glUseProgram(transform feedback active)");
          return;
       }
-   }
 
       if (program) {
          shProg =
@@ -2057,6 +2060,7 @@ use_program(GLuint program, bool no_error)
             print_shader_info(shProg);
          }
       }
+   }
 
    /* The ARB_separate_shader_object spec says:
     *
@@ -2259,7 +2263,7 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
     * Ensure that length always points to valid storage to avoid multiple NULL
     * pointer checks below.
     */
-   if (!length)
+   if (length == NULL)
       length = &length_dummy;
 
 
@@ -2277,7 +2281,7 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
       return;
    }
 
-   if (!ctx->Const.NumProgramBinaryFormats) {
+   if (ctx->Const.NumProgramBinaryFormats == 0) {
       *length = 0;
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetProgramBinary(driver supports zero binary formats)");
@@ -2872,7 +2876,7 @@ _mesa_UniformSubroutinesuiv(GLenum shadertype, GLsizei count,
    bool flushed = false;
    do {
       struct gl_uniform_storage *uni = p->sh.SubroutineUniformRemapTable[i];
-      if (!uni) {
+      if (uni == NULL) {
          i++;
          continue;
       }
@@ -3068,7 +3072,7 @@ _mesa_shader_write_subroutine_index(struct gl_context *ctx,
 {
    int i, j;
 
-   if (!p->sh.NumSubroutineUniformRemapTable)
+   if (p->sh.NumSubroutineUniformRemapTable == 0)
       return;
 
    i = 0;

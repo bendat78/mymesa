@@ -179,6 +179,7 @@ padding_is_good(int fd, uint32_t handle)
    uint8_t expected_value;
 
    ret = libc_ioctl(fd, DRM_IOCTL_I915_GEM_MMAP, &mmap_arg);
+
    if (ret) {
       intel_logd("Unable to map buffer %d for pad checking.", handle);
       return false;
@@ -223,6 +224,7 @@ create_with_padding(int fd, struct drm_i915_gem_create *create)
    };
 
    ret = libc_ioctl(fd, DRM_IOCTL_I915_GEM_MMAP, &mmap_arg);
+
    if (ret)
       return 0;
 
@@ -242,6 +244,7 @@ exec_and_check_padding(int fd, unsigned long request,
                        struct drm_i915_gem_execbuffer2 *exec)
 {
    int ret = libc_ioctl(fd, request, exec);
+
    if (ret)
       return ret;
 
