@@ -1235,7 +1235,7 @@ _mesa_compile_shader(struct gl_context *ctx, struct gl_shader *sh)
    } else {
       if (ctx->_Shader->Flags & GLSL_DUMP) {
          _mesa_log("GLSL source for %s shader %d:\n",
-                 _mesa_shader_stage_to_string(sh->Stage), sh->Name);
+                   _mesa_shader_stage_to_string(sh->Stage), sh->Name);
          _mesa_log("%s\n", sh->Source);
       }
 
@@ -1350,12 +1350,14 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       char *fsource = NULL;
       char *ftemp = NULL;
 
-      asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n", shProg->IsES ? " ES" : "",
+      asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n",
+               shProg->IsES ? " ES" : "",
                shProg->data->Version / 100, shProg->data->Version % 100);
 
       if (shProg->SeparateShader) {
          ftemp = fsource;
-         asprintf(&fsource, "%sGL_ARB_separate_shader_objects\nSSO ENABLED\n", ftemp);
+         asprintf(&fsource, "%sGL_ARB_separate_shader_objects\nSSO ENABLED\n",
+                  ftemp);
          free(ftemp);
       }
 
@@ -1370,7 +1372,8 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       char shabuf[64] = {"mylittlebunny"};
       generate_sha1(fsource, shabuf);
 
-      asprintf(&filename, "%s/%s_%u.shader_test", capture_path, shabuf,shProg->Name);
+      asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
+               shabuf,shProg->Name);
       file = fopen(filename, "w");
       if (file) {
          fprintf(file, "%s", fsource);
@@ -1396,13 +1399,13 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       GLuint i;
 
       printf("Link %u shaders in program %u: %s\n",
-                   shProg->NumShaders, shProg->Name,
-                   shProg->data->LinkStatus ? "Success" : "Failed");
+             shProg->NumShaders, shProg->Name,
+             shProg->data->LinkStatus ? "Success" : "Failed");
 
       for (i = 0; i < shProg->NumShaders; i++) {
          printf(" shader %u, stage %u\n",
-                      shProg->Shaders[i]->Name,
-                      shProg->Shaders[i]->Stage);
+                shProg->Shaders[i]->Name,
+                shProg->Shaders[i]->Stage);
       }
    }
 }
