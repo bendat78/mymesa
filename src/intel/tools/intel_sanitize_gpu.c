@@ -179,7 +179,7 @@ padding_is_good(int fd, uint32_t handle)
    uint8_t expected_value;
 
    ret = libc_ioctl(fd, DRM_IOCTL_I915_GEM_MMAP, &mmap_arg);
-   if (ret != 0) {
+   if (ret) {
       intel_logd("Unable to map buffer %d for pad checking.", handle);
       return false;
    }
@@ -211,7 +211,7 @@ create_with_padding(int fd, struct drm_i915_gem_create *create)
    int ret = libc_ioctl(fd, DRM_IOCTL_I915_GEM_CREATE, create);
    create->size -= PADDING_SIZE;
 
-   if (ret != 0)
+   if (ret)
       return ret;
 
    uint8_t *noise_values;
@@ -223,7 +223,7 @@ create_with_padding(int fd, struct drm_i915_gem_create *create)
    };
 
    ret = libc_ioctl(fd, DRM_IOCTL_I915_GEM_MMAP, &mmap_arg);
-   if (ret != 0)
+   if (ret)
       return 0;
 
    noise_values = (uint8_t*) (uintptr_t) mmap_arg.addr_ptr;
@@ -242,7 +242,7 @@ exec_and_check_padding(int fd, unsigned long request,
                        struct drm_i915_gem_execbuffer2 *exec)
 {
    int ret = libc_ioctl(fd, request, exec);
-   if (ret != 0)
+   if (ret)
       return ret;
 
    struct drm_i915_gem_exec_object2 *objects =
@@ -255,7 +255,7 @@ exec_and_check_padding(int fd, unsigned long request,
       .timeout_ns = -1,
    };
    ret = libc_ioctl(fd, DRM_IOCTL_I915_GEM_WAIT, &wait);
-   if (ret != 0)
+   if (ret)
       return ret;
 
    bool detected_out_of_bounds_write = false;
@@ -280,7 +280,7 @@ static int
 gem_close(int fd, struct drm_gem_close *close)
 {
    int ret = libc_ioctl(fd, DRM_IOCTL_GEM_CLOSE, close);
-   if (ret != 0)
+   if (ret)
       return ret;
 
    struct hash_table *t = bo_size_table(fd);
