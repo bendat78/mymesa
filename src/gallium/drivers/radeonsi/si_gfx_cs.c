@@ -47,7 +47,7 @@ void si_need_gfx_cs_space(struct si_context *ctx)
 						   ctx->vram, ctx->gtt))) {
 		ctx->gtt = 0;
 		ctx->vram = 0;
-		si_flush_gfx_cs(ctx, PIPE_FLUSH_ASYNC, NULL);
+		si_flush_gfx_cs(ctx, RADEON_FLUSH_ASYNC_START_NEXT_GFX_IB_NOW, NULL);
 		return;
 	}
 	ctx->gtt = 0;
@@ -61,7 +61,7 @@ void si_need_gfx_cs_space(struct si_context *ctx)
 	 */
 	unsigned need_dwords = 2048 + ctx->num_cs_dw_queries_suspend;
 	if (!ctx->ws->cs_check_space(cs, need_dwords))
-		si_flush_gfx_cs(ctx, PIPE_FLUSH_ASYNC, NULL);
+		si_flush_gfx_cs(ctx, RADEON_FLUSH_ASYNC_START_NEXT_GFX_IB_NOW, NULL);
 }
 
 void si_flush_gfx_cs(struct si_context *ctx, unsigned flags,
@@ -69,11 +69,28 @@ void si_flush_gfx_cs(struct si_context *ctx, unsigned flags,
 {
 	struct radeon_winsys_cs *cs = ctx->gfx_cs;
 	struct radeon_winsys *ws = ctx->ws;
+	unsigned wait_flags = 0;
 
 	if (ctx->gfx_flush_in_progress)
 		return;
 
-	if (!radeon_emitted(cs, ctx->initial_gfx_cs_size))
+	if (ctx->chip_class == VI && ctx->screen->info.drm_minor <= 1) {
+		/* DRM 3.1.0 doesn't flush TC for VI correctly. */
+		wait_flags |= SI_CONTEXT_PS_PARTIAL_FLUSH |
+			      SI_CONTEXT_CS_PARTIAL_FLUSH |
+			      SI_CONTEXT_INV_GLOBAL_L2;
+	} else if (ctx->chip_class == SI) {
+		/* The kernel flushes L2 before shaders are finished. */
+		wait_flags |= SI_CONTEXT_PS_PARTIAL_FLUSH |
+			      SI_CONTEXT_CS_PARTIAL_FLUSH;
+	} else if (!(flags & RADEON_FLUSH_START_NEXT_GFX_IB_NOW)) {
+		wait_flags |= SI_CONTEXT_PS_PARTIAL_FLUSH |
+			      SI_CONTEXT_CS_PARTIAL_FLUSH;
+	}
+
+	/* Drop this flush if it's a no-op. */
+	if (!radeon_emitted(cs, ctx->initial_gfx_cs_size) &&
+	    (!wait_flags || !ctx->gfx_last_ib_is_busy))
 		return;
 
 	if (si_check_device_reset(ctx))
@@ -103,13 +120,11 @@ void si_flush_gfx_cs(struct si_context *ctx, unsigned flags,
 		ctx->streamout.suspended = true;
 	}
 
-	ctx->flags |= SI_CONTEXT_CS_PARTIAL_FLUSH |
-			SI_CONTEXT_PS_PARTIAL_FLUSH;
-
-	/* DRM 3.1.0 doesn't flush TC for VI correctly. */
-	if (ctx->chip_class == VI && ctx->screen->info.drm_minor <= 1)
-		ctx->flags |= SI_CONTEXT_INV_GLOBAL_L2 |
-				SI_CONTEXT_INV_VMEM_L1;
+	if (wait_flags) {
+		ctx->flags |= wait_flags;
+		si_emit_cache_flush(ctx);
+	}
+	ctx->gfx_last_ib_is_busy = wait_flags == 0;
 
 	si_emit_cache_flush(ctx);
 
@@ -184,12 +199,24 @@ void si_begin_new_gfx_cs(struct si_context *ctx)
 	if (ctx->is_debug)
 		si_begin_gfx_cs_debug(ctx);
 
-	/* Flush read caches at the beginning of CS not flushed by the kernel. */
-	if (ctx->chip_class >= CIK)
-		ctx->flags |= SI_CONTEXT_INV_SMEM_L1 |
-				SI_CONTEXT_INV_ICACHE;
-
-	ctx->flags |= SI_CONTEXT_START_PIPELINE_STATS;
+	/* Always invalidate caches at the beginning of IBs, because external
+	 * users (e.g. BO evictions and SDMA/UVD/VCE IBs) can modify our
+	 * buffers.
+	 *
+	 * Note that the cache flush done by the kernel at the end of GFX IBs
+	 * isn't useful here, because that flush can finish after the following
+	 * IB starts drawing.
+	 *
+	 * TODO: Do we also need to invalidate CB & DB caches?
+	 */
+	ctx->flags |= SI_CONTEXT_INV_ICACHE |
+	      SI_CONTEXT_INV_SMEM_L1 |
+		      SI_CONTEXT_INV_VMEM_L1 |
+		      SI_CONTEXT_INV_GLOBAL_L2 |
+		      SI_CONTEXT_START_PIPELINE_STATS |
+		      SI_CONTEXT_FLUSH_AND_INV_DB |
+//		      SI_CONTEXT_FLUSH_AND_INV_DB_META |
+		      SI_CONTEXT_FLUSH_AND_INV_CB;
 
 	/* set all valid group as dirty so they get reemited on
 	 * next draw command
