@@ -1,3 +1,19 @@
+7.4.18
+workaround for aer memories of old
+$HOME/.config/unity3d/Daedalic\ Entertainment\ GmbH/AERMemoriesofOld/prefs
+<pref name="Screenmanager Is Fullscreen mode" type="int">0</pref>
+<pref name="Screenmanager Resolution Height" type="int">720</pref>
+<pref name="Screenmanager Resolution Width" type="int">1280</pref> 
+64 bit doesnt work
+
+AER Memories of the old - works (with workaround)
+
+Lara Croft GO - works
+
+Kerbal Space Program - works
+
+RUINER - 
+
 4.4.18
 
 Dead Island and Metro 2033 Redux crash before the actual game starts (menus or earlier)
