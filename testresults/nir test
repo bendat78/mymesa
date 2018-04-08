@@ -1,10 +1,23 @@
+8.4.18
+Black Mesa requires libtcmalloc-minimal4:i386
+delete Black\ Mesa/bin/libstdc++.so.6
+otherwise works
+
+Deus Ex Makind Divided
+still one crash ~80% through shader compilation
+nir 19/9.3/28.0
+tgsi 19.1/8.7/28.8
+
+Metro 2033 Redux doesnt crash when SSAO is enabled
+otherwise typically crashes on the press key screen
+
 7.4.18
 workaround for aer memories of old
 $HOME/.config/unity3d/Daedalic\ Entertainment\ GmbH/AERMemoriesofOld/prefs
 <pref name="Screenmanager Is Fullscreen mode" type="int">0</pref>
 <pref name="Screenmanager Resolution Height" type="int">720</pref>
 <pref name="Screenmanager Resolution Width" type="int">1280</pref> 
-64 bit doesnt work
+64 bit doesnt work at all
 
 AER Memories of the old - works (with workaround)
 
@@ -12,7 +25,7 @@ Lara Croft GO - works
 
 Kerbal Space Program - works
 
-RUINER - 
+RUINER - works
 
 4.4.18
 
@@ -28,18 +41,23 @@ Dead Island 91310
 War Hammer 40k: Dawn of War 3 285190
 Deus Ex: Mankind divided 337000
 
-
+build and install 32-bit apitrace:
 cmake -H. -Bbuild32 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_GUI=FALSE -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/local/lib -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32
 make -C build32
+sudo make install
+
+build and install 64-bit apitrace
+cmake -H. -Bbuild64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_GUI=FALSE -DCMAKE_SYSTEM_LIBRARY_PATH=/usr/local/lib
+make -C build64
 sudo make install
 
 Steam Launch options
 apitrace trace --output=/home/nano/deadbeaf5  %command%
 
-Trace is in the directory of the game executable
+Trace is in the directory of the game executable if output is not specified
 
 
-Dead Island
+Dead Island (classic)
 missing dependency ? works without
 http://de.archive.ubuntu.com/ubuntu/pool/main/g/glew/libglew1.13_1.13.0-2_i386.deb
 sudo ln -sf /usr/lib/i386-linux-gnu/libGLEW.so.1.13.0 /usr/lib/i386-linux-gnu/libGLEW.so.1.10

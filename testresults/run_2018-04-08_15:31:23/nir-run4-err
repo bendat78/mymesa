@@ -1,0 +1,1005 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+ERROR: shaders/csgo/fp-1.shader_test failed to compile
+ERROR: shaders/w40kdawn2/1054.shader_test failed to compile:
+0:65(2): error: `gl_TexCoord' undeclared
+0:65(2): error: type mismatch
+0:65(2): error: value of type float cannot be assigned to variable of type error
+0:70(2): error: `gl_TexCoord' undeclared
+0:70(2): error: type mismatch
+0:70(2): error: value of type float cannot be assigned to variable of type error
+0:164(2): error: `gl_TexCoord' undeclared
+0:164(2): error: type mismatch
+0:164(2): error: value of type vec3 cannot be assigned to variable of type error
+0:175(2): error: `gl_TexCoord' undeclared
+0:175(2): error: type mismatch
+0:175(2): error: value of type vec3 cannot be assigned to variable of type error
+0:179(2): error: `gl_TexCoord' undeclared
+0:179(2): error: type mismatch
+0:179(2): error: value of type vec3 cannot be assigned to variable of type error
+0:180(2): error: `gl_TexCoord' undeclared
+0:180(2): error: type mismatch
+0:180(2): error: value of type vec3 cannot be assigned to variable of type error
+0:184(2): error: `gl_TexCoord' undeclared
+0:184(2): error: type mismatch
+0:184(2): error: value of type vec2 cannot be assigned to variable of type error
+0:193(2): error: `gl_TexCoord' undeclared
+0:193(2): error: type mismatch
+0:193(2): error: value of type float cannot be assigned to variable of type error
+0:209(2): error: `gl_TexCoord' undeclared
+0:209(2): error: value of type vec4 cannot be assigned to variable of type error
+0:210(2): error: `gl_TexCoord' undeclared
+0:210(2): error: type mismatch
+0:210(2): error: value of type float cannot be assigned to variable of type error
+0:211(2): error: `gl_TexCoord' undeclared
+0:211(2): error: type mismatch
+0:211(2): error: value of type vec3 cannot be assigned to variable of type error
+0:212(2): error: `gl_TexCoord' undeclared
+0:212(2): error: type mismatch
+0:212(2): error: value of type float cannot be assigned to variable of type error
+0:213(2): error: `gl_TexCoord' undeclared
+0:213(2): error: type mismatch
+0:213(2): error: value of type vec2 cannot be assigned to variable of type error
+0:214(2): error: `gl_TexCoord' undeclared
+0:214(2): error: type mismatch
+0:214(2): error: value of type float cannot be assigned to variable of type error
+0:215(2): error: `gl_TexCoord' undeclared
+0:215(2): error: type mismatch
+0:215(2): error: value of type float cannot be assigned to variable of type error
+
+ERROR: shaders/w40kdawn2/1054.shader_test failed to compile:
+0:108(11): error: `gl_TexCoord' undeclared
+0:108(11): error: type mismatch
+0:108(11): error: operands to arithmetic operators must be numeric
+0:108(11): error: operands to arithmetic operators must be numeric
+0:113(18): error: `gl_TexCoord' undeclared
+0:113(18): error: type mismatch
+0:113(10): error: operands to arithmetic operators must be numeric
+0:116(19): error: `gl_TexCoord' undeclared
+0:116(19): error: type mismatch
+0:116(18): error: operands to arithmetic operators must be numeric
+0:116(10): error: operands to arithmetic operators must be numeric
+0:117(16): error: `gl_TexCoord' undeclared
+0:117(16): error: type mismatch
+0:117(9): error: operands to arithmetic operators must be numeric
+0:125(16): error: `gl_TexCoord' undeclared
+0:125(16): error: type mismatch
+0:125(9): error: operands to arithmetic operators must be numeric
+0:129(16): error: `gl_TexCoord' undeclared
+0:129(16): error: type mismatch
+0:129(9): error: operands to arithmetic operators must be numeric
+0:133(16): error: `gl_TexCoord' undeclared
+0:133(16): error: type mismatch
+0:133(9): error: operands to arithmetic operators must be numeric
+0:139(16): error: `gl_TexCoord' undeclared
+0:139(16): error: type mismatch
+0:139(9): error: operands to arithmetic operators must be numeric
+0:151(16): error: `gl_TexCoord' undeclared
+0:151(16): error: type mismatch
+0:151(9): error: operands to arithmetic operators must be numeric
+0:163(16): error: `gl_TexCoord' undeclared
+0:163(16): error: type mismatch
+0:163(9): error: operands to arithmetic operators must be numeric
+0:175(16): error: `gl_TexCoord' undeclared
+0:175(16): error: type mismatch
+0:175(9): error: operands to arithmetic operators must be numeric
+0:188(37): error: `gl_TexCoord' undeclared
+0:188(32): error: cannot construct `vec3' from a non-numeric data type
+0:188(17): error: no matching function for call to `texture(sampler2DShadow, error)'; candidates are:
+0:188(17): error:    vec4 texture(sampler1D, float)
+0:188(17): error:    ivec4 texture(isampler1D, float)
+0:188(17): error:    uvec4 texture(usampler1D, float)
+0:188(17): error:    vec4 texture(sampler2D, vec2)
+0:188(17): error:    ivec4 texture(isampler2D, vec2)
+0:188(17): error:    uvec4 texture(usampler2D, vec2)
+0:188(17): error:    vec4 texture(sampler3D, vec3)
+0:188(17): error:    ivec4 texture(isampler3D, vec3)
+0:188(17): error:    uvec4 texture(usampler3D, vec3)
+0:188(17): error:    vec4 texture(samplerCube, vec3)
+0:188(17): error:    ivec4 texture(isamplerCube, vec3)
+0:188(17): error:    uvec4 texture(usamplerCube, vec3)
+0:188(17): error:    float texture(sampler1DShadow, vec3)
+0:188(17): error:    float texture(sampler2DShadow, vec3)
+0:188(17): error:    float texture(samplerCubeShadow, vec4)
+0:188(17): error:    vec4 texture(sampler1DArray, vec2)
+0:188(17): error:    ivec4 texture(isampler1DArray, vec2)
+0:188(17): error:    uvec4 texture(usampler1DArray, vec2)
+0:188(17): error:    vec4 texture(sampler2DArray, vec3)
+0:188(17): error:    ivec4 texture(isampler2DArray, vec3)
+0:188(17): error:    uvec4 texture(usampler2DArray, vec3)
+0:188(17): error:    float texture(sampler1DArrayShadow, vec3)
+0:188(17): error:    float texture(sampler2DArrayShadow, vec4)
+0:188(17): error:    vec4 texture(sampler2DRect, vec2)
+0:188(17): error:    ivec4 texture(isampler2DRect, vec2)
+0:188(17): error:    uvec4 texture(usampler2DRect, vec2)
+0:188(17): error:    float texture(sampler2DRectShadow, vec3)
+0:188(17): error:    vec4 texture(sampler1D, float, float)
+0:188(17): error:    ivec4 texture(isampler1D, float, float)
+0:188(17): error:    uvec4 texture(usampler1D, float, float)
+0:188(17): error:    vec4 texture(sampler2D, vec2, float)
+0:188(17): error:    ivec4 texture(isampler2D, vec2, float)
+0:188(17): error:    uvec4 texture(usampler2D, vec2, float)
+0:188(17): error:    vec4 texture(sampler3D, vec3, float)
+0:188(17): error:    ivec4 texture(isampler3D, vec3, float)
+0:188(17): error:    uvec4 texture(usampler3D, vec3, float)
+0:188(17): error:    vec4 texture(samplerCube, vec3, float)
+0:188(17): error:    ivec4 texture(isamplerCube, vec3, float)
+0:188(17): error: 
+ERROR: shaders/w40kdawn2/1065.shader_test failed to compile:
+0:65(2): error: `gl_TexCoord' undeclared
+0:65(2): error: type mismatch
+0:65(2): error: value of type float cannot be assigned to variable of type error
+0:70(2): error: `gl_TexCoord' undeclared
+0:70(2): error: type mismatch
+0:70(2): error: value of type float cannot be assigned to variable of type error
+0:164(2): error: `gl_TexCoord' undeclared
+0:164(2): error: type mismatch
+0:164(2): error: value of type vec3 cannot be assigned to variable of type error
+0:175(2): error: `gl_TexCoord' undeclared
+0:175(2): error: type mismatch
+0:175(2): error: value of type vec3 cannot be assigned to variable of type error
+0:179(2): error: `gl_TexCoord' undeclared
+0:179(2): error: type mismatch
+0:179(2): error: value of type vec3 cannot be assigned to variable of type error
+0:180(2): error: `gl_TexCoord' undeclared
+0:180(2): error: type mismatch
+0:180(2): error: value of type vec3 cannot be assigned to variable of type error
+0:184(2): error: `gl_TexCoord' undeclared
+0:184(2): error: type mismatch
+0:184(2): error: value of type vec2 cannot be assigned to variable of type error
+0:193(2): error: `gl_TexCoord' undeclared
+0:193(2): error: type mismatch
+0:193(2): error: value of type float cannot be assigned to variable of type error
+0:209(2): error: `gl_TexCoord' undeclared
+0:209(2): error: value of type vec4 cannot be assigned to variable of type error
+0:210(2): error: `gl_TexCoord' undeclared
+0:210(2): error: type mismatch
+0:210(2): error: value of type float cannot be assigned to variable of type error
+0:211(2): error: `gl_TexCoord' undeclared
+0:211(2): error: type mismatch
+0:211(2): error: value of type vec3 cannot be assigned to variable of type error
+0:212(2): error: `gl_TexCoord' undeclared
+0:212(2): error: type mismatch
+0:212(2): error: value of type float cannot be assigned to variable of type error
+0:213(2): error: `gl_TexCoord' undeclared
+0:213(2): error: type mismatch
+0:213(2): error: value of type vec2 cannot be assigned to variable of type error
+0:214(2): error: `gl_TexCoord' undeclared
+0:214(2): error: type mismatch
+0:214(2): error: value of type float cannot be assigned to variable of type error
+0:215(2): error: `gl_TexCoord' undeclared
+0:215(2): error: type mismatch
+0:215(2): error: value of type float cannot be assigned to variable of type error
+
+ERROR: shaders/w40kdawn2/1065.shader_test failed to compile:
+0:103(11): error: `gl_TexCoord' undeclared
+0:103(11): error: type mismatch
+0:103(11): error: operands to arithmetic operators must be numeric
+0:103(11): error: operands to arithmetic operators must be numeric
+0:108(18): error: `gl_TexCoord' undeclared
+0:108(18): error: type mismatch
+0:108(10): error: operands to arithmetic operators must be numeric
+0:111(19): error: `gl_TexCoord' undeclared
+0:111(19): error: type mismatch
+0:111(18): error: operands to arithmetic operators must be numeric
+0:111(10): error: operands to arithmetic operators must be numeric
+0:112(16): error: `gl_TexCoord' undeclared
+0:112(16): error: type mismatch
+0:112(9): error: operands to arithmetic operators must be numeric
+0:120(16): error: `gl_TexCoord' undeclared
+0:120(16): error: type mismatch
+0:120(9): error: operands to arithmetic operators must be numeric
+0:124(16): error: `gl_TexCoord' undeclared
+0:124(16): error: type mismatch
+0:124(9): error: operands to arithmetic operators must be numeric
+0:128(16): error: `gl_TexCoord' undeclared
+0:128(16): error: type mismatch
+0:128(9): error: operands to arithmetic operators must be numeric
+0:135(37): error: `gl_TexCoord' undeclared
+0:135(32): error: cannot construct `vec3' from a non-numeric data type
+0:135(17): error: no matching function for call to `texture(sampler2DShadow, error)'; candidates are:
+0:135(17): error:    vec4 texture(sampler1D, float)
+0:135(17): error:    ivec4 texture(isampler1D, float)
+0:135(17): error:    uvec4 texture(usampler1D, float)
+0:135(17): error:    vec4 texture(sampler2D, vec2)
+0:135(17): error:    ivec4 texture(isampler2D, vec2)
+0:135(17): error:    uvec4 texture(usampler2D, vec2)
+0:135(17): error:    vec4 texture(sampler3D, vec3)
+0:135(17): error:    ivec4 texture(isampler3D, vec3)
+0:135(17): error:    uvec4 texture(usampler3D, vec3)
+0:135(17): error:    vec4 texture(samplerCube, vec3)
+0:135(17): error:    ivec4 texture(isamplerCube, vec3)
+0:135(17): error:    uvec4 texture(usamplerCube, vec3)
+0:135(17): error:    float texture(sampler1DShadow, vec3)
+0:135(17): error:    float texture(sampler2DShadow, vec3)
+0:135(17): error:    float texture(samplerCubeShadow, vec4)
+0:135(17): error:    vec4 texture(sampler1DArray, vec2)
+0:135(17): error:    ivec4 texture(isampler1DArray, vec2)
+0:135(17): error:    uvec4 texture(usampler1DArray, vec2)
+0:135(17): error:    vec4 texture(sampler2DArray, vec3)
+0:135(17): error:    ivec4 texture(isampler2DArray, vec3)
+0:135(17): error:    uvec4 texture(usampler2DArray, vec3)
+0:135(17): error:    float texture(sampler1DArrayShadow, vec3)
+0:135(17): error:    float texture(sampler2DArrayShadow, vec4)
+0:135(17): error:    vec4 texture(sampler2DRect, vec2)
+0:135(17): error:    ivec4 texture(isampler2DRect, vec2)
+0:135(17): error:    uvec4 texture(usampler2DRect, vec2)
+0:135(17): error:    float texture(sampler2DRectShadow, vec3)
+0:135(17): error:    vec4 texture(sampler1D, float, float)
+0:135(17): error:    ivec4 texture(isampler1D, float, float)
+0:135(17): error:    uvec4 texture(usampler1D, float, float)
+0:135(17): error:    vec4 texture(sampler2D, vec2, float)
+0:135(17): error:    ivec4 texture(isampler2D, vec2, float)
+0:135(17): error:    uvec4 texture(usampler2D, vec2, float)
+0:135(17): error:    vec4 texture(sampler3D, vec3, float)
+0:135(17): error:    ivec4 texture(isampler3D, vec3, float)
+0:135(17): error:    uvec4 texture(usampler3D, vec3, float)
+0:135(17): error:    vec4 texture(samplerCube, vec3, float)
+0:135(17): error:    ivec4 texture(isamplerCube, vec3, float)
+0:135(17): error:    uvec4 texture(usamplerCube, vec3, float)
+0:135(17): error:    float texture(sampler1DShadow, vec3, float)
+0:135(17): error:    float texture(sampler2DShadow, vec3, float)
+0:135(17): error:    float texture(samplerCubeShadow, vec4, float)
+0:135(17): error:    vec4 texture(sampler1DArray, vec2, float)
+0:135(17): error:    ivec4 texture(isampler1DArray, vec2, float)
+0:135(17): error:    uvec4 texture(usampler1DArray, vec2, float)
+0:135(17): error:    vec4 texture(sampler2DArray, vec3, float)
+0:135(17): error:    ivec4 texture(isampler2DArray, vec3, float)
+0:
+ERROR: shaders/w40kdawn2/1053.shader_test failed to compile:
+0:65(2): error: `gl_TexCoord' undeclared
+0:65(2): error: type mismatch
+0:65(2): error: value of type float cannot be assigned to variable of type error
+0:70(2): error: `gl_TexCoord' undeclared
+0:70(2): error: type mismatch
+0:70(2): error: value of type float cannot be assigned to variable of type error
+0:164(2): error: `gl_TexCoord' undeclared
+0:164(2): error: type mismatch
+0:164(2): error: value of type vec3 cannot be assigned to variable of type error
+0:175(2): error: `gl_TexCoord' undeclared
+0:175(2): error: type mismatch
+0:175(2): error: value of type vec3 cannot be assigned to variable of type error
+0:179(2): error: `gl_TexCoord' undeclared
+0:179(2): error: type mismatch
+0:179(2): error: value of type vec3 cannot be assigned to variable of type error
+0:180(2): error: `gl_TexCoord' undeclared
+0:180(2): error: type mismatch
+0:180(2): error: value of type vec3 cannot be assigned to variable of type error
+0:184(2): error: `gl_TexCoord' undeclared
+0:184(2): error: type mismatch
+0:184(2): error: value of type vec2 cannot be assigned to variable of type error
+0:193(2): error: `gl_TexCoord' undeclared
+0:193(2): error: type mismatch
+0:193(2): error: value of type float cannot be assigned to variable of type error
+0:209(2): error: `gl_TexCoord' undeclared
+0:209(2): error: value of type vec4 cannot be assigned to variable of type error
+0:210(2): error: `gl_TexCoord' undeclared
+0:210(2): error: type mismatch
+0:210(2): error: value of type float cannot be assigned to variable of type error
+0:211(2): error: `gl_TexCoord' undeclared
+0:211(2): error: type mismatch
+0:211(2): error: value of type vec3 cannot be assigned to variable of type error
+0:212(2): error: `gl_TexCoord' undeclared
+0:212(2): error: type mismatch
+0:212(2): error: value of type float cannot be assigned to variable of type error
+0:213(2): error: `gl_TexCoord' undeclared
+0:213(2): error: type mismatch
+0:213(2): error: value of type vec2 cannot be assigned to variable of type error
+0:214(2): error: `gl_TexCoord' undeclared
+0:214(2): error: type mismatch
+0:214(2): error: value of type float cannot be assigned to variable of type error
+0:215(2): error: `gl_TexCoord' undeclared
+0:215(2): error: type mismatch
+0:215(2): error: value of type float cannot be assigned to variable of type error
+
+ERROR: shaders/w40kdawn2/1053.shader_test failed to compile:
+0:110(11): error: `gl_TexCoord' undeclared
+0:110(11): error: type mismatch
+0:110(11): error: operands to arithmetic operators must be numeric
+0:110(11): error: operands to arithmetic operators must be numeric
+0:115(18): error: `gl_TexCoord' undeclared
+0:115(18): error: type mismatch
+0:115(10): error: operands to arithmetic operators must be numeric
+0:118(19): error: `gl_TexCoord' undeclared
+0:118(19): error: type mismatch
+0:118(18): error: operands to arithmetic operators must be numeric
+0:118(10): error: operands to arithmetic operators must be numeric
+0:119(16): error: `gl_TexCoord' undeclared
+0:119(16): error: type mismatch
+0:119(9): error: operands to arithmetic operators must be numeric
+0:127(16): error: `gl_TexCoord' undeclared
+0:127(16): error: type mismatch
+0:127(9): error: operands to arithmetic operators must be numeric
+0:131(16): error: `gl_TexCoord' undeclared
+0:131(16): error: type mismatch
+0:131(9): error: operands to arithmetic operators must be numeric
+0:135(16): error: `gl_TexCoord' undeclared
+0:135(16): error: type mismatch
+0:135(9): error: operands to arithmetic operators must be numeric
+0:141(16): error: `gl_TexCoord' undeclared
+0:141(16): error: type mismatch
+0:141(9): error: operands to arithmetic operators must be numeric
+0:153(16): error: `gl_TexCoord' undeclared
+0:153(16): error: type mismatch
+0:153(9): error: operands to arithmetic operators must be numeric
+0:165(16): error: `gl_TexCoord' undeclared
+0:165(16): error: type mismatch
+0:165(9): error: operands to arithmetic operators must be numeric
+0:177(16): error: `gl_TexCoord' undeclared
+0:177(16): error: type mismatch
+0:177(9): error: operands to arithmetic operators must be numeric
+0:189(16): error: `gl_TexCoord' undeclared
+0:189(16): error: type mismatch
+0:189(9): error: operands to arithmetic operators must be numeric
+0:201(16): error: `gl_TexCoord' undeclared
+0:201(16): error: type mismatch
+0:201(9): error: operands to arithmetic operators must be numeric
+0:214(38): error: `gl_TexCoord' undeclared
+0:214(33): error: cannot construct `vec3' from a non-numeric data type
+0:214(17): error: no matching function for call to `texture(sampler2DShadow, error)'; candidates are:
+0:214(17): error:    vec4 texture(sampler1D, float)
+0:214(17): error:    ivec4 texture(isampler1D, float)
+0:214(17): error:    uvec4 texture(usampler1D, float)
+0:214(17): error:    vec4 texture(sampler2D, vec2)
+0:214(17): error:    ivec4 texture(isampler2D, vec2)
+0:214(17): error:    uvec4 texture(usampler2D, vec2)
+0:214(17): error:    vec4 texture(sampler3D, vec3)
+0:214(17): error:    ivec4 texture(isampler3D, vec3)
+0:214(17): error:    uvec4 texture(usampler3D, vec3)
+0:214(17): error:    vec4 texture(samplerCube, vec3)
+0:214(17): error:    ivec4 texture(isamplerCube, vec3)
+0:214(17): error:    uvec4 texture(usamplerCube, vec3)
+0:214(17): error:    float texture(sampler1DShadow, vec3)
+0:214(17): error:    float texture(sampler2DShadow, vec3)
+0:214(17): error:    float texture(samplerCubeShadow, vec4)
+0:214(17): error:    vec4 texture(sampler1DArray, vec2)
+0:214(17): error:    ivec4 texture(isampler1DArray, vec2)
+0:214(17): error:    uvec4 texture(usampler1DArray, vec2)
+0:214(17): error:    vec4 texture(sampler2DArray, vec3)
+0:214(17): error:    ivec4 texture(isampler2DArray, vec3)
+0:214(17): error:    uvec4 texture(usampler2DArray, vec3)
+0:214(17): error:    float texture(sampler1DArrayShadow, vec3)
+0:214(17): error:    float texture(sampler2DArrayShadow, vec4)
+0:214(17): error:    vec4 texture(sampler2DRect, vec2)
+0:214(17): error:    ivec4 texture(isampler2DRect, vec2)
+0:214(17): error:    uvec4 texture(usampler2DRect, vec2)
+0:214(17): error:    float texture(sampler2DRectShadow, vec3)
+0:214(17): error:    vec4 texture(sampler1D, float, float)
+0:214(17): error:    ivec4 texture(isampler1D, float, float)
+0:214(17): error:    uvec4 texture(usampler1D, float, float)
+0:214(17): error:    vec4 texture(sampler2D, vec2, float)
+0:214(17): error:    ivec4 texture(isampler2D, vec2, float)
+0:214(17): error:    uvec4 texture(usampler2D, vec2, float)
+0:214(17): error:    vec4 texture(sa
+ERROR: shaders/w40kdawn2/1056.shader_test failed to compile:
+0:129(2): error: `gl_TexCoord' undeclared
+0:129(2): error: type mismatch
+0:129(2): error: value of type float cannot be assigned to variable of type error
+0:130(2): error: `gl_TexCoord' undeclared
+0:130(2): error: type mismatch
+0:130(2): error: value of type float cannot be assigned to variable of type error
+0:131(2): error: `gl_TexCoord' undeclared
+0:131(2): error: type mismatch
+0:131(2): error: value of type float cannot be assigned to variable of type error
+0:141(2): error: `gl_TexCoord' undeclared
+0:141(2): error: type mismatch
+0:141(2): error: value of type float cannot be assigned to variable of type error
+0:146(2): error: `gl_TexCoord' undeclared
+0:146(2): error: type mismatch
+0:146(2): error: value of type float cannot be assigned to variable of type error
+0:240(2): error: `gl_TexCoord' undeclared
+0:240(2): error: type mismatch
+0:240(2): error: value of type vec3 cannot be assigned to variable of type error
+0:251(2): error: `gl_TexCoord' undeclared
+0:251(2): error: type mismatch
+0:251(2): error: value of type vec3 cannot be assigned to variable of type error
+0:255(2): error: `gl_TexCoord' undeclared
+0:255(2): error: type mismatch
+0:255(2): error: value of type vec3 cannot be assigned to variable of type error
+0:256(2): error: `gl_TexCoord' undeclared
+0:256(2): error: type mismatch
+0:256(2): error: value of type vec3 cannot be assigned to variable of type error
+0:260(2): error: `gl_TexCoord' undeclared
+0:260(2): error: type mismatch
+0:260(2): error: value of type vec2 cannot be assigned to variable of type error
+0:270(2): error: `gl_TexCoord' undeclared
+0:270(2): error: type mismatch
+0:270(2): error: value of type float cannot be assigned to variable of type error
+0:286(2): error: `gl_TexCoord' undeclared
+0:286(2): error: value of type vec4 cannot be assigned to variable of type error
+0:287(2): error: `gl_TexCoord' undeclared
+0:287(2): error: type mismatch
+0:287(2): error: value of type float cannot be assigned to variable of type error
+0:288(2): error: `gl_TexCoord' undeclared
+0:288(2): error: type mismatch
+0:288(2): error: value of type float cannot be assigned to variable of type error
+0:289(2): error: `gl_TexCoord' undeclared
+0:289(2): error: type mismatch
+0:289(2): error: value of type vec2 cannot be assigned to variable of type error
+0:290(2): error: `gl_TexCoord' undeclared
+0:290(2): error: type mismatch
+0:290(2): error: value of type float cannot be assigned to variable of type error
+0:291(2): error: `gl_TexCoord' undeclared
+0:291(2): error: type mismatch
+0:291(2): error: value of type float cannot be assigned to variable of type error
+
+ERROR: shaders/w40kdawn2/1056.shader_test failed to compile:
+0:111(11): error: `gl_TexCoord' undeclared
+0:111(11): error: type mismatch
+0:111(11): error: operands to arithmetic operators must be numeric
+0:111(11): error: operands to arithmetic operators must be numeric
+0:116(18): error: `gl_TexCoord' undeclared
+0:116(18): error: type mismatch
+0:116(10): error: operands to arithmetic operators must be numeric
+0:119(19): error: `gl_TexCoord' undeclared
+0:119(19): error: type mismatch
+0:119(18): error: operands to arithmetic operators must be numeric
+0:119(10): error: operands to arithmetic operators must be numeric
+0:120(16): error: `gl_TexCoord' undeclared
+0:120(16): error: type mismatch
+0:120(9): error: operands to arithmetic operators must be numeric
+0:128(16): error: `gl_TexCoord' undeclared
+0:128(16): error: type mismatch
+0:128(9): error: operands to arithmetic operators must be numeric
+0:132(16): error: `gl_TexCoord' undeclared
+0:132(16): error: type mismatch
+0:132(9): error: operands to arithmetic operators must be numeric
+0:136(16): error: `gl_TexCoord' undeclared
+0:136(16): error: type mismatch
+0:136(9): error: operands to arithmetic operators must be numeric
+0:142(16): error: `gl_TexCoord' undeclared
+0:142(16): error: type mismatch
+0:142(9): error: operands to arithmetic operators must be numeric
+0:154(16): error: `gl_TexCoord' undeclared
+0:154(16): error: type mismatch
+0:154(9): error: operands to arithmetic operators must be numeric
+0:166(16): error: `gl_TexCoord' undeclared
+0:166(16): error: type mismatch
+0:166(9): error: operands to arithmetic operators must be numeric
+0:178(16): error: `gl_TexCoord' undeclared
+0:178(16): error: type mismatch
+0:178(9): error: operands to arithmetic operators must be numeric
+0:190(16): error: `gl_TexCoord' undeclared
+0:190(16): error: type mismatch
+0:190(9): error: operands to arithmetic operators must be numeric
+0:202(16): error: `gl_TexCoord' undeclared
+0:202(16): error: type mismatch
+0:202(9): error: operands to arithmetic operators must be numeric
+0:214(16): error: `gl_TexCoord' undeclared
+0:214(16): error: type mismatch
+0:214(9): error: operands to arithmetic operators must be numeric
+0:227(38): error: `gl_TexCoord' undeclared
+0:227(33): error: cannot construct `vec3' from a non-numeric data type
+0:227(17): error: no matching function for call to `texture(sampler2DShadow, error)'; candidates are:
+0:227(17): error:    vec4 texture(sampler1D, float)
+0:227(17): error:    ivec4 texture(isampler1D, float)
+0:227(17): error:    uvec4 texture(usampler1D, float)
+0:227(17): error:    vec4 texture(sampler2D, vec2)
+0:227(17): error:    ivec4 texture(isampler2D, vec2)
+0:227(17): error:    uvec4 texture(usampler2D, vec2)
+0:227(17): error:    vec4 texture(sampler3D, vec3)
+0:227(17): error:    ivec4 texture(isampler3D, vec3)
+0:227(17): error:    uvec4 texture(usampler3D, vec3)
+0:227(17): error:    vec4 texture(samplerCube, vec3)
+0:227(17): error:    ivec4 texture(isamplerCube, vec3)
+0:227(17): error:    uvec4 texture(usamplerCube, vec3)
+0:227(17): error:    float texture(sampler1DShadow, vec3)
+0:227(17): error:    float texture(sampler2DShadow, vec3)
+0:227(17): error:    float texture(samplerCubeShadow, vec4)
+0:227(17): error:    vec4 texture(sampler1DArray, vec2)
+0:227(17): error:    ivec4 texture(isampler1DArray, vec2)
+0:227(17): error:    uvec4 texture(usampler1DArray, vec2)
+0:227(17): error:    vec4 texture(sampler2DArray, vec3)
+0:227(17): error:    ivec4 texture(isampler2DArray, vec3)
+0:227(17): error:    uvec4 texture(usampler2DArray, vec3)
+0:227(17): error:    float texture(sampler1DArrayShadow, vec3)
+0:227(17): error:    float texture(sampler2DArrayShadow, vec4)
+0:227(17): error:    vec4 texture(sampler2DRect, vec2)
+0:227(17): error:    ivec4 texture(isampler2DRect, vec2)
+0:227(17): error:    uvec4 texture(usampler2DRect, vec2)
+0:227(17): error:    float texture(sampler2DRectShadow, vec3)
+0:227(17): error:    vec4 texture(sampler1D, float, float)
+0:227(17): error:    ivec4 texture(isampler1D, float, float)
+0:227(17): error:    uvec4 texture(usampler1D, float, float)
+0:227(17): error:    vec4 texture(sampler2D, vec2, float)
+0:227(17): erro
+ERROR: shaders/w40kdawn2/1060.shader_test failed to compile:
+0:65(2): error: `gl_TexCoord' undeclared
+0:65(2): error: type mismatch
+0:65(2): error: value of type float cannot be assigned to variable of type error
+0:70(2): error: `gl_TexCoord' undeclared
+0:70(2): error: type mismatch
+0:70(2): error: value of type float cannot be assigned to variable of type error
+0:164(2): error: `gl_TexCoord' undeclared
+0:164(2): error: type mismatch
+0:164(2): error: value of type vec3 cannot be assigned to variable of type error
+0:175(2): error: `gl_TexCoord' undeclared
+0:175(2): error: type mismatch
+0:175(2): error: value of type vec3 cannot be assigned to variable of type error
+0:179(2): error: `gl_TexCoord' undeclared
+0:179(2): error: type mismatch
+0:179(2): error: value of type vec3 cannot be assigned to variable of type error
+0:180(2): error: `gl_TexCoord' undeclared
+0:180(2): error: type mismatch
+0:180(2): error: value of type vec3 cannot be assigned to variable of type error
+0:184(2): error: `gl_TexCoord' undeclared
+0:184(2): error: type mismatch
+0:184(2): error: value of type vec2 cannot be assigned to variable of type error
+0:193(2): error: `gl_TexCoord' undeclared
+0:193(2): error: type mismatch
+0:193(2): error: value of type float cannot be assigned to variable of type error
+0:209(2): error: `gl_TexCoord' undeclared
+0:209(2): error: value of type vec4 cannot be assigned to variable of type error
+0:210(2): error: `gl_TexCoord' undeclared
+0:210(2): error: type mismatch
+0:210(2): error: value of type float cannot be assigned to variable of type error
+0:211(2): error: `gl_TexCoord' undeclared
+0:211(2): error: type mismatch
+0:211(2): error: value of type vec3 cannot be assigned to variable of type error
+0:212(2): error: `gl_TexCoord' undeclared
+0:212(2): error: type mismatch
+0:212(2): error: value of type float cannot be assigned to variable of type error
+0:213(2): error: `gl_TexCoord' undeclared
+0:213(2): error: type mismatch
+0:213(2): error: value of type vec2 cannot be assigned to variable of type error
+0:214(2): error: `gl_TexCoord' undeclared
+0:214(2): error: type mismatch
+0:214(2): error: value of type float cannot be assigned to variable of type error
+0:215(2): error: `gl_TexCoord' undeclared
+0:215(2): error: type mismatch
+0:215(2): error: value of type float cannot be assigned to variable of type error
+
+ERROR: shaders/w40kdawn2/1060.shader_test failed to compile:
+0:109(11): error: `gl_TexCoord' undeclared
+0:109(11): error: type mismatch
+0:109(11): error: operands to arithmetic operators must be numeric
+0:109(11): error: operands to arithmetic operators must be numeric
+0:114(18): error: `gl_TexCoord' undeclared
+0:114(18): error: type mismatch
+0:114(10): error: operands to arithmetic operators must be numeric
+0:117(19): error: `gl_TexCoord' undeclared
+0:117(19): error: type mismatch
+0:117(18): error: operands to arithmetic operators must be numeric
+0:117(10): error: operands to arithmetic operators must be numeric
+0:118(16): error: `gl_TexCoord' undeclared
+0:118(16): error: type mismatch
+0:118(9): error: operands to arithmetic operators must be numeric
+0:126(16): error: `gl_TexCoord' undeclared
+0:126(16): error: type mismatch
+0:126(9): error: operands to arithmetic operators must be numeric
+0:130(16): error: `gl_TexCoord' undeclared
+0:130(16): error: type mismatch
+0:130(9): error: operands to arithmetic operators must be numeric
+0:134(16): error: `gl_TexCoord' undeclared
+0:134(16): error: type mismatch
+0:134(9): error: operands to arithmetic operators must be numeric
+0:140(16): error: `gl_TexCoord' undeclared
+0:140(16): error: type mismatch
+0:140(9): error: operands to arithmetic operators must be numeric
+0:152(16): error: `gl_TexCoord' undeclared
+0:152(16): error: type mismatch
+0:152(9): error: operands to arithmetic operators must be numeric
+0:164(16): error: `gl_TexCoord' undeclared
+0:164(16): error: type mismatch
+0:164(9): error: operands to arithmetic operators must be numeric
+0:176(16): error: `gl_TexCoord' undeclared
+0:176(16): error: type mismatch
+0:176(9): error: operands to arithmetic operators must be numeric
+0:188(16): error: `gl_TexCoord' undeclared
+0:188(16): error: type mismatch
+0:188(9): error: operands to arithmetic operators must be numeric
+0:201(38): error: `gl_TexCoord' undeclared
+0:201(33): error: cannot construct `vec3' from a non-numeric data type
+0:201(17): error: no matching function for call to `texture(sampler2DShadow, error)'; candidates are:
+0:201(17): error:    vec4 texture(sampler1D, float)
+0:201(17): error:    ivec4 texture(isampler1D, float)
+0:201(17): error:    uvec4 texture(usampler1D, float)
+0:201(17): error:    vec4 texture(sampler2D, vec2)
+0:201(17): error:    ivec4 texture(isampler2D, vec2)
+0:201(17): error:    uvec4 texture(usampler2D, vec2)
+0:201(17): error:    vec4 texture(sampler3D, vec3)
+0:201(17): error:    ivec4 texture(isampler3D, vec3)
+0:201(17): error:    uvec4 texture(usampler3D, vec3)
+0:201(17): error:    vec4 texture(samplerCube, vec3)
+0:201(17): error:    ivec4 texture(isamplerCube, vec3)
+0:201(17): error:    uvec4 texture(usamplerCube, vec3)
+0:201(17): error:    float texture(sampler1DShadow, vec3)
+0:201(17): error:    float texture(sampler2DShadow, vec3)
+0:201(17): error:    float texture(samplerCubeShadow, vec4)
+0:201(17): error:    vec4 texture(sampler1DArray, vec2)
+0:201(17): error:    ivec4 texture(isampler1DArray, vec2)
+0:201(17): error:    uvec4 texture(usampler1DArray, vec2)
+0:201(17): error:    vec4 texture(sampler2DArray, vec3)
+0:201(17): error:    ivec4 texture(isampler2DArray, vec3)
+0:201(17): error:    uvec4 texture(usampler2DArray, vec3)
+0:201(17): error:    float texture(sampler1DArrayShadow, vec3)
+0:201(17): error:    float texture(sampler2DArrayShadow, vec4)
+0:201(17): error:    vec4 texture(sampler2DRect, vec2)
+0:201(17): error:    ivec4 texture(isampler2DRect, vec2)
+0:201(17): error:    uvec4 texture(usampler2DRect, vec2)
+0:201(17): error:    float texture(sampler2DRectShadow, vec3)
+0:201(17): error:    vec4 texture(sampler1D, float, float)
+0:201(17): error:    ivec4 texture(isampler1D, float, float)
+0:201(17): error:    uvec4 texture(usampler1D, float, float)
+0:201(17): error:    vec4 texture(sampler2D, vec2, float)
+0:201(17): error:    ivec4 texture(isampler2D, vec2, float)
+0:201(17): error:    uvec4 texture(usampler2D, vec2, float)
+0:201(17): error:    vec4 texture(sampler3D, vec3, float)
+0:201(17): error:    ivec4 texture(isampler3D, vec3, float)
+0:201(17): error:    uvec4 texture(usampler3D, vec3, float)
+ERROR: shaders/w40kdawn2/1068.shader_test failed to compile:
+0:65(2): error: `gl_TexCoord' undeclared
+0:65(2): error: type mismatch
+0:65(2): error: value of type float cannot be assigned to variable of type error
+0:70(2): error: `gl_TexCoord' undeclared
+0:70(2): error: type mismatch
+0:70(2): error: value of type float cannot be assigned to variable of type error
+0:164(2): error: `gl_TexCoord' undeclared
+0:164(2): error: type mismatch
+0:164(2): error: value of type vec3 cannot be assigned to variable of type error
+0:175(2): error: `gl_TexCoord' undeclared
+0:175(2): error: type mismatch
+0:175(2): error: value of type vec3 cannot be assigned to variable of type error
+0:179(2): error: `gl_TexCoord' undeclared
+0:179(2): error: type mismatch
+0:179(2): error: value of type vec3 cannot be assigned to variable of type error
+0:180(2): error: `gl_TexCoord' undeclared
+0:180(2): error: type mismatch
+0:180(2): error: value of type vec3 cannot be assigned to variable of type error
+0:184(2): error: `gl_TexCoord' undeclared
+0:184(2): error: type mismatch
+0:184(2): error: value of type vec2 cannot be assigned to variable of type error
+0:193(2): error: `gl_TexCoord' undeclared
+0:193(2): error: type mismatch
+0:193(2): error: value of type float cannot be assigned to variable of type error
+0:209(2): error: `gl_TexCoord' undeclared
+0:209(2): error: value of type vec4 cannot be assigned to variable of type error
+0:210(2): error: `gl_TexCoord' undeclared
+0:210(2): error: type mismatch
+0:210(2): error: value of type float cannot be assigned to variable of type error
+0:211(2): error: `gl_TexCoord' undeclared
+0:211(2): error: type mismatch
+0:211(2): error: value of type vec3 cannot be assigned to variable of type error
+0:212(2): error: `gl_TexCoord' undeclared
+0:212(2): error: type mismatch
+0:212(2): error: value of type float cannot be assigned to variable of type error
+0:213(2): error: `gl_TexCoord' undeclared
+0:213(2): error: type mismatch
+0:213(2): error: value of type vec2 cannot be assigned to variable of type error
+0:214(2): error: `gl_TexCoord' undeclared
+0:214(2): error: type mismatch
+0:214(2): error: value of type float cannot be assigned to variable of type error
+0:215(2): error: `gl_TexCoord' undeclared
+0:215(2): error: type mismatch
+0:215(2): error: value of type float cannot be assigned to variable of type error
+
+ERROR: shaders/w40kdawn2/1068.shader_test failed to compile:
+0:107(11): error: `gl_TexCoord' undeclared
+0:107(11): error: type mismatch
+0:107(11): error: operands to arithmetic operators must be numeric
+0:107(11): error: operands to arithmetic operators must be numeric
+0:112(18): error: `gl_TexCoord' undeclared
+0:112(18): error: type mismatch
+0:112(10): error: operands to arithmetic operators must be numeric
+0:115(19): error: `gl_TexCoord' undeclared
+0:115(19): error: type mismatch
+0:115(18): error: operands to arithmetic operators must be numeric
+0:115(10): error: operands to arithmetic operators must be numeric
+0:116(16): error: `gl_TexCoord' undeclared
+0:116(16): error: type mismatch
+0:116(9): error: operands to arithmetic operators must be numeric
+0:124(16): error: `gl_TexCoord' undeclared
+0:124(16): error: type mismatch
+0:124(9): error: operands to arithmetic operators must be numeric
+0:128(16): error: `gl_TexCoord' undeclared
+0:128(16): error: type mismatch
+0:128(9): error: operands to arithmetic operators must be numeric
+0:132(16): error: `gl_TexCoord' undeclared
+0:132(16): error: type mismatch
+0:132(9): error: operands to arithmetic operators must be numeric
+0:138(16): error: `gl_TexCoord' undeclared
+0:138(16): error: type mismatch
+0:138(9): error: operands to arithmetic operators must be numeric
+0:150(16): error: `gl_TexCoord' undeclared
+0:150(16): error: type mismatch
+0:150(9): error: operands to arithmetic operators must be numeric
+0:162(16): error: `gl_TexCoord' undeclared
+0:162(16): error: type mismatch
+0:162(9): error: operands to arithmetic operators must be numeric
+0:175(37): error: `gl_TexCoord' undeclared
+0:175(32): error: cannot construct `vec3' from a non-numeric data type
+0:175(17): error: no matching function for call to `texture(sampler2DShadow, error)'; candidates are:
+0:175(17): error:    vec4 texture(sampler1D, float)
+0:175(17): error:    ivec4 texture(isampler1D, float)
+0:175(17): error:    uvec4 texture(usampler1D, float)
+0:175(17): error:    vec4 texture(sampler2D, vec2)
+0:175(17): error:    ivec4 texture(isampler2D, vec2)
+0:175(17): error:    uvec4 texture(usampler2D, vec2)
+0:175(17): error:    vec4 texture(sampler3D, vec3)
+0:175(17): error:    ivec4 texture(isampler3D, vec3)
+0:175(17): error:    uvec4 texture(usampler3D, vec3)
+0:175(17): error:    vec4 texture(samplerCube, vec3)
+0:175(17): error:    ivec4 texture(isamplerCube, vec3)
+0:175(17): error:    uvec4 texture(usamplerCube, vec3)
+0:175(17): error:    float texture(sampler1DShadow, vec3)
+0:175(17): error:    float texture(sampler2DShadow, vec3)
+0:175(17): error:    float texture(samplerCubeShadow, vec4)
+0:175(17): error:    vec4 texture(sampler1DArray, vec2)
+0:175(17): error:    ivec4 texture(isampler1DArray, vec2)
+0:175(17): error:    uvec4 texture(usampler1DArray, vec2)
+0:175(17): error:    vec4 texture(sampler2DArray, vec3)
+0:175(17): error:    ivec4 texture(isampler2DArray, vec3)
+0:175(17): error:    uvec4 texture(usampler2DArray, vec3)
+0:175(17): error:    float texture(sampler1DArrayShadow, vec3)
+0:175(17): error:    float texture(sampler2DArrayShadow, vec4)
+0:175(17): error:    vec4 texture(sampler2DRect, vec2)
+0:175(17): error:    ivec4 texture(isampler2DRect, vec2)
+0:175(17): error:    uvec4 texture(usampler2DRect, vec2)
+0:175(17): error:    float texture(sampler2DRectShadow, vec3)
+0:175(17): error:    vec4 texture(sampler1D, float, float)
+0:175(17): error:    ivec4 texture(isampler1D, float, float)
+0:175(17): error:    uvec4 texture(usampler1D, float, float)
+0:175(17): error:    vec4 texture(sampler2D, vec2, float)
+0:175(17): error:    ivec4 texture(isampler2D, vec2, float)
+0:175(17): error:    uvec4 texture(usampler2D, vec2, float)
+0:175(17): error:    vec4 texture(sampler3D, vec3, float)
+0:175(17): error:    ivec4 texture(isampler3D, vec3, float)
+0:175(17): error:    uvec4 texture(usampler3D, vec3, float)
+0:175(17): error:    vec4 texture(samplerCube, vec3, float)
+0:175(17): error:    ivec4 texture(isamplerCube, vec3, float)
+0:175(17): error:    uvec4 texture(usamplerCube, vec3, float)
+0:175(17): error:    float texture(sampler1DShadow, vec3, float)
+0:175(17): error:    float textu
+ERROR: shaders/w40kdawn2/1055.shader_test failed to compile:
+0:65(2): error: `gl_TexCoord' undeclared
+0:65(2): error: type mismatch
+0:65(2): error: value of type float cannot be assigned to variable of type error
+0:70(2): error: `gl_TexCoord' undeclared
+0:70(2): error: type mismatch
+0:70(2): error: value of type float cannot be assigned to variable of type error
+0:164(2): error: `gl_TexCoord' undeclared
+0:164(2): error: type mismatch
+0:164(2): error: value of type vec3 cannot be assigned to variable of type error
+0:175(2): error: `gl_TexCoord' undeclared
+0:175(2): error: type mismatch
+0:175(2): error: value of type vec3 cannot be assigned to variable of type error
+0:179(2): error: `gl_TexCoord' undeclared
+0:179(2): error: type mismatch
+0:179(2): error: value of type vec3 cannot be assigned to variable of type error
+0:180(2): error: `gl_TexCoord' undeclared
+0:180(2): error: type mismatch
+0:180(2): error: value of type vec3 cannot be assigned to variable of type error
+0:184(2): error: `gl_TexCoord' undeclared
+0:184(2): error: type mismatch
+0:184(2): error: value of type vec2 cannot be assigned to variable of type error
+0:193(2): error: `gl_TexCoord' undeclared
+0:193(2): error: type mismatch
+0:193(2): error: value of type float cannot be assigned to variable of type error
+0:209(2): error: `gl_TexCoord' undeclared
+0:209(2): error: value of type vec4 cannot be assigned to variable of type error
+0:210(2): error: `gl_TexCoord' undeclared
+0:210(2): error: type mismatch
+0:210(2): error: value of type float cannot be assigned to variable of type error
+0:211(2): error: `gl_TexCoord' undeclared
+0:211(2): error: type mismatch
+0:211(2): error: value of type vec3 cannot be assigned to variable of type error
+0:212(2): error: `gl_TexCoord' undeclared
+0:212(2): error: type mismatch
+0:212(2): error: value of type float cannot be assigned to variable of type error
+0:213(2): error: `gl_TexCoord' undeclared
+0:213(2): error: type mismatch
+0:213(2): error: value of type vec2 cannot be assigned to variable of type error
+0:214(2): error: `gl_TexCoord' undeclared
+0:214(2): error: type mismatch
+0:214(2): error: value of type float cannot be assigned to variable of type error
+0:215(2): error: `gl_TexCoord' undeclared
+0:215(2): error: type mismatch
+0:215(2): error: value of type float cannot be assigned to variable of type error
+
+ERROR: shaders/w40kdawn2/1055.shader_test failed to compile:
+0:111(11): error: `gl_TexCoord' undeclared
+0:111(11): error: type mismatch
+0:111(11): error: operands to arithmetic operators must be numeric
+0:111(11): error: operands to arithmetic operators must be numeric
+0:116(18): error: `gl_TexCoord' undeclared
+0:116(18): error: type mismatch
+0:116(10): error: operands to arithmetic operators must be numeric
+0:119(19): error: `gl_TexCoord' undeclared
+0:119(19): error: type mismatch
+0:119(18): error: operands to arithmetic operators must be numeric
+0:119(10): error: operands to arithmetic operators must be numeric
+0:120(16): error: `gl_TexCoord' undeclared
+0:120(16): error: type mismatch
+0:120(9): error: operands to arithmetic operators must be numeric
+0:128(16): error: `gl_TexCoord' undeclared
+0:128(16): error: type mismatch
+0:128(9): error: operands to arithmetic operators must be numeric
+0:132(16): error: `gl_TexCoord' undeclared
+0:132(16): error: type mismatch
+0:132(9): error: operands to arithmetic operators must be numeric
+0:136(16): error: `gl_TexCoord' undeclared
+0:136(16): error: type mismatch
+0:136(9): error: operands to arithmetic operators must be numeric
+0:142(16): error: `gl_TexCoord' undeclared
+0:142(16): error: type mismatch
+0:142(9): error: operands to arithmetic operators must be numeric
+0:154(16): error: `gl_TexCoord' undeclared
+0:154(16): error: type mismatch
+0:154(9): error: operands to arithmetic operators must be numeric
+0:166(16): error: `gl_TexCoord' undeclared
+0:166(16): error: type mismatch
+0:166(9): error: operands to arithmetic operators must be numeric
+0:178(16): error: `gl_TexCoord' undeclared
+0:178(16): error: type mismatch
+0:178(9): error: operands to arithmetic operators must be numeric
+0:190(16): error: `gl_TexCoord' undeclared
+0:190(16): error: type mismatch
+0:190(9): error: operands to arithmetic operators must be numeric
+0:202(16): error: `gl_TexCoord' undeclared
+0:202(16): error: type mismatch
+0:202(9): error: operands to arithmetic operators must be numeric
+0:214(16): error: `gl_TexCoord' undeclared
+0:214(16): error: type mismatch
+0:214(9): error: operands to arithmetic operators must be numeric
+0:227(38): error: `gl_TexCoord' undeclared
+0:227(33): error: cannot construct `vec3' from a non-numeric data type
+0:227(17): error: no matching function for call to `texture(sampler2DShadow, error)'; candidates are:
+0:227(17): error:    vec4 texture(sampler1D, float)
+0:227(17): error:    ivec4 texture(isampler1D, float)
+0:227(17): error:    uvec4 texture(usampler1D, float)
+0:227(17): error:    vec4 texture(sampler2D, vec2)
+0:227(17): error:    ivec4 texture(isampler2D, vec2)
+0:227(17): error:    uvec4 texture(usampler2D, vec2)
+0:227(17): error:    vec4 texture(sampler3D, vec3)
+0:227(17): error:    ivec4 texture(isampler3D, vec3)
+0:227(17): error:    uvec4 texture(usampler3D, vec3)
+0:227(17): error:    vec4 texture(samplerCube, vec3)
+0:227(17): error:    ivec4 texture(isamplerCube, vec3)
+0:227(17): error:    uvec4 texture(usamplerCube, vec3)
+0:227(17): error:    float texture(sampler1DShadow, vec3)
+0:227(17): error:    float texture(sampler2DShadow, vec3)
+0:227(17): error:    float texture(samplerCubeShadow, vec4)
+0:227(17): error:    vec4 texture(sampler1DArray, vec2)
+0:227(17): error:    ivec4 texture(isampler1DArray, vec2)
+0:227(17): error:    uvec4 texture(usampler1DArray, vec2)
+0:227(17): error:    vec4 texture(sampler2DArray, vec3)
+0:227(17): error:    ivec4 texture(isampler2DArray, vec3)
+0:227(17): error:    uvec4 texture(usampler2DArray, vec3)
+0:227(17): error:    float texture(sampler1DArrayShadow, vec3)
+0:227(17): error:    float texture(sampler2DArrayShadow, vec4)
+0:227(17): error:    vec4 texture(sampler2DRect, vec2)
+0:227(17): error:    ivec4 texture(isampler2DRect, vec2)
+0:227(17): error:    uvec4 texture(usampler2DRect, vec2)
+0:227(17): error:    float texture(sampler2DRectShadow, vec3)
+0:227(17): error:    vec4 texture(sampler1D, float, float)
+0:227(17): error:    ivec4 texture(isampler1D, float, float)
+0:227(17): error:    uvec4 texture(usampler1D, float, float)
+0:227(17): error:    vec4 texture(sampler2D, vec2, float)
+0:227(17): erro
+ERROR: shaders/w40kdawn2/1064.shader_test failed to compile:
+0:65(2): error: `gl_TexCoord' undeclared
+0:65(2): error: type mismatch
+0:65(2): error: value of type float cannot be assigned to variable of type error
+0:70(2): error: `gl_TexCoord' undeclared
+0:70(2): error: type mismatch
+0:70(2): error: value of type float cannot be assigned to variable of type error
+0:164(2): error: `gl_TexCoord' undeclared
+0:164(2): error: type mismatch
+0:164(2): error: value of type vec3 cannot be assigned to variable of type error
+0:175(2): error: `gl_TexCoord' undeclared
+0:175(2): error: type mismatch
+0:175(2): error: value of type vec3 cannot be assigned to variable of type error
+0:179(2): error: `gl_TexCoord' undeclared
+0:179(2): error: type mismatch
+0:179(2): error: value of type vec3 cannot be assigned to variable of type error
+0:180(2): error: `gl_TexCoord' undeclared
+0:180(2): error: type mismatch
+0:180(2): error: value of type vec3 cannot be assigned to variable of type error
+0:184(2): error: `gl_TexCoord' undeclared
+0:184(2): error: type mismatch
+0:184(2): error: value of type vec2 cannot be assigned to variable of type error
+0:193(2): error: `gl_TexCoord' undeclared
+0:193(2): error: type mismatch
+0:193(2): error: value of type float cannot be assigned to variable of type error
+0:209(2): error: `gl_TexCoord' undeclared
+0:209(2): error: value of type vec4 cannot be assigned to variable of type error
+0:210(2): error: `gl_TexCoord' undeclared
+0:210(2): error: type mismatch
+0:210(2): error: value of type float cannot be assigned to variable of type error
+0:211(2): error: `gl_TexCoord' undeclared
+0:211(2): error: type mismatch
+0:211(2): error: value of type vec3 cannot be assigned to variable of type error
+0:212(2): error: `gl_TexCoord' undeclared
+0:212(2): error: type mismatch
+0:212(2): error: value of type float cannot be assigned to variable of type error
+0:213(2): error: `gl_TexCoord' undeclared
+0:213(2): error: type mismatch
+0:213(2): error: value of type vec2 cannot be assigned to variable of type error
+0:214(2): error: `gl_TexCoord' undeclared
+0:214(2): error: type mismatch
+0:214(2): error: value of type float cannot be assigned to variable of type error
+0:215(2): error: `gl_TexCoord' undeclared
+0:215(2): error: type mismatch
+0:215(2): error: value of type float cannot be assigned to variable of type error
+
+ERROR: shaders/w40kdawn2/1064.shader_test failed to compile:
+0:106(11): error: `gl_TexCoord' undeclared
+0:106(11): error: type mismatch
+0:106(11): error: operands to arithmetic operators must be numeric
+0:106(11): error: operands to arithmetic operators must be numeric
+0:111(18): error: `gl_TexCoord' undeclared
+0:111(18): error: type mismatch
+0:111(10): error: operands to arithmetic operators must be numeric
+0:114(19): error: `gl_TexCoord' undeclared
+0:114(19): error: type mismatch
+0:114(18): error: operands to arithmetic operators must be numeric
+0:114(10): error: operands to arithmetic operators must be numeric
+0:115(16): error: `gl_TexCoord' undeclared
+0:115(16): error: type mismatch
+0:115(9): error: operands to arithmetic operators must be numeric
+0:123(16): error: `gl_TexCoord' undeclared
+0:123(16): error: type mismatch
+0:123(9): error: operands to arithmetic operators must be numeric
+0:127(16): error: `gl_TexCoord' undeclared
+0:127(16): error: type mismatch
+0:127(9): error: operands to arithmetic operators must be numeric
+0:131(16): error: `gl_TexCoord' undeclared
+0:131(16): error: type mismatch
+0:131(9): error: operands to arithmetic operators must be numeric
+0:137(16): error: `gl_TexCoord' undeclared
+0:137(16): error: type mismatch
+0:137(9): error: operands to arithmetic operators must be numeric
+0:149(16): error: `gl_TexCoord' undeclared
+0:149(16): error: type mismatch
+0:149(9): error: operands to arithmetic operators must be numeric
+0:162(37): error: `gl_TexCoord' undeclared
+0:162(32): error: cannot construct `vec3' from a non-numeric data type
+0:162(17): error: no matching function for call to `texture(sampler2DShadow, error)'; candidates are:
+0:162(17): error:    vec4 texture(sampler1D, float)
+0:162(17): error:    ivec4 texture(isampler1D, float)
+0:162(17): error:    uvec4 texture(usampler1D, float)
+0:162(17): error:    vec4 texture(sampler2D, vec2)
+0:162(17): error:    ivec4 texture(isampler2D, vec2)
+0:162(17): error:    uvec4 texture(usampler2D, vec2)
+0:162(17): error:    vec4 texture(sampler3D, vec3)
+0:162(17): error:    ivec4 texture(isampler3D, vec3)
+0:162(17): error:    uvec4 texture(usampler3D, vec3)
+0:162(17): error:    vec4 texture(samplerCube, vec3)
+0:162(17): error:    ivec4 texture(isamplerCube, vec3)
+0:162(17): error:    uvec4 texture(usamplerCube, vec3)
+0:162(17): error:    float texture(sampler1DShadow, vec3)
+0:162(17): error:    float texture(sampler2DShadow, vec3)
+0:162(17): error:    float texture(samplerCubeShadow, vec4)
+0:162(17): error:    vec4 texture(sampler1DArray, vec2)
+0:162(17): error:    ivec4 texture(isampler1DArray, vec2)
+0:162(17): error:    uvec4 texture(usampler1DArray, vec2)
+0:162(17): error:    vec4 texture(sampler2DArray, vec3)
+0:162(17): error:    ivec4 texture(isampler2DArray, vec3)
+0:162(17): error:    uvec4 texture(usampler2DArray, vec3)
+0:162(17): error:    float texture(sampler1DArrayShadow, vec3)
+0:162(17): error:    float texture(sampler2DArrayShadow, vec4)
+0:162(17): error:    vec4 texture(sampler2DRect, vec2)
+0:162(17): error:    ivec4 texture(isampler2DRect, vec2)
+0:162(17): error:    uvec4 texture(usampler2DRect, vec2)
+0:162(17): error:    float texture(sampler2DRectShadow, vec3)
+0:162(17): error:    vec4 texture(sampler1D, float, float)
+0:162(17): error:    ivec4 texture(isampler1D, float, float)
+0:162(17): error:    uvec4 texture(usampler1D, float, float)
+0:162(17): error:    vec4 texture(sampler2D, vec2, float)
+0:162(17): error:    ivec4 texture(isampler2D, vec2, float)
+0:162(17): error:    uvec4 texture(usampler2D, vec2, float)
+0:162(17): error:    vec4 texture(sampler3D, vec3, float)
+0:162(17): error:    ivec4 texture(isampler3D, vec3, float)
+0:162(17): error:    uvec4 texture(usampler3D, vec3, float)
+0:162(17): error:    vec4 texture(samplerCube, vec3, float)
+0:162(17): error:    ivec4 texture(isamplerCube, vec3, float)
+0:162(17): error:    uvec4 texture(usamplerCube, vec3, float)
+0:162(17): error:    float texture(sampler1DShadow, vec3, float)
+0:162(17): error:    float texture(sampler2DShadow, vec3, float)
+0:162(17): error:    float texture(samplerCubeShadow, vec4, float)
+0:162(17): error:    vec4 texture(sampler
+ERROR: shaders/metro2033redux/fbf8031490eb77c2d30ed329353198d8e597cba2_4875.shader_test failed to compile:
+0:1(10): error: GLSL 4.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES
+
+ERROR: shaders/metro2033redux/fbf8031490eb77c2d30ed329353198d8e597cba2_4875.shader_test failed to compile:
+0:1(10): error: GLSL 4.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES
+
