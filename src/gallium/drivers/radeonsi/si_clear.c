@@ -411,14 +411,13 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 		 * organized in a 2D plane).
 		 */
 		if (sctx->chip_class >= GFX9 &&
-		    tex->buffer.b.b.last_level > 0)
+		    tex->resource.b.b.last_level > 0)
 			continue;
 
 		/* the clear is allowed if all layers are bound */
 		if (fb->cbufs[i]->u.tex.first_layer != 0 ||
-		    fb->cbufs[i]->u.tex.last_layer != util_max_layer(&tex->buffer.b.b, 0)) {
+		    fb->cbufs[i]->u.tex.last_layer != util_max_layer(&tex->resource.b.b, 0)) {
 			continue;
-		}
 
 		/* only supported on tiled surfaces */
 		if (tex->surface.is_linear) {
