@@ -213,10 +213,10 @@ void si_begin_new_gfx_cs(struct si_context *ctx)
 	      SI_CONTEXT_INV_SMEM_L1 |
 		      SI_CONTEXT_INV_VMEM_L1 |
 		      SI_CONTEXT_INV_GLOBAL_L2 |
-		      SI_CONTEXT_START_PIPELINE_STATS |
-		      SI_CONTEXT_FLUSH_AND_INV_DB |
+		      SI_CONTEXT_START_PIPELINE_STATS; // |
+//		      SI_CONTEXT_FLUSH_AND_INV_DB |
 //		      SI_CONTEXT_FLUSH_AND_INV_DB_META |
-		      SI_CONTEXT_FLUSH_AND_INV_CB;
+//		      SI_CONTEXT_FLUSH_AND_INV_CB;
 
 	/* set all valid group as dirty so they get reemited on
 	 * next draw command
