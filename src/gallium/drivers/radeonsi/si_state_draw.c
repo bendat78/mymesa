@@ -1181,8 +1181,8 @@ static void si_emit_all_states(struct si_context *sctx, const struct pipe_draw_i
 {
 	/* Emit state atoms. */
 	unsigned mask = sctx->dirty_atoms & ~skip_atom_mask;
-	while (mask)
-		sctx->atoms.array[u_bit_scan(&mask)].emit(sctx);
+	while (mask) {
+		struct si_atom *atom = sctx->atoms.array[u_bit_scan(&mask)];
 
 	sctx->dirty_atoms &= skip_atom_mask;
 

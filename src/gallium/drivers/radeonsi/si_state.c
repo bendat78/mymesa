@@ -33,6 +33,25 @@
 #include "util/u_resource.h"
 #include "util/u_upload_mgr.h"
 
+/* Initialize an external atom (owned by ../radeon). */
+static void
+si_init_external_atom(struct si_context *sctx, struct si_atom *atom,
+		      struct si_atom **list_elem)
+{
+	atom->id = list_elem - sctx->atoms.array;
+	*list_elem = atom;
+}
+
+/* Initialize an atom owned by radeonsi.  */
+void si_init_atom(struct si_context *sctx, struct si_atom *atom,
+		  struct si_atom **list_elem,
+		  void (*emit_func)(struct si_context *ctx, struct si_atom *state))
+{
+	atom->emit = emit_func;
+	atom->id = list_elem - sctx->atoms.array;
+	*list_elem = atom;
+}
+
 static unsigned si_map_swizzle(unsigned swizzle)
 {
 	switch (swizzle) {
@@ -64,7 +83,7 @@ static unsigned si_pack_float_12p4(float x)
  * CB_TARGET_MASK is emitted here to avoid a hang with dual source blending
  * if there is not enough PS outputs.
  */
-static void si_emit_cb_render_state(struct si_context *sctx)
+static void si_emit_cb_render_state(struct si_context *sctx, struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	struct si_state_blend *blend = sctx->queued.named.blend;
@@ -697,7 +716,7 @@ static void si_set_blend_color(struct pipe_context *ctx,
 	si_mark_atom_dirty(sctx, &sctx->atoms.s.blend_color);
 }
 
-static void si_emit_blend_color(struct si_context *sctx)
+static void si_emit_blend_color(struct si_context *sctx, struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 
@@ -731,7 +750,7 @@ static void si_set_clip_state(struct pipe_context *ctx,
 	pipe_resource_reference(&cb.buffer, NULL);
 }
 
-static void si_emit_clip_state(struct si_context *sctx)
+static void si_emit_clip_state(struct si_context *sctx, struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 
@@ -739,7 +758,7 @@ static void si_emit_clip_state(struct si_context *sctx)
 	radeon_emit_array(cs, (uint32_t*)sctx->clip_state.state.ucp, 6*4);
 }
 
-static void si_emit_clip_regs(struct si_context *sctx)
+static void si_emit_clip_regs(struct si_context *sctx, struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	struct si_shader *vs = si_get_vs_state(sctx);
@@ -1053,7 +1072,7 @@ static void si_delete_rs_state(struct pipe_context *ctx, void *state)
 /*
  * infeered state between dsa and stencil ref
  */
-static void si_emit_stencil_ref(struct si_context *sctx)
+static void si_emit_stencil_ref(struct si_context *sctx, struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	struct pipe_stencil_ref *ref = &sctx->stencil_ref.state;
@@ -1341,7 +1360,7 @@ void si_save_qbo_state(struct si_context *sctx, struct si_qbo_state *st)
 	si_get_shader_buffers(sctx, PIPE_SHADER_COMPUTE, 0, 3, st->saved_ssbo);
 }
 
-static void si_emit_db_render_state(struct si_context *sctx)
+static void si_emit_db_render_state(struct si_context *sctx, struct si_atom *state)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
@@ -2933,7 +2952,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
-static void si_emit_framebuffer_state(struct si_context *sctx)
+static void si_emit_framebuffer_state(struct si_context *sctx, struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	struct pipe_framebuffer_state *state = &sctx->framebuffer.state;
@@ -3190,7 +3209,8 @@ static void si_emit_framebuffer_state(struct si_context *sctx)
 	sctx->framebuffer.dirty_zsbuf = false;
 }
 
-static void si_emit_msaa_sample_locs(struct si_context *sctx)
+static void si_emit_msaa_sample_locs(struct si_context *sctx,
+				     struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	unsigned nr_samples = sctx->framebuffer.nr_samples;
@@ -3301,7 +3321,7 @@ static bool si_out_of_order_rasterization(struct si_context *sctx)
 	return true;
 }
 
-static void si_emit_msaa_config(struct si_context *sctx)
+static void si_emit_msaa_config(struct si_context *sctx, struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	unsigned num_tile_pipes = sctx->screen->info.num_tile_pipes;
@@ -4157,7 +4177,7 @@ static void si_set_sample_mask(struct pipe_context *ctx, unsigned sample_mask)
 	si_mark_atom_dirty(sctx, &sctx->atoms.s.sample_mask);
 }
 
-static void si_emit_sample_mask(struct si_context *sctx)
+static void si_emit_sample_mask(struct si_context *sctx, struct si_atom *atom)
 {
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	unsigned mask = sctx->sample_mask;
