@@ -1776,7 +1776,7 @@ static void si_render_condition(struct pipe_context *ctx,
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_query_hw *rquery = (struct si_query_hw *)query;
-	struct si_atom *atom = &sctx->render_cond_atom;
+	struct si_atom *atom = &sctx->atoms.s.render_cond;
 
 	if (query) {
 		bool needs_workaround = false;

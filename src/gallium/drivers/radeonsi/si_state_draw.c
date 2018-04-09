@@ -1182,7 +1182,7 @@ static void si_emit_all_states(struct si_context *sctx, const struct pipe_draw_i
 	/* Emit state atoms. */
 	unsigned mask = sctx->dirty_atoms & ~skip_atom_mask;
 	while (mask) {
-		struct si_atom *atom = sctx->atoms.array[u_bit_scan(&mask)];
+		struct si_atom *atom = &sctx->atoms.array[u_bit_scan(&mask)];
 
 	sctx->dirty_atoms &= skip_atom_mask;
 
@@ -1434,7 +1434,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		unsigned masked_atoms = 0;
 
 		if (unlikely(sctx->flags & SI_CONTEXT_FLUSH_FOR_RENDER_COND))
-			masked_atoms |= si_get_atom_bit(sctx, &sctx->atoms.s.render_cond);
+			masked_atoms |= 1u << sctx->atoms.s.render_cond.id;
 
 		if (!si_upload_graphics_shader_descriptors(sctx))
 			return;
@@ -1445,7 +1445,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		/* <-- CUs are idle here. */
 
 		if (si_is_atom_dirty(sctx, &sctx->atoms.s.render_cond))
-			sctx->atoms.s.render_cond.emit(sctx);
+			sctx->atoms.s.render_cond.emit(sctx, NULL);
 		sctx->dirty_atoms = 0;
 
 		si_emit_draw_packets(sctx, info, indexbuf, index_size, index_offset);
