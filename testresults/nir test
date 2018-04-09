@@ -1,4 +1,6 @@
 9.4.18
+significant improvement in shader db runs ~0.2%
+
 increase gpu fan speed
 /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/hwmon/hwmon0# echo 200 > pwm1 #how to regain auto control?
 limit gpu power
