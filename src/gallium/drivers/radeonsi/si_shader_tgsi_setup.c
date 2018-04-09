@@ -1207,10 +1207,37 @@ void si_llvm_create_func(struct si_shader_context *ctx,
 
 void si_llvm_optimize_module(struct si_shader_context *ctx)
 {
+	struct gallivm_state *gallivm = &ctx->gallivm;
+	LLVMTargetLibraryInfoRef target_library_info;
+
 	/* Dump LLVM IR before any optimization passes */
 	if (ctx->screen->debug_flags & DBG(PREOPT_IR) &&
 	    si_can_dump_shader(ctx->screen, ctx->type))
 		LLVMDumpModule(ctx->gallivm.module);
+
+	/* Create the pass manager */
+	gallivm->passmgr = LLVMCreatePassManager();
+
+	target_library_info =
+		gallivm_create_target_library_info(ctx->compiler->triple);
+	LLVMAddTargetLibraryInfo(target_library_info, gallivm->passmgr);
+
+	if (si_extra_shader_checks(ctx->screen, ctx->type))
+		LLVMAddVerifierPass(gallivm->passmgr);
+
+	LLVMAddAlwaysInlinerPass(gallivm->passmgr);
+
+	/* This pass should eliminate all the load and store instructions */
+	LLVMAddPromoteMemoryToRegisterPass(gallivm->passmgr);
+
+	/* Add some optimization passes */
+	LLVMAddScalarReplAggregatesPass(gallivm->passmgr);
+	LLVMAddLICMPass(gallivm->passmgr);
+	LLVMAddAggressiveDCEPass(gallivm->passmgr);
+	LLVMAddCFGSimplificationPass(gallivm->passmgr);
+	/* This is recommended by the instruction combining pass. */
+	LLVMAddEarlyCSEMemSSAPass(gallivm->passmgr);
+	LLVMAddInstructionCombiningPass(gallivm->passmgr);
 
 	/* Run the pass */
 	LLVMRunPassManager(ctx->compiler->passmgr, ctx->gallivm.module);
