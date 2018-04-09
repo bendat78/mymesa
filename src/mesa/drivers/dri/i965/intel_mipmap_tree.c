@@ -36,6 +36,7 @@
 
 #include "brw_blorp.h"
 #include "brw_context.h"
+#include "brw_meta_util.h"
 #include "brw_state.h"
 
 #include "main/enums.h"
@@ -3803,4 +3804,33 @@ intel_miptree_get_aux_isl_usage(const struct brw_context *brw,
       return ISL_AUX_USAGE_NONE;
 
    return mt->aux_usage;
+}
+
+bool
+intel_miptree_set_clear_color(struct brw_context *brw,
+                              struct intel_mipmap_tree *mt,
+                              const union gl_color_union *color)
+{
+   const union isl_color_value clear_color =
+      brw_meta_convert_fast_clear_color(brw, mt, color);
+
+   if (memcmp(&mt->fast_clear_color, &clear_color, sizeof(clear_color)) != 0) {
+      mt->fast_clear_color = clear_color;
+      brw->ctx.NewDriverState |= BRW_NEW_AUX_STATE;
+      return true;
+   }
+   return false;
+}
+
+bool
+intel_miptree_set_depth_clear_value(struct brw_context *brw,
+                                    struct intel_mipmap_tree *mt,
+                                    float clear_value)
+{
+   if (mt->fast_clear_color.f32[0] != clear_value) {
+      mt->fast_clear_color.f32[0] = clear_value;
+      brw->ctx.NewDriverState |= BRW_NEW_AUX_STATE;
+      return true;
+   }
+   return false;
 }
