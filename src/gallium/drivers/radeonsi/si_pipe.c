@@ -117,57 +117,11 @@ static void si_init_compiler(struct si_screen *sscreen,
 		(sscreen->info.chip_class < GFX9 ? AC_TM_FORCE_DISABLE_XNACK : 0) |
 		(!sscreen->llvm_has_working_vgpr_indexing ? AC_TM_PROMOTE_ALLOCA_TO_SCRATCH : 0);
 
-	compiler->tm = ac_create_target_machine(sscreen->info.family,
-						tm_options, &compiler->triple);
-	if (!compiler->tm)
-		return;
-
-	compiler->target_library_info =
-		gallivm_create_target_library_info(compiler->triple);
-	if (!compiler->target_library_info)
-		return;
-
-	compiler->passmgr = LLVMCreatePassManager();
-	if (!compiler->passmgr)
-		return;
-
-	LLVMAddTargetLibraryInfo(compiler->target_library_info,
-				 compiler->passmgr);
-
-	/* Add LLVM passes into the pass manager. */
-	if (sscreen->debug_flags & DBG(CHECK_IR))
-		LLVMAddVerifierPass(compiler->passmgr);
-
-	LLVMAddAlwaysInlinerPass(compiler->passmgr);
-	/* This pass should eliminate all the load and store instructions. */
-	LLVMAddPromoteMemoryToRegisterPass(compiler->passmgr);
-	LLVMAddScalarReplAggregatesPass(compiler->passmgr);
-	LLVMAddLICMPass(compiler->passmgr);
-	LLVMAddAggressiveDCEPass(compiler->passmgr);
-	LLVMAddCFGSimplificationPass(compiler->passmgr);
-	/* This is recommended by the instruction combining pass. */
-	LLVMAddEarlyCSEMemSSAPass(compiler->passmgr);
-	LLVMAddInstructionCombiningPass(compiler->passmgr);
-
-	/* Get the data layout. */
-	LLVMTargetDataRef data_layout = LLVMCreateTargetDataLayout(compiler->tm);
-	if (!data_layout)
-		return;
-	compiler->data_layout = LLVMCopyStringRepOfTargetData(data_layout);
-	LLVMDisposeTargetData(data_layout);
+	compiler->tm = ac_create_target_machine(sscreen->info.family, tm_options);
 }
 
 static void si_destroy_compiler(struct si_compiler *compiler)
 {
-	if (compiler->data_layout)
-		LLVMDisposeMessage((char*)compiler->data_layout);
-	if (compiler->passmgr)
-		LLVMDisposePassManager(compiler->passmgr);
-#if HAVE_LLVM < 0x0500 || HAVE_LLVM >= 0x0700
-	/* This crashes on LLVM 5.0 and 6.0 and Ubuntu 18.04, so leak it there. */
-	if (compiler->target_library_info)
-		gallivm_dispose_target_library_info(compiler->target_library_info);
-#endif
 	if (compiler->tm)
 		LLVMDisposeTargetMachine(compiler->tm);
 }
@@ -884,27 +838,14 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 
 	si_disk_cache_create(sscreen);
 
-	/* Determine the number of shader compiler threads. */
-	hw_threads = sysconf(_SC_NPROCESSORS_ONLN);
-
-	if (hw_threads >= 12) {
-		num_comp_hi_threads = hw_threads * 3 / 4;
-		num_comp_lo_threads = hw_threads / 3;
-	} else if (hw_threads >= 6) {
-		num_comp_hi_threads = hw_threads - 2;
-		num_comp_lo_threads = hw_threads / 2;
-	} else if (hw_threads >= 2) {
-		num_comp_hi_threads = hw_threads - 1;
-		num_comp_lo_threads = hw_threads / 2;
-	} else {
-		num_comp_hi_threads = 1;
-		num_comp_lo_threads = 1;
-	}
-
-	num_comp_hi_threads = MIN2(num_comp_hi_threads,
-				   ARRAY_SIZE(sscreen->compiler));
-	num_comp_lo_threads = MIN2(num_comp_lo_threads,
-				   ARRAY_SIZE(sscreen->compiler_lowp));
+	/* Only enable as many threads as we have target machines, but at most
+	 * the number of CPUs - 1 if there is more than one.
+	 */
+	num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+	num_threads = MAX2(1, num_threads - 1);
+	num_compiler_threads = MIN2(num_threads, ARRAY_SIZE(sscreen->compiler));
+	num_compiler_threads_lowprio =
+		MIN2(num_threads, ARRAY_SIZE(sscreen->compiler_lowp));
 
 	if (!util_queue_init(&sscreen->shader_compiler_queue, "si_shader",
 			     64, num_comp_hi_threads,
@@ -1067,9 +1008,9 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 	if (debug_get_bool_option("RADEON_DUMP_SHADERS", false))
 		sscreen->debug_flags |= DBG_ALL_SHADERS;
 
-	for (i = 0; i < num_comp_hi_threads; i++)
+	for (i = 0; i < num_compiler_threads; i++)
 		si_init_compiler(sscreen, &sscreen->compiler[i]);
-	for (i = 0; i < num_comp_lo_threads; i++)
+	for (i = 0; i < num_compiler_threads_lowprio; i++)
 		si_init_compiler(sscreen, &sscreen->compiler_lowp[i]);
 
 	/* Create the auxiliary context. This must be done last. */
