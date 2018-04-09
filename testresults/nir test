@@ -1,10 +1,46 @@
 9.4.18
-ib partial flush patches
+increase gpu fan speed
+/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/hwmon/hwmon0# echo 200 > pwm1 #how to regain auto control?
+limit gpu power
+/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/hwmon/hwmon0# echo 55000000 > power1_cap
+
+
+
+ib partial flush patches, 4.16.0+ kernel with just the additional kernel patch DRM3.26.0 applied
+
+glmark2 before ~8800 fps (>.110 ms) in high speed areas, overall score <7000; after ~9200 up to 9600 fps (<0.110 ms), overall score >7000
+
 Dirt Rally
+
+IB/CB flush TGSI
 1. run: 55/42/73
 2. run: 55/43/85
 3. run: 55.6/43/85
-before: 54/37-41/71-83
+
+IB/CB/Meta flush TGSI
+1. run: 54/42/73
+2. run: 55/42/84
+3. run: 55/43/85
+
+no additional flush TGSI
+1. run: 55/42/73
+2. run: 55/42/88
+3. run: 55/43.5/85
+
+before: 54/37-41/71-83 TGSI
+
+Deus Ex IB/CB flush TGSI
+1. run: 19.5/8.5/29.7
+2. run: 19.8/9.2/30.2
+before 19.1/8.7/28.8 first run
+
+Deus Ex IB/CB flush NIR
+1. run: 19.0/9.5/29.7
+2. run: 19.2/9.6/29.5
+3. run: 21.3/11.4/32.1
+4. run: 19.6/9.1/32.7
+5. run: 19.4/8.7/29.9
+before 19/9.3/28.0 first run
 
 8.4.18
 Black Mesa requires libtcmalloc-minimal4:i386
