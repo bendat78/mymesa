@@ -240,10 +240,10 @@ void vi_dcc_clear_level(struct si_context *sctx,
 
 	if (sctx->chip_class >= GFX9) {
 		/* Mipmap level clears aren't implemented. */
-		assert(rtex->resource.b.b.last_level == 0);
+		assert(rtex->buffer.b.b.last_level == 0);
 		/* 4x and 8x MSAA needs a sophisticated compute shader for
 		 * the clear. See AMDVLK. */
-		assert(rtex->resource.b.b.nr_samples <= 2);
+		assert(rtex->buffer.b.b.nr_samples <= 2);
 		clear_size = rtex->surface.dcc_size;
 	} else {
 		unsigned num_layers = util_num_layers(&rtex->buffer.b.b, level);
@@ -254,7 +254,7 @@ void vi_dcc_clear_level(struct si_context *sctx,
 		 * dcc_fast_clear_size bytes for each layer. A compute shader
 		 * would be more efficient than separate per-layer clear operations.
 		 */
-		assert(rtex->resource.b.b.nr_samples <= 2 || num_layers == 1);
+		assert(rtex->buffer.b.b.nr_samples <= 2 || num_layers == 1);
 
 		dcc_offset += rtex->surface.u.legacy.level[level].dcc_offset;
 		clear_size = rtex->surface.u.legacy.level[level].dcc_fast_clear_size *
@@ -411,12 +411,12 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 		 * organized in a 2D plane).
 		 */
 		if (sctx->chip_class >= GFX9 &&
-		    tex->resource.b.b.last_level > 0)
+		    tex->buffer.b.b.last_level > 0)
 			continue;
 
 		/* the clear is allowed if all layers are bound */
 		if (fb->cbufs[i]->u.tex.first_layer != 0 ||
-		    fb->cbufs[i]->u.tex.last_layer != util_max_layer(&tex->resource.b.b, 0)) {
+		    fb->cbufs[i]->u.tex.last_layer != util_max_layer(&tex->buffer.b.b, 0)) {
 			continue;
 
 		/* only supported on tiled surfaces */
@@ -482,7 +482,7 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 			    !tex->surface.u.legacy.level[level].dcc_fast_clear_size)
 				continue;
 
-			if (!vi_get_fast_clear_parameters(tex->resource.b.b.format,
+			if (!vi_get_fast_clear_parameters(tex->buffer.b.b.format,
 							  fb->cbufs[i]->format,
 							  color, &reset_value,
 							  &eliminate_needed))
