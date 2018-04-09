@@ -250,7 +250,7 @@ struct r600_cmask_info {
 };
 
 struct r600_texture {
-	struct r600_resource		buffer;
+	struct r600_resource		resource;
 
 	struct radeon_surf		surface;
 	uint64_t			size;
@@ -1284,6 +1284,34 @@ void si_init_context_texture_functions(struct si_context *sctx);
 static inline struct r600_resource *r600_resource(struct pipe_resource *r)
 {
 	return (struct r600_resource*)r;
+}
+
+static inline void
+r600_resource_reference(struct r600_resource **ptr, struct r600_resource *res)
+{
+	pipe_resource_reference((struct pipe_resource **)ptr,
+				(struct pipe_resource *)res);
+}
+
+static inline void
+r600_texture_reference(struct r600_texture **ptr, struct r600_texture *res)
+{
+	pipe_resource_reference((struct pipe_resource **)ptr, &res->resource.b.b);
+}
+
+static inline bool
+vi_dcc_enabled(struct r600_texture *tex, unsigned level)
+{
+	return tex->dcc_offset && level < tex->surface.num_dcc_levels;
+}
+
+static inline unsigned
+si_tile_mode_index(struct r600_texture *rtex, unsigned level, bool stencil)
+{
+	if (stencil)
+		return rtex->surface.u.legacy.stencil_tiling_index[level];
+	else
+		return rtex->surface.u.legacy.tiling_index[level];
 }
 
 static inline void
