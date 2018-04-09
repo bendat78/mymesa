@@ -1789,7 +1789,7 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 							 &trans->b.b.layer_stride);
 		}
 
-		trans->staging = &staging_depth->buffer;
+		trans->staging = &staging_depth->resource;
 		buf = trans->staging;
 	} else if (use_staging_texture) {
 		struct pipe_resource resource;

@@ -1330,21 +1330,6 @@ r600_texture_reference(struct r600_texture **ptr, struct r600_texture *res)
 static inline bool
 vi_dcc_enabled(struct r600_texture *tex, unsigned level)
 {
-	return tex->dcc_offset && level < tex->surface.num_dcc_levels;
-}
-
-static inline unsigned
-si_tile_mode_index(struct r600_texture *rtex, unsigned level, bool stencil)
-{
-	if (stencil)
-		return rtex->surface.u.legacy.stencil_tiling_index[level];
-	else
-		return rtex->surface.u.legacy.tiling_index[level];
-}
-
-static inline void
-si_context_add_resource_size(struct si_context *sctx, struct pipe_resource *r)
-{
 	if (r) {
 		/* Add memory usage for need_gfx_cs_space */
 		sctx->vram += r600_resource(r)->vram_usage;
