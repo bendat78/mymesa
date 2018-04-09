@@ -4154,7 +4154,7 @@ static void si_set_sample_mask(struct pipe_context *ctx, unsigned sample_mask)
 	if (sctx->sample_mask == (uint16_t)sample_mask)
 		return;
 
-	sctx->sample_mask.sample_mask = sample_mask;
+	sctx->sample_mask = sample_mask;
 	si_mark_atom_dirty(sctx, &sctx->atoms.s.sample_mask);
 }
 
