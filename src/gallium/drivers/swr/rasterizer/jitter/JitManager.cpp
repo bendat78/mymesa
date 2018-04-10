@@ -1,5 +1,5 @@
 /****************************************************************************
-* Copyright (C) 2014-2015 Intel Corporation.   All Rights Reserved.
+* Copyright (C) 2014-2018 Intel Corporation.   All Rights Reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -66,7 +66,7 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
     InitializeNativeTargetAsmPrinter();
     InitializeNativeTargetDisassembler();
 
-        
+
     TargetOptions    tOpts;
     tOpts.AllowFPOpFusion = FPOpFusion::Fast;
     tOpts.NoInfsFPMath = false;
@@ -124,6 +124,8 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
 
     // llvm5 is picky and does not take a void * type
     fsArgs.push_back(PointerType::get(Gen_SWR_FETCH_CONTEXT(this), 0));
+
+    fsArgs.push_back(Type::getInt8PtrTy(mContext));
 
     fsArgs.push_back(PointerType::get(Gen_SWR_FETCH_CONTEXT(this), 0));
 #if USE_SIMD16_SHADERS
