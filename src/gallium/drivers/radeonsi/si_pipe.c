@@ -885,14 +885,27 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 
 	si_disk_cache_create(sscreen);
 
-	/* Only enable as many threads as we have target machines, but at most
-	 * the number of CPUs - 1 if there is more than one.
-	 */
-	num_threads = sysconf(_SC_NPROCESSORS_ONLN);
-	num_threads = MAX2(1, num_threads - 1);
-	num_compiler_threads = MIN2(num_threads, ARRAY_SIZE(sscreen->compiler));
-	num_compiler_threads_lowprio =
-		MIN2(num_threads, ARRAY_SIZE(sscreen->compiler_lowp));
+	/* Determine the number of shader compiler threads. */
+	hw_threads = sysconf(_SC_NPROCESSORS_ONLN);
+
+	if (hw_threads >= 12) {
+		num_comp_hi_threads = hw_threads * 3 / 4;
+		num_comp_lo_threads = hw_threads / 3;
+	} else if (hw_threads >= 6) {
+		num_comp_hi_threads = hw_threads - 2;
+		num_comp_lo_threads = hw_threads / 2;
+	} else if (hw_threads >= 2) {
+		num_comp_hi_threads = hw_threads - 1;
+		num_comp_lo_threads = hw_threads / 2;
+	} else {
+		num_comp_hi_threads = 1;
+		num_comp_lo_threads = 1;
+	}
+
+	num_comp_hi_threads = MIN2(num_comp_hi_threads,
+				   ARRAY_SIZE(sscreen->compiler));
+	num_comp_lo_threads = MIN2(num_comp_lo_threads,
+				   ARRAY_SIZE(sscreen->compiler_lowp));
 
 	if (!util_queue_init(&sscreen->shader_compiler_queue, "si_shader",
 			     64, num_comp_hi_threads,
@@ -1055,9 +1068,9 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 	if (debug_get_bool_option("RADEON_DUMP_SHADERS", false))
 		sscreen->debug_flags |= DBG_ALL_SHADERS;
 
-	for (i = 0; i < num_compiler_threads; i++)
+	for (i = 0; i < num_comp_hi_threads; i++)
 		si_init_compiler(sscreen, &sscreen->compiler[i]);
-	for (i = 0; i < num_compiler_threads_lowprio; i++)
+	for (i = 0; i < num_comp_lo_threads; i++)
 		si_init_compiler(sscreen, &sscreen->compiler_lowp[i]);
 
 	/* Create the auxiliary context. This must be done last. */
