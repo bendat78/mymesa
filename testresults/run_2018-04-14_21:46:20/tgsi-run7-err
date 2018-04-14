@@ -1,0 +1,8 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+ERROR: shaders/csgo/fp-1.shader_test failed to compile
+ERROR: shaders/metro2033redux/fbf8031490eb77c2d30ed329353198d8e597cba2_4875.shader_test failed to compile:
+0:1(10): error: GLSL 4.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES
+
+ERROR: shaders/metro2033redux/fbf8031490eb77c2d30ed329353198d8e597cba2_4875.shader_test failed to compile:
+0:1(10): error: GLSL 4.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES
+
