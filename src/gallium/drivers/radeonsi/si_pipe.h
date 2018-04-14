@@ -903,6 +903,7 @@ enum si_coherency {
 	SI_COHERENCY_CB_META,
 };
 
+void si_cp_dma_wait_for_idle(struct si_context *sctx);
 void si_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
 		     uint64_t offset, uint64_t size, unsigned value,
 		     enum si_coherency coher);
@@ -912,7 +913,7 @@ void si_copy_buffer(struct si_context *sctx,
 		    unsigned user_flags);
 void cik_prefetch_TC_L2_async(struct si_context *sctx, struct pipe_resource *buf,
 			      uint64_t offset, unsigned size);
-void cik_emit_prefetch_L2(struct si_context *sctx);
+void cik_emit_prefetch_L2(struct si_context *sctx, bool vertex_stage_only);
 void si_init_cp_dma_functions(struct si_context *sctx);
 
 /* si_debug.c */

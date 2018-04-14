@@ -65,7 +65,6 @@ static void si_emit_cp_dma(struct si_context *sctx, uint64_t dst_va,
 	struct radeon_winsys_cs *cs = sctx->gfx_cs;
 	uint32_t header = 0, command = 0;
 
-	assert(size);
 	assert(size <= cp_dma_max_byte_count(sctx));
 
 	if (sctx->chip_class >= GFX9)
@@ -126,6 +125,17 @@ static void si_emit_cp_dma(struct si_context *sctx, uint64_t dst_va,
 		radeon_emit(cs, PKT3(PKT3_PFP_SYNC_ME, 0, 0));
 		radeon_emit(cs, 0);
 	}
+}
+
+void si_cp_dma_wait_for_idle(struct si_context *sctx)
+{
+	/* Issue a dummy DMA that copies zero bytes.
+	 *
+	 * The DMA engine will see that there's no work to do and skip this
+	 * DMA request, however, the CP will see the sync flag and still wait
+	 * for all DMAs to complete.
+	 */
+	si_emit_cp_dma(sctx, 0, 0, 0, CP_DMA_SYNC, SI_COHERENCY_NONE);
 }
 
 static unsigned get_flush_flags(struct si_context *sctx, enum si_coherency coher)
@@ -520,67 +530,110 @@ static void cik_prefetch_VBO_descriptors(struct si_context *sctx)
 				 sctx->vertex_elements->desc_list_byte_size);
 }
 
-void cik_emit_prefetch_L2(struct si_context *sctx)
+/**
+ * Prefetch shaders and VBO descriptors.
+ *
+ * \param vertex_stage_only  Whether only the the API VS and VBO descriptors
+ *                           should be prefetched.
+ */
+void cik_emit_prefetch_L2(struct si_context *sctx, bool vertex_stage_only)
 {
+	unsigned mask = sctx->prefetch_L2_mask;
+	assert(mask);
+
 	/* Prefetch shaders and VBO descriptors to TC L2. */
 	if (sctx->chip_class >= GFX9) {
 		/* Choose the right spot for the VBO prefetch. */
 		if (sctx->tes_shader.cso) {
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_HS)
+			if (mask & SI_PREFETCH_HS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.hs);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VBO_DESCRIPTORS)
+			if (mask & SI_PREFETCH_VBO_DESCRIPTORS)
 				cik_prefetch_VBO_descriptors(sctx);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_GS)
+			if (vertex_stage_only) {
+				sctx->prefetch_L2_mask &= ~(SI_PREFETCH_HS |
+							    SI_PREFETCH_VBO_DESCRIPTORS);
+				return;
+			}
+
+			if (mask & SI_PREFETCH_GS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.gs);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VS)
+			if (mask & SI_PREFETCH_VS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.vs);
 		} else if (sctx->gs_shader.cso) {
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_GS)
+			if (mask & SI_PREFETCH_GS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.gs);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VBO_DESCRIPTORS)
+			if (mask & SI_PREFETCH_VBO_DESCRIPTORS)
 				cik_prefetch_VBO_descriptors(sctx);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VS)
+			if (vertex_stage_only) {
+				sctx->prefetch_L2_mask &= ~(SI_PREFETCH_GS |
+							    SI_PREFETCH_VBO_DESCRIPTORS);
+				return;
+			}
+
+			if (mask & SI_PREFETCH_VS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.vs);
 		} else {
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VS)
+			if (mask & SI_PREFETCH_VS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.vs);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VBO_DESCRIPTORS)
+			if (mask & SI_PREFETCH_VBO_DESCRIPTORS)
 				cik_prefetch_VBO_descriptors(sctx);
+			if (vertex_stage_only) {
+				sctx->prefetch_L2_mask &= ~(SI_PREFETCH_VS |
+							    SI_PREFETCH_VBO_DESCRIPTORS);
+				return;
+			}
 		}
 	} else {
 		/* SI-CI-VI */
 		/* Choose the right spot for the VBO prefetch. */
 		if (sctx->tes_shader.cso) {
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_LS)
+			if (mask & SI_PREFETCH_LS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.ls);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VBO_DESCRIPTORS)
+			if (mask & SI_PREFETCH_VBO_DESCRIPTORS)
 				cik_prefetch_VBO_descriptors(sctx);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_HS)
+			if (vertex_stage_only) {
+				sctx->prefetch_L2_mask &= ~(SI_PREFETCH_LS |
+							    SI_PREFETCH_VBO_DESCRIPTORS);
+				return;
+			}
+
+			if (mask & SI_PREFETCH_HS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.hs);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_ES)
+			if (mask & SI_PREFETCH_ES)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.es);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_GS)
+			if (mask & SI_PREFETCH_GS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.gs);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VS)
+			if (mask & SI_PREFETCH_VS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.vs);
 		} else if (sctx->gs_shader.cso) {
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_ES)
+			if (mask & SI_PREFETCH_ES)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.es);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VBO_DESCRIPTORS)
+			if (mask & SI_PREFETCH_VBO_DESCRIPTORS)
 				cik_prefetch_VBO_descriptors(sctx);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_GS)
+			if (vertex_stage_only) {
+				sctx->prefetch_L2_mask &= ~(SI_PREFETCH_ES |
+							    SI_PREFETCH_VBO_DESCRIPTORS);
+				return;
+			}
+
+			if (mask & SI_PREFETCH_GS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.gs);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VS)
+			if (mask & SI_PREFETCH_VS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.vs);
 		} else {
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VS)
+			if (mask & SI_PREFETCH_VS)
 				cik_prefetch_shader_async(sctx, sctx->queued.named.vs);
-			if (sctx->prefetch_L2_mask & SI_PREFETCH_VBO_DESCRIPTORS)
+			if (mask & SI_PREFETCH_VBO_DESCRIPTORS)
 				cik_prefetch_VBO_descriptors(sctx);
+			if (vertex_stage_only) {
+				sctx->prefetch_L2_mask &= ~(SI_PREFETCH_VS |
+							    SI_PREFETCH_VBO_DESCRIPTORS);
+				return;
+			}
 		}
 	}
 
-	if (sctx->prefetch_L2_mask & SI_PREFETCH_PS)
+	if (mask & SI_PREFETCH_PS)
 		cik_prefetch_shader_async(sctx, sctx->queued.named.ps);
 
 	sctx->prefetch_L2_mask = 0;

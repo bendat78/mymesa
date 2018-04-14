@@ -528,20 +528,13 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 		si_do_fast_color_clear(sctx, &buffers, color);
 		if (!buffers)
 			return; /* all buffers have been fast cleared */
-	}
-
-	if (buffers & PIPE_CLEAR_COLOR) {
-		int i;
 
 		/* These buffers cannot use fast clear, make sure to disable expansion. */
-		for (i = 0; i < fb->nr_cbufs; i++) {
+		for (unsigned i = 0; i < fb->nr_cbufs; i++) {
 			struct r600_texture *tex;
 
 			/* If not clearing this buffer, skip. */
-			if (!(buffers & (PIPE_CLEAR_COLOR0 << i)))
-				continue;
-
-			if (!fb->cbufs[i])
+			if (!(buffers & (PIPE_CLEAR_COLOR0 << i)) || !fb->cbufs[i])
 				continue;
 
 			tex = (struct r600_texture *)fb->cbufs[i]->texture;
@@ -600,9 +593,9 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 		 *
 		 * This hack decreases back-to-back ClearDepth performance.
 		 */
-		if (sctx->screen->clear_db_cache_before_clear) {
+		if ((sctx->db_depth_clear || sctx->db_stencil_clear) &&
+		    sctx->screen->clear_db_cache_before_clear)
 			sctx->flags |= SI_CONTEXT_FLUSH_AND_INV_DB;
-		}
 	}
 
 	si_blitter_begin(sctx, SI_CLEAR);
