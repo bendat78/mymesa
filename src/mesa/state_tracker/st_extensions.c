@@ -963,7 +963,18 @@ void st_init_extensions(struct pipe_screen *screen,
 
    consts->AllowGLSLCrossStageInterpolationMismatch = options->allow_glsl_cross_stage_interpolation_mismatch;
 
-   if (consts->GLSLVersion >= 400)
+/* Requirements for GL_ARB_gpu_shader5
+*  From https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_gpu_shader5.txt
+*  This extension interacts with ARB_gpu_shader_fp64.
+*  This extension interacts with NV_gpu_shader5.
+*  This extension interacts with ARB_sample_shading.
+*  This extension interacts with ARB_texture_gather.
+*  OpenGL 3.2 and GLSL 1.50 are required.
+*  From https://www.khronos.org/registry/OpenGL/extensions/NV/NV_gpu_shader5.txt
+*  If implemented in OpenGL ES, OpenGL ES 3.1 and GLSL ES 3.10 are required.
+*/
+
+   if (consts->GLSLVersion >= 150)
       extensions->ARB_gpu_shader5 = GL_TRUE;
    if (consts->GLSLVersion >= 410)
       extensions->ARB_shader_precision = GL_TRUE;

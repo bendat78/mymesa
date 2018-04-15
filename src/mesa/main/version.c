@@ -307,6 +307,7 @@ compute_version(const struct gl_extensions *extensions,
                          extensions->ARB_depth_clamp &&
                          extensions->ARB_draw_elements_base_vertex &&
                          extensions->ARB_fragment_coord_conventions &&
+                         extensions->ARB_gpu_shader5 &&
                          extensions->EXT_provoking_vertex &&
                          extensions->ARB_seamless_cube_map &&
                          extensions->ARB_sync &&
@@ -329,7 +330,6 @@ compute_version(const struct gl_extensions *extensions,
                          consts->GLSLVersion >= 400 &&
                          extensions->ARB_draw_buffers_blend &&
                          extensions->ARB_draw_indirect &&
-                         extensions->ARB_gpu_shader5 &&
                          extensions->ARB_gpu_shader_fp64 &&
                          extensions->ARB_sample_shading &&
                          extensions->ARB_tessellation_shader &&
