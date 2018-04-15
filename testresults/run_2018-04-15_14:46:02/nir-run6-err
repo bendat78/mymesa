@@ -1,0 +1,379 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+ERROR: shaders/csgo/fp-1.shader_test failed to compile
+ERROR: shaders/piglit/e0638f1c9eca81c574bcd627e60f62282ec8ff75_3.shader_test failed to compile:
+0:1(12): error: extension `GL_OES_EGL_image_external' unsupported in fragment shader
+
+ERROR: shaders/piglit/7756d159e230b554b31ff02f32ed517898de980c_15.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/9e12ee42f7fcadd5e605cc2f5c3409935d63e639_19.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/ebd2c846d5a63379fe22f83a24283c51051140e6_49.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/a40d110611f6c541af85655b598fb963ccc6860a_115.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/62b17f03a32b27d6e40055822d8d8cae43568fee_73.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/e6b394af383c031cd983d3edf82346795cc66666_21.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/b66b4e3009ae549cb5c85e7ee18f4ea1331f634a_129.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/4d3fc33ea2daa76bc4f54af67cbc370631c2dd01_125.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/6d869ff760c8417edd265c71b7106478702e109c_5.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/34c129cc04c18d117524437bb8840ac22ea125e7_99.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/b247f9432fc21624cec4328de555c330f00c9bcb_95.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/dc805c050d49b3b21fa700b336fcca00d6f877a3_143.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/9d231cf1be4fc978858b395b59072fdcf0b081ce_91.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/0aa2279a0c4ab2a7bab63e39f541aeb04d71ce4d_7.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/5494a68e2d2804590b505fa3639cba5753f7ad07_3.shader_test failed to compile:
+0:1(11): error: syntax error, unexpected NEW_IDENTIFIER, expecting BASIC_TYPE_TOK or STRUCT or VOID_TOK or TYPE_IDENTIFIER
+
+ERROR: shaders/piglit/5494a68e2d2804590b505fa3639cba5753f7ad07_3.shader_test failed to compile:
+0:1(17): error: syntax error, unexpected BASIC_TYPE_TOK, expecting '{'
+
+ERROR: shaders/piglit/aa37289bd11ac3ac14be3e5f871d25b728c9e738_93.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/f34a7d4f5b111c246a1d5042232ea289767e71bd_87.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/32368c86281bcfc8a9b3dfd8d22b62979dd7c26e_11.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/febe77cc029f3df423146e8bc77b0b5bf922b090_25.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/38bd0fa4a5d709622c905af2d3f47ad61a59f7d7_9.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/b85b969d62385e446babe2098c8e205f99da1b3f_133.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/d184af507092b46d2d653b4c8323617721a7bbdd_137.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/8e9f12997a8facad415e21b4445f4550d0f921bd_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/8e9f12997a8facad415e21b4445f4550d0f921bd_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/cb9d1752bb5c6451abaea4a857831b40c863f18f_67.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/0c71a89d8647b2342aa8ecc2ca006e92bea837ab_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in vertex shader
+
+ERROR: shaders/piglit/0c71a89d8647b2342aa8ecc2ca006e92bea837ab_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/a5b6cf610f51fc289f4c30864e2914ddd78bcf68_3.shader_test failed to compile:
+0:4(2): error: value of type float cannot be assigned to variable of type vec4
+
+ERROR: shaders/piglit/b15b4fa8caca8dcfecdcf47615d63ff8ddf4f0ac_89.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/a559aef274baee2504c21d99f9a2b4f4418c8f5a_3.shader_test failed to compile:
+0:1(1): error: syntax error, unexpected NEW_IDENTIFIER
+
+ERROR: shaders/piglit/1e1012e195ca3fb1d5adca0fdecae295d003cd26_61.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/9507c01b2b65bf17ae8fd442d0dd46aabfc940cd_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_gpu_shader5' unsupported in fragment shader
+
+ERROR: shaders/piglit/0a361136e2f0424a8747d1fb40880814e85de193_109.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/019af2df73b22b53184e609652b8bdeed86f3006_51.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/d8ecd2fd0e91e195e52cbbfd208415eeeb2d6c44_3.shader_test failed to compile:
+0:4(12): warning: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+0:7(9): error: qualifier `bindless_image` requires ARB_bindless_texture
+0:10(2): error: only precision qualifiers may be applied to structure members
+
+ERROR: shaders/piglit/9ee36ac2286eadf0bfb91e2c8ef584707e20bb22_151.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/98f398825e4dac012d0b2ef24596f3b191d0201a_69.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/8020a265b6cb1cddabdeba7fdead55ffce9e06d7_3.shader_test failed to compile:
+0:3(12): warning: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+0:6(9): error: qualifier `bindless_image` requires ARB_bindless_texture
+
+ERROR: shaders/piglit/357b26b0ba7d1219ce07cd2ebc0d1692b99e5632_35.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/vp-0.shader_test failed to compile
+ERROR: shaders/piglit/bf92802cf66c47e45191f45294dee70cda561a5e_33.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/b50a6ef51cd1bee1077c448313a3c728c1cd3df7_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/b50a6ef51cd1bee1077c448313a3c728c1cd3df7_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/c5b64c58a87c30c570a429550d1970774d2d79f4_27.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/a9ebb03127697598f33860e7d474111933d2c247_131.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/bad7d13f65e6ed63eb27be072fec9df4f18eef03_47.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/55e3b3ccea43526ca9a5b776fb94e96d83dd2af2_119.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/6d20056a2355697274e88e67fe5ca75a607e928c_59.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/cada8f739fdaddf55b02a42622d57f2c3a8409e2_97.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/765b9b6a510f03d2f06f52f3a1fa5116a5eca80e_135.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/0635af161811f36c429e4e644d28ad9f045302ff_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/c6498d8b79b80aee1277ffda6dcbc0132c15de77_15.shader_test failed to compile:
+0:2(12): warning: extension `GL_ARB_gpu_shader5' unsupported in fragment shader
+0:7(25): error: `gl_SampleMaskIn' undeclared
+0:7(19): error: cannot construct `float' from a non-numeric data type
+0:7(19): error: operands to arithmetic operators must be numeric
+0:7(14): error: cannot construct `vec4' from a non-numeric data type
+
+ERROR: shaders/piglit/9ff713991ac261627f13f7c418ef0bdaa3aec936_121.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/bf318963d01323d6d5284095c97a65770a3b374c_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in vertex shader
+
+ERROR: shaders/piglit/bf318963d01323d6d5284095c97a65770a3b374c_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/fb949cea45942ae8fb0e9894397ddee51353de8d_79.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/242415020d6bd16f63c50baffcab61a22a112b99_24.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/3c324fd0b5dab440e4b71031ff3c679f886f8863_45.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/25c46f77d55343cfcb57e9d1f602724191b7a830_75.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/52b2508dea3e61634c6c865c884f339568f9c1a4_103.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/fc30069988e599fdb6fda30082b9e5f6e848da3d_65.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/e6e6ce7cb6a9e322a411c9d8b1235bc375cbede2_3.shader_test failed to compile:
+0:3(12): warning: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+0:5(9): error: qualifier `bindless_sampler` requires ARB_bindless_texture
+
+ERROR: shaders/piglit/ebd6ca29de82439dfaff3c3c98fe1cd75ee187ac_147.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/674ca91120aaad8fe75d8904cf6f82970d1d3c80_21.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/c6ca1719b28108ef75f672bfe57d07c89ee48e78_12.shader_test failed to compile:
+0:2(12): warning: extension `GL_ARB_gpu_shader5' unsupported in fragment shader
+0:7(25): error: `gl_SampleMaskIn' undeclared
+0:7(19): error: cannot construct `float' from a non-numeric data type
+0:7(19): error: operands to arithmetic operators must be numeric
+0:7(14): error: cannot construct `vec4' from a non-numeric data type
+
+ERROR: shaders/piglit/78dbef8a30994b2a3a9a2efd8aa74c2350ff4d8a_12.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/65be491536d7cd39aff9d5e6babac403bb09852c_41.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/b834b850e821815dfad85e88a18763981b09818f_83.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/732f2a9831284063903036b62f6be2be4e1acb0d_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/150c04b79ff8e0df76057f35a539175dc0b166ef_139.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/1eee48ffea49cf51f4b43aefbadbaa1a15315f2a_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/06ab68ad9855fc1e6082129a5f4f969e0be53d5c_145.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/ab7953d397f77e26e552f09e44388c4fda95f6cc_29.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/b0b33b15e555333060ab2e9a42ef8bf8aa0b7714_117.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/34dc760e9682ecee1ca6610b421cc0a9e5528a3f_9.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/0c877850fe651bf22fb7fae28be27aaa9a9120a2_6.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/3f1f2831b6dd5dbe9909466883ad35a3ea2b5d8e_113.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/9f5c43debb258acc5478c26d8eaf91b5f8890c20_149.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/dfc97ad106c727715c1bb82ec7f74cf80d20f16b_123.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/912dbf9c5b9d52af87da4b2e7f75aaebf323755c_71.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/048d4dc610f478fca7813d399405d8e4ee9ee2bd_141.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/c2b8979c89c4d617ec1dada82b5bd7ff4d2843a1_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/c2b8979c89c4d617ec1dada82b5bd7ff4d2843a1_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/c0d3f28d311b26b18b40c423a228e0688f45d1a9_3.shader_test failed to compile:
+0:4(12): warning: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+0:6(9): error: qualifier `bindless_sampler` requires ARB_bindless_texture
+
+ERROR: shaders/piglit/41cce637b6cec342077f3dddebbd96242c21a4a5_43.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/ca716d2a180630a4349118782cab0f188b568aef_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/1d6009aa8cb4fac245de4fe76b4a9d28606dc640_81.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/0b1fa188aff737909120eb8c5234662b80ab7c60_127.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/53531c899bcd4622c23d6f78bf6f0c9ceaca5bbd_39.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/e64a5229ea507050de34c883651a98db0c82cdb2_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/e64a5229ea507050de34c883651a98db0c82cdb2_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/65b3b8327f2ac69df8b6ecfc84576a47567423bc_77.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/831cda16f23c8eb3af588ea391299b6506d9836f_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/831cda16f23c8eb3af588ea391299b6506d9836f_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/ca7c500a91f669ace7a27b553117ea9874a9f47c_85.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/d315df892cb849839be3e7f2b9077049f4e07468_101.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/d60df0aec74a41c588ed8f1235f45d8d16c09a86_105.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/1111c1d18ba1c4419fe3520809187ab5ee6e5c74_23.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/746fb47f4737b107606ac092e457830d1c9ad6b0_57.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/84c6e9897f6368c914b61ab00a72a85052eb5f08_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/84c6e9897f6368c914b61ab00a72a85052eb5f08_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/df5d233cb7856a137a17350b173ee8643960ddf4_111.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/52aafeeb1995857befd266aec3b963800c876764_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/3bdb83336f7030077ab7c894bc662ab5b0a5b01f_31.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/f6f6f4ae7f2046443ea9103e1e849a94430bea52_63.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/64294db72cabc6d6dbcb540096d3ef0c4dd340eb_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/f6d8b4fbaa8c8ffb006407abe6686e36d770c32f_17.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/ceb045258b510797bc0bd9ef61b505db07ffebf3_53.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/67a3a796f6bcc89ce514c7cf64e9ecfb0c31cf23_18.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/377bb560c07108605c80dcc0b3290126a0bcd573_37.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/db7cd0f68b4f9cfac60dbd469d110a867d023c52_107.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/90edd713b851359b2ee9b23c842011a287196d6a_55.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/586b4c67dcfb20ad0685a3e68d9247f364bc07be_13.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/428a14191a40909fb7aa405847377b86ad2d670b_15.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/e616d9eea0656a3bad4baaf088e06033ef4e98b6_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/0fc6567084c6eba35b33fdc03bf66dd03c87573a_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in vertex shader
+
+ERROR: shaders/piglit/0fc6567084c6eba35b33fdc03bf66dd03c87573a_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/piglit/47439420224805694bf5843234d161bcf7d41bbe_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_bindless_texture' unsupported in fragment shader
+
+ERROR: shaders/metro2033redux/fbf8031490eb77c2d30ed329353198d8e597cba2_4875.shader_test failed to compile:
+0:1(10): error: GLSL 4.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES
+
+ERROR: shaders/metro2033redux/fbf8031490eb77c2d30ed329353198d8e597cba2_4875.shader_test failed to compile:
+0:1(10): error: GLSL 4.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES
+
