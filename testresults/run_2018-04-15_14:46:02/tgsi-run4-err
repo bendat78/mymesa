@@ -1,0 +1,68 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+ERROR: shaders/csgo/fp-1.shader_test failed to compile
+ERROR: shaders/piglit/e0638f1c9eca81c574bcd627e60f62282ec8ff75_3.shader_test failed to compile:
+0:1(12): error: extension `GL_OES_EGL_image_external' unsupported in fragment shader
+
+ERROR: shaders/piglit/16c99de8f94d8fdf59a93378c75b6c51a3d15cac_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/piglit/5494a68e2d2804590b505fa3639cba5753f7ad07_3.shader_test failed to compile:
+0:1(11): error: syntax error, unexpected NEW_IDENTIFIER, expecting BASIC_TYPE_TOK or STRUCT or VOID_TOK or TYPE_IDENTIFIER
+
+ERROR: shaders/piglit/5494a68e2d2804590b505fa3639cba5753f7ad07_3.shader_test failed to compile:
+0:1(17): error: syntax error, unexpected BASIC_TYPE_TOK, expecting '{'
+
+ERROR: shaders/piglit/a5b6cf610f51fc289f4c30864e2914ddd78bcf68_3.shader_test failed to compile:
+0:4(2): error: value of type float cannot be assigned to variable of type vec4
+
+ERROR: shaders/piglit/a559aef274baee2504c21d99f9a2b4f4418c8f5a_3.shader_test failed to compile:
+0:1(1): error: syntax error, unexpected NEW_IDENTIFIER
+
+ERROR: shaders/piglit/9507c01b2b65bf17ae8fd442d0dd46aabfc940cd_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_gpu_shader5' unsupported in fragment shader
+
+ERROR: shaders/piglit/8c0ae147c9309df7278dccb115b7356d3b111861_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/piglit/vp-0.shader_test failed to compile
+ERROR: shaders/piglit/bcd8f288881c58819eeec67c676590823b7e1731_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/piglit/c6498d8b79b80aee1277ffda6dcbc0132c15de77_15.shader_test failed to compile:
+0:2(12): warning: extension `GL_ARB_gpu_shader5' unsupported in fragment shader
+0:7(25): error: `gl_SampleMaskIn' undeclared
+0:7(19): error: cannot construct `float' from a non-numeric data type
+0:7(19): error: operands to arithmetic operators must be numeric
+0:7(14): error: cannot construct `vec4' from a non-numeric data type
+
+ERROR: shaders/piglit/cdb6cf993b7a3a05e1493e1d1192bb718461a6d8_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/piglit/7131e4045304d1837b6d9a41a6318ae99298fa7a_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/piglit/c6ca1719b28108ef75f672bfe57d07c89ee48e78_12.shader_test failed to compile:
+0:2(12): warning: extension `GL_ARB_gpu_shader5' unsupported in fragment shader
+0:7(25): error: `gl_SampleMaskIn' undeclared
+0:7(19): error: cannot construct `float' from a non-numeric data type
+0:7(19): error: operands to arithmetic operators must be numeric
+0:7(14): error: cannot construct `vec4' from a non-numeric data type
+
+ERROR: shaders/piglit/dd520609452cb4c18c2950fc1c5352a4b01fb6b0_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/piglit/672bf3331a25c3735a34d75a3023fab15ae8111b_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/piglit/78b34b474e017e65968aae05657d8dd2f322aee1_3.shader_test failed to compile:
+0:2(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/piglit/eefa98010abd0b4664a4e2b9c81c0ab1a9ed945c_3.shader_test failed to compile:
+0:3(12): error: extension `GL_ARB_shader_ballot' unsupported in fragment shader
+
+ERROR: shaders/metro2033redux/fbf8031490eb77c2d30ed329353198d8e597cba2_4875.shader_test failed to compile:
+0:1(10): error: GLSL 4.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES
+
+ERROR: shaders/metro2033redux/fbf8031490eb77c2d30ed329353198d8e597cba2_4875.shader_test failed to compile:
+0:1(10): error: GLSL 4.00 is not supported. Supported versions are: 1.10, 1.20, 1.30, 1.40, 1.00 ES, 3.00 ES, 3.10 ES, and 3.20 ES
+
