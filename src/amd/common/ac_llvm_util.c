@@ -135,7 +135,7 @@ LLVMTargetMachineRef ac_create_target_machine(enum radeon_family family, enum ac
 		 tm_options & AC_TM_FORCE_ENABLE_XNACK ? ",+xnack" : "",
 		 tm_options & AC_TM_FORCE_DISABLE_XNACK ? ",-xnack" : "",
 		 tm_options & AC_TM_PROMOTE_ALLOCA_TO_SCRATCH ? ",-promote-alloca" : "");
-
+	
 	LLVMTargetMachineRef tm = LLVMCreateTargetMachine(
 	                             target,
 	                             triple,
