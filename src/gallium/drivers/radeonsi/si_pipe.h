@@ -1333,7 +1333,7 @@ si_invalidate_draw_sh_constants(struct si_context *sctx)
 static inline unsigned
 si_get_atom_bit(struct si_context *sctx, struct si_atom *atom)
 {
-	return 1 << (atom - &sctx->atoms.array);
+	return 1 << (atom - sctx->atoms.array);
 }
 
 static inline void

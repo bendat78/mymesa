@@ -141,7 +141,7 @@ unsigned si_llvm_compile(LLVMModuleRef M, struct ac_shader_binary *binary,
 	LLVMDisposeMemoryBuffer(out_buffer);
 
 out:
-	if (diag.retval != 0)
+	if (diag.retval)
 		pipe_debug_message(debug, SHADER_INFO, "LLVM compile failed");
 	return diag.retval;
 }
@@ -502,7 +502,7 @@ LLVMValueRef si_llvm_emit_fetch(struct lp_build_tgsi_context *bld_base,
 	LLVMBuilderRef builder = ctx->ac.builder;
 	LLVMValueRef result = NULL, ptr, ptr2;
 
-	if (swizzle == ~0) {
+	if (swizzle == (~0u)) {
 		LLVMValueRef values[TGSI_NUM_CHANNELS];
 		unsigned chan;
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {

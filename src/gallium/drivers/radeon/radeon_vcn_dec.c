@@ -948,7 +948,7 @@ static struct pb_buffer *rvcn_dec_message_decode(struct radeon_decoder *dec,
 		memcpy(codec, (void*)&vp9, sizeof(rvcn_dec_message_vp9_t));
 		index->message_id = RDECODE_MESSAGE_VP9;
 
-		if (dec->ctx.res == NULL) {
+		if (!dec->ctx.res) {
 			unsigned ctx_size;
 			uint8_t *ptr;
 

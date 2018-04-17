@@ -223,7 +223,7 @@ foreach_deref_node_worker(struct deref_node *node, nir_deref *deref,
                                       struct lower_variables_state *state),
                           struct lower_variables_state *state)
 {
-   if (deref->child == NULL) {
+   if (!deref->child) {
       cb(node, state);
       return;
    }
@@ -278,7 +278,7 @@ foreach_deref_node_match(nir_deref_var *deref,
    var_deref.deref.child = NULL;
    struct deref_node *node = get_deref_node(&var_deref, state);
 
-   if (node == NULL)
+   if (!node)
       return;
 
    foreach_deref_node_worker(node, &deref->deref, cb, state);

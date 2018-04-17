@@ -487,8 +487,8 @@ static int gfx6_surface_settings(ADDR_HANDLE addrlib,
 	    surf->u.legacy.level[0].mode == RADEON_SURF_MODE_2D &&
 	    !(surf->flags & (RADEON_SURF_Z_OR_SBUFFER | RADEON_SURF_SHAREABLE)) &&
 	    !get_display_flag(config, surf)) {
-		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {0};
-		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {0};
+		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {};
+		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {};
 
 		AddrBaseSwizzleIn.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_INPUT);
 		AddrBaseSwizzleOut.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT);
@@ -985,8 +985,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		    !out.mipChainInTail &&
 		    !(surf->flags & RADEON_SURF_SHAREABLE) &&
 		    !in->flags.display) {
-			ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {0};
-			ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {0};
+			ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {};
+			ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {};
 
 			xin.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_INPUT);
 			xout.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT);

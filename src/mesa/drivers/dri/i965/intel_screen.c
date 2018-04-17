@@ -1834,7 +1834,7 @@ intel_detect_swizzling(struct intel_screen *screen)
    struct brw_bo *buffer =
       brw_bo_alloc_tiled(screen->bufmgr, "swizzle test", 32768,
                          tiling, 512, 0);
-   if (buffer == NULL)
+   if (!buffer)
       return false;
 
    brw_bo_get_tiling(buffer, &tiling, &swizzle_mode);
