@@ -120,18 +120,26 @@ void si_flush_gfx_cs(struct si_context *ctx, unsigned flags,
 		ctx->streamout.suspended = true;
 	}
 
+<<<<<<< HEAD
 	if (wait_flags) {
 		ctx->flags |= wait_flags;
 		si_emit_cache_flush(ctx);
 	}
 	ctx->gfx_last_ib_is_busy = wait_flags == 0;
 
+=======
+>>>>>>> 6e22ad6edc34dc07a08b41a781f1c37ff3c536e7
 	/* Make sure CP DMA is idle at the end of IBs after L2 prefetches
 	 * because the kernel doesn't wait for it. */
 	if (ctx->chip_class >= CIK)
 		si_cp_dma_wait_for_idle(ctx);
 
-	si_emit_cache_flush(ctx);
+	/* Wait for draw calls to finish if needed. */
+	if (wait_flags) {
+		ctx->flags |= wait_flags;
+		si_emit_cache_flush(ctx);
+	}
+	ctx->gfx_last_ib_is_busy = wait_flags == 0;
 
 	if (ctx->current_saved_cs) {
 		si_trace_emit(ctx);
@@ -215,6 +223,7 @@ void si_begin_new_gfx_cs(struct si_context *ctx)
 	 * TODO: Do we also need to invalidate CB & DB caches?
 	 */
 	ctx->flags |= SI_CONTEXT_INV_ICACHE |
+<<<<<<< HEAD
 	      SI_CONTEXT_INV_SMEM_L1 |
 		      SI_CONTEXT_INV_VMEM_L1 |
 		      SI_CONTEXT_INV_GLOBAL_L2 |
@@ -222,6 +231,12 @@ void si_begin_new_gfx_cs(struct si_context *ctx)
 //		      SI_CONTEXT_FLUSH_AND_INV_DB |
 //		      SI_CONTEXT_FLUSH_AND_INV_DB_META |
 //		      SI_CONTEXT_FLUSH_AND_INV_CB;
+=======
+		      SI_CONTEXT_INV_SMEM_L1 |
+		      SI_CONTEXT_INV_VMEM_L1 |
+		      SI_CONTEXT_INV_GLOBAL_L2 |
+		      SI_CONTEXT_START_PIPELINE_STATS;
+>>>>>>> 6e22ad6edc34dc07a08b41a781f1c37ff3c536e7
 
 	/* set all valid group as dirty so they get reemited on
 	 * next draw command
