@@ -77,7 +77,7 @@ enum si_arg_regfile {
 
 static void si_init_shader_ctx(struct si_shader_context *ctx,
 			       struct si_screen *sscreen,
-			       LLVMTargetMachineRef tm);
+			       struct si_compiler *compiler);
 
 static void si_llvm_emit_barrier(const struct lp_build_tgsi_action *action,
 				 struct lp_build_tgsi_context *bld_base,
@@ -5648,7 +5648,7 @@ void si_shader_dump(struct si_screen *sscreen, const struct si_shader *shader,
 static int si_compile_llvm(struct si_screen *sscreen,
 			   struct ac_shader_binary *binary,
 			   struct si_shader_config *conf,
-			   LLVMTargetMachineRef tm,
+			   struct si_compiler *compiler,
 			   LLVMModuleRef mod,
 			   struct pipe_debug_callback *debug,
 			   unsigned processor,
@@ -5674,7 +5674,7 @@ static int si_compile_llvm(struct si_screen *sscreen,
 	}
 
 	if (!si_replace_shader(count, binary)) {
-		r = si_llvm_compile(mod, binary, tm, debug);
+		r = si_llvm_compile(mod, binary, compiler, debug);
 		if (r)
 			return r;
 	}
@@ -5726,7 +5726,7 @@ static void si_llvm_build_ret(struct si_shader_context *ctx, LLVMValueRef ret)
 /* Generate code for the hardware VS shader stage to go with a geometry shader */
 struct si_shader *
 si_generate_gs_copy_shader(struct si_screen *sscreen,
-			   LLVMTargetMachineRef tm,
+			   struct si_compiler *compiler,
 			   struct si_shader_selector *gs_selector,
 			   struct pipe_debug_callback *debug)
 {
@@ -5757,7 +5757,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 	shader->selector = gs_selector;
 	shader->is_gs_copy_shader = true;
 
-	si_init_shader_ctx(&ctx, sscreen, tm);
+	si_init_shader_ctx(&ctx, sscreen, compiler);
 	ctx.shader = shader;
 	ctx.type = PIPE_SHADER_VERTEX;
 
@@ -5852,7 +5852,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 	si_llvm_optimize_module(&ctx);
 
 	r = si_compile_llvm(sscreen, &ctx.shader->binary,
-			    &ctx.shader->config, ctx.tm,
+			    &ctx.shader->config, ctx.compiler,
 			    ctx.gallivm.module,
 			    debug, PIPE_SHADER_GEOMETRY,
 			    "GS Copy Shader");
@@ -5974,11 +5974,11 @@ static void si_dump_shader_key(unsigned processor, const struct si_shader *shade
 
 static void si_init_shader_ctx(struct si_shader_context *ctx,
 			       struct si_screen *sscreen,
-			       LLVMTargetMachineRef tm)
+			       struct si_compiler *compiler)
 {
 	struct lp_build_tgsi_context *bld_base;
 
-	si_llvm_context_init(ctx, sscreen, tm);
+	si_llvm_context_init(ctx, sscreen, compiler);
 
 	bld_base = &ctx->bld_base;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = fetch_constant;
@@ -6756,7 +6756,7 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 }
 
 int si_compile_tgsi_shader(struct si_screen *sscreen,
-			   LLVMTargetMachineRef tm,
+			   struct si_compiler *compiler,
 			   struct si_shader *shader,
 			   bool is_monolithic,
 			   struct pipe_debug_callback *debug)
@@ -6776,7 +6776,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 		si_dump_streamout(&sel->so);
 	}
 
-	si_init_shader_ctx(&ctx, sscreen, tm);
+	si_init_shader_ctx(&ctx, sscreen, compiler);
 	si_llvm_context_set_tgsi(&ctx, shader);
 	ctx.separate_prolog = !is_monolithic;
 
@@ -6986,7 +6986,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 	       LLVMPointerTypeKind);
 
 	/* Compile to bytecode. */
-	r = si_compile_llvm(sscreen, &shader->binary, &shader->config, tm,
+	r = si_compile_llvm(sscreen, &shader->binary, &shader->config, compiler,
 			    ctx.gallivm.module, debug, ctx.type, "TGSI shader");
 	si_llvm_dispose(&ctx);
 	if (r) {
@@ -7097,7 +7097,7 @@ si_get_shader_part(struct si_screen *sscreen,
 		   enum pipe_shader_type type,
 		   bool prolog,
 		   union si_shader_part_key *key,
-		   LLVMTargetMachineRef tm,
+		   struct si_compiler *compiler,
 		   struct pipe_debug_callback *debug,
 		   void (*build)(struct si_shader_context *,
 				 union si_shader_part_key *),
@@ -7122,7 +7122,7 @@ si_get_shader_part(struct si_screen *sscreen,
 	struct si_shader shader = {};
 	struct si_shader_context ctx;
 
-	si_init_shader_ctx(&ctx, sscreen, tm);
+	si_init_shader_ctx(&ctx, sscreen, compiler);
 	ctx.shader = &shader;
 	ctx.type = type;
 
@@ -7153,7 +7153,7 @@ si_get_shader_part(struct si_screen *sscreen,
 	/* Compile. */
 	si_llvm_optimize_module(&ctx);
 
-	if (si_compile_llvm(sscreen, &result->binary, &result->config, tm,
+	if (si_compile_llvm(sscreen, &result->binary, &result->config, compiler,
 			    ctx.ac.module, debug, ctx.type, name)) {
 		FREE(result);
 		result = NULL;
@@ -7343,7 +7343,7 @@ static void si_build_vs_prolog_function(struct si_shader_context *ctx,
 }
 
 static bool si_get_vs_prolog(struct si_screen *sscreen,
-			     LLVMTargetMachineRef tm,
+			     struct si_compiler *compiler,
 			     struct si_shader *shader,
 			     struct pipe_debug_callback *debug,
 			     struct si_shader *main_part,
@@ -7361,7 +7361,7 @@ static bool si_get_vs_prolog(struct si_screen *sscreen,
 
 	shader->prolog =
 		si_get_shader_part(sscreen, &sscreen->vs_prologs,
-				   PIPE_SHADER_VERTEX, true, &prolog_key, tm,
+				   PIPE_SHADER_VERTEX, true, &prolog_key, compiler,
 				   debug, si_build_vs_prolog_function,
 				   "Vertex Shader Prolog");
 	return shader->prolog != NULL;
@@ -7371,11 +7371,11 @@ static bool si_get_vs_prolog(struct si_screen *sscreen,
  * Select and compile (or reuse) vertex shader parts (prolog & epilog).
  */
 static bool si_shader_select_vs_parts(struct si_screen *sscreen,
-				      LLVMTargetMachineRef tm,
+				      struct si_compiler *compiler,
 				      struct si_shader *shader,
 				      struct pipe_debug_callback *debug)
 {
-	return si_get_vs_prolog(sscreen, tm, shader, debug, shader,
+	return si_get_vs_prolog(sscreen, compiler, shader, debug, shader,
 				&shader->key.part.vs.prolog);
 }
 
@@ -7460,7 +7460,7 @@ static void si_build_tcs_epilog_function(struct si_shader_context *ctx,
  * Select and compile (or reuse) TCS parts (epilog).
  */
 static bool si_shader_select_tcs_parts(struct si_screen *sscreen,
-				       LLVMTargetMachineRef tm,
+				       struct si_compiler *compiler,
 				       struct si_shader *shader,
 				       struct pipe_debug_callback *debug)
 {
@@ -7468,7 +7468,7 @@ static bool si_shader_select_tcs_parts(struct si_screen *sscreen,
 		struct si_shader *ls_main_part =
 			shader->key.part.tcs.ls->main_shader_part_ls;
 
-		if (!si_get_vs_prolog(sscreen, tm, shader, debug, ls_main_part,
+		if (!si_get_vs_prolog(sscreen, compiler, shader, debug, ls_main_part,
 				      &shader->key.part.tcs.ls_prolog))
 			return false;
 
@@ -7482,7 +7482,7 @@ static bool si_shader_select_tcs_parts(struct si_screen *sscreen,
 
 	shader->epilog = si_get_shader_part(sscreen, &sscreen->tcs_epilogs,
 					    PIPE_SHADER_TESS_CTRL, false,
-					    &epilog_key, tm, debug,
+					    &epilog_key, compiler, debug,
 					    si_build_tcs_epilog_function,
 					    "Tessellation Control Shader Epilog");
 	return shader->epilog != NULL;
@@ -7492,7 +7492,7 @@ static bool si_shader_select_tcs_parts(struct si_screen *sscreen,
  * Select and compile (or reuse) GS parts (prolog).
  */
 static bool si_shader_select_gs_parts(struct si_screen *sscreen,
-				      LLVMTargetMachineRef tm,
+				      struct si_compiler *compiler,
 				      struct si_shader *shader,
 				      struct pipe_debug_callback *debug)
 {
@@ -7501,7 +7501,7 @@ static bool si_shader_select_gs_parts(struct si_screen *sscreen,
 			shader->key.part.gs.es->main_shader_part_es;
 
 		if (shader->key.part.gs.es->type == PIPE_SHADER_VERTEX &&
-		    !si_get_vs_prolog(sscreen, tm, shader, debug, es_main_part,
+		    !si_get_vs_prolog(sscreen, compiler, shader, debug, es_main_part,
 				      &shader->key.part.gs.vs_prolog))
 			return false;
 
@@ -7517,7 +7517,7 @@ static bool si_shader_select_gs_parts(struct si_screen *sscreen,
 
 	shader->prolog2 = si_get_shader_part(sscreen, &sscreen->gs_prologs,
 					    PIPE_SHADER_GEOMETRY, true,
-					    &prolog_key, tm, debug,
+					    &prolog_key, compiler, debug,
 					    si_build_gs_prolog_function,
 					    "Geometry Shader Prolog");
 	return shader->prolog2 != NULL;
@@ -7905,7 +7905,7 @@ static void si_build_ps_epilog_function(struct si_shader_context *ctx,
  * Select and compile (or reuse) pixel shader parts (prolog & epilog).
  */
 static bool si_shader_select_ps_parts(struct si_screen *sscreen,
-				      LLVMTargetMachineRef tm,
+				      struct si_compiler *compiler,
 				      struct si_shader *shader,
 				      struct pipe_debug_callback *debug)
 {
@@ -7920,7 +7920,7 @@ static bool si_shader_select_ps_parts(struct si_screen *sscreen,
 		shader->prolog =
 			si_get_shader_part(sscreen, &sscreen->ps_prologs,
 					   PIPE_SHADER_FRAGMENT, true,
-					   &prolog_key, tm, debug,
+					   &prolog_key, compiler, debug,
 					   si_build_ps_prolog_function,
 					   "Fragment Shader Prolog");
 		if (!shader->prolog)
@@ -7933,7 +7933,7 @@ static bool si_shader_select_ps_parts(struct si_screen *sscreen,
 	shader->epilog =
 		si_get_shader_part(sscreen, &sscreen->ps_epilogs,
 				   PIPE_SHADER_FRAGMENT, false,
-				   &epilog_key, tm, debug,
+				   &epilog_key, compiler, debug,
 				   si_build_ps_epilog_function,
 				   "Fragment Shader Epilog");
 	if (!shader->epilog)
@@ -8036,7 +8036,7 @@ static void si_fix_resource_usage(struct si_screen *sscreen,
 	}
 }
 
-int si_shader_create(struct si_screen *sscreen, LLVMTargetMachineRef tm,
+int si_shader_create(struct si_screen *sscreen, struct si_compiler *compiler,
 		     struct si_shader *shader,
 		     struct pipe_debug_callback *debug)
 {
@@ -8054,7 +8054,7 @@ int si_shader_create(struct si_screen *sscreen, LLVMTargetMachineRef tm,
 		/* Monolithic shader (compiled as a whole, has many variants,
 		 * may take a long time to compile).
 		 */
-		r = si_compile_tgsi_shader(sscreen, tm, shader, true, debug);
+		r = si_compile_tgsi_shader(sscreen, compiler, shader, true, debug);
 		if (r)
 			return r;
 	} else {
@@ -8094,21 +8094,21 @@ int si_shader_create(struct si_screen *sscreen, LLVMTargetMachineRef tm,
 		/* Select prologs and/or epilogs. */
 		switch (sel->type) {
 		case PIPE_SHADER_VERTEX:
-			if (!si_shader_select_vs_parts(sscreen, tm, shader, debug))
+			if (!si_shader_select_vs_parts(sscreen, compiler, shader, debug))
 				return -1;
 			break;
 		case PIPE_SHADER_TESS_CTRL:
-			if (!si_shader_select_tcs_parts(sscreen, tm, shader, debug))
+			if (!si_shader_select_tcs_parts(sscreen, compiler, shader, debug))
 				return -1;
 			break;
 		case PIPE_SHADER_TESS_EVAL:
 			break;
 		case PIPE_SHADER_GEOMETRY:
-			if (!si_shader_select_gs_parts(sscreen, tm, shader, debug))
+			if (!si_shader_select_gs_parts(sscreen, compiler, shader, debug))
 				return -1;
 			break;
 		case PIPE_SHADER_FRAGMENT:
-			if (!si_shader_select_ps_parts(sscreen, tm, shader, debug))
+			if (!si_shader_select_ps_parts(sscreen, compiler, shader, debug))
 				return -1;
 
 			/* Make sure we have at least as many VGPRs as there
