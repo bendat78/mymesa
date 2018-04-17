@@ -120,15 +120,6 @@ void si_flush_gfx_cs(struct si_context *ctx, unsigned flags,
 		ctx->streamout.suspended = true;
 	}
 
-<<<<<<< HEAD
-	if (wait_flags) {
-		ctx->flags |= wait_flags;
-		si_emit_cache_flush(ctx);
-	}
-	ctx->gfx_last_ib_is_busy = wait_flags == 0;
-
-=======
->>>>>>> 6e22ad6edc34dc07a08b41a781f1c37ff3c536e7
 	/* Make sure CP DMA is idle at the end of IBs after L2 prefetches
 	 * because the kernel doesn't wait for it. */
 	if (ctx->chip_class >= CIK)
