@@ -52,7 +52,7 @@ static void si_alloc_separate_cmask(struct si_screen *sscreen,
 					 PIPE_USAGE_DEFAULT,
 					 rtex->cmask.size,
 					 rtex->cmask.alignment);
-	if (!rtex->cmask_buffer) {
+	if (rtex->cmask_buffer == NULL) {
 		rtex->cmask.size = 0;
 		return;
 	}
@@ -378,7 +378,7 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 		}
 
 		/* cannot clear mipmapped textures */
-		if (fb->cbufs[i]->texture->last_level) {
+		if (fb->cbufs[i]->texture->last_level != 0) {
 			continue;
 		}
 
@@ -486,7 +486,7 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 
 			/* ensure CMASK is enabled */
 			si_alloc_separate_cmask(sctx->screen, tex);
-			if (!tex->cmask.size) {
+			if (tex->cmask.size == 0) {
 				continue;
 			}
 
@@ -538,7 +538,7 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 				continue;
 
 			tex = (struct r600_texture *)fb->cbufs[i]->texture;
-			if (!tex->fmask.size)
+			if (tex->fmask.size == 0)
 				tex->dirty_level_mask &= ~(1 << fb->cbufs[i]->u.tex.level);
 		}
 	}
@@ -661,7 +661,7 @@ static void si_clear_texture(struct pipe_context *pipe,
 {
 	struct pipe_screen *screen = pipe->screen;
 	struct r600_texture *rtex = (struct r600_texture*)tex;
-	struct pipe_surface tmpl = {};
+	struct pipe_surface tmpl = {{0}};
 	struct pipe_surface *sf;
 	const struct util_format_description *desc =
 		util_format_description(tex->format);
