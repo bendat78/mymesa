@@ -472,7 +472,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	sctx->blitter->draw_rectangle = si_draw_rectangle;
 	sctx->blitter->skip_viewport_restore = true;
 
-	sctx->sample_mask.sample_mask = 0xffff;
+	sctx->sample_mask = 0xffff;
 
 	/* these must be last */
 	si_begin_new_gfx_cs(sctx);
