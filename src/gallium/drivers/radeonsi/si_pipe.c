@@ -467,7 +467,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 		sctx->b.resource_copy_region = sctx->dma_copy;
 
 	sctx->blitter = util_blitter_create(&sctx->b);
-	if (!sctx->blitter)
+	if (sctx->blitter == NULL)
 		goto fail;
 	sctx->blitter->draw_rectangle = si_draw_rectangle;
 	sctx->blitter->skip_viewport_restore = true;
