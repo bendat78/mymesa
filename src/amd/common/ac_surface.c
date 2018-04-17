@@ -351,10 +351,22 @@ static int gfx6_compute_level(ADDR_HANDLE addrlib,
 
 		if (ret == ADDR_OK) {
 			surf_level->dcc_offset = surf->dcc_size;
-			surf_level->dcc_fast_clear_size = AddrDccOut->dccFastClearSize;
 			surf->num_dcc_levels = level + 1;
 			surf->dcc_size = surf_level->dcc_offset + AddrDccOut->dccRamSize;
 			surf->dcc_alignment = MAX2(surf->dcc_alignment, AddrDccOut->dccRamBaseAlign);
+
+			/* If the DCC size of a subresource (1 mip level or 1 slice)
+			 * is not aligned, the DCC memory layout is not contiguous for
+			 * that subresource, which means we can't use fast clear.
+			 *
+			 * We only do fast clears for whole mipmap levels. If we did
+			 * per-slice fast clears, the same restriction would apply.
+			 * (i.e. only compute the slice size and see if it's aligned)
+			 */
+			if (level == config->info.levels - 1 || AddrDccOut->dccRamSizeAligned)
+				surf_level->dcc_fast_clear_size = AddrDccOut->dccFastClearSize;
+			else
+				surf_level->dcc_fast_clear_size = 0;
 		}
 	}
 
