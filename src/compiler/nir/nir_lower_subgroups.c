@@ -33,7 +33,7 @@ lower_subgroups_64bit_split_intrinsic(nir_builder *b, nir_intrinsic_instr *intri
                                       unsigned int component)
 {
    nir_ssa_def *comp;
-   if (component == 0)
+   if (!component)
       comp = nir_unpack_64_2x32_split_x(b, intrin->src[0].ssa);
    else
       comp = nir_unpack_64_2x32_split_y(b, intrin->src[0].ssa);

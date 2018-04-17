@@ -744,7 +744,7 @@ gen_print_batch(struct gen_batch_decode_ctx *ctx,
       else
          offset = 0;
 
-      if (inst == NULL) {
+      if (!inst) {
          fprintf(ctx->fp, "%s0x%08"PRIx64": unknown instruction %08x%s\n",
                  (ctx->flags & GEN_BATCH_DECODE_IN_COLOR) ? RED_COLOR : "",
                  offset, p[0], reset_color);

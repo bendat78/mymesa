@@ -115,7 +115,7 @@ static unsigned vp9_u(struct vl_vlc *vlc, unsigned n)
 {
    unsigned valid = vl_vlc_valid_bits(vlc);
 
-   if (n == 0)
+   if (!n)
       return 0;
 
    if (valid < 32)
@@ -196,7 +196,7 @@ void vlVaDecoderVP9BitstreamHeader(vlVaContext *context, vlVaBuffer *buf)
    show_frame = vp9_u(&vlc, 1);
    error_resilient_mode = vp9_u(&vlc, 1);
 
-   if (frame_type == 0) {
+   if (!frame_type) {
       /* sync_code */
       if (vp9_u(&vlc, 24) != 0x498342)
          return;
