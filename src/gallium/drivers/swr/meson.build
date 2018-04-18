@@ -70,6 +70,8 @@ files_swr_mesa = files(
   'rasterizer/jitter/builder_math.h',
   'rasterizer/jitter/builder_mem.cpp',
   'rasterizer/jitter/builder_mem.h',
+  'rasterizer/jitter/builder_gfx_mem.cpp',
+  'rasterizer/jitter/builder_gfx_mem.h',
   'rasterizer/jitter/builder_misc.cpp',
   'rasterizer/jitter/builder_misc.h',
   'rasterizer/jitter/fetch_jit.cpp',
@@ -79,6 +81,8 @@ files_swr_mesa = files(
   'rasterizer/jitter/JitManager.h',
   'rasterizer/jitter/streamout_jit.cpp',
   'rasterizer/jitter/streamout_jit.h',
+  'rasterizer/jitter/shader_lib/DebugOutput.cpp',
+  'rasterizer/jitter/functionpasses/lower_x86.cpp',
 )
 
 files_swr_arch = files(
@@ -300,7 +304,7 @@ endif
 libmesaswr = static_library(
   'mesaswr',
   [files_swr_mesa, files_swr_common, gen_knobs_h, gen_knobs_cpp,
-   gen_builder_hpp, gen_builder_x86_hpp],
+   gen_builder_hpp, gen_builder_meta_hpp, gen_builder_intrin_hpp],
   cpp_args : [cpp_vis_args, swr_cpp_args, swr_avx_args, swr_arch_defines],
   include_directories : [inc_common, swr_incs],
   dependencies : dep_llvm,
