@@ -1,3 +1,33 @@
+18.4.18
+Tested with 
+Series starting with [Mesa-dev] [PATCH 1/7] ac/surface: handle DCC subresource fast clear restriction on VI
+Series starting with [Mesa-dev] [PATCH 1/9] radeonsi: remove r600_pipe_common.h
+Series starting with [Mesa-dev] [PATCH 0/9] RadeonSI LLVM crash workaround for Ubuntu 18.04
+
+Kernel 4.16.0+ Mareks kernel patches for IB Partial flush i.e. DRM 3.26.0
+
+I did not test Mareks patches isolated for performance gains 
+This is git since 9.4.18 plus Mareks patches
+
+RX560 4GB OC (but with 50 Watt cap, before: 60W got too hot)
+
+Deus Ex 
+1. run: 24.8/5.4/36.5
+2. run: 24.9/13.8/37.9
+before
+1. run: 19.5/8.5/29.7
+2. run: 19.8/9.2/30.2
+
+Dirt Rallye 
+1. run 58/44.7/72 
+2. run 58.5/44/83
+before 
+1. run: 55/42/73 
+2. run: 55/43/85 
+
+Dead Island classic crash with NIR during shader compilation, TGSI works fine
+Dead Island Definitive works fine with TGSI
+
 10.4.18
 Feral Gamemode
 https://github.com/FeralInteractive/gamemode
