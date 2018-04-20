@@ -116,6 +116,7 @@ emit_system_values_block(nir_block *block, fs_visitor *v)
 
       case nir_intrinsic_load_vertex_id_zero_base:
       case nir_intrinsic_load_base_vertex:
+      case nir_intrinsic_load_first_vertex:
       case nir_intrinsic_load_instance_id:
       case nir_intrinsic_load_base_instance:
       case nir_intrinsic_load_draw_id:
@@ -2458,6 +2459,9 @@ fs_visitor::nir_emit_vs_intrinsic(const fs_builder &bld,
       break;
    }
 
+   case nir_intrinsic_load_first_vertex:
+      unreachable("lowered by brw_nir_lower_vs_inputs");
+
    default:
       nir_emit_intrinsic(bld, instr);
       break;
@@ -4142,7 +4146,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       if (const_offset) {
          offset_reg = brw_imm_ud(const_offset->u32[0]);
       } else {
-         offset_reg = get_nir_src(instr->src[1]);
+         offset_reg = retype(get_nir_src(instr->src[1]), BRW_REGISTER_TYPE_UD);
       }
 
       /* Read the vector */
