@@ -1,3 +1,2359 @@
+20.4.18
+
+potential users of gpu_shader5:
+* pretty sure
+
+* 20something/lib/libnw.so
+A Game of Changes/agoc
+A Wild Catgirl Appears!/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+A Wild Catgirl Appears!/lib/linux-i686/libGLEW.so.1.7
+A Wild Catgirl Appears!/lib/linux-x86_64/libGLEW.so.1.7
+A Wild Catgirl Appears!/lib/windows-i686/glew32.dll
+A-Gents/agents.x86_64
+AdvertCity/AdvertCity
+Hand of Fate/Hand of Fate.x86
+Hand of Fate/Hand of Fate.x86_64
+Hatoful Boyfriend/hatoful.x86
+Hatoful Boyfriend/hatoful.x86_64
+Haven Moon/HavenMoon.x86
+Haven Moon/HavenMoon.x86_64
+Heileen 3 New Horizons/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+Heileen 3 New Horizons/lib/linux-i686/libGLEW.so.1.7
+Heileen 3 New Horizons/lib/linux-x86_64/libGLEW.so.1.7
+Heileen 3 New Horizons/lib/windows-i686/glew32.dll
+Hitman GO/HitmanGo.x86_64
+Hitman™/bin/HitmanPro
+* Alien Isolation/bin/AlienIsolation
+Almightree-TheLastDreamer/Almightree-TheLastDreamer.x86
+Almightree-TheLastDreamer/Almightree-TheLastDreamer.x86_64
+Alphabeats PC Master Edition/AlphabeatsPCME.x86
+* Always Sometimes Monsters/lib/libnw.so
+Amnesia The Dark Descent/Launcher.bin.x86
+Amnesia The Dark Descent/Amnesia.bin.x86
+Amnesia The Dark Descent/Amnesia.bin.x86_64
+Amnesia The Dark Descent/Amnesia_NO_STEAM.bin.x86
+Amnesia The Dark Descent/Amnesia_NO_STEAM.bin.x86_64
+Amnesia The Dark Descent/Launcher.bin.x86_64
+Angels That Kill/Angels That Kill.x86
+Anna's Quest/anna
+Antichamber/Binaries/Linux/UDKGame-Linux
+* Antichamber/Engine/Shaders/Fxaa3_11.usf
+AOF2/aof.jar
+Aozora Meikyuu/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+Aozora Meikyuu/lib/linux-i686/libGLEW.so.1.7
+Aozora Meikyuu/lib/linux-x86_64/libGLEW.so.1.7
+Aozora Meikyuu/lib/windows-i686/glew32.dll
+ArmaTactics/ArmaTactics.x86
+Army of Tentacles NACDS/lib/linux-i686/libGLEW.so.1.7
+Army of Tentacles NACDS/lib/linux-x86_64/libGLEW.so.1.7
+AstralBreakers/astral-breakers.x86
+AstralBreakers/astral-breakers.x86_64
+Atriage/Atriage.x86
+AutoTileGen/AutoTileGen.x86
+AutoTileGen/AutoTileGen.x86_64
+BANG BANG BANG!/BANG BANG BANG.x86
+Bear With Me/Bear With Me.x86
+Bear With Me/Bear With Me.x86_64
+Besiege/Besiege.x86
+Besiege/Besiege.x86_64
+Beyond Eyes/BeyondEyes.x86
+Beyond Eyes/BeyondEyes.x86_64
+Borderlands 2/Borderlands2
+* Borderlands 2/steamassets/engine/shaders/fxaa.usf
+BrutalLegend/Buddha.bin.x86
+Dungeon Warfare/DW.x86
+Dungeon Warfare/DW.x86_64
+Emily is Away Too/EmilyIsAwayToo.x86
+Gabe Newell Simulator/GNS.x86
+BlackseaOdyssey/BlackseaOdyssey.x86
+BlackTheFall/black.x86
+BlackTheFall/black.x86_64
+BLEAK/BLEAK.x86
+BLEAK/BLEAK.x86_64
+Block Legend DX/BlockLegendDX.x86
+Blue Rose/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+Blue Rose/lib/linux-i686/libGLEW.so.1.7
+Blue Rose/lib/linux-x86_64/libGLEW.so.1.7
+Blue Rose/lib/windows-i686/glew32.dll
+BorderlandsPreSequel/BorderlandsPreSequel
+* BorderlandsPreSequel/steamassets/engine/shaders/fxaa.usf
+Boson X/bosonx
+Box Life/boxlife.x86
+Box Life/boxlife.x86_64
+Breach & Clear Deadline/DEADline.x86_64
+Breezeblox/Breezeblox.x86
+Breezeblox/Breezeblox.x86_64
+Bridge Constructor Stunts/Bridge_Constructor_Stunts.x86
+Brigador/lib/libGLEW.so.1.12
+Broken Age/BrokenAge
+Broken Sword 5/BS5
+Bulby Diamond Course/bulbydiamondcourse.x86
+Caravanserail/Caravanserail_LINUX.x86
+Caravanserail/Caravanserail_LINUX.x86_64
+Chaos engine/lib/libGLEW.so.1.9
+Chaos on Deponia/Deponia2
+chivalrymedievalwarfare/Binaries/Linux/UDKGame-Linux
+* chivalrymedievalwarfare/Engine/Shaders/Fxaa3_11.usf
+ChucksChallenge3D/ChucksChallenge3D-Full.x86
+ChucksChallenge3D/ChucksChallenge3D-Full.x86_64
+Cities In Motion/Cities In Motion.bin
+City Z/CityZ.x86
+City Z/CityZ.x86_64
+Collisions/love-10.2-amd64/lib/liblove.so.0
+Collisions/love-10.2-amd64/lib/liblove.so.0.0.0
+Colortone/colortone.x86
+Colortone/colortone.x86_64
+Commander Cool 2/CommanderCool.x86
+Commander Cool 2/CommanderCool.x86_64
+* Company of Heroes 2/bin/CompanyOfHeroes2
+ContraptionMaker/ContraptionMaker
+Costume Quest/Cq.bin.x86
+Crawl/Crawl.x86
+Crawl/Crawl.x86_64
+Crusader Kings II/ck2
+Crush Your Enemies/cye.x86
+Crystal Picnic/CrystalPicnic
+Dark Echo/DarkEcho.x86
+Dark Echo/DarkEcho.x86_64
+* Dawn of War 2/bin/DawnOfWar2
+* Dawn of War II - Retribution/bin/DawnOfWar2Retribution
+* Dawn of War III/bin/DawnOfWar3
+Defend The Highlands/Defend The Highlands.x86
+Defend The Highlands/Defend The Highlands.x86_64
+Democracy 3/Democracy3.bin.x86
+Democracy 3/Democracy3.bin.x86_64
+Deponia/Deponia
+Deponia Doomsday/Deponia4
+* Deus Ex Mankind Divided/bin/DeusExMD
+* DiRT Rally/bin/DirtRally
+* DiRT Showdown/dirt.i386
+Dreamfall Chapters/Dreamfall Chapters
+* Dreaming Sarah/lib/libnw.so
+Droid Assault/lwjgl.jar
+Dropsy/Dropsy.x86
+Dropsy/Dropsy.x86_64
+The Body Changer/bin/plugins_1.8.1/linux/RenderSystem_GL.so
+The Detail/The Detail.x86
+The Great War/content/Bin/bin-release/libmhgw_sandstoneext-1_0.so
+Dungeons Are Random/DaR_Linux.x86
+Dungeons2/Dungeons2.x86_64
+dUpLicity ~Beyond the Lies~/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+dUpLicity ~Beyond the Lies~/lib/linux-i686/libGLEW.so.1.7
+dUpLicity ~Beyond the Lies~/lib/linux-x86_64/libGLEW.so.1.7
+dUpLicity ~Beyond the Lies~/lib/windows-i686/glew32.dll
+Dyscourse/Dyscourse.x86
+eets_munchies/bin/eets2-bin
+Egg Returns Home/EggReturnsHome.x86_64
+Empire Total War/bin/game.i386
+Epistory/Epistory.x86
+Epistory/Epistory.x86_64
+Eron/eron.x86
+Escape from Puzzlegate/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+Escape from Puzzlegate/lib/linux-i686/libGLEW.so.1.7
+Escape from Puzzlegate/lib/linux-x86_64/libGLEW.so.1.7
+Escape from Puzzlegate/lib/windows-i686/glew32.dll
+Evo Explores/evo.x86
+Evo Explores/evo.x86_64
+* F1 2015/bin/F12015
+* F1 2017/bin/F12017
+Fallen A2P Protocol/Fallen.x86
+Fallen A2P Protocol/Fallen.x86_64
+* FastAndCurious/lib/libnw.so
+faultms1/faultms1.app/Contents/MacOS/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+faultms1/lib/linux-i686/libGLEW.so.1.7
+faultms1/lib/linux-x86_64/libGLEW.so.1.7
+faultms1/lib/windows-i686/glew32.dll
+Featherpunk Prime/FeatherpunkPrime.x86
+FindingTeddy/bin/libGLEW.so.1.8
+Fire/BonusContent/Prototype/fire_prototype
+Fire/Fire.x86_64
+Flower Shop Winter In Fairbrook/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+Flower Shop Winter In Fairbrook/lib/linux-i686/libGLEW.so.1.7
+Flower Shop Winter In Fairbrook/lib/linux-x86_64/libGLEW.so.1.7
+Flower Shop Winter In Fairbrook/lib/windows-i686/glew32.dll
+* FLX/linux32/lib/libnw.so
+FLX/osx64/foxyland.app/Contents/Versions/57.0.2987.98/nwjs Framework.framework/nwjs Framework
+FLX/win32/libGLESv2.dll
+FLX/win32/nw.dll
+Forgotten Tales Day of the Dead/Forgotten Tales - Day of the Dead.x86
+Forgotten Tales Day of the Dead/Forgotten Tales - Day of the Dead.x86_64
+Frontier/Frontier.x86
+Frontier/Frontier.x86_64
+Frozen Endzone/FrozenCortex_32
+Frozen Endzone/FrozenCortex_64
+Frozen Endzone/shaders/common/postFx/fxaa/Fxaa3_11.h
+Galactic Fighters/GalacticFighters.x86
+Galactic Fighters/GalacticFighters.x86_64
+Galactic Fighters/GalacticFighters_Data/Plugins/x86/libHH-UnityPlugin.so
+Galactic Fighters/GalacticFighters_Data/Plugins/x86_64/libHH-UnityPlugin.so
+Galak-Z/Galak-Z.x86
+Galak-Z/Galak-Z.x86_64
+Galaxy Admirals/GalaxyAdmirals.x86
+Gardenarium/Gardenarium.x86_64
+Geometry Wars 3 - Dimensions/GeometryWars3
+Go Home - Rage incoming/game.x86
+GoDFactoryWingmen/GoDFactoryWingmen.x86
+GoDFactoryWingmen/GoDFactoryWingmen.x86_64
+Gon' E-Choo!/gonechoo.x86
+Gon' E-Choo!/gonechoo.x86_64
+GoNNER/GoNNER.x86
+Goodbye Deponia/Deponia3
+Green Game/GreenGame.x86
+Green Game/GreenGame.x86_64
+* GRID Autosport/bin/GridAutosport
+Grim Fandango Remastered/GrimFandango
+Ground Breakers/GroundBreakers.x86
+Ground Breakers/GroundBreakers.x86_64
+Ground Pounders/bin/glew32.dll
+Gunmetal Arcadia Zero/GunPreq_NFML
+Gunnheim/Gunnheim.x86
+Gunnheim/Gunnheim.x86_64
+* Hacker Evolution Duality/HackerEvolutionDuality
+HacknSlash/Hack
+Halcyon 6 Starbase Commander/H6.x86
+Halcyon 6 Starbase Commander/H6.x86_64
+Holy Potatoes! We're in Space!/HPWIS.x86
+Holy Potatoes! We're in Space!/HPWIS.x86_64
+HoPiKo/HoPiKo.x86
+Hotline Miami 2/lib/libGLEW.so.1.10
+Hotline Miami 2/lib32/libGLEW.so.1.10
+Human Fall Flat/Human.x86
+Human Fall Flat/Human.x86_64
+Hurtworld/Hurtworld.x86
+Hurtworld/Hurtworld.x86_64
+HyperLightDrifter/assets/libsdlgamecontrollerplugin.so
+I Can't Escape Darkness/ICEDarkness
+illumine/assets/sdk/steamworksexample/gl/glew.h
+illumine/assets/sdk/steamworksexample/glew.c
+In Between/In Between.x86
+Mad Max/bin/MadMax
+MajesticNights/MajesticNights
+Making History II/content/Bin/bin-release/libmh2_sandstoneext-1_30.so
+Marble Duel/MarbleDuel.x86
+Marble Duel/MarbleDuel.x86_64
+Marble Mountain/marble.x86
+Marble Mountain/marble.x86_64
+mark_of_the_ninja/bin/ninja-bin32
+Massive Chalice/Linux/Bin/MC
+Massive Chalice/MC
+MechRunner/MechRunner.x86
+Medieval II Total War/bin/Medieval2
+Infinifactory/infinifactory.x86
+Infinifactory/infinifactory.x86_64
+inSynch/lib/libGLEW.so.1.7
+Into the Void/IntoTheVoid.x86
+Into the Void/IntoTheVoid.x86_64
+Iron Sky Invasion/Game/ISI_DX11.exe
+Jerry McPartlin/Jerry0.x86
+Jotun/Jotun.x86
+Jotun/Jotun.x86_64
+Jumpix Jump/JumpixJump.x86
+JumpJetRex/JumpJetRex.x86
+JumpJetRex/JumpJetRex.x86_64
+Just Bones/justbones.x86
+Just Bones/justbones.x86_64
+Kelvin/Fahrenheit
+Kerbal Space Program/Launcher.x86
+Kerbal Space Program/Launcher.x86_64
+Kick Ass Commandos/KickAssCommandos.x86
+Kinetic Void/Kinetic Void.x86
+Kinetic Void/Kinetic Void.x86_64
+Kingdom/Kingdom.x86
+Knee Deep/Knee Deep.x86
+Knee Deep/Knee Deep.x86_64
+Knights and Merchants Historical Version/Game/KAMRemake/CampaignBuilder.exe
+Knights and Merchants Historical Version/Game/KAMRemake/KaM_Remake.exe
+Knights and Merchants Historical Version/Game/KAMRemake/ScriptValidator.exe
+Knights of the Old Republic II/KOTOR2
+KnightSquad/KnightSquad.x86
+KnightSquad/KnightSquad.x86_64
+Korwin The Game/Korwin.x86
+KWAAN/Kwaan.x86_64
+* Land it Rocket/lib/libnw.so
+Lara Croft GO/Lara Croft GO.x86
+Lara Croft GO/Lara Croft GO.x86_64
+Lavapools/Lavapools.x86
+Lavapools/Lavapools.x86_64
+Layers of Fear/LOF
+Legend of Grimrock/Grimrock.bin.x86
+lethalleague/binaries/libGLEW.so.1.10.0
+Leviathan The Last Day of the Decade/ldod.x86
+Lew Pulsipher's Doomstar/Doomstar.x86
+* Life Is Strange/bin/LifeIsStrange
+Lifeless Planet/LifelessPlanet.x86_64
+Loren Amazon Princess/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+Loren Amazon Princess/lib/linux-i686/libGLEW.so.1.7
+Loren Amazon Princess/lib/linux-x86_64/libGLEW.so.1.7
+Loren Amazon Princess/lib/windows-i686/glew32.dll
+LuciusDemake/LuciusDemake.x86
+LuciusDemake/LuciusDemake.x86_64
+Lucky Rabbit Reflex!/lib/darwin-x86_64/libGLEW.1.7.0.dylib
+Lucky Rabbit Reflex!/lib/linux-i686/libGLEW.so.1.7
+Lucky Rabbit Reflex!/lib/linux-x86_64/libGLEW.so.1.7
+Lucky Rabbit Reflex!/lib/windows-i686/glew32.dll
+The Last NightMary - A Lenda do Cabeça de Cuia/TheLastNightMary.x86
+MessageQuest/mq.x86
+MessageQuest/mq.x86_64
+Metrico+/Metrico+.x86
+Metrico+/Metrico+.x86_64
+Miaou Moon/Miaou Moon.x86
+Miaou Moon/Miaou Moon.x86_64
+Mighty No. 9/Binaries/Linux/MN9Game.bin.x86_64
+Mimic Arena/Linux/mimic-arena.x86
+Mimic Arena/Linux/mimic-arena.x86_64
+Mimic Arena/Mac/mimic-arena.app/Contents/MacOS/mimic-arena
+Mimic Arena/Windows/mimic-arena.exe
+Monument/Monument.x86
+Monument/Monument.x86_64
+Mother Russia Bleeds/Mother Russia Bleeds.x86
+Mother Russia Bleeds/Mother Russia Bleeds.x86_64
+Mr Makeshifter/MrMakeshifter.x86
+Mr Makeshifter/MrMakeshifter.x86_64
+Never Ending Night/NEN Linux.x86
+Never Ending Night/NEN Linux.x86_64
+Nightside/Nightside.x86
+Nightside/Nightside.x86_64
+NO THING/no_thing.x86
+* Nongunz/lib/libnw.so
+? Oil Rush/bin/libUnigine_x86.so
+Okhlos/Okhlos.x86
+Okhlos/Okhlos.x86_64
+On open seas/OnOpenSeas.x86
+On open seas/OnOpenSeas.x86_64
+Out of the Park Baseball 17/lib32/libGLEW.so.1.11
+Out of the Park Baseball 17/lib64/libGLEW.so.1.11
+Out of the Park Baseball 18/lib64/libGLEW.so.1.11
+* Overgrowth/Data/GLSL/post_new_ssao.frag
+Overgrowth/Overgrowth.bin.x86
+Overgrowth/Overgrowth.bin.x86_64
+Overlord/overlord.i386
+Oxenfree/Oxenfree.x86
+Oxenfree/Oxenfree.x86_64
+Painkiller Hell & Damnation/Binaries/Linux64/libGLEW.so.1.6
+Painkiller Hell & Damnation/Binaries/Linux64/libGLEW.so.1.6.0
+ParadiseIsland/ParadiseIsland.x86
+ParadiseIsland/ParadiseIsland.x86_64
+Passpartout/Passpartout.x86_64
+PAYDAY 2/payday2_release
+Pills4Skills/p4s.x86
+PING 1.5/PINGPlus.x86_64
+PlagueInc/PlagueIncEvolved.x86
+PlagueInc/PlagueIncSC.x86
+Planetary Annihilation/Coherent/Debugger/Debugger
+Planetary Annihilation/libCoherentUI.so
+* Planetary Annihilation/media/shaders/post_fxaa.fs
+* Planetary Annihilation/media/shaders/sao_apply.fs
+Planetary Annihilation Titans/Coherent/Debugger/Debugger
+Planetary Annihilation Titans/libCoherentUI.so
+* Planetary Annihilation Titans/media/shaders/post_fxaa.fs
+* Planetary Annihilation Titans/media/shaders/sao_apply.fs
+* PlatformGolf/lib/libnw.so
+Plight of the Zombie/potz.x86
+Plug & Play/pnp.x86
+Plug & Play/pnp.x86_64
+Poly Bridge/polybridge.x86
+Poly Bridge/polybridge.x86_64
+PolyRace/PolyRace.x86
+PolyRace/PolyRace.x86_64
+Pony Island/PonyIsland.x86
+QUBE Directors Cut/Binaries/Linux/QUBEGame-Linux
+* QUBE Directors Cut/Engine/Shaders/Fxaa3_11.usf
+Quiplash/Quiplash
+Race.a.bit/raceabit.x86
+Race.a.bit/raceabit.x86_64
+RAM/RAM.x86
+RAM/RAM.x86_64
+Razenroth/Razenroth.x86
+Razenroth/Razenroth.x86_64
+Read Only Memories/ROM.x86
+Read Only Memories/ROM.x86_64
+Recursion Deluxe/RecursionDeluxe.x86
+Recursion Deluxe/RecursionDeluxe.x86_64
+Renowned Explorers/x86/abbeycore_steam
+Renowned Explorers/x86_64/abbeycore_steam
+RePete/liblove.so.0
+Machine for Pigs/AmnesiaAMFP.bin.x86
+Machine for Pigs/AmnesiaAMFP.bin.x86_64
+Machine for Pigs/AmnesiaAMFP_NO_STEAM.bin.x86
+Machine for Pigs/AmnesiaAMFP_NO_STEAM.bin.x86_64
+Machine for Pigs/Launcher.bin.x86
+Machine for Pigs/Launcher.bin.x86_64
+Monster RPG 2/MonsterRPG2
+NEON STRUCT/Neon
+Oh...Sir! The Insult Simulator/ohsir.x86
+Overlord II/overlord2.i386
+Sixtieth Kilometer/lib/linux-i686/libGLEW.so.1.7
+Sixtieth Kilometer/lib/linux-x86_64/libGLEW.so.1.7
+SteamWorld Heist/Heist
+The Jackbox Party Pack 2/TJPP2
+Wargame Red Dragon/Data/PC/430000366/WarGame3
+Wargame Red Dragon/Data/PC/430000319/WarGame3
+Wargame Red Dragon/Data/PC/430000339/WarGame3
+Wargame Red Dragon/Data/PC/430000345/WarGame3
+Wargame Red Dragon/Data/PC/430000347/WarGame3
+Wargame Red Dragon/Data/PC/430000348/WarGame3
+Wargame Red Dragon/Data/PC/430000352/WarGame3
+Wargame Red Dragon/Data/PC/430000357/WarGame3
+Wargame Red Dragon/Data/PC/430000557/WarGame3
+Wargame Red Dragon/Data/PC/430000564/WarGame3
+Wargame Red Dragon/Data/PC/430000578/WarGame3
+Wargame Red Dragon/Data/PC/430000584/WarGame3
+Wargame Red Dragon/Data/PC/430000585/WarGame3
+Wargame Red Dragon/Data/PC/430000587/WarGame3
+Wargame Red Dragon/Data/PC/430000609/WarGame3
+Wargame Red Dragon/Data/PC/430000610/WarGame3
+Wargame Red Dragon/Data/PC/430000626/WarGame3
+Wargame Red Dragon/Data/PC/430000633/WarGame3
+Wargame Red Dragon/Data/PC/430000639/WarGame3
+Wargame Red Dragon/Data/PC/440000543/WarGame3
+Wargame Red Dragon/Data/PC/510011681/WarGame3
+Wargame Red Dragon/Data/PC/510012575/WarGame3
+Wargame Red Dragon/Data/PC/510019512/WarGame3
+Wargame Red Dragon/Data/PC/510024196/WarGame3
+Wargame Red Dragon/Data/PC/510024744/WarGame3
+Wargame Red Dragon/Data/PC/510025133/WarGame3
+Wargame Red Dragon/Data/PC/510027397/WarGame3
+Wargame Red Dragon/Data/PC/510040615/WarGame3
+Wargame Red Dragon/Data/PC/510047860/WarGame3
+Wargame Red Dragon/Data/PC/510049053/WarGame3
+Wargame Red Dragon/Data/PC/510049986/WarGame3
+Wargame Red Dragon/Data/PC/510053208/WarGame3
+Wargame Red Dragon/Data/PC/510057270/WarGame3
+Wargame Red Dragon/Data/PC/510060540/WarGame3
+Wargame Red Dragon/Data/PC/510061340/WarGame3
+Wargame Red Dragon/WarGame3
+Revenge of the Titans/lwjgl.jar
+Ride the Bullet/Ride the Bullet.x86
+Ride the Bullet/Ride the Bullet.x86_64
+Runes/Runes.x86
+Rust/rust_Data/Plugins/libRenderer.so
+Rust/rust_Data/Plugins/x86_64/libRenderer.so
+Saints Row 2/saintsrow2.i386
+* Saints Row Gat out of Hell/SaintsRow4GooH.i386
+* Saints Row IV/SaintsRow4.i386
+* Saints Row the Third/SaintsRow3.i386
+Satellite Rush/satelliterush.x86_64
+SatelliteReign/SatelliteReignLinux.x86
+SatelliteReign/SatelliteReignLinux.x86_64
+Savage Lands/SavageLands.x86
+Savage Lands/SavageLands.x86_64
+Save the Ninja Clan/SaveTheNinjaClan.x86
+Save the Ninja Clan/SaveTheNinjaClan.x86_64
+Scanner Sombre/scanner sombre.x86_64
+Screencheat/screencheat.x86
+
+
+
+
+find . -exec echo {} \; -exec sed -n '/Dependencies/,/Overview/p' {} \;
+
+Lots of requirements, lots of extensions that possibly be used by older games.
+
+./WGL_ARB_make_current_read.txt
+    This extension requires WGL_ARB_extensions_string is required.
+./ARB_cull_distance.txt
+    This extension requires OpenGL 3.0 is required.
+    The extension is written against the OpenGL 4.4 Specification, Core Profile, March 19, 2014.
+    The extension is written against the OpenGL Shading Language 4.40 Specification, January 22, 2014.
+./ARB_compute_variable_group_size.txt
+    This extension is written against the OpenGL 4.3 (Compatibility Profile) Specification, dated August 6, 2012.
+    This extension is written against the OpenGL Shading Language Specification, Version 4.30, Revision 7, dated September 24, 2012.
+    This extension requires OpenGL 4.3 or ARB_compute_shader is required.
+    This extension interacts with NV_compute_program5.
+./ARB_texture_query_levels.txt
+    This extension requires OpenGL 3.0 is required.
+    This extension requires OpenGL Shading Language 1.30 is required
+    This extension is written against the OpenGL 4.2 specification and version 4.20 of the OpenGL Shading Language Specification.
+./ARB_depth_clamp.txt
+    Written based on the wording of the OpenGL 3.1 specification.
+    ARB_compatibility affects the behavior of this extension.
+./WGL_ARB_render_texture.txt
+    This extension requires OpenGL 1.1 is required. 
+    This extension requires WGL_ARB_extension_string is required. 
+    This extension requires WGL_ARB_pixel_format is required. 
+    This extension requires WGL_ARB_pbuffer is required. 
+    WGL_ARB_make_current_read affects the definition of this extension. 
+    GL_ARB_texture_cube_map affects the definition of this extension 
+    The extension is written against the OpenGL 1.2.1 Specification. 
+./ARB_copy_image.txt
+    This extension requires OpenGL 1.1 is required.
+    The extension is written against the OpenGL 4.2 (Core Profile) Specification.
+    This extension interacts with OpenGL 4.3 and ARB_texture_view.
+    This extension interacts with the Compatibility Profile.
+    This extension interacts with EXT_texture_compression_s3tc.
+    This extension interacts with OpenGL 3.0 and ARB_texture_compression_rgtc.
+    This extension interacts with OpenGL 4.2 and ARB_texture_compression_bptc.
+./ARB_shader_clock.txt
+    This extension is written against version 4.50 of the OpenGL Shading Language Specification.
+    This interacts with GL_ARB_gpu_shader_int64.
+./ARB_texture_env_crossbar.txt
+    This extension is written against the OpenGL 1.2.1 Specification.
+    This extension requires OpenGL 1.1
+    This extension requires ARB_multitexture
+    This extension requires ARB_texture_env_combine
+./WGL_ARB_extensions_string.txt
+    None
+./ARB_shader_group_vote.txt
+    This extension is written against the OpenGL 4.3 (Compatibility Profile) Specification, dated August 6, 2012.
+    This extension is written against the OpenGL Shading Language Specification, Version 4.30, Revision 7, dated September 24, 2012.
+    This extension requires OpenGL 4.3 or ARB_compute_shader
+    This extension interacts with NV_gpu_shader5.
+./ARB_ES2_compatibility.txt
+    Written based on the wording of the OpenGL 4.0 Compatibility Profile (March 11, 2010) specification.
+    This extension interacts with ARB_tessellation_shader or 
+    OpenGL 4.0.
+./ARB_provoking_vertex.txt
+    This extension is written against the OpenGL 2.1 Specification but can apply to any prior specification.
+    ARB_geometry_shader4, 
+    EXT_geometry_shader4, 
+    NV_geometry_shader4, and 
+    NV_gpu_program4 interact with this extension
+    EXT_transform_feedback, NV_transform_feedback, and the transform feedback functionality made core by OpenGL 3.0 are clarified by this extension.
+./ARB_texture_buffer_object_rgb32.txt
+    This extension is written against the OpenGL 3.2 specification (Core Profile).
+./ARB_point_parameters.txt
+    This extension requires OpenGL 1.0 is required.
+    ARB_multisample affects the definition of this extension.
+    The extension is written against the OpenGL 1.2.1 Specification.
+./ARB_half_float_vertex.txt
+    This extension is written against the OpenGL 2.1 Specification
+    Based on the NV_half_float and OES_vertex_half_float extensions.
+./ARB_explicit_attrib_location.txt
+    This extension requires OpenGL 2.0 or GL_ARB_vertex_shader.
+    This extension interacts with GL_ARB_blend_func_extended.
+    This extension is written against the OpenGL 3.2 (Core Profile) specification dated 7/24/2009 and the 
+    This extension is written against the OpenGL Shading Language 1.50.09 specification dated 7/24/2009.
+    This extension interacts with GL_ARB_separate_shader_objects,
+    This extension interacts with GL_ARB_gpu_shader_fp64
+    This extension interacts with OpenGL 4.0
+    This extension interacts with OpenGL 4.1.
+./ARB_sparse_texture2.txt
+    This extension is written against the OpenGL 4.5 Specification (Compatibility Profile), dated February 2, 2015.
+    This extension is written against the OpenGL Shading Language Specification, version 4.50, revision 5.
+    This extension requires ARB_sparse_texture.
+    This extension interacts trivially with EXT_depth_bounds_test.
+    This extension interacts with NV_gpu_program4 and 
+    NV_gpu_program5.
+./ARB_fragment_coord_conventions.txt
+    This extension is written against the OpenGL 3.1 Specification but can apply to prior specifications.
+    This extension interacts with ARB_fragment_program.
+    This extension interacts with ARB_fragment_shader.
+    This extension interacts with NV_fragment_program.
+    This extension interacts with NV_fragment_program_option.
+    This extension interacts with NV_fragment_program2.
+    This extension interacts with NV_fragment_program4.
+./WGL_ARB_create_context.txt
+    This extension requires WGL_ARB_extensions_string is required.
+    The presence of an OpenGL 3.2 or later implementation determines whether or not WGL_ARB_create_context_profile is required.
+./ARB_invalidate_subdata.txt
+    This extension is written against the OpenGL 3.2 specification (Compatibility profile).
+    This extension requires OpenGL 2.0 is required.
+    This extension interacts with OpenGL ES 2.0.
+./ARB_robust_buffer_access_behavior.txt
+    This extension requires ARB_robustness extension is required.
+    This extension is written against The OpenGL 4.2 (Compatibility Profile) specification.
+./ARB_sparse_texture_clamp.txt
+    This extension is written against the OpenGL 4.5 Specification (Compatibility Profile), dated February 2, 2015.
+    This extension is written against the OpenGL Shading Language Specification, version 4.50, revision 5.
+    This extension requires and extends ARB_sparse_texture2.
+    This extension interacts with NV_gpu_program4 and NV_gpu_program5.
+./WGL_ARB_create_context_robustness.txt
+    This extension requires WGL_ARB_extensions_string is required.
+    This extension requires WGL_ARB_create_context is required.
+    This extension requires GL_ARB_robustness is required.
+./ARB_arrays_of_arrays.txt
+    This extension requires GLSL 1.2 is required.
+    This extension requires OpenGL ?? (Core Profile) specification is required.  (See issues.)
+./ARB_enhanced_layouts.txt
+    This extension is written against the OpenGL 4.3 (Compatibility Profile) Specification, dated February 14, 2013.
+    This extension is written against the GLSL 4.30 Specification.
+    This extension requires OpenGL 3.1 and 
+    This extension requires GLSL 1.40 or later are required.
+    This extension interacts with OpenGL 3.3 and ARB_explicit_attrib_location.
+    This extension interacts with OpenGL 4.0 and ARB_vertex_attrib_64bit.
+    This extension interacts with OpenGL 4.0 and ARB_transform_feedback3.
+    This extension interacts with OpenGL 4.1 and ARB_separate_shader_objects.
+    This extension interacts with OpenGL 4.3 and ARB_shader_storage_buffer_object.
+    This extension interacts with OpenGL 4.3 and ARB_program_interface_query.
+./ARB_shader_image_size.txt
+    This extension requires OpenGL 4.2 is required.
+    This extension requires OpenGL Shading Language 4.20 is required
+    This extension is written against the OpenGL 4.2 specification and 
+    This extension is written against version 4.20 of the OpenGL Shading Language Specification.
+    This extension interacts with NV_gpu_program5 and 
+    This extension interacts with EXT_shader_image_load_store.
+./ARB_transpose_matrix.txt
+    This extensions is written against the OpenGL 1.2 Specification.
+./ARB_vertex_array_bgra.txt
+    This extension is written against the OpenGL 2.1 Specification but
+    This extension requires OpenGL 1.1 required
+    This extension interacts with EXT_vertex_array.
+    This extension interacts with EXT_secondary_color.
+    This extension interacts with NV_vertex_program.
+    This extension interacts with ARB_vertex_program.
+    This extension interacts with ARB_vertex_shader.
+./ARB_gpu_shader_fp64.txt
+    This extension is written against the OpenGL 3.2 (Compatibility Profile) Specification.
+    This extension is written against version 1.50 (revision 09) of the OpenGL Shading Language Specification.
+    This extension requires OpenGL 3.2 and 
+    This extension requires GLSL 1.50 are required.
+    This extension interacts with EXT_direct_state_access.
+    This extension interacts with NV_shader_buffer_load.
+./ARB_sparse_texture.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension is written against the OpenGL 4.3 (Core) Specification, February 14, 2013.
+    This extension requires GL_EXT_direct_state_access
+    This extension requires GL_ARB_direct_state_access.
+./ARB_cl_event.txt
+    This extension requires GL_ARB_sync
+    This extension requires OpenCL sharing event objects with OpenGL is required.
+./ARB_texture_mirrored_repeat.txt
+    This extension is written against the OpenGL 1.3 Specification.
+./ARB_clear_texture.txt
+    This extension requires OpenGL 1.3 is required.
+    This extension is written against the OpenGL 4.3 (Core Profile) Specification (October 18, 2012).
+    This extension interacts with EXT_texture_integer.
+    This extension interacts with ARB_texture_buffer_object.
+    This extension interacts with ARB_texture_multisample.
+    This extension interacts with ARB_depth_texture.
+    This extension interacts with EXT_packed_depth_stencil
+    This extension interacts with ARB_framebuffer_object.
+    This extension interacts with ARB_texture_stencil8.
+    This extension interacts with ARB_shader_image_load_store.
+    This extension interacts with ARB_internalformat_query2.
+./ARB_shader_viewport_layer_array.txt
+    This extension requires OpenGL 4.1 is required.
+    The extension is written against the OpenGL 4.5 Specification, Core Profile, February 2, 2015 
+    The extension is written against the OpenGL Shading Language Specification, version 4.50.5.
+./ARB_matrix_palette.txt
+    This extension requires ARB_vertex_blend and 
+    This extension requires OpenGL 1.0 are required.
+    This extension is written against the ARB_vertex_blend extended OpenGL 1.2.1 Specification. 
+./GLX_ARB_robustness_application_isolation.txt
+    This extension requires GLX 1.4 is required.
+    This extension requires GLX_ARB_create_context_robustness is required.
+./ARB_depth_buffer_float.txt
+    This extension requires OpenGL 2.0 is required.
+    This extension requires ARB_color_buffer_float is required.
+    This extension requires EXT_packed_depth_stencil is required.
+    This extension requires ARB_framebuffer_object is required.
+    This extension modifies EXT_depth_bounds_test.
+    This extension modifies NV_copy_depth_to_color.
+    This extension is written against the OpenGL 2.0 specification.
+./ARB_vertex_type_2_10_10_10_rev.txt
+    This extension is written against the OpenGL 3.2 specification, compatibility profile.
+    This extension requires OpenGL 1.1 is required.
+    The OpenGL 3.2, core profile specification affects the definition of this extension.
+    This extension trivially interacts with the OES_vertex_type_10_10_10_2 extension.
+    This extension interacts with the EXT_vertex_array_bgra extension.
+./ARB_shader_storage_buffer_object.txt
+    This extension requires OpenGL 4.0 (either core or compatibility profile) is required.
+    This extension requires OpenGL 4.3 or ARB_program_interface_query is required.
+    This extension is written against the OpenGL 4.2 (Compatibility Profile) Specification.
+    This extension interacts with OpenGL 4.3 and ARB_compute_shader.
+    This extension interacts with OpenGL 4.3 and ARB_program_interface_query.
+    This extension interacts with NV_bindless_texture.
+./ARB_framebuffer_sRGB.txt
+    This extension requires OpenGL 1.1 is required
+    This extension is written against the OpenGL 2.0 (September 7, 2004) specification.
+    WGL_EXT_extensions_string is required for WGL support.
+    WGL_EXT_pixel_format is required for WGL support.
+    ARB_color_buffer_float interacts with this extension.
+    This extension requires ARB_framebuffer_object is required.
+    EXT_texture_sRGB interacts with this extension.
+    ARB_draw_buffers interacts with this extension.
+./GLX_ARB_get_proc_address.txt
+    The extension is written against the GLX 1.3 Specification.
+./ARB_geometry_shader4.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension is written against the OpenGL 2.0 specification.
+    This extension interacts with EXT_framebuffer_object
+    This extension interacts with EXT_framebuffer_blit
+    This extension interacts with EXT_texture_array
+    ARB_texture_rectangle trivially affects the definition of this extension.
+    ARB_texture_buffer_object trivially affects the definition of this extension.
+    NV_primitive_restart trivially affects the definition of this extension.
+    This extension interacts with ARB_tranform_feedback.
+    This extension interacts with geometry shader support in OpenGL 3.2.
+    This extension interacts with ARB_uniform_buffer_object.
+./ARB_ES3_1_compatibility.txt
+    This extension requires OpenGL 4.4, 
+    This extension requires ARB_ES2_compatibility, 
+    This extension requires ARB_ES3_compatibility are required.
+    This extension is written against The OpenGL 4.4 (Compatibility Profile) specification.
+./ARB_texture_env_add.txt
+./ARB_shader_draw_parameters.txt
+    This extension requires OpenGL 3.1 is required.
+    This extension is written against Version 4.3 of the Core Profile OpenGL Specification, dated February 14, 2013 
+    This extension is written against Version 4.30 of the OpenGL Shading Language Specification, dated February 7, 2013.
+    The presence of the GL_ARB_multi_draw_indirect extension affects the definition of this extension.
+    The GL_ARB_indirect_parameters extension affects the definition of this extension.
+./ARB_vertex_buffer_object.txt
+    Written based on the wording of the OpenGL 1.4 specification.
+    GL_ARB_vertex_blend affects the definition of this extension.
+    GL_ARB_vertex_program affects the definition of this extension.
+    GL_EXT_vertex_shader affects the definition of this extension.
+    GLX_ARB_create_context affects the behavior of this extension.
+./ARB_spirv_extensions.txt
+    This extensions is written against the OpenGL 4.5 Specification (Core Profile - July 7, 2016)
+    This extension requires ARB_gl_spirv.
+    This extension interacts with ARB_shader_ballot
+    This extension interacts with SPV_KHR_shader_ballot.
+    This extension interacts with ARB_shader_draw_parameters
+    This extension interacts with SPV_KHR_shader_draw_parameters.
+    This extension interacts with ARB_shader_group_vote
+    This extension interacts with SPV_KHR_subgroup_vote.
+    This extension interacts with NV_stereo_view_rendering
+    This extension interacts with SPV_NV_stereo_view_rendering.
+    This extension interacts with NV_viewport_array2
+    This extension interacts with SPV_NV_viewport_array2.
+    This extension interacts with ARB_shader_viewport_layer_array
+    This extension interacts with SPV_NV_viewport_array2.
+    This extension interacts with NV_geometry_shader_passthrough
+    This extension interacts with SPV_NV_geometry_shader_passthrough.
+    This extension interacts with NV_sample_mask_override_coverage
+    This extension interacts with SPV_NV_sample_mask_override_coverage.
+    This extension interacts with AMD_shader_explicit_vertex_parameter
+    This extension interacts with SPV_AMD_shader_explicit_vertex_parameter.
+    This extension interacts with AMD_gpu_shader_half_float
+    This extension interacts with SPV_AMD_gpu_shader_half_float.
+    This extension interacts with ARB_shader_atomic_counter_ops
+    This extension interacts with SPV_KHR_shader_atomic_counter_ops.
+    This extension interacts with ARB_post_depth_coverage,
+    This extension interacts with EXT_post_depth_coverage 
+    This extension interacts with SPV_KHR_post_depth_coverage.
+    This extension interacts with SPV_KHR_storage_buffer_storage_class.
+./ARB_texture_gather.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension requires OpenGL Shading Language version 1.30 is required.
+    This extension is written against the OpenGL 3.0 Specification (Compatibility Profile) 
+    This extension is written against the Version 1.30 of the OpenGL Shading Language Specification.
+    This extension interacts with EXT_texture_swizzle
+    This extension interacts with ARB_texture_swizzle
+./ARB_parallel_shader_compile.txt
+    This extension is written against OpenGL 4.5 (CoreProfile) dated May 28 2015.
+./ARB_conditional_render_inverted.txt
+    This extension requires OpenGL 3.0 is required.
+    The extension is written against the OpenGL 4.4 Specification, Core Profile, March 19, 2014.
+./ARB_shader_subroutine.txt
+    This extension is written against the OpenGL 3.2 core specification and
+    This extension is written against the version 1.50 of the GLSL specification.
+    This extension requires ARB_gpu_shader5
+    This extension interacts with NV_gpu_program5.
+    This extension interacts trivially with EXT_separate_shader_objects.
+./ARB_texture_filter_anisotropic.txt
+    This extension requires OpenGL 1.2 required.
+    This extension is written against the OpenGL 4.5 (Compatibility Profile) Specification (October 24, 2016).
+./ARB_texture_barrier.txt
+    This extension is written against The OpenGL 4.4 (Compatibility Profile) specification.
+./ARB_map_buffer_alignment.txt
+    This extension requires OpenGL 2.1 is required.
+    If ARB_map_buffer_range is NOT supported, ignore references to MapBufferRange.
+    This extension is written against The OpenGL 4.1 (Compatibility Profile) specification.
+./ARB_base_instance.txt
+    This extension is written against the OpenGL Specification, Version 4.1 (Core Profile).
+    This extension requires OpenGL 3.1 or ARB_draw_instanced is required.
+./ARB_viewport_array.txt
+    This extension requires OpenGL 1.0 is required.
+    This extension requires OpenGL 3.2 or the EXT_geometry_shader4 or ARB_geometry_shader4 extensions are required.
+    This extension is written against the OpenGL 3.2 (Compatibility) Specification.
+    This extension is written against the OpenGL Shading Language Specification version 1.50.09.
+./ARB_draw_buffers_blend.txt
+    The extension is written against the OpenGL 2.0 Specification.
+    This extension requires OpenGL 2.0 is required.
+    This extension requires EXT_draw_buffers2 is required.
+./ARB_explicit_uniform_location.txt
+    This extension requires Requires OpenGL 3.3 or ARB_explicit_attrib_location.
+    This extension interacts with ARB_shader_subroutine.
+    This extension is written against the OpenGL 4.2 (Compatibility Profile)
+    and the OpenGL Shading Language 4.20.11 specification.
+./ARB_color_buffer_float.txt
+    This extension is written against the OpenGL 2.0 Specification
+    This extension requires OpenGL 1.5 Specification.
+    This extension requires WGL_ARB_pixel_format is required.
+    This extension interacts with ARB_fragment_program.
+    This extension interacts with ARB_fragment_shader.
+    This extension interacts with NV_float_buffer.
+    This extension interacts with ATI_pixel_format_float.
+./GLX_ARB_create_context_robustness.txt
+    This extension requires GLX 1.4 is required.
+    This extension requires GLX_ARB_create_context
+    This extension requires GL_ARB_robustness
+./ARB_transform_feedback3.txt
+    This extension requires EXT_transform_feedback, NV_transform_feedback, or OpenGL 3.0 is required.
+    This extension requires OpenGL 2.0 is required.
+    This extension interacts with EXT_transform_feedback,
+    NV_transform_feedback, and 
+    NV_transform_feedback2.
+    This extension interacts with ARB_gpu_shader5 and NV_gpu_program5.
+    This extension is written against the OpenGL 3.2 specification (Core Profile).
+    This extension builds up and is written against various language in the EXT_transform_feedback and NV_transform_feedback specifications.
+./ARB_texture_query_lod.txt
+    This extension requires OpenGL 2.0 is required.
+    This extension requires OpenGL Shading Language 1.30 is required
+    This extension requires EXT_gpu_shader4 is required.
+    This extension requires EXT_texture_array is required.
+    This extension interacts trivially with ARB_texture_cube_map_array
+    This extension is written against the OpenGL 2.0 specification and
+    version 1.30 of the OpenGL Shading Language Specification.
+./ARB_fragment_layer_viewport.txt
+    This extension requires OpenGL 3.0 and ARB_geometry_shader4, or OpenGL 3.2 is required.
+    This extension requires ARB_viewport_array is required.
+    This extension is written against The OpenGL Shading Language 4.20.11 Specification.
+    This extension interacts with NV_gpu_program4.
+./ARB_seamless_cubemap_per_texture.txt
+    This extension requires OpenGL 3.2 is required.
+    This extension is written against the OpenGL 4.3 (Core Profile) Specification.
+./ARB_texture_border_clamp.txt
+    This extension requires OpenGL 1.0 is required.
+    This extension is written against the OpenGL 1.2.1 Specification.
+    This extension is based on and intended to replace GL_SGIS_texture_border_clamp.
+./ARB_shader_texture_lod.txt
+    This extension is written against the OpenGL 2.0 Specification.
+    This extension is written against The OpenGL Shading Language, Language Version 1.10, Document Revision 59.
+    This extension requires ARB_shader_objects is required.
+    This extension interacts with ATI_shader_texture_lod.
+    This extension interacts with ARB_texture_rectangle.
+    This extension interacts with EXT_texture_filter_anisotropic.
+./ARB_shader_precision.txt
+    This extension is written against OpenGL 4.0.
+    This extension requires OpenGL 4.0 is required.
+./WGL_ARB_pixel_format.txt
+    This extension requires WGL_ARB_extensions_string is required.
+./ARB_shader_bit_encoding.txt
+    This extension is written against Version 1.50 (Revision 09) of the OpenGL Shading Language Specification.
+    This extension is based on ARB_gpu_shader5.
+This extension requires 
+./ARB_shader_texture_image_samples.txt
+    This extension requires GLSL 1.50 or ARB_texture_multisample is required.
+    This extension is written against the OpenGL 4.4 specification and 
+    version 4.40 of the OpenGL Shading Language Specification.
+    This extension interacts with ARB_shader_image_load_store 
+and GLSL 4.20.
+    This extension interacts with NV_gpu_program5, 
+EXT_shader_image_load_store 
+    and NV_texture_multisample.
+    
+./ARB_window_pos.txt
+    This extension requires OpenGL 1.0 is required.
+    The extension is written against the OpenGL 1.3 Specification
+    GL_EXT_fog_coordinate effects the definition of this extension.
+    GL_EXT_secondary_color effects the definition of this extension.
+./ARB_program_interface_query.txt
+    This extension requires OpenGL 2.0 is required.
+    This extension is written against the OpenGL 4.2 Compatibility Profile Specification (January 19, 2012).
+    OpenGL 3.0, ARB_transform_feedback, and EXT_transform_feedback affect the definition of this extension.
+    OpenGL 3.1 and ARB_uniform_buffer_object affect the definition of this extension.
+    OpenGL 4.0 and ARB_shader_subroutine affect the definition of this extension.
+    OpenGL 4.2 and ARB_shader_atomic_counters affect the definition of this extension.
+    OpenGL 4.3 and ARB_shader_storage_buffer_object affect the definition of this extension.
+    OpenGL 4.3 and ARB_arrays_of_arrays affect the definition of this extension.
+    OpenGL 4.3 and ARB_compute_shader affect the definition of this extension.
+    OpenGL 4.3 and ARB_explicit_uniform_location affect the definition of this extension.
+./ARB_draw_buffers.txt
+    The extension is written against the OpenGL 1.5 Specification.
+    This extension requires OpenGL 1.3 is required.
+    ARB_fragment_program affects the definition of this extension.
+    ARB_fragment_shader affects the definition of this extension.
+./ARB_uniform_buffer_object.txt
+    This extension requires The OpenGL Shading Language (GLSL) is required. 
+    This extension requires OpenGL 2.0 or the ARB_shader_objects extension is required.
+    This extension requires OpenGL 1.5 or ARB_vertex_buffer_object is required.
+    This extension is written against the OpenGL 2.1 specification and
+    version 1.20-8 of the OpenGL Shading Language specification.
+    This extension interacts with OpenGL 3.0, 
+    ARB_geometry_shader4,
+    ARB_texture_rectangle, 
+    EXT_gpu_shader4, 
+    EXT_texture_array,
+    EXT_texture_integer, and 
+    EXT_texture_buffer_object.
+./ARB_shading_language_100.txt
+    This extension is written against the OpenGL 1.5 Specification
+    This extension requires ARB_shader_objects, 
+    This extension requires ARB_fragment_shader, and 
+    This extension requires ARB_vertex_shader are
+./ARB_vertex_array_object.txt
+    This extension is written against the OpenGL 2.1 specification (December 1st, 2006).
+    APPLE_vertex_array_object affects the definition of this extension.
+./ARB_texture_filter_minmax.txt
+    This extension is written against the OpenGL 4.5 Specification (Core Profile), dated February 2, 2015.
+    This extension requires OpenGL 3.3 is required.
+    This extension interacts with EXT_texture_filter_anisotropic.
+./ARB_internalformat_query.txt
+    This extension requires OpenGL 3.0 or ARB_framebuffer_object is required.
+    This extension is written against the OpenGL 4.1 (Core Profile) Specification (July 25, 2010).
+    ARB_texture_multisample affects the definition of this extension.
+./ARB_texture_buffer_object.txt
+    This extension requires OpenGL 2.0 is required.
+    This extension requires NV_gpu_program4 or EXT_gpu_shader4
+    This extension is written against the OpenGL 2.0 specification.
+    This extension depends trivially on EXT_texture_array.
+    This extension depends trivially on NV_texture_shader.
+    This extension depends trivially on EXT_texture_integer.
+    This extension depends trivially on ARB_texture_float.
+    This extension depends trivially on ARB_half_float_pixel.
+    This extension interacts with ARB_map_buffer_range.
+./ARB_shader_ballot.txt
+    This extension is written against Revision 5 of the version 4.50 of the OpenGL Shading Language Specification, dated January 30, 2015.
+    This extension requires GL_ARB_gpu_shader_int64.
+./ARB_query_buffer_object.txt
+    This extension requires OpenGL 1.5 is required.
+    This extension is written against the OpenGL 4.3 (core) specification.
+./ARB_texture_rg.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension is written against the OpenGL 2.1 Specification.
+    EXT_texture_integer affects the definition of this extension.
+    ARB_texture_float affects the definition of this extension.
+    EXT_packed_depth_stencil affects the definition of this extension.
+    This extension interacts with ARB_framebuffer_object and
+    EXT_framebuffer_object.
+    This extension is subsumed by OpenGL 3.0.
+./ARB_texture_rgb10_a2ui.txt
+    This extension is written against the OpenGL 3.2 specification, compatibility profile, but it can apply against previous versions of OpenGL.
+    Requires OpenGL 3.0 or EXT_texture_integer.
+./ARB_transform_feedback_overflow_query.txt
+    This extension requires OpenGL 3.0 is required.
+    The extension is written against the OpenGL 4.4 Specification, Core Profile, March 19, 2014.
+    OpenGL 4.0 and ARB_transform_feedback3 affect the definition of this extension.
+./ARB_bindless_texture.txt
+    This extension is written against the OpenGL 4.0 (Compatibility Profile) and OpenGL Shading Language 4.00 Specifications.
+    This extension requires OpenGL 4.0 or later versions is required.
+    This extension interacts with OpenGL 4.0 (Core Profile).
+    This extension interacts with OpenGL 3.3 and ARB_sampler_objects.
+    This extension interacts with OpenGL 4.2, 
+    ARB_shader_image_load_store, and
+    EXT_shader_image_load_store.
+    This extension interacts with NV_vertex_attrib_integer_64bit.
+    This extension interacts with NV_gpu_shader5.
+    This extension interacts with EXT_direct_state_access.
+    This extension interacts with ARB_seamless_cube_map and
+    AMD_seamless_cubemap_per_texture.
+    This extension interacts with NV_gpu_program4, 
+    NV_gpu_program5, and
+    EXT_shader_image_load_store.
+    This extension interacts with GLSL 4.20.
+    This extension interacts with NV_bindless_texture.
+./ARB_framebuffer_object.txt
+    This extension requires OpenGL 1.1 is required.
+    WGL_ARB_make_current_read affects the definition of this extension.
+    GLX 1.3 / GLX_SGI_make_current_read affects the definition of this extension.
+    ATI_draw_buffers affects the definition of this extension.
+    ARB_draw_buffers affects the definition of this extension.
+    ARB_fragment_program affects the definition of this extension.
+    ARB_fragment_shader affects the definition of this extension.
+    ARB_texture_rectangle affects the definition of this extension.
+    ARB_vertex_shader affects the definition of this extension.
+    NV_float_buffer affects the definition of this extension.
+    ARB_color_buffer_float affects the definition of this extension.
+    NV_texture_shader affects the definition of this extension.
+    This extension modifies NV_packed_depth_stencil.
+    ARB_depth_texture affects the definition of this extension.
+    SGIX_depth_texture affects the definition of this extension.
+    ARB_texture_rg affects the definition of this extension.
+    EXT_texture_array affects the definition of this extension.
+    EXT_texture_integer affects the definition of this extension.
+    ARB_framebuffer_sRGB affects the definition of this extension.
+    Written based on the wording of the OpenGL 2.1 specification.
+./ARB_fragment_program_shadow.txt
+    The extension is written against the OpenGL 1.3 Specification.
+    This extension requires ARB_fragment_program is required.
+    This extension requires ARB_shadow is required.
+    EXT_texture_rectange affects the definition of this extension.
+./ARB_texture_cube_map_array.txt
+    This extension is written against the OpenGL 3.0 specification and
+    version 1.30.08 of the OpenGL Shading Language specification.
+./ARB_texture_view.txt
+    This extension is written against the OpenGL 4.2 Core profile specification.
+    This extension requires ARB_texture_storage or OpenGL 4.2 is required.
+    ARB_internalformat_query2 interacts with this extension.
+    EXT_texture_compression_s3tc interacts with this extension.
+    EXT_texture_sRGB interacts with this extension.
+    ARB_texture_storage_multisample interacts with this extension.
+./ARB_shader_atomic_counter_ops.txt
+    This extension is written against version 4.50 of the OpenGL Shading Language Specification.
+    This extension requires OpenGL 4.2 or ARB_shader_atomic_counters is required.
+./ARB_post_depth_coverage.txt
+    This extension is written against the OpenGL 4.5 specification (Compatibility Profile).
+    This extension is written against version 4.50 of the OpenGL Shading Language Specification.
+    This extension interacts with NV_fragment_program4.
+    This extension interacts with EXT_post_depth_coverage.
+./WGL_ARB_pbuffer.txt
+    This extension requires WGL_ARB_extensions_string is required.
+    This extension requires WGL_ARB_pixel_format is required.
+    WGL_ARB_make_current_read affects the definition of this extension.
+./ARB_shadow.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension requires ARB_depth_texture is required.
+    This extension is written against the OpenGL 1.3 Specification.
+./ARB_texture_buffer_range.txt
+    This extension requires ARB_texture_buffer_object or OpenGL 3.1 is required.
+    The definition of this extension is dependent on EXT_direct_state_access.
+    This extension is written against the OpenGL 4.2 (Core) Specification.
+./ARB_ES3_2_compatibility.txt
+    This extension requires OpenGL 4.5, 
+    This extension requires ARB_ES2_compatibility, 
+    This extension requires ARB_ES3_compatibility and
+    This extension requires ARB_ES3_1_compatibility are required.
+    KHR_blend_equation_advanced and 
+    KHR_texture_compression_astc_ldr are
+    recommended to support the full OpenGL ES 3.2 feature set, but not required for this extension.
+    This extension is written against The OpenGL 4.5 (Compatibility Profile) specification.
+./ARB_robustness_application_isolation.txt
+    This extension requires GL_ARB_robustness is required.
+./ARB_texture_storage_multisample.txt
+    This extension requires OpenGL 4.2 or ARB_texture_storage is required.
+    EXT_direct_state_access affects the definition of this extension.
+    This extension is written against the OpenGL 4.2 (Core) Specification.
+./ARB_tessellation_shader.txt
+    This extension is written against the OpenGL 3.2 (Compatibility Profile) Specification.
+    This extension is written against Version 1.50 (Revision 09) of the OpenGL Shading Language Specification.
+    This extension requires OpenGL 3.2 and 
+    This extension requires GLSL 1.50 are required.
+    This specification interacts with the core profile of OpenGL 3.2.
+    This specification interacts with ARB_gpu_shader5.
+    This specification interacts with ARB_gpu_shader_fp64.
+    This specification interacts with NV_gpu_shader5.
+    This specification interacts with NV_primitive_restart.
+./ARB_compute_shader.txt
+    This extension requires OpenGL 4.2 is required.
+    This extension is written based on the wording of the OpenGL 4.2 (Core Profile) specification, and on the wording of the 
+    OpenGL Shading Language (GLSL) Specification, version 4.20.
+    This extension interacts with OpenGL 4.3 and
+    ARB_shader_storage_buffer_object.
+    This extension interacts with NV_vertex_buffer_unified_memory.
+./ARB_multi_draw_indirect.txt
+    This extension requires OpenGL 4.0 or ARB_draw_indirect is required.
+    The extension is written against the OpenGL 4.1 Specification, Core Profile, July 25, 2010
+./ARB_shading_language_packing.txt
+    This extension is written against version 4.1 (revision 09) of the OpenGL Shading Language Specification.
+./ARB_texture_cube_map.txt
+    Written based on the wording of the OpenGL 1.2.1 specification but not dependent on it.
+./ARB_transform_feedback2.txt
+    This extension requires The OpenGL Shading Language (GLSL) is required.  
+    This extension requires OpenGL 2.0 or ARB_shader_objects extension
+    This extension requires NV_transform_feedback or EXT_transform_feedback is required.  
+    EXT_geometry_shader4 trivially interacts with this extension.
+    This extension is written against the OpenGL 2.1 Specification.
+    This extension is written against the EXT_transform_feedback extension specification.
+./ARB_clear_buffer_object.txt
+    This extension requires OpenGL 1.5 is required.
+    The definition of this extension is dependent on EXT_direct_state_access.
+    This extension is written against the OpenGL 4.2 (Core) Specification.
+./ARB_draw_indirect.txt
+    This extension requires OpenGL 3.1 is required.
+    This extension is written against the OpenGL 3.2 specification with the Compatibility Profile.
+    This extension interacts with NV_vertex_buffer_unified_memory.
+    This extension interacts with ARB_instanced_arrays.
+    This extension interacts with ARB_compatibility.
+./ARB_multitexture.txt
+./ARB_buffer_storage.txt
+    This extension is written against version 4.3 of the Core Profile OpenGL Specification, dated August 6, 2012.
+    The definition of this extension is affected by the presence of GL_EXT_direct_state_access.
+./ARB_vertex_attrib_64bit.txt
+    This extension is written against the OpenGL 3.2 specification (Compatibility Profile).
+    This extension is written against version 1.50 (revision 09) of the OpenGL Shading Language Specification.
+    This extension requires OpenGL 3.0 and 
+    This extension requires GLSL 1.30 are required.
+    This extension requires ARB_gpu_shader_fp64 (or equivalent functionality) is required.
+    This extension interacts with OpenGL 3.1 implementations not supporting
+    ARB_compatibility and with the 
+    core profile of OpenGL 3.2.
+    This extension interacts with EXT_direct_state_access.
+    This extension interacts with NV_gpu_shader5.
+    This extension interacts with NV_vertex_attrib_integer_64bit.
+    This extension interacts with ARB_explicit_attrib_location,
+    ARB_separate_shader_objects, 
+    OpenGL 3.3, and 
+    OpenGL 4.1.
+./ARB_texture_non_power_of_two.txt
+    Written based on the OpenGL 1.4 specification.
+    ARB_texture_mirrored_repeat (and IBM_texture_mirrored_repeat) affects the definition of this extension.
+    ARB_texture_border_clamp affects the definition of this extension.
+    EXT_texture_compression_s3tc and 
+    NV_texture_compression_vtc affect the definition of this extension.
+./ARB_conservative_depth.txt
+    This extension requires OpenGL 3.0 is required.
+    This extension is written against the OpenGL Shading Language Version 4.00.
+./ARB_stencil_texturing.txt
+    This extension requires OpenGL 1.1, 
+    This extension requires ARB_depth_texture and 
+    This extension requires EXT_packed_depth_stencil are required.
+    This extension is written against The OpenGL 4.2 (Compatibility Profile) specification.
+./ARB_texture_env_dot3.txt
+    This extension is written against the OpenGL 1.2.1 Specification.
+    This extension requires OpenGL 1.1, 
+    This extension requires ARB_multitexture and 
+    This extension requires ARB_texture_env_combine
+./ARB_internalformat_query2.txt
+    This extension requires OpenGL 2.0 or OpenGL ES 2.0 is required.
+    ARB_internalformat_query is required.
+    This extension is written against the OpenGL 4.2 (Core Profile) Specification.
+    OES_texture_3D, ARB_framebuffer_object, EXT_texture_sRGB,
+    ARB_framebuffer_sRGB, ARB_texture_sRGB_decode,
+    EXT_texture_sRGB_decode, ARB_tessellation_shader,
+    ARB_geometry_shader4, ARB_compute_shader, EXT_texture_array,
+    ARB_texture_cube_map_array, ARB_texture_multisample,
+    ARB_texture_rectangle, ARB_texture_buffer_object,
+    ARB_texture_gather, ARB_debug_output, KHR_debug,
+    ARB_clear_buffer_object, ARB_texture_compression_bptc,
+    ARB_texture_compression_rgtc, ARB_stencil_texturing,
+    ARB_depth_texture, OES_depth_texture, ARB_texture_view,
+    ARB_texture_storage, ARB_texture_storage_multisample,
+    ARB_shader_image_load_store, EXT_direct_state_access,
+    EXT_texture_compression_s3tc, and core specifications
+    that incorporate these extensions affect the definition
+    of this extension.
+./ARB_texture_env_combine.txt
+    This extension is written against the OpenGL 1.2.1 Specification.
+    This extension requires OpenGL 1.1 and 
+    This extension requires ARB_multitexture.
+./ARB_sampler_objects.txt
+    This extension is written against the OpenGL 3.2 (Compatibility Profile) specification.
+    This extension interacts with EXT_texture_filter_anisotropic.
+    This extension requires OpenGL 1.0 is required.
+./ARB_get_program_binary.txt
+    This extension requires OpenGL 3.0 is required.
+    Written based on the wording of the OpenGL 3.2 compatibility specification.
+./ARB_occlusion_query2.txt
+    Written based on the wording of OpenGL Specification Version 3.2 (Core Profile) - July 24, 2009
+    Version 3.2 (Compatibility Profile) interacts with this extension.
+    This extension requires OpenGL 1.x is required.
+    ARB_occlusion_query interacts with this extension.
+    Conditional rendering interacts with this extension.
+./ARB_sparse_buffer.txt
+    This extension requires OpenGL 4.4 is required.
+    This extension interacts with EXT_direct_state_access.
+    This extension interacts with ARB_direct_state_access.
+    This extension is written against the OpenGL 4.4 (core) specification.
+./ARB_instanced_arrays.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension is written against the OpenGL 2.1 Specification.
+    ARB_draw_instanced affects the definition of this extension.
+    EXT_draw_instanced affects the definition of this extension.
+    EXT_gpu_shader4 affects the definition of this extension.
+./ARB_shader_atomic_counters.txt
+    This extension is written against the OpenGL 4.1 (core) specification
+    and the GLSL 4.10.6 specification.
+    This extension requires OpenGL 3.0 is required.
+./ARB_pixel_buffer_object.txt
+    Written based on the wording of the OpenGL 2.0 specification.
+    This extension requires OpenGL 1.5 or ARB_vertex_buffer_object extension.
+    NV_pixel_data_range affects the definition of this extension.
+    EXT_pixel_buffer_object interacts with this extension.
+./ARB_robustness.txt
+    This extension is written against the OpenGL 3.2 Compatibility
+    Profile Specification but can apply to OpenGL 1.1 and up.
+    This specification interacts with the ARB_imaging subset of the OpenGL 3.2 Compatibility Profile.
+    This specification interacts with the OpenGL 3.2 Core Profile.
+    This specification interacts with EXT_direct_state_access.
+    GLX_ARB_create_context_robustness and
+    WGL_ARB_create_context_robustness are used to determine if a context
+    implementing this extension supports robust buffer access, and if it
+    supports reset notification. Equivalent platform-dependent
+    mechanisms in other window-system integration layers such as EGL and
+    AGL may exist for those platforms.
+./ARB_blend_func_extended.txt
+    This extension requires OpenGL 1.0 is required.
+    This extension requires ARB_fragment_shader extension is required.
+    This extension requires EXT_gpu_shader4 extension is required.
+    The EXT_blend_func_separate extension interacts with this extension.
+    The ARB_draw_buffers extension trivially affects the definition of this extension.
+    The ARB_draw_buffers_blend extension affects the definition of this extension.
+    This extension is written against the OpenGL 3.2 Specification (Compatibility Profile)
+./ARB_texture_swizzle.txt
+     Written based on the wording of the OpenGL 2.1 specification.
+./ARB_timer_query.txt
+    This extension is written against the OpenGL 3.2 specification.
+./ARB_shading_language_420pack.txt
+    This extension requires GLSL 1.3 is required for all features.  
+    This extension requires GLSL 1.4 is required declaring a binding for a uniform block, as uniform blocks were not present until version 1.4.
+    This extension interacts with the ARB_shader_image_load_store extension, for assigning locations to image variables.
+    References to *patch* are not valid unless tessellation stages are present and enabled.
+    While this document is self-contained, clarifying context for how to add the following changes can be seen by looking at version 4.20 of the GLSL specification.
+./ARB_gpu_shader5.txt
+    This extension is written against the OpenGL 3.2 (Compatibility Profile) Specification.
+    This extension is written against Version 1.50 (Revision 09) of the OpenGL Shading Language Specification.
+    This extension requires OpenGL 3.2 and 
+    This extension requires GLSL 1.50 are required.
+    This extension interacts with ARB_gpu_shader_fp64.
+    This extension interacts with NV_gpu_shader5.
+    This extension interacts with ARB_sample_shading.
+    This extension interacts with ARB_texture_gather.
+./ARB_vertex_type_10f_11f_11f_rev.txt
+    This extension requires OpenGL 3.0 is required.
+    This extension depends on ARB_vertex_attrib_binding.
+    This extension requires ARB_vertex_type_2_10_10_10_rev.
+    This extension is written against the OpenGL 4.3 (Core Profile) Specification (October 18, 2012).
+./ARB_map_buffer_range.txt
+    This extension requires OpenGL 2.1 is required.
+    If ARB_pixel_buffer_object is NOT supported and the OpenGL version is less than 2.1, ignore references to PIXEL_UNPACK_BUFFER and PIXEL_PACK_BUFFER.
+    If EXT_texture_buffer_object is NOT supported, ignore references to TEXTURE_BUFFER_EXT.
+    If GL_EXT_bindable_uniform is NOT supported, ignore references to UNIFORM_BUFFER_EXT.
+    Written based on the wording of the OpenGL 2.1 specification.
+./ARB_pipeline_statistics_query.txt
+    This extension requires OpenGL 3.0 is required.
+    The extension is written against the OpenGL 4.4 Specification, Core Profile, March 19, 2014.
+    OpenGL 3.2 and ARB_geometry_shader4 affect the definition of this extension.
+    OpenGL 4.0 and ARB_gpu_shader5 affect the definition of this extension.
+    OpenGL 4.0 and ARB_tessellation_shader affect the definition of this extension.
+    OpenGL 4.3 and ARB_compute_shader affect the definition of this extension.
+    This extension interacts with AMD_transform_feedback4.
+./ARB_compressed_texture_pixel_storage.txt
+    This extension requires OpenGL 1.2 is required.
+    This extension is written against The OpenGL 4.1 (Compatibility Profile) specification.
+./ARB_multi_bind.txt
+    This extension is written against the OpenGL 4.3 (Compatibility Profile) Specification, dated August 6, 2012.
+    This extension requires OpenGL 3.0 is required.
+    This extension interacts with OpenGL 3.3 and ARB_sampler_objects.
+    This extension interacts with OpenGL 4.3 and ARB_vertex_attrib_binding.
+./ARB_fragment_program.txt
+    The extension is written against the OpenGL 1.3 Specification.
+    This extension requires OpenGL 1.3 is required.
+    This extension requires EXT_texture_lod_bias or OpenGL 1.4 is required.
+    OpenGL 1.4 affects the definition of this extension.
+    ARB_vertex_blend and 
+    EXT_vertex_weighting affect the definition of     this extension.
+    ARB_matrix_palette affects the definition of this extension.
+    ARB_transpose_matrix affects the definition of this extension.
+    EXT_fog_coord affects the definition of this extension.
+    EXT_texture_rectangle affects the definition of this extension.
+    ARB_shadow interacts with this extension.
+    ARB_vertex_program interacts with this extension.
+    ATI_fragment_shader interacts with this extension.
+    NV_fragment_program interacts with this extension.
+./ARB_sync.txt
+    This extension requires OpenGL 3.1 is required.
+    The functionality of ARB_sync was added to the OpenGL 3.2 core.
+./ARB_copy_buffer.txt
+    Written based on the wording of the OpenGL 3.0 (August 11, 2008 draft) specification.
+./ARB_texture_mirror_clamp_to_edge.txt
+    This extension requires OpenGL 1.4 is required.
+    This extension is written against the OpenGL 4.3 (Core Profile) Specification (October 18, 2012).
+    This extension interacts with EXT_texture3D.
+    This extension interacts with ARB_texture_rectangle.
+    This extension interacts with ARB_sampler_objects.
+./ARB_framebuffer_no_attachments.txt
+    This extension requires OpenGL 3.0 or ARB_framebuffer_object is required.
+    This extension is written against the OpenGL 4.2 (Compatibility Profile) Specification (January 19, 2012).
+    This extension interacts with OpenGL 3.0 and EXT_texture_array.
+    This extension interacts with EXT_direct_state_access.
+./ARB_clip_control.txt
+    Written based on the wording of the OpenGL 4.4 (Compatibility Profile) specification.
+./ARB_ES3_compatibility.txt
+    This extension requires OpenGL 3.3, 
+    This extension requires ARB_ES2_compatibility, 
+    This extension requires ARB_invalidate_subdata, and
+    This extension requires ARB_texture_storage are required.
+    The ETC2 and EAC texture compression formats added to OpenGL-ES 3.0
+    This extension requires OES_compressed_ETC2_RGB8_texture,
+    This extension requires OES_compressed_ETC2_sRGB8_texture,
+    This extension requires OES_compressed_ETC2_punchthroughA_RGBA8_texture,
+    This extension requires OES_compressed_ETC2_punchthroughA_sRGB8_alpha_texture,
+    This extension requires OES_compressed_ETC2_RGBA8_texture,
+    This extension requires OES_compressed_ETC2_sRGB8_alpha8_texture,
+    This extension requires OES_compressed_EAC_R11_unsigned_texture,
+    This extension requires OES_compressed_EAC_R11_signed_texture,
+    This extension requires OES_compressed_EAC_RG11_unsigned_texture and
+    This extension requires OES_compressed_EAC_RG11_signed_texture are required.
+    This extension is written against The OpenGL 4.2 (Compatibility Profile) specification.
+./ARB_texture_compression.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension is written against the OpenGL 1.2.1 Specification.
+    This extension is written against the GLX Extensions for OpenGL Specification (Version 1.3).
+    Depends on GL_ARB_texture_cube_map, as cube maps may be stored in compressed form.
+./WGL_ARB_robustness_application_isolation.txt
+    This extension requires WGL_ARB_extensions_string is required.
+    This extension requires WGL_ARB_create_context_robustness is required.
+./ARB_debug_output.txt
+    This extension requires OpenGL 1.1 is required.
+    The extension is written against the OpenGL 4.0 Core specification (March 11, 2010).
+    The extension interacts with OpenGL 4.0 Compatibility specification and other specifications that provide display list support.
+    The extension interacts with OpenGL 4.0 Compatibility specification and other specifications that provide the GetPointerv entry point.
+./ARB_texture_stencil8.txt
+    This extension is written against the OpenGL 4.3 specification (Compatibility Profile).
+./ARB_vertex_program.txt
+    Written based on the wording of the OpenGL 1.3 specification and 
+    This extension requires OpenGL 1.3.
+    ARB_vertex_blend and EXT_vertex_weighting affect the definition of this extension.
+    ARB_matrix_palette affects the definition of this extension.
+    ARB_point_parameters and EXT_point_parameters affect the definition of this extension.
+    EXT_secondary_color affects the definition of this extension.
+    EXT_fog_coord affects the definition of this extension.
+    ARB_transpose_matrix affects the definition of this extension.
+    NV_vertex_program interacts with this extension.
+    EXT_vertex_shader interacts with this extension.
+./ARB_indirect_parameters.txt
+    This extension requires OpenGL 4.2 is required.
+    This extension is written against Version 4.3 of the Core Profile OpenGL Specification, dated February 14, 2013 and 
+    Version 4.30 of the OpenGL Shading Language Specification, dated February 7, 2013.
+./ARB_fragment_shader_interlock.txt
+    This extension is written against the OpenGL 4.5 (Core Profile) Specification.
+    This extension is written against version 4.50 (revision 5) of the OpenGL Shading Language Specification.
+    This extension requires OpenGL 4.2 or ARB_shader_image_load_store is required; 
+    This extension requires GLSL 4.20 is required.
+./ARB_gl_spirv.txt
+    This extension requires version 3.3 or later of The OpenGL Graphics System.
+    (It is not written for OpenGL ES.)
+    This extension is written against the following specifications:
+      - The GL_KHR_vulkan_glsl extension, Version 30, April 12, 2016.
+      - The OpenGL Graphics System, Version 4.5, Core Profile, May 28, 2015.
+      - The OpenGL Shading Language, Version 4.50, Revision 6, April 14, 2016.
+      - SPIR-V Specification, Version 1.00, Revision 5
+    This extension interacts with ARB_parallel_shader_compile.
+    This extension interacts with ARB_separate_shader_objects.
+    This extension interacts with ARB_program_interface_query.
+./ARB_texture_compression_rgtc.txt
+    This extension requires OpenGL 1.3 or ARB_texture_compression required
+    This extension is written against the OpenGL 2.0 (September 7, 2004) specification.
+    This extension interacts with OpenGL 2.0 and ARB_texture_non_power_of_two.
+./ARB_separate_shader_objects.txt
+    Written based on the wording of the OpenGL 4.0 Compatibility Profile (March 11, 2010) specification.
+    Written based on the wording of The OpenGL Shading Language 4.00.8 (March 10, 2010) specification.
+    This extension requires OpenGL 2.0 or ARB_shader_objects.
+    This extension interacts with OpenGL 4.0 (Core Profile).
+    This extension interacts with GLSL 1.40 (and earlier).
+    This extension interacts with ARB_geometry_shader4,
+    EXT_geometry_shader4, and/or 
+    NV_geometry_shader4.
+    This extension depends on ARB_explicit_attrib_location.
+    This extension interacts with ARB_tessellation_shader or OpenGL 4.0.
+    This extension interacts with GL_ARB_gpu_shader_fp64 or OpenGL 4.0.
+    This extension interacts with ARB_explicit_attrib_location,
+    ARB_vertex_attrib_64bit, 
+    OpenGL 3.3, and 
+    OpenGL 4.1.
+    This extension interacts with the EXT_separate_shader_objects extension.
+    This extension interacts with ARB_vertex_program, 
+    ARB_fragment_program,
+    NV_gpu_program4 and related assembly extensions.
+./ARB_sample_shading.txt
+    This extension requires OpenGL 2.0 is required.
+    This extension requires OpenGL Shading Language 1.30 is required
+    This extension is written against the OpenGL 2.0 specification and
+    version 1.30 of the OpenGL Shading Language Specification.
+./ARB_vertex_shader.txt
+    This extension requires OpenGL 1.0 is required.
+    This extension is written against version 1.10 of the OpenGL Shading Language Specification.
+    The extension is written against the OpenGL 1.4 Specification.
+    This extension requires ARB_shader_objects extension is required.
+./ARB_shadow_ambient.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension requires ARB_shadow is required.
+    This extension requires ARB_depth_texture is required.
+    This extension is written against the OpenGL 1.3 Specification.
+./ARB_derivative_control.txt
+    This extension is written against the GLSL 4.40 Specification.
+    This extension requires OpenGL 4.0 and 
+    This extension requires GLSL 4.00 or later are required.
+./ARB_shader_objects.txt
+    This extension requires OpenGL 1.0 is required.
+    This extension is written against version 1.10 of the OpenGL Shading Language Specification.
+    The extension is written against the OpenGL 1.4 Specification.
+./ARB_shader_image_load_store.txt
+    This extension is written against the OpenGL 3.2 specification (Compatibility Profile).
+    This extension is written against version 1.50 (revision 09) of the OpenGL Shading Language Specification.
+    This extension requires OpenGL 3.0 and 
+    This extension requires GLSL 1.30 are required.
+    This extension interacts trivially with OpenGL 3.2 (Core Profile).
+    This extension interacts trivially with OpenGL 3.1,
+    ARB_uniform_buffer_object, and 
+    EXT_bindable_uniform.
+    This extension interacts trivially with ARB_draw_indirect.
+    This extension interacts trivially with NV_vertex_buffer_unified_memory.
+    This extension interacts with NV_parameter_buffer_object.
+    This extension interacts trivially with OpenGL 3.2 and
+    ARB_texture_multisample.
+    This extension interacts trivially with OpenGL 4.0 and 
+    ARB_sample_shading.
+    This extension interacts trivially with OpenGL 4.0 and
+    ARB_texture_cube_map_array.
+    This extension interacts trivially with OpenGL 3.3 and
+    ARB_texture_rgb10_a2ui.
+    This extension interacts trivially with NV_shader_buffer_load.
+    This extension interacts trivially with OpenGL 4.0, 
+    ARB_gpu_shader5, and
+    NV_gpu_shader5.
+    This extension interacts trivially with OpenGL 4.0 and
+    ARB_tessellation_shader.
+    This extension interacts trivially with EXT_depth_bounds_test.
+    This extension interacts with ARB_separate_shader_objects.
+    This extension interacts with EXT_shader_image_load_store.
+./ARB_polygon_offset_clamp.txt
+    This extension requires OpenGL 3.3 (either core or compatibility profiles).
+    This extension is written against the OpenGL 4.5 (Compatibility Profile) Specification (October 24, 2016).
+./ARB_get_texture_sub_image.txt
+    This extension requires OpenGL 2.0 is required
+    The extension is written against the OpenGL 4.4 Specification, Core Profile, March 19, 2014.
+./ARB_draw_instanced.txt
+    This extension requires OpenGL 2.0 is required.
+    The extension is written against the OpenGL 2.1 Specification.
+    This extension requires EXT_gpu_shader4 or NV_vertex_program4 or OpenGL 3.0 is required.
+./ARB_seamless_cube_map.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension requires ARB_texture_cube_map is required.
+    EXT_texture_filter_anisotropic affects the definition of this extension.
+    This extension is written against the OpenGL 3.1 Specification.
+./ARB_multisample.txt
+    This extension requires WGL_EXT_extensions_string is required.
+    This extension requires WGL_EXT_pixel_format is required.
+./WGL_ARB_buffer_region.txt
+    The extension is written against the OpenGL 1.2.1 Specification
+    although it should work on any previous OpenGL specification.
+    This extension requires  WGL_EXT_extensions_string extension is required.
+./ARB_texture_rectangle.txt
+     This extension requires OpenGL 1.1 is required
+     OpenGL 1.4 (or ARB_texture_mirrored_repeat) affects the definition of this extension.
+     ARB_texture_non_power_of_two trivially affects the definition of this extension.
+     ATI_texture_mirror_once affects the definition of this extension.
+     EXT_paletted_texture affects the definition of this extension.
+     EXT_texture_compression_s3tc affects the definition of this extension.
+     EXT_texture_mirror_clamp affects the definition of this extension.
+     The OpenGL Shading Language specification (provided by OpenGL 2.0 and/or ARB_shader_objects) interacts with this extension.
+     This extension is written against the OpenGL 2.0 specification.
+./GLX_ARB_create_context.txt
+    This extension requires GLX 1.4 is required.
+    Some of the capabilities of these extensions are only available with contexts supporting OpenGL 3.0 or later.
+    The presence of an OpenGL 3.2 or later implementation determines whether or not GLX_ARB_create_context_profile is required.
+./ARB_vertex_blend.txt
+    This extension requires OpenGL 1.0 is required.
+    This extension is written against the OpenGL 1.2.1 Specification.
+./ARB_texture_storage.txt
+    This extension requires OpenGL ES 1.0 or OpenGL ES 2.0 or OpenGL 1.2 is required.
+    OES_texture_npot, OES_texture_cube_map, OES_texture_3D,
+    OES_depth_texture, OES_packed_depth_stencil,
+    OES_compressed_paletted_texture, EXT_texture_type_2_10_10_10_REV,
+    EXT_texture3D, OES_texture_npot, APPLE_texture_2D_limited_npot,
+    ARB_texture_cube_map, ARB_texture_cube_map_array,
+    ARB_texture_rectangle, SGIS_generate_mipmap,
+    EXT_direct_state_access, OES_EGL_image, WGL_ARB_render_texture,
+    GLX_EXT_texture_from_pixmap, and core specifications that
+    incorporate these extensions affect the definition of this extension.
+    This extension is written against the OpenGL 3.2 Core Profile specification.
+./ARB_depth_texture.txt
+    This extension requires OpenGL 1.1 is required.
+    This extension is written against the OpenGL 1.3 Specification.
+./ARB_sample_locations.txt
+    This extension is written against the OpenGL 4.5 specification (Compatibility Profile).
+    This extension interacts with OpenGL ES 3.1.
+./ARB_texture_float.txt
+./ARB_direct_state_access.txt
+    This extension requires OpenGL 2.0 is required.
+    This extension is written against the OpenGL 4.4 (core) specification.
+./ARB_fragment_shader.txt
+    This extension requires OpenGL 1.0 is required.
+    This extension is written against version 1.10 of the OpenGL Shading Language Specification.
+    The extension is written against the OpenGL 1.4 Specification.
+    This extension requires ARB_shader_objects extension is required.
+    This extension interacts with the ARB_vertex_shader extension.
+./ARB_compatibility.txt
+./ARB_transform_feedback_instanced.txt
+    This extension requires OpenGL 4.0 or the ARB_transform_feedback2 extension is required.
+    This extension requires OpenGL 3.1 or the ARB_draw_instanced extension is required.
+    This extension interacts with the ARB_transform_feedback3 extension.
+    This extension is written against the OpenGL 4.1 (Core Profile) specification.
+./ARB_draw_elements_base_vertex.txt
+    This extension is written against the OpenGL 3.1 Specification but can apply to prior specifications.
+    This extension interacts with ARB_draw_instanced.
+    This extension interacts with EXT_draw_instanced.
+    This extension interacts with ARB_instanced_arrays.
+    This extension interacts with ARB_compatibility.
+./ARB_vertex_attrib_binding.txt
+    This extension is written against the OpenGL 4.2 Core specification.
+    NV_vertex_buffer_unified_memory affects the definition of this extension.
+    EXT_direct_state_access affects the definition of this extension.
+    The Compatibility specification affects the definition of this extension.
+./ARB_point_sprite.txt
+    Written based on the wording of the OpenGL 1.4 specification.
+    NV_point_sprite affects the definition of this extension.
+./ARB_shading_language_include.txt
+    This extension requires OpenGL Shading Language 1.10
+    This extension is written against the OpenGL 3.2 (Core Profile) and
+    OpenGL Shading Language 1.50 Specifications.
+./ARB_gpu_shader_int64.txt
+    This extension is written against the OpenGL 4.5 (Core Profile) Specification.
+    This extension is written against version 4.50 of the OpenGL Shading Language Specification.
+    This extension requires OpenGL 4.0 and 
+    This extension requires GLSL 4.00 are required.
+    This extension interacts with AMD_gpu_shader_int64.
+    This extension interacts with NV_gpu_shader5.
+    This extension interacts with NV_shader_buffer_load.
+    This extension interacts with NV_vertex_attrib_integer_64bit.
+./ARB_shader_stencil_export.txt
+    This extension requires OpenGL 1.0 is required.
+    This extension requires ARB_fragment_shader is required.
+    This extension is written against the OpenGL Shading Language Specification version 1.40.05
+./ARB_half_float_pixel.txt
+    This extension is written against the OpenGL 2.0 Specification
+    This extension requires OpenGL 1.5
+    Based on the NV_half_float extension.
+    This extension interacts with ARB_color_buffer_float.
+./ARB_texture_compression_bptc.txt
+    This extension requires OpenGL 1.3 or ARB_texture_compression is required.
+    This extension is written against the OpenGL 3.2 Specification (Compatibility Profile).
+./ARB_texture_multisample.txt
+    This extension is written against the OpenGL 3.1 specification.
+./ARB_occlusion_query.txt
+    Written based on the wording of the OpenGL 1.4 specification.
+    HP_occlusion_test affects the definition of this extension.
+./ARB_create_context_no_error.txt
+    WGL_ARB_create_context_no_error is written against the
+    This extension requires WGL_ARB_create_context specification, which is required.
+    GLX_ARB_create_context_no_error is written against the 
+    This extension requires GLX 1.4 and
+    This extension requires GLX_ARB_create_context specifications. Both are required.
+
+
+
+
+find . -exec echo {} \; -exec sed -n '/required/p;90q' {} \;
+
+./WGL_ARB_make_current_read.txt    WGL_ARB_extensions_string is required.
+./ARB_cull_distance.txt    OpenGL 3.0 is required.
+./ARB_compute_variable_group_size.txt    OpenGL 4.3 or ARB_compute_shader is required.
+./ARB_texture_query_levels.txt    OpenGL 3.0 is required.    OpenGL Shading Language 1.30 is required
+./ARB_depth_clamp.txt
+./WGL_ARB_render_texture.txt    OpenGL 1.1 is required. 
+    WGL_ARB_extension_string is required. 
+    WGL_ARB_pixel_format is required. 
+    WGL_ARB_pbuffer is required. 
+./ARB_copy_image.txt    OpenGL 1.1 is required.
+./ARB_shader_clock.txt
+./ARB_texture_env_crossbar.txt    OpenGL 1.1, 
+    ARB_multitexture and 
+    ARB_texture_env_combine are required 
+./WGL_ARB_extensions_string.txt
+./ARB_shader_group_vote.txt    OpenGL 4.3 or ARB_compute_shader is required.
+./ARB_ES2_compatibility.txt
+./ARB_provoking_vertex.txt
+./ARB_texture_buffer_object_rgb32.txt
+./ARB_point_parameters.txt    OpenGL 1.0 is required.
+./ARB_half_float_vertex.txt
+./ARB_explicit_attrib_location.txt
+./ARB_sparse_texture2.txt
+./ARB_fragment_coord_conventions.txt
+./WGL_ARB_create_context.txt
+    WGL_ARB_extensions_string is required.
+    whether or not WGL_ARB_create_context_profile is required.
+./ARB_invalidate_subdata.txt    OpenGL 2.0 is required.
+./ARB_robust_buffer_access_behavior.txt
+    The ARB_robustness extension is required.
+./ARB_sparse_texture_clamp.txt
+./WGL_ARB_create_context_robustness.txt
+    WGL_ARB_extensions_string is required.
+    WGL_ARB_create_context is required.
+    An OpenGL implementation supporting GL_ARB_robustness is required.
+./ARB_arrays_of_arrays.txt    GLSL 1.2 is required.
+    OpenGL ?? (Core Profile) specification is required.  (See issues.)
+./ARB_enhanced_layouts.txt    OpenGL 3.1 and GLSL 1.40 or later are required.
+./ARB_shader_image_size.txt    OpenGL 4.2 is required.    OpenGL Shading Language 4.20 is required
+./ARB_transpose_matrix.txt
+./ARB_vertex_array_bgra.txt
+./ARB_gpu_shader_fp64.txt    OpenGL 3.2 and GLSL 1.50 are required.
+./ARB_sparse_texture.txt    OpenGL 1.1 is required.
+./ARB_cl_event.txt
+    OpenGL 3.2, or an earlier OpenGL version supporting the GL_ARB_sync extension, is required.
+    An OpenCL implementation supporting sharing event objects with OpenGL is required.
+./ARB_texture_mirrored_repeat.txt
+./ARB_clear_texture.txt    OpenGL 1.3 is required.
+./ARB_shader_viewport_layer_array.txt    OpenGL 4.1 is required.
+./ARB_matrix_palette.txt    OpenGL 1.0 are required.
+    ARB_vertex_blend required
+./GLX_ARB_robustness_application_isolation.txt
+    GLX 1.4 is required.
+    GLX_ARB_create_context_robustness is required.
+./ARB_depth_buffer_float.txt    OpenGL 2.0 is required.
+    ARB_color_buffer_float is required.
+    EXT_packed_depth_stencil is required.
+    ARB_framebuffer_object is required.
+./ARB_vertex_type_2_10_10_10_rev.txt    OpenGL 1.1 is required.
+./ARB_shader_storage_buffer_object.txt
+    OpenGL 4.0 (either core or compatibility profile) is required.
+    OpenGL 4.3 or ARB_program_interface_query is required.
+./ARB_framebuffer_sRGB.txt    OpenGL 1.1 is required
+    WGL_EXT_extensions_string is required for WGL support.
+    WGL_EXT_pixel_format is required for WGL support.
+    ARB_framebuffer_object is required.
+./GLX_ARB_get_proc_address.txt
+./ARB_geometry_shader4.txt    OpenGL 1.1 is required.
+./ARB_ES3_1_compatibility.txt
+    OpenGL 4.4, ARB_ES2_compatibility, ARB_ES3_compatibility are required.
+    - increases the minimum required size of SSBOs to 2^27 (128 MB).
+./ARB_texture_env_add.txt
+./ARB_shader_draw_parameters.txt    OpenGL 3.1 is required.
+./ARB_vertex_buffer_object.txt
+    Written based on the wording of the OpenGL 1.4 specification.
+./ARB_spirv_extensions.txt
+./ARB_texture_gather.txt    OpenGL 1.1 is required.    OpenGL Shading Language version 1.30 is required.
+./ARB_parallel_shader_compile.txt
+./ARB_conditional_render_inverted.txt    OpenGL 3.0 is required.
+./ARB_shader_subroutine.txt
+    ARB_gpu_shader5 is required.
+./ARB_texture_filter_anisotropic.txt    OpenGL 1.2 required.
+./ARB_texture_barrier.txt
+./ARB_map_buffer_alignment.txt    OpenGL 2.1 is required.
+./ARB_base_instance.txt    OpenGL 3.1 or 
+    ARB_draw_instanced is required.
+./ARB_viewport_array.txt    OpenGL 1.0 is required.
+    OpenGL 3.2 or the EXT_geometry_shader4 or ARB_geometry_shader4 extensions
+    are required.
+./ARB_draw_buffers_blend.txt    OpenGL 2.0 is required.
+    EXT_draw_buffers2 is required.
+./ARB_explicit_uniform_location.txt
+./ARB_color_buffer_float.txt
+    WGL_ARB_pixel_format is required.
+./GLX_ARB_create_context_robustness.txt
+    GLX 1.4 is required.
+    GLX_ARB_create_context is required.
+    An OpenGL implementation supporting GL_ARB_robustness is required.
+./ARB_transform_feedback3.txt    OpenGL 2.0 is required.
+    EXT_transform_feedback, NV_transform_feedback, or OpenGL 3.0 is required.
+./ARB_texture_query_lod.txt    OpenGL 2.0 is required.    OpenGL Shading Language 1.30 is required
+    EXT_gpu_shader4 is required.
+    EXT_texture_array is required.
+./ARB_fragment_layer_viewport.txt
+    OpenGL 3.0 and ARB_geometry_shader4, or OpenGL 3.2 is required.
+    ARB_viewport_array is required.
+./ARB_seamless_cubemap_per_texture.txt    OpenGL 3.2 is required.
+./ARB_texture_border_clamp.txt    OpenGL 1.0 is required.
+./ARB_shader_texture_lod.txt
+    ARB_shader_objects is required.
+./ARB_shader_precision.txt    OpenGL 4.0 is required.
+./WGL_ARB_pixel_format.txt
+    WGL_ARB_extensions_string is required.
+./ARB_shader_bit_encoding.txt
+./ARB_shader_texture_image_samples.txt
+    Either GLSL 1.50 or ARB_texture_multisample is required.
+./ARB_window_pos.txt    OpenGL 1.0 is required.
+./ARB_program_interface_query.txt    OpenGL 2.0 is required.
+./ARB_draw_buffers.txt    OpenGL 1.3 is required.
+./ARB_uniform_buffer_object.txt    The OpenGL Shading Language (GLSL) is required. OpenGL 2.0 or the
+    ARB_shader_objects extension is required.
+    OpenGL 1.5 or ARB_vertex_buffer_object is required.
+./ARB_shading_language_100.txt    This extension is written against the OpenGL 1.5 Specification
+    ARB_shader_objects, ARB_fragment_shader, and ARB_vertex_shader are
+    required to utilize the OpenGL Shading Language associated with this
+    extension.
+./ARB_vertex_array_object.txt
+./ARB_texture_filter_minmax.txt    OpenGL 3.3 is required.
+./ARB_internalformat_query.txt    OpenGL 3.0 or 
+    ARB_framebuffer_object is required.
+./ARB_texture_buffer_object.txt    OpenGL 2.0 is required.
+    NV_gpu_program4 or EXT_gpu_shader4 is required.
+./ARB_shader_ballot.txt
+./ARB_query_buffer_object.txt    OpenGL 1.5 is required.
+./ARB_texture_rg.txt    OpenGL 1.1 is required.
+./ARB_texture_rgb10_a2ui.txt
+./ARB_transform_feedback_overflow_query.txt    OpenGL 3.0 is required.
+./ARB_bindless_texture.txt    OpenGL 4.0 or later versions is required.
+./ARB_framebuffer_object.txt    OpenGL 1.1 is required.
+./ARB_fragment_program_shadow.txt
+    ARB_fragment_program is required.
+    ARB_shadow is required.
+./ARB_texture_cube_map_array.txt
+./ARB_texture_view.txt
+    ARB_texture_storage or OpenGL 4.2 is required.
+./ARB_shader_atomic_counter_ops.txt
+    OpenGL 4.2 or ARB_shader_atomic_counters is required.
+./ARB_post_depth_coverage.txt
+./WGL_ARB_pbuffer.txt
+    WGL_ARB_extensions_string is required.
+    WGL_ARB_pixel_format is required.
+./ARB_shadow.txt    OpenGL 1.1 is required.
+    ARB_depth_texture is required.
+./ARB_texture_buffer_range.txt
+    ARB_texture_buffer_object or OpenGL 3.1 is required.
+./ARB_ES3_2_compatibility.txt
+    ARB_ES3_1_compatibility are required.
+./ARB_robustness_application_isolation.txt
+    GL_ARB_robustness is required.
+./ARB_texture_storage_multisample.txt
+    OpenGL 4.2 or ARB_texture_storage is required.
+./ARB_tessellation_shader.txt    OpenGL 3.2 and GLSL 1.50 are required.
+./ARB_compute_shader.txt    OpenGL 4.2 is required.
+./ARB_multi_draw_indirect.txt
+    OpenGL 4.0 or ARB_draw_indirect is required.
+./ARB_shading_language_packing.txt
+./ARB_texture_cube_map.txt
+./ARB_transform_feedback2.txt    The OpenGL Shading Language (GLSL) is required.  OpenGL 2.0 or the 
+    ARB_shader_objects extension is required.
+    NV_transform_feedback or EXT_transform_feedback is required.  
+./ARB_clear_buffer_object.txt    OpenGL 1.5 is required.
+./ARB_draw_indirect.txt    OpenGL 3.1 is required.
+./ARB_multitexture.txt
+./ARB_buffer_storage.txt
+./ARB_vertex_attrib_64bit.txt    OpenGL 3.0 and GLSL 1.30 are required.
+    ARB_gpu_shader_fp64 (or equivalent functionality) is required.
+./ARB_texture_non_power_of_two.txt
+      but notice these terms are never required in the actual extension
+./ARB_conservative_depth.txt    OpenGL 3.0 is required.
+./ARB_stencil_texturing.txt
+    OpenGL 1.1, ARB_depth_texture and EXT_packed_depth_stencil are required.
+./ARB_texture_env_dot3.txt
+    OpenGL 1.1, ARB_multitexture and ARB_texture_env_combine are required 
+./ARB_internalformat_query2.txt    OpenGL 2.0 or OpenGL ES 2.0 is required.
+    ARB_internalformat_query is required.
+./ARB_texture_env_combine.txt
+    OpenGL 1.1 and ARB_multitexture are required for this extension.
+./ARB_sampler_objects.txt    OpenGL 1.0 is required.
+./ARB_get_program_binary.txt    OpenGL 3.0 is required.
+./ARB_occlusion_query2.txt    OpenGL 1.x is required.
+./ARB_sparse_buffer.txt    OpenGL 4.4 is required.
+./ARB_instanced_arrays.txt    OpenGL 1.1 is required.
+./ARB_shader_atomic_counters.txt    OpenGL 3.0 is required.
+./ARB_pixel_buffer_object.txt
+./ARB_robustness.txt
+./ARB_blend_func_extended.txt    OpenGL 1.0 is required.
+    The ARB_fragment_shader extension is required.
+    The EXT_gpu_shader4 extension is required.
+./ARB_texture_swizzle.txt
+./ARB_timer_query.txt
+./ARB_shading_language_420pack.txt    GLSL 1.3 is required for all features.  GLSL 1.4 is required 
+./ARB_gpu_shader5.txt    OpenGL 3.2 and GLSL 1.50 are required.
+./ARB_vertex_type_10f_11f_11f_rev.txt    OpenGL 3.0 is required.
+./ARB_map_buffer_range.txt    OpenGL 2.1 is required.
+./ARB_pipeline_statistics_query.txt    OpenGL 3.0 is required.
+./ARB_compressed_texture_pixel_storage.txt    OpenGL 1.2 is required.
+./ARB_multi_bind.txt    OpenGL 3.0 is required.
+./ARB_fragment_program.txt    OpenGL 1.3 is required.
+    EXT_texture_lod_bias or OpenGL 1.4 is required.
+./ARB_sync.txt    OpenGL 3.1 is required.
+./ARB_copy_buffer.txt
+./ARB_texture_mirror_clamp_to_edge.txt    OpenGL 1.4 is required.
+./ARB_framebuffer_no_attachments.txt
+    OpenGL 3.0 or ARB_framebuffer_object is required.
+    such errors, an application may be required to create an otherwise
+./ARB_clip_control.txt
+./ARB_ES3_compatibility.txt
+    ARB_texture_storage are required.
+    OES_compressed_EAC_RG11_signed_texture are required.
+./ARB_texture_compression.txt    OpenGL 1.1 is required.
+./WGL_ARB_robustness_application_isolation.txt
+    WGL_ARB_extensions_string is required.
+    WGL_ARB_create_context_robustness is required.
+./ARB_debug_output.txt    OpenGL 1.1 is required.
+./ARB_texture_stencil8.txt
+    adds STENCIL_INDEX8 to the required internal format list. This removes the
+./ARB_vertex_program.txt
+./ARB_indirect_parameters.txt    OpenGL 4.2 is required.
+./ARB_fragment_shader_interlock.txt
+    OpenGL 4.2 or ARB_shader_image_load_store is required; GLSL 4.20 is
+./ARB_gl_spirv.txt
+./ARB_texture_compression_rgtc.txt
+    OpenGL 1.3 or ARB_texture_compression required
+./ARB_separate_shader_objects.txt
+./ARB_sample_shading.txt    OpenGL 2.0 is required.    OpenGL Shading Language 1.30 is required
+./ARB_vertex_shader.txt    OpenGL 1.0 is required.
+    The ARB_shader_objects extension is required.
+./ARB_shadow_ambient.txt    OpenGL 1.1 is required.
+    ARB_shadow is required.
+    ARB_depth_texture is required.
+./ARB_derivative_control.txt    OpenGL 4.0 and GLSL 4.00 or later are required.
+./ARB_shader_objects.txt    OpenGL 1.0 is required.
+./ARB_shader_image_load_store.txt    OpenGL 3.0 and GLSL 1.30 are required.
+./ARB_polygon_offset_clamp.txt
+./ARB_get_texture_sub_image.txt    OpenGL 2.0 is required
+./ARB_draw_instanced.txt    OpenGL 2.0 is required.
+    EXT_gpu_shader4 or NV_vertex_program4 or OpenGL 3.0 is required.
+./ARB_seamless_cube_map.txt    OpenGL 1.1 is required.
+    ARB_texture_cube_map is required.
+    case that the locations of the individual elements required during a
+./ARB_multisample.txt
+    WGL_EXT_extensions_string is required.
+    WGL_EXT_pixel_format is required.
+./WGL_ARB_buffer_region.txt
+    The WGL_EXT_extensions_string extension is required.
+./ARB_texture_rectangle.txt     OpenGL 1.1 is required
+     artifacts are avoided and less texture memory may be required by
+./GLX_ARB_create_context.txt
+    GLX 1.4 is required.
+    whether or not GLX_ARB_create_context_profile is required.
+./ARB_vertex_blend.txt    OpenGL 1.0 is required.
+./ARB_texture_storage.txt    OpenGL ES 1.0, OpenGL ES 2.0 or OpenGL 1.2 is required.
+./ARB_depth_texture.txt    OpenGL 1.1 is required.
+./ARB_sample_locations.txt
+./ARB_texture_float.txt
+    OpenGL 1.1 or EXT_texture is required.
+./ARB_direct_state_access.txt    OpenGL 2.0 is required.
+./ARB_fragment_shader.txt    OpenGL 1.0 is required.
+    The ARB_shader_objects extension is required.
+./ARB_compatibility.txt
+./ARB_transform_feedback_instanced.txt
+    OpenGL 4.0 or the ARB_transform_feedback2 extension is required.
+    OpenGL 3.1 or the ARB_draw_instanced extension is required.
+./ARB_draw_elements_base_vertex.txt
+./ARB_vertex_attrib_binding.txt
+./ARB_point_sprite.txt
+    expensive, since it quadruples the amount of geometry required, and
+./ARB_shading_language_include.txt
+    is required.
+./ARB_gpu_shader_int64.txt    OpenGL 4.0 and GLSL 4.00 are required.
+./ARB_shader_stencil_export.txt    OpenGL 1.0 is required.
+    ARB_fragment_shader is required.
+./ARB_half_float_pixel.txt
+./ARB_texture_compression_bptc.txt
+    OpenGL 1.3 or ARB_texture_compression is required.
+./ARB_texture_multisample.txt
+./ARB_occlusion_query.txt
+./ARB_create_context_no_error.txt
+    WGL_ARB_create_context specification, which is required.
+    GLX_ARB_create_context specifications. Both are required.
+
+
+
+
+these extensions are expressly designed so that applications that use lower versions of OpenGL can use them:
+
+K.3.3.36
+Floating-Point Depth Buffers
+The name string for floating-point depth buffers is GL_ARB_depth_buffer_-
+float . This extension is equivalent to new core functionality introduced in
+OpenGL 3.0, based on the earlier GL_NV_depth_buffer_float extension, and
+is provided to enable this functionality in older drivers.
+
+K.3.3.38
+Framebuffer Objects
+The name string for framebuffer objects is GL_ARB_framebuffer_object . This
+extension is equivalent to new core functionality introduced in OpenGL 3.0, based
+on the earlier GL_EXT_framebuffer_object , GL_EXT_framebuffer_-
+multisample , and GL_EXT_framebuffer_blit extensions, and is provided
+to enable this functionality in older drivers.
+
+K.3.3.41
+Half-Precision Vertex Data
+The name string for half-precision vertex data is GL_ARB_half_float_vertex .
+This extension is equivalent to new core functionality introduced in OpenGL 3.0,
+based on the earlier GL_NV_half_float extension, and is provided to enable this
+functionality in older drivers.
+
+K.3.3.43
+Flexible Buffer Mapping
+The name string for flexible buffer mapping is GL_ARB_map_buffer_range .
+This extension is equivalent to new core functionality introduced in OpenGL 3.0,
+based on the earlier GL_APPLE_flush_buffer_range extension, and is pro-
+vided to enable this functionality in older drivers.
+
+K.3.3.45
+RGTC Texture Compression Formats
+The name string for RGTC texture compression formats is GL_ARB_texture_-
+compression_rgtc . This extension is equivalent to new core functionality intro-
+duced in OpenGL 3.0, based on the earlier GL_EXT_texture_compression_-
+rgtc extension, and is provided to enable this functionality in older drivers.
+It was promoted to a core feature in OpenGL 3.0.
+
+K.3.3.46
+One- and Two-Component Texture Formats
+The name string for one- and two-component texture formats is GL_ARB_-
+texture_rg . It was promoted to a core feature in OpenGL 3.0. This extension is
+equivalent to new core functionality introduced in OpenGL 3.0, and is provided to
+enable this functionality in older drivers.
+
+K.3.3.47
+Vertex Array Objects
+The name string for vertex array objects is GL_ARB_vertex_array_object .
+This extension is equivalent to new core functionality introduced in OpenGL 3.0,
+based on the earlier GL_APPLE_vertex_array_object extension, and is pro-
+vided to enable this functionality in older drivers.
+It was promoted to a core feature in OpenGL 3.0.
+
+K.3.3.49
+Uniform Buffer Objects
+The name string for uniform buffer objects is GL_ARB_uniform_buffer_-
+object . This extension is equivalent to new core functionality introduced in
+OpenGL 3.1 and is provided to enable this functionality in older drivers.
+
+K.3.3.51
+Fast Buffer-to-Buffer Copies
+The name string for fast buffer-to-buffer copies is GL_ARB_copy_buffer . This
+extension is equivalent to new core functionality introduced in OpenGL 3.1 and is
+provided to enable this functionality in older drivers.
+
+K.3.3.53
+Depth Clamp Control
+The name string for depth clamp control is GL_ARB_depth_clamp . This exten-
+sion is equivalent to new core functionality introduced in OpenGL 3.2 and is pro-
+vided to enable this functionality in older drivers.
+
+K.3.3.55
+Fragment Coordinate Convention Control
+The name string for fragment coordinate convention control is GL_ARB_-
+fragment_coord_conventions . This extension is equivalent to new core func-
+tionality introduced in OpenGL 3.2 and is provided to enable this functionality in
+older drivers.
+
+K.3.3.56
+Provoking Vertex Control
+The name string for provoking vertex control is GL_ARB_provoking_vertex .
+This extension is equivalent to new core functionality introduced in OpenGL 3.2
+and is provided to enable this functionality in older drivers.
+
+K.3.3.57
+Seamless Cube Maps
+The name string for seamless cube maps is GL_ARB_seamless_cube_map . This
+extension is equivalent to new core functionality introduced in OpenGL 3.2 and is
+provided to enable this functionality in older drivers.
+
+K.3.3.58
+Fence Sync Objects
+The name string for fence sync objects is GL_ARB_sync . This extension is equiva-
+lent to new core functionality introduced in OpenGL 3.2 and is provided to enable
+this functionality in older drivers.
+
+K.3.3.59
+Multisample Textures
+The name string for multisample textures is GL_ARB_texture_multisample .
+This extension is equivalent to new core functionality introduced in OpenGL 3.2
+and is provided to enable this functionality in older drivers.
+
+K.3.3.60
+BGRA Attribute Component Ordering
+The name string for BGRA attribute component ordering is GL_ARB_vertex_-
+array_bgra . This extension is equivalent to new core functionality introduced in
+OpenGL 3.2 and is provided to enable this functionality in older drivers.
+
+K.3.3.69
+Extended Blend Functions
+The name string for extended blend functions is GL_ARB_blend_func_-
+extended . This extension is equivalent to new core functionality introduced in
+OpenGL 3.3, and is provided to enable this functionality in older drivers.
+
+K.3.3.70
+Explicit Attribute Location
+The name string for explicit attribute location is GL_ARB_explicit_attrib_-
+location . This extension is equivalent to new core functionality introduced in
+OpenGL 3.3 and is provided to enable this functionality in older drivers.
+
+K.3.3.71
+Boolean Occlusion Queries
+The name string for boolean occlusion queries is GL_ARB_occlusion_query2 .
+This extension is equivalent to new core functionality introduced in OpenGL 3.3
+and is provided to enable this functionality in older drivers.
+
+K.3.3.72
+Sampler Objects
+The name string for sampler objects is GL_ARB_sampler_objects . This ex-
+tension is equivalent to new core functionality introduced in OpenGL 3.3 and is
+provided to enable this functionality in older drivers.
+
+K.3.3.73
+Shader Bit Encoding
+The name string for shader bit encoding is GL_ARB_shader_bit_encoding .
+This extension is equivalent to new core functionality introduced in OpenGL 3.3
+and is provided to enable this functionality in older drivers.
+
+K.3.3.74
+RGB10A2 Integer Textures
+The name string for RGB10A2 integer textures is GL_ARB_texture_rgb10_-
+a2ui . This extension is equivalent to new core functionality introduced in OpenGL
+3.3 and is provided to enable this functionality in older drivers.
+
+K.3.3.75
+Texture Swizzle
+The name string for texture swizzle is GL_ARB_texture_swizzle . This ex-
+tension is equivalent to new core functionality introduced in OpenGL 3.3 and is
+provided to enable this functionality in older drivers.
+
+K.3.3.76
+Timer Queries
+The name string for timer queries is GL_ARB_timer_query . This extension is
+equivalent to new core functionality introduced in OpenGL 3.3 and is provided to
+enable this functionality in older drivers.
+
+K.3.3.78
+Draw Indirect
+The name string for draw indirect is GL_ARB_draw_indirect . This extension is
+equivalent to new core functionality introduced in OpenGL 4.0 and is provided to
+enable this functionality in older drivers.
+
+K.3.3.79
+GPU Shader5 Miscellaneous Functionality
+The name string for GPU shader5 miscellaneous functionality is GL_ARB_gpu_-
+shader5 . This extension is equivalent to new core functionality introduced in
+OpenGL 4.0 and is provided to enable this functionality in older drivers.
+
+K.3.3.80
+Double-Precision Floating-Point Shader Support
+The name string for double-precision floating-point shader support is GL_ARB_-
+gpu_shader_fp64 . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.0 and is provided to enable this functionality in older drivers.
+
+K.3.3.81
+Shader Subroutines
+The name string for shader subroutines is GL_ARB_shader_subroutine . This
+extension is equivalent to new core functionality introduced in OpenGL 4.0 and is
+provided to enable this functionality in older drivers.
+
+K.3.3.82
+Tessellation Shaders
+The name string for tessellation shaders is GL_ARB_tessellation_shader .
+This extension is equivalent to new core functionality introduced in OpenGL 4.0
+and is provided to enable this functionality in older drivers.
+
+K.3.3.84
+Transform Feedback 2
+The name string for transform feedback 2 is GL_ARB_transform_feedback2 .
+This extension is equivalent to new core functionality introduced in OpenGL 4.0
+and is provided to enable this functionality in older drivers.
+
+K.3.3.85
+Transform Feedback 3
+The name string for transform feedback 3 is GL_ARB_transform_feedback3 .
+This extension is equivalent to new core functionality introduced in OpenGL 4.0
+and is provided to enable this functionality in older drivers.
+
+K.3.3.86
+OpenGL ES 2.0 Compatibility
+The name string for OpenGL ES 2.0 compatibility is GL_ARB_ES2_-
+compatibility . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.1 and is provided to enable this functionality in older drivers.
+
+K.3.3.87
+Program Binary Support
+The name string for program binary support is GL_ARB_get_program_binary .
+This extension is equivalent to new core functionality introduced in OpenGL 4.1
+and is provided to enable this functionality in older drivers.
+
+K.3.3.88
+Separate Shader Objects
+The name string for separate shader objects is GL_ARB_separate_shader_-
+objects . This extension is equivalent to new core functionality introduced in
+OpenGL 4.1 and is provided to enable this functionality in older drivers.
+
+K.3.3.89
+Shader Precision Restrictions
+The name string for shader precision restritions is GL_ARB_shader_precision .
+This extension is equivalent to new core functionality introduced in OpenGL 4.1
+and is provided to enable this functionality in older drivers.
+
+K.3.3.90
+Double Precision Vertex Shader Inputs
+The name string for double precision vertex shader inputs is GL_ARB_vertex_-
+attrib_64bit . This extension is equivalent to new core functionality introduced
+in OpenGL 4.1 and is provided to enable this functionality in older drivers.
+
+K.3.3.91
+Viewport Arrays
+The name string for viewport arrays is GL_ARB_viewport_array . This exten-
+sion is equivalent to new core functionality introduced in OpenGL 4.1 and is pro-
+vided to enable this functionality in older drivers.
+
+K.3.3.97
+Base Instanced Rendering
+The name string for base instanced rendering is GL_ARB_base_instance . This
+extension is equivalent to new core functionality introduced in OpenGL 4.2 and is
+provided to enable this functionality in older drivers.
+
+K.3.3.98
+OpenGL Shading Language 4.20 Feature Pack
+The name string for the OpenGL Shading Language 4.20 feature pack is GL_-
+ARB_shading_language_420pack . This extension is equivalent to new core
+functionality introduced in OpenGL 4.2 and is provided to enable this functionality
+in older drivers.
+
+K.3.3.101
+Conservative Depth
+The name string for conservative depth is GL_ARB_conservative_depth . This
+extension is equivalent to new core functionality introduced in OpenGL 4.2 and is
+provided to enable this functionality in older drivers.
+
+K.3.3.102
+Internal Format Query
+The name string for internal format query is GL_ARB_internalformat_query .
+This extension is equivalent to new core functionality introduced in OpenGL 4.2
+and is provided to enable this functionality in older drivers.
+
+K.3.3.103
+Map Buffer Alignment
+The name string for map buffer alignment is GL_ARB_map_buffer_alignment .
+This extension is equivalent to new core functionality introduced in OpenGL 4.2
+and is provided to enable this functionality in older drivers.
+
+K.3.3.104
+Shader Atomic Counters
+The name string for shader atomic counters is GL_ARB_shader_atomic_-
+counters . This extension is equivalent to new core functionality introduced in
+OpenGL 4.2 and is provided to enable this functionality in older drivers.
+
+K.3.3.105
+Shader Image Load/Store
+The name string for shader image load/store is GL_ARB_shader_image_load_-
+store . This extension is equivalent to new core functionality introduced in
+OpenGL 4.2 and is provided to enable this functionality in older drivers.
+
+K.3.3.106
+Shading Language Packing
+The name string for shading language packing is GL_ARB_shading_-
+language_packing . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.2 and is provided to enable this functionality in older drivers.
+
+K.3.3.107
+Texture Storage
+The name string for texture storage is GL_ARB_texture_storage . This exten-
+sion is equivalent to new core functionality introduced in OpenGL 4.2 and is pro-
+vided to enable this functionality in older drivers.
+
+K.3.3.110
+Shader Array of Arrays
+The name string for shader array of arrays is GL_ARB_arrays_of_arrays . This
+extension is equivalent to new core functionality introduced in OpenGL 4.3, and is
+provided to enable this functionality in older drivers.
+
+K.3.3.111
+Clear Buffer Object
+The name string for clear buffer object is GL_ARB_clear_buffer_object . This
+extension is equivalent to new core functionality introduced in OpenGL 4.3, and is
+provided to enable this functionality in older drivers.
+
+K.3.3.112
+Compute Shaders
+The name string for compute shaders is GL_ARB_compute_shader . This ex-
+tension is equivalent to new core functionality introduced in OpenGL 4.3, and is
+provided to enable this functionality in older drivers.
+
+K.3.3.113
+Copy Image
+The name string for copy image is GL_ARB_copy_image . This extension is equiv-
+alent to new core functionality introduced in OpenGL 4.3, and is provided to enable
+this functionality in older drivers.
+
+K.3.3.114
+Texture Views
+The name string for texture views is GL_ARB_texture_view . This extension is
+equivalent to new core functionality introduced in OpenGL 4.3, and is provided to
+enable this functionality in older drivers.
+
+K.3.3.115
+Vertex Attribute Binding
+The name string for vertex attribute binding is GL_ARB_vertex_attrib_-
+binding . This extension is equivalent to new core functionality introduced in
+OpenGL 4.3, and is provided to enable this functionality in older drivers.
+
+K.3.3.116
+Robustness Isolation
+The name string for robustness isolation is GL_ARB_robustness_isolation .
+This extension is equivalent to new core functionality introduced in OpenGL 4.3,
+and is provided to enable this functionality in older drivers.
+
+K.3.3.117
+OpenGL ES 3.0 Compatibility
+The name string for OpenGL ES 3.0 compatibility is GL_ARB_ES3_-
+compatibility . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.3, and is provided to enable this functionality in older drivers.
+
+K.3.3.118
+Shader Explicit Uniform Location
+The name string for shader explicit uniform location is GL_ARB_explicit_-
+uniform_location . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.3, and is provided to enable this functionality in older drivers.
+
+K.3.3.119
+Fragment Layer Viewport
+The name string for fragment layer viewport is GL_ARB_fragment_layer_-
+viewport . This extension is equivalent to new core functionality introduced in
+OpenGL 4.3, and is provided to enable this functionality in older drivers.
+
+K.3.3.120
+Binding a Framebuffer Without Attachments
+The name string for binding a framebuffer without attachments is GL_ARB_-
+framebuffer_no_attachments . This extension is equivalent to new core func-
+tionality introduced in OpenGL 4.3, and is provided to enable this functionality in
+older drivers.
+
+K.3.3.121
+The name Extended Internal Format Query string for extended internal format query is GL_ARB_-
+internalformat_query2 . This extension is equivalent to new core functionality introduced in OpenGL 4.3, and is provided to enable this functionality in older drivers.
+
+K.3.3.122
+Invalidate SubData
+The name string for invalidate subdata is GL_ARB_invalidate_subdata . This
+extension is equivalent to new core functionality introduced in OpenGL 4.3, and is
+provided to enable this functionality in older drivers.
+
+K.3.3.123
+Multi Draw Indirect
+The name string for multi draw indirect is GL_ARB_multi_draw_indirect .
+This extension is equivalent to new core functionality introduced in OpenGL 4.3,
+and is provided to enable this functionality in older drivers.
+
+K.3.3.124
+Program Interface Queries
+The name string for program interface queries is GL_ARB_program_-
+interface_query . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.3, and is provided to enable this functionality in older drivers.
+
+K.3.3.125
+Robust Buffer Access Behavior
+The name string for robust buffer access behavior is GL_ARB_robust_buffer_-
+access_behavior . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.3, and is provided to enable this functionality in older drivers.
+
+K.3.3.126
+Shader Image Size Query
+The name string for shader image size query is GL_ARB_shader_image_size .
+This extension is equivalent to new core functionality introduced in OpenGL 4.3,
+and is provided to enable this functionality in older drivers.
+
+K.3.3.127
+Shader Storage in Buffer Objects
+The name string for shader storage in buffer objects is GL_ARB_shader_-
+storage_buffer_object . This extension is equivalent to new core function-
+ality introduced in OpenGL 4.3, and is provided to enable this functionality in
+older drivers.
+
+K.3.3.128
+Stencil Texturing
+The name string for stencil texturing is GL_ARB_stencil_texturing . This ex-
+tension is equivalent to new core functionality introduced in OpenGL 4.3, and is
+provided to enable this functionality in older drivers.
+
+K.3.3.129
+Texture Buffer Range
+The name string for texture buffer range is GL_ARB_texture_buffer_range .
+This extension is equivalent to new core functionality introduced in OpenGL 4.3,
+and is provided to enable this functionality in older drivers.
+
+K.3.3.130
+Texture Query Levels
+The name string for texture query levels is GL_ARB_texture_query_levels .
+This extension is equivalent to new core functionality introduced in OpenGL 4.3,
+and is provided to enable this functionality in older drivers.
+
+K.3.3.133
+Buffer Storage
+The name string for buffer storage is GL_ARB_buffer_storage . This extension
+is equivalent to new core functionality introduced in OpenGL 4.4, and is provided
+to enable this functionality in older drivers.
+
+K.3.3.134
+Clear Texture
+The name string for clear texture is GL_ARB_clear_texture . This extension is
+equivalent to new core functionality introduced in OpenGL 4.4, and is provided to
+enable this functionality in older drivers.
+
+K.3.3.135
+Enhanced Layouts
+The name string for enhanced layouts is GL_ARB_enhanced_layouts . This ex-
+tension is equivalent to new core functionality introduced in OpenGL 4.4, and is
+provided to enable this functionality in older drivers.
+
+K.3.3.136
+Multiple Bind
+The name string for multiple bind is GL_ARB_multi_bind . This extension is
+equivalent to new core functionality introduced in OpenGL 4.4, and is provided to
+enable this functionality in older drivers.
+
+K.3.3.137
+Query Buffer Object
+The name string for query buffer object is GL_ARB_query_buffer_object .
+This extension is equivalent to new core functionality introduced in OpenGL 4.4,
+and is provided to enable this functionality in older drivers.
+
+K.3.3.138
+Texture Mirror Clamp To Edge
+The name string for texture mirror clamp to edge is GL_ARB_texture_mirror_-
+clamp_to_edge . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.4, and is provided to enable this functionality in older drivers.
+
+K.3.3.139
+Texture Stencil8
+The name string for texture stencil8 is GL_ARB_texture_stencil8 . This ex-
+tension is equivalent to new core functionality introduced in OpenGL 4.4, and is
+provided to enable this functionality in older drivers.
+
+K.3.3.140
+Vertex Type 10f 11f 11f
+The name string for vertex type 10f 11f 11f is GL_ARB_vertex_type_10f_-
+11f_11f_rev . This extension is equivalent to new core functionality introduced
+in OpenGL 4.4, and is provided to enable this functionality in older drivers.
+
+K.3.3.148
+OpenGL ES 3.1 Compatibility
+This extension adds supported for features of OpenGL ES 3.1 that are missing from
+OpenGL 4.5.
+The name string for OpenGL ES 3.1 compatibility is GL_ARB_ES3_1_-
+compatibility . This extension is equivalent to new core functionality intro-
+duced in OpenGL 4.5, and is provided to enable this functionality in older drivers.
+
+K.3.3.149
+Clip Control
+This extension provides additional clip control modes to configure how clip space
+is mapped to window space.
+The name string for clip control is GL_ARB_clip_control . This extension
+is equivalent to new core functionality introduced in OpenGL 4.5, and is provided
+to enable this functionality in older drivers.
+
+K.3.3.150
+Inverted Conditional Rendering
+This extension adds new modes to BeginConditionalRender which invert the con-
+dition used to determine whether to draw or not.
+The name string for inverted conditional rendering is GL_ARB_-
+conditional_render_inverted .
+This extension is equivalent to new
+core functionality introduced in OpenGL 4.5, and is provided to enable this
+functionality in older drivers.
+
+K.3.3.151
+Cull Distance Shader Output
+This extension adds a new OpenGL Shading Language gl_CullDistance shader
+output, similar to gl_ClipDistance , but used for whole primitive culling.
+The name string for cull distance shader output is GL_ARB_cull_distance .
+This extension is equivalent to new core functionality introduced in OpenGL 4.5,
+and is provided to enable this functionality in older drivers.
+
+K.3.3.153
+Direct State Access
+This extension allows state for most objects to be queried and modified without the
+object needing to be bound to a context.
+The name string for direct state access is GL_ARB_direct_state_access .
+This extension is equivalent to new core functionality introduced in OpenGL 4.5,
+and is provided to enable this functionality in older drivers.
+
+K.3.3.154
+Texture Subregion Readback
+This extension adds commands allowing readback of subregions of texture images.
+The name string for texture subregion readback is GL_ARB_get_texture_-
+sub_image . This extension is equivalent to new core functionality introduced in
+OpenGL 4.5, and is provided to enable this functionality in older drivers.
+
+K.3.3.155
+Shading Language Texture Sample Queries
+This extension provides OpenGL Shading Language built-in functions allowing
+shaders to query the number of samples of a texture.
+The name string for shading language texture sample queries is GL_ARB_-
+shader_texture_image_samples . This extension is equivalent to new core
+functionality introduced in OpenGL 4.5, and is provided to enable this functionality
+in older drivers.
+
+K.3.3.156
+Texture Barriers
+This extension relaxes the restrictions on rendering to a currently bound texture
+and provides a mechanism to avoid read-after-write hazards.
+The name string for texture barriers is GL_ARB_texture_barrier . This ex-
+tension is equivalent to new core functionality introduced in OpenGL 4.5, and is
+provided to enable this functionality in older drivers.
+
+K.3.3.157
+Context Flush Control
+This extension allows querying the context flush behavior. There are associated
+EGL, GLX and WGL extensions which add new context creation parameters al-
+lowing specification of the desired behavior when a context is made non-current,
+as well as opting out of the implicit flush behavior of unextended OpenGL.
+The name string for context flush control is GL_KHR_context_flush_-
+control . This extension is equivalent to new core functionality introduced in
+OpenGL 4.5, and is provided to enable this functionality in older drivers.
+
+K.3.3.159
+Context Robustness
+This extension adds APIs for safe access to application buffers by the GL imple-
+mentation; mechanisms to learn about how graphics hardware resets affect the GL
+context; specification of behavior of GL commands after a graphics reset; and guar-
+antees that out-of-bounds buffer object accesses by the GPU will have deterministic
+behavior.
+The name string for context robustness is GL_KHR_robustness . This ex-
+tension is equivalent to new core functionality introduced in OpenGL 4.5, and is
+provided to enable this functionality in older drivers.
+
+
 18.4.18
 Tested with 
 Series starting with [Mesa-dev] [PATCH 1/7] ac/surface: handle DCC subresource fast clear restriction on VI
