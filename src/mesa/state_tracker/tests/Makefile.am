@@ -44,3 +44,5 @@ st_renumerate_test_LDADD = \
 	$(GALLIUM_COMMON_LIB_DEPS) \
 	$(LLVM_LIBS)
 
+EXTRA_DIST = meson.build
+
