@@ -974,7 +974,7 @@ void st_init_extensions(struct pipe_screen *screen,
 *  If implemented in OpenGL ES, OpenGL ES 3.1 and GLSL ES 3.10 are required.
 */
 
-   if (consts->GLSLVersion >= 150)
+   if (consts->GLSLVersion >= 400)
       extensions->ARB_gpu_shader5 = GL_TRUE;
    if (consts->GLSLVersion >= 410)
       extensions->ARB_shader_precision = GL_TRUE;

@@ -233,8 +233,13 @@ _mesa_override_glsl_version(struct gl_constants *consts)
 }
 
 /**
- * Examine enabled GL extensions to determine GL version.
+ * Enable GL Extensions according to the minimum version requirements as per spec.
+ * Careful: some extensions are implemented for the express purpose of being
+ * used in a lower version context (legacy extensions).
+ * Example: ARB_gpu_shader5 first implementation in OpenGL 4.0 (GLSL 400) but
+ * supposed to be exposed in OpenGL 3.2 (GLSL 130) upwards
  */
+
 static GLuint
 compute_version(const struct gl_extensions *extensions,
                 const struct gl_constants *consts, gl_api api)
@@ -242,25 +247,43 @@ compute_version(const struct gl_extensions *extensions,
    GLuint major, minor, version;
 
    const bool ver_1_3 = (extensions->ARB_texture_border_clamp &&
+                         extensions->ARB_instanced_arrays &&
+                         extensions->ARB_shadow &&
+                         extensions->ARB_vertex_shader &&
+                         extensions->ARB_fragment_shader &&
+                         extensions->ARB_depth_texture &&
+                         extensions->ARB_occlusion_query2 &&
                          extensions->ARB_texture_cube_map &&
+                         extensions->ARB_seamless_cube_map &&
                          extensions->ARB_texture_env_combine &&
+                         extensions->ARB_texture_rg &&
+                         extensions->ARB_texture_compression_rgtc &&
+                         extensions->ARB_texture_compression_bptc &&
+                         extensions->ARB_texture_float &&
+                         extensions->ARB_framebuffer_object &&
+                         extensions->ARB_framebuffer_no_attachments &&
                          extensions->ARB_texture_env_dot3);
    const bool ver_1_4 = (ver_1_3 &&
-                         extensions->ARB_depth_texture &&
-                         extensions->ARB_shadow &&
+                         extensions->ARB_stencil_texturing &&
                          extensions->ARB_texture_env_crossbar &&
+                         extensions->ARB_texture_mirror_clamp_to_edge &&
                          extensions->EXT_blend_color &&
                          extensions->EXT_blend_func_separate &&
                          extensions->EXT_blend_minmax &&
                          extensions->EXT_point_parameters);
    const bool ver_1_5 = (ver_1_4 &&
+                         extensions->ARB_query_buffer_object &&
                          extensions->ARB_occlusion_query);
    const bool ver_2_0 = (ver_1_5 &&
                          extensions->ARB_point_sprite &&
-                         extensions->ARB_vertex_shader &&
-                         extensions->ARB_fragment_shader &&
+                         extensions->ARB_blend_func_extended &&
                          extensions->ARB_texture_non_power_of_two &&
                          extensions->EXT_blend_equation_separate &&
+                         extensions->ARB_shader_texture_lod &&
+                         extensions->ARB_transform_feedback2 &&
+                         extensions->ARB_uniform_buffer_object &&
+                         extensions->ARB_texture_buffer_object &&
+                         extensions->ARB_texture_buffer_range &&
 
                          /* Technically, 2.0 requires the functionality of the
                           * EXT version.  Enable 2.0 if either extension is
@@ -272,33 +295,42 @@ compute_version(const struct gl_extensions *extensions,
                           || extensions->ATI_separate_stencil));
    const bool ver_2_1 = (ver_2_0 &&
                          extensions->EXT_pixel_buffer_object &&
+                         extensions->ARB_map_buffer_range &&
                          extensions->EXT_texture_sRGB);
    const bool ver_3_0 = (ver_2_1 &&
                          consts->GLSLVersion >= 130 &&
                          (consts->MaxSamples >= 4 || consts->FakeSWMSAA) &&
                          (api == API_OPENGL_CORE ||
                           extensions->ARB_color_buffer_float) &&
+                         extensions->ARB_conservative_depth &&
                          extensions->ARB_depth_buffer_float &&
                          extensions->ARB_half_float_vertex &&
-                         extensions->ARB_map_buffer_range &&
-                         extensions->ARB_shader_texture_lod &&
-                         extensions->ARB_texture_float &&
-                         extensions->ARB_texture_rg &&
-                         extensions->ARB_texture_compression_rgtc &&
+                         extensions->ARB_pipeline_statistics_query &&
+                         extensions->ARB_shader_image_load_store &&
+                         extensions->ARB_texture_rgb10_a2ui &&
+                         extensions->ARB_vertex_type_10f_11f_11f_rev &&
                          extensions->EXT_draw_buffers2 &&
-                         extensions->ARB_framebuffer_object &&
+                         extensions->ARB_draw_instanced &&
+                         extensions->ARB_transform_feedback_instanced &&
+                         extensions->ARB_internalformat_query &&
+                         extensions->ARB_internalformat_query2 &&
                          extensions->EXT_framebuffer_sRGB &&
                          extensions->EXT_packed_float &&
+                         extensions->ARB_sample_shading &&
+                         extensions->ARB_shader_atomic_counters &&
                          extensions->EXT_texture_array &&
+                         extensions->ARB_texture_query_lod &&
                          extensions->EXT_texture_shared_exponent &&
                          extensions->EXT_transform_feedback &&
-                         extensions->NV_conditional_render);
+                         extensions->NV_conditional_render &&
+                         extensions->ARB_texture_cube_map_array &&
+                         extensions->ARB_transform_feedback_overflow_query);
    const bool ver_3_1 = (ver_3_0 &&
                          consts->GLSLVersion >= 140 &&
-                         extensions->ARB_draw_instanced &&
-                         extensions->ARB_texture_buffer_object &&
-                         extensions->ARB_uniform_buffer_object &&
                          extensions->EXT_texture_snorm &&
+                         extensions->ARB_shading_language_420pack &&
+                         extensions->ARB_sync &&
+                         extensions->ARB_draw_indirect &&
                          extensions->NV_primitive_restart &&
                          extensions->NV_texture_rectangle &&
                          consts->Program[MESA_SHADER_VERTEX].MaxTextureImageUnits >= 16);
@@ -309,18 +341,18 @@ compute_version(const struct gl_extensions *extensions,
                          extensions->ARB_fragment_coord_conventions &&
                          extensions->ARB_gpu_shader5 &&
                          extensions->EXT_provoking_vertex &&
-                         extensions->ARB_seamless_cube_map &&
-                         extensions->ARB_sync &&
+                         extensions->ARB_gpu_shader_fp64 &&
+                         extensions->ARB_vertex_attrib_64bit &&
                          extensions->ARB_texture_multisample &&
-                         extensions->EXT_vertex_array_bgra);
+                         extensions->ARB_tessellation_shader &&
+                         extensions->EXT_vertex_array_bgra &&
+                         extensions->ARB_fragment_layer_viewport &&
+                         extensions->ARB_shader_bit_encoding &&
+                         extensions->ARB_viewport_array);
    const bool ver_3_3 = (ver_3_2 &&
                          consts->GLSLVersion >= 330 &&
-                         extensions->ARB_blend_func_extended &&
                          extensions->ARB_explicit_attrib_location &&
-                         extensions->ARB_instanced_arrays &&
-                         extensions->ARB_occlusion_query2 &&
-                         extensions->ARB_shader_bit_encoding &&
-                         extensions->ARB_texture_rgb10_a2ui &&
+                         extensions->ARB_explicit_uniform_location &&
                          extensions->ARB_timer_query &&
                          extensions->ARB_vertex_type_2_10_10_10_rev &&
                          extensions->EXT_texture_swizzle);
@@ -329,66 +361,42 @@ compute_version(const struct gl_extensions *extensions,
    const bool ver_4_0 = (ver_3_3 &&
                          consts->GLSLVersion >= 400 &&
                          extensions->ARB_draw_buffers_blend &&
-                         extensions->ARB_draw_indirect &&
-                         extensions->ARB_gpu_shader_fp64 &&
-                         extensions->ARB_sample_shading &&
-                         extensions->ARB_tessellation_shader &&
+                         extensions->ARB_derivative_control &&
                          extensions->ARB_texture_buffer_object_rgb32 &&
-                         extensions->ARB_texture_cube_map_array &&
-                         extensions->ARB_texture_query_lod &&
-                         extensions->ARB_transform_feedback2 &&
                          extensions->ARB_transform_feedback3);
    const bool ver_4_1 = (ver_4_0 &&
                          consts->GLSLVersion >= 410 &&
                          extensions->ARB_ES2_compatibility &&
-                         extensions->ARB_shader_precision &&
-                         extensions->ARB_vertex_attrib_64bit &&
-                         extensions->ARB_viewport_array);
+                         extensions->ARB_shading_language_packing &&
+                         extensions->ARB_shader_precision);
    const bool ver_4_2 = (ver_4_1 &&
                          consts->GLSLVersion >= 420 &&
                          extensions->ARB_base_instance &&
-                         extensions->ARB_conservative_depth &&
-                         extensions->ARB_internalformat_query &&
-                         extensions->ARB_shader_atomic_counters &&
-                         extensions->ARB_shader_image_load_store &&
-                         extensions->ARB_shading_language_420pack &&
-                         extensions->ARB_shading_language_packing &&
-                         extensions->ARB_texture_compression_bptc &&
-                         extensions->ARB_transform_feedback_instanced);
+                         extensions->ARB_compute_shader &&
+                         extensions->ARB_shader_atomic_counter_ops);
    const bool ver_4_3 = (ver_4_2 &&
                          consts->GLSLVersion >= 430 &&
                          consts->Program[MESA_SHADER_VERTEX].MaxUniformBlocks >= 14 &&
                          extensions->ARB_ES3_compatibility &&
                          extensions->ARB_arrays_of_arrays &&
-                         extensions->ARB_compute_shader &&
+                         extensions->ARB_buffer_storage &&
                          extensions->ARB_copy_image &&
-                         extensions->ARB_explicit_uniform_location &&
-                         extensions->ARB_fragment_layer_viewport &&
-                         extensions->ARB_framebuffer_no_attachments &&
-                         extensions->ARB_internalformat_query2 &&
                          extensions->ARB_robust_buffer_access_behavior &&
                          extensions->ARB_shader_image_size &&
                          extensions->ARB_shader_storage_buffer_object &&
-                         extensions->ARB_stencil_texturing &&
-                         extensions->ARB_texture_buffer_range &&
                          extensions->ARB_texture_query_levels &&
                          extensions->ARB_texture_view);
    const bool ver_4_4 = (ver_4_3 &&
                          consts->GLSLVersion >= 440 &&
-                         extensions->ARB_buffer_storage &&
                          extensions->ARB_clear_texture &&
                          extensions->ARB_enhanced_layouts &&
-                         extensions->ARB_query_buffer_object &&
-                         extensions->ARB_texture_mirror_clamp_to_edge &&
-                         extensions->ARB_texture_stencil8 &&
-                         extensions->ARB_vertex_type_10f_11f_11f_rev);
+                         extensions->ARB_texture_stencil8);
    const bool ver_4_5 = (ver_4_4 &&
                          consts->GLSLVersion >= 450 &&
                          extensions->ARB_ES3_1_compatibility &&
                          extensions->ARB_clip_control &&
                          extensions->ARB_conditional_render_inverted &&
                          extensions->ARB_cull_distance &&
-                         extensions->ARB_derivative_control &&
                          extensions->ARB_shader_texture_image_samples &&
                          extensions->NV_texture_barrier);
    const bool ver_4_6 = (ver_4_5 &&
@@ -396,13 +404,10 @@ compute_version(const struct gl_extensions *extensions,
                          /* extensions->ARB_gl_spirv */ 0 &&
                          /* extensions->ARB_spirv_extensions */ 0 &&
                          extensions->ARB_indirect_parameters &&
-                         extensions->ARB_pipeline_statistics_query &&
                          extensions->ARB_polygon_offset_clamp &&
-                         extensions->ARB_shader_atomic_counter_ops &&
                          extensions->ARB_shader_draw_parameters &&
                          extensions->ARB_shader_group_vote &&
-                         extensions->ARB_texture_filter_anisotropic &&
-                         extensions->ARB_transform_feedback_overflow_query);
+                         extensions->ARB_texture_filter_anisotropic);
 
    if (ver_4_6) {
       major = 4;
