@@ -296,6 +296,9 @@ compute_version(const struct gl_extensions *extensions,
    const bool ver_2_1 = (ver_2_0 &&
                          extensions->EXT_pixel_buffer_object &&
                          extensions->ARB_map_buffer_range &&
+                         extensions->ARB_draw_instanced &&
+                         extensions->ARB_shader_bit_encoding &&
+                         extensions->ARB_gpu_shader5 &&
                          extensions->EXT_texture_sRGB);
    const bool ver_3_0 = (ver_2_1 &&
                          consts->GLSLVersion >= 130 &&
@@ -310,7 +313,6 @@ compute_version(const struct gl_extensions *extensions,
                          extensions->ARB_texture_rgb10_a2ui &&
                          extensions->ARB_vertex_type_10f_11f_11f_rev &&
                          extensions->EXT_draw_buffers2 &&
-                         extensions->ARB_draw_instanced &&
                          extensions->ARB_transform_feedback_instanced &&
                          extensions->ARB_internalformat_query &&
                          extensions->ARB_internalformat_query2 &&
@@ -339,7 +341,6 @@ compute_version(const struct gl_extensions *extensions,
                          extensions->ARB_depth_clamp &&
                          extensions->ARB_draw_elements_base_vertex &&
                          extensions->ARB_fragment_coord_conventions &&
-                         extensions->ARB_gpu_shader5 &&
                          extensions->EXT_provoking_vertex &&
                          extensions->ARB_gpu_shader_fp64 &&
                          extensions->ARB_vertex_attrib_64bit &&
@@ -347,7 +348,6 @@ compute_version(const struct gl_extensions *extensions,
                          extensions->ARB_tessellation_shader &&
                          extensions->EXT_vertex_array_bgra &&
                          extensions->ARB_fragment_layer_viewport &&
-                         extensions->ARB_shader_bit_encoding &&
                          extensions->ARB_viewport_array);
    const bool ver_3_3 = (ver_3_2 &&
                          consts->GLSLVersion >= 330 &&

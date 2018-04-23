@@ -448,6 +448,7 @@ Screencheat/screencheat.x86
 find . -exec echo {} \; -exec sed -n '/Dependencies/,/Overview/p' {} \;
 
 Lots of requirements, lots of extensions that possibly be used by older games.
+Incorrect version requirements *
 
 ./WGL_ARB_make_current_read.txt
     This extension requires WGL_ARB_extensions_string is required.
@@ -462,7 +463,7 @@ Lots of requirements, lots of extensions that possibly be used by older games.
     This extension interacts with NV_compute_program5.
 ./ARB_texture_query_levels.txt
     This extension requires OpenGL 3.0 is required.
-    This extension requires OpenGL Shading Language 1.30 is required
+ok    This extension requires OpenGL Shading Language 1.30 is required
     This extension is written against the OpenGL 4.2 specification and version 4.20 of the OpenGL Shading Language Specification.
 ./ARB_depth_clamp.txt
     Written based on the wording of the OpenGL 3.1 specification.
@@ -856,9 +857,9 @@ EXT_shader_image_load_store
     ARB_fragment_program affects the definition of this extension.
     ARB_fragment_shader affects the definition of this extension.
 ./ARB_uniform_buffer_object.txt
-    This extension requires The OpenGL Shading Language (GLSL) is required. 
-    This extension requires OpenGL 2.0 or the ARB_shader_objects extension is required.
-    This extension requires OpenGL 1.5 or ARB_vertex_buffer_object is required.
+    This extension requires The OpenGL Shading Language (GLSL)
+    This extension requires OpenGL 2.0 or the ARB_shader_objects extension
+    This extension requires OpenGL 1.5 or ARB_vertex_buffer_object
     This extension is written against the OpenGL 2.1 specification and
     version 1.20-8 of the OpenGL Shading Language specification.
     This extension interacts with OpenGL 3.0, 
@@ -1722,7 +1723,6 @@ find . -exec echo {} \; -exec sed -n '/required/p;90q' {} \;
 ./ARB_texture_mirror_clamp_to_edge.txt    OpenGL 1.4 is required.
 ./ARB_framebuffer_no_attachments.txt
     OpenGL 3.0 or ARB_framebuffer_object is required.
-    such errors, an application may be required to create an otherwise
 ./ARB_clip_control.txt
 ./ARB_ES3_compatibility.txt
     ARB_texture_storage are required.
@@ -1757,14 +1757,12 @@ find . -exec echo {} \; -exec sed -n '/required/p;90q' {} \;
     EXT_gpu_shader4 or NV_vertex_program4 or OpenGL 3.0 is required.
 ./ARB_seamless_cube_map.txt    OpenGL 1.1 is required.
     ARB_texture_cube_map is required.
-    case that the locations of the individual elements required during a
 ./ARB_multisample.txt
     WGL_EXT_extensions_string is required.
     WGL_EXT_pixel_format is required.
 ./WGL_ARB_buffer_region.txt
     The WGL_EXT_extensions_string extension is required.
 ./ARB_texture_rectangle.txt     OpenGL 1.1 is required
-     artifacts are avoided and less texture memory may be required by
 ./GLX_ARB_create_context.txt
     GLX 1.4 is required.
     whether or not GLX_ARB_create_context_profile is required.
@@ -1784,9 +1782,7 @@ find . -exec echo {} \; -exec sed -n '/required/p;90q' {} \;
 ./ARB_draw_elements_base_vertex.txt
 ./ARB_vertex_attrib_binding.txt
 ./ARB_point_sprite.txt
-    expensive, since it quadruples the amount of geometry required, and
 ./ARB_shading_language_include.txt
-    is required.
 ./ARB_gpu_shader_int64.txt    OpenGL 4.0 and GLSL 4.00 are required.
 ./ARB_shader_stencil_export.txt    OpenGL 1.0 is required.
     ARB_fragment_shader is required.
