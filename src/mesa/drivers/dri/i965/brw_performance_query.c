@@ -1092,13 +1092,9 @@ brw_begin_perf_query(struct gl_context *ctx,
       if (brw->perfquery.oa_stream_fd != -1 &&
           brw->perfquery.current_oa_metrics_set_id != metric_id) {
 
-<<<<<<< HEAD
-         if (brw->perfquery.n_oa_users)
-=======
          if (brw->perfquery.n_oa_users != 0) {
             DBG("WARNING: Begin(%d) failed already using perf config=%i/%"PRIu64"\n",
                 o->Id, brw->perfquery.current_oa_metrics_set_id, metric_id);
->>>>>>> 4559aefb5cee5878198f8491680abe47df3e3250
             return false;
          } else
             close_perf(brw, query);
