@@ -2039,7 +2039,7 @@ static LLVMValueRef adjust_sample_index_using_fmask(struct ac_llvm_context *ctx,
 						    LLVMValueRef sample_index,
 						    LLVMValueRef fmask_desc_ptr)
 {
-	struct ac_image_args args = {0};
+	struct ac_image_args args = {};
 	LLVMValueRef res;
 
 	args.coords[0] = coord_x;
@@ -2383,7 +2383,7 @@ static LLVMValueRef visit_image_samples(struct ac_nir_context *ctx,
 	const nir_variable *var = instr->variables[0]->var;
 	const struct glsl_type *type = glsl_without_array(var->type);
 
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 	args.dim = get_ac_sampler_dim(&ctx->ac, glsl_get_sampler_dim(type),
 				      glsl_sampler_type_is_array(type));
 	args.dmask = 0xf;
@@ -3225,7 +3225,7 @@ static LLVMValueRef apply_round_slice(struct ac_llvm_context *ctx,
 static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 {
 	LLVMValueRef result = NULL;
-	struct ac_image_args args = { 0 };
+	struct ac_image_args args = {};
 	LLVMValueRef fmask_ptr = NULL, sample_index = NULL;
 	LLVMValueRef ddx = NULL, ddy = NULL;
 	unsigned offset_src = 0;
@@ -3423,7 +3423,7 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 		args.coords[instr->coord_components] = sample_index;
 
 	if (instr->op == nir_texop_samples_identical) {
-		struct ac_image_args txf_args = { 0 };
+		struct ac_image_args txf_args = {};
 		memcpy(txf_args.coords, args.coords, sizeof(txf_args.coords));
 
 		txf_args.dmask = 0xf;

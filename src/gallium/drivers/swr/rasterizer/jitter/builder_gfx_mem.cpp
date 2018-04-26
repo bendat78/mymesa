@@ -56,7 +56,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a masked gather operation in LLVM IR.  If not  
+    /// @brief Generate a masked gather operation in LLVM IR.  If not
     /// supported on the underlying platform, emulate it with loads
     /// @param vSrc - SIMD wide value that will be loaded if mask is invalid
     /// @param pBase - Int8* base VB address pointer value
@@ -78,7 +78,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a masked gather operation in LLVM IR.  If not  
+    /// @brief Generate a masked gather operation in LLVM IR.  If not
     /// supported on the underlying platform, emulate it with loads
     /// @param vSrc - SIMD wide value that will be loaded if mask is invalid
     /// @param pBase - Int8* base VB address pointer value
@@ -105,7 +105,7 @@ namespace SwrJit
     {
         return ADD(base, offset);
     }
-    
+
     Value *BuilderGfxMem::GEP(Value *Ptr, Value *Idx, Type *Ty, const Twine &Name)
     {
         Ptr = TranslationHelper(Ptr, Ty);
@@ -167,7 +167,7 @@ namespace SwrJit
         Ptr = TranslationHelper(Ptr, Ty);
         return Builder::LOAD(Ty, Ptr, Name);
     }
-    
+
     LoadInst* BuilderGfxMem::LOAD(Value *Ptr, bool isVolatile, const Twine &Name, Type *Ty, JIT_MEM_CLIENT usage)
     {
         AssertGFXMemoryParams(Ptr, usage);
@@ -182,8 +182,8 @@ namespace SwrJit
 
         // This call is just a pass through to the base class.
         // It needs to be here to compile due to the combination of virtual overrides and signature overloads.
-        // It doesn't do anything meaningful because the implementation in the base class is going to call 
-        // another version of LOAD inside itself where the actual per offset translation will take place 
+        // It doesn't do anything meaningful because the implementation in the base class is going to call
+        // another version of LOAD inside itself where the actual per offset translation will take place
         // and we can't just translate the BasePtr once, each address needs individual translation.
         return Builder::LOAD(BasePtr, offset, name, Ty, usage);
     }
