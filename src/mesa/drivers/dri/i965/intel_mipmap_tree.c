@@ -963,7 +963,7 @@ create_ccs_buf_for_image(struct brw_context *brw,
    assert(temp_ccs_surf.size <= image->bo->size - image->aux_offset);
 
    mt->aux_buf = calloc(sizeof(*mt->aux_buf), 1);
-   if (mt->aux_buf == NULL)
+   if (!mt->aux_buf)
       return false;
 
    mt->aux_state = create_aux_state_map(mt, initial_state);
@@ -1676,7 +1676,7 @@ intel_miptree_init_mcs(struct brw_context *brw,
     * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
     */
    void *map = brw_bo_map(brw, mt->aux_buf->bo, MAP_WRITE | MAP_RAW);
-   if (unlikely(map == NULL)) {
+   if (!unlikely(map)) {
       fprintf(stderr, "Failed to map mcs buffer into GTT\n");
       brw_bo_unreference(mt->aux_buf->bo);
       free(mt->aux_buf);

@@ -91,7 +91,7 @@ namespace SwrJit
     Instruction* VHSUB_EMU(LowerX86* pThis, TargetArch arch, TargetWidth width, CallInst* pCallInst);
 
     Instruction* DOUBLE_EMU(LowerX86* pThis, TargetArch arch, TargetWidth width, CallInst* pCallInst, Intrinsic::ID intrin);
-    
+
     static Intrinsic::ID DOUBLE = (Intrinsic::ID)-1;
 
     static std::map<std::string, X86Intrinsic> intrinsicMap2[] = {
@@ -275,7 +275,7 @@ namespace SwrJit
         Instruction* ProcessIntrinsic(CallInst* pCallInst)
         {
             Function* pFunc = pCallInst->getCalledFunction();
-            
+
             // Forward to the advanced support if found
             if (intrinsicMap2[mTarget].find(pFunc->getName()) != intrinsicMap2[mTarget].end())
             {
@@ -436,7 +436,7 @@ namespace SwrJit
             if (srcTy == B->mFP32Ty)
             {
                 pX86IntrinFunc = Intrinsic::getDeclaration(B->JM()->mpCurrentModule, Intrinsic::x86_avx2_gather_d_ps_256);
-            } 
+            }
             else if (srcTy == B->mInt32Ty)
             {
                 pX86IntrinFunc = Intrinsic::getDeclaration(B->JM()->mpCurrentModule, Intrinsic::x86_avx2_gather_d_d_256);

@@ -159,7 +159,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
                 vIndices = GetSimdValid8bitIndices(indices, pLastIndex);
             }
             break;
-        case R16_UINT: 
+        case R16_UINT:
             if(fetchState.bDisableIndexOOBCheck)
             {
                 vIndices = LOAD(BITCAST(indices, PointerType::get(VectorType::get(mInt16Ty, mpJitMgr->mVWidth), 0)), {(uint32_t)0});
@@ -182,7 +182,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
 
     if(fetchState.bForceSequentialAccessEnable)
     {
-        Value* pOffsets = mVWidth == 8 ? C({ 0, 1, 2, 3, 4, 5, 6, 7 }) : 
+        Value* pOffsets = mVWidth == 8 ? C({ 0, 1, 2, 3, 4, 5, 6, 7 }) :
             C({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
 
         // VertexData buffers are accessed sequentially, the index is equal to the vertex number
@@ -219,7 +219,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
     {
         Value* vCutIndex = VIMMED1(fetchState.cutIndex);
         Value* cutMask = VMASK(ICMP_EQ(vIndices, vCutIndex));
-        
+
         if (mVWidth == 16)
         {
             auto cutMaskLo = EXTRACT_16(cutMask, 0);
@@ -278,7 +278,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
 #if USE_SIMD16_SHADERS
     SetTargetWidth(baseWidth);
 #endif
- 
+
     return fetch;
 }
 
@@ -645,7 +645,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
         //  false - value of vInstanceStride has been initialialized to zero
         vOffsets = ADD(vOffsets, vInstanceStride);
 
-        // Packing and component control 
+        // Packing and component control
         ComponentEnable compMask = (ComponentEnable)ied.ComponentPacking;
         const ComponentControl compCtrl[4] { (ComponentControl)ied.ComponentControl0, (ComponentControl)ied.ComponentControl1,
                                              (ComponentControl)ied.ComponentControl2, (ComponentControl)ied.ComponentControl3};
@@ -951,7 +951,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
 
                                 // e.g. result of a single 8x32bit integer gather for 32bit components
                                 // 256i - 0    1    2    3    4    5    6    7
-                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx 
+                                //        xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx
                             }
                             else
                             {
@@ -1024,7 +1024,7 @@ template<typename T> Value* FetchJit::GetSimdValidIndicesHelper(Value* pIndices,
 
             pLastIndex = INT_TO_PTR(pLastIndex, Ty);
 
-            // check if the address is less than the max index, 
+            // check if the address is less than the max index,
             Value* mask = ICMP_ULT(pIndex, pLastIndex);
 
             // if valid, load the index. if not, load 0 from the stack
@@ -1070,7 +1070,7 @@ Value* FetchJit::GetSimdValid32bitIndices(Value* pIndices, Value* pLastIndex)
 {
     DataLayout dL(JM()->mpCurrentModule);
     unsigned int ptrSize = dL.getPointerSize() * 8;  // ptr size in bits
-    Value* iLastIndex = pLastIndex; 
+    Value* iLastIndex = pLastIndex;
     Value* iIndices = pIndices;
 
     // get the number of indices left in the buffer (endPtr - curPtr) / sizeof(index)

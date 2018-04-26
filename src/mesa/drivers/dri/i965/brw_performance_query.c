@@ -283,7 +283,7 @@ brw_perf_query_get_metric_id(struct brw_context *brw,
     * 0. When it stops being used the id returns to 0. No need to reload the
     * ID when it's already loaded.
     */
-   if (query->oa_metrics_set_id != 0) {
+   if (query->oa_metrics_set_id) {
       DBG("Raw query '%s' guid=%s using cached ID: %"PRIu64"\n",
           query->name, query->guid, query->oa_metrics_set_id);
       return query->oa_metrics_set_id;
@@ -1092,7 +1092,7 @@ brw_begin_perf_query(struct gl_context *ctx,
       if (brw->perfquery.oa_stream_fd != -1 &&
           brw->perfquery.current_oa_metrics_set_id != metric_id) {
 
-         if (brw->perfquery.n_oa_users != 0) {
+         if (brw->perfquery.n_oa_users) {
             DBG("WARNING: Begin(%d) failed already using perf config=%i/%"PRIu64"\n",
                 o->Id, brw->perfquery.current_oa_metrics_set_id, metric_id);
             return false;

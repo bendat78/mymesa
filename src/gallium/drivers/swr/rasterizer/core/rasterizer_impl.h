@@ -1317,7 +1317,7 @@ void GetRenderHotTiles(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroID, u
     uint32_t colorHottileEnableMask = state.colorHottileEnable;
     while(_BitScanForward(&rtSlot, colorHottileEnableMask))
     {
-        HOTTILE *pColor = pContext->pHotTileMgr->GetHotTile(pContext, pDC, hWorkerPrivateData, macroID, (SWR_RENDERTARGET_ATTACHMENT)(SWR_ATTACHMENT_COLOR0 + rtSlot), true, 
+        HOTTILE *pColor = pContext->pHotTileMgr->GetHotTile(pContext, pDC, hWorkerPrivateData, macroID, (SWR_RENDERTARGET_ATTACHMENT)(SWR_ATTACHMENT_COLOR0 + rtSlot), true,
             numSamples, renderTargetArrayIndex);
         pColor->state = HOTTILE_DIRTY;
         renderBuffers.pColor[rtSlot] = pColor->pBuffer + offset;

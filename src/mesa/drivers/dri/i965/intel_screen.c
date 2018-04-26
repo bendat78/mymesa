@@ -1262,7 +1262,7 @@ intel_query_dma_buf_formats(__DRIscreen *screen, int max,
 {
    int i, j = 0;
 
-   if (max == 0) {
+   if (!max) {
       /* Note, sRGB formats not included. */
       *count = ARRAY_SIZE(intel_image_formats) - 2;
       return true;

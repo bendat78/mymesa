@@ -801,7 +801,7 @@ virgl_drm_winsys_create(int drmFD)
    struct virgl_drm_winsys *qdws;
    int ret;
    int gl = 0;
-   struct drm_virtgpu_getparam getparam = {0};
+   struct drm_virtgpu_getparam getparam = {};
 
    getparam.param = VIRTGPU_PARAM_3D_FEATURES;
    getparam.value = (uint64_t)(uintptr_t)&gl;

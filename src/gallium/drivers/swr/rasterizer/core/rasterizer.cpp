@@ -1829,7 +1829,7 @@ void RasterizeSimplePoint(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTi
 
     RenderOutputBuffers renderBuffers;
 
-    GetRenderHotTiles(pDC, workerId, macroTile, tileAlignedX >> KNOB_TILE_X_DIM_SHIFT , tileAlignedY >> KNOB_TILE_Y_DIM_SHIFT, 
+    GetRenderHotTiles(pDC, workerId, macroTile, tileAlignedX >> KNOB_TILE_X_DIM_SHIFT , tileAlignedY >> KNOB_TILE_Y_DIM_SHIFT,
         renderBuffers, triDesc.triFlags.renderTargetArrayIndex);
 
     RDTSC_BEGIN(BEPixelBackend, pDC->drawId);

@@ -242,7 +242,7 @@ def generate_meta_h(output_dir):
         # determine the return type of the intrinsic. It can either be:
         # - type of one of the input arguments
         # - snippet of code to set the return type
-        
+
         if ret in args:
             returnTy = ret + '->getType()'
         else:

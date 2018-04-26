@@ -724,7 +724,7 @@ INLINE void OutputMerger4x2(DRAW_CONTEXT *pDC, SWR_PS_CONTEXT &psContext, uint8_
 
         const SWR_RENDER_TARGET_BLEND_STATE *pRTBlend = &pBlendState->renderTarget[rt];
 
-        SWR_BLEND_CONTEXT blendContext = { 0 };
+        SWR_BLEND_CONTEXT blendContext = {};
         {
             // pfnBlendFunc may not update all channels.  Initialize with PS output.
             /// TODO: move this into the blend JIT.
@@ -750,7 +750,7 @@ INLINE void OutputMerger4x2(DRAW_CONTEXT *pDC, SWR_PS_CONTEXT &psContext, uint8_
         // Track alpha events
         AR_EVENT(AlphaInfoEvent(pDC->drawId, blendContext.isAlphaTested, blendContext.isAlphaBlended));
 
-        // final write mask 
+        // final write mask
         simdscalari outputMask = _simd_castps_si(_simd_and_ps(coverageMask, depthPassMask));
 
         ///@todo can only use maskstore fast path if bpc is 32. Assuming hot tile is RGBA32_FLOAT.
@@ -816,7 +816,7 @@ INLINE void OutputMerger8x2(DRAW_CONTEXT *pDC, SWR_PS_CONTEXT &psContext, uint8_
             pColorSample = nullptr;
         }
 
-        SWR_BLEND_CONTEXT blendContext = { 0 };
+        SWR_BLEND_CONTEXT blendContext = {};
         {
             // pfnBlendFunc may not update all channels.  Initialize with PS output.
             /// TODO: move this into the blend JIT.
@@ -842,7 +842,7 @@ INLINE void OutputMerger8x2(DRAW_CONTEXT *pDC, SWR_PS_CONTEXT &psContext, uint8_
         // Track alpha events
         AR_EVENT(AlphaInfoEvent(pDC->drawId, blendContext.isAlphaTested, blendContext.isAlphaBlended));
 
-        // final write mask 
+        // final write mask
         simdscalari outputMask = _simd_castps_si(_simd_and_ps(coverageMask, depthPassMask));
 
         ///@todo can only use maskstore fast path if bpc is 32. Assuming hot tile is RGBA32_FLOAT.
