@@ -37,6 +37,75 @@ using std::unique_ptr;
 using std::make_unique;
 #endif
 
+
+array_live_range::array_live_range():
+   id(0),
+   length(0),
+   first_access(0),
+   last_access(0),
+   component_access_mask(0),
+   used_component_count(0)
+{
+}
+
+array_live_range::array_live_range(unsigned aid, unsigned alength):
+   id(aid),
+   length(alength),
+   first_access(0),
+   last_access(0),
+   component_access_mask(0),
+   used_component_count(0)
+{
+}
+
+array_live_range::array_live_range(unsigned aid, unsigned alength, int begin,
+                               int end, int sw):
+   id(aid),
+   length(alength),
+   first_access(begin),
+   last_access(end),
+   component_access_mask(sw),
+   used_component_count(util_bitcount(sw))
+{
+}
+
+void array_live_range::set_live_range(int _begin, int _end)
+{
+   set_begin(_begin);
+   set_end(_end);
+}
+
+void array_live_range::set_access_mask(int mask)
+{
+   component_access_mask = mask;
+   used_component_count = util_bitcount(mask);
+}
+
+void array_live_range::merge_live_range(const array_live_range &other)
+{
+   if (other.begin() < first_access)
+      first_access = other.begin();
+   if (other.end() > last_access)
+      last_access = other.end();
+}
+
+void array_live_range::print(std::ostream& os) const
+{
+   os << "[id:" << id
+      << ", length:" << length
+      << ", (b:" << first_access
+      << ", e:" << last_access
+      << "), sw:" << component_access_mask
+      << ", nc:" << used_component_count
+      << "]";
+}
+
+bool array_live_range::time_doesnt_overlap(const array_live_range& other) const
+{
+   return (other.last_access < first_access ||
+           last_access < other.first_access);
+}
+
 namespace tgsi_array_merge {
 
 array_remapping::array_remapping():

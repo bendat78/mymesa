@@ -27,6 +27,52 @@
 #include "st_glsl_to_tgsi_private.h"
 #include <iosfwd>
 
+/* Helper class to evaluate the required live range of an array.
+ *
+ * For arrays not only the live range must be tracked, but also the arrays
+ * length and since we want to interleave arrays, we also track an access mask.
+ * Consequently, one array can be merged into another or interleaved with
+ * another only if the target array is longer.
+ */
+class array_live_range {
+public:
+   array_live_range();
+   array_live_range(unsigned aid, unsigned alength);
+   array_live_range(unsigned aid, unsigned alength, int first_access,
+                  int last_access, int mask);
+
+   void set_live_range(int first_access, int last_access);
+   void set_begin(int _begin){first_access = _begin;}
+   void set_end(int _end){last_access = _end;}
+   void set_access_mask(int s);
+   void merge_live_range(const array_live_range& other);
+
+   unsigned array_id() const {return id;}
+   int array_length() const { return length;}
+   int begin() const { return first_access;}
+   int end() const { return last_access;}
+   int access_mask() const { return component_access_mask;}
+   int used_components() const {return used_component_count;}
+
+   bool time_doesnt_overlap(const array_live_range& other) const;
+
+   void print(std::ostream& os) const;
+
+private:
+   unsigned id;
+   unsigned length;
+   int first_access;
+   int last_access;
+   int component_access_mask;
+   int used_component_count;
+};
+
+inline
+std::ostream& operator << (std::ostream& os, const array_live_range& lt) {
+   lt.print(os);
+   return os;
+}
+
 namespace tgsi_array_merge {
 
 /* Helper class to merge and interleave arrays.
