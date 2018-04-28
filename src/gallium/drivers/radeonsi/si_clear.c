@@ -107,7 +107,7 @@ bool vi_alpha_is_on_msb(enum pipe_format format)
 
 	/* Formats with 3 channels can't have alpha. */
 	if (util_format_description(format)->nr_channels == 3)
-		return 1; /* same as xxxA; is any value OK here? */
+		return true; /* same as xxxA; is any value OK here? */
 
 	return si_translate_colorswap(format, false) <= 1;
 }

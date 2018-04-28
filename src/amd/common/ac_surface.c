@@ -343,6 +343,9 @@ static int gfx6_compute_level(ADDR_HANDLE addrlib,
 	/* The previous level's flag tells us if we can use DCC for this level. */
 	if (AddrSurfInfoIn->flags.dccCompatible &&
 	    (level == 0 || AddrDccOut->subLvlCompressible)) {
+		bool prev_level_clearable = level == 0 ||
+					    AddrDccOut->dccRamSizeAligned;
+
 		AddrDccIn->colorSurfSize = AddrSurfInfoOut->surfSize;
 		AddrDccIn->tileMode = AddrSurfInfoOut->tileMode;
 		AddrDccIn->tileInfo = *AddrSurfInfoOut->pTileInfo;
@@ -366,8 +369,12 @@ static int gfx6_compute_level(ADDR_HANDLE addrlib,
 			 * We only do fast clears for whole mipmap levels. If we did
 			 * per-slice fast clears, the same restriction would apply.
 			 * (i.e. only compute the slice size and see if it's aligned)
+			 *
+			 * The last level can be non-contiguous and still be clearable
+			 * if it's interleaved with the next level that doesn't exist.
 			 */
-			if (level == config->info.levels - 1 || AddrDccOut->dccRamSizeAligned)
+			if (AddrDccOut->dccRamSizeAligned ||
+			    (prev_level_clearable && level == config->info.levels - 1))
 				surf_level->dcc_fast_clear_size = AddrDccOut->dccFastClearSize;
 			else
 				surf_level->dcc_fast_clear_size = 0;
