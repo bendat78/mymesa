@@ -69,6 +69,7 @@ static const struct debug_named_value debug_options[] = {
 	{ "nir", DBG(NIR), "Enable experimental NIR shaders" },
 	{ "mono", DBG(MONOLITHIC_SHADERS), "Use old-style monolithic shaders compiled on demand" },
 	{ "nooptvariant", DBG(NO_OPT_VARIANT), "Disable compiling optimized shader variants." },
+	{ "merge", DBG(MERGE), "Enable register merging with lifetime optimizations:" },
 
 	/* Information logging options: */
 	{ "info", DBG(INFO), "Print driver information" },
