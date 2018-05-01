@@ -236,8 +236,10 @@ _mesa_override_glsl_version(struct gl_constants *consts)
  * Enable GL Extensions according to the minimum version requirements as per spec.
  * Careful: some extensions are implemented for the express purpose of being
  * used in a lower version context (legacy extensions).
- * Example: ARB_gpu_shader5 first implementation in OpenGL 4.0 (GLSL 400) but
- * supposed to be exposed in OpenGL 3.2 (GLSL 130) upwards
+ * Example:
+ * ARB_gpu_shader5: first implementation in OpenGL 4.0 (GLSL 400) but
+ * supposed to be advertised from OpenGL 3.2 (GLSL 150) upwards,
+ * however early Nvidia FXAA could use it from GLSL 120 so advertise it there
  */
 
 static GLuint
