@@ -1329,6 +1329,24 @@ static int register_merge_record_compare (const void *a, const void *b) {
 }
 #endif
 
+/* these magic numbers are determined by looking at the results of shader-db */
+bool should_merge (int distance)
+{
+   switch (distance) {
+	case 12 ... 126: //lower bound interfering with llvm?, upper bound here
+	case 244 ... 768: // and lower bound here determined by one regressing tombraider shader
+// nothing to see here
+	case 2432 ... 2496: // purely empiricily determined
+	case 2497 ... 2623: // Deus Ex
+	case 2624 ... 2688:
+//	case 2689 ... 2943: // causes regressions in ubershaders
+	case 2944 ... 3072: // above isnt used
+	   return true;
+	default:
+	   return false;
+   }
+}
+
 /* This functions evaluates the register merges by using a binary
  * search to find suitable merge candidates. */
 void get_temp_registers_remapping(void *mem_ctx, int ntemps,
@@ -1360,10 +1378,17 @@ void get_temp_registers_remapping(void *mem_ctx, int ntemps,
    register_merge_record *first_erase = reg_access_end;
    register_merge_record *search_start = trgt + 1;
 
+   int rename_distance;
+
    while (trgt != reg_access_end) {
       register_merge_record *src = find_next_rename(search_start, reg_access_end,
                                             trgt->end);
-      if (src != reg_access_end) {
+
+      rename_distance = src->begin - search_start->begin;
+
+      if ((src != reg_access_end) &&
+          (should_merge(rename_distance))) {
+
          result[src->reg].new_reg = trgt->reg;
          result[src->reg].valid = true;
          trgt->end = src->end;
@@ -1376,6 +1401,7 @@ void get_temp_registers_remapping(void *mem_ctx, int ntemps,
             first_erase = src;
 
          search_start = src + 1;
+
       } else {
          /* Moving to the next target register it is time to remove
           * the already merged registers from the search range */
