@@ -231,17 +231,6 @@ struct r600_transfer {
 	unsigned			offset;
 };
 
-struct r600_fmask_info {
-	uint64_t offset;
-	uint64_t size;
-	unsigned alignment;
-	unsigned pitch_in_pixels;
-	unsigned bank_height;
-	unsigned slice_tile_max;
-	unsigned tile_mode_index;
-	unsigned tile_swizzle;
-};
-
 struct r600_cmask_info {
 	uint64_t offset;
 	uint64_t size;
@@ -258,7 +247,7 @@ struct r600_texture {
 	struct r600_texture		*flushed_depth_texture;
 
 	/* Colorbuffer compression and fast clear. */
-	struct r600_fmask_info		fmask;
+	uint64_t			fmask_offset;
 	struct r600_cmask_info		cmask;
 	struct r600_resource		*cmask_buffer;
 	uint64_t			dcc_offset; /* 0 = disabled */
@@ -1231,10 +1220,6 @@ bool si_prepare_for_dma_blit(struct si_context *sctx,
 			     struct r600_texture *rsrc,
 			     unsigned src_level,
 			     const struct pipe_box *src_box);
-void si_texture_get_fmask_info(struct si_screen *sscreen,
-			       struct r600_texture *rtex,
-			       unsigned nr_samples,
-			       struct r600_fmask_info *out);
 void si_texture_get_cmask_info(struct si_screen *sscreen,
 			       struct r600_texture *rtex,
 			       struct r600_cmask_info *out);
