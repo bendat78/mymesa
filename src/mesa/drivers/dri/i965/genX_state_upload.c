@@ -5609,7 +5609,7 @@ genX(init_atoms)(struct brw_context *brw)
 
       &genX(scissor_state),
 
-      &gen7_depthbuffer,
+      &brw_depthbuffer,
 
       &genX(polygon_stipple),
       &genX(polygon_stipple_offset),
@@ -5700,7 +5700,7 @@ genX(init_atoms)(struct brw_context *brw)
 
       &genX(scissor_state),
 
-      &gen7_depthbuffer,
+      &brw_depthbuffer,
 
       &genX(polygon_stipple),
       &genX(polygon_stipple_offset),
