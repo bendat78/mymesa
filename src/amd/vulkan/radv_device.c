@@ -315,7 +315,7 @@ radv_physical_device_init(struct radv_physical_device *device,
 	device->has_out_of_order_rast = device->rad_info.chip_class >= VI &&
 					device->rad_info.max_se >= 2;
 	device->out_of_order_rast_allowed = device->has_out_of_order_rast &&
-					    (device->instance->perftest_flags & RADV_PERFTEST_OUT_OF_ORDER);
+					    !(device->instance->debug_flags & RADV_DEBUG_NO_OUT_OF_ORDER);
 
 	device->dcc_msaa_allowed = device->rad_info.chip_class == VI &&
 				   (device->instance->perftest_flags & RADV_PERFTEST_DCC_MSAA);
@@ -390,6 +390,7 @@ static const struct debug_control radv_debug_options[] = {
 	{"nosisched", RADV_DEBUG_NO_SISCHED},
 	{"preoptir", RADV_DEBUG_PREOPTIR},
 	{"nodynamicbounds", RADV_DEBUG_NO_DYNAMIC_BOUNDS},
+	{"nooutoforder", RADV_DEBUG_NO_OUT_OF_ORDER},
 	{NULL, 0}
 };
 
@@ -405,7 +406,6 @@ static const struct debug_control radv_perftest_options[] = {
 	{"sisched", RADV_PERFTEST_SISCHED},
 	{"localbos", RADV_PERFTEST_LOCAL_BOS},
 	{"binning", RADV_PERFTEST_BINNING},
-	{"outoforderrast", RADV_PERFTEST_OUT_OF_ORDER},
 	{"dccmsaa", RADV_PERFTEST_DCC_MSAA},
 	{NULL, 0}
 };
@@ -460,16 +460,7 @@ VkResult radv_CreateInstance(
 	    pCreateInfo->pApplicationInfo->apiVersion != 0) {
 		client_version = pCreateInfo->pApplicationInfo->apiVersion;
 	} else {
-		client_version = VK_MAKE_VERSION(1, 0, 0);
-	}
-
-	if (VK_MAKE_VERSION(1, 0, 0) > client_version ||
-	    client_version > VK_MAKE_VERSION(1, 1, 0xfff)) {
-		return vk_errorf(VK_ERROR_INCOMPATIBLE_DRIVER,
-				 "Client requested version %d.%d.%d",
-				 VK_VERSION_MAJOR(client_version),
-				 VK_VERSION_MINOR(client_version),
-				 VK_VERSION_PATCH(client_version));
+		radv_EnumerateInstanceVersion(&client_version);
 	}
 
 	instance = vk_zalloc2(&default_alloc, pAllocator, sizeof(*instance), 8,

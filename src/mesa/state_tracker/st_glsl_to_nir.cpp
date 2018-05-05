@@ -43,6 +43,7 @@
 #include "compiler/nir/nir.h"
 #include "compiler/glsl_types.h"
 #include "compiler/glsl/glsl_to_nir.h"
+#include "compiler/glsl/gl_nir.h"
 #include "compiler/glsl/ir.h"
 #include "compiler/glsl/string_to_uint_map.h"
 
@@ -324,7 +325,7 @@ st_nir_opts(nir_shader *nir)
       NIR_PASS_V(nir, nir_lower_alu_to_scalar);
       NIR_PASS_V(nir, nir_lower_phis_to_scalar);
 
-      NIR_PASS_V(nir, nir_lower_64bit_pack);
+      NIR_PASS_V(nir, nir_lower_pack);
       NIR_PASS(progress, nir, nir_copy_prop);
       NIR_PASS(progress, nir, nir_opt_remove_phis);
       NIR_PASS(progress, nir, nir_opt_dce);
@@ -467,7 +468,7 @@ st_glsl_to_nir_post_opts(struct st_context *st, struct gl_program *prog,
    st_set_prog_affected_state_flags(prog);
 
    NIR_PASS_V(nir, st_nir_lower_builtin);
-   NIR_PASS_V(nir, nir_lower_atomics, shader_program, true);
+   NIR_PASS_V(nir, gl_nir_lower_atomics, shader_program, true);
 
    if (st->ctx->_Shader->Flags & GLSL_DUMP) {
       _mesa_log("\n");
@@ -813,9 +814,9 @@ st_finalize_nir(struct st_context *st, struct gl_program *prog,
    }
 
    if (screen->get_param(screen, PIPE_CAP_NIR_SAMPLERS_AS_DEREF))
-      NIR_PASS_V(nir, nir_lower_samplers_as_deref, shader_program);
+      NIR_PASS_V(nir, gl_nir_lower_samplers_as_deref, shader_program);
    else
-      NIR_PASS_V(nir, nir_lower_samplers, shader_program);
+      NIR_PASS_V(nir, gl_nir_lower_samplers, shader_program);
 }
 
 } /* extern "C" */

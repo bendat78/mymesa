@@ -55,9 +55,6 @@
 extern "C" {
 #endif
 
-struct gl_program;
-struct gl_shader_program;
-
 #define NIR_FALSE 0u
 #define NIR_TRUE (~0u)
 
@@ -1933,6 +1930,12 @@ typedef struct nir_shader_compiler_options {
    /* Indicates that the driver only has zero-based vertex id */
    bool vertex_id_zero_based;
 
+   /**
+    * If enabled, gl_BaseVertex will be lowered as:
+    * is_indexed_draw (~0/0) & firstvertex
+    */
+   bool lower_base_vertex;
+
    bool lower_cs_local_index_from_id;
 
    bool lower_device_index_to_zero;
@@ -2596,11 +2599,6 @@ void nir_lower_io_arrays_to_elements_no_indirects(nir_shader *shader,
 void nir_lower_io_to_scalar(nir_shader *shader, nir_variable_mode mask);
 void nir_lower_io_to_scalar_early(nir_shader *shader, nir_variable_mode mask);
 
-bool nir_lower_samplers(nir_shader *shader,
-                        const struct gl_shader_program *shader_program);
-bool nir_lower_samplers_as_deref(nir_shader *shader,
-                                 const struct gl_shader_program *shader_program);
-
 typedef struct nir_lower_subgroups_options {
    uint8_t subgroup_size;
    uint8_t ballot_bit_size;
@@ -2755,13 +2753,16 @@ typedef struct nir_lower_bitmap_options {
 
 void nir_lower_bitmap(nir_shader *shader, const nir_lower_bitmap_options *options);
 
-bool nir_lower_atomics(nir_shader *shader,
-                       const struct gl_shader_program *shader_program,
-                       bool use_binding_as_idx);
 bool nir_lower_atomics_to_ssbo(nir_shader *shader, unsigned ssbo_offset);
 bool nir_lower_to_source_mods(nir_shader *shader);
 
 bool nir_lower_gs_intrinsics(nir_shader *shader);
+
+typedef unsigned (*nir_lower_bit_size_callback)(const nir_alu_instr *, void *);
+
+bool nir_lower_bit_size(nir_shader *shader,
+                        nir_lower_bit_size_callback callback,
+                        void *callback_data);
 
 typedef enum {
    nir_lower_imul64 = (1 << 0),
@@ -2785,7 +2786,7 @@ typedef enum {
 } nir_lower_doubles_options;
 
 bool nir_lower_doubles(nir_shader *shader, nir_lower_doubles_options options);
-bool nir_lower_64bit_pack(nir_shader *shader);
+bool nir_lower_pack(nir_shader *shader);
 
 bool nir_normalize_cubemap_coords(nir_shader *shader);
 

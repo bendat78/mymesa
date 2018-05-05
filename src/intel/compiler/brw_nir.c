@@ -238,8 +238,7 @@ brw_nir_lower_vs_inputs(nir_shader *nir,
     */
    const bool has_sgvs =
       nir->info.system_values_read &
-      (BITFIELD64_BIT(SYSTEM_VALUE_BASE_VERTEX) |
-       BITFIELD64_BIT(SYSTEM_VALUE_FIRST_VERTEX) |
+      (BITFIELD64_BIT(SYSTEM_VALUE_FIRST_VERTEX) |
        BITFIELD64_BIT(SYSTEM_VALUE_BASE_INSTANCE) |
        BITFIELD64_BIT(SYSTEM_VALUE_VERTEX_ID_ZERO_BASE) |
        BITFIELD64_BIT(SYSTEM_VALUE_INSTANCE_ID));
@@ -261,11 +260,11 @@ brw_nir_lower_vs_inputs(nir_shader *nir,
             nir_intrinsic_instr *intrin = nir_instr_as_intrinsic(instr);
 
             switch (intrin->intrinsic) {
-            case nir_intrinsic_load_base_vertex:
             case nir_intrinsic_load_first_vertex:
             case nir_intrinsic_load_base_instance:
             case nir_intrinsic_load_vertex_id_zero_base:
             case nir_intrinsic_load_instance_id:
+            case nir_intrinsic_load_is_indexed_draw:
             case nir_intrinsic_load_draw_id: {
                b.cursor = nir_after_instr(&intrin->instr);
 
@@ -279,7 +278,6 @@ brw_nir_lower_vs_inputs(nir_shader *nir,
 
                nir_intrinsic_set_base(load, num_inputs);
                switch (intrin->intrinsic) {
-               case nir_intrinsic_load_base_vertex:
                case nir_intrinsic_load_first_vertex:
                   nir_intrinsic_set_component(load, 0);
                   break;
@@ -293,11 +291,15 @@ brw_nir_lower_vs_inputs(nir_shader *nir,
                   nir_intrinsic_set_component(load, 3);
                   break;
                case nir_intrinsic_load_draw_id:
-                  /* gl_DrawID is stored right after gl_VertexID and friends
-                   * if any of them exist.
+               case nir_intrinsic_load_is_indexed_draw:
+                  /* gl_DrawID and IsIndexedDraw are stored right after
+                   * gl_VertexID and friends if any of them exist.
                    */
                   nir_intrinsic_set_base(load, num_inputs + has_sgvs);
-                  nir_intrinsic_set_component(load, 0);
+                  if (intrin->intrinsic == nir_intrinsic_load_draw_id)
+                     nir_intrinsic_set_component(load, 0);
+                  else
+                     nir_intrinsic_set_component(load, 1);
                   break;
                default:
                   unreachable("Invalid system value intrinsic");
@@ -584,10 +586,29 @@ brw_nir_optimize(nir_shader *nir, const struct brw_compiler *compiler,
                              nir_lower_dfract |
                              nir_lower_dround_even |
                              nir_lower_dmod);
-      OPT(nir_lower_64bit_pack);
+      OPT(nir_lower_pack);
    } while (progress);
 
    return nir;
+}
+
+static unsigned
+lower_bit_size_callback(const nir_alu_instr *alu, void *data)
+{
+   assert(alu->dest.dest.is_ssa);
+   if (alu->dest.dest.ssa.bit_size != 16)
+      return 0;
+
+   switch (alu->op) {
+   case nir_op_idiv:
+   case nir_op_imod:
+   case nir_op_irem:
+   case nir_op_udiv:
+   case nir_op_umod:
+      return 32;
+   default:
+      return 0;
+   }
 }
 
 /* Does some simple lowering and runs the standard suite of optimizations
@@ -642,6 +663,8 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
                         nir_lower_divmod64);
 
    nir = brw_nir_optimize(nir, compiler, is_scalar);
+
+   nir_lower_bit_size(nir, lower_bit_size_callback, NULL);
 
    if (is_scalar) {
       OPT(nir_lower_load_const_to_scalar);
