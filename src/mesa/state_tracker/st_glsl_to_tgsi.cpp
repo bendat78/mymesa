@@ -5537,7 +5537,7 @@ glsl_to_tgsi_visitor::merge_registers(void)
 
       rename_temp_registers(renames);
 
-// this only creates regerssions
+// this only creates regressions
 //      this->next_array =  merge_arrays(this->next_array, this->array_sizes,
 //                                       &this->instructions, arr_live_ranges);
 

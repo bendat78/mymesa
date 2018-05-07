@@ -1329,6 +1329,34 @@ static int register_merge_record_compare (const void *a, const void *b) {
 }
 #endif
 
+struct renamebounds
+{
+   int upper;
+   int lower;
+};
+
+renamebounds
+_rename_bounds()
+{
+   const char *env_var = "MESA_RENAME_BOUNDS";
+   const char *rename;
+   int n;
+   struct renamebounds bounds = {4096,0};
+
+   rename = getenv(env_var);
+   if (!rename) {
+      goto the_end;
+   }
+
+   n = sscanf(rename, "%u,%u", &bounds.upper, &bounds.lower);
+   if (n != 2) {
+      fprintf(stderr, "error: invalid value for %s: %s\n", env_var, rename);
+   }
+the_end:
+   //fprintf(stderr, "Register rename bounds: upper: %u, lower: %u\n", bounds.upper, bounds.lower);
+   return bounds;
+}
+
 /* these magic numbers are determined by looking at the results of shader-db */
 bool should_merge (int distance)
 {
@@ -1379,15 +1407,38 @@ void get_temp_registers_remapping(void *mem_ctx, int ntemps,
    register_merge_record *search_start = trgt + 1;
 
    int rename_distance;
+   struct renamebounds bounds = _rename_bounds();
 
    while (trgt != reg_access_end) {
       register_merge_record *src = find_next_rename(search_start, reg_access_end,
                                             trgt->end);
 
+//      rename_distance = src->begin - search_start->begin;
       rename_distance = src->begin - search_start->begin;
 
-      if ((src != reg_access_end) &&
-          (should_merge(rename_distance))) {
+      if ((src != reg_access_end) && should_merge(rename_distance)) {
+
+//          (rename_distance >= bounds.lower) &&
+//          (rename_distance <= bounds.upper)) {
+
+//GFX6-GFX9
+//        max_vgpr 1..256
+//        roundup((max_vgpg + 1) / 4) - 1
+
+
+//GFX6-GFX8
+//        max_sgpr 1..112
+//        roundup((max_sgpg + 1) / 8) - 1
+
+//GFX9
+//        max_sgpr 1..112
+//        roundup((max_sgpg + 1) / 16) - 1
+
+
+
+
+
+//          (should_merge(rename_distance))) {
 
          result[src->reg].new_reg = trgt->reg;
          result[src->reg].valid = true;
