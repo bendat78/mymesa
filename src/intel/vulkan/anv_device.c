@@ -759,7 +759,7 @@ void anv_GetPhysicalDeviceFeatures(
                                                   pdevice->info.has_64bit_types,
       .shaderInt64                              = pdevice->info.gen >= 8 &&
                                                   pdevice->info.has_64bit_types,
-      .shaderInt16                              = false,
+      .shaderInt16                              = pdevice->info.gen >= 8,
       .shaderResourceMinLod                     = false,
       .variableMultisampleRate                  = true,
       .inheritedQueries                         = true,
@@ -1268,7 +1268,6 @@ anv_queue_init(struct anv_device *device, struct anv_queue *queue)
 {
    queue->_loader_data.loaderMagic = ICD_LOADER_MAGIC;
    queue->device = device;
-   queue->pool = &device->surface_state_pool;
    queue->flags = 0;
 }
 
