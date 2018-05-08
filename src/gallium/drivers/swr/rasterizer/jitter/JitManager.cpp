@@ -96,7 +96,7 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
 #else
         hostCPUName = StringRef("core-avx2");
 #endif
-        if (mVWidth == 0)
+        if (!mVWidth)
         {
             mVWidth = 8;
         }
@@ -104,7 +104,7 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
     else if(mArch.AVX2())
     {
         hostCPUName = StringRef("core-avx2");
-        if (mVWidth == 0)
+        if (!mVWidth)
         {
             mVWidth = 8;
         }
@@ -119,7 +119,7 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
         {
             hostCPUName = StringRef("corei7-avx");
         }
-        if (mVWidth == 0)
+        if (!mVWidth)
         {
             mVWidth = 8;
         }

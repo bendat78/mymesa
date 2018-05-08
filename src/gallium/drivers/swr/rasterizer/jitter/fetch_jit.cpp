@@ -1065,7 +1065,7 @@ Value* FetchJit::GetSimdValid16bitIndices(Value* pIndices, Value* pLastIndex)
 Value* FetchJit::GetSimdValid32bitIndices(Value* pIndices, Value* pLastIndex)
 {
     DataLayout dL(JM()->mpCurrentModule);
-    Value* iLastIndex = pLastIndex; 
+    Value* iLastIndex = pLastIndex;
     Value* iIndices = pIndices;
 
     // get the number of indices left in the buffer (endPtr - curPtr) / sizeof(index)

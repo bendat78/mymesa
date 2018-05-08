@@ -667,7 +667,7 @@ vtn_handle_alu(struct vtn_builder *b, SpvOp opcode,
       for (unsigned i = 0; i < nir_op_infos[op].num_inputs; i++) {
          unsigned src_bit_size =
             nir_alu_type_get_type_size(nir_op_infos[op].input_types[i]);
-         if (src_bit_size == 0)
+         if (!src_bit_size)
             continue;
          if (src_bit_size != src[i]->bit_size) {
             assert(src_bit_size == 32);
