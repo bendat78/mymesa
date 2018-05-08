@@ -95,7 +95,7 @@ invalid_pname_enum:
 void GLAPIENTRY
 _mesa_ConservativeRasterParameteriNV_no_error(GLenum pname, GLint param)
 {
-   conservative_raster_parameter(pname, param, true, 
+   conservative_raster_parameter(pname, param, true,
                                  "glConservativeRasterParameteriNV");
 }
 
@@ -109,14 +109,14 @@ _mesa_ConservativeRasterParameteriNV(GLenum pname, GLint param)
 void GLAPIENTRY
 _mesa_ConservativeRasterParameterfNV_no_error(GLenum pname, GLfloat param)
 {
-   conservative_raster_parameter(pname, param, true, 
+   conservative_raster_parameter(pname, param, true,
                                  "glConservativeRasterParameterfNV");
 }
 
 void GLAPIENTRY
 _mesa_ConservativeRasterParameterfNV(GLenum pname, GLfloat param)
 {
-   conservative_raster_parameter(pname, param, false, 
+   conservative_raster_parameter(pname, param, false,
                                  "glConservativeRasterParameterfNV");
 }
 

@@ -102,7 +102,7 @@ namespace SwrJit
     {
         return ADD(base, offset);
     }
-    
+
     Value* BuilderGfxMem::GEP(Value* Ptr, Value* Idx, Type *Ty, const Twine &Name)
     {
         Ptr = TranslationHelper(Ptr, Ty);
@@ -200,7 +200,7 @@ namespace SwrJit
 
     Value* BuilderGfxMem::TranslateGfxAddress(Value* xpGfxAddress, Type* PtrTy, const Twine &Name, JIT_MEM_CLIENT /* usage */)
     {
-        if (PtrTy == nullptr)
+        if (!PtrTy)
         {
             PtrTy = mInt8PtrTy;
         }

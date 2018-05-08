@@ -385,7 +385,7 @@ handle_3dstate_vertex_buffers(struct gen_batch_decode_ctx *ctx,
 
          fprintf(ctx->fp, "vertex buffer %d, size %d\n", index, vb_size);
 
-         if (vb.map == NULL) {
+         if (!vb.map) {
             fprintf(ctx->fp, "  buffer contents unavailable\n");
             continue;
          }

@@ -435,7 +435,7 @@ bool operator == (const array_remapping& lhs, const array_remapping& rhs)
    if (lhs.target_id != rhs.target_id)
       return false;
 
-   if (lhs.target_id == 0)
+   if (!lhs.target_id)
       return true;
 
    if (lhs.reswizzle) {
