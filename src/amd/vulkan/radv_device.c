@@ -278,7 +278,7 @@ radv_physical_device_init(struct radv_physical_device *device,
 		(device->instance->perftest_flags & RADV_PERFTEST_SISCHED ? 0x1 : 0) |
 		(device->instance->debug_flags & RADV_DEBUG_UNSAFE_MATH ? 0x2 : 0);
 
-	/* The gpu id is already embeded in the uuid so we just pass "radv"
+	/* The gpu id is already embedded in the uuid so we just pass "radv"
 	 * when creating the cache.
 	 */
 	char buf[VK_UUID_SIZE * 2 + 1];
@@ -300,7 +300,7 @@ radv_physical_device_init(struct radv_physical_device *device,
 		                         device->rad_info.family == CHIP_RAVEN;
 	}
 
-	/* The mere presense of CLEAR_STATE in the IB causes random GPU hangs
+	/* The mere presence of CLEAR_STATE in the IB causes random GPU hangs
 	 * on SI.
 	 */
 	device->has_clear_state = device->rad_info.chip_class >= CIK;
@@ -428,10 +428,12 @@ radv_handle_per_app_options(struct radv_instance *instance,
 
 	if (!strcmp(name, "Talos - Linux - 32bit") ||
 	    !strcmp(name, "Talos - Linux - 64bit")) {
-		/* Force enable LLVM sisched for Talos because it looks safe
-		 * and it gives few more FPS.
-		 */
-		instance->perftest_flags |= RADV_PERFTEST_SISCHED;
+		if (!(instance->debug_flags & RADV_DEBUG_NO_SISCHED)) {
+			/* Force enable LLVM sisched for Talos because it looks
+			 * safe and it gives few more FPS.
+			 */
+			instance->perftest_flags |= RADV_PERFTEST_SISCHED;
+		}
 	}
 }
 
@@ -507,14 +509,6 @@ VkResult radv_CreateInstance(
 						   radv_perftest_options);
 
 	radv_handle_per_app_options(instance, pCreateInfo->pApplicationInfo);
-
-	if (instance->debug_flags & RADV_DEBUG_NO_SISCHED) {
-		/* Disable sisched when the user requests it, this is mostly
-		 * useful when the driver force-enable sisched for the given
-		 * application.
-		 */
-		instance->perftest_flags &= ~RADV_PERFTEST_SISCHED;
-	}
 
 	*pInstance = radv_instance_to_handle(instance);
 
@@ -1466,7 +1460,7 @@ VkResult radv_CreateDevice(
 	 * evenly between CUs. The number is only a function of the number of CUs.
 	 * We can decrease the constant to decrease the scratch buffer size.
 	 *
-	 * sctx->scratch_waves must be >= the maximum posible size of
+	 * sctx->scratch_waves must be >= the maximum possible size of
 	 * 1 threadgroup, so that the hw doesn't hang from being unable
 	 * to start any.
 	 *

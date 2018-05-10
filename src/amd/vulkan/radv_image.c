@@ -414,7 +414,7 @@ static unsigned radv_tex_dim(VkImageType image_type, VkImageViewType view_type,
 		else
 			return V_008F1C_SQ_RSRC_IMG_2D_ARRAY;
 	default:
-		unreachable("illegale image type");
+		unreachable("illegal image type");
 	}
 }
 
@@ -534,7 +534,7 @@ si_make_texture_descriptor(struct radv_device *device,
 	if (device->physical_device->rad_info.chip_class >= GFX9) {
 		unsigned bc_swizzle = gfx9_border_color_swizzle(swizzle);
 
-		/* Depth is the the last accessible layer on Gfx9.
+		/* Depth is the last accessible layer on Gfx9.
 		 * The hw doesn't need to know the total number of layers.
 		 */
 		if (type == V_008F1C_SQ_RSRC_IMG_3D)
@@ -619,7 +619,7 @@ si_make_texture_descriptor(struct radv_device *device,
 			S_008F1C_DST_SEL_Y(V_008F1C_SQ_SEL_X) |
 			S_008F1C_DST_SEL_Z(V_008F1C_SQ_SEL_X) |
 			S_008F1C_DST_SEL_W(V_008F1C_SQ_SEL_X) |
-			S_008F1C_TYPE(radv_tex_dim(image->type, view_type, 1, 0, false, false));
+			S_008F1C_TYPE(radv_tex_dim(image->type, view_type, image->info.array_size, 0, false, false));
 		fmask_state[4] = 0;
 		fmask_state[5] = S_008F24_BASE_ARRAY(first_layer);
 		fmask_state[6] = 0;
