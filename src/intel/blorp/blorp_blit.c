@@ -871,24 +871,8 @@ bit_cast_color(struct nir_builder *b, nir_ssa_def *color,
 {
    assert(key->texture_data_type == nir_type_uint);
 
-<<<<<<< HEAD
-   if (key->dst_bpc > key->src_bpc) {
-      nir_ssa_def *u = nir_ssa_undef(b, 1, 32);
-      nir_ssa_def *dst_chan[2] = { u, u };
-      unsigned shift = 0;
-      unsigned dst_idx = 0;
-      for (unsigned i = 0; i < 4; i++) {
-         nir_ssa_def *shifted = nir_ishl(b, nir_channel(b, color, i),
-                                            nir_imm_int(b, shift));
-         if (!shift) {
-            dst_chan[dst_idx] = shifted;
-         } else {
-            dst_chan[dst_idx] = nir_ior(b, dst_chan[dst_idx], shifted);
-         }
-=======
    if (key->src_format == key->dst_format)
       return color;
->>>>>>> 45dfa6f4e77fbb21f312eb6101db6c25acd4d483
 
    const struct isl_format_layout *src_fmtl =
       isl_format_get_layout(key->src_format);

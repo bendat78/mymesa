@@ -273,13 +273,8 @@ static GLboolean *_tnl_import_edgeflag( struct gl_context *ctx,
 }
 
 
-<<<<<<< HEAD
-static void bind_inputs( struct gl_context *ctx,
-			 const struct gl_vertex_array *inputs,
-=======
 static void bind_inputs( struct gl_context *ctx, 
 			 const struct tnl_vertex_array *inputs,
->>>>>>> 45dfa6f4e77fbb21f312eb6101db6c25acd4d483
 			 GLint count,
 			 struct gl_buffer_object **bo,
 			 GLuint *nr_bo )

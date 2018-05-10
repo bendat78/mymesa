@@ -388,14 +388,8 @@ st_translate_vertex_program(struct st_context *st,
    enum pipe_error error;
    unsigned num_outputs = 0;
    unsigned attr;
-<<<<<<< HEAD
-   ubyte input_to_index[VERT_ATTRIB_MAX] = {};
-   ubyte output_semantic_name[VARYING_SLOT_MAX] = {};
-   ubyte output_semantic_index[VARYING_SLOT_MAX] = {};
-=======
    ubyte output_semantic_name[VARYING_SLOT_MAX] = {0};
    ubyte output_semantic_index[VARYING_SLOT_MAX] = {0};
->>>>>>> 45dfa6f4e77fbb21f312eb6101db6c25acd4d483
 
    stvp->num_inputs = 0;
    memset(stvp->input_to_index, ~0, sizeof(stvp->input_to_index));

@@ -671,16 +671,9 @@ brw_prepare_vertices(struct brw_context *brw)
    /* Upload non-interleaved arrays */
    for (i = 0; i < nr_uploads; i++) {
       struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
-<<<<<<< HEAD
-      const struct gl_vertex_array *glarray = upload[i]->glarray;
-      const struct gl_vertex_buffer_binding *glbinding = glarray->BufferBinding;
-      const struct gl_array_attributes *glattrib = glarray->VertexAttrib;
-      if (!glbinding->InstanceDivisor) {
-=======
       const struct gl_vertex_buffer_binding *glbinding = upload[i]->glbinding;
       const struct gl_array_attributes *glattrib = upload[i]->glattrib;
       if (glbinding->InstanceDivisor == 0) {
->>>>>>> 45dfa6f4e77fbb21f312eb6101db6c25acd4d483
          copy_array_to_vbo_array(brw, upload[i], min_index, max_index,
                                  buffer, glattrib->_ElementSize);
       } else {
