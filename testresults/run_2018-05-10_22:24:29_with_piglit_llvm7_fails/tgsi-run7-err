@@ -1,0 +1,20 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+ERROR: shaders/csgo/fp-1.shader_test failed to compile
+ERROR: shaders/piglit/fp-2.shader_test failed to compile
+ERROR: shaders/piglit/5494a68e2d2804590b505fa3639cba5753f7ad07_3.shader_test failed to compile:
+0:1(11): error: syntax error, unexpected NEW_IDENTIFIER, expecting BASIC_TYPE_TOK or STRUCT or VOID_TOK or TYPE_IDENTIFIER
+
+ERROR: shaders/piglit/5494a68e2d2804590b505fa3639cba5753f7ad07_3.shader_test failed to compile:
+0:1(17): error: syntax error, unexpected BASIC_TYPE_TOK, expecting '{'
+
+ERROR: shaders/piglit/fp-1.shader_test failed to compile
+ERROR: shaders/piglit/vp-1.shader_test failed to compile
+ERROR: shaders/piglit/41da29f5b9b90d1cd88a4f83fa3e25d4f2171e3f_3.shader_test failed to compile:
+0:4(16): error: `gl_Vertex' undeclared
+0:6(2): error: `gl_FrontColor' undeclared
+0:6(23): error: `gl_MaxLights' undeclared
+0:6(18): error: cannot construct `vec4' from a non-numeric data type
+
+ERROR: shaders/piglit/41da29f5b9b90d1cd88a4f83fa3e25d4f2171e3f_3.shader_test failed to compile:
+0:4(17): error: `gl_Color' undeclared
+

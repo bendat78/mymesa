@@ -1,0 +1,753 @@
+155310 shaders in 93119 tests
+Totals:
+SGPRS: 5289464 -> 5051232 (-4.50 %)
+VGPRS: 3250724 -> 3135124 (-3.56 %)
+Spilled SGPRs: 11409 -> 19172 (68.04 %)
+Spilled VGPRs: 1150 -> 792 (-31.13 %)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 13412 -> 780 (-94.18 %) dwords per thread
+Code Size: 131662144 -> 126701612 (-3.77 %) bytes
+LDS: 1229 -> 1229 (0.00 %) blocks
+Max Waves: 1190492 -> 1205272 (1.24 %)
+Wait states: 0 -> 0 (0.00 %)
+
+Totals from affected shaders:
+SGPRS: 4237320 -> 3999088 (-5.62 %)
+VGPRS: 2526672 -> 2411072 (-4.58 %)
+Spilled SGPRs: 11409 -> 19172 (68.04 %)
+Spilled VGPRs: 1150 -> 792 (-31.13 %)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 13412 -> 780 (-94.18 %) dwords per thread
+Code Size: 124228264 -> 119267732 (-3.99 %) bytes
+LDS: 1225 -> 1225 (0.00 %) blocks
+Max Waves: 715679 -> 730459 (2.07 %)
+Wait states: 0 -> 0 (0.00 %)
+
+Increases:
+SGPRS: 15624 (0.10 %)
+VGPRS: 9366 (0.06 %)
+Spilled SGPRs: 745 (0.00 %)
+Spilled VGPRs: 2 (0.00 %)
+Private memory VGPRs: 0 (0.00 %)
+Scratch size: 1 (0.00 %)
+Code Size: 9153 (0.06 %)
+LDS: 0 (0.00 %)
+Max Waves: 10555 (0.07 %)
+Wait states: 0 (0.00 %)
+
+Decreases:
+SGPRS: 25679 (0.17 %)
+VGPRS: 23075 (0.15 %)
+Spilled SGPRs: 330 (0.00 %)
+Spilled VGPRs: 4 (0.00 %)
+Private memory VGPRs: 0 (0.00 %)
+Scratch size: 448 (0.00 %)
+Code Size: 83688 (0.54 %)
+LDS: 0 (0.00 %)
+Max Waves: 1348 (0.01 %)
+Wait states: 0 (0.00 %)
+
+*** BY PERCENTAGE ***
+
+Max Increase:
+
+SGPRS: 16 -> 80 (400.00 %) (in shaders/piglit/48f4c2f8ef4db24ad4b6ea93e1ac68908ea1ae45_3.shader_test)
+VGPRS: 20 -> 56 (180.00 %) (in shaders/piglit/29d3ff6169c2858723f6b08f54f580a4e4b1ae3e_237.shader_test)
+Spilled SGPRs: 0 -> 20 (0.00 %) (in shaders/leditrain/18245.shader_test)
+Spilled VGPRs: 50 -> 53 (6.00 %) (in shaders/dirtrally/3c67e1799a2e67024a54c8159b1a6137b7c7ecb6_1264.shader_test)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 36 -> 44 (22.22 %) dwords per thread (in shaders/dirtrally/3c67e1799a2e67024a54c8159b1a6137b7c7ecb6_1264.shader_test)
+Code Size: 1276 -> 2264 (77.43 %) bytes (in shaders/leditrain/26216.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 1 -> 8 (700.00 %) (in shaders/piglit/71552d4aa81f27c20b002023ebde5e38d4498893_4.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+Max Decrease:
+
+SGPRS: 104 -> 16 (-84.62 %) (in shaders/total_war_warhammer/3274.shader_test)
+VGPRS: 256 -> 20 (-92.19 %) (in shaders/piglit/49d48bb500119863f17d45652a4074c7c6c00bd0_4.shader_test)
+Spilled SGPRs: 49 -> 0 (-100.00 %) (in shaders/talos/1657.shader_test)
+Spilled VGPRs: 40 -> 0 (-100.00 %) (in shaders/piglit/81e2a36fbb4afb2dfac3c678e3a49a07d8590493_4.shader_test)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 52 -> 0 (-100.00 %) dwords per thread (in shaders/talos/1657.shader_test)
+Code Size: 7472 -> 3028 (-59.48 %) bytes (in shaders/piglit/49d48bb500119863f17d45652a4074c7c6c00bd0_4.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 8 -> 4 (-50.00 %) (in shaders/piglit/aa5eeca734b4fa4d489737f8708ccb6eaa894976_246.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+*** BY UNIT ***
+
+Max Increase:
+
+SGPRS: 24 -> 96 (300.00 %) (in shaders/piglit/077bc3c98f2feb9a588865581b0647be73bc2a7c_23.shader_test)
+VGPRS: 20 -> 56 (180.00 %) (in shaders/piglit/29d3ff6169c2858723f6b08f54f580a4e4b1ae3e_237.shader_test)
+Spilled SGPRs: 0 -> 134 (0.00 %) (in shaders/talos/99919760040acb7cc3cd43866eda0d6ae514ea0b_1936.shader_test)
+Spilled VGPRs: 50 -> 53 (6.00 %) (in shaders/dirtrally/3c67e1799a2e67024a54c8159b1a6137b7c7ecb6_1264.shader_test)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 36 -> 44 (22.22 %) dwords per thread (in shaders/dirtrally/3c67e1799a2e67024a54c8159b1a6137b7c7ecb6_1264.shader_test)
+Code Size: 4172 -> 6240 (49.57 %) bytes (in shaders/talos/99919760040acb7cc3cd43866eda0d6ae514ea0b_1936.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 1 -> 8 (700.00 %) (in shaders/piglit/71552d4aa81f27c20b002023ebde5e38d4498893_4.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+Max Decrease:
+
+SGPRS: 104 -> 16 (-84.62 %) (in shaders/total_war_warhammer/3274.shader_test)
+VGPRS: 256 -> 20 (-92.19 %) (in shaders/piglit/49d48bb500119863f17d45652a4074c7c6c00bd0_4.shader_test)
+Spilled SGPRs: 207 -> 0 (-100.00 %) (in shaders/piglit/02c61b780a7b5ebcc34e16e9a8329862b1529850_5.shader_test)
+Spilled VGPRs: 262 -> 0 (-100.00 %) (in shaders/piglit/49d48bb500119863f17d45652a4074c7c6c00bd0_4.shader_test)
+Private memory VGPRs: 0 -> 0 (0.00 %)
+Scratch size: 208 -> 0 (-100.00 %) dwords per thread (in shaders/piglit/02c61b780a7b5ebcc34e16e9a8329862b1529850_5.shader_test)
+Code Size: 33328 -> 23584 (-29.24 %) bytes (in shaders/w40kdawn3/970.shader_test)
+LDS: 0 -> 0 (0.00 %) blocks
+Max Waves: 8 -> 4 (-50.00 %) (in shaders/piglit/aa5eeca734b4fa4d489737f8708ccb6eaa894976_246.shader_test)
+Wait states: 0 -> 0 (0.00 %)
+
+*** Tests only in 'after' results are ignored:
+shaders/piglit/672bf3331a25c3735a34d75a3023fab15ae8111b_3.shader_test, shaders/piglit/cdb6cf993b7a3a05e1493e1d1192bb718461a6d8_3.shader_test, shaders/piglit/16c99de8f94d8fdf59a93378c75b6c51a3d15cac_3.shader_test, shaders/piglit/78b34b474e017e65968aae05657d8dd2f322aee1_3.shader_test, shaders/piglit/dd520609452cb4c18c2950fc1c5352a4b01fb6b0_3.shader_test, and 4 more
+[1;33mWORST VGPR SPILLS (not deltas)                                                                [0m
+[1;33m  VGPRs Spills Private Scratch[0m
+    256   548     0      552    shaders/piglit/de396e7769a0c6f7783fc333d8c726177ac49276_4.shader_test [1]
+    256   138     0      140    shaders/piglit/5b3522e99e5cdafe295ec8376e22807c727cbf51_4.shader_test [1]
+     64    53     0       44    shaders/dirtrally/3c67e1799a2e67024a54c8159b1a6137b7c7ecb6_1264.shader_test [0]
+     64    46     0       36    shaders/piglit/51e07b0ac242a7c22d5d519ea8b3e4f7ac8e51f9_2.shader_test [0]
+     64     7     0        8    shaders/alien_isolation/788.shader_test [0]
+
+[1;33mVGPR SPILLING APPS
+Shaders SpillVGPR  PrivVGPR ScratchSize[0m
+   1414     7          0        8   alien_isolation       
+    787    53          0       44   dirtrally             
+  80346   732          0      728   piglit                
+
+[1;33mWORST SGPR SPILLS (not deltas)                                                                [0m
+[1;33m  SGPRs Spills[0m
+    104   140   shaders/deadisland_original/10.shader_test [0]                                            
+    104   134   shaders/talos/99919760040acb7cc3cd43866eda0d6ae514ea0b_1936.shader_test [1]               
+    104   109   shaders/talos/1a93595187ce22ad32d464a786a348cec8218f01_1978.shader_test [1]               
+    104   106   shaders/talos/4a77af22ac0b5d0176fc20965a56919731c28e3f_1935.shader_test [1]               
+    104    88   shaders/dirtrally/fe6f1fa131df6952af38b072ebdf1e6b6059f625_1852.shader_test [0]           
+    104    88   shaders/dirtrally/904f1acb1a084a19f77464b709899218717b26ee_1722.shader_test [0]           
+    104    84   shaders/dirtrally/6cabf827b3ce4c29b678cfcc5106c37a159cb5c9_1096.shader_test [0]           
+    104    83   shaders/talos/e02f5c5e64e190292eaff713c610a9db626d066e_1980.shader_test [1]               
+    104    83   shaders/talos/ed3b798186f4699cb45f75cc0de480e0faaccf1a_2010.shader_test [1]               
+    104    83   shaders/talos/560f4227872f44223ece184f9e2171b463c2edfe_2029.shader_test [1]               
+    104    83   shaders/talos/6fdd02ccd3375342e60d8ef16a3b8d7b043ad052_2028.shader_test [1]               
+    104    80   shaders/dirtrally/8d6832fac2b1fc3f233dd354212643efadf2f307_1172.shader_test [0]           
+    104    78   shaders/w40kdawn2/416.shader_test [1]                                                     
+    104    78   shaders/w40kdawn2/1055.shader_test [0]                                                    
+    104    78   shaders/w40kdawn2/415.shader_test [0]                                                     
+    104    78   shaders/w40kdawn2/1056.shader_test [1]                                                    
+    104    78   shaders/w40kdawn2/2e15856e36721375036b30ee1f8328d7beef0a2c_416.shader_test [1]            
+    104    78   shaders/f1_2015/9baeaef117779723d80494ba32e81045548d53f3_1574.shader_test [0]             
+    104    78   shaders/w40kdawn2/1dc00b015eb212dac90787f193e2cc39e79c4a10_415.shader_test [0]            
+    104    76   shaders/dirtrally/e9d6112f5624675ce7e9ed3bc4133829998a626b_670.shader_test [0]            
+    104    76   shaders/dirtrally/49186d77fb8bd84b3353104882e34c26217724b7_490.shader_test [0]            
+    104    74   shaders/deusex_mankind/68ca608cab8629be01cca936ec3ee74f3fa98833_918.shader_test [0]       
+    104    70   shaders/dirtrally/3ce17b104a0654b76a2f1b4f62eb061e4a6f1d52_1056.shader_test [0]           
+    104    68   shaders/specops/1431.shader_test [1]                                                      
+    104    66   shaders/dirtrally/6b19b7e280e7c96af16912fa7c36880ad6a98beb_80.shader_test [0]             
+    104    64   shaders/dirtrally/93acf8fb98fd02b3f42f21bd40c51ff789859307_518.shader_test [0]            
+    104    62   shaders/kerbal/891.shader_test [0]                                                        
+    104    62   shaders/kerbal/930.shader_test [0]                                                        
+    104    60   shaders/ruiner/ead1e776f193ec0fe00353d14b028a583e223462_2839.shader_test [0]              
+    104    60   shaders/cat/1772.shader_test [0]                                                          
+    104    60   shaders/unigine_valley/151.shader_test [0]                                                
+    104    56   shaders/w40kdawn2/1061.shader_test [0]                                                    
+    104    56   shaders/w40kdawn2/421.shader_test [0]                                                     
+    104    56   shaders/w40kdawn2/e379998caf8f692807b53fcccdd531be252d7454_413.shader_test [0]            
+    104    56   shaders/w40kdawn2/1053.shader_test [0]                                                    
+    104    56   shaders/kerbal/894.shader_test [0]                                                        
+    104    56   shaders/w40kdawn2/413.shader_test [0]                                                     
+    104    56   shaders/dirtrally/468a352e54face43d1e830631c91bc17b1167f82_186.shader_test [0]            
+    104    55   shaders/talos/b49940763619a99b2b1cb6407dd4d2cd92565a25_2027.shader_test [1]               
+    104    55   shaders/talos/c76a0f840c5b44092f76d2a296b1d5dac5474927_2075.shader_test [1]               
+
+[1;33m SGPR SPILLING APPS
+Shaders SpillSGPR AvgPerSh[0m
+    590      4       0.0      aer                   
+   1414      1       0.0      alien_isolation       
+   2581      9       0.0      bioshock_infinite     
+    573    337       0.6      cat                   
+   1392    218       0.2      csgo                  
+   1776    220       0.1      deadisland_definitive 
+  11602    534       0.0      deadisland_original   
+    293      2       0.0      deadisland_riptide_.. 
+   5051    483       0.1      deusex_mankind        
+    787   3174       4.0      dirtrally             
+    746   1594       2.1      f1_2015               
+   1016    408       0.4      kerbal                
+  18836   7006       0.4      leditrain             
+    354    101       0.3      madmax                
+   4410    116       0.0      metro2033redux        
+  80346    905       0.0      piglit                
+    693     60       0.1      ruiner                
+    736    317       0.4      serioussam2017        
+   1814    198       0.1      specops               
+    762   1837       2.4      talos                 
+   1012     57       0.1      tombraider            
+    176    181       1.0      total_war_shogun_2    
+    218      8       0.0      total_war_warhammer   
+    733     56       0.1      unigine_superposition 
+    288    160       0.6      unigine_valley        
+    421   1104       2.6      w40kdawn2             
+    159     34       0.2      w40kdawn3             
+   1439     48       0.0      xcom2                 
+
+[1;33m WORST REGRESSIONS - SGPRS                                                           [0m
+[1;33m Before After     Delta Percentage[0m
+     24    96[31m        72[0m[31m  300.00 %[0m   shaders/piglit/077bc3c98f2feb9a588865581b0647be73bc2a7c_23.shader_test [0]                
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/e607a354fa81dbf344df1ca5b2f5323b83b26279_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/cd882eb0885bc770093db9b373d0820e51afcd8c_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/7e4545fadee68afe4af15f4bcfa62e567ba9ecc9_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/f0e3ba5c599570c8517576cda514fbf28f8eb775_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/636c8e9d2692b5f0f700353df8df36559d6dd314_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/dd2a3f33f56dbd675c30c89c01c897ec7aa04f23_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/edf217cd9a1b44e9d031f0d5ed8acce073c2a796_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/90c13beb05cd9fc0aff0c99c0727e267a28feb99_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/8644eec6ba9674392baf0b048475c34590b088fe_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/c836d26b6cbc0f30fd78809d7f74c5e71e21c7c0_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/0f7785bdd7c76d9bbc7eaba6731d76910741fbb2_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/3f9e7e9f16ba06279f6a8c07af4375b8c0e8e4a1_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/465fe5326e7ee1818d76be48257984fd02c1d502_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/14b8ac3599b96df1ed5e7f62bc72c02f31aa2a4e_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/f5c0e6992360fdeeb9dcf8a484359eb1d5193b29_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/b661f104ba3042e6e3bf7cb5735124c0dd7576d8_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/60b9b5be4b090cfe0bdfc16bf9cd005ba2471af4_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/7c61c7403ba190e9faf2a71fce97cb290f1dffcb_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/ff29471bd0a9a54612c8196f650047ae7e677f1b_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/48f4c2f8ef4db24ad4b6ea93e1ac68908ea1ae45_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/550e0acfc182b853578ce083d301ea235b0133ef_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/f9ee6e867e01c7bfcbe29c4eae6d7603b2114b1a_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/49665f27f94d262e34382b4f1c7e5ac036dd2fda_3.shader_test [1]                 
+     16    80[31m        64[0m[31m  400.00 %[0m   shaders/piglit/659ae33bf66c03fb8c9fbdef62ea3ba6c90c3a4c_3.shader_test [1]                 
+     40    96[31m        56[0m[31m  140.00 %[0m   shaders/deusex_mankind/ce4a8c012884ef0d5304743988a23c75b7202919_2826.shader_test [0]      
+     40    96[31m        56[0m[31m  140.00 %[0m   shaders/alien_isolation/709.shader_test [0]                                               
+     32    88[31m        56[0m[31m  175.00 %[0m   shaders/piglit/07057022716fff70e79f0d1f11ba29070b81f31b_25.shader_test [1]                
+     48   104[31m        56[0m[31m  116.67 %[0m   shaders/alien_isolation/667.shader_test [0]                                               
+     32    88[31m        56[0m[31m  175.00 %[0m   shaders/piglit/814237c94f3ad834809c4e3719c71e211006d7fa_4.shader_test [0]                 
+     48   104[31m        56[0m[31m  116.67 %[0m   shaders/deusex_mankind/ba968cab0c5645533072d7f53fcca5c074b4f0c8_7034.shader_test [0]      
+     24    80[31m        56[0m[31m  233.33 %[0m   shaders/piglit/88c7210f8776c756f1d5bad6d9c16aa9e1af7848_5.shader_test [0]                 
+     40    96[31m        56[0m[31m  140.00 %[0m   shaders/madmax/47cad35f484053cf0c49c8ed30fdfb5d97567492_1780.shader_test [0]              
+     48   104[31m        56[0m[31m  116.67 %[0m   shaders/deusex_mankind/75d900c6e24e71208fe87c87626ef7cf41fb2edc_2620.shader_test [0]      
+     40    96[31m        56[0m[31m  140.00 %[0m   shaders/xcom/1415.shader_test [0]                                                         
+     48   104[31m        56[0m[31m  116.67 %[0m   shaders/alien_isolation/668.shader_test [0]                                               
+     48   104[31m        56[0m[31m  116.67 %[0m   shaders/deusex_mankind/3df53bfef992923f3b6a97201dac584784ae2342_6352.shader_test [0]      
+     48   104[31m        56[0m[31m  116.67 %[0m   shaders/cat/1812.shader_test [1]                                                          
+     40    96[31m        56[0m[31m  140.00 %[0m   shaders/piglit/2595cd8a2e0bfc160a793d4fec2f9e37e05677ec_3.shader_test [1]                 
+     48   104[31m        56[0m[31m  116.67 %[0m   shaders/deusex_mankind/7f0731b04b861bda5d90916bb32b912e1545a405_4284.shader_test [0]      
+
+[1;33m WORST REGRESSIONS - VGPRS                                                           [0m
+[1;33m Before After     Delta Percentage[0m
+     20    56[31m        36[0m[31m  180.00 %[0m   shaders/piglit/39622164c246f8e8cb93c2acc98e9f7845f44d5c_240.shader_test [0]               
+     48    84[31m        36[0m[31m   75.00 %[0m   shaders/piglit/98fac513967b20a5224256a5b4abc81d15f4d809_4.shader_test [0]                 
+     20    56[31m        36[0m[31m  180.00 %[0m   shaders/piglit/3e5b62e4ab0413d1018f2f3943c61852088a5be8_273.shader_test [0]               
+     48    84[31m        36[0m[31m   75.00 %[0m   shaders/piglit/15ed817ae3ccc59bb492f7939897bdec863e713f_4.shader_test [0]                 
+     20    56[31m        36[0m[31m  180.00 %[0m   shaders/piglit/0b2b104de7dfbe8d348bb98596ea9887948a68bb_270.shader_test [0]               
+     20    56[31m        36[0m[31m  180.00 %[0m   shaders/piglit/29d3ff6169c2858723f6b08f54f580a4e4b1ae3e_237.shader_test [0]               
+     40    72[31m        32[0m[31m   80.00 %[0m   shaders/piglit/e300101afa06af3809d48efea8d2856dd722c333_3.shader_test [0]                 
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/576e982856ca241685e67d9a29637bd4200f30d5_258.shader_test [0]               
+     48    80[31m        32[0m[31m   66.67 %[0m   shaders/piglit/e8e1ac2877fe02ab24abce90030ab58c6e1646a9_4.shader_test [0]                 
+     48    80[31m        32[0m[31m   66.67 %[0m   shaders/piglit/17fb1851645fbd38d793c6cbfd8b0b3d16a15697_4.shader_test [0]                 
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/fe1310e4298a535c8856411b649c69cd799e2afe_249.shader_test [0]               
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/aa5eeca734b4fa4d489737f8708ccb6eaa894976_246.shader_test [0]               
+     20    52[31m        32[0m[31m  160.00 %[0m   shaders/piglit/540469157223809792c5e24fcb78824fc4a2d880_201.shader_test [0]               
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/7da69297ec81b11d0cdb5b1f43a0b7bfbe14ae04_243.shader_test [0]               
+     48    80[31m        32[0m[31m   66.67 %[0m   shaders/piglit/1fd90e92caf5ee95b9ab0a72021f5b66df9dc2df_4.shader_test [0]                 
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/6403896272618f0228df3db30413f7e13810fad4_255.shader_test [0]               
+     48    80[31m        32[0m[31m   66.67 %[0m   shaders/piglit/f30d8d402122300f9ca3c73dfa3576c89bceef7b_4.shader_test [0]                 
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/a1e6e5a5da83b2773d2b4564f17fb808f95a3c85_264.shader_test [0]               
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/a051da140a09f28cfc669bff43171630da4c2926_267.shader_test [0]               
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/3a89928348b492e307278668d3e56791dfbddae3_252.shader_test [0]               
+     24    56[31m        32[0m[31m  133.33 %[0m   shaders/piglit/df5c458a439ed904a11bd30090bffc8d4923c0f7_261.shader_test [0]               
+     20    52[31m        32[0m[31m  160.00 %[0m   shaders/piglit/4223d616361e3099419b6f2159536dcde5104fe2_234.shader_test [0]               
+     20    52[31m        32[0m[31m  160.00 %[0m   shaders/piglit/e57bee6748bfe3610c10200fb4b04d52507d3ee4_231.shader_test [0]               
+     20    52[31m        32[0m[31m  160.00 %[0m   shaders/piglit/be70bd52513a1c59b94a57422b18a95db9385d42_204.shader_test [0]               
+     20    48[31m        28[0m[31m  140.00 %[0m   shaders/piglit/44086ac890e80eb203e99a3eec0498f54d5c7b21_168.shader_test [0]               
+     36    64[31m        28[0m[31m   77.78 %[0m   shaders/piglit/049aab059591bebdfde18f1a0c1e837eb8a65fb4_3.shader_test [0]                 
+     24    52[31m        28[0m[31m  116.67 %[0m   shaders/piglit/4e83e7cf736d5e22c5ee37c7f5b45aeb7319baae_225.shader_test [0]               
+     24    52[31m        28[0m[31m  116.67 %[0m   shaders/piglit/3b11e83a659ee3ab74160140aa8c7d1166a8ceb0_213.shader_test [0]               
+     24    52[31m        28[0m[31m  116.67 %[0m   shaders/piglit/e3f5ece329695ddf4cdf19dcee5944975431dae0_222.shader_test [0]               
+     20    48[31m        28[0m[31m  140.00 %[0m   shaders/piglit/ad4e78c98d3111d286b9eaa52d5fef412853cc72_198.shader_test [0]               
+     24    52[31m        28[0m[31m  116.67 %[0m   shaders/piglit/a11184c63f99928e7fd728a278a4ff504b66e65b_216.shader_test [0]               
+     24    52[31m        28[0m[31m  116.67 %[0m   shaders/piglit/0ddde4839de3757f321ca3a2ceb36074082e6bc8_228.shader_test [0]               
+     36    64[31m        28[0m[31m   77.78 %[0m   shaders/piglit/c71e9932cfd948bc6687bf997784d93271e14a64_5.shader_test [0]                 
+    144   172[31m        28[0m[31m   19.44 %[0m   shaders/piglit/441a3b61b58ec9318ada722094dc50fbb2e245c7_4.shader_test [0]                 
+     36    64[31m        28[0m[31m   77.78 %[0m   shaders/piglit/2e7efea105b037b1d76e7ff24b8772d2b60943e0_5.shader_test [0]                 
+     24    52[31m        28[0m[31m  116.67 %[0m   shaders/piglit/7a31b91b110beac4050eddc0936a5ddfaa7acc76_207.shader_test [0]               
+     24    52[31m        28[0m[31m  116.67 %[0m   shaders/piglit/57e2b7ff8e59662f9baf28682d5340f82c8b2a61_210.shader_test [0]               
+     36    64[31m        28[0m[31m   77.78 %[0m   shaders/piglit/77735bbe4e5fdce23e6b17814c81333a4c6b99f0_2.shader_test [0]                 
+     36    64[31m        28[0m[31m   77.78 %[0m   shaders/piglit/19b661ed85c5429a43e8db3ecc5a9db6c64c461e_3.shader_test [0]                 
+     20    48[31m        28[0m[31m  140.00 %[0m   shaders/piglit/77b0dd0a839afc3c8f886e6394719609124278d1_171.shader_test [0]               
+
+[1;33m WORST REGRESSIONS - Spilled SGPRs                                                   [0m
+[1;33m Before After     Delta Percentage[0m
+      0   134[31m       134[0m[31m     inf %[0m   shaders/talos/99919760040acb7cc3cd43866eda0d6ae514ea0b_1936.shader_test [1]               
+      0   109[31m       109[0m[31m     inf %[0m   shaders/talos/1a93595187ce22ad32d464a786a348cec8218f01_1978.shader_test [1]               
+      0   106[31m       106[0m[31m     inf %[0m   shaders/talos/4a77af22ac0b5d0176fc20965a56919731c28e3f_1935.shader_test [1]               
+      0    88[31m        88[0m[31m     inf %[0m   shaders/dirtrally/fe6f1fa131df6952af38b072ebdf1e6b6059f625_1852.shader_test [0]           
+      0    88[31m        88[0m[31m     inf %[0m   shaders/dirtrally/904f1acb1a084a19f77464b709899218717b26ee_1722.shader_test [0]           
+      0    84[31m        84[0m[31m     inf %[0m   shaders/dirtrally/6cabf827b3ce4c29b678cfcc5106c37a159cb5c9_1096.shader_test [0]           
+      0    80[31m        80[0m[31m     inf %[0m   shaders/dirtrally/8d6832fac2b1fc3f233dd354212643efadf2f307_1172.shader_test [0]           
+      0    78[31m        78[0m[31m     inf %[0m   shaders/f1_2015/9baeaef117779723d80494ba32e81045548d53f3_1574.shader_test [0]             
+      7    83[31m        76[0m[31m 1085.71 %[0m   shaders/talos/e02f5c5e64e190292eaff713c610a9db626d066e_1980.shader_test [1]               
+      7    83[31m        76[0m[31m 1085.71 %[0m   shaders/talos/ed3b798186f4699cb45f75cc0de480e0faaccf1a_2010.shader_test [1]               
+      7    83[31m        76[0m[31m 1085.71 %[0m   shaders/talos/560f4227872f44223ece184f9e2171b463c2edfe_2029.shader_test [1]               
+      0    76[31m        76[0m[31m     inf %[0m   shaders/dirtrally/e9d6112f5624675ce7e9ed3bc4133829998a626b_670.shader_test [0]            
+      7    83[31m        76[0m[31m 1085.71 %[0m   shaders/talos/6fdd02ccd3375342e60d8ef16a3b8d7b043ad052_2028.shader_test [1]               
+      0    76[31m        76[0m[31m     inf %[0m   shaders/dirtrally/49186d77fb8bd84b3353104882e34c26217724b7_490.shader_test [0]            
+      3    78[31m        75[0m[31m 2500.00 %[0m   shaders/w40kdawn2/416.shader_test [1]                                                     
+      3    78[31m        75[0m[31m 2500.00 %[0m   shaders/w40kdawn2/1055.shader_test [0]                                                    
+      3    78[31m        75[0m[31m 2500.00 %[0m   shaders/w40kdawn2/415.shader_test [0]                                                     
+      3    78[31m        75[0m[31m 2500.00 %[0m   shaders/w40kdawn2/1056.shader_test [1]                                                    
+      3    78[31m        75[0m[31m 2500.00 %[0m   shaders/w40kdawn2/2e15856e36721375036b30ee1f8328d7beef0a2c_416.shader_test [1]            
+      3    78[31m        75[0m[31m 2500.00 %[0m   shaders/w40kdawn2/1dc00b015eb212dac90787f193e2cc39e79c4a10_415.shader_test [0]            
+      0    74[31m        74[0m[31m     inf %[0m   shaders/deusex_mankind/68ca608cab8629be01cca936ec3ee74f3fa98833_918.shader_test [0]       
+      0    70[31m        70[0m[31m     inf %[0m   shaders/dirtrally/3ce17b104a0654b76a2f1b4f62eb061e4a6f1d52_1056.shader_test [0]           
+      0    68[31m        68[0m[31m     inf %[0m   shaders/specops/1431.shader_test [1]                                                      
+      0    66[31m        66[0m[31m     inf %[0m   shaders/dirtrally/6b19b7e280e7c96af16912fa7c36880ad6a98beb_80.shader_test [0]             
+      0    64[31m        64[0m[31m     inf %[0m   shaders/dirtrally/93acf8fb98fd02b3f42f21bd40c51ff789859307_518.shader_test [0]            
+      0    62[31m        62[0m[31m     inf %[0m   shaders/kerbal/891.shader_test [0]                                                        
+      0    62[31m        62[0m[31m     inf %[0m   shaders/kerbal/930.shader_test [0]                                                        
+      0    60[31m        60[0m[31m     inf %[0m   shaders/unigine_valley/151.shader_test [0]                                                
+      0    56[31m        56[0m[31m     inf %[0m   shaders/w40kdawn2/1061.shader_test [0]                                                    
+      0    56[31m        56[0m[31m     inf %[0m   shaders/w40kdawn2/421.shader_test [0]                                                     
+      0    56[31m        56[0m[31m     inf %[0m   shaders/kerbal/894.shader_test [0]                                                        
+      0    56[31m        56[0m[31m     inf %[0m   shaders/dirtrally/468a352e54face43d1e830631c91bc17b1167f82_186.shader_test [0]            
+      0    54[31m        54[0m[31m     inf %[0m   shaders/leditrain/30863.shader_test [1]                                                   
+      0    54[31m        54[0m[31m     inf %[0m   shaders/leditrain/30902.shader_test [1]                                                   
+      0    54[31m        54[0m[31m     inf %[0m   shaders/dirtrally/2490232286963a83d1766bcbea557f7fe5aec727_948.shader_test [0]            
+      0    54[31m        54[0m[31m     inf %[0m   shaders/leditrain/30941.shader_test [1]                                                   
+      0    54[31m        54[0m[31m     inf %[0m   shaders/leditrain/30824.shader_test [1]                                                   
+      0    54[31m        54[0m[31m     inf %[0m   shaders/unigine_superposition/cb3b3b9652be55e99eafe0acbc16637d69883fdb_489.shader_test [1]
+      0    54[31m        54[0m[31m     inf %[0m   shaders/deadisland_definitive/f44ac0586c6d638de670f34150345719723756de_3233.shader_test [0]
+      0    54[31m        54[0m[31m     inf %[0m   shaders/deadisland_definitive/dc23374d0197d71fcebead58194aeb5db9ec25f0_4369.shader_test [0]
+
+[1;33m WORST REGRESSIONS - Spilled VGPRs                                                   [0m
+[1;33m Before After     Delta Percentage[0m
+     50    53[31m         3[0m[31m    6.00 %[0m   shaders/dirtrally/3c67e1799a2e67024a54c8159b1a6137b7c7ecb6_1264.shader_test [0]           
+    136   138[31m         2[0m[31m    1.47 %[0m   shaders/piglit/5b3522e99e5cdafe295ec8376e22807c727cbf51_4.shader_test [1]                 
+
+[1;33m WORST REGRESSIONS - Scratch size                                                    [0m
+[1;33m Before After     Delta Percentage[0m
+     36    44[31m         8[0m[31m   22.22 %[0m   shaders/dirtrally/3c67e1799a2e67024a54c8159b1a6137b7c7ecb6_1264.shader_test [0]           
+
+[1;33m WORST REGRESSIONS - Code Size                                                       [0m
+[1;33m Before After     Delta Percentage[0m
+   4172  6240[31m      2068[0m[31m   49.57 %[0m   shaders/talos/99919760040acb7cc3cd43866eda0d6ae514ea0b_1936.shader_test [1]               
+   3968  5592[31m      1624[0m[31m   40.93 %[0m   shaders/talos/1a93595187ce22ad32d464a786a348cec8218f01_1978.shader_test [1]               
+   3612  5056[31m      1444[0m[31m   39.98 %[0m   shaders/talos/4a77af22ac0b5d0176fc20965a56919731c28e3f_1935.shader_test [1]               
+   3560  4944[31m      1384[0m[31m   38.88 %[0m   shaders/w40kdawn2/416.shader_test [1]                                                     
+   3560  4944[31m      1384[0m[31m   38.88 %[0m   shaders/w40kdawn2/1055.shader_test [0]                                                    
+   3560  4944[31m      1384[0m[31m   38.88 %[0m   shaders/w40kdawn2/415.shader_test [0]                                                     
+   3560  4944[31m      1384[0m[31m   38.88 %[0m   shaders/w40kdawn2/1056.shader_test [1]                                                    
+   3560  4944[31m      1384[0m[31m   38.88 %[0m   shaders/w40kdawn2/2e15856e36721375036b30ee1f8328d7beef0a2c_416.shader_test [1]            
+   3560  4944[31m      1384[0m[31m   38.88 %[0m   shaders/w40kdawn2/1dc00b015eb212dac90787f193e2cc39e79c4a10_415.shader_test [0]            
+   2920  4260[31m      1340[0m[31m   45.89 %[0m   shaders/specops/1431.shader_test [1]                                                      
+   3304  4588[31m      1284[0m[31m   38.86 %[0m   shaders/dirtrally/fe6f1fa131df6952af38b072ebdf1e6b6059f625_1852.shader_test [0]           
+   3360  4632[31m      1272[0m[31m   37.86 %[0m   shaders/dirtrally/904f1acb1a084a19f77464b709899218717b26ee_1722.shader_test [0]           
+   3344  4536[31m      1192[0m[31m   35.65 %[0m   shaders/dirtrally/6cabf827b3ce4c29b678cfcc5106c37a159cb5c9_1096.shader_test [0]           
+   4228  5384[31m      1156[0m[31m   27.34 %[0m   shaders/talos/e02f5c5e64e190292eaff713c610a9db626d066e_1980.shader_test [1]               
+   4228  5384[31m      1156[0m[31m   27.34 %[0m   shaders/talos/ed3b798186f4699cb45f75cc0de480e0faaccf1a_2010.shader_test [1]               
+   4228  5384[31m      1156[0m[31m   27.34 %[0m   shaders/talos/560f4227872f44223ece184f9e2171b463c2edfe_2029.shader_test [1]               
+   4228  5384[31m      1156[0m[31m   27.34 %[0m   shaders/talos/6fdd02ccd3375342e60d8ef16a3b8d7b043ad052_2028.shader_test [1]               
+   3424  4556[31m      1132[0m[31m   33.06 %[0m   shaders/dirtrally/8d6832fac2b1fc3f233dd354212643efadf2f307_1172.shader_test [0]           
+   3116  4240[31m      1124[0m[31m   36.07 %[0m   shaders/dirtrally/e9d6112f5624675ce7e9ed3bc4133829998a626b_670.shader_test [0]            
+   2828  3904[31m      1076[0m[31m   38.05 %[0m   shaders/specops/1562.shader_test [1]                                                      
+   4480  5480[31m      1000[0m[31m   22.32 %[0m   shaders/kerbal/930.shader_test [0]                                                        
+   1500  2492[31m       992[0m[31m   66.13 %[0m   shaders/leditrain/26213.shader_test [1]                                                   
+   1276  2264[31m       988[0m[31m   77.43 %[0m   shaders/leditrain/26216.shader_test [1]                                                   
+   1444  2420[31m       976[0m[31m   67.59 %[0m   shaders/leditrain/26270.shader_test [1]                                                   
+   1448  2424[31m       976[0m[31m   67.40 %[0m   shaders/leditrain/26255.shader_test [1]                                                   
+   2112  3080[31m       968[0m[31m   45.83 %[0m   shaders/leditrain/30815.shader_test [1]                                                   
+   1468  2424[31m       956[0m[31m   65.12 %[0m   shaders/leditrain/26240.shader_test [1]                                                   
+   5368  6324[31m       956[0m[31m   17.81 %[0m   shaders/unigine_valley/151.shader_test [0]                                                
+   1620  2572[31m       952[0m[31m   58.77 %[0m   shaders/leditrain/26219.shader_test [1]                                                   
+   3548  4500[31m       952[0m[31m   26.83 %[0m   shaders/f1_2015/9baeaef117779723d80494ba32e81045548d53f3_1574.shader_test [0]             
+   2860  3804[31m       944[0m[31m   33.01 %[0m   shaders/kerbal/894.shader_test [0]                                                        
+   1396  2332[31m       936[0m[31m   67.05 %[0m   shaders/leditrain/26225.shader_test [1]                                                   
+   2292  3228[31m       936[0m[31m   40.84 %[0m   shaders/leditrain/30902.shader_test [1]                                                   
+   2288  3224[31m       936[0m[31m   40.91 %[0m   shaders/leditrain/30941.shader_test [1]                                                   
+   3408  4344[31m       936[0m[31m   27.46 %[0m   shaders/kerbal/891.shader_test [0]                                                        
+   2244  3180[31m       936[0m[31m   41.71 %[0m   shaders/leditrain/30824.shader_test [1]                                                   
+   2588  3516[31m       928[0m[31m   35.86 %[0m   shaders/leditrain/30830.shader_test [1]                                                   
+   2640  3568[31m       928[0m[31m   35.15 %[0m   shaders/leditrain/30908.shader_test [1]                                                   
+   2636  3564[31m       928[0m[31m   35.20 %[0m   shaders/leditrain/30947.shader_test [1]                                                   
+   2308  3228[31m       920[0m[31m   39.86 %[0m   shaders/leditrain/30863.shader_test [1]                                                   
+
+[1;33m WORST REGRESSIONS - Max Waves                                                       [0m
+[1;33m Before After     Delta Percentage[0m
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/576e982856ca241685e67d9a29637bd4200f30d5_258.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/fe1310e4298a535c8856411b649c69cd799e2afe_249.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/4e83e7cf736d5e22c5ee37c7f5b45aeb7319baae_225.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/aa5eeca734b4fa4d489737f8708ccb6eaa894976_246.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/540469157223809792c5e24fcb78824fc4a2d880_201.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/7da69297ec81b11d0cdb5b1f43a0b7bfbe14ae04_243.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/3b11e83a659ee3ab74160140aa8c7d1166a8ceb0_213.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/39622164c246f8e8cb93c2acc98e9f7845f44d5c_240.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/e3f5ece329695ddf4cdf19dcee5944975431dae0_222.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/6403896272618f0228df3db30413f7e13810fad4_255.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/a11184c63f99928e7fd728a278a4ff504b66e65b_216.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/0ddde4839de3757f321ca3a2ceb36074082e6bc8_228.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/a1e6e5a5da83b2773d2b4564f17fb808f95a3c85_264.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/a051da140a09f28cfc669bff43171630da4c2926_267.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/3a89928348b492e307278668d3e56791dfbddae3_252.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/df5c458a439ed904a11bd30090bffc8d4923c0f7_261.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/4223d616361e3099419b6f2159536dcde5104fe2_234.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/7a31b91b110beac4050eddc0936a5ddfaa7acc76_207.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/3e5b62e4ab0413d1018f2f3943c61852088a5be8_273.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/57e2b7ff8e59662f9baf28682d5340f82c8b2a61_210.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/e57bee6748bfe3610c10200fb4b04d52507d3ee4_231.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/be70bd52513a1c59b94a57422b18a95db9385d42_204.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/0b2b104de7dfbe8d348bb98596ea9887948a68bb_270.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/d9b5db727da07ad616920b7b3f599ecd590c942d_219.shader_test [0]               
+      8     4[31m        -4[0m[31m  -50.00 %[0m   shaders/piglit/29d3ff6169c2858723f6b08f54f580a4e4b1ae3e_237.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/636aae99e9e1fbc4b56f9af10e85754de28ff877_186.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/44086ac890e80eb203e99a3eec0498f54d5c7b21_168.shader_test [0]               
+      6     3[31m        -3[0m[31m  -50.00 %[0m   shaders/piglit/e300101afa06af3809d48efea8d2856dd722c333_3.shader_test [0]                 
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/madmax/f4dbaf6d5c286387ef9adec8ea8f5de55346ed75_2894.shader_test [0]              
+      7     4[31m        -3[0m[31m  -42.86 %[0m   shaders/piglit/049aab059591bebdfde18f1a0c1e837eb8a65fb4_3.shader_test [0]                 
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/9f84350c9a4bfe9bc7229d02610c1dc57b826eec_183.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/d09402a6c270e8352a79368bcf4535863da30d7b_192.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/7863e6a8523f5e1c20305c7b04a4cd73661ed0e0_147.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/6301fa477daecb3677504f2bec7bb6ef0a486136_180.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/4f4a95b1b8d74897d3c19fce57a116adc12d4480_195.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/deadisland_riptide_definitive/0015d36e408ee9b3baefc06ff3d39993f981f43e_454.shader_test [0]
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/d48ef0dd023dba5daddfd5556a5adc386296630f_144.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/ad4e78c98d3111d286b9eaa52d5fef412853cc72_198.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/4a0cf9d6d33417b402b758e296f08d3031e677b7_159.shader_test [0]               
+      8     5[31m        -3[0m[31m  -37.50 %[0m   shaders/piglit/22adda7dd68464068465487bba095ea0b18113b3_162.shader_test [0]               
+
+[1;33m BIGGEST IMPROVEMENTS - SGPRS                                                           [0m
+[1;33m Before After     Delta Percentage[0m
+    104    16[1;32m       -88[0m[1;32m  -84.62 %[0m   shaders/total_war_warhammer/3274.shader_test [0]                                          
+     88    24[1;32m       -64[0m[1;32m  -72.73 %[0m   shaders/piglit/07057022716fff70e79f0d1f11ba29070b81f31b_25.shader_test [0]                
+     88    32[1;32m       -56[0m[1;32m  -63.64 %[0m   shaders/leditrain/29870.shader_test [0]                                                   
+     80    24[1;32m       -56[0m[1;32m  -70.00 %[0m   shaders/piglit/05ded9252ee3cf8c26bf775b541d8b42e02c1006_3.shader_test [0]                 
+     88    32[1;32m       -56[0m[1;32m  -63.64 %[0m   shaders/leditrain/30080.shader_test [0]                                                   
+     88    32[1;32m       -56[0m[1;32m  -63.64 %[0m   shaders/deusex_mankind/d8f79d22cc6742f4a2698d80de4775f60e3c72d6_4734.shader_test [0]      
+     88    32[1;32m       -56[0m[1;32m  -63.64 %[0m   shaders/leditrain/30290.shader_test [0]                                                   
+     88    32[1;32m       -56[0m[1;32m  -63.64 %[0m   shaders/bioshock_infinite/326.shader_test [0]                                             
+     88    32[1;32m       -56[0m[1;32m  -63.64 %[0m   shaders/deadisland_original/21469.shader_test [0]                                         
+     88    32[1;32m       -56[0m[1;32m  -63.64 %[0m   shaders/specops/1541.shader_test [0]                                                      
+     80    24[1;32m       -56[0m[1;32m  -70.00 %[0m   shaders/specops/1626.shader_test [0]                                                      
+    104    56[1;32m       -48[0m[1;32m  -46.15 %[0m   shaders/deadisland_definitive/4dad9302e2ec90e1a86301286f512ddfc9baa4d6_8536.shader_test [0]
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/specops/1538.shader_test [0]                                                      
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/ruiner/5e4d374aa83c039c28d4a7169eba80bb2747cceb_2934.shader_test [0]              
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/leditrain/23972.shader_test [0]                                                   
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/blackmesa/4793.shader_test [0]                                                    
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/ruiner/5ab97284298c808a877748de51fba10c35350dc2_2936.shader_test [0]              
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/leditrain/24062.shader_test [0]                                                   
+     88    40[1;32m       -48[0m[1;32m  -54.55 %[0m   shaders/blackmesa/3979.shader_test [0]                                                    
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/ruiner/13d5d75f0c49e07a7f2e82be0110aa11d787a27d_2937.shader_test [0]              
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/leditrain/23063.shader_test [0]                                                   
+     88    40[1;32m       -48[0m[1;32m  -54.55 %[0m   shaders/piglit/538f188b0482463e89cd969d6cbc054b84981d1b_3.shader_test [0]                 
+     88    40[1;32m       -48[0m[1;32m  -54.55 %[0m   shaders/xcom/888.shader_test [0]                                                          
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/cat/2027.shader_test [0]                                                          
+     88    40[1;32m       -48[0m[1;32m  -54.55 %[0m   shaders/ruiner/75f4bd3494425ab3b7b2be1d4af6ae3842561663_2935.shader_test [0]              
+     88    40[1;32m       -48[0m[1;32m  -54.55 %[0m   shaders/bioshock_infinite/832.shader_test [0]                                             
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/leditrain/24041.shader_test [0]                                                   
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/leditrain/25901.shader_test [0]                                                   
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/specops/1537.shader_test [0]                                                      
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/dirtrally/c35414b3981f4cb64273a7cac6a7575ac88c16fa_3172.shader_test [0]           
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/blackmesa/5819.shader_test [0]                                                    
+     88    40[1;32m       -48[0m[1;32m  -54.55 %[0m   shaders/deusex_mankind/e408c382f5c6c8cf561d28d2623d622906b59387_522.shader_test [0]       
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/specops/1543.shader_test [0]                                                      
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/deusex_mankind/c8dabee7c75523c6cfe51cb9e42bc4e74f1dc16e_4462.shader_test [0]      
+     88    40[1;32m       -48[0m[1;32m  -54.55 %[0m   shaders/cat/2028.shader_test [0]                                                          
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/leditrain/23099.shader_test [0]                                                   
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/deusex_mankind/bc8a45474271b1730b1c5e8dc7d142c0274ea1fd_5770.shader_test [0]      
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/deusex_mankind/4e486a8c2f3e924297774498722c552e819d816d_652.shader_test [0]       
+     80    32[1;32m       -48[0m[1;32m  -60.00 %[0m   shaders/leditrain/23036.shader_test [0]                                                   
+     96    48[1;32m       -48[0m[1;32m  -50.00 %[0m   shaders/bioshock_infinite/4418.shader_test [0]                                            
+
+[1;33m BIGGEST IMPROVEMENTS - VGPRS                                                           [0m
+[1;33m Before After     Delta Percentage[0m
+    196    60[1;32m      -136[0m[1;32m  -69.39 %[0m   shaders/kerbal/930.shader_test [0]                                                        
+    188    64[1;32m      -124[0m[1;32m  -65.96 %[0m   shaders/kerbal/927.shader_test [0]                                                        
+    128    16[1;32m      -112[0m[1;32m  -87.50 %[0m   shaders/piglit/441a3b61b58ec9318ada722094dc50fbb2e245c7_4.shader_test [1]                 
+    148    48[1;32m      -100[0m[1;32m  -67.57 %[0m   shaders/kerbal/903.shader_test [0]                                                        
+    168    68[1;32m      -100[0m[1;32m  -59.52 %[0m   shaders/kerbal/1749.shader_test [0]                                                       
+    168    68[1;32m      -100[0m[1;32m  -59.52 %[0m   shaders/kerbal/1068.shader_test [0]                                                       
+    144    48[1;32m       -96[0m[1;32m  -66.67 %[0m   shaders/kerbal/765.shader_test [0]                                                        
+    128    44[1;32m       -84[0m[1;32m  -65.62 %[0m   shaders/w40kdawn2/416.shader_test [1]                                                     
+    128    44[1;32m       -84[0m[1;32m  -65.62 %[0m   shaders/w40kdawn2/1055.shader_test [0]                                                    
+    128    44[1;32m       -84[0m[1;32m  -65.62 %[0m   shaders/w40kdawn2/415.shader_test [0]                                                     
+    100    16[1;32m       -84[0m[1;32m  -84.00 %[0m   shaders/piglit/b0e3c1c177fe886a8407e229358bb56bbb95aa29_4.shader_test [1]                 
+    128    44[1;32m       -84[0m[1;32m  -65.62 %[0m   shaders/w40kdawn2/1056.shader_test [1]                                                    
+    148    64[1;32m       -84[0m[1;32m  -56.76 %[0m   shaders/kerbal/1065.shader_test [0]                                                       
+    128    44[1;32m       -84[0m[1;32m  -65.62 %[0m   shaders/w40kdawn2/2e15856e36721375036b30ee1f8328d7beef0a2c_416.shader_test [1]            
+    128    44[1;32m       -84[0m[1;32m  -65.62 %[0m   shaders/w40kdawn2/1dc00b015eb212dac90787f193e2cc39e79c4a10_415.shader_test [0]            
+    116    40[1;32m       -76[0m[1;32m  -65.52 %[0m   shaders/w40kdawn2/e379998caf8f692807b53fcccdd531be252d7454_413.shader_test [0]            
+    136    60[1;32m       -76[0m[1;32m  -55.88 %[0m   shaders/kerbal/753.shader_test [0]                                                        
+    116    40[1;32m       -76[0m[1;32m  -65.52 %[0m   shaders/w40kdawn2/1053.shader_test [0]                                                    
+    136    60[1;32m       -76[0m[1;32m  -55.88 %[0m   shaders/kerbal/1077.shader_test [0]                                                       
+    116    40[1;32m       -76[0m[1;32m  -65.52 %[0m   shaders/w40kdawn2/413.shader_test [0]                                                     
+    140    72[1;32m       -68[0m[1;32m  -48.57 %[0m   shaders/kerbal/891.shader_test [0]                                                        
+    128    60[1;32m       -68[0m[1;32m  -53.12 %[0m   shaders/unigine_superposition/3dd9ae9cec958914f24ca0bf1db1efd725431879_79.shader_test [0] 
+    140    72[1;32m       -68[0m[1;32m  -48.57 %[0m   shaders/kerbal/894.shader_test [0]                                                        
+    104    40[1;32m       -64[0m[1;32m  -61.54 %[0m   shaders/w40kdawn2/420.shader_test [0]                                                     
+    124    60[1;32m       -64[0m[1;32m  -51.61 %[0m   shaders/unigine_superposition/0ed9080b1bb15b2ffa02a74e924a7a306c009898_73.shader_test [0] 
+    116    52[1;32m       -64[0m[1;32m  -55.17 %[0m   shaders/unigine_superposition/ad63a2bbfab5057866e7408b6f532d954ee6d5b2_71.shader_test [0] 
+    104    40[1;32m       -64[0m[1;32m  -61.54 %[0m   shaders/w40kdawn2/1060.shader_test [0]                                                    
+    112    48[1;32m       -64[0m[1;32m  -57.14 %[0m   shaders/unigine_superposition/b649dc9b297b44b4f2f16a0e32149f005d8c78eb_65.shader_test [0] 
+    152    88[1;32m       -64[0m[1;32m  -42.11 %[0m   shaders/kerbal/1719.shader_test [0]                                                       
+    132    68[1;32m       -64[0m[1;32m  -48.48 %[0m   shaders/kerbal/756.shader_test [0]                                                        
+    120    56[1;32m       -64[0m[1;32m  -53.33 %[0m   shaders/unigine_superposition/46edc7afc7d0967cce70930ceb1f0ab05c4f5bb9_77.shader_test [0] 
+    120    60[1;32m       -60[0m[1;32m  -50.00 %[0m   shaders/unigine_superposition/19c16103a3bc0f5b9342d06b4e2ba54f90fda214_67.shader_test [0] 
+    108    48[1;32m       -60[0m[1;32m  -55.56 %[0m   shaders/unigine_superposition/f9c447880feea1c0ba1f12dd3544ef2643230a8b_59.shader_test [0] 
+    104    44[1;32m       -60[0m[1;32m  -57.69 %[0m   shaders/unigine_superposition/4967a2b254dd49970cd83760f208008514f07c03_53.shader_test [0] 
+    116    60[1;32m       -56[0m[1;32m  -48.28 %[0m   shaders/unigine_superposition/6df9b6f6bf02bdfbe22eb5334f388cee9d36e83b_61.shader_test [0] 
+     96    40[1;32m       -56[0m[1;32m  -58.33 %[0m   shaders/unigine_superposition/eedf8fe79829d7b1afeeaf5d835888a18e1c2454_41.shader_test [0] 
+    100    44[1;32m       -56[0m[1;32m  -56.00 %[0m   shaders/unigine_superposition/d8ca0b37bd019d52062879cca59889e96eeb7687_47.shader_test [0] 
+    112    60[1;32m       -52[0m[1;32m  -46.43 %[0m   shaders/unigine_superposition/f96f34bb5ca06c8934f1ef7fe13169a2ecdca1e4_55.shader_test [0] 
+     88    36[1;32m       -52[0m[1;32m  -59.09 %[0m   shaders/w40kdawn2/1054.shader_test [0]                                                    
+     88    36[1;32m       -52[0m[1;32m  -59.09 %[0m   shaders/w40kdawn2/414.shader_test [0]                                                     
+
+[1;33m BIGGEST IMPROVEMENTS - Spilled SGPRs                                                   [0m
+[1;33m Before After     Delta Percentage[0m
+    207     0[1;32m      -207[0m[1;32m -100.00 %[0m   shaders/piglit/02c61b780a7b5ebcc34e16e9a8329862b1529850_5.shader_test [0]                 
+    199     0[1;32m      -199[0m[1;32m -100.00 %[0m   shaders/piglit/4d358cac83079fc84b4ff4ddcade24b7a12275c9_3.shader_test [0]                 
+    199     0[1;32m      -199[0m[1;32m -100.00 %[0m   shaders/piglit/d8798f5dfae5049717056174a9fc71fb14607e2d_2.shader_test [0]                 
+    198     0[1;32m      -198[0m[1;32m -100.00 %[0m   shaders/piglit/e553367691bd174ce002e89114fc3be1136048f9_3.shader_test [0]                 
+    197     0[1;32m      -197[0m[1;32m -100.00 %[0m   shaders/piglit/9f7c00e514955b59470902413927a896bd19ec72_5.shader_test [0]                 
+    189     0[1;32m      -189[0m[1;32m -100.00 %[0m   shaders/piglit/9d4bc7b6e774145f605ff1beb7c2bfd9e9222fe2_3.shader_test [0]                 
+    185     0[1;32m      -185[0m[1;32m -100.00 %[0m   shaders/piglit/9db3acca14d46c8b4af7e170f893e566bda68063_2.shader_test [0]                 
+    184     0[1;32m      -184[0m[1;32m -100.00 %[0m   shaders/piglit/12d7a0be665c2b8be046b2809c0e6f0f410620cc_3.shader_test [0]                 
+    199    34[1;32m      -165[0m[1;32m  -82.91 %[0m   shaders/piglit/fae76dfd5318d035f08ae69887428ea76a6c4a2a_3.shader_test [0]                 
+    205    40[1;32m      -165[0m[1;32m  -80.49 %[0m   shaders/piglit/2ad2112b44b7bdd636c5493fc124b472d800e6fb_5.shader_test [0]                 
+    197    36[1;32m      -161[0m[1;32m  -81.73 %[0m   shaders/piglit/fbc7dcb33119ccc2cc5cb5025f428089a7794a7c_2.shader_test [0]                 
+    196    35[1;32m      -161[0m[1;32m  -82.14 %[0m   shaders/piglit/21c7eca421d4a8fdb52b0d4387d5d269e6c475d8_3.shader_test [0]                 
+    135     0[1;32m      -135[0m[1;32m -100.00 %[0m   shaders/piglit/56b207a42970760720e2cd6a33e2018c6e1953f9_5.shader_test [0]                 
+    125     0[1;32m      -125[0m[1;32m -100.00 %[0m   shaders/piglit/e567e6a64560cdbbad9cf86ef0cfaa2d83f64926_5.shader_test [0]                 
+    123     0[1;32m      -123[0m[1;32m -100.00 %[0m   shaders/piglit/bc5cd424f8f89f04e8b229ce9ba999012adabc46_3.shader_test [0]                 
+    123     0[1;32m      -123[0m[1;32m -100.00 %[0m   shaders/piglit/a25d66187c785389a13da48b976e42147f74f5f6_2.shader_test [0]                 
+    120     0[1;32m      -120[0m[1;32m -100.00 %[0m   shaders/piglit/96ed54427d3dddaa1c5573e22ab074533888d8e6_3.shader_test [0]                 
+    110     0[1;32m      -110[0m[1;32m -100.00 %[0m   shaders/piglit/8ee41d8176ef71247ec56083563e0a083a8cf5e4_2.shader_test [0]                 
+    110     0[1;32m      -110[0m[1;32m -100.00 %[0m   shaders/piglit/9f6bf0adda6f66550cceb581bd7144e905fe90d2_3.shader_test [0]                 
+    108     0[1;32m      -108[0m[1;32m -100.00 %[0m   shaders/piglit/feae8b7a6a4cc999d7be8322c19590f1fae0106f_3.shader_test [0]                 
+    125    22[1;32m      -103[0m[1;32m  -82.40 %[0m   shaders/piglit/e300101afa06af3809d48efea8d2856dd722c333_3.shader_test [0]                 
+    133    34[1;32m       -99[0m[1;32m  -74.44 %[0m   shaders/piglit/b5f44e0f2a7d8e63a3a853c4cfb1c637ee7da5c3_5.shader_test [0]                 
+    122    24[1;32m       -98[0m[1;32m  -80.33 %[0m   shaders/piglit/049aab059591bebdfde18f1a0c1e837eb8a65fb4_3.shader_test [0]                 
+    123    27[1;32m       -96[0m[1;32m  -78.05 %[0m   shaders/piglit/84fa94dee2250efe1ab7082274b9bacbd85c15b4_2.shader_test [0]                 
+     83     0[1;32m       -83[0m[1;32m -100.00 %[0m   shaders/total_war_warhammer/3274.shader_test [0]                                          
+     67    17[1;32m       -50[0m[1;32m  -74.63 %[0m   shaders/serioussam2017/2261.shader_test [1]                                               
+     67    17[1;32m       -50[0m[1;32m  -74.63 %[0m   shaders/serioussam2017/2159.shader_test [1]                                               
+     67    17[1;32m       -50[0m[1;32m  -74.63 %[0m   shaders/serioussam2017/2217.shader_test [1]                                               
+     78    32[1;32m       -46[0m[1;32m  -58.97 %[0m   shaders/serioussam2017/2180.shader_test [0]                                               
+     57    11[1;32m       -46[0m[1;32m  -80.70 %[0m   shaders/piglit/2e7efea105b037b1d76e7ff24b8772d2b60943e0_5.shader_test [0]                 
+     55     9[1;32m       -46[0m[1;32m  -83.64 %[0m   shaders/piglit/587f417122be94aa20bde2020419822f889bd3fb_5.shader_test [0]                 
+     58    18[1;32m       -40[0m[1;32m  -68.97 %[0m   shaders/piglit/c71e9932cfd948bc6687bf997784d93271e14a64_5.shader_test [0]                 
+     52    14[1;32m       -38[0m[1;32m  -73.08 %[0m   shaders/piglit/19b661ed85c5429a43e8db3ecc5a9db6c64c461e_3.shader_test [0]                 
+     50    14[1;32m       -36[0m[1;32m  -72.00 %[0m   shaders/piglit/1fd693814499deffa4723928df8d319594882c04_3.shader_test [0]                 
+     50    14[1;32m       -36[0m[1;32m  -72.00 %[0m   shaders/piglit/77735bbe4e5fdce23e6b17814c81333a4c6b99f0_2.shader_test [0]                 
+     39     6[1;32m       -33[0m[1;32m  -84.62 %[0m   shaders/piglit/3a417aa86d94bc8ca9e581f822ce04a34b67907c_3.shader_test [0]                 
+     36     4[1;32m       -32[0m[1;32m  -88.89 %[0m   shaders/piglit/211d8b24fe06c209ac561a5fa88d13ee228aea58_3.shader_test [0]                 
+     39     8[1;32m       -31[0m[1;32m  -79.49 %[0m   shaders/piglit/eea6999a98b4a06278a21716d21d5eaccab5ceb9_2.shader_test [0]                 
+     38     8[1;32m       -30[0m[1;32m  -78.95 %[0m   shaders/piglit/6b21e8341adf1038af263f4579caffd0d594ee1e_3.shader_test [0]                 
+     40    10[1;32m       -30[0m[1;32m  -75.00 %[0m   shaders/piglit/c89fb33b8d8d4d34bf2e12cca7529399693dac3f_3.shader_test [0]                 
+
+[1;33m BIGGEST IMPROVEMENTS - Spilled VGPRs                                                   [0m
+[1;33m Before After     Delta Percentage[0m
+     64    46[1;32m       -18[0m[1;32m  -28.12 %[0m   shaders/piglit/51e07b0ac242a7c22d5d519ea8b3e4f7ac8e51f9_2.shader_test [0]                 
+
+[1;33m BIGGEST IMPROVEMENTS - Scratch size                                                    [0m
+[1;33m Before After     Delta Percentage[0m
+    208     0[1;32m      -208[0m[1;32m -100.00 %[0m   shaders/piglit/02c61b780a7b5ebcc34e16e9a8329862b1529850_5.shader_test [0]                 
+    208     0[1;32m      -208[0m[1;32m -100.00 %[0m   shaders/piglit/2ad2112b44b7bdd636c5493fc124b472d800e6fb_5.shader_test [0]                 
+    200     0[1;32m      -200[0m[1;32m -100.00 %[0m   shaders/piglit/9f7c00e514955b59470902413927a896bd19ec72_5.shader_test [0]                 
+    200     0[1;32m      -200[0m[1;32m -100.00 %[0m   shaders/piglit/e553367691bd174ce002e89114fc3be1136048f9_3.shader_test [0]                 
+    200     0[1;32m      -200[0m[1;32m -100.00 %[0m   shaders/piglit/fbc7dcb33119ccc2cc5cb5025f428089a7794a7c_2.shader_test [0]                 
+    200     0[1;32m      -200[0m[1;32m -100.00 %[0m   shaders/piglit/21c7eca421d4a8fdb52b0d4387d5d269e6c475d8_3.shader_test [0]                 
+    200     0[1;32m      -200[0m[1;32m -100.00 %[0m   shaders/piglit/4d358cac83079fc84b4ff4ddcade24b7a12275c9_3.shader_test [0]                 
+    200     0[1;32m      -200[0m[1;32m -100.00 %[0m   shaders/piglit/fae76dfd5318d035f08ae69887428ea76a6c4a2a_3.shader_test [0]                 
+    200     0[1;32m      -200[0m[1;32m -100.00 %[0m   shaders/piglit/d8798f5dfae5049717056174a9fc71fb14607e2d_2.shader_test [0]                 
+    192     0[1;32m      -192[0m[1;32m -100.00 %[0m   shaders/piglit/9d4bc7b6e774145f605ff1beb7c2bfd9e9222fe2_3.shader_test [0]                 
+    188     0[1;32m      -188[0m[1;32m -100.00 %[0m   shaders/piglit/12d7a0be665c2b8be046b2809c0e6f0f410620cc_3.shader_test [0]                 
+    188     0[1;32m      -188[0m[1;32m -100.00 %[0m   shaders/piglit/9db3acca14d46c8b4af7e170f893e566bda68063_2.shader_test [0]                 
+    140     0[1;32m      -140[0m[1;32m -100.00 %[0m   shaders/deadisland_original/10.shader_test [0]                                            
+    136     0[1;32m      -136[0m[1;32m -100.00 %[0m   shaders/piglit/b5f44e0f2a7d8e63a3a853c4cfb1c637ee7da5c3_5.shader_test [0]                 
+    136     0[1;32m      -136[0m[1;32m -100.00 %[0m   shaders/piglit/56b207a42970760720e2cd6a33e2018c6e1953f9_5.shader_test [0]                 
+    128     0[1;32m      -128[0m[1;32m -100.00 %[0m   shaders/piglit/e300101afa06af3809d48efea8d2856dd722c333_3.shader_test [0]                 
+    128     0[1;32m      -128[0m[1;32m -100.00 %[0m   shaders/piglit/e567e6a64560cdbbad9cf86ef0cfaa2d83f64926_5.shader_test [0]                 
+    124     0[1;32m      -124[0m[1;32m -100.00 %[0m   shaders/piglit/049aab059591bebdfde18f1a0c1e837eb8a65fb4_3.shader_test [0]                 
+    124     0[1;32m      -124[0m[1;32m -100.00 %[0m   shaders/piglit/bc5cd424f8f89f04e8b229ce9ba999012adabc46_3.shader_test [0]                 
+    124     0[1;32m      -124[0m[1;32m -100.00 %[0m   shaders/piglit/96ed54427d3dddaa1c5573e22ab074533888d8e6_3.shader_test [0]                 
+    124     0[1;32m      -124[0m[1;32m -100.00 %[0m   shaders/piglit/84fa94dee2250efe1ab7082274b9bacbd85c15b4_2.shader_test [0]                 
+    124     0[1;32m      -124[0m[1;32m -100.00 %[0m   shaders/piglit/a25d66187c785389a13da48b976e42147f74f5f6_2.shader_test [0]                 
+    112     0[1;32m      -112[0m[1;32m -100.00 %[0m   shaders/piglit/8ee41d8176ef71247ec56083563e0a083a8cf5e4_2.shader_test [0]                 
+    112     0[1;32m      -112[0m[1;32m -100.00 %[0m   shaders/piglit/feae8b7a6a4cc999d7be8322c19590f1fae0106f_3.shader_test [0]                 
+    112     0[1;32m      -112[0m[1;32m -100.00 %[0m   shaders/piglit/9f6bf0adda6f66550cceb581bd7144e905fe90d2_3.shader_test [0]                 
+     80     0[1;32m       -80[0m[1;32m -100.00 %[0m   shaders/serioussam2017/2180.shader_test [0]                                               
+     76     0[1;32m       -76[0m[1;32m -100.00 %[0m   shaders/total_war_warhammer/3274.shader_test [0]                                          
+     68     0[1;32m       -68[0m[1;32m -100.00 %[0m   shaders/serioussam2017/2261.shader_test [1]                                               
+     68     0[1;32m       -68[0m[1;32m -100.00 %[0m   shaders/serioussam2017/2159.shader_test [1]                                               
+     68     0[1;32m       -68[0m[1;32m -100.00 %[0m   shaders/serioussam2017/2217.shader_test [1]                                               
+     64     0[1;32m       -64[0m[1;32m -100.00 %[0m   shaders/piglit/19ba75e68b3e00ef86d161d8df4dbef0e6b8f68b_4.shader_test [0]                 
+     60     0[1;32m       -60[0m[1;32m -100.00 %[0m   shaders/piglit/c71e9932cfd948bc6687bf997784d93271e14a64_5.shader_test [0]                 
+     60     0[1;32m       -60[0m[1;32m -100.00 %[0m   shaders/piglit/2e7efea105b037b1d76e7ff24b8772d2b60943e0_5.shader_test [0]                 
+     60     0[1;32m       -60[0m[1;32m -100.00 %[0m   shaders/piglit/15ed817ae3ccc59bb492f7939897bdec863e713f_4.shader_test [0]                 
+     56     0[1;32m       -56[0m[1;32m -100.00 %[0m   shaders/ruiner/ead1e776f193ec0fe00353d14b028a583e223462_2839.shader_test [0]              
+     56     0[1;32m       -56[0m[1;32m -100.00 %[0m   shaders/cat/1772.shader_test [0]                                                          
+     56     0[1;32m       -56[0m[1;32m -100.00 %[0m   shaders/piglit/587f417122be94aa20bde2020419822f889bd3fb_5.shader_test [0]                 
+     56     0[1;32m       -56[0m[1;32m -100.00 %[0m   shaders/piglit/19b661ed85c5429a43e8db3ecc5a9db6c64c461e_3.shader_test [0]                 
+     52     0[1;32m       -52[0m[1;32m -100.00 %[0m   shaders/piglit/1fd693814499deffa4723928df8d319594882c04_3.shader_test [0]                 
+     52     0[1;32m       -52[0m[1;32m -100.00 %[0m   shaders/piglit/77735bbe4e5fdce23e6b17814c81333a4c6b99f0_2.shader_test [0]                 
+
+[1;33m BIGGEST IMPROVEMENTS - Code Size                                                       [0m
+[1;33m Before After     Delta Percentage[0m
+  33328 23584[1;32m     -9744[0m[1;32m  -29.24 %[0m   shaders/w40kdawn3/970.shader_test [0]                                                     
+  13224  9756[1;32m     -3468[0m[1;32m  -26.23 %[0m   shaders/piglit/02c61b780a7b5ebcc34e16e9a8329862b1529850_5.shader_test [0]                 
+  11780  8416[1;32m     -3364[0m[1;32m  -28.56 %[0m   shaders/total_war_warhammer/3274.shader_test [0]                                          
+  12732  9420[1;32m     -3312[0m[1;32m  -26.01 %[0m   shaders/piglit/9f7c00e514955b59470902413927a896bd19ec72_5.shader_test [0]                 
+  12732  9440[1;32m     -3292[0m[1;32m  -25.86 %[0m   shaders/piglit/4d358cac83079fc84b4ff4ddcade24b7a12275c9_3.shader_test [0]                 
+  12728  9444[1;32m     -3284[0m[1;32m  -25.80 %[0m   shaders/piglit/d8798f5dfae5049717056174a9fc71fb14607e2d_2.shader_test [0]                 
+  12672  9404[1;32m     -3268[0m[1;32m  -25.79 %[0m   shaders/piglit/e553367691bd174ce002e89114fc3be1136048f9_3.shader_test [0]                 
+  12236  9108[1;32m     -3128[0m[1;32m  -25.56 %[0m   shaders/piglit/9d4bc7b6e774145f605ff1beb7c2bfd9e9222fe2_3.shader_test [0]                 
+  12192  9108[1;32m     -3084[0m[1;32m  -25.30 %[0m   shaders/piglit/9db3acca14d46c8b4af7e170f893e566bda68063_2.shader_test [0]                 
+  12140  9068[1;32m     -3072[0m[1;32m  -25.30 %[0m   shaders/piglit/12d7a0be665c2b8be046b2809c0e6f0f410620cc_3.shader_test [0]                 
+  31568 28552[1;32m     -3016[0m[1;32m   -9.55 %[0m   shaders/piglit/de396e7769a0c6f7783fc333d8c726177ac49276_4.shader_test [1]                 
+  11932  9304[1;32m     -2628[0m[1;32m  -22.02 %[0m   shaders/piglit/fae76dfd5318d035f08ae69887428ea76a6c4a2a_3.shader_test [0]                 
+  12372  9760[1;32m     -2612[0m[1;32m  -21.11 %[0m   shaders/piglit/2ad2112b44b7bdd636c5493fc124b472d800e6fb_5.shader_test [0]                 
+  11836  9292[1;32m     -2544[0m[1;32m  -21.49 %[0m   shaders/piglit/21c7eca421d4a8fdb52b0d4387d5d269e6c475d8_3.shader_test [0]                 
+  11888  9352[1;32m     -2536[0m[1;32m  -21.33 %[0m   shaders/piglit/fbc7dcb33119ccc2cc5cb5025f428089a7794a7c_2.shader_test [0]                 
+   9752  7460[1;32m     -2292[0m[1;32m  -23.50 %[0m   shaders/piglit/56b207a42970760720e2cd6a33e2018c6e1953f9_5.shader_test [0]                 
+   9376  7236[1;32m     -2140[0m[1;32m  -22.82 %[0m   shaders/piglit/e567e6a64560cdbbad9cf86ef0cfaa2d83f64926_5.shader_test [0]                 
+   9204  7148[1;32m     -2056[0m[1;32m  -22.34 %[0m   shaders/piglit/a25d66187c785389a13da48b976e42147f74f5f6_2.shader_test [0]                 
+   9180  7148[1;32m     -2032[0m[1;32m  -22.14 %[0m   shaders/piglit/bc5cd424f8f89f04e8b229ce9ba999012adabc46_3.shader_test [0]                 
+   9120  7112[1;32m     -2008[0m[1;32m  -22.02 %[0m   shaders/piglit/96ed54427d3dddaa1c5573e22ab074533888d8e6_3.shader_test [0]                 
+  16752 14748[1;32m     -2004[0m[1;32m  -11.96 %[0m   shaders/alien_isolation/788.shader_test [0]                                               
+  14540 12584[1;32m     -1956[0m[1;32m  -13.45 %[0m   shaders/deusex_mankind/e733ae5378e4aa646f7be14d7a722db63b243964_9904.shader_test [0]      
+  14404 12456[1;32m     -1948[0m[1;32m  -13.52 %[0m   shaders/deusex_mankind/cb4660bc1ac8bf322612e6658cc63fed9c146a90_1194.shader_test [0]      
+   8796  6924[1;32m     -1872[0m[1;32m  -21.28 %[0m   shaders/piglit/9f6bf0adda6f66550cceb581bd7144e905fe90d2_3.shader_test [0]                 
+   8788  6924[1;32m     -1864[0m[1;32m  -21.21 %[0m   shaders/piglit/8ee41d8176ef71247ec56083563e0a083a8cf5e4_2.shader_test [0]                 
+   8728  6888[1;32m     -1840[0m[1;32m  -21.08 %[0m   shaders/piglit/feae8b7a6a4cc999d7be8322c19590f1fae0106f_3.shader_test [0]                 
+  14072 12344[1;32m     -1728[0m[1;32m  -12.28 %[0m   shaders/deusex_mankind/ad718041c86471af6db343a03a127664ce1b169a_3624.shader_test [0]      
+   8712  7012[1;32m     -1700[0m[1;32m  -19.51 %[0m   shaders/piglit/e300101afa06af3809d48efea8d2856dd722c333_3.shader_test [0]                 
+  11188  9496[1;32m     -1692[0m[1;32m  -15.12 %[0m   shaders/deusex_mankind/e79338ccc8e5253c00e5adbf33ad4b4ccf7126c2_6042.shader_test [0]      
+  16536 14848[1;32m     -1688[0m[1;32m  -10.21 %[0m   shaders/f1_2015/9a84d71f74dbd38f1cb12b08f7006aeeb2bac572_2150.shader_test [0]             
+   8756  7104[1;32m     -1652[0m[1;32m  -18.87 %[0m   shaders/tacoma/217d9616374c014fb266976f94f955e8d15e1e8e_1083.shader_test [0]              
+   9176  7568[1;32m     -1608[0m[1;32m  -17.52 %[0m   shaders/piglit/b5f44e0f2a7d8e63a3a853c4cfb1c637ee7da5c3_5.shader_test [0]                 
+   8616  7044[1;32m     -1572[0m[1;32m  -18.25 %[0m   shaders/piglit/049aab059591bebdfde18f1a0c1e837eb8a65fb4_3.shader_test [0]                 
+  13904 12332[1;32m     -1572[0m[1;32m  -11.31 %[0m   shaders/deusex_mankind/197c04ac06379bf5e8dca59e42e5e101bec79218_6386.shader_test [0]      
+  13424 11868[1;32m     -1556[0m[1;32m  -11.59 %[0m   shaders/deusex_mankind/480ddf21b1076d36f9ffd9911389656b5d8e12cb_2878.shader_test [0]      
+   8668  7116[1;32m     -1552[0m[1;32m  -17.90 %[0m   shaders/piglit/84fa94dee2250efe1ab7082274b9bacbd85c15b4_2.shader_test [0]                 
+  13332 11784[1;32m     -1548[0m[1;32m  -11.61 %[0m   shaders/deusex_mankind/c0e0b858c0ddb64afff682195b3ee6519ee02ccc_3304.shader_test [0]      
+  13040 11492[1;32m     -1548[0m[1;32m  -11.87 %[0m   shaders/deusex_mankind/9b3c34514507f5cf38cf739851995813339bd82b_2640.shader_test [0]      
+  13500 11956[1;32m     -1544[0m[1;32m  -11.44 %[0m   shaders/deusex_mankind/390c1622a9b3455200cc87d91e15497577ac4bf5_4666.shader_test [0]      
+  13020 11476[1;32m     -1544[0m[1;32m  -11.86 %[0m   shaders/deusex_mankind/c896388d0804848cb50bfd76583f950cc21495f2_2318.shader_test [0]      
+
+[1;33m BIGGEST IMPROVEMENTS - Max Waves                                                       [0m
+[1;33m Before After     Delta Percentage[0m
+      2     8[1;32m         6[0m[1;32m  300.00 %[0m   shaders/piglit/b0e3c1c177fe886a8407e229358bb56bbb95aa29_4.shader_test [1]                 
+      2     8[1;32m         6[0m[1;32m  300.00 %[0m   shaders/piglit/441a3b61b58ec9318ada722094dc50fbb2e245c7_4.shader_test [1]                 
+      2     7[1;32m         5[0m[1;32m  250.00 %[0m   shaders/w40kdawn2/1054.shader_test [0]                                                    
+      2     7[1;32m         5[0m[1;32m  250.00 %[0m   shaders/w40kdawn2/414.shader_test [0]                                                     
+      2     7[1;32m         5[0m[1;32m  250.00 %[0m   shaders/w40kdawn2/b58f24829d144e73425c585fbbd11ca579ca87eb_414.shader_test [0]            
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/17159.shader_test [1]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/20435.shader_test [1]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/17090.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/piglit/715abb7f5961f7049e19069293f0272f404428b4_3.shader_test [0]                 
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/20366.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/17324.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/csgo/bda526d17efe93b5027d0dca9a4d2796e83d19ff2395.shader_test [1]                 
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/15839.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/20156.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/piglit/880b319b00688061a07d08bc650c9d218879a6fd_4.shader_test [0]                 
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/19664.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/csgo/15ebd5b9abd16901a892dc850a0a2e072e7d1de72823.shader_test [0]                 
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/hl2/2054.shader_test [0]                                                          
+      2     6[1;32m         4[0m[1;32m  200.00 %[0m   shaders/w40kdawn2/420.shader_test [0]                                                     
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/28751.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/15821.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/15587.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/piglit/217be72f948425ef04c310ba04e60f93e89285d4_4.shader_test [0]                 
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/16646.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/blackmesa/4229.shader_test [0]                                                    
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/20165.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/15656.shader_test [1]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/piglit/67927535fa0c8c6d650834a1b25a7eb7cf865d56_3.shader_test [0]                 
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/piglit/828bc26d1482484444509787a728a6f99ea28974_4.shader_test [0]                 
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/aer/657.shader_test [0]                                                           
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/17411.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/blackmesa/2713.shader_test [0]                                                    
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/20372.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/17096.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/15680.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/28292.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/20399.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/18143.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/20384.shader_test [0]                                                   
+      4     8[1;32m         4[0m[1;32m  100.00 %[0m   shaders/leditrain/28805.shader_test [0]                                                   
+
+[1;33m PERCENTAGE DELTAS    Shaders     SGPRs     VGPRs SpillSGPR SpillVGPR  PrivVGPR   Scratch  CodeSize  MaxWaves     Waits[0m
+ 0ad                        6[1;32m   -7.41 %[0m     .         .         .         .         .    [1;32m   -4.17 %[0m     .         .    
+ aer                      590[1;32m   -0.81 %[0m[1;32m   -2.59 %[0m[1;32m  -69.23 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -3.21 %[0m    0.48 %     .    
+ alien_isolation         1414[1;32m   -5.63 %[0m[1;32m   -1.96 %[0m[31m     inf %[0m     .         .         .    [1;32m   -4.86 %[0m    0.40 %     .    
+ anholt                    10     .         .         .         .         .         .       -0.34 %     .         .    
+ bioshock_infinite       2581[1;32m  -17.87 %[0m[1;32m   -3.00 %[0m[31m  200.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -4.10 %[0m[1;32m    1.22 %[0m     .    
+ blackmesa               1954[1;32m  -12.93 %[0m[1;32m   -3.29 %[0m     .         .         .         .    [1;32m   -3.09 %[0m[1;32m    0.90 %[0m     .    
+ cat                      573[1;32m   -6.13 %[0m[1;32m   -6.55 %[0m[31m  233.66 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -4.09 %[0m[1;32m    1.48 %[0m     .    
+ csgo                    1392[31m    1.00 %[0m[1;32m  -10.26 %[0m[31m     inf %[0m     .         .         .    [1;32m   -2.94 %[0m[1;32m    5.57 %[0m     .    
+ dayofinfamy              620[1;32m  -11.46 %[0m[1;32m   -3.80 %[0m     .         .         .         .    [1;32m   -2.61 %[0m[1;32m    1.24 %[0m     .    
+ deadisland_definitive   1776[1;32m   -4.70 %[0m[1;32m   -3.31 %[0m[31m10900.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -5.32 %[0m[1;32m    2.48 %[0m     .    
+ deadisland_original    11602[1;32m   -9.84 %[0m[1;32m   -5.93 %[0m[1;32m  -20.54 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -4.24 %[0m[1;32m    2.46 %[0m     .    
+ deadisland_riptide_..    293   -0.35 %[1;32m   -1.17 %[0m[31m     inf %[0m     .         .         .    [1;32m   -3.52 %[0m[1;32m    1.54 %[0m     .    
+ deusex_mankind          5051[1;32m  -12.46 %[0m[1;32m   -4.57 %[0m[31m  263.16 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -6.75 %[0m[1;32m    1.40 %[0m     .    
+ dirtrally                787[1;32m   -1.18 %[0m[1;32m   -9.60 %[0m[31m14327.27 %[0m[1;32m  -43.01 %[0m     .    [1;32m  -62.07 %[0m[1;32m   -5.06 %[0m[1;32m    4.56 %[0m     .    
+ dolphin                   22[31m    3.49 %[0m[31m    2.41 %[0m     .         .         .         .    [1;32m   -5.13 %[0m     .         .    
+ dyinglight              4012[1;32m   -7.71 %[0m[1;32m   -2.37 %[0m     .         .         .         .    [1;32m   -5.45 %[0m[1;32m    1.78 %[0m     .    
+ eurotruck2               216[1;32m   -3.14 %[0m[1;32m   -3.07 %[0m     .         .         .         .    [1;32m   -1.99 %[0m[1;32m    1.72 %[0m     .    
+ f1_2015                  746[1;32m   -1.34 %[0m[1;32m   -3.33 %[0m[31m   92.74 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -6.15 %[0m[1;32m    2.25 %[0m     .    
+ glamor                    16[31m    2.44 %[0m     .         .         .         .         .        0.33 %     .         .    
+ hl2                      102[31m    2.28 %[0m[1;32m   -1.40 %[0m     .         .         .         .    [1;32m   -2.58 %[0m[1;32m    1.14 %[0m     .    
+ hl2ep1                   284[1;32m   -6.77 %[0m[1;32m   -3.72 %[0m     .         .         .         .    [1;32m   -2.61 %[0m[1;32m    1.54 %[0m     .    
+ hl2ep2                   176[1;32m   -9.13 %[0m[1;32m   -2.97 %[0m     .         .         .         .    [1;32m   -2.92 %[0m[1;32m    1.25 %[0m     .    
+ hl2lostcoast              66[1;32m  -19.11 %[0m[1;32m   -1.36 %[0m     .         .         .         .    [1;32m   -1.60 %[0m   -0.19 %     .    
+ hlsl3                    582[1;32m   -9.54 %[0m[1;32m   -2.49 %[0m[1;32m -100.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -2.91 %[0m[1;32m    0.81 %[0m     .    
+ humus-celshading           4     .         .         .         .         .         .    [1;32m   -1.26 %[0m     .         .    
+ humus-domino               6     .         .         .         .         .         .    [1;32m   -2.91 %[0m     .         .    
+ humus-dynamicbranching    24[1;32m   -2.11 %[0m[1;32m   -3.55 %[0m     .         .         .         .    [1;32m   -3.32 %[0m[1;32m    2.15 %[0m     .    
+ humus-hdr                 10[1;32m   -3.12 %[0m[31m    2.86 %[0m     .         .         .         .    [1;32m   -1.83 %[0m     .         .    
+ humus-portals              2[1;32m  -11.11 %[0m[31m   10.00 %[0m     .         .         .         .    [1;32m   -5.04 %[0m     .         .    
+ humus-volumetricfog..      6     .    [1;32m   -3.85 %[0m     .         .         .         .    [1;32m   -1.44 %[0m     .         .    
+ kerbal                  1016[1;32m   -2.41 %[0m[1;32m   -8.28 %[0m[31m 8060.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -1.71 %[0m[1;32m    1.87 %[0m     .    
+ larago                   664[31m    0.60 %[0m    0.16 %     .         .         .         .    [1;32m   -2.80 %[0m   -0.02 %     .    
+ leditrain              18836[1;32m   -0.87 %[0m[1;32m   -7.08 %[0m[31m58283.33 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -2.45 %[0m[1;32m    3.86 %[0m     .    
+ madmax                   354[1;32m   -7.61 %[0m[1;32m   -5.75 %[0m[31m  741.67 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -4.73 %[0m[1;32m    3.40 %[0m     .    
+ metro2033redux          4410[1;32m   -0.61 %[0m[1;32m   -6.08 %[0m[31m     inf %[0m     .         .         .    [1;32m   -3.11 %[0m[1;32m    4.36 %[0m     .    
+ nexuiz                    80[1;32m   -5.69 %[0m[31m    1.69 %[0m     .         .         .         .    [1;32m   -1.16 %[0m     .         .    
+ piglit                 80346[1;32m   -1.24 %[0m   -0.17 %[1;32m  -82.42 %[0m[1;32m  -30.29 %[0m     .    [1;32m  -88.10 %[0m[1;32m   -3.20 %[0m    0.04 %     .    
+ ruiner                   693[31m    6.02 %[0m[1;32m   -5.52 %[0m[31m   13.21 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -3.27 %[0m[1;32m    3.19 %[0m     .    
+ sauerbraten                7     .         .         .         .         .         .    [1;32m   -1.29 %[0m     .         .    
+ serioussam2017           736[1;32m  -12.22 %[0m[1;32m  -11.94 %[0m[1;32m  -83.39 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -5.81 %[0m[1;32m    7.12 %[0m     .    
+ soma                     436[1;32m   -6.71 %[0m[1;32m   -1.39 %[0m     .         .         .         .    [1;32m   -1.89 %[0m[1;32m    0.98 %[0m     .    
+ specops                 1814[1;32m  -11.54 %[0m[1;32m   -2.67 %[0m[31m     inf %[0m     .         .         .    [1;32m   -2.65 %[0m[1;32m    1.45 %[0m     .    
+ stellaris                434[1;32m   -3.62 %[0m[1;32m   -1.67 %[0m     .         .         .         .    [1;32m   -5.86 %[0m    0.37 %     .    
+ supertuxkart               4     .    [31m    8.33 %[0m     .         .         .         .       -0.48 %     .         .    
+ tacoma                  1359[31m    2.36 %[0m[1;32m   -1.51 %[0m[1;32m -100.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -2.60 %[0m[1;32m    0.54 %[0m     .    
+ talos                    762[1;32m  -10.73 %[0m[1;32m  -14.26 %[0m[1;32m  -17.36 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -5.07 %[0m[1;32m    6.86 %[0m     .    
+ tesseract                430[1;32m   -2.53 %[0m[1;32m   -2.33 %[0m     .         .         .         .    [1;32m   -2.37 %[0m    0.09 %     .    
+ tombraider              1012[1;32m   -3.35 %[0m[1;32m   -0.93 %[0m[31m     inf %[0m     .         .         .    [1;32m   -4.69 %[0m[1;32m    0.79 %[0m     .    
+ total_war_shogun_2       176[1;32m   -2.12 %[0m[1;32m   -5.66 %[0m[31m 4425.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -4.38 %[0m[1;32m    1.38 %[0m     .    
+ total_war_warhammer      218[1;32m   -2.31 %[0m[1;32m  -12.35 %[0m[1;32m  -93.39 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -5.38 %[0m[1;32m    4.25 %[0m     .    
+ ubershaders               54[1;32m   -0.65 %[0m   -0.41 %     .         .         .         .    [1;32m   -9.78 %[0m[1;32m    5.56 %[0m     .    
+ ug_gettysburg            149[31m    4.62 %[0m[31m    0.88 %[0m     .         .         .         .    [1;32m   -0.67 %[0m     .         .    
+ unigine_heaven           226[31m    0.55 %[0m[1;32m   -3.71 %[0m     .         .         .         .    [1;32m   -6.44 %[0m[1;32m    1.04 %[0m     .    
+ unigine_superposition    733[31m    5.88 %[0m[1;32m  -12.21 %[0m[1;32m  -15.15 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -2.81 %[0m[1;32m    5.57 %[0m     .    
+ unigine_valley           288[1;32m   -5.25 %[0m[1;32m   -4.43 %[0m[31m  966.67 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -3.92 %[0m[1;32m    1.67 %[0m     .    
+ unity                     72[31m    0.50 %[0m[1;32m   -3.33 %[0m     .         .         .         .    [1;32m   -3.04 %[0m[1;32m    1.61 %[0m     .    
+ w40kdawn2                421[1;32m   -6.44 %[0m[1;32m  -14.05 %[0m[31m 2108.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -2.16 %[0m[1;32m    5.31 %[0m     .    
+ w40kdawn3                159[1;32m   -2.02 %[0m[1;32m   -2.58 %[0m[31m     inf %[0m     .         .         .    [1;32m   -6.50 %[0m[1;32m    1.28 %[0m     .    
+ warsow                   176[1;32m   -4.30 %[0m[1;32m   -1.97 %[0m     .         .         .         .    [1;32m   -2.86 %[0m[1;32m    0.57 %[0m     .    
+ warzone2100                4[1;32m   -4.76 %[0m[31m    4.55 %[0m     .         .         .         .    [31m    0.55 %[0m     .         .    
+ witcher2                 928[1;32m  -10.19 %[0m    0.22 %[1;32m -100.00 %[0m     .         .    [1;32m -100.00 %[0m[1;32m   -2.21 %[0m    0.15 %     .    
+ x3_albion                641[1;32m  -19.64 %[0m[1;32m   -6.05 %[0m     .         .         .         .    [1;32m   -7.12 %[0m[1;32m    2.61 %[0m     .    
+ xblades                  208[1;32m  -17.81 %[0m[1;32m   -6.87 %[0m     .         .         .         .    [1;32m   -3.91 %[0m[1;32m    3.94 %[0m     .    
+ xcom                    1020[1;32m  -13.37 %[0m[1;32m   -5.81 %[0m     .         .         .         .    [1;32m   -3.35 %[0m[1;32m    2.27 %[0m     .    
+ xcom2                   1439[1;32m   -6.48 %[0m[1;32m   -2.50 %[0m[31m     inf %[0m     .         .         .    [1;32m   -4.57 %[0m[1;32m    1.01 %[0m     .    
+ yofrankie                 82[31m    1.56 %[0m[1;32m   -4.75 %[0m     .         .         .         .    [1;32m   -4.05 %[0m[1;32m    1.71 %[0m     .    
+ ----------------------------------------------------------------------------------------------------------------------
+ All affected           95945[1;32m   -5.62 %[0m[1;32m   -4.58 %[0m[31m   68.04 %[0m[1;32m  -31.13 %[0m     .    [1;32m  -94.18 %[0m[1;32m   -3.99 %[0m[1;32m    2.07 %[0m     .    
+ ----------------------------------------------------------------------------------------------------------------------
+ Total                 155310[1;32m   -4.50 %[0m[1;32m   -3.56 %[0m[31m   68.04 %[0m[1;32m  -31.13 %[0m     .    [1;32m  -94.18 %[0m[1;32m   -3.77 %[0m[1;32m    1.24 %[0m     .    
+
