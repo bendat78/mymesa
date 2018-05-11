@@ -1,0 +1,1628 @@
+ATTENTION: default value of option allow_glsl_extension_directive_midshader overridden by environment.
+ERROR: shaders/csgo/fp-1.shader_test failed to compile
+ERROR: shaders/blackmesa/2429.shader_test failed to compile:
+0:93(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2429.shader_test failed to compile:
+0:50(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3171.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3171.shader_test failed to compile:
+0:127(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3915.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3915.shader_test failed to compile:
+0:197(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3182.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3182.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/625.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/625.shader_test failed to compile:
+0:245(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3330.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3330.shader_test failed to compile:
+0:138(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3245.shader_test failed to compile:
+0:142(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3245.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4293.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4293.shader_test failed to compile:
+0:171(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16597.shader_test failed to compile:
+0:104(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16597.shader_test failed to compile:
+0:68(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1107.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1107.shader_test failed to compile:
+0:253(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16586.shader_test failed to compile:
+0:75(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16586.shader_test failed to compile:
+0:68(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4055.shader_test failed to compile:
+0:56(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4055.shader_test failed to compile:
+0:44(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16595.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16595.shader_test failed to compile:
+0:85(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3612.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3612.shader_test failed to compile:
+0:175(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1192.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1192.shader_test failed to compile:
+0:112(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3914.shader_test failed to compile:
+0:217(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3914.shader_test failed to compile:
+0:234(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2077.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2077.shader_test failed to compile:
+0:163(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3685.shader_test failed to compile:
+0:60(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3685.shader_test failed to compile:
+0:49(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16585.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16585.shader_test failed to compile:
+0:85(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2764.shader_test failed to compile:
+0:51(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2764.shader_test failed to compile:
+0:38(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3323.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3323.shader_test failed to compile:
+0:88(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3180.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3180.shader_test failed to compile:
+0:251(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2145.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2145.shader_test failed to compile:
+0:199(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2925.shader_test failed to compile:
+0:142(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2925.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4226.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4226.shader_test failed to compile:
+0:202(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3178.shader_test failed to compile:
+0:158(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3178.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3071.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3071.shader_test failed to compile:
+0:244(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1338.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1338.shader_test failed to compile:
+0:218(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2948.shader_test failed to compile:
+0:38(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2948.shader_test failed to compile:
+0:44(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2286.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2286.shader_test failed to compile:
+0:173(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1495.shader_test failed to compile:
+0:117(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1495.shader_test failed to compile:
+0:79(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2146.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2146.shader_test failed to compile:
+0:123(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/491.shader_test failed to compile:
+0:60(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/491.shader_test failed to compile:
+0:29(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4192.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4192.shader_test failed to compile:
+0:244(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/399.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/399.shader_test failed to compile:
+0:115(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2958.shader_test failed to compile:
+0:74(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2958.shader_test failed to compile:
+0:21(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1853.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1853.shader_test failed to compile:
+0:234(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3334.shader_test failed to compile:
+0:159(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3334.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2084.shader_test failed to compile:
+0:104(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2084.shader_test failed to compile:
+0:72(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4191.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4191.shader_test failed to compile:
+0:155(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4212.shader_test failed to compile:
+0:75(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4212.shader_test failed to compile:
+0:147(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2152.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2152.shader_test failed to compile:
+0:79(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3742.shader_test failed to compile:
+0:239(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3742.shader_test failed to compile:
+0:155(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3341.shader_test failed to compile:
+0:247(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3341.shader_test failed to compile:
+0:139(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3159.shader_test failed to compile:
+0:72(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3159.shader_test failed to compile:
+0:73(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2554.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2554.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4193.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4193.shader_test failed to compile:
+0:249(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2523.shader_test failed to compile:
+0:160(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2523.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3333.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3333.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/952.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/952.shader_test failed to compile:
+0:281(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16579.shader_test failed to compile:
+0:65(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16579.shader_test failed to compile:
+0:71(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2164.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2164.shader_test failed to compile:
+0:108(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3414.shader_test failed to compile:
+0:75(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3414.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2549.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2549.shader_test failed to compile:
+0:173(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2902.shader_test failed to compile:
+0:84(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2902.shader_test failed to compile:
+0:29(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3340.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3340.shader_test failed to compile:
+0:175(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3744.shader_test failed to compile:
+0:82(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3744.shader_test failed to compile:
+0:56(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/564.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/564.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1730.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1730.shader_test failed to compile:
+0:239(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4223.shader_test failed to compile:
+0:94(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4223.shader_test failed to compile:
+0:158(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2928.shader_test failed to compile:
+0:38(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2928.shader_test failed to compile:
+0:25(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2037.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2037.shader_test failed to compile:
+0:251(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4184.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4184.shader_test failed to compile:
+0:270(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2418.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2418.shader_test failed to compile:
+0:182(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16574.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16574.shader_test failed to compile:
+0:98(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16577.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16577.shader_test failed to compile:
+0:111(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3339.shader_test failed to compile:
+0:59(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3339.shader_test failed to compile:
+0:45(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3748.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3748.shader_test failed to compile:
+0:140(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4195.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4195.shader_test failed to compile:
+0:191(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2038.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2038.shader_test failed to compile:
+0:185(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2531.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2531.shader_test failed to compile:
+0:155(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16593.shader_test failed to compile:
+0:33(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16593.shader_test failed to compile:
+0:220(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3412.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3412.shader_test failed to compile:
+0:140(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4210.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4210.shader_test failed to compile:
+0:211(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2765.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2765.shader_test failed to compile:
+0:246(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4198.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4198.shader_test failed to compile:
+0:239(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4201.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4201.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2532.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2532.shader_test failed to compile:
+0:232(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/377.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/377.shader_test failed to compile:
+0:244(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/289.shader_test failed to compile:
+0:52(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/289.shader_test failed to compile:
+0:41(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2533.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2533.shader_test failed to compile:
+0:191(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16587.shader_test failed to compile:
+0:75(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16587.shader_test failed to compile:
+0:68(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3410.shader_test failed to compile:
+0:231(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3410.shader_test failed to compile:
+0:178(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3746.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3746.shader_test failed to compile:
+0:191(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16581.shader_test failed to compile:
+0:76(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1500.shader_test failed to compile:
+0:65(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16581.shader_test failed to compile:
+0:53(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1500.shader_test failed to compile:
+0:53(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3065.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3065.shader_test failed to compile:
+0:188(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3174.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3174.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2763.shader_test failed to compile:
+0:88(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2763.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3408.shader_test failed to compile:
+0:142(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3408.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1669.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1669.shader_test failed to compile:
+0:121(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2149.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2149.shader_test failed to compile:
+0:138(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3610.shader_test failed to compile:
+0:157(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3610.shader_test failed to compile:
+0:72(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16589.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16589.shader_test failed to compile:
+0:88(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3173.shader_test failed to compile:
+0:140(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3173.shader_test failed to compile:
+0:72(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3322.shader_test failed to compile:
+0:247(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3322.shader_test failed to compile:
+0:145(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2348.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2348.shader_test failed to compile:
+0:239(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2287.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2287.shader_test failed to compile:
+0:211(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3338.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3338.shader_test failed to compile:
+0:63(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3072.shader_test failed to compile:
+0:248(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3072.shader_test failed to compile:
+0:254(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1349.shader_test failed to compile:
+0:227(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1349.shader_test failed to compile:
+0:139(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3069.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3069.shader_test failed to compile:
+0:53(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3068.shader_test failed to compile:
+0:140(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3068.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/634.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/634.shader_test failed to compile:
+0:99(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2075.shader_test failed to compile:
+0:151(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2075.shader_test failed to compile:
+0:39(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2147.shader_test failed to compile:
+0:34(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2147.shader_test failed to compile:
+0:28(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/633.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/633.shader_test failed to compile:
+0:110(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2522.shader_test failed to compile:
+0:91(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2522.shader_test failed to compile:
+0:73(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3478.shader_test failed to compile:
+0:141(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3478.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2935.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2935.shader_test failed to compile:
+0:91(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/476.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/476.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4292.shader_test failed to compile:
+0:74(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4292.shader_test failed to compile:
+0:63(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4214.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4214.shader_test failed to compile:
+0:244(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16590.shader_test failed to compile:
+0:33(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16590.shader_test failed to compile:
+0:461(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3331.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3331.shader_test failed to compile:
+0:109(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3066.shader_test failed to compile:
+0:71(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3066.shader_test failed to compile:
+0:29(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1334.shader_test failed to compile:
+0:34(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1334.shader_test failed to compile:
+0:113(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3599.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3599.shader_test failed to compile:
+0:202(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2413.shader_test failed to compile:
+0:76(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2413.shader_test failed to compile:
+0:54(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/756.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/756.shader_test failed to compile:
+0:202(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2439.shader_test failed to compile:
+0:145(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2439.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3070.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3070.shader_test failed to compile:
+0:246(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2960.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2960.shader_test failed to compile:
+0:121(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16580.shader_test failed to compile:
+0:81(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16580.shader_test failed to compile:
+0:65(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4054.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4054.shader_test failed to compile:
+0:213(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4225.shader_test failed to compile:
+0:247(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4225.shader_test failed to compile:
+0:145(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3407.shader_test failed to compile:
+0:81(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3407.shader_test failed to compile:
+0:66(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16596.shader_test failed to compile:
+0:104(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16596.shader_test failed to compile:
+0:68(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16576.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16576.shader_test failed to compile:
+0:91(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1792.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1792.shader_test failed to compile:
+0:102(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2901.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2901.shader_test failed to compile:
+0:206(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3147.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3147.shader_test failed to compile:
+0:128(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4227.shader_test failed to compile:
+0:235(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4227.shader_test failed to compile:
+0:216(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4295.shader_test failed to compile:
+0:38(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4295.shader_test failed to compile:
+0:44(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3183.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3183.shader_test failed to compile:
+0:124(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3327.shader_test failed to compile:
+0:38(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3327.shader_test failed to compile:
+0:28(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3743.shader_test failed to compile:
+0:60(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3743.shader_test failed to compile:
+0:29(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2555.shader_test failed to compile:
+0:159(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2555.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3311.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3311.shader_test failed to compile:
+0:145(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16591.shader_test failed to compile:
+0:40(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16591.shader_test failed to compile:
+0:220(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3611.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3611.shader_test failed to compile:
+0:281(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1022.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1022.shader_test failed to compile:
+0:92(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4058.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4058.shader_test failed to compile:
+0:87(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2550.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2550.shader_test failed to compile:
+0:209(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4211.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4211.shader_test failed to compile:
+0:243(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/282.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/282.shader_test failed to compile:
+0:53(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3307.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3307.shader_test failed to compile:
+0:246(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2924.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2924.shader_test failed to compile:
+0:135(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2530.shader_test failed to compile:
+0:56(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2530.shader_test failed to compile:
+0:43(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1668.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1668.shader_test failed to compile:
+0:253(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4213.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4213.shader_test failed to compile:
+0:248(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16573.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16573.shader_test failed to compile:
+0:90(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1360.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1360.shader_test failed to compile:
+0:146(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2449.shader_test failed to compile:
+0:54(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2449.shader_test failed to compile:
+0:21(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3751.shader_test failed to compile:
+0:75(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3751.shader_test failed to compile:
+0:37(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4224.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4224.shader_test failed to compile:
+0:145(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2934.shader_test failed to compile:
+0:75(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2934.shader_test failed to compile:
+0:63(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16584.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16584.shader_test failed to compile:
+0:90(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4197.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4197.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4208.shader_test failed to compile:
+0:159(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4208.shader_test failed to compile:
+0:89(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1335.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1335.shader_test failed to compile:
+0:281(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3745.shader_test failed to compile:
+0:117(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3745.shader_test failed to compile:
+0:79(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4199.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4199.shader_test failed to compile:
+0:127(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3169.shader_test failed to compile:
+0:52(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3169.shader_test failed to compile:
+0:50(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1337.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1337.shader_test failed to compile:
+0:251(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2944.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2944.shader_test failed to compile:
+0:122(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3310.shader_test failed to compile:
+0:46(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3310.shader_test failed to compile:
+0:72(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3337.shader_test failed to compile:
+0:52(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3337.shader_test failed to compile:
+0:29(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3181.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3181.shader_test failed to compile:
+0:214(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3172.shader_test failed to compile:
+0:159(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3172.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2627.shader_test failed to compile:
+0:59(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2627.shader_test failed to compile:
+0:46(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1731.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1731.shader_test failed to compile:
+0:181(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4057.shader_test failed to compile:
+0:231(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4057.shader_test failed to compile:
+0:254(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3146.shader_test failed to compile:
+0:59(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3146.shader_test failed to compile:
+0:45(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3328.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3328.shader_test failed to compile:
+0:234(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3609.shader_test failed to compile:
+0:51(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3609.shader_test failed to compile:
+0:28(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3064.shader_test failed to compile:
+0:38(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3064.shader_test failed to compile:
+0:38(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3244.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3244.shader_test failed to compile:
+0:177(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2151.shader_test failed to compile:
+0:79(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2151.shader_test failed to compile:
+0:79(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2955.shader_test failed to compile:
+0:142(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2955.shader_test failed to compile:
+0:90(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3409.shader_test failed to compile:
+0:86(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3409.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2945.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2945.shader_test failed to compile:
+0:117(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16594.shader_test failed to compile:
+0:33(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16594.shader_test failed to compile:
+0:267(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1854.shader_test failed to compile:
+0:157(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1854.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2961.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2961.shader_test failed to compile:
+0:53(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1015.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1015.shader_test failed to compile:
+0:218(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3335.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3335.shader_test failed to compile:
+0:259(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/818.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/818.shader_test failed to compile:
+0:171(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3067.shader_test failed to compile:
+0:69(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3067.shader_test failed to compile:
+0:62(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16598.shader_test failed to compile:
+0:40(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16598.shader_test failed to compile:
+0:28(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3177.shader_test failed to compile:
+0:52(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3177.shader_test failed to compile:
+0:32(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1014.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1014.shader_test failed to compile:
+0:161(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/556.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/556.shader_test failed to compile:
+0:98(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4215.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4215.shader_test failed to compile:
+0:195(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3179.shader_test failed to compile:
+0:51(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3179.shader_test failed to compile:
+0:29(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1168.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1168.shader_test failed to compile:
+0:270(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3415.shader_test failed to compile:
+0:104(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3415.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1013.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1013.shader_test failed to compile:
+0:183(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1175.shader_test failed to compile:
+0:51(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1175.shader_test failed to compile:
+0:29(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1915.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1915.shader_test failed to compile:
+0:218(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2148.shader_test failed to compile:
+0:230(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3246.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2148.shader_test failed to compile:
+0:185(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3246.shader_test failed to compile:
+0:203(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3413.shader_test failed to compile:
+0:231(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3413.shader_test failed to compile:
+0:200(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/308.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/308.shader_test failed to compile:
+0:140(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1046.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1046.shader_test failed to compile:
+0:119(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4194.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4194.shader_test failed to compile:
+0:195(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2913.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2913.shader_test failed to compile:
+0:147(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4216.shader_test failed to compile:
+0:38(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4216.shader_test failed to compile:
+0:33(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2548.shader_test failed to compile:
+0:94(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2548.shader_test failed to compile:
+0:161(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4217.shader_test failed to compile:
+0:75(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4217.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3165.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3165.shader_test failed to compile:
+0:81(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1027.shader_test failed to compile:
+0:63(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1027.shader_test failed to compile:
+0:57(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2430.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2430.shader_test failed to compile:
+0:93(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4218.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4218.shader_test failed to compile:
+0:110(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4200.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4200.shader_test failed to compile:
+0:90(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2036.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2036.shader_test failed to compile:
+0:211(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2438.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2438.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2076.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2076.shader_test failed to compile:
+0:148(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2534.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2534.shader_test failed to compile:
+0:63(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16588.shader_test failed to compile:
+0:140(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16588.shader_test failed to compile:
+0:68(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4196.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4196.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3023.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3023.shader_test failed to compile:
+0:231(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3411.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3411.shader_test failed to compile:
+0:234(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3336.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3336.shader_test failed to compile:
+0:262(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1186.shader_test failed to compile:
+0:76(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1186.shader_test failed to compile:
+0:37(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/388.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/388.shader_test failed to compile:
+0:139(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2933.shader_test failed to compile:
+0:145(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2933.shader_test failed to compile:
+0:55(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/757.shader_test failed to compile:
+0:109(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/757.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2959.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2959.shader_test failed to compile:
+0:116(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3477.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3477.shader_test failed to compile:
+0:217(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1666.shader_test failed to compile:
+0:239(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1666.shader_test failed to compile:
+0:253(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2962.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2962.shader_test failed to compile:
+0:164(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2936.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2936.shader_test failed to compile:
+0:83(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3332.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3332.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/891.shader_test failed to compile:
+0:81(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/891.shader_test failed to compile:
+0:81(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1336.shader_test failed to compile:
+0:140(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1336.shader_test failed to compile:
+0:244(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16582.shader_test failed to compile:
+0:59(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16582.shader_test failed to compile:
+0:43(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16575.shader_test failed to compile:
+0:81(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16575.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2541.shader_test failed to compile:
+0:75(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2541.shader_test failed to compile:
+0:72(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/557.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/557.shader_test failed to compile:
+0:146(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3747.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3747.shader_test failed to compile:
+0:146(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2943.shader_test failed to compile:
+0:93(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2943.shader_test failed to compile:
+0:150(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2420.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2420.shader_test failed to compile:
+0:134(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2957.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2957.shader_test failed to compile:
+0:232(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2163.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2163.shader_test failed to compile:
+0:144(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/635.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/635.shader_test failed to compile:
+0:100(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2956.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2956.shader_test failed to compile:
+0:155(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1199.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1199.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16583.shader_test failed to compile:
+0:91(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16583.shader_test failed to compile:
+0:71(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2150.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2150.shader_test failed to compile:
+0:191(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1328.shader_test failed to compile:
+0:104(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1328.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3325.shader_test failed to compile:
+0:145(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3325.shader_test failed to compile:
+0:35(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3342.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3342.shader_test failed to compile:
+0:177(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4056.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4056.shader_test failed to compile:
+0:79(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4053.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4053.shader_test failed to compile:
+0:211(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16578.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16578.shader_test failed to compile:
+0:97(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/481.shader_test failed to compile:
+0:52(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/481.shader_test failed to compile:
+0:40(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2628.shader_test failed to compile:
+0:106(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2628.shader_test failed to compile:
+0:43(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4123.shader_test failed to compile:
+0:65(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4209.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4123.shader_test failed to compile:
+0:72(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/4209.shader_test failed to compile:
+0:37(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2419.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2419.shader_test failed to compile:
+0:139(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2553.shader_test failed to compile:
+0:40(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2553.shader_test failed to compile:
+0:78(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1667.shader_test failed to compile:
+0:225(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1667.shader_test failed to compile:
+0:251(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1191.shader_test failed to compile:
+0:226(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/1191.shader_test failed to compile:
+0:182(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3932.shader_test failed to compile:
+0:57(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3932.shader_test failed to compile:
+0:42(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3153.shader_test failed to compile:
+0:34(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3153.shader_test failed to compile:
+0:23(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/632.shader_test failed to compile:
+0:140(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/632.shader_test failed to compile:
+0:64(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2285.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/2285.shader_test failed to compile:
+0:202(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3329.shader_test failed to compile:
+0:242(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3329.shader_test failed to compile:
+0:189(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3170.shader_test failed to compile:
+0:96(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/3170.shader_test failed to compile:
+0:80(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16592.shader_test failed to compile:
+0:40(1): preprocessor error: Unterminated comment
+
+ERROR: shaders/blackmesa/16592.shader_test failed to compile:
+0:267(1): preprocessor error: Unterminated comment
+
