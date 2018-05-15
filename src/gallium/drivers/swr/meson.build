@@ -131,6 +131,7 @@ files_swr_arch = files(
   'rasterizer/core/threads.h',
   'rasterizer/core/tilemgr.cpp',
   'rasterizer/core/tilemgr.h',
+  'rasterizer/core/tileset.h',
   'rasterizer/core/utils.h',
   'rasterizer/memory/ClearTile.cpp',
   'rasterizer/memory/Convert.h',
