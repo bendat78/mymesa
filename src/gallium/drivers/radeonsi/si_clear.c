@@ -577,7 +577,8 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 				continue;
 
 			tex = (struct r600_texture *)fb->cbufs[i]->texture;
-			if (tex->surface.fmask_size == 0)
+
+			if (!tex->surface.fmask_size)
 				tex->dirty_level_mask &= ~(1 << fb->cbufs[i]->u.tex.level);
 		}
 	}

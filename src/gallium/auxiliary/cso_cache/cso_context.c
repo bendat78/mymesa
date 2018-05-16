@@ -1157,7 +1157,7 @@ void cso_set_vertex_buffers(struct cso_context *ctx,
 
    /* Save what's in the auxiliary slot, so that we can save and restore it
     * for meta ops. */
-   if (start_slot == 0) {
+   if (!start_slot) {
       if (buffers) {
          pipe_vertex_buffer_reference(&ctx->vertex_buffer0_current,
                                       buffers);

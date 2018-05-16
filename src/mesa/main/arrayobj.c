@@ -619,7 +619,7 @@ _mesa_update_vao_derived_arrays(struct gl_context *ctx,
 
          GLbitfield scanmask = mask & vbos & ~bound;
          /* Is there something left to scan? */
-         if (scanmask == 0) {
+         if (!scanmask) {
             /* Just update the back reference from the attrib to the binding and
              * the effective offset.
              */

@@ -273,7 +273,7 @@ static GLboolean *_tnl_import_edgeflag( struct gl_context *ctx,
 }
 
 
-static void bind_inputs( struct gl_context *ctx, 
+static void bind_inputs( struct gl_context *ctx,
 			 const struct tnl_vertex_array *inputs,
 			 GLint count,
 			 struct gl_buffer_object **bo,

@@ -848,8 +848,8 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 
 	/* Compute FMASK. */
 	if (config->info.samples >= 2 && AddrSurfInfoIn.flags.color) {
-		ADDR_COMPUTE_FMASK_INFO_INPUT fin = {0};
-		ADDR_COMPUTE_FMASK_INFO_OUTPUT fout = {0};
+		ADDR_COMPUTE_FMASK_INFO_INPUT fin = {};
+		ADDR_COMPUTE_FMASK_INFO_OUTPUT fout = {};
 		ADDR_TILEINFO fmask_tile_info = {};
 
 		fin.size = sizeof(fin);
@@ -884,8 +884,8 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 		/* Compute tile swizzle for FMASK. */
 		if (config->info.fmask_surf_index &&
 		    !(surf->flags & RADEON_SURF_SHAREABLE)) {
-			ADDR_COMPUTE_BASE_SWIZZLE_INPUT xin = {0};
-			ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT xout = {0};
+			ADDR_COMPUTE_BASE_SWIZZLE_INPUT xin = {};
+			ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT xout = {};
 
 			xin.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_INPUT);
 			xout.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT);

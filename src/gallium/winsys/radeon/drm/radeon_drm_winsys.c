@@ -744,7 +744,7 @@ static bool radeon_winsys_unref(struct radeon_winsys *ws)
     destroy = pipe_reference(&rws->reference, NULL);
     if (destroy && fd_tab) {
         util_hash_table_remove(fd_tab, intptr_to_pointer(rws->fd));
-        if (util_hash_table_count(fd_tab) == 0) {
+        if (!util_hash_table_count(fd_tab)) {
            util_hash_table_destroy(fd_tab);
            fd_tab = NULL;
         }

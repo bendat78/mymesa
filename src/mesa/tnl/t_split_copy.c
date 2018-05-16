@@ -447,7 +447,7 @@ replay_init(struct copy_context *copy)
       const struct tnl_vertex_array *array = &copy->array[i];
       const struct gl_vertex_buffer_binding *binding = array->BufferBinding;
 
-      if (binding->Stride == 0) {
+      if (!binding->Stride) {
          copy_vertex_array(&copy->dstarray[i], array);
       }
       else {

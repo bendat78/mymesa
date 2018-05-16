@@ -674,7 +674,7 @@ brw_prepare_vertices(struct brw_context *brw)
       struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
       const struct gl_vertex_buffer_binding *glbinding = upload[i]->glbinding;
       const struct gl_array_attributes *glattrib = upload[i]->glattrib;
-      if (glbinding->InstanceDivisor == 0) {
+      if (!glbinding->InstanceDivisor) {
          copy_array_to_vbo_array(brw, upload[i], min_index, max_index,
                                  buffer, glattrib->_ElementSize);
       } else {
