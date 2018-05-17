@@ -422,6 +422,30 @@ static struct si_pc_block groups_gfx9[] = {
 	{ &cik_CPC, 35 },
 };
 
+static struct si_pc_block groups_gfx9[] = {
+	{ &cik_CB, 438, 4 },
+	{ &cik_CPF, 32 },
+	{ &cik_DB, 328, 4 },
+	{ &cik_GRBM, 38 },
+	{ &cik_GRBMSE, 16 },
+	{ &cik_PA_SU, 292 },
+	{ &cik_PA_SC, 491 },
+	{ &cik_SPI, 196 },
+	{ &cik_SQ, 374 },
+	{ &cik_SX, 208 },
+	{ &cik_TA, 119, 16 },
+	{ &cik_TCA, 35, 2 },
+	{ &cik_TCC, 256, 16 },
+	{ &cik_TD, 57, 16 },
+	{ &cik_TCP, 85, 16 },
+	{ &cik_GDS, 121 },
+	{ &cik_VGT, 148 },
+	{ &cik_IA, 32 },
+	{ &cik_WD, 58 },
+	{ &cik_CPG, 59 },
+	{ &cik_CPC, 35 },
+};
+
 static void si_pc_emit_instance(struct si_context *sctx,
 				int se, int instance)
 {

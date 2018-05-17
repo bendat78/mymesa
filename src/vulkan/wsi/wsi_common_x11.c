@@ -720,6 +720,9 @@ x11_get_wsi_image(struct wsi_swapchain *wsi_chain, uint32_t image_index)
    return &chain->images[image_index].base;
 }
 
+/**
+ * Process an X11 Present event. Does not update chain->status.
+ */
 static VkResult
 x11_handle_dri3_present_event(struct x11_swapchain *chain,
                               xcb_present_generic_event_t *event)
@@ -819,7 +822,7 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
             xshmfence_await(chain->images[i].shm_fence);
             *image_index = i;
             chain->images[i].busy = true;
-            return VK_SUCCESS;
+            return x11_swapchain_result(chain, VK_SUCCESS);
          }
       }
 
@@ -828,23 +831,23 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
       if (timeout == UINT64_MAX) {
          event = xcb_wait_for_special_event(chain->conn, chain->special_event);
          if (!event)
-            return VK_ERROR_OUT_OF_DATE_KHR;
+            return x11_swapchain_result(chain, VK_ERROR_OUT_OF_DATE_KHR);
       } else {
          event = xcb_poll_for_special_event(chain->conn, chain->special_event);
          if (!event) {
             int ret;
-            if (!timeout)
-               return VK_NOT_READY;
+            if (timeout == 0)
+               return x11_swapchain_result(chain, VK_NOT_READY);
 
             atimeout = wsi_get_absolute_timeout(timeout);
 
             pfds.fd = xcb_get_file_descriptor(chain->conn);
             pfds.events = POLLIN;
             ret = poll(&pfds, 1, timeout / 1000 / 1000);
-            if (!ret)
-               return VK_TIMEOUT;
+            if (ret == 0)
+               return x11_swapchain_result(chain, VK_TIMEOUT);
             if (ret == -1)
-               return VK_ERROR_OUT_OF_DATE_KHR;
+               return x11_swapchain_result(chain, VK_ERROR_OUT_OF_DATE_KHR);
 
             /* If a non-special event happens, the fd will still
              * poll. So recalculate the timeout now just in case.
@@ -858,10 +861,13 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
          }
       }
 
+      /* Update the swapchain status here. We may catch non-fatal errors here,
+       * in which case we need to update the status and continue.
+       */
       VkResult result = x11_handle_dri3_present_event(chain, (void *)event);
       free(event);
-      if (result != VK_SUCCESS)
-         return result;
+      if (result < 0)
+         return x11_swapchain_result(chain, result);
    }
 }
 
@@ -874,9 +880,13 @@ x11_acquire_next_image_from_queue(struct x11_swapchain *chain,
    uint32_t image_index;
    VkResult result = wsi_queue_pull(&chain->acquire_queue,
                                     &image_index, timeout);
-   if (result != VK_SUCCESS) {
-      return result;
-   } else if (chain->status != VK_SUCCESS) {
+   if (result < 0 || result == VK_TIMEOUT) {
+      /* On error, the thread has shut down, so safe to update chain->status.
+       * Calling x11_swapchain_result with VK_TIMEOUT won't modify
+       * chain->status so that is also safe.
+       */
+      return x11_swapchain_result(chain, result);
+   } else if (chain->status < 0) {
       return chain->status;
    }
 
@@ -885,7 +895,7 @@ x11_acquire_next_image_from_queue(struct x11_swapchain *chain,
 
    *image_index_out = image_index;
 
-   return VK_SUCCESS;
+   return chain->status;
 }
 
 static VkResult
@@ -933,7 +943,7 @@ x11_present_to_x11(struct x11_swapchain *chain, uint32_t image_index,
 
    xcb_flush(chain->conn);
 
-   return VK_SUCCESS;
+   return x11_swapchain_result(chain, VK_SUCCESS);
 }
 
 static VkResult
@@ -974,7 +984,7 @@ x11_manage_fifo_queues(void *state)
 
    assert(chain->base.present_mode == VK_PRESENT_MODE_FIFO_KHR);
 
-   while (chain->status == VK_SUCCESS) {
+   while (chain->status >= 0) {
       /* It should be safe to unconditionally block here.  Later in the loop
        * we blocks until the previous present has landed on-screen.  At that
        * point, we should have received IDLE_NOTIFY on all images presented
@@ -983,15 +993,19 @@ x11_manage_fifo_queues(void *state)
        */
       uint32_t image_index;
       result = wsi_queue_pull(&chain->present_queue, &image_index, INT64_MAX);
-      if (result != VK_SUCCESS) {
+      assert(result != VK_TIMEOUT);
+      if (result < 0) {
          goto fail;
-      } else if (chain->status != VK_SUCCESS) {
+      } else if (chain->status < 0) {
+         /* The status can change underneath us if the swapchain is destroyed
+          * from another thread.
+          */
          return NULL;
       }
 
       uint64_t target_msc = chain->last_present_msc + 1;
       result = x11_present_to_x11(chain, image_index, target_msc);
-      if (result != VK_SUCCESS)
+      if (result < 0)
          goto fail;
 
       while (chain->last_present_msc < target_msc) {
@@ -1004,13 +1018,13 @@ x11_manage_fifo_queues(void *state)
 
          result = x11_handle_dri3_present_event(chain, (void *)event);
          free(event);
-         if (result != VK_SUCCESS)
+         if (result < 0)
             goto fail;
       }
    }
 
 fail:
-   chain->status = result;
+   result = x11_swapchain_result(chain, result);
    wsi_queue_push(&chain->acquire_queue, UINT32_MAX);
 
    return NULL;
@@ -1036,7 +1050,7 @@ x11_image_init(VkDevice device_h, struct x11_swapchain *chain,
                                        num_tranches, num_modifiers, modifiers,
                                        &image->base);
    }
-   if (result != VK_SUCCESS)
+   if (result < 0)
       return result;
 
    image->pixmap = xcb_generate_id(chain->conn);
@@ -1273,8 +1287,7 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    xcb_window_t window = x11_surface_get_window(icd_surface);
    xcb_get_geometry_reply_t *geometry =
       xcb_get_geometry_reply(conn, xcb_get_geometry(conn, window), NULL);
-
-   if (!geometry)
+   if (geometry == NULL)
       return VK_ERROR_SURFACE_LOST_KHR;
    const uint32_t bit_depth = geometry->depth;
    free(geometry);
@@ -1282,7 +1295,7 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    size_t size = sizeof(*chain) + num_images * sizeof(chain->images[0]);
    chain = vk_alloc(pAllocator, size, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!chain)
+   if (chain == NULL)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    result = wsi_swapchain_init(wsi_device, &chain->base, device,

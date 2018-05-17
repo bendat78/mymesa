@@ -425,7 +425,7 @@ read_data_file(FILE *file)
       if (line[0] == ':' || line[0] == '~') {
          uint32_t *data = NULL;
          int count = ascii85_decode(line+1, &data, line[0] == ':');
-         if (!count) {
+         if (count == 0) {
             fprintf(stderr, "ASCII85 decode failed.\n");
             exit(EXIT_FAILURE);
          }

@@ -637,7 +637,7 @@ gbm_dri_is_format_supported(struct gbm_device *gbm,
       return 0;
 
    format = gbm_format_canonicalize(format);
-   if (!gbm_format_to_dri_format(format))
+   if (gbm_format_to_dri_format(format) == 0)
       return 0;
 
    /* If there is no query, fall back to the small table which was originally
@@ -676,7 +676,7 @@ gbm_dri_get_format_modifier_plane_count(struct gbm_device *gbm,
       return -1;
 
    format = gbm_format_canonicalize(format);
-   if (!gbm_format_to_dri_format(format))
+   if (gbm_format_to_dri_format(format) == 0)
       return -1;
 
    if (!dri->image->queryDmaBufFormatModifierAttribs(
@@ -1162,7 +1162,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    bo->base.format = format;
 
    dri_format = gbm_format_to_dri_format(format);
-   if (!dri_format) {
+   if (dri_format == 0) {
       errno = EINVAL;
       goto failed;
    }

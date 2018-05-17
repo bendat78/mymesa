@@ -394,7 +394,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 Float<SIMD_T> vCullComp;
-                if (!slot)
+                if (slot == 0)
                 {
                     vCullComp = vClipCullDistLo[e][component];
                 }
@@ -422,7 +422,7 @@ public:
             for (uint32_t e = 0; e < NumVertsPerPrim; ++e)
             {
                 Float<SIMD_T> vClipComp;
-                if (!slot)
+                if (slot == 0)
                 {
                     vClipComp = vClipCullDistLo[e][component];
                 }
@@ -530,6 +530,10 @@ public:
             if (pa.binTopology == TOP_POINT_LIST)
             {
                 clipTopology = TOP_POINT_LIST;
+            }
+            else if (pa.binTopology == TOP_RECT_LIST)
+            {
+                clipTopology = TOP_RECT_LIST;
             }
         }
         else if (NumVertsPerPrim == 2)
@@ -703,7 +707,7 @@ public:
         // cull prims with NAN coords
         primMask &= ~ComputeNaNMask(prim);
 
-        // user cull distance cull
+        // user cull distance cull 
         if (state.backendState.cullDistanceMask | state.backendState.clipDistanceMask)
         {
             primMask &= ~ComputeUserClipCullMask(pa, prim);
@@ -1149,10 +1153,12 @@ private:
 
 
 // pipeline stage functions
+void ClipRectangles(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simdvector prims[], uint32_t primMask, simdscalari const &primId, simdscalari const &viewportIdx, simdscalari const &rtIdx);
 void ClipTriangles(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simdvector prims[], uint32_t primMask, simdscalari const &primId, simdscalari const &viewportIdx, simdscalari const &rtIdx);
 void ClipLines(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simdvector prims[], uint32_t primMask, simdscalari const &primId, simdscalari const &viewportIdx, simdscalari const &rtIdx);
 void ClipPoints(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simdvector prims[], uint32_t primMask, simdscalari const &primId, simdscalari const &viewportIdx, simdscalari const &rtIdx);
 #if USE_SIMD16_FRONTEND
+void SIMDCALL ClipRectangles_simd16(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simd16vector prims[], uint32_t primMask, simd16scalari const &primId, simd16scalari const &viewportIdx, simd16scalari const &rtIdx);
 void SIMDCALL ClipTriangles_simd16(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simd16vector prims[], uint32_t primMask, simd16scalari const &primId, simd16scalari const &viewportIdx, simd16scalari const &rtIdx);
 void SIMDCALL ClipLines_simd16(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simd16vector prims[], uint32_t primMask, simd16scalari const &primId, simd16scalari const &viewportIdx, simd16scalari const &rtIdx);
 void SIMDCALL ClipPoints_simd16(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simd16vector prims[], uint32_t primMask, simd16scalari const &primId, simd16scalari const &viewportIdx, simd16scalari const &rtIdx);

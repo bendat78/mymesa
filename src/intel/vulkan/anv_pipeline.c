@@ -544,7 +544,7 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
                                              module, entrypoint,
                                              MESA_SHADER_VERTEX, spec_info,
                                              &prog_data.base.base, &map);
-      if (!nir) {
+      if (nir == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -559,7 +559,7 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_vs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         -1, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -725,7 +725,7 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
       shader_code =
          brw_compile_tcs(compiler, NULL, mem_ctx, &tcs_key, &tcs_prog_data,
                          tcs_nir, shader_time_index, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -746,7 +746,7 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
          brw_compile_tes(compiler, NULL, mem_ctx, &tes_key,
                          &tcs_prog_data.base.vue_map, &tes_prog_data, tes_nir,
                          NULL, shader_time_index, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -813,7 +813,7 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
                                              module, entrypoint,
                                              MESA_SHADER_GEOMETRY, spec_info,
                                              &prog_data.base.base, &map);
-      if (!nir) {
+      if (nir == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -828,7 +828,7 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_gs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         NULL, -1, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -893,7 +893,7 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
                                              module, entrypoint,
                                              MESA_SHADER_FRAGMENT, spec_info,
                                              &prog_data.base, &map);
-      if (!nir) {
+      if (nir == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -979,7 +979,7 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_fs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         NULL, -1, -1, true, false, NULL, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -1055,7 +1055,7 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_cs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         -1, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -1247,8 +1247,18 @@ anv_pipeline_validate_create_info(const VkGraphicsPipelineCreateInfo *info)
       if (subpass && subpass->depth_stencil_attachment.attachment != VK_ATTACHMENT_UNUSED)
          assert(info->pDepthStencilState);
 
-      if (subpass && subpass->color_count > 0)
-         assert(info->pColorBlendState);
+      if (subpass && subpass->color_count > 0) {
+         bool all_color_unused = true;
+         for (int i = 0; i < subpass->color_count; i++) {
+            if (subpass->color_attachments[i].attachment != VK_ATTACHMENT_UNUSED)
+               all_color_unused = false;
+         }
+         /* pColorBlendState is ignored if the pipeline has rasterization
+          * disabled or if the subpass of the render pass the pipeline is
+          * created against does not use any color attachments.
+          */
+         assert(info->pColorBlendState || all_color_unused);
+      }
    }
 
    for (uint32_t i = 0; i < info->stageCount; ++i) {

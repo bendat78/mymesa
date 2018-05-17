@@ -801,7 +801,7 @@ virgl_drm_winsys_create(int drmFD)
    struct virgl_drm_winsys *qdws;
    int ret;
    int gl = 0;
-   struct drm_virtgpu_getparam getparam = {};
+   struct drm_virtgpu_getparam getparam = {0};
 
    getparam.param = VIRTGPU_PARAM_3D_FEATURES;
    getparam.value = (uint64_t)(uintptr_t)&gl;
@@ -847,7 +847,7 @@ virgl_drm_winsys_create(int drmFD)
    getparam.param = VIRTGPU_PARAM_CAPSET_QUERY_FIX;
    getparam.value = (uint64_t)(uintptr_t)&value;
    ret = drmIoctl(qdws->fd, DRM_IOCTL_VIRTGPU_GETPARAM, &getparam);
-   if (!ret) {
+   if (ret == 0) {
       if (value == 1)
          qdws->has_capset_query_fix = true;
    }

@@ -141,7 +141,7 @@ set_src(struct v3d_qpu_instr *instr, enum v3d_qpu_mux *mux, struct qpu_reg src)
 static bool
 is_no_op_mov(struct qinst *qinst)
 {
-        static const struct v3d_qpu_sig no_sig = {};
+        static const struct v3d_qpu_sig no_sig = {0};
 
         /* Make sure it's just a lone MOV. */
         if (qinst->qpu.type != V3D_QPU_INSTR_TYPE_ALU ||
@@ -320,7 +320,7 @@ v3d_generate_code_block(struct v3d_compile *c,
                                 qinst->qpu.sig_magic = dst.magic;
                         } else if (qinst->qpu.alu.add.op != V3D_QPU_A_NOP) {
                                 assert(qinst->qpu.alu.mul.op == V3D_QPU_M_NOP);
-                                if (nsrc) {
+                                if (nsrc >= 1) {
                                         set_src(&qinst->qpu,
                                                 &qinst->qpu.alu.add.a, src[0]);
                                 }
@@ -332,7 +332,7 @@ v3d_generate_code_block(struct v3d_compile *c,
                                 qinst->qpu.alu.add.waddr = dst.index;
                                 qinst->qpu.alu.add.magic_write = dst.magic;
                         } else {
-                                if (nsrc) {
+                                if (nsrc >= 1) {
                                         set_src(&qinst->qpu,
                                                 &qinst->qpu.alu.mul.a, src[0]);
                                 }

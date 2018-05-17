@@ -377,9 +377,9 @@ _mesa_meta_setup_vertex_objects(struct gl_context *ctx,
                                       GL_FALSE, GL_FALSE,
                                       offsetof(struct vertex, tex));
             _mesa_bind_vertex_buffer(ctx, array_obj, VERT_ATTRIB_TEX(0),
-                                     *buf_obj, 0, sizeof(struct vertex), true);
+                                     *buf_obj, 0, sizeof(struct vertex));
             _mesa_enable_vertex_array_attrib(ctx, array_obj,
-                                             VERT_ATTRIB_TEX(0), true);
+                                             VERT_ATTRIB_TEX(0));
          }
 
          if (color_size > 0) {
@@ -388,9 +388,9 @@ _mesa_meta_setup_vertex_objects(struct gl_context *ctx,
                                       GL_FALSE, GL_FALSE,
                                       offsetof(struct vertex, r));
             _mesa_bind_vertex_buffer(ctx, array_obj, VERT_ATTRIB_COLOR0,
-                                     *buf_obj, 0, sizeof(struct vertex), true);
+                                     *buf_obj, 0, sizeof(struct vertex));
             _mesa_enable_vertex_array_attrib(ctx, array_obj,
-                                             VERT_ATTRIB_COLOR0, true);
+                                             VERT_ATTRIB_COLOR0);
          }
       }
    } else {
@@ -883,7 +883,7 @@ _mesa_meta_end(struct gl_context *ctx)
       for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
          if (GET_COLORMASK(ctx->Color.ColorMask, i) !=
              GET_COLORMASK(save->ColorMask, i)) {
-            if (!i) {
+            if (i == 0) {
                _mesa_ColorMask(GET_COLORMASK_BIT(save->ColorMask, i, 0),
                                GET_COLORMASK_BIT(save->ColorMask, i, 1),
                                GET_COLORMASK_BIT(save->ColorMask, i, 2),
@@ -1270,7 +1270,7 @@ _mesa_meta_get_temp_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->TempTex;
 
-   if (!tex->tex_obj) {
+   if (tex->tex_obj == NULL) {
       init_temp_texture(ctx, tex);
    }
 
@@ -1288,7 +1288,7 @@ get_bitmap_temp_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->Bitmap.Tex;
 
-   if (!tex->tex_obj) {
+   if (tex->tex_obj == NULL) {
       init_temp_texture(ctx, tex);
    }
 
@@ -1304,7 +1304,7 @@ _mesa_meta_get_temp_depth_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->Blit.depthTex;
 
-   if (!tex->tex_obj) {
+   if (tex->tex_obj == NULL) {
       init_temp_texture(ctx, tex);
    }
 

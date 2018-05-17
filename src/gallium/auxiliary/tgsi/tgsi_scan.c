@@ -454,7 +454,7 @@ scan_instruction(struct tgsi_shader_info *info,
                        is_interp_instruction, &is_mem_inst);
 
       if (fullinst->Src[i].Register.Indirect) {
-         struct tgsi_full_src_register src = {};
+         struct tgsi_full_src_register src = {{0}};
 
          src.Register.File = fullinst->Src[i].Indirect.File;
          src.Register.Index = fullinst->Src[i].Indirect.Index;
@@ -466,7 +466,7 @@ scan_instruction(struct tgsi_shader_info *info,
 
       if (fullinst->Src[i].Register.Dimension &&
           fullinst->Src[i].Dimension.Indirect) {
-         struct tgsi_full_src_register src = {};
+         struct tgsi_full_src_register src = {{0}};
 
          src.Register.File = fullinst->Src[i].DimIndirect.File;
          src.Register.Index = fullinst->Src[i].DimIndirect.Index;
@@ -498,7 +498,7 @@ scan_instruction(struct tgsi_shader_info *info,
       const struct tgsi_full_dst_register *dst = &fullinst->Dst[i];
 
       if (dst->Register.Indirect) {
-         struct tgsi_full_src_register src = {};
+         struct tgsi_full_src_register src = {{0}};
 
          src.Register.File = dst->Indirect.File;
          src.Register.Index = dst->Indirect.Index;
@@ -511,7 +511,7 @@ scan_instruction(struct tgsi_shader_info *info,
       }
 
       if (dst->Register.Dimension && dst->Dimension.Indirect) {
-         struct tgsi_full_src_register src = {};
+         struct tgsi_full_src_register src = {{0}};
 
          src.Register.File = dst->DimIndirect.File;
          src.Register.Index = dst->DimIndirect.Index;

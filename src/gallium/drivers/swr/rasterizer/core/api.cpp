@@ -948,7 +948,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     }
 
     // Disable rasterizer and backend if no pixel, no depth/stencil, and no attributes
-    if (!(pState->state.psState.pfnPixelShader) &&
+    if ((pState->state.psState.pfnPixelShader == nullptr) &&
         (pState->state.depthStencilState.depthTestEnable == FALSE) &&
         (pState->state.depthStencilState.depthWriteEnable == FALSE) &&
         (pState->state.depthStencilState.stencilTestEnable == FALSE) &&
@@ -1025,7 +1025,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     uint32_t hotTileEnable = pState->state.psState.renderTargetMask;
 
     // Disable hottile for surfaces with no writes
-    if (psState.pfnPixelShader)
+    if (psState.pfnPixelShader != nullptr)
     {
         DWORD rt;
         uint32_t rtMask = pState->state.psState.renderTargetMask;

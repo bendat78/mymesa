@@ -198,4 +198,3 @@ num_inst_src_regs(const glsl_to_tgsi_instruction *op)
       op->info->num_src - 1 : op->info->num_src;
 }
 #endif
-

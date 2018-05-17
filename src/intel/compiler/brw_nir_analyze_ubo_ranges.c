@@ -71,11 +71,11 @@ cmp_ubo_range_entry(const void *va, const void *vb)
    int delta = score(b) - score(a);
 
    /* Then use the UBO block index as a tie-breaker */
-   if (!delta)
+   if (delta == 0)
       delta = b->range.block - a->range.block;
 
    /* Finally use the UBO offset as a second tie-breaker */
-   if (!delta)
+   if (delta == 0)
       delta = b->range.block - a->range.block;
 
    return delta;
@@ -212,7 +212,7 @@ brw_nir_analyze_ubo_ranges(const struct brw_compiler *compiler,
        *
        * Each of these will become a UBO range.
        */
-      while (offsets) {
+      while (offsets != 0) {
          /* Find the first 1 in the offsets bitfield.  This represents the
           * start of a range of interesting UBO data.  Make it zero-indexed.
           */

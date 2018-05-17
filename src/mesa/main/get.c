@@ -2643,12 +2643,12 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
       v->value_int = 1;
       return TYPE_INT;
    case GL_DRIVER_UUID_EXT:
-      if (index)
+      if (index >= 1)
          goto invalid_value;
       _mesa_get_driver_uuid(ctx, v->value_int_4);
       return TYPE_INT_4;
    case GL_DEVICE_UUID_EXT:
-      if (index)
+      if (index >= 1)
          goto invalid_value;
       _mesa_get_device_uuid(ctx, v->value_int_4);
       return TYPE_INT_4;
@@ -3068,7 +3068,7 @@ _mesa_GetFixedv(GLenum pname, GLfixed *params)
       break;
 
    case TYPE_ENUM16:
-      params[0] = INT_TO_FIXED(((GLenum16 *) p)[0]);
+      params[0] = INT_TO_FIXED((GLint)(((GLenum16 *) p)[0]));
       break;
 
    case TYPE_INT_N:

@@ -847,7 +847,7 @@ fs_inst::size_read(int arg) const
    case FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET:
    case SHADER_OPCODE_BYTE_SCATTERED_WRITE:
    case SHADER_OPCODE_BYTE_SCATTERED_READ:
-      if (!arg)
+      if (arg == 0)
          return mlen * REG_SIZE;
       break;
 
@@ -1939,7 +1939,7 @@ fs_visitor::compact_virtual_grfs()
 static int
 get_subgroup_id_param_index(const brw_stage_prog_data *prog_data)
 {
-   if (!prog_data->nr_params)
+   if (prog_data->nr_params == 0)
       return -1;
 
    /* The local thread id is always the last parameter in the list */
@@ -2045,7 +2045,7 @@ mark_uniform_slots_read(struct uniform_slot_info *slots,
          slots[i].contiguous = true;
 
       align.offset = (i * UNIFORM_SLOT_SIZE) & (align.mul - 1);
-      if (!slots[i].align.mul) {
+      if (slots[i].align.mul == 0) {
          slots[i].align = align;
       } else {
          slots[i].align = cplx_align_combine(slots[i].align, align);
@@ -2942,7 +2942,7 @@ fs_visitor::opt_peephole_csel()
                csel_inst->src[1].abs = true;
             }
 
-            if (csel_inst) {
+            if (csel_inst != NULL) {
                progress = true;
                inst->remove(block);
             }
@@ -7318,7 +7318,7 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
    }
 
    const unsigned *ret = NULL;
-   if (!unlikely(cfg)) {
+   if (unlikely(cfg == NULL)) {
       assert(fail_msg);
       if (error_str)
          *error_str = ralloc_strdup(mem_ctx, fail_msg);

@@ -134,15 +134,15 @@ namespace SwrJit
 
     protected:
 
-        void SetPrivateContext(Value* pPrivateContext)
-        {
-            mpPrivateContext = pPrivateContext;
+        void SetPrivateContext(Value* pPrivateContext) 
+        { 
+            mpPrivateContext = pPrivateContext; 
             NotifyPrivateContextSet();
         }
         virtual void NotifyPrivateContextSet() {}
         inline Value* GetPrivateContext() { return mpPrivateContext; }
 
-    private:
+    private: 
         Value* mpPrivateContext;
 
     };

@@ -1130,7 +1130,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
       // we're using the texture result from lane 0 in all cases, so make sure
       // that lane 0 is pointing at the proper array index, indirect value,
       // and depth compare.
-      if (l) {
+      if (l != 0) {
          for (c = 0; c < array; ++c)
             bld.mkQuadop(0x00, arr[c], l, i->getSrc(c), zero);
          if (i->tex.target.isShadow()) {
@@ -1163,7 +1163,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
       }
       // texture
       bld.insert(tex = cloneForward(func, i));
-      if (l) {
+      if (l != 0) {
          for (c = 0; c < array; ++c)
             tex->setSrc(c, arr[c]);
          if (i->tex.target.isShadow())
@@ -1173,7 +1173,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
          tex->setSrc(c + array, src[c]);
       // broadcast results from lane 0 to all lanes so that the moves *into*
       // the target lane pick up the proper value.
-      if (l)
+      if (l != 0)
          for (c = 0; i->defExists(c); ++c)
             bld.mkQuadop(0x00, tex->getDef(c), 0, tex->getDef(c), zero);
       bld.mkOp(OP_QUADPOP, TYPE_NONE, NULL);

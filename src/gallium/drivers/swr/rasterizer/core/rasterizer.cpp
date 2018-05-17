@@ -260,7 +260,7 @@ void RasterizeSimplePoint(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t macroTi
     const TRIANGLE_WORK_DESC& workDesc = *(const TRIANGLE_WORK_DESC*)pData;
     const BACKEND_FUNCS& backendFuncs = pDC->pState->backendFuncs;
 
-    // map x,y relative offsets from start of raster tile to bit position in
+    // map x,y relative offsets from start of raster tile to bit position in 
     // coverage mask for the point
     static const uint32_t coverageMap[8][8] = {
         { 0, 1, 4, 5, 8, 9, 12, 13 },

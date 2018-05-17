@@ -103,7 +103,7 @@ BOOL_32 EgBasedLib::DispatchComputeSurfaceInfo(
     UINT_32             padDims       = 0;
     BOOL_32             valid;
 
-    if (!pIn->flags.disallowLargeThickDegrade)
+    if (pIn->flags.disallowLargeThickDegrade == 0)
     {
         tileMode = DegradeLargeThickTile(tileMode, bpp);
     }

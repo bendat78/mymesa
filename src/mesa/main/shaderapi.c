@@ -1908,6 +1908,26 @@ _mesa_LinkProgram(GLuint programObj)
       _mesa_lookup_shader_program_err(ctx, programObj, "glLinkProgram");
    link_program_error(ctx, shProg);
 }
+>>>>>>> 11a0d5563f49b84f27b2707d77a8553da52d73ba
+
+   struct gl_shader_program *shProg =
+      _mesa_lookup_shader_program(ctx, programObj);
+   link_program_no_error(ctx, shProg);
+}
+
+
+void GLAPIENTRY
+_mesa_LinkProgram(GLuint programObj)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glLinkProgram %u\n", programObj);
+
+   struct gl_shader_program *shProg =
+      _mesa_lookup_shader_program_err(ctx, programObj, "glLinkProgram");
+   link_program_error(ctx, shProg);
+}
 
 
 
@@ -1930,7 +1950,7 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
       if (!sh)
          return;
 
-      if (!string) {
+      if (string == NULL) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
          return;
       }
@@ -2281,7 +2301,7 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
       return;
    }
 
-   if (!ctx->Const.NumProgramBinaryFormats) {
+   if (ctx->Const.NumProgramBinaryFormats == 0) {
       *length = 0;
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetProgramBinary(driver supports zero binary formats)");

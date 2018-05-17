@@ -842,7 +842,7 @@ wsi_common_queue_present(const struct wsi_device *wsi,
       };
 
       VkPipelineStageFlags *stage_flags = NULL;
-      if (!i) {
+      if (i == 0) {
          /* We only need/want to wait on semaphores once.  After that, we're
           * guaranteed ordering since it all happens on the same queue.
           */
@@ -901,7 +901,7 @@ wsi_common_queue_present(const struct wsi_device *wsi,
       }
 
    fail_present:
-      if (pPresentInfo->pResults)
+      if (pPresentInfo->pResults != NULL)
          pPresentInfo->pResults[i] = result;
 
       /* Let the final result be our first unsuccessful result */

@@ -1123,6 +1123,9 @@ static VkResult radv_get_image_format_properties(struct radv_physical_device *ph
 	if (info->type != VK_IMAGE_TYPE_2D && vk_format_is_depth_or_stencil(info->format))
 		goto unsupported;
 
+	if (info->type != VK_IMAGE_TYPE_2D && vk_format_is_depth_or_stencil(info->format))
+		goto unsupported;
+
 	switch (info->type) {
 	default:
 		unreachable("bad vkimage type\n");

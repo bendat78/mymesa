@@ -288,12 +288,12 @@ static rvcn_dec_message_hevc_t get_h265_msg(struct radeon_decoder *dec,
 				break;
 			if (j == 15)
 				dec->render_pic_list[i] = NULL;
-			else if (!pic->ref[j+1])
+			else if (pic->ref[j+1] == NULL)
 				dec->render_pic_list[i] = NULL;
 		}
 	}
 	for (i = 0 ; i < 16 ; i++) {
-		if (!dec->render_pic_list[i]) {
+		if (dec->render_pic_list[i] == NULL) {
 			dec->render_pic_list[i] = target;
 			result.curr_idx = i;
 			break;
@@ -948,7 +948,7 @@ static struct pb_buffer *rvcn_dec_message_decode(struct radeon_decoder *dec,
 		memcpy(codec, (void*)&vp9, sizeof(rvcn_dec_message_vp9_t));
 		index->message_id = RDECODE_MESSAGE_VP9;
 
-		if (!dec->ctx.res) {
+		if (dec->ctx.res == NULL) {
 			unsigned ctx_size;
 			uint8_t *ptr;
 

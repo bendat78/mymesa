@@ -558,7 +558,7 @@ VkResult anv_CreateInstance(
       if (!anv_entrypoint_is_enabled(i, instance->apiVersion,
                                      &instance->enabled_extensions, NULL)) {
          instance->dispatch.entrypoints[i] = NULL;
-      } else if (anv_dispatch_table.entrypoints[i]) {
+      } else if (anv_dispatch_table.entrypoints[i] != NULL) {
          instance->dispatch.entrypoints[i] = anv_dispatch_table.entrypoints[i];
       } else {
          instance->dispatch.entrypoints[i] =
@@ -666,7 +666,7 @@ VkResult anv_EnumeratePhysicalDevices(
    if (result != VK_SUCCESS)
       return result;
 
-   if (!instance->physicalDeviceCount)
+   if (instance->physicalDeviceCount == 0)
       return VK_SUCCESS;
 
    assert(instance->physicalDeviceCount == 1);
@@ -690,7 +690,7 @@ VkResult anv_EnumeratePhysicalDeviceGroups(
    if (result != VK_SUCCESS)
       return result;
 
-   if (!instance->physicalDeviceCount)
+   if (instance->physicalDeviceCount == 0)
       return VK_SUCCESS;
 
    assert(instance->physicalDeviceCount == 1);
@@ -974,8 +974,8 @@ void anv_GetPhysicalDeviceProperties(
       .sparseProperties = {}, /* Broadwell doesn't do sparse. */
    };
 
-   strncpy(pProperties->deviceName, pdevice->name,
-           VK_MAX_PHYSICAL_DEVICE_NAME_SIZE);
+   snprintf(pProperties->deviceName, sizeof(pProperties->deviceName),
+            "%s", pdevice->name);
    memcpy(pProperties->pipelineCacheUUID,
           pdevice->pipeline_cache_uuid, VK_UUID_SIZE);
 }
@@ -1170,7 +1170,7 @@ PFN_vkVoidFunction anv_GetInstanceProcAddr(
     * when we have to return valid function pointers, NULL, or it's left
     * undefined.  See the table for exact details.
     */
-   if (!pName)
+   if (pName == NULL)
       return NULL;
 
 #define LOOKUP_ANV_ENTRYPOINT(entrypoint) \
@@ -1184,7 +1184,7 @@ PFN_vkVoidFunction anv_GetInstanceProcAddr(
 
 #undef LOOKUP_ANV_ENTRYPOINT
 
-   if (!instance)
+   if (instance == NULL)
       return NULL;
 
    int idx = anv_get_entrypoint_index(pName);
@@ -1484,7 +1484,7 @@ VkResult anv_CreateDevice(
     */
    assert(pCreateInfo->queueCreateInfoCount > 0);
    for (uint32_t i = 0; i < pCreateInfo->queueCreateInfoCount; i++) {
-      if (pCreateInfo->pQueueCreateInfos[i].flags)
+      if (pCreateInfo->pQueueCreateInfos[i].flags != 0)
          return vk_error(VK_ERROR_INITIALIZATION_FAILED);
    }
 

@@ -63,10 +63,6 @@ struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 
 	assert(resource_formats[0] != PIPE_FORMAT_NONE);
 
-	/* TODO: get tiling working */
-
-	assert(resource_formats[0] != PIPE_FORMAT_NONE);
-
 	for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
 		if (resource_formats[i] != PIPE_FORMAT_NONE) {
 			vl_video_buffer_template(&templ, &vidtemplate,
@@ -74,6 +70,7 @@ struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 			                         array_size, PIPE_USAGE_DEFAULT, i);
 			/* Set PIPE_BIND_SHARED to avoid reallocation in r600_texture_get_handle,
 			 * which can't handle joined surfaces. */
+			/* TODO: get tiling working */
 			templ.bind = PIPE_BIND_LINEAR | PIPE_BIND_SHARED;
 			resources[i] = (struct r600_texture *)
 			                pipe->screen->resource_create(pipe->screen, &templ);

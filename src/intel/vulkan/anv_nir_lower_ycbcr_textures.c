@@ -334,7 +334,7 @@ try_lower_tex_ycbcr(struct anv_pipeline_layout *layout,
        tex->op == nir_texop_lod)
       return false;
 
-   if (!binding->immutable_samplers)
+   if (binding->immutable_samplers == NULL)
       return false;
 
    unsigned texture_index = tex->texture_index;
@@ -350,7 +350,7 @@ try_lower_tex_ycbcr(struct anv_pipeline_layout *layout,
    const struct anv_sampler *sampler =
       binding->immutable_samplers[texture_index];
 
-   if (!sampler->conversion)
+   if (sampler->conversion == NULL)
       return false;
 
    struct ycbcr_state state = {

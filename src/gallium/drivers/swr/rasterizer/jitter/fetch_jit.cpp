@@ -159,7 +159,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
                 vIndices = GetSimdValid8bitIndices(indices, pLastIndex);
             }
             break;
-        case R16_UINT:
+        case R16_UINT: 
             if(fetchState.bDisableIndexOOBCheck)
             {
                 vIndices = LOAD(BITCAST(indices, PointerType::get(VectorType::get(mInt16Ty, mpJitMgr->mVWidth), 0)), {(uint32_t)0});
@@ -182,7 +182,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
 
     if(fetchState.bForceSequentialAccessEnable)
     {
-        Value* pOffsets = mVWidth == 8 ? C({ 0, 1, 2, 3, 4, 5, 6, 7 }) :
+        Value* pOffsets = mVWidth == 8 ? C({ 0, 1, 2, 3, 4, 5, 6, 7 }) : 
             C({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
 
         // VertexData buffers are accessed sequentially, the index is equal to the vertex number
@@ -278,7 +278,7 @@ Function* FetchJit::Create(const FETCH_COMPILE_STATE& fetchState)
 #if USE_SIMD16_SHADERS
     SetTargetWidth(baseWidth);
 #endif
-
+ 
     return fetch;
 }
 
@@ -645,7 +645,7 @@ void FetchJit::JitGatherVertices(const FETCH_COMPILE_STATE &fetchState,
         //  false - value of vInstanceStride has been initialialized to zero
         vOffsets = ADD(vOffsets, vInstanceStride);
 
-        // Packing and component control
+        // Packing and component control 
         ComponentEnable compMask = (ComponentEnable)ied.ComponentPacking;
         const ComponentControl compCtrl[4] { (ComponentControl)ied.ComponentControl0, (ComponentControl)ied.ComponentControl1,
                                              (ComponentControl)ied.ComponentControl2, (ComponentControl)ied.ComponentControl3};
@@ -1020,7 +1020,7 @@ template<typename T> Value* FetchJit::GetSimdValidIndicesHelper(Value* pIndices,
 
             pLastIndex = INT_TO_PTR(pLastIndex, Ty);
 
-            // check if the address is less than the max index,
+            // check if the address is less than the max index, 
             Value* mask = ICMP_ULT(pIndex, pLastIndex);
 
             // if valid, load the index. if not, load 0 from the stack
@@ -1065,7 +1065,7 @@ Value* FetchJit::GetSimdValid16bitIndices(Value* pIndices, Value* pLastIndex)
 Value* FetchJit::GetSimdValid32bitIndices(Value* pIndices, Value* pLastIndex)
 {
     DataLayout dL(JM()->mpCurrentModule);
-    Value* iLastIndex = pLastIndex;
+    Value* iLastIndex = pLastIndex; 
     Value* iIndices = pIndices;
 
     // get the number of indices left in the buffer (endPtr - curPtr) / sizeof(index)
@@ -1561,7 +1561,7 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs &args)
                 if (compCtrl[i] == ComponentControl::StoreSrc)
                 {
                     // if x or z, extract 128bits from lane 0, else for y or w, extract from lane 1
-                    uint32_t lane = ((!i) || (i == 2)) ? 0 : 1;
+                    uint32_t lane = ((i == 0) || (i == 2)) ? 0 : 1;
                     // if x or y, use vi128XY permute result, else use vi128ZW
                     Value *selectedPermute_lo = (i < 2) ? vi128XY_lo : vi128ZW_lo;
                     Value *selectedPermute_hi = (i < 2) ? vi128XY_hi : vi128ZW_hi;
@@ -1659,7 +1659,7 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs &args)
                 if (compCtrl[i] == ComponentControl::StoreSrc)
                 {
                     // select correct constMask for x/z or y/w pshufb
-                    uint32_t selectedMask = ((!i) || (i == 2)) ? 0 : 1;
+                    uint32_t selectedMask = ((i == 0) || (i == 2)) ? 0 : 1;
                     // if x or y, use vi128XY permute result, else use vi128ZW
                     uint32_t selectedGather = (i < 2) ? 0 : 1;
 
@@ -1673,7 +1673,7 @@ void FetchJit::Shuffle16bpcGather16(Shuffle16bpcArgs &args)
 
                     // after pshufb mask for x channel; z uses the same shuffle from the second gather
                     // 256i - 0    1    2    3    4    5    6    7
-                    //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00
+                    //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00 
 
                     Value* temp = JOIN_16(temp_lo, temp_hi);
 

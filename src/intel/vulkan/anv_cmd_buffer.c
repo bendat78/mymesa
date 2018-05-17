@@ -929,11 +929,11 @@ anv_cmd_buffer_get_push_descriptor_set(struct anv_cmd_buffer *cmd_buffer,
    struct anv_push_descriptor_set **push_set =
       &pipe_state->push_descriptors[set];
 
-   if (!*push_set) {
+   if (*push_set == NULL) {
       *push_set = vk_alloc(&cmd_buffer->pool->alloc,
                            sizeof(struct anv_push_descriptor_set), 8,
                            VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-      if (!*push_set) {
+      if (*push_set == NULL) {
          anv_batch_set_error(&cmd_buffer->batch, VK_ERROR_OUT_OF_HOST_MEMORY);
          return NULL;
       }

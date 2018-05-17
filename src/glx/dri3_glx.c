@@ -296,7 +296,7 @@ dri3_create_context_attribs(struct glx_screen *base,
       ctx_attribs[num_ctx_attribs++] = release;
    }
 
-   if (flags) {
+   if (flags != 0) {
       ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_FLAGS;
 
       /* The current __DRI_CTX_FLAG_* values are identical to the

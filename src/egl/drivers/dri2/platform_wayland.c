@@ -507,11 +507,11 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
                                          __DRI_IMAGE_USE_LINEAR,
                                          NULL);
       }
-      if (!dri2_surf->back->linear_copy)
+      if (dri2_surf->back->linear_copy == NULL)
           return -1;
    }
 
-   if (!dri2_surf->back->dri_image) {
+   if (dri2_surf->back->dri_image == NULL) {
       /* If our DRIImage implementation does not support
        * createImageWithModifiers, then fall back to the old createImage,
        * and hope it allocates an image which is acceptable to the winsys.
@@ -1264,7 +1264,7 @@ static EGLBoolean
 dri2_wl_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-   unsigned int format_count[ARRAY_SIZE(dri2_wl_visuals)] = {};
+   unsigned int format_count[ARRAY_SIZE(dri2_wl_visuals)] = { 0 };
    unsigned int count = 0;
 
    for (unsigned i = 0; dri2_dpy->driver_configs[i]; i++) {
@@ -1756,7 +1756,7 @@ dri2_wl_swrast_commit_backbuffer(struct dri2_egl_surface *dri2_surf)
     * to a sync callback so that we always give a chance for the compositor to
     * handle the commit and send a release event before checking for a free
     * buffer */
-   if (!dri2_surf->throttle_callback) {
+   if (dri2_surf->throttle_callback == NULL) {
       dri2_surf->throttle_callback = wl_display_sync(dri2_surf->wl_dpy_wrapper);
       wl_callback_add_listener(dri2_surf->throttle_callback,
                                &throttle_listener, dri2_surf);

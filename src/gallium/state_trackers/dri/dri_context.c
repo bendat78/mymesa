@@ -250,7 +250,7 @@ dri_unbind_context(__DRIcontext * cPriv)
    struct st_context_iface *st = ctx->st;
    struct st_api *stapi = screen->st_api;
 
-   if (!--ctx->bind_count) {
+   if (--ctx->bind_count == 0) {
       if (st == stapi->get_current(stapi)) {
          if (st->thread_finish)
             st->thread_finish(st);

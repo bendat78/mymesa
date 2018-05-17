@@ -82,7 +82,7 @@ __gen_combine_address(struct brw_context *brw, void *location,
    struct intel_batchbuffer *batch = &brw->batch;
    uint32_t offset;
 
-   if (!address.bo) {
+   if (address.bo == NULL) {
       return address.offset + delta;
    } else {
       if (GEN_GEN < 6 && brw_ptr_in_state_buffer(batch, location)) {
@@ -3139,7 +3139,7 @@ genX(upload_push_constant_packets)(struct brw_context *brw)
                const struct brw_ubo_range *range =
                   &stage_state->prog_data->ubo_ranges[i];
 
-               if (!range->length)
+               if (range->length == 0)
                   continue;
 
                const struct gl_uniform_block *block =

@@ -205,7 +205,7 @@ radv_pipeline_cache_grow(struct radv_pipeline_cache *cache)
 	struct cache_entry **old_table = cache->hash_table;
 
 	table = malloc(byte_size);
-	if (!table)
+	if (table == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	cache->hash_table = table;
@@ -353,6 +353,22 @@ radv_pipeline_cache_insert_shaders(struct radv_device *device,
 				   const void *const *codes,
 				   const unsigned *code_sizes)
 {
+	/* Pipeline caches can be disabled with RADV_DEBUG=nocache, with
+	 * MESA_GLSL_CACHE_DISABLE=1, and when VK_AMD_shader_info is requested.
+	 */
+	return (device->instance->debug_flags & RADV_DEBUG_NO_CACHE) ||
+	       !device->physical_device->disk_cache ||
+	       device->keep_shader_info;
+}
+
+bool
+radv_create_shader_variants_from_pipeline_cache(struct radv_device *device,
+					        struct radv_pipeline_cache *cache,
+					        const unsigned char *sha1,
+					        struct radv_shader_variant **variants)
+{
+	struct cache_entry *entry;
+
 	if (!cache)
 		cache = device->mem_cache;
 
@@ -564,7 +580,7 @@ VkResult radv_GetPipelineCacheData(
 	pthread_mutex_lock(&cache->mutex);
 
 	const size_t size = sizeof(*header) + cache->total_size;
-	if (!pData) {
+	if (pData == NULL) {
 		pthread_mutex_unlock(&cache->mutex);
 		*pDataSize = size;
 		return VK_SUCCESS;

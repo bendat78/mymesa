@@ -303,7 +303,7 @@ struct BEChooserSingleSample
     template <typename... TArgsT>
     static PFN_BACKEND_FUNC GetFunc(bool tArg, TArgsT... remainingArgs)
     {
-        if(tArg)
+        if(tArg == true)
         {
             return BEChooserSingleSample<ArgsT..., 1>::GetFunc(remainingArgs...);
         }

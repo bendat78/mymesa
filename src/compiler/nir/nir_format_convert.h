@@ -128,7 +128,7 @@ nir_format_bitcast_uint_vec_unmasked(nir_builder *b, nir_ssa_def *src,
       for (unsigned i = 0; i < src->num_components; i++) {
          nir_ssa_def *shifted = nir_ishl(b, nir_channel(b, src, i),
                                             nir_imm_int(b, shift));
-         if (!shift) {
+         if (shift == 0) {
             dst_chan[dst_idx] = shifted;
          } else {
             dst_chan[dst_idx] = nir_ior(b, dst_chan[dst_idx], shifted);

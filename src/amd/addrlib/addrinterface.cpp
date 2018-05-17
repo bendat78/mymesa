@@ -1091,7 +1091,7 @@ ADDR_E_RETURNCODE ADDR_API AddrGetMaxMetaAlignments(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->GetMaxMetaAlignments(pOut);
     }
@@ -1723,7 +1723,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2IsValidDisplaySwizzleMode(
 
     V2::Lib* pLib = V2::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         ADDR2_COMPUTE_SURFACE_INFO_INPUT in;
         in.swizzleMode = swizzleMode;

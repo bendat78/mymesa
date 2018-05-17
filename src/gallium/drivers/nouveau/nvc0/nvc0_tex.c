@@ -1399,7 +1399,7 @@ gm107_create_image_handle(struct pipe_context *pipe,
       gm107_create_texture_view_from_image(pipe, view);
    struct nv50_tic_entry *tic = nv50_tic_entry(sview);
 
-   if (!tic)
+   if (tic == NULL)
       goto fail;
 
    tic->bindless = 1;

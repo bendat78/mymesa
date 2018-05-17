@@ -230,7 +230,8 @@ brw_codegen_tcs_prog(struct brw_context *brw, struct brw_program *tcp,
    const unsigned *program =
       brw_compile_tcs(compiler, brw, mem_ctx, key, &prog_data, nir, st_index,
                       &error_str);
-   if (!program) {
+
+   if (program == NULL) {
       if (tep) {
          tep->program.sh.data->LinkStatus = LINKING_FAILURE;
          ralloc_strcat(&tep->program.sh.data->InfoLog, error_str);

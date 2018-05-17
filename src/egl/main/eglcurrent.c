@@ -301,7 +301,7 @@ _eglDebugReport(EGLenum error, const char *funcName,
    EGLDEBUGPROCKHR callback = NULL;
    va_list args;
 
-   if (!funcName)
+   if (funcName == NULL)
       funcName = thr->CurrentFuncName;
 
    mtx_lock(_eglGlobal.Mutex);
@@ -327,4 +327,3 @@ _eglDebugReport(EGLenum error, const char *funcName,
    if (type == EGL_DEBUG_MSG_CRITICAL_KHR || type == EGL_DEBUG_MSG_ERROR_KHR)
       _eglInternalError(error, funcName);
 }
-

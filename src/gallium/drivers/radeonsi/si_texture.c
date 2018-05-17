@@ -1415,7 +1415,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 		}
 	}
 
-	struct radeon_surf surface = {};
+	struct radeon_surf surface = {0};
 	bool is_flushed_depth = templ->flags & SI_RESOURCE_FLAG_FLUSHED_DEPTH;
 	bool tc_compatible_htile =
 		sscreen->info.chip_class >= VI &&
@@ -1558,7 +1558,7 @@ bool si_init_flushed_depth_texture(struct pipe_context *ctx,
 		resource.flags |= SI_RESOURCE_FLAG_TRANSFER;
 
 	*flushed_depth_texture = (struct r600_texture *)ctx->screen->resource_create(ctx->screen, &resource);
-	if (!*flushed_depth_texture) {
+	if (*flushed_depth_texture == NULL) {
 		PRINT_ERR("failed to create temporary texture to hold flushed depth\n");
 		return false;
 	}

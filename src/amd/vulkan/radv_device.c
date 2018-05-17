@@ -329,6 +329,9 @@ radv_physical_device_init(struct radv_physical_device *device,
 		goto fail;
 	}
 
+	if ((device->instance->debug_flags & RADV_DEBUG_INFO))
+		ac_print_gpu_info(&device->rad_info);
+
 	return VK_SUCCESS;
 
 fail:
@@ -391,6 +394,7 @@ static const struct debug_control radv_debug_options[] = {
 	{"preoptir", RADV_DEBUG_PREOPTIR},
 	{"nodynamicbounds", RADV_DEBUG_NO_DYNAMIC_BOUNDS},
 	{"nooutoforder", RADV_DEBUG_NO_OUT_OF_ORDER},
+	{"info", RADV_DEBUG_INFO},
 	{NULL, 0}
 };
 
@@ -2474,6 +2478,8 @@ VkResult radv_QueueSubmit(
 
 		for (uint32_t j = 0; j < pSubmits[i].commandBufferCount; j += advance) {
 			struct radeon_winsys_cs *initial_preamble = (do_flush && !j) ? initial_flush_preamble_cs : initial_preamble_cs;
+			const struct radv_winsys_bo_list *bo_list = NULL;
+
 			advance = MIN2(max_cs_submission,
 				       pSubmits[i].commandBufferCount - j);
 
@@ -2483,12 +2489,14 @@ VkResult radv_QueueSubmit(
 			sem_info.cs_emit_wait = j == 0;
 			sem_info.cs_emit_signal = j + advance == pSubmits[i].commandBufferCount;
 
-			if (unlikely(queue->device->use_global_bo_list))
+			if (unlikely(queue->device->use_global_bo_list)) {
 				pthread_mutex_lock(&queue->device->bo_list.mutex);
+				bo_list = &queue->device->bo_list.list;
+			}
 
 			ret = queue->device->ws->cs_submit(ctx, queue->queue_idx, cs_array + j,
 							advance, initial_preamble, continue_preamble_cs,
-							&sem_info, &queue->device->bo_list.list,
+							&sem_info, bo_list,
 							can_patch, base_fence);
 
 			if (unlikely(queue->device->use_global_bo_list))
@@ -2823,7 +2831,7 @@ void radv_UnmapMemory(
 	if (!mem)
 		return;
 
-	if (!mem->user_ptr)
+	if (mem->user_ptr == NULL)
 		device->ws->buffer_unmap(mem->bo);
 }
 
@@ -4316,7 +4324,7 @@ VkResult radv_GetMemoryFdKHR(VkDevice _device,
 	       VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
 
 	bool ret = radv_get_memory_fd(device, memory, pFD);
-	if (!ret)
+	if (ret == false)
 		return vk_error(VK_ERROR_OUT_OF_DEVICE_MEMORY);
 	return VK_SUCCESS;
 }
@@ -4349,7 +4357,7 @@ static VkResult radv_import_opaque_fd(struct radv_device *device,
 {
 	uint32_t syncobj_handle = 0;
 	int ret = device->ws->import_syncobj(device->ws, fd, &syncobj_handle);
-	if (ret)
+	if (ret != 0)
 		return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
 
 	if (*syncobj)
@@ -4379,7 +4387,7 @@ static VkResult radv_import_sync_fd(struct radv_device *device,
 		device->ws->signal_syncobj(device->ws, syncobj_handle);
 	} else {
 		int ret = device->ws->import_syncobj_from_sync_file(device->ws, syncobj_handle, fd);
-	if (ret)
+	if (ret != 0)
 		return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
 	}
 
@@ -4460,7 +4468,7 @@ void radv_GetPhysicalDeviceExternalSemaphoreProperties(
 
 	/* Require has_syncobj_wait_for_submit for the syncobj signal ioctl introduced at virtually the same time */
 	if (pdevice->rad_info.has_syncobj_wait_for_submit &&
-	    (pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
+	    (pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR || 
 	     pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR)) {
 		pExternalSemaphoreProperties->exportFromImportedHandleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
 		pExternalSemaphoreProperties->compatibleHandleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
@@ -4548,7 +4556,7 @@ void radv_GetPhysicalDeviceExternalFenceProperties(
 	RADV_FROM_HANDLE(radv_physical_device, pdevice, physicalDevice);
 
 	if (pdevice->rad_info.has_syncobj_wait_for_submit &&
-	    (pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
+	    (pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR || 
 	     pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR)) {
 		pExternalFenceProperties->exportFromImportedHandleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
 		pExternalFenceProperties->compatibleHandleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR;

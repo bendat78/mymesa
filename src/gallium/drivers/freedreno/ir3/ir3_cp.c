@@ -205,6 +205,9 @@ static bool valid_flags(struct ir3_instruction *instr, unsigned n,
 
 			if (is_atomic(instr->opc) && !(instr->flags & IR3_INSTR_G))
 				return false;
+
+			if (is_atomic(instr->opc) && !(instr->flags & IR3_INSTR_G))
+				return false;
 		}
 
 		break;
@@ -317,7 +320,7 @@ unuse(struct ir3_instruction *instr)
 {
 	debug_assert(instr->use_count > 0);
 
-	if (!--instr->use_count) {
+	if (--instr->use_count == 0) {
 		struct ir3_block *block = instr->block;
 
 		instr->barrier_class = 0;

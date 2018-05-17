@@ -89,7 +89,7 @@ static void scan_instruction(struct tgsi_shader_info *info,
 			break;
 		case nir_intrinsic_load_local_group_size:
 			/* The block size is translated to IMM with a fixed block size. */
-			if (!info->properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH])
+			if (info->properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH] == 0)
 				info->uses_block_size = true;
 			break;
 		case nir_intrinsic_load_local_invocation_id:
@@ -635,7 +635,7 @@ void si_nir_scan_shader(const struct nir_shader *nir,
 		 * uniforms) its really only used for getting the buffer count
 		 * so we don't need to worry about the ordering.
 		 */
-		if (variable->interface_type) {
+		if (variable->interface_type != NULL) {
 			if (variable->data.mode == nir_var_uniform) {
 
 				unsigned block_count;

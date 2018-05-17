@@ -273,7 +273,7 @@ vc4_write_uniforms(struct vc4_context *vc4, struct vc4_compiled_shader *shader,
                         break;
 
                 case QUNIFORM_UBO_ADDR:
-                        if (!uinfo->data[i]) {
+                        if (uinfo->data[i] == 0) {
                                 cl_aligned_reloc(job, &job->uniforms,
                                                  &uniforms, ubo, 0);
                         } else {

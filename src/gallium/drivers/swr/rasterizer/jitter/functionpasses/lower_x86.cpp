@@ -209,7 +209,7 @@ namespace SwrJit
             {
             case W256: numElem = 8; break;
             case W512: numElem = 16; break;
-	    default: SWR_ASSERT(false, "Unhandled vector width type %d\n", width);
+            default: SWR_ASSERT(false, "Unhandled vector width type %d\n", width);
             }
 
             return ConstantVector::getNullValue(VectorType::get(pTy, numElem));
@@ -222,7 +222,7 @@ namespace SwrJit
             {
             case W256: mask = B->C((uint8_t)-1); break;
             case W512: mask = B->C((uint16_t)-1); break;
-	    default: SWR_ASSERT(false, "Unhandled vector width type %d\n", width);
+            default: SWR_ASSERT(false, "Unhandled vector width type %d\n", width);
             }
             return mask;
         }
@@ -265,8 +265,16 @@ namespace SwrJit
                 // Assuming the intrinsics are consistent and place the src operand and mask last in the argument list.
                 if (mTarget == AVX512)
                 {
-                    args.push_back(GetZeroVec(vecWidth, pElemTy));
-                    args.push_back(GetMask(vecWidth));
+                    if (pFunc->getName().equals("meta.intrinsic.VCVTPD2PS")) {
+                        args.push_back(GetZeroVec(W256, pCallInst->getType()->getScalarType()));
+                        args.push_back(GetMask(W256));
+                        // for AVX512 VCVTPD2PS, we also have to add rounding mode
+                        args.push_back(B->C(_MM_FROUND_TO_NEAREST_INT |
+                                            _MM_FROUND_NO_EXC));
+                    } else {
+                        args.push_back(GetZeroVec(vecWidth, pElemTy));
+                        args.push_back(GetMask(vecWidth));
+                    }
                 }
 
                 return B->CALLA(pIntrin, args);
@@ -445,7 +453,7 @@ namespace SwrJit
             if (srcTy == B->mFP32Ty)
             {
                 pX86IntrinFunc = Intrinsic::getDeclaration(B->JM()->mpCurrentModule, Intrinsic::x86_avx2_gather_d_ps_256);
-            }
+            } 
             else if (srcTy == B->mInt32Ty)
             {
                 pX86IntrinFunc = Intrinsic::getDeclaration(B->JM()->mpCurrentModule, Intrinsic::x86_avx2_gather_d_d_256);

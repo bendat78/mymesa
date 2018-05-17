@@ -680,12 +680,12 @@ static struct ruvd_h265 get_h265_msg(struct ruvd_decoder *dec, struct pipe_video
 				break;
 			if (j == 15)
 				dec->render_pic_list[i] = NULL;
-			else if (!pic->ref[j+1])
+			else if (pic->ref[j+1] == NULL)
 				dec->render_pic_list[i] = NULL;
 		}
 	}
 	for (i = 0 ; i < 16 ; i++) {
-		if (!dec->render_pic_list[i]) {
+		if (dec->render_pic_list[i] == NULL) {
 			dec->render_pic_list[i] = target;
 			result.curr_idx = i;
 			break;
@@ -983,7 +983,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	size++;
 
 	for (i = 0; i < 4; ++i) {
-		if (!pic->quantization_table.load_quantiser_table[i])
+		if (pic->quantization_table.load_quantiser_table[i] == 0)
 			continue;
 
 		buf[size++] = i;
@@ -1004,7 +1004,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	size++;
 
 	for (i = 0; i < 2; ++i) {
-		if (!pic->huffman_table.load_huffman_table[i])
+		if (pic->huffman_table.load_huffman_table[i] == 0)
 			continue;
 
 		buf[size++] = 0x00 | i;
@@ -1015,7 +1015,7 @@ static void get_mjpeg_slice_header(struct ruvd_decoder *dec, struct pipe_mjpeg_p
 	}
 
 	for (i = 0; i < 2; ++i) {
-		if (!pic->huffman_table.load_huffman_table[i])
+		if (pic->huffman_table.load_huffman_table[i] == 0)
 			continue;
 
 		buf[size++] = 0x10 | i;

@@ -901,7 +901,7 @@ static void choose_spill_arrays(struct r600_shader_ctx *ctx, int *regno, unsigne
 		narrays_left --;
 	}
 
-	if (!narrays_left) {
+	if (narrays_left == 0) {
 		ctx->info.indirect_files &= ~(1 << TGSI_FILE_TEMPORARY);
 	}
 }
@@ -1338,7 +1338,7 @@ static int load_sample_position(struct r600_shader_ctx *ctx, struct r600_shader_
 	vtx.op = FETCH_OP_VFETCH;
 	vtx.buffer_id = R600_BUFFER_INFO_CONST_BUFFER;
 	vtx.fetch_type = SQ_VTX_FETCH_NO_INDEX_OFFSET;
-	if (!sample_id) {
+	if (sample_id == NULL) {
 		assert(ctx->fixed_pt_position_gpr != -1);
 
 		vtx.src_gpr = ctx->fixed_pt_position_gpr; // SAMPLEID is in .w;
@@ -3224,7 +3224,7 @@ static int r600_emit_tess_factor(struct r600_shader_ctx *ctx)
 		if (ctx->shader->tcs_prim_mode == PIPE_PRIM_LINES) {
 			if (out_comp == 1)
 				out_comp = 0;
-			else if (!out_comp)
+			else if (out_comp == 0)
 				out_comp = 1;
 		}
 
@@ -4438,14 +4438,14 @@ static int tgsi_op2_64_params(struct r600_shader_ctx *ctx, bool singledest, bool
 			}
 			break;
 		case 0x4:
-			if (!swizzle_x) {
+			if (swizzle_x == 0) {
 				write_mask = 0x3;
 				use_tmp = 1;
 			} else
 				write_mask = 0xc;
 			break;
 		case 0x8:
-			if (!swizzle_x) {
+			if (swizzle_x == 0) {
 				write_mask = 0x3;
 				use_tmp = 1;
 			} else {
@@ -4856,7 +4856,6 @@ static int egcm_int_to_double(struct r600_shader_ctx *ctx)
 					alu.last = i == dchan + 1;
 				else
 					alu.last = 1; /* trans only ops on evergreen */
-
 				r = r600_bytecode_add_alu(ctx->bc, &alu);
 				if (r)
 					return r;
@@ -8734,7 +8733,7 @@ static int tgsi_load_lds(struct r600_shader_ctx *ctx)
 	struct r600_bytecode_alu alu;
 	int r;
 	int temp_reg = r600_get_temp(ctx);
-
+	
 	memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 	alu.op = ALU_OP1_MOV;
 	r600_bytecode_src(&alu.src[0], &ctx->src[1], 0);
@@ -8744,7 +8743,8 @@ static int tgsi_load_lds(struct r600_shader_ctx *ctx)
 	r = r600_bytecode_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;
-
+	
+>>>>>>> 11a0d5563f49b84f27b2707d77a8553da52d73ba
 	r = do_lds_fetch_values(ctx, temp_reg,
 				ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index, inst->Dst[0].Register.WriteMask);
 	if (r)
@@ -9723,7 +9723,7 @@ static int tgsi_log(struct r600_shader_ctx *ctx)
 
 				alu.dst.sel = ctx->temp_reg;
 				alu.dst.chan = i;
-				if (!i)
+				if (i == 0)
 					alu.dst.write = 1;
 				if (i == 2)
 					alu.last = 1;
@@ -10501,7 +10501,7 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 			break;
 	}
 
-	if (!fscp) {
+	if (fscp == 0) {
 		R600_ERR("Break not inside loop/endloop pair\n");
 		return -EINVAL;
 	}
@@ -11080,7 +11080,7 @@ static int egcm_u64div(struct r600_shader_ctx *ctx)
 	/* make sure we are dividing my a const with 0 in the high bits */
 	if (ctx->src[1].sel != V_SQ_ALU_SRC_LITERAL)
 		return -1;
-	if (ctx->src[1].value[ctx->src[1].swizzle[1]])
+	if (ctx->src[1].value[ctx->src[1].swizzle[1]] != 0)
 		return -1;
 	/* make sure we are doing one division */
 	if (inst->Dst[0].Register.WriteMask != 0x3)

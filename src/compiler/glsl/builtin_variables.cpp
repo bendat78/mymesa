@@ -1459,4 +1459,3 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
       break;
    }
 }
-

@@ -266,7 +266,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    }
 
    void *map = brw_bo_map(brw, bo, MAP_WRITE | MAP_RAW);
-   if (!map) {
+   if (map == NULL) {
       DBG("%s: failed to map bo\n", __func__);
       return false;
    }
@@ -405,6 +405,7 @@ static void
 intel_set_texture_image_mt(struct brw_context *brw,
                            struct gl_texture_image *image,
                            GLenum internal_format,
+                           mesa_format format,
                            struct intel_mipmap_tree *mt)
 
 {
@@ -415,7 +416,7 @@ intel_set_texture_image_mt(struct brw_context *brw,
    _mesa_init_teximage_fields(&brw->ctx, image,
                               mt->surf.logical_level0_px.width,
                               mt->surf.logical_level0_px.height, 1,
-                              0, internal_format, mt->format);
+                              0, internal_format, format);
 
    brw->ctx.Driver.FreeTextureImageBuffer(&brw->ctx, image);
 
@@ -442,7 +443,6 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    mesa_format texFormat = MESA_FORMAT_NONE;
-   struct intel_mipmap_tree *mt;
    GLenum internal_format = 0;
 
    texObj = _mesa_get_current_tex_object(ctx, target);
@@ -491,8 +491,8 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    _mesa_lock_texture(&brw->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, 0);
-   intel_set_texture_image_mt(brw, texImage, internal_format, mt);
-   intel_miptree_release(&mt);
+   intel_set_texture_image_mt(brw, texImage, internal_format,
+                              texFormat, rb->mt);
    _mesa_unlock_texture(&brw->ctx, texObj);
 }
 
@@ -646,7 +646,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    const GLenum internal_format =
       image->internal_format != 0 ?
       image->internal_format : _mesa_get_format_base_format(mt->format);
-   intel_set_texture_image_mt(brw, texImage, internal_format, mt);
+   intel_set_texture_image_mt(brw, texImage, internal_format, mt->format, mt);
    intel_miptree_release(&mt);
 }
 

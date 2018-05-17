@@ -572,7 +572,7 @@ struct BlendJit : public Builder
 
             // load constant color
             constantColor[i] = VBROADCAST(LOAD(pBlendState, { 0, SWR_BLEND_STATE_constantColor, i }));
-
+        
             // load src
             src[i] = LOAD(pSrc, { 0, i });
 

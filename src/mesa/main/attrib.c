@@ -287,7 +287,7 @@ _mesa_PushAttrib(GLbitfield mask)
       GLuint i;
       struct gl_colorbuffer_attrib *attr;
       attr = MALLOC_STRUCT(gl_colorbuffer_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -324,7 +324,7 @@ _mesa_PushAttrib(GLbitfield mask)
       struct gl_enable_attrib *attr;
       GLuint i;
       attr = MALLOC_STRUCT(gl_enable_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -454,7 +454,7 @@ _mesa_PushAttrib(GLbitfield mask)
    if (mask & GL_PIXEL_MODE_BIT) {
       struct gl_pixel_attrib *attr;
       attr = MALLOC_STRUCT(gl_pixel_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -960,7 +960,7 @@ _mesa_PopAttrib(void)
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
 
-   if (!ctx->AttribStackDepth) {
+   if (ctx->AttribStackDepth == 0) {
       _mesa_error(ctx, GL_STACK_UNDERFLOW, "glPopAttrib");
       return;
    }
@@ -1712,7 +1712,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       struct gl_pixelstore_attrib *attr;
       /* packing attribs */
       attr = CALLOC_STRUCT(gl_pixelstore_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
          goto end;
       }
@@ -1727,7 +1727,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
 
       /* unpacking attribs */
       attr = CALLOC_STRUCT(gl_pixelstore_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
          goto end;
       }
@@ -1745,7 +1745,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
    if (mask & GL_CLIENT_VERTEX_ARRAY_BIT) {
       struct gl_array_attrib *attr;
       attr = CALLOC_STRUCT(gl_array_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
          goto end;
       }
@@ -1782,7 +1782,7 @@ _mesa_PopClientAttrib(void)
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
 
-   if (!ctx->ClientAttribStackDepth) {
+   if (ctx->ClientAttribStackDepth == 0) {
       _mesa_error(ctx, GL_STACK_UNDERFLOW, "glPopClientAttrib");
       return;
    }

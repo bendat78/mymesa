@@ -2715,6 +2715,7 @@ Fake_glXReleaseBuffersMESA( Display *dpy, GLXDrawable d )
 }
 
 
+
 /*** GLX_MESA_agp_offset ***/
 
 static GLuint

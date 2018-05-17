@@ -164,13 +164,14 @@ static ADDR_E_RETURNCODE ADDR_API freeSysMem(const ADDR_FREESYSMEM_INPUT * pInpu
 }
 
 ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
-			       const struct amdgpu_gpu_info *amdinfo)
+			       const struct amdgpu_gpu_info *amdinfo,
+			       uint64_t *max_alignment)
 {
-	ADDR_CREATE_INPUT addrCreateInput = {};
-	ADDR_CREATE_OUTPUT addrCreateOutput = {};
-	ADDR_REGISTER_VALUE regValue = {};
-	ADDR_CREATE_FLAGS createFlags = {};
-	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {};
+	ADDR_CREATE_INPUT addrCreateInput = {0};
+	ADDR_CREATE_OUTPUT addrCreateOutput = {0};
+	ADDR_REGISTER_VALUE regValue = {0};
+	ADDR_CREATE_FLAGS createFlags = {{0}};
+	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {0};
 	ADDR_E_RETURNCODE addrRet;
 
 	addrCreateInput.size = sizeof(ADDR_CREATE_INPUT);
@@ -217,6 +218,12 @@ ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
 	if (addrRet != ADDR_OK)
 		return NULL;
 
+	if (max_alignment) {
+		addrRet = AddrGetMaxAlignments(addrCreateOutput.hLib, &addrGetMaxAlignmentsOutput);
+		if (addrRet == ADDR_OK){
+			*max_alignment = addrGetMaxAlignmentsOutput.baseAlign;
+		}
+	}
 	return addrCreateOutput.hLib;
 }
 
@@ -515,8 +522,8 @@ static int gfx6_surface_settings(ADDR_HANDLE addrlib,
 	    surf->u.legacy.level[0].mode == RADEON_SURF_MODE_2D &&
 	    !(surf->flags & (RADEON_SURF_Z_OR_SBUFFER | RADEON_SURF_SHAREABLE)) &&
 	    !get_display_flag(config, surf)) {
-		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {};
-		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {};
+		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {0};
+		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {0};
 
 		AddrBaseSwizzleIn.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_INPUT);
 		AddrBaseSwizzleOut.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT);
@@ -848,8 +855,8 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 
 	/* Compute FMASK. */
 	if (config->info.samples >= 2 && AddrSurfInfoIn.flags.color) {
-		ADDR_COMPUTE_FMASK_INFO_INPUT fin = {};
-		ADDR_COMPUTE_FMASK_INFO_OUTPUT fout = {};
+		ADDR_COMPUTE_FMASK_INFO_INPUT fin = {0};
+		ADDR_COMPUTE_FMASK_INFO_OUTPUT fout = {0};
 		ADDR_TILEINFO fmask_tile_info = {};
 
 		fin.size = sizeof(fin);
@@ -884,8 +891,8 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 		/* Compute tile swizzle for FMASK. */
 		if (config->info.fmask_surf_index &&
 		    !(surf->flags & RADEON_SURF_SHAREABLE)) {
-			ADDR_COMPUTE_BASE_SWIZZLE_INPUT xin = {};
-			ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT xout = {};
+			ADDR_COMPUTE_BASE_SWIZZLE_INPUT xin = {0};
+			ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT xout = {0};
 
 			xin.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_INPUT);
 			xout.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT);
@@ -1075,8 +1082,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		    !out.mipChainInTail &&
 		    !(surf->flags & RADEON_SURF_SHAREABLE) &&
 		    !in->flags.display) {
-			ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {};
-			ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {};
+			ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {0};
+			ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {0};
 
 			xin.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_INPUT);
 			xout.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT);
@@ -1102,8 +1109,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		if (!(surf->flags & RADEON_SURF_DISABLE_DCC) &&
 		    !compressed &&
 		    in->swizzleMode != ADDR_SW_LINEAR) {
-			ADDR2_COMPUTE_DCCINFO_INPUT din = {};
-			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {};
+			ADDR2_COMPUTE_DCCINFO_INPUT din = {0};
+			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {0};
 			ADDR2_META_MIP_INFO meta_mip_info[RADEON_SURF_MAX_LEVELS] = {};
 
 			din.size = sizeof(ADDR2_COMPUTE_DCCINFO_INPUT);
@@ -1200,8 +1207,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 			if (config->info.fmask_surf_index &&
 			    fin.swizzleMode >= ADDR_SW_64KB_Z_T &&
 			    !(surf->flags & RADEON_SURF_SHAREABLE)) {
-				ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {};
-				ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {};
+				ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {0};
+				ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {0};
 
 				xin.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_INPUT);
 				xout.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT);

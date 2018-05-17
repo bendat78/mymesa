@@ -313,7 +313,7 @@ bind_sampler(struct gl_context *ctx, GLuint unit, GLuint sampler, bool no_error)
 {
    struct gl_sampler_object *sampObj;
 
-   if (!sampler) {
+   if (sampler == 0) {
       /* Use the default sampler object, the one contained in the texture
        * object.
        */

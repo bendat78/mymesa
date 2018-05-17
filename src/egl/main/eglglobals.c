@@ -157,7 +157,7 @@ _eglPointerIsDereferencable(void *p)
    unsigned char valid = 0;
    const long page_size = getpagesize();
 
-   if (!p)
+   if (p == NULL)
       return EGL_FALSE;
 
    /* align addr to page_size */

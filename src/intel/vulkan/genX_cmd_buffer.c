@@ -2379,7 +2379,7 @@ cmd_buffer_flush_push_constants(struct anv_cmd_buffer *cmd_buffer,
 
             for (int i = 3; i >= 0; i--) {
                const struct brw_ubo_range *range = &prog_data->ubo_ranges[i];
-               if (!range->length)
+               if (range->length == 0)
                   continue;
 
                const unsigned surface =

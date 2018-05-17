@@ -303,6 +303,10 @@ loop_unroll_visitor::complex_unroll(ir_loop *ir, int iterations,
          ? &ir_if->then_instructions : &ir_if->else_instructions;
       ir_if = ((ir_instruction *) first_list->get_tail())->as_if();
 
+      exec_list *const first_list = first_term_then_continue
+         ? &ir_if->then_instructions : &ir_if->else_instructions;
+      ir_if = ((ir_instruction *) first_list->get_tail())->as_if();
+
       ir_to_replace->insert_before(&copy_list);
       ir_to_replace->remove();
 
@@ -384,12 +388,12 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   if (ls->limiting_terminator) {
+   if (ls->limiting_terminator != NULL) {
       /* If the limiting terminator has an iteration count of zero, then we've
        * proven that the loop cannot run, so delete it.
        */
       int iterations = ls->limiting_terminator->iterations;
-      if (!iterations) {
+      if (iterations == 0) {
          ir->remove();
          this->progress = true;
          return visit_continue;
@@ -436,7 +440,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
       }
    }
 
-   if (!ls->limiting_terminator) {
+   if (ls->limiting_terminator == NULL) {
       ir_instruction *last_ir =
          (ir_instruction *) ir->body_instructions.get_tail();
 

@@ -406,27 +406,27 @@ _mesa_glsl_release_types(void)
     * object, or if process terminates), so no mutex-locking should be
     * necessary.
     */
-   if (glsl_type::array_types) {
+   if (glsl_type::array_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::array_types, hash_free_type_function);
       glsl_type::array_types = NULL;
    }
 
-   if (glsl_type::record_types) {
+   if (glsl_type::record_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::record_types, hash_free_type_function);
       glsl_type::record_types = NULL;
    }
 
-   if (glsl_type::interface_types) {
+   if (glsl_type::interface_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::interface_types, hash_free_type_function);
       glsl_type::interface_types = NULL;
    }
 
-   if (glsl_type::function_types) {
+   if (glsl_type::function_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::function_types, hash_free_type_function);
       glsl_type::function_types = NULL;
    }
 
-   if (glsl_type::subroutine_types) {
+   if (glsl_type::subroutine_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::subroutine_types, hash_free_type_function);
       glsl_type::subroutine_types = NULL;
    }
@@ -2158,7 +2158,7 @@ decode_type_from_blob(struct blob_reader *blob)
 {
    uint32_t u = blob_read_uint32(blob);
 
-   if (!u) {
+   if (u == 0) {
       return NULL;
    }
 

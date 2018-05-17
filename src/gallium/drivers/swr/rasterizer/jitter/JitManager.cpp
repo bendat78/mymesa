@@ -96,7 +96,7 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
 #else
         hostCPUName = StringRef("core-avx2");
 #endif
-        if (!mVWidth)
+        if (mVWidth == 0)
         {
             mVWidth = 8;
         }
@@ -104,7 +104,7 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
     else if(mArch.AVX2())
     {
         hostCPUName = StringRef("core-avx2");
-        if (!mVWidth)
+        if (mVWidth == 0)
         {
             mVWidth = 8;
         }
@@ -119,7 +119,7 @@ JitManager::JitManager(uint32_t simdWidth, const char *arch, const char* core)
         {
             hostCPUName = StringRef("corei7-avx");
         }
-        if (!mVWidth)
+        if (mVWidth == 0)
         {
             mVWidth = 8;
         }
@@ -579,7 +579,6 @@ int ExecUnhookedProcess(const std::string& CmdLine, std::string* pStdOut, std::s
 {
     return ExecCmd(CmdLine, "", pStdOut, pStdErr);
 }
-
 
 /// notifyObjectCompiled - Provides a pointer to compiled code for Module M.
 void JitCache::notifyObjectCompiled(const llvm::Module *M, llvm::MemoryBufferRef Obj)

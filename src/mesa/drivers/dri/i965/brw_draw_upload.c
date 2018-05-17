@@ -412,7 +412,7 @@ copy_array_to_vbo_array(struct brw_context *brw,
     * attribute once and set the buffer's stride to 0.  There's no need
     * to replicate it out.
     */
-   if (!src_stride) {
+   if (src_stride == 0) {
       brw_upload_data(&brw->upload, glattrib->Ptr, glattrib->_ElementSize,
                       glattrib->_ElementSize, &buffer->bo, &buffer->offset);
 
@@ -586,7 +586,7 @@ brw_prepare_vertices(struct brw_context *brw)
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
 	  */
-	 if (!nr_uploads) {
+	 if (nr_uploads == 0) {
             interleaved = glbinding->Stride;
             ptr = glattrib->Ptr;
 	 }
@@ -674,7 +674,8 @@ brw_prepare_vertices(struct brw_context *brw)
       struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
       const struct gl_vertex_buffer_binding *glbinding = upload[i]->glbinding;
       const struct gl_array_attributes *glattrib = upload[i]->glattrib;
-      if (!glbinding->InstanceDivisor) {
+
+      if (glbinding->InstanceDivisor == 0) {
          copy_array_to_vbo_array(brw, upload[i], min_index, max_index,
                                  buffer, glattrib->_ElementSize);
       } else {

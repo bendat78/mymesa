@@ -337,7 +337,7 @@ static void bind_vs_pos_only(struct blitter_context_priv *ctx,
       struct pipe_stream_output_info so;
       static const enum tgsi_semantic semantic_names[] =
          { TGSI_SEMANTIC_POSITION };
-      const uint semantic_indices[] = {};
+      const uint semantic_indices[] = { 0 };
 
       memset(&so, 0, sizeof(so));
       so.num_outputs = 1;
@@ -377,7 +377,7 @@ static void *get_vs_passthrough_pos(struct blitter_context *blitter)
    if (!ctx->vs_nogeneric) {
       static const enum tgsi_semantic semantic_names[] =
          { TGSI_SEMANTIC_POSITION };
-      const uint semantic_indices[] = {};
+      const uint semantic_indices[] = { 0 };
 
       ctx->vs_nogeneric =
          util_make_vertex_passthrough_shader(pipe, 1,

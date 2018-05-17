@@ -1005,7 +1005,7 @@ st_translate_mesa_program(struct gl_context *ctx,
    if (program->Parameters) {
       t->constants = calloc(program->Parameters->NumParameters,
                              sizeof t->constants[0]);
-      if (!t->constants) {
+      if (t->constants == NULL) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }
@@ -1029,7 +1029,7 @@ st_translate_mesa_program(struct gl_context *ctx,
             if (program->arb.IndirectRegisterFiles & PROGRAM_ANY_CONST)
                t->constants[i] = ureg_DECL_constant( ureg, i );
             else
-               t->constants[i] =
+               t->constants[i] = 
                   ureg_DECL_immediate(ureg,
                                       (const float *)
                                       program->Parameters->ParameterValues + pvo,

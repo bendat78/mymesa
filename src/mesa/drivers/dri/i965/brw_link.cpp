@@ -282,7 +282,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
     if (first != last && brw->screen->devinfo.gen >= 8) {
        int next = last;
        for (int i = next - 1; i >= 0; i--) {
-          if (!shProg->_LinkedShaders[i])
+          if (shProg->_LinkedShaders[i] == NULL)
              continue;
 
           brw_nir_link_shaders(compiler,

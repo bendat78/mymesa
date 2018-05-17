@@ -156,8 +156,7 @@ dp2_emit(
 
 static struct lp_build_tgsi_action dp2_action = {
    dp2_fetch_args,	 /* fetch_args */
-   dp2_emit,	 /* emit */
-   NULL
+   dp2_emit	 /* emit */
 };
 
 /* TGSI_OPCODE_DP3 */
@@ -233,8 +232,7 @@ dp4_emit(
 
 static struct lp_build_tgsi_action dp4_action = {
    dp4_fetch_args,	 /* fetch_args */
-   dp4_emit,	 /* emit */
-   NULL
+   dp4_emit	 /* emit */
 };
 
 /* TGSI_OPCODE_DST */
@@ -693,8 +691,7 @@ sqrt_emit(
 
 const struct lp_build_tgsi_action sqrt_action = {
    scalar_unary_fetch_args,	 /* fetch_args */
-   sqrt_emit,	 /* emit */
-   NULL
+   sqrt_emit	 /* emit */
 };
 
 /* TGSI_OPCODE_F2U */

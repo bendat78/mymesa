@@ -157,7 +157,7 @@ static void
 drm_handle_format(void *data, struct wl_drm *drm, uint32_t wl_format)
 {
    struct wsi_wl_display *display = data;
-   if (!display->formats.element_size)
+   if (display->formats.element_size == 0)
       return;
 
    switch (wl_format) {

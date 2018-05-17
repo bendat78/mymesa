@@ -805,7 +805,7 @@ static void GeometryShaderStage(
     const SWR_GS_STATE* pState = &state.gsState;
     SWR_GS_CONTEXT gsContext;
 
-    static uint8_t sNullBuffer[128] = {};
+    static uint8_t sNullBuffer[128] = { 0 };
 
     for (uint32_t i = 0; i < KNOB_SIMD_WIDTH; ++i)
     {
@@ -868,6 +868,7 @@ static void GeometryShaderStage(
     {
         switch (pState->outputTopology)
         {
+        case TOP_RECT_LIST:         pfnClipFunc = ClipRectangles_simd16; break;
         case TOP_TRIANGLE_STRIP:    pfnClipFunc = ClipTriangles_simd16; break;
         case TOP_LINE_STRIP:        pfnClipFunc = ClipLines_simd16; break;
         case TOP_POINT_LIST:        pfnClipFunc = ClipPoints_simd16; break;
@@ -881,6 +882,7 @@ static void GeometryShaderStage(
     {
         switch (pState->outputTopology)
         {
+        case TOP_RECT_LIST:         pfnClipFunc = ClipRectangles; break;
         case TOP_TRIANGLE_STRIP:    pfnClipFunc = ClipTriangles; break;
         case TOP_LINE_STRIP:        pfnClipFunc = ClipLines; break;
         case TOP_POINT_LIST:        pfnClipFunc = ClipPoints; break;
@@ -1264,7 +1266,7 @@ static void TessellationStages(
     for (uint32_t p = 0; p < numPrims; ++p)
     {
         // Run Tessellator
-        SWR_TS_TESSELLATED_DATA tsData = {};
+        SWR_TS_TESSELLATED_DATA tsData = { 0 };
         RDTSC_BEGIN(FETessellation, pDC->drawId);
         TSTessellate(tsCtx, hsContext.pCPout[p].tessFactors, tsData);
         AR_EVENT(TessPrimCount(1));

@@ -204,6 +204,7 @@ _mesa_bind_vertex_buffer(struct gl_context *ctx,
    if (binding->BufferObj != vbo ||
        binding->Offset != offset ||
        binding->Stride != stride) {
+
       if (flush_vertices) {
          FLUSH_VERTICES(ctx, _NEW_ARRAY);
       }
@@ -238,7 +239,6 @@ vertex_binding_divisor(struct gl_context *ctx,
    assert(!vao->SharedAndImmutable);
 
    if (binding->InstanceDivisor != divisor) {
-      FLUSH_VERTICES(ctx, _NEW_ARRAY);
       binding->InstanceDivisor = divisor;
       vao->NewArrays |= vao->_Enabled & binding->_BoundArrays;
    }
@@ -322,8 +322,6 @@ get_array_format(const struct gl_context *ctx, GLint sizeMax, GLint *size)
  * \param doubles        Double values not reduced to floats
  * \param relativeOffset Offset of the first element relative to the binding
  *                       offset.
- * \param flush_verties  Should \c FLUSH_VERTICES be invoked before updating
- *                       state?
  */
 void
 _mesa_update_array_format(struct gl_context *ctx,
@@ -623,7 +621,6 @@ _mesa_VertexPointer_no_error(GLint size, GLenum type, GLsizei stride,
                              const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
 
    update_array(ctx, VERT_ATTRIB_POS, GL_RGBA, 4, size, type, stride,
                 GL_FALSE, GL_FALSE, GL_FALSE, ptr);
@@ -634,8 +631,6 @@ void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = GL_RGBA;
    GLbitfield legalTypes = (ctx->API == API_OPENGLES)
@@ -660,7 +655,6 @@ void GLAPIENTRY
 _mesa_NormalPointer_no_error(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
 
    update_array(ctx, VERT_ATTRIB_NORMAL, GL_RGBA, 3, 3, type, stride, GL_TRUE,
                 GL_FALSE, GL_FALSE, ptr);
@@ -671,8 +665,6 @@ void GLAPIENTRY
 _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = GL_RGBA;
    const GLbitfield legalTypes = (ctx->API == API_OPENGLES)
@@ -698,7 +690,6 @@ _mesa_ColorPointer_no_error(GLint size, GLenum type, GLsizei stride,
                             const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = get_array_format(ctx, BGRA_OR_4, &size);
    update_array(ctx, VERT_ATTRIB_COLOR0, format, BGRA_OR_4, size,
@@ -711,8 +702,6 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
    const GLint sizeMin = (ctx->API == API_OPENGLES) ? 4 : 3;
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = get_array_format(ctx, BGRA_OR_4, &size);
    const GLbitfield legalTypes = (ctx->API == API_OPENGLES)
@@ -740,7 +729,6 @@ void GLAPIENTRY
 _mesa_FogCoordPointer_no_error(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
 
    update_array(ctx, VERT_ATTRIB_FOG, GL_RGBA, 1, 1, type, stride, GL_FALSE,
                 GL_FALSE, GL_FALSE, ptr);
@@ -751,8 +739,6 @@ void GLAPIENTRY
 _mesa_FogCoordPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = GL_RGBA;
    const GLbitfield legalTypes = (HALF_BIT | FLOAT_BIT | DOUBLE_BIT);
@@ -772,7 +758,6 @@ void GLAPIENTRY
 _mesa_IndexPointer_no_error(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
 
    update_array(ctx, VERT_ATTRIB_COLOR_INDEX, GL_RGBA, 1, 1, type, stride,
                 GL_FALSE, GL_FALSE, GL_FALSE, ptr);
@@ -783,8 +768,6 @@ void GLAPIENTRY
 _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = GL_RGBA;
    const GLbitfield legalTypes = (UNSIGNED_BYTE_BIT | SHORT_BIT | INT_BIT |
@@ -807,7 +790,6 @@ _mesa_SecondaryColorPointer_no_error(GLint size, GLenum type,
                                      GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = get_array_format(ctx, BGRA_OR_4, &size);
    update_array(ctx, VERT_ATTRIB_COLOR1, format, BGRA_OR_4, size, type,
@@ -820,8 +802,6 @@ _mesa_SecondaryColorPointer(GLint size, GLenum type,
 			       GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = get_array_format(ctx, BGRA_OR_4, &size);
    const GLbitfield legalTypes = (BYTE_BIT | UNSIGNED_BYTE_BIT |
@@ -849,7 +829,6 @@ _mesa_TexCoordPointer_no_error(GLint size, GLenum type, GLsizei stride,
 {
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Array.ActiveTexture;
-   FLUSH_VERTICES(ctx, 0);
 
    update_array(ctx, VERT_ATTRIB_TEX(unit), GL_RGBA, 4, size, type,
                 stride, GL_FALSE, GL_FALSE, GL_FALSE, ptr);
@@ -863,8 +842,6 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
    GET_CURRENT_CONTEXT(ctx);
    const GLint sizeMin = (ctx->API == API_OPENGLES) ? 2 : 1;
    const GLuint unit = ctx->Array.ActiveTexture;
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = GL_RGBA;
    const GLbitfield legalTypes = (ctx->API == API_OPENGLES)
@@ -892,7 +869,6 @@ _mesa_EdgeFlagPointer_no_error(GLsizei stride, const GLvoid *ptr)
    /* this is the same type that glEdgeFlag uses */
    const GLboolean integer = GL_FALSE;
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
 
    update_array(ctx, VERT_ATTRIB_EDGEFLAG, GL_RGBA, 1, 1, GL_UNSIGNED_BYTE,
                 stride, GL_FALSE, integer, GL_FALSE, ptr);
@@ -905,8 +881,6 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
    /* this is the same type that glEdgeFlag uses */
    const GLboolean integer = GL_FALSE;
    GET_CURRENT_CONTEXT(ctx);
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = GL_RGBA;
    const GLbitfield legalTypes = UNSIGNED_BYTE_BIT;
@@ -928,7 +902,6 @@ _mesa_PointSizePointerOES_no_error(GLenum type, GLsizei stride,
                                    const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
 
    update_array(ctx, VERT_ATTRIB_POINT_SIZE, GL_RGBA, 1, 1, type, stride,
                 GL_FALSE, GL_FALSE, GL_FALSE, ptr);
@@ -939,8 +912,6 @@ void GLAPIENTRY
 _mesa_PointSizePointerOES(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   FLUSH_VERTICES(ctx, 0);
 
    GLenum format = GL_RGBA;
    if (ctx->API != API_OPENGLES) {
@@ -1728,8 +1699,6 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    GLint defstride;                /* default stride */
    GLint c, f;
 
-   FLUSH_VERTICES(ctx, 0);
-
    f = sizeof(GLfloat);
    c = f * ((4 * sizeof(GLubyte) + (f - 1)) / f);
 
@@ -1899,8 +1868,6 @@ _mesa_LockArraysEXT(GLint first, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   FLUSH_VERTICES(ctx, 0);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glLockArrays %d %d\n", first, count);
 
@@ -1928,8 +1895,6 @@ void GLAPIENTRY
 _mesa_UnlockArraysEXT( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glUnlockArrays\n");
@@ -2522,8 +2487,6 @@ vertex_attrib_format(GLuint attribIndex, GLint size, GLenum type,
       }
    }
 
-   FLUSH_VERTICES(ctx, 0);
-
    _mesa_update_array_format(ctx, ctx->Array.VAO,
                              VERT_ATTRIB_GENERIC(attribIndex), size, type,
                              format, normalized, integer, doubles,
@@ -2611,8 +2574,6 @@ vertex_array_attrib_format(GLuint vaobj, GLuint attribIndex, GLint size,
          return;
       }
    }
-
-   FLUSH_VERTICES(ctx, 0);
 
    _mesa_update_array_format(ctx, vao, VERT_ATTRIB_GENERIC(attribIndex), size,
                              type, format, normalized, integer, doubles,

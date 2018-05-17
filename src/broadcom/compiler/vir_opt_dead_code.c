@@ -62,7 +62,7 @@ has_nonremovable_reads(struct v3d_compile *c, struct qinst *inst)
                         /* Instance ID, Vertex ID: Should have been removed at
                          * the NIR level
                          */
-                        if (inst->src[i].index == (~0u))
+                        if (inst->src[i].index == ~0)
                                 return true;
 
                         uint32_t attr = inst->src[i].index / 4;

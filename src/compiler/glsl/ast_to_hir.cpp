@@ -2383,7 +2383,7 @@ ast_type_specifier::glsl_type(const char **name,
 {
    const struct glsl_type *type;
 
-   if (this->type)
+   if (this->type != NULL)
       type = this->type;
    else if (structure)
       type = structure->type;
@@ -6642,7 +6642,7 @@ ast_case_statement_list::hir(exec_list *instructions,
          }
       }
 
-      if (cmp)
+      if (cmp != NULL)
          body.emit(assign(state->switch_state.run_default, logic_not(cmp)));
       else
          body.emit(assign(state->switch_state.run_default, body.constant(true)));

@@ -489,7 +489,6 @@ brw_blorp_copy_buffers(struct brw_context *brw,
    blorp_batch_finish(&batch);
 }
 
-
 static struct intel_mipmap_tree *
 find_miptree(GLbitfield buffer_bit, struct intel_renderbuffer *irb)
 {
@@ -817,7 +816,7 @@ blorp_get_client_bo(struct brw_context *brw,
        */
       struct brw_bo *bo =
          brw_bo_alloc(brw->bufmgr, "tmp_tex_subimage_src", size);
-      if (!bo) {
+      if (bo == NULL) {
          perf_debug("intel_texsubimage: temp bo creation failed: size = %u\n",
                     size);
          return NULL;
@@ -913,7 +912,7 @@ brw_blorp_upload_miptree(struct brw_context *brw,
                           target, format, type, pixels, packing,
                           &src_offset, &src_row_stride,
                           &src_image_stride, true);
-   if (!src_bo)
+   if (src_bo == NULL)
       return false;
 
    /* Now that source is offset to correct starting point, adjust the
@@ -1028,7 +1027,7 @@ brw_blorp_download_miptree(struct brw_context *brw,
                           target, format, type, pixels, packing,
                           &dst_offset, &dst_row_stride,
                           &dst_image_stride, false);
-   if (!dst_bo)
+   if (dst_bo == NULL)
       return false;
 
    /* Now that source is offset to correct starting point, adjust the
@@ -1229,7 +1228,9 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
       bool same_clear_color =
          !intel_miptree_set_clear_color(brw, irb->mt, &ctx->Color.ClearColor);
 
-      /* If the buffer is already in INTEL_FAST_CLEAR_STATE_CLEAR, the clear
+      intel_miptree_set_clear_color(brw, irb->mt, clear_color);
+
+      /* If the buffer is already in ISL_AUX_STATE_CLEAR, the clear
        * is redundant and can be skipped.
        */
       if (aux_state == ISL_AUX_STATE_CLEAR && same_clear_color)
@@ -1259,7 +1260,8 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
       brw_emit_end_of_pipe_sync(brw, PIPE_CONTROL_RENDER_TARGET_FLUSH);
 
       struct blorp_batch batch;
-      blorp_batch_init(&brw->blorp, &batch, brw, 0);
+      blorp_batch_init(&brw->blorp, &batch, brw,
+                       BLORP_BATCH_NO_UPDATE_CLEAR_COLOR);
       blorp_fast_clear(&batch, &surf, isl_format,
                        level, irb->mt_layer, num_layers,
                        x0, y0, x1, y1);
@@ -1613,7 +1615,8 @@ intel_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
                           &level, start_layer, num_layers, isl_tmp);
 
    struct blorp_batch batch;
-   blorp_batch_init(&brw->blorp, &batch, brw, 0);
+   blorp_batch_init(&brw->blorp, &batch, brw,
+                    BLORP_BATCH_NO_UPDATE_CLEAR_COLOR);
    blorp_hiz_op(&batch, &surf, level, start_layer, num_layers, op);
    blorp_batch_finish(&batch);
 

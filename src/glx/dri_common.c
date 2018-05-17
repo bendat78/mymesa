@@ -431,9 +431,9 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
       return pdraw;
    }
 
-   if (!config)
+   if (config == NULL)
       config = driInferDrawableConfig(gc->psc, glxDrawable);
-   if (!config)
+   if (config == NULL)
       return NULL;
 
    pdraw = psc->driScreen->createDrawable(psc, glxDrawable, glxDrawable,

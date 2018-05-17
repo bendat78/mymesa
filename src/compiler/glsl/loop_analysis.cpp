@@ -102,7 +102,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       new(mem_ctx) ir_expression(ir_binop_div, sub->type, sub, increment);
 
    ir_constant *iter = div->constant_expression_value(mem_ctx);
-   if (!iter) {
+   if (iter == NULL) {
       ralloc_free(mem_ctx);
       return -1;
    }
@@ -474,7 +474,7 @@ loop_analysis::visit_leave(ir_loop *ir)
 
       ir_if *if_stmt = ((ir_instruction *) node)->as_if();
 
-      if (if_stmt)
+      if (if_stmt != NULL)
          try_add_loop_terminator(ls, if_stmt);
    }
 

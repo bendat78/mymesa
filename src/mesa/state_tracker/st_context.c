@@ -605,6 +605,7 @@ destroy_tex_sampler_cb(GLuint id, void *data, void *userData)
    st_texture_release_sampler_view(st, st_texture_object(texObj));
 }
 
+
 void
 st_destroy_context(struct st_context *st)
 {
@@ -613,7 +614,7 @@ st_destroy_context(struct st_context *st)
 
    GET_CURRENT_CONTEXT(curctx);
 
-   if (!curctx) {
+   if (curctx == NULL) {
       /* No current context, but we need one to release
        * renderbuffer surface when we release framebuffer.
        * So temporarily bind the context.

@@ -92,12 +92,11 @@ static inline bool print_stats_enabled ()
       }
    }
    return stats_enabled > 0;
-}
+
 #define PRINT_STATS(X) if (print_stats_enabled()) do { X; } while (false);
 #else
 #define PRINT_STATS(X)
 #endif
-
 
 static unsigned is_precise(const ir_variable *ir)
 {
@@ -3352,14 +3351,15 @@ glsl_to_tgsi_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
          atomic_info[num_atomics].location = location->data.location;
          atomic_info[num_atomics].binding = location->data.binding;
          atomic_info[num_atomics].size = location->type->arrays_of_arrays_size();
-         if (!atomic_info[num_atomics].size)
+
+         if (atomic_info[num_atomics].size == 0)
             atomic_info[num_atomics].size = 1;
          atomic_info[num_atomics].array_id = 0;
          num_atomics++;
       }
 
       if (offset.file != PROGRAM_UNDEFINED) {
-         if (!atomic_info[entry->index].array_id) {
+         if (atomic_info[entry->index].array_id == 0) {
             num_atomic_arrays++;
             atomic_info[entry->index].array_id = num_atomic_arrays;
          }
@@ -4824,7 +4824,7 @@ glsl_to_tgsi_visitor::get_first_temp_write(int *first_writes)
       }
 
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (!depth++)
+         if (depth++ == 0)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
          if (!--depth)
@@ -4856,7 +4856,7 @@ glsl_to_tgsi_visitor::get_first_temp_read(int *first_reads)
          }
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (!depth++)
+         if (depth++ == 0)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
          if (!--depth)
@@ -4891,7 +4891,7 @@ glsl_to_tgsi_visitor::get_last_temp_read_first_temp_write(int *last_reads, int *
             last_reads[inst->tex_offsets[j].index] = (!depth) ? i : -2;
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (!depth++)
+         if (depth++ == 0)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
          if (!--depth) {

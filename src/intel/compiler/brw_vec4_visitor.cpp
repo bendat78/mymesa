@@ -1771,7 +1771,6 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
    /* The vulkan dirver doesn't support pull constants other than UBOs so
     * everything has to be pushed regardless.
     */
-
    if (!compiler->supports_pull_constants) {
       split_uniform_registers();
       return;

@@ -317,7 +317,6 @@ extern void *
 _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
                     unsigned long alignment);
 
-
 #ifdef HAVE___BUILTIN_POPCOUNT
 #define _mesa_bitcount(i) __builtin_popcount(i)
 #else

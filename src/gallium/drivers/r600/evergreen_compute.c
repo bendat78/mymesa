@@ -520,7 +520,7 @@ static void evergreen_compute_upload_input(struct pipe_context *ctx,
 
 	if (!shader)
 		return;
-	if (!shader->input_size) {
+	if (shader->input_size == 0) {
 		return;
 	}
 	input_size = shader->input_size + 36;

@@ -33,7 +33,6 @@
 
 #include <cstdarg>
 
-
 namespace SwrJit
 {
     void Builder::AssertMemoryUsageParams(Value* ptr, JIT_MEM_CLIENT usage)
@@ -162,7 +161,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a masked gather operation in LLVM IR.  If not
+    /// @brief Generate a masked gather operation in LLVM IR.  If not  
     /// supported on the underlying platform, emulate it with loads
     /// @param vSrc - SIMD wide value that will be loaded if mask is invalid
     /// @param pBase - Int8* base VB address pointer value
@@ -177,7 +176,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a masked gather operation in LLVM IR.  If not
+    /// @brief Generate a masked gather operation in LLVM IR.  If not  
     /// supported on the underlying platform, emulate it with loads
     /// @param vSrc - SIMD wide value that will be loaded if mask is invalid
     /// @param pBase - Int8* base VB address pointer value
@@ -257,7 +256,7 @@ namespace SwrJit
                 vGatherResult[1] = GATHERPS(vGatherMaskedVal, pSrcBase, byteOffsets, vMask, 1, usage);
                 // e.g. result of second 8x32bit integer gather for 16bit components
                 // 256i - 0    1    2    3    4    5    6    7
-                //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
+                //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
                 //
             }
             else
@@ -306,7 +305,7 @@ namespace SwrJit
             Value* vGatherResult = GATHERDD(vGatherMaskedVal, pSrcBase, byteOffsets, vMask, 1, usage);
             // e.g. result of an 8x32bit integer gather for 8bit components
             // 256i - 0    1    2    3    4    5    6    7
-            //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw
+            //        xyzw xyzw xyzw xyzw xyzw xyzw xyzw xyzw 
 
             Shuffle8bpcGather4(info, vGatherResult, vGatherComponents, bPackedOutput);
         }
@@ -335,7 +334,7 @@ namespace SwrJit
                 vGatherResult[1] = GATHERDD(vGatherMaskedVal, pSrcBase, byteOffsets, vMask, 1, usage);
                 // e.g. result of second 8x32bit integer gather for 16bit components
                 // 256i - 0    1    2    3    4    5    6    7
-                //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw
+                //        zwzw zwzw zwzw zwzw zwzw zwzw zwzw zwzw 
                 //
             }
             else
@@ -426,7 +425,7 @@ namespace SwrJit
                 // if x or y, use vi128XY permute result, else use vi128ZW
                 Value* selectedPermute = (i < 2) ? vi128XY : vi128ZW;
 
-                // extract packed component 128 bit lanes
+                // extract packed component 128 bit lanes 
                 vGatherOutput[swizzleIndex] = VEXTRACT(selectedPermute, C(lane));
             }
 
@@ -463,7 +462,7 @@ namespace SwrJit
                 vGatherOutput[swizzleIndex] = BITCAST(PSHUFB(BITCAST(vGatherInput[selectedGather], v32x8Ty), vConstMask[selectedMask]), vGatherTy);
                 // after pshufb mask for x channel; z uses the same shuffle from the second gather
                 // 256i - 0    1    2    3    4    5    6    7
-                //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00
+                //        xx00 xx00 xx00 xx00 xx00 xx00 xx00 xx00 
             }
         }
     }
@@ -563,14 +562,14 @@ namespace SwrJit
                 vGatherOutput[swizzleIndex] = BITCAST(PSHUFB(BITCAST(vGatherInput, v32x8Ty), vConstMask), vGatherTy);
                 // after pshufb for x channel
                 // 256i - 0    1    2    3    4    5    6    7
-                //        x000 x000 x000 x000 x000 x000 x000 x000
+                //        x000 x000 x000 x000 x000 x000 x000 x000 
             }
         }
     }
 
     //////////////////////////////////////////////////////////////////////////
     /// @brief emulates a scatter operation.
-    /// @param pDst - pointer to destination
+    /// @param pDst - pointer to destination 
     /// @param vSrc - vector of src data to scatter
     /// @param vOffsets - vector of byte offsets from pDst
     /// @param vMask - mask of valid lanes
@@ -591,7 +590,7 @@ namespace SwrJit
         Type* pSrcTy = vSrc->getType()->getVectorElementType();
 
         // Store vectors on stack
-        if (!pScatterStackSrc)
+        if (pScatterStackSrc == nullptr)
         {
             // Save off stack allocations and reuse per scatter. Significantly reduces stack
             // requirements for shaders with a lot of scatters.

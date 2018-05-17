@@ -304,7 +304,7 @@ static void
 fd_blit_from_staging(struct fd_context *ctx, struct fd_transfer *trans)
 {
 	struct pipe_resource *dst = trans->base.resource;
-	struct pipe_blit_info blit = {};
+	struct pipe_blit_info blit = {0};
 
 	blit.dst.resource = dst;
 	blit.dst.format   = dst->format;
@@ -324,7 +324,7 @@ static void
 fd_blit_to_staging(struct fd_context *ctx, struct fd_transfer *trans)
 {
 	struct pipe_resource *src = trans->base.resource;
-	struct pipe_blit_info blit = {};
+	struct pipe_blit_info blit = {0};
 
 	blit.src.resource = src;
 	blit.src.format   = src->format;
@@ -371,7 +371,7 @@ flush_resource(struct fd_context *ctx, struct fd_resource *rsc, unsigned usage)
 	fd_batch_reference(&write_batch, rsc->write_batch);
 
 	if (usage & PIPE_TRANSFER_WRITE) {
-		struct fd_batch *batch, *batches[32] = {};
+		struct fd_batch *batch, *batches[32] = {0};
 		uint32_t batch_mask;
 
 		/* This is a bit awkward, probably a fd_batch_flush_locked()

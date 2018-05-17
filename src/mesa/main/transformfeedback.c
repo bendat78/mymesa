@@ -344,7 +344,7 @@ _mesa_compute_max_transform_feedback_vertices(struct gl_context *ctx,
          unsigned max_for_this_buffer;
 
          /* Skip any inactive buffers, which have a stride of 0. */
-         if (!stride)
+         if (stride == 0)
             continue;
 
          max_for_this_buffer = obj->Size[i] / (4 * stride);
@@ -785,7 +785,7 @@ bind_buffer_offset(struct gl_context *ctx,
 {
    struct gl_buffer_object *bufObj;
 
-   if (!buffer) {
+   if (buffer == 0) {
       bufObj = ctx->Shared->NullBufferObj;
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);

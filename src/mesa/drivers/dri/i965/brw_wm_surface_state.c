@@ -217,7 +217,7 @@ brw_emit_surface_state(struct brw_context *brw,
       }
    }
 
-   if (clear_bo) {
+   if (clear_bo != NULL) {
       /* Make sure the offset is aligned with a cacheline. */
       assert((clear_offset & 0x3f) == 0);
       uint32_t *clear_address =

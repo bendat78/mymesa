@@ -548,7 +548,7 @@ swrast_put_image2(__DRIdrawable *driDrawable,
    bo = gbm_dri_bo(dri2_surf->current->bo);
 
    bpp = gbm_bo_get_bpp(&bo->base);
-   if (!bpp)
+   if (bpp == 0)
       return;
 
    x_bytes = x * (bpp >> 3);
@@ -591,8 +591,9 @@ swrast_get_image(__DRIdrawable *driDrawable,
       return;
 
    bo = gbm_dri_bo(dri2_surf->current->bo);
+
    bpp = gbm_bo_get_bpp(&bo->base);
-   if (!bpp)
+   if (bpp == 0)
       return;
 
    x_bytes = x * (bpp >> 3);
@@ -601,7 +602,7 @@ swrast_get_image(__DRIdrawable *driDrawable,
    internal_stride = bo->base.stride;
    stride = width_bytes;
 
-   if (!gbm_dri_bo_map_dumb(bo))
+   if (gbm_dri_bo_map_dumb(bo) == NULL)
       return;
 
    dst = data;

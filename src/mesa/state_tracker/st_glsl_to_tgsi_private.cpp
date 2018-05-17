@@ -416,4 +416,3 @@ void glsl_to_tgsi_instruction::print(std::ostream& os) const
       }
    }
 }
-

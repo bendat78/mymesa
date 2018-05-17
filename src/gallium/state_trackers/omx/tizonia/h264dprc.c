@@ -295,7 +295,7 @@ static void h264d_manage_buffers(vid_dec_PrivateType* priv) {
    }
 
    /* Release input buffer if possible */
-   if (!priv->in_buffers[0]->nFilledLen) {
+   if (priv->in_buffers[0]->nFilledLen == 0) {
       h264d_buffer_emptied(priv, priv->in_buffers[0]);
    }
 }

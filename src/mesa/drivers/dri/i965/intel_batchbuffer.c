@@ -248,7 +248,7 @@ intel_batchbuffer_reset(struct brw_context *brw)
 {
    struct intel_batchbuffer *batch = &brw->batch;
 
-   if (batch->last_bo) {
+   if (batch->last_bo != NULL) {
       brw_bo_unreference(batch->last_bo);
       batch->last_bo = NULL;
    }
@@ -559,7 +559,7 @@ brw_new_batch(struct brw_context *brw)
     * would otherwise be stored in the context (which for all intents and
     * purposes means everything).
     */
-   if (!brw->hw_ctx) {
+   if (brw->hw_ctx == 0) {
       brw->ctx.NewDriverState |= BRW_NEW_CONTEXT;
       brw_upload_invariant_state(brw);
    }
@@ -863,7 +863,7 @@ _intel_batchbuffer_flush_fence(struct brw_context *brw,
    finish_growing_bos(&brw->batch.batch);
    finish_growing_bos(&brw->batch.state);
 
-   if (!brw->throttle_batch[0]) {
+   if (brw->throttle_batch[0] == NULL) {
       brw->throttle_batch[0] = brw->batch.batch.bo;
       brw_bo_reference(brw->throttle_batch[0]);
    }

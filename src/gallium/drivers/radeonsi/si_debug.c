@@ -407,7 +407,7 @@ static void si_log_chunk_type_cs_print(void *data, FILE *f)
 		last_trace_id = map[0];
 
 	if (chunk->gfx_end != chunk->gfx_begin) {
-		if (!chunk->gfx_begin) {
+		if (chunk->gfx_begin == 0) {
 			if (ctx->init_config)
 				ac_parse_ib(f, ctx->init_config->pm4, ctx->init_config->ndw,
 					    NULL, 0, "IB2: Init config", ctx->chip_class,

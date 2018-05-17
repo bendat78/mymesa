@@ -411,8 +411,8 @@ st_translate_vertex_program(struct st_context *st,
    enum pipe_error error;
    unsigned num_outputs = 0;
    unsigned attr;
-   ubyte output_semantic_name[VARYING_SLOT_MAX] = {};
-   ubyte output_semantic_index[VARYING_SLOT_MAX] = {};
+   ubyte output_semantic_name[VARYING_SLOT_MAX] = {0};
+   ubyte output_semantic_index[VARYING_SLOT_MAX] = {0};
 
    stvp->num_inputs = 0;
    memset(stvp->input_to_index, ~0, sizeof(stvp->input_to_index));
@@ -1573,7 +1573,7 @@ st_get_basic_variant(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    struct st_basic_variant *v;
    struct st_basic_variant_key key;
-   struct pipe_shader_state tgsi = {};
+   struct pipe_shader_state tgsi = {0};
    memset(&key, 0, sizeof(key));
    key.st = st->has_shareable_shaders ? NULL : st;
 

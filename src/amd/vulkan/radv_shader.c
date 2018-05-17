@@ -88,7 +88,7 @@ VkResult radv_CreateShaderModule(
 	module = vk_alloc2(&device->alloc, pAllocator,
 			     sizeof(*module) + pCreateInfo->codeSize, 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!module)
+	if (module == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	module->nir = NULL;
@@ -163,10 +163,6 @@ radv_shader_compile_to_nir(struct radv_device *device,
 			   const VkSpecializationInfo *spec_info,
 			   const VkPipelineCreateFlags flags)
 {
-	if (strcmp(entrypoint_name, "main") != 0) {
-		radv_finishme("Multiple shaders per module not really supported");
-	}
-
 	nir_shader *nir;
 	nir_function *entry_point;
 	if (module->nir) {
@@ -376,9 +372,6 @@ radv_fill_shader_variant(struct radv_device *device,
 	struct radv_shader_info *info = &variant->info.info;
 	unsigned vgpr_comp_cnt = 0;
 
-	if (scratch_enabled && !device->llvm_supports_spill)
-		radv_finishme("shader scratch support only available with LLVM 4.0");
-
 	variant->code_size = binary->code_size;
 	variant->rsrc2 = S_00B12C_USER_SGPR(variant->info.num_user_sgprs) |
 			 S_00B12C_SCRATCH_EN(scratch_enabled);
@@ -547,14 +540,14 @@ radv_shader_variant_create(struct radv_device *device,
 			   void **code_out,
 			   unsigned *code_size_out)
 {
-	struct radv_nir_compiler_options options = {};
+	struct radv_nir_compiler_options options = {0};
 
 	options.layout = layout;
 	if (key)
 		options.key = *key;
 
 	options.unsafe_math = !!(device->instance->debug_flags & RADV_DEBUG_UNSAFE_MATH);
-	options.supports_spill = device->llvm_supports_spill;
+	options.supports_spill = true;
 
 	return shader_variant_create(device, module, shaders, shader_count, shaders[shader_count - 1]->info.stage,
 				     &options, false, code_out, code_size_out);
@@ -567,7 +560,7 @@ radv_create_gs_copy_shader(struct radv_device *device,
 			   unsigned *code_size_out,
 			   bool multiview)
 {
-	struct radv_nir_compiler_options options = {};
+	struct radv_nir_compiler_options options = {0};
 
 	options.key.has_multiview_view_index = multiview;
 

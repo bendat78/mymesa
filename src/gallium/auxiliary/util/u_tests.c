@@ -687,7 +687,7 @@ test_texture_barrier(struct pipe_context *ctx, bool use_fbfetch,
              "ADD OUT[0], TEMP[0], IMM[0]\n"
              "END\n";
    } else {
-      struct pipe_sampler_view templ = {};
+      struct pipe_sampler_view templ = {{0}};
       templ.format = cb->format;
       templ.target = cb->target;
       templ.swizzle_r = PIPE_SWIZZLE_X;

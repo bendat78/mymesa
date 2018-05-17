@@ -496,7 +496,7 @@ void si_llvm_load_input_vs(
 						    LLVMIntNE, vertex_id,
 						    ctx->i32_1, "");
 
-		if (!input_index) {
+		if (input_index == 0) {
 			/* Position: */
 			LLVMValueRef x1y1 = LLVMGetParam(ctx->main_fn,
 							 ctx->param_vs_blit_inputs);
@@ -1515,7 +1515,7 @@ static void si_nir_store_output_tcs(struct ac_shader_abi *abi,
 		param_index = LLVMBuildAdd(ctx->ac.builder, param_index,
 					   LLVMConstInt(ctx->i32, const_index, 0), "");
 	} else {
-		if (const_index)
+		if (const_index != 0)
 			param_index = LLVMConstInt(ctx->i32, const_index, 0);
 	}
 
@@ -1963,7 +1963,7 @@ static LLVMValueRef get_block_size(struct ac_shader_abi *abi)
 	unsigned i;
 	unsigned *properties = ctx->shader->selector->info.properties;
 
-	if (properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH]) {
+	if (properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH] != 0) {
 		unsigned sizes[3] = {
 			properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH],
 			properties[TGSI_PROPERTY_CS_FIXED_BLOCK_HEIGHT],
@@ -5830,7 +5830,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 					       stream);
 		}
 
-		if (!stream)
+		if (stream == 0)
 			si_llvm_export_vs(&ctx, outputs, gsinfo->num_outputs);
 
 		LLVMBuildBr(builder, end_bb);

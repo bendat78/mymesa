@@ -567,7 +567,7 @@ blend_equationi(struct gl_context *ctx, GLuint buf, GLenum mode,
    ctx->Color.Blend[buf].EquationA = mode;
    ctx->Color._BlendEquationPerBuffer = GL_TRUE;
 
-   if (!buf)
+   if (buf == 0)
       ctx->Color._AdvancedBlendMode = advanced_mode;
 }
 

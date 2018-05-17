@@ -1306,20 +1306,7 @@ si_tile_mode_index(struct r600_texture *rtex, unsigned level, bool stencil)
 }
 
 static inline void
-r600_resource_reference(struct r600_resource **ptr, struct r600_resource *res)
-{
-	pipe_resource_reference((struct pipe_resource **)ptr,
-				(struct pipe_resource *)res);
-}
-
-static inline void
-r600_texture_reference(struct r600_texture **ptr, struct r600_texture *res)
-{
-	pipe_resource_reference((struct pipe_resource **)ptr, &res->buffer.b.b);
-}
-
-static inline bool
-vi_dcc_enabled(struct r600_texture *tex, unsigned level)
+si_context_add_resource_size(struct si_context *sctx, struct pipe_resource *r)
 {
 	if (r) {
 		/* Add memory usage for need_gfx_cs_space */

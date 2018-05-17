@@ -33,6 +33,7 @@
 #define MP(X, W) std::make_pair(X, W)
 #define MT(X,Y,Z) std::make_tuple(X,Y,Z)
 
+
 /* Use this to make the compiler pick the swizzle constructor below */
 struct SWZ {};
 

@@ -142,7 +142,7 @@ add_surface(struct anv_image *image, struct anv_surface *surf, uint32_t plane)
    } else {
       surf->offset = align_u32(image->size, surf->isl.alignment);
       /* Determine plane's offset only once when the first surface is added. */
-      if (!image->planes[plane].size)
+      if (image->planes[plane].size == 0)
          image->planes[plane].offset = image->size;
    }
 
@@ -936,7 +936,7 @@ anv_layout_to_fast_clear_type(const struct gen_device_info * const devinfo,
    uint32_t plane = anv_image_aspect_to_plane(image->aspects, aspect);
 
    /* If there is no auxiliary surface allocated, there are no fast-clears */
-   if (!image->planes[plane].aux_surface.isl.size)
+   if (image->planes[plane].aux_surface.isl.size == 0)
       return ANV_FAST_CLEAR_NONE;
 
    /* All images that use an auxiliary surface are required to be tiled. */

@@ -494,7 +494,7 @@ do {                                                                    \
       assert(exec->vtx.attrtype[A] == T);                               \
    }                                                                    \
                                                                         \
-   if (!(A)) {                                                      \
+   if ((A) == 0) {                                                      \
       /* This is a glVertex call */                                     \
       GLuint i;                                                         \
                                                                         \

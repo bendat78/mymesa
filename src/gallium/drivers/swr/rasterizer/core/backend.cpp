@@ -329,9 +329,8 @@ PFN_BACKEND_FUNC gBackendSampleRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
                                         [2] // canEarlyZ
                                         = {};
 
-
 void InitBackendFuncTables()
-{
+{    
     InitBackendPixelRate();
     InitBackendSingleFuncTable(gBackendSingleSample);
     InitBackendSampleFuncTable(gBackendSampleRateTable);

@@ -1359,8 +1359,7 @@ link_assign_uniform_storage(struct gl_context *ctx,
    unsigned int boolean_true = ctx->Const.UniformBooleanTrue;
 
    union gl_constant_value *data;
-
-   if (!prog->data->UniformStorage) {
+   if (prog->data->UniformStorage == NULL) {
       prog->data->UniformStorage = rzalloc_array(prog->data,
                                                  struct gl_uniform_storage,
                                                  prog->data->NumUniformStorage);

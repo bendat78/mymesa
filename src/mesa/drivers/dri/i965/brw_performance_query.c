@@ -283,7 +283,7 @@ brw_perf_query_get_metric_id(struct brw_context *brw,
     * 0. When it stops being used the id returns to 0. No need to reload the
     * ID when it's already loaded.
     */
-   if (query->oa_metrics_set_id) {
+   if (query->oa_metrics_set_id != 0) {
       DBG("Raw query '%s' guid=%s using cached ID: %"PRIu64"\n",
           query->name, query->guid, query->oa_metrics_set_id);
       return query->oa_metrics_set_id;
@@ -739,7 +739,7 @@ read_oa_samples_for_query(struct brw_context *brw,
 
    /* Map the BO once here and let accumulate_oa_reports() unmap
     * it. */
-   if (!obj->oa.map)
+   if (obj->oa.map == NULL)
       obj->oa.map = brw_bo_map(brw, obj->oa.bo, MAP_READ);
 
    start = last = obj->oa.map;
@@ -888,7 +888,7 @@ accumulate_oa_reports(struct brw_context *brw,
                    * We didn't *really* Switch AWAY in the case that we e.g.
                    * saw a single periodic report while idle...
                    */
-                  if (out_duration)
+                  if (out_duration >= 1)
                      add = false;
                } else if (in_ctx) {
                   assert(report[2] == obj->oa.hw_id);
@@ -1092,7 +1092,7 @@ brw_begin_perf_query(struct gl_context *ctx,
       if (brw->perfquery.oa_stream_fd != -1 &&
           brw->perfquery.current_oa_metrics_set_id != metric_id) {
 
-         if (brw->perfquery.n_oa_users) {
+         if (brw->perfquery.n_oa_users != 0) {
             DBG("WARNING: Begin(%d) failed already using perf config=%i/%"PRIu64"\n",
                 o->Id, brw->perfquery.current_oa_metrics_set_id, metric_id);
             return false;
@@ -1150,7 +1150,7 @@ brw_begin_perf_query(struct gl_context *ctx,
                period_exponent = e + 1;
          }
 
-         if (!period_exponent) {
+         if (period_exponent == 0) {
             DBG("WARNING: enable to find a sampling exponent\n");
             return false;
          }

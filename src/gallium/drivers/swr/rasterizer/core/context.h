@@ -176,7 +176,7 @@ struct DRAW_WORK
     };
     union
     {
-        gfxptr_t   xpIB;              // DrawIndexed: App supplied int32 indices
+        gfxptr_t   xpIB;              // DrawIndexed: App supplied int32 indices 
         uint32_t   startVertex;    // Draw: Starting vertex in VB to render from.
     };
     int32_t    baseVertex;
@@ -213,7 +213,7 @@ struct GUARDBANDS
 struct PA_STATE;
 
 // function signature for pipeline stages that execute after primitive assembly
-typedef void(*PFN_PROCESS_PRIMS)(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simdvector prims[],
+typedef void(*PFN_PROCESS_PRIMS)(DRAW_CONTEXT *pDC, PA_STATE& pa, uint32_t workerId, simdvector prims[], 
     uint32_t primMask, simdscalari const &primID, simdscalari const &viewportIdx, simdscalari const &rtIdx);
 
 #if ENABLE_AVX512_SIMD16

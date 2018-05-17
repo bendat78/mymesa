@@ -413,7 +413,7 @@ ralloc_str_append(char **dest, const char *str,
    assert(dest != NULL && *dest != NULL);
 
    both = resize(*dest, existing_length + str_size + 1);
-   if (!unlikely(both))
+   if (unlikely(both == NULL))
       return false;
 
    memcpy(both + existing_length, str, str_size);

@@ -736,7 +736,7 @@ _mesa_TextureView(GLuint texture, GLenum target, GLuint origtexture,
                   _mesa_enum_to_string(internalformat),
                   minlevel, numlevels, minlayer, numlayers);
 
-   if (!origtexture) {
+   if (origtexture == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glTextureView(origtexture = %u)",
                   origtexture);
       return;
@@ -764,7 +764,7 @@ _mesa_TextureView(GLuint texture, GLenum target, GLuint origtexture,
    }
 
    /* If <texture> is 0, INVALID_VALUE is generated. */
-   if (!texture) {
+   if (texture == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glTextureView(texture = 0)");
       return;
    }
@@ -773,7 +773,7 @@ _mesa_TextureView(GLuint texture, GLenum target, GLuint origtexture,
     * the error INVALID_OPERATION is generated.
     */
    texObj = _mesa_lookup_texture(ctx, texture);
-   if (!texObj) {
+   if (texObj == NULL) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glTextureView(texture = %u non-gen name)", texture);
       return;

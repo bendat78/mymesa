@@ -28,7 +28,7 @@
 
 #if !defined(SIMD_ARCH)
 #define SIMD_ARCH KNOB_ARCH
-#endif
+#endif 
 
 #include "simdlib_types.hpp"
 
@@ -50,7 +50,7 @@ typedef SIMDImpl::SIMD512Impl::Integer                    simd16scalari;
 typedef SIMDImpl::SIMD512Impl::Vec4                       simd16vector;
 typedef SIMDImpl::SIMD512Impl::Mask                       simd16mask;
 
-#if KNOB_SIMD_WIDTH == 8
+#if KNOB_SIMD_WIDTH == 8 
 typedef simd8scalar     simdscalar;
 typedef simd8scalard    simdscalard;
 typedef simd8scalari    simdscalari;

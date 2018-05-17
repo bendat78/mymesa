@@ -1054,7 +1054,7 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
       image->bo = brw_bo_gem_create_from_prime(screen->bufmgr, fds[0]);
    }
 
-   if (!image->bo) {
+   if (image->bo == NULL) {
       free(image);
       return NULL;
    }
@@ -1261,7 +1261,7 @@ intel_query_dma_buf_formats(__DRIscreen *screen, int max,
 {
    int i, j = 0;
 
-   if (!max) {
+   if (max == 0) {
       /* Note, sRGB formats not included. */
       *count = ARRAY_SIZE(intel_image_formats) - 2;
       return true;
@@ -1329,8 +1329,46 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     int width, height, offset, stride, size, dri_format;
     __DRIimage *image;
 
-    if (!parent)
+    if (parent == NULL)
        return NULL;
+
+    width = parent->width;
+    height = parent->height;
+
+    const struct intel_image_format *f = parent->planar_format;
+
+    if (f && plane < f->nplanes) {
+       /* Use the planar format definition. */
+       width >>= f->planes[plane].width_shift;
+       height >>= f->planes[plane].height_shift;
+       dri_format = f->planes[plane].dri_format;
+       int index = f->planes[plane].buffer_index;
+       offset = parent->offsets[index];
+       stride = parent->strides[index];
+       size = height * stride;
+    } else if (plane == 0) {
+       /* The only plane of a non-planar image: copy the parent definition
+        * directly. */
+       dri_format = parent->dri_format;
+       offset = parent->offset;
+       stride = parent->pitch;
+       size = height * stride;
+    } else if (plane == 1 && parent->modifier != DRM_FORMAT_MOD_INVALID &&
+               isl_drm_modifier_has_aux(parent->modifier)) {
+       /* Auxiliary plane */
+       dri_format = parent->dri_format;
+       offset = parent->aux_offset;
+       stride = parent->aux_pitch;
+       size = parent->aux_size;
+    } else {
+       return NULL;
+    }
+
+    if (offset + size > parent->bo->size) {
+       _mesa_warning(NULL, "intel_from_planar: subimage out of bounds");
+       return NULL;
+    }
+>>>>>>> 11a0d5563f49b84f27b2707d77a8553da52d73ba
 
     width = parent->width;
     height = parent->height;
@@ -1363,15 +1401,6 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     } else {
        return NULL;
     }
-
-    if (offset + size > parent->bo->size) {
-       _mesa_warning(NULL, "intel_from_planar: subimage out of bounds");
-       return NULL;
-    }
-
-    image = intel_allocate_image(parent->screen, dri_format, loaderPrivate);
-    if (!image)
-       return NULL;
 
     image->bo = parent->bo;
     brw_bo_reference(parent->bo);
@@ -1835,7 +1864,7 @@ intel_detect_swizzling(struct intel_screen *screen)
    struct brw_bo *buffer =
       brw_bo_alloc_tiled(screen->bufmgr, "swizzle test", 32768,
                          tiling, 512, 0);
-   if (!buffer)
+   if (buffer == NULL)
       return false;
 
    brw_bo_get_tiling(buffer, &tiling, &swizzle_mode);
@@ -1910,11 +1939,11 @@ intel_detect_pipelined_register(struct intel_screen *screen,
 
    /* Create a zero'ed temporary buffer for reading our results */
    results = brw_bo_alloc(screen->bufmgr, "registers", 4096);
-   if (!results)
+   if (results == NULL)
       goto err;
 
    bo = brw_bo_alloc(screen->bufmgr, "batchbuffer", 4096);
-   if (!bo)
+   if (bo == NULL)
       goto err_results;
 
    map = brw_bo_map(NULL, bo, MAP_WRITE);

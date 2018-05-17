@@ -289,7 +289,7 @@ ADDR_E_RETURNCODE Lib::Create(
         pLib->SetMaxAlignments();
 
     }
-    else if (!(pLib) &&
+    else if ((pLib == NULL) &&
              (returnCode == ADDR_OK))
     {
         // Unknown failures, we return the general error code
@@ -357,6 +357,23 @@ VOID Lib::SetMaxAlignments()
 
 /**
 ****************************************************************************************************
+*   Lib::SetMaxAlignments
+*
+*   @brief
+*       Set max alignments
+*
+*   @return
+*      N/A
+****************************************************************************************************
+*/
+VOID Lib::SetMaxAlignments()
+{
+    m_maxBaseAlign     = HwlComputeMaxBaseAlignments();
+    m_maxMetaBaseAlign = HwlComputeMaxMetaBaseAlignments();
+}
+
+/**
+****************************************************************************************************
 *   Lib::GetLib
 *
 *   @brief
@@ -399,7 +416,7 @@ ADDR_E_RETURNCODE Lib::GetMaxAlignments(
 
     if (returnCode == ADDR_OK)
     {
-        if (m_maxBaseAlign)
+        if (m_maxBaseAlign != 0)
         {
             pOut->baseAlign = m_maxBaseAlign;
         }
@@ -429,7 +446,7 @@ ADDR_E_RETURNCODE Lib::GetMaxMetaAlignments(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags())
+    if (GetFillSizeFieldsFlags() == TRUE)
     {
         if (pOut->size != sizeof(ADDR_GET_MAX_ALINGMENTS_OUTPUT))
         {
@@ -439,7 +456,7 @@ ADDR_E_RETURNCODE Lib::GetMaxMetaAlignments(
 
     if (returnCode == ADDR_OK)
     {
-        if (m_maxMetaBaseAlign)
+        if (m_maxMetaBaseAlign != 0)
         {
             pOut->baseAlign = m_maxMetaBaseAlign;
         }

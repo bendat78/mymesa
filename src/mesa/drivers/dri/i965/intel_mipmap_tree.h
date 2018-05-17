@@ -354,7 +354,7 @@ struct intel_mipmap_tree
 };
 
 bool
-intel_miptree_alloc_ccs(struct brw_context *brw,
+intel_miptree_alloc_aux(struct brw_context *brw,
                         struct intel_mipmap_tree *mt);
 
 enum intel_miptree_create_flags {
@@ -510,15 +510,6 @@ intel_miptree_copy_teximage(struct brw_context *brw,
  * It is safe to call the "slice_set_need_resolve" and "slice_resolve"
  * functions on a miptree without HiZ. In that case, each function is a no-op.
  */
-
-/**
- * \brief Allocate the miptree's embedded HiZ miptree.
- * \see intel_mipmap_tree:hiz_mt
- * \return false if allocation failed
- */
-bool
-intel_miptree_alloc_hiz(struct brw_context *brw,
-			struct intel_mipmap_tree *mt);
 
 bool
 intel_miptree_level_has_hiz(const struct intel_mipmap_tree *mt, uint32_t level);
@@ -715,7 +706,7 @@ intel_miptree_sample_with_hiz(struct brw_context *brw,
 bool
 intel_miptree_set_clear_color(struct brw_context *brw,
                               struct intel_mipmap_tree *mt,
-                              const union gl_color_union *color);
+                              union isl_color_value clear_color);
 
 /* Get a clear color suitable for filling out an ISL surface state. */
 union isl_color_value
@@ -724,11 +715,6 @@ intel_miptree_get_clear_color(const struct gen_device_info *devinfo,
                               enum isl_format view_format, bool sampling,
                               struct brw_bo **clear_color_bo,
                               uint32_t *clear_color_offset);
-
-bool
-intel_miptree_set_depth_clear_value(struct brw_context *brw,
-                                    struct intel_mipmap_tree *mt,
-                                    float clear_value);
 
 #ifdef __cplusplus
 }
