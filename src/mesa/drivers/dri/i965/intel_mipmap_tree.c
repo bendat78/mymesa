@@ -36,7 +36,6 @@
 
 #include "brw_blorp.h"
 #include "brw_context.h"
-#include "brw_meta_util.h"
 #include "brw_state.h"
 
 #include "main/enums.h"
@@ -58,10 +57,6 @@ static void *intel_miptree_map_raw(struct brw_context *brw,
                                    GLbitfield mode);
 
 static void intel_miptree_unmap_raw(struct intel_mipmap_tree *mt);
-
-static bool
-intel_miptree_alloc_aux(struct brw_context *brw,
-                        struct intel_mipmap_tree *mt);
 
 static bool
 intel_miptree_supports_mcs(struct brw_context *brw,
@@ -791,7 +786,12 @@ intel_miptree_create(struct brw_context *brw,
 
    mt->offset = 0;
 
-   if (!intel_miptree_alloc_aux(brw, mt)) {
+   /* Create the auxiliary surface up-front. CCS_D, on the other hand, can only
+    * compress clear color so we wait until an actual fast-clear to allocate
+    * it.
+    */
+   if (mt->aux_usage != ISL_AUX_USAGE_CCS_D &&
+       !intel_miptree_alloc_aux(brw, mt)) {
       intel_miptree_release(&mt);
       return NULL;
    }
@@ -882,7 +882,12 @@ intel_miptree_create_for_bo(struct brw_context *brw,
    if (!(flags & MIPTREE_CREATE_NO_AUX)) {
       intel_miptree_choose_aux_usage(brw, mt);
 
-      if (!intel_miptree_alloc_aux(brw, mt)) {
+      /* Create the auxiliary surface up-front. CCS_D, on the other hand, can
+       * only compress clear color so we wait until an actual fast-clear to
+       * allocate it.
+       */
+      if (mt->aux_usage != ISL_AUX_USAGE_CCS_D &&
+          !intel_miptree_alloc_aux(brw, mt)) {
          intel_miptree_release(&mt);
          return NULL;
       }
@@ -978,11 +983,11 @@ create_ccs_buf_for_image(struct brw_context *brw,
     * system with CCS, we don't have the extra space at the end of the aux
     * buffer. So create a new bo here that will store that clear color.
     */
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
-   if (devinfo->gen >= 10) {
+   if (brw->isl_dev.ss.clear_color_state_size > 0) {
       mt->aux_buf->clear_color_bo =
-         brw_bo_alloc(brw->bufmgr, "clear_color_bo",
-                      brw->isl_dev.ss.clear_color_state_size);
+         brw_bo_alloc_tiled(brw->bufmgr, "clear_color_bo",
+                            brw->isl_dev.ss.clear_color_state_size,
+                            I915_TILING_NONE, 0, BO_ALLOC_ZEROED);
       if (!mt->aux_buf->clear_color_bo) {
          free(mt->aux_buf);
          mt->aux_buf = NULL;
@@ -1655,41 +1660,11 @@ intel_miptree_copy_teximage(struct brw_context *brw,
    intel_obj->needs_validate = true;
 }
 
-static void
-intel_miptree_init_mcs(struct brw_context *brw,
-                       struct intel_mipmap_tree *mt,
-                       int init_value)
-{
-   assert(mt->aux_buf != NULL);
-
-   /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
-    *
-    *     When MCS buffer is enabled and bound to MSRT, it is required that it
-    *     is cleared prior to any rendering.
-    *
-    * Since we don't use the MCS buffer for any purpose other than rendering,
-    * it makes sense to just clear it immediately upon allocation.
-    *
-    * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
-    */
-   void *map = brw_bo_map(brw, mt->aux_buf->bo, MAP_WRITE | MAP_RAW);
-   if (!unlikely(map)) {
-      fprintf(stderr, "Failed to map mcs buffer into GTT\n");
-      brw_bo_unreference(mt->aux_buf->bo);
-      free(mt->aux_buf);
-      return;
-   }
-   void *data = map;
-   memset(data, init_value, mt->aux_buf->surf.size);
-   brw_bo_unmap(mt->aux_buf->bo);
-}
-
 static struct intel_miptree_aux_buffer *
 intel_alloc_aux_buffer(struct brw_context *brw,
-                       const char *name,
                        const struct isl_surf *aux_surf,
-                       uint32_t alloc_flags,
-                       struct intel_mipmap_tree *mt)
+                       bool wants_memset,
+                       uint8_t memset_value)
 {
    struct intel_miptree_aux_buffer *buf = calloc(sizeof(*buf), 1);
    if (!buf)
@@ -1697,9 +1672,9 @@ intel_alloc_aux_buffer(struct brw_context *brw,
 
    uint64_t size = aux_surf->size;
 
-   const struct gen_device_info *devinfo = &brw->screen->devinfo;
-   if (devinfo->gen >= 10) {
-      /* On CNL, instead of setting the clear color in the SURFACE_STATE, we
+   const bool has_indirect_clear = brw->isl_dev.ss.clear_color_state_size > 0;
+   if (has_indirect_clear) {
+      /* On CNL+, instead of setting the clear color in the SURFACE_STATE, we
        * will set a pointer to a dword somewhere that contains the color. So,
        * allocate the space for the clear color value here on the aux buffer.
        */
@@ -1707,11 +1682,22 @@ intel_alloc_aux_buffer(struct brw_context *brw,
       size += brw->isl_dev.ss.clear_color_state_size;
    }
 
+   /* If the buffer needs to be initialised (requiring the buffer to be
+    * immediately mapped to cpu space for writing), do not use the gpu access
+    * flag which can cause an unnecessary delay if the backing pages happened
+    * to be just used by the GPU.
+    */
+   const bool alloc_zeroed = wants_memset && memset_value == 0;
+   const bool needs_memset =
+      !alloc_zeroed && (wants_memset || has_indirect_clear);
+   const uint32_t alloc_flags =
+      alloc_zeroed ? BO_ALLOC_ZEROED : (needs_memset ? 0 : BO_ALLOC_BUSY);
+
    /* ISL has stricter set of alignment rules then the drm allocator.
     * Therefore one can pass the ISL dimensions in terms of bytes instead of
     * trying to recalculate based on different format block sizes.
     */
-   buf->bo = brw_bo_alloc_tiled(brw->bufmgr, name, size,
+   buf->bo = brw_bo_alloc_tiled(brw->bufmgr, "aux-miptree", size,
                                 I915_TILING_Y, aux_surf->row_pitch,
                                 alloc_flags);
    if (!buf->bo) {
@@ -1719,7 +1705,30 @@ intel_alloc_aux_buffer(struct brw_context *brw,
       return NULL;
    }
 
-   if (devinfo->gen >= 10) {
+   /* Initialize the bo to the desired value */
+   if (needs_memset) {
+      assert(!(alloc_flags & BO_ALLOC_BUSY));
+
+      void *map = brw_bo_map(brw, buf->bo, MAP_WRITE | MAP_RAW);
+      if (map == NULL) {
+         intel_miptree_aux_buffer_free(buf);
+         return NULL;
+      }
+
+      /* Memset the aux_surf portion of the BO. */
+      if (wants_memset)
+         memset(map, memset_value, aux_surf->size);
+
+      /* Zero the indirect clear color to match ::fast_clear_color. */
+      if (has_indirect_clear) {
+         memset((char *)map + buf->clear_color_offset, 0,
+                brw->isl_dev.ss.clear_color_state_size);
+      }
+
+      brw_bo_unmap(buf->bo);
+   }
+
+   if (has_indirect_clear) {
       buf->clear_color_bo = buf->bo;
       brw_bo_reference(buf->clear_color_bo);
    }
@@ -1729,97 +1738,9 @@ intel_alloc_aux_buffer(struct brw_context *brw,
    return buf;
 }
 
-static bool
-intel_miptree_alloc_mcs(struct brw_context *brw,
-                        struct intel_mipmap_tree *mt,
-                        GLuint num_samples)
-{
-   assert(brw->screen->devinfo.gen >= 7); /* MCS only used on Gen7+ */
-   assert(mt->aux_buf == NULL);
-   assert(mt->aux_usage == ISL_AUX_USAGE_MCS);
-
-   /* Multisampled miptrees are only supported for single level. */
-   assert(mt->first_level == 0);
-   enum isl_aux_state **aux_state =
-      create_aux_state_map(mt, ISL_AUX_STATE_CLEAR);
-   if (!aux_state)
-      return false;
-
-   struct isl_surf temp_mcs_surf;
-
-   MAYBE_UNUSED bool ok =
-      isl_surf_get_mcs_surf(&brw->isl_dev, &mt->surf, &temp_mcs_surf);
-   assert(ok);
-
-   /* Buffer needs to be initialised requiring the buffer to be immediately
-    * mapped to cpu space for writing. Therefore do not use the gpu access
-    * flag which can cause an unnecessary delay if the backing pages happened
-    * to be just used by the GPU.
-    */
-   const uint32_t alloc_flags = 0;
-   mt->aux_buf = intel_alloc_aux_buffer(brw, "mcs-miptree",
-                                        &temp_mcs_surf, alloc_flags, mt);
-   if (!mt->aux_buf) {
-      free(aux_state);
-      return false;
-   }
-
-   mt->aux_state = aux_state;
-
-   intel_miptree_init_mcs(brw, mt, 0xFF);
-
-   return true;
-}
-
-bool
-intel_miptree_alloc_ccs(struct brw_context *brw,
-                        struct intel_mipmap_tree *mt)
-{
-   assert(mt->aux_buf == NULL);
-   assert(mt->aux_usage == ISL_AUX_USAGE_CCS_E ||
-          mt->aux_usage == ISL_AUX_USAGE_CCS_D);
-
-   struct isl_surf temp_ccs_surf;
-
-   if (!isl_surf_get_ccs_surf(&brw->isl_dev, &mt->surf, &temp_ccs_surf, 0))
-      return false;
-
-   assert(temp_ccs_surf.size &&
-          (temp_ccs_surf.size % temp_ccs_surf.row_pitch == 0));
-
-   enum isl_aux_state **aux_state =
-      create_aux_state_map(mt, ISL_AUX_STATE_PASS_THROUGH);
-   if (!aux_state)
-      return false;
-
-   /* When CCS_E is used, we need to ensure that the CCS starts off in a valid
-    * state.  From the Sky Lake PRM, "MCS Buffer for Render Target(s)":
-    *
-    *    "If Software wants to enable Color Compression without Fast clear,
-    *    Software needs to initialize MCS with zeros."
-    *
-    * A CCS value of 0 indicates that the corresponding block is in the
-    * pass-through state which is what we want.
-    *
-    * For CCS_D, on the other hand, we don't care as we're about to perform a
-    * fast-clear operation.  In that case, being hot in caches more useful.
-    */
-   const uint32_t alloc_flags = mt->aux_usage == ISL_AUX_USAGE_CCS_E ?
-                                BO_ALLOC_ZEROED : BO_ALLOC_BUSY;
-   mt->aux_buf = intel_alloc_aux_buffer(brw, "ccs-miptree",
-                                        &temp_ccs_surf, alloc_flags, mt);
-   if (!mt->aux_buf) {
-      free(aux_state);
-      return false;
-   }
-
-   mt->aux_state = aux_state;
-
-   return true;
-}
 
 /**
- * Helper for intel_miptree_alloc_hiz() that sets
+ * Helper for intel_miptree_alloc_aux() that sets
  * \c mt->level[level].has_hiz. Return true if and only if
  * \c has_hiz was set.
  */
@@ -1854,41 +1775,6 @@ intel_miptree_level_enable_hiz(struct brw_context *brw,
    return true;
 }
 
-bool
-intel_miptree_alloc_hiz(struct brw_context *brw,
-			struct intel_mipmap_tree *mt)
-{
-   assert(mt->aux_buf == NULL);
-   assert(mt->aux_usage == ISL_AUX_USAGE_HIZ);
-
-   enum isl_aux_state **aux_state =
-      create_aux_state_map(mt, ISL_AUX_STATE_AUX_INVALID);
-   if (!aux_state)
-      return false;
-
-   struct isl_surf temp_hiz_surf;
-
-   MAYBE_UNUSED bool ok =
-      isl_surf_get_hiz_surf(&brw->isl_dev, &mt->surf, &temp_hiz_surf);
-   assert(ok);
-
-   const uint32_t alloc_flags = BO_ALLOC_BUSY;
-   mt->aux_buf = intel_alloc_aux_buffer(brw, "hiz-miptree",
-                                        &temp_hiz_surf, alloc_flags, mt);
-
-   if (!mt->aux_buf) {
-      free(aux_state);
-      return false;
-   }
-
-   for (unsigned level = mt->first_level; level <= mt->last_level; ++level)
-      intel_miptree_level_enable_hiz(brw, mt, level);
-
-   mt->aux_state = aux_state;
-
-   return true;
-}
-
 
 /**
  * Allocate the initial aux surface for a miptree based on mt->aux_usage
@@ -1897,42 +1783,105 @@ intel_miptree_alloc_hiz(struct brw_context *brw,
  * create the auxiliary surfaces up-front.  CCS_D, on the other hand, can only
  * compress clear color so we wait until an actual fast-clear to allocate it.
  */
-static bool
+bool
 intel_miptree_alloc_aux(struct brw_context *brw,
                         struct intel_mipmap_tree *mt)
 {
+   assert(mt->aux_buf == NULL);
+
+   /* Get the aux buf allocation parameters for this miptree. */
+   enum isl_aux_state initial_state;
+   uint8_t memset_value;
+   struct isl_surf aux_surf;
+   bool aux_surf_ok;
+
    switch (mt->aux_usage) {
    case ISL_AUX_USAGE_NONE:
-      return true;
-
+      aux_surf.size = 0;
+      aux_surf_ok = true;
+      break;
    case ISL_AUX_USAGE_HIZ:
       assert(!_mesa_is_format_color_format(mt->format));
-      if (!intel_miptree_alloc_hiz(brw, mt))
-         return false;
-      return true;
 
+      initial_state = ISL_AUX_STATE_AUX_INVALID;
+      aux_surf_ok = isl_surf_get_hiz_surf(&brw->isl_dev, &mt->surf, &aux_surf);
+      assert(aux_surf_ok);
+      break;
    case ISL_AUX_USAGE_MCS:
       assert(_mesa_is_format_color_format(mt->format));
-      assert(mt->surf.samples > 1);
-      if (!intel_miptree_alloc_mcs(brw, mt, mt->surf.samples))
-         return false;
-      return true;
+      assert(brw->screen->devinfo.gen >= 7); /* MCS only used on Gen7+ */
 
-   case ISL_AUX_USAGE_CCS_D:
-      /* Since CCS_D can only compress clear color so we wait until an actual
-       * fast-clear to allocate it.
+      /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
+       *
+       *     When MCS buffer is enabled and bound to MSRT, it is required that
+       *     it is cleared prior to any rendering.
+       *
+       * Since we don't use the MCS buffer for any purpose other than
+       * rendering, it makes sense to just clear it immediately upon
+       * allocation.
+       *
+       * Note: the clear value for MCS buffers is all 1's, so we memset to
+       * 0xff.
        */
-      return true;
-
+      initial_state = ISL_AUX_STATE_CLEAR;
+      memset_value = 0xFF;
+      aux_surf_ok = isl_surf_get_mcs_surf(&brw->isl_dev, &mt->surf, &aux_surf);
+      assert(aux_surf_ok);
+      break;
+   case ISL_AUX_USAGE_CCS_D:
    case ISL_AUX_USAGE_CCS_E:
       assert(_mesa_is_format_color_format(mt->format));
-      assert(mt->surf.samples == 1);
-      if (!intel_miptree_alloc_ccs(brw, mt))
-         return false;
-      return true;
+
+      /* When CCS_E is used, we need to ensure that the CCS starts off in a
+       * valid state.  From the Sky Lake PRM, "MCS Buffer for Render
+       * Target(s)":
+       *
+       *    "If Software wants to enable Color Compression without Fast
+       *    clear, Software needs to initialize MCS with zeros."
+       *
+       * A CCS value of 0 indicates that the corresponding block is in the
+       * pass-through state which is what we want.
+       *
+       * For CCS_D, do the same thing. On gen9+, this avoids having any
+       * undefined bits in the aux buffer.
+       */
+      initial_state = ISL_AUX_STATE_PASS_THROUGH;
+      memset_value = 0;
+      aux_surf_ok =
+         isl_surf_get_ccs_surf(&brw->isl_dev, &mt->surf, &aux_surf, 0);
+      break;
    }
 
-   unreachable("Invalid aux usage");
+   /* Ensure we have a valid aux_surf. */
+   if (aux_surf_ok == false)
+      return false;
+
+   /* No work is needed for a zero-sized auxiliary buffer. */
+   if (aux_surf.size == 0)
+      return true;
+
+   /* Create the aux_state for the auxiliary buffer. */
+   mt->aux_state = create_aux_state_map(mt, initial_state);
+   if (mt->aux_state == NULL)
+      return false;
+
+   /* Allocate the auxiliary buffer. */
+   const bool needs_memset = initial_state != ISL_AUX_STATE_AUX_INVALID;
+   mt->aux_buf = intel_alloc_aux_buffer(brw, &aux_surf, needs_memset,
+                                        memset_value);
+   if (mt->aux_buf == NULL) {
+      free_aux_state_map(mt->aux_state);
+      mt->aux_state = NULL;
+      return false;
+   }
+
+   /* Perform aux_usage-specific initialization. */
+   if (mt->aux_usage == ISL_AUX_USAGE_HIZ) {
+      for (unsigned level = mt->first_level; level <= mt->last_level; ++level)
+         intel_miptree_level_enable_hiz(brw, mt, level);
+   }
+
+   return true;
 }
 
 
@@ -3775,26 +3724,23 @@ get_isl_dim_layout(const struct gen_device_info *devinfo,
 bool
 intel_miptree_set_clear_color(struct brw_context *brw,
                               struct intel_mipmap_tree *mt,
-                              const union gl_color_union *color)
+                              union isl_color_value clear_color)
 {
-   const union isl_color_value clear_color =
-      brw_meta_convert_fast_clear_color(brw, mt, color);
-
    if (memcmp(&mt->fast_clear_color, &clear_color, sizeof(clear_color)) != 0) {
       mt->fast_clear_color = clear_color;
-      brw->ctx.NewDriverState |= BRW_NEW_AUX_STATE;
-      return true;
-   }
-   return false;
-}
-
-bool
-intel_miptree_set_depth_clear_value(struct brw_context *brw,
-                                    struct intel_mipmap_tree *mt,
-                                    float clear_value)
-{
-   if (mt->fast_clear_color.f32[0] != clear_value) {
-      mt->fast_clear_color.f32[0] = clear_value;
+      if (mt->aux_buf->clear_color_bo) {
+         /* We can't update the clear color while the hardware is still using
+          * the previous one for a resolve or sampling from it. Make sure that
+          * there are no pending commands at this point.
+          */
+         brw_emit_pipe_control_flush(brw, PIPE_CONTROL_CS_STALL);
+         for (int i = 0; i < 4; i++) {
+            brw_store_data_imm32(brw, mt->aux_buf->clear_color_bo,
+                                 mt->aux_buf->clear_color_offset + i * 4,
+                                 mt->fast_clear_color.u32[i]);
+         }
+         brw_emit_pipe_control_flush(brw, PIPE_CONTROL_STATE_CACHE_INVALIDATE);
+      }
       brw->ctx.NewDriverState |= BRW_NEW_AUX_STATE;
       return true;
    }

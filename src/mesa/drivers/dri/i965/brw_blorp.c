@@ -1208,7 +1208,7 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
     */
    if (can_fast_clear && !irb->mt->aux_buf) {
       assert(irb->mt->aux_usage == ISL_AUX_USAGE_CCS_D);
-      if (!intel_miptree_alloc_ccs(brw, irb->mt)) {
+      if (!intel_miptree_alloc_aux(brw, irb->mt)) {
          /* There are a few reasons in addition to out-of-memory, that can
           * cause intel_miptree_alloc_non_msrt_mcs to fail.  Try to recover by
           * falling back to non-fast clear.
@@ -1225,14 +1225,16 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
    if (can_fast_clear) {
       const enum isl_aux_state aux_state =
          intel_miptree_get_aux_state(irb->mt, irb->mt_level, irb->mt_layer);
+      union isl_color_value clear_color =
+         brw_meta_convert_fast_clear_color(brw, irb->mt,
+                                           &ctx->Color.ClearColor);
 
-      bool same_clear_color =
-         !intel_miptree_set_clear_color(brw, irb->mt, &ctx->Color.ClearColor);
+      intel_miptree_set_clear_color(brw, irb->mt, clear_color);
 
-      /* If the buffer is already in INTEL_FAST_CLEAR_STATE_CLEAR, the clear
+      /* If the buffer is already in ISL_AUX_STATE_CLEAR, the clear
        * is redundant and can be skipped.
        */
-      if (aux_state == ISL_AUX_STATE_CLEAR && same_clear_color)
+      if (aux_state == ISL_AUX_STATE_CLEAR)
          return;
 
       DBG("%s (fast) to mt %p level %d layers %d+%d\n", __FUNCTION__,
@@ -1259,7 +1261,8 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
       brw_emit_end_of_pipe_sync(brw, PIPE_CONTROL_RENDER_TARGET_FLUSH);
 
       struct blorp_batch batch;
-      blorp_batch_init(&brw->blorp, &batch, brw, 0);
+      blorp_batch_init(&brw->blorp, &batch, brw,
+                       BLORP_BATCH_NO_UPDATE_CLEAR_COLOR);
       blorp_fast_clear(&batch, &surf, isl_format,
                        level, irb->mt_layer, num_layers,
                        x0, y0, x1, y1);
@@ -1613,7 +1616,8 @@ intel_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
                           &level, start_layer, num_layers, isl_tmp);
 
    struct blorp_batch batch;
-   blorp_batch_init(&brw->blorp, &batch, brw, 0);
+   blorp_batch_init(&brw->blorp, &batch, brw,
+                    BLORP_BATCH_NO_UPDATE_CLEAR_COLOR);
    blorp_hiz_op(&batch, &surf, level, start_layer, num_layers, op);
    blorp_batch_finish(&batch);
 
