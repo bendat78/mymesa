@@ -1908,27 +1908,6 @@ _mesa_LinkProgram(GLuint programObj)
       _mesa_lookup_shader_program_err(ctx, programObj, "glLinkProgram");
    link_program_error(ctx, shProg);
 }
->>>>>>> 11a0d5563f49b84f27b2707d77a8553da52d73ba
-
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program(ctx, programObj);
-   link_program_no_error(ctx, shProg);
-}
-
-
-void GLAPIENTRY
-_mesa_LinkProgram(GLuint programObj)
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glLinkProgram %u\n", programObj);
-
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, programObj, "glLinkProgram");
-   link_program_error(ctx, shProg);
-}
-
 
 
 /**

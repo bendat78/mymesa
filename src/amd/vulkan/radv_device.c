@@ -901,7 +901,7 @@ void radv_GetPhysicalDeviceProperties(
 		.deviceID = pdevice->rad_info.pci_id,
 		.deviceType = pdevice->rad_info.has_dedicated_vram ? VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU : VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
 		.limits = limits,
-		.sparseProperties = {},
+		.sparseProperties = {0},
 	};
 
 	strcpy(pProperties->deviceName, pdevice->name);
@@ -1086,7 +1086,7 @@ static void radv_get_physical_device_queue_family_properties(
 	    !(pdevice->instance->debug_flags & RADV_DEBUG_NO_COMPUTE_QUEUE))
 		num_queue_families++;
 
-	if (!pQueueFamilyProperties) {
+	if (pQueueFamilyProperties == NULL) {
 		*pCount = num_queue_families;
 		return;
 	}
@@ -1095,7 +1095,7 @@ static void radv_get_physical_device_queue_family_properties(
 		return;
 
 	idx = 0;
-	if (*pCount) {
+	if (*pCount >= 1) {
 		*pQueueFamilyProperties[idx] = (VkQueueFamilyProperties) {
 			.queueFlags = VK_QUEUE_GRAPHICS_BIT |
 			              VK_QUEUE_COMPUTE_BIT |
@@ -1455,8 +1455,6 @@ VkResult radv_CreateDevice(
 	device->always_use_syncobj = device->physical_device->rad_info.has_syncobj_wait_for_submit;
 #endif
 
-	device->llvm_supports_spill = true;
-
 	/* The maximum number of scratch waves. Scratch space isn't divided
 	 * evenly between CUs. The number is only a function of the number of CUs.
 	 * We can decrease the constant to decrease the scratch buffer size.
@@ -1606,7 +1604,7 @@ VkResult radv_EnumerateInstanceLayerProperties(
 	uint32_t*                                   pPropertyCount,
 	VkLayerProperties*                          pProperties)
 {
-	if (!pProperties) {
+	if (pProperties == NULL) {
 		*pPropertyCount = 0;
 		return VK_SUCCESS;
 	}
@@ -1620,7 +1618,7 @@ VkResult radv_EnumerateDeviceLayerProperties(
 	uint32_t*                                   pPropertyCount,
 	VkLayerProperties*                          pProperties)
 {
-	if (!pProperties) {
+	if (pProperties == NULL) {
 		*pPropertyCount = 0;
 		return VK_SUCCESS;
 	}
@@ -2694,7 +2692,7 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 
 	assert(pAllocateInfo->sType == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
 
-	if (!pAllocateInfo->allocationSize) {
+	if (pAllocateInfo->allocationSize == 0) {
 		/* Apparently, this is allowed */
 		*pMem = VK_NULL_HANDLE;
 		return VK_SUCCESS;
@@ -2714,7 +2712,7 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 
 	mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
 			  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!mem)
+	if (mem == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	if (wsi_info && wsi_info->implicit_sync)
@@ -2817,7 +2815,7 @@ void radv_FreeMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _mem);
 
-	if (!mem)
+	if (mem == NULL)
 		return;
 
 	radv_bo_list_remove(device, mem->bo);
@@ -2838,7 +2836,7 @@ VkResult radv_MapMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _memory);
 
-	if (!mem) {
+	if (mem == NULL) {
 		*ppData = NULL;
 		return VK_SUCCESS;
 	}
@@ -2863,7 +2861,7 @@ void radv_UnmapMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _memory);
 
-	if (!mem)
+	if (mem == NULL)
 		return;
 
 	if (mem->user_ptr == NULL)
@@ -3555,7 +3553,7 @@ VkResult radv_CreateBuffer(
 
 	buffer = vk_alloc2(&device->alloc, pAllocator, sizeof(*buffer), 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!buffer)
+	if (buffer == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	buffer->size = pCreateInfo->size;
@@ -3765,7 +3763,7 @@ radv_initialise_color_surface(struct radv_device *device,
 					       desc,
 					       vk_format_get_first_non_void_channel(iview->vk_format));
 	format = radv_translate_colorformat(iview->vk_format);
-	if (format == V_028C70_COLOR_INVALID || ntype == (~0u))
+	if (format == V_028C70_COLOR_INVALID || ntype == ~0u)
 		radv_finishme("Illegal color\n");
 	swap = radv_translate_colorswap(iview->vk_format, FALSE);
 	endian = radv_colorformat_endian_swap(format);
@@ -4059,7 +4057,7 @@ VkResult radv_CreateFramebuffer(
 		sizeof(struct radv_attachment_info) * pCreateInfo->attachmentCount;
 	framebuffer = vk_alloc2(&device->alloc, pAllocator, size, 8,
 				  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!framebuffer)
+	if (framebuffer == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	framebuffer->attachment_count = pCreateInfo->attachmentCount;

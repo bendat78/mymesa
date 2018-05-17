@@ -135,10 +135,10 @@ static int store_shader(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	uint32_t *ptr, i;
 
-	if (!shader->bo) {
+	if (shader->bo == NULL) {
 		shader->bo = (struct r600_resource*)
 			pipe_buffer_create(ctx->screen, 0, PIPE_USAGE_IMMUTABLE, shader->shader.bc.ndw * 4);
-		if (!shader->bo) {
+		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
 		ptr = r600_buffer_map_sync_with_rings(&rctx->b, shader->bo, PIPE_TRANSFER_WRITE);
@@ -2624,7 +2624,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 
 		for (j = 0; j < so->num_outputs; j++) {
 			if (so->output[j].register_index == i) {
-				if (!so->output[j].stream)
+				if (so->output[j].stream == 0)
 					break;
 				if (so->output[j].stream > 0)
 					instream0 = false;
@@ -3634,7 +3634,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 			immediate = &ctx.parse.FullToken.FullImmediate;
 			ctx.literals = realloc(ctx.literals, (ctx.nliterals + 1) * 16);
-			if(!ctx.literals) {
+			if(ctx.literals == NULL) {
 				r = -ENOMEM;
 				goto out_err;
 			}
@@ -4856,6 +4856,7 @@ static int egcm_int_to_double(struct r600_shader_ctx *ctx)
 					alu.last = i == dchan + 1;
 				else
 					alu.last = 1; /* trans only ops on evergreen */
+				
 				r = r600_bytecode_add_alu(ctx->bc, &alu);
 				if (r)
 					return r;
@@ -5899,7 +5900,7 @@ static int tgsi_divmod(struct r600_shader_ctx *ctx, int mod, int signed_op)
 
 				alu.dst.sel = tmp0;
 				alu.dst.chan = j;
-				alu.dst.write = (!j);
+				alu.dst.write = (j == 0);
 
 				alu.src[0].sel = tmp3;
 				alu.src[0].chan = 0;
@@ -7724,14 +7725,14 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		int start_val = 0;
 
 		/* if we've already loaded the src (i.e. CUBE don't reload it). */
-		if (src_loaded)
+		if (src_loaded == TRUE)
 			start_val = 1;
 		else
 			src_loaded = TRUE;
 		for (i = start_val; i < 3; i++) {
 			int treg = r600_get_temp(ctx);
 
-			if (!i)
+			if (i == 0)
 				src_gpr = treg;
 			else if (i == 1)
 				temp_h = treg;
@@ -8744,7 +8745,6 @@ static int tgsi_load_lds(struct r600_shader_ctx *ctx)
 	if (r)
 		return r;
 	
->>>>>>> 11a0d5563f49b84f27b2707d77a8553da52d73ba
 	r = do_lds_fetch_values(ctx, temp_reg,
 				ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index, inst->Dst[0].Register.WriteMask);
 	if (r)

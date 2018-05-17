@@ -1838,8 +1838,7 @@ void r600_query_fix_enabled_rb_mask(struct r600_common_screen *rscreen)
 	uint32_t *results;
 	unsigned i, mask = 0;
 	unsigned max_rbs;
-
-r600_query.c
+	
 	if (ctx->family == CHIP_JUNIPER) {
 		/*
 		 * Fix for predication lockups - the chip can only ever have
@@ -1861,8 +1860,6 @@ r600_query.c
 	 * bit there if the map is zero.
 	 * (Albeit some chips with just one active rb can have a valid 0 map.)
 	 */ 
-
-r600_query.c
 	if (rscreen->info.r600_gb_backend_map_valid &&
 	    (ctx->chip_class < EVERGREEN || rscreen->info.r600_gb_backend_map != 0)) {
 		unsigned num_tile_pipes = rscreen->info.num_tile_pipes;
@@ -1882,7 +1879,7 @@ r600_query.c
 			mask |= (1<<i);
 			backend_map >>= item_width;
 		}
-		if (mask) {
+		if (mask != 0) {
 			rscreen->info.enabled_rb_mask = mask;
 			return;
 		}

@@ -357,23 +357,6 @@ VOID Lib::SetMaxAlignments()
 
 /**
 ****************************************************************************************************
-*   Lib::SetMaxAlignments
-*
-*   @brief
-*       Set max alignments
-*
-*   @return
-*      N/A
-****************************************************************************************************
-*/
-VOID Lib::SetMaxAlignments()
-{
-    m_maxBaseAlign     = HwlComputeMaxBaseAlignments();
-    m_maxMetaBaseAlign = HwlComputeMaxMetaBaseAlignments();
-}
-
-/**
-****************************************************************************************************
 *   Lib::GetLib
 *
 *   @brief

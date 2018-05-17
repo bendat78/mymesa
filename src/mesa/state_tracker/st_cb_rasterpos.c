@@ -1,8 +1,8 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
 /**
@@ -197,10 +197,10 @@ new_draw_rastpos_stage(struct gl_context *ctx, struct draw_context *draw)
    rs->ctx = ctx;
 
    rs->VAO = _mesa_new_vao(ctx, ~((GLuint)0));
-   _mesa_vertex_attrib_binding(ctx, rs->VAO, VERT_ATTRIB_POS, 0, false);
+   _mesa_vertex_attrib_binding(ctx, rs->VAO, VERT_ATTRIB_POS, 0);
    _mesa_update_array_format(ctx, rs->VAO, VERT_ATTRIB_POS, 4, GL_FLOAT,
                              GL_RGBA, GL_FALSE, GL_FALSE, GL_FALSE, 0);
-   _mesa_enable_vertex_array_attrib(ctx, rs->VAO, 0, false);
+   _mesa_enable_vertex_array_attrib(ctx, rs->VAO, 0);
 
    rs->prim.mode = GL_POINTS;
    rs->prim.indexed = 0;

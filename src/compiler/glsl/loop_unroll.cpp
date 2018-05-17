@@ -303,10 +303,6 @@ loop_unroll_visitor::complex_unroll(ir_loop *ir, int iterations,
          ? &ir_if->then_instructions : &ir_if->else_instructions;
       ir_if = ((ir_instruction *) first_list->get_tail())->as_if();
 
-      exec_list *const first_list = first_term_then_continue
-         ? &ir_if->then_instructions : &ir_if->else_instructions;
-      ir_if = ((ir_instruction *) first_list->get_tail())->as_if();
-
       ir_to_replace->insert_before(&copy_list);
       ir_to_replace->remove();
 

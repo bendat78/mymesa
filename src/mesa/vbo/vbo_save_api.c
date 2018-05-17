@@ -143,7 +143,7 @@ copy_vertices(struct gl_context *ctx,
                 sz * sizeof(GLfloat));
       return i;
    case GL_LINE_STRIP:
-      if (!nr)
+      if (nr == 0)
          return 0;
       else {
          memcpy(dst, src + (nr - 1) * sz, sz * sizeof(GLfloat));
@@ -152,7 +152,7 @@ copy_vertices(struct gl_context *ctx,
    case GL_LINE_LOOP:
    case GL_TRIANGLE_FAN:
    case GL_POLYGON:
-      if (!nr)
+      if (nr == 0)
          return 0;
       else if (nr == 1) {
          memcpy(dst, src + 0, sz * sizeof(GLfloat));
@@ -499,7 +499,7 @@ update_vao(struct gl_context *ctx,
     */
 
    /* Bind the buffer object at binding point 0 */
-   _mesa_bind_vertex_buffer(ctx, *vao, 0, bo, buffer_offset, stride, false);
+   _mesa_bind_vertex_buffer(ctx, *vao, 0, bo, buffer_offset, stride);
 
    /* Retrieve the mapping from VBO_ATTRIB to VERT_ATTRIB space
     * Note that the position/generic0 aliasing is done in the VAO.
@@ -514,8 +514,8 @@ update_vao(struct gl_context *ctx,
 
       _vbo_set_attrib_format(ctx, *vao, vao_attr, buffer_offset,
                              size[vbo_attr], type[vbo_attr], offset[vbo_attr]);
-      _mesa_vertex_attrib_binding(ctx, *vao, vao_attr, 0, false);
-      _mesa_enable_vertex_array_attrib(ctx, *vao, vao_attr, false);
+      _mesa_vertex_attrib_binding(ctx, *vao, vao_attr, 0);
+      _mesa_enable_vertex_array_attrib(ctx, *vao, vao_attr);
    }
    assert(vao_enabled == (*vao)->_Enabled);
    assert((vao_enabled & ~(*vao)->VertexAttribBufferMask) == 0);
@@ -893,7 +893,7 @@ upgrade_vertex(struct gl_context *ctx, GLuint attr, GLuint newsz)
       /* Need to note this and fix up at runtime (or loopback):
        */
       if (attr != VBO_ATTRIB_POS && save->currentsz[attr][0] == 0) {
-         assert(!oldsz);
+         assert(oldsz == 0);
          save->dangling_attr_ref = GL_TRUE;
       }
 
@@ -1007,7 +1007,7 @@ do {								\
       save->attrtype[A] = T;					\
    }								\
 								\
-   if (!(A)) {						\
+   if ((A) == 0) {						\
       GLuint i;							\
 								\
       for (i = 0; i < save->vertex_size; i++)			\
