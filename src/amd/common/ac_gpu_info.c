@@ -313,10 +313,32 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 	info->has_syncobj_wait_for_submit = info->has_syncobj && info->drm_minor >= 20;
 	info->has_fence_to_handle = info->has_syncobj && info->drm_minor >= 21;
 	info->has_ctx_priority = info->drm_minor >= 22;
-
 	/* TODO: Enable this once the kernel handles it efficiently. */
 	info->has_local_buffers = info->drm_minor >= 20 &&
 				  !info->has_dedicated_vram;
+	info->kernel_flushes_hdp_before_ib = true;
+	info->htile_cmask_support_1d_tiling = true;
+	info->si_TA_CS_BC_BASE_ADDR_allowed = true;
+	info->has_bo_metadata = true;
+	info->has_gpu_reset_status_query = true;
+	info->has_gpu_reset_counter_query = false;
+	info->has_eqaa_surface_allocator = true;
+	info->has_format_bc1_through_bc7 = true;
+	/* DRM 3.1.0 doesn't flush TC for VI correctly. */
+	info->kernel_flushes_tc_l2_after_ib = info->chip_class != VI ||
+					      info->drm_minor >= 2;
+	info->has_indirect_compute_dispatch = true;
+	/* SI doesn't support unaligned loads. */
+	info->has_unaligned_shader_loads = info->chip_class != SI;
+	/* Disable sparse mappings on SI due to VM faults in CP DMA. Enable them once
+	 * these faults are mitigated in software.
+	 * Disable sparse mappings on GFX9 due to hangs.
+	 */
+	info->has_sparse_vm_mappings =
+		info->chip_class >= CIK && info->chip_class <= VI &&
+		info->drm_minor >= 13;
+	info->has_2d_tiling = true;
+	info->has_read_registers_query = true;
 
 	info->num_render_backends = amdinfo->rb_pipes;
 	/* The value returned by the kernel driver was wrong. */
