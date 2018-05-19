@@ -69,7 +69,7 @@
  * Generate a SHA-1 hash value string for given source string.
  */
 static void
-generate_sha1(const char *source, char sha_str[64])
+generate_sha1(const char *source, char sha_str[41])
 {
    unsigned char sha[20];
    _mesa_sha1_compute(source, strlen(source), sha);
@@ -88,7 +88,7 @@ static char *
 construct_name(const gl_shader_stage stage, const char *source,
                const char *path)
 {
-   char sha[64];
+   char sha[41];
    static const char *types[] = {
       "VS", "TC", "TE", "GS", "FS", "CS",
    };
@@ -1368,7 +1368,7 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
           free(ftemp);
       }
 
-      char shabuf[64] = {"mylittlebunny"};
+      char shabuf[41];
       generate_sha1(fsource, shabuf);
 
       asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
