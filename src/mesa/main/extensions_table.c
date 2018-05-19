@@ -35,7 +35,7 @@
  * \brief Table of supported OpenGL extensions for all API's.
  */
 const struct mesa_extension _mesa_extension_table[] = {
-#define EXT(name_str, driver_cap, gll_ver, glc_ver, gles_ver, gles2_ver, yyyy) \
+#define EXT(name_str, driver_cap, gll_ver, glc_ver, gles_ver, gles2_ver, yyyy, deps) \
         { .name = "GL_" #name_str, .offset = o(driver_cap), \
           .version = { \
             [API_OPENGL_COMPAT] = gll_ver, \
@@ -43,7 +43,8 @@ const struct mesa_extension _mesa_extension_table[] = {
             [API_OPENGLES]      = gles_ver, \
             [API_OPENGLES2]     = gles2_ver, \
            }, \
-           .year = yyyy \
+           .year = yyyy, \
+           .dependencies = deps \
         },
 #include "extensions_table.h"
 #undef EXT

@@ -81,6 +81,9 @@ struct mesa_extension {
    /** Year the extension was proposed or approved.  Used to sort the
     * extension string chronologically. */
    uint16_t year;
+
+   /** Dependencies of this extension, may modify required OpenGL version */
+   const char *dependencies;
 };
 
 extern const struct mesa_extension _mesa_extension_table[];

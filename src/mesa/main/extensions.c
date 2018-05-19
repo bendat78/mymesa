@@ -375,6 +375,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
       if (i->year <= maxYear &&
           _mesa_extension_supported(ctx, k)) {
          length += strlen(i->name) + 1; /* +1 for space */
+         length += strlen(i->dependencies) + 1; /* +1 for space */
          extension_indices[count++] = k;
       }
    }
@@ -393,6 +394,8 @@ _mesa_make_extension_string(struct gl_context *ctx)
       const struct mesa_extension *i = &_mesa_extension_table[extension_indices[j]];
       assert(_mesa_extension_supported(ctx, extension_indices[j]));
       strcat(exts, i->name);
+      strcat(exts, "-");
+      strcat(exts, i->dependencies);
       strcat(exts, " ");
    }
 
