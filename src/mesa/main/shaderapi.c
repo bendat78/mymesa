@@ -1254,12 +1254,12 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       }
 
       unsigned char shabin[20];
-      char shabuf[41];
+      char shastr[41];
       _mesa_sha1_compute(fsource, strlen(fsource), shabin);
-      _mesa_sha1_format(shabuf, shabin);
+      _mesa_sha1_format(shastr, shabin);
 
       asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
-               shabuf, shProg->Name);
+               shastr, shProg->Name);
       file = fopen(filename, "w");
       if (file) {
          fprintf(file, "%s", fsource);
