@@ -65,6 +65,7 @@
 #include "util/crc32.h"
 
 
+#ifdef ENABLE_SHADER_CACHE
 /**
  * Generate a SHA-1 hash value string for given source string.
  */
@@ -77,7 +78,6 @@ generate_sha1(const char *source, char sha_str[41])
 }
 
 
-#ifdef ENABLE_SHADER_CACHE
 /**
  * Construct a full path for shader replacement functionality using
  * following format:
@@ -1368,8 +1368,10 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
           free(ftemp);
       }
 
+      unsigned char shabin[20];
       char shabuf[41];
-      generate_sha1(fsource, shabuf);
+      _mesa_sha1_compute(fsource, strlen(fsource), shabin);
+      _mesa_sha1_format(shabuf, shabin);
 
       asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
                shabuf, shProg->Name);
