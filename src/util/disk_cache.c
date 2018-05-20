@@ -28,7 +28,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/file.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -848,6 +847,29 @@ struct cache_entry_file_data {
    uint32_t uncompressed_size;
 };
 
+static char *
+generate_random_string(int length) {
+   static const char a[] = "0123456789abcdef";
+
+   if (length > 16)
+      return NULL;
+
+   char buf[16];
+   char *rndstr;
+
+   for (int i = 0; i < length - 1; ++i) {
+       // assign a random element from the lookup table
+       buf[i] = a[rand() % (sizeof(a) - 1)];
+   }
+
+   buf[length - 1] = 0;
+
+   if (asprintf(&rndstr, "%s", buf) == -1)
+      return NULL;
+
+   return rndstr;
+}
+
 static void
 cache_put(void *job, int thread_index)
 {
@@ -855,7 +877,7 @@ cache_put(void *job, int thread_index)
 
    int fd = -1, fd_final = -1, err, ret;
    unsigned i = 0;
-   char *filename = NULL, *filename_tmp = NULL;
+   char *filename = NULL, *filename_tmp = NULL, *random = NULL;
    struct disk_cache_put_job *dc_job = (struct disk_cache_put_job *) job;
 
    filename = get_cache_file(dc_job->cache, dc_job->key);
@@ -873,7 +895,16 @@ cache_put(void *job, int thread_index)
     * final destination filename, (to prevent any readers from seeing
     * a partially written file).
     */
-   if (asprintf(&filename_tmp, "%s.tmp", filename) == -1)
+
+   /* This next part used to be an flock(), which would prevent windows systems
+    * to build. 4 hex characters should be enough to prevent filename race
+    * conditions for now.
+   */
+   random = generate_random_string(4);
+   if (random == NULL)
+      goto done;
+
+   if (asprintf(&filename_tmp, "%s_%s.tmp", filename, random) == -1)
       goto done;
 
    fd = open(filename_tmp, O_WRONLY | O_CLOEXEC | O_CREAT, 0644);
@@ -890,16 +921,7 @@ cache_put(void *job, int thread_index)
          goto done;
    }
 
-   /* With the temporary file open, we take an exclusive flock on
-    * it. If the flock fails, then another process still has the file
-    * open with the flock held. So just let that file be responsible
-    * for writing the file.
-    */
-   err = flock(fd, LOCK_EX | LOCK_NB);
-   if (err == -1)
-      goto done;
-
-   /* Now that we have the lock on the open temporary file, we can
+   /* Now that we have the open temporary file, we can
     * check to see if the destination file already exists. If so,
     * another process won the race between when we saw that the file
     * didn't exist and now. In this case, we don't do anything more,
