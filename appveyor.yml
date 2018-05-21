@@ -33,54 +33,18 @@ branches:
 # - https://www.appveyor.com/blog/2014/06/04/shallow-clone-for-git-repositories
 clone_depth: 100
 
-cache:
-- win_flex_bison-2.5.9.zip
-- llvm-3.3.1-msvc2015-mtd.7z
+image: ubuntu
+platform: Any CPU
+configuration: Release
 
-os: Visual Studio 2015
-
-environment:
-  WINFLEXBISON_ARCHIVE: win_flex_bison-2.5.9.zip
-  LLVM_ARCHIVE: llvm-3.3.1-msvc2015-mtd.7z
-  ZLIB_ARCHIVE: zlib123.zip
 
 install:
-# Check pip
-- python --version
-- python -m pip --version
-# Install Mako
-- python -m pip install Mako==1.0.6
-# Install pywin32 extensions, needed by SCons
-- python -m pip install pypiwin32
-# Install python wheels, necessary to install SCons via pip
-- python -m pip install wheel
-# Install SCons
-- python -m pip install scons==2.5.1
-- scons --version
-# Install flex/bison
-- if not exist "%WINFLEXBISON_ARCHIVE%" appveyor DownloadFile "https://downloads.sourceforge.net/project/winflexbison/old_versions/%WINFLEXBISON_ARCHIVE%"
-- 7z x -y -owinflexbison\ "%WINFLEXBISON_ARCHIVE%" > nul
-- set Path=%CD%\winflexbison;%Path%
-- win_flex --version
-- win_bison --version
-# Download and extract LLVM
-- if not exist "%LLVM_ARCHIVE%" appveyor DownloadFile "https://people.freedesktop.org/~jrfonseca/llvm/%LLVM_ARCHIVE%"
-- 7z x -y "%LLVM_ARCHIVE%" > nul
-- mkdir llvm\bin
-- set LLVM=%CD%\llvm
-# Download and extract zLib
-- if not exist "%ZLIB_ARCHIVE%" appveyor DownloadFile "http://www.winimage.com/zLibDll/%ZLIB_ARCHIVE%"
-- 7z x -y -osrc\util\ "%ZLIB_ARCHIVE%" > nul
+- ls -al
+- sh: sudo apt-get update
+- sh: sudo apt-get upgrade
+- sh: sudo apt-get build-dep mesa
 
 build_script:
-- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1
-
-after_build:
-- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1 check
-
-
-# It's possible to setup notification here, as described in
-# http://www.appveyor.com/docs/notifications#appveyor-yml-configuration , but
-# doing so would cause the notification settings to be replicated across all
-# repos, which is most likely undesired.  So it's better to rely on the
-# Appveyor global/project notification settings.
+- sh: ./configure
+- sh: make
+- sh: sudo make install
