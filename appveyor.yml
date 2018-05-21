@@ -47,6 +47,6 @@ install:
 - sh: sudo apt-get build-dep mesa -y
 
 build_script:
-- sh: ./autogen.sh --enable-dri --with-dri-drivers="nouveau i915 i965 r200 radeon swrast" --enable-osmesa --enable-glx-tls --enable-shared-glapi --enable-texture-float --enable-driglx-direct --enable-dri3 --with-platforms="x11 wayland drm" --enable-xa --enable-llvm --enable-vdpau --enable-omx-bellagio --enable-va --enable-xvmc --enable-opencl --enable-opencl-icd --enable-nine --enable-gallium-extra-hud --enable-lmsensors --with-gallium-drivers=" nouveau svga r600 r300 i915 virgl radeonsi swrast" --enable-gles1 --enable-gles2 --enable-gle --with-vulkan-drivers=intel,radeon
+- sh: ./autogen.sh --enable-dri --with-dri-drivers="nouveau i915 i965 r200 radeon swrast" --enable-osmesa --enable-glx-tls --enable-shared-glapi --enable-texture-float --enable-driglx-direct --enable-dri3 --with-platforms="x11 wayland drm" --enable-xa --enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-5.0 --enable-vdpau --enable-omx-bellagio --enable-va --enable-xvmc --enable-opencl --enable-opencl-icd --enable-nine --enable-gallium-extra-hud --enable-lmsensors --with-gallium-drivers=" nouveau svga r600 r300 i915 virgl radeonsi swrast" --enable-gles1 --enable-gles2 --enable-gle --with-vulkan-drivers=intel,radeon
 - sh: make
 - sh: sudo make install
