@@ -221,7 +221,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *rho_bld = &bld->lodf_bld;
    const unsigned dims = bld->dims;
-   LLVMValueRef ddx_ddy[2] = {};
+   LLVMValueRef ddx_ddy[2] = {0};
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMTypeRef i32t = LLVMInt32TypeInContext(bld->gallivm->context);
    LLVMValueRef index0 = LLVMConstInt(i32t, 0, 0);
@@ -275,7 +275,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
       rho = lp_build_mul(rho_bld, cubesize, rho);
    }
    else if (derivs) {
-      LLVMValueRef ddmax[3] = {}, ddx[3] = {}, ddy[3] = {};
+      LLVMValueRef ddmax[3] = {0}, ddx[3] = {0}, ddy[3] = {0};
       for (i = 0; i < dims; i++) {
          LLVMValueRef floatdim;
          LLVMValueRef indexi = lp_build_const_int32(gallivm, i);

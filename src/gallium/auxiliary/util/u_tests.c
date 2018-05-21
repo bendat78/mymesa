@@ -47,7 +47,7 @@ util_create_texture2d(struct pipe_screen *screen, unsigned width,
                       unsigned height, enum pipe_format format,
                       unsigned num_samples)
 {
-   struct pipe_resource templ = {};
+   struct pipe_resource templ = {0};
 
    templ.target = PIPE_TEXTURE_2D;
    templ.width0 = width;
@@ -68,8 +68,8 @@ static void
 util_set_framebuffer_cb0(struct cso_context *cso, struct pipe_context *ctx,
 			 struct pipe_resource *tex)
 {
-   struct pipe_surface templ = {}, *surf;
-   struct pipe_framebuffer_state fb = {};
+   struct pipe_surface templ = {0}, *surf;
+   struct pipe_framebuffer_state fb = {0};
 
    templ.format = tex->format;
    surf = ctx->create_surface(ctx, tex, &templ);
@@ -86,7 +86,7 @@ util_set_framebuffer_cb0(struct cso_context *cso, struct pipe_context *ctx,
 static void
 util_set_blend_normal(struct cso_context *cso)
 {
-   struct pipe_blend_state blend = {};
+   struct pipe_blend_state blend = {0};
 
    blend.rt[0].colormask = PIPE_MASK_RGBA;
    cso_set_blend(cso, &blend);
@@ -95,7 +95,7 @@ util_set_blend_normal(struct cso_context *cso)
 static void
 util_set_dsa_disable(struct cso_context *cso)
 {
-   struct pipe_depth_stencil_alpha_state dsa = {};
+   struct pipe_depth_stencil_alpha_state dsa = {0};
 
    cso_set_depth_stencil_alpha(cso, &dsa);
 }
@@ -103,7 +103,7 @@ util_set_dsa_disable(struct cso_context *cso)
 static void
 util_set_rasterizer_normal(struct cso_context *cso)
 {
-   struct pipe_rasterizer_state rs = {};
+   struct pipe_rasterizer_state rs = {0};
 
    rs.half_pixel_center = 1;
    rs.bottom_edge_rule = 1;
@@ -475,7 +475,7 @@ null_fragment_shader(struct pipe_context *ctx)
    struct cso_context *cso;
    struct pipe_resource *cb;
    void *vs;
-   struct pipe_rasterizer_state rs = {};
+   struct pipe_rasterizer_state rs = {0};
    struct pipe_query *query;
    union pipe_query_result qresult;
 
@@ -687,7 +687,7 @@ test_texture_barrier(struct pipe_context *ctx, bool use_fbfetch,
              "ADD OUT[0], TEMP[0], IMM[0]\n"
              "END\n";
    } else {
-      struct pipe_sampler_view templ = {};
+      struct pipe_sampler_view templ = {0};
       templ.format = cb->format;
       templ.target = cb->target;
       templ.swizzle_r = PIPE_SWIZZLE_X;

@@ -190,7 +190,7 @@ KSP(UNUSED struct brw_context *brw, uint32_t offset)
    })
 
 #define brw_state_emit(brw, cmd, align, offset, name)              \
-   for (struct cmd name = {},                                      \
+   for (struct cmd name = {0},                                      \
         *_dst = brw_state_batch(brw, _brw_cmd_length(cmd) * 4,     \
                                 align, offset);                    \
         __builtin_expect(_dst != NULL, 1);                         \
@@ -1128,7 +1128,7 @@ genX(calculate_attr_overrides)(const struct brw_context *brw,
       }
 
       /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
-      struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attribute = {};
+      struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attribute = {0};
 
       if (!point_sprite) {
          genX(get_attr_override)(&attribute,
@@ -2968,11 +2968,11 @@ genX(upload_blend_state)(struct brw_context *brw)
    blend_map = brw_state_batch(brw, size, 64, &brw->cc.blend_state_offset);
 
 #if GEN_GEN >= 8
-   struct GENX(BLEND_STATE) blend = {};
+   struct GENX(BLEND_STATE) blend = {0};
    {
 #else
    for (int i = 0; i < nr_draw_buffers; i++) {
-      struct GENX(BLEND_STATE_ENTRY) entry = {};
+      struct GENX(BLEND_STATE_ENTRY) entry = {0};
 #define blend entry
 #endif
       /* OpenGL specification 3.3 (page 196), section 4.1.3 says:
@@ -3005,7 +3005,7 @@ genX(upload_blend_state)(struct brw_context *brw)
 
 #if GEN_GEN >= 8
       for (int i = 0; i < nr_draw_buffers; i++) {
-         struct GENX(BLEND_STATE_ENTRY) entry = {};
+         struct GENX(BLEND_STATE_ENTRY) entry = {0};
 #else
       {
 #endif
@@ -3457,7 +3457,7 @@ genX(upload_sbe)(struct brw_context *brw)
    const struct brw_wm_prog_data *wm_prog_data =
       brw_wm_prog_data(brw->wm.base.prog_data);
 #if GEN_GEN >= 8
-   struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attr_overrides[16] = {};
+   struct GENX(SF_OUTPUT_ATTRIBUTE_DETAIL) attr_overrides[16] = {0};
 #else
 #define attr_overrides sbe.Attribute
 #endif
@@ -4845,7 +4845,7 @@ genX(upload_default_color)(struct brw_context *brw,
       brw, GENX(SAMPLER_BORDER_COLOR_STATE_length) * sizeof(uint32_t),
       alignment, sdc_offset);
 
-   struct GENX(SAMPLER_BORDER_COLOR_STATE) state = {};
+   struct GENX(SAMPLER_BORDER_COLOR_STATE) state = {0};
 
 #define ASSIGN(dst, src) \
    do {                  \
@@ -5021,7 +5021,7 @@ genX(update_sampler_state)(struct brw_context *brw,
                            const struct gl_sampler_object *sampler,
                            uint32_t *sampler_state)
 {
-   struct GENX(SAMPLER_STATE) samp_st = {};
+   struct GENX(SAMPLER_STATE) samp_st = {0};
 
    /* Select min and mip filters. */
    switch (sampler->MinFilter) {

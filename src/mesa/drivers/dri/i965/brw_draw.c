@@ -740,7 +740,7 @@ brw_prepare_drawing(struct gl_context *ctx,
     * and finalizing textures but before setting up any hardware state for
     * this draw call.
     */
-   bool draw_aux_buffer_disabled[MAX_DRAW_BUFFERS] = { };
+   bool draw_aux_buffer_disabled[MAX_DRAW_BUFFERS] = {0};
    brw_predraw_resolve_inputs(brw, true, draw_aux_buffer_disabled);
    brw_predraw_resolve_framebuffer(brw, draw_aux_buffer_disabled);
 

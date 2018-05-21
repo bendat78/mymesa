@@ -516,7 +516,7 @@ brw_saturate_immediate(enum brw_reg_type type, struct brw_reg *reg)
       int d;
       float f;
       double df;
-   } imm, sat_imm = {};
+   } imm, sat_imm = {0};
 
    const unsigned size = type_sz(type);
 

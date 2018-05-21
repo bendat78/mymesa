@@ -203,7 +203,7 @@ surfaceless_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
       { "RGB888",   { 0xff0000, 0xff00, 0xff, 0x0 } },
       { "RGB565",   { 0x00f800, 0x07e0, 0x1f, 0x0 } },
    };
-   unsigned int format_count[ARRAY_SIZE(visuals)] = {};
+   unsigned int format_count[ARRAY_SIZE(visuals)] = {0};
    unsigned int config_count = 0;
 
    for (unsigned i = 0; dri2_dpy->driver_configs[i] != NULL; i++) {

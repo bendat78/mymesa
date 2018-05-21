@@ -254,7 +254,7 @@ nv04_emit_tex_env(struct gl_context *ctx, int emit)
 {
 	struct nv04_context *nv04 = to_nv04_context(ctx);
 	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
-	struct combiner_state rc_a = {}, rc_c = {};
+	struct combiner_state rc_a = {0}, rc_c = {0};
 
 	/* Compute the new combiner state. */
 	if (ctx->Texture.Unit[i]._Current) {

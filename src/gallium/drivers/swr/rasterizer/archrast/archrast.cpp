@@ -369,18 +369,18 @@ namespace ArchRast
             // Primitive Culling
             EventHandlerFile::Handle(CullEvent(drawId, mCullStats.backfacePrimCount, mCullStats.degeneratePrimCount));
 
-            mDSSingleSample = {};
-            mDSSampleRate = {};
-            mDSCombined = {};
-            mDSPixelRate = {};
-            mDSNullPS = {};
+            mDSSingleSample = {0};
+            mDSSampleRate = {0};
+            mDSCombined = {0};
+            mDSPixelRate = {0};
+            mDSNullPS = {0};
 
-            rastStats = {};
-            mCullStats = {};
-            mAlphaStats = {};
+            rastStats = {0};
+            mCullStats = {0};
+            mAlphaStats = {0};
 
-            mShaderStats[SHADER_PIXEL] = {};
-            mShaderStats[SHADER_COMPUTE] = {};
+            mShaderStats[SHADER_PIXEL] = {0};
+            mShaderStats[SHADER_COMPUTE] = {0};
 
             mNeedFlush = false;
         }
@@ -403,15 +403,15 @@ namespace ArchRast
             EventHandlerFile::Handle(DSInfo(event.data.drawId, mShaderStats[SHADER_DOMAIN].numInstExecuted));
             EventHandlerFile::Handle(GSInfo(event.data.drawId, mShaderStats[SHADER_GEOMETRY].numInstExecuted));
 
-            mShaderStats[SHADER_VERTEX] = {};
-            mShaderStats[SHADER_HULL] = {};
-            mShaderStats[SHADER_DOMAIN] = {};
-            mShaderStats[SHADER_GEOMETRY] = {};
+            mShaderStats[SHADER_VERTEX] = {0};
+            mShaderStats[SHADER_HULL] = {0};
+            mShaderStats[SHADER_DOMAIN] = {0};
+            mShaderStats[SHADER_GEOMETRY] = {0};
 
             //Reset Internal Counters
-            mClipper = {};
-            mTS = {};
-            mGS = {};
+            mClipper = {0};
+            mTS = {0};
+            mGS = {0};
         }
 
         virtual void Handle(const GSPrimInfo& event)
@@ -446,18 +446,18 @@ namespace ArchRast
     protected:
         bool mNeedFlush;
         // Per draw stats
-        DepthStencilStats mDSSingleSample = {};
-        DepthStencilStats mDSSampleRate = {};
-        DepthStencilStats mDSPixelRate = {};
-        DepthStencilStats mDSCombined = {};
-        DepthStencilStats mDSNullPS = {};
-        DepthStencilStats mDSOmZ = {};
-        CStats mClipper = {};
-        TEStats mTS = {};
-        GSStateInfo mGS = {};
-        RastStats rastStats = {};
-        CullStats mCullStats = {};
-        AlphaStats mAlphaStats = {};
+        DepthStencilStats mDSSingleSample = {0};
+        DepthStencilStats mDSSampleRate = {0};
+        DepthStencilStats mDSPixelRate = {0};
+        DepthStencilStats mDSCombined = {0};
+        DepthStencilStats mDSNullPS = {0};
+        DepthStencilStats mDSOmZ = {0};
+        CStats mClipper = {0};
+        TEStats mTS = {0};
+        GSStateInfo mGS = {0};
+        RastStats rastStats = {0};
+        CullStats mCullStats = {0};
+        AlphaStats mAlphaStats = {0};
 
         ShaderStats mShaderStats[NUM_SHADER_TYPES];
 

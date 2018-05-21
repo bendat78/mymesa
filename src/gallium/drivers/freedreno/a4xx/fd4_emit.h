@@ -83,7 +83,7 @@ fd4_emit_get_fp(struct fd4_emit *emit)
 	if (!emit->fp) {
 		if (emit->key.binning_pass) {
 			/* use dummy stateobj to simplify binning vs non-binning: */
-			static const struct ir3_shader_variant binning_fp = {};
+			static const struct ir3_shader_variant binning_fp = {0};
 			emit->fp = &binning_fp;
 		} else {
 			struct ir3_shader *shader = emit->prog->fp;

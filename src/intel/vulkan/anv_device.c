@@ -512,7 +512,7 @@ VkResult anv_CreateInstance(
 
    assert(pCreateInfo->sType == VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
 
-   struct anv_instance_extension_table enabled_extensions = {};
+   struct anv_instance_extension_table enabled_extensions = {0};
    for (uint32_t i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
       int idx;
       for (idx = 0; idx < ANV_INSTANCE_EXTENSION_COUNT; idx++) {
@@ -971,7 +971,7 @@ void anv_GetPhysicalDeviceProperties(
       .deviceID = pdevice->chipset_id,
       .deviceType = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
       .limits = limits,
-      .sparseProperties = {}, /* Broadwell doesn't do sparse. */
+      .sparseProperties = {0}, /* Broadwell doesn't do sparse. */
    };
 
    snprintf(pProperties->deviceName, sizeof(pProperties->deviceName),
@@ -1448,7 +1448,7 @@ VkResult anv_CreateDevice(
 
    assert(pCreateInfo->sType == VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
 
-   struct anv_device_extension_table enabled_extensions = { };
+   struct anv_device_extension_table enabled_extensions = {0};
    for (uint32_t i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
       int idx;
       for (idx = 0; idx < ANV_DEVICE_EXTENSION_COUNT; idx++) {

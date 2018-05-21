@@ -1323,7 +1323,7 @@ init_cache_buckets(struct brw_bufmgr *bufmgr)
 uint32_t
 brw_create_hw_context(struct brw_bufmgr *bufmgr)
 {
-   struct drm_i915_gem_context_create create = { };
+   struct drm_i915_gem_context_create create = {0};
    int ret = drmIoctl(bufmgr->fd, DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &create);
    if (ret) {
       DBG("DRM_IOCTL_I915_GEM_CONTEXT_CREATE failed: %s\n", strerror(errno));

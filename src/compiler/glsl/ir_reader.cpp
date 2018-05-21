@@ -708,7 +708,7 @@ ir_reader::read_expression(s_expression *expr)
 {
    s_expression *s_type;
    s_symbol *s_op;
-   s_expression *s_arg[4] = {};
+   s_expression *s_arg[4] = {0};
 
    s_pattern pat[] = { "expression", s_type, s_op, s_arg[0] };
    if (!PARTIAL_MATCH(expr, pat)) {
@@ -742,7 +742,7 @@ ir_reader::read_expression(s_expression *expr)
       return NULL;
    }
 
-   ir_rvalue *arg[4] = {};
+   ir_rvalue *arg[4] = {0};
    for (int i = 0; i < num_operands; i++) {
       arg[i] = read_rvalue(s_arg[i]);
       if (!arg[i]) {
@@ -823,7 +823,7 @@ ir_reader::read_constant(s_expression *expr)
       return new(mem_ctx) ir_constant(type, &elements);
    }
 
-   ir_constant_data data = {};
+   ir_constant_data data = {0};
 
    // Read in list of values (at most 16).
    unsigned k = 0;

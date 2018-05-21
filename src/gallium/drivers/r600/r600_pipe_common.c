@@ -229,7 +229,7 @@ void r600_draw_rectangle(struct blitter_context *blitter,
 	}
 
 	/* draw */
-	struct pipe_vertex_buffer vbuffer = {};
+	struct pipe_vertex_buffer vbuffer = {0};
 	vbuffer.buffer.resource = buf;
 	vbuffer.stride = 2 * 4 * sizeof(float); /* vertex size */
 	vbuffer.buffer_offset = offset;
@@ -1272,7 +1272,7 @@ struct pipe_resource *r600_resource_create_common(struct pipe_screen *screen,
 bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws)
 {
-	char family_name[32] = {}, llvm_string[32] = {}, kernel_version[128] = {};
+	char family_name[32] = {0}, llvm_string[32] = {0}, kernel_version[128] = {0};
 	struct utsname uname_data;
 	const char *chip_name;
 

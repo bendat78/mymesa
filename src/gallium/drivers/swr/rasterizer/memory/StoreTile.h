@@ -1162,10 +1162,10 @@ struct StoreRasterTile
                         ((y + ry) < lodHeight))
                 {
                     // Sum across samples
-                    float resolveColor[4] = {};
+                    float resolveColor[4] = {0};
                     for (uint32_t sampleNum = 0; sampleNum < pDstSurface->numSamples; sampleNum++)
                     {
-                        float sampleColor[4] = {};
+                        float sampleColor[4] = {0};
                         uint8_t *pSampleSrc = pSrc + sampleOffset * sampleNum;
                         GetSwizzledSrcColor(pSampleSrc, rx, ry, sampleColor);
                         resolveColor[0] += sampleColor[0];

@@ -579,7 +579,7 @@ void r600_texture_get_fmask_info(struct r600_common_screen *rscreen,
 {
 	/* FMASK is allocated like an ordinary texture. */
 	struct pipe_resource templ = rtex->resource.b.b;
-	struct radeon_surf fmask = {};
+	struct radeon_surf fmask = {0};
 	unsigned flags, bpe;
 
 	memset(out, 0, sizeof(*out));
@@ -1073,7 +1073,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 					  const struct pipe_resource *templ)
 {
 	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
-	struct radeon_surf surface = {};
+	struct radeon_surf surface = {0};
 	bool is_flushed_depth = templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH;
 	int r;
 
@@ -1097,9 +1097,9 @@ static struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen
 	struct pb_buffer *buf = NULL;
 	unsigned stride = 0, offset = 0;
 	enum radeon_surf_mode array_mode;
-	struct radeon_surf surface = {};
+	struct radeon_surf surface = {0};
 	int r;
-	struct radeon_bo_metadata metadata = {};
+	struct radeon_bo_metadata metadata = {0};
 	struct r600_texture *rtex;
 	bool is_scanout;
 
@@ -1594,7 +1594,7 @@ static void r600_clear_texture(struct pipe_context *pipe,
 {
 	struct pipe_screen *screen = pipe->screen;
 	struct r600_texture *rtex = (struct r600_texture*)tex;
-	struct pipe_surface tmpl = {};
+	struct pipe_surface tmpl = {0};
 	struct pipe_surface *sf;
 	const struct util_format_description *desc =
 		util_format_description(tex->format);
@@ -1877,8 +1877,8 @@ r600_texture_from_memobj(struct pipe_screen *screen,
 	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
 	struct r600_memory_object *memobj = (struct r600_memory_object *)_memobj;
 	struct r600_texture *rtex;
-	struct radeon_surf surface = {};
-	struct radeon_bo_metadata metadata = {};
+	struct radeon_surf surface = {0};
+	struct radeon_bo_metadata metadata = {0};
 	enum radeon_surf_mode array_mode;
 	bool is_scanout;
 	struct pb_buffer *buf = NULL;

@@ -327,7 +327,7 @@ fd4_program_emit(struct fd_ringbuffer *ring, struct fd4_emit *emit,
 			A4XX_SP_VS_PARAM_REG_PSIZEREGID(psize_regid) |
 			A4XX_SP_VS_PARAM_REG_TOTALVSOUTVAR(s[FS].v->varying_in));
 
-	struct ir3_shader_linkage l = {};
+	struct ir3_shader_linkage l = {0};
 	ir3_link_shaders(&l, s[VS].v, s[FS].v);
 
 	for (i = 0, j = 0; (i < 16) && (j < l.cnt); i++) {

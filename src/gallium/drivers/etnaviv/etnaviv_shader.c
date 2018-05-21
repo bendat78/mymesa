@@ -65,7 +65,7 @@ static bool
 etna_link_shaders(struct etna_context *ctx, struct compiled_shader_state *cs,
                   struct etna_shader_variant *vs, struct etna_shader_variant *fs)
 {
-   struct etna_shader_link_info link = { };
+   struct etna_shader_link_info link = {0};
 
    assert(vs->processor == PIPE_SHADER_VERTEX);
    assert(fs->processor == PIPE_SHADER_FRAGMENT);
@@ -114,7 +114,7 @@ etna_link_shaders(struct etna_context *ctx, struct compiled_shader_state *cs,
    cs->VS_OUTPUT_COUNT = 1 + link.num_varyings; /* position + varyings */
 
    /* vs outputs (varyings) */
-   DEFINE_ETNA_BITARRAY(vs_output, 16, 8) = {};
+   DEFINE_ETNA_BITARRAY(vs_output, 16, 8) = {0};
    int varid = 0;
    etna_bitarray_set(vs_output, 8, varid++, vs->vs_pos_out_reg);
    for (int idx = 0; idx < link.num_varyings; ++idx)
@@ -161,8 +161,8 @@ etna_link_shaders(struct etna_context *ctx, struct compiled_shader_state *cs,
       VIVS_PS_TEMP_REGISTER_CONTROL_NUM_TEMPS(MAX2(fs->num_temps, link.num_varyings + 2));
 
    uint32_t total_components = 0;
-   DEFINE_ETNA_BITARRAY(num_components, ETNA_NUM_VARYINGS, 4) = {};
-   DEFINE_ETNA_BITARRAY(component_use, 4 * ETNA_NUM_VARYINGS, 2) = {};
+   DEFINE_ETNA_BITARRAY(num_components, ETNA_NUM_VARYINGS, 4) = {0};
+   DEFINE_ETNA_BITARRAY(component_use, 4 * ETNA_NUM_VARYINGS, 2) = {0};
    for (int idx = 0; idx < link.num_varyings; ++idx) {
       const struct etna_varying *varying = &link.varyings[idx];
 
@@ -259,7 +259,7 @@ etna_shader_update_vs_inputs(struct etna_context *ctx,
       VIVS_VS_TEMP_REGISTER_CONTROL_NUM_TEMPS(num_temps);
 
    /* vs inputs (attributes) */
-   DEFINE_ETNA_BITARRAY(vs_input, 16, 8) = {};
+   DEFINE_ETNA_BITARRAY(vs_input, 16, 8) = {0};
    for (int idx = 0; idx < num_vs_inputs; ++idx) {
       if (idx < vs->infile.num_reg)
          etna_bitarray_set(vs_input, 8, idx, vs->infile.reg[idx].reg);
@@ -384,7 +384,7 @@ etna_create_shader_state(struct pipe_context *pctx,
        * (as otherwise nothing will trigger the shader to be
        * actually compiled).
        */
-      struct etna_shader_key key = {};
+      struct etna_shader_key key = {0};
       etna_shader_variant(shader, key, &ctx->debug);
    }
 

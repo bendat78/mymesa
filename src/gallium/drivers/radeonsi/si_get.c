@@ -956,7 +956,7 @@ static struct disk_cache *si_get_disk_shader_cache(struct pipe_screen *pscreen)
 static void si_init_renderer_string(struct si_screen *sscreen)
 {
 	struct radeon_winsys *ws = sscreen->ws;
-	char family_name[32] = {}, kernel_version[128] = {};
+	char family_name[32] = {0}, kernel_version[128] = {0};
 	struct utsname uname_data;
 
 	const char *chip_name = si_get_marketing_name(ws);

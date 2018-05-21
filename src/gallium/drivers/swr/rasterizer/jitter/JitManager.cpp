@@ -536,8 +536,8 @@ private:
     uint32_t m_platformKey = JC_PLATFORM_KEY;
     uint32_t m_objCRC = 0;
     uint32_t m_optLevel = 0;
-    char m_ModuleID[JC_STR_MAX_LEN] = {};
-    char m_Cpu[JC_STR_MAX_LEN] = {};
+    char m_ModuleID[JC_STR_MAX_LEN] = {0};
+    char m_Cpu[JC_STR_MAX_LEN] = {0};
 };
 
 static inline uint32_t ComputeModuleCRC(const llvm::Module* M)

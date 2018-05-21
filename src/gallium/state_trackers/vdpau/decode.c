@@ -44,7 +44,7 @@ vlVdpDecoderCreate(VdpDevice device,
                    uint32_t max_references,
                    VdpDecoder *decoder)
 {
-   struct pipe_video_codec templat = {};
+   struct pipe_video_codec templat = {0};
    struct pipe_context *pipe;
    struct pipe_screen *screen;
    vlVdpDevice *dev;
@@ -571,9 +571,9 @@ vlVdpDecoderRender(VdpDecoder decoder,
    struct pipe_video_codec *dec;
    bool buffer_support[2];
    unsigned i;
-   struct pipe_h264_sps sps_h264 = {};
+   struct pipe_h264_sps sps_h264 = {0};
    struct pipe_h264_pps pps_h264 = { &sps_h264 };
-   struct pipe_h265_sps sps_h265 = {};
+   struct pipe_h265_sps sps_h265 = {0};
    struct pipe_h265_pps pps_h265 = { &sps_h265 };
    union {
       struct pipe_picture_desc base;

@@ -41,15 +41,15 @@ namespace clover {
       program(clover::context &ctx,
               const std::string &source);
       program(clover::context &ctx,
-              const ref_vector<device> &devs = {},
-              const std::vector<module> &binaries = {});
+              const ref_vector<device> &devs = {0},
+              const std::vector<module> &binaries = {0});
 
       program(const program &prog) = delete;
       program &
       operator=(const program &prog) = delete;
 
       void compile(const ref_vector<device> &devs, const std::string &opts,
-                   const header_map &headers = {});
+                   const header_map &headers = {0});
       void link(const ref_vector<device> &devs, const std::string &opts,
                 const ref_vector<program> &progs);
 
@@ -59,8 +59,8 @@ namespace clover {
       device_range devices() const;
 
       struct build {
-         build(const module &m = {}, const std::string &opts = {},
-               const std::string &log = {}) : binary(m), opts(opts), log(log) {}
+         build(const module &m = {0}, const std::string &opts = {0},
+               const std::string &log = {0}) : binary(m), opts(opts), log(log) {}
 
          cl_build_status status() const;
          cl_program_binary_type binary_type() const;

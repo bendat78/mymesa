@@ -540,7 +540,7 @@ radv_shader_variant_create(struct radv_device *device,
 			   void **code_out,
 			   unsigned *code_size_out)
 {
-	struct radv_nir_compiler_options options = {};
+	struct radv_nir_compiler_options options = {0};
 
 	options.layout = layout;
 	if (key)
@@ -560,7 +560,7 @@ radv_create_gs_copy_shader(struct radv_device *device,
 			   unsigned *code_size_out,
 			   bool multiview)
 {
-	struct radv_nir_compiler_options options = {};
+	struct radv_nir_compiler_options options = {0};
 
 	options.key.has_multiview_view_index = multiview;
 
@@ -707,7 +707,7 @@ radv_GetShaderInfoAMD(VkDevice _device,
 			unsigned lds_multiplier = device->physical_device->rad_info.chip_class >= CIK ? 512 : 256;
 			struct ac_shader_config *conf = &variant->config;
 
-			VkShaderStatisticsInfoAMD statistics = {};
+			VkShaderStatisticsInfoAMD statistics = {0};
 			statistics.shaderStageMask = shaderStage;
 			statistics.numPhysicalVgprs = RADV_NUM_PHYSICAL_VGPRS;
 			statistics.numPhysicalSgprs = radv_get_num_physical_sgprs(device->physical_device);

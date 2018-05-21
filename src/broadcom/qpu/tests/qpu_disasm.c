@@ -106,7 +106,7 @@ swap_pack(enum v3d_qpu_input_unpack *a, enum v3d_qpu_input_unpack *b)
 int
 main(int argc, char **argv)
 {
-        struct v3d_device_info devinfo = { };
+        struct v3d_device_info devinfo = {0};
         int retval = 0;
 
         for (int i = 0; i < ARRAY_SIZE(tests); i++) {

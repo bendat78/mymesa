@@ -1042,7 +1042,7 @@ blorp_emit_depth_stencil_state(struct blorp_batch *batch,
       GENX(3DSTATE_WM_DEPTH_STENCIL_header),
    };
 #else
-   struct GENX(DEPTH_STENCIL_STATE) ds = {};
+   struct GENX(DEPTH_STENCIL_STATE) ds = {0};
 #endif
 
    if (params->depth.enabled) {
@@ -1487,7 +1487,7 @@ blorp_emit_depth_stencil_config(struct blorp_batch *batch,
    if (!dw)
       return;
 
-   struct isl_depth_stencil_hiz_emit_info info = { };
+   struct isl_depth_stencil_hiz_emit_info info = {0};
 
    if (params->depth.enabled) {
       info.view = &params->depth.view;

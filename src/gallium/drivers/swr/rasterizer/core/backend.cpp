@@ -543,24 +543,24 @@ void BackendNullPS(DRAW_CONTEXT *pDC, uint32_t workerId, uint32_t x, uint32_t y,
     RDTSC_END(BENullBackend, 0);
 }
 
-PFN_CLEAR_TILES gClearTilesTable[NUM_SWR_FORMATS] = {};
+PFN_CLEAR_TILES gClearTilesTable[NUM_SWR_FORMATS] = {0};
 PFN_BACKEND_FUNC gBackendNullPs[SWR_MULTISAMPLE_TYPE_COUNT];
 PFN_BACKEND_FUNC gBackendSingleSample[SWR_INPUT_COVERAGE_COUNT]
                                      [2] // centroid
                                      [2] // canEarlyZ
-                                     = {};
+ = {0};
 PFN_BACKEND_FUNC gBackendPixelRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
                                        [2] // isCenterPattern
                                        [SWR_INPUT_COVERAGE_COUNT]
                                        [2] // centroid
                                        [2] // forcedSampleCount
                                        [2] // canEarlyZ
-                                       = {};
+ = {0};
 PFN_BACKEND_FUNC gBackendSampleRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
                                         [SWR_INPUT_COVERAGE_COUNT]
                                         [2] // centroid
                                         [2] // canEarlyZ
-                                        = {};
+ = {0};
 
 void InitBackendFuncTables()
 {

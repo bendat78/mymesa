@@ -798,7 +798,7 @@ LLVMValueRef si_get_indirect_index(struct si_shader_context *ctx,
 		result = ctx->addrs[ind->Index][ind->Swizzle];
 		result = LLVMBuildLoad(ctx->ac.builder, result, "");
 	} else {
-		struct tgsi_full_src_register src = {};
+		struct tgsi_full_src_register src = {0};
 
 		src.Register.File = ind->File;
 		src.Register.Index = ind->Index;
@@ -2831,7 +2831,7 @@ static void si_llvm_emit_streamout(struct si_shader_context *ctx,
 
 		/* Load the descriptor and compute the write offset for each
 		 * enabled buffer. */
-		LLVMValueRef so_write_offset[4] = {};
+		LLVMValueRef so_write_offset[4] = {0};
 		LLVMValueRef so_buffers[4];
 		LLVMValueRef buf_ptr = LLVMGetParam(ctx->main_fn,
 						    ctx->param_rw_buffers);
@@ -2934,7 +2934,7 @@ static void si_llvm_export_vs(struct si_shader_context *ctx,
 			      unsigned noutput)
 {
 	struct si_shader *shader = ctx->shader;
-	struct ac_export_args pos_args[4] = {};
+	struct ac_export_args pos_args[4] = {0};
 	LLVMValueRef psize_value = NULL, edgeflag_value = NULL, layer_value = NULL, viewport_index_value = NULL;
 	unsigned pos_idx;
 	int i;
@@ -3864,7 +3864,7 @@ static void si_llvm_return_fs_outputs(struct ac_shader_abi *abi,
 	LLVMBuilderRef builder = ctx->ac.builder;
 	unsigned i, j, first_vgpr, vgpr;
 
-	LLVMValueRef color[8][4] = {};
+	LLVMValueRef color[8][4] = {0};
 	LLVMValueRef depth = NULL, stencil = NULL, samplemask = NULL;
 	LLVMValueRef ret;
 
@@ -6821,7 +6821,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			parts[3] = ctx.main_fn;
 
 			/* VS as LS main part */
-			struct si_shader shader_ls = {};
+			struct si_shader shader_ls = {0};
 			shader_ls.selector = ls;
 			shader_ls.key.as_ls = 1;
 			shader_ls.key.mono = shader->key.mono;
@@ -6885,7 +6885,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			gs_prolog = ctx.main_fn;
 
 			/* ES main part */
-			struct si_shader shader_es = {};
+			struct si_shader shader_es = {0};
 			shader_es.selector = es;
 			shader_es.key.as_es = 1;
 			shader_es.key.mono = shader->key.mono;
@@ -7114,7 +7114,7 @@ si_get_shader_part(struct si_screen *sscreen,
 	result = CALLOC_STRUCT(si_shader_part);
 	result->key = *key;
 
-	struct si_shader shader = {};
+	struct si_shader shader = {0};
 	struct si_shader_context ctx;
 
 	si_init_shader_ctx(&ctx, sscreen, compiler);
@@ -7808,7 +7808,7 @@ static void si_build_ps_epilog_function(struct si_shader_context *ctx,
 	struct si_function_info fninfo;
 	LLVMValueRef depth = NULL, stencil = NULL, samplemask = NULL;
 	int i;
-	struct si_ps_exports exp = {};
+	struct si_ps_exports exp = {0};
 
 	si_init_function_info(&fninfo);
 

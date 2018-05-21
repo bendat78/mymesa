@@ -213,7 +213,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
 
    if (screen->base.class_3d >= GM200_3D_CLASS) {
       const uint8_t (*ptr)[2] = nvc0_get_sample_locations(ms);
-      uint32_t val[4] = {};
+      uint32_t val[4] = {0};
 
       for (i = 0; i < 16; i++) {
          val[i / 4] |= ptr[i % ms][0] << (((i % 4) * 8) + 0);

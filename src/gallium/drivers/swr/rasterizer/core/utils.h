@@ -256,7 +256,7 @@ private:
     static_assert(ELEMENTS_PER_WORD * BitsPerElementT == BITS_PER_WORD,
         "Element size must an integral fraction of pointer size");
 
-    size_t              m_words[NUM_WORDS] = {};
+    size_t              m_words[NUM_WORDS] = {0};
 
 public:
 

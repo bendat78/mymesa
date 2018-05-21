@@ -704,7 +704,7 @@ namespace {
                 const color_u &shifts, const color_u &widths)
       {
          const fs_reg dst = bld.vgrf(BRW_REGISTER_TYPE_UD, 4);
-         bool seen[4] = {};
+         bool seen[4] = {0};
 
          for (unsigned c = 0; c < 4; ++c) {
             if (widths[c]) {

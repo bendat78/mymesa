@@ -392,7 +392,7 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 	struct r600_common_screen *rscreen = (struct r600_common_screen *)context->screen;
 	struct r600_common_context *rctx = (struct r600_common_context*)context;
 	struct rvce_encoder *enc;
-	struct pipe_video_buffer *tmp_buf, templat = {};
+	struct pipe_video_buffer *tmp_buf, templat = {0};
 	struct radeon_surf *tmp_surf;
 	unsigned cpb_size;
 

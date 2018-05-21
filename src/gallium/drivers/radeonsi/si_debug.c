@@ -804,7 +804,7 @@ static void si_dump_descriptors(struct si_context *sctx,
 	    sctx->vb_descriptors_gpu_list &&
 	    sctx->vertex_elements) {
 		assert(info); /* only CS may not have an info struct */
-		struct si_descriptors desc = {};
+		struct si_descriptors desc = {0};
 
 		desc.buffer = sctx->vb_descriptors_buffer;
 		desc.list = sctx->vb_descriptors_gpu_list;

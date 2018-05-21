@@ -567,7 +567,7 @@ sched_block(struct ir3_sched_ctx *ctx, struct ir3_block *block)
 	}
 
 	while (!list_empty(&ctx->depth_list)) {
-		struct ir3_sched_notes notes = {};
+		struct ir3_sched_notes notes = {0};
 		struct ir3_instruction *instr;
 
 		instr = find_eligible_instr(ctx, &notes, true);
@@ -711,7 +711,7 @@ sched_intra_block(struct ir3_sched_ctx *ctx, struct ir3_block *block)
 
 int ir3_sched(struct ir3 *ir)
 {
-	struct ir3_sched_ctx ctx = {};
+	struct ir3_sched_ctx ctx = {0};
 
 	ir3_clear_mark(ir);
 

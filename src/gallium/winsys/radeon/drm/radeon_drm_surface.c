@@ -251,7 +251,7 @@ static int radeon_winsys_surface_init(struct radeon_winsys *rws,
         !(flags & (RADEON_SURF_Z_OR_SBUFFER | RADEON_SURF_FMASK))) {
         /* FMASK is allocated like an ordinary texture. */
         struct pipe_resource templ = *tex;
-        struct radeon_surf fmask = {};
+        struct radeon_surf fmask = {0};
         unsigned fmask_flags, bpe;
 
         templ.nr_samples = 1;

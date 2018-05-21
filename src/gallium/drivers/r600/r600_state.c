@@ -2589,7 +2589,7 @@ void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 {
 	struct r600_command_buffer *cb = &shader->command_buffer;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned spi_vs_out_id[10] = {};
+	unsigned spi_vs_out_id[10] = {0};
 	unsigned i, tmp, nparams = 0;
 
 	for (i = 0; i < rshader->noutput; i++) {

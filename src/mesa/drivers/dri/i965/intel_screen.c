@@ -2097,7 +2097,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
       __DRI_ATTRIB_SWAP_UNDEFINED, __DRI_ATTRIB_SWAP_NONE
    };
 
-   static const uint8_t singlesample_samples[1] = {};
+   static const uint8_t singlesample_samples[1] = {0};
    struct intel_screen *screen = dri_screen->driverPrivate;
    const struct gen_device_info *devinfo = &screen->devinfo;
    uint8_t depth_bits[4], stencil_bits[4];

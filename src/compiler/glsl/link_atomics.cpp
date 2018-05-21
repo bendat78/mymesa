@@ -205,7 +205,7 @@ link_assign_atomic_counter_resources(struct gl_context *ctx,
                                      struct gl_shader_program *prog)
 {
    unsigned num_buffers;
-   unsigned num_atomic_buffers[MESA_SHADER_STAGES] = {};
+   unsigned num_atomic_buffers[MESA_SHADER_STAGES] = {0};
    active_atomic_buffer *abs =
       find_active_atomic_counters(ctx, prog, &num_buffers);
 
@@ -306,8 +306,8 @@ link_check_atomic_counter_resources(struct gl_context *ctx,
    unsigned num_buffers;
    active_atomic_buffer *const abs =
       find_active_atomic_counters(ctx, prog, &num_buffers);
-   unsigned atomic_counters[MESA_SHADER_STAGES] = {};
-   unsigned atomic_buffers[MESA_SHADER_STAGES] = {};
+   unsigned atomic_counters[MESA_SHADER_STAGES] = {0};
+   unsigned atomic_buffers[MESA_SHADER_STAGES] = {0};
    unsigned total_atomic_counters = 0;
    unsigned total_atomic_buffers = 0;
 

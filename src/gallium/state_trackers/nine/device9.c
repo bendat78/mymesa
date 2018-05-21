@@ -2946,7 +2946,7 @@ NineDevice9_ProcessVertices( struct NineDevice9 *This,
     struct pipe_draw_info draw;
     struct pipe_box box;
     bool programmable_vs = This->state.vs && !(This->state.vdecl && This->state.vdecl->position_t);
-    unsigned offsets[1] = {};
+    unsigned offsets[1] = {0};
     HRESULT hr;
     unsigned buffer_size;
     void *map;

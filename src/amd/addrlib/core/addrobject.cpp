@@ -94,7 +94,7 @@ VOID* Object::ClientAlloc(
 
     if (pClient->callbacks.allocSysMem)
     {
-        ADDR_ALLOCSYSMEM_INPUT allocInput = {};
+        ADDR_ALLOCSYSMEM_INPUT allocInput = {0};
 
         allocInput.size        = sizeof(ADDR_ALLOCSYSMEM_INPUT);
         allocInput.flags.value = 0;
@@ -138,7 +138,7 @@ VOID Object::ClientFree(
     {
         if (pObjMem)
         {
-            ADDR_FREESYSMEM_INPUT freeInput = {};
+            ADDR_FREESYSMEM_INPUT freeInput = {0};
 
             freeInput.size      = sizeof(ADDR_FREESYSMEM_INPUT);
             freeInput.hClient   = pClient->handle;
@@ -216,7 +216,7 @@ VOID Object::DebugPrint(
 #if DEBUG
     if (m_client.callbacks.debugPrint)
     {
-        ADDR_DEBUGPRINT_INPUT debugPrintInput = {};
+        ADDR_DEBUGPRINT_INPUT debugPrintInput = {0};
 
         debugPrintInput.size         = sizeof(ADDR_DEBUGPRINT_INPUT);
         debugPrintInput.pDebugString = const_cast<CHAR*>(pDebugString);

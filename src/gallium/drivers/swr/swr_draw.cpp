@@ -64,12 +64,12 @@ swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    if (ctx->vs->pipe.stream_output.num_outputs) {
       if (!ctx->vs->soFunc[info->mode]) {
-         STREAMOUT_COMPILE_STATE state = {};
+         STREAMOUT_COMPILE_STATE state = {0};
          struct pipe_stream_output_info *so = &ctx->vs->pipe.stream_output;
 
          state.numVertsPerPrim = u_vertices_per_prim(info->mode);
 
-         uint32_t offsets[MAX_SO_STREAMS] = {};
+         uint32_t offsets[MAX_SO_STREAMS] = {0};
          uint32_t num = 0;
 
          for (uint32_t i = 0; i < so->num_outputs; i++) {
@@ -138,7 +138,7 @@ swr_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    /* Set up frontend state
     * XXX setup provokingVertex & topologyProvokingVertex */
-   SWR_FRONTEND_STATE feState = {};
+   SWR_FRONTEND_STATE feState = {0};
 
    // feState.vsVertexSize seeds the PA size that is used as an interface
    // between all the shader stages, so it has to be large enough to

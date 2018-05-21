@@ -445,7 +445,7 @@ static void *si_create_blend_state_mode(struct pipe_context *ctx,
 	struct si_context *sctx = (struct si_context*)ctx;
 	struct si_state_blend *blend = CALLOC_STRUCT(si_state_blend);
 	struct si_pm4_state *pm4 = &blend->pm4;
-	uint32_t sx_mrt_blend_opt[8] = {};
+	uint32_t sx_mrt_blend_opt[8] = {0};
 	uint32_t color_control = 0;
 
 	if (!blend)
@@ -1295,7 +1295,7 @@ static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
 
 static void *si_create_db_flush_dsa(struct si_context *sctx)
 {
-	struct pipe_depth_stencil_alpha_state dsa = {};
+	struct pipe_depth_stencil_alpha_state dsa = {0};
 
 	return sctx->b.create_depth_stencil_alpha_state(&sctx->b, &dsa);
 }
@@ -2694,7 +2694,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 				     const struct pipe_framebuffer_state *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct pipe_constant_buffer constbuf = {};
+	struct pipe_constant_buffer constbuf = {0};
 	struct r600_surface *surf = NULL;
 	struct r600_texture *rtex;
 	bool old_any_dst_linear = sctx->framebuffer.any_dst_linear;
@@ -4323,7 +4323,7 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 {
 	struct si_screen *sscreen = (struct si_screen*)ctx->screen;
 	struct si_vertex_elements *v = CALLOC_STRUCT(si_vertex_elements);
-	bool used[SI_NUM_VERTEX_BUFFERS] = {};
+	bool used[SI_NUM_VERTEX_BUFFERS] = {0};
 	int i;
 
 	assert(count <= SI_MAX_ATTRIBS);

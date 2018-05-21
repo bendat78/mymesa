@@ -784,7 +784,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws,
 
 	rscreen->has_atomics = rscreen->b.info.drm_minor >= 44;
 #if 0 /* This is for testing whether aux_context and buffer clearing work correctly. */
-	struct pipe_resource templ = {};
+	struct pipe_resource templ = {0};
 
 	templ.width0 = 4;
 	templ.height0 = 2048;

@@ -134,7 +134,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
 
                 // Find Numa Node
                 uint32_t numaId = 0;
-                PROCESSOR_NUMBER procNum = {};
+                PROCESSOR_NUMBER procNum = {0};
                 procNum.Group = WORD(procGroup);
                 procNum.Number = UCHAR(threadId);
 
@@ -320,7 +320,7 @@ void bindThread(SWR_CONTEXT* pContext, uint32_t threadId, uint32_t procGroupId =
 
 #if defined(_WIN32)
 
-    GROUP_AFFINITY affinity = {};
+    GROUP_AFFINITY affinity = {0};
     affinity.Group = procGroupId;
 
 #if !defined(_WIN64)

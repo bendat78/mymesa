@@ -1070,7 +1070,7 @@ st_create_fp_variant(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct st_fp_variant *variant = CALLOC_STRUCT(st_fp_variant);
-   struct pipe_shader_state tgsi = {};
+   struct pipe_shader_state tgsi = {0};
    struct gl_program_parameter_list *params = stfp->Base.Parameters;
    static const gl_state_index16 texcoord_state[STATE_LENGTH] =
       { STATE_INTERNAL, STATE_CURRENT_ATTRIB, VERT_ATTRIB_TEX0 };
@@ -1099,7 +1099,7 @@ st_create_fp_variant(struct st_context *st,
 
       /* glBitmap */
       if (key->bitmap) {
-         nir_lower_bitmap_options options = {};
+         nir_lower_bitmap_options options = {0};
 
          variant->bitmap_sampler = ffs(~stfp->Base.SamplersUsed) - 1;
          options.sampler = variant->bitmap_sampler;
@@ -1110,7 +1110,7 @@ st_create_fp_variant(struct st_context *st,
 
       /* glDrawPixels (color only) */
       if (key->drawpixels) {
-         nir_lower_drawpixels_options options = {};
+         nir_lower_drawpixels_options options = {0};
          unsigned samplers_used = stfp->Base.SamplersUsed;
 
          /* Find the first unused slot. */
@@ -1142,7 +1142,7 @@ st_create_fp_variant(struct st_context *st,
       }
 
       if (unlikely(key->external.lower_nv12 || key->external.lower_iyuv)) {
-         nir_lower_tex_options options = {};
+         nir_lower_tex_options options = {0};
          options.lower_y_uv_external = key->external.lower_nv12;
          options.lower_y_u_v_external = key->external.lower_iyuv;
          NIR_PASS_V(tgsi.ir.nir, nir_lower_tex, &options);
@@ -1573,7 +1573,7 @@ st_get_basic_variant(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    struct st_basic_variant *v;
    struct st_basic_variant_key key;
-   struct pipe_shader_state tgsi = {};
+   struct pipe_shader_state tgsi = {0};
    memset(&key, 0, sizeof(key));
    key.st = st->has_shareable_shaders ? NULL : st;
 

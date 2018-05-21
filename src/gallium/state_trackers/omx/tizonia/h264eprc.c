@@ -240,7 +240,7 @@ static void enc_HandleTask(vid_enc_PrivateType * priv, struct encode_task *task,
 {
    unsigned size = priv->out_port_def_.nBufferSize;
    struct pipe_video_buffer *vbuf = task->buf;
-   struct pipe_h264_enc_picture_desc picture = {};
+   struct pipe_h264_enc_picture_desc picture = {0};
 
    /* -------------- scale input image --------- */
    enc_ScaleInput(priv, &vbuf, &size);
@@ -522,7 +522,7 @@ static OMX_ERRORTYPE h264e_prc_prepare_to_transfer(void *ap_obj, OMX_U32 a_pid)
 
    priv->eos_ = false;
 
-   struct pipe_video_codec templat = {};
+   struct pipe_video_codec templat = {0};
 
    templat.profile = enc_TranslateOMXProfileToPipe(priv->profile_level.eProfile);
    templat.level = enc_TranslateOMXLevelToPipe(priv->profile_level.eLevel);

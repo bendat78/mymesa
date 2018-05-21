@@ -1143,7 +1143,7 @@ static LLVMValueRef lower_gather4_integer(struct ac_llvm_context *ctx,
 
 	//TODO Rect
 	{
-		struct ac_image_args txq_args = {};
+		struct ac_image_args txq_args = {0};
 
 		txq_args.dim = get_ac_sampler_dim(ctx, instr->sampler_dim, instr->is_array);
 		txq_args.opcode = ac_image_get_resinfo;
@@ -2052,7 +2052,7 @@ static LLVMValueRef adjust_sample_index_using_fmask(struct ac_llvm_context *ctx,
 						    LLVMValueRef sample_index,
 						    LLVMValueRef fmask_desc_ptr)
 {
-	struct ac_image_args args = {};
+	struct ac_image_args args = {0};
 	LLVMValueRef res;
 
 	args.coords[0] = coord_x;
@@ -2244,7 +2244,7 @@ static LLVMValueRef visit_image_load(struct ac_nir_context *ctx,
 		res = ac_trim_vector(&ctx->ac, res, instr->dest.ssa.num_components);
 		res = ac_to_integer(&ctx->ac, res);
 	} else {
-		struct ac_image_args args = {};
+		struct ac_image_args args = {0};
 		args.opcode = ac_image_load;
 		get_image_coords(ctx, instr, &args);
 		args.resource = get_sampler_desc(ctx, instr->variables[0],
@@ -2286,7 +2286,7 @@ static void visit_image_store(struct ac_nir_context *ctx,
 		ac_build_intrinsic(&ctx->ac, "llvm.amdgcn.buffer.store.format.v4f32", ctx->ac.voidt,
 				   params, 6, 0);
 	} else {
-		struct ac_image_args args = {};
+		struct ac_image_args args = {0};
 		args.opcode = ac_image_store;
 		args.data[0] = ac_to_float(&ctx->ac, get_src(ctx, instr->src[2]));
 		get_image_coords(ctx, instr, &args);
@@ -2374,7 +2374,7 @@ static LLVMValueRef visit_image_atomic(struct ac_nir_context *ctx,
 		return ac_build_intrinsic(&ctx->ac, intrinsic_name, ctx->ac.i32,
 					  params, param_count, 0);
 	} else {
-		struct ac_image_args args = {};
+		struct ac_image_args args = {0};
 		args.opcode = cmpswap ? ac_image_atomic_cmpswap : ac_image_atomic;
 		args.atomic = atomic_subop;
 		args.data[0] = params[0];
@@ -2396,7 +2396,7 @@ static LLVMValueRef visit_image_samples(struct ac_nir_context *ctx,
 	const nir_variable *var = instr->variables[0]->var;
 	const struct glsl_type *type = glsl_without_array(var->type);
 
-	struct ac_image_args args = {};
+	struct ac_image_args args = {0};
 	args.dim = get_ac_sampler_dim(&ctx->ac, glsl_get_sampler_dim(type),
 				      glsl_sampler_type_is_array(type));
 	args.dmask = 0xf;
@@ -2421,7 +2421,7 @@ static LLVMValueRef visit_image_size(struct ac_nir_context *ctx,
 			get_sampler_desc(ctx, instr->variables[0],
 					 AC_DESC_BUFFER, NULL, true, false), true);
 
-	struct ac_image_args args = {};
+	struct ac_image_args args = {0};
 
 	args.dim = get_ac_image_dim(&ctx->ac, glsl_get_sampler_dim(type),
 				    glsl_sampler_type_is_array(type));
@@ -3238,7 +3238,7 @@ static LLVMValueRef apply_round_slice(struct ac_llvm_context *ctx,
 static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 {
 	LLVMValueRef result = NULL;
-	struct ac_image_args args = {};
+	struct ac_image_args args = {0};
 	LLVMValueRef fmask_ptr = NULL, sample_index = NULL;
 	LLVMValueRef ddx = NULL, ddy = NULL;
 	unsigned offset_src = 0;
@@ -3436,7 +3436,7 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 		args.coords[instr->coord_components] = sample_index;
 
 	if (instr->op == nir_texop_samples_identical) {
-		struct ac_image_args txf_args = {};
+		struct ac_image_args txf_args = {0};
 		memcpy(txf_args.coords, args.coords, sizeof(txf_args.coords));
 
 		txf_args.dmask = 0xf;
@@ -3822,7 +3822,7 @@ setup_shared(struct ac_nir_context *ctx,
 void ac_nir_translate(struct ac_llvm_context *ac, struct ac_shader_abi *abi,
 		      struct nir_shader *nir)
 {
-	struct ac_nir_context ctx = {};
+	struct ac_nir_context ctx = {0};
 	struct nir_function *func;
 
 	ctx.ac = *ac;

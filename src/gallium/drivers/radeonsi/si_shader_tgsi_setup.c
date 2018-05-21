@@ -375,7 +375,7 @@ emit_array_fetch(struct lp_build_tgsi_context *bld_base,
 	LLVMTypeRef vec = LLVMVectorType(tgsi2llvmtype(bld_base, type), size);
 	LLVMValueRef result = LLVMGetUndef(vec);
 
-	struct tgsi_full_src_register tmp_reg = {};
+	struct tgsi_full_src_register tmp_reg = {0};
 	tmp_reg.Register.File = File;
 
 	for (i = 0; i < size; ++i) {
@@ -823,7 +823,7 @@ void si_llvm_emit_store(struct lp_build_tgsi_context *bld_base,
 	}
 
 	if (is_vec_store) {
-		LLVMValueRef values[4] = {};
+		LLVMValueRef values[4] = {0};
 		uint32_t writemask = reg->Register.WriteMask;
 		while (writemask) {
 			unsigned chan = u_bit_scan(&writemask);

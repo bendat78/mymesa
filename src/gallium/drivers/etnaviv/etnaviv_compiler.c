@@ -408,7 +408,7 @@ static struct etna_inst_src
 alloc_imm_vec4u(struct etna_compile *c, enum etna_immediate_contents contents,
                 const uint32_t *values)
 {
-   struct etna_inst_src imm_src = { };
+   struct etna_inst_src imm_src = {0};
    int idx, i;
 
    for (idx = 0; idx + 3 < c->imm_size; idx += 4) {
@@ -476,7 +476,7 @@ etna_imm_vec4f(struct etna_compile *c, const float *vec4)
 static void
 etna_compile_parse_declarations(struct etna_compile *c)
 {
-   struct tgsi_parse_context ctx = { };
+   struct tgsi_parse_context ctx = {0};
    unsigned status = TGSI_PARSE_OK;
    status = tgsi_parse_init(&ctx, c->tokens);
    assert(status == TGSI_PARSE_OK);
@@ -529,7 +529,7 @@ etna_allocate_decls(struct etna_compile *c)
 static void
 etna_compile_pass_check_usage(struct etna_compile *c)
 {
-   struct tgsi_parse_context ctx = { };
+   struct tgsi_parse_context ctx = {0};
    unsigned status = TGSI_PARSE_OK;
    status = tgsi_parse_init(&ctx, c->tokens);
    assert(status == TGSI_PARSE_OK);
@@ -660,7 +660,7 @@ etna_mov_check_no_swizzle(const struct tgsi_dst_register dst,
 static void
 etna_compile_pass_optimize_outputs(struct etna_compile *c)
 {
-   struct tgsi_parse_context ctx = { };
+   struct tgsi_parse_context ctx = {0};
    int inst_idx = 0;
    unsigned status = TGSI_PARSE_OK;
    status = tgsi_parse_init(&ctx, c->tokens);
@@ -958,7 +958,7 @@ static struct etna_inst_src
 etna_mov_src_to_temp(struct etna_compile *c, struct etna_inst_src src,
                      struct etna_native_reg temp)
 {
-   struct etna_inst mov = { };
+   struct etna_inst mov = {0};
 
    mov.opcode = INST_OPCODE_MOV;
    mov.sat = 0;
@@ -1053,7 +1053,7 @@ trans_instr(const struct instr_translater *t, struct etna_compile *c,
             const struct tgsi_full_instruction *inst, struct etna_inst_src *src)
 {
    const struct tgsi_opcode_info *info = tgsi_get_opcode_info(inst->Instruction.Opcode);
-   struct etna_inst instr = { };
+   struct etna_inst instr = {0};
 
    instr.opcode = t->opc;
    instr.cond = t->cond;
@@ -1258,14 +1258,14 @@ trans_arl(const struct instr_translater *t, struct etna_compile *c,
           const struct tgsi_full_instruction *inst, struct etna_inst_src *src)
 {
    struct etna_native_reg temp = etna_compile_get_inner_temp(c);
-   struct etna_inst arl = { };
+   struct etna_inst arl = {0};
    struct etna_inst_dst dst;
 
    dst = etna_native_to_dst(temp, INST_COMPS_X | INST_COMPS_Y | INST_COMPS_Z |
                                   INST_COMPS_W);
 
    if (c->specs->has_sign_floor_ceil) {
-      struct etna_inst floor = { };
+      struct etna_inst floor = {0};
 
       floor.opcode = INST_OPCODE_FLOOR;
       floor.src[2] = src[0];
@@ -1273,7 +1273,7 @@ trans_arl(const struct instr_translater *t, struct etna_compile *c,
 
       emit_inst(c, &floor);
    } else {
-      struct etna_inst floor[2] = { };
+      struct etna_inst floor[2] = {0};
 
       floor[0].opcode = INST_OPCODE_FRC;
       floor[0].sat = inst->Instruction.Saturate;
@@ -1318,7 +1318,7 @@ trans_lrp(const struct instr_translater *t, struct etna_compile *c,
       src[0] = etna_mov_src(c, src[0]);
    }
 
-   struct etna_inst mad[2] = { };
+   struct etna_inst mad[2] = {0};
    mad[0].opcode = INST_OPCODE_MAD;
    mad[0].sat = 0;
    mad[0].dst = etna_native_to_dst(temp, INST_COMPS_X | INST_COMPS_Y |
@@ -1350,12 +1350,12 @@ trans_lit(const struct instr_translater *t, struct etna_compile *c,
     * LITP dst, undef, src.xxxx, tmp.xxxx
     */
    struct etna_native_reg inner_temp = etna_compile_get_inner_temp(c);
-   struct etna_inst_src src_y = { };
+   struct etna_inst_src src_y = {0};
 
    if (!etna_rgroup_is_uniform(src[0].rgroup)) {
       src_y = etna_native_to_src(inner_temp, SWIZZLE(Y, Y, Y, Y));
 
-      struct etna_inst ins = { };
+      struct etna_inst ins = {0};
       ins.opcode = INST_OPCODE_SELECT;
       ins.cond = INST_CONDITION_LT;
       ins.dst = etna_native_to_dst(inner_temp, INST_COMPS_Y);
@@ -1367,12 +1367,12 @@ trans_lit(const struct instr_translater *t, struct etna_compile *c,
    else
       src_y = swizzle(src[0], SWIZZLE(Y, Y, Y, Y));
 
-   struct etna_inst_src src_w = { };
+   struct etna_inst_src src_w = {0};
 
    if (!etna_rgroup_is_uniform(src[0].rgroup)) {
       src_w = etna_native_to_src(inner_temp, SWIZZLE(W, W, W, W));
 
-      struct etna_inst ins = { };
+      struct etna_inst ins = {0};
       ins.opcode = INST_OPCODE_SELECT;
       ins.cond = INST_CONDITION_GT;
       ins.dst = etna_native_to_dst(inner_temp, INST_COMPS_W);
@@ -1405,7 +1405,7 @@ trans_lit(const struct instr_translater *t, struct etna_compile *c,
          .src[1] = etna_native_to_src(inner_temp, SWIZZLE(Y, Y, Y, Y)),
       });
    } else {
-      struct etna_inst ins[3] = { };
+      struct etna_inst ins[3] = {0};
       ins[0].opcode = INST_OPCODE_LOG;
       ins[0].dst = etna_native_to_dst(inner_temp, INST_COMPS_X);
       ins[0].src[2] = src_y;
@@ -1442,7 +1442,7 @@ trans_ssg(const struct instr_translater *t, struct etna_compile *c,
       });
    } else {
       struct etna_native_reg temp = etna_compile_get_inner_temp(c);
-      struct etna_inst ins[2] = { };
+      struct etna_inst ins[2] = {0};
 
       ins[0].opcode = INST_OPCODE_SET;
       ins[0].cond = INST_CONDITION_NZ;
@@ -1535,7 +1535,7 @@ trans_trig(const struct instr_translater *t, struct etna_compile *c,
        *  MAD t._y_w, t,xxzz, |t.xxzz|, -t.xxzz
        *  MAD dst, t.ywyw, .2225, t.xzxz
        */
-      struct etna_inst *p, ins[9] = { };
+      struct etna_inst *p, ins[9] = {0};
       struct etna_native_reg t0 = etna_compile_get_inner_temp(c);
       struct etna_inst_src t0s = etna_native_to_src(t0, INST_SWIZ_IDENTITY);
       struct etna_inst_src sincos[3], in = src[0];
@@ -1546,7 +1546,7 @@ trans_trig(const struct instr_translater *t, struct etna_compile *c,
        * be exceeded.  Explicitly deal with that scenario.
        */
       if (etna_rgroup_is_uniform(src[0].rgroup)) {
-         struct etna_inst ins = { };
+         struct etna_inst ins = {0};
          ins.opcode = INST_OPCODE_MOV;
          ins.dst = etna_native_to_dst(t0, INST_COMPS_X);
          ins.src[2] = in;
@@ -1652,7 +1652,7 @@ trans_sampler(const struct instr_translater *t, struct etna_compile *c,
     * we have to rescale from ([0, width], [0, height]) to ([0, 1], [0, 1]). */
    if (inst->Texture.Texture == TGSI_TEXTURE_RECT) {
       uint32_t unit = inst->Src[1].Register.Index;
-      struct etna_inst ins[2] = { };
+      struct etna_inst ins[2] = {0};
       struct etna_native_reg temp = etna_compile_get_inner_temp(c);
 
       ins[0].opcode = INST_OPCODE_MUL;
@@ -1811,7 +1811,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 static void
 etna_compile_pass_generate_code(struct etna_compile *c)
 {
-   struct tgsi_parse_context ctx = { };
+   struct tgsi_parse_context ctx = {0};
    unsigned status = tgsi_parse_init(&ctx, c->tokens);
    assert(status == TGSI_PARSE_OK);
 

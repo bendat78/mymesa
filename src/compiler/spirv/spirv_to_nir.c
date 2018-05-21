@@ -2087,7 +2087,7 @@ vtn_handle_texture(struct vtn_builder *b, SpvOp opcode,
          (*p++) = vtn_tex_src(b, w[idx++], nir_tex_src_offset);
 
       if (operands & SpvImageOperandsConstOffsetsMask) {
-         nir_tex_src none = {};
+         nir_tex_src none = {0};
          gather_offsets = vtn_ssa_value(b, w[idx++]);
          (*p++) = none;
       }

@@ -98,7 +98,7 @@ BOOL_32 EgBasedLib::DispatchComputeSurfaceInfo(
     UINT_32             mipLevel      = pIn->mipLevel;
     ADDR_SURFACE_FLAGS  flags         = pIn->flags;
 
-    ADDR_TILEINFO       tileInfoDef = {};
+    ADDR_TILEINFO       tileInfoDef = {0};
     ADDR_TILEINFO*      pTileInfo     = &tileInfoDef;
     UINT_32             padDims       = 0;
     BOOL_32             valid;
@@ -1188,7 +1188,7 @@ BOOL_32 EgBasedLib::HwlGetAlignmentInfoMacroTiled(
 
     ADDR_ASSERT(pIn->pTileInfo);
     ADDR_TILEINFO tileInfo = *pIn->pTileInfo;
-    ADDR_COMPUTE_SURFACE_INFO_OUTPUT out = {};
+    ADDR_COMPUTE_SURFACE_INFO_OUTPUT out = {0};
     out.pTileInfo = &tileInfo;
 
     if (UseTileIndex(pIn->tileIndex))
@@ -3246,8 +3246,8 @@ ADDR_E_RETURNCODE EgBasedLib::DispatchComputeFmaskInfo(
 {
     ADDR_E_RETURNCODE retCode = ADDR_OK;
 
-    ADDR_COMPUTE_SURFACE_INFO_INPUT  surfIn = {};
-    ADDR_COMPUTE_SURFACE_INFO_OUTPUT surfOut = {};
+    ADDR_COMPUTE_SURFACE_INFO_INPUT  surfIn = {0};
+    ADDR_COMPUTE_SURFACE_INFO_OUTPUT surfOut = {0};
 
     // Setup input structure
     surfIn.tileMode          = pIn->tileMode;
@@ -3320,7 +3320,7 @@ ADDR_E_RETURNCODE EgBasedLib::HwlComputeFmaskInfo(
 {
     ADDR_E_RETURNCODE retCode = ADDR_OK;
 
-    ADDR_TILEINFO tileInfo = {};
+    ADDR_TILEINFO tileInfo = {0};
 
     // Use internal tile info if pOut does not have a valid pTileInfo
     if (!pOut->pTileInfo)
@@ -3824,7 +3824,7 @@ ADDR_E_RETURNCODE EgBasedLib::HwlComputeSurfaceInfo(
         retCode = ADDR_INVALIDPARAMS;
     }
 
-    ADDR_TILEINFO tileInfo = {};
+    ADDR_TILEINFO tileInfo = {0};
 
     if (retCode == ADDR_OK)
     {

@@ -681,7 +681,7 @@ cross_validate_outputs_to_inputs(struct gl_context *ctx,
                                  gl_linked_shader *consumer)
 {
    glsl_symbol_table parameters;
-   struct explicit_location_info explicit_locations[MAX_VARYING][4] = {};
+   struct explicit_location_info explicit_locations[MAX_VARYING][4] = {0};
 
    /* Find all shader outputs in the "producer" stage.
     */
@@ -1892,7 +1892,7 @@ varying_matches::store_locations() const
    /* Check is location needs to be packed with lower_packed_varyings() or if
     * we can just use ARB_enhanced_layouts packing.
     */
-   bool pack_loc[MAX_VARYINGS_INCL_PATCH] = {};
+   bool pack_loc[MAX_VARYINGS_INCL_PATCH] = {0};
    const glsl_type *loc_type[MAX_VARYINGS_INCL_PATCH][4] = { {NULL, NULL} };
 
    for (unsigned i = 0; i < this->num_matches; i++) {
@@ -2581,7 +2581,7 @@ assign_varying_locations(struct gl_context *ctx,
    _mesa_hash_table_destroy(consumer_inputs, NULL);
    _mesa_hash_table_destroy(consumer_interface_inputs, NULL);
 
-   uint8_t components[MAX_VARYINGS_INCL_PATCH] = {};
+   uint8_t components[MAX_VARYINGS_INCL_PATCH] = {0};
    const unsigned slots_used = matches.assign_locations(
          prog, components, reserved_slots);
    matches.store_locations();

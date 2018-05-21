@@ -328,7 +328,7 @@ void alu_packed_node::update_packed_items(sb_context &ctx) {
 	if (((flags & AF_REPL) && slot_flags == AF_4V) ||
 			(ctx.is_cayman() && slot_flags == AF_S)) {
 
-		value *swp[4] = {};
+		value *swp[4] = {0};
 
 		unsigned chan;
 

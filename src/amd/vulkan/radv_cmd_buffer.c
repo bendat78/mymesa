@@ -537,7 +537,7 @@ radv_save_descriptors(struct radv_cmd_buffer *cmd_buffer,
 		radv_get_descriptors_state(cmd_buffer, bind_point);
 	struct radv_device *device = cmd_buffer->device;
 	struct radeon_winsys_cs *cs = cmd_buffer->cs;
-	uint32_t data[MAX_SETS * 2] = {};
+	uint32_t data[MAX_SETS * 2] = {0};
 	uint64_t va;
 	unsigned i;
 	va = radv_buffer_get_va(device->trace_bo) + 24;
@@ -3265,7 +3265,7 @@ void radv_CmdDraw(
 	uint32_t                                    firstInstance)
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
-	struct radv_draw_info info = {};
+	struct radv_draw_info info = {0};
 
 	info.count = vertexCount;
 	info.instance_count = instanceCount;
@@ -3284,7 +3284,7 @@ void radv_CmdDrawIndexed(
 	uint32_t                                    firstInstance)
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
-	struct radv_draw_info info = {};
+	struct radv_draw_info info = {0};
 
 	info.indexed = true;
 	info.count = indexCount;
@@ -3305,7 +3305,7 @@ void radv_CmdDrawIndirect(
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	RADV_FROM_HANDLE(radv_buffer, buffer, _buffer);
-	struct radv_draw_info info = {};
+	struct radv_draw_info info = {0};
 
 	info.count = drawCount;
 	info.indirect = buffer;
@@ -3324,7 +3324,7 @@ void radv_CmdDrawIndexedIndirect(
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	RADV_FROM_HANDLE(radv_buffer, buffer, _buffer);
-	struct radv_draw_info info = {};
+	struct radv_draw_info info = {0};
 
 	info.indexed = true;
 	info.count = drawCount;
@@ -3347,7 +3347,7 @@ void radv_CmdDrawIndirectCountAMD(
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	RADV_FROM_HANDLE(radv_buffer, buffer, _buffer);
 	RADV_FROM_HANDLE(radv_buffer, count_buffer, _countBuffer);
-	struct radv_draw_info info = {};
+	struct radv_draw_info info = {0};
 
 	info.count = maxDrawCount;
 	info.indirect = buffer;
@@ -3371,7 +3371,7 @@ void radv_CmdDrawIndexedIndirectCountAMD(
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	RADV_FROM_HANDLE(radv_buffer, buffer, _buffer);
 	RADV_FROM_HANDLE(radv_buffer, count_buffer, _countBuffer);
-	struct radv_draw_info info = {};
+	struct radv_draw_info info = {0};
 
 	info.indexed = true;
 	info.count = maxDrawCount;
@@ -3612,7 +3612,7 @@ void radv_CmdDispatchBase(
 	uint32_t                                    z)
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
-	struct radv_dispatch_info info = {};
+	struct radv_dispatch_info info = {0};
 
 	info.blocks[0] = x;
 	info.blocks[1] = y;
@@ -3640,7 +3640,7 @@ void radv_CmdDispatchIndirect(
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	RADV_FROM_HANDLE(radv_buffer, buffer, _buffer);
-	struct radv_dispatch_info info = {};
+	struct radv_dispatch_info info = {0};
 
 	info.indirect = buffer;
 	info.indirect_offset = offset;
@@ -3654,7 +3654,7 @@ void radv_unaligned_dispatch(
 	uint32_t                                    y,
 	uint32_t                                    z)
 {
-	struct radv_dispatch_info info = {};
+	struct radv_dispatch_info info = {0};
 
 	info.blocks[0] = x;
 	info.blocks[1] = y;

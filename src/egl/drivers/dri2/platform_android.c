@@ -1062,7 +1062,7 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
       { HAL_PIXEL_FORMAT_BGRA_8888, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 } },
    };
 
-   unsigned int format_count[ARRAY_SIZE(visuals)] = {};
+   unsigned int format_count[ARRAY_SIZE(visuals)] = {0};
    int config_count = 0;
 
    /* The nesting of loops is significant here. Also significant is the order

@@ -385,8 +385,8 @@ virgl_drm_winsys_resource_create_handle(struct virgl_winsys *qws,
                                         struct winsys_handle *whandle)
 {
    struct virgl_drm_winsys *qdws = virgl_drm_winsys(qws);
-   struct drm_gem_open open_arg = {};
-   struct drm_virtgpu_resource_info info_arg = {};
+   struct drm_gem_open open_arg = {0};
+   struct drm_virtgpu_resource_info info_arg = {0};
    struct virgl_hw_res *res;
    uint32_t handle = whandle->handle;
 
@@ -801,7 +801,7 @@ virgl_drm_winsys_create(int drmFD)
    struct virgl_drm_winsys *qdws;
    int ret;
    int gl = 0;
-   struct drm_virtgpu_getparam getparam = {};
+   struct drm_virtgpu_getparam getparam = {0};
 
    getparam.param = VIRTGPU_PARAM_3D_FEATURES;
    getparam.value = (uint64_t)(uintptr_t)&gl;

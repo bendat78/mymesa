@@ -283,7 +283,7 @@ color_attachment_compute_aux_usage(struct anv_device * device,
    assert(iview->image->planes[0].aux_surface.isl.usage &
           (ISL_SURF_USAGE_CCS_BIT | ISL_SURF_USAGE_MCS_BIT));
 
-   union isl_color_value clear_color = {};
+   union isl_color_value clear_color = {0};
    anv_clear_color_from_att_state(&clear_color, att_state, iview);
 
    att_state->clear_color_is_zero_one =
@@ -3578,7 +3578,7 @@ cmd_buffer_begin_subpass(struct anv_cmd_buffer *cmd_buffer,
             assert(iview->planes[0].isl.base_level == 0);
             assert(iview->planes[0].isl.base_array_layer == 0);
 
-            union isl_color_value clear_color = {};
+            union isl_color_value clear_color = {0};
             anv_clear_color_from_att_state(&clear_color, att_state, iview);
             if (iview->image->samples == 1) {
                anv_image_ccs_op(cmd_buffer, image, VK_IMAGE_ASPECT_COLOR_BIT,

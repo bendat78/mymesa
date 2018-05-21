@@ -706,8 +706,8 @@ radeon_uvd_enc_nalu_aud_hevc(struct radeon_uvd_encoder *enc)
 static void
 radeon_uvd_enc_slice_header_hevc(struct radeon_uvd_encoder *enc)
 {
-   uint32_t instruction[RENC_UVD_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {};
-   uint32_t num_bits[RENC_UVD_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {};
+   uint32_t instruction[RENC_UVD_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {0};
+   uint32_t num_bits[RENC_UVD_SLICE_HEADER_TEMPLATE_MAX_NUM_INSTRUCTIONS] = {0};
    unsigned int inst_index = 0;
    unsigned int bit_index = 0;
    unsigned int bits_copied = 0;

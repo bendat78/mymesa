@@ -3290,7 +3290,7 @@ lp_build_sample_soa_code(struct gallivm_state *gallivm,
             LLVMValueRef s4, t4, r4;
             LLVMValueRef lod_positive4, lod_fpart4 = NULL;
             LLVMValueRef ilevel04, ilevel14 = NULL;
-            LLVMValueRef offsets4[4] = {};
+            LLVMValueRef offsets4[4] = {0};
             unsigned num_lods = bld4.num_lods;
 
             s4 = lp_build_extract_range(gallivm, newcoords[0], 4*i, 4);
@@ -3412,7 +3412,7 @@ lp_build_sample_gen_func(struct gallivm_state *gallivm,
    LLVMBuilderRef old_builder;
    LLVMBasicBlockRef block;
    LLVMValueRef coords[5];
-   LLVMValueRef offsets[3] = {};
+   LLVMValueRef offsets[3] = {0};
    LLVMValueRef lod = NULL;
    LLVMValueRef context_ptr;
    LLVMValueRef thread_data_ptr = NULL;

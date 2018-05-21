@@ -165,7 +165,7 @@ sel_chan regbits::find_free_bit() {
 
 // find free gpr component to use as indirectly addressable array
 sel_chan regbits::find_free_array(unsigned length, unsigned mask) {
-	unsigned cc[4] = {};
+	unsigned cc[4] = {0};
 
 	// FIXME optimize this. though hopefully we won't have a lot of arrays
 	for (unsigned a = 0; a < MAX_GPR - num_temps; ++a) {
@@ -390,7 +390,7 @@ void ra_init::color_bs_constraint(ra_constraint* c) {
 
 	regbits rb(ctx.alu_temp_gprs);
 
-	unsigned chan_count[4] = {};
+	unsigned chan_count[4] = {0};
 	unsigned allowed_chans = 0x0F;
 
 	for (vvec::iterator I = vv.begin(), E = vv.end(); I != E; ++I) {

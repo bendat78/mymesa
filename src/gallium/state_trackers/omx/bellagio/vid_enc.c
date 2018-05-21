@@ -287,7 +287,7 @@ static OMX_ERRORTYPE enc_AllocateBackTexture(omx_base_PortType *port,
    OMX_COMPONENTTYPE* comp = port->standCompContainer;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
    struct pipe_resource buf_templ;
-   struct pipe_box box = {};
+   struct pipe_box box = {0};
    OMX_U8 *ptr;
 
    memset(&buf_templ, 0, sizeof buf_templ);
@@ -541,7 +541,7 @@ static OMX_ERRORTYPE vid_enc_SetConfig(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx,
 
       priv->scale = *scale;
       if (priv->scale.xWidth != 0xffffffff && priv->scale.xHeight != 0xffffffff) {
-         struct pipe_video_buffer templat = {};
+         struct pipe_video_buffer templat = {0};
 
          templat.buffer_format = PIPE_FORMAT_NV12;
          templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
@@ -600,7 +600,7 @@ static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalReq
    if (msg->messageType == OMX_CommandStateSet) {
       if ((msg->messageParam == OMX_StateIdle ) && (priv->state == OMX_StateLoaded)) {
 
-         struct pipe_video_codec templat = {};
+         struct pipe_video_codec templat = {0};
          omx_base_video_PortType *port;
 
          port = (omx_base_video_PortType *)priv->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
@@ -785,7 +785,7 @@ static void enc_HandleTask(omx_base_PortType *port, struct encode_task *task,
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
    unsigned size = priv->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize;
    struct pipe_video_buffer *vbuf = task->buf;
-   struct pipe_h264_enc_picture_desc picture = {};
+   struct pipe_h264_enc_picture_desc picture = {0};
 
    /* -------------- scale input image --------- */
    enc_ScaleInput(port, &vbuf, &size);

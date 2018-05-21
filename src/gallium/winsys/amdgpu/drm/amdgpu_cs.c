@@ -290,7 +290,7 @@ static struct radeon_winsys_ctx *amdgpu_ctx_create(struct radeon_winsys *ws)
 {
    struct amdgpu_ctx *ctx = CALLOC_STRUCT(amdgpu_ctx);
    int r;
-   struct amdgpu_bo_alloc_request alloc_buffer = {};
+   struct amdgpu_bo_alloc_request alloc_buffer = {0};
    amdgpu_bo_handle buf_handle;
 
    if (!ctx)

@@ -170,7 +170,7 @@ int SWR_API  ExecCmd(
         HANDLE hRead;
         HANDLE hWrite;
     };
-    std::array<WinPipe, 3> hPipes = {};
+    std::array<WinPipe, 3> hPipes = {0};
 
     SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES) };
     saAttr.bInheritHandle = TRUE;   //Pipe handles are inherited by child process.

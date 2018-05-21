@@ -125,7 +125,7 @@ void vid_enc_BufferEncoded_common(vid_enc_PrivateType * priv, OMX_BUFFERHEADERTY
    struct output_buf_private *outp = output->pOutputPortPrivate;
    struct input_buf_private *inp = input->pInputPortPrivate;
    struct encode_task *task;
-   struct pipe_box box = {};
+   struct pipe_box box = {0};
    unsigned size;
 
 #if ENABLE_ST_OMX_BELLAGIO
@@ -178,7 +178,7 @@ void vid_enc_BufferEncoded_common(vid_enc_PrivateType * priv, OMX_BUFFERHEADERTY
 
 struct encode_task *enc_NeedTask_common(vid_enc_PrivateType * priv, OMX_VIDEO_PORTDEFINITIONTYPE *def)
 {
-   struct pipe_video_buffer templat = {};
+   struct pipe_video_buffer templat = {0};
    struct encode_task *task;
 
    if (!LIST_IS_EMPTY(&priv->free_tasks)) {
@@ -310,7 +310,7 @@ OMX_ERRORTYPE enc_LoadImage_common(vid_enc_PrivateType * priv, OMX_VIDEO_PORTDEF
                                    OMX_BUFFERHEADERTYPE *buf,
                                    struct pipe_video_buffer *vbuf)
 {
-   struct pipe_box box = {};
+   struct pipe_box box = {0};
    struct input_buf_private *inp = buf->pInputPortPrivate;
 
    if (!inp->resource) {

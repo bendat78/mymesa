@@ -307,7 +307,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 				CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
 		OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
 		for (i = 0; i < tex->num_samplers; i++) {
-			static const struct fd5_sampler_stateobj dummy_sampler = {};
+			static const struct fd5_sampler_stateobj dummy_sampler = {0};
 			const struct fd5_sampler_stateobj *sampler = tex->samplers[i] ?
 					fd5_sampler_stateobj(tex->samplers[i]) :
 					&dummy_sampler;
@@ -334,7 +334,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 				CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
 		OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
 		for (i = 0; i < tex->num_textures; i++) {
-			static const struct fd5_pipe_sampler_view dummy_view = {};
+			static const struct fd5_pipe_sampler_view dummy_view = {0};
 			const struct fd5_pipe_sampler_view *view = tex->textures[i] ?
 					fd5_pipe_sampler_view(tex->textures[i]) :
 					&dummy_view;
@@ -494,7 +494,7 @@ fd5_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	emit_marker5(ring, 5);
 
 	if ((dirty & FD_DIRTY_FRAMEBUFFER) && !emit->key.binning_pass) {
-		unsigned char mrt_comp[A5XX_MAX_RENDER_TARGETS] = {};
+		unsigned char mrt_comp[A5XX_MAX_RENDER_TARGETS] = {0};
 
 		for (unsigned i = 0; i < A5XX_MAX_RENDER_TARGETS; i++) {
 			mrt_comp[i] = ((i < pfb->nr_cbufs) && pfb->cbufs[i]) ? 0xf : 0;

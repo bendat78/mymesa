@@ -83,7 +83,7 @@ static void
 st_nir_assign_vs_in_locations(struct gl_program *prog, nir_shader *nir)
 {
    unsigned attr, num_inputs = 0;
-   unsigned input_to_index[VERT_ATTRIB_MAX] = {};
+   unsigned input_to_index[VERT_ATTRIB_MAX] = {0};
 
    /* TODO de-duplicate w/ similar code in st_translate_vertex_program()? */
    for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
@@ -129,7 +129,7 @@ st_nir_assign_var_locations(struct exec_list *var_list, unsigned *size,
 {
    unsigned location = 0;
    unsigned assigned_locations[VARYING_SLOT_TESS_MAX];
-   uint64_t processed_locs[2] = {};
+   uint64_t processed_locs[2] = {0};
 
    const int base = stage == MESA_SHADER_FRAGMENT ?
       (int) FRAG_RESULT_DATA0 : (int) VARYING_SLOT_VAR0;
@@ -684,7 +684,7 @@ st_link_nir(struct gl_context *ctx,
          static const gl_state_index16 wposTransformState[STATE_LENGTH] = {
             STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM
          };
-         nir_lower_wpos_ytransform_options wpos_options = {};
+         nir_lower_wpos_ytransform_options wpos_options = {0};
          struct pipe_screen *pscreen = st->pipe->screen;
 
          memcpy(wpos_options.state_tokens, wposTransformState,

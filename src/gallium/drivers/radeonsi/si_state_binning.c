@@ -425,7 +425,7 @@ void si_emit_dpbb_state(struct si_context *sctx)
 	}
 
 	/* Emit registers. */
-	struct uvec2 bin_size_extend = {};
+	struct uvec2 bin_size_extend = {0};
 	if (bin_size.x >= 32)
 		bin_size_extend.x = util_logbase2(bin_size.x) - 5;
 	if (bin_size.y >= 32)

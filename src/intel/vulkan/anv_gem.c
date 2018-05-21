@@ -313,7 +313,7 @@ anv_gem_has_context_priority(int fd)
 int
 anv_gem_create_context(struct anv_device *device)
 {
-   struct drm_i915_gem_context_create create = {};
+   struct drm_i915_gem_context_create create = {0};
 
    int ret = anv_ioctl(device->fd, DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &create);
    if (ret == -1)
@@ -366,7 +366,7 @@ anv_gem_get_context_param(int fd, int context, uint32_t param, uint64_t *value)
 int
 anv_gem_get_aperture(int fd, uint64_t *size)
 {
-   struct drm_i915_gem_get_aperture aperture = {};
+   struct drm_i915_gem_get_aperture aperture = {0};
 
    int ret = anv_ioctl(fd, DRM_IOCTL_I915_GEM_GET_APERTURE, &aperture);
    if (ret == -1)

@@ -59,9 +59,9 @@ struct pipe_video_buffer *r600_video_buffer_create(struct pipe_context *pipe,
 						   const struct pipe_video_buffer *tmpl)
 {
 	struct r600_context *ctx = (struct r600_context *)pipe;
-	struct r600_texture *resources[VL_NUM_COMPONENTS] = {};
-	struct radeon_surf* surfaces[VL_NUM_COMPONENTS] = {};
-	struct pb_buffer **pbs[VL_NUM_COMPONENTS] = {};
+	struct r600_texture *resources[VL_NUM_COMPONENTS] = {0};
+	struct radeon_surf* surfaces[VL_NUM_COMPONENTS] = {0};
+	struct pb_buffer **pbs[VL_NUM_COMPONENTS] = {0};
 	const enum pipe_format *resource_formats;
 	struct pipe_video_buffer template;
 	struct pipe_resource templ;

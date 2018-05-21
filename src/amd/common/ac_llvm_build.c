@@ -1197,7 +1197,7 @@ ac_build_ddxy(struct ac_llvm_context *ctx,
 					  AC_FUNC_ATTR_READNONE |
 					  AC_FUNC_ATTR_CONVERGENT);
 	} else {
-		uint32_t masks[2] = {};
+		uint32_t masks[2] = {0};
 
 		switch (mask) {
 		case AC_TID_MASK_TOP_LEFT:
@@ -1955,7 +1955,7 @@ static bool ac_eliminate_const_output(uint8_t *vs_output_param_offset,
 				      struct ac_vs_exp_inst *exp)
 {
 	unsigned i, default_val; /* SPI_PS_INPUT_CNTL_i.DEFAULT_VAL */
-	bool is_zero[4] = {}, is_one[4] = {};
+	bool is_zero[4] = {0}, is_one[4] = {0};
 
 	for (i = 0; i < 4; i++) {
 		/* It's a constant expression. Undef outputs are eliminated too. */
@@ -2556,7 +2556,7 @@ LLVMValueRef ac_unpack_param(struct ac_llvm_context *ctx, LLVMValueRef param,
 void ac_apply_fmask_to_sample(struct ac_llvm_context *ac, LLVMValueRef fmask,
 			      LLVMValueRef *addr, bool is_array_tex)
 {
-	struct ac_image_args fmask_load = {};
+	struct ac_image_args fmask_load = {0};
 	fmask_load.opcode = ac_image_load;
 	fmask_load.resource = fmask;
 	fmask_load.dmask = 0xf;

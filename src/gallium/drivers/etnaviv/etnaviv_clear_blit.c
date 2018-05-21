@@ -163,7 +163,7 @@ etna_copy_resource(struct pipe_context *pctx, struct pipe_resource *dst,
    assert(src->array_size == dst->array_size);
    assert(last_level <= dst->last_level && last_level <= src->last_level);
 
-   struct pipe_blit_info blit = {};
+   struct pipe_blit_info blit = {0};
    blit.mask = util_format_get_mask(dst->format);
    blit.filter = PIPE_TEX_FILTER_NEAREST;
    blit.src.resource = src;
@@ -195,7 +195,7 @@ etna_copy_resource_box(struct pipe_context *pctx, struct pipe_resource *dst,
    assert(src->format == dst->format);
    assert(src->array_size == dst->array_size);
 
-   struct pipe_blit_info blit = {};
+   struct pipe_blit_info blit = {0};
    blit.mask = util_format_get_mask(dst->format);
    blit.filter = PIPE_TEX_FILTER_NEAREST;
    blit.src.resource = src;

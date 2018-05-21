@@ -2478,7 +2478,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 				   struct r600_pipe_shader *gs,
 				   struct pipe_stream_output_info *so)
 {
-	struct r600_shader_ctx ctx = {};
+	struct r600_shader_ctx ctx = {0};
 	struct r600_shader *gs_shader = &gs->shader;
 	struct r600_pipe_shader *cshader;
 	unsigned ocnt = gs_shader->noutput;

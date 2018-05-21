@@ -1779,7 +1779,7 @@ get_image_offset(struct ir3_context *ctx, const nir_variable *var,
 	}, 2);
 }
 
-/* src[] = { coord, sample_index }. const_index[] = {} */
+/* src[] = { coord, sample_index }. const_index[] = {0} */
 static void
 emit_intrinsic_load_image(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 		struct ir3_instruction **dst)
@@ -1805,7 +1805,7 @@ emit_intrinsic_load_image(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 	split_dest(b, dst, sam, 0, 4);
 }
 
-/* src[] = { coord, sample_index, value }. const_index[] = {} */
+/* src[] = { coord, sample_index, value }. const_index[] = {0} */
 static void
 emit_intrinsic_store_image(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 {
@@ -1864,7 +1864,7 @@ emit_intrinsic_image_size(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 	split_dest(b, dst, sam, 0, ncoords);
 }
 
-/* src[] = { coord, sample_index, value, compare }. const_index[] = {} */
+/* src[] = { coord, sample_index, value, compare }. const_index[] = {0} */
 static struct ir3_instruction *
 emit_intrinsic_atomic_image(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 {
@@ -3296,7 +3296,7 @@ fixup_astc_srgb(struct ir3_context *ctx)
 	 * state tex idx.  Zero is invalid since there is at least one sampler
 	 * if we get here.
 	 */
-	unsigned alt_tex_state[16] = {};
+	unsigned alt_tex_state[16] = {0};
 	unsigned tex_idx = ctx->max_texture_index + 1;
 	unsigned idx = 0;
 

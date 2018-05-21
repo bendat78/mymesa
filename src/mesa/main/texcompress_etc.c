@@ -1278,7 +1278,7 @@ fetch_etc2_rgb8(const GLubyte *map,
                 GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    struct etc2_block block;
-   uint8_t dst[3] = {};
+   uint8_t dst[3] = {0};
    const uint8_t *src;
 
    src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
@@ -1299,7 +1299,7 @@ fetch_etc2_srgb8(const GLubyte *map,
                  GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    struct etc2_block block;
-   uint8_t dst[3] = {};
+   uint8_t dst[3] = {0};
    const uint8_t *src;
 
    src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
@@ -1320,7 +1320,7 @@ fetch_etc2_rgba8_eac(const GLubyte *map,
                      GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    struct etc2_block block;
-   uint8_t dst[4] = {};
+   uint8_t dst[4] = {0};
    const uint8_t *src;
 
    src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 16;
@@ -1339,7 +1339,7 @@ fetch_etc2_srgb8_alpha8_eac(const GLubyte *map,
                             GLint rowStride, GLint i, GLint j, GLfloat *texel)
 {
    struct etc2_block block;
-   uint8_t dst[4] = {};
+   uint8_t dst[4] = {0};
    const uint8_t *src;
 
    src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 16;
@@ -1445,7 +1445,7 @@ fetch_etc2_rgb8_punchthrough_alpha1(const GLubyte *map,
                                     GLfloat *texel)
 {
    struct etc2_block block;
-   uint8_t dst[4] = {};
+   uint8_t dst[4] = {0};
    const uint8_t *src;
 
    src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
@@ -1466,7 +1466,7 @@ fetch_etc2_srgb8_punchthrough_alpha1(const GLubyte *map,
                                      GLint i, GLint j, GLfloat *texel)
 {
    struct etc2_block block;
-   uint8_t dst[4] = {};
+   uint8_t dst[4] = {0};
    const uint8_t *src;
 
    src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;

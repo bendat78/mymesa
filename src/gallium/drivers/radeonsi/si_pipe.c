@@ -185,7 +185,7 @@ static void si_destroy_context(struct pipe_context *context)
 	/* Unreference the framebuffer normally to disable related logic
 	 * properly.
 	 */
-	struct pipe_framebuffer_state fb = {};
+	struct pipe_framebuffer_state fb = {0};
 	if (context->set_framebuffer_state)
 		context->set_framebuffer_state(context, &fb);
 

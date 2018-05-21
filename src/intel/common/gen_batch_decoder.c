@@ -348,7 +348,7 @@ handle_3dstate_vertex_buffers(struct gen_batch_decode_ctx *ctx,
    struct gen_group *inst = gen_spec_find_instruction(ctx->spec, p);
    struct gen_group *vbs = gen_spec_find_struct(ctx->spec, "VERTEX_BUFFER_STATE");
 
-   struct gen_batch_decode_bo vb = {};
+   struct gen_batch_decode_bo vb = {0};
    uint32_t vb_size = 0;
    int index = -1;
    int pitch = -1;
@@ -410,7 +410,7 @@ handle_3dstate_index_buffer(struct gen_batch_decode_ctx *ctx,
 {
    struct gen_group *inst = gen_spec_find_instruction(ctx->spec, p);
 
-   struct gen_batch_decode_bo ib = {};
+   struct gen_batch_decode_bo ib = {0};
    uint32_t ib_size = 0;
    uint32_t format = 0;
 

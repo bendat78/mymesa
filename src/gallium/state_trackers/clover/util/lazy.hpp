@@ -58,7 +58,7 @@ namespace clover {
          operator T() const {
             if (f) {
                x = (*f)();
-               f = {};
+               f = {0};
             }
 
             return x;

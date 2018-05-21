@@ -167,11 +167,11 @@ ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
 			       const struct amdgpu_gpu_info *amdinfo,
 			       uint64_t *max_alignment)
 {
-	ADDR_CREATE_INPUT addrCreateInput = {};
-	ADDR_CREATE_OUTPUT addrCreateOutput = {};
-	ADDR_REGISTER_VALUE regValue = {};
-	ADDR_CREATE_FLAGS createFlags = {};
-	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {};
+	ADDR_CREATE_INPUT addrCreateInput = {0};
+	ADDR_CREATE_OUTPUT addrCreateOutput = {0};
+	ADDR_REGISTER_VALUE regValue = {0};
+	ADDR_CREATE_FLAGS createFlags = {0};
+	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {0};
 	ADDR_E_RETURNCODE addrRet;
 
 	addrCreateInput.size = sizeof(ADDR_CREATE_INPUT);
@@ -522,8 +522,8 @@ static int gfx6_surface_settings(ADDR_HANDLE addrlib,
 	    surf->u.legacy.level[0].mode == RADEON_SURF_MODE_2D &&
 	    !(surf->flags & (RADEON_SURF_Z_OR_SBUFFER | RADEON_SURF_SHAREABLE)) &&
 	    !get_display_flag(config, surf)) {
-		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {};
-		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {};
+		ADDR_COMPUTE_BASE_SWIZZLE_INPUT AddrBaseSwizzleIn = {0};
+		ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT AddrBaseSwizzleOut = {0};
 
 		AddrBaseSwizzleIn.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_INPUT);
 		AddrBaseSwizzleOut.size = sizeof(ADDR_COMPUTE_BASE_SWIZZLE_OUTPUT);
@@ -560,14 +560,14 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 {
 	unsigned level;
 	bool compressed;
-	ADDR_COMPUTE_SURFACE_INFO_INPUT AddrSurfInfoIn = {};
-	ADDR_COMPUTE_SURFACE_INFO_OUTPUT AddrSurfInfoOut = {};
-	ADDR_COMPUTE_DCCINFO_INPUT AddrDccIn = {};
-	ADDR_COMPUTE_DCCINFO_OUTPUT AddrDccOut = {};
-	ADDR_COMPUTE_HTILE_INFO_INPUT AddrHtileIn = {};
-	ADDR_COMPUTE_HTILE_INFO_OUTPUT AddrHtileOut = {};
-	ADDR_TILEINFO AddrTileInfoIn = {};
-	ADDR_TILEINFO AddrTileInfoOut = {};
+	ADDR_COMPUTE_SURFACE_INFO_INPUT AddrSurfInfoIn = {0};
+	ADDR_COMPUTE_SURFACE_INFO_OUTPUT AddrSurfInfoOut = {0};
+	ADDR_COMPUTE_DCCINFO_INPUT AddrDccIn = {0};
+	ADDR_COMPUTE_DCCINFO_OUTPUT AddrDccOut = {0};
+	ADDR_COMPUTE_HTILE_INFO_INPUT AddrHtileIn = {0};
+	ADDR_COMPUTE_HTILE_INFO_OUTPUT AddrHtileOut = {0};
+	ADDR_TILEINFO AddrTileInfoIn = {0};
+	ADDR_TILEINFO AddrTileInfoOut = {0};
 	int r;
 
 	AddrSurfInfoIn.size = sizeof(ADDR_COMPUTE_SURFACE_INFO_INPUT);
@@ -857,7 +857,7 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 	if (config->info.samples >= 2 && AddrSurfInfoIn.flags.color) {
 		ADDR_COMPUTE_FMASK_INFO_INPUT fin = {0};
 		ADDR_COMPUTE_FMASK_INFO_OUTPUT fout = {0};
-		ADDR_TILEINFO fmask_tile_info = {};
+		ADDR_TILEINFO fmask_tile_info = {0};
 
 		fin.size = sizeof(fin);
 		fout.size = sizeof(fout);
@@ -952,8 +952,8 @@ gfx9_get_preferred_swizzle_mode(ADDR_HANDLE addrlib,
 				AddrSwizzleMode *swizzle_mode)
 {
 	ADDR_E_RETURNCODE ret;
-	ADDR2_GET_PREFERRED_SURF_SETTING_INPUT sin = {};
-	ADDR2_GET_PREFERRED_SURF_SETTING_OUTPUT sout = {};
+	ADDR2_GET_PREFERRED_SURF_SETTING_INPUT sin = {0};
+	ADDR2_GET_PREFERRED_SURF_SETTING_OUTPUT sout = {0};
 
 	sin.size = sizeof(ADDR2_GET_PREFERRED_SURF_SETTING_INPUT);
 	sout.size = sizeof(ADDR2_GET_PREFERRED_SURF_SETTING_OUTPUT);
@@ -1003,8 +1003,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 				struct radeon_surf *surf, bool compressed,
 				ADDR2_COMPUTE_SURFACE_INFO_INPUT *in)
 {
-	ADDR2_MIP_INFO mip_info[RADEON_SURF_MAX_LEVELS] = {};
-	ADDR2_COMPUTE_SURFACE_INFO_OUTPUT out = {};
+	ADDR2_MIP_INFO mip_info[RADEON_SURF_MAX_LEVELS] = {0};
+	ADDR2_COMPUTE_SURFACE_INFO_OUTPUT out = {0};
 	ADDR_E_RETURNCODE ret;
 
 	out.size = sizeof(ADDR2_COMPUTE_SURFACE_INFO_OUTPUT);
@@ -1049,8 +1049,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		assert(in->swizzleMode != ADDR_SW_LINEAR);
 
 		/* HTILE */
-		ADDR2_COMPUTE_HTILE_INFO_INPUT hin = {};
-		ADDR2_COMPUTE_HTILE_INFO_OUTPUT hout = {};
+		ADDR2_COMPUTE_HTILE_INFO_INPUT hin = {0};
+		ADDR2_COMPUTE_HTILE_INFO_OUTPUT hout = {0};
 
 		hin.size = sizeof(ADDR2_COMPUTE_HTILE_INFO_INPUT);
 		hout.size = sizeof(ADDR2_COMPUTE_HTILE_INFO_OUTPUT);
@@ -1082,8 +1082,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		    !out.mipChainInTail &&
 		    !(surf->flags & RADEON_SURF_SHAREABLE) &&
 		    !in->flags.display) {
-			ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {};
-			ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {};
+			ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {0};
+			ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {0};
 
 			xin.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_INPUT);
 			xout.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT);
@@ -1109,9 +1109,9 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		if (!(surf->flags & RADEON_SURF_DISABLE_DCC) &&
 		    !compressed &&
 		    in->swizzleMode != ADDR_SW_LINEAR) {
-			ADDR2_COMPUTE_DCCINFO_INPUT din = {};
-			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {};
-			ADDR2_META_MIP_INFO meta_mip_info[RADEON_SURF_MAX_LEVELS] = {};
+			ADDR2_COMPUTE_DCCINFO_INPUT din = {0};
+			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {0};
+			ADDR2_META_MIP_INFO meta_mip_info[RADEON_SURF_MAX_LEVELS] = {0};
 
 			din.size = sizeof(ADDR2_COMPUTE_DCCINFO_INPUT);
 			dout.size = sizeof(ADDR2_COMPUTE_DCCINFO_OUTPUT);
@@ -1176,8 +1176,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 
 		/* FMASK */
 		if (in->numSamples > 1) {
-			ADDR2_COMPUTE_FMASK_INFO_INPUT fin = {};
-			ADDR2_COMPUTE_FMASK_INFO_OUTPUT fout = {};
+			ADDR2_COMPUTE_FMASK_INFO_INPUT fin = {0};
+			ADDR2_COMPUTE_FMASK_INFO_OUTPUT fout = {0};
 
 			fin.size = sizeof(ADDR2_COMPUTE_FMASK_INFO_INPUT);
 			fout.size = sizeof(ADDR2_COMPUTE_FMASK_INFO_OUTPUT);
@@ -1207,8 +1207,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 			if (config->info.fmask_surf_index &&
 			    fin.swizzleMode >= ADDR_SW_64KB_Z_T &&
 			    !(surf->flags & RADEON_SURF_SHAREABLE)) {
-				ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {};
-				ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {};
+				ADDR2_COMPUTE_PIPEBANKXOR_INPUT xin = {0};
+				ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT xout = {0};
 
 				xin.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_INPUT);
 				xout.size = sizeof(ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT);
@@ -1234,8 +1234,8 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 
 		/* CMASK */
 		if (in->swizzleMode != ADDR_SW_LINEAR) {
-			ADDR2_COMPUTE_CMASK_INFO_INPUT cin = {};
-			ADDR2_COMPUTE_CMASK_INFO_OUTPUT cout = {};
+			ADDR2_COMPUTE_CMASK_INFO_INPUT cin = {0};
+			ADDR2_COMPUTE_CMASK_INFO_OUTPUT cout = {0};
 
 			cin.size = sizeof(ADDR2_COMPUTE_CMASK_INFO_INPUT);
 			cout.size = sizeof(ADDR2_COMPUTE_CMASK_INFO_OUTPUT);
@@ -1280,7 +1280,7 @@ static int gfx9_compute_surface(ADDR_HANDLE addrlib,
 				struct radeon_surf *surf)
 {
 	bool compressed;
-	ADDR2_COMPUTE_SURFACE_INFO_INPUT AddrSurfInfoIn = {};
+	ADDR2_COMPUTE_SURFACE_INFO_INPUT AddrSurfInfoIn = {0};
 	int r;
 
 	AddrSurfInfoIn.size = sizeof(ADDR2_COMPUTE_SURFACE_INFO_INPUT);

@@ -45,8 +45,8 @@ int main(int argc, char **argv)
 	int			colorkey;
 	XvMCContext		context;
 	XvMCSurface		surface;
-	XvMCBlockArray		blocks = {};
-	XvMCMacroBlockArray	macroblocks = {};
+	XvMCBlockArray		blocks = {0};
+	XvMCMacroBlockArray	macroblocks = {0};
 
 	display = XOpenDisplay(NULL);
 

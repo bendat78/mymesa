@@ -724,7 +724,7 @@ INLINE void OutputMerger4x2(DRAW_CONTEXT *pDC, SWR_PS_CONTEXT &psContext, uint8_
 
         const SWR_RENDER_TARGET_BLEND_STATE *pRTBlend = &pBlendState->renderTarget[rt];
 
-        SWR_BLEND_CONTEXT blendContext = {};
+        SWR_BLEND_CONTEXT blendContext = {0};
         {
             // pfnBlendFunc may not update all channels.  Initialize with PS output.
             /// TODO: move this into the blend JIT.
@@ -816,7 +816,7 @@ INLINE void OutputMerger8x2(DRAW_CONTEXT *pDC, SWR_PS_CONTEXT &psContext, uint8_
             pColorSample = nullptr;
         }
 
-        SWR_BLEND_CONTEXT blendContext = {};
+        SWR_BLEND_CONTEXT blendContext = {0};
         {
             // pfnBlendFunc may not update all channels.  Initialize with PS output.
             /// TODO: move this into the blend JIT.

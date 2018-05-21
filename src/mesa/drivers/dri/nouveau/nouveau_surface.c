@@ -36,7 +36,7 @@ nouveau_surface_alloc(struct gl_context *ctx, struct nouveau_surface *s,
 		      unsigned flags, unsigned format,
 		      unsigned width, unsigned height)
 {
-	union nouveau_bo_config config = {};
+	union nouveau_bo_config config = {0};
 	int ret, cpp = _mesa_get_format_bytes(format);
 
 	nouveau_bo_ref(NULL, &s->bo);

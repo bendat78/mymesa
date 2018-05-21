@@ -120,7 +120,7 @@
 
 static const struct v3d_qpu_sig v33_sig_map[] = {
         /*      MISC   R3       R4      R5 */
-        [0]  = {                               },
+        [0] = {0},
         [1]  = { THRSW,                        },
         [2]  = {                        LDUNIF },
         [3]  = { THRSW,                 LDUNIF },
@@ -153,7 +153,7 @@ static const struct v3d_qpu_sig v33_sig_map[] = {
 
 static const struct v3d_qpu_sig v40_sig_map[] = {
         /*      MISC    R3      R4      R5 */
-        [0]  = {                               },
+        [0] = {0},
         [1]  = { THRSW,                        },
         [2]  = {                        LDUNIF },
         [3]  = { THRSW,                 LDUNIF },
@@ -182,7 +182,7 @@ static const struct v3d_qpu_sig v40_sig_map[] = {
 
 static const struct v3d_qpu_sig v41_sig_map[] = {
         /*      MISC       phys    R5 */
-        [0]  = {                          },
+        [0] = {0},
         [1]  = { THRSW,                   },
         [2]  = {                   LDUNIF },
         [3]  = { THRSW,            LDUNIF },

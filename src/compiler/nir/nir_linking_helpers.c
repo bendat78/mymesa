@@ -134,8 +134,8 @@ nir_remove_unused_varyings(nir_shader *producer, nir_shader *consumer)
    assert(producer->info.stage != MESA_SHADER_FRAGMENT);
    assert(consumer->info.stage != MESA_SHADER_VERTEX);
 
-   uint64_t read[4] = {}, written[4] = {};
-   uint64_t patches_read[4] = {}, patches_written[4] = {};
+   uint64_t read[4] = {0}, written[4] = {0};
+   uint64_t patches_read[4] = {0}, patches_written[4] = {0};
 
    nir_foreach_variable(var, &producer->outputs) {
       if (var->data.patch) {
@@ -355,7 +355,7 @@ compact_components(nir_shader *producer, nir_shader *consumer, uint8_t *comps,
    struct varying_loc remap[32][4] = {{{0}, {0}}};
 
    /* Create a cursor for each interpolation type */
-   unsigned cursor[4] = {};
+   unsigned cursor[4] = {0};
 
    /* We only need to pass over one stage and we choose the consumer as it seems
     * to cause a larger reduction in instruction counts (tested on i965).
@@ -487,9 +487,9 @@ nir_compact_varyings(nir_shader *producer, nir_shader *consumer,
    assert(producer->info.stage != MESA_SHADER_FRAGMENT);
    assert(consumer->info.stage != MESA_SHADER_VERTEX);
 
-   uint8_t comps[32] = {};
-   uint8_t interp_type[32] = {};
-   uint8_t interp_loc[32] = {};
+   uint8_t comps[32] = {0};
+   uint8_t interp_type[32] = {0};
+   uint8_t interp_loc[32] = {0};
 
    get_slot_component_masks_and_interp_types(&producer->outputs, comps,
                                              interp_type, interp_loc,

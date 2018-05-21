@@ -2390,7 +2390,7 @@ glsl_to_tgsi_visitor::visit(ir_swizzle *ir)
 {
    st_src_reg src;
    int i;
-   int swizzle[4] = {};
+   int swizzle[4] = {0};
 
    /* Note that this is only swizzles in expressions, not those on the left
     * hand side of an assignment, which do write masking.  See ir_assignment
@@ -3136,7 +3136,7 @@ void
 glsl_to_tgsi_visitor::visit(ir_constant *ir)
 {
    st_src_reg src;
-   GLdouble stack_vals[4] = {};
+   GLdouble stack_vals[4] = {0};
    gl_constant_value *values = (gl_constant_value *) stack_vals;
    GLenum gl_type = GL_NONE;
    unsigned int i;

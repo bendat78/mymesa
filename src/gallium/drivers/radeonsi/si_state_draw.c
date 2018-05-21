@@ -1541,7 +1541,7 @@ void si_draw_rectangle(struct blitter_context *blitter,
 
 	pipe->bind_vs_state(pipe, si_get_blit_vs(sctx, type, num_instances));
 
-	struct pipe_draw_info info = {};
+	struct pipe_draw_info info = {0};
 	info.mode = SI_PRIM_RECTANGLE_LIST;
 	info.count = 3;
 	info.instance_count = num_instances;

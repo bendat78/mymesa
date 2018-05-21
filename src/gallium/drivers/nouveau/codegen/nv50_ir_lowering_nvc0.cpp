@@ -2108,8 +2108,8 @@ NVC0LoweringPass::convertSurfaceFormat(TexInstruction *su)
    const TexInstruction::ImgFormatDesc *format = su->tex.format;
    int width = format->bits[0] + format->bits[1] +
       format->bits[2] + format->bits[3];
-   Value *untypedDst[4] = {};
-   Value *typedDst[4] = {};
+   Value *untypedDst[4] = {0};
+   Value *typedDst[4] = {0};
 
    // We must convert this to a generic load.
    su->op = OP_SULDB;

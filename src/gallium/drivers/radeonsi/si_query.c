@@ -1587,7 +1587,7 @@ static void si_create_query_result_shader(struct si_context *sctx)
 
 	char text[sizeof(text_tmpl) + 32];
 	struct tgsi_token tokens[1024];
-	struct pipe_compute_state state = {};
+	struct pipe_compute_state state = {0};
 
 	/* Hard code the frequency into the shader so that the backend can
 	 * use the full range of optimizations for divide-by-constant.
@@ -1632,9 +1632,9 @@ static void si_query_hw_get_result_resource(struct si_context *sctx,
 	struct si_query_buffer *qbuf_prev;
 	struct pipe_resource *tmp_buffer = NULL;
 	unsigned tmp_buffer_offset = 0;
-	struct si_qbo_state saved_state = {};
-	struct pipe_grid_info grid = {};
-	struct pipe_constant_buffer constant_buffer = {};
+	struct si_qbo_state saved_state = {0};
+	struct pipe_grid_info grid = {0};
+	struct pipe_constant_buffer constant_buffer = {0};
 	struct pipe_shader_buffer ssbo[3];
 	struct si_hw_query_params params;
 	struct {

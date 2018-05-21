@@ -29,9 +29,9 @@
 //////////////////////////////////////////////////////////////////////////
 /// Store Raster Tile Function Tables.
 //////////////////////////////////////////////////////////////////////////
-PFN_STORE_TILES sStoreTilesTableColor[SWR_TILE_MODE_COUNT][NUM_SWR_FORMATS] = {};
-PFN_STORE_TILES sStoreTilesTableDepth[SWR_TILE_MODE_COUNT][NUM_SWR_FORMATS] = {};
-PFN_STORE_TILES sStoreTilesTableStencil[SWR_TILE_MODE_COUNT][NUM_SWR_FORMATS] = {};
+PFN_STORE_TILES sStoreTilesTableColor[SWR_TILE_MODE_COUNT][NUM_SWR_FORMATS] = {0};
+PFN_STORE_TILES sStoreTilesTableDepth[SWR_TILE_MODE_COUNT][NUM_SWR_FORMATS] = {0};
+PFN_STORE_TILES sStoreTilesTableStencil[SWR_TILE_MODE_COUNT][NUM_SWR_FORMATS] = {0};
 
 static void BUCKETS_START(UINT id)
 {

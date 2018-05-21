@@ -618,7 +618,7 @@ vlVaHandleSurfaceAllocate(vlVaDriver *drv, vlVaSurface *surface,
 
    surfaces = surface->buffer->get_surfaces(surface->buffer);
    for (i = 0; i < VL_MAX_SURFACES; ++i) {
-      union pipe_color_union c = {};
+      union pipe_color_union c = {0};
 
       if (!surfaces[i])
          continue;

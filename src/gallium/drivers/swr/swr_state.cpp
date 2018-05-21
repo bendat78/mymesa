@@ -335,7 +335,7 @@ swr_create_vs_state(struct pipe_context *pipe,
 
    lp_build_tgsi_info(vs->tokens, &swr_vs->info);
 
-   swr_vs->soState = {};
+   swr_vs->soState = {0};
 
    if (swr_vs->pipe.stream_output.num_outputs) {
       pipe_stream_output_info *stream_output = &swr_vs->pipe.stream_output;
@@ -910,7 +910,7 @@ swr_change_rt(struct swr_context *ctx,
       /* If detaching attachment, mark tiles as RESOLVED so core
        * won't try to load from non-existent target. */
       swr_store_render_target(&ctx->pipe, attachment, SWR_TILE_RESOLVED);
-      *rt = {};
+      *rt = {0};
       return true;
    }
 
@@ -1322,7 +1322,7 @@ swr_update_derived(struct pipe_context *pipe,
             }
          }
 
-         swrVertexBuffers[i] = {};
+         swrVertexBuffers[i] = {0};
          swrVertexBuffers[i].index = i;
          swrVertexBuffers[i].pitch = pitch;
          swrVertexBuffers[i].xpData = (gfxptr_t) p_data;
@@ -1423,7 +1423,7 @@ swr_update_derived(struct pipe_context *pipe,
 
          ctx->api.pfnSwrSetGsState(ctx->swrContext, &ctx->gs->gsState);
       } else {
-         SWR_GS_STATE state = {};
+         SWR_GS_STATE state = {0};
          ctx->api.pfnSwrSetGsState(ctx->swrContext, &state);
          ctx->api.pfnSwrSetGsFunc(ctx->swrContext, NULL);
       }
@@ -1493,7 +1493,7 @@ swr_update_derived(struct pipe_context *pipe,
       } else {
          func = swr_compile_fs(ctx, key);
       }
-      SWR_PS_STATE psState = {};
+      SWR_PS_STATE psState = {0};
       psState.pfnPixelShader = func;
       psState.killsPixel = ctx->fs->info.base.uses_kill;
       psState.inputCoverage = SWR_INPUT_COVERAGE_NORMAL;
@@ -1574,8 +1574,8 @@ swr_update_derived(struct pipe_context *pipe,
    if (ctx->dirty & (SWR_NEW_DEPTH_STENCIL_ALPHA | SWR_NEW_FRAMEBUFFER)) {
       struct pipe_depth_state *depth = &(ctx->depth_stencil->depth);
       struct pipe_stencil_state *stencil = ctx->depth_stencil->stencil;
-      SWR_DEPTH_STENCIL_STATE depthStencilState = {};
-      SWR_DEPTH_BOUNDS_STATE depthBoundsState = {};
+      SWR_DEPTH_STENCIL_STATE depthStencilState = {0};
+      SWR_DEPTH_BOUNDS_STATE depthBoundsState = {0};
 
       /* XXX, incomplete.  Need to flesh out stencil & alpha test state
       struct pipe_stencil_state *front_stencil =
@@ -1741,7 +1741,7 @@ swr_update_derived(struct pipe_context *pipe,
       pipe_stream_output_info *stream_output = &ctx->vs->pipe.stream_output;
 
       for (uint32_t i = 0; i < ctx->num_so_targets; i++) {
-         SWR_STREAMOUT_BUFFER buffer = {};
+         SWR_STREAMOUT_BUFFER buffer = {0};
          if (!ctx->so_targets[i])
             continue;
          buffer.enable = true;
@@ -1769,7 +1769,7 @@ swr_update_derived(struct pipe_context *pipe,
    }
 
    // set up backend state
-   SWR_BACKEND_STATE backendState = {};
+   SWR_BACKEND_STATE backendState = {0};
    if (ctx->gs) {
       backendState.numAttributes = ctx->gs->info.base.num_outputs - 1;
    } else {

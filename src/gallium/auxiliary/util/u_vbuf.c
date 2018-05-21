@@ -393,7 +393,7 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
                          int min_index, boolean unroll_indices)
 {
    struct translate *tr;
-   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {};
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
    struct pipe_resource *out_buffer = NULL;
    uint8_t *out_map;
    unsigned out_offset, mask;
@@ -568,7 +568,7 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
                        int start_vertex, unsigned num_vertices,
                        int min_index, boolean unroll_indices)
 {
-   unsigned mask[VB_NUM] = {};
+   unsigned mask[VB_NUM] = {0};
    struct translate_key key[VB_NUM];
    unsigned elem_index[VB_NUM][PIPE_MAX_ATTRIBS]; /* ... into key.elements */
    unsigned i, type;

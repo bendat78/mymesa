@@ -1191,7 +1191,7 @@ try_pbo_upload_common(struct gl_context *ctx,
    {
       struct pipe_sampler_view templ;
       struct pipe_sampler_view *sampler_view;
-      struct pipe_sampler_state sampler = {};
+      struct pipe_sampler_state sampler = {0};
       const struct pipe_sampler_state *samplers[1] = {&sampler};
 
       memset(&templ, 0, sizeof(templ));
@@ -3016,7 +3016,7 @@ st_ClearTexSubImage(struct gl_context *ctx,
                     GLsizei width, GLsizei height, GLsizei depth,
                     const void *clearValue)
 {
-   static const char zeros[16] = {};
+   static const char zeros[16] = {0};
    struct gl_texture_object *texObj = texImage->TexObject;
    struct st_texture_image *stImage = st_texture_image(texImage);
    struct pipe_resource *pt = stImage->pt;
@@ -3112,7 +3112,7 @@ st_NewTextureHandle(struct gl_context *ctx, struct gl_texture_object *texObj,
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct pipe_context *pipe = st->pipe;
    struct pipe_sampler_view *view;
-   struct pipe_sampler_state sampler = {};
+   struct pipe_sampler_state sampler = {0};
 
    if (texObj->Target != GL_TEXTURE_BUFFER) {
       if (!st_finalize_texture(ctx, pipe, texObj, 0))

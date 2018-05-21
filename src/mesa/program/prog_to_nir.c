@@ -178,7 +178,7 @@ ptn_get_src(struct ptn_compile *c, const struct prog_src_register *prog_src)
          if (prog_src->RelAddr) {
             deref_arr->deref_array_type = nir_deref_array_type_indirect;
 
-            nir_alu_src addr_src = {};
+            nir_alu_src addr_src = {0};
             addr_src.src = nir_src_for_reg(c->addr_reg);
             nir_ssa_def *reladdr = nir_imov_alu(b, addr_src, 1);
 

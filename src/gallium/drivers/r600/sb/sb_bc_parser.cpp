@@ -368,7 +368,7 @@ int bc_parser::prepare_alu_group(cf_node* cf, alu_group_node *g) {
 	for (node_iterator I = g->begin(), E = g->end();
 			I != E; ++I) {
 		n = static_cast<alu_node*>(*I);
-		bool ubo_indexing[2] = {};
+		bool ubo_indexing[2] = {0};
 
 		if (!sh->assign_slot(n, slots[cgroup])) {
 			assert(!"alu slot assignment failed");

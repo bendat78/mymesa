@@ -41,7 +41,7 @@ static void vid_dec_h264_BeginFrame(vid_dec_PrivateType *priv)
       return;
 
    if (!priv->codec) {
-      struct pipe_video_codec templat = {};
+      struct pipe_video_codec templat = {0};
       templat.profile = priv->profile;
       templat.entrypoint = PIPE_VIDEO_ENTRYPOINT_BITSTREAM;
       templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
@@ -1084,7 +1084,7 @@ void vid_dec_FrameDecoded_common(vid_dec_PrivateType* priv, OMX_BUFFERHEADERTYPE
          vbuf = input->pInputPortPrivate;
          if (vbuf->interlaced) {
             /* re-allocate the progressive buffer */
-            struct pipe_video_buffer templat = {};
+            struct pipe_video_buffer templat = {0};
             struct u_rect src_rect, dst_rect;
 
 #if ENABLE_ST_OMX_BELLAGIO

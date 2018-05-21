@@ -628,7 +628,7 @@ radv_pipeline_init_blend_state(struct radv_pipeline *pipeline,
 {
 	const VkPipelineColorBlendStateCreateInfo *vkblend = pCreateInfo->pColorBlendState;
 	const VkPipelineMultisampleStateCreateInfo *vkms = pCreateInfo->pMultisampleState;
-	struct radv_blend_state blend = {};
+	struct radv_blend_state blend = {0};
 	unsigned mode = V_028808_CB_NORMAL;
 	int i;
 
@@ -1414,7 +1414,7 @@ static struct radv_gs_state
 calculate_gs_info(const VkGraphicsPipelineCreateInfo *pCreateInfo,
                        const struct radv_pipeline *pipeline)
 {
-	struct radv_gs_state gs = {};
+	struct radv_gs_state gs = {0};
 	struct radv_shader_variant_info *gs_info = &pipeline->shaders[MESA_SHADER_GEOMETRY]->info;
 	struct radv_es_output_info *es_info;
 
@@ -1609,7 +1609,7 @@ calculate_tess_state(struct radv_pipeline *pipeline,
 	unsigned num_tcs_output_cp;
 	unsigned lds_size;
 	unsigned num_patches;
-	struct radv_tessellation_state tess = {};
+	struct radv_tessellation_state tess = {0};
 
 	num_tcs_input_cp = pCreateInfo->pTessellationState->patchControlPoints;
 	num_tcs_output_cp = pipeline->shaders[MESA_SHADER_TESS_CTRL]->info.tcs.tcs_vertices_out; //TCS VERTICES OUT
@@ -1950,11 +1950,11 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
                          const VkPipelineShaderStageCreateInfo **pStages,
                          const VkPipelineCreateFlags flags)
 {
-	struct radv_shader_module fs_m = {};
+	struct radv_shader_module fs_m = {0};
 	struct radv_shader_module *modules[MESA_SHADER_STAGES] = { 0, };
-	nir_shader *nir[MESA_SHADER_STAGES] = {};
-	void *codes[MESA_SHADER_STAGES] = {};
-	unsigned code_sizes[MESA_SHADER_STAGES] = {};
+	nir_shader *nir[MESA_SHADER_STAGES] = {0};
+	void *codes[MESA_SHADER_STAGES] = {0};
+	unsigned code_sizes[MESA_SHADER_STAGES] = {0};
 	struct radv_shader_variant_key keys[MESA_SHADER_STAGES] = {{{{0}}}};
 	unsigned char hash[20], gs_copy_hash[20];
 
@@ -1973,7 +1973,7 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
 	gs_copy_hash[0] ^= 1;
 
 	if (modules[MESA_SHADER_GEOMETRY]) {
-		struct radv_shader_variant *variants[MESA_SHADER_STAGES] = {};
+		struct radv_shader_variant *variants[MESA_SHADER_STAGES] = {0};
 		radv_create_shader_variants_from_pipeline_cache(device, cache, gs_copy_hash, variants);
 		pipeline->gs_copy_shader = variants[MESA_SHADER_GEOMETRY];
 	}
@@ -2129,9 +2129,9 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
 		}
 
 		if (pipeline->gs_copy_shader) {
-			void *code[MESA_SHADER_STAGES] = {};
-			unsigned code_size[MESA_SHADER_STAGES] = {};
-			struct radv_shader_variant *variants[MESA_SHADER_STAGES] = {};
+			void *code[MESA_SHADER_STAGES] = {0};
+			unsigned code_size[MESA_SHADER_STAGES] = {0};
+			struct radv_shader_variant *variants[MESA_SHADER_STAGES] = {0};
 
 			code[MESA_SHADER_GEOMETRY] = gs_copy_code;
 			code_size[MESA_SHADER_GEOMETRY] = gs_copy_code_size;
@@ -3262,7 +3262,7 @@ radv_compute_ia_multi_vgt_param_helpers(struct radv_pipeline *pipeline,
                                         const struct radv_tessellation_state *tess,
                                         uint32_t prim)
 {
-	struct radv_ia_multi_vgt_param_helpers ia_multi_vgt_param = {};
+	struct radv_ia_multi_vgt_param_helpers ia_multi_vgt_param = {0};
 	const struct radv_device *device = pipeline->device;
 
 	if (radv_pipeline_has_tess(pipeline))
@@ -3474,13 +3474,13 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		}
 	}
 
-	struct radv_gs_state gs = {};
+	struct radv_gs_state gs = {0};
 	if (radv_pipeline_has_gs(pipeline)) {
 		gs = calculate_gs_info(pCreateInfo, pipeline);
 		calculate_gs_ring_sizes(pipeline, &gs);
 	}
 
-	struct radv_tessellation_state tess = {};
+	struct radv_tessellation_state tess = {0};
 	if (radv_pipeline_has_tess(pipeline)) {
 		if (prim == V_008958_DI_PT_PATCH) {
 			pipeline->graphics.prim_vertex_count.min = pCreateInfo->pTessellationState->patchControlPoints;

@@ -114,7 +114,7 @@ driCreateNewScreen2(int scrn, int fd,
                     const __DRIextension **driver_extensions,
                     const __DRIconfig ***driver_configs, void *data)
 {
-    static const __DRIextension *emptyExtensionList[] = {};
+    static const __DRIextension *emptyExtensionList[] = {0};
     __DRIscreen *psp;
 
     psp = calloc(1, sizeof(*psp));
@@ -154,7 +154,7 @@ driCreateNewScreen2(int scrn, int fd,
 	return NULL;
     }
 
-    struct gl_constants consts = {};
+    struct gl_constants consts = {0};
     gl_api api;
     unsigned version;
 

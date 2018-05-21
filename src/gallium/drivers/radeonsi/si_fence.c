@@ -502,7 +502,7 @@ static void si_flush_from_st(struct pipe_context *ctx,
 	struct pipe_fence_handle *gfx_fence = NULL;
 	struct pipe_fence_handle *sdma_fence = NULL;
 	bool deferred_fence = false;
-	struct si_fine_fence fine = {};
+	struct si_fine_fence fine = {0};
 	unsigned rflags = PIPE_FLUSH_ASYNC;
 
 	if (flags & PIPE_FLUSH_END_OF_FRAME)

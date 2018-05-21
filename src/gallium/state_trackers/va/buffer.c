@@ -126,7 +126,7 @@ vlVaMapBuffer(VADriverContextP ctx, VABufferID buf_id, void **pbuff)
 
    if (buf->derived_surface.resource) {
       struct pipe_resource *resource;
-      struct pipe_box box = {};
+      struct pipe_box box = {0};
 
       resource = buf->derived_surface.resource;
       box.width = resource->width0;

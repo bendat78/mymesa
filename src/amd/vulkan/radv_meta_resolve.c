@@ -694,7 +694,7 @@ radv_decompress_resolve_subpass_src(struct radv_cmd_buffer *cmd_buffer)
 		struct radv_image *src_image =
 			fb->attachments[src_att.attachment].attachment->image;
 
-		VkImageResolve region = {};
+		VkImageResolve region = {0};
 		region.srcSubresource.baseArrayLayer = 0;
 		region.srcSubresource.mipLevel = 0;
 		region.srcSubresource.layerCount = src_image->info.array_size;

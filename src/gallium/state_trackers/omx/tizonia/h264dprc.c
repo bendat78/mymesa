@@ -195,7 +195,7 @@ static void get_eglimage(vid_dec_PrivateType* priv) {
    OMX_PTR p_eglimage = NULL;
    OMX_NATIVE_WINDOWTYPE * p_egldisplay = NULL;
    const tiz_port_t * p_port = NULL;
-   struct pipe_video_buffer templat = {};
+   struct pipe_video_buffer templat = {0};
    struct pipe_video_buffer *video_buffer = NULL;
    struct pipe_resource * p_res = NULL;
    struct pipe_resource *resources[VL_NUM_COMPONENTS];

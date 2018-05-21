@@ -219,7 +219,7 @@ nv50_hw_sm_end_query(struct nv50_context *nv50, struct nv50_hw_query *hq)
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_hw_sm_query *hsq = nv50_hw_sm_query(hq);
    struct nv50_program *old = nv50->compprog;
-   struct pipe_grid_info info = {};
+   struct pipe_grid_info info = {0};
    uint32_t mask;
    uint32_t input[3];
    const uint block[3] = { 32, 1, 1 };

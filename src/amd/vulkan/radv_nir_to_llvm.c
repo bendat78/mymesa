@@ -873,7 +873,7 @@ static void create_function(struct radv_shader_context *ctx,
 {
 	uint8_t user_sgpr_idx;
 	struct user_sgpr_info user_sgpr_info;
-	struct arg_info args = {};
+	struct arg_info args = {0};
 	LLVMValueRef desc_sets;
 	bool needs_view_index = needs_view_index_sgpr(ctx, stage);
 	allocate_user_sgprs(ctx, stage, has_previous_stage,
@@ -2348,7 +2348,7 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 	uint32_t param_count = 0;
 	unsigned target;
 	unsigned pos_idx, num_pos_exports = 0;
-	struct ac_export_args args, pos_args[4] = {};
+	struct ac_export_args args, pos_args[4] = {0};
 	LLVMValueRef psize_value = NULL, layer_value = NULL, viewport_index_value = NULL;
 	int i;
 
@@ -3109,7 +3109,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(LLVMTargetMachineRef tm,
                                        struct radv_shader_variant_info *shader_info,
                                        const struct radv_nir_compiler_options *options)
 {
-	struct radv_shader_context ctx = {};
+	struct radv_shader_context ctx = {0};
 	unsigned i;
 	ctx.options = options;
 	ctx.shader_info = shader_info;
@@ -3558,7 +3558,7 @@ radv_compile_gs_copy_shader(LLVMTargetMachineRef tm,
 			    struct radv_shader_variant_info *shader_info,
 			    const struct radv_nir_compiler_options *options)
 {
-	struct radv_shader_context ctx = {};
+	struct radv_shader_context ctx = {0};
 	ctx.context = LLVMContextCreate();
 	ctx.options = options;
 	ctx.shader_info = shader_info;

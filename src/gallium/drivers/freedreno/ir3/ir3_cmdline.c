@@ -262,7 +262,7 @@ int main(int argc, char **argv)
 	unsigned stage = 0;
 	struct ir3_shader_variant v;
 	struct ir3_shader s;
-	struct ir3_shader_key key = {};
+	struct ir3_shader_key key = {0};
 	/* TODO cmdline option to target different gpus: */
 	unsigned gpu_id = 320;
 	const char *info;

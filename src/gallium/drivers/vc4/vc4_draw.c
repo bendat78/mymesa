@@ -565,7 +565,7 @@ vc4_clear(struct pipe_context *pctx, unsigned buffers,
                      zsclear == PIPE_CLEAR_STENCIL) &&
                     (rsc->initialized_buffers & ~(zsclear | job->cleared)) &&
                     util_format_is_depth_and_stencil(vc4->framebuffer.zsbuf->format)) {
-                        static const union pipe_color_union dummy_color = {};
+                        static const union pipe_color_union dummy_color = {0};
 
                         perf_debug("Partial clear of Z+stencil buffer, "
                                    "drawing a quad instead of fast clearing\n");

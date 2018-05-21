@@ -529,7 +529,7 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
    }
 
    if (!bin) {
-      struct brw_vs_prog_data prog_data = {};
+      struct brw_vs_prog_data prog_data = {0};
       struct anv_pipeline_binding surface_to_descriptor[256];
       struct anv_pipeline_binding sampler_to_descriptor[256];
 
@@ -635,8 +635,8 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
    const struct gen_device_info *devinfo = &pipeline->device->info;
    const struct brw_compiler *compiler =
       pipeline->device->instance->physicalDevice.compiler;
-   struct brw_tcs_prog_key tcs_key = {};
-   struct brw_tes_prog_key tes_key = {};
+   struct brw_tcs_prog_key tcs_key = {0};
+   struct brw_tes_prog_key tes_key = {0};
    struct anv_shader_bin *tcs_bin = NULL;
    struct anv_shader_bin *tes_bin = NULL;
    unsigned char tcs_sha1[40];
@@ -662,8 +662,8 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
    }
 
    if (tcs_bin == NULL || tes_bin == NULL) {
-      struct brw_tcs_prog_data tcs_prog_data = {};
-      struct brw_tes_prog_data tes_prog_data = {};
+      struct brw_tcs_prog_data tcs_prog_data = {0};
+      struct brw_tes_prog_data tes_prog_data = {0};
       struct anv_pipeline_binding tcs_surface_to_descriptor[256];
       struct anv_pipeline_binding tcs_sampler_to_descriptor[256];
       struct anv_pipeline_binding tes_surface_to_descriptor[256];
@@ -798,7 +798,7 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
    }
 
    if (!bin) {
-      struct brw_gs_prog_data prog_data = {};
+      struct brw_gs_prog_data prog_data = {0};
       struct anv_pipeline_binding surface_to_descriptor[256];
       struct anv_pipeline_binding sampler_to_descriptor[256];
 
@@ -878,7 +878,7 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
    }
 
    if (!bin) {
-      struct brw_wm_prog_data prog_data = {};
+      struct brw_wm_prog_data prog_data = {0};
       struct anv_pipeline_binding surface_to_descriptor[256];
       struct anv_pipeline_binding sampler_to_descriptor[256];
 
@@ -1028,7 +1028,7 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
    }
 
    if (!bin) {
-      struct brw_cs_prog_data prog_data = {};
+      struct brw_cs_prog_data prog_data = {0};
       struct anv_pipeline_binding surface_to_descriptor[256];
       struct anv_pipeline_binding sampler_to_descriptor[256];
 
@@ -1340,8 +1340,8 @@ anv_pipeline_init(struct anv_pipeline *pipeline,
 
    pipeline->active_stages = 0;
 
-   const VkPipelineShaderStageCreateInfo *pStages[MESA_SHADER_STAGES] = {};
-   struct anv_shader_module *modules[MESA_SHADER_STAGES] = {};
+   const VkPipelineShaderStageCreateInfo *pStages[MESA_SHADER_STAGES] = {0};
+   struct anv_shader_module *modules[MESA_SHADER_STAGES] = {0};
    for (uint32_t i = 0; i < pCreateInfo->stageCount; i++) {
       VkShaderStageFlagBits vk_stage = pCreateInfo->pStages[i].stage;
       gl_shader_stage stage = vk_to_mesa_shader_stage(vk_stage);

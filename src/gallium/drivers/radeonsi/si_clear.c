@@ -126,7 +126,7 @@ static bool vi_get_fast_clear_parameters(enum pipe_format base_format,
 	 * can set color and alpha independently to 0 or 1 (or 0/max for integer
 	 * formats).
 	 */
-	bool values[4] = {}; /* whether to clear to 0 or 1 */
+	bool values[4] = {0}; /* whether to clear to 0 or 1 */
 	bool color_value = false; /* clear color to 0 or 1 */
 	bool alpha_value = false; /* clear alpha to 0 or 1 */
 	int alpha_channel; /* index of the alpha component */
@@ -708,7 +708,7 @@ static void si_clear_texture(struct pipe_context *pipe,
 {
 	struct pipe_screen *screen = pipe->screen;
 	struct r600_texture *rtex = (struct r600_texture*)tex;
-	struct pipe_surface tmpl = {};
+	struct pipe_surface tmpl = {0};
 	struct pipe_surface *sf;
 	const struct util_format_description *desc =
 		util_format_description(tex->format);

@@ -286,7 +286,7 @@ svga_context_create(struct pipe_screen *screen, void *priv, unsigned flags)
     * matching the blend state it is replacing.
     */
    {
-      struct pipe_blend_state noop_tmpl = {};
+      struct pipe_blend_state noop_tmpl = {0};
       unsigned i;
 
       for (i = 0; i < PIPE_MAX_COLOR_BUFS; ++i) {

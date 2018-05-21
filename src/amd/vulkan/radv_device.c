@@ -80,7 +80,7 @@ static void
 radv_get_device_name(enum radeon_family family, char *name, size_t name_len)
 {
 	const char *chip_string;
-	char llvm_string[32] = {};
+	char llvm_string[32] = {0};
 
 	switch (family) {
 	case CHIP_TAHITI: chip_string = "AMD RADV TAHITI"; break;
@@ -901,7 +901,7 @@ void radv_GetPhysicalDeviceProperties(
 		.deviceID = pdevice->rad_info.pci_id,
 		.deviceType = pdevice->rad_info.has_dedicated_vram ? VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU : VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
 		.limits = limits,
-		.sparseProperties = {},
+		.sparseProperties = {0},
 	};
 
 	strcpy(pProperties->deviceName, pdevice->name);
@@ -1997,7 +1997,7 @@ radv_get_preamble_cs(struct radv_queue *queue,
 	struct radeon_winsys_bo *esgs_ring_bo = NULL;
 	struct radeon_winsys_bo *gsvs_ring_bo = NULL;
 	struct radeon_winsys_bo *tess_rings_bo = NULL;
-	struct radeon_winsys_cs *dest_cs[3] = {};
+	struct radeon_winsys_cs *dest_cs[3] = {0};
 
 	bool add_tess_rings = false, add_sample_positions = false;
 	unsigned tess_factor_ring_size = 0, tess_offchip_ring_size = 0;

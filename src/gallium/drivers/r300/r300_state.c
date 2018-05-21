@@ -1832,7 +1832,7 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
 {
     struct r300_vertex_element_state *velems;
     unsigned i;
-    struct pipe_vertex_element dummy_attrib = {};
+    struct pipe_vertex_element dummy_attrib = {0};
 
     /* R300 Programmable Stream Control (PSC) doesn't support 0 vertex elements. */
     if (!count) {

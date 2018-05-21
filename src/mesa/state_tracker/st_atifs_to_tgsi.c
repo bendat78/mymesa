@@ -400,8 +400,8 @@ compile_instruction(struct st_translate *t,
 static void
 finalize_shader(struct st_translate *t, unsigned numPasses)
 {
-   struct ureg_dst dst[1] = {};
-   struct ureg_src src[1] = {};
+   struct ureg_dst dst[1] = {0};
+   struct ureg_src src[1] = {0};
 
    if (t->regs_written[numPasses-1][0]) {
       /* copy the result into the OUT slot */

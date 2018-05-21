@@ -62,7 +62,7 @@ struct radeon_bo_va_hole {
 
 static bool radeon_real_bo_is_busy(struct radeon_bo *bo)
 {
-    struct drm_radeon_gem_busy args = {};
+    struct drm_radeon_gem_busy args = {0};
 
     args.handle = bo->handle;
     return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
@@ -95,7 +95,7 @@ static bool radeon_bo_is_busy(struct radeon_bo *bo)
 
 static void radeon_real_bo_wait_idle(struct radeon_bo *bo)
 {
-    struct drm_radeon_gem_wait_idle args = {};
+    struct drm_radeon_gem_wait_idle args = {0};
 
     args.handle = bo->handle;
     while (drmCommandWrite(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
@@ -433,7 +433,7 @@ static void radeon_bo_destroy_or_cache(struct pb_buffer *_buf)
 
 void *radeon_bo_do_map(struct radeon_bo *bo)
 {
-    struct drm_radeon_gem_mmap args = {};
+    struct drm_radeon_gem_mmap args = {0};
     void *ptr;
     unsigned offset;
 
@@ -1185,7 +1185,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     }
 
     if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
-        struct drm_gem_open open_arg = {};
+        struct drm_gem_open open_arg = {0};
         memset(&open_arg, 0, sizeof(open_arg));
         /* Open the BO. */
         open_arg.name = whandle->handle;

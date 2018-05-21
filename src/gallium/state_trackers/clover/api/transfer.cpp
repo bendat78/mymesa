@@ -245,7 +245,7 @@ namespace {
          auto src = _map<S>::get(q, src_obj, CL_MAP_READ,
                                  dot(src_pitch, src_orig),
                                  size(src_pitch, region));
-         vector_t v = {};
+         vector_t v = {0};
 
          for (v[2] = 0; v[2] < region[2]; ++v[2]) {
             for (v[1] = 0; v[1] < region[1]; ++v[1]) {

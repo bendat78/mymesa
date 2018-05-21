@@ -259,7 +259,7 @@ create_color_pipeline(struct radv_device *device,
 		.stencilTestEnable = false,
 	};
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state[MAX_RTS] = {};
+	VkPipelineColorBlendAttachmentState blend_attachment_state[MAX_RTS] = {0};
 	blend_attachment_state[frag_output] = (VkPipelineColorBlendAttachmentState) {
 		.blendEnable = false,
 		.colorWriteMask = VK_COLOR_COMPONENT_A_BIT |
@@ -898,7 +898,7 @@ static void vi_get_fast_clear_parameters(VkFormat format,
 					 uint32_t* reset_value,
 					 bool *can_avoid_fast_clear_elim)
 {
-	bool values[4] = {};
+	bool values[4] = {0};
 	int extra_channel;
 	bool main_value = false;
 	bool extra_value = false;

@@ -358,8 +358,8 @@ void cso_destroy_context( struct cso_context *ctx )
       ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
 
       {
-         static struct pipe_sampler_view *views[PIPE_MAX_SHADER_SAMPLER_VIEWS] = {};
-         static void *zeros[PIPE_MAX_SAMPLERS] = {};
+         static struct pipe_sampler_view *views[PIPE_MAX_SHADER_SAMPLER_VIEWS] = {0};
+         static void *zeros[PIPE_MAX_SAMPLERS] = {0};
          struct pipe_screen *scr = ctx->pipe->screen;
          enum pipe_shader_type sh;
          for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {

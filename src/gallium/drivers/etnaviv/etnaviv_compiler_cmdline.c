@@ -102,8 +102,8 @@ main(int argc, char **argv)
    const char *filename;
    struct tgsi_token toks[65536];
    struct tgsi_parse_context parse;
-   struct etna_shader s = {};
-   struct etna_shader_key key = {};
+   struct etna_shader s = {0};
+   struct etna_shader_key key = {0};
    void *ptr;
    size_t size;
 

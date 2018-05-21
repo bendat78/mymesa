@@ -205,7 +205,7 @@ etna_blit_clear_color_blt(struct pipe_context *pctx, struct pipe_surface *dst,
    uint32_t new_clear_value = etna_clear_blit_pack_rgba(surf->base.format, color->f);
 
    struct etna_resource *res = etna_resource(surf->base.texture);
-   struct blt_clear_op clr = {};
+   struct blt_clear_op clr = {0};
    clr.dest.addr.bo = res->bo;
    clr.dest.addr.offset = surf->surf.offset;
    clr.dest.addr.flags = ETNA_RELOC_WRITE;
@@ -281,7 +281,7 @@ etna_blit_clear_zs_blt(struct pipe_context *pctx, struct pipe_surface *dst,
 
    /* TODO unduplicate this */
    struct etna_resource *res = etna_resource(surf->base.texture);
-   struct blt_clear_op clr = {};
+   struct blt_clear_op clr = {0};
    clr.dest.addr.bo = res->bo;
    clr.dest.addr.offset = surf->surf.offset;
    clr.dest.addr.flags = ETNA_RELOC_WRITE;
@@ -420,7 +420,7 @@ etna_try_blt_blit(struct pipe_context *pctx,
       assert(!memcmp(&blit_info->src, &blit_info->dst, sizeof(blit_info->src)));
       if (!src_lev->ts_size || !src_lev->ts_valid) /* No TS, no worries */
          return TRUE;
-      struct blt_inplace_op op = {};
+      struct blt_inplace_op op = {0};
 
       op.addr.bo = src->bo;
       op.addr.offset = src_lev->offset + blit_info->src.box.z * src_lev->layer_stride;
@@ -439,7 +439,7 @@ etna_try_blt_blit(struct pipe_context *pctx,
       emit_blt_inplace(ctx->stream, &op);
    } else {
       /* Copy op */
-      struct blt_imgcopy_op op = {};
+      struct blt_imgcopy_op op = {0};
 
       op.src.addr.bo = src->bo;
       op.src.addr.offset = src_lev->offset + blit_info->src.box.z * src_lev->layer_stride;

@@ -356,7 +356,7 @@ nir_lower_io_arrays_to_elements_no_indirects(nir_shader *shader,
       _mesa_hash_table_create(NULL, _mesa_hash_pointer,
                               _mesa_key_pointer_equal);
 
-   uint64_t indirects[4] = {}, patch_indirects[4] = {};
+   uint64_t indirects[4] = {0}, patch_indirects[4] = {0};
 
    lower_io_arrays_to_elements(shader, nir_var_shader_out, indirects,
                                patch_indirects, split_outputs, true);
@@ -398,7 +398,7 @@ nir_lower_io_arrays_to_elements(nir_shader *producer, nir_shader *consumer)
       _mesa_hash_table_create(NULL, _mesa_hash_pointer,
                               _mesa_key_pointer_equal);
 
-   uint64_t indirects[4] = {}, patch_indirects[4] = {};
+   uint64_t indirects[4] = {0}, patch_indirects[4] = {0};
    create_indirects_mask(producer, indirects, patch_indirects,
                          nir_var_shader_out);
    create_indirects_mask(consumer, indirects, patch_indirects,
