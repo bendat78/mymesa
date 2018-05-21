@@ -1008,7 +1008,7 @@ _mesa_ast_process_interface_block(YYLTYPE *locp,
     * the same language versions, we don't have to explicitly
     * version-check both things.
     */
-   if (block->instance_name) {
+   if (block->instance_name != NULL) {
       state->check_version(150, 300, locp, "interface blocks with "
                            "an instance name are not allowed");
    }
@@ -1179,7 +1179,7 @@ ast_compound_statement::ast_compound_statement(int new_scope,
 {
    this->new_scope = new_scope;
 
-   if (statements) {
+   if (statements != NULL) {
       this->statements.push_degenerate_list_at_head(&statements->link);
    }
 }
@@ -1536,7 +1536,7 @@ void
 ast_switch_body::print(void) const
 {
    printf("{\n");
-   if (stmts) {
+   if (stmts != NULL) {
       stmts->print();
    }
    printf("}\n");
@@ -1551,7 +1551,7 @@ ast_switch_body::ast_switch_body(ast_case_statement_list *stmts)
 
 void ast_case_label::print(void) const
 {
-   if (test_value) {
+   if (test_value != NULL) {
       printf("case ");
       test_value->print();
       printf(": ");
@@ -1881,7 +1881,7 @@ _mesa_glsl_copy_symbols_from_table(struct exec_list *shader_ir,
       }
    }
 
-   if (src) {
+   if (src != NULL) {
       /* Explicitly copy the gl_PerVertex interface definitions because these
        * are needed to check they are the same during the interstage link.
        * They can’t necessarily be found via the exec_list because the members
