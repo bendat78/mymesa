@@ -40,7 +40,7 @@ configuration: Release
 
 install:
 - ls -al
-- sh: sudo sed -i~orig -e 's/# deb-src/deb-src/' /etc/apt/sources.list
+- sh: cat /etc/apt/sources.list
 - sh: sudo apt-get update
 - sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 - sh: sudo apt-get build-dep mesa -y
