@@ -70,8 +70,7 @@ install:
 - set LLVM=%CD%\llvm
 # Download and extract zLib
 - if not exist "%ZLIB_ARCHIVE%" appveyor DownloadFile "http://www.winimage.com/zLibDll/%ZLIB_ARCHIVE%"
-- 7z x -y -ozlib\ "%ZLIB_ARCHIVE%" > nul
-- set Path=%CD%\zlib;%Path%
+- 7z x -y -osrc\util\ "%ZLIB_ARCHIVE%" > nul
 
 build_script:
 - scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1
