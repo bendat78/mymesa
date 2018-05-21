@@ -34,7 +34,7 @@
 //#include <pwd.h>
 #include <errno.h>
 //#include <dirent.h>
-//#include "zlib.h"
+#include "zlib.h"
 
 #include "util/crc32.h"
 #include "util/debug.h"
