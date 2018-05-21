@@ -1,5 +1,5 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
  *
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
 #ifndef TGSI_TRANSFORM_H
@@ -128,7 +128,7 @@ tgsi_transform_const_decl(struct tgsi_transform_context *ctx,
    /* Dim.Index2D is already 0 */
    ctx->emit_declaration(ctx, &decl);
 }
-
+ 
 static inline void
 tgsi_transform_input_decl(struct tgsi_transform_context *ctx,
                           unsigned index,
@@ -246,22 +246,20 @@ tgsi_transform_src_reg_xyzw(struct tgsi_full_src_register *reg,
 
 static inline void
 tgsi_transform_src_reg(struct tgsi_full_src_register *reg,
-                       unsigned file, unsigned index,
+                       unsigned file, unsigned index, 
                        unsigned swizzleX, unsigned swizzleY,
                        unsigned swizzleZ, unsigned swizzleW)
 {
    reg->Register.File = file;
    reg->Register.Index = index;
-
    if (file == TGSI_FILE_CONSTANT) {
       reg->Register.Dimension = 1;
       reg->Dimension.Index = 0;
    }
-
    reg->Register.SwizzleX = swizzleX;
-   reg->Register.SwizzleY = swizzleY;
-   reg->Register.SwizzleZ = swizzleZ;
-   reg->Register.SwizzleW = swizzleW;
+   reg->Register.SwizzleY = swizzleY; 
+   reg->Register.SwizzleZ = swizzleZ; 
+   reg->Register.SwizzleW = swizzleW; 
 }
 
 /**

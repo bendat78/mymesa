@@ -183,7 +183,7 @@ static int swizzle_from_char(const char *sw)
       default:
          assert(!"This test uses an unknown swizzle character");
       }
-      if (isw[1])
+      if (isw[1] != 0)
          ++isw;
    }
    return swizzle;
@@ -409,11 +409,11 @@ LifetimeEvaluatorTest::run(const vector<FakeCodeline>& code, bool& success)
 {
    FakeShader shader(code);
    lifetime_result result(shader.get_num_temps());
-   vector <array_live_range> arr(10);
+
    success =
-         get_temp_registers_required_live_ranges(mem_ctx, shader.get_program(mem_ctx),
+         get_temp_registers_required_lifetimes(mem_ctx, shader.get_program(mem_ctx),
                                                shader.get_num_temps(),
-                                               &result[0], 9, &arr[0]);
+                                               &result[0]);
 
    return result;
 }
@@ -422,17 +422,16 @@ void LifetimeEvaluatorTest::run(const vector<FakeCodeline>& code, const temp_lt_
 {
    FakeShader shader(code);
    lifetime_result result(shader.get_num_temps());
-   vector <array_live_range> arr(10);
    bool success =
-      get_temp_registers_required_live_ranges(mem_ctx, shader.get_program(mem_ctx),
+      get_temp_registers_required_lifetimes(mem_ctx, shader.get_program(mem_ctx),
                                             shader.get_num_temps(),
-                                            &result[0], 9, &arr[0]);
+                                            &result[0]);
    ASSERT_TRUE(success);
    ASSERT_EQ(result.size(), e.size());
    check(result, e);
 }
 
-void LifetimeEvaluatorExactTest::check( const vector<register_live_range>& lifetimes,
+void LifetimeEvaluatorExactTest::check( const vector<lifetime>& lifetimes,
                                         const temp_lt_expect& e)
 {
    for (unsigned i = 1; i < lifetimes.size(); ++i) {
@@ -441,7 +440,7 @@ void LifetimeEvaluatorExactTest::check( const vector<register_live_range>& lifet
    }
 }
 
-void LifetimeEvaluatorAtLeastTest::check( const vector<register_live_range>& lifetimes,
+void LifetimeEvaluatorAtLeastTest::check( const vector<lifetime>& lifetimes,
                                           const temp_lt_expect& e)
 {
    for (unsigned i = 1; i < lifetimes.size(); ++i) {
@@ -450,7 +449,7 @@ void LifetimeEvaluatorAtLeastTest::check( const vector<register_live_range>& lif
    }
 }
 
-void RegisterRemappingTest::run(const vector<register_live_range>& lt,
+void RegisterRemappingTest::run(const vector<lifetime>& lt,
                                 const vector<int>& expect)
 {
    rename_reg_pair proto{false,0};
@@ -477,10 +476,8 @@ void RegisterLifetimeAndRemappingTest::run(const vector<FakeCodeline>& code,
                                            const vector<int>& expect)
 {
      FakeShader shader(code);
-     std::vector<register_live_range> lt(shader.get_num_temps());
-     vector <array_live_range> arr(10);
-     get_temp_registers_required_live_ranges(mem_ctx, shader.get_program(mem_ctx),
-                                             shader.get_num_temps(), &lt[0],
-                                             9, &arr[0]);
+     std::vector<lifetime> lt(shader.get_num_temps());
+     get_temp_registers_required_lifetimes(mem_ctx, shader.get_program(mem_ctx),
+                                           shader.get_num_temps(), &lt[0]);
      this->run(lt, expect);
 }

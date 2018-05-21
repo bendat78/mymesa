@@ -24,14 +24,13 @@
 #ifndef mesa_st_tests_h
 #define mesa_st_tests_h
 
-#include "state_tracker/st_glsl_to_tgsi_temprename.h"
-#include "state_tracker/st_glsl_to_tgsi_array_merge.h"
-#include "gtest/gtest.h"
-
+#include <state_tracker/st_glsl_to_tgsi_temprename.h>
+#include <gtest/gtest.h>
 #include <utility>
 
 #define MP(X, W) std::make_pair(X, W)
 #define MT(X,Y,Z) std::make_tuple(X,Y,Z)
+
 
 /* Use this to make the compiler pick the swizzle constructor below */
 struct SWZ {};
@@ -132,19 +131,17 @@ class LifetimeEvaluatorTest : public MesaTestWithMemCtx {
 protected:
    void run(const std::vector<FakeCodeline>& code, const temp_lt_expect& e);
 private:
-   using lifetime_result=std::vector<register_live_range>;
+   using lifetime_result=std::vector<lifetime>;
    lifetime_result run(const std::vector<FakeCodeline>& code, bool& success);
 
-   virtual void check(const std::vector<register_live_range>& result,
-                      const temp_lt_expect& e) = 0;
+   virtual void check(const std::vector<lifetime>& result, const temp_lt_expect& e) = 0;
 };
 
 /* This is a test class to check the exact life times of
  * registers. */
 class LifetimeEvaluatorExactTest : public LifetimeEvaluatorTest {
 protected:
-   void check(const std::vector<register_live_range>& result,
-              const temp_lt_expect& e);
+   void check(const std::vector<lifetime>& result, const temp_lt_expect& e);
 
 };
 
@@ -155,14 +152,13 @@ protected:
  */
 class LifetimeEvaluatorAtLeastTest : public LifetimeEvaluatorTest {
 protected:
-   void check(const std::vector<register_live_range>& result, const temp_lt_expect& e);
+   void check(const std::vector<lifetime>& result, const temp_lt_expect& e);
 };
 
 /* With this test class the renaming mapping estimation is tested */
 class RegisterRemappingTest : public MesaTestWithMemCtx {
 protected:
-   void run(const std::vector<register_live_range>& lt,
-            const std::vector<int> &expect);
+   void run(const std::vector<lifetime>& lt, const std::vector<int> &expect);
 };
 
 /* With this test class the combined lifetime estimation and renaming

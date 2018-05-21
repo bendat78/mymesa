@@ -487,7 +487,7 @@ create_aux_state_map(struct intel_mipmap_tree *mt,
    const size_t total_size = per_level_array_size +
                              total_slices * sizeof(enum isl_aux_state);
    void *data = malloc(total_size);
-   if (!data)
+   if (data == NULL)
       return NULL;
 
    enum isl_aux_state **per_level_arr = data;
@@ -926,12 +926,12 @@ miptree_create_for_planar_image(struct brw_context *brw,
                                      image->strides[index],
                                      tiling,
                                      MIPTREE_CREATE_NO_AUX);
-      if (!mt)
+      if (mt == NULL)
          return NULL;
 
       mt->target = target;
 
-      if (!i)
+      if (i == 0)
          planar_mt = mt;
       else
          planar_mt->plane[i - 1] = mt;
@@ -971,7 +971,7 @@ create_ccs_buf_for_image(struct brw_context *brw,
    assert(temp_ccs_surf.size <= image->bo->size - image->aux_offset);
 
    mt->aux_buf = calloc(sizeof(*mt->aux_buf), 1);
-   if (!mt->aux_buf)
+   if (mt->aux_buf == NULL)
       return false;
 
    mt->aux_state = create_aux_state_map(mt, initial_state);
@@ -1070,7 +1070,7 @@ intel_miptree_create_for_dri_image(struct brw_context *brw,
       intel_miptree_create_for_bo(brw, image->bo, format,
                                   image->offset, image->width, image->height, 1,
                                   image->pitch, tiling, mt_create_flags);
-   if (!mt)
+   if (mt == NULL)
       return NULL;
 
    mt->target = target;
@@ -1233,7 +1233,7 @@ intel_miptree_reference(struct intel_mipmap_tree **dst,
 static void
 intel_miptree_aux_buffer_free(struct intel_miptree_aux_buffer *aux_buf)
 {
-   if (!aux_buf)
+   if (aux_buf == NULL)
       return;
 
    brw_bo_unreference(aux_buf->bo);
@@ -3035,7 +3035,7 @@ intel_miptree_map_gtt(struct brw_context *brw,
 
    base = intel_miptree_map_raw(brw, mt, map->mode);
 
-   if (!base)
+   if (base == NULL)
       map->ptr = NULL;
    else {
       base += mt->offset;
@@ -3632,7 +3632,7 @@ intel_miptree_map(struct brw_context *brw,
    *out_ptr = map->ptr;
    *out_stride = map->stride;
 
-   if (!map->ptr)
+   if (map->ptr == NULL)
       intel_miptree_release_map(mt, level, slice);
 }
 

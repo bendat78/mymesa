@@ -295,7 +295,7 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
    interface_block_definitions buffer_interfaces;
 
    for (unsigned int i = 0; i < num_shaders; i++) {
-      if (!shader_list[i])
+      if (shader_list[i] == NULL)
          continue;
 
       foreach_in_list(ir_instruction, node, shader_list[i]->ir) {
@@ -305,7 +305,7 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
 
          const glsl_type *iface_type = var->get_interface_type();
 
-         if (!iface_type)
+         if (iface_type == NULL)
             continue;
 
          interface_block_definitions *definitions;
@@ -331,7 +331,7 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
          }
 
          ir_variable *prev_def = definitions->lookup(var);
-         if (!prev_def) {
+         if (prev_def == NULL) {
             /* This is the first time we've seen the interface, so save
              * it into the appropriate data structure.
              */
@@ -441,7 +441,7 @@ validate_interstage_uniform_blocks(struct gl_shader_program *prog,
    interface_block_definitions definitions;
 
    for (int i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (!stages[i])
+      if (stages[i] == NULL)
          continue;
 
       const gl_linked_shader *stage = stages[i];
@@ -453,7 +453,7 @@ validate_interstage_uniform_blocks(struct gl_shader_program *prog,
             continue;
 
          ir_variable *old_def = definitions.lookup(var);
-         if (!old_def) {
+         if (old_def == NULL) {
             definitions.store(var);
          } else {
             /* Interstage uniform matching rules are the same as intrastage

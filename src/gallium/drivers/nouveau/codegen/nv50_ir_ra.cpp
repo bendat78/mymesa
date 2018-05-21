@@ -852,7 +852,7 @@ isShortRegOp(Instruction *insn)
 static bool
 isShortRegVal(LValue *lval)
 {
-   if (!lval->getInsn())
+   if (lval->getInsn() == NULL)
       return false;
    for (Value::DefCIterator def = lval->defs.begin();
         def != lval->defs.end(); ++def)

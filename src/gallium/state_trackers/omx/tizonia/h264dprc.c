@@ -195,7 +195,7 @@ static void get_eglimage(vid_dec_PrivateType* priv) {
    OMX_PTR p_eglimage = NULL;
    OMX_NATIVE_WINDOWTYPE * p_egldisplay = NULL;
    const tiz_port_t * p_port = NULL;
-   struct pipe_video_buffer templat = {0};
+   struct pipe_video_buffer templat = {};
    struct pipe_video_buffer *video_buffer = NULL;
    struct pipe_resource * p_res = NULL;
    struct pipe_resource *resources[VL_NUM_COMPONENTS];
@@ -295,7 +295,7 @@ static void h264d_manage_buffers(vid_dec_PrivateType* priv) {
    }
 
    /* Release input buffer if possible */
-   if (!priv->in_buffers[0]->nFilledLen) {
+   if (priv->in_buffers[0]->nFilledLen == 0) {
       h264d_buffer_emptied(priv, priv->in_buffers[0]);
    }
 }

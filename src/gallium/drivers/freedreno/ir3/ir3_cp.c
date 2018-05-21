@@ -317,7 +317,7 @@ unuse(struct ir3_instruction *instr)
 {
 	debug_assert(instr->use_count > 0);
 
-	if (!--instr->use_count) {
+	if (--instr->use_count == 0) {
 		struct ir3_block *block = instr->block;
 
 		instr->barrier_class = 0;
@@ -522,7 +522,7 @@ instr_cp(struct ir3_cp_ctx *ctx, struct ir3_instruction *instr)
 {
 	struct ir3_register *reg;
 
-	if (!instr->regs_count)
+	if (instr->regs_count == 0)
 		return;
 
 	if (ir3_instr_check_mark(instr))

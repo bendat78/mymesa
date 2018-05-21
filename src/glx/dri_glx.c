@@ -336,7 +336,7 @@ __glXReportDamage(__DRIdrawable * driDraw,
    }
 
    xrects = malloc(sizeof(XRectangle) * num_rects);
-   if (!xrects)
+   if (xrects == NULL)
       return;
 
    for (i = 0; i < num_rects; i++) {
@@ -396,7 +396,7 @@ static const __DRIextension *loader_extensions[] = {
 /**
  * Perform the required libGL-side initialization and call the client-side
  * driver's \c __driCreateNewScreen function.
- *
+ * 
  * \param dpy    Display pointer.
  * \param scrn   Screen number on the display.
  * \param psc    DRI screen information.
@@ -509,7 +509,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
    /* Map the framebuffer region. */
    status = drmMap(fd, hFB, framebuffer.size,
                    (drmAddressPtr) & framebuffer.base);
-   if (status) {
+   if (status != 0) {
       ErrorMessageF("drmMap of framebuffer failed (%s)\n", strerror(-status));
       goto handle_error;
    }
@@ -518,7 +518,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
     * each DRI driver's "createNewScreen" function.
     */
    status = drmMap(fd, hSAREA, SAREA_MAX, &pSAREA);
-   if (status) {
+   if (status != 0) {
       ErrorMessageF("drmMap of SAREA failed (%s)\n", strerror(-status));
       goto handle_error;
    }
@@ -533,7 +533,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
                                           loader_extensions,
                                           &driver_configs, psc);
 
-   if (!psp) {
+   if (psp == NULL) {
       ErrorMessageF("Calling driver entry point failed\n");
       goto handle_error;
    }
@@ -692,7 +692,7 @@ dri_create_context(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (!pcp)
+   if (pcp == NULL)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
@@ -713,7 +713,7 @@ dri_create_context(struct glx_screen *base,
       (*psc->legacy->createNewContext) (psc->driScreen,
                                         config->driConfig,
                                         renderType, shared, hwContext, pcp);
-   if (!pcp->driContext) {
+   if (pcp->driContext == NULL) {
       XF86DRIDestroyContext(psc->base.dpy, psc->base.scr, pcp->hwContextID);
       free(pcp);
       return NULL;
@@ -831,10 +831,10 @@ driSetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
 
-   if (pdraw) {
+   if (pdraw != NULL) {
       struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
-      if (psc->swapControl) {
+      if (psc->swapControl != NULL) {
          psc->swapControl->setSwapInterval(pdp->driDrawable, interval);
          return 0;
       }
@@ -847,10 +847,10 @@ driGetSwapInterval(__GLXDRIdrawable *pdraw)
 {
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
 
-   if (pdraw) {
+   if (pdraw != NULL) {
       struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
-      if (psc->swapControl)
+      if (psc->swapControl != NULL)
          return psc->swapControl->getSwapInterval(pdp->driDrawable);
    }
    return 0;
@@ -906,7 +906,7 @@ driCreateScreen(int screen, struct glx_display *priv)
    int i;
 
    psc = calloc(1, sizeof *psc);
-   if (!psc)
+   if (psc == NULL)
       return NULL;
 
    if (!glx_screen_init(&psc->base, screen, priv)) {
@@ -919,11 +919,11 @@ driCreateScreen(int screen, struct glx_display *priv)
    }
 
    psc->driver = driOpenDriver(driverName);
-   if (!psc->driver)
+   if (psc->driver == NULL)
       goto cleanup;
 
    extensions = dlsym(psc->driver, __DRI_DRIVER_EXTENSIONS);
-   if (!extensions) {
+   if (extensions == NULL) {
       ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
       goto cleanup;
    }
@@ -941,7 +941,7 @@ driCreateScreen(int screen, struct glx_display *priv)
    pdp = (struct dri_display *) priv->driDisplay;
    psc->driScreen =
       CallCreateNewScreen(psc->base.dpy, screen, psc, pdp);
-   if (!psc->driScreen)
+   if (psc->driScreen == NULL)
       goto cleanup;
 
    extensions = psc->core->getExtensions(psc->driScreen);

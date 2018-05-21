@@ -136,7 +136,7 @@ static bool radeon_bo_wait(struct pb_buffer *_buf, uint64_t timeout,
     int64_t abs_timeout;
 
     /* No timeout. Just query. */
-    if (!timeout)
+    if (timeout == 0)
         return !bo->num_active_ioctls && !radeon_bo_is_busy(bo);
 
     abs_timeout = os_time_get_absolute_timeout(timeout);
@@ -408,7 +408,7 @@ void radeon_bo_destroy(struct pb_buffer *_buf)
     else if (bo->initial_domain & RADEON_DOMAIN_GTT)
         rws->allocated_gtt -= align(bo->base.size, rws->info.gart_page_size);
 
-    if (bo->u.real.map_count) {
+    if (bo->u.real.map_count >= 1) {
         if (bo->initial_domain & RADEON_DOMAIN_VRAM)
             bo->rws->mapped_vram -= bo->base.size;
         else
@@ -1185,7 +1185,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     }
 
     if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
-        struct drm_gem_open open_arg = {0};
+        struct drm_gem_open open_arg = {};
         memset(&open_arg, 0, sizeof(open_arg));
         /* Open the BO. */
         open_arg.name = whandle->handle;
@@ -1198,7 +1198,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
         bo->flink_name = whandle->handle;
     } else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
         size = lseek(whandle->handle, 0, SEEK_END);
-        /*
+        /* 
          * Could check errno to determine whether the kernel is new enough, but
          * it doesn't really matter why this failed, just that it failed.
          */

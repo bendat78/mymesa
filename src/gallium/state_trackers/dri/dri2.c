@@ -1144,7 +1144,7 @@ dri2_create_image_from_fd(__DRIscreen *_screen,
 
    img = dri2_create_image_from_winsys(_screen, width, height, format,
                                        num_fds, whandles, loaderPrivate);
-   if(!img)
+   if(img == NULL)
       err = __DRI_IMAGE_ERROR_BAD_ALLOC;
 
 exit:
@@ -1312,7 +1312,7 @@ dri2_query_image(__DRIimage *image, int attrib, int *value)
       *value = image->texture->height0;
       return GL_TRUE;
    case __DRI_IMAGE_ATTRIB_COMPONENTS:
-      if (!image->dri_components)
+      if (image->dri_components == 0)
          return GL_FALSE;
       *value = image->dri_components;
       return GL_TRUE;
@@ -1421,7 +1421,7 @@ dri2_from_names(__DRIscreen *screen, int width, int height, int format,
 
    img = dri2_create_image_from_winsys(screen, width, height, format,
                                        1, &whandle, loaderPrivate);
-   if (!img)
+   if (img == NULL)
       return NULL;
 
    img->dri_components = dri_components;
@@ -1433,14 +1433,14 @@ dri2_from_planar(__DRIimage *image, int plane, void *loaderPrivate)
 {
    __DRIimage *img;
 
-   if (plane)
+   if (plane != 0)
       return NULL;
 
-   if (!image->dri_components)
+   if (image->dri_components == 0)
       return NULL;
 
    img = dri2_dup_image(image, loaderPrivate);
-   if (!img)
+   if (img == NULL)
       return NULL;
 
    if (img->texture->screen->resource_changed)
@@ -1464,7 +1464,7 @@ dri2_from_fds(__DRIscreen *screen, int width, int height, int fourcc,
                                    DRM_FORMAT_MOD_INVALID, fds, num_fds,
                                    strides, offsets, NULL,
                                    &dri_components, loaderPrivate);
-   if (!img)
+   if (img == NULL)
       return NULL;
 
    img->dri_components = dri_components;
@@ -1534,7 +1534,7 @@ dri2_from_dma_bufs(__DRIscreen *screen,
                                    DRM_FORMAT_MOD_INVALID, fds, num_fds,
                                    strides, offsets, error,
                                    &dri_components, loaderPrivate);
-   if (!img)
+   if (img == NULL)
       return NULL;
 
    img->yuv_color_space = yuv_color_space;
@@ -1565,7 +1565,7 @@ dri2_from_dma_bufs2(__DRIscreen *screen,
    img = dri2_create_image_from_fd(screen, width, height, fourcc,
                                    modifier, fds, num_fds, strides, offsets,
                                    error, &dri_components, loaderPrivate);
-   if (!img)
+   if (img == NULL)
       return NULL;
 
    img->yuv_color_space = yuv_color_space;
@@ -1711,7 +1711,7 @@ dri2_interop_query_device_info(__DRIcontext *_ctx,
    struct pipe_screen *screen = dri_context(_ctx)->st->pipe->screen;
 
    /* There is no version 0, thus we do not support it */
-   if (!out->version)
+   if (out->version == 0)
       return MESA_GLINTEROP_INVALID_VERSION;
 
    out->pci_segment_group = screen->get_param(screen, PIPE_CAP_PCI_GROUP);

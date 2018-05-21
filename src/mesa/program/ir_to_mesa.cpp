@@ -835,7 +835,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
     * 0, or 1, or is a component from one source register (possibly with
     * negation).
     */
-   uint8_t components[4] = {0};
+   uint8_t components[4] = { 0 };
    bool negate[4] = { false };
    ir_variable *var = NULL;
 
@@ -844,7 +844,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
 
       assert(op->type->is_scalar());
 
-      while (op) {
+      while (op != NULL) {
 	 switch (op->ir_type) {
 	 case ir_type_constant: {
 
@@ -1566,7 +1566,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       /* If there was already a relative address register involved, add the
        * new and the old together to get the new offset.
        */
-      if (src.reladdr)  {
+      if (src.reladdr != NULL)  {
 	 src_reg accum_reg = get_temp(glsl_type::float_type);
 
 	 emit(ir, OPCODE_ADD, dst_reg(accum_reg),
@@ -1733,8 +1733,7 @@ ir_to_mesa_visitor::process_move_condition(ir_rvalue *ir)
    bool switch_order = false;
 
    ir_expression *const expr = ir->as_expression();
-
-   if (expr && (expr->num_operands == 2)) {
+   if ((expr != NULL) && (expr->num_operands == 2)) {
       bool zero_on_left = false;
 
       if (expr->operands[0]->is_zero()) {
@@ -1805,7 +1804,7 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
     * FINISHME: component written (in the loops below).  This case can only
     * FINISHME: occur for matrices, arrays, and structures.
     */
-   if (!ir->write_mask) {
+   if (ir->write_mask == 0) {
       assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
       l.writemask = WRITEMASK_XYZW;
    } else if (ir->lhs->type->is_scalar()) {
@@ -1875,7 +1874,7 @@ void
 ir_to_mesa_visitor::visit(ir_constant *ir)
 {
    src_reg src;
-   GLfloat stack_vals[4] = {0};
+   GLfloat stack_vals[4] = { 0 };
    GLfloat *values = stack_vals;
    unsigned int i;
 
@@ -2501,7 +2500,7 @@ _mesa_generate_parameters_list_for_uniforms(struct gl_context *ctx,
    foreach_in_list(ir_instruction, node, sh->ir) {
       ir_variable *var = node->as_variable();
 
-      if (!(var) || (var->data.mode != ir_var_uniform)
+      if ((var == NULL) || (var->data.mode != ir_var_uniform)
 	  || var->is_in_buffer_block() || (strncmp(var->name, "gl_", 3) == 0))
 	 continue;
 
@@ -2935,7 +2934,7 @@ get_mesa_program(struct gl_context *ctx,
 
       switch (mesa_inst->Opcode) {
       case OPCODE_IF:
-	 if (!options->MaxIfDepth) {
+	 if (options->MaxIfDepth == 0) {
 	    linker_warning(shader_program,
 			   "Couldn't flatten if-statement.  "
 			   "This will likely result in software "
@@ -3044,7 +3043,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    assert(prog->data->LinkStatus);
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (!prog->_LinkedShaders[i])
+      if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
       bool progress;
@@ -3067,7 +3066,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
 	 progress = lower_quadop_vector(ir, true) || progress;
 
-	 if (!options->MaxIfDepth)
+	 if (options->MaxIfDepth == 0)
 	    progress = lower_discard(ir) || progress;
 
 	 progress = lower_if_to_cond_assign((gl_shader_stage)i, ir,
@@ -3098,7 +3097,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_program *linked_prog;
 
-      if (!prog->_LinkedShaders[i])
+      if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
       linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
@@ -3190,8 +3189,10 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       }
    }
 
+#ifdef ENABLE_SHADER_CACHE
    if (prog->data->LinkStatus)
       shader_cache_write_program_metadata(ctx, prog);
+#endif
 }
 
 } /* extern "C" */

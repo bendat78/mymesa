@@ -153,10 +153,10 @@ gbm_dri_bo_map_dumb(struct gbm_dri_bo *bo)
    struct drm_mode_map_dumb map_arg;
    int ret;
 
-   if (bo->image)
+   if (bo->image != NULL)
       return NULL;
 
-   if (bo->map)
+   if (bo->map != NULL)
       return bo->map;
 
    memset(&map_arg, 0, sizeof(map_arg));

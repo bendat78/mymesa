@@ -79,7 +79,7 @@ skip_newline (const char *str)
 {
 	const char *ret = str;
 
-	if (!ret)
+	if (ret == NULL)
 		return ret;
 
 	if (*ret == '\0')
@@ -121,7 +121,7 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 	backslash = strchr(shader, '\\');
 
 	/* No line continuations were found in this shader, our job is done */
-	if (!backslash)
+	if (backslash == NULL)
 		return (char *) shader;
 
 	search_start = shader;
@@ -151,9 +151,9 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 	newline_separator[1] = '\0';
 	newline_separator[2] = '\0';
 
-	if (!cr) {
+	if (cr == NULL) {
 		/* Nothing to do. */
-	} else if (!lf) {
+	} else if (lf == NULL) {
 		newline_separator[0] = '\r';
 	} else if (lf == cr + 1) {
 		newline_separator[0] = '\r';
@@ -197,7 +197,7 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 
 		search_start = backslash + 1;
 
-		if (!backslash)
+		if (backslash == NULL)
 			break;
 
 		/* At each line continuation, (backslash followed by a

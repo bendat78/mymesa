@@ -142,9 +142,9 @@ void evergreen_apply_scissor_bug_workaround(struct r600_common_context *rctx,
 					    struct pipe_scissor_state *scissor)
 {
 	if (rctx->chip_class == EVERGREEN || rctx->chip_class == CAYMAN) {
-		if (!scissor->maxx)
+		if (scissor->maxx == 0)
 			scissor->minx = 1;
-		if (!scissor->maxy)
+		if (scissor->maxy == 0)
 			scissor->miny = 1;
 
 		if (rctx->chip_class == CAYMAN &&

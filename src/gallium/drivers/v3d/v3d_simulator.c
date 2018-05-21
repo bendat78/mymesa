@@ -185,7 +185,7 @@ v3d_create_simulator_bo(int fd, int handle, unsigned size)
         /* A handle of 0 is used for v3d_gem.c internal allocations that
          * don't need to go in the lookup table.
          */
-        if (handle) {
+        if (handle != 0) {
                 mtx_lock(&sim_state.mutex);
                 _mesa_hash_table_insert(file->bo_map, int_to_key(handle),
                                         sim_bo);
@@ -428,7 +428,7 @@ v3d_simulator_map_winsys_bo(int fd, struct v3d_simulator_bo *sim_bo)
                 .handle = sim_bo->handle,
         };
         ret = drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &map_dumb);
-        if (ret) {
+        if (ret != 0) {
                 fprintf(stderr, "map ioctl failure\n");
                 abort();
         }

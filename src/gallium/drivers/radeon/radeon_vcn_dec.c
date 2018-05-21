@@ -208,7 +208,7 @@ static rvcn_dec_message_hevc_t get_h265_msg(struct radeon_decoder *dec,
 	result.sps_info_flags |= pic->pps->sps->separate_colour_plane_flag << 8;
 	if (((struct si_screen*)dec->screen)->info.family == CHIP_CARRIZO)
 		result.sps_info_flags |= 1 << 9;
-	if (pic->UseRefPicList)
+	if (pic->UseRefPicList == true)
 		result.sps_info_flags |= 1 << 10;
 
 	result.chroma_format = pic->pps->sps->chroma_format_idc;
@@ -288,12 +288,12 @@ static rvcn_dec_message_hevc_t get_h265_msg(struct radeon_decoder *dec,
 				break;
 			if (j == 15)
 				dec->render_pic_list[i] = NULL;
-			else if (!pic->ref[j+1])
+			else if (pic->ref[j+1] == NULL)
 				dec->render_pic_list[i] = NULL;
 		}
 	}
 	for (i = 0 ; i < 16 ; i++) {
-		if (!dec->render_pic_list[i]) {
+		if (dec->render_pic_list[i] == NULL) {
 			dec->render_pic_list[i] = target;
 			result.curr_idx = i;
 			break;
@@ -899,7 +899,7 @@ static struct pb_buffer *rvcn_dec_message_decode(struct radeon_decoder *dec,
 
 		memcpy(codec, (void*)&hevc, sizeof(rvcn_dec_message_hevc_t));
 		index->message_id = RDECODE_MESSAGE_HEVC;
-		if (!dec->ctx.res) {
+		if (dec->ctx.res == NULL) {
 			unsigned ctx_size;
 			if (dec->base.profile == PIPE_VIDEO_PROFILE_HEVC_MAIN_10)
 				ctx_size = calc_ctx_size_h265_main10(dec,
@@ -948,7 +948,7 @@ static struct pb_buffer *rvcn_dec_message_decode(struct radeon_decoder *dec,
 		memcpy(codec, (void*)&vp9, sizeof(rvcn_dec_message_vp9_t));
 		index->message_id = RDECODE_MESSAGE_VP9;
 
-		if (!dec->ctx.res) {
+		if (dec->ctx.res == NULL) {
 			unsigned ctx_size;
 			uint8_t *ptr;
 

@@ -412,7 +412,7 @@ intel_allocate_image(struct intel_screen *screen, int dri_format,
     __DRIimage *image;
 
     image = calloc(1, sizeof *image);
-    if (!image)
+    if (image == NULL)
 	return NULL;
 
     image->screen = screen;
@@ -469,7 +469,7 @@ intel_create_image_from_name(__DRIscreen *dri_screen,
     int cpp;
 
     image = intel_allocate_image(screen, format, loaderPrivate);
-    if (!image)
+    if (image == NULL)
        return NULL;
 
     if (image->format == MESA_FORMAT_NONE)
@@ -510,7 +510,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    irb = intel_renderbuffer(rb);
    intel_miptree_make_shareable(brw, irb->mt);
    image = calloc(1, sizeof *image);
-   if (!image)
+   if (image == NULL)
       return NULL;
 
    image->internal_format = rb->InternalFormat;
@@ -571,7 +571,7 @@ intel_create_image_from_texture(__DRIcontext *context, int target,
       return NULL;
    }
    image = calloc(1, sizeof *image);
-   if (!image) {
+   if (image == NULL) {
       *error = __DRI_IMAGE_ERROR_BAD_ALLOC;
       return NULL;
    }
@@ -696,7 +696,7 @@ intel_create_image_common(__DRIscreen *dri_screen,
    }
 
    image = intel_allocate_image(screen, format, loaderPrivate);
-   if (!image)
+   if (image == NULL)
       return NULL;
 
    const struct isl_drm_modifier_info *mod_info =
@@ -747,8 +747,7 @@ intel_create_image_common(__DRIscreen *dri_screen,
                                   surf.size + aux_surf.size,
                                   isl_tiling_to_i915_tiling(mod_info->tiling),
                                   surf.row_pitch, BO_ALLOC_ZEROED);
-
-   if (!image->bo) {
+   if (image->bo == NULL) {
       free(image);
       return NULL;
    }
@@ -870,7 +869,7 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
       *value = image->height;
       return true;
    case __DRI_IMAGE_ATTRIB_COMPONENTS:
-      if (!image->planar_format)
+      if (image->planar_format == NULL)
          return false;
       *value = image->planar_format->components;
       return true;
@@ -930,7 +929,7 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    __DRIimage *image;
 
    image = calloc(1, sizeof *image);
-   if (!image)
+   if (image == NULL)
       return NULL;
 
    brw_bo_reference(orig_image->bo);
@@ -984,7 +983,7 @@ intel_create_image_from_names(__DRIscreen *dri_screen,
         return NULL;
 
     f = intel_image_format_lookup(fourcc);
-    if (!f)
+    if (f == NULL)
         return NULL;
 
     image = intel_create_image_from_name(dri_screen, width, height,
@@ -992,7 +991,7 @@ intel_create_image_from_names(__DRIscreen *dri_screen,
                                          names[0], strides[0],
                                          loaderPrivate);
 
-   if (!image)
+   if (image == NULL)
       return NULL;
 
     image->planar_format = f;
@@ -1022,7 +1021,7 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
       return NULL;
 
    f = intel_image_format_lookup(fourcc);
-   if (!f)
+   if (f == NULL)
       return NULL;
 
    if (modifier != DRM_FORMAT_MOD_INVALID &&
@@ -1036,7 +1035,7 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
       image = intel_allocate_image(screen, __DRI_IMAGE_FORMAT_NONE,
                                    loaderPrivate);
 
-   if (!image)
+   if (image == NULL)
       return NULL;
 
    image->width = width;
@@ -1055,7 +1054,7 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
       image->bo = brw_bo_gem_create_from_prime(screen->bufmgr, fds[0]);
    }
 
-   if (!image->bo) {
+   if (image->bo == NULL) {
       free(image);
       return NULL;
    }
@@ -1159,7 +1158,7 @@ intel_create_image_from_fds_common(__DRIscreen *dri_screen,
 
    /* Check that the requested image actually fits within the BO. 'size'
     * is already relative to the offsets, so we don't need to add that. */
-   if (!image->bo->size) {
+   if (image->bo->size == 0) {
       image->bo->size = size;
    } else if (size > image->bo->size) {
       brw_bo_unreference(image->bo);
@@ -1262,7 +1261,7 @@ intel_query_dma_buf_formats(__DRIscreen *screen, int max,
 {
    int i, j = 0;
 
-   if (!max) {
+   if (max == 0) {
       /* Note, sRGB formats not included. */
       *count = ARRAY_SIZE(intel_image_formats) - 2;
       return true;
@@ -1290,7 +1289,7 @@ intel_query_dma_buf_modifiers(__DRIscreen *_screen, int fourcc, int max,
    int num_mods = 0, i;
 
    f = intel_image_format_lookup(fourcc);
-   if (!f)
+   if (f == NULL)
       return false;
 
    for (i = 0; i < ARRAY_SIZE(supported_modifiers); i++) {
@@ -1299,7 +1298,7 @@ intel_query_dma_buf_modifiers(__DRIscreen *_screen, int fourcc, int max,
          continue;
 
       num_mods++;
-      if (!max)
+      if (max == 0)
          continue;
 
       modifiers[num_mods - 1] = modifier;
@@ -1307,7 +1306,7 @@ intel_query_dma_buf_modifiers(__DRIscreen *_screen, int fourcc, int max,
         break;
    }
 
-   if (external_only) {
+   if (external_only != NULL) {
       for (i = 0; i < num_mods && i < max; i++) {
          if (f->components == __DRI_IMAGE_COMPONENTS_Y_U_V ||
              f->components == __DRI_IMAGE_COMPONENTS_Y_UV ||
@@ -1330,7 +1329,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     int width, height, offset, stride, size, dri_format;
     __DRIimage *image;
 
-    if (!parent)
+    if (parent == NULL)
        return NULL;
 
     width = parent->width;
@@ -1347,7 +1346,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
        offset = parent->offsets[index];
        stride = parent->strides[index];
        size = height * stride;
-    } else if (!plane) {
+    } else if (plane == 0) {
        /* The only plane of a non-planar image: copy the parent definition
         * directly. */
        dri_format = parent->dri_format;
@@ -1371,7 +1370,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     }
 
     image = intel_allocate_image(parent->screen, dri_format, loaderPrivate);
-    if (!image)
+    if (image == NULL)
        return NULL;
 
     image->bo = parent->bo;
@@ -1666,7 +1665,7 @@ intelCreateBuffer(__DRIscreen *dri_screen,
    } else if (mesaVis->sRGBCapable) {
       rgbFormat = mesaVis->redMask == 0xff ? MESA_FORMAT_R8G8B8A8_SRGB
                                            : MESA_FORMAT_B8G8R8A8_SRGB;
-   } else if (!mesaVis->alphaBits) {
+   } else if (mesaVis->alphaBits == 0) {
       rgbFormat = mesaVis->redMask == 0xff ? MESA_FORMAT_R8G8B8X8_UNORM
                                            : MESA_FORMAT_B8G8R8X8_UNORM;
    } else {
@@ -1810,11 +1809,11 @@ intel_init_bufmgr(struct intel_screen *screen)
 {
    __DRIscreen *dri_screen = screen->driScrnPriv;
 
-   if (getenv("INTEL_NO_HW"))
+   if (getenv("INTEL_NO_HW") != NULL)
       screen->no_hw = true;
 
    screen->bufmgr = brw_bufmgr_init(&screen->devinfo, dri_screen->fd);
-   if (!screen->bufmgr) {
+   if (screen->bufmgr == NULL) {
       fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
 	      __func__, __LINE__);
       return false;
@@ -1836,7 +1835,7 @@ intel_detect_swizzling(struct intel_screen *screen)
    struct brw_bo *buffer =
       brw_bo_alloc_tiled(screen->bufmgr, "swizzle test", 32768,
                          tiling, 512, 0);
-   if (!buffer)
+   if (buffer == NULL)
       return false;
 
    brw_bo_get_tiling(buffer, &tiling, &swizzle_mode);
@@ -1911,11 +1910,11 @@ intel_detect_pipelined_register(struct intel_screen *screen,
 
    /* Create a zero'ed temporary buffer for reading our results */
    results = brw_bo_alloc(screen->bufmgr, "registers", 4096);
-   if (!results)
+   if (results == NULL)
       goto err;
 
    bo = brw_bo_alloc(screen->bufmgr, "batchbuffer", 4096);
-   if (!bo)
+   if (bo == NULL)
       goto err_results;
 
    map = brw_bo_map(NULL, bo, MAP_WRITE);
@@ -2098,6 +2097,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    };
 
    static const uint8_t singlesample_samples[1] = {0};
+
    struct intel_screen *screen = dri_screen->driverPrivate;
    const struct gen_device_info *devinfo = &screen->devinfo;
    uint8_t depth_bits[4], stencil_bits[4];
@@ -2248,7 +2248,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
       configs = driConcatConfigs(configs, new_configs);
    }
 
-   if (!configs) {
+   if (configs == NULL) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;
@@ -2708,7 +2708,7 @@ intelAllocateBuffer(__DRIscreen *dri_screen,
           attachment == __DRI_BUFFER_BACK_LEFT);
 
    intelBuffer = calloc(1, sizeof *intelBuffer);
-   if (!intelBuffer)
+   if (intelBuffer == NULL)
       return NULL;
 
    /* The front and back buffers are color buffers, which are X tiled. GEN9+
@@ -2724,7 +2724,7 @@ intelAllocateBuffer(__DRIscreen *dri_screen,
                                            I915_TILING_X, &pitch,
                                            BO_ALLOC_BUSY);
 
-   if (!intelBuffer->bo) {
+   if (intelBuffer->bo == NULL) {
 	   free(intelBuffer);
 	   return NULL;
    }

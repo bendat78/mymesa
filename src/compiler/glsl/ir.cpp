@@ -72,10 +72,10 @@ ir_assignment::set_lhs(ir_rvalue *lhs)
    void *mem_ctx = this;
    bool swizzled = false;
 
-   while (lhs) {
+   while (lhs != NULL) {
       ir_swizzle *swiz = lhs->as_swizzle();
 
-      if (!swiz)
+      if (swiz == NULL)
 	 break;
 
       unsigned write_mask = 0;
@@ -128,7 +128,7 @@ ir_assignment::whole_variable_written()
 {
    ir_variable *v = this->lhs->whole_variable_referenced();
 
-   if (!v)
+   if (v == NULL)
       return NULL;
 
    if (v->type->is_scalar())
@@ -1421,7 +1421,7 @@ ir_dereference::is_lvalue(const struct _mesa_glsl_parse_state *state) const
 
    /* Every l-value derference chain eventually ends in a variable.
     */
-   if (!(var) || var->data.read_only)
+   if ((var == NULL) || var->data.read_only)
       return false;
 
    /* From section 4.1.7 of the ARB_bindless_texture spec:
@@ -1723,7 +1723,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.bindless = false;
    this->data.bound = false;
 
-   if (type) {
+   if (type != NULL) {
       if (type->is_interface())
          this->init_interface_type(type);
       else if (type->without_array()->is_interface())
@@ -1799,7 +1799,7 @@ ir_function_signature::is_builtin_available(const _mesa_glsl_parse_state *state)
     * imported built-in prototypes to their definitions, which will always
     * be an exact match.  So we can skip the filtering.
     */
-   if (!state)
+   if (state == NULL)
       return true;
 
    assert(builtin_avail != NULL);
@@ -1917,7 +1917,8 @@ steal_memory(ir_instruction *ir, void *new_ctx)
    /* The components of aggregate constants are not visited by the normal
     * visitor, so steal their values by hand.
     */
-   if (constant && (constant->type->is_array() || constant->type->is_record())) {
+   if (constant != NULL &&
+       (constant->type->is_array() || constant->type->is_record())) {
       for (unsigned int i = 0; i < constant->type->length; i++) {
          steal_memory(constant->const_elements[i], ir);
       }

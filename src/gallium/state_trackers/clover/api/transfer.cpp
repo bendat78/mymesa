@@ -42,7 +42,7 @@ namespace {
                         map(multiplies(), region, pitch))) {
          // The spec defines a value of zero as the natural pitch,
          // i.e. the unaligned size of the previous dimension.
-         if (!std::get<0>(x))
+         if (std::get<0>(x) == 0)
             std::get<0>(x) = std::get<1>(x);
       }
 
@@ -245,7 +245,7 @@ namespace {
          auto src = _map<S>::get(q, src_obj, CL_MAP_READ,
                                  dot(src_pitch, src_orig),
                                  size(src_pitch, region));
-         vector_t v = {0};
+         vector_t v = {};
 
          for (v[2] = 0; v[2] < region[2]; ++v[2]) {
             for (v[1] = 0; v[1] < region[1]; ++v[1]) {

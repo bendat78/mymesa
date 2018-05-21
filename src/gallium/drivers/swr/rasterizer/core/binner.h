@@ -47,7 +47,7 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Convert the X,Y coords of a triangle to the requested Fixed
+/// @brief Convert the X,Y coords of a triangle to the requested Fixed 
 /// Point precision from FP32.
 template <typename SIMD_T, typename PT = FixedPointTraits<Fixed_16_8>>
 INLINE Integer<SIMD_T> fpToFixedPointVertical(const Float<SIMD_T> &vIn)
@@ -56,7 +56,7 @@ INLINE Integer<SIMD_T> fpToFixedPointVertical(const Float<SIMD_T> &vIn)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// @brief Helper function to set the X,Y coords of a triangle to the
+/// @brief Helper function to set the X,Y coords of a triangle to the 
 /// requested Fixed Point precision from FP32.
 /// @param tri: simdvector[3] of FP triangle verts
 /// @param vXi: fixed point X coords of tri verts
@@ -78,7 +78,7 @@ INLINE static void FPToFixedPoint(const Vec4<SIMD_T> *const tri, Integer<SIMD_T>
 /// @param vX: fixed point X position for triangle verts
 /// @param vY: fixed point Y position for triangle verts
 /// @param bbox: fixed point bbox
-/// *Note*: expects vX, vY to be in the correct precision for the type
+/// *Note*: expects vX, vY to be in the correct precision for the type 
 /// of rasterization. This avoids unnecessary FP->fixed conversions.
 template <typename SIMD_T, typename CT>
 INLINE void calcBoundingBoxIntVertical(const Integer<SIMD_T>(&vX)[3], const Integer<SIMD_T>(&vY)[3], SIMDBBOX_T<SIMD_T> &bbox)
@@ -103,7 +103,7 @@ INLINE void calcBoundingBoxIntVertical(const Integer<SIMD_T>(&vX)[3], const Inte
     vMaxY = SIMD_T::max_epi32(vMaxY, vY[1]);
     vMaxY = SIMD_T::max_epi32(vMaxY, vY[2]);
 
-    if (CT::BoundingBoxOffsetT::value)
+    if (CT::BoundingBoxOffsetT::value != 0)
     {
         /// Bounding box needs to be expanded by 1/512 before snapping to 16.8 for conservative rasterization
         /// expand bbox by 1/256; coverage will be correctly handled in the rasterizer.

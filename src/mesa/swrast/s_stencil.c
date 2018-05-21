@@ -95,7 +95,7 @@ clamp(GLint val)
 
 
 #define STENCIL_OP(NEW_VAL)                                                 \
-   if (!invmask) {                                                      \
+   if (invmask == 0) {                                                      \
       for (i = j = 0; i < n; i++, j += stride) {                            \
          if (mask[i]) {                                                     \
             GLubyte s = stencil[j];                                         \
@@ -434,9 +434,9 @@ _swrast_stencil_and_ztest_span(struct gl_context *ctx, SWspan *span)
       put_s8_values(ctx, rb, count, span->array->x, span->array->y,
                     stencilBuf);
    }
-
+   
    span->writeAll = GL_FALSE;
-
+   
    return GL_TRUE;  /* one or more fragments passed both tests */
 }
 
@@ -590,7 +590,7 @@ _swrast_clear_stencil_buffer(struct gl_context *ctx)
       {
          GLubyte clear = ctx->Stencil.Clear & writeMask & 0xff;
          GLubyte mask = (~writeMask) & 0xff;
-         if (mask) {
+         if (mask != 0) {
             /* masked clear */
             for (i = 0; i < height; i++) {
                GLubyte *row = map;

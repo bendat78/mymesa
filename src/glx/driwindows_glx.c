@@ -120,7 +120,7 @@ driwindows_bind_tex_image(Display * dpy,
 
    __glXInitialize(dpy);
 
-   if (pdraw) {
+   if (pdraw != NULL) {
       windows_setTexBuffer(pcp->windowsContext,
                           pdraw->base.textureTarget,
                           pdraw->base.textureFormat,
@@ -186,7 +186,7 @@ driwindows_create_context(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (!pcp)
+   if (pcp == NULL)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
@@ -261,7 +261,7 @@ driwindows_create_context_attribs(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (!pcp)
+   if (pcp == NULL)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
@@ -276,7 +276,7 @@ driwindows_create_context_attribs(struct glx_screen *base,
    pcp->windowsContext = windows_create_context_attribs(config->pxfi,
                                                       shared,
                                                       (const int *)attribs);
-   if (!pcp->windowsContext) {
+   if (pcp->windowsContext == NULL) {
       free(pcp);
       return NULL;
    }
@@ -482,13 +482,13 @@ driwindowsMapConfigs(struct glx_display *priv, int screen, struct glx_config *co
 
       int pxfi;
       XWindowsDRIFBConfigToPixelFormat(priv->dpy, screen, fbconfigID, &pxfi);
-      if (!pxfi)
+      if (pxfi == 0)
          continue;
 
       struct driwindows_config *config = malloc(sizeof(*config));
 
       tail->next = &config->base;
-      if (!tail->next)
+      if (tail->next == NULL)
          continue;
 
       config->base = *m;
@@ -509,7 +509,7 @@ driwindowsCreateScreen(int screen, struct glx_display *priv)
    int directCapable;
 
    psc = calloc(1, sizeof *psc);
-   if (!psc)
+   if (psc == NULL)
       return NULL;
 
    if (!glx_screen_init(&psc->base, screen, priv)) {
@@ -598,7 +598,7 @@ driwindowsCreateDisplay(Display * dpy)
    }
 
    pdpyp = malloc(sizeof *pdpyp);
-   if (!pdpyp)
+   if (pdpyp == NULL)
       return NULL;
 
    pdpyp->base.destroyDisplay = driwindowsDestroyDisplay;

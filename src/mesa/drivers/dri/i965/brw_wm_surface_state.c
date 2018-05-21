@@ -217,7 +217,7 @@ brw_emit_surface_state(struct brw_context *brw,
       }
    }
 
-   if (clear_bo) {
+   if (clear_bo != NULL) {
       /* Make sure the offset is aligned with a cacheline. */
       assert((clear_offset & 0x3f) == 0);
       uint32_t *clear_address =
@@ -992,7 +992,7 @@ update_renderbuffer_surfaces(struct brw_context *brw)
    uint32_t *surf_offsets = brw->wm.base.surf_offset;
 
    /* Update surfaces for drawing buffers */
-   if (fb->_NumColorDrawBuffers) {
+   if (fb->_NumColorDrawBuffers >= 1) {
       for (unsigned i = 0; i < fb->_NumColorDrawBuffers; i++) {
          struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[i];
 
@@ -1638,7 +1638,7 @@ brw_upload_cs_work_groups_surface(struct brw_context *brw)
       struct brw_bo *bo;
       uint32_t bo_offset;
 
-      if (!brw->compute.num_work_groups_bo) {
+      if (brw->compute.num_work_groups_bo == NULL) {
          bo = NULL;
          brw_upload_data(&brw->upload,
                          (void *)brw->compute.num_work_groups,

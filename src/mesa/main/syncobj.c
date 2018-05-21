@@ -199,7 +199,7 @@ _mesa_unref_sync_object(struct gl_context *ctx, struct gl_sync_object *syncObj,
 
    simple_mtx_lock(&ctx->Shared->Mutex);
    syncObj->RefCount -= amount;
-   if (!syncObj->RefCount) {
+   if (syncObj->RefCount == 0) {
       entry = _mesa_set_search(ctx->Shared->SyncObjects, syncObj);
       assert (entry != NULL);
       _mesa_set_remove(ctx->Shared->SyncObjects, entry);
@@ -233,7 +233,7 @@ delete_sync(struct gl_context *ctx, GLsync sync, bool no_error)
     *    INVALID_VALUE error is generated if <sync> is neither zero nor the
     *    name of a sync object.
     */
-   if (!sync) {
+   if (sync == 0) {
       return;
    }
 
@@ -274,22 +274,9 @@ static GLsync
 fence_sync(struct gl_context *ctx, GLenum condition, GLbitfield flags)
 {
    struct gl_sync_object *syncObj;
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
-
-   if (condition != GL_SYNC_GPU_COMMANDS_COMPLETE) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glFenceSync(condition=0x%x)",
-		  condition);
-      return 0;
-   }
-
-   if (flags) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glFenceSync(flags=0x%x)",
-		  condition);
-      return 0;
-   }
 
    syncObj = ctx->Driver.NewSyncObject(ctx);
-   if (syncObj) {
+   if (syncObj != NULL) {
       /* The name is not currently used, and it is never visible to
        * applications.  If sync support is extended to provide support for
        * NV_fence, this field will be used.  We'll also need to add an object
@@ -335,7 +322,7 @@ _mesa_FenceSync(GLenum condition, GLbitfield flags)
       return 0;
    }
 
-   if (flags) {
+   if (flags != 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glFenceSync(flags=0x%x)", condition);
       return 0;
    }
@@ -361,7 +348,7 @@ client_wait_sync(struct gl_context *ctx, struct gl_sync_object *syncObj,
    if (syncObj->StatusFlag) {
       ret = GL_ALREADY_SIGNALED;
    } else {
-      if (!timeout) {
+      if (timeout == 0) {
          ret = GL_TIMEOUT_EXPIRED;
       } else {
          ctx->Driver.ClientWaitSync(ctx, syncObj, flags, timeout);
@@ -435,7 +422,7 @@ _mesa_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_sync_object *syncObj;
 
-   if (flags) {
+   if (flags != 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glWaitSync(flags=0x%x)", flags);
       return;
    }
@@ -520,7 +507,7 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
       memcpy(values, v, sizeof(GLint) * copy_count);
    }
 
-   if (length) {
+   if (length != NULL) {
       *length = size;
    }
 

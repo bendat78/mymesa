@@ -105,7 +105,7 @@ emit_vertex_input(struct anv_pipeline *pipeline,
 
    const uint32_t total_elems =
       elem_count + needs_svgs_elem + vs_prog_data->uses_drawid;
-   if (!total_elems)
+   if (total_elems == 0)
       return;
 
    uint32_t *p;
@@ -803,7 +803,7 @@ emit_ds_state(struct anv_pipeline *pipeline,
 #  define depth_stencil_dw pipeline->gen9.wm_depth_stencil
 #endif
 
-   if (!pCreateInfo) {
+   if (pCreateInfo == NULL) {
       /* We're going to OR this together with the dynamic state.  We need
        * to make sure it's initialized to something useful.
        */
@@ -889,7 +889,7 @@ emit_cb_state(struct anv_pipeline *pipeline,
    uint32_t *state_pos = pipeline->blend_state.map;
    state_pos += GENX(BLEND_STATE_length);
 #if GEN_GEN >= 8
-   struct GENX(BLEND_STATE_ENTRY) bs0 = {0};
+   struct GENX(BLEND_STATE_ENTRY) bs0 = { 0 };
 #endif
    for (unsigned i = 0; i < surface_count; i++) {
       struct anv_pipeline_binding *binding = &map->surface_to_descriptor[i];
@@ -951,7 +951,7 @@ emit_cb_state(struct anv_pipeline *pipeline,
 #endif
       }
 
-      if (a->colorWriteMask)
+      if (a->colorWriteMask != 0)
          has_writeable_rt = true;
 
       /* Our hardware applies the blend factor prior to the blend function
@@ -973,7 +973,7 @@ emit_cb_state(struct anv_pipeline *pipeline,
       GENX(BLEND_STATE_ENTRY_pack)(NULL, state_pos, &entry);
       state_pos += GENX(BLEND_STATE_ENTRY_length);
 #if GEN_GEN >= 8
-      if (!i)
+      if (i == 0)
          bs0 = entry;
 #endif
    }
@@ -1676,7 +1676,7 @@ genX(graphics_pipeline_create)(
 
    pipeline = vk_alloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
                          VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!pipeline)
+   if (pipeline == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    result = anv_pipeline_init(pipeline, device, cache,
@@ -1759,7 +1759,7 @@ compute_pipeline_create(
 
    pipeline = vk_alloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
                          VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!pipeline)
+   if (pipeline == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    pipeline->device = device;

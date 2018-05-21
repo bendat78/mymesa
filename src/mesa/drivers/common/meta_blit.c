@@ -641,7 +641,7 @@ blitframebuffer_texture(struct gl_context *ctx,
       texObj = readAtt->Texture;
    } else if (!readAtt->Texture && ctx->Driver.BindRenderbufferTexImage) {
       texObj = _mesa_meta_texture_object_from_renderbuffer(ctx, rb);
-      if (!texObj)
+      if (texObj == NULL)
          return false;
 
       fb_tex_blit.temp_tex_obj = texObj;
@@ -675,7 +675,7 @@ blitframebuffer_texture(struct gl_context *ctx,
 
       srcLevel = 0;
       texObj = meta_temp_texture->tex_obj;
-      if (!texObj) {
+      if (texObj == NULL) {
          return false;
       }
 
@@ -851,7 +851,7 @@ _mesa_meta_fb_tex_blit_end(struct gl_context *ctx, GLenum target,
     * _mesa_meta_end().  If the texture is the temporary texture that is about
     * to be destroyed, don't bother restoring its state.
     */
-   if (!blit->temp_tex_obj) {
+   if (blit->temp_tex_obj == NULL) {
       /* If the target restricts values for base level or max level, we assume
        * that the original values were valid.
        */
@@ -918,7 +918,7 @@ _mesa_meta_setup_sampler(struct gl_context *ctx,
                        GL_NEAREST : filter;
 
    samp_obj =  ctx->Driver.NewSamplerObject(ctx, 0xDEADBEEF);
-   if (!samp_obj)
+   if (samp_obj == NULL)
       return NULL;
 
    _mesa_bind_sampler(ctx, ctx->Texture.CurrentUnit, samp_obj);
@@ -1046,7 +1046,7 @@ _mesa_meta_glsl_blit_cleanup(struct gl_context *ctx, struct blit_state *blit)
    _mesa_meta_blit_shader_table_cleanup(ctx, &blit->shaders_with_depth);
    _mesa_meta_blit_shader_table_cleanup(ctx, &blit->shaders_without_depth);
 
-   if (blit->depthTex.tex_obj) {
+   if (blit->depthTex.tex_obj != NULL) {
       _mesa_delete_nameless_texture(ctx, blit->depthTex.tex_obj);
       blit->depthTex.tex_obj = NULL;
    }

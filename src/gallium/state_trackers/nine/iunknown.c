@@ -123,9 +123,9 @@ NineUnknown_Release( struct NineUnknown *This )
 
     ULONG r = p_atomic_dec_return(&This->refs);
 
-    if (!r) {
+    if (r == 0) {
         if (This->device) {
-            if (!NineUnknown_Release(NineUnknown(This->device)))
+            if (NineUnknown_Release(NineUnknown(This->device)) == 0)
                 return r; /* everything's gone */
         }
         /* Containers (here with !forward) take care of item destruction */
@@ -146,9 +146,9 @@ NineUnknown_ReleaseWithDtorLock( struct NineUnknown *This )
 
     ULONG r = p_atomic_dec_return(&This->refs);
 
-    if (!r) {
+    if (r == 0) {
         if (This->device) {
-            if (!NineUnknown_ReleaseWithDtorLock(NineUnknown(This->device)))
+            if (NineUnknown_ReleaseWithDtorLock(NineUnknown(This->device)) == 0)
                 return r; /* everything's gone */
         }
         /* Containers (here with !forward) take care of item destruction */

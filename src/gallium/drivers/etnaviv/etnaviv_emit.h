@@ -76,7 +76,7 @@ static inline void
 etna_set_state_multi(struct etna_cmd_stream *stream, uint32_t base,
                      uint32_t num, const uint32_t *values)
 {
-   if (!num)
+   if (num == 0)
       return;
 
    etna_cmd_stream_reserve(stream, 1 + num + 1); /* 1 extra for potential alignment */
@@ -174,7 +174,7 @@ static inline void
 check_coalsence(struct etna_cmd_stream *stream, struct etna_coalesce *coalesce,
                 uint32_t reg, uint32_t fixp)
 {
-   if (coalesce->last_reg) {
+   if (coalesce->last_reg != 0) {
       if (((coalesce->last_reg + 4) != reg) || (coalesce->last_fixp != fixp)) {
          etna_coalesce_end(stream, coalesce);
          etna_emit_load_state(stream, reg >> 2, 0, fixp);

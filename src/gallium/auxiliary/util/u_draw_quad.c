@@ -38,7 +38,7 @@
  * Draw a simple vertex buffer / primitive.
  * Limited to float[4] vertex attribs, tightly packed.
  */
-void
+void 
 util_draw_vertex_buffer(struct pipe_context *pipe,
                         struct cso_context *cso,
                         struct pipe_resource *vbuf,

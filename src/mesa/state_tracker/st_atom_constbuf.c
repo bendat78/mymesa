@@ -199,7 +199,7 @@ st_bind_ubos(struct st_context *st, struct gl_program *prog,
              enum pipe_shader_type shader_type)
 {
    unsigned i;
-   struct pipe_constant_buffer cb = {0};
+   struct pipe_constant_buffer cb = { 0 };
 
    if (!prog)
       return;

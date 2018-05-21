@@ -695,7 +695,7 @@ etna_get_specs(struct etna_screen *screen)
       DBG("could not get %s", "ETNA_GPU_NUM_CONSTANTS");
       goto fail;
    }
-   if (!val) {
+   if (val == 0) {
       fprintf(stderr, "Warning: zero num constants (update kernel?)\n");
       val = 168;
    }
@@ -813,7 +813,7 @@ etna_get_specs(struct etna_screen *screen)
       screen->specs.has_unified_uniforms = true;
       screen->specs.vs_uniforms_offset = VIVS_SH_HALTI5_UNIFORMS_MIRROR(0);
       screen->specs.ps_uniforms_offset = VIVS_SH_HALTI5_UNIFORMS(screen->specs.max_vs_uniforms*4);
-   } else if (screen->specs.halti) {
+   } else if (screen->specs.halti >= 1) {
       /* unified uniform memory on GC3000 - HALTI1 feature bit is just a guess
       */
       screen->specs.has_unified_uniforms = true;

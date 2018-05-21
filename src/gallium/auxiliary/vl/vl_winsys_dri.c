@@ -308,7 +308,7 @@ static xcb_screen_t *
 get_xcb_screen(xcb_screen_iterator_t iter, int screen)
 {
     for (; iter.rem; --screen, xcb_screen_next(&iter))
-        if (!screen)
+        if (screen == 0)
             return iter.data;
 
     return NULL;
@@ -369,7 +369,7 @@ vl_dri2_screen_create(Display *display, int screen)
          unsigned primeid;
          errno = 0;
          primeid = strtoul(prime, NULL, 0);
-         if (!errno)
+         if (errno == 0)
             driverType |=
                ((primeid & DRI2DriverPrimeMask) << DRI2DriverPrimeShift);
       }

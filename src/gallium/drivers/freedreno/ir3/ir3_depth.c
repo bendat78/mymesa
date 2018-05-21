@@ -153,7 +153,7 @@ ir3_instr_depth(struct ir3_instruction *instr, unsigned boost, bool falsedep)
 		ir3_instr_depth(src, boost, __is_false_dep(instr, i));
 
 		/* for array writes, no need to delay on previous write: */
-		if (!i)
+		if (i == 0)
 			continue;
 
 		sd = ir3_delayslots(src, instr, i) + src->depth;

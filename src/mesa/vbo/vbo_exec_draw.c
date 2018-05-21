@@ -103,7 +103,7 @@ vbo_copy_vertices(struct vbo_exec_context *exec)
          memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
       return i;
    case GL_LINE_STRIP:
-      if (!nr) {
+      if (nr == 0) {
          return 0;
       }
       else {
@@ -111,7 +111,7 @@ vbo_copy_vertices(struct vbo_exec_context *exec)
          return 1;
       }
    case GL_LINE_LOOP:
-      if (!last_prim->begin) {
+      if (last_prim->begin == 0) {
          /* We're dealing with the second or later section of a split/wrapped
           * GL_LINE_LOOP.  Since we're converting line loops to line strips,
           * we've already increment the last_prim->start counter by one to
@@ -125,7 +125,7 @@ vbo_copy_vertices(struct vbo_exec_context *exec)
       /* fall-through */
    case GL_TRIANGLE_FAN:
    case GL_POLYGON:
-      if (!nr) {
+      if (nr == 0) {
          return 0;
       }
       else if (nr == 1) {
@@ -176,8 +176,8 @@ vbo_exec_bind_arrays(struct gl_context *ctx)
    struct vbo_context *vbo = vbo_context(ctx);
    struct gl_vertex_array_object *vao = vbo->VAO;
    struct vbo_exec_context *exec = &vbo->exec;
-   GLintptr buffer_offset;
 
+   GLintptr buffer_offset;
    if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
       assert(exec->vtx.bufferobj->Mappings[MAP_INTERNAL].Pointer);
       buffer_offset = exec->vtx.bufferobj->Mappings[MAP_INTERNAL].Offset;

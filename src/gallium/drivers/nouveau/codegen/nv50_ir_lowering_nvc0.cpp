@@ -664,9 +664,9 @@ NVC0LegalizePostRA::replaceZero(Instruction *i)
       if (imm) {
          if (i->op == OP_SELP && s == 2) {
             i->setSrc(s, pOne);
-            if (!imm->reg.data.u64)
+            if (imm->reg.data.u64 == 0)
                i->src(s).mod = i->src(s).mod ^ Modifier(NV50_IR_MOD_NOT);
-         } else if (!imm->reg.data.u64) {
+         } else if (imm->reg.data.u64 == 0) {
             i->setSrc(s, rZero);
          }
       }
@@ -1130,7 +1130,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
       // we're using the texture result from lane 0 in all cases, so make sure
       // that lane 0 is pointing at the proper array index, indirect value,
       // and depth compare.
-      if (l) {
+      if (l != 0) {
          for (c = 0; c < array; ++c)
             bld.mkQuadop(0x00, arr[c], l, i->getSrc(c), zero);
          if (i->tex.target.isShadow()) {
@@ -1163,7 +1163,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
       }
       // texture
       bld.insert(tex = cloneForward(func, i));
-      if (l) {
+      if (l != 0) {
          for (c = 0; c < array; ++c)
             tex->setSrc(c, arr[c]);
          if (i->tex.target.isShadow())
@@ -1173,7 +1173,7 @@ NVC0LoweringPass::handleManualTXD(TexInstruction *i)
          tex->setSrc(c + array, src[c]);
       // broadcast results from lane 0 to all lanes so that the moves *into*
       // the target lane pick up the proper value.
-      if (l)
+      if (l != 0)
          for (c = 0; i->defExists(c); ++c)
             bld.mkQuadop(0x00, tex->getDef(c), 0, tex->getDef(c), zero);
       bld.mkOp(OP_QUADPOP, TYPE_NONE, NULL);
@@ -2108,8 +2108,8 @@ NVC0LoweringPass::convertSurfaceFormat(TexInstruction *su)
    const TexInstruction::ImgFormatDesc *format = su->tex.format;
    int width = format->bits[0] + format->bits[1] +
       format->bits[2] + format->bits[3];
-   Value *untypedDst[4] = {0};
-   Value *typedDst[4] = {0};
+   Value *untypedDst[4] = {};
+   Value *typedDst[4] = {};
 
    // We must convert this to a generic load.
    su->op = OP_SULDB;
@@ -2561,7 +2561,7 @@ NVC0LoweringPass::readTessCoord(LValue *dst, int c)
 
    bld.mkOp1(OP_RDSV, TYPE_U32, laneid, bld.mkSysVal(SV_LANEID, 0));
 
-   if (!c) {
+   if (c == 0) {
       x = dst;
       y = NULL;
    } else

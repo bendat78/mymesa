@@ -61,7 +61,7 @@ name_to_index(const char* name)
 {
    unsigned i;
 
-   if (!name)
+   if (name == 0)
       return -1;
 
    for (i = 0; i < MESA_EXTENSION_COUNT; ++i) {
@@ -196,6 +196,7 @@ set_extension(struct gl_extensions *ext, int i, GLboolean state)
    return offset;
 }
 
+
 /**
  * \brief Free string pointed by unrecognized_extensions
  *
@@ -233,14 +234,14 @@ _mesa_one_time_init_extension_overrides(struct gl_context *ctx)
    memset(&_mesa_extension_override_enables, 0, sizeof(struct gl_extensions));
    memset(&_mesa_extension_override_disables, 0, sizeof(struct gl_extensions));
 
-   if (!env_const) {
+   if (env_const == NULL) {
       return;
    }
 
    /* Copy env_const because strtok() is destructive. */
    env = strdup(env_const);
 
-   if (!env)
+   if (env == NULL)
       return;
 
    for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
@@ -264,7 +265,7 @@ _mesa_one_time_init_extension_overrides(struct gl_context *ctx)
       i = name_to_index(ext);
       offset = set_extension(&_mesa_extension_override_enables, i, enable);
       offset = set_extension(&_mesa_extension_override_disables, i, !enable);
-      if (offset)
+      if (offset != 0)
          recognized = true;
       else
          recognized = false;
@@ -375,17 +376,15 @@ _mesa_make_extension_string(struct gl_context *ctx)
       if (i->year <= maxYear &&
           _mesa_extension_supported(ctx, k)) {
          length += strlen(i->name) + 1; /* +1 for space */
-         length += strlen(i->dependencies) + 1; /* +1 for space */
          extension_indices[count++] = k;
       }
    }
-
    for (k = 0; k < MAX_UNRECOGNIZED_EXTENSIONS; k++)
       if (ctx->Extensions.unrecognized_extensions[k])
          length += 1 + strlen(ctx->Extensions.unrecognized_extensions[k]); /* +1 for space */
 
    exts = calloc(ALIGN(length + 1, 4), sizeof(char));
-   if (!exts) {
+   if (exts == NULL) {
       return NULL;
    }
 
@@ -394,11 +393,8 @@ _mesa_make_extension_string(struct gl_context *ctx)
       const struct mesa_extension *i = &_mesa_extension_table[extension_indices[j]];
       assert(_mesa_extension_supported(ctx, extension_indices[j]));
       strcat(exts, i->name);
-      strcat(exts, "-");
-      strcat(exts, i->dependencies);
       strcat(exts, " ");
    }
-
    for (j = 0; j < MAX_UNRECOGNIZED_EXTENSIONS; j++) {
       if (ctx->Extensions.unrecognized_extensions[j]) {
          strcat(exts, ctx->Extensions.unrecognized_extensions[j]);
@@ -418,7 +414,7 @@ _mesa_get_extension_count(struct gl_context *ctx)
    unsigned k;
 
    /* only count once */
-   if (ctx->Extensions.Count)
+   if (ctx->Extensions.Count != 0)
       return ctx->Extensions.Count;
 
    for (k = 0; k < MESA_EXTENSION_COUNT; ++k) {

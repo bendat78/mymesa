@@ -236,7 +236,7 @@ sources_not_null(const struct gen_device_info *devinfo,
    if (num_sources == 3)
       return (struct string){};
 
-   if (num_sources)
+   if (num_sources >= 1)
       ERROR_IF(src0_is_null(devinfo, inst), "src0 is null");
 
    if (num_sources == 2)
@@ -413,7 +413,7 @@ general_restrictions_based_on_operand_types(const struct gen_device_info *devinf
    if (exec_size == 1)
       return (struct string){};
 
-   if (!desc->ndst)
+   if (desc->ndst == 0)
       return (struct string){};
 
    /* The PRMs say:
@@ -513,7 +513,7 @@ general_restrictions_on_region_parameters(const struct gen_device_info *devinfo,
          ERROR_IF(brw_inst_dst_hstride(devinfo, inst) != BRW_HORIZONTAL_STRIDE_1,
                   "Destination Horizontal Stride must be 1");
 
-      if (num_sources) {
+      if (num_sources >= 1) {
          if (devinfo->is_haswell || devinfo->gen >= 8) {
             ERROR_IF(brw_inst_src0_reg_file(devinfo, inst) != BRW_IMMEDIATE_VALUE &&
                      brw_inst_src0_vstride(devinfo, inst) != BRW_VERTICAL_STRIDE_0 &&
@@ -562,7 +562,7 @@ general_restrictions_on_region_parameters(const struct gen_device_info *devinfo,
       element_size = brw_reg_type_to_size(type);                               \
       subreg = brw_inst_src ## n ## _da1_subreg_nr(devinfo, inst)
 
-      if (!i) {
+      if (i == 0) {
          DO_SRC(0);
       } else {
          DO_SRC(1);
@@ -763,7 +763,7 @@ region_alignment_rules(const struct gen_device_info *devinfo,
                          exec_size, element_size, subreg,                      \
                          vstride, width, hstride)
 
-      if (!i) {
+      if (i == 0) {
          DO_SRC(0);
       } else {
          DO_SRC(1);
@@ -955,7 +955,7 @@ region_alignment_rules(const struct gen_device_info *devinfo,
                   "The offset from the two source registers "                 \
                   "must be the same")
 
-         if (!i) {
+         if (i == 0) {
             DO_SRC(0);
          } else {
             DO_SRC(1);
@@ -1014,7 +1014,7 @@ region_alignment_rules(const struct gen_device_info *devinfo,
                   "span two registers\n" ERROR_INDENT "(exceptions for scalar "    \
                   "source and packed-word to packed-dword expansion)")
 
-         if (!i) {
+         if (i == 0) {
             DO_SRC(0);
          } else {
             DO_SRC(1);
@@ -1142,7 +1142,7 @@ special_requirements_for_handling_double_precision_data_types(
       subreg = brw_inst_src ## n ## _da1_subreg_nr(devinfo, inst);             \
       address_mode = brw_inst_src ## n ## _address_mode(devinfo, inst)
 
-      if (!i) {
+      if (i == 0) {
          DO_SRC(0);
       } else {
          DO_SRC(1);

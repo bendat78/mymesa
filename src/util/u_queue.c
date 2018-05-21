@@ -104,10 +104,10 @@ do_futex_fence_wait(struct util_queue_fence *fence,
    ts.tv_sec = abs_timeout / (1000*1000*1000);
    ts.tv_nsec = abs_timeout % (1000*1000*1000);
 
-   while (v) {
+   while (v != 0) {
       if (v != 2) {
          v = p_atomic_cmpxchg(&fence->val, 1, 2);
-         if (!v)
+         if (v == 0)
             return true;
       }
 
@@ -333,7 +333,7 @@ util_queue_init(struct util_queue *queue,
       if (!queue->threads[i]) {
          free(input);
 
-         if (!i) {
+         if (i == 0) {
             /* no threads created, fail */
             goto fail;
          } else {
@@ -344,9 +344,9 @@ util_queue_init(struct util_queue *queue,
       }
 
       if (flags & UTIL_QUEUE_INIT_USE_MINIMUM_PRIORITY) {
-
    #if defined(__linux__) && defined(SCHED_IDLE)
          struct sched_param sched_param = {0};
+
          /* The nice() function can only set a maximum of 19.
           * SCHED_IDLE is the same as nice = 20.
           *

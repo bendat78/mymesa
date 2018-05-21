@@ -384,6 +384,7 @@ kms_sw_displaytarget_from_handle(struct sw_winsys *ws,
    struct kms_sw_displaytarget *kms_sw_dt;
    struct kms_sw_plane *kms_sw_pl;
 
+
    assert(whandle->type == DRM_API_HANDLE_TYPE_KMS ||
           whandle->type == DRM_API_HANDLE_TYPE_FD);
 

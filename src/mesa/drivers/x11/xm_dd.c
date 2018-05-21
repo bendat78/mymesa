@@ -198,7 +198,7 @@ clear_32bit_ximage(struct gl_context *ctx, struct xmesa_renderbuffer *xrb,
       /* clearing whole buffer */
       const GLuint n = xrb->Base.Base.Width * xrb->Base.Base.Height;
       GLuint *ptr4 = (GLuint *) xrb->ximage->data;
-      if (!pixel) {
+      if (pixel == 0) {
          /* common case */
          memset(ptr4, pixel, 4 * n);
       }
@@ -315,7 +315,7 @@ can_do_DrawPixels_8R8G8B(struct gl_context *ctx, GLenum format, GLenum type)
 
       if (swrast->NewState)
          _swrast_validate_derived( ctx );
-
+      
       if ((swrast->_RasterMask & ~CLIP_BIT) == 0) /* no blend, z-test, etc */ {
          struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
          if (rb) {
@@ -446,7 +446,7 @@ can_do_DrawPixels_5R6G5B(struct gl_context *ctx, GLenum format, GLenum type)
 
       if (swrast->NewState)
          _swrast_validate_derived( ctx );
-
+      
       if ((swrast->_RasterMask & ~CLIP_BIT) == 0) /* no blend, z-test, etc */ {
          struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
          if (rb) {
@@ -486,7 +486,7 @@ xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
 
       if (swrast->NewState)
          _swrast_validate_derived( ctx );
-
+      
       if (_mesa_is_bufferobj(unpack->BufferObj)) {
          /* unpack from PBO */
          GLubyte *buf;

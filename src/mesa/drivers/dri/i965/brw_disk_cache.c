@@ -165,7 +165,7 @@ read_and_upload(struct brw_context *brw, struct disk_cache *cache,
 
    size_t buffer_size;
    uint8_t *buffer = disk_cache_get(cache, binary_sha1, &buffer_size);
-   if (!buffer) {
+   if (buffer == NULL) {
       if (brw->ctx._Shader->Flags & GLSL_CACHE_INFO) {
          char sha1_buf[41];
          _mesa_sha1_format(sha1_buf, binary_sha1);
@@ -273,11 +273,11 @@ bool
 brw_disk_cache_upload_program(struct brw_context *brw, gl_shader_stage stage)
 {
    struct disk_cache *cache = brw->ctx.Cache;
-   if (!cache)
+   if (cache == NULL)
       return false;
 
    struct gl_program *prog = brw->ctx._Shader->CurrentProgram[stage];
-   if (!prog)
+   if (prog == NULL)
       return false;
 
    if (brw->ctx._Shader->Flags & GLSL_CACHE_FALLBACK)
@@ -338,7 +338,7 @@ void
 brw_disk_cache_write_render_programs(struct brw_context *brw)
 {
    struct disk_cache *cache = brw->ctx.Cache;
-   if (!cache)
+   if (cache == NULL)
       return;
 
    struct gl_program *prog =
@@ -402,7 +402,7 @@ void
 brw_disk_cache_write_compute_program(struct brw_context *brw)
 {
    struct disk_cache *cache = brw->ctx.Cache;
-   if (!cache)
+   if (cache == NULL)
       return;
 
    struct gl_program *prog =
@@ -421,6 +421,7 @@ brw_disk_cache_write_compute_program(struct brw_context *brw)
 void
 brw_disk_cache_init(struct intel_screen *screen)
 {
+#ifdef ENABLE_SHADER_CACHE
    char renderer[10];
    MAYBE_UNUSED int len = snprintf(renderer, sizeof(renderer), "i965_%04x",
                                    screen->deviceID);
@@ -437,4 +438,5 @@ brw_disk_cache_init(struct intel_screen *screen)
    _mesa_sha1_format(timestamp, id_sha1);
 
    screen->disk_cache = disk_cache_create(renderer, timestamp, 0);
+#endif
 }

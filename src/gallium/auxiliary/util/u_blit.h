@@ -38,7 +38,7 @@
 extern "C" {
 #endif
 
-
+   
 struct cso_context;
 struct pipe_context;
 struct pipe_resource;

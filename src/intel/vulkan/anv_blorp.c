@@ -791,7 +791,7 @@ void anv_CmdFillBuffer(
 
    uint64_t height = fillSize / (MAX_SURFACE_DIM * bs);
    assert(height < MAX_SURFACE_DIM);
-   if (height) {
+   if (height != 0) {
       const uint64_t rect_fill_size = height * MAX_SURFACE_DIM * bs;
       get_blorp_surf_for_anv_buffer(cmd_buffer->device,
                                     dst_buffer, dstOffset,
@@ -806,7 +806,7 @@ void anv_CmdFillBuffer(
       dstOffset += rect_fill_size;
    }
 
-   if (fillSize) {
+   if (fillSize != 0) {
       const uint32_t width = fillSize / bs;
       get_blorp_surf_for_anv_buffer(cmd_buffer->device,
                                     dst_buffer, dstOffset,
@@ -840,7 +840,7 @@ void anv_CmdClearColorImage(
 
 
    for (unsigned r = 0; r < rangeCount; r++) {
-      if (!pRanges[r].aspectMask)
+      if (pRanges[r].aspectMask == 0)
          continue;
 
       assert(pRanges[r].aspectMask & VK_IMAGE_ASPECT_ANY_COLOR_BIT_ANV);
@@ -915,7 +915,7 @@ void anv_CmdClearDepthStencilImage(
    }
 
    for (unsigned r = 0; r < rangeCount; r++) {
-      if (!pRanges[r].aspectMask)
+      if (pRanges[r].aspectMask == 0)
          continue;
 
       bool clear_depth = pRanges[r].aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -952,7 +952,7 @@ anv_cmd_buffer_alloc_blorp_binding_table(struct anv_cmd_buffer *cmd_buffer,
 {
    *bt_state = anv_cmd_buffer_alloc_binding_table(cmd_buffer, num_entries,
                                                   state_offset);
-   if (!bt_state->map) {
+   if (bt_state->map == NULL) {
       /* We ran out of space.  Grab a new binding table block. */
       VkResult result = anv_cmd_buffer_new_binding_table_block(cmd_buffer);
       if (result != VK_SUCCESS)
@@ -1492,7 +1492,7 @@ anv_image_clear_depth_stencil(struct anv_cmd_buffer *cmd_buffer,
    struct blorp_batch batch;
    blorp_batch_init(&cmd_buffer->device->blorp, &batch, cmd_buffer, 0);
 
-   struct blorp_surf depth = {0};
+   struct blorp_surf depth = {};
    if (aspects & VK_IMAGE_ASPECT_DEPTH_BIT) {
       get_blorp_surf_for_anv_image(cmd_buffer->device,
                                    image, VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -1501,7 +1501,7 @@ anv_image_clear_depth_stencil(struct anv_cmd_buffer *cmd_buffer,
       depth.clear_color.f32[0] = ANV_HZ_FC_VAL;
    }
 
-   struct blorp_surf stencil = {0};
+   struct blorp_surf stencil = {};
    if (aspects & VK_IMAGE_ASPECT_STENCIL_BIT) {
       get_blorp_surf_for_anv_image(cmd_buffer->device,
                                    image, VK_IMAGE_ASPECT_STENCIL_BIT,
@@ -1563,7 +1563,7 @@ anv_image_hiz_clear(struct anv_cmd_buffer *cmd_buffer,
    struct blorp_batch batch;
    blorp_batch_init(&cmd_buffer->device->blorp, &batch, cmd_buffer, 0);
 
-   struct blorp_surf depth = {0};
+   struct blorp_surf depth = {};
    if (aspects & VK_IMAGE_ASPECT_DEPTH_BIT) {
       assert(base_layer + layer_count <=
              anv_image_aux_layers(image, VK_IMAGE_ASPECT_DEPTH_BIT, level));
@@ -1574,7 +1574,7 @@ anv_image_hiz_clear(struct anv_cmd_buffer *cmd_buffer,
       depth.clear_color.f32[0] = ANV_HZ_FC_VAL;
    }
 
-   struct blorp_surf stencil = {0};
+   struct blorp_surf stencil = {};
    if (aspects & VK_IMAGE_ASPECT_STENCIL_BIT) {
       get_blorp_surf_for_anv_image(cmd_buffer->device,
                                    image, VK_IMAGE_ASPECT_STENCIL_BIT,

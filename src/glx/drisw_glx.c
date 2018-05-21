@@ -285,7 +285,7 @@ drisw_bind_tex_image(Display * dpy,
 
    __glXInitialize(dpy);
 
-   if (pdraw) {
+   if (pdraw != NULL) {
       psc = (struct drisw_screen *) base->psc;
 
       if (!psc->texBuffer)
@@ -373,7 +373,7 @@ drisw_create_context(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (!pcp)
+   if (pcp == NULL)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
@@ -386,7 +386,7 @@ drisw_create_context(struct glx_screen *base,
    pcp->driContext =
       (*psc->core->createNewContext) (psc->driScreen,
 				      config->driConfig, shared, pcp);
-   if (!pcp->driContext) {
+   if (pcp->driContext == NULL) {
       free(pcp);
       return NULL;
    }
@@ -450,7 +450,7 @@ drisw_create_context_attribs(struct glx_screen *base,
    }
 
    pcp = calloc(1, sizeof *pcp);
-   if (!pcp)
+   if (pcp == NULL)
       return NULL;
 
    if (!glx_context_init(&pcp->base, &psc->base, config_base)) {
@@ -467,7 +467,7 @@ drisw_create_context_attribs(struct glx_screen *base,
        ctx_attribs[num_ctx_attribs++] = release;
    }
 
-   if (flags) {
+   if (flags != 0) {
       ctx_attribs[num_ctx_attribs++] = __DRI_CTX_ATTRIB_FLAGS;
 
       /* The current __DRI_CTX_FLAG_* values are identical to the
@@ -487,7 +487,7 @@ drisw_create_context_attribs(struct glx_screen *base,
 					    ctx_attribs,
 					    error,
 					    pcp);
-   if (!pcp->driContext) {
+   if (pcp->driContext == NULL) {
       free(pcp);
       return NULL;
    }
@@ -605,7 +605,7 @@ driOpenSwrast(void)
 {
    void *driver = NULL;
 
-   if (!driver)
+   if (driver == NULL)
       driver = driOpenDriver(SWRAST_DRIVER_NAME);
 
    return driver;
@@ -638,7 +638,7 @@ driswBindExtensions(struct drisw_screen *psc, const __DRIextension **extensions)
    }
 
    if (psc->copySubBuffer)
-      __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");
+      __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");      
 
    /* FIXME: Figure out what other extensions can be ported here from dri2. */
    for (i = 0; extensions[i]; i++) {
@@ -672,7 +672,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
    int i;
 
    psc = calloc(1, sizeof *psc);
-   if (!psc)
+   if (psc == NULL)
       return NULL;
 
    if (!glx_screen_init(&psc->base, screen, priv)) {
@@ -681,11 +681,11 @@ driswCreateScreen(int screen, struct glx_display *priv)
    }
 
    psc->driver = driOpenSwrast();
-   if (!psc->driver)
+   if (psc->driver == NULL)
       goto handle_error;
 
    extensions = driGetDriverExtensions(psc->driver, SWRAST_DRIVER_NAME);
-   if (!extensions)
+   if (extensions == NULL)
       goto handle_error;
 
    for (i = 0; extensions[i]; i++) {
@@ -712,7 +712,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
          psc->swrast->createNewScreen(screen, loader_extensions,
                                       &driver_configs, psc);
    }
-   if (!psc->driScreen) {
+   if (psc->driScreen == NULL) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }
@@ -785,7 +785,7 @@ driswCreateDisplay(Display * dpy)
    struct drisw_display *pdpyp;
 
    pdpyp = malloc(sizeof *pdpyp);
-   if (!pdpyp)
+   if (pdpyp == NULL)
       return NULL;
 
    pdpyp->base.destroyDisplay = driswDestroyDisplay;

@@ -484,7 +484,7 @@ static int virgl_vtest_winsys_submit_cmd(struct virgl_winsys *vws,
    struct virgl_vtest_cmd_buf *cbuf = virgl_vtest_cmd_buf(_cbuf);
    int ret;
 
-   if (!cbuf->base.cdw)
+   if (cbuf->base.cdw == 0)
       return 0;
 
    ret = virgl_vtest_submit_cmd(vtws, cbuf);
@@ -549,7 +549,7 @@ static bool virgl_fence_wait(struct virgl_winsys *vws,
    struct virgl_vtest_winsys *vdws = virgl_vtest_winsys(vws);
    struct virgl_hw_res *res = virgl_hw_res(fence);
 
-   if (!timeout)
+   if (timeout == 0)
       return !virgl_vtest_resource_is_busy(vdws, res);
 
    if (timeout != PIPE_TIMEOUT_INFINITE) {

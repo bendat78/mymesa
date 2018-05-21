@@ -417,7 +417,7 @@ anv_physical_device_init(struct anv_physical_device *device,
    }
 
    device->compiler = brw_compiler_create(NULL, &device->info);
-   if (!device->compiler) {
+   if (device->compiler == NULL) {
       result = vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       goto fail;
    }
@@ -512,7 +512,7 @@ VkResult anv_CreateInstance(
 
    assert(pCreateInfo->sType == VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
 
-   struct anv_instance_extension_table enabled_extensions = {0};
+   struct anv_instance_extension_table enabled_extensions = {};
    for (uint32_t i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
       int idx;
       for (idx = 0; idx < ANV_INSTANCE_EXTENSION_COUNT; idx++) {
@@ -558,7 +558,7 @@ VkResult anv_CreateInstance(
       if (!anv_entrypoint_is_enabled(i, instance->apiVersion,
                                      &instance->enabled_extensions, NULL)) {
          instance->dispatch.entrypoints[i] = NULL;
-      } else if (anv_dispatch_table.entrypoints[i]) {
+      } else if (anv_dispatch_table.entrypoints[i] != NULL) {
          instance->dispatch.entrypoints[i] = anv_dispatch_table.entrypoints[i];
       } else {
          instance->dispatch.entrypoints[i] =
@@ -666,7 +666,7 @@ VkResult anv_EnumeratePhysicalDevices(
    if (result != VK_SUCCESS)
       return result;
 
-   if (!instance->physicalDeviceCount)
+   if (instance->physicalDeviceCount == 0)
       return VK_SUCCESS;
 
    assert(instance->physicalDeviceCount == 1);
@@ -690,7 +690,7 @@ VkResult anv_EnumeratePhysicalDeviceGroups(
    if (result != VK_SUCCESS)
       return result;
 
-   if (!instance->physicalDeviceCount)
+   if (instance->physicalDeviceCount == 0)
       return VK_SUCCESS;
 
    assert(instance->physicalDeviceCount == 1);
@@ -1170,7 +1170,7 @@ PFN_vkVoidFunction anv_GetInstanceProcAddr(
     * when we have to return valid function pointers, NULL, or it's left
     * undefined.  See the table for exact details.
     */
-   if (!pName)
+   if (pName == NULL)
       return NULL;
 
 #define LOOKUP_ANV_ENTRYPOINT(entrypoint) \
@@ -1184,7 +1184,7 @@ PFN_vkVoidFunction anv_GetInstanceProcAddr(
 
 #undef LOOKUP_ANV_ENTRYPOINT
 
-   if (!instance)
+   if (instance == NULL)
       return NULL;
 
    int idx = anv_get_entrypoint_index(pName);
@@ -1448,7 +1448,7 @@ VkResult anv_CreateDevice(
 
    assert(pCreateInfo->sType == VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
 
-   struct anv_device_extension_table enabled_extensions = {0};
+   struct anv_device_extension_table enabled_extensions = { };
    for (uint32_t i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
       int idx;
       for (idx = 0; idx < ANV_DEVICE_EXTENSION_COUNT; idx++) {
@@ -1484,7 +1484,7 @@ VkResult anv_CreateDevice(
     */
    assert(pCreateInfo->queueCreateInfoCount > 0);
    for (uint32_t i = 0; i < pCreateInfo->queueCreateInfoCount; i++) {
-      if (pCreateInfo->pQueueCreateInfos[i].flags)
+      if (pCreateInfo->pQueueCreateInfos[i].flags != 0)
          return vk_error(VK_ERROR_INITIALIZATION_FAILED);
    }
 
@@ -1564,7 +1564,7 @@ VkResult anv_CreateDevice(
    }
 
    pthread_condattr_t condattr;
-   if (pthread_condattr_init(&condattr)) {
+   if (pthread_condattr_init(&condattr) != 0) {
       result = vk_error(VK_ERROR_INITIALIZATION_FAILED);
       goto fail_mutex;
    }
@@ -1737,7 +1737,7 @@ VkResult anv_EnumerateInstanceLayerProperties(
     uint32_t*                                   pPropertyCount,
     VkLayerProperties*                          pProperties)
 {
-   if (!pProperties) {
+   if (pProperties == NULL) {
       *pPropertyCount = 0;
       return VK_SUCCESS;
    }
@@ -1751,7 +1751,7 @@ VkResult anv_EnumerateDeviceLayerProperties(
     uint32_t*                                   pPropertyCount,
     VkLayerProperties*                          pProperties)
 {
-   if (!pProperties) {
+   if (pProperties == NULL) {
       *pPropertyCount = 0;
       return VK_SUCCESS;
    }
@@ -1922,7 +1922,7 @@ VkResult anv_AllocateMemory(
 
    mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
                     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!mem)
+   if (mem == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    assert(pAllocateInfo->memoryTypeIndex < pdevice->memory.type_count);
@@ -2089,7 +2089,7 @@ void anv_FreeMemory(
    ANV_FROM_HANDLE(anv_device, device, _device);
    ANV_FROM_HANDLE(anv_device_memory, mem, _mem);
 
-   if (!mem)
+   if (mem == NULL)
       return;
 
    if (mem->map)
@@ -2111,7 +2111,7 @@ VkResult anv_MapMemory(
    ANV_FROM_HANDLE(anv_device, device, _device);
    ANV_FROM_HANDLE(anv_device_memory, mem, _memory);
 
-   if (!mem) {
+   if (mem == NULL) {
       *ppData = NULL;
       return VK_SUCCESS;
    }
@@ -2168,7 +2168,7 @@ void anv_UnmapMemory(
 {
    ANV_FROM_HANDLE(anv_device_memory, mem, _memory);
 
-   if (!mem)
+   if (mem == NULL)
       return;
 
    anv_gem_munmap(mem->map, mem->map_size);
@@ -2597,7 +2597,7 @@ VkResult anv_CreateBuffer(
 
    buffer = vk_alloc2(&device->alloc, pAllocator, sizeof(*buffer), 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!buffer)
+   if (buffer == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    buffer->size = pCreateInfo->size;
@@ -2668,7 +2668,7 @@ VkResult anv_CreateFramebuffer(
                  sizeof(struct anv_image_view *) * pCreateInfo->attachmentCount;
    framebuffer = vk_alloc2(&device->alloc, pAllocator, size, 8,
                             VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!framebuffer)
+   if (framebuffer == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    framebuffer->attachment_count = pCreateInfo->attachmentCount;

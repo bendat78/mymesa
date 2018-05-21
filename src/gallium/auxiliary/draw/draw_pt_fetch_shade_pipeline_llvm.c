@@ -293,7 +293,7 @@ llvm_middle_end_bind_parameters(struct draw_pt_middle_end *middle)
          draw->pt.user.vs_constants_size[i] / (sizeof(float) * 4);
       llvm->jit_context.vs_constants[i] = draw->pt.user.vs_constants[i];
       llvm->jit_context.num_vs_constants[i] = num_consts;
-      if (!num_consts) {
+      if (num_consts == 0) {
          llvm->jit_context.vs_constants[i] = fake_const_buf;
       }
    }
@@ -302,7 +302,7 @@ llvm_middle_end_bind_parameters(struct draw_pt_middle_end *middle)
          draw->pt.user.gs_constants_size[i] / (sizeof(float) * 4);
       llvm->gs_jit_context.constants[i] = draw->pt.user.gs_constants[i];
       llvm->gs_jit_context.num_constants[i] = num_consts;
-      if (!num_consts) {
+      if (num_consts == 0) {
          llvm->gs_jit_context.constants[i] = fake_const_buf;
       }
    }
@@ -441,7 +441,7 @@ llvm_pipeline_generic(struct draw_pt_middle_end *middle,
          }
       }
    }
-   if (!prim_info->count) {
+   if (prim_info->count == 0) {
       debug_printf("GS/IA didn't emit any vertices!\n");
 
       FREE(vert_info->verts);

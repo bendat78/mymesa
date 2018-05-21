@@ -190,7 +190,7 @@ BGLView::AttachedToWindow()
 		view->ConvertToParent(&fBounds);
 
 	fRenderer = fRoster->GetRenderer();
-	if (fRenderer) {
+	if (fRenderer != NULL) {
 		// Jackburton: The following code was commented because it doesn't look
 		// good in "direct" mode:
 		// when the window is moved, the app_server doesn't paint the view's
@@ -342,9 +342,9 @@ BGLView::GetSupportedSuites(BMessage* data)
 void
 BGLView::DirectConnected(direct_buffer_info* info)
 {
-	if (!fClipInfo) {
+	if (fClipInfo == NULL) {
 		fClipInfo = new (std::nothrow) glview_direct_info();
-		if (!fClipInfo)
+		if (fClipInfo == NULL)
 			return;
 	}
 
@@ -379,9 +379,9 @@ BGLView::EnableDirectMode(bool enabled)
 {
 	if (fRenderer)
 		fRenderer->EnableDirectMode(enabled);
-	if (!fClipInfo) {
+	if (fClipInfo == NULL) {
 		fClipInfo = new (std::nothrow) glview_direct_info();
-		if (!fClipInfo)
+		if (fClipInfo == NULL)
 			return;
 	}
 
@@ -418,7 +418,7 @@ BGLView::_CallDirectConnected()
 	direct_buffer_info* localInfo = fClipInfo->direct_info;
 	direct_buffer_info* info = (direct_buffer_info*)malloc(
 		DIRECT_BUFFER_INFO_AREA_SIZE);
-	if (!info)
+	if (info == NULL)
 		return;
 
 	memcpy(info, localInfo, DIRECT_BUFFER_INFO_AREA_SIZE);

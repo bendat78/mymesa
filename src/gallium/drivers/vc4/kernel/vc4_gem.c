@@ -150,7 +150,7 @@ vc4_cl_validate(struct drm_device *dev, struct vc4_exec_info *exec)
 		exec->tile_height = 64;
 	}
 
-	if (exec->args->bin_cl_size) {
+	if (exec->args->bin_cl_size != 0) {
 		ret = vc4_get_bcl(dev, exec);
 		if (ret)
 			goto fail;

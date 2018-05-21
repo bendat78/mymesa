@@ -195,7 +195,7 @@ lower_tex_deref(nir_tex_instr *tex, nir_deref_var *deref,
 static void
 cleanup_tex_deref(nir_tex_instr *tex, nir_deref_var *deref)
 {
-   if (!deref->deref.child)
+   if (deref->deref.child == NULL)
       return;
 
    nir_deref_array *deref_array = nir_deref_as_array(deref->deref.child);

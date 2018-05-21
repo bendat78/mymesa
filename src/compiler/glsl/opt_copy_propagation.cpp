@@ -344,7 +344,7 @@ ir_copy_propagation_visitor::add_copy(ir_assignment *ir)
    /* Don't try to remove a dumb assignment of a variable to itself.  Removing
     * it now would mess up the loop iteration calling us.
     */
-   if (lhs_var && rhs_var && lhs_var != rhs_var) {
+   if (lhs_var != NULL && rhs_var != NULL && lhs_var != rhs_var) {
       if (lhs_var->data.mode != ir_var_shader_storage &&
           lhs_var->data.mode != ir_var_shader_shared &&
           lhs_var->data.precise == rhs_var->data.precise) {

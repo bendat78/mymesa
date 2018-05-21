@@ -664,7 +664,7 @@ fxt1_quantize_ALPHA1 (GLuint *cc,
            }
            sumL += sum;
        }
-
+       
        nn_comp--;
    }
 
@@ -739,7 +739,7 @@ fxt1_quantize_ALPHA1 (GLuint *cc,
          lolo <<= 2;
          lolo |= texel;
       }
-
+      
       cc[0] = lolo;
    }
 
@@ -1114,7 +1114,7 @@ fxt1_quantize_MIXED0 (GLuint *cc,
          }
          lolo = ~lolo;
       }
-
+      
       cc[0] = lolo;
    }
 
@@ -1223,7 +1223,7 @@ fxt1_quantize (GLuint *cc, const GLubyte *lines[], GLint comps)
 #if 0
    if (trualpha) {
       fxt1_quantize_ALPHA0(cc, input, reord, l);
-   } else if (!l) {
+   } else if (l == 0) {
       cc[0] = cc[1] = cc[2] = -1;
       cc[3] = 0;
    } else if (l < N_TEXELS) {
@@ -1237,7 +1237,7 @@ fxt1_quantize (GLuint *cc, const GLubyte *lines[], GLint comps)
 #else
    if (trualpha) {
       fxt1_quantize_ALPHA1(cc, input);
-   } else if (!l) {
+   } else if (l == 0) {
       cc[0] = cc[1] = cc[2] = ~0u;
       cc[3] = 0;
    } else if (l < N_TEXELS) {
@@ -1390,7 +1390,7 @@ fxt1_decode_1HI (const GLubyte *code, GLint t, GLubyte *rgba)
    } else {
       GLubyte r, g, b;
       cc = (const GLuint *)(code + 12);
-      if (!t) {
+      if (t == 0) {
          b = UP5(CC_SEL(cc, 0));
          g = UP5(CC_SEL(cc, 5));
          r = UP5(CC_SEL(cc, 10));
@@ -1477,7 +1477,7 @@ fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLubyte *rgba)
          rgba[RCOMP] = rgba[BCOMP] = rgba[GCOMP] = rgba[ACOMP] = 0;
       } else {
          GLubyte r, g, b;
-         if (!t) {
+         if (t == 0) {
             b = UP5(col[0][BCOMP]);
             g = UP5(col[0][GCOMP]);
             r = UP5(col[0][RCOMP]);
@@ -1498,7 +1498,7 @@ fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLubyte *rgba)
    } else {
       /* alpha[0] == 0 */
       GLubyte r, g, b;
-      if (!t) {
+      if (t == 0) {
          b = UP5(col[0][BCOMP]);
          g = UP6(col[0][GCOMP], glsb ^ selb);
          r = UP5(col[0][RCOMP]);
@@ -1548,7 +1548,7 @@ fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLubyte *rgba)
          col0[ACOMP] = CC_SEL(cc, 109);
       }
 
-      if (!t) {
+      if (t == 0) {
          b = UP5(col0[BCOMP]);
          g = UP5(col0[GCOMP]);
          r = UP5(col0[RCOMP]);

@@ -140,7 +140,7 @@ void peephole::optimize_cc_op2(alu_node* a) {
 
 		value *s = a->src[0];
 
-		bool_op_info bop = {0};
+		bool_op_info bop = {};
 
 		PPH_DUMP(
 			sblog << "cc_op2: ";
@@ -222,7 +222,7 @@ void peephole::optimize_CNDcc_op(alu_node* a) {
 
 	value *s = a->src[0];
 
-	bool_op_info bop = {0};
+	bool_op_info bop = {};
 
 	PPH_DUMP(
 		sblog << "cndcc: ";

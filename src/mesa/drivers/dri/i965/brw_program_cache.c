@@ -197,7 +197,7 @@ brw_search_cache(struct brw_cache *cache,
 
    item = search_cache(cache, hash, &lookup);
 
-   if (!item)
+   if (item == NULL)
       return false;
 
    void *prog_data = ((char *) item->key) + item->key_size;
@@ -229,7 +229,7 @@ brw_cache_new_bo(struct brw_cache *cache, uint32_t new_size)
                                        MAP_ASYNC | MAP_PERSISTENT);
 
    /* Copy any existing data that needs to be saved. */
-   if (cache->next_offset) {
+   if (cache->next_offset != 0) {
 #ifdef USE_SSE41
       if (!cache->bo->cache_coherent && cpu_has_sse4_1)
          _mesa_streaming_load_memcpy(map, cache->map, cache->next_offset);

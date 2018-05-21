@@ -35,9 +35,9 @@ uint32_t vk_get_driver_version(void)
    int minor = minor_string ? atoi(minor_string + 1) : 0;
    int patch = patch_string ? atoi(patch_string + 1) : 0;
    if (strstr(VERSION, "devel")) {
-      if (!patch) {
+      if (patch == 0) {
          patch = 99;
-         if (!minor) {
+         if (minor == 0) {
             minor = 99;
             --major;
          } else
@@ -51,7 +51,7 @@ uint32_t vk_get_driver_version(void)
 uint32_t vk_get_version_override(void)
 {
    const char *str = getenv("MESA_VK_VERSION_OVERRIDE");
-   if (!str)
+   if (str == NULL)
       return 0;
 
    const char *minor_str = strchr(str, '.');

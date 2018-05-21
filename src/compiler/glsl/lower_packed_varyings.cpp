@@ -271,7 +271,7 @@ lower_packed_varyings_visitor::run(struct gl_linked_shader *shader)
 {
    foreach_in_list(ir_instruction, node, shader->ir) {
       ir_variable *var = node->as_variable();
-      if (!var)
+      if (var == NULL)
          continue;
 
       if (var->data.mode != this->mode ||
@@ -523,7 +523,7 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
 
    if (rvalue->type->is_record()) {
       for (unsigned i = 0; i < rvalue->type->length; i++) {
-         if (i)
+         if (i != 0)
             rvalue = rvalue->clone(this->mem_ctx, NULL);
          const char *field_name = rvalue->type->fields.structure[i].name;
          ir_dereference_record *dereference_record = new(this->mem_ctx)
@@ -608,7 +608,7 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
       ir_dereference *packed_deref =
          this->get_packed_varying_deref(location, unpacked_var, name,
                                         vertex_index);
-      if (unpacked_var->data.stream) {
+      if (unpacked_var->data.stream != 0) {
          assert(unpacked_var->data.stream < 4);
          ir_variable *packed_var = packed_deref->variable_referenced();
          for (unsigned i = 0; i < components; ++i) {
@@ -652,7 +652,7 @@ lower_packed_varyings_visitor::lower_arraylike(ir_rvalue *rvalue,
                                                unsigned vertex_index)
 {
    for (unsigned i = 0; i < array_size; i++) {
-      if (i)
+      if (i != 0)
          rvalue = rvalue->clone(this->mem_ctx, NULL);
       ir_constant *constant = new(this->mem_ctx) ir_constant(i);
       ir_dereference_array *dereference_array = new(this->mem_ctx)
@@ -695,7 +695,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
 {
    unsigned slot = location - VARYING_SLOT_VAR0;
    assert(slot < locations_used);
-   if (!this->packed_varyings[slot]) {
+   if (this->packed_varyings[slot] == NULL) {
       char *packed_name = ralloc_asprintf(this->mem_ctx, "packed:%s", name);
       const glsl_type *packed_type;
       assert(components[slot] != 0);
@@ -703,14 +703,14 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
          packed_type = glsl_type::get_instance(GLSL_TYPE_INT, components[slot], 1);
       else
          packed_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, components[slot], 1);
-      if (this->gs_input_vertices) {
+      if (this->gs_input_vertices != 0) {
          packed_type =
             glsl_type::get_array_instance(packed_type,
                                           this->gs_input_vertices);
       }
       ir_variable *packed_var = new(this->mem_ctx)
          ir_variable(packed_type, packed_name, this->mode);
-      if (this->gs_input_vertices) {
+      if (this->gs_input_vertices != 0) {
          /* Prevent update_array_sizes() from messing with the size of the
           * array.
           */
@@ -744,7 +744,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
 
    ir_dereference *deref = new(this->mem_ctx)
       ir_dereference_variable(this->packed_varyings[slot]);
-   if (this->gs_input_vertices) {
+   if (this->gs_input_vertices != 0) {
       /* When lowering GS inputs, the packed variable is an array, so we need
        * to dereference it using vertex_index.
        */

@@ -98,6 +98,7 @@ emit_rss_vgpu9(struct svga_context *svga, unsigned dirty)
          EMIT_RS(svga, curr->rt[0].srcblend, SRCBLEND);
          EMIT_RS(svga, curr->rt[0].dstblend, DSTBLEND);
          EMIT_RS(svga, curr->rt[0].blendeq, BLENDEQUATION);
+
          EMIT_RS(svga, curr->rt[0].separate_alpha_blend_enable,
                   SEPARATEALPHABLENDENABLE);
 
@@ -334,7 +335,7 @@ static struct svga_depth_stencil_state *
 get_no_depth_stencil_test_state(struct svga_context *svga)
 {
    if (!svga->depthstencil_disable) {
-      struct pipe_depth_stencil_alpha_state ds = {0};
+      struct pipe_depth_stencil_alpha_state ds = {{0}};
       svga->depthstencil_disable =
          svga->pipe.create_depth_stencil_alpha_state(&svga->pipe, &ds);
    }

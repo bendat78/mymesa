@@ -426,7 +426,7 @@ CodeEmitter::addReloc(RelocEntry::Type ty, int w, uint32_t data, uint32_t m,
                  size + RELOC_ALLOC_INCREMENT * sizeof(RelocEntry)));
       if (!relocInfo)
          return false;
-      if (!n)
+      if (n == 0)
          memset(relocInfo, 0, sizeof(RelocInfo));
    }
    ++relocInfo->count;
@@ -452,7 +452,7 @@ CodeEmitter::addInterp(int ipa, int reg, FixupApply apply)
                  size + RELOC_ALLOC_INCREMENT * sizeof(FixupEntry)));
       if (!fixupInfo)
          return false;
-      if (!n)
+      if (n == 0)
          memset(fixupInfo, 0, sizeof(FixupInfo));
    }
    ++fixupInfo->count;

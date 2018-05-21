@@ -447,7 +447,7 @@ struct BlendJit : public Builder
     {
         // load uint32_t reference
         Value* pRef = VBROADCAST(LOAD(pBlendState, { 0, SWR_BLEND_STATE_alphaTestReference }));
-
+        
         // load alpha
         Value* pAlpha = LOAD(ppAlpha, { 0, 0 });
 
@@ -572,7 +572,7 @@ struct BlendJit : public Builder
 
             // load constant color
             constantColor[i] = VBROADCAST(LOAD(pBlendState, { 0, SWR_BLEND_STATE_constantColor, i }));
-
+        
             // load src
             src[i] = LOAD(pSrc, { 0, i });
 
@@ -663,7 +663,7 @@ struct BlendJit : public Builder
             // Gather for archrast stats
             STORE(C(0), pBlendContext, { 0, SWR_BLEND_CONTEXT_isAlphaBlended });
         }
-
+        
         if(state.blendState.logicOpEnable)
         {
             const SWR_FORMAT_INFO& info = GetFormatInfo(state.format);

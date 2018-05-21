@@ -108,7 +108,7 @@ vtn_dump_shader(struct vtn_builder *b, const char *path, const char *prefix)
       return;
 
    FILE *f = fopen(filename, "w");
-   if (!f)
+   if (f == NULL)
       return;
 
    fwrite(b->spirv, sizeof(*b->spirv), b->spirv_word_count, f);
@@ -4040,7 +4040,7 @@ spirv_to_nir(const uint32_t *words, size_t word_count,
                                               stage, entry_point_name,
                                               options);
 
-   if (!b)
+   if (b == NULL)
       return NULL;
 
    /* See also _vtn_fail() */
@@ -4056,7 +4056,7 @@ spirv_to_nir(const uint32_t *words, size_t word_count,
    words = vtn_foreach_instruction(b, words, word_end,
                                    vtn_handle_preamble_instruction);
 
-   if (!b->entry_point) {
+   if (b->entry_point == NULL) {
       vtn_fail("Entry point not found");
       ralloc_free(b);
       return NULL;

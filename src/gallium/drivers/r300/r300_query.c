@@ -95,7 +95,7 @@ static boolean r300_begin_query(struct pipe_context* pipe,
     if (q->type == PIPE_QUERY_GPU_FINISHED)
         return true;
 
-    if (r300->query_current) {
+    if (r300->query_current != NULL) {
         fprintf(stderr, "r300: begin_query: "
                 "Some other query has already been started.\n");
         assert(0);

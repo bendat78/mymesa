@@ -218,6 +218,7 @@ svga_need_unfilled_fallback(const struct svga_hwtnl *hwtnl,
    }
 }
 
+
 enum pipe_error
 svga_hwtnl_prim(struct svga_hwtnl *hwtnl,
                 const SVGA3dPrimitiveRange *range,

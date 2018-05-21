@@ -180,7 +180,7 @@ nir_lower_io_to_temporaries(nir_shader *shader, nir_function_impl *entrypoint,
    }
 
    nir_foreach_function(function, shader) {
-      if (!function->impl)
+      if (function->impl == NULL)
          continue;
 
       if (inputs)

@@ -80,7 +80,7 @@ static void
 radv_get_device_name(enum radeon_family family, char *name, size_t name_len)
 {
 	const char *chip_string;
-	char llvm_string[32] = {0};
+	char llvm_string[32] = {};
 
 	switch (family) {
 	case CHIP_TAHITI: chip_string = "AMD RADV TAHITI"; break;
@@ -1086,7 +1086,7 @@ static void radv_get_physical_device_queue_family_properties(
 	    !(pdevice->instance->debug_flags & RADV_DEBUG_NO_COMPUTE_QUEUE))
 		num_queue_families++;
 
-	if (!pQueueFamilyProperties) {
+	if (pQueueFamilyProperties == NULL) {
 		*pCount = num_queue_families;
 		return;
 	}
@@ -1095,7 +1095,7 @@ static void radv_get_physical_device_queue_family_properties(
 		return;
 
 	idx = 0;
-	if (*pCount) {
+	if (*pCount >= 1) {
 		*pQueueFamilyProperties[idx] = (VkQueueFamilyProperties) {
 			.queueFlags = VK_QUEUE_GRAPHICS_BIT |
 			              VK_QUEUE_COMPUTE_BIT |
@@ -1604,7 +1604,7 @@ VkResult radv_EnumerateInstanceLayerProperties(
 	uint32_t*                                   pPropertyCount,
 	VkLayerProperties*                          pProperties)
 {
-	if (!pProperties) {
+	if (pProperties == NULL) {
 		*pPropertyCount = 0;
 		return VK_SUCCESS;
 	}
@@ -1618,7 +1618,7 @@ VkResult radv_EnumerateDeviceLayerProperties(
 	uint32_t*                                   pPropertyCount,
 	VkLayerProperties*                          pProperties)
 {
-	if (!pProperties) {
+	if (pProperties == NULL) {
 		*pPropertyCount = 0;
 		return VK_SUCCESS;
 	}
@@ -1998,7 +1998,6 @@ radv_get_preamble_cs(struct radv_queue *queue,
 	struct radeon_winsys_bo *gsvs_ring_bo = NULL;
 	struct radeon_winsys_bo *tess_rings_bo = NULL;
 	struct radeon_winsys_cs *dest_cs[3] = {0};
-
 	bool add_tess_rings = false, add_sample_positions = false;
 	unsigned tess_factor_ring_size = 0, tess_offchip_ring_size = 0;
 	unsigned max_offchip_buffers;
@@ -2172,7 +2171,7 @@ radv_get_preamble_cs(struct radv_queue *queue,
 		radv_emit_global_shader_pointers(queue, cs, descriptor_bo);
 		radv_emit_compute_scratch(queue, cs, compute_scratch_bo);
 
-		if (!i) {
+		if (i == 0) {
 			si_cs_emit_cache_flush(cs,
 			                       queue->device->physical_device->rad_info.chip_class,
 					       NULL, 0,
@@ -2693,7 +2692,7 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 
 	assert(pAllocateInfo->sType == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
 
-	if (!pAllocateInfo->allocationSize) {
+	if (pAllocateInfo->allocationSize == 0) {
 		/* Apparently, this is allowed */
 		*pMem = VK_NULL_HANDLE;
 		return VK_SUCCESS;
@@ -2713,7 +2712,7 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 
 	mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
 			  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!mem)
+	if (mem == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	if (wsi_info && wsi_info->implicit_sync)
@@ -2816,7 +2815,7 @@ void radv_FreeMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _mem);
 
-	if (!mem)
+	if (mem == NULL)
 		return;
 
 	radv_bo_list_remove(device, mem->bo);
@@ -2837,7 +2836,7 @@ VkResult radv_MapMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _memory);
 
-	if (!mem) {
+	if (mem == NULL) {
 		*ppData = NULL;
 		return VK_SUCCESS;
 	}
@@ -2862,10 +2861,10 @@ void radv_UnmapMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _memory);
 
-	if (!mem)
+	if (mem == NULL)
 		return;
 
-	if (!mem->user_ptr)
+	if (mem->user_ptr == NULL)
 		device->ws->buffer_unmap(mem->bo);
 }
 
@@ -3554,7 +3553,7 @@ VkResult radv_CreateBuffer(
 
 	buffer = vk_alloc2(&device->alloc, pAllocator, sizeof(*buffer), 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!buffer)
+	if (buffer == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	buffer->size = pCreateInfo->size;
@@ -3764,7 +3763,7 @@ radv_initialise_color_surface(struct radv_device *device,
 					       desc,
 					       vk_format_get_first_non_void_channel(iview->vk_format));
 	format = radv_translate_colorformat(iview->vk_format);
-	if (format == V_028C70_COLOR_INVALID || ntype == (~0u))
+	if (format == V_028C70_COLOR_INVALID || ntype == ~0u)
 		radv_finishme("Illegal color\n");
 	swap = radv_translate_colorswap(iview->vk_format, FALSE);
 	endian = radv_colorformat_endian_swap(format);
@@ -4058,7 +4057,7 @@ VkResult radv_CreateFramebuffer(
 		sizeof(struct radv_attachment_info) * pCreateInfo->attachmentCount;
 	framebuffer = vk_alloc2(&device->alloc, pAllocator, size, 8,
 				  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!framebuffer)
+	if (framebuffer == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	framebuffer->attachment_count = pCreateInfo->attachmentCount;
@@ -4358,7 +4357,7 @@ VkResult radv_GetMemoryFdKHR(VkDevice _device,
 	       VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
 
 	bool ret = radv_get_memory_fd(device, memory, pFD);
-	if (!ret)
+	if (ret == false)
 		return vk_error(VK_ERROR_OUT_OF_DEVICE_MEMORY);
 	return VK_SUCCESS;
 }
@@ -4391,7 +4390,7 @@ static VkResult radv_import_opaque_fd(struct radv_device *device,
 {
 	uint32_t syncobj_handle = 0;
 	int ret = device->ws->import_syncobj(device->ws, fd, &syncobj_handle);
-	if (ret)
+	if (ret != 0)
 		return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
 
 	if (*syncobj)
@@ -4421,7 +4420,7 @@ static VkResult radv_import_sync_fd(struct radv_device *device,
 		device->ws->signal_syncobj(device->ws, syncobj_handle);
 	} else {
 		int ret = device->ws->import_syncobj_from_sync_file(device->ws, syncobj_handle, fd);
-	if (ret)
+	if (ret != 0)
 		return vk_error(VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR);
 	}
 
@@ -4502,7 +4501,7 @@ void radv_GetPhysicalDeviceExternalSemaphoreProperties(
 
 	/* Require has_syncobj_wait_for_submit for the syncobj signal ioctl introduced at virtually the same time */
 	if (pdevice->rad_info.has_syncobj_wait_for_submit &&
-	    (pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
+	    (pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR || 
 	     pExternalSemaphoreInfo->handleType == VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR)) {
 		pExternalSemaphoreProperties->exportFromImportedHandleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
 		pExternalSemaphoreProperties->compatibleHandleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
@@ -4590,7 +4589,7 @@ void radv_GetPhysicalDeviceExternalFenceProperties(
 	RADV_FROM_HANDLE(radv_physical_device, pdevice, physicalDevice);
 
 	if (pdevice->rad_info.has_syncobj_wait_for_submit &&
-	    (pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR ||
+	    (pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR || 
 	     pExternalFenceInfo->handleType == VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR)) {
 		pExternalFenceProperties->exportFromImportedHandleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR;
 		pExternalFenceProperties->compatibleHandleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR | VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT_KHR;

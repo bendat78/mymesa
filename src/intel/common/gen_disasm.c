@@ -113,7 +113,7 @@ gen_disasm_create(const struct gen_device_info *devinfo)
    struct gen_disasm *gd;
 
    gd = malloc(sizeof *gd);
-   if (!gd)
+   if (gd == NULL)
       return NULL;
 
    gd->devinfo = *devinfo;

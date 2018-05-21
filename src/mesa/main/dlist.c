@@ -786,7 +786,7 @@ build_bitmap_atlas(struct gl_context *ctx, struct gl_bitmap_atlas *atlas,
    /* Now we know the texture height */
    atlas->texHeight = ypos + row_height;
 
-   if (!atlas->texHeight) {
+   if (atlas->texHeight == 0) {
       /* no glyphs found, give up */
       goto fail;
    }
@@ -1140,7 +1140,7 @@ destroy_list(struct gl_context *ctx, GLuint list)
 {
    struct gl_display_list *dlist;
 
-   if (!list)
+   if (list == 0)
       return;
 
    dlist = _mesa_lookup_list(ctx, list);
@@ -1316,7 +1316,7 @@ dlist_alloc(struct gl_context *ctx, OpCode opcode, GLuint bytes, bool align8)
    assert(bytes <= BLOCK_SIZE * sizeof(Node));
 
    if (opcode < OPCODE_EXT_0) {
-      if (!InstSize[opcode]) {
+      if (InstSize[opcode] == 0) {
          /* save instruction size now */
          InstSize[opcode] = numNodes;
       }
@@ -5721,7 +5721,7 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
    }
 
    /* If this call has no effect, return early */
-   if (!bitmask)
+   if (bitmask == 0)
       return;
 
    SAVE_FLUSH_VERTICES(ctx);
@@ -9301,7 +9301,7 @@ _mesa_GenLists(GLsizei range)
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenLists");
       return 0;
    }
-   if (!range) {
+   if (range == 0) {
       return 0;
    }
 
@@ -9359,7 +9359,7 @@ _mesa_NewList(GLuint name, GLenum mode)
       _mesa_debug(ctx, "glNewList %u %s\n", name,
                   _mesa_enum_to_string(mode));
 
-   if (!name) {
+   if (name == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glNewList");
       return;
    }
@@ -9390,7 +9390,7 @@ _mesa_NewList(GLuint name, GLenum mode)
 
    ctx->CurrentServerDispatch = ctx->Save;
    _glapi_set_dispatch(ctx->CurrentServerDispatch);
-   if (!ctx->MarshalExec) {
+   if (ctx->MarshalExec == NULL) {
       ctx->CurrentClientDispatch = ctx->CurrentServerDispatch;
    }
 }
@@ -9449,7 +9449,7 @@ _mesa_EndList(void)
 
    ctx->CurrentServerDispatch = ctx->Exec;
    _glapi_set_dispatch(ctx->CurrentServerDispatch);
-   if (!ctx->MarshalExec) {
+   if (ctx->MarshalExec == NULL) {
       ctx->CurrentClientDispatch = ctx->CurrentServerDispatch;
    }
 }
@@ -9465,7 +9465,7 @@ _mesa_CallList(GLuint list)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glCallList %d\n", list);
 
-   if (!list) {
+   if (list == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glCallList(list==0)");
       return;
    }
@@ -9488,7 +9488,7 @@ _mesa_CallList(GLuint list)
    if (save_compile_flag) {
       ctx->CurrentServerDispatch = ctx->Save;
        _glapi_set_dispatch(ctx->CurrentServerDispatch);
-      if (!ctx->MarshalExec) {
+      if (ctx->MarshalExec == NULL) {
          ctx->CurrentClientDispatch = ctx->CurrentServerDispatch;
       }
    }
@@ -9530,7 +9530,7 @@ render_bitmap_atlas(struct gl_context *ctx, GLsizei n, GLenum type,
        * If the atlas was created in glGenLists, we'll have recorded the
        * number of lists (bitmaps).  Otherwise, take a guess at 256.
        */
-      if (!atlas->numBitmaps)
+      if (atlas->numBitmaps == 0)
          atlas->numBitmaps = 256;
       build_bitmap_atlas(ctx, atlas, ctx->List.ListBase);
    }
@@ -9614,7 +9614,7 @@ _mesa_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
    if (save_compile_flag) {
       ctx->CurrentServerDispatch = ctx->Save;
       _glapi_set_dispatch(ctx->CurrentServerDispatch);
-      if (!ctx->MarshalExec) {
+      if (ctx->MarshalExec == NULL) {
          ctx->CurrentClientDispatch = ctx->CurrentServerDispatch;
       }
    }

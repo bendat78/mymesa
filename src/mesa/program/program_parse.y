@@ -2349,7 +2349,7 @@ initialize_symbol_from_state(struct gl_program *prog,
 	 state_tokens[2] = state_tokens[3] = row;
 
 	 idx = add_state_reference(prog->Parameters, state_tokens);
-	 if (param_var->param_binding_begin == (~0u)) {
+	 if (param_var->param_binding_begin == ~0U) {
 	    param_var->param_binding_begin = idx;
             param_var->param_binding_swizzle = SWIZZLE_XYZW;
          }
@@ -2359,7 +2359,7 @@ initialize_symbol_from_state(struct gl_program *prog,
    }
    else {
       idx = add_state_reference(prog->Parameters, state_tokens);
-      if (param_var->param_binding_begin == (~0u)) {
+      if (param_var->param_binding_begin == ~0U) {
 	 param_var->param_binding_begin = idx;
          param_var->param_binding_swizzle = SWIZZLE_XYZW;
       }
@@ -2405,7 +2405,7 @@ initialize_symbol_from_param(struct gl_program *prog,
 	 state_tokens[2] = state_tokens[3] = row;
 
 	 idx = add_state_reference(prog->Parameters, state_tokens);
-	 if (param_var->param_binding_begin == (~0u)) {
+	 if (param_var->param_binding_begin == ~0U) {
 	    param_var->param_binding_begin = idx;
             param_var->param_binding_swizzle = SWIZZLE_XYZW;
          }
@@ -2414,7 +2414,7 @@ initialize_symbol_from_param(struct gl_program *prog,
    }
    else {
       idx = add_state_reference(prog->Parameters, state_tokens);
-      if (param_var->param_binding_begin == (~0u)) {
+      if (param_var->param_binding_begin == ~0U) {
 	 param_var->param_binding_begin = idx;
          param_var->param_binding_swizzle = SWIZZLE_XYZW;
       }
@@ -2449,7 +2449,7 @@ initialize_symbol_from_const(struct gl_program *prog,
    param_var->type = at_param;
    param_var->param_binding_type = PROGRAM_CONSTANT;
 
-   if (param_var->param_binding_begin == (~0u)) {
+   if (param_var->param_binding_begin == ~0U) {
       param_var->param_binding_begin = idx;
       param_var->param_binding_swizzle = allowSwizzle ? swizzle : SWIZZLE_XYZW;
    }

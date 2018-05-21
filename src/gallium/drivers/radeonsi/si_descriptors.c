@@ -1506,7 +1506,7 @@ static void si_set_polygon_stipple(struct pipe_context *ctx,
 				   const struct pipe_poly_stipple *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct pipe_constant_buffer cb = {0};
+	struct pipe_constant_buffer cb = {};
 	unsigned stipple[32];
 	int i;
 

@@ -532,9 +532,8 @@ draw_buffers(struct gl_context *ctx, struct gl_framebuffer *fb, GLsizei n,
           *  INVALID_OPERATION results."
           */
          destMask[output] &= supportedMask;
-
          if (!no_error) {
-            if (!destMask[output]) {
+            if (destMask[output] == 0) {
                _mesa_error(ctx, GL_INVALID_OPERATION,
                            "%s(unsupported buffer %s)",
                            caller, _mesa_enum_to_string(buffers[output]));

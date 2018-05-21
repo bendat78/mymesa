@@ -119,7 +119,7 @@ _mesa_hash_table_create(void *mem_ctx,
    struct hash_table *ht;
 
    ht = ralloc(mem_ctx, struct hash_table);
-   if (!ht)
+   if (ht == NULL)
       return NULL;
 
    ht->size_index = 0;
@@ -133,7 +133,7 @@ _mesa_hash_table_create(void *mem_ctx,
    ht->deleted_entries = 0;
    ht->deleted_key = &deleted_key_value;
 
-   if (!ht->table) {
+   if (ht->table == NULL) {
       ralloc_free(ht);
       return NULL;
    }
@@ -147,13 +147,13 @@ _mesa_hash_table_clone(struct hash_table *src, void *dst_mem_ctx)
    struct hash_table *ht;
 
    ht = ralloc(dst_mem_ctx, struct hash_table);
-   if (!ht)
+   if (ht == NULL)
       return NULL;
 
    memcpy(ht, src, sizeof(struct hash_table));
 
    ht->table = ralloc_array(ht, struct hash_entry, ht->size);
-   if (!ht->table) {
+   if (ht->table == NULL) {
       ralloc_free(ht);
       return NULL;
    }
@@ -199,7 +199,7 @@ _mesa_hash_table_clear(struct hash_table *ht,
    struct hash_entry *entry;
 
    for (entry = ht->table; entry != ht->table + ht->size; entry++) {
-      if (!entry->key)
+      if (entry->key == NULL)
          continue;
 
       if (delete_function != NULL && entry->key != ht->deleted_key)
@@ -291,7 +291,7 @@ _mesa_hash_table_rehash(struct hash_table *ht, unsigned new_size_index)
 
    table = rzalloc_array(ht, struct hash_entry,
                          hash_sizes[new_size_index].size);
-   if (!table)
+   if (table == NULL)
       return;
 
    old_ht = *ht;
@@ -334,7 +334,7 @@ hash_table_insert(struct hash_table *ht, uint32_t hash,
 
       if (!entry_is_present(ht, entry)) {
          /* Stash the first available entry we find */
-         if (!available_entry)
+         if (available_entry == NULL)
             available_entry = entry;
          if (entry_is_free(entry))
             break;
@@ -430,7 +430,7 @@ struct hash_entry *
 _mesa_hash_table_next_entry(struct hash_table *ht,
                             struct hash_entry *entry)
 {
-   if (!entry)
+   if (entry == NULL)
       entry = ht->table;
    else
       entry = entry + 1;
@@ -459,7 +459,7 @@ _mesa_hash_table_random_entry(struct hash_table *ht,
    struct hash_entry *entry;
    uint32_t i = rand() % ht->size;
 
-   if (!ht->entries)
+   if (ht->entries == 0)
       return NULL;
 
    for (entry = ht->table + i; entry != ht->table + ht->size; entry++) {
@@ -503,7 +503,7 @@ _mesa_hash_string(const void *_key)
    uint32_t hash = _mesa_fnv32_1a_offset_bias;
    const char *key = _key;
 
-   while (*key) {
+   while (*key != 0) {
       hash = _mesa_fnv32_1a_accumulate(hash, *key);
       key++;
    }

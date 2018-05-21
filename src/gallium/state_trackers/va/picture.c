@@ -150,8 +150,8 @@ handlePictureParameterBuffer(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *
       if (!context->target)
          return VA_STATUS_ERROR_INVALID_CONTEXT;
 
-      if ((!context->templat.max_references) &&
-         (format != PIPE_VIDEO_FORMAT_JPEG))
+      if (context->templat.max_references == 0 &&
+         format != PIPE_VIDEO_FORMAT_JPEG)
          return VA_STATUS_ERROR_INVALID_BUFFER;
 
       if (format == PIPE_VIDEO_FORMAT_MPEG4_AVC)
@@ -412,6 +412,7 @@ static VAStatus
 handleVAEncPictureParameterBufferType(vlVaDriver *drv, vlVaContext *context, vlVaBuffer *buf)
 {
    VAStatus status = VA_STATUS_SUCCESS;
+
    switch (u_reduce_video_profile(context->templat.profile)) {
    case PIPE_VIDEO_FORMAT_MPEG4_AVC:
       status = vlVaHandleVAEncPictureParameterBufferTypeH264(drv, context, buf);

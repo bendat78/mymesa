@@ -113,7 +113,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
       goto err_resource;
 
    *surface = vlAddDataHTAB(vlsurface);
-   if (!*surface)
+   if (*surface == 0)
       goto err_resource;
 
    pipe_resource_reference(&res, NULL);

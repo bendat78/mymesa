@@ -42,7 +42,7 @@ vk_zalloc(const VkAllocationCallbacks *alloc,
           VkSystemAllocationScope scope)
 {
    void *mem = vk_alloc(alloc, size, align, scope);
-   if (!mem)
+   if (mem == NULL)
       return NULL;
 
    memset(mem, 0, size);
@@ -61,7 +61,7 @@ vk_realloc(const VkAllocationCallbacks *alloc,
 static inline void
 vk_free(const VkAllocationCallbacks *alloc, void *data)
 {
-   if (!data)
+   if (data == NULL)
       return;
 
    alloc->pfnFree(alloc->pUserData, data);
@@ -86,7 +86,7 @@ vk_zalloc2(const VkAllocationCallbacks *parent_alloc,
            VkSystemAllocationScope scope)
 {
    void *mem = vk_alloc2(parent_alloc, alloc, size, align, scope);
-   if (!mem)
+   if (mem == NULL)
       return NULL;
 
    memset(mem, 0, size);

@@ -280,7 +280,7 @@ v3d_emit_gl_shader_state(struct v3d_context *v3d,
                 }
         }
 
-        if (!vtx->num_elements) {
+        if (vtx->num_elements == 0) {
                 /* GFXH-930: At least one attribute must be enabled and read
                  * by CS and VS.  If we have no attributes being consumed by
                  * the shader, set up a dummy to be loaded into the VPM.

@@ -118,7 +118,7 @@ wsi_x11_check_dri3_compatible(xcb_connection_t *conn, int local_fd)
       free(local_dev);
       free(dri3_dev);
 
-      if (ret)
+      if (ret != 0)
          return false;
    }
    return true;
@@ -361,7 +361,7 @@ get_visualtype_for_window(xcb_connection_t *conn, xcb_window_t window,
    free(tree);
 
    xcb_screen_t *screen = get_screen_for_root(conn, root);
-   if (!screen)
+   if (screen == NULL)
       return NULL;
 
    return screen_get_visualtype(screen, visual_id, depth);
@@ -590,7 +590,7 @@ x11_surface_get_present_modes(VkIcdSurfaceBase *surface,
                               uint32_t *pPresentModeCount,
                               VkPresentModeKHR *pPresentModes)
 {
-   if (!pPresentModes) {
+   if (pPresentModes == NULL) {
       *pPresentModeCount = ARRAY_SIZE(present_modes);
       return VK_SUCCESS;
    }
@@ -610,7 +610,7 @@ VkResult wsi_create_xcb_surface(const VkAllocationCallbacks *pAllocator,
 
    surface = vk_alloc(pAllocator, sizeof *surface, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!surface)
+   if (surface == NULL)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    surface->base.platform = VK_ICD_WSI_PLATFORM_XCB;
@@ -629,7 +629,7 @@ VkResult wsi_create_xlib_surface(const VkAllocationCallbacks *pAllocator,
 
    surface = vk_alloc(pAllocator, sizeof *surface, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!surface)
+   if (surface == NULL)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    surface->base.platform = VK_ICD_WSI_PLATFORM_XLIB;
@@ -836,8 +836,7 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
          event = xcb_poll_for_special_event(chain->conn, chain->special_event);
          if (!event) {
             int ret;
-
-            if (!timeout)
+            if (timeout == 0)
                return x11_swapchain_result(chain, VK_NOT_READY);
 
             atimeout = wsi_get_absolute_timeout(timeout);
@@ -845,10 +844,8 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
             pfds.fd = xcb_get_file_descriptor(chain->conn);
             pfds.events = POLLIN;
             ret = poll(&pfds, 1, timeout / 1000 / 1000);
-
-            if (!ret)
+            if (ret == 0)
                return x11_swapchain_result(chain, VK_TIMEOUT);
-
             if (ret == -1)
                return x11_swapchain_result(chain, VK_ERROR_OUT_OF_DATE_KHR);
 
@@ -1110,7 +1107,7 @@ x11_image_init(VkDevice device_h, struct x11_swapchain *chain,
       goto fail_pixmap;
 
    image->shm_fence = xshmfence_map_shm(fence_fd);
-   if (!image->shm_fence)
+   if (image->shm_fence == NULL)
       goto fail_shmfence_alloc;
 
    image->sync_fence = xcb_generate_id(chain->conn);
@@ -1290,17 +1287,15 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    xcb_window_t window = x11_surface_get_window(icd_surface);
    xcb_get_geometry_reply_t *geometry =
       xcb_get_geometry_reply(conn, xcb_get_geometry(conn, window), NULL);
-
-   if (!geometry)
+   if (geometry == NULL)
       return VK_ERROR_SURFACE_LOST_KHR;
-
    const uint32_t bit_depth = geometry->depth;
    free(geometry);
 
    size_t size = sizeof(*chain) + num_images * sizeof(chain->images[0]);
    chain = vk_alloc(pAllocator, size, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!chain)
+   if (chain == NULL)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    result = wsi_swapchain_init(wsi_device, &chain->base, device,
@@ -1455,7 +1450,7 @@ wsi_x11_init_wsi(struct wsi_device *wsi_device,
    }
 
    int ret = pthread_mutex_init(&wsi->mutex, NULL);
-   if (ret) {
+   if (ret != 0) {
       if (ret == ENOMEM) {
          result = VK_ERROR_OUT_OF_HOST_MEMORY;
       } else {

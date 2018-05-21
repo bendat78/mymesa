@@ -41,7 +41,7 @@ static void vid_dec_h264_BeginFrame(vid_dec_PrivateType *priv)
       return;
 
    if (!priv->codec) {
-      struct pipe_video_codec templat = {0};
+      struct pipe_video_codec templat = {};
       templat.profile = priv->profile;
       templat.entrypoint = PIPE_VIDEO_ENTRYPOINT_BITSTREAM;
       templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
@@ -173,7 +173,7 @@ static void scaling_list(struct vl_rbsp *rbsp, uint8_t *scalingList, unsigned si
    list = (sizeOfScalingList == 16) ? vl_zscan_normal_16 : vl_zscan_normal;
    for (i = 0; i < sizeOfScalingList; ++i ) {
 
-      if (nextScale) {
+      if (nextScale != 0) {
          signed delta_scale = vl_rbsp_se(rbsp);
          nextScale = (lastScale + delta_scale + 256) % 256;
          if (i == 0 && nextScale == 0) {
@@ -282,7 +282,7 @@ static void seq_parameter_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp)
 
    sps->pic_order_cnt_type = vl_rbsp_ue(rbsp);
 
-   if (!sps->pic_order_cnt_type)
+   if (sps->pic_order_cnt_type == 0)
       sps->log2_max_pic_order_cnt_lsb_minus4 = vl_rbsp_ue(rbsp);
    else if (sps->pic_order_cnt_type == 1) {
       sps->delta_pic_order_always_zero_flag = vl_rbsp_u(rbsp, 1);
@@ -393,7 +393,7 @@ static void picture_parameter_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbs
    if (pps->num_slice_groups_minus1 > 0) {
       pps->slice_group_map_type = vl_rbsp_ue(rbsp);
 
-      if (!pps->slice_group_map_type) {
+      if (pps->slice_group_map_type == 0) {
 
          for (i = 0; i <= pps->num_slice_groups_minus1; ++i)
             /* run_length_minus1[i] */
@@ -535,7 +535,7 @@ static void pred_weight_table(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
    /* luma_log2_weight_denom */
    vl_rbsp_ue(rbsp);
 
-   if (ChromaArrayType)
+   if (ChromaArrayType != 0)
       /* chroma_log2_weight_denom */
       vl_rbsp_ue(rbsp);
 
@@ -547,7 +547,7 @@ static void pred_weight_table(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
          /* luma_offset_l0[i] */
          vl_rbsp_se(rbsp);
       }
-      if (ChromaArrayType) {
+      if (ChromaArrayType != 0) {
          /* chroma_weight_l0_flag */
          if (vl_rbsp_u(rbsp, 1)) {
             for (j = 0; j < 2; ++j) {
@@ -569,7 +569,7 @@ static void pred_weight_table(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
             /* luma_offset_l1[i] */
             vl_rbsp_se(rbsp);
          }
-         if (ChromaArrayType) {
+         if (ChromaArrayType != 0) {
             /* chroma_weight_l1_flag */
             if (vl_rbsp_u(rbsp, 1)) {
                for (j = 0; j < 2; ++j) {
@@ -617,7 +617,7 @@ static void dec_ref_pic_marking(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
             if (memory_management_control_operation == 4)
                /* max_long_term_frame_idx_plus1 */
                vl_rbsp_ue(rbsp);
-         } while (memory_management_control_operation);
+         } while (memory_management_control_operation != 0);
       }
    }
 }
@@ -700,7 +700,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       priv->codec_data.h264.idr_pic_id = idr_pic_id;
    }
 
-   if (!sps->pic_order_cnt_type) {
+   if (sps->pic_order_cnt_type == 0) {
       /* pic_order_cnt_lsb */
       unsigned log2_max_pic_order_cnt_lsb = sps->log2_max_pic_order_cnt_lsb_minus4 + 4;
       unsigned max_pic_order_cnt_lsb = 1 << log2_max_pic_order_cnt_lsb;
@@ -783,7 +783,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
 
       priv->codec_data.h264.prevFrameNumOffset = FrameNumOffset;
 
-      if (sps->num_ref_frames_in_pic_order_cnt_cycle)
+      if (sps->num_ref_frames_in_pic_order_cnt_cycle != 0)
          absFrameNum = FrameNumOffset + frame_num;
       else
          absFrameNum = 0;
@@ -807,7 +807,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       } else
          expectedPicOrderCnt = 0;
 
-      if (!nal_ref_idc)
+      if (nal_ref_idc == 0)
          expectedPicOrderCnt += sps->offset_for_non_ref_pic;
 
       if (!priv->picture.h264.field_pic_flag) {
@@ -836,7 +836,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
 
       if (IdrPicFlag)
          tempPicOrderCnt = 0;
-      else if (!nal_ref_idc)
+      else if (nal_ref_idc == 0)
          tempPicOrderCnt = 2 * (FrameNumOffset + frame_num) - 1;
       else
          tempPicOrderCnt = 2 * (FrameNumOffset + frame_num);
@@ -884,7 +884,7 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
        (pps->weighted_bipred_idc == 1 && slice_type == PIPE_H264_SLICE_TYPE_B))
       pred_weight_table(priv, rbsp, sps, slice_type);
 
-   if (nal_ref_idc)
+   if (nal_ref_idc != 0)
       dec_ref_pic_marking(priv, rbsp, IdrPicFlag);
 
    if (pps->entropy_coding_mode_flag && slice_type != PIPE_H264_SLICE_TYPE_I && slice_type != PIPE_H264_SLICE_TYPE_SI)
@@ -1084,7 +1084,7 @@ void vid_dec_FrameDecoded_common(vid_dec_PrivateType* priv, OMX_BUFFERHEADERTYPE
          vbuf = input->pInputPortPrivate;
          if (vbuf->interlaced) {
             /* re-allocate the progressive buffer */
-            struct pipe_video_buffer templat = {0};
+            struct pipe_video_buffer templat = {};
             struct u_rect src_rect, dst_rect;
 
 #if ENABLE_ST_OMX_BELLAGIO

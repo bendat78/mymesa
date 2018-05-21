@@ -181,7 +181,7 @@ void SwrStoreHotTileClear(
 
     // Store a macro tile.
     /// @todo Once all formats are supported then if check can go away. This is to help us near term to make progress.
-    if (pfnStoreTilesClear)
+    if (pfnStoreTilesClear != NULL)
     {
         pfnStoreTilesClear(pClearColor, pDstSurface, x, y, renderTargetArrayIndex);
     }

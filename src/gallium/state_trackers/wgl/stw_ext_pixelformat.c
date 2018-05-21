@@ -115,7 +115,7 @@ stw_query_attrib(int iPixelFormat, int iLayerPlane, int attrib, int *pvalue)
       return TRUE;
    }
 
-   if (iLayerPlane)
+   if (iLayerPlane != 0)
       return FALSE;
 
    switch (attrib) {
@@ -348,7 +348,7 @@ score_pixelformats(struct stw_pixelformat_score *scores,
          break;
       }
    }
-   if (!ami)
+   if (ami == NULL)
       return TRUE;
 
    /* Iterate all pixelformats, query the requested attribute and calculate
@@ -406,7 +406,7 @@ wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
    count = stw_pixelformat_get_extended_count();
    scores = (struct stw_pixelformat_score *)
       MALLOC(count * sizeof(struct stw_pixelformat_score));
-   if (!scores)
+   if (scores == NULL)
       return FALSE;
    for (i = 0; i < count; i++) {
       scores[i].points = 0x7fffffff;
@@ -415,8 +415,8 @@ wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
 
    /* Given the attribute list calculate a score for each pixelformat.
     */
-   if (piAttribIList) {
-      while (*piAttribIList) {
+   if (piAttribIList != NULL) {
+      while (*piAttribIList != 0) {
          if (!score_pixelformats(scores, count, piAttribIList[0],
                                  piAttribIList[1])) {
             FREE(scores);
@@ -425,8 +425,8 @@ wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList,
          piAttribIList += 2;
       }
    }
-   if (pfAttribFList) {
-      while (*pfAttribFList) {
+   if (pfAttribFList != NULL) {
+      while (*pfAttribFList != 0) {
          if (!score_pixelformats(scores, count, (int) pfAttribFList[0],
                                  (int) pfAttribFList[1])) {
             FREE(scores);

@@ -26,7 +26,7 @@
 /**
  * @file
  * SVGA Shader Dump Facilities
- *
+ * 
  * @author Michal Krol <michal@vmware.com>
  */
 
@@ -496,7 +496,7 @@ parse_op(struct dump_info *di,
    op->op = *(struct sh_op *)*token;
    *token += sizeof(struct sh_op) / sizeof(uint);
 
-   if (num_dst) {
+   if (num_dst >= 1) {
       op->dst = *(struct sh_dstreg *)*token;
       *token += sizeof(struct sh_dstreg) / sizeof(uint);
       if (op->dst.relative &&

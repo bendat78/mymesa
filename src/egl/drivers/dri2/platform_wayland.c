@@ -312,7 +312,7 @@ dri2_wl_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 
    dri2_surf->dri_drawable = (*createNewDrawable)(dri2_dpy->dri_screen, config,
                                                   dri2_surf);
-    if (!dri2_surf->dri_drawable) {
+    if (dri2_surf->dri_drawable == NULL) {
       _eglError(EGL_BAD_ALLOC, "createNewDrawable");
        goto cleanup_surf_wrapper;
     }
@@ -450,15 +450,15 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
    /* There might be a buffer release already queued that wasn't processed */
    wl_display_dispatch_queue_pending(dri2_dpy->wl_dpy, dri2_surf->wl_queue);
 
-   while (!dri2_surf->back) {
+   while (dri2_surf->back == NULL) {
       for (int i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
          /* Get an unlocked buffer, preferrably one with a dri_buffer
           * already allocated. */
          if (dri2_surf->color_buffers[i].locked)
             continue;
-         if (!dri2_surf->back)
+         if (dri2_surf->back == NULL)
             dri2_surf->back = &dri2_surf->color_buffers[i];
-         else if (!dri2_surf->back->dri_image)
+         else if (dri2_surf->back->dri_image == NULL)
             dri2_surf->back = &dri2_surf->color_buffers[i];
       }
 
@@ -476,7 +476,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
           return -1;
    }
 
-   if (!dri2_surf->back)
+   if (dri2_surf->back == NULL)
       return -1;
 
    use_flags = __DRI_IMAGE_USE_SHARE | __DRI_IMAGE_USE_BACKBUFFER;
@@ -507,11 +507,11 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
                                          __DRI_IMAGE_USE_LINEAR,
                                          NULL);
       }
-      if (!dri2_surf->back->linear_copy)
+      if (dri2_surf->back->linear_copy == NULL)
           return -1;
    }
 
-   if (!dri2_surf->back->dri_image) {
+   if (dri2_surf->back->dri_image == NULL) {
       /* If our DRIImage implementation does not support
        * createImageWithModifiers, then fall back to the old createImage,
        * and hope it allocates an image which is acceptable to the winsys.
@@ -539,7 +539,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
 
       dri2_surf->back->age = 0;
    }
-   if (!dri2_surf->back->dri_image)
+   if (dri2_surf->back->dri_image == NULL)
       return -1;
 
    dri2_surf->back->locked = true;
@@ -642,7 +642,7 @@ dri2_wl_get_buffers_with_format(__DRIdrawable * driDrawable,
    }
 
    *out_count = j;
-   if (!j)
+   if (j == 0)
       return NULL;
 
    *width = dri2_surf->base.Width;
@@ -916,7 +916,7 @@ dri2_wl_swap_buffers_with_damage(_EGLDriver *drv,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
 
-   while (dri2_surf->throttle_callback)
+   while (dri2_surf->throttle_callback != NULL)
       if (wl_display_dispatch_queue(dri2_dpy->wl_dpy,
                                     dri2_surf->wl_queue) == -1)
          return -1;
@@ -994,7 +994,7 @@ dri2_wl_swap_buffers_with_damage(_EGLDriver *drv,
     * to a sync callback so that we always give a chance for the compositor to
     * handle the commit and send a release event before checking for a free
     * buffer */
-   if (!dri2_surf->throttle_callback) {
+   if (dri2_surf->throttle_callback == NULL) {
       dri2_surf->throttle_callback = wl_display_sync(dri2_surf->wl_dpy_wrapper);
       wl_callback_add_listener(dri2_surf->throttle_callback,
                                &throttle_listener, dri2_surf);
@@ -1264,7 +1264,7 @@ static EGLBoolean
 dri2_wl_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-   unsigned int format_count[ARRAY_SIZE(dri2_wl_visuals)] = {0};
+   unsigned int format_count[ARRAY_SIZE(dri2_wl_visuals)] = { 0 };
    unsigned int count = 0;
 
    for (unsigned i = 0; dri2_dpy->driver_configs[i]; i++) {
@@ -1307,9 +1307,9 @@ dri2_initialize_wayland_drm(_EGLDriver *drv, _EGLDisplay *disp)
 
    dri2_dpy->fd = -1;
    disp->DriverData = (void *) dri2_dpy;
-   if (!disp->PlatformDisplay) {
+   if (disp->PlatformDisplay == NULL) {
       dri2_dpy->wl_dpy = wl_display_connect(NULL);
-      if (!dri2_dpy->wl_dpy)
+      if (dri2_dpy->wl_dpy == NULL)
          goto cleanup;
       dri2_dpy->own_device = true;
    } else {
@@ -1328,7 +1328,7 @@ dri2_initialize_wayland_drm(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->wl_queue = wl_display_create_queue(dri2_dpy->wl_dpy);
 
    dri2_dpy->wl_dpy_wrapper = wl_proxy_create_wrapper(dri2_dpy->wl_dpy);
-   if (!dri2_dpy->wl_dpy_wrapper)
+   if (dri2_dpy->wl_dpy_wrapper == NULL)
       goto cleanup;
 
    wl_proxy_set_queue((struct wl_proxy *) dri2_dpy->wl_dpy_wrapper,
@@ -1368,7 +1368,7 @@ dri2_initialize_wayland_drm(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->is_render_node = drmGetNodeTypeFromFd(dri2_dpy->fd) == DRM_NODE_RENDER;
 
    dri2_dpy->driver_name = loader_get_driver_for_fd(dri2_dpy->fd);
-   if (!dri2_dpy->driver_name) {
+   if (dri2_dpy->driver_name == NULL) {
       _eglError(EGL_BAD_ALLOC, "DRI2: failed to get driver name");
       goto cleanup;
    }
@@ -1723,7 +1723,7 @@ dri2_wl_swrast_commit_backbuffer(struct dri2_egl_surface *dri2_surf)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(dri2_surf->base.Resource.Display);
 
-   while (dri2_surf->throttle_callback)
+   while (dri2_surf->throttle_callback != NULL)
       if (wl_display_dispatch_queue(dri2_dpy->wl_dpy,
                                     dri2_surf->wl_queue) == -1)
          return;
@@ -1756,7 +1756,7 @@ dri2_wl_swrast_commit_backbuffer(struct dri2_egl_surface *dri2_surf)
     * to a sync callback so that we always give a chance for the compositor to
     * handle the commit and send a release event before checking for a free
     * buffer */
-   if (!dri2_surf->throttle_callback) {
+   if (dri2_surf->throttle_callback == NULL) {
       dri2_surf->throttle_callback = wl_display_sync(dri2_surf->wl_dpy_wrapper);
       wl_callback_add_listener(dri2_surf->throttle_callback,
                                &throttle_listener, dri2_surf);
@@ -1961,9 +1961,9 @@ dri2_initialize_wayland_swrast(_EGLDriver *drv, _EGLDisplay *disp)
 
    dri2_dpy->fd = -1;
    disp->DriverData = (void *) dri2_dpy;
-   if (!disp->PlatformDisplay) {
+   if (disp->PlatformDisplay == NULL) {
       dri2_dpy->wl_dpy = wl_display_connect(NULL);
-      if (!dri2_dpy->wl_dpy)
+      if (dri2_dpy->wl_dpy == NULL)
          goto cleanup;
       dri2_dpy->own_device = true;
    } else {
@@ -1973,7 +1973,7 @@ dri2_initialize_wayland_swrast(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->wl_queue = wl_display_create_queue(dri2_dpy->wl_dpy);
 
    dri2_dpy->wl_dpy_wrapper = wl_proxy_create_wrapper(dri2_dpy->wl_dpy);
-   if (!dri2_dpy->wl_dpy_wrapper)
+   if (dri2_dpy->wl_dpy_wrapper == NULL)
       goto cleanup;
 
    wl_proxy_set_queue((struct wl_proxy *) dri2_dpy->wl_dpy_wrapper,

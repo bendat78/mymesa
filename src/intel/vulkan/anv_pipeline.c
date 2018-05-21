@@ -54,7 +54,7 @@ VkResult anv_CreateShaderModule(
    module = vk_alloc2(&device->alloc, pAllocator,
                        sizeof(*module) + pCreateInfo->codeSize, 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!module)
+   if (module == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    module->size = pCreateInfo->codeSize;
@@ -407,7 +407,7 @@ anv_pipeline_compile(struct anv_pipeline *pipeline,
    nir_shader *nir = anv_shader_compile_to_nir(pipeline, mem_ctx,
                                                module, entrypoint, stage,
                                                spec_info);
-   if (!nir)
+   if (nir == NULL)
       return NULL;
 
    NIR_PASS_V(nir, anv_nir_lower_ycbcr_textures, layout);
@@ -528,8 +528,8 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
       bin = anv_pipeline_cache_search(cache, sha1, 20);
    }
 
-   if (!bin) {
-      struct brw_vs_prog_data prog_data = {0};
+   if (bin == NULL) {
+      struct brw_vs_prog_data prog_data = {};
       struct anv_pipeline_binding surface_to_descriptor[256];
       struct anv_pipeline_binding sampler_to_descriptor[256];
 
@@ -544,7 +544,7 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
                                              module, entrypoint,
                                              MESA_SHADER_VERTEX, spec_info,
                                              &prog_data.base.base, &map);
-      if (!nir) {
+      if (nir == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -559,7 +559,7 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_vs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         -1, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -635,8 +635,8 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
    const struct gen_device_info *devinfo = &pipeline->device->info;
    const struct brw_compiler *compiler =
       pipeline->device->instance->physicalDevice.compiler;
-   struct brw_tcs_prog_key tcs_key = {0};
-   struct brw_tes_prog_key tes_key = {0};
+   struct brw_tcs_prog_key tcs_key = {};
+   struct brw_tes_prog_key tes_key = {};
    struct anv_shader_bin *tcs_bin = NULL;
    struct anv_shader_bin *tes_bin = NULL;
    unsigned char tcs_sha1[40];
@@ -662,8 +662,8 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
    }
 
    if (tcs_bin == NULL || tes_bin == NULL) {
-      struct brw_tcs_prog_data tcs_prog_data = {0};
-      struct brw_tes_prog_data tes_prog_data = {0};
+      struct brw_tcs_prog_data tcs_prog_data = {};
+      struct brw_tes_prog_data tes_prog_data = {};
       struct anv_pipeline_binding tcs_surface_to_descriptor[256];
       struct anv_pipeline_binding tcs_sampler_to_descriptor[256];
       struct anv_pipeline_binding tes_surface_to_descriptor[256];
@@ -725,7 +725,7 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
       shader_code =
          brw_compile_tcs(compiler, NULL, mem_ctx, &tcs_key, &tcs_prog_data,
                          tcs_nir, shader_time_index, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -746,7 +746,7 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
          brw_compile_tes(compiler, NULL, mem_ctx, &tes_key,
                          &tcs_prog_data.base.vue_map, &tes_prog_data, tes_nir,
                          NULL, shader_time_index, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -797,8 +797,8 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
       bin = anv_pipeline_cache_search(cache, sha1, 20);
    }
 
-   if (!bin) {
-      struct brw_gs_prog_data prog_data = {0};
+   if (bin == NULL) {
+      struct brw_gs_prog_data prog_data = {};
       struct anv_pipeline_binding surface_to_descriptor[256];
       struct anv_pipeline_binding sampler_to_descriptor[256];
 
@@ -813,7 +813,7 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
                                              module, entrypoint,
                                              MESA_SHADER_GEOMETRY, spec_info,
                                              &prog_data.base.base, &map);
-      if (!nir) {
+      if (nir == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -828,7 +828,7 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_gs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         NULL, -1, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -877,8 +877,8 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
       bin = anv_pipeline_cache_search(cache, sha1, 20);
    }
 
-   if (!bin) {
-      struct brw_wm_prog_data prog_data = {0};
+   if (bin == NULL) {
+      struct brw_wm_prog_data prog_data = {};
       struct anv_pipeline_binding surface_to_descriptor[256];
       struct anv_pipeline_binding sampler_to_descriptor[256];
 
@@ -893,7 +893,7 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
                                              module, entrypoint,
                                              MESA_SHADER_FRAGMENT, spec_info,
                                              &prog_data.base, &map);
-      if (!nir) {
+      if (nir == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -957,7 +957,7 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
          var->data.location = rt_to_bindings[rt] + FRAG_RESULT_DATA0;
       }
 
-      if (!num_rts) {
+      if (num_rts == 0) {
          /* If we have no render targets, we need a null render target */
          rt_bindings[0] = (struct anv_pipeline_binding) {
             .set = ANV_DESCRIPTOR_SET_COLOR_ATTACHMENTS,
@@ -979,7 +979,7 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_fs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         NULL, -1, -1, true, false, NULL, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -1027,8 +1027,8 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
       bin = anv_pipeline_cache_search(cache, sha1, 20);
    }
 
-   if (!bin) {
-      struct brw_cs_prog_data prog_data = {0};
+   if (bin == NULL) {
+      struct brw_cs_prog_data prog_data = {};
       struct anv_pipeline_binding surface_to_descriptor[256];
       struct anv_pipeline_binding sampler_to_descriptor[256];
 
@@ -1043,7 +1043,7 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
                                              module, entrypoint,
                                              MESA_SHADER_COMPUTE, spec_info,
                                              &prog_data.base, &map);
-      if (!nir) {
+      if (nir == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -1055,7 +1055,7 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
       const unsigned *shader_code =
          brw_compile_cs(compiler, NULL, mem_ctx, &key, &prog_data, nir,
                         -1, NULL);
-      if (!shader_code) {
+      if (shader_code == NULL) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -1305,7 +1305,7 @@ anv_pipeline_init(struct anv_pipeline *pipeline,
 
    anv_pipeline_validate_create_info(pCreateInfo);
 
-   if (!alloc)
+   if (alloc == NULL)
       alloc = &device->alloc;
 
    pipeline->device = device;
@@ -1340,8 +1340,8 @@ anv_pipeline_init(struct anv_pipeline *pipeline,
 
    pipeline->active_stages = 0;
 
-   const VkPipelineShaderStageCreateInfo *pStages[MESA_SHADER_STAGES] = {0};
-   struct anv_shader_module *modules[MESA_SHADER_STAGES] = {0};
+   const VkPipelineShaderStageCreateInfo *pStages[MESA_SHADER_STAGES] = {};
+   struct anv_shader_module *modules[MESA_SHADER_STAGES] = {};
    for (uint32_t i = 0; i < pCreateInfo->stageCount; i++) {
       VkShaderStageFlagBits vk_stage = pCreateInfo->pStages[i].stage;
       gl_shader_stage stage = vk_to_mesa_shader_stage(vk_stage);

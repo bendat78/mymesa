@@ -65,7 +65,7 @@ read_atom(void *ctx, const char *&src, char *&symbol_buffer)
    skip_whitespace(src, symbol_buffer);
 
    size_t n = strcspn(src, "( \v\t\r\n);");
-   if (!n)
+   if (n == 0)
       return NULL; // no atom
 
    // Check for the special symbol '+INF', which means +Infinity.  Note: C99
@@ -102,7 +102,7 @@ static s_expression *
 __read_expression(void *ctx, const char *&src, char *&symbol_buffer)
 {
    s_expression *atom = read_atom(ctx, src, symbol_buffer);
-   if (atom)
+   if (atom != NULL)
       return atom;
 
    skip_whitespace(src, symbol_buffer);
@@ -199,7 +199,7 @@ bool
 s_match(s_expression *top, unsigned n, s_pattern *pattern, bool partial)
 {
    s_list *list = SX_AS_LIST(top);
-   if (!list)
+   if (list == NULL)
       return false;
 
    unsigned i = 0;

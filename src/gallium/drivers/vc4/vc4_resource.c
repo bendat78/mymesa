@@ -449,7 +449,7 @@ vc4_setup_slices(struct vc4_resource *rsc, const char *caller)
                 struct vc4_resource_slice *slice = &rsc->slices[i];
 
                 uint32_t level_width, level_height;
-                if (!i) {
+                if (i == 0) {
                         level_width = width;
                         level_height = height;
                 } else {
@@ -663,7 +663,7 @@ vc4_resource_create_with_modifiers(struct pipe_screen *pscreen,
                 };
                 int ret = vc4_ioctl(screen->fd, DRM_IOCTL_VC4_SET_TILING,
                                     &set_tiling);
-                if (ret)
+                if (ret != 0)
                         goto fail;
         }
 
@@ -730,7 +730,7 @@ vc4_resource_from_handle(struct pipe_screen *pscreen,
         };
         int ret = vc4_ioctl(screen->fd, DRM_IOCTL_VC4_GET_TILING, &get_tiling);
 
-        if (ret) {
+        if (ret != 0) {
                 whandle->modifier = DRM_FORMAT_MOD_LINEAR;
         } else if (whandle->modifier == DRM_FORMAT_MOD_INVALID) {
                 whandle->modifier = get_tiling.modifier;
@@ -758,7 +758,7 @@ vc4_resource_from_handle(struct pipe_screen *pscreen,
         rsc->vc4_format = get_resource_texture_format(prsc);
         vc4_setup_slices(rsc, "import");
 
-        if (whandle->offset) {
+        if (whandle->offset != 0) {
                 if (rsc->tiled) {
                         fprintf(stderr,
                                 "Attempt to import unsupported "

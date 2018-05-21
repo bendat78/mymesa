@@ -65,7 +65,7 @@ static bool
 etna_link_shaders(struct etna_context *ctx, struct compiled_shader_state *cs,
                   struct etna_shader_variant *vs, struct etna_shader_variant *fs)
 {
-   struct etna_shader_link_info link = {0};
+   struct etna_shader_link_info link = { };
 
    assert(vs->processor == PIPE_SHADER_VERTEX);
    assert(fs->processor == PIPE_SHADER_FRAGMENT);
@@ -384,7 +384,7 @@ etna_create_shader_state(struct pipe_context *pctx,
        * (as otherwise nothing will trigger the shader to be
        * actually compiled).
        */
-      struct etna_shader_key key = {0};
+      struct etna_shader_key key = {};
       etna_shader_variant(shader, key, &ctx->debug);
    }
 

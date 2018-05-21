@@ -87,7 +87,7 @@ process_array_ir(void * const mem_ctx,
    ir_dereference_array *deref_array =
       deref_array_prev->array->as_dereference_array();
 
-   if (!deref_array) {
+   if (deref_array == NULL) {
       return new(mem_ctx) ir_dereference_array(deref_var,
                                                deref_array_prev->array_index);
    } else {
@@ -260,15 +260,15 @@ flatten_named_interface_blocks_declarations::visit_leave(ir_expression *ir)
 void
 flatten_named_interface_blocks_declarations::handle_rvalue(ir_rvalue **rvalue)
 {
-   if (!*rvalue)
+   if (*rvalue == NULL)
       return;
 
    ir_dereference_record *ir = (*rvalue)->as_dereference_record();
-   if (!ir)
+   if (ir == NULL)
       return;
 
    ir_variable *var = ir->variable_referenced();
-   if (!var)
+   if (var == NULL)
       return;
 
    if (!var->is_interface_instance())
@@ -281,7 +281,7 @@ flatten_named_interface_blocks_declarations::handle_rvalue(ir_rvalue **rvalue)
    if (var->data.mode == ir_var_uniform || var->data.mode == ir_var_shader_storage)
       return;
 
-   if (var->get_interface_type()) {
+   if (var->get_interface_type() != NULL) {
       char *iface_field_name =
          ralloc_asprintf(mem_ctx, "%s %s.%s.%s",
                          var->data.mode == ir_var_shader_in ? "in" : "out",
@@ -300,7 +300,7 @@ flatten_named_interface_blocks_declarations::handle_rvalue(ir_rvalue **rvalue)
 
       ir_dereference_array *deref_array =
          ir->record->as_dereference_array();
-      if (deref_array) {
+      if (deref_array != NULL) {
          *rvalue = process_array_ir(mem_ctx, deref_array,
                                     (ir_rvalue *)deref_var);
       } else {

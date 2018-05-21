@@ -107,7 +107,7 @@ GBM_EXPORT void
 gbm_device_destroy(struct gbm_device *gbm)
 {
    gbm->refcount--;
-   if (!gbm->refcount)
+   if (gbm->refcount == 0)
       gbm->destroy(gbm);
 }
 
@@ -135,7 +135,7 @@ gbm_create_device(int fd)
    }
 
    gbm = _gbm_create_device(fd);
-   if (!gbm)
+   if (gbm == NULL)
       return NULL;
 
    gbm->dummy = gbm_create_device;

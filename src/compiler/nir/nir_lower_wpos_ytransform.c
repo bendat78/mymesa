@@ -47,7 +47,7 @@ typedef struct {
 static nir_ssa_def *
 get_transform(lower_wpos_ytransform_state *state)
 {
-   if (!state->transform) {
+   if (state->transform == NULL) {
       /* NOTE: name must be prefixed w/ "gl_" to trigger slot based
        * special handling in uniform setup:
        */

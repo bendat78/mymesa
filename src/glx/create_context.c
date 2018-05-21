@@ -57,7 +57,7 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
     * error.  There is nothing sensible to do, so return an error.
     */
    psc = GetGLXScreenConfigs(dpy, cfg->screen);
-   if (!psc)
+   if (psc == NULL)
       return NULL;
 
    assert(cfg->screen == psc->scr);
@@ -65,7 +65,7 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
    /* Count the number of attributes specified by the application.  All
     * attributes appear in pairs, except the terminating None.
     */
-   if (attrib_list) {
+   if (attrib_list != NULL) {
       for (/* empty */; attrib_list[num_attribs * 2] != 0; num_attribs++)
 	 /* empty */ ;
    }
@@ -80,7 +80,7 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
 					       &dummy_err);
    }
 
-   if (!gc) {
+   if (gc == NULL) {
 #ifdef GLX_USE_APPLEGL
       gc = applegl_create_context(psc, cfg, share, 0);
 #else
@@ -112,7 +112,7 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
 						 (const uint32_t *)
 						 attrib_list);
    err = xcb_request_check(c, cookie);
-   if (err) {
+   if (err != NULL) {
       gc->vtable->destroy(gc);
       gc = NULL;
 

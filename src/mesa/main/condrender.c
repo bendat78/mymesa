@@ -45,7 +45,7 @@ begin_conditional_render(struct gl_context *ctx, GLuint queryId, GLenum mode,
 
    assert(ctx->Query.CondRenderMode == GL_NONE);
 
-   if (queryId)
+   if (queryId != 0)
       q = _mesa_lookup_query_object(ctx, queryId);
 
    if (!no_error) {
@@ -131,6 +131,7 @@ _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
 
    begin_conditional_render(ctx, queryId, mode, false);
 }
+
 
 static void
 end_conditional_render(struct gl_context *ctx)

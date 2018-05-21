@@ -49,7 +49,7 @@ INLINE void SWR_MULTISAMPLE_POS::PrecalcSampleData(int numSamples)
         _vY[i] = _simd_set1_ps(_y[i]);
     }
     // precalculate the raster tile BB for the rasterizer.
-    CalcTileSampleOffsets(numSamples);
+    CalcTileSampleOffsets(numSamples);                                 
 }
 
 INLINE void SWR_MULTISAMPLE_POS::CalcTileSampleOffsets(int numSamples)

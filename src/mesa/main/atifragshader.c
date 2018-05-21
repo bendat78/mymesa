@@ -104,12 +104,12 @@ create_dst_mod_str(GLuint mod)
    if (mod & GL_SATURATE_BIT_ATI)
       strncat(ret_str, "|SAT", 1024);
 
-   if (!strlen(ret_str))
+   if (strlen(ret_str) == 0)
       strncat(ret_str, "NONE", 1024);
    return ret_str;
 }
 
-static char *atifs_ops[] = {"ColorFragmentOp1ATI", "ColorFragmentOp2ATI", "ColorFragmentOp3ATI",
+static char *atifs_ops[] = {"ColorFragmentOp1ATI", "ColorFragmentOp2ATI", "ColorFragmentOp3ATI", 
 			    "AlphaFragmentOp1ATI", "AlphaFragmentOp2ATI", "AlphaFragmentOp3ATI" };
 
 static void debug_op(GLint optype, GLuint arg_count, GLenum op, GLuint dst,
@@ -121,14 +121,14 @@ static void debug_op(GLint optype, GLuint arg_count, GLenum op, GLuint dst,
   char *op_name;
 
   op_name = atifs_ops[(arg_count-1)+(optype?3:0)];
-
+  
   fprintf(stderr, "%s(%s, %s", op_name, _mesa_enum_to_string(op),
 	      _mesa_enum_to_string(dst));
   if (optype == ATI_FRAGMENT_SHADER_COLOR_OP)
     fprintf(stderr, ", %d", dstMask);
-
+  
   fprintf(stderr, ", %s", create_dst_mod_str(dstMod));
-
+  
   fprintf(stderr, ", %s, %s, %d", _mesa_enum_to_string(arg1),
 	      _mesa_enum_to_string(arg1Rep), arg1Mod);
   if (arg_count>1)
@@ -190,7 +190,7 @@ _mesa_GenFragmentShadersATI(GLuint range)
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!range) {
+   if (range == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenFragmentShadersATI(range)");
       return 0;
    }
@@ -231,7 +231,7 @@ _mesa_BindFragmentShaderATI(GLuint id)
    }
 
    /* unbind current */
-   if (curProg->Id) {
+   if (curProg->Id != 0) {
       curProg->RefCount--;
       if (curProg->RefCount <= 0) {
 	 _mesa_HashRemove(ctx->Shared->ATIShaders, id);
@@ -239,7 +239,7 @@ _mesa_BindFragmentShaderATI(GLuint id)
    }
 
    /* find new shader */
-   if (!id) {
+   if (id == 0) {
       newProg = ctx->Shared->DefaultFragmentShader;
    }
    else {
@@ -275,7 +275,7 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
       return;
    }
 
-   if (id) {
+   if (id != 0) {
       struct ati_fragment_shader *prog = (struct ati_fragment_shader *)
 	 _mesa_HashLookup(ctx->Shared->ATIShaders, id);
       if (prog == &DummyShader) {
@@ -374,7 +374,7 @@ _mesa_EndFragmentShaderATI(void)
    match_pair_inst(curProg, 0);
    ctx->ATIFragmentShader.Compiling = 0;
    ctx->ATIFragmentShader.Current->isValid = GL_TRUE;
-   if (!(ctx->ATIFragmentShader.Current->cur_pass) ||
+   if ((ctx->ATIFragmentShader.Current->cur_pass == 0) ||
       (ctx->ATIFragmentShader.Current->cur_pass == 2)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEndFragmentShaderATI(noarithinst)");
    }
@@ -454,7 +454,7 @@ _mesa_PassTexCoordATI(GLuint dst, GLuint coord, GLenum swizzle)
       _mesa_error(ctx, GL_INVALID_ENUM, "glPassTexCoordATI(coord)");
       return;
    }
-   if (!(new_pass) && (coord >= GL_REG_0_ATI)) {
+   if ((new_pass == 0) && (coord >= GL_REG_0_ATI)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glPassTexCoordATI(coord)");
       return;
    }
@@ -528,7 +528,7 @@ _mesa_SampleMapATI(GLuint dst, GLuint interp, GLenum swizzle)
       _mesa_error(ctx, GL_INVALID_ENUM, "glSampleMapATI(interp)");
       return;
    }
-   if (!(new_pass) && (interp >= GL_REG_0_ATI)) {
+   if ((new_pass == 0) && (interp >= GL_REG_0_ATI)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleMapATI(interp)");
       return;
    }
@@ -590,7 +590,7 @@ _mesa_FragmentOpXATI(GLint optype, GLuint arg_count, GLenum op, GLuint dst,
       return;
    }
 
-   if (!curProg->cur_pass)
+   if (curProg->cur_pass == 0)
       new_pass = 1;
    else if (curProg->cur_pass == 2)
       new_pass = 3;

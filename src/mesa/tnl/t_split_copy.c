@@ -339,7 +339,6 @@ replay_elts(struct copy_context *copy)
       GLuint first, incr;
 
       switch (prim->mode) {
-
       case GL_LINE_LOOP:
          /* Convert to linestrip and emit the final vertex explicitly,
           * but only in the resultant strip that requires it.

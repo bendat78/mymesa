@@ -96,7 +96,7 @@ nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
    struct nouveau_bo *bo = 0;
    int ret;
 
-   if (whandle->offset) {
+   if (whandle->offset != 0) {
       debug_printf("%s: attempt to import unsupported winsys offset %d\n",
                    __FUNCTION__, whandle->offset);
       return NULL;
@@ -169,7 +169,7 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 {
    struct pipe_screen *pscreen = &screen->base;
    struct nv04_fifo nv04_data = { .vram = 0xbeef0201, .gart = 0xbeef0202 };
-   struct nvc0_fifo nvc0_data = {0};
+   struct nvc0_fifo nvc0_data = { };
    uint64_t time;
    int size, ret;
    void *data;

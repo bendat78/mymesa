@@ -125,10 +125,10 @@ namespace ArchRast
 
         virtual void Handle(const DrawInstancedEvent& event)
         {
-            DrawInfoEvent e(event.data.drawId, ArchRast::Instanced, event.data.topology,
-                event.data.numVertices, 0, 0, event.data.startVertex, event.data.numInstances,
+            DrawInfoEvent e(event.data.drawId, ArchRast::Instanced, event.data.topology, 
+                event.data.numVertices, 0, 0, event.data.startVertex, event.data.numInstances, 
                 event.data.startInstance, event.data.tsEnable, event.data.gsEnable, event.data.soEnable, event.data.soTopology, event.data.splitId);
-
+            
             EventHandlerFile::Handle(e);
         }
 
@@ -328,7 +328,7 @@ namespace ArchRast
         // Flush cached events for this draw
         virtual void FlushDraw(uint32_t drawId)
         {
-            if (!mNeedFlush) return;
+            if (mNeedFlush == false) return;
 
             EventHandlerFile::Handle(PSInfo(drawId, mShaderStats[SHADER_PIXEL].numInstExecuted));
             EventHandlerFile::Handle(CSInfo(drawId, mShaderStats[SHADER_COMPUTE].numInstExecuted));
@@ -369,18 +369,18 @@ namespace ArchRast
             // Primitive Culling
             EventHandlerFile::Handle(CullEvent(drawId, mCullStats.backfacePrimCount, mCullStats.degeneratePrimCount));
 
-            mDSSingleSample = {0};
-            mDSSampleRate = {0};
-            mDSCombined = {0};
-            mDSPixelRate = {0};
-            mDSNullPS = {0};
+            mDSSingleSample = {};
+            mDSSampleRate = {};
+            mDSCombined = {};
+            mDSPixelRate = {};
+            mDSNullPS = {};
 
-            rastStats = {0};
-            mCullStats = {0};
-            mAlphaStats = {0};
+            rastStats = {};
+            mCullStats = {};
+            mAlphaStats = {};
 
-            mShaderStats[SHADER_PIXEL] = {0};
-            mShaderStats[SHADER_COMPUTE] = {0};
+            mShaderStats[SHADER_PIXEL] = {};
+            mShaderStats[SHADER_COMPUTE] = {};
 
             mNeedFlush = false;
         }
@@ -403,15 +403,15 @@ namespace ArchRast
             EventHandlerFile::Handle(DSInfo(event.data.drawId, mShaderStats[SHADER_DOMAIN].numInstExecuted));
             EventHandlerFile::Handle(GSInfo(event.data.drawId, mShaderStats[SHADER_GEOMETRY].numInstExecuted));
 
-            mShaderStats[SHADER_VERTEX] = {0};
-            mShaderStats[SHADER_HULL] = {0};
-            mShaderStats[SHADER_DOMAIN] = {0};
-            mShaderStats[SHADER_GEOMETRY] = {0};
+            mShaderStats[SHADER_VERTEX] = {};
+            mShaderStats[SHADER_HULL] = {};
+            mShaderStats[SHADER_DOMAIN] = {};
+            mShaderStats[SHADER_GEOMETRY] = {};
 
             //Reset Internal Counters
-            mClipper = {0};
-            mTS = {0};
-            mGS = {0};
+            mClipper = {};
+            mTS = {};
+            mGS = {};
         }
 
         virtual void Handle(const GSPrimInfo& event)
@@ -446,18 +446,18 @@ namespace ArchRast
     protected:
         bool mNeedFlush;
         // Per draw stats
-        DepthStencilStats mDSSingleSample = {0};
-        DepthStencilStats mDSSampleRate = {0};
-        DepthStencilStats mDSPixelRate = {0};
-        DepthStencilStats mDSCombined = {0};
-        DepthStencilStats mDSNullPS = {0};
-        DepthStencilStats mDSOmZ = {0};
-        CStats mClipper = {0};
-        TEStats mTS = {0};
-        GSStateInfo mGS = {0};
-        RastStats rastStats = {0};
-        CullStats mCullStats = {0};
-        AlphaStats mAlphaStats = {0};
+        DepthStencilStats mDSSingleSample = {};
+        DepthStencilStats mDSSampleRate = {};
+        DepthStencilStats mDSPixelRate = {};
+        DepthStencilStats mDSCombined = {};
+        DepthStencilStats mDSNullPS = {};
+        DepthStencilStats mDSOmZ = {};
+        CStats mClipper = {};
+        TEStats mTS = {};
+        GSStateInfo mGS = {};
+        RastStats rastStats = {};
+        CullStats mCullStats = {};
+        AlphaStats mAlphaStats = {};
 
         ShaderStats mShaderStats[NUM_SHADER_TYPES];
 

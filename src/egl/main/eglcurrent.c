@@ -301,7 +301,7 @@ _eglDebugReport(EGLenum error, const char *funcName,
    EGLDEBUGPROCKHR callback = NULL;
    va_list args;
 
-   if (!funcName)
+   if (funcName == NULL)
       funcName = thr->CurrentFuncName;
 
    mtx_lock(_eglGlobal.Mutex);
@@ -310,10 +310,10 @@ _eglDebugReport(EGLenum error, const char *funcName,
 
    mtx_unlock(_eglGlobal.Mutex);
 
-   if (callback) {
+   if (callback != NULL) {
       char *buf = NULL;
 
-      if (message) {
+      if (message != NULL) {
          va_start(args, message);
          if (vasprintf(&buf, message, args) < 0)
             buf = NULL;

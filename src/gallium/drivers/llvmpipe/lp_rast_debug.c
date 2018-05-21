@@ -23,7 +23,7 @@ static char get_label( int i )
 
 
 
-static const char *cmd_names[LP_RAST_OP_MAX] =
+static const char *cmd_names[LP_RAST_OP_MAX] = 
 {
    "clear_color",
    "clear_zstencil",
@@ -108,7 +108,7 @@ debug_bin( const struct cmd_bin *bin, int x, int y )
    int i, j = 0;
 
    debug_printf("bin %d,%d:\n", x, y);
-
+                
    while (head) {
       for (i = 0; i < head->count; i++, j++) {
          if (head->cmd[i] == LP_RAST_OP_SET_STATE)
@@ -192,7 +192,7 @@ debug_triangle(int tilex, int tiley,
    const struct lp_rast_triangle *tri = arg.triangle.tri;
    unsigned plane_mask = arg.triangle.plane_mask;
    const struct lp_rast_plane *tri_plane = GET_PLANES(tri);
-   struct lp_rast_plane plane[8] = {0};
+   struct lp_rast_plane plane[8];
    int x, y;
    int count = 0;
    unsigned i, nr_planes = 0;
@@ -218,7 +218,7 @@ debug_triangle(int tilex, int tiley,
          for (i = 0; i < nr_planes; i++)
             if (plane[i].c <= 0)
                goto out;
-
+         
          plot(tile, x, y, val, blend);
          count++;
 
@@ -261,13 +261,13 @@ do_debug_bin( struct tile *tile,
          boolean blend = is_blend(tile->state, block, k);
          char val = get_label(j);
          int count = 0;
-
+            
          if (print_cmds)
             debug_printf("%c: %15s", val, cmd_name(block->cmd[k]));
 
          if (block->cmd[k] == LP_RAST_OP_SET_STATE)
             tile->state = block->arg[k].state;
-
+         
          if (block->cmd[k] == LP_RAST_OP_CLEAR_COLOR ||
              block->cmd[k] == LP_RAST_OP_CLEAR_ZSTENCIL)
             count = debug_clear_tile(tx, ty, block->arg[k], tile, val);
@@ -290,7 +290,7 @@ do_debug_bin( struct tile *tile,
 
             if (blend)
                debug_printf(" blended");
-
+            
             debug_printf("\n");
          }
       }

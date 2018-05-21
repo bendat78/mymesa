@@ -873,7 +873,7 @@ static void create_function(struct radv_shader_context *ctx,
 {
 	uint8_t user_sgpr_idx;
 	struct user_sgpr_info user_sgpr_info;
-	struct arg_info args = {0};
+	struct arg_info args = {};
 	LLVMValueRef desc_sets;
 	bool needs_view_index = needs_view_index_sgpr(ctx, stage);
 	allocate_user_sgprs(ctx, stage, has_previous_stage,
@@ -2348,7 +2348,7 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 	uint32_t param_count = 0;
 	unsigned target;
 	unsigned pos_idx, num_pos_exports = 0;
-	struct ac_export_args args, pos_args[4] = {0};
+	struct ac_export_args args, pos_args[4] = {};
 	LLVMValueRef psize_value = NULL, layer_value = NULL, viewport_index_value = NULL;
 	int i;
 
@@ -2431,11 +2431,11 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 		pos_args[1].out[2] = ctx->ac.f32_0; /* Z */
 		pos_args[1].out[3] = ctx->ac.f32_0;  /* W */
 
-		if (outinfo->writes_pointsize)
+		if (outinfo->writes_pointsize == true)
 			pos_args[1].out[0] = psize_value;
-		if (outinfo->writes_layer)
+		if (outinfo->writes_layer == true)
 			pos_args[1].out[2] = layer_value;
-		if (outinfo->writes_viewport_index) {
+		if (outinfo->writes_viewport_index == true) {
 			if (ctx->options->chip_class >= GFX9) {
 				/* GFX9 has the layer in out.z[10:0] and the viewport
 				 * index in out.z[19:16].

@@ -679,11 +679,11 @@ brw_opcode_desc(const struct gen_device_info *devinfo, enum opcode opcode)
       return NULL;
 
    enum gen gen = gen_from_devinfo(devinfo);
-   if (opcode_descs[opcode].gens) {
+   if (opcode_descs[opcode].gens != 0) {
       if ((opcode_descs[opcode].gens & gen) != 0) {
          return &opcode_descs[opcode];
       }
-   } else if (opcode_descs[opcode].table) {
+   } else if (opcode_descs[opcode].table != NULL) {
       const struct opcode_desc *table = opcode_descs[opcode].table;
       for (unsigned i = 0; i < opcode_descs[opcode].size; i++) {
          if ((table[i].gens & gen) != 0) {

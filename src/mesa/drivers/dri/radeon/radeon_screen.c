@@ -127,7 +127,7 @@ DRI_CONF_END
 static int
 radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 {
-  struct drm_radeon_info info = {0};
+  struct drm_radeon_info info = { 0 };
 
   info.value = (uint64_t)(uintptr_t)value;
   switch (param) {
@@ -191,11 +191,11 @@ radeon_create_image_from_name(__DRIscreen *screen,
    __DRIimage *image;
    radeonScreenPtr radeonScreen = screen->driverPrivate;
 
-   if (!name)
+   if (name == 0)
       return NULL;
 
    image = calloc(1, sizeof *image);
-   if (!image)
+   if (image == NULL)
       return NULL;
 
    switch (format) {
@@ -232,7 +232,7 @@ radeon_create_image_from_name(__DRIscreen *screen,
                               RADEON_GEM_DOMAIN_VRAM,
                               0);
 
-   if (!image->bo) {
+   if (image->bo == NULL) {
       free(image);
       return NULL;
    }
@@ -258,7 +258,7 @@ radeon_create_image_from_renderbuffer(__DRIcontext *context,
 
    rrb = radeon_renderbuffer(rb);
    image = calloc(1, sizeof *image);
-   if (!image)
+   if (image == NULL)
       return NULL;
 
    image->internal_format = rb->InternalFormat;
@@ -293,7 +293,7 @@ radeon_create_image(__DRIscreen *screen,
    radeonScreenPtr radeonScreen = screen->driverPrivate;
 
    image = calloc(1, sizeof *image);
-   if (!image)
+   if (image == NULL)
       return NULL;
 
    image->dri_format = format;
@@ -332,7 +332,7 @@ radeon_create_image(__DRIscreen *screen,
                               RADEON_GEM_DOMAIN_VRAM,
                               0);
 
-   if (!image->bo) {
+   if (image->bo == NULL) {
       free(image);
       return NULL;
    }
@@ -588,7 +588,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 
    screen->driScreen = sPriv;
    screen->bom = radeon_bo_manager_gem_ctor(sPriv->fd);
-   if (!screen->bom) {
+   if (screen->bom == NULL) {
        free(screen);
        return NULL;
    }
@@ -667,7 +667,7 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
 
     if (mesaVis->redBits == 5)
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B5G6R5_UNORM : MESA_FORMAT_R5G6B5_UNORM;
-    else if (!mesaVis->alphaBits)
+    else if (mesaVis->alphaBits == 0)
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B8G8R8X8_UNORM : MESA_FORMAT_X8R8G8B8_UNORM;
     else
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B8G8R8A8_UNORM : MESA_FORMAT_A8R8G8B8_UNORM;
@@ -808,7 +808,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
       configs = driConcatConfigs(configs, new_configs);
    }
 
-   if (!configs) {
+   if (configs == NULL) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;

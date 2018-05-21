@@ -106,7 +106,7 @@ setup_inputs(lower_2side_state *state)
    }
 
    /* if we don't have any color inputs, nothing to do: */
-   if (!state->colors_count)
+   if (state->colors_count == 0)
       return -1;
 
    /* add required back-face color inputs: */
@@ -196,7 +196,7 @@ nir_lower_two_sided_color(nir_shader *shader)
    if (shader->info.stage != MESA_SHADER_FRAGMENT)
       return;
 
-   if (setup_inputs(&state))
+   if (setup_inputs(&state) != 0)
       return;
 
    nir_foreach_function(function, shader) {

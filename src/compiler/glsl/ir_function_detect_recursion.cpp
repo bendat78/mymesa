@@ -172,7 +172,7 @@ public:
    {
       function *f;
       hash_entry *entry = _mesa_hash_table_search(this->function_hash, sig);
-      if (!entry) {
+      if (entry == NULL) {
          f = new(mem_ctx) function(sig);
          _mesa_hash_table_insert(this->function_hash, sig, f);
       } else {
@@ -201,7 +201,7 @@ public:
        * call global scope, it can never be part of a cycle.  Don't bother
        * adding calls from global scope to the graph.
        */
-      if (!this->current)
+      if (this->current == NULL)
 	 return visit_continue;
 
       function *const target = this->get_function(call->callee);

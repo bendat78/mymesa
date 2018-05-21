@@ -41,9 +41,9 @@ struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 						 const struct pipe_video_buffer *tmpl)
 {
 	struct si_context *ctx = (struct si_context *)pipe;
-	struct r600_texture *resources[VL_NUM_COMPONENTS] = {0};
-	struct radeon_surf *surfaces[VL_NUM_COMPONENTS] = {0};
-	struct pb_buffer **pbs[VL_NUM_COMPONENTS] = {0};
+	struct r600_texture *resources[VL_NUM_COMPONENTS] = {};
+	struct radeon_surf *surfaces[VL_NUM_COMPONENTS] = {};
+	struct pb_buffer **pbs[VL_NUM_COMPONENTS] = {};
 	const enum pipe_format *resource_formats;
 	struct pipe_video_buffer vidtemplate;
 	struct pipe_resource templ;
@@ -57,7 +57,6 @@ struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 		return NULL;
 
 	array_size = tmpl->interlaced ? 2 : 1;
-
 	vidtemplate = *tmpl;
 	vidtemplate.width = align(tmpl->width, VL_MACROBLOCK_WIDTH);
 	vidtemplate.height = align(tmpl->height / array_size, VL_MACROBLOCK_HEIGHT);

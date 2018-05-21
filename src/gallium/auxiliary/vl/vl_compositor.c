@@ -146,7 +146,7 @@ create_frag_shader_weave(struct ureg_program *shader, struct ureg_dst fragment)
                              TGSI_RETURN_TYPE_FLOAT,
                              TGSI_RETURN_TYPE_FLOAT);
    }
-
+   
    for (i = 0; i < 2; ++i) {
       t_tc[i] = ureg_DECL_temporary(shader);
       t_texel[i] = ureg_DECL_temporary(shader);
@@ -256,6 +256,7 @@ create_frag_shader_yuv(struct ureg_program *shader, struct ureg_dst texel)
                              TGSI_RETURN_TYPE_FLOAT,
                              TGSI_RETURN_TYPE_FLOAT);
    }
+
    /*
     * texel.xyz = tex(tc, sampler[i])
     */
@@ -373,7 +374,7 @@ create_frag_shader_palette(struct vl_compositor *c, bool include_cc)
                           TGSI_RETURN_TYPE_FLOAT,
                           TGSI_RETURN_TYPE_FLOAT,
                           TGSI_RETURN_TYPE_FLOAT);
-
+   
    texel = ureg_DECL_temporary(shader);
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -1360,7 +1361,7 @@ vl_compositor_render(struct vl_compositor_state *s,
    c->fb_state.width = dst_surface->width;
    c->fb_state.height = dst_surface->height;
    c->fb_state.cbufs[0] = dst_surface;
-
+   
    if (!s->scissor_valid) {
       s->scissor.minx = 0;
       s->scissor.miny = 0;

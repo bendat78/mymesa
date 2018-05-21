@@ -63,7 +63,7 @@ static bool amdgpu_bo_wait(struct pb_buffer *_buf, uint64_t timeout,
    struct amdgpu_winsys *ws = bo->ws;
    int64_t abs_timeout;
 
-   if (!timeout) {
+   if (timeout == 0) {
       if (p_atomic_read(&bo->num_active_ioctls))
          return false;
 
@@ -90,7 +90,7 @@ static bool amdgpu_bo_wait(struct pb_buffer *_buf, uint64_t timeout,
       return !buffer_busy;
    }
 
-   if (!timeout) {
+   if (timeout == 0) {
       unsigned idle_fences;
       bool buffer_idle;
 
@@ -189,7 +189,7 @@ void amdgpu_bo_destroy(struct pb_buffer *_buf)
    else if (bo->initial_domain & RADEON_DOMAIN_GTT)
       bo->ws->allocated_gtt -= align64(bo->base.size, bo->ws->info.gart_page_size);
 
-   if (bo->u.real.map_count) {
+   if (bo->u.real.map_count >= 1) {
       if (bo->initial_domain & RADEON_DOMAIN_VRAM)
          bo->ws->mapped_vram -= bo->base.size;
       else if (bo->initial_domain & RADEON_DOMAIN_GTT)

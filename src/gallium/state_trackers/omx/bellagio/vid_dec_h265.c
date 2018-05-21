@@ -215,7 +215,7 @@ static void scaling_list_data(vid_dec_PrivateType *priv,
 {
    unsigned size_id, matrix_id;
    unsigned scaling_list_len[4] = { 16, 64, 64, 64 };
-   uint8_t scaling_list4x4[6][64] = {0};
+   uint8_t scaling_list4x4[6][64] = {  };
    int i;
 
    uint8_t (*scaling_list_data[4])[6][64] = {
@@ -248,7 +248,7 @@ static void scaling_list_data(vid_dec_PrivateType *priv,
             } else {
                const uint8_t *d;
 
-               if (!size_id)
+               if (size_id == 0)
                   memset((*scaling_list_data[0])[matrix_id], 16, 16);
                else {
                   if (size_id < 3)
@@ -613,7 +613,7 @@ static void vid_dec_h265_BeginFrame(vid_dec_PrivateType *priv)
       return;
 
    if (!priv->codec) {
-      struct pipe_video_codec templat = {0};
+      struct pipe_video_codec templat = {};
       omx_base_video_PortType *port = (omx_base_video_PortType *)
          priv->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
 

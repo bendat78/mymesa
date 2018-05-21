@@ -55,7 +55,7 @@
 static void
 compute_depth_max(struct gl_framebuffer *fb)
 {
-   if (!fb->Visual.depthBits) {
+   if (fb->Visual.depthBits == 0) {
       /* Special case.  Even if we don't have a depth buffer we need
        * good values for DepthMax for Z vertex transformation purposes
        * and for per-fragment fog computation.
@@ -680,7 +680,7 @@ renderbuffer_exists(struct gl_context *ctx,
    const struct gl_renderbuffer_attachment *att = fb->Attachment;
 
    /* If we don't know the framebuffer status, update it now */
-   if (!fb->_Status) {
+   if (fb->_Status == 0) {
       _mesa_test_framebuffer_completeness(ctx, fb);
    }
 
@@ -800,7 +800,7 @@ _mesa_get_color_read_format(struct gl_context *ctx,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (!fb)
+   if (fb == NULL)
       fb = ctx->ReadBuffer;
 
    if (!fb || !fb->_ColorReadBuffer) {
@@ -869,7 +869,7 @@ _mesa_get_color_read_type(struct gl_context *ctx,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   if (!fb)
+   if (fb == NULL)
       fb = ctx->ReadBuffer;
 
    if (!fb || !fb->_ColorReadBuffer) {

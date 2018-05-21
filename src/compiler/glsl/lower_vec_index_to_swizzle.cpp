@@ -56,17 +56,17 @@ public:
 void
 ir_vec_index_to_swizzle_visitor::handle_rvalue(ir_rvalue **rv)
 {
-   if (!*rv)
+   if (*rv == NULL)
       return;
 
    ir_expression *const expr = (*rv)->as_expression();
-   if (!expr || expr->operation != ir_binop_vector_extract)
+   if (expr == NULL || expr->operation != ir_binop_vector_extract)
       return;
 
    void *mem_ctx = ralloc_parent(expr);
    ir_constant *const idx =
       expr->operands[1]->constant_expression_value(mem_ctx);
-   if (!idx)
+   if (idx == NULL)
       return;
 
    this->progress = true;

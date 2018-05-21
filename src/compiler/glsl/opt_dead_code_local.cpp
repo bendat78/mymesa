@@ -173,7 +173,7 @@ process_assignment(void *lin_ctx, ir_assignment *ir, exec_list *assignments)
    bool progress = false;
    kill_for_derefs_visitor v(assignments);
 
-   if (!ir->condition) {
+   if (ir->condition == NULL) {
       /* If this is an assignment of the form "foo = foo;", remove the whole
        * instruction and be done with it.
        */
@@ -237,7 +237,7 @@ process_assignment(void *lin_ctx, ir_assignment *ir, exec_list *assignments)
 
 	       entry->ir->write_mask &= ~remove;
 	       entry->unused &= ~remove;
-	       if (!entry->ir->write_mask) {
+	       if (entry->ir->write_mask == 0) {
 		  /* Delete the dead assignment. */
 		  entry->ir->remove();
 		  entry->remove();
@@ -269,7 +269,7 @@ process_assignment(void *lin_ctx, ir_assignment *ir, exec_list *assignments)
 	       }
 	    }
 	 }
-      } else if (ir->whole_variable_written()) {
+      } else if (ir->whole_variable_written() != NULL) {
 	 /* We did a whole-variable assignment.  So, any instruction in
 	  * the assignment list with the same LHS is dead.
 	  */

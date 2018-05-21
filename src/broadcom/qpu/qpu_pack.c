@@ -120,7 +120,7 @@
 
 static const struct v3d_qpu_sig v33_sig_map[] = {
         /*      MISC   R3       R4      R5 */
-        [0] = {0},
+        [0]  = {                               },
         [1]  = { THRSW,                        },
         [2]  = {                        LDUNIF },
         [3]  = { THRSW,                 LDUNIF },
@@ -153,7 +153,7 @@ static const struct v3d_qpu_sig v33_sig_map[] = {
 
 static const struct v3d_qpu_sig v40_sig_map[] = {
         /*      MISC    R3      R4      R5 */
-        [0] = {0},
+        [0]  = {                               },
         [1]  = { THRSW,                        },
         [2]  = {                        LDUNIF },
         [3]  = { THRSW,                 LDUNIF },
@@ -182,7 +182,7 @@ static const struct v3d_qpu_sig v40_sig_map[] = {
 
 static const struct v3d_qpu_sig v41_sig_map[] = {
         /*      MISC       phys    R5 */
-        [0] = {0},
+        [0]  = {                          },
         [1]  = { THRSW,                   },
         [2]  = {                   LDUNIF },
         [3]  = { THRSW,            LDUNIF },
@@ -338,7 +338,7 @@ v3d_qpu_flags_unpack(const struct v3d_device_info *devinfo,
         cond->auf = V3D_QPU_UF_NONE;
         cond->muf = V3D_QPU_UF_NONE;
 
-        if (!packed_cond) {
+        if (packed_cond == 0) {
                 return true;
         } else if (packed_cond >> 2 == 0) {
                 cond->apf = packed_cond & 0x3;
@@ -1057,7 +1057,7 @@ v3d_qpu_add_pack(const struct v3d_device_info *devinfo,
                                                  &packed)) {
                         return false;
                 }
-                if (!packed)
+                if (packed == 0)
                         return false;
                 opcode |= packed << 2;
                 break;
@@ -1075,7 +1075,7 @@ v3d_qpu_add_pack(const struct v3d_device_info *devinfo,
                                                  &packed)) {
                         return false;
                 }
-                if (!packed)
+                if (packed == 0)
                         return false;
                 opcode |= packed << 2;
 
@@ -1272,7 +1272,7 @@ v3d_qpu_instr_unpack_branch(const struct v3d_device_info *devinfo,
         instr->type = V3D_QPU_INSTR_TYPE_BRANCH;
 
         uint32_t cond = QPU_GET_FIELD(packed_instr, VC5_QPU_BRANCH_COND);
-        if (!cond)
+        if (cond == 0)
                 instr->branch.cond = V3D_QPU_BRANCH_COND_ALWAYS;
         else if (V3D_QPU_BRANCH_COND_A0 + (cond - 2) <=
                  V3D_QPU_BRANCH_COND_ALLNA)

@@ -119,7 +119,7 @@ genX(cmd_buffer_so_memcpy)(struct anv_cmd_buffer *cmd_buffer,
                            struct anv_bo *src, uint32_t src_offset,
                            uint32_t size)
 {
-   if (!size)
+   if (size == 0)
       return;
 
    assert(dst_offset + size <= dst->size);

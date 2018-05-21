@@ -52,7 +52,7 @@ process_parameters(exec_list *instructions, exec_list *actual_parameters,
       ir_constant *const constant =
          result->constant_expression_value(mem_ctx);
 
-      if (constant)
+      if (constant != NULL)
          result = constant;
 
       actual_parameters->push_tail(result);
@@ -82,7 +82,7 @@ prototype_string(const glsl_type *return_type, const char *name,
 {
    char *str = NULL;
 
-   if (return_type)
+   if (return_type != NULL)
       str = ralloc_asprintf(NULL, "%s ", return_type->name);
 
    ralloc_asprintf_append(&str, "%s(", name);
@@ -265,7 +265,7 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
           * is_lvalue() is insufficient because the actual parameter at the
           * IR-level is just a temporary value, which is an l-value.
           */
-         if (actual_ast->non_lvalue_description) {
+         if (actual_ast->non_lvalue_description != NULL) {
             _mesa_glsl_error(&loc, state,
                              "function parameter '%s %s' references a %s",
                              mode, formal->name,
@@ -533,7 +533,7 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
       ir_constant *value = sig->constant_expression_value(ctx,
                                                           actual_parameters,
                                                           NULL);
-      if (value) {
+      if (value != NULL) {
          return value;
       }
    }
@@ -591,7 +591,7 @@ match_function_by_name(const char *name,
        && state->symbols->get_variable(name))
       return sig; /* no match */
 
-   if (f) {
+   if (f != NULL) {
       /* In desktop GL, the presence of a user-defined signature hides any
        * built-in signatures, so we must ignore them.  In contrast, in ES2
        * user-defined signatures add new overloads, so we must consider them.
@@ -693,7 +693,7 @@ static void
 print_function_prototypes(_mesa_glsl_parse_state *state, YYLTYPE *loc,
                           ir_function *f)
 {
-   if (!f)
+   if (f == NULL)
       return;
 
    foreach_in_list(ir_function_signature, sig, &f->signatures) {
@@ -1006,7 +1006,7 @@ implicitly_convert_component(ir_rvalue * &from, const glsl_base_type to,
 
    ir_rvalue *const constant = result->constant_expression_value(mem_ctx);
 
-   if (constant)
+   if (constant != NULL)
       result = constant;
 
    if (from != result) {
@@ -1193,7 +1193,7 @@ process_array_constructor(exec_list *instructions,
       process_parameters(instructions, &actual_parameters, parameters, state);
    bool is_unsized_array = constructor_type->is_unsized_array();
 
-   if (!(parameter_count) ||
+   if ((parameter_count == 0) ||
        (!is_unsized_array && (constructor_type->length != parameter_count))) {
       const unsigned min_param = is_unsized_array
          ? 1 : constructor_type->length;
@@ -1365,7 +1365,7 @@ emit_inline_vector_constructor(const glsl_type *type,
          }
 
          const ir_constant *const c = param->as_constant();
-         if (c) {
+         if (c != NULL) {
             for (unsigned i = 0; i < rhs_components; i++) {
                switch (c->type->base_type) {
                case GLSL_TYPE_UINT:
@@ -1407,7 +1407,7 @@ emit_inline_vector_constructor(const glsl_type *type,
          base_lhs_component += rhs_components;
       }
 
-      if (constant_mask) {
+      if (constant_mask != 0) {
          ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
          const glsl_type *rhs_type =
             glsl_type::get_instance(var->type->base_type,
@@ -1433,12 +1433,12 @@ emit_inline_vector_constructor(const glsl_type *type,
           * loop. This can happen when initializing a vec4 with a mat3 as the
           * mat3 would have been broken into a series of column vectors.
           */
-         if (!rhs_components) {
+         if (rhs_components == 0) {
             break;
          }
 
          const ir_constant *const c = param->as_constant();
-         if (!c) {
+         if (c == NULL) {
             /* Mask of fields to be written in the assignment. */
             const unsigned write_mask = ((1U << rhs_components) - 1)
                << base_component;
@@ -1732,7 +1732,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
          unsigned rhs_components = rhs->type->components();
          unsigned rhs_base = 0;
 
-         if (!remaining_slots)
+         if (remaining_slots == 0)
             break;
 
          /* Since the parameter might be used in the RHS of two assignments,
@@ -1999,7 +1999,7 @@ ast_function_expression::hir(exec_list *instructions,
       /* constructor_type can be NULL if a variable with the same name as the
        * structure has come into scope.
        */
-      if (!constructor_type) {
+      if (constructor_type == NULL) {
          _mesa_glsl_error(& loc, state, "unknown type `%s' (structure name "
                           "may be shadowed by a variable with the same name)",
                           type->type_name);
@@ -2240,7 +2240,7 @@ ast_function_expression::hir(exec_list *instructions,
           */
          ir_rvalue *const constant = result->constant_expression_value(ctx);
 
-         if (constant)
+         if (constant != NULL)
             result = constant;
          else
             all_parameters_are_constant = false;
@@ -2303,12 +2303,12 @@ ast_function_expression::hir(exec_list *instructions,
          match_function_by_name(func_name, &actual_parameters, state);
 
       ir_rvalue *value = NULL;
-      if (!sig) {
+      if (sig == NULL) {
          sig = match_subroutine_by_name(func_name, &actual_parameters,
                                         state, &sub_var);
       }
 
-      if (!sig) {
+      if (sig == NULL) {
          no_matching_function_error(func_name, &loc,
                                     &actual_parameters, state);
          value = ir_rvalue::error_value(ctx);

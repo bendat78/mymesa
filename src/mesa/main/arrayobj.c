@@ -196,7 +196,7 @@ _mesa_vao_attribute_map[ATTRIBUTE_MAP_MODE_MAX][VERT_ATTRIB_MAX] =
 struct gl_vertex_array_object *
 _mesa_lookup_vao(struct gl_context *ctx, GLuint id)
 {
-   if (!id) {
+   if (id == 0) {
       return NULL;
    } else {
       struct gl_vertex_array_object *vao;
@@ -232,7 +232,7 @@ _mesa_lookup_vao_err(struct gl_context *ctx, GLuint id, const char *caller)
     *     zero, indicating the default vertex array object, or]
     *     the name of the vertex array object."
     */
-   if (!id) {
+   if (id == 0) {
       if (ctx->API == API_OPENGL_CORE) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(zero is not valid vaobj name in a core profile "
@@ -879,7 +879,7 @@ _mesa_all_varyings_in_vbos(const struct gl_vertex_array_object *vao)
       assert(!_mesa_is_bufferobj(buffer_binding->BufferObj));
 
       /* Bail out once we find the first non vbo with a non zero stride */
-      if (buffer_binding->Stride)
+      if (buffer_binding->Stride != 0)
          return false;
 
       /* Note that we cannot use the xor variant since the _BoundArray mask
@@ -942,7 +942,7 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, bool no_error)
    /*
     * Get pointer to new array object (newObj)
     */
-   if (!id) {
+   if (id == 0) {
       /* The spec says there is no array object named 0, but we use
        * one internally because it simplifies things.
        */
@@ -1025,7 +1025,7 @@ delete_vertex_arrays(struct gl_context *ctx, GLsizei n, const GLuint *ids)
          if (ctx->Array._DrawVAO == obj)
             _mesa_set_draw_vao(ctx, ctx->Array._EmptyVAO, 0);
 
-         /* Unreference the array object.
+         /* Unreference the array object. 
           * If refcount hits zero, the object will be deleted.
           */
          _mesa_reference_vao(ctx, &obj, NULL);
@@ -1200,7 +1200,7 @@ vertex_array_element_buffer(struct gl_context *ctx, GLuint vaobj, GLuint buffer,
       vao = _mesa_lookup_vao(ctx, vaobj);
    }
 
-   if (buffer) {
+   if (buffer != 0) {
       if (!no_error) {
          /* The GL_ARB_direct_state_access specification says:
           *

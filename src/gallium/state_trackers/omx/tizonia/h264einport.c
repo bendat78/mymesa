@@ -48,7 +48,7 @@ static OMX_ERRORTYPE enc_AllocateBackTexture(OMX_HANDLETYPE ap_hdl,
    vid_enc_PrivateType * priv = tiz_get_prc(ap_hdl);
    tiz_port_t * port = tiz_krn_get_port(tiz_get_krn(ap_hdl), idx);
    struct pipe_resource buf_templ;
-   struct pipe_box box = {0};
+   struct pipe_box box = {};
    OMX_U8 *ptr;
 
    memset(&buf_templ, 0, sizeof buf_templ);

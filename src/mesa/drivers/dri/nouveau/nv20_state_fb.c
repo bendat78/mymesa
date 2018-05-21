@@ -136,7 +136,7 @@ nv20_emit_viewport(struct gl_context *ctx, int emit)
 {
 	struct nouveau_pushbuf *push = context_push(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
-	float a[4] = {0};
+	float a[4] = {};
 
 	get_viewport_translate(ctx, a);
 

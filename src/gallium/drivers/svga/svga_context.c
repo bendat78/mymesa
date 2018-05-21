@@ -218,7 +218,7 @@ svga_context_create(struct pipe_screen *screen, void *priv, unsigned flags)
       goto cleanup;
 
    svga->hwtnl = svga_hwtnl_create(svga);
-   if (!svga->hwtnl)
+   if (svga->hwtnl == NULL)
       goto cleanup;
 
    if (!svga_init_swtnl(svga))

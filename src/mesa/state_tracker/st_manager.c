@@ -862,7 +862,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    /* Create a hash table for the framebuffer interface objects
     * if it has not been created for this st manager.
     */
-   if (!smapi->st_manager_private) {
+   if (smapi->st_manager_private == NULL) {
       struct st_manager_private *smPriv;
 
       smPriv = CALLOC_STRUCT(st_manager_private);
@@ -989,7 +989,7 @@ st_framebuffer_reuse_or_create(struct st_context *st,
    }
 
    /* If there is not already a framebuffer object, create one */
-   if (!stfb) {
+   if (stfb == NULL) {
       cur = st_framebuffer_create(st, stfbi);
 
       if (cur) {

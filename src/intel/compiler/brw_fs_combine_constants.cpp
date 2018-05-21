@@ -259,7 +259,7 @@ fs_visitor::opt_combine_constants()
       }
       i++;
    }
-   if (!table.len) {
+   if (table.len == 0) {
       ralloc_free(const_ctx);
       return false;
    }

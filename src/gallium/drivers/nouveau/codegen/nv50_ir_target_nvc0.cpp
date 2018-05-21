@@ -361,7 +361,7 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
             continue;
          if (k == 1 && i->op == OP_SHLADD) // special case
             continue;
-         if (i->getSrc(k)->reg.data.u64)
+         if (i->getSrc(k)->reg.data.u64 != 0)
             return false;
       } else
       if (i->src(k).getFile() != FILE_GPR &&
@@ -476,7 +476,7 @@ TargetNVC0::isModSupported(const Instruction *insn, int s, Modifier mod) const
             return false;
          break;
       case OP_SUB:
-         if (!s)
+         if (s == 0)
             return insn->src(1).mod.neg() ? false : true;
          break;
       case OP_SHLADD:

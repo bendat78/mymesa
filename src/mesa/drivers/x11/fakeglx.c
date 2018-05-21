@@ -457,7 +457,7 @@ transparent_pixel( XMesaVisual glxvis )
       const OverlayInfo *ov = overlay_info + i;
       if (ov->overlay_visual == vinfo->visualid) {
          /* found it! */
-         if (!ov->transparent_type) {
+         if (ov->transparent_type == 0) {
             /* type 0 indicates no transparency */
             free((void *) overlay_info);
             return -1;
@@ -550,10 +550,10 @@ get_env_visual(Display *dpy, int scr, const char *varname)
 
    sscanf( value, "%s %d", type, &depth );
 
-   if (!strcmp(type,"TrueColor"))          xclass = TrueColor;
-   else if (!strcmp(type,"DirectColor"))   xclass = DirectColor;
-   else if (!strcmp(type,"GrayScale"))     xclass = GrayScale;
-   else if (!strcmp(type,"StaticGray"))    xclass = StaticGray;
+   if (strcmp(type,"TrueColor")==0)          xclass = TrueColor;
+   else if (strcmp(type,"DirectColor")==0)   xclass = DirectColor;
+   else if (strcmp(type,"GrayScale")==0)     xclass = GrayScale;
+   else if (strcmp(type,"StaticGray")==0)    xclass = StaticGray;
 
    if (xclass>-1 && depth>0) {
       vis = get_visual( dpy, scr, depth, xclass );
@@ -598,7 +598,7 @@ choose_x_visual(Display *dpy, int screen, int min_depth, int preferred_class)
 	 case 2:  visclass = GrayScale;    break;
 	 case 3:  visclass = StaticGray;   break;
 	 }
-	 if (!min_depth) {
+	 if (min_depth==0) {
 	    /* start with shallowest */
 	    for (depth=0;depth<=32;depth++) {
 	       vis = get_visual( dpy, screen, depth, visclass );
@@ -629,7 +629,7 @@ choose_x_visual(Display *dpy, int screen, int min_depth, int preferred_class)
       case GLX_STATIC_COLOR_EXT:
       default:   return NULL;
       }
-      if (!min_depth) {
+      if (min_depth==0) {
 	 /* start with shallowest */
 	 for (depth=0;depth<=32;depth++) {
 	    vis = get_visual( dpy, screen, depth, visclass );
@@ -1050,7 +1050,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          case GLX_SAMPLE_BUFFERS_ARB:
          case GLX_SAMPLES_ARB:
 	    parselist++;
-	    if (*parselist++)
+	    if (*parselist++ != 0)
 	       /* ms not supported */
 	       return NULL;
 	    break;
@@ -1071,7 +1071,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             else if (*parselist & (GLX_RGBA_FLOAT_BIT_ARB|GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT)) {
                rgb_flag = GL_TRUE;
             }
-            else if (!*parselist) {
+            else if (*parselist == 0) {
                rgb_flag = GL_TRUE;
             }
             parselist++;
@@ -1174,7 +1174,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 	 min_rgb = 1;
       }
 
-      if (!level) {
+      if (level==0) {
 	 vis = choose_x_visual(dpy, screen, min_rgb, visual_type);
       }
       else {
@@ -1206,8 +1206,8 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          stencil_size = 8;
       if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0 ||
           accumAlphaSize > 0) {
-         accumRedSize =
-         accumGreenSize =
+         accumRedSize = 
+         accumGreenSize = 
          accumBlueSize = default_accum_bits();
          accumAlphaSize = alpha_flag ? accumRedSize : 0;
       }
@@ -1611,7 +1611,7 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          }
          return 0;
       case GLX_TRANSPARENT_TYPE_EXT:
-         if (!xmvis->mesa_visual.level) {
+         if (xmvis->mesa_visual.level==0) {
             /* normal planes */
             *value = GLX_NONE_EXT;
          }
@@ -2713,6 +2713,7 @@ Fake_glXReleaseBuffersMESA( Display *dpy, GLXDrawable d )
    }
    return False;
 }
+
 
 
 /*** GLX_MESA_agp_offset ***/

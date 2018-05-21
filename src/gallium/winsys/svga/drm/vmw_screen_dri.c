@@ -99,7 +99,7 @@ svga_drm_winsys_screen_create(int fd)
    drmVersionPtr ver;
 
    ver = drmGetVersion(fd);
-   if (!ver)
+   if (ver == NULL)
       return NULL;
 
    drm_ver.major = ver->version_major;
@@ -154,7 +154,7 @@ vmw_drm_gb_surface_from_handle(struct svga_winsys_screen *sws,
     uint32_t handle;
     int ret;
 
-    if (whandle->offset) {
+    if (whandle->offset != 0) {
        fprintf(stderr, "Attempt to import unsupported winsys offset %u\n",
                whandle->offset);
        return NULL;
@@ -227,7 +227,7 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     int ret;
     int i;
 
-    if (whandle->offset) {
+    if (whandle->offset != 0) {
        fprintf(stderr, "Attempt to import unsupported winsys offset %u\n",
                whandle->offset);
        return NULL;
@@ -285,7 +285,7 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     }
 
     for (i=1; i < DRM_VMW_MAX_SURFACE_FACES; ++i) {
-	if (rep->mip_levels[i]) {
+	if (rep->mip_levels[i] != 0) {
             vmw_error("Incorrect number of faces levels on shared surface."
                       " SID %d, face %d present.\n",
                       handle, i);

@@ -35,7 +35,7 @@
 static struct vtn_ssa_value *
 wrap_matrix(struct vtn_builder *b, struct vtn_ssa_value *val)
 {
-   if (!val)
+   if (val == NULL)
       return NULL;
 
    if (glsl_type_is_matrix(val->type))
@@ -667,7 +667,7 @@ vtn_handle_alu(struct vtn_builder *b, SpvOp opcode,
       for (unsigned i = 0; i < nir_op_infos[op].num_inputs; i++) {
          unsigned src_bit_size =
             nir_alu_type_get_type_size(nir_op_infos[op].input_types[i]);
-         if (!src_bit_size)
+         if (src_bit_size == 0)
             continue;
          if (src_bit_size != src[i]->bit_size) {
             assert(src_bit_size == 32);

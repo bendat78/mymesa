@@ -320,7 +320,7 @@ v3d_generate_code_block(struct v3d_compile *c,
                                 qinst->qpu.sig_magic = dst.magic;
                         } else if (qinst->qpu.alu.add.op != V3D_QPU_A_NOP) {
                                 assert(qinst->qpu.alu.mul.op == V3D_QPU_M_NOP);
-                                if (nsrc) {
+                                if (nsrc >= 1) {
                                         set_src(&qinst->qpu,
                                                 &qinst->qpu.alu.add.a, src[0]);
                                 }
@@ -332,7 +332,7 @@ v3d_generate_code_block(struct v3d_compile *c,
                                 qinst->qpu.alu.add.waddr = dst.index;
                                 qinst->qpu.alu.add.magic_write = dst.magic;
                         } else {
-                                if (nsrc) {
+                                if (nsrc >= 1) {
                                         set_src(&qinst->qpu,
                                                 &qinst->qpu.alu.mul.a, src[0]);
                                 }

@@ -298,7 +298,7 @@
 
 /*
  * Color channel component order
- *
+ * 
  * \note Changes will almost certainly cause problems at this time.
  */
 #define RCOMP 0
@@ -308,7 +308,7 @@
 
 
 /**
- * Maximum number of temporary vertices required for clipping.
+ * Maximum number of temporary vertices required for clipping.  
  *
  * Used in array_cache and tnl modules.
  */

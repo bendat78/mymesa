@@ -227,7 +227,7 @@ DrvSetCallbackProcs(INT nProcs, PROC *pProcs)
 {
    size_t size;
 
-   if (!stw_dev)
+   if (stw_dev == NULL)
       return;
 
    size = MIN2(nProcs * sizeof *pProcs, sizeof stw_dev->callbacks);

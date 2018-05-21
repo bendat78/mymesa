@@ -143,12 +143,12 @@ class Field:
                 while value[1] >= len(values_offsets):
                     values_offsets.append(-1)
                 values_offsets[value[1]] = string_table.add(strip_prefix(value[0]))
-            return '{.mask\t= %s(~0u),\n\t .name_offset\t= %s,\n\t .num_values\t= %s,\n\t .values_offset\t= %s}' % (
-                self.s_name, string_table.add(self.name),
+            return '{%s, %s(~0u), %s, %s}' % (
+                string_table.add(self.name), self.s_name,
                 len(values_offsets), idx_table.add(values_offsets))
         else:
-            return '{.mask\t= %s(~0u),\n\t .name_offset\t= %s}' % (self.s_name, string_table.add(self.name))
-#(~0u)
+            return '{%s, %s(~0u)}' % (string_table.add(self.name), self.s_name)
+
     def __eq__(self, other):
         return (self.s_name == other.s_name and
                 self.name == other.name and
@@ -341,15 +341,15 @@ def write_tables(asics, packets):
 #define SID_TABLES_H
 
 struct si_field {
-        unsigned mask;
         unsigned name_offset;
+        unsigned mask;
         unsigned num_values;
         unsigned values_offset; /* offset into sid_strings_offsets */
 };
 
 struct si_reg {
-        unsigned offset;
         unsigned name_offset;
+        unsigned offset;
         unsigned num_fields;
         unsigned fields_offset;
 };
@@ -377,12 +377,12 @@ struct si_packet3 {
                 continue
 
             if len(reg.fields):
-                print '\t{.offset\t= %s,\n\t .name_offset\t= %s,\n\t .num_fields\t= %s,\n\t .fields_offset\t= %s},' % (
-                      reg.r_name, strings.add(reg.name), len(reg.fields), fields.add(reg.fields))
+                print '\t{%s, %s, %s, %s},' % (strings.add(reg.name), reg.r_name,
+                    len(reg.fields), fields.add(reg.fields))
             else:
-                print '\t{.offset\t= %s,\n\t .name_offset\t= %s},' % (
-                      reg.r_name, strings.add(reg.name))
-                regs[reg.r_name] = reg
+                print '\t{%s, %s},' % (strings.add(reg.name), reg.r_name)
+
+            regs[reg.r_name] = reg
         print '};'
         print
 

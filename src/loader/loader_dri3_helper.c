@@ -887,7 +887,7 @@ loader_dri3_swap_buffers_msc(struct loader_dri3_drawable *draw,
        * behaviour by not using XCB_PRESENT_OPTION_ASYNC, but this should not be
        * the default.
        */
-      if (!draw->swap_interval)
+      if (draw->swap_interval == 0)
           options |= XCB_PRESENT_OPTION_ASYNC;
 
       /* If we need to populate the new back, but need to reuse the back
@@ -1115,7 +1115,7 @@ dri3_alloc_render_buffer(struct loader_dri3_drawable *draw, unsigned int format,
       return NULL;
 
    shm_fence = xshmfence_map_shm(fence_fd);
-   if (!shm_fence)
+   if (shm_fence == NULL)
       goto no_shm_fence;
 
    /* Allocate the image from the driver
@@ -1551,7 +1551,7 @@ dri3_get_pixmap_buffer(__DRIdrawable *driDrawable, unsigned int format,
    if (fence_fd < 0)
       goto no_fence;
    shm_fence = xshmfence_map_shm(fence_fd);
-   if (!shm_fence) {
+   if (shm_fence == NULL) {
       close (fence_fd);
       goto no_fence;
    }

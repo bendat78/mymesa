@@ -357,7 +357,7 @@ emit_swz(struct st_translate *t,
    boolean need_add = FALSE;
    boolean need_mul = FALSE;
 
-   if (!dst.WriteMask)
+   if (dst.WriteMask == 0)
       return;
 
    /* Is this just a MOV?
@@ -514,7 +514,7 @@ compile_instruction(struct gl_context *ctx,
 {
    struct ureg_program *ureg = t->ureg;
    GLuint i;
-   struct ureg_dst dst[1] = {0};
+   struct ureg_dst dst[1] = { { 0 } };
    struct ureg_src src[4];
    unsigned num_dst;
    unsigned num_src;
@@ -1005,7 +1005,7 @@ st_translate_mesa_program(struct gl_context *ctx,
    if (program->Parameters) {
       t->constants = calloc(program->Parameters->NumParameters,
                              sizeof t->constants[0]);
-      if (!t->constants) {
+      if (t->constants == NULL) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }
@@ -1029,7 +1029,7 @@ st_translate_mesa_program(struct gl_context *ctx,
             if (program->arb.IndirectRegisterFiles & PROGRAM_ANY_CONST)
                t->constants[i] = ureg_DECL_constant( ureg, i );
             else
-               t->constants[i] =
+               t->constants[i] = 
                   ureg_DECL_immediate(ureg,
                                       (const float *)
                                       program->Parameters->ParameterValues + pvo,

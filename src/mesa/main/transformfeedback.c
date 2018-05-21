@@ -98,7 +98,7 @@ reference_transform_feedback_object(struct gl_transform_feedback_object **ptr,
       assert(oldObj->RefCount > 0);
       oldObj->RefCount--;
 
-      if (!oldObj->RefCount) {
+      if (oldObj->RefCount == 0) {
          GET_CURRENT_CONTEXT(ctx);
          if (ctx)
             ctx->Driver.DeleteTransformFeedback(ctx, oldObj);
@@ -306,7 +306,7 @@ compute_transform_feedback_buffer_sizes(
       GLsizeiptr available_space
          = buffer_size <= offset ? 0 : buffer_size - offset;
       GLsizeiptr computed_size;
-      if (!obj->RequestedSize[i]) {
+      if (obj->RequestedSize[i] == 0) {
          /* No size was specified at the time the buffer was bound, so allow
           * writing to all available space in the buffer.
           */
@@ -344,7 +344,7 @@ _mesa_compute_max_transform_feedback_vertices(struct gl_context *ctx,
          unsigned max_for_this_buffer;
 
          /* Skip any inactive buffers, which have a stride of 0. */
-         if (!stride)
+         if (stride == 0)
             continue;
 
          max_for_this_buffer = obj->Size[i] / (4 * stride);
@@ -373,7 +373,7 @@ get_xfb_source(struct gl_context *ctx)
 {
    int i;
    for (i = MESA_SHADER_GEOMETRY; i >= MESA_SHADER_VERTEX; i--) {
-      if (ctx->_Shader->CurrentProgram[i])
+      if (ctx->_Shader->CurrentProgram[i] != NULL)
          return ctx->_Shader->CurrentProgram[i];
    }
    return NULL;
@@ -395,7 +395,7 @@ begin_transform_feedback(struct gl_context *ctx, GLenum mode, bool no_error)
     * feedback.
     */
    source = get_xfb_source(ctx);
-   if (!no_error && !source) {
+   if (!no_error && source == NULL) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBeginTransformFeedback(no program active)");
       return;
@@ -403,7 +403,7 @@ begin_transform_feedback(struct gl_context *ctx, GLenum mode, bool no_error)
 
    info = source->sh.LinkedTransformFeedback;
 
-   if (!no_error && !info->NumOutputs) {
+   if (!no_error && info->NumOutputs == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBeginTransformFeedback(no varyings to record)");
       return;
@@ -438,7 +438,7 @@ begin_transform_feedback(struct gl_context *ctx, GLenum mode, bool no_error)
 
       for (i = 0; i < ctx->Const.MaxTransformFeedbackBuffers; i++) {
          if ((info->ActiveBuffers >> i) & 1) {
-            if (!obj->BufferNames[i]) {
+            if (obj->BufferNames[i] == 0) {
                _mesa_error(ctx, GL_INVALID_OPERATION,
                            "glBeginTransformFeedback(binding point %d does not "
                            "have a buffer object bound)", i);
@@ -709,7 +709,7 @@ lookup_transform_feedback_bufferobj_err(struct gl_context *ctx,
    /* OpenGL 4.5 core profile, 13.2, pdf page 444: buffer must be zero or the
     * name of an existing buffer object.
     */
-   if (!buffer) {
+   if (buffer == 0) {
       bufObj = ctx->Shared->NullBufferObj;
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
@@ -785,7 +785,7 @@ bind_buffer_offset(struct gl_context *ctx,
 {
    struct gl_buffer_object *bufObj;
 
-   if (!buffer) {
+   if (buffer == 0) {
       bufObj = ctx->Shared->NullBufferObj;
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
@@ -1027,7 +1027,7 @@ _mesa_lookup_transform_feedback_object(struct gl_context *ctx, GLuint name)
     * the default transform feedback object, or the name of an existing
     * transform feedback object."
     */
-   if (!name) {
+   if (name == 0) {
       return ctx->TransformFeedback.DefaultObject;
    }
    else
@@ -1127,11 +1127,11 @@ _mesa_IsTransformFeedback(GLuint name)
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (!name)
+   if (name == 0)
       return GL_FALSE;
 
    obj = _mesa_lookup_transform_feedback_object(ctx, name);
-   if (!obj)
+   if (obj == NULL)
       return GL_FALSE;
 
    return obj->EverBound;

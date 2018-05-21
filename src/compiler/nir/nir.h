@@ -546,7 +546,7 @@ typedef struct nir_src {
 static inline nir_src
 nir_src_init(void)
 {
-   nir_src src = {0};
+   nir_src src = { { NULL } };
    return src;
 }
 
@@ -576,7 +576,7 @@ typedef struct {
 static inline nir_dest
 nir_dest_init(void)
 {
-   nir_dest dest = {0};
+   nir_dest dest = { { { NULL } } };
    return dest;
 }
 

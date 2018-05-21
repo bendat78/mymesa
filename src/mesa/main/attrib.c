@@ -231,7 +231,7 @@ push_attrib(struct gl_context *ctx, struct gl_attrib_node **head,
    void *attribute;
 
    attribute = malloc(attr_size);
-   if (!attribute) {
+   if (attribute == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
       return false;
    }
@@ -267,7 +267,7 @@ _mesa_PushAttrib(GLbitfield mask)
    /* groups specified by the mask. */
    head = NULL;
 
-   if (!mask) {
+   if (mask == 0) {
       /* if mask is zero we still need to push something so that we
        * don't get a GL_STACK_UNDERFLOW error in glPopAttrib().
        */
@@ -287,7 +287,7 @@ _mesa_PushAttrib(GLbitfield mask)
       GLuint i;
       struct gl_colorbuffer_attrib *attr;
       attr = MALLOC_STRUCT(gl_colorbuffer_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -324,7 +324,7 @@ _mesa_PushAttrib(GLbitfield mask)
       struct gl_enable_attrib *attr;
       GLuint i;
       attr = MALLOC_STRUCT(gl_enable_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -454,7 +454,7 @@ _mesa_PushAttrib(GLbitfield mask)
    if (mask & GL_PIXEL_MODE_BIT) {
       struct gl_pixel_attrib *attr;
       attr = MALLOC_STRUCT(gl_pixel_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -585,7 +585,7 @@ _mesa_PushAttrib(GLbitfield mask)
    }
 
 end:
-   if (head) {
+   if (head != NULL) {
        ctx->AttribStack[ctx->AttribStackDepth] = head;
        ctx->AttribStackDepth++;
    }
@@ -960,7 +960,7 @@ _mesa_PopAttrib(void)
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
 
-   if (!ctx->AttribStackDepth) {
+   if (ctx->AttribStackDepth == 0) {
       _mesa_error(ctx, GL_STACK_UNDERFLOW, "glPopAttrib");
       return;
    }
@@ -1213,27 +1213,27 @@ _mesa_PopAttrib(void)
                   _mesa_light(ctx, i, GL_POSITION, l->EyePosition);
                   _mesa_light(ctx, i, GL_SPOT_DIRECTION, l->SpotDirection);
                   {
-                     GLfloat p[4] = {0};
+                     GLfloat p[4] = { 0 };
                      p[0] = l->SpotExponent;
                      _mesa_light(ctx, i, GL_SPOT_EXPONENT, p);
                   }
                   {
-                     GLfloat p[4] = {0};
+                     GLfloat p[4] = { 0 };
                      p[0] = l->SpotCutoff;
                      _mesa_light(ctx, i, GL_SPOT_CUTOFF, p);
                   }
                   {
-                     GLfloat p[4] = {0};
+                     GLfloat p[4] = { 0 };
                      p[0] = l->ConstantAttenuation;
                      _mesa_light(ctx, i, GL_CONSTANT_ATTENUATION, p);
                   }
                   {
-                     GLfloat p[4] = {0};
+                     GLfloat p[4] = { 0 };
                      p[0] = l->LinearAttenuation;
                      _mesa_light(ctx, i, GL_LINEAR_ATTENUATION, p);
                   }
                   {
-                     GLfloat p[4] = {0};
+                     GLfloat p[4] = { 0 };
                      p[0] = l->QuadraticAttenuation;
                      _mesa_light(ctx, i, GL_QUADRATIC_ATTENUATION, p);
                   }
@@ -1665,7 +1665,7 @@ init_array_attrib_data(struct gl_context *ctx,
    /* Get a non driver gl_vertex_array_object. */
    attrib->VAO = CALLOC_STRUCT(gl_vertex_array_object);
 
-   if (!attrib->VAO) {
+   if (attrib->VAO == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
       return false;
    }
@@ -1712,7 +1712,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       struct gl_pixelstore_attrib *attr;
       /* packing attribs */
       attr = CALLOC_STRUCT(gl_pixelstore_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
          goto end;
       }
@@ -1727,7 +1727,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
 
       /* unpacking attribs */
       attr = CALLOC_STRUCT(gl_pixelstore_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
          goto end;
       }
@@ -1745,7 +1745,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
    if (mask & GL_CLIENT_VERTEX_ARRAY_BIT) {
       struct gl_array_attrib *attr;
       attr = CALLOC_STRUCT(gl_array_attrib);
-      if (!attr) {
+      if (attr == NULL) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
          goto end;
       }
@@ -1767,7 +1767,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       }
    }
 end:
-   if (head) {
+   if (head != NULL) {
        ctx->ClientAttribStack[ctx->ClientAttribStackDepth] = head;
        ctx->ClientAttribStackDepth++;
    }
@@ -1782,7 +1782,7 @@ _mesa_PopClientAttrib(void)
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
 
-   if (!ctx->ClientAttribStackDepth) {
+   if (ctx->ClientAttribStackDepth == 0) {
       _mesa_error(ctx, GL_STACK_UNDERFLOW, "glPopClientAttrib");
       return;
    }

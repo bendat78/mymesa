@@ -63,7 +63,7 @@ def generate_format_type(format):
     '''Generate a structure that describes the format.'''
 
     assert format.layout == PLAIN
-
+    
     def generate_bitfields(channels, swizzles):
         for channel in channels:
             if channel.type == VOID:
@@ -106,7 +106,7 @@ def generate_format_type(format):
                 assert 0
 
     print 'union util_format_%s {' % format.short_name()
-
+    
     if format.block_size() in (8, 16, 32, 64):
         print '   uint%u_t value;' % (format.block_size(),)
 
@@ -126,7 +126,7 @@ def generate_format_type(format):
 
 
 def is_format_supported(format):
-    '''Determines whether we actually have the plumbing necessary to generate the
+    '''Determines whether we actually have the plumbing necessary to generate the 
     to read/write to/from this format.'''
 
     # FIXME: Ideally we would support any format combination here.
@@ -275,7 +275,7 @@ def clamp_expr(src_channel, dst_channel, dst_native_type, value):
     src_max = src_channel.max()
     dst_min = dst_channel.min()
     dst_max = dst_channel.max()
-
+    
     # Translate the destination range to the src native value
     dst_min_native = native_to_constant(src_channel, value_to_native(src_channel, dst_min))
     dst_max_native = native_to_constant(src_channel, value_to_native(src_channel, dst_max))
@@ -285,18 +285,18 @@ def clamp_expr(src_channel, dst_channel, dst_native_type, value):
 
     if src_max > dst_max:
         return 'MIN2(%s, %s)' % (value, dst_max_native)
-
+        
     if src_min < dst_min:
         return 'MAX2(%s, %s)' % (value, dst_min_native)
 
     return value
 
 
-def conversion_expr(src_channel,
-                    dst_channel, dst_native_type,
-                    value,
-                    clamp=True,
-                    src_colorspace = RGB,
+def conversion_expr(src_channel, 
+                    dst_channel, dst_native_type, 
+                    value, 
+                    clamp=True, 
+                    src_colorspace = RGB, 
                     dst_colorspace = RGB):
     '''Generate the expression to convert a value between two types.'''
 
@@ -437,14 +437,14 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
 
     if not is_format_supported(format):
         return
-
+    
     assert format.layout == PLAIN
 
     src_native_type = native_type(format)
 
     def unpack_from_bitmask(channels, swizzles):
         depth = format.block_size()
-        print '         uint%u_t value = *(const uint%u_t *)src;' % (depth, depth)
+        print '         uint%u_t value = *(const uint%u_t *)src;' % (depth, depth) 
 
         # Declare the intermediate variables
         for i in range(format.nr_channels()):
@@ -454,7 +454,7 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             elif src_channel.type == SIGNED:
                 print '         int%u_t %s;' % (depth, src_channel.name)
 
-        # Compute the intermediate unshifted values
+        # Compute the intermediate unshifted values 
         for i in range(format.nr_channels()):
             src_channel = channels[i]
             value = 'value'
@@ -477,10 +477,10 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
                     value = '(%s) >> %u' % (value, rshift)
             else:
                 value = None
-
+                
             if value is not None:
                 print '         %s = %s;' % (src_channel.name, value)
-
+                
         # Convert, swizzle, and store final values
         for i in range(4):
             swizzle = swizzles[i]
@@ -490,9 +490,9 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
                 if src_colorspace == SRGB and i == 3:
                     # Alpha channel is linear
                     src_colorspace = RGB
-                value = src_channel.name
-                value = conversion_expr(src_channel,
-                                        dst_channel, dst_native_type,
+                value = src_channel.name 
+                value = conversion_expr(src_channel, 
+                                        dst_channel, dst_native_type, 
                                         value,
                                         src_colorspace = src_colorspace)
             elif swizzle == SWIZZLE_0:
@@ -504,11 +504,11 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             else:
                 assert False
             print '         dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
-
+        
     def unpack_from_union(channels, swizzles):
         print '         union util_format_%s pixel;' % format.short_name()
         print '         memcpy(&pixel, src, sizeof pixel);'
-
+    
         for i in range(4):
             swizzle = swizzles[i]
             if swizzle < 4:
@@ -517,9 +517,9 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
                 if src_colorspace == SRGB and i == 3:
                     # Alpha channel is linear
                     src_colorspace = RGB
-                value = 'pixel.chan.%s' % src_channel.name
-                value = conversion_expr(src_channel,
-                                        dst_channel, dst_native_type,
+                value = 'pixel.chan.%s' % src_channel.name 
+                value = conversion_expr(src_channel, 
+                                        dst_channel, dst_native_type, 
                                         value,
                                         src_colorspace = src_colorspace)
             elif swizzle == SWIZZLE_0:
@@ -531,7 +531,7 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             else:
                 assert False
             print '         dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
-
+    
     if format.is_bitmask():
         print_channels(format, unpack_from_bitmask)
     else:
@@ -542,7 +542,7 @@ def generate_pack_kernel(format, src_channel, src_native_type):
 
     if not is_format_supported(format):
         return
-
+    
     dst_native_type = native_type(format)
 
     assert format.layout == PLAIN
@@ -551,7 +551,7 @@ def generate_pack_kernel(format, src_channel, src_native_type):
         inv_swizzle = inv_swizzles(swizzles)
 
         depth = format.block_size()
-        print '         uint%u_t value = 0;' % depth
+        print '         uint%u_t value = 0;' % depth 
 
         for i in range(4):
             dst_channel = channels[i]
@@ -562,8 +562,8 @@ def generate_pack_kernel(format, src_channel, src_native_type):
                 if dst_colorspace == SRGB and inv_swizzle[i] == 3:
                     # Alpha channel is linear
                     dst_colorspace = RGB
-                value = conversion_expr(src_channel,
-                                        dst_channel, dst_native_type,
+                value = conversion_expr(src_channel, 
+                                        dst_channel, dst_native_type, 
                                         value,
                                         dst_colorspace = dst_colorspace)
                 if dst_channel.type in (UNSIGNED, SIGNED):
@@ -578,14 +578,14 @@ def generate_pack_kernel(format, src_channel, src_native_type):
                     value = None
                 if value is not None:
                     print '         value |= %s;' % (value)
-
-        print '         *(uint%u_t *)dst = value;' % depth
+                
+        print '         *(uint%u_t *)dst = value;' % depth 
 
     def pack_into_union(channels, swizzles):
         inv_swizzle = inv_swizzles(swizzles)
 
         print '         union util_format_%s pixel;' % format.short_name()
-
+    
         for i in range(4):
             dst_channel = channels[i]
             width = dst_channel.size
@@ -596,14 +596,14 @@ def generate_pack_kernel(format, src_channel, src_native_type):
                 # Alpha channel is linear
                 dst_colorspace = RGB
             value ='src[%u]' % inv_swizzle[i]
-            value = conversion_expr(src_channel,
-                                    dst_channel, dst_native_type,
-                                    value,
+            value = conversion_expr(src_channel, 
+                                    dst_channel, dst_native_type, 
+                                    value, 
                                     dst_colorspace = dst_colorspace)
             print '         pixel.chan.%s = %s;' % (dst_channel.name, value)
-
+    
         print '         memcpy(dst, &pixel, sizeof pixel);'
-
+    
     if format.is_bitmask():
         print_channels(format, pack_into_bitmask)
     else:
@@ -625,9 +625,9 @@ def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
         print '      %s *dst = dst_row;' % (dst_native_type)
         print '      const uint8_t *src = src_row;'
         print '      for(x = 0; x < width; x += %u) {' % (format.block_width,)
-
+        
         generate_unpack_kernel(format, dst_channel, dst_native_type)
-
+    
         print '         src += %u;' % (format.block_size() / 8,)
         print '         dst += 4;'
         print '      }'
@@ -637,7 +637,7 @@ def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
 
     print '}'
     print
-
+    
 
 def generate_format_pack(format, src_channel, src_native_type, src_suffix):
     '''Generate the function to pack pixels to a particular format'''
@@ -647,26 +647,26 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
     print 'static inline void'
     print 'util_format_%s_pack_%s(uint8_t *dst_row, unsigned dst_stride, const %s *src_row, unsigned src_stride, unsigned width, unsigned height)' % (name, src_suffix, src_native_type)
     print '{'
-
+    
     if is_format_supported(format):
         print '   unsigned x, y;'
         print '   for(y = 0; y < height; y += %u) {' % (format.block_height,)
         print '      const %s *src = src_row;' % (src_native_type)
         print '      uint8_t *dst = dst_row;'
         print '      for(x = 0; x < width; x += %u) {' % (format.block_width,)
-
+    
         generate_pack_kernel(format, src_channel, src_native_type)
-
+            
         print '         src += 4;'
         print '         dst += %u;' % (format.block_size() / 8,)
         print '      }'
         print '      dst_row += dst_stride;'
         print '      src_row += src_stride/sizeof(*src_row);'
         print '   }'
-
+        
     print '}'
     print
-
+    
 
 def generate_format_fetch(format, dst_channel, dst_native_type, dst_suffix):
     '''Generate the function to unpack pixels from a particular format'''
@@ -702,7 +702,7 @@ def generate(formats):
 
     for format in formats:
         if not is_format_hand_written(format):
-
+            
             if is_format_supported(format):
                 generate_format_type(format)
 
@@ -719,21 +719,21 @@ def generate(formats):
                 native_type = 'int'
                 suffix = 'signed'
                 generate_format_unpack(format, channel, native_type, suffix)
-                generate_format_pack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)   
             elif format.is_pure_signed():
                 native_type = 'int'
                 suffix = 'signed'
                 channel = Channel(SIGNED, False, True, 32)
 
                 generate_format_unpack(format, channel, native_type, suffix)
-                generate_format_pack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)   
                 generate_format_fetch(format, channel, native_type, suffix)
 
                 native_type = 'unsigned'
                 suffix = 'unsigned'
                 channel = Channel(UNSIGNED, False, True, 32)
                 generate_format_unpack(format, channel, native_type, suffix)
-                generate_format_pack(format, channel, native_type, suffix)
+                generate_format_pack(format, channel, native_type, suffix)   
             else:
                 channel = Channel(FLOAT, False, False, 32)
                 native_type = 'float'

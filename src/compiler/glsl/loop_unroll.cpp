@@ -379,17 +379,17 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    /* If we've entered a loop that hasn't been analyzed, something really,
     * really bad has happened.
     */
-   if (!ls) {
+   if (ls == NULL) {
       assert(ls != NULL);
       return visit_continue;
    }
 
-   if (ls->limiting_terminator) {
+   if (ls->limiting_terminator != NULL) {
       /* If the limiting terminator has an iteration count of zero, then we've
        * proven that the loop cannot run, so delete it.
        */
       int iterations = ls->limiting_terminator->iterations;
-      if (!iterations) {
+      if (iterations == 0) {
          ir->remove();
          this->progress = true;
          return visit_continue;
@@ -436,7 +436,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
       }
    }
 
-   if (!ls->limiting_terminator) {
+   if (ls->limiting_terminator == NULL) {
       ir_instruction *last_ir =
          (ir_instruction *) ir->body_instructions.get_tail();
 
@@ -493,7 +493,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    if (predicted_num_loop_jumps > 1)
       return visit_continue;
 
-   if (!predicted_num_loop_jumps) {
+   if (predicted_num_loop_jumps == 0) {
       simple_unroll(ir, iterations);
       return visit_continue;
    }

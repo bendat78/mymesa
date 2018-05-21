@@ -1,9 +1,9 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2009 VMware, Inc.
  * Copyright 2007-2008 VMware, Inc.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -11,11 +11,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -23,7 +23,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
 /**
@@ -66,7 +66,7 @@
 #include "lp_bld_sample.h"
 #include "lp_bld_struct.h"
 
-/* SM 4.0 says that subroutines can nest 32 deep and
+/* SM 4.0 says that subroutines can nest 32 deep and 
  * we need one more for our main function */
 #define LP_MAX_NUM_FUNCS 33
 
@@ -183,7 +183,7 @@ lp_exec_mask_function_init(struct lp_exec_mask *mask, int function_idx)
    ctx->loop_stack_size = 0;
    ctx->switch_stack_size = 0;
 
-   if (!function_idx) {
+   if (function_idx == 0) {
       ctx->ret_mask = mask->ret_mask;
    }
 
@@ -432,7 +432,7 @@ static void lp_exec_endloop(struct gallivm_state *gallivm,
 
    assert(mask->break_mask);
 
-
+   
    assert(ctx->loop_stack_size);
    if (ctx->loop_stack_size > LP_MAX_TGSI_NESTING) {
       --ctx->loop_stack_size;
@@ -2042,7 +2042,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef oow = NULL;
    LLVMValueRef lod = NULL;
    LLVMValueRef coords[5];
-   LLVMValueRef offsets[3] = {0};
+   LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_sampler_params params;
    enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
@@ -2249,7 +2249,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    unsigned texture_unit, sampler_unit;
    LLVMValueRef lod = NULL;
    LLVMValueRef coords[5];
-   LLVMValueRef offsets[3] = {0};
+   LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    struct lp_sampler_params params;
    enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
@@ -2429,7 +2429,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef coord_undef = LLVMGetUndef(bld->bld_base.base.int_vec_type);
    LLVMValueRef explicit_lod = NULL;
    LLVMValueRef coords[5];
-   LLVMValueRef offsets[3] = {0};
+   LLVMValueRef offsets[3] = { NULL };
    struct lp_sampler_params params;
    enum lp_sampler_lod_property lod_property = LP_SAMPLER_LOD_SCALAR;
    unsigned dims, i;
@@ -3762,7 +3762,7 @@ static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
          vertices in the cache. Note must not call end_primitive here
          since the exec_mask is not valid at this point. */
       end_primitive_masked(bld_base, lp_build_mask_value(bld->mask));
-
+      
       total_emitted_vertices_vec =
          LLVMBuildLoad(builder, bld->total_emitted_vertices_vec_ptr, "");
       emitted_prims_vec =

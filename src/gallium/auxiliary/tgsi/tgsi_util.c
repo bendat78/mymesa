@@ -1,8 +1,8 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
 #include "util/u_debug.h"
@@ -217,7 +217,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       break;
 
    case TGSI_OPCODE_TXQ:
-      if (!src_idx)
+      if (src_idx == 0)
          read_mask = TGSI_WRITEMASK_X;
       else
          read_mask = TGSI_WRITEMASK_XY;  /* bindless handle possible */
@@ -261,14 +261,14 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       break;
 
    case TGSI_OPCODE_DST:
-      if (!src_idx)
+      if (src_idx == 0)
          read_mask = TGSI_WRITEMASK_YZ;
       else
          read_mask = TGSI_WRITEMASK_YW;
       break;
 
    case TGSI_OPCODE_DLDEXP:
-      if (!src_idx) {
+      if (src_idx == 0) {
          read_mask = write_mask;
       } else {
          read_mask =
@@ -278,7 +278,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       break;
 
    case TGSI_OPCODE_READ_INVOC:
-      if (!src_idx)
+      if (src_idx == 0)
          read_mask = write_mask;
       else
          read_mask = TGSI_WRITEMASK_X;
@@ -358,7 +358,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    }
 
    case TGSI_OPCODE_LOAD:
-      if (!src_idx) {
+      if (src_idx == 0) {
          read_mask = TGSI_WRITEMASK_XY; /* bindless handle possible */
       } else {
          unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
@@ -367,7 +367,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
       break;
 
    case TGSI_OPCODE_STORE:
-      if (!src_idx) {
+      if (src_idx == 0) {
          unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
          read_mask = u_bit_consecutive(0, dim);
       } else {
@@ -385,7 +385,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_ATOMUMAX:
    case TGSI_OPCODE_ATOMIMIN:
    case TGSI_OPCODE_ATOMIMAX:
-      if (!src_idx) {
+      if (src_idx == 0) {
          read_mask = TGSI_WRITEMASK_XY; /* bindless handle possible */
       } else if (src_idx == 1) {
          unsigned dim = tgsi_util_get_texture_coord_dim(inst->Memory.Texture);
@@ -398,7 +398,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
    case TGSI_OPCODE_INTERP_CENTROID:
    case TGSI_OPCODE_INTERP_SAMPLE:
    case TGSI_OPCODE_INTERP_OFFSET:
-      if (!src_idx)
+      if (src_idx == 0)
          read_mask = write_mask;
       else if (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_OFFSET)
          read_mask = TGSI_WRITEMASK_XY; /* offset */
@@ -431,7 +431,7 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
 struct tgsi_src_register
 tgsi_util_get_src_from_ind(const struct tgsi_ind_register *reg)
 {
-   struct tgsi_src_register src = {0};
+   struct tgsi_src_register src = { 0 };
 
    src.File = reg->File;
    src.Index = reg->Index;

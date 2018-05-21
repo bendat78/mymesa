@@ -58,7 +58,7 @@ brw_upload_binding_table(struct brw_context *brw,
 {
    const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
-   if (!prog_data->binding_table.size_bytes) {
+   if (prog_data->binding_table.size_bytes == 0) {
       /* There are no surfaces; skip making the binding table altogether. */
       if (stage_state->bind_bo_offset == 0 && devinfo->gen < 9)
          return;
@@ -153,7 +153,7 @@ static void
 brw_tcs_upload_binding_table(struct brw_context *brw)
 {
    /* Skip if the tessellation stages are disabled. */
-   if (!brw->programs[MESA_SHADER_TESS_EVAL])
+   if (brw->programs[MESA_SHADER_TESS_EVAL] == NULL)
       return;
 
    /* BRW_NEW_TCS_PROG_DATA */
@@ -182,7 +182,7 @@ static void
 brw_tes_upload_binding_table(struct brw_context *brw)
 {
    /* If there's no TES, skip changing anything. */
-   if (!brw->programs[MESA_SHADER_TESS_EVAL])
+   if (brw->programs[MESA_SHADER_TESS_EVAL] == NULL)
       return;
 
    /* BRW_NEW_TES_PROG_DATA */
@@ -210,7 +210,7 @@ static void
 brw_gs_upload_binding_table(struct brw_context *brw)
 {
    /* If there's no GS, skip changing anything. */
-   if (!brw->programs[MESA_SHADER_GEOMETRY])
+   if (brw->programs[MESA_SHADER_GEOMETRY] == NULL)
       return;
 
    /* BRW_NEW_GS_PROG_DATA */

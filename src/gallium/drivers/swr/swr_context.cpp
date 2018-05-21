@@ -522,7 +522,7 @@ swr_create_context(struct pipe_screen *p_screen, void *priv, unsigned flags)
 
    ctx->api.pfnSwrInit();
 
-   if (!ctx->swrContext)
+   if (ctx->swrContext == NULL)
       goto fail;
 
    ctx->pipe.screen = p_screen;

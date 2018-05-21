@@ -48,7 +48,7 @@ lock_front_buffer(struct gbm_surface *_surf)
    struct gbm_dri_device *device = (struct gbm_dri_device *) _surf->gbm;
    struct gbm_bo *bo;
 
-   if (!dri2_surf->current) {
+   if (dri2_surf->current == NULL) {
       _eglError(EGL_BAD_SURFACE, "no front buffer");
       return NULL;
    }
@@ -184,7 +184,7 @@ dri2_drm_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
                                              dri2_surf->gbm_surf);
 
    }
-   if (!dri2_surf->dri_drawable) {
+   if (dri2_surf->dri_drawable == NULL) {
       _eglError(EGL_BAD_ALLOC, "createNewDrawable()");
       goto cleanup_surf;
    }
@@ -241,7 +241,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
    struct gbm_dri_surface *surf = dri2_surf->gbm_surf;
    int age = 0;
 
-   if (!dri2_surf->back) {
+   if (dri2_surf->back == NULL) {
       for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
 	 if (!dri2_surf->color_buffers[i].locked &&
 	      dri2_surf->color_buffers[i].age >= age) {
@@ -251,9 +251,9 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
       }
    }
 
-   if (!dri2_surf->back)
+   if (dri2_surf->back == NULL)
       return -1;
-   if (!dri2_surf->back->bo) {
+   if (dri2_surf->back->bo == NULL) {
       if (surf->base.modifiers)
          dri2_surf->back->bo = gbm_bo_create_with_modifiers(&dri2_dpy->gbm_dri->base,
                                                             surf->base.width,
@@ -269,7 +269,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
                                              surf->base.flags);
 
    }
-   if (!dri2_surf->back->bo)
+   if (dri2_surf->back->bo == NULL)
       return -1;
 
    return 0;
@@ -282,16 +282,16 @@ get_swrast_front_bo(struct dri2_egl_surface *dri2_surf)
       dri2_egl_display(dri2_surf->base.Resource.Display);
    struct gbm_dri_surface *surf = dri2_surf->gbm_surf;
 
-   if (!dri2_surf->current) {
+   if (dri2_surf->current == NULL) {
       assert(!dri2_surf->color_buffers[0].locked);
       dri2_surf->current = &dri2_surf->color_buffers[0];
    }
 
-   if (!dri2_surf->current->bo)
+   if (dri2_surf->current->bo == NULL)
       dri2_surf->current->bo = gbm_bo_create(&dri2_dpy->gbm_dri->base,
                                              surf->base.width, surf->base.height,
                                              surf->base.format, surf->base.flags);
-   if (!dri2_surf->current->bo)
+   if (dri2_surf->current->bo == NULL)
       return -1;
 
    return 0;
@@ -354,7 +354,7 @@ dri2_drm_get_buffers_with_format(__DRIdrawable *driDrawable,
    }
 
    *out_count = j;
-   if (!j)
+   if (j == 0)
       return NULL;
 
    *width = dri2_surf->base.Width;
@@ -488,7 +488,7 @@ dri2_drm_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
    _eglInitImage(&dri2_img->base, disp);
 
    dri2_img->dri_image = dri2_dpy->image->dupImage(dri_bo->image, dri2_img);
-   if (!dri2_img->dri_image) {
+   if (dri2_img->dri_image == NULL) {
       free(dri2_img);
       _eglError(EGL_BAD_ALLOC, "dri2_create_image_khr_pixmap");
       return NULL;
@@ -548,13 +548,13 @@ swrast_put_image2(__DRIdrawable *driDrawable,
    bo = gbm_dri_bo(dri2_surf->current->bo);
 
    bpp = gbm_bo_get_bpp(&bo->base);
-   if (!bpp)
+   if (bpp == 0)
       return;
 
    x_bytes = x * (bpp >> 3);
    width_bytes = width * (bpp >> 3);
 
-   if (!gbm_dri_bo_map_dumb(bo))
+   if (gbm_dri_bo_map_dumb(bo) == NULL)
       return;
 
    internal_stride = bo->base.stride;
@@ -591,8 +591,9 @@ swrast_get_image(__DRIdrawable *driDrawable,
       return;
 
    bo = gbm_dri_bo(dri2_surf->current->bo);
+
    bpp = gbm_bo_get_bpp(&bo->base);
-   if (!bpp)
+   if (bpp == 0)
       return;
 
    x_bytes = x * (bpp >> 3);
@@ -601,7 +602,7 @@ swrast_get_image(__DRIdrawable *driDrawable,
    internal_stride = bo->base.stride;
    stride = width_bytes;
 
-   if (!gbm_dri_bo_map_dumb(bo))
+   if (gbm_dri_bo_map_dumb(bo) == NULL)
       return;
 
    dst = data;
@@ -713,13 +714,13 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    disp->DriverData = (void *) dri2_dpy;
 
    gbm = disp->PlatformDisplay;
-   if (!gbm) {
+   if (gbm == NULL) {
       char buf[64];
       int n = snprintf(buf, sizeof(buf), DRM_DEV_NAME, DRM_DIR_NAME, 0);
       if (n != -1 && n < sizeof(buf))
          dri2_dpy->fd = loader_open_device(buf);
       gbm = gbm_create_device(dri2_dpy->fd);
-      if (!gbm) {
+      if (gbm == NULL) {
          err = "DRI2: failed to create gbm device";
          goto cleanup;
       }

@@ -71,7 +71,7 @@ _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
    if (*ptr != rb)
       _mesa_reference_renderbuffer_(ptr, rb);
 }
-
+      
 #ifdef __cplusplus
 }
 #endif

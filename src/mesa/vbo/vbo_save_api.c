@@ -143,7 +143,7 @@ copy_vertices(struct gl_context *ctx,
                 sz * sizeof(GLfloat));
       return i;
    case GL_LINE_STRIP:
-      if (!nr)
+      if (nr == 0)
          return 0;
       else {
          memcpy(dst, src + (nr - 1) * sz, sz * sizeof(GLfloat));
@@ -152,7 +152,7 @@ copy_vertices(struct gl_context *ctx,
    case GL_LINE_LOOP:
    case GL_TRIANGLE_FAN:
    case GL_POLYGON:
-      if (!nr)
+      if (nr == 0)
          return 0;
       else if (nr == 1) {
          memcpy(dst, src + 0, sz * sizeof(GLfloat));
@@ -1007,7 +1007,7 @@ do {								\
       save->attrtype[A] = T;					\
    }								\
 								\
-   if (!(A)) {						\
+   if ((A) == 0) {						\
       GLuint i;							\
 								\
       for (i = 0; i < save->vertex_size; i++)			\
@@ -1268,7 +1268,7 @@ _save_PrimitiveRestartNV(void)
    GET_CURRENT_CONTEXT(ctx);
    struct vbo_save_context *save = &vbo_context(ctx)->save;
 
-   if (!save->prim_count) {
+   if (save->prim_count == 0) {
       /* We're not inside a glBegin/End pair, so calling glPrimitiverRestartNV
        * is an error.
        */
@@ -1818,7 +1818,7 @@ vbo_destroy_vertex_list(struct gl_context *ctx, void *data)
    for (gl_vertex_processing_mode vpm = VP_MODE_FF; vpm < VP_MODE_MAX; ++vpm)
       _mesa_reference_vao(ctx, &node->VAO[vpm], NULL);
 
-   if (!--node->prim_store->refcount)
+   if (--node->prim_store->refcount == 0)
       free(node->prim_store);
 
    free(node->current_data);

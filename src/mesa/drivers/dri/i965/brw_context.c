@@ -1233,14 +1233,14 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       struct gl_context *ctx = &brw->ctx;
       struct gl_framebuffer *fb, *readFb;
 
-      if (!driDrawPriv) {
+      if (driDrawPriv == NULL) {
          fb = _mesa_get_incomplete_framebuffer();
       } else {
          fb = driDrawPriv->driverPrivate;
          driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
       }
 
-      if (!driReadPriv) {
+      if (driReadPriv == NULL) {
          readFb = _mesa_get_incomplete_framebuffer();
       } else {
          readFb = driReadPriv->driverPrivate;
@@ -1362,7 +1362,7 @@ intel_update_dri2_buffers(struct brw_context *brw, __DRIdrawable *drawable)
 
    intel_query_dri2_buffers(brw, drawable, &buffers, &count);
 
-   if (!buffers)
+   if (buffers == NULL)
       return;
 
    for (int i = 0; i < count; i++) {
@@ -1564,7 +1564,7 @@ intel_process_dri2_buffer(struct brw_context *brw,
     * moderately expensive.
     */
    struct intel_mipmap_tree *last_mt;
-   if (!num_samples)
+   if (num_samples == 0)
       last_mt = rb->mt;
    else
       last_mt = rb->singlesample_mt;
@@ -1680,7 +1680,7 @@ intel_update_image_buffer(struct brw_context *intel,
     * buffer object
     */
    struct intel_mipmap_tree *last_mt;
-   if (!num_samples)
+   if (num_samples == 0)
       last_mt = rb->mt;
    else
       last_mt = rb->singlesample_mt;

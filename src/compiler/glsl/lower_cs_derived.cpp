@@ -108,7 +108,7 @@ lower_cs_derived_visitor::add_system_value(
 void
 lower_cs_derived_visitor::find_sysvals()
 {
-   if (gl_WorkGroupSize)
+   if (gl_WorkGroupSize != NULL)
       return;
 
    ir_variable *WorkGroupSize;
@@ -153,7 +153,7 @@ lower_cs_derived_visitor::find_sysvals()
 void
 lower_cs_derived_visitor::make_gl_GlobalInvocationID()
 {
-   if (gl_GlobalInvocationID)
+   if (gl_GlobalInvocationID != NULL)
       return;
 
    find_sysvals();
@@ -175,7 +175,7 @@ lower_cs_derived_visitor::make_gl_GlobalInvocationID()
 void
 lower_cs_derived_visitor::make_gl_LocalInvocationIndex()
 {
-   if (gl_LocalInvocationIndex)
+   if (gl_LocalInvocationIndex != NULL)
       return;
 
    find_sysvals();

@@ -98,7 +98,7 @@ _mesa_clear_accum_buffer(struct gl_context *ctx)
 
       for (j = 0; j < height; j++) {
          GLshort *row = (GLshort *) accMap;
-
+         
          for (i = 0; i < width; i++) {
             row[i * 4 + 0] = clearR;
             row[i * 4 + 1] = clearG;
@@ -436,7 +436,7 @@ accum(struct gl_context *ctx, GLenum op, GLfloat value)
 }
 
 
-void
+void 
 _mesa_init_accum( struct gl_context *ctx )
 {
    /* Accumulate buffer group */
@@ -463,7 +463,7 @@ _mesa_Accum( GLenum op, GLfloat value )
       return;
    }
 
-   if (!ctx->DrawBuffer->Visual.haveAccumBuffer) {
+   if (ctx->DrawBuffer->Visual.haveAccumBuffer == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glAccum(no accum buffer)");
       return;
    }

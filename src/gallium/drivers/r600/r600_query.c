@@ -1567,7 +1567,7 @@ static void r600_create_query_result_shader(struct r600_common_context *rctx)
 
 	char text[sizeof(text_tmpl) + 32];
 	struct tgsi_token tokens[1024];
-	struct pipe_compute_state state = {0};
+	struct pipe_compute_state state = {};
 
 	/* Hard code the frequency into the shader so that the backend can
 	 * use the full range of optimizations for divide-by-constant.
@@ -1612,9 +1612,9 @@ static void r600_query_hw_get_result_resource(struct r600_common_context *rctx,
 	struct r600_query_buffer *qbuf_prev;
 	struct pipe_resource *tmp_buffer = NULL;
 	unsigned tmp_buffer_offset = 0;
-	struct r600_qbo_state saved_state = {0};
-	struct pipe_grid_info grid = {0};
-	struct pipe_constant_buffer constant_buffer = {0};
+	struct r600_qbo_state saved_state = {};
+	struct pipe_grid_info grid = {};
+	struct pipe_constant_buffer constant_buffer = {};
 	struct pipe_shader_buffer ssbo[3];
 	struct r600_hw_query_params params;
 	struct {
@@ -1838,7 +1838,7 @@ void r600_query_fix_enabled_rb_mask(struct r600_common_screen *rscreen)
 	uint32_t *results;
 	unsigned i, mask = 0;
 	unsigned max_rbs;
-
+	
 	if (ctx->family == CHIP_JUNIPER) {
 		/*
 		 * Fix for predication lockups - the chip can only ever have
@@ -1859,7 +1859,7 @@ void r600_query_fix_enabled_rb_mask(struct r600_common_screen *rscreen)
 	 * associated data on eg/cm, only on r600/r700, hence ignore the valid
 	 * bit there if the map is zero.
 	 * (Albeit some chips with just one active rb can have a valid 0 map.)
-	 */
+	 */ 
 	if (rscreen->info.r600_gb_backend_map_valid &&
 	    (ctx->chip_class < EVERGREEN || rscreen->info.r600_gb_backend_map != 0)) {
 		unsigned num_tile_pipes = rscreen->info.num_tile_pipes;
@@ -1879,7 +1879,7 @@ void r600_query_fix_enabled_rb_mask(struct r600_common_screen *rscreen)
 			mask |= (1<<i);
 			backend_map >>= item_width;
 		}
-		if (mask) {
+		if (mask != 0) {
 			rscreen->info.enabled_rb_mask = mask;
 			return;
 		}

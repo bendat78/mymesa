@@ -61,7 +61,7 @@ namespace {
             realloc(uniforms, sizeof(active_atomic_counter_uniform) *
                     (num_uniforms + 1));
 
-         if (!new_uniforms) {
+         if (new_uniforms == NULL) {
             _mesa_error_no_memory(__func__);
             return;
          }
@@ -125,7 +125,7 @@ namespace {
          /* If this is the first time the buffer is used, increment
           * the counter of buffers used.
           */
-         if (!buf->size)
+         if (buf->size == 0)
             (*num_buffers)++;
 
          buf->push_back(*uniform_loc, var);
@@ -158,7 +158,7 @@ namespace {
 
       for (unsigned i = 0; i < MESA_SHADER_STAGES; ++i) {
          struct gl_linked_shader *sh = prog->_LinkedShaders[i];
-         if (!sh)
+         if (sh == NULL)
             continue;
 
          foreach_in_list(ir_instruction, node, sh->ir) {
@@ -174,7 +174,7 @@ namespace {
       }
 
       for (unsigned i = 0; i < ctx->Const.MaxAtomicBufferBindings; i++) {
-         if (!buffers[i].size)
+         if (buffers[i].size == 0)
             continue;
 
          qsort(buffers[i].uniforms, buffers[i].num_uniforms,
@@ -205,7 +205,7 @@ link_assign_atomic_counter_resources(struct gl_context *ctx,
                                      struct gl_shader_program *prog)
 {
    unsigned num_buffers;
-   unsigned num_atomic_buffers[MESA_SHADER_STAGES] = {0};
+   unsigned num_atomic_buffers[MESA_SHADER_STAGES] = {};
    active_atomic_buffer *abs =
       find_active_atomic_counters(ctx, prog, &num_buffers);
 
@@ -220,7 +220,7 @@ link_assign_atomic_counter_resources(struct gl_context *ctx,
 
       /* If the binding was not used, skip.
        */
-      if (!abs[binding].size)
+      if (abs[binding].size == 0)
          continue;
 
       active_atomic_buffer &ab = abs[binding];
@@ -306,8 +306,8 @@ link_check_atomic_counter_resources(struct gl_context *ctx,
    unsigned num_buffers;
    active_atomic_buffer *const abs =
       find_active_atomic_counters(ctx, prog, &num_buffers);
-   unsigned atomic_counters[MESA_SHADER_STAGES] = {0};
-   unsigned atomic_buffers[MESA_SHADER_STAGES] = {0};
+   unsigned atomic_counters[MESA_SHADER_STAGES] = {};
+   unsigned atomic_buffers[MESA_SHADER_STAGES] = {};
    unsigned total_atomic_counters = 0;
    unsigned total_atomic_buffers = 0;
 
@@ -317,7 +317,7 @@ link_check_atomic_counter_resources(struct gl_context *ctx,
     * requires.
     */
    for (unsigned i = 0; i < ctx->Const.MaxAtomicBufferBindings; i++) {
-      if (!abs[i].size)
+      if (abs[i].size == 0)
          continue;
 
       for (unsigned j = 0; j < MESA_SHADER_STAGES; ++j) {

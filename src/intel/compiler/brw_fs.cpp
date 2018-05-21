@@ -709,7 +709,7 @@ fs_inst::components_read(unsigned i) const
 
    switch (opcode) {
    case FS_OPCODE_LINTERP:
-      if (!i)
+      if (i == 0)
          return 2;
       else
          return 1;
@@ -763,7 +763,7 @@ fs_inst::components_read(unsigned i) const
    case SHADER_OPCODE_TYPED_SURFACE_READ_LOGICAL:
       assert(src[3].file == IMM);
       /* Surface coordinates. */
-      if (!i)
+      if (i == 0)
          return src[3].ud;
       /* Surface operation source (ignored for reads). */
       else if (i == 1)
@@ -776,7 +776,7 @@ fs_inst::components_read(unsigned i) const
       assert(src[3].file == IMM &&
              src[4].file == IMM);
       /* Surface coordinates. */
-      if (!i)
+      if (i == 0)
          return src[3].ud;
       /* Surface operation source. */
       else if (i == 1)
@@ -807,7 +807,7 @@ fs_inst::components_read(unsigned i) const
              src[4].file == IMM);
       const unsigned op = src[4].ud;
       /* Surface coordinates. */
-      if (!i)
+      if (i == 0)
          return src[3].ud;
       /* Surface operation source. */
       else if (i == 1 && op == BRW_AOP_CMPWR)
@@ -847,7 +847,7 @@ fs_inst::size_read(int arg) const
    case FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET:
    case SHADER_OPCODE_BYTE_SCATTERED_WRITE:
    case SHADER_OPCODE_BYTE_SCATTERED_READ:
-      if (!arg)
+      if (arg == 0)
          return mlen * REG_SIZE;
       break;
 
@@ -872,7 +872,7 @@ fs_inst::size_read(int arg) const
       return REG_SIZE;
 
    case SHADER_OPCODE_MOV_INDIRECT:
-      if (!arg) {
+      if (arg == 0) {
          assert(src[2].file == IMM);
          return src[2].ud;
       }
@@ -977,7 +977,7 @@ fs_inst::flags_written() const
 int
 fs_visitor::implied_mrf_writes(fs_inst *inst) const
 {
-   if (!inst->mlen)
+   if (inst->mlen == 0)
       return 0;
 
    if (inst->base_mrf == -1)
@@ -1939,7 +1939,7 @@ fs_visitor::compact_virtual_grfs()
 static int
 get_subgroup_id_param_index(const brw_stage_prog_data *prog_data)
 {
-   if (!prog_data->nr_params)
+   if (prog_data->nr_params == 0)
       return -1;
 
    /* The local thread id is always the last parameter in the list */
@@ -2045,7 +2045,7 @@ mark_uniform_slots_read(struct uniform_slot_info *slots,
          slots[i].contiguous = true;
 
       align.offset = (i * UNIFORM_SLOT_SIZE) & (align.mul - 1);
-      if (!slots[i].align.mul) {
+      if (slots[i].align.mul == 0) {
          slots[i].align = align;
       } else {
          slots[i].align = cplx_align_combine(slots[i].align, align);
@@ -2942,7 +2942,7 @@ fs_visitor::opt_peephole_csel()
                csel_inst->src[1].abs = true;
             }
 
-            if (csel_inst) {
+            if (csel_inst != NULL) {
                progress = true;
                inst->remove(block);
             }
@@ -3171,7 +3171,7 @@ fs_visitor::eliminate_find_live_channel()
          return progress;
 
       case SHADER_OPCODE_FIND_LIVE_CHANNEL:
-         if (!depth) {
+         if (depth == 0) {
             inst->opcode = BRW_OPCODE_MOV;
             inst->src[0] = brw_imm_ud(0u);
             inst->sources = 1;
@@ -3962,7 +3962,7 @@ lower_fb_write_logical_send(const fs_builder &bld, fs_inst *inst,
       header_size = 0;
    }
 
-   if (header_size) {
+   if (header_size != 0) {
       assert(header_size == 2);
       /* Allocate 2 registers for a header */
       length += 2;
@@ -4220,7 +4220,7 @@ lower_sampler_logical_send_gen5(const fs_builder &bld, fs_inst *inst, opcode op,
    fs_reg msg_coords = message;
    unsigned header_size = 0;
 
-   if (inst->offset) {
+   if (inst->offset != 0) {
       /* The offsets set up by the visitor are in the m1 header, so we can't
        * go headerless.
        */
@@ -7318,7 +7318,7 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
    }
 
    const unsigned *ret = NULL;
-   if (!unlikely(cfg)) {
+   if (unlikely(cfg == NULL)) {
       assert(fail_msg);
       if (error_str)
          *error_str = ralloc_strdup(mem_ctx, fail_msg);

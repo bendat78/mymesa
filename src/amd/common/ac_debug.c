@@ -204,7 +204,7 @@ static void ac_parse_set_reg_packet(FILE *f, unsigned count, unsigned reg_offset
 	unsigned index = reg_dw >> 28;
 	int i;
 
-	if (index) {
+	if (index != 0) {
 		print_spaces(f, INDENT_PKT);
 		fprintf(f, "INDEX = %u\n", index);
 	}
@@ -560,7 +560,7 @@ void ac_parse_ib_chunk(FILE *f, uint32_t *ib_ptr, int num_dw, const int *trace_i
 		       unsigned trace_id_count, enum chip_class chip_class,
                        ac_debug_addr_callback addr_callback, void *addr_callback_data)
 {
-	struct ac_ib_parser ib = {0};
+	struct ac_ib_parser ib = {};
 	ib.ib = ib_ptr;
 	ib.num_dw = num_dw;
 	ib.trace_ids = trace_ids;

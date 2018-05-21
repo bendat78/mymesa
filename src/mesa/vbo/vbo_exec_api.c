@@ -64,7 +64,7 @@ vbo_reset_all_attr(struct vbo_exec_context *exec);
 static void
 vbo_exec_wrap_buffers(struct vbo_exec_context *exec)
 {
-   if (!exec->vtx.prim_count) {
+   if (exec->vtx.prim_count == 0) {
       exec->vtx.copied.nr = 0;
       exec->vtx.vert_count = 0;
       exec->vtx.buffer_ptr = exec->vtx.buffer_map;
@@ -440,7 +440,7 @@ vbo_exec_fixup_vertex(struct gl_context *ctx, GLuint attr,
     * vtxfmt on each flush (otherwise flags won't get reset
     * afterwards).
     */
-   if (!attr)
+   if (attr == 0)
       ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
 }
 
@@ -494,7 +494,7 @@ do {                                                                    \
       assert(exec->vtx.attrtype[A] == T);                               \
    }                                                                    \
                                                                         \
-   if (!(A)) {                                                      \
+   if ((A) == 0) {                                                      \
       /* This is a glVertex call */                                     \
       GLuint i;                                                         \
                                                                         \
@@ -1205,7 +1205,7 @@ vbo_exec_vtx_destroy(struct vbo_exec_context *exec)
    if (exec->vtx.buffer_map) {
       assert(exec->vtx.bufferobj->Name == 0 ||
              exec->vtx.bufferobj->Name == IMM_BUFFER_NAME);
-      if (!exec->vtx.bufferobj->Name) {
+      if (exec->vtx.bufferobj->Name == 0) {
          _mesa_align_free(exec->vtx.buffer_map);
          exec->vtx.buffer_map = NULL;
          exec->vtx.buffer_ptr = NULL;

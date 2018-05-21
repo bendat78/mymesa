@@ -438,7 +438,7 @@ resample_linear_row_ub(GLint srcWidth, GLint dstWidth,
       alpha = lerp_2d(colWeight, rowWeight,
                     srcColor0[srcCol0][ACOMP], srcColor0[srcCol1][ACOMP],
                     srcColor1[srcCol0][ACOMP], srcColor1[srcCol1][ACOMP]);
-
+      
       dstColor[dstCol][RCOMP] = IFLOOR(red);
       dstColor[dstCol][GCOMP] = IFLOOR(green);
       dstColor[dstCol][BCOMP] = IFLOOR(blue);
@@ -493,7 +493,7 @@ resample_linear_row_float(GLint srcWidth, GLint dstWidth,
       alpha = lerp_2d(colWeight, rowWeight,
                     srcColor0[srcCol0][ACOMP], srcColor0[srcCol1][ACOMP],
                     srcColor1[srcCol0][ACOMP], srcColor1[srcCol1][ACOMP]);
-
+      
       dstColor[dstCol][RCOMP] = red;
       dstColor[dstCol][GCOMP] = green;
       dstColor[dstCol][BCOMP] = blue;

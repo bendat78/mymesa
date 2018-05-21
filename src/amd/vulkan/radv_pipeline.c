@@ -679,7 +679,7 @@ radv_pipeline_init_blend_state(struct radv_pipeline *pipeline,
 		}
 
 		if (is_dual_src(srcRGB) || is_dual_src(dstRGB) || is_dual_src(srcA) || is_dual_src(dstA))
-			if (!i)
+			if (i == 0)
 				blend.mrt0_is_dual_src = true;
 
 		if (eqRGB == VK_BLEND_OP_MIN || eqRGB == VK_BLEND_OP_MAX) {
@@ -1417,7 +1417,6 @@ calculate_gs_info(const VkGraphicsPipelineCreateInfo *pCreateInfo,
 	struct radv_gs_state gs = {0};
 	struct radv_shader_variant_info *gs_info = &pipeline->shaders[MESA_SHADER_GEOMETRY]->info;
 	struct radv_es_output_info *es_info;
-
 	if (pipeline->device->physical_device->rad_info.chip_class >= GFX9)
 		es_info = radv_pipeline_has_tess(pipeline) ? &gs_info->tes.es_info : &gs_info->vs.es_info;
 	else
@@ -3406,7 +3405,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 	struct radv_subpass *subpass = pass->subpasses + pCreateInfo->subpass;
 	if (subpass->view_mask)
 		has_view_index = true;
-	if (!alloc)
+	if (alloc == NULL)
 		alloc = &device->alloc;
 
 	pipeline->device = device;
@@ -3421,7 +3420,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		pStages[stage] = &pCreateInfo->pStages[i];
 	}
 
-	radv_create_shaders(pipeline, device, cache,
+	radv_create_shaders(pipeline, device, cache, 
 	                    radv_generate_graphics_pipeline_key(pipeline, pCreateInfo, &blend, has_view_index),
 	                    pStages, pCreateInfo->flags);
 
@@ -3529,7 +3528,7 @@ radv_graphics_pipeline_create(
 
 	pipeline = vk_zalloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
 			      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!pipeline)
+	if (pipeline == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	result = radv_pipeline_init(pipeline, device, cache,
@@ -3648,7 +3647,7 @@ static VkResult radv_compute_pipeline_create(
 
 	pipeline = vk_zalloc2(&device->alloc, pAllocator, sizeof(*pipeline), 8,
 			      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!pipeline)
+	if (pipeline == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	pipeline->device = device;

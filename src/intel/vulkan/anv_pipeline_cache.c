@@ -335,7 +335,7 @@ anv_pipeline_cache_load(struct anv_pipeline_cache *cache,
    struct anv_device *device = cache->device;
    struct anv_physical_device *pdevice = &device->instance->physicalDevice;
 
-   if (!cache->cache)
+   if (cache->cache == NULL)
       return;
 
    struct blob_reader blob;
@@ -391,7 +391,7 @@ VkResult anv_CreatePipelineCache(
    cache = vk_alloc2(&device->alloc, pAllocator,
                        sizeof(*cache), 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!cache)
+   if (cache == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    anv_pipeline_cache_init(cache, device, pipeline_cache_enabled());
@@ -431,6 +431,7 @@ VkResult anv_GetPipelineCacheData(
    ANV_FROM_HANDLE(anv_device, device, _device);
    ANV_FROM_HANDLE(anv_pipeline_cache, cache, _cache);
    struct anv_physical_device *pdevice = &device->instance->physicalDevice;
+
    struct blob blob;
    if (pData) {
       blob_init_fixed(&blob, pData, *pDataSize);

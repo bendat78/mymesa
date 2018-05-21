@@ -213,7 +213,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
 
    if (screen->base.class_3d >= GM200_3D_CLASS) {
       const uint8_t (*ptr)[2] = nvc0_get_sample_locations(ms);
-      uint32_t val[4] = {0};
+      uint32_t val[4] = {};
 
       for (i = 0; i < 16; i++) {
          val[i / 4] |= ptr[i % ms][0] << (((i % 4) * 8) + 0);
@@ -521,7 +521,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
                BEGIN_NVC0(push, NVC0_3D(CB_BIND(s)), 1);
                PUSH_DATA (push, (i << 4) | 0);
             }
-            if (!i)
+            if (i == 0)
                nvc0->state.uniform_buffer_bound[s] = 0;
          }
       }
@@ -743,7 +743,7 @@ nvc0_validate_fbread(struct nvc0_context *nvc0)
          return;
 
       new_view = pipe->create_sampler_view(pipe, sf->texture, &tmpl);
-   } else if (!old_view) {
+   } else if (old_view == NULL) {
       return;
    }
 

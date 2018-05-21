@@ -142,7 +142,7 @@ add_surface(struct anv_image *image, struct anv_surface *surf, uint32_t plane)
    } else {
       surf->offset = align_u32(image->size, surf->isl.alignment);
       /* Determine plane's offset only once when the first surface is added. */
-      if (!image->planes[plane].size)
+      if (image->planes[plane].size == 0)
          image->planes[plane].offset = image->size;
    }
 
@@ -812,7 +812,7 @@ anv_layout_to_aux_usage(const struct gen_device_info * const devinfo,
    /* If there is no auxiliary surface allocated, we must use the one and only
     * main buffer.
     */
-   if (!image->planes[plane].aux_surface.isl.size)
+   if (image->planes[plane].aux_surface.isl.size == 0)
       return ISL_AUX_USAGE_NONE;
 
    /* All images that use an auxiliary surface are required to be tiled. */
@@ -936,7 +936,7 @@ anv_layout_to_fast_clear_type(const struct gen_device_info * const devinfo,
    uint32_t plane = anv_image_aspect_to_plane(image->aspects, aspect);
 
    /* If there is no auxiliary surface allocated, there are no fast-clears */
-   if (!image->planes[plane].aux_surface.isl.size)
+   if (image->planes[plane].aux_surface.isl.size == 0)
       return ANV_FAST_CLEAR_NONE;
 
    /* All images that use an auxiliary surface are required to be tiled. */
@@ -1235,7 +1235,7 @@ anv_CreateImageView(VkDevice _device,
 
    iview = vk_zalloc2(&device->alloc, pAllocator, sizeof(*iview), 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!iview)
+   if (iview == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    const VkImageSubresourceRange *range = &pCreateInfo->subresourceRange;

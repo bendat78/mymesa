@@ -168,7 +168,7 @@ static void cull_tri( struct draw_stage *stage,
       /* det = cross(e,f).z */
       header->det = ex * fy - ey * fx;
 
-      if (header->det) {
+      if (header->det != 0) {
          /* if det < 0 then Z points toward the camera and the triangle is
           * counter-clockwise winding.
           */

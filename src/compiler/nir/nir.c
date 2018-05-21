@@ -660,7 +660,7 @@ nir_deref_struct_create(void *mem_ctx, unsigned field_index)
 nir_deref_var *
 nir_deref_var_clone(const nir_deref_var *deref, void *mem_ctx)
 {
-   if (!deref)
+   if (deref == NULL)
       return NULL;
 
    nir_deref_var *ret = nir_deref_var_create(mem_ctx, deref->var);
@@ -698,7 +698,7 @@ deref_struct_clone(const nir_deref_struct *deref, void *mem_ctx)
 nir_deref *
 nir_deref_clone(const nir_deref *deref, void *mem_ctx)
 {
-   if (!deref)
+   if (deref == NULL)
       return NULL;
 
    switch (deref->deref_type) {
@@ -1009,7 +1009,7 @@ reduce_cursor(nir_cursor cursor)
    }
 
    case nir_cursor_after_instr:
-      if (!nir_instr_next(cursor.instr)) {
+      if (nir_instr_next(cursor.instr) == NULL) {
          /* This is the last instruction, switch to after block */
          cursor.option = nir_cursor_after_block;
          cursor.block = cursor.instr->block;
@@ -1330,7 +1330,7 @@ static bool
 visit_deref_src(nir_deref_var *deref, nir_foreach_src_cb cb, void *state)
 {
    nir_deref *cur = &deref->deref;
-   while (cur) {
+   while (cur != NULL) {
       if (cur->deref_type == nir_deref_type_array) {
          if (!visit_deref_array_src(nir_deref_as_array(cur), cb, state))
             return false;
@@ -1360,12 +1360,12 @@ visit_tex_src(nir_tex_instr *instr, nir_foreach_src_cb cb, void *state)
          return false;
    }
 
-   if (instr->texture) {
+   if (instr->texture != NULL) {
       if (!visit_deref_src(instr->texture, cb, state))
          return false;
    }
 
-   if (instr->sampler) {
+   if (instr->sampler != NULL) {
       if (!visit_deref_src(instr->sampler, cb, state))
          return false;
    }
@@ -1749,7 +1749,7 @@ nir_ssa_def_components_read(const nir_ssa_def *def)
 nir_block *
 nir_block_cf_tree_next(nir_block *block)
 {
-   if (!block) {
+   if (block == NULL) {
       /* nir_foreach_block_safe() will call this function on a NULL block
        * after the last iteration, but it won't use the result so just return
        * NULL here.
@@ -1788,7 +1788,7 @@ nir_block_cf_tree_next(nir_block *block)
 nir_block *
 nir_block_cf_tree_prev(nir_block *block)
 {
-   if (!block) {
+   if (block == NULL) {
       /* do this for consistency with nir_block_cf_tree_next() */
       return NULL;
    }

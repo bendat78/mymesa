@@ -202,15 +202,15 @@ brw_buffer_data(struct gl_context *ctx,
    assert(!obj->Mappings[MAP_USER].Pointer); /* Mesa should have unmapped it */
    assert(!obj->Mappings[MAP_INTERNAL].Pointer);
 
-   if (intel_obj->buffer)
+   if (intel_obj->buffer != NULL)
       release_buffer(intel_obj);
 
-   if (size) {
+   if (size != 0) {
       alloc_buffer_object(brw, intel_obj);
       if (!intel_obj->buffer)
          return false;
 
-      if (data) {
+      if (data != NULL) {
          brw_bo_subdata(intel_obj->buffer, 0, size, data);
          mark_buffer_valid_data(intel_obj, 0, size);
       }
@@ -240,7 +240,7 @@ brw_buffer_subdata(struct gl_context *ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
    bool busy;
 
-   if (!size)
+   if (size == 0)
       return;
 
    assert(intel_obj);
@@ -409,7 +409,7 @@ brw_map_buffer_range(struct gl_context *ctx,
    obj->Mappings[index].Length = length;
    obj->Mappings[index].AccessFlags = access;
 
-   if (!intel_obj->buffer) {
+   if (intel_obj->buffer == NULL) {
       obj->Mappings[index].Pointer = NULL;
       return NULL;
    }
@@ -504,10 +504,10 @@ brw_flush_mapped_buffer_range(struct gl_context *ctx,
    /* If we gave a direct mapping of the buffer instead of using a temporary,
     * then there's nothing to do.
     */
-   if (!intel_obj->range_map_bo[index])
+   if (intel_obj->range_map_bo[index] == NULL)
       return;
 
-   if (!length)
+   if (length == 0)
       return;
 
    /* Note that we're not unmapping our buffer while executing the blit.  We
@@ -561,7 +561,7 @@ brw_unmap_buffer(struct gl_context *ctx,
 
    assert(intel_obj);
    assert(obj->Mappings[index].Pointer);
-   if (intel_obj->range_map_bo[index]) {
+   if (intel_obj->range_map_bo[index] != NULL) {
       brw_bo_unmap(intel_obj->range_map_bo[index]);
 
       if (!(obj->Mappings[index].AccessFlags & GL_MAP_FLUSH_EXPLICIT_BIT)) {
@@ -583,7 +583,7 @@ brw_unmap_buffer(struct gl_context *ctx,
 
       brw_bo_unreference(intel_obj->range_map_bo[index]);
       intel_obj->range_map_bo[index] = NULL;
-   } else if (intel_obj->buffer) {
+   } else if (intel_obj->buffer != NULL) {
       brw_bo_unmap(intel_obj->buffer);
    }
    obj->Mappings[index].Pointer = NULL;
@@ -609,7 +609,7 @@ intel_bufferobj_buffer(struct brw_context *brw,
     * objects that need a BO but don't want to check that they exist for
     * draw-time validation can just always get a BO from a GL buffer object.
     */
-   if (!intel_obj->buffer)
+   if (intel_obj->buffer == NULL)
       alloc_buffer_object(brw, intel_obj);
 
    mark_buffer_gpu_usage(intel_obj, offset, size);
@@ -640,7 +640,7 @@ brw_copy_buffer_subdata(struct gl_context *ctx,
    struct intel_buffer_object *intel_dst = intel_buffer_object(dst);
    struct brw_bo *src_bo, *dst_bo;
 
-   if (!size)
+   if (size == 0)
       return;
 
    dst_bo = intel_bufferobj_buffer(brw, intel_dst, write_offset, size, true);

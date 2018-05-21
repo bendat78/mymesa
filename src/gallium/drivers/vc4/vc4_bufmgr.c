@@ -167,7 +167,7 @@ vc4_bo_free(struct vc4_bo *bo)
         memset(&c, 0, sizeof(c));
         c.handle = bo->handle;
         int ret = vc4_ioctl(screen->fd, DRM_IOCTL_GEM_CLOSE, &c);
-        if (ret)
+        if (ret != 0)
                 fprintf(stderr, "close object %d: %s\n", bo->handle, strerror(errno));
 
         screen->bo_count--;
@@ -262,7 +262,7 @@ vc4_bo_alloc(struct vc4_screen *screen, uint32_t size, const char *name)
         ret = vc4_ioctl(screen->fd, DRM_IOCTL_VC4_CREATE_BO, &create);
         bo->handle = create.handle;
 
-        if (ret) {
+        if (ret != 0) {
                 if (!list_empty(&screen->bo_cache.time_list) &&
                     !cleared_and_retried) {
                         cleared_and_retried = true;
@@ -466,7 +466,7 @@ vc4_bo_get_dmabuf(struct vc4_bo *bo)
         int fd;
         int ret = drmPrimeHandleToFD(bo->screen->fd, bo->handle,
                                      O_CLOEXEC, &fd);
-        if (ret) {
+        if (ret != 0) {
                 fprintf(stderr, "Failed to export gem bo %d to dmabuf\n",
                         bo->handle);
                 return -1;
@@ -505,7 +505,7 @@ vc4_bo_alloc_shader(struct vc4_screen *screen, const void *data, uint32_t size)
                         &create);
         bo->handle = create.handle;
 
-        if (ret) {
+        if (ret != 0) {
                 fprintf(stderr, "create shader ioctl failure\n");
                 abort();
         }
@@ -635,7 +635,7 @@ vc4_bo_map_unsynchronized(struct vc4_bo *bo)
         map.handle = bo->handle;
         ret = vc4_ioctl(bo->screen->fd, DRM_IOCTL_VC4_MMAP_BO, &map);
         offset = map.offset;
-        if (ret) {
+        if (ret != 0) {
                 fprintf(stderr, "map ioctl failure\n");
                 abort();
         }

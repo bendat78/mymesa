@@ -563,10 +563,10 @@ si_write_scissors(struct radeon_winsys_cs *cs, int first,
 static inline unsigned
 radv_prims_for_vertices(struct radv_prim_vertex_count *info, unsigned num)
 {
-	if (!num)
+	if (num == 0)
 		return 0;
 
-	if (!info->incr)
+	if (info->incr == 0)
 		return 0;
 
 	if (num < info->min)
@@ -774,7 +774,7 @@ si_cs_emit_cache_flush(struct radeon_winsys_cs *cs,
 	unsigned cp_coher_cntl = 0;
 	uint32_t flush_cb_db = flush_bits & (RADV_CMD_FLAG_FLUSH_AND_INV_CB |
 					     RADV_CMD_FLAG_FLUSH_AND_INV_DB);
-
+	
 	if (flush_bits & RADV_CMD_FLAG_INV_ICACHE)
 		cp_coher_cntl |= S_0085F0_SH_ICACHE_ACTION_ENA(1);
 	if (flush_bits & RADV_CMD_FLAG_INV_SMEM_L1)

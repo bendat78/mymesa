@@ -181,7 +181,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
     * a zero context ID is used only to mean that we bind to no current
     * context.
     */
-   if ((gc) && (gc->xid == None)) {
+   if ((gc != NULL) && (gc->xid == None)) {
       return GL_FALSE;
    }
 
@@ -195,7 +195,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 
    if (oldGC != &dummyContext) {
-      if (!--oldGC->thread_refcount) {
+      if (--oldGC->thread_refcount == 0) {
 	 oldGC->vtable->unbind(oldGC, gc);
 	 oldGC->currentDpy = 0;
       }
@@ -218,7 +218,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
          return GL_FALSE;
       }
 
-      if (!gc->thread_refcount) {
+      if (gc->thread_refcount == 0) {
          gc->currentDpy = dpy;
          gc->currentDrawable = draw;
          gc->currentReadable = read;

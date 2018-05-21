@@ -79,7 +79,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
    }
 
    *mixer = vlAddDataHTAB(vmixer);
-   if (!*mixer) {
+   if (*mixer == 0) {
       ret = VDP_STATUS_ERROR;
       goto no_handle;
    }

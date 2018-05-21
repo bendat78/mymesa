@@ -861,7 +861,7 @@ fd_resource_create(struct pipe_screen *pscreen,
 	/* special case for hw-query buffer, which we need to allocate before we
 	 * know the size:
 	 */
-	if (!size) {
+	if (size == 0) {
 		/* note, semi-intention == instead of & */
 		debug_assert(prsc->bind == PIPE_BIND_QUERY_BUFFER);
 		return prsc;
@@ -1008,7 +1008,7 @@ fd_render_condition_check(struct pipe_context *pctx)
 	if (!ctx->cond_query)
 		return true;
 
-	union pipe_query_result res = {0};
+	union pipe_query_result res = { 0 };
 	bool wait =
 		ctx->cond_mode != PIPE_RENDER_COND_NO_WAIT &&
 		ctx->cond_mode != PIPE_RENDER_COND_BY_REGION_NO_WAIT;

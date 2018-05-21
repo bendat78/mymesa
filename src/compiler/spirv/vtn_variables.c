@@ -189,7 +189,7 @@ vtn_ssa_offset_pointer_dereference(struct vtn_builder *b,
          vtn_assert(base->var && base->type);
          nir_ssa_def *desc_arr_idx;
          if (glsl_type_is_array(type->type)) {
-            if (deref_chain->length) {
+            if (deref_chain->length >= 1) {
                desc_arr_idx =
                   vtn_access_link_as_ssa(b, deref_chain->link[0], 1);
                idx++;
@@ -888,7 +888,7 @@ _vtn_block_load_store(struct vtn_builder *b, nir_intrinsic_op op, bool load,
             }
 
             if (load) {
-               if (!*inout)
+               if (*inout == NULL)
                   *inout = vtn_create_ssa_value(b, type->type);
                (*inout)->def = nir_vec(&b->nb, per_comp, elems);
             }

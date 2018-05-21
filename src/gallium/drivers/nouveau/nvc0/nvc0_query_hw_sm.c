@@ -2361,7 +2361,7 @@ nve4_hw_sm_begin_query(struct nvc0_context *nvc0, struct nvc0_hw_query *hq)
       assert(c <= (d * 4 + 3)); /* must succeed, already checked for space */
 
       /* configure and reset the counter(s) */
-     if (!d)
+     if (d == 0)
         BEGIN_NVC0(push, NVE4_CP(MP_PM_A_SIGSEL(c & 3)), 1);
      else
         BEGIN_NVC0(push, NVE4_CP(MP_PM_B_SIGSEL(c & 3)), 1);
@@ -2536,7 +2536,7 @@ nvc0_hw_sm_end_query(struct nvc0_context *nvc0, struct nvc0_hw_query *hq)
    const bool is_nve4 = screen->base.class_3d >= NVE4_3D_CLASS;
    struct nvc0_hw_sm_query *hsq = nvc0_hw_sm_query(hq);
    struct nvc0_program *old = nvc0->compprog;
-   struct pipe_grid_info info = {0};
+   struct pipe_grid_info info = {};
    uint32_t mask;
    uint32_t input[3];
    const uint block[3] = { 32, is_nve4 ? 4 : 1, 1 };

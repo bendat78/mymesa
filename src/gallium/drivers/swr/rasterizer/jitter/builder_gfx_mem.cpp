@@ -203,7 +203,7 @@ namespace SwrJit
 
     Value* BuilderGfxMem::TranslateGfxAddress(Value* xpGfxAddress, Type* PtrTy, const Twine &Name, JIT_MEM_CLIENT /* usage */)
     {
-        if (!PtrTy)
+        if (PtrTy == nullptr)
         {
             PtrTy = mInt8PtrTy;
         }

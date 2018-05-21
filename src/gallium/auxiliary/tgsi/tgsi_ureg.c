@@ -1,8 +1,8 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
 
@@ -230,10 +230,10 @@ static void tokens_expand( struct ureg_tokens *tokens,
       tokens->size = (1 << ++tokens->order);
    }
 
-   tokens->tokens = REALLOC(tokens->tokens,
+   tokens->tokens = REALLOC(tokens->tokens, 
                             old_size,
                             tokens->size * sizeof(unsigned));
-   if (!tokens->tokens) {
+   if (tokens->tokens == NULL) {
       tokens_error(tokens);
    }
 }
@@ -252,7 +252,7 @@ static union tgsi_any_token *get_tokens( struct ureg_program *ureg,
    struct ureg_tokens *tokens = &ureg->domain[domain];
    union tgsi_any_token *result;
 
-   if (tokens->count + count > tokens->size)
+   if (tokens->count + count > tokens->size) 
       tokens_expand(tokens, count);
 
    result = &tokens->tokens[tokens->count];
@@ -349,7 +349,7 @@ ureg_DECL_fs_input_cyl_centroid(struct ureg_program *ureg,
 }
 
 
-struct ureg_src
+struct ureg_src 
 ureg_DECL_vs_input( struct ureg_program *ureg,
                     unsigned index )
 {
@@ -484,7 +484,7 @@ ureg_DECL_output_masked(struct ureg_program *ureg,
 }
 
 
-struct ureg_dst
+struct ureg_dst 
 ureg_DECL_output(struct ureg_program *ureg,
                  enum tgsi_semantic name,
                  unsigned index)
@@ -720,7 +720,7 @@ struct ureg_src ureg_DECL_sampler( struct ureg_program *ureg,
    for (i = 0; i < ureg->nr_samplers; i++)
       if (ureg->sampler[i].Index == nr)
          return ureg->sampler[i];
-
+   
    if (i < PIPE_MAX_SAMPLERS) {
       ureg->sampler[i] = ureg_src_register( TGSI_FILE_SAMPLER, nr );
       ureg->nr_samplers++;
@@ -1116,7 +1116,7 @@ ureg_emit_src( struct ureg_program *ureg,
 
    assert(src.File != TGSI_FILE_NULL);
    assert(src.File < TGSI_FILE_COUNT);
-
+   
    out[n].value = 0;
    out[n].src.File = src.File;
    out[n].src.SwizzleX = src.SwizzleX;
@@ -1170,7 +1170,7 @@ ureg_emit_src( struct ureg_program *ureg,
 }
 
 
-void
+void 
 ureg_emit_dst( struct ureg_program *ureg,
                struct ureg_dst dst )
 {
@@ -1192,7 +1192,7 @@ ureg_emit_dst( struct ureg_program *ureg,
    out[n].dst.Indirect = dst.Indirect;
    out[n].dst.Index = dst.Index;
    n++;
-
+   
    if (dst.Indirect) {
       out[n].value = 0;
       out[n].ind.File = dst.IndirectFile;
@@ -1261,7 +1261,7 @@ ureg_emit_insn(struct ureg_program *ureg,
    struct ureg_emit_insn_result result;
 
    validate( opcode, num_dst, num_src );
-
+   
    out = get_tokens( ureg, DOMAIN_INSN, count );
    out[0].insn = tgsi_default_instruction();
    out[0].insn.Opcode = opcode;
@@ -1356,7 +1356,7 @@ ureg_emit_texture_offset(struct ureg_program *ureg,
 
    out[0].value = 0;
    out[0].insn_texture_offset = *offset;
-
+   
 }
 
 void
@@ -1929,7 +1929,7 @@ static void emit_decls( struct ureg_program *ureg )
    }
 
    for (i = 0; i < ureg->nr_samplers; i++) {
-      emit_decl_range( ureg,
+      emit_decl_range( ureg, 
                        TGSI_FILE_SAMPLER,
                        ureg->sampler[i].Index, 1 );
    }
@@ -2029,12 +2029,12 @@ static void emit_decls( struct ureg_program *ureg )
 static void copy_instructions( struct ureg_program *ureg )
 {
    unsigned nr_tokens = ureg->domain[DOMAIN_INSN].count;
-   union tgsi_any_token *out = get_tokens( ureg,
-                                           DOMAIN_DECL,
+   union tgsi_any_token *out = get_tokens( ureg, 
+                                           DOMAIN_DECL, 
                                            nr_tokens );
 
-   memcpy(out,
-          ureg->domain[DOMAIN_INSN].tokens,
+   memcpy(out, 
+          ureg->domain[DOMAIN_INSN].tokens, 
           nr_tokens * sizeof out[0] );
 }
 
@@ -2081,7 +2081,7 @@ const struct tgsi_token *ureg_finalize( struct ureg_program *ureg )
    emit_decls( ureg );
    copy_instructions( ureg );
    fixup_header_size( ureg );
-
+   
    if (ureg->domain[0].tokens == error_tokens ||
        ureg->domain[1].tokens == error_tokens) {
       debug_printf("%s: error in generated shader\n", __FUNCTION__);
@@ -2092,7 +2092,7 @@ const struct tgsi_token *ureg_finalize( struct ureg_program *ureg )
    tokens = &ureg->domain[DOMAIN_DECL].tokens[0].token;
 
    if (0) {
-      debug_printf("%s: emitted shader %d tokens:\n", __FUNCTION__,
+      debug_printf("%s: emitted shader %d tokens:\n", __FUNCTION__, 
                    ureg->domain[DOMAIN_DECL].count);
       tgsi_dump( tokens, 0 );
    }
@@ -2105,7 +2105,7 @@ const struct tgsi_token *ureg_finalize( struct ureg_program *ureg )
    }
 #endif
 
-
+   
    return tokens;
 }
 
@@ -2149,7 +2149,7 @@ const struct tgsi_token *ureg_get_tokens( struct ureg_program *ureg,
 
    tokens = &ureg->domain[DOMAIN_DECL].tokens[0].token;
 
-   if (nr_tokens)
+   if (nr_tokens) 
       *nr_tokens = ureg->domain[DOMAIN_DECL].count;
 
    ureg->domain[DOMAIN_DECL].tokens = 0;
@@ -2194,15 +2194,15 @@ ureg_create_with_screen(enum pipe_shader_type processor,
       ureg->properties[i] = ~0;
 
    ureg->free_temps = util_bitmask_create();
-   if (!ureg->free_temps)
+   if (ureg->free_temps == NULL)
       goto no_free_temps;
 
    ureg->local_temps = util_bitmask_create();
-   if (!ureg->local_temps)
+   if (ureg->local_temps == NULL)
       goto no_local_temps;
 
    ureg->decl_temps = util_bitmask_create();
-   if (!ureg->decl_temps)
+   if (ureg->decl_temps == NULL)
       goto no_decl_temps;
 
    return ureg;
@@ -2239,7 +2239,7 @@ void ureg_destroy( struct ureg_program *ureg )
    unsigned i;
 
    for (i = 0; i < ARRAY_SIZE(ureg->domain); i++) {
-      if (ureg->domain[i].tokens &&
+      if (ureg->domain[i].tokens && 
           ureg->domain[i].tokens != error_tokens)
          FREE(ureg->domain[i].tokens);
    }

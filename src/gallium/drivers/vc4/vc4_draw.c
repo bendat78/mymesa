@@ -211,7 +211,7 @@ vc4_emit_gl_shader_state(struct vc4_context *vc4,
                 }
         }
 
-        if (!vtx->num_elements) {
+        if (vtx->num_elements == 0) {
                 assert(num_elements_emit == 1);
                 struct vc4_bo *bo = vc4_bo_alloc(vc4->screen, 4096, "scratch VBO");
 
@@ -565,7 +565,7 @@ vc4_clear(struct pipe_context *pctx, unsigned buffers,
                      zsclear == PIPE_CLEAR_STENCIL) &&
                     (rsc->initialized_buffers & ~(zsclear | job->cleared)) &&
                     util_format_is_depth_and_stencil(vc4->framebuffer.zsbuf->format)) {
-                        static const union pipe_color_union dummy_color = {0};
+                        static const union pipe_color_union dummy_color = {};
 
                         perf_debug("Partial clear of Z+stencil buffer, "
                                    "drawing a quad instead of fast clearing\n");

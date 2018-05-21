@@ -121,7 +121,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeSurfaceInfo(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSurfaceInfo(pIn, pOut);
     }
@@ -155,7 +155,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeSurfaceAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSurfaceAddrFromCoord(pIn, pOut);
     }
@@ -187,7 +187,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeSurfaceCoordFromAddr(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSurfaceCoordFromAddr(pIn, pOut);
     }
@@ -225,7 +225,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeHtileInfo(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeHtileInfo(pIn, pOut);
     }
@@ -257,7 +257,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeHtileAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeHtileAddrFromCoord(pIn, pOut);
     }
@@ -290,7 +290,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeHtileCoordFromAddr(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeHtileCoordFromAddr(pIn, pOut);
     }
@@ -329,7 +329,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeCmaskInfo(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeCmaskInfo(pIn, pOut);
     }
@@ -361,7 +361,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeCmaskAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeCmaskAddrFromCoord(pIn, pOut);
     }
@@ -394,7 +394,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeCmaskCoordFromAddr(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeCmaskCoordFromAddr(pIn, pOut);
     }
@@ -432,7 +432,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeFmaskInfo(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeFmaskInfo(pIn, pOut);
     }
@@ -464,7 +464,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeFmaskAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeFmaskAddrFromCoord(pIn, pOut);
     }
@@ -496,7 +496,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeFmaskCoordFromAddr(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeFmaskCoordFromAddr(pIn, pOut);
     }
@@ -532,7 +532,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeDccInfo(
 
     V1::Lib* pLib = V1::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeDccInfo(pIn, pOut);
     }
@@ -642,7 +642,7 @@ ADDR_E_RETURNCODE ADDR_API AddrExtractBankPipeSwizzle(
 
     V1::Lib* pLib = V1::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ExtractBankPipeSwizzle(pIn, pOut);
     }
@@ -673,7 +673,7 @@ ADDR_E_RETURNCODE ADDR_API AddrCombineBankPipeSwizzle(
 
     V1::Lib* pLib = V1::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->CombineBankPipeSwizzle(pIn, pOut);
     }
@@ -704,7 +704,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeSliceSwizzle(
 
     V1::Lib* pLib = V1::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSliceTileSwizzle(pIn, pOut);
     }
@@ -735,7 +735,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputeBaseSwizzle(
 
     V1::Lib* pLib = V1::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeBaseSwizzle(pIn, pOut);
     }
@@ -768,7 +768,7 @@ ADDR_E_RETURNCODE ADDR_API ElemFlt32ToDepthPixel(
 
     Lib* pLib = Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         pLib->Flt32ToDepthPixel(pIn, pOut);
     }
@@ -801,7 +801,7 @@ ADDR_E_RETURNCODE ADDR_API ElemFlt32ToColorPixel(
 
     Lib* pLib = Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         pLib->Flt32ToColorPixel(pIn, pOut);
     }
@@ -834,7 +834,7 @@ BOOL_32 ADDR_API ElemGetExportNorm(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         enabled = pLib->GetExportNorm(pIn);
     }
@@ -868,7 +868,7 @@ ADDR_E_RETURNCODE ADDR_API AddrConvertTileInfoToHW(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ConvertTileInfoToHW(pIn, pOut);
     }
@@ -900,7 +900,7 @@ ADDR_E_RETURNCODE ADDR_API AddrConvertTileIndex(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ConvertTileIndex(pIn, pOut);
     }
@@ -932,7 +932,7 @@ ADDR_E_RETURNCODE ADDR_API AddrGetMacroModeIndex(
 
     ADDR_E_RETURNCODE returnCode;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->GetMacroModeIndex(pIn, pOut);
     }
@@ -964,7 +964,7 @@ ADDR_E_RETURNCODE ADDR_API AddrConvertTileIndex1(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ConvertTileIndex1(pIn, pOut);
     }
@@ -999,7 +999,7 @@ ADDR_E_RETURNCODE ADDR_API AddrGetTileIndex(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->GetTileIndex(pIn, pOut);
     }
@@ -1029,7 +1029,7 @@ ADDR_E_RETURNCODE ADDR_API AddrComputePrtInfo(
 
     V1::Lib* pLib = V1::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputePrtInfo(pIn, pOut);
     }
@@ -1060,7 +1060,7 @@ ADDR_E_RETURNCODE ADDR_API AddrGetMaxAlignments(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->GetMaxAlignments(pOut);
     }
@@ -1091,7 +1091,7 @@ ADDR_E_RETURNCODE ADDR_API AddrGetMaxMetaAlignments(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->GetMaxMetaAlignments(pOut);
     }
@@ -1128,7 +1128,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeSurfaceInfo(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSurfaceInfo(pIn, pOut);
     }
@@ -1161,7 +1161,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeSurfaceAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSurfaceAddrFromCoord(pIn, pOut);
     }
@@ -1194,7 +1194,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeSurfaceCoordFromAddr(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSurfaceCoordFromAddr(pIn, pOut);
     }
@@ -1232,7 +1232,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeHtileInfo(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeHtileInfo(pIn, pOut);
     }
@@ -1265,7 +1265,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeHtileAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeHtileAddrFromCoord(pIn, pOut);
     }
@@ -1299,7 +1299,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeHtileCoordFromAddr(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeHtileCoordFromAddr(pIn, pOut);
     }
@@ -1338,7 +1338,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeCmaskInfo(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeCmaskInfo(pIn, pOut);
     }
@@ -1371,7 +1371,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeCmaskAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeCmaskAddrFromCoord(pIn, pOut);
     }
@@ -1405,7 +1405,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeCmaskCoordFromAddr(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeCmaskCoordFromAddr(pIn, pOut);
     }
@@ -1443,7 +1443,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeFmaskInfo(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeFmaskInfo(pIn, pOut);
     }
@@ -1476,7 +1476,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeFmaskAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeFmaskAddrFromCoord(pIn, pOut);
     }
@@ -1509,7 +1509,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeFmaskCoordFromAddr(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeFmaskCoordFromAddr(pIn, pOut);
     }
@@ -1545,7 +1545,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeDccInfo(
 
     V2::Lib* pLib = V2::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeDccInfo(pIn, pOut);
     }
@@ -1577,7 +1577,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeDccAddrFromCoord(
 
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeDccAddrFromCoord(pIn, pOut);
     }
@@ -1606,7 +1606,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputePipeBankXor(
 
     V2::Lib* pLib = V2::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputePipeBankXor(pIn, pOut);
     }
@@ -1635,7 +1635,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeSlicePipeBankXor(
 
     V2::Lib* pLib = V2::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSlicePipeBankXor(pIn, pOut);
     }
@@ -1664,7 +1664,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2ComputeSubResourceOffsetForSwizzlePattern(
 
     V2::Lib* pLib = V2::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->ComputeSubResourceOffsetForSwizzlePattern(pIn, pOut);
     }
@@ -1693,7 +1693,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2GetPreferredSurfaceSetting(
 
     V2::Lib* pLib = V2::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         returnCode = pLib->Addr2GetPreferredSurfaceSetting(pIn, pOut);
     }
@@ -1723,7 +1723,7 @@ ADDR_E_RETURNCODE ADDR_API Addr2IsValidDisplaySwizzleMode(
 
     V2::Lib* pLib = V2::Lib::GetLib(hLib);
 
-    if (pLib)
+    if (pLib != NULL)
     {
         ADDR2_COMPUTE_SURFACE_INFO_INPUT in;
         in.swizzleMode = swizzleMode;

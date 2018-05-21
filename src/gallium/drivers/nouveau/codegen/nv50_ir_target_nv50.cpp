@@ -469,7 +469,7 @@ TargetNV50::isModSupported(const Instruction *insn, int s, Modifier mod) const
             return false;
          break;
       case OP_SUB:
-         if (!s)
+         if (s == 0)
             return insn->src(1).mod.neg() ? false : true;
          break;
       case OP_SET:

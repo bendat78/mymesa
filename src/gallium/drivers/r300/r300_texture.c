@@ -1072,7 +1072,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
 {
     struct radeon_winsys *rws = rscreen->rws;
     struct r300_resource *tex = NULL;
-    struct radeon_bo_metadata tiling = {0};
+    struct radeon_bo_metadata tiling = {};
 
     tex = CALLOC_STRUCT(r300_resource);
     if (!tex) {
@@ -1172,7 +1172,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
     struct radeon_winsys *rws = rscreen->rws;
     struct pb_buffer *buffer;
     unsigned stride;
-    struct radeon_bo_metadata tiling = {0};
+    struct radeon_bo_metadata tiling = {};
 
     /* Support only 2D textures without mipmaps */
     if ((base->target != PIPE_TEXTURE_2D &&

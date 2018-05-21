@@ -222,7 +222,7 @@ void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     unsigned i, j;
     CS_LOCALS(r300);
 
-    if (!count)
+    if (count == 0)
         return;
 
     BEGIN_CS(size);
@@ -253,7 +253,7 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     unsigned j;
     CS_LOCALS(r300);
 
-    if (!count)
+    if (count == 0)
         return;
 
     BEGIN_CS(size);
@@ -286,7 +286,7 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     unsigned count = fs->shader->externals_count;
     CS_LOCALS(r300);
 
-    if (!count)
+    if (count == 0)
         return;
 
     BEGIN_CS(size);
@@ -313,7 +313,7 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     unsigned end = constants->Count;
     CS_LOCALS(r300);
 
-    if (!count)
+    if (count == 0)
         return;
 
     BEGIN_CS(size);
@@ -520,7 +520,7 @@ static unsigned r300_get_mspos(int index, unsigned *p)
 {
     unsigned reg, i, distx, disty, dist;
 
-    if (!index) {
+    if (index == 0) {
         /* MSPOS0 contains positions for samples 0,1,2 as (X,Y) pairs of nibbles,
          * followed by a (Y,X) pair containing the minimum distance from the pixel
          * edge:
@@ -752,7 +752,7 @@ void r300_emit_query_end(struct r300_context* r300)
     if (!query)
 	return;
 
-    if (!query->begin_emitted)
+    if (query->begin_emitted == FALSE)
         return;
 
     if (caps->family == CHIP_RV530) {
@@ -760,7 +760,7 @@ void r300_emit_query_end(struct r300_context* r300)
             rv530_emit_query_end_double_z(r300, query);
         else
             rv530_emit_query_end_single_z(r300, query);
-    } else
+    } else 
         r300_emit_query_end_frag_pipes(r300, query);
 
     query->begin_emitted = FALSE;

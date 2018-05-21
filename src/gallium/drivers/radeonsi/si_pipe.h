@@ -128,7 +128,6 @@ enum {
 	DBG_NIR,
 	DBG_MONOLITHIC_SHADERS,
 	DBG_NO_OPT_VARIANT,
-	DBG_MERGE,
 
 	/* Information logging options: */
 	DBG_INFO,

@@ -871,7 +871,7 @@ svga_buffer_update_hw(struct svga_context *svga, struct svga_buffer *sbuf,
 
       /* This user/malloc buffer is now indistinguishable from a gpu buffer */
       assert(sbuf->map.count == 0);
-      if (!sbuf->map.count) {
+      if (sbuf->map.count == 0) {
          if (sbuf->user)
             sbuf->user = FALSE;
          else

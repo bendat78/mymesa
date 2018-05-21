@@ -649,7 +649,7 @@ isl_surf_choose_dim_layout(const struct isl_device *dev,
           *
           * The cube face textures are stored in the same way as 3D surfaces
           * are stored (see section 6.17.5 for details).  For cube surfaces,
-          * however, the depth is equal to the number of faces (always 6) and
+          * however, the depth is equal to the number of faces (always 6) and 
           * is not reduced for each MIP.
           */
          if (ISL_DEV_GEN(dev) == 4 && (usage & ISL_SURF_USAGE_CUBE_BIT))
@@ -960,7 +960,7 @@ isl_calc_phys_slice0_extent_sa_gen4_2d(
       uint32_t w = isl_align_npot(W, image_align_sa->w);
       uint32_t h = isl_align_npot(H, image_align_sa->h);
 
-      if (!l) {
+      if (l == 0) {
          slice_top_w = w;
          slice_left_h = h;
          slice_right_h = h;
@@ -1117,7 +1117,7 @@ isl_calc_phys_total_extent_el_gen6_stencil_hiz(
       const uint32_t w = isl_align(W, tile_extent_sa.w);
       const uint32_t h = isl_align(H, tile_extent_sa.h);
 
-      if (!l) {
+      if (l == 0) {
          total_top_w = w;
          total_h = h;
       } else if (l == 1) {
@@ -1352,7 +1352,7 @@ isl_calc_row_pitch(const struct isl_device *dev,
 
    uint32_t row_pitch = min_row_pitch;
 
-   if (surf_info->row_pitch) {
+   if (surf_info->row_pitch != 0) {
       row_pitch = surf_info->row_pitch;
 
       if (row_pitch < min_row_pitch)
@@ -1364,7 +1364,7 @@ isl_calc_row_pitch(const struct isl_device *dev,
 
    const uint32_t row_pitch_tiles = row_pitch / tile_info->phys_extent_B.width;
 
-   if (!row_pitch)
+   if (row_pitch == 0)
       return false;
 
    if (dim_layout == ISL_DIM_LAYOUT_GEN9_1D) {
@@ -2033,7 +2033,7 @@ get_image_offset_sa_gen6_stencil_hiz(const struct isl_surf *surf,
       const uint32_t h = isl_align(H * surf->phys_level0_sa.a,
                                    tile_extent_sa.h);
 
-      if (!l) {
+      if (l == 0) {
          y += h;
       } else {
          x += w;

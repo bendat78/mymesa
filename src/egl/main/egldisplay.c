@@ -238,7 +238,7 @@ _eglFindDisplay(_EGLPlatformType plat, void *plat_dpy)
          dpy->Platform = plat;
          dpy->PlatformDisplay = plat_dpy;
 
-         /* add to the display list */
+         /* add to the display list */ 
          dpy->Next = _eglGlobal.DisplayList;
          _eglGlobal.DisplayList = dpy;
       }
@@ -344,7 +344,7 @@ EGLBoolean
 _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
 {
    _EGLResource *list = dpy->ResourceLists[type];
-
+   
    if (!res)
       return EGL_FALSE;
 
@@ -452,7 +452,7 @@ _eglParseX11DisplayAttribList(_EGLDisplay *display,
 {
    int i;
 
-   if (!attrib_list) {
+   if (attrib_list == NULL) {
       return EGL_TRUE;
    }
 
@@ -528,7 +528,7 @@ _eglGetSurfacelessDisplay(void *native_display,
                           const EGLAttrib *attrib_list)
 {
    /* This platform has no native display. */
-   if (native_display) {
+   if (native_display != NULL) {
       _eglError(EGL_BAD_PARAMETER, "eglGetPlatformDisplay");
       return NULL;
    }

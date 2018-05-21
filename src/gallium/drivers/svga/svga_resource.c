@@ -109,7 +109,7 @@ svga_can_create_resource(struct pipe_screen *screen,
       arraySize = res->array_size;
    }
 
-   return sws->surface_can_create(sws, format, base_level_size,
+   return sws->surface_can_create(sws, format, base_level_size, 
                                   arraySize, numMipLevels);
 }
 

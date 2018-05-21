@@ -817,7 +817,7 @@ blorp_get_client_bo(struct brw_context *brw,
        */
       struct brw_bo *bo =
          brw_bo_alloc(brw->bufmgr, "tmp_tex_subimage_src", size);
-      if (!bo) {
+      if (bo == NULL) {
          perf_debug("intel_texsubimage: temp bo creation failed: size = %u\n",
                     size);
          return NULL;
@@ -913,7 +913,7 @@ brw_blorp_upload_miptree(struct brw_context *brw,
                           target, format, type, pixels, packing,
                           &src_offset, &src_row_stride,
                           &src_image_stride, true);
-   if (!src_bo)
+   if (src_bo == NULL)
       return false;
 
    /* Now that source is offset to correct starting point, adjust the
@@ -1028,7 +1028,7 @@ brw_blorp_download_miptree(struct brw_context *brw,
                           target, format, type, pixels, packing,
                           &dst_offset, &dst_row_stride,
                           &dst_image_stride, false);
-   if (!dst_bo)
+   if (dst_bo == NULL)
       return false;
 
    /* Now that source is offset to correct starting point, adjust the
@@ -1162,7 +1162,7 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
 
    x0 = fb->_Xmin;
    x1 = fb->_Xmax;
-   if (rb->Name) {
+   if (rb->Name != 0) {
       y0 = fb->_Ymin;
       y1 = fb->_Ymax;
    } else {
@@ -1323,7 +1323,7 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
        * the framebuffer can be complete with some attachments missing.  In
        * this case the _ColorDrawBuffers pointer will be NULL.
        */
-      if (!rb)
+      if (rb == NULL)
          continue;
 
       do_single_blorp_clear(brw, fb, rb, buf, partial_clear, encode_srgb);
@@ -1369,7 +1369,7 @@ brw_blorp_clear_depth_stencil(struct brw_context *brw,
 
    x0 = fb->_Xmin;
    x1 = fb->_Xmax;
-   if (rb_name) {
+   if (rb_name != 0) {
       y0 = fb->_Ymin;
       y1 = fb->_Ymax;
    } else {
@@ -1381,7 +1381,7 @@ brw_blorp_clear_depth_stencil(struct brw_context *brw,
    if (x0 == x1 || y0 == y1)
       return;
 
-   uint32_t level = 0, start_layer = 0, num_layers = 0;
+   uint32_t level, start_layer, num_layers;
    struct isl_surf isl_tmp[4];
    struct blorp_surf depth_surf, stencil_surf;
 

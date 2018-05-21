@@ -1456,9 +1456,9 @@ static struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 	struct pb_buffer *buf = NULL;
 	unsigned stride = 0, offset = 0;
 	enum radeon_surf_mode array_mode;
-	struct radeon_surf surface = {0};
+	struct radeon_surf surface = {};
 	int r;
-	struct radeon_bo_metadata metadata = {0};
+	struct radeon_bo_metadata metadata = {};
 	struct r600_texture *rtex;
 	bool is_scanout;
 
@@ -1558,7 +1558,7 @@ bool si_init_flushed_depth_texture(struct pipe_context *ctx,
 		resource.flags |= SI_RESOURCE_FLAG_TRANSFER;
 
 	*flushed_depth_texture = (struct r600_texture *)ctx->screen->resource_create(ctx->screen, &resource);
-	if (!*flushed_depth_texture) {
+	if (*flushed_depth_texture == NULL) {
 		PRINT_ERR("failed to create temporary texture to hold flushed depth\n");
 		return false;
 	}
@@ -2372,8 +2372,8 @@ si_texture_from_memobj(struct pipe_screen *screen,
 	struct si_screen *sscreen = (struct si_screen*)screen;
 	struct r600_memory_object *memobj = (struct r600_memory_object *)_memobj;
 	struct r600_texture *rtex;
-	struct radeon_surf surface = {0};
-	struct radeon_bo_metadata metadata = {0};
+	struct radeon_surf surface = {};
+	struct radeon_bo_metadata metadata = {};
 	enum radeon_surf_mode array_mode;
 	bool is_scanout;
 	struct pb_buffer *buf = NULL;

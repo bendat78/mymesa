@@ -1609,7 +1609,7 @@ can_shrink_surface(const struct brw_blorp_surface_info *surf)
     * Currently the cases where we must split the blit are limited to cases
     * where we don't have a aux buffer.
     */
-   if (surf->aux_addr.buffer)
+   if (surf->aux_addr.buffer != NULL)
       return false;
 
    /* We can't support splitting the blit for gen <= 7, because the qpitch
@@ -2028,7 +2028,7 @@ try_blorp_blit(struct blorp_batch *batch,
        params->dst.surf.logical_level0_px.height > max_surface_size)
       result |= BLIT_HEIGHT_SHRINK;
 
-   if (!result) {
+   if (result == 0) {
       batch->blorp->exec(batch, params);
    }
 
@@ -2170,7 +2170,7 @@ do_blorp_blit(struct blorp_batch *batch,
          adjust_split_source_coords(&orig->y, &split_coords.y, y_scale);
       }
 
-      if (result) {
+      if (result != 0) {
          assert(can_shrink_surfaces(orig_params));
          shrink = true;
          continue;
@@ -2747,7 +2747,7 @@ blorp_buffer_copy(struct blorp_batch *batch,
    /* Now make a max-width copy */
    uint64_t height = copy_size / (max_surface_dim * bs);
    assert(height < max_surface_dim);
-   if (height) {
+   if (height != 0) {
       uint64_t rect_copy_size = height * max_surface_dim * bs;
       do_buffer_copy(batch, &src, &dst, max_surface_dim, height, bs);
       copy_size -= rect_copy_size;
@@ -2756,7 +2756,7 @@ blorp_buffer_copy(struct blorp_batch *batch,
    }
 
    /* Finally, make a small copy to finish it off */
-   if (copy_size) {
+   if (copy_size != 0) {
       do_buffer_copy(batch, &src, &dst, copy_size / bs, 1, bs);
    }
 }

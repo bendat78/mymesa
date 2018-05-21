@@ -156,7 +156,7 @@ static bool drm_device_matches_tag(drmDevicePtr device, const char *prime_tag)
    char *tag = drm_construct_id_path_tag(device);
    int ret;
 
-   if (!tag)
+   if (tag == NULL)
       return false;
 
    ret = strcmp(tag, prime_tag);
@@ -195,13 +195,13 @@ int loader_get_user_preferred_fd(int default_fd, bool *different_device)
       prime = loader_get_dri_config_device_id();
 #endif
 
-   if (!prime) {
+   if (prime == NULL) {
       *different_device = false;
       return default_fd;
    }
 
    default_tag = drm_get_id_path_tag_for_fd(default_fd);
-   if (!default_tag)
+   if (default_tag == NULL)
       goto err;
 
    num_devices = drmGetDevices2(0, devices, MAX_DRM_DEVICES);

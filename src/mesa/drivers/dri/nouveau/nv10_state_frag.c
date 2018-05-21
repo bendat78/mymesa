@@ -342,7 +342,7 @@ nv10_get_general_combiner(struct gl_context *ctx, int i,
 void
 nv10_get_final_combiner(struct gl_context *ctx, uint64_t *in, int *n)
 {
-	struct combiner_state rc = {0};
+	struct combiner_state rc = {};
 
 	/*
 	 * The final fragment value equation is something like:

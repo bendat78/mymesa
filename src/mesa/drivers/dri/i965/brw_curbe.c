@@ -168,7 +168,7 @@ void brw_upload_cs_urb_state(struct brw_context *brw)
    OUT_BATCH(CMD_CS_URB_STATE << 16 | (2-2));
 
    /* BRW_NEW_URB_FENCE */
-   if (!brw->urb.csize) {
+   if (brw->urb.csize == 0) {
       OUT_BATCH(0);
    } else {
       /* BRW_NEW_URB_FENCE */
@@ -210,7 +210,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
    /* BRW_NEW_VERTEX_PROGRAM */
    struct gl_program *vp = brw->programs[MESA_SHADER_VERTEX];
 
-   if (!sz) {
+   if (sz == 0) {
       goto emit;
    }
 
@@ -303,7 +303,7 @@ emit:
     *      in the pipeline."
     */
    BEGIN_BATCH(2);
-   if (!brw->curbe.total_size) {
+   if (brw->curbe.total_size == 0) {
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
       OUT_BATCH(0);
    } else {

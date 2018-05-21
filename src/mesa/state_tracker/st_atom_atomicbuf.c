@@ -76,7 +76,6 @@ st_bind_atomics(struct st_context *st, struct gl_program *prog,
    for (i = 0; i < prog->sh.data->NumAtomicBuffers; i++) {
       struct gl_active_atomic_buffer *atomic =
          &prog->sh.data->AtomicBuffers[i];
-
       struct pipe_shader_buffer sb;
 
       st_binding_to_sb(&st->ctx->AtomicBufferBindings[atomic->Binding], &sb);

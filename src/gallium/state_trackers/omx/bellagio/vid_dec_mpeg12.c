@@ -65,7 +65,7 @@ static struct pipe_video_buffer *vid_dec_mpeg12_Flush(vid_dec_PrivateType *priv,
 
 void vid_dec_mpeg12_Init(vid_dec_PrivateType *priv)
 {
-   struct pipe_video_codec templat = {0};
+   struct pipe_video_codec templat = {};
    omx_base_video_PortType *port;
 
    port = (omx_base_video_PortType *)priv->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];

@@ -221,7 +221,7 @@ nir_visitor::evaluate_deref(nir_instr *mem_ctx, ir_instruction *ir)
 static nir_constant *
 constant_copy(ir_constant *ir, void *mem_ctx)
 {
-   if (!ir)
+   if (ir == NULL)
       return NULL;
 
    nir_constant *ret = rzalloc(mem_ctx, nir_constant);
@@ -616,7 +616,7 @@ nir_visitor::visit(ir_loop_jump *ir)
 void
 nir_visitor::visit(ir_return *ir)
 {
-   if (ir->value) {
+   if (ir->value != NULL) {
       nir_intrinsic_instr *copy =
          nir_intrinsic_instr_create(this->shader, nir_intrinsic_copy_var);
 
@@ -1991,7 +1991,7 @@ nir_visitor::visit(ir_texture *ir)
 
    case ir_txf:
       op = nir_texop_txf;
-      if (ir->lod_info.lod)
+      if (ir->lod_info.lod != NULL)
          num_srcs = 2; /* coordinate, lod */
       else
          num_srcs = 1; /* coordinate */
@@ -2004,7 +2004,7 @@ nir_visitor::visit(ir_texture *ir)
 
    case ir_txs:
       op = nir_texop_txs;
-      if (ir->lod_info.lod)
+      if (ir->lod_info.lod != NULL)
          num_srcs = 1; /* lod */
       else
          num_srcs = 0;
@@ -2039,11 +2039,11 @@ nir_visitor::visit(ir_texture *ir)
       unreachable("not reached");
    }
 
-   if (ir->projector)
+   if (ir->projector != NULL)
       num_srcs++;
-   if (ir->shadow_comparator)
+   if (ir->shadow_comparator != NULL)
       num_srcs++;
-   if (ir->offset)
+   if (ir->offset != NULL)
       num_srcs++;
 
    nir_tex_instr *instr = nir_tex_instr_create(this->shader, num_srcs);
@@ -2074,7 +2074,7 @@ nir_visitor::visit(ir_texture *ir)
 
    unsigned src_number = 0;
 
-   if (ir->coordinate) {
+   if (ir->coordinate != NULL) {
       instr->coord_components = ir->coordinate->type->vector_elements;
       instr->src[src_number].src =
          nir_src_for_ssa(evaluate_rvalue(ir->coordinate));
@@ -2082,21 +2082,21 @@ nir_visitor::visit(ir_texture *ir)
       src_number++;
    }
 
-   if (ir->projector) {
+   if (ir->projector != NULL) {
       instr->src[src_number].src =
          nir_src_for_ssa(evaluate_rvalue(ir->projector));
       instr->src[src_number].src_type = nir_tex_src_projector;
       src_number++;
    }
 
-   if (ir->shadow_comparator) {
+   if (ir->shadow_comparator != NULL) {
       instr->src[src_number].src =
          nir_src_for_ssa(evaluate_rvalue(ir->shadow_comparator));
       instr->src[src_number].src_type = nir_tex_src_comparator;
       src_number++;
    }
 
-   if (ir->offset) {
+   if (ir->offset != NULL) {
       /* we don't support multiple offsets yet */
       assert(ir->offset->type->is_vector() || ir->offset->type->is_scalar());
 
@@ -2117,7 +2117,7 @@ nir_visitor::visit(ir_texture *ir)
    case ir_txl:
    case ir_txf:
    case ir_txs:
-      if (ir->lod_info.lod) {
+      if (ir->lod_info.lod != NULL) {
          instr->src[src_number].src =
             nir_src_for_ssa(evaluate_rvalue(ir->lod_info.lod));
          instr->src[src_number].src_type = nir_tex_src_lod;
@@ -2209,7 +2209,7 @@ nir_visitor::visit(ir_dereference_array *ir)
    deref->deref.type = ir->type;
 
    ir_constant *const_index = ir->array_index->as_constant();
-   if (const_index) {
+   if (const_index != NULL) {
       deref->deref_array_type = nir_deref_array_type_direct;
       deref->base_offset = const_index->value.u[0];
    } else {

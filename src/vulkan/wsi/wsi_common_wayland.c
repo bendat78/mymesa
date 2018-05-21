@@ -157,7 +157,7 @@ static void
 drm_handle_format(void *data, struct wl_drm *drm, uint32_t wl_format)
 {
    struct wsi_wl_display *display = data;
-   if (!display->formats.element_size)
+   if (display->formats.element_size == 0)
       return;
 
    switch (wl_format) {
@@ -249,7 +249,7 @@ dmabuf_handle_modifier(void *data, struct zwp_linux_dmabuf_v1 *dmabuf,
    uint64_t *mod = NULL;
 
    /* If we're not fetching formats, don't fetch modifiers either. */
-   if (!display->formats.element_size)
+   if (display->formats.element_size == 0)
       return;
 
    if (modifier_hi == (DRM_FORMAT_MOD_INVALID >> 32) &&
@@ -588,7 +588,7 @@ wsi_wl_surface_get_present_modes(VkIcdSurfaceBase *surface,
                                  uint32_t* pPresentModeCount,
                                  VkPresentModeKHR* pPresentModes)
 {
-   if (!pPresentModes) {
+   if (pPresentModes == NULL) {
       *pPresentModeCount = ARRAY_SIZE(present_modes);
       return VK_SUCCESS;
    }
@@ -610,7 +610,7 @@ VkResult wsi_create_wl_surface(const VkAllocationCallbacks *pAllocator,
 
    surface = vk_alloc(pAllocator, sizeof *surface, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!surface)
+   if (surface == NULL)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    surface->base.platform = VK_ICD_WSI_PLATFORM_WAYLAND;
@@ -653,7 +653,6 @@ wsi_wl_swapchain_get_wsi_image(struct wsi_swapchain *wsi_chain,
                                uint32_t image_index)
 {
    struct wsi_wl_swapchain *chain = (struct wsi_wl_swapchain *)wsi_chain;
-
    return &chain->images[image_index].base;
 }
 
@@ -909,7 +908,7 @@ wsi_wl_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    size_t size = sizeof(*chain) + num_images * sizeof(chain->images[0]);
    chain = vk_alloc(pAllocator, size, 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!chain)
+   if (chain == NULL)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
    result = wsi_swapchain_init(wsi_device, &chain->base, device,

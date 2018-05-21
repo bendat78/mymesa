@@ -48,7 +48,7 @@ get_io_offset(nir_builder *b, nir_deref_var *deref, nir_variable *var,
    }
 
    unsigned offset = 0;
-   while (tail->child) {
+   while (tail->child != NULL) {
       tail = tail->child;
 
       if (tail->deref_type == nir_deref_type_array) {

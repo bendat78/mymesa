@@ -226,7 +226,7 @@ gen6_queryobj_get_results(struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
    const struct gen_device_info *devinfo = &brw->screen->devinfo;
 
-   if (!query->bo)
+   if (query->bo == NULL)
       return;
 
    uint64_t *results = brw_bo_map(brw, query->bo, MAP_READ);
@@ -366,7 +366,7 @@ gen6_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 
    case GL_PRIMITIVES_GENERATED:
       write_primitives_generated(brw, query->bo, query->Base.Stream, 0);
-      if (!query->Base.Stream)
+      if (query->Base.Stream == 0)
          ctx->NewDriverState |= BRW_NEW_RASTERIZER_DISCARD;
       break;
 
@@ -428,7 +428,7 @@ gen6_end_query(struct gl_context *ctx, struct gl_query_object *q)
 
    case GL_PRIMITIVES_GENERATED:
       write_primitives_generated(brw, query->bo, query->Base.Stream, 1);
-      if (!query->Base.Stream)
+      if (query->Base.Stream == 0)
          ctx->NewDriverState |= BRW_NEW_RASTERIZER_DISCARD;
       break;
 
@@ -523,7 +523,7 @@ static void gen6_check_query(struct gl_context *ctx, struct gl_query_object *q)
    /* If query->bo is NULL, we've already gathered the results - this is a
     * redundant CheckQuery call.  Ignore it.
     */
-   if (!query->bo)
+   if (query->bo == NULL)
       return;
 
    /* From the GL_ARB_occlusion_query spec:

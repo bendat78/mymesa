@@ -130,7 +130,7 @@ vmw_fences_signal(struct pb_fence_ops *fence_ops,
    struct vmw_fence_ops *ops = NULL;
    struct vmw_fence *fence, *n;
 
-   if (!fence_ops)
+   if (fence_ops == NULL)
       return;
 
    ops = vmw_fence_ops(fence_ops);
@@ -321,7 +321,7 @@ vmw_fence_signalled(struct vmw_winsys_screen *vws,
 #if 1
    ret = vmw_ioctl_fence_signalled(vws, vfence->handle, vflags);
 
-   if (!ret)
+   if (ret == 0)
       p_atomic_set(&vfence->signalled, 1);
    return ret;
 #else
@@ -374,7 +374,7 @@ vmw_fence_finish(struct vmw_winsys_screen *vws,
 
    ret = vmw_ioctl_fence_finish(vws, vfence->handle, vflags);
 
-   if (!ret) {
+   if (ret == 0) {
       int32_t prev = old;
 
       do {
@@ -477,7 +477,7 @@ vmw_fence_ops_destroy(struct pb_fence_ops *ops)
  * Returns NULL on failure.
  */
 struct pb_fence_ops *
-vmw_fence_ops_create(struct vmw_winsys_screen *vws)
+vmw_fence_ops_create(struct vmw_winsys_screen *vws) 
 {
    struct vmw_fence_ops *ops;
 

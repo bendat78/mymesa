@@ -272,7 +272,7 @@ allocate_query_block(struct svga_context *svga)
 
          alloc_entry = svga->gb_query_map[i];
          while (alloc_entry && index == -1) {
-            if (!alloc_entry->nquery) {
+            if (alloc_entry->nquery == 0) {
                /* This memory block is empty, it can be recycled. */
                if (prev_alloc_entry) {
                   prev_alloc_entry->next = alloc_entry->next;
@@ -488,7 +488,7 @@ define_query_vgpu10(struct svga_context *svga,
 
    SVGA_DBG(DEBUG_QUERY, "%s\n", __FUNCTION__);
 
-   if (!svga->gb_query) {
+   if (svga->gb_query == NULL) {
       /* Create a gb query object */
       svga->gb_query = sws->query_create(sws, SVGA_QUERY_MEM_SIZE);
       if (!svga->gb_query)
@@ -1226,7 +1226,7 @@ svga_render_condition(struct pipe_context *pipe, struct pipe_query *q,
    SVGA_DBG(DEBUG_QUERY, "%s\n", __FUNCTION__);
 
    assert(svga_have_vgpu10(svga));
-   if (!sq) {
+   if (sq == NULL) {
       queryId = SVGA3D_INVALID_ID;
    }
    else {

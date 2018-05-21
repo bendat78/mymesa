@@ -327,7 +327,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		  brw_math_invert(p, c->reg.t, c->reg.t);
 		  brw_MUL(p, c->reg.t, c->reg.t, c->reg.dpPrev);
 
-		  /* If (!vtxOut) vtxOut = vtxPrev
+		  /* If (vtxOut == 0) vtxOut = vtxPrev
 		   */
 		  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ, get_addr_reg(vtxOut), brw_imm_uw(0) );
                   brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtxPrev));
@@ -369,7 +369,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		  brw_math_invert(p, c->reg.t, c->reg.t);
 		  brw_MUL(p, c->reg.t, c->reg.t, c->reg.dp);
 
-		  /* If (!vtxOut) vtxOut = vtx
+		  /* If (vtxOut == 0) vtxOut = vtx
 		   */
 		  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ, get_addr_reg(vtxOut), brw_imm_uw(0) );
                   brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtx));
@@ -397,7 +397,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	    brw_MOV(p, get_addr_reg(vtxPrev), get_addr_reg(vtx));
 	    brw_ADD(p, get_addr_reg(inlist_ptr), get_addr_reg(inlist_ptr), brw_imm_uw(sizeof(short)));
 
-	    /* while (--loopcount)
+	    /* while (--loopcount != 0)
 	     */
 	    brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
             brw_inst_set_cond_modifier(p->devinfo, brw_last_inst, BRW_CONDITIONAL_NZ);

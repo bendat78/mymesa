@@ -40,6 +40,8 @@
 
 bool error = false;
 
+#ifdef ENABLE_SHADER_CACHE
+
 static void
 expect_true(bool result, const char *test)
 {
@@ -64,7 +66,7 @@ expect_equal(uint64_t actual, uint64_t expected, const char *test)
 static void
 expect_null(void *ptr, const char *test)
 {
-   if (ptr) {
+   if (ptr != NULL) {
       fprintf(stderr, "Error: Test '%s' failed: Result=%p, but expected NULL.\n",
               test, ptr);
       error = true;
@@ -74,7 +76,7 @@ expect_null(void *ptr, const char *test)
 static void
 expect_non_null(void *ptr, const char *test)
 {
-   if (!ptr) {
+   if (ptr == NULL) {
       fprintf(stderr, "Error: Test '%s' failed: Result=NULL, but expected something else.\n",
               test);
       error = true;
@@ -491,10 +493,12 @@ test_put_key_and_get_key(void)
 
    disk_cache_destroy(cache);
 }
+#endif /* ENABLE_SHADER_CACHE */
 
 int
 main(void)
 {
+#ifdef ENABLE_SHADER_CACHE
    int err;
 
    test_disk_cache_create();
@@ -505,6 +509,7 @@ main(void)
 
    err = rmrf_local(CACHE_TEST_TMP);
    expect_equal(err, 0, "Removing " CACHE_TEST_TMP " again");
+#endif /* ENABLE_SHADER_CACHE */
 
    return error ? 1 : 0;
 }

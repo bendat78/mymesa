@@ -67,7 +67,7 @@ add_var_use_intrinsic(nir_intrinsic_instr *instr, struct set *live,
 static void
 add_var_use_call(nir_call_instr *instr, struct set *live)
 {
-   if (instr->return_deref) {
+   if (instr->return_deref != NULL) {
       nir_variable *var = instr->return_deref->var;
       _mesa_set_add(live, var);
    }
@@ -81,12 +81,12 @@ add_var_use_call(nir_call_instr *instr, struct set *live)
 static void
 add_var_use_tex(nir_tex_instr *instr, struct set *live)
 {
-   if (instr->texture) {
+   if (instr->texture != NULL) {
       nir_variable *var = instr->texture->var;
       _mesa_set_add(live, var);
    }
 
-   if (instr->sampler) {
+   if (instr->sampler != NULL) {
       nir_variable *var = instr->sampler->var;
       _mesa_set_add(live, var);
    }
@@ -140,7 +140,7 @@ remove_dead_var_writes(nir_shader *shader, struct set *live)
                continue;
 
             /* Stores to dead variables need to be removed */
-            if (!intrin->variables[0]->var->data.mode)
+            if (intrin->variables[0]->var->data.mode == 0)
                nir_instr_remove(instr);
          }
       }
@@ -154,7 +154,7 @@ remove_dead_vars(struct exec_list *var_list, struct set *live)
 
    foreach_list_typed_safe(nir_variable, var, node, var_list) {
       struct set_entry *entry = _mesa_set_search(live, var);
-      if (!entry) {
+      if (entry == NULL) {
          /* Mark this variable as used by setting the mode to 0 */
          var->data.mode = 0;
          exec_node_remove(&var->node);

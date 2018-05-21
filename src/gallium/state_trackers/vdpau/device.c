@@ -121,7 +121,7 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
    }
 
    *device = vlAddDataHTAB(dev);
-   if (!*device) {
+   if (*device == 0) {
       ret = VDP_STATUS_ERROR;
       goto no_handle;
    }
@@ -178,7 +178,7 @@ vlVdpPresentationQueueTargetCreateX11(VdpDevice device, Drawable drawable,
    pqt->drawable = drawable;
 
    *target = vlAddDataHTAB(pqt);
-   if (!*target) {
+   if (*target == 0) {
       ret = VDP_STATUS_ERROR;
       goto no_handle;
    }

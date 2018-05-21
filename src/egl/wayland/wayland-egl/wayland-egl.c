@@ -83,6 +83,7 @@ wl_egl_window_create(struct wl_surface *surface,
 	*version = WL_EGL_WINDOW_VERSION;
 
 	egl_window->surface = surface;
+
 	egl_window->width  = width;
 	egl_window->height = height;
 

@@ -1,7 +1,7 @@
 /**
  * \file extensions.h
  * Extension handling.
- *
+ * 
  * \if subset
  * (No-op)
  *
@@ -78,12 +78,9 @@ struct mesa_extension {
     */
    uint8_t version[API_OPENGL_LAST + 1];
 
-   /** Year the extension was proposed or approved.  Used to sort the
+   /** Year the extension was proposed or approved.  Used to sort the 
     * extension string chronologically. */
    uint16_t year;
-
-   /** Dependencies of this extension, may modify required OpenGL version */
-   const char *dependencies;
 };
 
 extern const struct mesa_extension _mesa_extension_table[];

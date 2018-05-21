@@ -75,7 +75,7 @@ we should reserve another one too.=> 10 image binding for writing max.
 
 from Nvidia OpenCL:
   CL_DEVICE_MAX_READ_IMAGE_ARGS:        128
-  CL_DEVICE_MAX_WRITE_IMAGE_ARGS:       8
+  CL_DEVICE_MAX_WRITE_IMAGE_ARGS:       8 
 
 so 10 for writing is enough. 176 is the max for reading according to the docs
 
@@ -520,7 +520,7 @@ static void evergreen_compute_upload_input(struct pipe_context *ctx,
 
 	if (!shader)
 		return;
-	if (!shader->input_size) {
+	if (shader->input_size == 0) {
 		return;
 	}
 	input_size = shader->input_size + 36;
@@ -1211,7 +1211,7 @@ static void *r600_compute_global_transfer_map(struct pipe_context *ctx,
 		compute_memory_demote_item(pool, item, ctx);
 	}
 	else {
-		if (!item->real_buffer) {
+		if (item->real_buffer == NULL) {
 			item->real_buffer =
 					r600_compute_buffer_alloc_vram(pool->screen, item->size_in_dw * 4);
 		}
@@ -1322,7 +1322,7 @@ struct pipe_resource *r600_compute_global_buffer_create(struct pipe_screen *scre
 
 	result->chunk = compute_memory_alloc(rscreen->global_pool, size_in_dw);
 
-	if (!result->chunk)
+	if (result->chunk == NULL)
 	{
 		free(result);
 		return NULL;

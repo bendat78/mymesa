@@ -281,7 +281,7 @@ static void rvce_begin_frame(struct pipe_video_codec *encoder,
 	else if (pic->picture_type == PIPE_H264_ENC_PICTURE_TYPE_P ||
 	         pic->picture_type == PIPE_H264_ENC_PICTURE_TYPE_B)
 		sort_cpb(enc);
-
+	
 	if (!enc->stream_handle) {
 		struct rvid_buffer fb;
 		enc->stream_handle = si_vid_alloc_stream_handle();
@@ -391,7 +391,7 @@ struct pipe_video_codec *si_vce_create_encoder(struct pipe_context *context,
 	struct si_screen *sscreen = (struct si_screen *)context->screen;
 	struct si_context *sctx = (struct si_context*)context;
 	struct rvce_encoder *enc;
-	struct pipe_video_buffer *tmp_buf, templat = {0};
+	struct pipe_video_buffer *tmp_buf, templat = {};
 	struct radeon_surf *tmp_surf;
 	unsigned cpb_size;
 

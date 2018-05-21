@@ -740,7 +740,7 @@ v3dX(emit_rcl)(struct v3d_job *job)
                 cl_emit(&job->rcl, STORE_TILE_BUFFER_GENERAL, store) {
                         store.buffer_to_store = NONE;
                 }
-                if (!i) {
+                if (i == 0) {
                         cl_emit(&job->rcl, CLEAR_TILE_BUFFERS, clear) {
                                 clear.clear_z_stencil_buffer = true;
                                 clear.clear_all_render_targets = true;

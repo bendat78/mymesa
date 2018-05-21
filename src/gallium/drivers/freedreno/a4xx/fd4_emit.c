@@ -151,7 +151,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_RING(ring, CP_LOAD_STATE4_1_STATE_TYPE(ST4_SHADER) |
 				CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
 		for (i = 0; i < tex->num_samplers; i++) {
-			static const struct fd4_sampler_stateobj dummy_sampler = {0};
+			static const struct fd4_sampler_stateobj dummy_sampler = {};
 			const struct fd4_sampler_stateobj *sampler = tex->samplers[i] ?
 					fd4_sampler_stateobj(tex->samplers[i]) :
 					&dummy_sampler;
@@ -179,7 +179,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_RING(ring, CP_LOAD_STATE4_1_STATE_TYPE(ST4_CONSTANTS) |
 				CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
 		for (i = 0; i < tex->num_textures; i++) {
-			static const struct fd4_pipe_sampler_view dummy_view = {0};
+			static const struct fd4_pipe_sampler_view dummy_view = {};
 			const struct fd4_pipe_sampler_view *view = tex->textures[i] ?
 					fd4_pipe_sampler_view(tex->textures[i]) :
 					&dummy_view;
@@ -202,7 +202,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		}
 
 		for (i = 0; i < v->astc_srgb.count; i++) {
-			static const struct fd4_pipe_sampler_view dummy_view = {0};
+			static const struct fd4_pipe_sampler_view dummy_view = {};
 			const struct fd4_pipe_sampler_view *view;
 			unsigned idx = v->astc_srgb.orig_idx[i];
 

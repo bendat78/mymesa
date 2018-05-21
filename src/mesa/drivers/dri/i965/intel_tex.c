@@ -38,7 +38,7 @@ intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
 
    DBG("%s\n", __func__);
 
-   if (!obj)
+   if (obj == NULL)
       return NULL;
 
    _mesa_initialize_texture_object(ctx, &obj->base, name, target);
@@ -152,7 +152,7 @@ intel_alloc_texture_storage(struct gl_context *ctx,
                                               MAX2(num_samples, 1),
                                               MIPTREE_CREATE_DEFAULT);
 
-      if (!intel_texobj->mt) {
+      if (intel_texobj->mt == NULL) {
          return false;
       }
    }

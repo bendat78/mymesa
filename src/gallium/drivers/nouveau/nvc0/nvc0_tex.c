@@ -242,7 +242,7 @@ gm107_create_texture_view_from_image(struct pipe_context *pipe,
                                      const struct pipe_image_view *view)
 {
    struct nv04_resource *res = nv04_resource(view->resource);
-   struct pipe_sampler_view templ = {0};
+   struct pipe_sampler_view templ = {};
    enum pipe_texture_target target;
    uint32_t flags = 0;
 
@@ -1112,7 +1112,7 @@ nvc0_validate_suf(struct nvc0_context *nvc0, int s)
 
    for (int i = 0; i < NVC0_MAX_IMAGES; ++i) {
       struct pipe_image_view *view = &nvc0->images[s][i];
-      int width = 0, height = 0, depth = 0;
+      int width, height, depth;
       uint64_t address = 0;
 
       if (s == 5)
@@ -1155,7 +1155,7 @@ nvc0_validate_suf(struct nvc0_context *nvc0, int s)
 
             if (mt->layout_3d) {
                address += nvc0_mt_zslice_offset(mt, view->u.tex.level, z);
-               if (depth) {
+               if (depth >= 1) {
                   pipe_debug_message(&nvc0->base.debug, CONFORMANCE,
                                      "3D images are not supported!");
                   debug_printf("3D images are not supported!\n");
@@ -1399,7 +1399,7 @@ gm107_create_image_handle(struct pipe_context *pipe,
       gm107_create_texture_view_from_image(pipe, view);
    struct nv50_tic_entry *tic = nv50_tic_entry(sview);
 
-   if (!tic)
+   if (tic == NULL)
       goto fail;
 
    tic->bindless = 1;

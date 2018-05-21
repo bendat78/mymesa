@@ -221,7 +221,7 @@ wsi_create_native_image(const struct wsi_swapchain *chain,
    uint32_t image_modifier_count = 0, modifier_prop_count = 0;
    struct wsi_format_modifier_properties *modifier_props = NULL;
    uint64_t *image_modifiers = NULL;
-   if (!num_modifier_lists) {
+   if (num_modifier_lists == 0) {
       /* If we don't have modifiers, fall back to the legacy "scanout" flag */
       image_wsi_info.scanout = true;
    } else {
@@ -394,7 +394,7 @@ wsi_create_native_image(const struct wsi_swapchain *chain,
          image->sizes[p] = image_layout.size;
          image->row_pitches[p] = image_layout.rowPitch;
          image->offsets[p] = image_layout.offset;
-         if (!p) {
+         if (p == 0) {
             image->fds[p] = fd;
          } else {
             image->fds[p] = dup(fd);
@@ -842,7 +842,7 @@ wsi_common_queue_present(const struct wsi_device *wsi,
       };
 
       VkPipelineStageFlags *stage_flags = NULL;
-      if (!i) {
+      if (i == 0) {
          /* We only need/want to wait on semaphores once.  After that, we're
           * guaranteed ordering since it all happens on the same queue.
           */
@@ -901,7 +901,7 @@ wsi_common_queue_present(const struct wsi_device *wsi,
       }
 
    fail_present:
-      if (pPresentInfo->pResults)
+      if (pPresentInfo->pResults != NULL)
          pPresentInfo->pResults[i] = result;
 
       /* Let the final result be our first unsuccessful result */

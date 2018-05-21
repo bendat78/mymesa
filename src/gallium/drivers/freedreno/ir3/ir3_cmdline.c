@@ -262,7 +262,7 @@ int main(int argc, char **argv)
 	unsigned stage = 0;
 	struct ir3_shader_variant v;
 	struct ir3_shader s;
-	struct ir3_shader_key key = {0};
+	struct ir3_shader_key key = {};
 	/* TODO cmdline option to target different gpus: */
 	unsigned gpu_id = 320;
 	const char *info;
@@ -383,11 +383,11 @@ int main(int argc, char **argv)
 		char *ext = rindex(filename, '.');
 
 		if (strcmp(ext, ".tgsi") == 0) {
-			if (num_files)
+			if (num_files != 0)
 				errx(1, "in TGSI mode, only a single file may be specified");
 			s.from_tgsi = true;
 		} else if (strcmp(ext, ".spv") == 0) {
-			if (num_files)
+			if (num_files != 0)
 				errx(1, "in SPIR-V mode, only a single file may be specified");
 			stage = MESA_SHADER_COMPUTE;
 			from_spirv = true;

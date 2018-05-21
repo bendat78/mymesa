@@ -159,7 +159,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_SHADER) |
 				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
 		for (i = 0; i < tex->num_samplers; i++) {
-			static const struct fd3_sampler_stateobj dummy_sampler = {0};
+			static const struct fd3_sampler_stateobj dummy_sampler = {};
 			const struct fd3_sampler_stateobj *sampler = tex->samplers[i] ?
 					fd3_sampler_stateobj(tex->samplers[i]) :
 					&dummy_sampler;
@@ -181,7 +181,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
 				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
 		for (i = 0; i < tex->num_textures; i++) {
-			static const struct fd3_pipe_sampler_view dummy_view = {0};
+			static const struct fd3_pipe_sampler_view dummy_view = {};
 			const struct fd3_pipe_sampler_view *view = tex->textures[i] ?
 					fd3_pipe_sampler_view(tex->textures[i]) :
 					&dummy_view;

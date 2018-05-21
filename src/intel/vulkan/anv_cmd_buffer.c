@@ -159,17 +159,17 @@ anv_cmd_buffer_ensure_push_constants_size(struct anv_cmd_buffer *cmd_buffer,
 {
    struct anv_push_constants **ptr = &cmd_buffer->state.push_constants[stage];
 
-   if (!*ptr) {
+   if (*ptr == NULL) {
       *ptr = vk_alloc(&cmd_buffer->pool->alloc, size, 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-      if (!*ptr) {
+      if (*ptr == NULL) {
          anv_batch_set_error(&cmd_buffer->batch, VK_ERROR_OUT_OF_HOST_MEMORY);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
    } else if ((*ptr)->size < size) {
       *ptr = vk_realloc(&cmd_buffer->pool->alloc, *ptr, size, 8,
                          VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-      if (!*ptr) {
+      if (*ptr == NULL) {
          anv_batch_set_error(&cmd_buffer->batch, VK_ERROR_OUT_OF_HOST_MEMORY);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
       }
@@ -190,7 +190,7 @@ static VkResult anv_create_cmd_buffer(
 
    cmd_buffer = vk_alloc(&pool->alloc, sizeof(*cmd_buffer), 8,
                           VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!cmd_buffer)
+   if (cmd_buffer == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    cmd_buffer->batch.status = VK_SUCCESS;
@@ -754,7 +754,7 @@ anv_cmd_buffer_cs_push_constants(struct anv_cmd_buffer *cmd_buffer)
    const struct brw_stage_prog_data *prog_data = &cs_prog_data->base;
 
    /* If we don't actually have any push constants, bail. */
-   if (!cs_prog_data->push.total.size)
+   if (cs_prog_data->push.total.size == 0)
       return (struct anv_state) { .offset = 0 };
 
    const unsigned push_constant_alignment =
@@ -835,7 +835,7 @@ VkResult anv_CreateCommandPool(
 
    pool = vk_alloc2(&device->alloc, pAllocator, sizeof(*pool), 8,
                      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!pool)
+   if (pool == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    if (pAllocator)
@@ -929,11 +929,11 @@ anv_cmd_buffer_get_push_descriptor_set(struct anv_cmd_buffer *cmd_buffer,
    struct anv_push_descriptor_set **push_set =
       &pipe_state->push_descriptors[set];
 
-   if (!*push_set) {
+   if (*push_set == NULL) {
       *push_set = vk_alloc(&cmd_buffer->pool->alloc,
                            sizeof(struct anv_push_descriptor_set), 8,
                            VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-      if (!*push_set) {
+      if (*push_set == NULL) {
          anv_batch_set_error(&cmd_buffer->batch, VK_ERROR_OUT_OF_HOST_MEMORY);
          return NULL;
       }

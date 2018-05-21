@@ -96,7 +96,7 @@ etna_screen_resource_alloc_ts(struct pipe_screen *pscreen,
    ts_layer_stride = align(pixels * screen->specs.bits_per_tile / 0x80,
                            0x100 * screen->specs.pixel_pipes);
    rt_ts_size = ts_layer_stride * rsc->base.array_size;
-   if (!rt_ts_size)
+   if (rt_ts_size == 0)
       return true;
 
    DBG_F(ETNA_DBG_RESOURCE_MSGS, "%p: Allocating tile status of size %zu",
@@ -283,7 +283,7 @@ etna_resource_alloc(struct pipe_screen *pscreen, unsigned layout,
    if (templat->bind & PIPE_BIND_VERTEX_BUFFER)
       flags |= DRM_ETNA_GEM_FORCE_MMU;
    struct etna_bo *bo = etna_bo_new(screen->dev, size, flags);
-   if (!unlikely(bo)) {
+   if (unlikely(bo == NULL)) {
       BUG("Problem allocating video memory for resource");
       goto free_rsc;
    }

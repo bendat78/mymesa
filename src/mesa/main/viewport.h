@@ -56,7 +56,7 @@ _mesa_ViewportIndexedfv_no_error(GLuint index, const GLfloat * v);
 extern void GLAPIENTRY
 _mesa_ViewportIndexedfv(GLuint index, const GLfloat * v);
 
-extern void
+extern void 
 _mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLfloat x, GLfloat y,
                    GLfloat width, GLfloat height);
 
@@ -90,7 +90,7 @@ extern void
 _mesa_set_depth_range(struct gl_context *ctx, unsigned idx,
                       GLclampd nearval, GLclampd farval);
 
-extern void
+extern void 
 _mesa_init_viewport(struct gl_context *ctx);
 
 

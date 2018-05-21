@@ -33,7 +33,7 @@ lower_subgroups_64bit_split_intrinsic(nir_builder *b, nir_intrinsic_instr *intri
                                       unsigned int component)
 {
    nir_ssa_def *comp;
-   if (!component)
+   if (component == 0)
       comp = nir_unpack_64_2x32_split_x(b, intrin->src[0].ssa);
    else
       comp = nir_unpack_64_2x32_split_y(b, intrin->src[0].ssa);
@@ -203,7 +203,7 @@ lower_vote_eq_to_ballot(nir_builder *b, nir_intrinsic_instr *intrin,
          is_eq = nir_ieq(b, &rfi->dest.ssa, nir_channel(b, value, i));
       }
 
-      if (!all_eq) {
+      if (all_eq == NULL) {
          all_eq = is_eq;
       } else {
          all_eq = nir_iand(b, all_eq, is_eq);

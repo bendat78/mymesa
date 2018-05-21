@@ -344,7 +344,7 @@ lower_distance_visitor::lower_distance_vec8(ir_rvalue *ir)
       if (ir->variable_referenced() == this->old_distance_in_var)
          new_var = &this->new_distance_in_var;
    }
-   if (!new_var)
+   if (new_var == NULL)
       return NULL;
 
    if (ir->as_dereference_variable()) {
@@ -363,11 +363,11 @@ lower_distance_visitor::lower_distance_vec8(ir_rvalue *ir)
 void
 lower_distance_visitor::handle_rvalue(ir_rvalue **rv)
 {
-   if (!*rv)
+   if (*rv == NULL)
       return;
 
    ir_dereference_array *const array_deref = (*rv)->as_dereference_array();
-   if (!array_deref)
+   if (array_deref == NULL)
       return;
 
    /* Replace any expression that indexes one of the floats in gl_ClipDistance
@@ -376,7 +376,7 @@ lower_distance_visitor::handle_rvalue(ir_rvalue **rv)
     */
    ir_rvalue *lowered_vec8 =
       this->lower_distance_vec8(array_deref->array);
-   if (lowered_vec8) {
+   if (lowered_vec8 != NULL) {
       this->progress = true;
       ir_rvalue *array_index;
       ir_rvalue *swizzle_index;
@@ -629,7 +629,7 @@ lower_distance_visitor_counter::visit(ir_variable *ir)
    if (ir->type->is_unsized_array())
       return visit_continue;
 
-   if (!*clip_size) {
+   if (*clip_size == 0) {
       if (!strcmp(ir->name, "gl_ClipDistance")) {
          if (!ir->type->fields.array->is_array())
             *clip_size = ir->type->array_size();
@@ -638,7 +638,7 @@ lower_distance_visitor_counter::visit(ir_variable *ir)
       }
    }
 
-   if (!*cull_size) {
+   if (*cull_size == 0) {
       if (!strcmp(ir->name, "gl_CullDistance")) {
          if (!ir->type->fields.array->is_array())
             *cull_size = ir->type->array_size();

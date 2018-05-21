@@ -35,7 +35,6 @@ hash_table *glsl_type::interface_types = NULL;
 hash_table *glsl_type::function_types = NULL;
 hash_table *glsl_type::subroutine_types = NULL;
 
-
 glsl_type::glsl_type(GLenum gl_type,
                      glsl_base_type base_type, unsigned vector_elements,
                      unsigned matrix_columns, const char *name) :
@@ -407,27 +406,27 @@ _mesa_glsl_release_types(void)
     * object, or if process terminates), so no mutex-locking should be
     * necessary.
     */
-   if (glsl_type::array_types) {
+   if (glsl_type::array_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::array_types, hash_free_type_function);
       glsl_type::array_types = NULL;
    }
 
-   if (glsl_type::record_types) {
+   if (glsl_type::record_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::record_types, hash_free_type_function);
       glsl_type::record_types = NULL;
    }
 
-   if (glsl_type::interface_types) {
+   if (glsl_type::interface_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::interface_types, hash_free_type_function);
       glsl_type::interface_types = NULL;
    }
 
-   if (glsl_type::function_types) {
+   if (glsl_type::function_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::function_types, hash_free_type_function);
       glsl_type::function_types = NULL;
    }
 
-   if (glsl_type::subroutine_types) {
+   if (glsl_type::subroutine_types != NULL) {
       _mesa_hash_table_destroy(glsl_type::subroutine_types, hash_free_type_function);
       glsl_type::subroutine_types = NULL;
    }
@@ -459,7 +458,7 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
 
    char *const n = (char *) ralloc_size(this->mem_ctx, name_length);
 
-   if (!length)
+   if (length == 0)
       snprintf(n, name_length, "%s[]", array->name);
    else {
       /* insert outermost dimensions in the correct spot
@@ -858,13 +857,13 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
 
    mtx_lock(&glsl_type::hash_mutex);
 
-   if (!array_types) {
+   if (array_types == NULL) {
       array_types = _mesa_hash_table_create(NULL, _mesa_key_hash_string,
                                             _mesa_key_string_equal);
    }
 
    const struct hash_entry *entry = _mesa_hash_table_search(array_types, key);
-   if (!entry) {
+   if (entry == NULL) {
       const glsl_type *t = new glsl_type(base, array_size);
 
       entry = _mesa_hash_table_insert(array_types,
@@ -1010,14 +1009,14 @@ glsl_type::get_record_instance(const glsl_struct_field *fields,
 
    mtx_lock(&glsl_type::hash_mutex);
 
-   if (!record_types) {
+   if (record_types == NULL) {
       record_types = _mesa_hash_table_create(NULL, record_key_hash,
                                              record_key_compare);
    }
 
    const struct hash_entry *entry = _mesa_hash_table_search(record_types,
                                                             &key);
-   if (!entry) {
+   if (entry == NULL) {
       const glsl_type *t = new glsl_type(fields, num_fields, name);
 
       entry = _mesa_hash_table_insert(record_types, t, (void *) t);
@@ -1044,14 +1043,14 @@ glsl_type::get_interface_instance(const glsl_struct_field *fields,
 
    mtx_lock(&glsl_type::hash_mutex);
 
-   if (!interface_types) {
+   if (interface_types == NULL) {
       interface_types = _mesa_hash_table_create(NULL, record_key_hash,
                                                 record_key_compare);
    }
 
    const struct hash_entry *entry = _mesa_hash_table_search(interface_types,
                                                             &key);
-   if (!entry) {
+   if (entry == NULL) {
       const glsl_type *t = new glsl_type(fields, num_fields,
                                          packing, row_major, block_name);
 
@@ -1074,14 +1073,14 @@ glsl_type::get_subroutine_instance(const char *subroutine_name)
 
    mtx_lock(&glsl_type::hash_mutex);
 
-   if (!subroutine_types) {
+   if (subroutine_types == NULL) {
       subroutine_types = _mesa_hash_table_create(NULL, record_key_hash,
                                                  record_key_compare);
    }
 
    const struct hash_entry *entry = _mesa_hash_table_search(subroutine_types,
                                                             &key);
-   if (!entry) {
+   if (entry == NULL) {
       const glsl_type *t = new glsl_type(subroutine_name);
 
       entry = _mesa_hash_table_insert(subroutine_types, t, (void *) t);
@@ -1127,13 +1126,13 @@ glsl_type::get_function_instance(const glsl_type *return_type,
 
    mtx_lock(&glsl_type::hash_mutex);
 
-   if (!function_types) {
+   if (function_types == NULL) {
       function_types = _mesa_hash_table_create(NULL, function_key_hash,
                                                function_key_compare);
    }
 
    struct hash_entry *entry = _mesa_hash_table_search(function_types, &key);
-   if (!entry) {
+   if (entry == NULL) {
       const glsl_type *t = new glsl_type(return_type, params, num_params);
 
       entry = _mesa_hash_table_insert(function_types, t, (void *) t);
@@ -2159,7 +2158,7 @@ decode_type_from_blob(struct blob_reader *blob)
 {
    uint32_t u = blob_read_uint32(blob);
 
-   if (!u) {
+   if (u == 0) {
       return NULL;
    }
 

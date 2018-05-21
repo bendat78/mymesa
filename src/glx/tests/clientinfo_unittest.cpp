@@ -56,7 +56,7 @@ public:
    ~fake_glx_display()
    {
       for (int i = 0; i < this->dpy->nscreens; i++) {
-	 if (this->screens[i])
+	 if (this->screens[i] != NULL)
 	    delete this->screens[i];
       }
 
@@ -91,7 +91,7 @@ protected:
 void
 fake_glx_display::init_screen(int i, const char *ext)
 {
-   if (this->screens[i])
+   if (this->screens[i] != NULL)
       delete this->screens[i];
 
    this->screens[i] = new fake_glx_screen(this, i, ext);
@@ -239,8 +239,8 @@ glX_send_client_info_test::~glX_send_client_info_test()
 void
 glX_send_client_info_test::destroy_display()
 {
-   if (this->glx_dpy) {
-      if (this->glx_dpy->screens) {
+   if (this->glx_dpy != NULL) {
+      if (this->glx_dpy->screens != NULL) {
 	 for (int i = 0; i < this->display->nscreens; i++) {
 	    delete [] this->glx_dpy->screens[i]->serverGLXexts;
 	    delete this->glx_dpy->screens[i];
@@ -680,7 +680,7 @@ TEST_F(glX_send_client_info_test, glx_extensions_has_GLX_ARB_create_context)
    const char *const needle = "GLX_ARB_create_context";
    const unsigned len = strlen(needle);
    char *haystack = glx_ext_string;
-   while (haystack) {
+   while (haystack != NULL) {
       char *match = strstr(haystack, needle);
 
       if (match[len] == '\0' || match[len] == ' ') {
@@ -706,7 +706,7 @@ TEST_F(glX_send_client_info_test, glx_extensions_has_GLX_ARB_create_context_prof
    const char *const needle = "GLX_ARB_create_context_profile";
    const unsigned len = strlen(needle);
    char *haystack = glx_ext_string;
-   while (haystack) {
+   while (haystack != NULL) {
       char *match = strstr(haystack, needle);
 
       if (match[len] == '\0' || match[len] == ' ') {

@@ -160,7 +160,7 @@ v3d_bo_alloc(struct v3d_screen *screen, uint32_t size, const char *name)
         bo->handle = create.handle;
         bo->offset = create.offset;
 
-        if (ret) {
+        if (ret != 0) {
                 if (!list_empty(&screen->bo_cache.time_list) &&
                     !cleared_and_retried) {
                         cleared_and_retried = true;
@@ -419,7 +419,7 @@ v3d_bo_get_dmabuf(struct v3d_bo *bo)
         int fd;
         int ret = drmPrimeHandleToFD(bo->screen->fd, bo->handle,
                                      O_CLOEXEC, &fd);
-        if (ret) {
+        if (ret != 0) {
                 fprintf(stderr, "Failed to export gem bo %d to dmabuf\n",
                         bo->handle);
                 return -1;
@@ -506,7 +506,7 @@ v3d_bo_map_unsynchronized(struct v3d_bo *bo)
         map.handle = bo->handle;
         ret = v3d_ioctl(bo->screen->fd, DRM_IOCTL_V3D_MMAP_BO, &map);
         offset = map.offset;
-        if (ret) {
+        if (ret != 0) {
                 fprintf(stderr, "map ioctl failure\n");
                 abort();
         }

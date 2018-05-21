@@ -94,7 +94,7 @@ def write_format_table(formats):
     print '#include "stdbool.h"'
     print '#include "vk_format.h"'
     print
-
+    
     def do_channel_array(channels, swizzles):
         print "   {"
         for i in range(4):
@@ -106,7 +106,7 @@ def write_format_table(formats):
             if channel.size:
                 print "      {%s, %s, %s, %s, %u, %u}%s\t/* %s = %s */" % (type_map[channel.type], bool_map(channel.norm), bool_map(channel.pure), bool_map(channel.scaled), channel.size, channel.shift, sep, "xyzw"[i], channel.name)
             else:
-                print "      {}%s" % (sep,)
+                print "      {0, 0, 0, 0, 0}%s" % (sep,)
         print "   },"
 
     def do_swizzle_array(channels, swizzles):
@@ -141,7 +141,7 @@ def write_format_table(formats):
         print "   %s," % (colorspace_map(format.colorspace),)
         print "};"
         print
-
+        
     print "const struct vk_format_description *"
     print "vk_format_description(VkFormat format)"
     print "{"

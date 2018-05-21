@@ -149,7 +149,7 @@ intel_finalize_mipmap_tree(struct brw_context *brw,
          struct intel_texture_image *intelImage =
             intel_texture_image(intelObj->base.Image[face][i]);
 	 /* skip too small size mipmap */
- 	 if (!intelImage)
+ 	 if (intelImage == NULL)
 		 break;
 
          if (intelObj->mt != intelImage->mt)

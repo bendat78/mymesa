@@ -102,7 +102,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       new(mem_ctx) ir_expression(ir_binop_div, sub->type, sub, increment);
 
    ir_constant *iter = div->constant_expression_value(mem_ctx);
-   if (!iter) {
+   if (iter == NULL) {
       ralloc_free(mem_ctx);
       return -1;
    }
@@ -234,7 +234,7 @@ loop_variable::record_reference(bool in_assignee,
          this->conditional_or_nested_assignment = true;
       }
 
-      if (!this->first_assignment) {
+      if (this->first_assignment == NULL) {
          assert(this->num_assignments == 0);
 
          this->first_assignment = current_assignment;
@@ -341,7 +341,7 @@ loop_variable_state::get_or_insert(ir_variable *var, bool in_assignee)
 {
    loop_variable *lv = this->get(var);
 
-   if (!lv) {
+   if (lv == NULL) {
       lv = this->insert(var);
       lv->read_before_write = !in_assignee;
    }
@@ -474,7 +474,7 @@ loop_analysis::visit_leave(ir_loop *ir)
 
       ir_if *if_stmt = ((ir_instruction *) node)->as_if();
 
-      if (if_stmt)
+      if (if_stmt != NULL)
          try_add_loop_terminator(ls, if_stmt);
    }
 
@@ -558,7 +558,7 @@ loop_analysis::visit_leave(ir_loop *ir)
        */
       ir_rvalue *const inc =
 	 get_basic_induction_increment(lv->first_assignment, ls->var_hash);
-      if (inc) {
+      if (inc != NULL) {
 	 lv->increment = inc;
 
 	 lv->remove();
@@ -579,7 +579,7 @@ loop_analysis::visit_leave(ir_loop *ir)
        * about the former here.
        */
       ir_expression *cond = if_stmt->condition->as_expression();
-      if (!cond)
+      if (cond == NULL)
 	 continue;
 
       switch (cond->operation) {
@@ -594,13 +594,13 @@ loop_analysis::visit_leave(ir_loop *ir)
 	 enum ir_expression_operation cmp = cond->operation;
          bool swap_compare_operands = false;
 
-	 if (!limit) {
+	 if (limit == NULL) {
 	    counter = cond->operands[1]->as_dereference_variable();
 	    limit = cond->operands[0]->as_constant();
             swap_compare_operands = true;
 	 }
 
-	 if (!(counter) || (limit == NULL))
+	 if ((counter == NULL) || (limit == NULL))
 	    break;
 
 	 ir_variable *var = counter->variable_referenced();
@@ -730,7 +730,7 @@ get_basic_induction_increment(ir_assignment *ir, hash_table *var_hash)
    /* The RHS must be a binary expression.
     */
    ir_expression *const rhs = ir->rhs->as_expression();
-   if (!(rhs)
+   if ((rhs == NULL)
        || ((rhs->operation != ir_binop_add)
 	   && (rhs->operation != ir_binop_sub)))
       return NULL;
@@ -750,9 +750,9 @@ get_basic_induction_increment(ir_assignment *ir, hash_table *var_hash)
 
    ir_rvalue *inc = (op0 == var) ? rhs->operands[1] : rhs->operands[0];
 
-   if (!inc->as_constant()) {
+   if (inc->as_constant() == NULL) {
       ir_variable *const inc_var = inc->variable_referenced();
-      if (inc_var) {
+      if (inc_var != NULL) {
          hash_entry *entry = _mesa_hash_table_search(var_hash, inc_var);
          loop_variable *lv = entry ? (loop_variable *) entry->data : NULL;
 
@@ -764,7 +764,7 @@ get_basic_induction_increment(ir_assignment *ir, hash_table *var_hash)
 	 inc = NULL;
    }
 
-   if ((inc) && (rhs->operation == ir_binop_sub)) {
+   if ((inc != NULL) && (rhs->operation == ir_binop_sub)) {
       void *mem_ctx = ralloc_parent(ir);
 
       inc = new(mem_ctx) ir_expression(ir_unop_neg,

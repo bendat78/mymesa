@@ -444,7 +444,7 @@ fs_visitor::emit_fb_writes()
    prog_data->dual_src_blend = (this->dual_src_output.file != BAD_FILE);
    assert(!prog_data->dual_src_blend || key->nr_color_regions == 1);
 
-   if (!inst) {
+   if (inst == NULL) {
       /* Even if there's no color buffers enabled, we still need to send
        * alpha out the pipeline to our null renderbuffer to support
        * alpha-testing, alpha-to-coverage, and so on.
@@ -470,7 +470,7 @@ fs_visitor::setup_uniform_clipplane_values()
    const struct brw_vs_prog_key *key =
       (const struct brw_vs_prog_key *) this->key;
 
-   if (!key->nr_userclip_plane_consts)
+   if (key->nr_userclip_plane_consts == 0)
       return;
 
    assert(stage_prog_data->nr_params == uniforms);
@@ -500,7 +500,7 @@ void fs_visitor::compute_clip_distance()
       (const struct brw_vs_prog_key *) this->key;
 
    /* Bail unless some sort of legacy clipping is enabled */
-   if (!key->nr_userclip_plane_consts)
+   if (key->nr_userclip_plane_consts == 0)
       return;
 
    /* From the GLSL 1.30 spec, section 7.1 (Vertex Shader Special Variables):

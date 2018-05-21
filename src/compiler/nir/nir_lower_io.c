@@ -95,7 +95,7 @@ get_io_offset(nir_builder *b, nir_deref_var *deref,
    /* For per-vertex input arrays (i.e. geometry shader inputs), keep the
     * outermost array index separate.  Process the rest normally.
     */
-   if (vertex_index) {
+   if (vertex_index != NULL) {
       tail = tail->child;
       nir_deref_array *deref_array = nir_deref_as_array(tail);
 
@@ -122,7 +122,7 @@ get_io_offset(nir_builder *b, nir_deref_var *deref,
    /* Just emit code and let constant-folding go to town */
    nir_ssa_def *offset = nir_imm_int(b, 0);
 
-   while (tail->child) {
+   while (tail->child != NULL) {
       const struct glsl_type *parent_type = tail->type;
       tail = tail->child;
 

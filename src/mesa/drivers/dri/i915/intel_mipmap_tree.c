@@ -709,7 +709,7 @@ intel_miptree_map_gtt(struct intel_context *intel,
 
    base = intel_miptree_map_raw(intel, mt) + mt->offset;
 
-   if (!base)
+   if (base == NULL)
       map->ptr = NULL;
    else {
       /* Note that in the case of cube maps, the caller must have passed the
@@ -882,7 +882,7 @@ intel_miptree_map(struct intel_context *intel,
    *out_ptr = map->ptr;
    *out_stride = map->stride;
 
-   if (!map->ptr)
+   if (map->ptr == NULL)
       intel_miptree_release_map(mt, level, slice);
 }
 

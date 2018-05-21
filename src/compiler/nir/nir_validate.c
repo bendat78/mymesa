@@ -407,7 +407,7 @@ validate_deref_chain(nir_deref *deref, nir_variable_mode mode,
    validate_assert(state, deref->child == NULL || ralloc_parent(deref->child) == deref);
 
    nir_deref *parent = NULL;
-   while (deref) {
+   while (deref != NULL) {
       switch (deref->deref_type) {
       case nir_deref_type_array:
          if (mode == nir_var_shared) {
@@ -483,7 +483,6 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
 
    unsigned num_srcs = nir_intrinsic_infos[instr->intrinsic].num_srcs;
    for (unsigned i = 0; i < num_srcs; i++) {
-
       unsigned components_read = nir_intrinsic_src_components(instr, i);
 
       validate_assert(state, components_read > 0);
@@ -497,7 +496,6 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
    }
 
    if (nir_intrinsic_infos[instr->intrinsic].has_dest) {
-
       unsigned components_written = nir_intrinsic_dest_components(instr);
 
       validate_assert(state, components_written > 0);
@@ -554,10 +552,10 @@ validate_tex_instr(nir_tex_instr *instr, validate_state *state)
                    0, nir_tex_instr_src_size(instr, i));
    }
 
-   if (instr->texture)
+   if (instr->texture != NULL)
       validate_deref_var(instr, instr->texture, state);
 
-   if (instr->sampler)
+   if (instr->sampler != NULL)
       validate_deref_var(instr, instr->sampler, state);
 
    validate_dest(&instr->dest, state, 0, nir_tex_instr_dest_size(instr));
@@ -566,7 +564,7 @@ validate_tex_instr(nir_tex_instr *instr, validate_state *state)
 static void
 validate_call_instr(nir_call_instr *instr, validate_state *state)
 {
-   if (!instr->return_deref) {
+   if (instr->return_deref == NULL) {
       validate_assert(state, glsl_type_is_void(instr->callee->return_type));
    } else {
       validate_assert(state, instr->return_deref->deref.type == instr->callee->return_type);
@@ -714,7 +712,7 @@ validate_block(nir_block *block, validate_state *state)
    validate_assert(state, block->successors[0] != block->successors[1]);
 
    for (unsigned i = 0; i < 2; i++) {
-      if (block->successors[i]) {
+      if (block->successors[i] != NULL) {
          struct set_entry *entry =
             _mesa_set_search(block->successors[i]->predecessors, block);
          validate_assert(state, entry);
@@ -757,7 +755,7 @@ validate_block(nir_block *block, validate_state *state)
       }
    } else {
       nir_cf_node *next = nir_cf_node_next(&block->cf_node);
-      if (!next) {
+      if (next == NULL) {
          switch (state->parent_node->type) {
          case nir_cf_node_loop: {
             nir_block *first = nir_loop_first_block(state->loop);
@@ -930,7 +928,7 @@ postvalidate_reg_decl(nir_register *reg, validate_state *state)
       _mesa_set_remove(reg_state->uses, entry);
    }
 
-   if (reg_state->uses->entries) {
+   if (reg_state->uses->entries != 0) {
       printf("extra entries in register uses:\n");
       struct set_entry *entry;
       set_foreach(reg_state->uses, entry)
@@ -945,7 +943,7 @@ postvalidate_reg_decl(nir_register *reg, validate_state *state)
       _mesa_set_remove(reg_state->if_uses, entry);
    }
 
-   if (reg_state->if_uses->entries) {
+   if (reg_state->if_uses->entries != 0) {
       printf("extra entries in register if_uses:\n");
       struct set_entry *entry;
       set_foreach(reg_state->if_uses, entry)
@@ -960,7 +958,7 @@ postvalidate_reg_decl(nir_register *reg, validate_state *state)
       _mesa_set_remove(reg_state->defs, entry);
    }
 
-   if (reg_state->defs->entries) {
+   if (reg_state->defs->entries != 0) {
       printf("extra entries in register defs:\n");
       struct set_entry *entry;
       set_foreach(reg_state->defs, entry)
@@ -1020,7 +1018,7 @@ postvalidate_ssa_def(nir_ssa_def *def, void *void_state)
       _mesa_set_remove(def_state->uses, entry);
    }
 
-   if (def_state->uses->entries) {
+   if (def_state->uses->entries != 0) {
       printf("extra entries in SSA def uses:\n");
       struct set_entry *entry;
       set_foreach(def_state->uses, entry)
@@ -1035,7 +1033,7 @@ postvalidate_ssa_def(nir_ssa_def *def, void *void_state)
       _mesa_set_remove(def_state->if_uses, entry);
    }
 
-   if (def_state->if_uses->entries) {
+   if (def_state->if_uses->entries != 0) {
       printf("extra entries in SSA def uses:\n");
       struct set_entry *entry;
       set_foreach(def_state->if_uses, entry)
@@ -1115,7 +1113,7 @@ validate_function_impl(nir_function_impl *impl, validate_state *state)
 static void
 validate_function(nir_function *func, validate_state *state)
 {
-   if (func->impl) {
+   if (func->impl != NULL) {
       validate_assert(state, func->impl->function == func);
       validate_function_impl(func->impl, state);
    }

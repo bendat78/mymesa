@@ -134,7 +134,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
 
    /* Loop back through the IR until we find the uniform block */
    ir_rvalue *ir = d;
-   while (ir) {
+   while (ir != NULL) {
       switch (ir->ir_type) {
       case ir_type_dereference_variable: {
          /* Exit loop */
@@ -174,7 +174,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
       }
    }
 
-   while (d) {
+   while (d != NULL) {
       switch (d->ir_type) {
       case ir_type_dereference_variable: {
          ir_dereference_variable *v = (ir_dereference_variable *) d;
@@ -194,7 +194,7 @@ interface_field_name(void *mem_ctx, char *base_name, ir_rvalue *d,
          ir_dereference_array *a = (ir_dereference_array *) d;
          size_t new_length;
 
-         if (!name_copy) {
+         if (name_copy == NULL) {
             name_copy = ralloc_strdup(mem_ctx, base_name);
             base_length = strlen(name_copy);
          }

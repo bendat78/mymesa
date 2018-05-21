@@ -267,7 +267,7 @@ static struct gl_memory_object *
 lookup_memory_object_err(struct gl_context *ctx, unsigned memory,
                          const char* func)
 {
-   if (!memory) {
+   if (memory == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(memory=0)", func);
       return NULL;
    }

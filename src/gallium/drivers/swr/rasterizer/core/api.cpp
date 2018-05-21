@@ -76,7 +76,7 @@ HANDLE SwrCreateContext(
     pContext->privateStateSize = pCreateInfo->privateStateSize;
 
     pContext->MAX_DRAWS_IN_FLIGHT = KNOB_MAX_DRAWS_IN_FLIGHT;
-    if (pCreateInfo->MAX_DRAWS_IN_FLIGHT)
+    if (pCreateInfo->MAX_DRAWS_IN_FLIGHT != 0)
     {
         pContext->MAX_DRAWS_IN_FLIGHT = pCreateInfo->MAX_DRAWS_IN_FLIGHT;
     }
@@ -193,7 +193,7 @@ HANDLE SwrCreateContext(
     pContext->pfnUpdateSoWriteOffset = pCreateInfo->pfnUpdateSoWriteOffset;
     pContext->pfnUpdateStats = pCreateInfo->pfnUpdateStats;
     pContext->pfnUpdateStatsFE = pCreateInfo->pfnUpdateStatsFE;
-
+    
 
     // pass pointer to bucket manager back to caller
 #ifdef KNOB_ENABLE_RDTSC
@@ -291,7 +291,7 @@ DRAW_CONTEXT* GetDrawContext(SWR_CONTEXT *pContext, bool isSplitDraw = false)
 {
     RDTSC_BEGIN(APIGetDrawContext, 0);
     // If current draw context is null then need to obtain a new draw context to use from ring.
-    if (!pContext->pCurDrawContext)
+    if (pContext->pCurDrawContext == nullptr)
     {
         // Need to wait for a free entry.
         while (pContext->dcRing.IsFull())
@@ -327,7 +327,7 @@ DRAW_CONTEXT* GetDrawContext(SWR_CONTEXT *pContext, bool isSplitDraw = false)
             // If we're splitting our draw then we can just use the same state from the previous
             // draw. In this case, we won't increment the DS ring index so the next non-split
             // draw can receive the state.
-            if (!isSplitDraw)
+            if (isSplitDraw == false)
             {
                 CopyState(*pCurDrawContext->pState, *pPrevDrawContext->pState);
 
@@ -856,7 +856,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     BACKEND_FUNCS& backendFuncs = pState->backendFuncs;
 
     // setup backend
-    if (!psState.pfnPixelShader)
+    if (psState.pfnPixelShader == nullptr)
     {
         backendFuncs.pfnBackend = gBackendNullPs[pState->state.rastState.sampleCount];
     }
@@ -867,7 +867,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
         const uint32_t centroid = ((psState.barycentricsMask & SWR_BARYCENTRIC_CENTROID_MASK) > 0) ? 1 : 0;
         const uint32_t canEarlyZ = (psState.forceEarlyZ || (!psState.writesODepth && !psState.usesUAV)) ? 1 : 0;
         SWR_BARYCENTRICS_MASK barycentricsMask = (SWR_BARYCENTRICS_MASK)psState.barycentricsMask;
-
+        
         // select backend function
         switch(psState.shadingRate)
         {
@@ -948,7 +948,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     }
 
     // Disable rasterizer and backend if no pixel, no depth/stencil, and no attributes
-    if (!(pState->state.psState.pfnPixelShader) &&
+    if ((pState->state.psState.pfnPixelShader == nullptr) &&
         (pState->state.depthStencilState.depthTestEnable == FALSE) &&
         (pState->state.depthStencilState.depthWriteEnable == FALSE) &&
         (pState->state.depthStencilState.stencilTestEnable == FALSE) &&
@@ -961,7 +961,7 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
 #endif
     }
 
-    if (pState->state.soState.rasterizerDisable)
+    if (pState->state.soState.rasterizerDisable == true)
     {
         pState->pfnProcessPrims = nullptr;
 #if USE_SIMD16_FRONTEND
@@ -1006,8 +1006,8 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
     pState->state.depthHottileEnable = ((!(pState->state.depthStencilState.depthTestEnable &&
                                            !pState->state.depthStencilState.depthWriteEnable &&
                                            !pState->state.depthBoundsState.depthBoundsTestEnable &&
-                                           pState->state.depthStencilState.depthTestFunc == ZFUNC_ALWAYS)) &&
-                                        (pState->state.depthStencilState.depthTestEnable ||
+                                           pState->state.depthStencilState.depthTestFunc == ZFUNC_ALWAYS)) && 
+                                        (pState->state.depthStencilState.depthTestEnable || 
                                          pState->state.depthStencilState.depthWriteEnable ||
                                          pState->state.depthBoundsState.depthBoundsTestEnable)) ? true : false;
 
@@ -1017,14 +1017,15 @@ void SetupPipeline(DRAW_CONTEXT *pDC)
                                           // for stencil we have to check the double sided state as well
                                           (!(pState->state.depthStencilState.doubleSidedStencilTestEnable &&
                                              !pState->state.depthStencilState.stencilWriteEnable &&
-                                              pState->state.depthStencilState.backfaceStencilTestFunc == ZFUNC_ALWAYS))) &&
+                                              pState->state.depthStencilState.backfaceStencilTestFunc == ZFUNC_ALWAYS))) && 
                                           (pState->state.depthStencilState.stencilTestEnable  ||
                                            pState->state.depthStencilState.stencilWriteEnable)) ? true : false;
+
 
     uint32_t hotTileEnable = pState->state.psState.renderTargetMask;
 
     // Disable hottile for surfaces with no writes
-    if (psState.pfnPixelShader)
+    if (psState.pfnPixelShader != nullptr)
     {
         DWORD rt;
         uint32_t rtMask = pState->state.psState.renderTargetMask;
@@ -1073,12 +1074,12 @@ void InitDraw(
     bool isSplitDraw)
 {
     // We don't need to re-setup the scissors/pipeline state again for split draw.
-    if (!isSplitDraw)
+    if (isSplitDraw == false)
     {
         SetupMacroTileScissors(pDC);
         SetupPipeline(pDC);
     }
-
+    
 
 }
 
@@ -1400,6 +1401,7 @@ void DrawIndexedInstance(
     // Restore culling state
     pDC = GetDrawContext(pContext);
     pDC->pState->state.rastState.cullMode = oldCullMode;
+ 
     RDTSC_END(APIDrawIndexed, numIndices * numInstances);
 }
 
@@ -1644,7 +1646,7 @@ VOID* SwrGetPrivateContextState(
     DRAW_CONTEXT* pDC = GetDrawContext(pContext);
     DRAW_STATE* pState = pDC->pState;
 
-    if (!pState->pPrivateState)
+    if (pState->pPrivateState == nullptr)
     {
         pState->pPrivateState = pState->pArena->AllocAligned(pContext->privateStateSize, KNOB_SIMD_WIDTH*sizeof(float));
     }

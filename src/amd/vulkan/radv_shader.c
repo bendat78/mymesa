@@ -88,7 +88,7 @@ VkResult radv_CreateShaderModule(
 	module = vk_alloc2(&device->alloc, pAllocator,
 			     sizeof(*module) + pCreateInfo->codeSize, 8,
 			     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!module)
+	if (module == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	module->nir = NULL;
@@ -673,7 +673,6 @@ radv_shader_dump_stats(struct radv_device *device,
 	generate_shader_stats(device, variant, stage, buf);
 
 	fprintf(file, "\n%s:\n", radv_get_shader_name(variant, stage));
-
 	fprintf(file, "%s", buf->buf);
 
 	_mesa_string_buffer_destroy(buf);
@@ -707,7 +706,7 @@ radv_GetShaderInfoAMD(VkDevice _device,
 			unsigned lds_multiplier = device->physical_device->rad_info.chip_class >= CIK ? 512 : 256;
 			struct ac_shader_config *conf = &variant->config;
 
-			VkShaderStatisticsInfoAMD statistics = {0};
+			VkShaderStatisticsInfoAMD statistics = {};
 			statistics.shaderStageMask = shaderStage;
 			statistics.numPhysicalVgprs = RADV_NUM_PHYSICAL_VGPRS;
 			statistics.numPhysicalSgprs = radv_get_num_physical_sgprs(device->physical_device);

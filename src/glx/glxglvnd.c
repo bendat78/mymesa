@@ -31,7 +31,7 @@ static unsigned FindGLXFunction(const GLubyte *name)
     match = bsearch(name, __glXDispatchTableStrings, DI_FUNCTION_COUNT,
                     sizeof(const char *), compare);
 
-    if (!match)
+    if (match == NULL)
         return DI_FUNCTION_COUNT;
 
     return match - __glXDispatchTableStrings;

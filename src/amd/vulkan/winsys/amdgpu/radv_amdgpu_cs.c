@@ -640,7 +640,7 @@ static int radv_amdgpu_create_bo_list(struct radv_amdgpu_winsys *ws,
 	} else if (count == 1 && !num_extra_bo && !extra_cs && !radv_bo_list &&
 	           !radv_amdgpu_cs(cs_array[0])->num_virtual_buffers) {
 		struct radv_amdgpu_cs *cs = (struct radv_amdgpu_cs*)cs_array[0];
-		if (!cs->num_buffers) {
+		if (cs->num_buffers == 0) {
 			*bo_list = 0;
 			return 0;
 		}
@@ -664,7 +664,7 @@ static int radv_amdgpu_create_bo_list(struct radv_amdgpu_winsys *ws,
 			total_buffer_count += radv_bo_list->count;
 		}
 
-		if (!total_buffer_count) {
+		if (total_buffer_count == 0) {
 			*bo_list = 0;
 			return 0;
 		}
@@ -692,7 +692,7 @@ static int radv_amdgpu_create_bo_list(struct radv_amdgpu_winsys *ws,
 			if (!cs->num_buffers)
 				continue;
 
-			if (!unique_bo_count) {
+			if (unique_bo_count == 0) {
 				memcpy(handles, cs->handles, cs->num_buffers * sizeof(amdgpu_bo_handle));
 				memcpy(priorities, cs->priorities, cs->num_buffers * sizeof(uint8_t));
 				unique_bo_count = cs->num_buffers;
@@ -1400,7 +1400,7 @@ static int radv_amdgpu_cs_submit(struct radv_amdgpu_ctx *ctx,
 		}
 		num_chunks++;
 
-		if (!sem_info->wait.sem_count)
+		if (sem_info->wait.sem_count == 0)
 			sem_info->cs_emit_wait = false;
 
 	}
@@ -1497,7 +1497,7 @@ static bool radv_amdgpu_wait_syncobj(struct radeon_winsys *_ws, const uint32_t *
 					 DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT |
 					 (wait_all ? DRM_SYNCOBJ_WAIT_FLAGS_WAIT_ALL : 0),
 					 &tmp);
-	if (!ret) {
+	if (ret == 0) {
 		return true;
 	} else if (ret == -1 && errno == ETIME) {
 		return false;

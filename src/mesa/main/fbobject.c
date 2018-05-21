@@ -111,7 +111,7 @@ _mesa_lookup_renderbuffer(struct gl_context *ctx, GLuint id)
 {
    struct gl_renderbuffer *rb;
 
-   if (!id)
+   if (id == 0)
       return NULL;
 
    rb = (struct gl_renderbuffer *)
@@ -149,7 +149,7 @@ _mesa_lookup_framebuffer(struct gl_context *ctx, GLuint id)
 {
    struct gl_framebuffer *fb;
 
-   if (!id)
+   if (id == 0)
       return NULL;
 
    fb = (struct gl_framebuffer *)
@@ -1218,7 +1218,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
 
    fb->MaxNumLayers = max_layer_count;
 
-   if (!numImages) {
+   if (numImages == 0) {
       fb->_HasAttachments = false;
 
       if (!ctx->Extensions.ARB_framebuffer_no_attachments) {
@@ -1296,7 +1296,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
     * renderbuffers/textures are different sizes, the framebuffer
     * width/height will be set to the smallest width/height.
     */
-   if (numImages) {
+   if (numImages != 0) {
       fb->Width = minWidth;
       fb->Height = minHeight;
    }
@@ -2147,7 +2147,7 @@ _mesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    assert(width >= 0 && width <= (GLsizei) ctx->Const.MaxRenderbufferSize);
    assert(height >= 0 && height <= (GLsizei) ctx->Const.MaxRenderbufferSize);
    assert(samples != NO_SAMPLES);
-   if (samples) {
+   if (samples != 0) {
       assert(samples > 0);
       assert(_mesa_check_sample_count(ctx, GL_RENDERBUFFER,
                                       internalFormat, samples) == GL_NO_ERROR);
@@ -2208,7 +2208,7 @@ renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    GLenum sample_count_error;
 
    baseFormat = _mesa_base_fbo_format(ctx, internalFormat);
-   if (!baseFormat) {
+   if (baseFormat == 0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(internalFormat=%s)",
                   func, _mesa_enum_to_string(internalFormat));
       return;
@@ -3282,7 +3282,7 @@ _mesa_get_and_validate_attachment(struct gl_context *ctx,
    bool is_color_attachment;
    struct gl_renderbuffer_attachment *att =
       get_attachment(ctx, fb, attachment, &is_color_attachment);
-   if (!att) {
+   if (att == NULL) {
       if (is_color_attachment) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(invalid color attachment %s)", caller,
@@ -3713,7 +3713,7 @@ framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
       }
 
       att = get_attachment(ctx, fb, attachment, &is_color_attachment);
-      if (!att) {
+      if (att == NULL) {
          /*
           * From OpenGL 4.5 spec, section 9.2.7 "Attaching Renderbuffer Images
           * to a Framebuffer":
@@ -3916,7 +3916,7 @@ get_framebuffer_attachment_parameter(struct gl_context *ctx,
       att = get_attachment(ctx, buffer, attachment, &is_color_attachment);
    }
 
-   if (!att) {
+   if (att == NULL) {
       /*
        * From OpenGL 4.5 spec, section 9.2.3 "Framebuffer Object Queries":
        *

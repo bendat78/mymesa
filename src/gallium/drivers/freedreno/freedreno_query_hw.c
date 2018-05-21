@@ -371,7 +371,7 @@ fd_hw_query_prepare_tile(struct fd_batch *batch, uint32_t n,
 	uint32_t offset = tile_stride * n;
 
 	/* bail if no queries: */
-	if (!tile_stride)
+	if (tile_stride == 0)
 		return;
 
 	fd_wfi(batch, ring);

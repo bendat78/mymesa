@@ -170,7 +170,7 @@ ADDR_HANDLE amdgpu_addr_create(const struct radeon_info *info,
 	ADDR_CREATE_INPUT addrCreateInput = {0};
 	ADDR_CREATE_OUTPUT addrCreateOutput = {0};
 	ADDR_REGISTER_VALUE regValue = {0};
-	ADDR_CREATE_FLAGS createFlags = {0};
+	ADDR_CREATE_FLAGS createFlags = {{0}};
 	ADDR_GET_MAX_ALINGMENTS_OUTPUT addrGetMaxAlignmentsOutput = {0};
 	ADDR_E_RETURNCODE addrRet;
 
@@ -836,7 +836,7 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 					surf->u.legacy.stencil_level[level].nblk_x;
 			}
 
-			if (level) {
+			if (level == 0) {
 				if (only_stencil) {
 					r = gfx6_surface_settings(addrlib, info, config,
 								  &AddrSurfInfoOut, surf);
@@ -857,7 +857,7 @@ static int gfx6_compute_surface(ADDR_HANDLE addrlib,
 	if (config->info.samples >= 2 && AddrSurfInfoIn.flags.color) {
 		ADDR_COMPUTE_FMASK_INFO_INPUT fin = {0};
 		ADDR_COMPUTE_FMASK_INFO_OUTPUT fout = {0};
-		ADDR_TILEINFO fmask_tile_info = {0};
+		ADDR_TILEINFO fmask_tile_info = {};
 
 		fin.size = sizeof(fin);
 		fout.size = sizeof(fout);
@@ -1003,7 +1003,7 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 				struct radeon_surf *surf, bool compressed,
 				ADDR2_COMPUTE_SURFACE_INFO_INPUT *in)
 {
-	ADDR2_MIP_INFO mip_info[RADEON_SURF_MAX_LEVELS] = {0};
+	ADDR2_MIP_INFO mip_info[RADEON_SURF_MAX_LEVELS] = {};
 	ADDR2_COMPUTE_SURFACE_INFO_OUTPUT out = {0};
 	ADDR_E_RETURNCODE ret;
 
@@ -1111,7 +1111,7 @@ static int gfx9_compute_miptree(ADDR_HANDLE addrlib,
 		    in->swizzleMode != ADDR_SW_LINEAR) {
 			ADDR2_COMPUTE_DCCINFO_INPUT din = {0};
 			ADDR2_COMPUTE_DCCINFO_OUTPUT dout = {0};
-			ADDR2_META_MIP_INFO meta_mip_info[RADEON_SURF_MAX_LEVELS] = {0};
+			ADDR2_META_MIP_INFO meta_mip_info[RADEON_SURF_MAX_LEVELS] = {};
 
 			din.size = sizeof(ADDR2_COMPUTE_DCCINFO_INPUT);
 			dout.size = sizeof(ADDR2_COMPUTE_DCCINFO_OUTPUT);

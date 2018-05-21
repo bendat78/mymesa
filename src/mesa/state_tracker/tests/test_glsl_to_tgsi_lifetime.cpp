@@ -794,29 +794,6 @@ TEST_F(LifetimeEvaluatorExactTest, WriteInIfElseBranchSecondIfInLoop)
    run (code, temp_lt_expect({{-1,-1}, {2,9}}));
 }
 
-/*
-  Test for
-*/
-
-TEST_F(LifetimeEvaluatorExactTest, DeeplyNestedinLoop)
-{
-   const vector<FakeCodeline> code = {
-      { TGSI_OPCODE_BGNLOOP },
-      {   TGSI_OPCODE_UIF, {}, {in0}, {}},
-      {     TGSI_OPCODE_FSEQ, {1}, {in1,in2}, {}},
-      {     TGSI_OPCODE_UIF, {}, {1}, {}},
-      {       TGSI_OPCODE_MOV, {2}, {in1}, {}},
-      {     TGSI_OPCODE_ELSE },
-      {       TGSI_OPCODE_MOV, {2}, {in2}, {}},
-      {     TGSI_OPCODE_ENDIF },
-      {     TGSI_OPCODE_MOV, {3}, {2}, {}},
-      {   TGSI_OPCODE_ENDIF },
-      {   TGSI_OPCODE_ADD, {out0}, {3, in1}, {}},
-      { TGSI_OPCODE_ENDLOOP }
-   };
-   run (code, temp_lt_expect({{-1,-1}, {2,3}, {4, 8}, {0,11}}));
-}
-
 /** Regression test for bug #104803,
  *  Read and write in if/else path outside loop and later read in conditional
  *  within a loop. The first write is to be considered the dominant write.
@@ -1707,7 +1684,7 @@ TEST_F(LifetimeEvaluatorExactTest, WriteIndirectReladdr2)
  */
 TEST_F(RegisterRemappingTest, RegisterRemapping1)
 {
-   vector<register_live_range> lt({{-1,-1},
+   vector<lifetime> lt({{-1,-1},
                         {0,1},
                         {0,2},
                         {1,2},
@@ -1722,7 +1699,7 @@ TEST_F(RegisterRemappingTest, RegisterRemapping1)
 
 TEST_F(RegisterRemappingTest, RegisterRemapping2)
 {
-   vector<register_live_range> lt({{-1,-1},
+   vector<lifetime> lt({{-1,-1},
                         {0,1},
                         {0,2},
                         {3,4},
@@ -1734,7 +1711,7 @@ TEST_F(RegisterRemappingTest, RegisterRemapping2)
 
 TEST_F(RegisterRemappingTest, RegisterRemappingMergeAllToOne)
 {
-   vector<register_live_range> lt({{-1,-1},
+   vector<lifetime> lt({{-1,-1},
                         {0,1},
                         {1,2},
                         {2,3},
@@ -1746,7 +1723,7 @@ TEST_F(RegisterRemappingTest, RegisterRemappingMergeAllToOne)
 
 TEST_F(RegisterRemappingTest, RegisterRemappingIgnoreUnused)
 {
-   vector<register_live_range> lt({{-1,-1},
+   vector<lifetime> lt({{-1,-1},
                         {0,1},
                         {1,2},
                         {2,3},
@@ -1759,7 +1736,7 @@ TEST_F(RegisterRemappingTest, RegisterRemappingIgnoreUnused)
 
 TEST_F(RegisterRemappingTest, RegisterRemappingMergeZeroLifetimeRegisters)
 {
-   vector<register_live_range> lt({{-1,-1},
+   vector<lifetime> lt({{-1,-1},
                         {0,1},
                         {1,2},
                         {2,3},

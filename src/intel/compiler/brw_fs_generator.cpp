@@ -63,7 +63,7 @@ brw_reg_from_fs_reg(const struct gen_device_info *devinfo, fs_inst *inst,
       assert((reg->nr & ~BRW_MRF_COMPR4) < BRW_MAX_MRF(devinfo->gen));
       /* Fallthrough */
    case VGRF:
-      if (!reg->stride) {
+      if (reg->stride == 0) {
          brw_reg = brw_vec1_reg(brw_file_from_reg(reg), reg->nr, 0);
       } else {
          /* From the Haswell PRM:
@@ -324,7 +324,7 @@ fs_generator::generate_fb_write(fs_inst *inst, struct brw_reg payload)
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
     */
-   if (inst->header_size) {
+   if (inst->header_size != 0) {
       brw_push_insn_state(p);
       brw_set_default_mask_control(p, BRW_MASK_DISABLE);
       brw_set_default_exec_size(p, BRW_EXECUTE_1);

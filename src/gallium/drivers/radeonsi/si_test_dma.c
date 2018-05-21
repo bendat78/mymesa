@@ -219,7 +219,7 @@ void si_test_dma(struct si_screen *sscreen)
 	 * - generate random subrectangle copies for partial blits
 	 */
 	for (i = 0; i < iterations; i++) {
-		struct pipe_resource tsrc = {0}, tdst = {0}, *src, *dst;
+		struct pipe_resource tsrc = {}, tdst = {}, *src, *dst;
 		struct r600_texture *rdst;
 		struct r600_texture *rsrc;
 		struct cpu_texture src_cpu, dst_cpu;

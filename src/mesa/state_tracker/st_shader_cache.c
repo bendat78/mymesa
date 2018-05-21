@@ -385,7 +385,7 @@ st_load_ir_from_disk_cache(struct gl_context *ctx,
       return false;
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (!prog->_LinkedShaders[i])
+      if (prog->_LinkedShaders[i] == NULL)
          continue;
 
       struct gl_program *glprog = prog->_LinkedShaders[i]->Program;

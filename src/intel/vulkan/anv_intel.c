@@ -46,7 +46,7 @@ VkResult anv_CreateDmaBufImageINTEL(
 
    mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
                     VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!mem)
+   if (mem == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    result = anv_image_create(_device,

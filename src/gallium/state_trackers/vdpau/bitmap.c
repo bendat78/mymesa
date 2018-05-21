@@ -105,7 +105,7 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    mtx_unlock(&dev->mutex);
 
    *surface = vlAddDataHTAB(vlsurface);
-   if (!*surface) {
+   if (*surface == 0) {
       mtx_lock(&dev->mutex);
       ret = VDP_STATUS_ERROR;
       goto err_sampler;

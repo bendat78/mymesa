@@ -222,7 +222,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen,
 		rctx->b.b.resource_copy_region = rctx->b.dma_copy;
 
 	rctx->blitter = util_blitter_create(&rctx->b.b);
-	if (!rctx->blitter)
+	if (rctx->blitter == NULL)
 		goto fail;
 	util_blitter_set_texture_multisample(rctx->blitter, rscreen->has_msaa);
 	rctx->blitter->draw_rectangle = r600_draw_rectangle;
@@ -784,7 +784,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws,
 
 	rscreen->has_atomics = rscreen->b.info.drm_minor >= 44;
 #if 0 /* This is for testing whether aux_context and buffer clearing work correctly. */
-	struct pipe_resource templ = {0};
+	struct pipe_resource templ = {};
 
 	templ.width0 = 4;
 	templ.height0 = 2048;

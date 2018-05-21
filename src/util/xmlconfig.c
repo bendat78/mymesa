@@ -15,11 +15,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * FELIX KUEHLING, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * FELIX KUEHLING, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  */
 /**
  * \file xmlconfig.c
@@ -74,13 +74,13 @@ __getProgramName()
 {
     static const char *progname;
 
-    if (!progname) {
+    if (progname == NULL) {
         const char *e = getexecname();
-        if (e) {
+        if (e != NULL) {
             /* Have to make a copy since getexecname can return a readonly
                string, but basename expects to be able to modify its arg. */
             char *n = strdup(e);
-            if (n) {
+            if (n != NULL) {
                 progname = basename(n);
             }
         }
@@ -131,7 +131,7 @@ findOption(const driOptionCache *cache, const char *name)
   /* this is just the starting point of the linear search for the option */
     for (i = 0; i < size; ++i, hash = (hash+1) & mask) {
       /* if we hit an empty entry then the option is not defined (yet) */
-        if (!cache->info[hash].name)
+        if (cache->info[hash].name == 0)
             break;
         else if (!strcmp (name, cache->info[hash].name))
             break;
@@ -267,7 +267,7 @@ strToF(const XML_Char *string, const XML_Char **tail)
             nDigits++;
         }
     }
-    if (!nDigits) {
+    if (nDigits == 0) {
         /* no digits, no number */
         *tail = start;
         return 0.0f;
@@ -412,7 +412,7 @@ checkValue(const driOptionValue *v, const driOptionInfo *info)
 {
     uint32_t i;
     assert (info->type != DRI_BOOL); /* should be caught by the parser */
-    if (!info->nRanges)
+    if (info->nRanges == 0)
         return true;
     switch (info->type) {
       case DRI_ENUM: /* enum is just a special integer */
@@ -438,10 +438,10 @@ checkValue(const driOptionValue *v, const driOptionInfo *info)
 
 /**
  * Print message to \c stderr if the \c LIBGL_DEBUG environment variable
- * is set.
- *
+ * is set. 
+ * 
  * Is called from the drivers.
- *
+ * 
  * \param f \c printf like format string.
  */
 static void
@@ -607,7 +607,7 @@ parseOptInfoAttr(struct OptInfoData *data, const XML_Char **attr)
         XML_FATAL ("illegal type in option: %s.", attrVal[OA_TYPE]);
 
     defaultVal = getenv (cache->info[opt].name);
-    if (defaultVal) {
+    if (defaultVal != NULL) {
       /* don't use XML_WARNING, we want the user to see this! */
         fprintf (stderr,
                  "ATTENTION: default value of option %s overridden by environment.\n",
@@ -833,7 +833,7 @@ parseOptConfAttr(struct OptConfData *data, const XML_Char **attr)
     if (name && value) {
         driOptionCache *cache = data->cache;
         uint32_t opt = findOption (cache, name);
-        if (!cache->info[opt].name)
+        if (cache->info[opt].name == NULL)
             /* don't use XML_WARNING, drirc defines options for all drivers,
              * but not all drivers support them */
             return;
@@ -927,7 +927,7 @@ initOptionCache(driOptionCache *cache, const driOptionCache *info)
     cache->info = info->info;
     cache->tableSize = info->tableSize;
     cache->values = malloc((1<<info->tableSize) * sizeof (driOptionValue));
-    if (!cache->values) {
+    if (cache->values == NULL) {
         fprintf (stderr, "%s: %d: out of memory.\n", __FILE__, __LINE__);
         abort();
     }
@@ -972,7 +972,7 @@ parseOneConfigFile(XML_Parser p)
             XML_ERROR ("%s.", XML_ErrorString(XML_GetErrorCode(p)));
             break;
         }
-        if (!bytesRead)
+        if (bytesRead == 0)
             break;
     }
 
@@ -1003,7 +1003,7 @@ driParseConfigFiles(driOptionCache *cache, const driOptionCache *info,
     if ((home = getenv ("HOME"))) {
         uint32_t len = strlen (home);
         filenames[1] = malloc(len + 7+1);
-        if (!filenames[1])
+        if (filenames[1] == NULL)
             __driUtilMessage ("Can't allocate memory for %s/.drirc.", home);
         else {
             memcpy (filenames[1], home, len);
@@ -1013,7 +1013,7 @@ driParseConfigFiles(driOptionCache *cache, const driOptionCache *info,
 
     for (i = 0; i < 2; ++i) {
         XML_Parser p;
-        if (!filenames[i])
+        if (filenames[i] == NULL)
             continue;
 
         p = XML_ParserCreate (NULL); /* use encoding specified by file */

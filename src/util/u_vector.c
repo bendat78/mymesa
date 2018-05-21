@@ -58,11 +58,11 @@ u_vector_add(struct u_vector *vector)
    if (vector->head - vector->tail == vector->size) {
       size = vector->size * 2;
       data = malloc(size);
-      if (!data)
+      if (data == NULL)
          return NULL;
       src_tail = vector->tail & (vector->size - 1);
       dst_tail = vector->tail & (size - 1);
-      if (!src_tail) {
+      if (src_tail == 0) {
          /* Since we know that the vector is full, this means that it's
           * linear from start to end so we can do one copy.
           */

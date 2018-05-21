@@ -222,7 +222,7 @@ brw_codegen_vs_prog(struct brw_context *brw,
    program = brw_compile_vs(compiler, brw, mem_ctx, key, &prog_data,
                             vp->program.nir,
                             st_index, &error_str);
-   if (!program) {
+   if (program == NULL) {
       if (!vp->program.is_arb_asm) {
          vp->program.sh.data->LinkStatus = LINKING_FAILURE;
          ralloc_strcat(&vp->program.sh.data->InfoLog, error_str);

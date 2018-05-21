@@ -698,7 +698,7 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 					  swizzle,
 					  &word4, &yuv_format, do_endian_swap);
 	assert(format != ~0);
-	if (format == (~0u)) {
+	if (format == ~0) {
 		FREE(view);
 		return NULL;
 	}
@@ -2589,7 +2589,7 @@ void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 {
 	struct r600_command_buffer *cb = &shader->command_buffer;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned spi_vs_out_id[10] = {0};
+	unsigned spi_vs_out_id[10] = {};
 	unsigned i, tmp, nparams = 0;
 
 	for (i = 0; i < rshader->noutput; i++) {
@@ -2961,7 +2961,7 @@ static void r600_dma_copy(struct pipe_context *ctx,
 	unsigned src_x, src_y;
 	unsigned dst_x = dstx, dst_y = dsty, dst_z = dstz;
 
-	if (!rctx->b.dma.cs) {
+	if (rctx->b.dma.cs == NULL) {
 		goto fallback;
 	}
 

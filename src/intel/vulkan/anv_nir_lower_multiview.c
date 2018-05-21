@@ -46,7 +46,7 @@ build_instance_id(struct lower_multiview_state *state)
 {
    assert(state->builder.shader->info.stage == MESA_SHADER_VERTEX);
 
-   if (!state->instance_id) {
+   if (state->instance_id == NULL) {
       nir_builder *b = &state->builder;
 
       b->cursor = nir_before_block(nir_start_block(b->impl));
@@ -66,7 +66,7 @@ build_instance_id(struct lower_multiview_state *state)
 static nir_ssa_def *
 build_view_index(struct lower_multiview_state *state)
 {
-   if (!state->view_index) {
+   if (state->view_index == NULL) {
       nir_builder *b = &state->builder;
 
       b->cursor = nir_before_block(nir_start_block(b->impl));
@@ -158,7 +158,7 @@ anv_nir_lower_multiview(nir_shader *shader, uint32_t view_mask)
    assert(shader->info.stage != MESA_SHADER_COMPUTE);
 
    /* If multiview isn't enabled, we have nothing to do. */
-   if (!view_mask)
+   if (view_mask == 0)
       return false;
 
    struct lower_multiview_state state = {

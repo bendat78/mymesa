@@ -457,7 +457,7 @@ static bool radv_is_storage_image_format_supported(struct radv_physical_device *
 	num_format = radv_translate_tex_numformat(format, desc,
 						  vk_format_get_first_non_void_channel(format));
 
-	if(data_format == (~0u) || num_format == (~0u))
+	if(data_format == ~0 || num_format == ~0)
 		return false;
 
 	/* Extracted from the GCN3 ISA document. */
@@ -1117,7 +1117,7 @@ static VkResult radv_get_image_format_properties(struct radv_physical_device *ph
 		unreachable("bad VkImageTiling");
 	}
 
-	if (!format_feature_flags)
+	if (format_feature_flags == 0)
 		goto unsupported;
 
 	if (info->type != VK_IMAGE_TYPE_2D && vk_format_is_depth_or_stencil(info->format))

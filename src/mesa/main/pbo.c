@@ -100,7 +100,7 @@ _mesa_validate_pbo_access(GLuint dimensions,
          return GL_FALSE;
    }
 
-   if (!size)
+   if (size == 0)
       /* no buffer! */
       return GL_FALSE;
 

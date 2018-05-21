@@ -280,7 +280,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    aaline_fs = *orig_fs; /* copy to init */
    aaline_fs.tokens = tgsi_alloc_tokens(newLen);
-   if (!aaline_fs.tokens)
+   if (aaline_fs.tokens == NULL)
       return FALSE;
 
    memset(&transform, 0, sizeof(transform));
@@ -306,7 +306,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
 #endif
 
    aaline->fs->aaline_fs = aaline->driver_create_fs_state(pipe, &aaline_fs);
-   if (!aaline->fs->aaline_fs)
+   if (aaline->fs->aaline_fs == NULL)
       goto fail;
 
    aaline->fs->generic_attrib = transform.maxGeneric + 1;

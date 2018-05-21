@@ -82,7 +82,7 @@ get_deref_offset(struct lower_io_types_state *state, nir_deref *tail, bool vs_in
 {
    unsigned offset = 0;
 
-   while (tail->child) {
+   while (tail->child != NULL) {
       const struct glsl_type *parent_type = tail->type;
       tail = tail->child;
 

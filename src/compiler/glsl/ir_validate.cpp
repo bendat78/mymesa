@@ -90,7 +90,7 @@ public:
 ir_visitor_status
 ir_validate::visit(ir_dereference_variable *ir)
 {
-   if (!(ir->var) || (ir->var->as_variable() == NULL)) {
+   if ((ir->var == NULL) || (ir->var->as_variable() == NULL)) {
       printf("ir_dereference_variable @ %p does not specify a variable %p\n",
 	     (void *) ir, (void *) ir->var);
       abort();
@@ -170,7 +170,7 @@ ir_validate::visit_enter(ir_function *ir)
 {
    /* Function definitions cannot be nested.
     */
-   if (this->current_function) {
+   if (this->current_function != NULL) {
       printf("Function definition nested inside another function "
 	     "definition:\n");
       printf("%s %p inside %s %p\n",
@@ -223,7 +223,7 @@ ir_validate::visit_enter(ir_function_signature *ir)
       abort();
    }
 
-   if (!ir->return_type) {
+   if (ir->return_type == NULL) {
       printf("Function signature %p for function %s has NULL return type.\n",
 	     (void *) ir, ir->function_name());
       abort();
@@ -940,7 +940,7 @@ ir_validate::visit_enter(ir_assignment *ir)
 {
    const ir_dereference *const lhs = ir->lhs;
    if (lhs->type->is_scalar() || lhs->type->is_vector()) {
-      if (!ir->write_mask) {
+      if (ir->write_mask == 0) {
 	 printf("Assignment LHS is %s, but write mask is 0:\n",
 		lhs->type->is_scalar() ? "scalar" : "vector");
 	 ir->print();
@@ -1052,7 +1052,7 @@ check_node_type(ir_instruction *ir, void *data)
       ir->print(); printf("\n");
    }
    ir_rvalue *value = ir->as_rvalue();
-   if (value)
+   if (value != NULL)
       assert(value->type != glsl_type::error_type);
 }
 

@@ -40,7 +40,7 @@ anv_device_execbuf(struct anv_device *device,
                    struct anv_bo **execbuf_bos)
 {
    int ret = device->no_hw ? 0 : anv_gem_execbuffer(device, execbuf);
-   if (ret) {
+   if (ret != 0) {
       /* We don't know the real error. */
       device->lost = true;
       return vk_errorf(device->instance, device, VK_ERROR_DEVICE_LOST,
@@ -172,7 +172,7 @@ VkResult anv_QueueSubmit(
       /* Fence for this submit.  NULL for all but the last one */
       VkFence submit_fence = (i == submitCount - 1) ? fence : VK_NULL_HANDLE;
 
-      if (!pSubmits[i].commandBufferCount) {
+      if (pSubmits[i].commandBufferCount == 0) {
          /* If we don't have any command buffers, we need to submit a dummy
           * batch to give GEM something to wait on.  We could, potentially,
           * come up with something more efficient but this shouldn't be a
@@ -203,7 +203,7 @@ VkResult anv_QueueSubmit(
 
          const VkSemaphore *in_semaphores = NULL, *out_semaphores = NULL;
          uint32_t num_in_semaphores = 0, num_out_semaphores = 0;
-         if (!j) {
+         if (j == 0) {
             /* Only the first batch gets the in semaphores */
             in_semaphores = pSubmits[i].pWaitSemaphores;
             num_in_semaphores = pSubmits[i].waitSemaphoreCount;
@@ -271,7 +271,7 @@ VkResult anv_CreateFence(
 
    fence = vk_zalloc2(&device->alloc, pAllocator, sizeof(*fence), 8,
                       VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!fence)
+   if (fence == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    if (device->instance->physicalDevice.has_syncobj_wait) {
@@ -851,7 +851,7 @@ VkResult anv_CreateSemaphore(
 
    semaphore = vk_alloc2(&device->alloc, pAllocator, sizeof(*semaphore), 8,
                          VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!semaphore)
+   if (semaphore == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    const VkExportSemaphoreCreateInfoKHR *export =
@@ -859,7 +859,7 @@ VkResult anv_CreateSemaphore(
     VkExternalSemaphoreHandleTypeFlagsKHR handleTypes =
       export ? export->handleTypes : 0;
 
-   if (!handleTypes) {
+   if (handleTypes == 0) {
       /* The DRM execbuffer ioctl always execute in-oder so long as you stay
        * on the same ring.  Since we don't expose the blit engine as a DMA
        * queue, a dummy no-op semaphore is a perfectly valid implementation.
@@ -951,7 +951,7 @@ void anv_DestroySemaphore(
    ANV_FROM_HANDLE(anv_device, device, _device);
    ANV_FROM_HANDLE(anv_semaphore, semaphore, _semaphore);
 
-   if (!semaphore)
+   if (semaphore == NULL)
       return;
 
    anv_semaphore_impl_cleanup(device, &semaphore->temporary);

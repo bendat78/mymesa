@@ -126,7 +126,7 @@ vlVaMapBuffer(VADriverContextP ctx, VABufferID buf_id, void **pbuff)
 
    if (buf->derived_surface.resource) {
       struct pipe_resource *resource;
-      struct pipe_box box = {0};
+      struct pipe_box box = {};
 
       resource = buf->derived_surface.resource;
       box.width = resource->width0;
@@ -352,10 +352,10 @@ vlVaReleaseBufferHandle(VADriverContextP ctx, VABufferID buf_id)
    if (!buf)
       return VA_STATUS_ERROR_INVALID_BUFFER;
 
-   if (!buf->export_refcount)
+   if (buf->export_refcount == 0)
       return VA_STATUS_ERROR_INVALID_BUFFER;
 
-   if (!--buf->export_refcount) {
+   if (--buf->export_refcount == 0) {
       VABufferInfo * const buf_info = &buf->export_state;
 
       switch (buf_info->mem_type) {

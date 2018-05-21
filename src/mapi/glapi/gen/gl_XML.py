@@ -419,7 +419,7 @@ class gl_parameter(object):
         # take over.
 
         c = element.get( "count" )
-        try:
+        try: 
             count = int(c)
             self.count = count
             self.counter = None

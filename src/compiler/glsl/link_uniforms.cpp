@@ -136,7 +136,7 @@ program_resource_visitor::recursion(const glsl_type *t, char **name,
             this->set_buffer_offset(t->fields.structure[i].offset);
 
          /* Append '.field' to the current variable name. */
-         if (!name_length) {
+         if (name_length == 0) {
             ralloc_asprintf_rewrite_tail(name, &new_length, "%s", field);
          } else {
             ralloc_asprintf_rewrite_tail(name, &new_length, ".%s", field);
@@ -1070,7 +1070,7 @@ link_update_uniform_buffer_variables(struct gl_linked_shader *shader,
                const char *const begin = blks[i]->Name;
                const char *const end = strchr(begin, sentinel);
 
-               if (!end)
+               if (end == NULL)
                   continue;
 
                if (len != (end - begin))
@@ -1109,7 +1109,7 @@ link_update_uniform_buffer_variables(struct gl_linked_shader *shader,
                const char *begin = blks[i]->Uniforms[j].Name;
                const char *end = strchr(begin, sentinel);
 
-               if (!end)
+               if (end == NULL)
                   continue;
 
                if ((ptrdiff_t) l != (end - begin))
@@ -1353,14 +1353,13 @@ link_assign_uniform_storage(struct gl_context *ctx,
 {
    /* On the outside chance that there were no uniforms, bail out.
     */
-   if (!prog->data->NumUniformStorage)
+   if (prog->data->NumUniformStorage == 0)
       return;
 
    unsigned int boolean_true = ctx->Const.UniformBooleanTrue;
 
    union gl_constant_value *data;
-
-   if (!prog->data->UniformStorage) {
+   if (prog->data->UniformStorage == NULL) {
       prog->data->UniformStorage = rzalloc_array(prog->data,
                                                  struct gl_uniform_storage,
                                                  prog->data->NumUniformStorage);
@@ -1392,7 +1391,7 @@ link_assign_uniform_storage(struct gl_context *ctx,
       foreach_in_list(ir_instruction, node, shader->ir) {
          ir_variable *const var = node->as_variable();
 
-         if (!(var) || (var->data.mode != ir_var_uniform &&
+         if ((var == NULL) || (var->data.mode != ir_var_uniform &&
                                var->data.mode != ir_var_shader_storage))
             continue;
 
@@ -1458,7 +1457,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog,
    prog->data->UniformStorage = NULL;
    prog->data->NumUniformStorage = 0;
 
-   if (prog->UniformHash) {
+   if (prog->UniformHash != NULL) {
       prog->UniformHash->clear();
    } else {
       prog->UniformHash = new string_to_uint_map;
@@ -1477,7 +1476,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog,
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *sh = prog->_LinkedShaders[i];
 
-      if (!sh)
+      if (sh == NULL)
          continue;
 
       link_update_uniform_buffer_variables(sh, i);
@@ -1489,7 +1488,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog,
       foreach_in_list(ir_instruction, node, sh->ir) {
          ir_variable *const var = node->as_variable();
 
-         if (!(var) || (var->data.mode != ir_var_uniform &&
+         if ((var == NULL) || (var->data.mode != ir_var_uniform &&
                                var->data.mode != ir_var_shader_storage))
             continue;
 

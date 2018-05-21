@@ -31,7 +31,7 @@ u_socket_init(void)
    wVersionRequested = MAKEWORD(1, 1);
 
    err = WSAStartup(wVersionRequested, &wsaData);
-   if (err) {
+   if (err != 0) {
       debug_printf("WSAStartup failed with error: %d\n", err);
       return FALSE;
    }
@@ -122,7 +122,7 @@ u_socket_connect(const char *hostname, uint16_t port)
    util_snprintf(portString, sizeof(portString), "%d", port);
 
    r = getaddrinfo(hostname, portString, NULL, &addr);
-   if (r) {
+   if (r != 0) {
       return -1;
    }
 

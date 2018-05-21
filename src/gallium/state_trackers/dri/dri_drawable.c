@@ -152,7 +152,7 @@ dri_create_buffer(__DRIscreen * sPriv,
       goto fail;		       /* not implemented */
 
    drawable = CALLOC_STRUCT(dri_drawable);
-   if (!drawable)
+   if (drawable == NULL)
       goto fail;
 
    dri_fill_st_visual(&drawable->stvis, screen, visual);
@@ -347,7 +347,7 @@ swap_fences_pop_front(struct dri_drawable *draw)
    struct pipe_screen *screen = draw->screen->base.screen;
    struct pipe_fence_handle *fence = NULL;
 
-   if (!draw->desired_fences)
+   if (draw->desired_fences == 0)
       return NULL;
 
    if (draw->cur_fences >= draw->desired_fences) {

@@ -135,7 +135,7 @@ _mesa_SampleMaski(GLuint index, GLbitfield mask)
       return;
    }
 
-   if (index) {
+   if (index != 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glSampleMaski(index)");
       return;
    }

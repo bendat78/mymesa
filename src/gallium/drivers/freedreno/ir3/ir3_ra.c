@@ -513,7 +513,7 @@ ra_block_find_definers(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 {
 	list_for_each_entry (struct ir3_instruction, instr, &block->instr_list, node) {
 		struct ir3_ra_instr_data *id = &ctx->instrd[instr->ip];
-		if (!instr->regs_count)
+		if (instr->regs_count == 0)
 			continue;
 		/* couple special cases: */
 		if (writes_addr(instr) || writes_pred(instr)) {
@@ -542,7 +542,7 @@ ra_block_name_instructions(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 
 		ctx->instr_cnt++;
 
-		if (!instr->regs_count)
+		if (instr->regs_count == 0)
 			continue;
 
 		if (!writes_gpr(instr))
@@ -662,7 +662,7 @@ ra_block_compute_live_ranges(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 		struct ir3_instruction *src;
 		struct ir3_register *reg;
 
-		if (!instr->regs_count)
+		if (instr->regs_count == 0)
 			continue;
 
 		/* There are a couple special cases to deal with here:
@@ -1023,7 +1023,7 @@ ra_block_alloc(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 	list_for_each_entry (struct ir3_instruction, instr, &block->instr_list, node) {
 		struct ir3_register *reg;
 
-		if (!instr->regs_count)
+		if (instr->regs_count == 0)
 			continue;
 
 		if (writes_gpr(instr)) {
@@ -1091,7 +1091,7 @@ ra_alloc(struct ir3_ra_ctx *ctx)
 	list_for_each_entry (struct ir3_array, arr, &ctx->ir->array_list, node) {
 		unsigned base = n;
 
-		if (!arr->end_ip)
+		if (arr->end_ip == 0)
 			continue;
 
 		/* figure out what else we conflict with which has already
@@ -1101,7 +1101,7 @@ retry:
 		list_for_each_entry (struct ir3_array, arr2, &ctx->ir->array_list, node) {
 			if (arr2 == arr)
 				break;
-			if (!arr2->end_ip)
+			if (arr2->end_ip == 0)
 				continue;
 			/* if it intersects with liverange AND register range.. */
 			if (intersects(arr->start_ip, arr->end_ip,

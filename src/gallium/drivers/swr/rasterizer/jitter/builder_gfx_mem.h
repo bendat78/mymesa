@@ -78,7 +78,7 @@ namespace SwrJit
     protected:
 
         void AssertGFXMemoryParams(Value* ptr, Builder::JIT_MEM_CLIENT usage);
-
+            
         virtual void NotifyPrivateContextSet();
 
         virtual Value* OFFSET_TO_NEXT_COMPONENT(Value* base, Constant *offset);

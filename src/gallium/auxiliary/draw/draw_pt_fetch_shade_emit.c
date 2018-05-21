@@ -115,7 +115,7 @@ fse_prepare(struct draw_pt_middle_end *middle,
    }
 
    for (i = 0; i < 5 && i < nr_vbs; i++) {
-      if (!draw->pt.vertex_buffer[i].stride)
+      if (draw->pt.vertex_buffer[i].stride == 0)
          fse->key.const_vbuffers |= (1<<i);
    }
 

@@ -95,7 +95,7 @@ is_logic_op(enum opcode opcode)
 static src_reg
 get_copy_value(const copy_entry &entry, unsigned readmask)
 {
-   unsigned swz[4] = {0};
+   unsigned swz[4] = {};
    src_reg value;
 
    for (unsigned i = 0; i < 4; i++) {

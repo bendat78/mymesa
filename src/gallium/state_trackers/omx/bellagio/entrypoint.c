@@ -39,7 +39,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents)
 {
    OMX_ERRORTYPE r;
 
-   if (!stComponents)
+   if (stComponents == NULL)
       return 2;
 
    /* component 0 - video decoder */

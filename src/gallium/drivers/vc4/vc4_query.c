@@ -171,7 +171,7 @@ vc4_destroy_query(struct pipe_context *pctx, struct pipe_query *pquery)
 
         if (query->hwperfmon && query->hwperfmon->id) {
                 if (query->hwperfmon->id) {
-                        struct drm_vc4_perfmon_destroy req = {0};
+                        struct drm_vc4_perfmon_destroy req = { };
 
                         req.id = query->hwperfmon->id;
                         vc4_ioctl(ctx->fd, DRM_IOCTL_VC4_PERFMON_DESTROY,
@@ -189,7 +189,7 @@ vc4_begin_query(struct pipe_context *pctx, struct pipe_query *pquery)
 {
         struct vc4_query *query = (struct vc4_query *)pquery;
         struct vc4_context *ctx = vc4_context(pctx);
-        struct drm_vc4_perfmon_create req = {0};
+        struct drm_vc4_perfmon_create req = { };
         unsigned i;
         int ret;
 
@@ -202,7 +202,7 @@ vc4_begin_query(struct pipe_context *pctx, struct pipe_query *pquery)
 
         /* Reset the counters by destroying the previously allocated perfmon */
         if (query->hwperfmon->id) {
-                struct drm_vc4_perfmon_destroy destroyreq = {0};
+                struct drm_vc4_perfmon_destroy destroyreq = { };
 
                 destroyreq.id = query->hwperfmon->id;
                 vc4_ioctl(ctx->fd, DRM_IOCTL_VC4_PERFMON_DESTROY, &destroyreq);

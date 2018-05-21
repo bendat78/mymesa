@@ -66,38 +66,6 @@
 
 #define MAX_GLSL_TEXTURE_OFFSET 4
 
-#ifndef NDEBUG
-#include <fstream>
-#include <ios>
-/* Prepare to make it possible to specify log file */
-static std::ofstream stats_log;
-
-/* Helper function to check whether we want to write some statistics
- * of the shader conversion.
- */
-static inline bool print_stats_enabled ()
-{
-   static int stats_enabled = 0;
-   if (!stats_enabled) {
-      const char *stats_filename = getenv("GLSL_TO_TGSI_PRINT_STATS");
-      if (stats_filename) {
-         bool write_header = std::ifstream(stats_filename).fail();
-         stats_log.open(stats_filename, std::ios_base::out | std::ios_base::app);
-         stats_enabled = stats_log.good() ? 1 : -1;
-         if (write_header)
-            stats_log << "arrays,temps,temps in arrays,total,instructions\n";
-      } else {
-         stats_enabled = -1;
-      }
-   }
-   return stats_enabled > 0;
-}
-#define PRINT_STATS(X) if (print_stats_enabled()) do { X; } while (false);
-#else
-#define PRINT_STATS(X)
-#endif
-
-
 static unsigned is_precise(const ir_variable *ir)
 {
    if (!ir)
@@ -369,7 +337,6 @@ public:
    void copy_propagate(void);
    int eliminate_dead_code(void);
 
-   void split_arrays(void);
    void merge_two_dsts(void);
    void merge_registers(void);
    void renumber_registers(void);
@@ -377,8 +344,6 @@ public:
    void emit_block_mov(ir_assignment *ir, const struct glsl_type *type,
                        st_dst_reg *l, st_src_reg *r,
                        st_src_reg *cond, bool cond_swap);
-
-   void print_stats();
 
    void *mem_ctx;
 };
@@ -587,7 +552,7 @@ glsl_to_tgsi_visitor::emit_asm(ir_instruction *ir, enum tgsi_opcode op,
          }
 
          /* first time use previous instruction */
-         if (!dinst) {
+         if (dinst == NULL) {
             dinst = inst;
          } else {
             /* create a new instructions for subsequent attempts */
@@ -2390,7 +2355,7 @@ glsl_to_tgsi_visitor::visit(ir_swizzle *ir)
 {
    st_src_reg src;
    int i;
-   int swizzle[4] = {0};
+   int swizzle[4];
 
    /* Note that this is only swizzles in expressions, not those on the left
     * hand side of an assignment, which do write masking.  See ir_assignment
@@ -2871,7 +2836,7 @@ glsl_to_tgsi_visitor::process_move_condition(ir_rvalue *ir)
    ir_expression *const expr = ir->as_expression();
 
    if (native_integers) {
-      if (expr && (expr->num_operands == 2)) {
+      if ((expr != NULL) && (expr->num_operands == 2)) {
          enum glsl_base_type type = expr->operands[0]->type->base_type;
          if (type == GLSL_TYPE_INT || type == GLSL_TYPE_UINT ||
              type == GLSL_TYPE_BOOL) {
@@ -2900,7 +2865,7 @@ glsl_to_tgsi_visitor::process_move_condition(ir_rvalue *ir)
       return switch_order;
    }
 
-   if (expr && (expr->num_operands == 2)) {
+   if ((expr != NULL) && (expr->num_operands == 2)) {
       bool zero_on_left = false;
 
       if (expr->operands[0]->is_zero()) {
@@ -3021,7 +2986,7 @@ glsl_to_tgsi_visitor::emit_block_mov(ir_assignment *ir, const struct glsl_type *
    r->index++;
    if (type->is_dual_slot()) {
       l->index++;
-      if (!r->is_double_vertex_input)
+      if (r->is_double_vertex_input == false)
          r->index++;
    }
 }
@@ -3059,7 +3024,7 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
             assert(variable->data.location == FRAG_RESULT_STENCIL);
             l.writemask = WRITEMASK_Y;
          }
-      } else if (!ir->write_mask) {
+      } else if (ir->write_mask == 0) {
          assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
 
          unsigned num_elements =
@@ -3136,7 +3101,7 @@ void
 glsl_to_tgsi_visitor::visit(ir_constant *ir)
 {
    st_src_reg src;
-   GLdouble stack_vals[4] = {0};
+   GLdouble stack_vals[4] = { 0 };
    gl_constant_value *values = (gl_constant_value *) stack_vals;
    GLenum gl_type = GL_NONE;
    unsigned int i;
@@ -3350,14 +3315,14 @@ glsl_to_tgsi_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
          atomic_info[num_atomics].location = location->data.location;
          atomic_info[num_atomics].binding = location->data.binding;
          atomic_info[num_atomics].size = location->type->arrays_of_arrays_size();
-         if (!atomic_info[num_atomics].size)
+         if (atomic_info[num_atomics].size == 0)
             atomic_info[num_atomics].size = 1;
          atomic_info[num_atomics].array_id = 0;
          num_atomics++;
       }
 
       if (offset.file != PROGRAM_UNDEFINED) {
-         if (!atomic_info[entry->index].array_id) {
+         if (atomic_info[entry->index].array_id == 0) {
             num_atomic_arrays++;
             atomic_info[entry->index].array_id = num_atomic_arrays;
          }
@@ -4652,7 +4617,7 @@ count_resources(glsl_to_tgsi_visitor *v, gl_program *prog)
    }
    prog->SamplersUsed = v->samplers_used;
 
-   if (v->shader_program)
+   if (v->shader_program != NULL)
       _mesa_update_shader_textures_used(v->shader_program, prog);
 }
 
@@ -4822,10 +4787,10 @@ glsl_to_tgsi_visitor::get_first_temp_write(int *first_writes)
       }
 
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (!depth++)
+         if (depth++ == 0)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
-         if (!--depth)
+         if (--depth == 0)
             loop_start = -1;
       }
       assert(depth >= 0);
@@ -4854,10 +4819,10 @@ glsl_to_tgsi_visitor::get_first_temp_read(int *first_reads)
          }
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (!depth++)
+         if (depth++ == 0)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
-         if (!--depth)
+         if (--depth == 0)
             loop_start = -1;
       }
       assert(depth >= 0);
@@ -4889,10 +4854,10 @@ glsl_to_tgsi_visitor::get_last_temp_read_first_temp_write(int *last_reads, int *
             last_reads[inst->tex_offsets[j].index] = (depth == 0) ? i : -2;
       }
       if (inst->op == TGSI_OPCODE_BGNLOOP) {
-         if (!depth++)
+         if (depth++ == 0)
             loop_start = i;
       } else if (inst->op == TGSI_OPCODE_ENDLOOP) {
-         if (!--depth) {
+         if (--depth == 0) {
             loop_start = -1;
             for (k = 0; k < this->next_temp; k++) {
                if (last_reads[k] == -2) {
@@ -4922,7 +4887,7 @@ glsl_to_tgsi_visitor::get_last_temp_write(int *last_writes)
       if (inst->op == TGSI_OPCODE_BGNLOOP)
          depth++;
       else if (inst->op == TGSI_OPCODE_ENDLOOP)
-         if (!--depth) {
+         if (--depth == 0) {
             for (k = 0; k < this->next_temp; k++) {
                if (last_writes[k] == -2) {
                   last_writes[k] = i;
@@ -5401,110 +5366,6 @@ glsl_to_tgsi_visitor::merge_two_dsts(void)
    }
 }
 
-
-
-/* One-dimensional arrays who's elements are only accessed directly are
- * replaced by an according set of temporary registers that then can become
- * subject to further optimization steps like copy propagation and
- * register merging.
- */
-
-template <typename st_reg>
-void test_indirect_access(const st_reg& reg, bool *has_indirect_access)
-{
-   if (reg.file == PROGRAM_ARRAY) {
-      if (reg.reladdr || reg.reladdr2 || reg.has_index2) {
-         has_indirect_access[reg.array_id] = true;
-         if (reg.reladdr)
-            test_indirect_access(*reg.reladdr, has_indirect_access);
-         if (reg.reladdr2)
-            test_indirect_access(*reg.reladdr, has_indirect_access);
-      }
-   }
-}
-
-template <typename st_reg>
-void remap_array(st_reg& reg, const int *array_remap_info,
-                 const bool *has_indirect_access)
-{
-   if (reg.file == PROGRAM_ARRAY) {
-      if (!has_indirect_access[reg.array_id]) {
-         reg.file = PROGRAM_TEMPORARY;
-         reg.index = reg.index + array_remap_info[reg.array_id];
-         reg.array_id = 0;
-      } else {
-         reg.array_id = array_remap_info[reg.array_id];
-      }
-
-      if (reg.reladdr)
-         remap_array(*reg.reladdr, array_remap_info, has_indirect_access);
-
-      if (reg.reladdr2)
-         remap_array(*reg.reladdr2, array_remap_info, has_indirect_access);
-   }
-}
-
-void
-glsl_to_tgsi_visitor::split_arrays(void)
-{
-   if (!next_array)
-      return;
-
-   bool *has_indirect_access = rzalloc_array(mem_ctx, bool, next_array + 1);
-
-   foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
-      for (unsigned j = 0; j < num_inst_src_regs(inst); j++)
-         test_indirect_access(inst->src[j], has_indirect_access);
-
-      for (unsigned j = 0; j < inst->tex_offset_num_offset; j++)
-         test_indirect_access(inst->tex_offsets[j], has_indirect_access);
-
-      for (unsigned j = 0; j < num_inst_dst_regs(inst); j++)
-         test_indirect_access(inst->dst[j], has_indirect_access);
-   }
-
-   unsigned array_offset = 0;
-   unsigned n_remaining_arrays = 0;
-
-   /* Double use: For arrays that get disolved this value will contain
-    * the base index of the temporary registers this array is replaced
-    * with. For arrays that remain it contains the new array ID.
-    */
-   int *array_remap_info = rzalloc_array(has_indirect_access, int,
-                                         next_array + 1);
-
-   for (unsigned i = 1; i <= next_array; ++i) {
-      if (!has_indirect_access[i]) {
-         array_remap_info[i] = this->next_temp + array_offset;
-         array_offset += array_sizes[i-1];
-      } else {
-         array_sizes[n_remaining_arrays] = array_sizes[i-1];
-         array_remap_info[i] = ++n_remaining_arrays;
-      }
-   }
-
-   if (next_array !=  n_remaining_arrays) {
-
-      foreach_in_list(glsl_to_tgsi_instruction, inst, &this->instructions) {
-
-         for (unsigned j = 0; j < num_inst_src_regs(inst); j++)
-            remap_array(inst->src[j], array_remap_info, has_indirect_access);
-
-         for (unsigned j = 0; j < inst->tex_offset_num_offset; j++)
-            remap_array(inst->tex_offsets[j], array_remap_info, has_indirect_access);
-
-         for (unsigned j = 0; j < num_inst_dst_regs(inst); j++) {
-            remap_array(inst->dst[j], array_remap_info, has_indirect_access);
-         }
-      }
-   }
-
-   ralloc_free(has_indirect_access);
-
-   this->next_temp += array_offset;
-   next_array = n_remaining_arrays;
-}
-
 /* Merges temporary registers together where possible to reduce the number of
  * registers needed to run a program.
  *
@@ -5513,38 +5374,19 @@ glsl_to_tgsi_visitor::split_arrays(void)
 void
 glsl_to_tgsi_visitor::merge_registers(void)
 {
-   struct array_live_range *arr_live_ranges = NULL;
+   struct lifetime *lifetimes =
+         rzalloc_array(mem_ctx, struct lifetime, this->next_temp);
 
-   struct register_live_range *reg_live_ranges =
-         rzalloc_array(mem_ctx, struct register_live_range, this->next_temp);
-
-   if (this->next_array > 0) {
-      arr_live_ranges = new array_live_range[this->next_array];
-      for (unsigned i = 0; i < this->next_array; ++i)
-         arr_live_ranges[i] = array_live_range(i+1, this->array_sizes[i+1]);
+   if (get_temp_registers_required_lifetimes(mem_ctx, &this->instructions,
+                                             this->next_temp, lifetimes)) {
+      struct rename_reg_pair *renames =
+            rzalloc_array(mem_ctx, struct rename_reg_pair, this->next_temp);
+      get_temp_registers_remapping(mem_ctx, this->next_temp, lifetimes, renames);
+      rename_temp_registers(renames);
+      ralloc_free(renames);
    }
 
-
-   get_temp_registers_required_live_ranges(reg_live_ranges, &this->instructions,
-                                               this->next_temp, reg_live_ranges,
-                                               this->next_array, arr_live_ranges);
-
-      struct rename_reg_pair *renames =
-            rzalloc_array(reg_live_ranges, struct rename_reg_pair, this->next_temp);
-
-      get_temp_registers_remapping(reg_live_ranges, this->next_temp,
-                                   reg_live_ranges, renames);
-
-      rename_temp_registers(renames);
-
-// this only creates regressions
-//      this->next_array =  merge_arrays(this->next_array, this->array_sizes,
-//                                       &this->instructions, arr_live_ranges);
-
-      if (arr_live_ranges)
-         delete[] arr_live_ranges;
-//   }
-   ralloc_free(reg_live_ranges);
+   ralloc_free(lifetimes);
 }
 
 /* Reassign indices to temporary registers by reusing unused indices created
@@ -5577,25 +5419,6 @@ glsl_to_tgsi_visitor::renumber_registers(void)
    ralloc_free(first_writes);
 }
 
-#ifndef NDEBUG
-void glsl_to_tgsi_visitor::print_stats()
-{
-   int narray_registers = 0;
-   for (unsigned i = 0; i < this->next_array; ++i)
-      narray_registers += this->array_sizes[i];
-
-   int ninstructions = 0;
-   foreach_in_list(glsl_to_tgsi_instruction, inst, &instructions) {
-      ++ninstructions;
-   }
-
-   stats_log << next_array << ", "
-             << next_temp << ", "
-             << narray_registers << ", "
-             << next_temp + narray_registers << ", "
-             << ninstructions << "\n";
-}
-#endif
 /* ------------------------- TGSI conversion stuff -------------------------- */
 
 /**
@@ -5862,7 +5685,7 @@ translate_dst(struct st_translate *t,
    if (saturate)
       dst = ureg_saturate(dst);
 
-   if (dst_reg->reladdr) {
+   if (dst_reg->reladdr != NULL) {
       assert(dst_reg->file != PROGRAM_TEMPORARY);
       dst = ureg_dst_indirect(dst, translate_addr(t, dst_reg->reladdr, 0));
    }
@@ -6000,7 +5823,7 @@ translate_src(struct st_translate *t, const st_src_reg *src_reg)
    if ((src_reg->negate & 0xf) == NEGATE_XYZW)
       src = ureg_negate(src);
 
-   if (src_reg->reladdr) {
+   if (src_reg->reladdr != NULL) {
       assert(src_reg->file != PROGRAM_TEMPORARY);
       src = ureg_src_indirect(src, translate_addr(t, src_reg->reladdr, 0));
    }
@@ -6766,7 +6589,7 @@ st_translate_program(
    if (proginfo->Parameters) {
       t->constants = (struct ureg_src *)
          calloc(proginfo->Parameters->NumParameters, sizeof(t->constants[0]));
-      if (!t->constants) {
+      if (t->constants == NULL) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }
@@ -6816,7 +6639,7 @@ st_translate_program(
     */
    t->immediates = (struct ureg_src *)
       calloc(program->num_immediates, sizeof(struct ureg_src));
-   if (!t->immediates) {
+   if (t->immediates == NULL) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto out;
    }
@@ -7016,21 +6839,8 @@ get_mesa_program_tgsi(struct gl_context *ctx,
    while (v->eliminate_dead_code());
 
    v->merge_two_dsts();
-
-   v->split_arrays();
-   v->copy_propagate();
-   while (v->eliminate_dead_code());
-
-   v->merge_registers();
-   v->copy_propagate();
-   while (v->eliminate_dead_code());
-
-   if (!skip_merge_registers) {
+   if (!skip_merge_registers)
       v->merge_registers();
-      v->copy_propagate();
-      while (v->eliminate_dead_code());
-   }
-
    v->renumber_registers();
 
    /* Write the END instruction. */
@@ -7118,8 +6928,6 @@ get_mesa_program_tgsi(struct gl_context *ctx,
       return NULL;
    }
 
-   PRINT_STATS(v->print_stats());
-
    return prog;
 }
 
@@ -7199,7 +7007,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    assert(prog->data->LinkStatus);
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (!prog->_LinkedShaders[i])
+      if (prog->_LinkedShaders[i] == NULL)
          continue;
 
       struct gl_linked_shader *shader = prog->_LinkedShaders[i];
@@ -7293,7 +7101,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       lower_vector_insert(ir, true);
       lower_quadop_vector(ir, false);
       lower_noise(ir);
-      if (!options->MaxIfDepth) {
+      if (options->MaxIfDepth == 0) {
          lower_discard(ir);
       }
 
@@ -7331,7 +7139,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *shader = prog->_LinkedShaders[i];
-      if (!shader)
+      if (shader == NULL)
          continue;
 
       struct gl_program *linked_prog =

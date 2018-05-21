@@ -111,7 +111,7 @@ brw_emit_gpgpu_walker(struct brw_context *brw)
    const GLuint *num_groups = brw->compute.num_work_groups;
    uint32_t indirect_flag;
 
-   if (!brw->compute.num_work_groups_bo) {
+   if (brw->compute.num_work_groups_bo == NULL) {
       indirect_flag = 0;
    } else {
       indirect_flag =
@@ -128,7 +128,7 @@ brw_emit_gpgpu_walker(struct brw_context *brw)
 
    uint32_t right_mask = 0xffffffffu >> (32 - simd_size);
    const unsigned right_non_aligned = group_size & (simd_size - 1);
-   if (right_non_aligned)
+   if (right_non_aligned != 0)
       right_mask >>= (simd_size - right_non_aligned);
 
    uint32_t dwords = devinfo->gen < 8 ? 11 : 15;

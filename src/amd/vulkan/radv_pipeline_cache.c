@@ -139,7 +139,7 @@ radv_pipeline_cache_search_unlocked(struct radv_pipeline_cache *cache,
 	const uint32_t mask = cache->table_size - 1;
 	const uint32_t start = (*(uint32_t *) sha1);
 
-	if (!cache->table_size)
+	if (cache->table_size == 0)
 		return NULL;
 
 	for (uint32_t i = 0; i < cache->table_size; i++) {
@@ -205,7 +205,7 @@ radv_pipeline_cache_grow(struct radv_pipeline_cache *cache)
 	struct cache_entry **old_table = cache->hash_table;
 
 	table = malloc(byte_size);
-	if (!table)
+	if (table == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	cache->hash_table = table;
@@ -514,7 +514,7 @@ VkResult radv_CreatePipelineCache(
 	cache = vk_alloc2(&device->alloc, pAllocator,
 			    sizeof(*cache), 8,
 			    VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-	if (!cache)
+	if (cache == NULL)
 		return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	if (pAllocator)
@@ -564,7 +564,7 @@ VkResult radv_GetPipelineCacheData(
 	pthread_mutex_lock(&cache->mutex);
 
 	const size_t size = sizeof(*header) + cache->total_size;
-	if (!pData) {
+	if (pData == NULL) {
 		pthread_mutex_unlock(&cache->mutex);
 		*pDataSize = size;
 		return VK_SUCCESS;

@@ -312,7 +312,7 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
          }
       }
    }
-   if (!prim_info->count) {
+   if (prim_info->count == 0) {
       debug_printf("GS/IA didn't emit any vertices!\n");
 
       FREE(vert_info->verts);

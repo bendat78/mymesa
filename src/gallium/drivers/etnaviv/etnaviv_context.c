@@ -208,7 +208,7 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    }
    ctx->dirty |= ETNA_DIRTY_INDEX_BUFFER;
 
-   struct etna_shader_key key = {0};
+   struct etna_shader_key key = {};
    struct etna_surface *cbuf = etna_surface(pfb->cbufs[0]);
 
    if (cbuf) {
@@ -348,7 +348,7 @@ etna_cmd_stream_reset_notify(struct etna_cmd_stream *stream, void *priv)
    etna_set_state(stream, VIVS_PS_CONTROL_EXT, 0x00000000);
 
    /* There is no HALTI0 specific state */
-   if (ctx->specs.halti) { /* Only on HALTI1+ */
+   if (ctx->specs.halti >= 1) { /* Only on HALTI1+ */
       etna_set_state(stream, VIVS_VS_HALTI1_UNK00884, 0x00000808);
    }
    if (ctx->specs.halti >= 2) { /* Only on HALTI2+ */
@@ -415,7 +415,7 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    struct etna_screen *screen;
    struct pipe_context *pctx;
 
-   if (!ctx)
+   if (ctx == NULL)
       return NULL;
 
    pctx = &ctx->base;
@@ -428,7 +428,7 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
 
    screen = etna_screen(pscreen);
    ctx->stream = etna_cmd_stream_new(screen->pipe, 0x2000, &etna_cmd_stream_reset_notify, ctx);
-   if (!ctx->stream)
+   if (ctx->stream == NULL)
       goto fail;
 
    /* context ctxate setup */

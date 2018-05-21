@@ -60,7 +60,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
       ir_swizzle *swiz = ir_swizzle::create(op,
 					    expr->primary_expression.identifier,
 					    op->type->vector_elements);
-      if (swiz) {
+      if (swiz != NULL) {
 	 result = swiz;
       } else {
 	 /* FINISHME: Logging of error messages should be moved into

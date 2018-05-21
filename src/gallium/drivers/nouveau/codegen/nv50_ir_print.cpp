@@ -60,7 +60,7 @@ static const char **colour;
 
 static void init_colours()
 {
-   if (getenv("NV50_PROG_DEBUG_NO_COLORS"))
+   if (getenv("NV50_PROG_DEBUG_NO_COLORS") != NULL)
       colour = _nocolour;
    else
       colour = _colour;

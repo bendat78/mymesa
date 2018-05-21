@@ -19,13 +19,13 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
-*
+* 
 * @file builder_misc.cpp
-*
+* 
 * @brief Implementation for miscellaneous builder functions
-*
+* 
 * Notes:
-*
+* 
 ******************************************************************************/
 #include "jit_pch.hpp"
 #include "builder.h"
@@ -130,7 +130,7 @@ namespace SwrJit
             uint32_t sign = (val & 0x8000) << 16;
             uint32_t mant = (val & 0x3ff) << 13;
             uint32_t exp = (val >> 10) & 0x1f;
-            if (!(exp) && (mant != 0)) // Adjust exponent and mantissa for denormals
+            if ((exp == 0) && (mant != 0)) // Adjust exponent and mantissa for denormals
             {
                 mant <<= 1;
                 while (mant < (0x400 << 13))
@@ -482,7 +482,7 @@ namespace SwrJit
         Function *callPrintFn = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("CallPrint", callPrintTy));
 
         // if we haven't yet added the symbol to the symbol table
-        if(!(sys::DynamicLibrary::SearchForAddressOfSymbol("CallPrint")))
+        if((sys::DynamicLibrary::SearchForAddressOfSymbol("CallPrint")) == nullptr)
         {
             sys::DynamicLibrary::AddSymbol("CallPrint", (void *)&CallPrint);
         }
@@ -500,7 +500,7 @@ namespace SwrJit
 
     Value *Builder::EXTRACT_16(Value *x, uint32_t imm)
     {
-        if (!imm)
+        if (imm == 0)
         {
             return VSHUFFLE(x, UndefValue::get(x->getType()), { 0, 1, 2, 3, 4, 5, 6, 7 });
         }
@@ -564,12 +564,12 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a VPSHUFB operation in LLVM IR.  If not
+    /// @brief Generate a VPSHUFB operation in LLVM IR.  If not  
     /// supported on the underlying platform, emulate it
     /// @param a - 256bit SIMD(32x8bit) of 8bit integer values
     /// @param b - 256bit SIMD(32x8bit) of 8bit integer mask values
-    /// Byte masks in lower 128 lane of b selects 8 bit values from lower
-    /// 128bits of a, and vice versa for the upper lanes.  If the mask
+    /// Byte masks in lower 128 lane of b selects 8 bit values from lower 
+    /// 128bits of a, and vice versa for the upper lanes.  If the mask 
     /// value is negative, '0' is inserted.
     Value *Builder::PSHUFB(Value* a, Value* b)
     {
@@ -615,9 +615,9 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a VPSHUFB operation (sign extend 8 8bit values to 32
+    /// @brief Generate a VPSHUFB operation (sign extend 8 8bit values to 32 
     /// bits)in LLVM IR.  If not supported on the underlying platform, emulate it
-    /// @param a - 128bit SIMD lane(16x8bit) of 8bit integer values.  Only
+    /// @param a - 128bit SIMD lane(16x8bit) of 8bit integer values.  Only 
     /// lower 8 values are used.
     Value *Builder::PMOVSXBD(Value* a)
     {
@@ -628,7 +628,7 @@ namespace SwrJit
     }
 
     //////////////////////////////////////////////////////////////////////////
-    /// @brief Generate a VPSHUFB operation (sign extend 8 16bit values to 32
+    /// @brief Generate a VPSHUFB operation (sign extend 8 16bit values to 32 
     /// bits)in LLVM IR.  If not supported on the underlying platform, emulate it
     /// @param a - 128bit SIMD lane(8x16bit) of 16bit integer values.
     Value *Builder::PMOVSXWD(Value* a)
@@ -654,7 +654,7 @@ namespace SwrJit
             FunctionType* pFuncTy = FunctionType::get(mFP32Ty, mInt16Ty);
             Function* pCvtPh2Ps = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("ConvertFloat16ToFloat32", pFuncTy));
 
-            if (!sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertFloat16ToFloat32"))
+            if (sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertFloat16ToFloat32") == nullptr)
             {
                 sys::DynamicLibrary::AddSymbol("ConvertFloat16ToFloat32", (void *)&ConvertFloat16ToFloat32);
             }
@@ -688,7 +688,7 @@ namespace SwrJit
             FunctionType* pFuncTy = FunctionType::get(mInt16Ty, mFP32Ty);
             Function* pCvtPs2Ph = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("ConvertFloat32ToFloat16", pFuncTy));
 
-            if (!sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertFloat32ToFloat16"))
+            if (sys::DynamicLibrary::SearchForAddressOfSymbol("ConvertFloat32ToFloat16") == nullptr)
             {
                 sys::DynamicLibrary::AddSymbol("ConvertFloat32ToFloat16", (void *)&ConvertFloat32ToFloat16);
             }
@@ -856,7 +856,7 @@ namespace SwrJit
 
             FunctionType* pFuncTy = FunctionType::get(Type::getVoidTy(JM()->mContext), args, false);
             Function* pFunc = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StartBucket", pFuncTy));
-            if (!sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StartBucket"))
+            if (sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StartBucket") == nullptr)
             {
                 sys::DynamicLibrary::AddSymbol("BucketManager_StartBucket", (void*)&BucketManager_StartBucket);
             }
@@ -878,7 +878,7 @@ namespace SwrJit
 
             FunctionType* pFuncTy = FunctionType::get(Type::getVoidTy(JM()->mContext), args, false);
             Function* pFunc = cast<Function>(JM()->mpCurrentModule->getOrInsertFunction("BucketManager_StopBucket", pFuncTy));
-            if (!sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StopBucket"))
+            if (sys::DynamicLibrary::SearchForAddressOfSymbol("BucketManager_StopBucket") == nullptr)
             {
                 sys::DynamicLibrary::AddSymbol("BucketManager_StopBucket", (void*)&BucketManager_StopBucket);
             }

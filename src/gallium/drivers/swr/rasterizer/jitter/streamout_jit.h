@@ -43,7 +43,7 @@ struct STREAMOUT_DECL
     // attribute to stream
     uint32_t attribSlot;
 
-    // attribute component mask
+    // attribute component mask 
     uint32_t componentMask;
 
     // indicates this decl is a hole

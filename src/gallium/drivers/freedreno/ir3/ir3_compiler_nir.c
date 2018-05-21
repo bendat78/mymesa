@@ -678,7 +678,7 @@ create_collect(struct ir3_context *ctx, struct ir3_instruction *const *arr,
 	struct ir3_block *block = ctx->block;
 	struct ir3_instruction *collect;
 
-	if (!arrsz)
+	if (arrsz == 0)
 		return NULL;
 
 	unsigned flags = arr[0]->regs[0]->flags & IR3_REG_HALF;
@@ -1779,7 +1779,7 @@ get_image_offset(struct ir3_context *ctx, const nir_variable *var,
 	}, 2);
 }
 
-/* src[] = { coord, sample_index }. const_index[] = {0} */
+/* src[] = { coord, sample_index }. const_index[] = {} */
 static void
 emit_intrinsic_load_image(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 		struct ir3_instruction **dst)
@@ -1805,7 +1805,7 @@ emit_intrinsic_load_image(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 	split_dest(b, dst, sam, 0, 4);
 }
 
-/* src[] = { coord, sample_index, value }. const_index[] = {0} */
+/* src[] = { coord, sample_index, value }. const_index[] = {} */
 static void
 emit_intrinsic_store_image(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 {
@@ -1864,7 +1864,7 @@ emit_intrinsic_image_size(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 	split_dest(b, dst, sam, 0, ncoords);
 }
 
-/* src[] = { coord, sample_index, value, compare }. const_index[] = {0} */
+/* src[] = { coord, sample_index, value, compare }. const_index[] = {} */
 static struct ir3_instruction *
 emit_intrinsic_atomic_image(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 {
@@ -3307,7 +3307,7 @@ fixup_astc_srgb(struct ir3_context *ctx)
 
 		compile_assert(ctx, sam->cat5.tex < ARRAY_SIZE(alt_tex_state));
 
-		if (!alt_tex_state[sam->cat5.tex]) {
+		if (alt_tex_state[sam->cat5.tex] == 0) {
 			/* assign new alternate/alpha tex state slot: */
 			alt_tex_state[sam->cat5.tex] = tex_idx++;
 			so->astc_srgb.orig_idx[idx++] = sam->cat5.tex;

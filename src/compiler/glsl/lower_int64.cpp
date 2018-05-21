@@ -327,7 +327,7 @@ lower_64bit_visitor::handle_op(ir_expression *ir,
    ir_function_signature *callee = NULL;
    ir_function *f = find_function(function_name);
 
-   if (f) {
+   if (f != NULL) {
       callee = (ir_function_signature *) f->signatures.get_head();
       assert(callee != NULL && callee->ir_type == ir_type_function_signature);
    } else {

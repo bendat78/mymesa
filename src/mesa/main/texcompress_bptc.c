@@ -100,7 +100,7 @@ bptc_float_modes[] = {
        { 1, 2, 0, 5, false }, { 3, 2, 1, 1, false }, { 2, 2, 0, 4, false },
        { 2, 0, 0, 5, false }, { 3, 2, 2, 1, false }, { 3, 0, 0, 5, false },
        { 3, 2, 3, 1, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 01 */
    { false, true, 5, 7, 3, { 6, 6, 6 },
@@ -113,7 +113,7 @@ bptc_float_modes[] = {
        { 3, 1, 0, 4, false }, { 1, 2, 0, 6, false }, { 2, 2, 0, 4, false },
        { 2, 0, 0, 6, false },
        { 3, 0, 0, 6, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 00010 */
    { false, true, 5, 11, 3, { 5, 4, 4 },
@@ -123,13 +123,13 @@ bptc_float_modes[] = {
        { 3, 1, 0, 4, false }, { 1, 2, 0, 4, false }, { 0, 2, 10, 1, false },
        { 3, 2, 1, 1, false }, { 2, 2, 0, 4, false }, { 2, 0, 0, 5, false },
        { 3, 2, 2, 1, false }, { 3, 0, 0, 5, false }, { 3, 2, 3, 1, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 00011 */
    { false, false, 0, 10, 4, { 10, 10, 10 },
      { { 0, 0, 0, 10, false }, { 0, 1, 0, 10, false }, { 0, 2, 0, 10, false },
        { 1, 0, 0, 10, false }, { 1, 1, 0, 10, false }, { 1, 2, 0, 10, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 00110 */
    { false, true, 5, 11, 3, { 4, 5, 4 },
@@ -140,14 +140,14 @@ bptc_float_modes[] = {
        { 3, 2, 1, 1, false }, { 2, 2, 0, 4, false }, { 2, 0, 0, 4, false },
        { 3, 2, 0, 1, false }, { 3, 2, 2, 1, false }, { 3, 0, 0, 4, false },
        { 2, 1, 4, 1, false }, { 3, 2, 3, 1, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 00111 */
    { false, true, 0, 11, 4, { 9, 9, 9 },
      { { 0, 0, 0, 10, false }, { 0, 1, 0, 10, false }, { 0, 2, 0, 10, false },
        { 1, 0, 0, 9, false }, { 0, 0, 10, 1, false }, { 1, 1, 0, 9, false },
        { 0, 1, 10, 1, false }, { 1, 2, 0, 9, false }, { 0, 2, 10, 1, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 01010 */
    { false, true, 5, 11, 3, { 4, 4, 5 },
@@ -158,14 +158,14 @@ bptc_float_modes[] = {
        { 0, 2, 10, 1, false }, { 2, 2, 0, 4, false }, { 2, 0, 0, 4, false },
        { 3, 2, 1, 1, false }, { 3, 2, 2, 1, false }, { 3, 0, 0, 4, false },
        { 3, 2, 4, 1, false }, { 3, 2, 3, 1, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 01011 */
    { false, true, 0, 12, 4, { 8, 8, 8 },
      { { 0, 0, 0, 10, false }, { 0, 1, 0, 10, false }, { 0, 2, 0, 10, false },
        { 1, 0, 0, 8, false }, { 0, 0, 10, 2, true }, { 1, 1, 0, 8, false },
        { 0, 1, 10, 2, true }, { 1, 2, 0, 8, false }, { 0, 2, 10, 2, true },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 01110 */
    { false, true, 5, 9, 3, { 5, 5, 5 },
@@ -176,14 +176,14 @@ bptc_float_modes[] = {
        { 1, 2, 0, 5, false }, { 3, 2, 1, 1, false }, { 2, 2, 0, 4, false },
        { 2, 0, 0, 5, false }, { 3, 2, 2, 1, false }, { 3, 0, 0, 5, false },
        { 3, 2, 3, 1, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 01111 */
    { false, true, 0, 16, 4, { 4, 4, 4 },
      { { 0, 0, 0, 10, false }, { 0, 1, 0, 10, false }, { 0, 2, 0, 10, false },
        { 1, 0, 0, 4, false }, { 0, 0, 10, 6, true }, { 1, 1, 0, 4, false },
        { 0, 1, 10, 6, true }, { 1, 2, 0, 4, false }, { 0, 2, 10, 6, true },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 10010 */
    { false, true, 5, 8, 3, { 6, 5, 5 },
@@ -194,7 +194,7 @@ bptc_float_modes[] = {
        { 3, 2, 0, 1, false }, { 3, 1, 0, 4, false }, { 1, 2, 0, 5, false },
        { 3, 2, 1, 1, false }, { 2, 2, 0, 4, false }, { 2, 0, 0, 6, false },
        { 3, 0, 0, 6, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 10011 */
    { true /* reserved */ },
@@ -207,7 +207,7 @@ bptc_float_modes[] = {
        { 1, 1, 0, 6, false }, { 3, 1, 0, 4, false }, { 1, 2, 0, 5, false },
        { 3, 2, 1, 1, false }, { 2, 2, 0, 4, false }, { 2, 0, 0, 5, false },
        { 3, 2, 2, 1, false }, { 3, 0, 0, 5, false }, { 3, 2, 3, 1, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 10111 */
    { true /* reserved */ },
@@ -220,7 +220,7 @@ bptc_float_modes[] = {
        { 1, 1, 0, 5, false }, { 3, 2, 0, 1, false }, { 3, 1, 0, 4, false },
        { 1, 2, 0, 6, false }, { 2, 2, 0, 4, false }, { 2, 0, 0, 5, false },
        { 3, 2, 2, 1, false }, { 3, 0, 0, 5, false }, { 3, 2, 3, 1, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 11011 */
    { true /* reserved */ },
@@ -234,7 +234,7 @@ bptc_float_modes[] = {
        { 1, 0, 0, 6, false }, { 2, 1, 0, 4, false }, { 1, 1, 0, 6, false },
        { 3, 1, 0, 4, false }, { 1, 2, 0, 6, false }, { 2, 2, 0, 4, false },
        { 2, 0, 0, 6, false }, { 3, 0, 0, 6, false },
-       { -1, 0, 0, 0, false } }
+       { -1 } }
    },
    /* 11111 */
    { true /* reserved */ },
@@ -452,7 +452,7 @@ is_anchor(int n_subsets,
           int partition_num,
           int texel)
 {
-   if (!texel)
+   if (texel == 0)
       return true;
 
    switch (n_subsets) {
@@ -476,7 +476,7 @@ count_anchors_before_texel(int n_subsets,
 {
    int count = 1;
 
-   if (!texel)
+   if (texel == 0)
       return 0;
 
    switch (n_subsets) {
@@ -525,7 +525,7 @@ apply_rotation(int rotation,
 {
    uint8_t t;
 
-   if (!rotation)
+   if (rotation == 0)
       return;
 
    rotation--;
@@ -556,7 +556,7 @@ fetch_rgba_unorm_from_block(const uint8_t *block,
    uint32_t subsets;
    int component;
 
-   if (!mode_num) {
+   if (mode_num == 0) {
       /* According to the spec this mode is reserved and shouldn't be used. */
       memset(result, 0, 3);
       result[3] = 0xff;
@@ -718,7 +718,7 @@ signed_unquantize(int value, int n_endpoint_bits)
    if (n_endpoint_bits >= 16)
       return value;
 
-   if (!value)
+   if (value == 0)
       return 0;
 
    sign = false;
@@ -745,7 +745,7 @@ unsigned_unquantize(int value, int n_endpoint_bits)
    if (n_endpoint_bits >= 15)
       return value;
 
-   if (!value)
+   if (value == 0)
       return 0;
 
    if (value == (1 << n_endpoint_bits) - 1)

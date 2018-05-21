@@ -150,7 +150,7 @@ nouveau_renderbuffer_map(struct gl_context *ctx,
 	map = s->bo->map;
 	stride = s->pitch;
 
-	if (!rb->Name) {
+	if (rb->Name == 0) {
 		map += stride * (rb->Height - 1);
 		stride = -stride;
 	}

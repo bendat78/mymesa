@@ -352,7 +352,7 @@ static void
 svga_buffer_destroy( struct pipe_screen *screen,
 		     struct pipe_resource *buf )
 {
-   struct svga_screen *ss = svga_screen(screen);
+   struct svga_screen *ss = svga_screen(screen); 
    struct svga_buffer *sbuf = svga_buffer( buf );
 
    assert(!p_atomic_read(&buf->reference.count));

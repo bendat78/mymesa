@@ -210,12 +210,12 @@ static OMX_ERRORTYPE h264e_manage_buffers(vid_enc_PrivateType* priv) {
    out_buf->nTimeStamp = in_buf->nTimeStamp;
 
    /* Release input buffer if possible */
-   if (!in_buf->nFilledLen) {
+   if (in_buf->nFilledLen == 0) {
       r = h264e_buffer_emptied(priv, in_buf);
    }
 
    /* Realase output buffer if filled or eos */
-   if ((out_buf->nFilledLen) || priv->eos_) {
+   if ((out_buf->nFilledLen != 0) || priv->eos_) {
       r = h264e_buffer_filled(priv, out_buf);
    }
 
@@ -240,7 +240,7 @@ static void enc_HandleTask(vid_enc_PrivateType * priv, struct encode_task *task,
 {
    unsigned size = priv->out_port_def_.nBufferSize;
    struct pipe_video_buffer *vbuf = task->buf;
-   struct pipe_h264_enc_picture_desc picture = {0};
+   struct pipe_h264_enc_picture_desc picture = {};
 
    /* -------------- scale input image --------- */
    enc_ScaleInput(priv, &vbuf, &size);
@@ -312,7 +312,7 @@ static OMX_ERRORTYPE encode_frame(vid_enc_PrivateType * priv, OMX_BUFFERHEADERTY
       return OMX_ErrorInsufficientResources;
 
    /* EOS */
-   if (!in_buf->nFilledLen) {
+   if (in_buf->nFilledLen == 0) {
       if (in_buf->nFlags & OMX_BUFFERFLAG_EOS) {
          in_buf->nFilledLen = in_buf->nAllocLen;
          enc_ClearBframes(priv, inp);
@@ -522,7 +522,7 @@ static OMX_ERRORTYPE h264e_prc_prepare_to_transfer(void *ap_obj, OMX_U32 a_pid)
 
    priv->eos_ = false;
 
-   struct pipe_video_codec templat = {0};
+   struct pipe_video_codec templat = {};
 
    templat.profile = enc_TranslateOMXProfileToPipe(priv->profile_level.eProfile);
    templat.level = enc_TranslateOMXLevelToPipe(priv->profile_level.eLevel);

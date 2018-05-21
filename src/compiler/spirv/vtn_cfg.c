@@ -206,7 +206,7 @@ vtn_cfg_handle_prepass_instruction(struct vtn_builder *b, SpvOp opcode,
       b->block->label = w;
       vtn_push_value(b, w[1], vtn_value_type_block)->block = b->block;
 
-      if (!b->func->start_block) {
+      if (b->func->start_block == NULL) {
          /* This is the first block encountered for this function.  In this
           * case, we set the start block and add it to the list of
           * implemented functions that we'll walk later.
@@ -255,7 +255,7 @@ vtn_add_case(struct vtn_builder *b, struct vtn_switch *swtch,
    if (case_block == break_block)
       return;
 
-   if (!case_block->switch_case) {
+   if (case_block->switch_case == NULL) {
       struct vtn_case *c = ralloc(b, struct vtn_case);
 
       list_inithead(&c->body);

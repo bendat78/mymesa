@@ -113,7 +113,7 @@ std::string GlobalKnobs::ToString(const char* optPerLinePrefix)
     std::basic_stringstream<char> str;
     str << std::showbase << std::setprecision(1) << std::fixed;
 
-    if (!optPerLinePrefix) { optPerLinePrefix = ""; }
+    if (optPerLinePrefix == nullptr) { optPerLinePrefix = ""; }
 
     % for knob in knobs:
     str << optPerLinePrefix << "KNOB_${knob[0]}:${space_knob(knob[0])}";
@@ -131,7 +131,7 @@ std::string GlobalKnobs::ToString(const char* optPerLinePrefix)
     return str.str();
 }
 <%!
-    # Globally available python
+    # Globally available python 
     max_len = 0
     def calc_max_knob_len(knobs):
         global max_len

@@ -178,7 +178,7 @@ ptn_get_src(struct ptn_compile *c, const struct prog_src_register *prog_src)
          if (prog_src->RelAddr) {
             deref_arr->deref_array_type = nir_deref_array_type_indirect;
 
-            nir_alu_src addr_src = {0};
+            nir_alu_src addr_src = { NIR_SRC_INIT };
             addr_src.src = nir_src_for_reg(c->addr_reg);
             nir_ssa_def *reladdr = nir_imov_alu(b, addr_src, 1);
 
@@ -825,7 +825,7 @@ ptn_emit_instruction(struct ptn_compile *c, struct prog_instruction *prog_inst)
       break;
 
    default:
-      if (op_trans[op]) {
+      if (op_trans[op] != 0) {
          ptn_alu(b, op_trans[op], dest, src);
       } else {
          fprintf(stderr, "unknown opcode: %s\n", _mesa_opcode_string(op));

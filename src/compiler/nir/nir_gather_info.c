@@ -118,7 +118,7 @@ get_io_offset(nir_deref_var *deref, bool is_vertex_input)
    unsigned offset = 0;
 
    nir_deref *tail = &deref->deref;
-   while (tail->child) {
+   while (tail->child != NULL) {
       tail = tail->child;
 
       if (tail->deref_type == nir_deref_type_array) {

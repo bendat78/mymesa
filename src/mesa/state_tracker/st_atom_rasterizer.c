@@ -198,7 +198,7 @@ st_update_rasterizer(struct st_context *st)
    /* ST_NEW_VERTEX_PROGRAM
     */
    if (vertProg) {
-      if (!vertProg->Id) {
+      if (vertProg->Id == 0) {
          if (vertProg->info.outputs_written &
              BITFIELD64_BIT(VARYING_SLOT_PSIZ)) {
             /* generated program which emits point size */

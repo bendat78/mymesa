@@ -122,12 +122,12 @@ _eglGetClientExtensionString(void)
 
    mtx_lock(_eglGlobal.Mutex);
 
-   if (!_eglGlobal.ClientExtensionString) {
+   if (_eglGlobal.ClientExtensionString == NULL) {
       size_t clientLen = strlen(_eglGlobal.ClientOnlyExtensionString);
       size_t platformLen = strlen(_eglGlobal.PlatformExtensionString);
 
       _eglGlobal.ClientExtensionString = (char *) malloc(clientLen + platformLen + 1);
-      if (_eglGlobal.ClientExtensionString) {
+      if (_eglGlobal.ClientExtensionString != NULL) {
          char *ptr = _eglGlobal.ClientExtensionString;
 
          memcpy(ptr, _eglGlobal.ClientOnlyExtensionString, clientLen);
@@ -157,7 +157,7 @@ _eglPointerIsDereferencable(void *p)
    unsigned char valid = 0;
    const long page_size = getpagesize();
 
-   if (!p)
+   if (p == NULL)
       return EGL_FALSE;
 
    /* align addr to page_size */

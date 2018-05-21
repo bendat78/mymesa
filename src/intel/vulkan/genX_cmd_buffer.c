@@ -283,7 +283,7 @@ color_attachment_compute_aux_usage(struct anv_device * device,
    assert(iview->image->planes[0].aux_surface.isl.usage &
           (ISL_SURF_USAGE_CCS_BIT | ISL_SURF_USAGE_MCS_BIT));
 
-   union isl_color_value clear_color = {0};
+   union isl_color_value clear_color = {};
    anv_clear_color_from_att_state(&clear_color, att_state, iview);
 
    att_state->clear_color_is_zero_one =
@@ -1148,12 +1148,12 @@ genX(cmd_buffer_setup_attachments)(struct anv_cmd_buffer *cmd_buffer,
 
    vk_free(&cmd_buffer->pool->alloc, state->attachments);
 
-   if (pass->attachment_count) {
+   if (pass->attachment_count > 0) {
       state->attachments = vk_alloc(&cmd_buffer->pool->alloc,
                                     pass->attachment_count *
                                          sizeof(state->attachments[0]),
                                     8, VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-      if (!state->attachments) {
+      if (state->attachments == NULL) {
          /* Propagate VK_ERROR_OUT_OF_HOST_MEMORY to vkEndCommandBuffer */
          return anv_batch_set_error(&cmd_buffer->batch,
                                     VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -1968,7 +1968,7 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
                                                   &state_offset);
    uint32_t *bt_map = bt_state->map;
 
-   if (!bt_state->map)
+   if (bt_state->map == NULL)
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 
    if (stage == MESA_SHADER_COMPUTE &&
@@ -1989,7 +1989,7 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
       add_surface_state_reloc(cmd_buffer, surface_state, bo, bo_offset);
    }
 
-   if (!map->surface_count)
+   if (map->surface_count == 0)
       goto out;
 
    if (map->image_count > 0) {
@@ -2198,7 +2198,7 @@ emit_samplers(struct anv_cmd_buffer *cmd_buffer,
    }
 
    struct anv_pipeline_bind_map *map = &pipeline->shaders[stage]->bind_map;
-   if (!map->sampler_count) {
+   if (map->sampler_count == 0) {
       *state = (struct anv_state) { 0, };
       return VK_SUCCESS;
    }
@@ -2206,7 +2206,7 @@ emit_samplers(struct anv_cmd_buffer *cmd_buffer,
    uint32_t size = map->sampler_count * 16;
    *state = anv_cmd_buffer_alloc_dynamic_state(cmd_buffer, size, 32);
 
-   if (!state->map)
+   if (state->map == NULL)
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 
    for (uint32_t s = 0; s < map->sampler_count; s++) {
@@ -2223,7 +2223,7 @@ emit_samplers(struct anv_cmd_buffer *cmd_buffer,
       /* This can happen if we have an unfilled slot since TYPE_SAMPLER
        * happens to be zero.
        */
-      if (!sampler)
+      if (sampler == NULL)
          continue;
 
       memcpy(state->map + (s * 16),
@@ -2379,7 +2379,7 @@ cmd_buffer_flush_push_constants(struct anv_cmd_buffer *cmd_buffer,
 
             for (int i = 3; i >= 0; i--) {
                const struct brw_ubo_range *range = &prog_data->ubo_ranges[i];
-               if (!range->length)
+               if (range->length == 0)
                   continue;
 
                const unsigned surface =
@@ -3369,7 +3369,7 @@ cmd_buffer_emit_depth_stencil(struct anv_cmd_buffer *cmd_buffer)
 
    uint32_t *dw = anv_batch_emit_dwords(&cmd_buffer->batch,
                                         device->isl_dev.ds.size / 4);
-   if (!dw)
+   if (dw == NULL)
       return;
 
    struct isl_depth_stencil_hiz_emit_info info = {
@@ -3578,7 +3578,7 @@ cmd_buffer_begin_subpass(struct anv_cmd_buffer *cmd_buffer,
             assert(iview->planes[0].isl.base_level == 0);
             assert(iview->planes[0].isl.base_array_layer == 0);
 
-            union isl_color_value clear_color = {0};
+            union isl_color_value clear_color = {};
             anv_clear_color_from_att_state(&clear_color, att_state, iview);
             if (iview->image->samples == 1) {
                anv_image_ccs_op(cmd_buffer, image, VK_IMAGE_ASPECT_COLOR_BIT,

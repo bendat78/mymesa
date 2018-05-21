@@ -110,7 +110,7 @@ Lib* Lib::GetLib(
     ADDR_HANDLE hLib)   ///< [in] handle of ADDR_HANDLE
 {
     Addr::Lib* pAddrLib = Addr::Lib::GetLib(hLib);
-    if ((pAddrLib) &&
+    if ((pAddrLib != NULL) &&
         (pAddrLib->GetChipFamily() <= ADDR_CHIP_FAMILY_VI))
     {
         // only valid and GFX9+ AISC can use AddrLib2 function.
@@ -144,7 +144,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceInfo(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags())
+    if (GetFillSizeFieldsFlags() == TRUE)
     {
         if ((pIn->size != sizeof(ADDR2_COMPUTE_SURFACE_INFO_INPUT)) ||
             (pOut->size != sizeof(ADDR2_COMPUTE_SURFACE_INFO_OUTPUT)))
@@ -201,7 +201,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceInfo(
             // Overwrite these parameters if we have a valid format
         }
 
-        if (localIn.bpp)
+        if (localIn.bpp != 0)
         {
             localIn.width  = Max(localIn.width, 1u);
             localIn.height = Max(localIn.height, 1u);
@@ -285,7 +285,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceInfo(
 
             if (localIn.flags.qbStereo)
             {
-                if (pOut->pStereoInfo)
+                if (pOut->pStereoInfo != NULL)
                 {
                     ComputeQbStereoInfo(pOut);
                 }
@@ -318,7 +318,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags())
+    if (GetFillSizeFieldsFlags() == TRUE)
     {
         if ((pIn->size != sizeof(ADDR2_COMPUTE_SURFACE_ADDRFROMCOORD_INPUT)) ||
             (pOut->size != sizeof(ADDR2_COMPUTE_SURFACE_ADDRFROMCOORD_OUTPUT)))
@@ -385,7 +385,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddr(
 {
     ADDR_E_RETURNCODE returnCode = ADDR_OK;
 
-    if (GetFillSizeFieldsFlags())
+    if (GetFillSizeFieldsFlags() == TRUE)
     {
         if ((pIn->size != sizeof(ADDR2_COMPUTE_SURFACE_COORDFROMADDR_INPUT)) ||
             (pOut->size != sizeof(ADDR2_COMPUTE_SURFACE_COORDFROMADDR_OUTPUT)))
@@ -440,7 +440,7 @@ ADDR_E_RETURNCODE Lib::ComputeHtileInfo(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_HTILE_INFO_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_HTILE_INFO_OUTPUT))))
     {
@@ -473,7 +473,7 @@ ADDR_E_RETURNCODE Lib::ComputeHtileAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_HTILE_ADDRFROMCOORD_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_HTILE_ADDRFROMCOORD_OUTPUT))))
     {
@@ -504,7 +504,7 @@ ADDR_E_RETURNCODE Lib::ComputeHtileCoordFromAddr(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_HTILE_COORDFROMADDR_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_HTILE_COORDFROMADDR_OUTPUT))))
     {
@@ -536,7 +536,7 @@ ADDR_E_RETURNCODE Lib::ComputeCmaskInfo(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_CMASK_INFO_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_CMASK_INFO_OUTPUT))))
     {
@@ -573,7 +573,7 @@ ADDR_E_RETURNCODE Lib::ComputeCmaskAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_CMASK_ADDRFROMCOORD_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_CMASK_ADDRFROMCOORD_OUTPUT))))
     {
@@ -640,7 +640,7 @@ ADDR_E_RETURNCODE Lib::ComputeFmaskInfo(
         }
     }
 
-    if (!valid)
+    if (valid == FALSE)
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
@@ -763,7 +763,7 @@ ADDR_E_RETURNCODE Lib::ComputeDccInfo(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_DCCINFO_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_DCCINFO_OUTPUT))))
     {
@@ -796,7 +796,7 @@ ADDR_E_RETURNCODE Lib::ComputeDccAddrFromCoord(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_DCC_ADDRFROMCOORD_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_DCC_ADDRFROMCOORD_OUTPUT))))
     {
@@ -827,13 +827,13 @@ ADDR_E_RETURNCODE Lib::ComputePipeBankXor(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_PIPEBANKXOR_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_PIPEBANKXOR_OUTPUT))))
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
-    else if (!IsXor(pIn->swizzleMode))
+    else if (IsXor(pIn->swizzleMode) == FALSE)
     {
         returnCode = ADDR_NOTSUPPORTED;
     }
@@ -862,7 +862,7 @@ ADDR_E_RETURNCODE Lib::ComputeSlicePipeBankXor(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_SLICE_PIPEBANKXOR_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_SLICE_PIPEBANKXOR_OUTPUT))))
     {
@@ -899,7 +899,7 @@ ADDR_E_RETURNCODE Lib::ComputeSubResourceOffsetForSwizzlePattern(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_COMPUTE_SUBRESOURCE_OFFSET_FORSWIZZLEPATTERN_INPUT)) ||
          (pOut->size != sizeof(ADDR2_COMPUTE_SUBRESOURCE_OFFSET_FORSWIZZLEPATTERN_OUTPUT))))
     {
@@ -965,7 +965,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceInfoSanityCheck(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         (pIn->size != sizeof(ADDR2_COMPUTE_SURFACE_INFO_INPUT)))
     {
         returnCode = ADDR_INVALIDPARAMS;
@@ -1109,7 +1109,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceAddrFromCoordLinear(
 
     if (valid)
     {
-        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn = {0};
+        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn  = {0};
         ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {0};
         ADDR2_MIP_INFO                    mipInfo[MaxMipLevels];
 
@@ -1143,7 +1143,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceAddrFromCoordLinear(
         }
     }
 
-    if (!valid)
+    if (valid == FALSE)
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
@@ -1200,7 +1200,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddrLinear(
 
     if (valid)
     {
-        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn = {0};
+        ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn  = {0};
         ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {0};
         localIn.bpp          = pIn->bpp;
         localIn.flags        = pIn->flags;
@@ -1237,7 +1237,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddrLinear(
                     mipSize = currentMipHeight * localOut.pitch * elementBytes;
                 }
 
-                if (!mipSize)
+                if (mipSize == 0)
                 {
                     valid = FALSE;
                     break;
@@ -1299,7 +1299,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddrLinear(
         }
     }
 
-    if (!valid)
+    if (valid == FALSE)
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
@@ -1462,7 +1462,7 @@ Dim3d Lib::GetMipTailDim(
     {
         UINT_32 dim = log2blkSize % 3;
 
-        if (!dim)
+        if (dim == 0)
         {
             out.h >>= 1;
         }
@@ -1515,7 +1515,7 @@ UINT_32 Lib::ComputeSurface2DMicroBlockOffset(
         if (log2ElementBytes < 3)
         {
             microBlockOffset |= (pIn->y & 0x4) << 4;
-            if (!log2ElementBytes)
+            if (log2ElementBytes == 0)
             {
                 microBlockOffset |= (pIn->y & 0x8) << 4;
             }
@@ -1588,7 +1588,7 @@ UINT_32 Lib::ComputeSurface3DMicroBlockOffset(
     UINT_32 microBlockOffset = 0;
     if (IsStandardSwizzle(pIn->resourceType, pIn->swizzleMode))
     {
-        if (!log2ElementBytes)
+        if (log2ElementBytes == 0)
         {
             microBlockOffset = ((pIn->slice & 4) >> 2) | ((pIn->y & 4) >> 1);
         }
@@ -1618,7 +1618,7 @@ UINT_32 Lib::ComputeSurface3DMicroBlockOffset(
     {
         UINT_32 xh, yh, zh;
 
-        if (!log2ElementBytes)
+        if (log2ElementBytes == 0)
         {
             microBlockOffset =
                 (pIn->x & 1) | ((pIn->y & 1) << 1) | ((pIn->x & 2) << 1) | ((pIn->y & 2) << 2);
@@ -1738,7 +1738,7 @@ ADDR_E_RETURNCODE Lib::Addr2GetPreferredSurfaceSetting(
 {
     ADDR_E_RETURNCODE returnCode;
 
-    if ((GetFillSizeFieldsFlags()) &&
+    if ((GetFillSizeFieldsFlags() == TRUE) &&
         ((pIn->size != sizeof(ADDR2_GET_PREFERRED_SURF_SETTING_INPUT)) ||
          (pOut->size != sizeof(ADDR2_GET_PREFERRED_SURF_SETTING_OUTPUT))))
     {

@@ -228,7 +228,6 @@ VkResult radv_QueuePresentKHR(
 	const VkPresentInfoKHR*                  pPresentInfo)
 {
 	RADV_FROM_HANDLE(radv_queue, queue, _queue);
-
 	return wsi_common_queue_present(&queue->device->physical_device->wsi_device,
 					radv_device_to_handle(queue->device),
 					_queue,

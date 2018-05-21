@@ -68,9 +68,9 @@ vmw_winsys_create( int fd )
    struct vmw_winsys_screen *vws;
    struct stat stat_buf;
 
-   if (!dev_hash) {
+   if (dev_hash == NULL) {
       dev_hash = util_hash_table_create(vmw_dev_hash, vmw_dev_compare);
-      if (!dev_hash)
+      if (dev_hash == NULL)
          return NULL;
    }
 
@@ -130,7 +130,7 @@ out_no_vws:
 void
 vmw_winsys_destroy(struct vmw_winsys_screen *vws)
 {
-   if (!--vws->open_count) {
+   if (--vws->open_count == 0) {
       util_hash_table_remove(dev_hash, &vws->device);
       vmw_pools_cleanup(vws);
       vws->fence_ops->destroy(vws->fence_ops);

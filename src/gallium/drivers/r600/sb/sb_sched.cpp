@@ -51,7 +51,7 @@ bool rp_kcache_tracker::try_reserve(sel_chan r) {
 	unsigned sel = kc_sel(r);
 
 	for (unsigned i = 0; i < sel_count; ++i) {
-		if (!rp[i]) {
+		if (rp[i] == 0) {
 			rp[i] = sel;
 			++uc[i];
 			return true;
@@ -106,7 +106,7 @@ void rp_kcache_tracker::unreserve(sel_chan r) {
 
 	for (unsigned i = 0; i < sel_count; ++i)
 		if (rp[i] == sel) {
-			if (!--uc[i])
+			if (--uc[i] == 0)
 				rp[i] = 0;
 			return;
 		}
@@ -157,7 +157,7 @@ bool literal_tracker::try_reserve(literal l) {
 	PSC_DUMP( sblog << "literal reserve " << l.u << "  " << l.f << "\n"; );
 
 	for (unsigned i = 0; i < MAX_ALU_LITERALS; ++i) {
-		if (!lt[i]) {
+		if (lt[i] == 0) {
 			lt[i] = l;
 			++uc[i];
 			PSC_DUMP( sblog << "  reserved new uc = " << uc[i] << "\n"; );
@@ -178,7 +178,7 @@ void literal_tracker::unreserve(literal l) {
 
 	for (unsigned i = 0; i < MAX_ALU_LITERALS; ++i) {
 		if (lt[i] == l) {
-			if (!--uc[i])
+			if (--uc[i] == 0)
 				lt[i] = 0;
 			return;
 		}
@@ -215,7 +215,7 @@ static inline unsigned bs_cycle(bool trans, unsigned bs, unsigned src) {
 inline
 bool rp_gpr_tracker::try_reserve(unsigned cycle, unsigned sel, unsigned chan) {
 	++sel;
-	if (!rp[cycle][chan]) {
+	if (rp[cycle][chan] == 0) {
 		rp[cycle][chan] = sel;
 		++uc[cycle][chan];
 		return true;
@@ -250,7 +250,7 @@ inline
 void rp_gpr_tracker::unreserve(unsigned cycle, unsigned sel, unsigned chan) {
 	++sel;
 	assert(rp[cycle][chan] == sel && uc[cycle][chan]);
-	if (!--uc[cycle][chan])
+	if (--uc[cycle][chan] == 0)
 		rp[cycle][chan] = 0;
 }
 
@@ -523,7 +523,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 	for (unsigned i = 0; i < max_slots; ++i) {
 		alu_node *a = slots[i];
 		if (a) {
-			if (first_slot == (~0u))
+			if (first_slot == ~0)
 				first_slot = i;
 			last_slot = i;
 			save_bs[i] = a->bc.bank_swizzle;
@@ -534,7 +534,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 				if (!gpr.try_reserve(a))
 					assert(!"internal reservation error");
 			} else {
-				if (first_nf == (~0u))
+				if (first_nf == ~0)
 					first_nf = i;
 
 				a->bc.bank_swizzle = 0;
@@ -542,7 +542,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 		}
 	}
 
-	if (first_nf == (~0u)) {
+	if (first_nf == ~0) {
 		assign_slot(slot, n);
 		return true;
 	}
@@ -712,7 +712,7 @@ void alu_group_tracker::update_flags(alu_node* n) {
 	consumes_lds_oqa |= n->consumes_lds_oq();
 	produces_lds_oqa |= n->produces_lds_oq();
 	if (flags & AF_ANY_PRED) {
-		if (n->dst[2])
+		if (n->dst[2] != NULL)
 			updates_exec_mask = true;
 	}
 }
@@ -1309,7 +1309,7 @@ bool post_scheduler::recolor_local(value *v) {
 
 	while (pass < 2) {
 
-		if (!pass) {
+		if (pass == 0) {
 			rs = sh.first_temp_gpr();
 			re = MAX_GPR;
 		} else {

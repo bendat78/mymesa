@@ -44,9 +44,7 @@
 #include <llvm-c/Transforms/Utils.h>
 #endif
 #include <llvm-c/BitWriter.h>
-#if HAVE_LLVM >= 0x0700
-#include <llvm-c/Transforms/Utils.h>
-#endif
+
 
 /* Only MCJIT is available as of LLVM SVN r216982 */
 #if HAVE_LLVM >= 0x0306
@@ -457,7 +455,7 @@ lp_build_init(void)
        */
       lp_native_vector_width = 128;
    }
-
+ 
    lp_native_vector_width = debug_get_num_option("LP_NATIVE_VECTOR_WIDTH",
                                                  lp_native_vector_width);
 

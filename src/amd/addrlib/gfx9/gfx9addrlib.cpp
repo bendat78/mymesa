@@ -224,7 +224,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeHtileInfo(
     const UINT_32 metaBlkSize = numCompressBlkPerMetaBlk << 2;
     UINT_32       align       = numPipeTotal * numRbTotal * m_pipeInterleaveBytes;
 
-    if (!(IsXor(pIn->swizzleMode)) && (numPipeTotal > 2))
+    if ((IsXor(pIn->swizzleMode) == FALSE) && (numPipeTotal > 2))
     {
         align *= (numPipeTotal >> 1);
     }
@@ -410,7 +410,7 @@ VOID Gfx9Lib::GetMetaMipInfo(
                   (mip0Height <= tailHeight) &&
                   ((dataThick == FALSE) || (mip0Depth <= tailDepth)));
 
-        if (!inTail)
+        if (inTail == FALSE)
         {
             UINT_32 orderLimit;
             UINT_32 *pMipDim;
@@ -449,12 +449,12 @@ VOID Gfx9Lib::GetMetaMipInfo(
         }
     }
 
-    if (pInfo)
+    if (pInfo != NULL)
     {
         UINT_32 mipWidth  = mip0Width;
         UINT_32 mipHeight = mip0Height;
         UINT_32 mipDepth  = mip0Depth;
-        Dim3d   mipCoord = {0};
+        Dim3d   mipCoord  = {0};
 
         for (UINT_32 mip = 0; mip < numMipLevels; mip++)
         {
@@ -553,7 +553,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeDccInfo(
     {
         metaLinear = TRUE;
     }
-    else if (metaLinear)
+    else if (metaLinear == TRUE)
     {
         pipeAligned = FALSE;
     }
@@ -604,7 +604,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeDccInfo(
             if ((metaBlkDim.h < metaBlkDim.w) ||
                 ((pIn->numMipLevels > 1) && (metaBlkDim.h == metaBlkDim.w)))
             {
-                if (!(dataThick) || (metaBlkDim.h <= metaBlkDim.d))
+                if ((dataThick == FALSE) || (metaBlkDim.h <= metaBlkDim.d))
                 {
                     metaBlkDim.h <<= 1;
                 }
@@ -615,7 +615,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeDccInfo(
             }
             else
             {
-                if (!(dataThick) || (metaBlkDim.w <= metaBlkDim.d))
+                if ((dataThick == FALSE) || (metaBlkDim.w <= metaBlkDim.d))
                 {
                     metaBlkDim.w <<= 1;
                 }
@@ -1276,7 +1276,7 @@ ChipFamily Gfx9Lib::HwlConvertChipFamily(
 
             m_settings.isDce12 = 1;
 
-            if (!m_settings.isVega10)
+            if (m_settings.isVega10 == 0)
             {
                 m_settings.htileAlignFix = 1;
                 m_settings.applyAliasFix = 1;
@@ -1347,7 +1347,7 @@ VOID Gfx9Lib::GetRbEquation(
         cx++;
         cy++;
 
-        if (!m_settings.applyAliasFix)
+        if (m_settings.applyAliasFix == false)
         {
             (*pRbEq)[0].add(cy);
         }
@@ -1479,7 +1479,7 @@ VOID Gfx9Lib::GetDataEquation(
                     (*pDataEq)[i].add(cz);
                     cz++;
                 }
-                if (!(elementBytesLog2) || (elementBytesLog2 == 3))
+                if ((elementBytesLog2 == 0) || (elementBytesLog2 == 3))
                 {
                     // add an x and z
                     (*pDataEq)[6].add(cx);
@@ -1624,7 +1624,7 @@ VOID Gfx9Lib::GetPipeEquation(
         // so we don't need to do anything
         // Note, this if condition is not necessary, since if we execute the loop when pipe==0,
         // we will get the same pipe equation
-        if (pipeStart)
+        if (pipeStart != 0)
         {
             for (UINT_32 i = 0; i < numPipeLog2; i++)
             {
@@ -1664,7 +1664,7 @@ VOID Gfx9Lib::GetPipeEquation(
             // Xor in the bits above the pipe+gpu bits
             dataEq.copy(xorMask, pipeInterleaveLog2 + pipeStart + numPipeLog2, numPipeLog2);
 
-            if (!(numSamplesLog2) && (IsPrt(swizzleMode) == FALSE))
+            if ((numSamplesLog2 == 0) && (IsPrt(swizzleMode) == FALSE))
             {
                 Coordinate co;
                 CoordEq xorMask2;
@@ -1980,7 +1980,7 @@ VOID Gfx9Lib::GenMetaEquation(
             }
         }
 
-         bool rbAppendedWithPipeBits[1 << (MaxSeLog2 + MaxRbPerSeLog2)] = {0};
+         bool rbAppendedWithPipeBits[1 << (MaxSeLog2 + MaxRbPerSeLog2)] = {};
 
         // Loop through each bit of the channel, get the smallest coordinate,
         // and remove it from the metaaddr, and rb_equation
@@ -2265,7 +2265,7 @@ UINT_32 Gfx9Lib::HwlGetEquationIndex(
         index = m_equationLookupTable[rsrcTypeIdx][swModeIdx][elementBytesLog2];
     }
 
-    if (pOut->pMipInfo)
+    if (pOut->pMipInfo != NULL)
     {
         for (UINT_32 i = 0; i < pIn->numMipLevels; i++)
         {
@@ -2306,8 +2306,8 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeBlock256Equation(
     ADDR_CHANNEL_SETTING* pixelBit = &pEquation->addr[elementBytesLog2];
 
     const UINT_32 maxBitsUsed = 4;
-    ADDR_CHANNEL_SETTING x[maxBitsUsed] = {0};
-    ADDR_CHANNEL_SETTING y[maxBitsUsed] = {0};
+    ADDR_CHANNEL_SETTING x[maxBitsUsed] = {};
+    ADDR_CHANNEL_SETTING y[maxBitsUsed] = {};
 
     for (i = 0; i < maxBitsUsed; i++)
     {
@@ -2516,12 +2516,12 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeThinEquation(
 
     const UINT_32 maxBitsUsed = 14;
     ADDR_ASSERT((2 * maxBitsUsed) >= maxXorBits);
-    ADDR_CHANNEL_SETTING x[maxBitsUsed] = {0};
-    ADDR_CHANNEL_SETTING y[maxBitsUsed] = {0};
+    ADDR_CHANNEL_SETTING x[maxBitsUsed] = {};
+    ADDR_CHANNEL_SETTING y[maxBitsUsed] = {};
 
     const UINT_32 extraXorBits = 16;
     ADDR_ASSERT(extraXorBits >= maxXorBits - blockSizeLog2);
-    ADDR_CHANNEL_SETTING xorExtra[extraXorBits] = {0};
+    ADDR_CHANNEL_SETTING xorExtra[extraXorBits] = {};
 
     for (UINT_32 i = 0; i < maxBitsUsed; i++)
     {
@@ -2608,7 +2608,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeThinEquation(
                 InitChannel(&pEquation->xor1[bankStart + i], pXor1Src);
             }
 
-            if (!IsPrt(swMode))
+            if (IsPrt(swMode) == FALSE)
             {
                 for (UINT_32 i = 0; i < pipeXorBits; i++)
                 {
@@ -2675,13 +2675,13 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeThickEquation(
 
     const UINT_32 maxBitsUsed = 12;
     ADDR_ASSERT((3 * maxBitsUsed) >= maxXorBits);
-    ADDR_CHANNEL_SETTING x[maxBitsUsed] = {0};
-    ADDR_CHANNEL_SETTING y[maxBitsUsed] = {0};
-    ADDR_CHANNEL_SETTING z[maxBitsUsed] = {0};
+    ADDR_CHANNEL_SETTING x[maxBitsUsed] = {};
+    ADDR_CHANNEL_SETTING y[maxBitsUsed] = {};
+    ADDR_CHANNEL_SETTING z[maxBitsUsed] = {};
 
     const UINT_32 extraXorBits = 24;
     ADDR_ASSERT(extraXorBits >= maxXorBits - blockSizeLog2);
-    ADDR_CHANNEL_SETTING xorExtra[extraXorBits] = {0};
+    ADDR_CHANNEL_SETTING xorExtra[extraXorBits] = {};
 
     for (UINT_32 i = 0; i < maxBitsUsed; i++)
     {
@@ -3139,7 +3139,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
     BOOL_32          prt         = flags.prt;
     BOOL_32          stereo      = flags.qbStereo;
 
-    if (!invalid)
+    if (invalid == FALSE)
     {
         if ((pIn->numFrags > 1) &&
             (GetBlockSize(swizzle) < (m_pipeInterleaveBytes * pIn->numFrags)))
@@ -3149,7 +3149,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
         }
     }
 
-    if (!invalid)
+    if (invalid == FALSE)
     {
         switch (rsrcType)
         {
@@ -3168,7 +3168,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
         }
     }
 
-    if (!invalid)
+    if (invalid == FALSE)
     {
         if (display)
         {
@@ -3176,7 +3176,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
         }
     }
 
-    if (!invalid)
+    if (invalid == FALSE)
     {
         if (linear)
         {
@@ -3194,7 +3194,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoSanityCheck(
                 }
             }
 
-            if (!invalid)
+            if (invalid == FALSE)
             {
                 if (IsZOrderSwizzle(swizzle))
                 {
@@ -3346,7 +3346,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
         addrValidSwSet           = addrPreferredSwSet;
         clientPreferredSwSet     = pIn->preferredSwSet;
 
-        if (!clientPreferredSwSet.value)
+        if (clientPreferredSwSet.value == 0)
         {
             clientPreferredSwSet.value = AddrSwSetAll;
         }
@@ -3365,7 +3365,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
             addrPreferredSwSet.value = AddrSwSetZ;
             addrValidSwSet.value     = AddrSwSetZ;
 
-            if (!pIn->flags.noMetadata)
+            if (pIn->flags.noMetadata == FALSE)
             {
                 if (pIn->flags.depth &&
                     pIn->flags.texture &&
@@ -3397,7 +3397,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
             blockSet.value = AddrBlockSetMacro;
 
             // This isn't to be used as texture and caller doesn't allow macro tiled.
-            if (!(pIn->flags.texture) &&
+            if ((pIn->flags.texture == FALSE) &&
                 (pIn->forbiddenBlock.macro4KB && pIn->forbiddenBlock.macro64KB))
             {
                 blockSet.value |= AddrBlockSetLinear;
@@ -3527,7 +3527,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
 
         pOut->validSwTypeSet = addrValidSwSet;
 
-        if (!clientPreferredSwSet.value)
+        if (clientPreferredSwSet.value == 0)
         {
             // Client asks for an invalid swizzle type...
             ADDR_ASSERT_ALWAYS();
@@ -3595,8 +3595,8 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
                 }
             }
 
-            Dim3d blkAlign[AddrBlockMaxTiledType] = {0};
-            Dim3d paddedDim[AddrBlockMaxTiledType] = {0};
+            Dim3d blkAlign[AddrBlockMaxTiledType]  = {{0}, {0}, {0}};
+            Dim3d paddedDim[AddrBlockMaxTiledType] = {{0}, {0}, {0}};
             UINT_64 padSize[AddrBlockMaxTiledType] = {0};
 
             if (blockSet.micro)
@@ -3738,7 +3738,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlGetPreferredSurfaceSetting(
                     }
                 }
 
-                if (!blockSet.value)
+                if (blockSet.value == 0)
                 {
                     // Bad things happen, client will not get any useful information from AddrLib.
                     // Maybe we should fill in some output earlier instead of outputing nothing?
@@ -3903,7 +3903,7 @@ ADDR_E_RETURNCODE Gfx9Lib::ComputeStereoInfo(
             {
                 *pHeightAlign = 1u << maxYCoordInPipeBankXor;
 
-                if (pOut->pStereoInfo)
+                if (pOut->pStereoInfo != NULL)
                 {
                     pOut->pStereoInfo->rightSwizzle = 0;
 
@@ -3965,7 +3965,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
     {
         UINT_32 pitchAlignInElement = pOut->blockWidth;
 
-        if ((IsTex2d(pIn->resourceType)) &&
+        if ((IsTex2d(pIn->resourceType) == TRUE) &&
             (pIn->flags.display || pIn->flags.rotated) &&
             (pIn->numMipLevels <= 1) &&
             (pIn->numSamples <= 1) &&
@@ -4035,7 +4035,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
 
                 const UINT_32 endingMipId = Min(pOut->firstMipIdInTail, pIn->numMipLevels - 1);
 
-                if (!endingMipId)
+                if (endingMipId == 0)
                 {
                     const Dim3d tailMaxDim = GetMipTailDim(pIn->resourceType,
                                                            pIn->swizzleMode,
@@ -4088,13 +4088,13 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                     }
                 }
 
-                if (pOut->pMipInfo)
+                if (pOut->pMipInfo != NULL)
                 {
                     UINT_32 elementBytesLog2 = Log2(pIn->bpp >> 3);
 
                     for (UINT_32 i = 0; i < pIn->numMipLevels; i++)
                     {
-                        Dim3d   mipStartPos = {0};
+                        Dim3d   mipStartPos          = {0};
                         UINT_32 mipTailOffsetInBytes = 0;
 
                         mipStartPos = GetMipStartPos(pIn->resourceType,
@@ -4123,7 +4123,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoTiled(
                     }
                 }
             }
-            else if (pOut->pMipInfo)
+            else if (pOut->pMipInfo != NULL)
             {
                 pOut->pMipInfo[0].pitch  = pOut->pitch;
                 pOut->pMipInfo[0].height = pOut->height;
@@ -4181,7 +4181,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoLinear(
             pitch        = PowTwoAlign(pIn->width, pitchAlignInElement);
             actualHeight = pIn->numMipLevels;
 
-            if (!pIn->flags.prt)
+            if (pIn->flags.prt == FALSE)
             {
                 returnCode = ApplyCustomizedPitchHeight(pIn, elementBytes, pitchAlignInElement,
                                                         &pitch, &actualHeight);
@@ -4189,7 +4189,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoLinear(
 
             if (returnCode == ADDR_OK)
             {
-                if (pOut->pMipInfo)
+                if (pOut->pMipInfo != NULL)
                 {
                     for (UINT_32 i = 0; i < pIn->numMipLevels; i++)
                     {
@@ -4207,7 +4207,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceInfoLinear(
         returnCode = ComputeSurfaceLinearPadding(pIn, &pitch, &actualHeight, pOut->pMipInfo);
     }
 
-    if (!(pitch) || (actualHeight == 0))
+    if ((pitch == 0) || (actualHeight == 0))
     {
         returnCode = ADDR_INVALIDPARAMS;
     }
@@ -4276,7 +4276,7 @@ UINT_32 Gfx9Lib::GetMipChainInfo(
     {
         if (inTail)
         {
-            if (!finalDim)
+            if (finalDim == FALSE)
             {
                 UINT_32 mipSize;
 
@@ -4337,7 +4337,7 @@ UINT_32 Gfx9Lib::GetMipChainInfo(
             }
         }
 
-        if (pMipInfo)
+        if (pMipInfo != NULL)
         {
             pMipInfo[mipId].pitch  = mipPitch;
             pMipInfo[mipId].height = mipHeight;
@@ -4565,7 +4565,7 @@ Dim3d Gfx9Lib::GetMipStartPos(
     UINT_32 log2blkSize    = GetBlockSizeLog2(swizzleMode);
     UINT_32 mipIndexInTail = mipId;
 
-    if (!inMipTail)
+    if (inMipTail == FALSE)
     {
         // Mip 0 dimension, unit in block
         UINT_32 mipWidthInBlk   = width  / blockWidth;
@@ -4614,7 +4614,7 @@ Dim3d Gfx9Lib::GetMipStartPos(
             {
                 UINT_32 dim = log2blkSize % 3;
 
-                if (!dim)
+                if (dim == 0)
                 {
                     inTail =
                         (mipWidthInBlk <= 2) && (mipHeightInBlk == 1) && (mipDepthInBlk <= 2);
@@ -4713,7 +4713,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceAddrFromCoordTiled(
     if (valid)
     {
         UINT_32 log2ElementBytes   = Log2(pIn->bpp >> 3);
-        Dim3d   mipStartPos = {0};
+        Dim3d   mipStartPos        = {0};
         UINT_32 mipTailBytesOffset = 0;
 
         if (pIn->numMipLevels > 1)
@@ -4748,7 +4748,7 @@ ADDR_E_RETURNCODE Gfx9Lib::HwlComputeSurfaceAddrFromCoordTiled(
             if (IsZOrderSwizzle(pIn->swizzleMode))
             {
                 // Morton generation
-                if (!(log2ElementBytes) || (log2ElementBytes == 2))
+                if ((log2ElementBytes == 0) || (log2ElementBytes == 2))
                 {
                     UINT_32 totalLowBits = 6 - log2ElementBytes;
                     UINT_32 mortBits = totalLowBits / 2;
@@ -4989,7 +4989,7 @@ ADDR_E_RETURNCODE Gfx9Lib::ComputeSurfaceLinearPadding(
 
         for (UINT_32 i = 0; i < pIn->numMipLevels; i++)
         {
-            if (pMipInfo)
+            if (pMipInfo != NULL)
             {
                 pMipInfo[i].offset = mipChainWidth * mipChainHeight * elementBytes;
                 pMipInfo[i].pitch  = mipChainWidth;

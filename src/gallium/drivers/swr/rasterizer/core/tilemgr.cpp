@@ -101,7 +101,7 @@ HOTTILE* HotTileMgr::GetHotTile(SWR_CONTEXT* pContext, DRAW_CONTEXT* pDC, HANDLE
 
     HotTileSet &tile = mHotTiles[x][y];
     HOTTILE& hotTile = tile.Attachment[attachment];
-    if (!hotTile.pBuffer)
+    if (hotTile.pBuffer == NULL)
     {
         if (create)
         {
@@ -122,7 +122,7 @@ HOTTILE* HotTileMgr::GetHotTile(SWR_CONTEXT* pContext, DRAW_CONTEXT* pDC, HANDLE
         // free the old tile and create a new one with enough space to hold all samples
         if (numSamples > hotTile.numSamples)
         {
-            // tile should be either uninitialized or resolved if we're deleting and switching to a
+            // tile should be either uninitialized or resolved if we're deleting and switching to a 
             // new sample count
             SWR_ASSERT((hotTile.state == HOTTILE_INVALID) ||
                 (hotTile.state == HOTTILE_RESOLVED) ||
@@ -136,7 +136,7 @@ HOTTILE* HotTileMgr::GetHotTile(SWR_CONTEXT* pContext, DRAW_CONTEXT* pDC, HANDLE
             hotTile.numSamples = numSamples;
         }
 
-        // if requested render target array index isn't currently loaded, need to store out the current hottile
+        // if requested render target array index isn't currently loaded, need to store out the current hottile 
         // and load the requested array slice
         if (renderTargetArrayIndex != hotTile.renderTargetArrayIndex)
         {
@@ -196,7 +196,7 @@ HOTTILE* HotTileMgr::GetHotTileNoLoad(
 
     HotTileSet &tile = mHotTiles[x][y];
     HOTTILE& hotTile = tile.Attachment[attachment];
-    if (!hotTile.pBuffer)
+    if (hotTile.pBuffer == NULL)
     {
         if (create)
         {

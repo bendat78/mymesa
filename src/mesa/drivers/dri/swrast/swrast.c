@@ -273,7 +273,7 @@ swrastFillInModes(__DRIscreen *psp,
 			       depth_buffer_factor, back_buffer_modes,
 			       back_buffer_factor, msaa_samples_array, 1,
 			       GL_TRUE, GL_FALSE);
-    if (!configs) {
+    if (configs == NULL) {
 	fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
 		__LINE__);
 	return NULL;
@@ -551,14 +551,14 @@ dri_create_buffer(__DRIscreen * sPriv,
     (void) isPixmap;
 
     drawable = CALLOC_STRUCT(dri_drawable);
-    if (!drawable)
+    if (drawable == NULL)
 	goto drawable_fail;
 
     dPriv->driverPrivate = drawable;
     drawable->dPriv = dPriv;
 
     drawable->row = malloc(SWRAST_MAX_WIDTH * 4);
-    if (!drawable->row)
+    if (drawable->row == NULL)
 	goto drawable_fail;
 
     fb = &drawable->Base;
@@ -636,7 +636,7 @@ dri_swap_buffers(__DRIdrawable * dPriv)
 	dri_swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 
     /* check for signle-buffered */
-    if (!backrb)
+    if (backrb == NULL)
 	return;
 
     /* check if swapping currently bound buffer */
@@ -766,13 +766,13 @@ dri_create_context(gl_api api,
     (void) ctx_config->flags;
 
     /* The swrast driver doesn't understand any of the attributes */
-    if (ctx_config->attribute_mask) {
+    if (ctx_config->attribute_mask != 0) {
 	*error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
 	return false;
     }
 
     ctx = CALLOC_STRUCT(dri_context);
-    if (!ctx) {
+    if (ctx == NULL) {
 	*error = __DRI_CTX_ERROR_NO_MEMORY;
 	goto context_fail;
     }
@@ -933,7 +933,7 @@ dri_copy_sub_buffer(__DRIdrawable *dPriv, int x, int y,
 	dri_swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 
     /* check for signle-buffered */
-    if (!backrb)
+    if (backrb == NULL)
        return;
 
     iy = frontrb->Base.Base.Height - y - h;

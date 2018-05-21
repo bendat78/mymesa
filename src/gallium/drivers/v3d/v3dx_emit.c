@@ -32,7 +32,7 @@ static uint8_t
 v3d_factor(enum pipe_blendfactor factor, bool dst_alpha_one)
 {
         /* We may get a bad blendfactor when blending is disabled. */
-        if (!factor)
+        if (factor == 0)
                 return V3D_BLEND_FACTOR_ZERO;
 
         switch (factor) {

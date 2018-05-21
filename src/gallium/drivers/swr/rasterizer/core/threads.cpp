@@ -134,7 +134,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
 
                 // Find Numa Node
                 uint32_t numaId = 0;
-                PROCESSOR_NUMBER procNum = {0};
+                PROCESSOR_NUMBER procNum = {};
                 procNum.Group = WORD(procGroup);
                 procNum.Number = UCHAR(threadId);
 
@@ -158,7 +158,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
                     pCore->procGroup = procGroup;
                 }
                 pCore->threadIds.push_back(threadId);
-                if (!procGroup)
+                if (procGroup == 0)
                 {
                     out_numThreadsPerProcGroup++;
                 }
@@ -200,7 +200,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
             physId = std::strtoul(&line.c_str()[data_start], &c, 10);
             continue;
         }
-        if (!line.length())
+        if (line.length() == 0)
         {
             if (physId + 1 > out_nodes.size())
                 out_nodes.resize(physId + 1);
@@ -288,7 +288,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
         // Erase empty cores (first)
         for (auto core_it = node_it->cores.begin(); core_it != node_it->cores.end(); )
         {
-            if (!core_it->threadIds.size())
+            if (core_it->threadIds.size() == 0)
             {
                 core_it = node_it->cores.erase(core_it);
             }
@@ -299,7 +299,7 @@ void CalculateProcessorTopology(CPUNumaNodes& out_nodes, uint32_t& out_numThread
         }
 
         // Erase empty numa nodes (second)
-        if (!node_it->cores.size())
+        if (node_it->cores.size() == 0)
         {
             node_it = out_nodes.erase(node_it);
         }
@@ -320,7 +320,7 @@ void bindThread(SWR_CONTEXT* pContext, uint32_t threadId, uint32_t procGroupId =
 
 #if defined(_WIN32)
 
-    GROUP_AFFINITY affinity = {0};
+    GROUP_AFFINITY affinity = {};
     affinity.Group = procGroupId;
 
 #if !defined(_WIN64)
@@ -363,7 +363,7 @@ void bindThread(SWR_CONTEXT* pContext, uint32_t threadId, uint32_t procGroupId =
     CPU_SET(threadId, &cpuset);
 
     int err = pthread_setaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-    if (err)
+    if (err != 0)
     {
         fprintf(stderr, "pthread_setaffinity_np failure for tid %u: %s\n", threadId, strerror(err));
     }
@@ -407,7 +407,7 @@ bool CheckDependencyFE(SWR_CONTEXT *pContext, DRAW_CONTEXT *pDC, uint32_t lastRe
 /// @brief Update client stats.
 INLINE void UpdateClientStats(SWR_CONTEXT* pContext, uint32_t workerId, DRAW_CONTEXT* pDC)
 {
-    if (!(pContext->pfnUpdateStats) || (GetApiState(pDC).enableStatsBE == false))
+    if ((pContext->pfnUpdateStats == nullptr) || (GetApiState(pDC).enableStatsBE == false))
     {
         return;
     }
@@ -448,7 +448,7 @@ INLINE int32_t CompleteDrawContextInl(SWR_CONTEXT* pContext, uint32_t workerId, 
 
     AR_FLUSH(pDC->drawId);
 
-    if (!result)
+    if (result == 0)
     {
         ExecuteCallbacks(pContext, workerId, pDC);
 
@@ -547,7 +547,7 @@ bool WorkOnFifoBE(
 
     // Try to work on each draw in order of the available draws in flight.
     //   1. If we're on curDrawBE, we can work on any macrotile that is available.
-    //   2. If we're trying to work on draws after curDrawBE, we are restricted to
+    //   2. If we're trying to work on draws after curDrawBE, we are restricted to 
     //      working on those macrotiles that are known to be complete in the prior draw to
     //      maintain order. The locked tiles provides the history to ensures this.
     for (uint32_t i = curDrawBE; IDComparesLess(i, drawEnqueued); ++i)
@@ -560,7 +560,7 @@ bool WorkOnFifoBE(
         // but if there are lots of bubbles between draws then serializing FE and BE may
         // need to be revisited.
         if (!pDC->doneFE) return false;
-
+        
         // If this draw is dependent on a previous draw then we need to bail.
         if (CheckDependency(pContext, pDC, lastRetiredDraw))
         {
@@ -726,7 +726,7 @@ void WorkOnFifoFE(SWR_CONTEXT *pContext, uint32_t workerId, uint32_t &curDrawFE)
             }
 
             uint32_t initial = InterlockedCompareExchange((volatile uint32_t*)&pDC->FeLock, 1, 0);
-            if (!initial)
+            if (initial == 0)
             {
                 // successfully grabbed the DC, now run the FE
                 pDC->FeWork.pfnWork(pContext, pDC, workerId, &pDC->FeWork.desc);
@@ -761,7 +761,7 @@ void WorkOnCompute(
     for (uint64_t i = curDrawBE; IDComparesLess(i, drawEnqueued); ++i)
     {
         DRAW_CONTEXT *pDC = &pContext->dcRing[i % pContext->MAX_DRAWS_IN_FLIGHT];
-        if (!pDC->isCompute) return;
+        if (pDC->isCompute == false) return;
 
         // check dependencies
         if (CheckDependency(pContext, pDC, lastRetiredDraw))
@@ -851,7 +851,7 @@ DWORD workerThreadMain(LPVOID pData)
 
     // each worker has the ability to work on any of the queued draws as long as certain
     // conditions are met. the data associated
-    // with a draw is guaranteed to be active as long as a worker hasn't signaled that he
+    // with a draw is guaranteed to be active as long as a worker hasn't signaled that he 
     // has moved on to the next draw when he determines there is no more work to do. The api
     // thread will not increment the head of the dc ring until all workers have moved past the
     // current head.

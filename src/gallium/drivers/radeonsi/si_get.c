@@ -169,6 +169,7 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_DOUBLES:
 	case PIPE_CAP_TGSI_TEX_TXF_LZ:
 	case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
+	case PIPE_CAP_BINDLESS_TEXTURE:
 	case PIPE_CAP_QUERY_TIMESTAMP:
 	case PIPE_CAP_QUERY_TIME_ELAPSED:
 	case PIPE_CAP_NIR_SAMPLERS_AS_DEREF:
@@ -229,11 +230,6 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		if (sscreen->debug_flags & DBG(NIR))
 			return 1;
 		return 0;
-
-	case PIPE_CAP_BINDLESS_TEXTURE:
-		if (sscreen->debug_flags & DBG(NIR))
-			return 0;
-		return 1;
 
 	/* Unsupported features. */
 	case PIPE_CAP_BUFFER_SAMPLER_VIEW_RGBA_ONLY:
@@ -451,14 +447,10 @@ static int si_get_shader_param(struct pipe_screen* pscreen,
 	case PIPE_SHADER_CAP_FP16:
 	case PIPE_SHADER_CAP_TGSI_FMA_SUPPORTED:
 	case PIPE_SHADER_CAP_TGSI_ANY_INOUT_DECL_RANGE:
+	case PIPE_SHADER_CAP_TGSI_SKIP_MERGE_REGISTERS:
 	case PIPE_SHADER_CAP_TGSI_DROUND_SUPPORTED:
 	case PIPE_SHADER_CAP_TGSI_LDEXP_SUPPORTED:
 	case PIPE_SHADER_CAP_TGSI_DFRACEXP_DLDEXP_SUPPORTED:
-		return 1;
-
-	case PIPE_SHADER_CAP_TGSI_SKIP_MERGE_REGISTERS:
-		if (sscreen->debug_flags & DBG(MERGE))
-			return 0;
 		return 1;
 
 	case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
@@ -956,7 +948,7 @@ static struct disk_cache *si_get_disk_shader_cache(struct pipe_screen *pscreen)
 static void si_init_renderer_string(struct si_screen *sscreen)
 {
 	struct radeon_winsys *ws = sscreen->ws;
-	char family_name[32] = {0}, kernel_version[128] = {0};
+	char family_name[32] = {}, kernel_version[128] = {};
 	struct utsname uname_data;
 
 	const char *chip_name = si_get_marketing_name(ws);
@@ -967,7 +959,7 @@ static void si_init_renderer_string(struct si_screen *sscreen)
 	else
 		chip_name = si_get_family_name(sscreen);
 
-	if (!uname(&uname_data))
+	if (uname(&uname_data) == 0)
 		snprintf(kernel_version, sizeof(kernel_version),
 			 ", %s", uname_data.release);
 

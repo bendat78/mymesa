@@ -195,7 +195,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
     * Used for the backing buffer GB surfaces, and to approximate
     * when to flush on non-GB hosts.
     */
-   buffer_size = svga3dsurface_get_serialized_size(format, size, numMipLevels,
+   buffer_size = svga3dsurface_get_serialized_size(format, size, numMipLevels, 
                                                    numLayers);
    if (flags & SVGA3D_SURFACE_BIND_STREAM_OUTPUT)
       buffer_size += sizeof(SVGA3dDXSOState);
@@ -232,7 +232,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
 						 &desc.region);
 
       if (surface->sid == SVGA3D_INVALID_ID) {
-         if (!surface->buf) {
+         if (surface->buf == NULL) {
             goto no_sid;
          } else {
             /*
@@ -256,7 +256,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
        * If the kernel created the buffer for us, wrap it into a
        * vmw_svga_winsys_buffer.
        */
-      if (!surface->buf) {
+      if (surface->buf == NULL) {
          struct pb_buffer *pb_buf;
 
          surface->size = vmw_region_size(desc.region);
@@ -265,7 +265,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
          pb_buf = provider->create_buffer(provider, surface->size,
                                           &desc.pb_desc);
          surface->buf = vmw_svga_winsys_buffer_wrap(pb_buf);
-         if (!surface->buf) {
+         if (surface->buf == NULL) {
             vmw_ioctl_region_destroy(desc.region);
             vmw_ioctl_surface_destroy(vws, surface->sid);
             goto no_sid;
@@ -280,8 +280,8 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
 
       /* Best estimate for surface size, used for early flushing. */
       surface->size = buffer_size;
-      surface->buf = NULL;
-   }
+      surface->buf = NULL; 
+   }      
 
    return svga_winsys_surface(surface);
 
@@ -304,8 +304,8 @@ vmw_svga_winsys_surface_can_create(struct svga_winsys_screen *sws,
    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
    uint32_t buffer_size;
 
-   buffer_size = svga3dsurface_get_serialized_size(format, size,
-                                                   numMipLevels,
+   buffer_size = svga3dsurface_get_serialized_size(format, size, 
+                                                   numMipLevels, 
                                                    numLayers);
    if (buffer_size > vws->ioctl.max_texture_size) {
 	return FALSE;
@@ -361,7 +361,7 @@ static boolean
 vmw_svga_winsys_get_cap(struct svga_winsys_screen *sws,
                         SVGA3dDevCapIndex index,
                         SVGA3dDevCapResult *result)
-{
+{   
    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
 
    if (index > vws->ioctl.num_cap_3d ||

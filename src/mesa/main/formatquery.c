@@ -1044,7 +1044,7 @@ _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
          goto end;
 
       get_pname = _equivalent_size_pname(target, pname);
-      if (!get_pname)
+      if (get_pname == 0)
          goto end;
 
       _mesa_GetIntegerv(get_pname, buffer);
@@ -1084,7 +1084,7 @@ _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
                                    max_dimensions_pnames[i],
                                    1, &current_value);
 
-         if (current_value)
+         if (current_value != 0)
             combined_value *= current_value;
       }
 

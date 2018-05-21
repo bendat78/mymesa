@@ -359,8 +359,7 @@ clear_bufferiv(struct gl_context *ctx, GLenum buffer, GLint drawbuffer,
        *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
        *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
        */
-
-      if (!no_error && drawbuffer) {
+      if (!no_error && drawbuffer != 0) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferiv(drawbuffer=%d)",
                      drawbuffer);
          return;
@@ -563,7 +562,7 @@ clear_bufferfv(struct gl_context *ctx, GLenum buffer, GLint drawbuffer,
        *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
        *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
        */
-      if (!no_error && drawbuffer) {
+      if (!no_error && drawbuffer != 0) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfv(drawbuffer=%d)",
                      drawbuffer);
          return;
@@ -674,6 +673,7 @@ clear_bufferfi(struct gl_context *ctx, GLenum buffer, GLint drawbuffer,
                      _mesa_enum_to_string(buffer));
          return;
       }
+
       /* Page 264 (page 280 of the PDF) of the OpenGL 3.0 spec says:
        *
        *     "ClearBuffer generates an INVALID VALUE error if buffer is
@@ -681,7 +681,7 @@ clear_bufferfi(struct gl_context *ctx, GLenum buffer, GLint drawbuffer,
        *     value of MAX DRAW BUFFERS minus one; or if buffer is DEPTH,
        *     STENCIL, or DEPTH STENCIL and drawbuffer is not zero."
        */
-      if (drawbuffer) {
+      if (drawbuffer != 0) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glClearBufferfi(drawbuffer=%d)",
                      drawbuffer);
          return;

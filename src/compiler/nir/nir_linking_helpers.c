@@ -134,8 +134,8 @@ nir_remove_unused_varyings(nir_shader *producer, nir_shader *consumer)
    assert(producer->info.stage != MESA_SHADER_FRAGMENT);
    assert(consumer->info.stage != MESA_SHADER_VERTEX);
 
-   uint64_t read[4] = {0}, written[4] = {0};
-   uint64_t patches_read[4] = {0}, patches_written[4] = {0};
+   uint64_t read[4] = { 0 }, written[4] = { 0 };
+   uint64_t patches_read[4] = { 0 }, patches_written[4] = { 0 };
 
    nir_foreach_variable(var, &producer->outputs) {
       if (var->data.patch) {

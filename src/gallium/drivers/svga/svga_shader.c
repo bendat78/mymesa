@@ -540,7 +540,7 @@ svga_rebind_shaders(struct svga_context *svga)
     * If the underlying winsys layer does not need resource rebinding,
     * just clear the rebind flags and return.
     */
-   if (!swc->resource_rebind) {
+   if (swc->resource_rebind == NULL) {
       svga->rebind.flags.vs = 0;
       svga->rebind.flags.gs = 0;
       svga->rebind.flags.fs = 0;

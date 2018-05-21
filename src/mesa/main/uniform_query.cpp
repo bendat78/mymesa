@@ -163,7 +163,7 @@ validate_uniform_parameters(GLint location, GLsizei count,
                             struct gl_shader_program *shProg,
                             const char *caller)
 {
-   if (!shProg) {
+   if (shProg == NULL) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(program not linked)", caller);
       return NULL;
    }
@@ -244,7 +244,7 @@ validate_uniform_parameters(GLint location, GLsizei count,
    if (uni->builtin)
       return NULL;
 
-   if (!uni->array_elements) {
+   if (uni->array_elements == 0) {
       if (count > 1) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "%s(count = %u for non-array \"%s\"@%d)",
@@ -287,7 +287,7 @@ _mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
    struct gl_uniform_storage *const uni =
       validate_uniform_parameters(location, 1, &offset,
                                   ctx, shProg, "glGetUniform");
-   if (!uni) {
+   if (uni == NULL) {
       /* For glGetUniform, page 264 (page 278 of the PDF) of the OpenGL 2.1
        * spec says:
        *
@@ -721,7 +721,7 @@ static void
 log_program_parameters(const struct gl_shader_program *shProg)
 {
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (!shProg->_LinkedShaders[i])
+      if (shProg->_LinkedShaders[i] == NULL)
 	 continue;
 
       const struct gl_program *const prog = shProg->_LinkedShaders[i]->Program;
@@ -906,7 +906,7 @@ validate_uniform(GLint location, GLsizei count, const GLvoid *values,
    struct gl_uniform_storage *const uni =
       validate_uniform_parameters(location, count, offset,
                                   ctx, shProg, "glUniform");
-   if (!uni)
+   if (uni == NULL)
       return NULL;
 
    if (uni->type->is_matrix()) {
@@ -1121,7 +1121,7 @@ _mesa_uniform(GLint location, GLsizei count, const GLvoid *values,
     * Clamp 'count' to a valid value.  Note that for non-arrays a count > 1
     * will have already generated an error.
     */
-   if (uni->array_elements) {
+   if (uni->array_elements != 0) {
       count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
@@ -1304,7 +1304,7 @@ _mesa_uniform_matrix(GLint location, GLsizei count,
    struct gl_uniform_storage *const uni =
       validate_uniform_parameters(location, count, &offset,
                                   ctx, shProg, "glUniformMatrix");
-   if (!uni)
+   if (uni == NULL)
       return;
 
    if (!uni->type->is_matrix()) {
@@ -1381,7 +1381,7 @@ _mesa_uniform_matrix(GLint location, GLsizei count,
     * Clamp 'count' to a valid value.  Note that for non-arrays a count > 1
     * will have already generated an error.
     */
-   if (uni->array_elements) {
+   if (uni->array_elements != 0) {
       count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
@@ -1515,7 +1515,7 @@ _mesa_uniform_handle(GLint location, GLsizei count, const GLvoid *values,
     * Clamp 'count' to a valid value.  Note that for non-arrays a count > 1
     * will have already generated an error.
     */
-   if (uni->array_elements) {
+   if (uni->array_elements != 0) {
       count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
@@ -1590,7 +1590,7 @@ _mesa_sampler_uniforms_are_valid(const struct gl_shader_program *shProg,
 				 char *errMsg, size_t errMsgLength)
 {
    /* Shader does not have samplers. */
-   if (!shProg->data->NumUniformStorage)
+   if (shProg->data->NumUniformStorage == 0)
       return true;
 
    if (!shProg->SamplersValidated) {
@@ -1643,7 +1643,7 @@ _mesa_sampler_uniforms_pipeline_are_valid(struct gl_pipeline_object *pipeline)
           * great job of eliminating unused uniforms currently so for now
           * don't throw an error if two sampler types both point to 0.
           */
-         if (!unit)
+         if (unit == 0)
             continue;
 
          if (TexturesUsed[unit] & ~(1 << tgt)) {

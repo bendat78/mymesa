@@ -218,11 +218,11 @@ class PrintGlxProtoStubs(glX_proto_common.glx_print_proto):
 __glXReadReply( Display *dpy, size_t size, void * dest, GLboolean reply_is_always_array )
 {
     xGLXSingleReply reply;
-
+    
     (void) _XReply(dpy, (xReply *) & reply, 0, False);
     if (size != 0) {
         if ((reply.length > 0) || reply_is_always_array) {
-            const GLint bytes = (reply_is_always_array)
+            const GLint bytes = (reply_is_always_array) 
               ? (4 * reply.length) : (reply.size * size);
             const GLint extra = 4 - (bytes & 3);
 
@@ -246,14 +246,14 @@ __glXReadPixelReply( Display *dpy, struct glx_context * gc, unsigned max_dim,
 {
     xGLXSingleReply reply;
     GLint size;
-
+    
     (void) _XReply(dpy, (xReply *) & reply, 0, False);
 
     if ( dimensions_in_reply ) {
         width  = reply.pad3;
         height = reply.pad4;
         depth  = reply.pad5;
-
+	
 	if ((height == 0) || (max_dim < 2)) { height = 1; }
 	if ((depth  == 0) || (max_dim < 3)) { depth  = 1; }
     }
@@ -407,7 +407,7 @@ _glapi_proc
 __indirect_get_proc_address(const char *name)
 {
    const struct proc_pair *pair;
-
+   
    /* skip "gl" */
    name += 2;
 
@@ -701,7 +701,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 
                         # Hardcode this in.  lsb_first param (apparently always GL_FALSE)
                         # also present in GetPolygonStipple, but taken care of above.
-                        if xcb_name == "xcb_glx_read_pixels":
+                        if xcb_name == "xcb_glx_read_pixels": 
                             extra_iparams.append("0")
                 else:
                     iparams.append(p.name)

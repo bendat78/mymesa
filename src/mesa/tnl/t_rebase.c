@@ -39,7 +39,7 @@
  *
  * If we just upload the new data, however, the indices will be
  * incorrect as we tend to upload each set of vertex data to a new
- * region.
+ * region.  
  *
  * This file provides a helper to adjust the arrays, primitives and
  * indices of a draw call so that it can be re-issued with a min_index
@@ -66,7 +66,7 @@ static void *rebase_##TYPE( const void *ptr,			\
    const TYPE *in = (TYPE *)ptr;				\
    TYPE *tmp_indices = malloc(count * sizeof(TYPE));		\
 								\
-   if (!tmp_indices) {                                   \
+   if (tmp_indices == NULL) {                                   \
       _mesa_error_no_memory(__func__);                          \
       return NULL;                                              \
    }                                                            \
@@ -83,6 +83,7 @@ REBASE(GLushort)
 REBASE(GLubyte)
 
 
+
 /* Adjust primitives, indices and vertex definitions so that min_index
  * becomes zero. There are lots of reasons for wanting to do this, eg:
  *
@@ -91,7 +92,7 @@ REBASE(GLubyte)
  *      min_index will be transformed.
  *
  * Hardware tnl:
- *    - if ib != NULL and min_index != 0, otherwise vertices lower than
+ *    - if ib != NULL and min_index != 0, otherwise vertices lower than 
  *      min_index will be uploaded.  Requires adjusting index values.
  *
  *    - if ib == NULL and min_index != 0, just for convenience so this doesn't
@@ -134,7 +135,7 @@ void t_rebase_prims( struct gl_context *ctx,
        */
       tmp_prims = malloc(sizeof(*prim) * nr_prims);
 
-      if (!tmp_prims) {
+      if (tmp_prims == NULL) {
          _mesa_error_no_memory(__func__);
          return;
       }
@@ -152,7 +153,7 @@ void t_rebase_prims( struct gl_context *ctx,
                          !ib->obj->Mappings[MAP_INTERNAL].Pointer;
       void *ptr;
 
-      if (map_ib)
+      if (map_ib) 
 	 ctx->Driver.MapBufferRange(ctx, 0, ib->obj->Size, GL_MAP_READ_BIT,
 				    ib->obj, MAP_INTERNAL);
 
@@ -172,12 +173,12 @@ void t_rebase_prims( struct gl_context *ctx,
       case 1:
 	 tmp_indices = rebase_GLubyte( ptr, ib->count, min_index );
 	 break;
-      }
+      }      
 
-      if (map_ib)
+      if (map_ib) 
 	 ctx->Driver.UnmapBuffer(ctx, ib->obj, MAP_INTERNAL);
 
-      if (!tmp_indices) {
+      if (tmp_indices == NULL) {
          return;
       }
 
@@ -193,7 +194,7 @@ void t_rebase_prims( struct gl_context *ctx,
        */
       tmp_prims = malloc(sizeof(*prim) * nr_prims);
 
-      if (!tmp_prims) {
+      if (tmp_prims == NULL) {
          _mesa_error_no_memory(__func__);
          return;
       }
@@ -230,21 +231,21 @@ void t_rebase_prims( struct gl_context *ctx,
       else
          tmp_attribs[i].Ptr += min_index * arrays[i].BufferBinding->Stride;
    }
-
+   
    /* Re-issue the draw call.
     */
    draw( ctx,
          tmp_arrays,
 	 prim,
-	 nr_prims,
-	 ib,
+	 nr_prims, 
+	 ib, 
 	 GL_TRUE,
-	 0,
+	 0, 
 	 max_index - min_index,
 	 NULL, 0, NULL );
 
    free(tmp_indices);
-
+   
    free(tmp_prims);
 }
 

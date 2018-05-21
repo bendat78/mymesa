@@ -387,7 +387,7 @@ find_instr_recursive(struct ir3_sched_ctx *ctx, struct ir3_sched_notes *notes,
 	}
 
 	/* if all our src's are already scheduled: */
-	if (!nsrcs) {
+	if (nsrcs == 0) {
 		if (check_instr(ctx, notes, instr)) {
 			instr->data = instr;
 			return instr;
@@ -440,7 +440,7 @@ find_eligible_instr(struct ir3_sched_ctx *ctx, struct ir3_sched_notes *notes,
 			min_delay = delay;
 		}
 
-		if (!min_delay)
+		if (min_delay == 0)
 			break;
 	}
 

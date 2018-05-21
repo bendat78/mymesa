@@ -1443,7 +1443,7 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
       /* If the enum isn't valid, the hash walk ends with index 0,
        * pointing to the first entry of values[] which doesn't hold
        * any valid enum. */
-      if (!unlikely(idx)) {
+      if (unlikely(idx == 0)) {
          _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=%s)", func,
                _mesa_enum_to_string(pname));
          return &error_value;
@@ -2449,7 +2449,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
 
    /* ARB_texture_multisample / GL3.2 */
    case GL_SAMPLE_MASK_VALUE:
-      if (index)
+      if (index != 0)
          goto invalid_value;
       if (!ctx->Extensions.ARB_texture_multisample)
          goto invalid_enum;
@@ -2643,12 +2643,12 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
       v->value_int = 1;
       return TYPE_INT;
    case GL_DRIVER_UUID_EXT:
-      if (index)
+      if (index >= 1)
          goto invalid_value;
       _mesa_get_driver_uuid(ctx, v->value_int_4);
       return TYPE_INT_4;
    case GL_DEVICE_UUID_EXT:
-      if (index)
+      if (index >= 1)
          goto invalid_value;
       _mesa_get_device_uuid(ctx, v->value_int_4);
       return TYPE_INT_4;

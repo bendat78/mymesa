@@ -340,7 +340,7 @@ create_buffer_blocks(void *mem_ctx, struct gl_context *ctx,
                      struct hash_table *block_hash, unsigned num_variables,
                      bool create_ubo_blocks)
 {
-   if (!num_blocks) {
+   if (num_blocks == 0) {
       assert(num_variables == 0);
       return;
    }
@@ -372,7 +372,7 @@ create_buffer_blocks(void *mem_ctx, struct gl_context *ctx,
           (!create_ubo_blocks && b->is_shader_storage)) {
 
          unsigned binding_offset = 0;
-         if (b->array) {
+         if (b->array != NULL) {
             char *name = ralloc_strdup(NULL,
                                        block_type->without_array()->name);
             size_t name_length = strlen(name);
@@ -413,7 +413,7 @@ link_uniform_blocks(void *mem_ctx,
       _mesa_hash_table_create(mem_ctx, _mesa_key_hash_string,
                               _mesa_key_string_equal);
 
-   if (!block_hash) {
+   if (block_hash == NULL) {
       _mesa_error_no_memory(__func__);
       linker_error(prog, "out of memory\n");
       return;
@@ -448,7 +448,7 @@ link_uniform_blocks(void *mem_ctx,
       block_size.process(b->type->without_array(), "",
                          ctx->Const.UseSTD430AsDefaultPacking);
 
-      if (b->array) {
+      if (b->array != NULL) {
          unsigned aoa_size = b->type->arrays_of_arrays_size();
          if (b->is_shader_storage) {
             *num_ssbo_blocks += aoa_size;

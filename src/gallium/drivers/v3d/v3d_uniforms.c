@@ -366,7 +366,7 @@ v3d_write_uniforms(struct v3d_context *v3d, struct v3d_compiled_shader *shader,
                         break;
 
                 case QUNIFORM_UBO_ADDR:
-                        if (!uinfo->data[i]) {
+                        if (uinfo->data[i] == 0) {
                                 cl_aligned_reloc(&job->indirect, &uniforms,
                                                  ubo, 0);
                         } else {

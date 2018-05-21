@@ -248,7 +248,7 @@ intel_batchbuffer_reset(struct brw_context *brw)
 {
    struct intel_batchbuffer *batch = &brw->batch;
 
-   if (batch->last_bo) {
+   if (batch->last_bo != NULL) {
       brw_bo_unreference(batch->last_bo);
       batch->last_bo = NULL;
    }
@@ -307,7 +307,7 @@ intel_batchbuffer_reset_to_saved(struct brw_context *brw)
    brw->batch.exec_count = brw->batch.saved.exec_count;
 
    brw->batch.map_next = brw->batch.saved.map_next;
-   if (!USED_BATCH(brw->batch))
+   if (USED_BATCH(brw->batch) == 0)
       brw->batch.ring = UNKNOWN_RING;
 }
 
@@ -559,7 +559,7 @@ brw_new_batch(struct brw_context *brw)
     * would otherwise be stored in the context (which for all intents and
     * purposes means everything).
     */
-   if (!brw->hw_ctx) {
+   if (brw->hw_ctx == 0) {
       brw->ctx.NewDriverState |= BRW_NEW_CONTEXT;
       brw_upload_invariant_state(brw);
    }
@@ -708,14 +708,14 @@ execbuffer(int fd,
       execbuf.flags |= I915_EXEC_FENCE_IN;
    }
 
-   if (out_fence) {
+   if (out_fence != NULL) {
       cmd = DRM_IOCTL_I915_GEM_EXECBUFFER2_WR;
       *out_fence = -1;
       execbuf.flags |= I915_EXEC_FENCE_OUT;
    }
 
    int ret = drmIoctl(fd, cmd, &execbuf);
-   if (ret)
+   if (ret != 0)
       ret = -errno;
 
    for (int i = 0; i < batch->exec_count; i++) {
@@ -828,7 +828,7 @@ submit_batch(struct brw_context *brw, int in_fence_fd, int *out_fence_fd)
    if (brw->ctx.Const.ResetStrategy == GL_LOSE_CONTEXT_ON_RESET_ARB)
       brw_check_for_reset(brw);
 
-   if (ret) {
+   if (ret != 0) {
       fprintf(stderr, "i965: Failed to submit batchbuffer: %s\n",
               strerror(-ret));
       exit(1);
@@ -851,7 +851,7 @@ _intel_batchbuffer_flush_fence(struct brw_context *brw,
 {
    int ret;
 
-   if (!USED_BATCH(brw->batch))
+   if (USED_BATCH(brw->batch) == 0)
       return 0;
 
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
@@ -863,7 +863,7 @@ _intel_batchbuffer_flush_fence(struct brw_context *brw,
    finish_growing_bos(&brw->batch.batch);
    finish_growing_bos(&brw->batch.state);
 
-   if (!brw->throttle_batch[0]) {
+   if (brw->throttle_batch[0] == NULL) {
       brw->throttle_batch[0] = brw->batch.batch.bo;
       brw_bo_reference(brw->throttle_batch[0]);
    }

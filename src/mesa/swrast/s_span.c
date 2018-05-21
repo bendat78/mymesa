@@ -74,7 +74,7 @@ _swrast_span_default_attribs(struct gl_context *ctx, SWspan *span)
       if (ctx->DrawBuffer->Visual.depthBits <= 16)
          span->z = FloatToFixed(ctx->Current.RasterPos[2] * depthMax + 0.5F);
       else {
-         GLfloat tmpf = ctx->Current.RasterPos[2] * depthMax;
+         GLfloat tmpf = ctx->Current.RasterPos[2] * depthMax; 
          tmpf = MIN2(tmpf, depthMax);
          span->z = (GLint)tmpf;
       }
@@ -390,7 +390,7 @@ _swrast_span_interpolate_z( const struct gl_context *ctx, SWspan *span )
 
    if (ctx->DrawBuffer->Visual.depthBits <= 16) {
       GLfixed zval = span->z;
-      GLuint *z = span->array->z;
+      GLuint *z = span->array->z; 
       for (i = 0; i < n; i++) {
          z[i] = FixedToInt(zval);
          zval += span->zStep;
@@ -685,7 +685,7 @@ stipple_polygon_span(struct gl_context *ctx, SWspan *span)
             mask[i] = 0;
          }
          m = m >> 1;
-         if (!m) {
+         if (m == 0) {
             m = highBit;
          }
       }
@@ -1095,7 +1095,7 @@ _swrast_put_row(struct gl_context *ctx, struct gl_renderbuffer *rb,
       runLen = runStart = 0;
       for (i = 0; i < count; i++) {
          if (mask[i]) {
-            if (!runLen)
+            if (runLen == 0)
                runStart = i;
             runLen++;
          }
@@ -1314,7 +1314,7 @@ _swrast_write_rgba_span( struct gl_context *ctx, SWspan *span)
    {
       const GLuint numBuffers = fb->_NumColorDrawBuffers;
       const struct gl_program *fp = ctx->FragmentProgram._Current;
-      const GLboolean multiFragOutputs =
+      const GLboolean multiFragOutputs = 
          _swrast_use_fragment_program(ctx)
          && fp->info.outputs_written >= (1 << FRAG_RESULT_DATA0);
       /* Save srcColorType because convert_color_type() can change it */

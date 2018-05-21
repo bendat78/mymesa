@@ -60,4 +60,3 @@ extern PFN_BACKEND_FUNC gBackendSampleRateTable[SWR_MULTISAMPLE_TYPE_COUNT]
                                         [2]  // centroid
                                         [2]; // canEarlyZ
 
-

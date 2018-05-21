@@ -93,7 +93,7 @@ ir_invariance_propagation_visitor::visit_leave(ir_assignment *)
 ir_visitor_status
 ir_invariance_propagation_visitor::visit(ir_dereference_variable *ir)
 {
-   if (!this->dst_var)
+   if (this->dst_var == NULL)
       return visit_continue;
 
    if (this->dst_var->data.invariant) {

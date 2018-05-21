@@ -41,7 +41,7 @@ typedef struct {
 static nir_ssa_def *
 get_texcoord(lower_drawpixels_state *state)
 {
-   if (!state->texcoord) {
+   if (state->texcoord == NULL) {
       nir_variable *texcoord = NULL;
 
       /* find gl_TexCoord, if it exists: */
@@ -53,7 +53,7 @@ get_texcoord(lower_drawpixels_state *state)
       }
 
       /* otherwise create it: */
-      if (!texcoord) {
+      if (texcoord == NULL) {
          texcoord = nir_variable_create(state->shader,
                                         nir_var_shader_in,
                                         glsl_vec4_type(),
@@ -84,7 +84,7 @@ create_uniform(nir_shader *shader, const char *name,
 static nir_ssa_def *
 get_scale(lower_drawpixels_state *state)
 {
-   if (!state->scale) {
+   if (state->scale == NULL) {
       state->scale = create_uniform(state->shader, "gl_PTscale",
                                     state->options->scale_state_tokens);
    }
@@ -94,7 +94,7 @@ get_scale(lower_drawpixels_state *state)
 static nir_ssa_def *
 get_bias(lower_drawpixels_state *state)
 {
-   if (!state->bias) {
+   if (state->bias == NULL) {
       state->bias = create_uniform(state->shader, "gl_PTbias",
                                    state->options->bias_state_tokens);
    }
@@ -104,7 +104,7 @@ get_bias(lower_drawpixels_state *state)
 static nir_ssa_def *
 get_texcoord_const(lower_drawpixels_state *state)
 {
-   if (!state->bias) {
+   if (state->bias == NULL) {
       state->bias = create_uniform(state->shader, "gl_MultiTexCoord0",
                                    state->options->texcoord_state_tokens);
    }

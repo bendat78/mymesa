@@ -82,7 +82,7 @@ derefs_equal(const void *void_a, const void *void_b)
       /* Do nothing for arrays.  They're all the same. */
 
       assert((a->child == NULL) == (b->child == NULL));
-      if(!(a->child) != (b->child == NULL))
+      if((a->child == NULL) != (b->child == NULL))
          return false;
    }
 
@@ -137,11 +137,11 @@ get_deref_reg_src(nir_deref_var *deref, nir_instr *instr,
     * accessing a non-array register is not allowed in NIR.  In order to
     * handle this case we just convert it to a direct reference.
     */
-   if (!src.reg.reg->num_array_elems)
+   if (src.reg.reg->num_array_elems == 0)
       return src;
 
    nir_deref *tail = &deref->deref;
-   while (tail->child) {
+   while (tail->child != NULL) {
       const struct glsl_type *parent_type = tail->type;
       tail = tail->child;
 
@@ -172,7 +172,7 @@ get_deref_reg_src(nir_deref_var *deref, nir_instr *instr,
       }
 
       if (deref_array->deref_array_type == nir_deref_array_type_indirect) {
-         if (!src.reg.indirect) {
+         if (src.reg.indirect == NULL) {
             src.reg.indirect = ralloc(state->shader, nir_src);
             nir_src_copy(src.reg.indirect, &deref_array->indirect,
                          state->shader);

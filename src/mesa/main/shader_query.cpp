@@ -143,7 +143,7 @@ _mesa_GetActiveAttrib(GLuint program, GLuint desired_index,
       return;
    }
 
-   if (!shProg->_LinkedShaders[MESA_SHADER_VERTEX]) {
+   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(no vertex shader)");
       return;
    }
@@ -195,7 +195,7 @@ _mesa_GetAttribLocation(GLuint program, const GLchar * name)
 
    /* Not having a vertex shader is not an error.
     */
-   if (!shProg->_LinkedShaders[MESA_SHADER_VERTEX])
+   if (shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL)
       return -1;
 
    unsigned array_index = 0;
@@ -373,7 +373,7 @@ _mesa_GetFragDataIndex(GLuint program, const GLchar *name)
 
    /* Not having a fragment shader is not an error.
     */
-   if (!shProg->_LinkedShaders[MESA_SHADER_FRAGMENT])
+   if (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL)
       return -1;
 
    return _mesa_program_resource_location_index(shProg, GL_PROGRAM_OUTPUT,
@@ -408,7 +408,7 @@ _mesa_GetFragDataLocation(GLuint program, const GLchar *name)
 
    /* Not having a fragment shader is not an error.
     */
-   if (!shProg->_LinkedShaders[MESA_SHADER_FRAGMENT])
+   if (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL)
       return -1;
 
    unsigned array_index = 0;
@@ -800,7 +800,7 @@ _mesa_get_program_resource_name(struct gl_shader_program *shProg,
 
    GLsizei localLength;
 
-   if (!length)
+   if (length == NULL)
       length = &localLength;
 
    _mesa_copy_string(name, bufSize, length, _mesa_program_resource_name(res));
@@ -1416,7 +1416,7 @@ _mesa_get_program_resourceiv(struct gl_shader_program *shProg,
                                      "glGetProgramResourceiv");
 
       /* Error happened. */
-      if (!props_written)
+      if (props_written == 0)
          return;
 
       amount += props_written;
@@ -1447,7 +1447,7 @@ validate_io(struct gl_program *producer, struct gl_program *consumer)
    gl_shader_variable const **outputs =
       (gl_shader_variable const **) calloc(producer->sh.data->NumProgramResourceList,
                                            sizeof(gl_shader_variable *));
-   if (!outputs)
+   if (outputs == NULL)
       return false;
 
    /* Section 7.4.1 (Shader Interface Matching) of the OpenGL ES 3.1 spec
@@ -1540,7 +1540,7 @@ validate_io(struct gl_program *producer, struct gl_program *consumer)
        *      - the two variables are declared with the same location
        *        qualifier and match in type and qualification.
        */
-      if (!producer_var) {
+      if (producer_var == NULL) {
          valid = false;
          goto out;
       }

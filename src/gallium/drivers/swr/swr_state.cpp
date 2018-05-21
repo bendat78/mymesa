@@ -114,7 +114,7 @@ swr_create_blend_state(struct pipe_context *pipe,
       blendState.writeDisableAlpha =
          (rt_blend->colormask & PIPE_MASK_A) ? 0 : 1;
 
-      if (!rt_blend->colormask)
+      if (rt_blend->colormask == 0)
          compileState.blendEnable = false;
    }
 
@@ -539,7 +539,7 @@ swr_create_vertex_elements_state(struct pipe_context *pipe,
             mesa_to_swr_format(attribs[i].src_format));
          velems->stream_pitch[attribs[i].vertex_buffer_index] += swr_desc.Bpp;
 
-         if (attribs[i].instance_divisor) {
+         if (attribs[i].instance_divisor != 0) {
             velems->instanced_bufs |= 1U << attribs[i].vertex_buffer_index;
             uint32_t *min_instance_div =
                &velems->min_instance_div[attribs[i].vertex_buffer_index];
@@ -1423,7 +1423,7 @@ swr_update_derived(struct pipe_context *pipe,
 
          ctx->api.pfnSwrSetGsState(ctx->swrContext, &ctx->gs->gsState);
       } else {
-         SWR_GS_STATE state = {0};
+         SWR_GS_STATE state = { 0 };
          ctx->api.pfnSwrSetGsState(ctx->swrContext, &state);
          ctx->api.pfnSwrSetGsFunc(ctx->swrContext, NULL);
       }
@@ -1574,7 +1574,7 @@ swr_update_derived(struct pipe_context *pipe,
    if (ctx->dirty & (SWR_NEW_DEPTH_STENCIL_ALPHA | SWR_NEW_FRAMEBUFFER)) {
       struct pipe_depth_state *depth = &(ctx->depth_stencil->depth);
       struct pipe_stencil_state *stencil = ctx->depth_stencil->stencil;
-      SWR_DEPTH_STENCIL_STATE depthStencilState = {0};
+      SWR_DEPTH_STENCIL_STATE depthStencilState = {{0}};
       SWR_DEPTH_BOUNDS_STATE depthBoundsState = {0};
 
       /* XXX, incomplete.  Need to flesh out stencil & alpha test state
@@ -1650,7 +1650,7 @@ swr_update_derived(struct pipe_context *pipe,
 
       /* If there are no color buffers bound, disable writes on RT0
        * and skip loop */
-      if (!fb->nr_cbufs) {
+      if (fb->nr_cbufs == 0) {
          blendState.renderTarget[0].writeDisableRed = 1;
          blendState.renderTarget[0].writeDisableGreen = 1;
          blendState.renderTarget[0].writeDisableBlue = 1;
@@ -1710,7 +1710,7 @@ swr_update_derived(struct pipe_context *pipe,
             compileState.alphaTestFormat = ALPHA_TEST_FLOAT32; // xxx
 
             compileState.Canonicalize();
-
+            
             PFN_BLEND_JIT_FUNC func = NULL;
             auto search = ctx->blendJIT->find(compileState);
             if (search != ctx->blendJIT->end()) {

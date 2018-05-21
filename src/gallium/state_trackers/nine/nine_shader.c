@@ -1984,7 +1984,7 @@ sm1_declusage_to_tgsi(struct tgsi_declaration_semantic *sem,
     case D3DDECLUSAGE_POSITION:
     case D3DDECLUSAGE_POSITIONT:
     case D3DDECLUSAGE_DEPTH:
-        if (!index) {
+        if (index == 0) {
             sem->Name = TGSI_SEMANTIC_POSITION;
             sem->Index = 0;
         } else {

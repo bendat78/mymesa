@@ -248,7 +248,7 @@ setup_border_colors(struct fd_texture_stateobj *tex, struct bcolor_entry *entrie
 				else
 					e->rgb10a2 |= (int)(f_u * 0x3ff) << (c * 10);
 				e->rgba4 |= (int)(f_u * 0xf) << (c * 4);
-				if (!c)
+				if (c == 0)
 					e->z24 = f_u * 0xffffff;
 			}
 		}
@@ -307,7 +307,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 				CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
 		OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
 		for (i = 0; i < tex->num_samplers; i++) {
-			static const struct fd5_sampler_stateobj dummy_sampler = {0};
+			static const struct fd5_sampler_stateobj dummy_sampler = {};
 			const struct fd5_sampler_stateobj *sampler = tex->samplers[i] ?
 					fd5_sampler_stateobj(tex->samplers[i]) :
 					&dummy_sampler;
@@ -334,7 +334,7 @@ emit_textures(struct fd_context *ctx, struct fd_ringbuffer *ring,
 				CP_LOAD_STATE4_1_EXT_SRC_ADDR(0));
 		OUT_RING(ring, CP_LOAD_STATE4_2_EXT_SRC_ADDR_HI(0));
 		for (i = 0; i < tex->num_textures; i++) {
-			static const struct fd5_pipe_sampler_view dummy_view = {0};
+			static const struct fd5_pipe_sampler_view dummy_view = {};
 			const struct fd5_pipe_sampler_view *view = tex->textures[i] ?
 					fd5_pipe_sampler_view(tex->textures[i]) :
 					&dummy_view;
@@ -376,7 +376,7 @@ emit_ssbos(struct fd_context *ctx, struct fd_ringbuffer *ring,
 {
 	unsigned count = util_last_bit(so->enabled_mask);
 
-	if (!count)
+	if (count == 0)
 		return;
 
 	OUT_PKT7(ring, CP_LOAD_STATE4, 3 + (4 * count));

@@ -39,7 +39,7 @@
 
 void vid_dec_NeedTarget(vid_dec_PrivateType *priv)
 {
-   struct pipe_video_buffer templat = {0};
+   struct pipe_video_buffer templat = {};
    struct vl_screen *omx_screen;
    struct pipe_screen *pscreen;
 

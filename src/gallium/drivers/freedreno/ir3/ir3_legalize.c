@@ -348,7 +348,7 @@ resolve_dest_block(struct ir3_block *block)
 	 *   (1) successor[1] == NULL &&
 	 *   (2) (block-is-empty || only-instr-is-jump)
 	 */
-	if (!block->successors[1]) {
+	if (block->successors[1] == NULL) {
 		if (list_empty(&block->instr_list)) {
 			return block->successors[0];
 		} else if (list_length(&block->instr_list) == 1) {
@@ -387,7 +387,7 @@ resolve_jump(struct ir3_instruction *instr)
 	 * then we can just drop the jump.
 	 */
 	unsigned next_block;
-	if (instr->cat0.inv)
+	if (instr->cat0.inv == true)
 		next_block = 2;
 	else
 		next_block = 1;

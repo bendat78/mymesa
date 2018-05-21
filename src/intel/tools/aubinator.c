@@ -215,7 +215,7 @@ handle_trace_header(uint32_t *p)
    if (end > &p[12] && p[12] > 0)
       sscanf((char *)&p[13], "PCI-ID=%i", &aub_pci_id);
 
-   if (!pci_id)
+   if (pci_id == 0)
       pci_id = aub_pci_id;
 
    char app_name[33];
@@ -237,7 +237,7 @@ handle_memtrace_version(uint32_t *p)
    strncpy(app_name, (char *)&p[5], app_name_len);
    app_name[app_name_len] = 0;
    sscanf(app_name, "PCI-ID=%i %n", &aub_pci_id, &pci_id_len);
-   if (!pci_id)
+   if (pci_id == 0)
       pci_id = aub_pci_id;
    aubinator_init(aub_pci_id, app_name + pci_id_len);
 }
@@ -494,7 +494,7 @@ aub_file_data_load(struct aub_file *file)
 {
    size_t r;
 
-   if (!file->stream)
+   if (file->stream == NULL)
       return false;
 
    /* First remove any consumed data */
@@ -531,7 +531,7 @@ setup_pager(void)
    if (pid == -1)
       return;
 
-   if (!pid) {
+   if (pid == 0) {
       close(fds[1]);
       dup2(fds[0], 0);
       execlp("less", "less", "-FRSi", NULL);
@@ -632,7 +632,7 @@ int main(int argc, char *argv[])
    if (isatty(1) && pager)
       setup_pager();
 
-   if (!input_file)
+   if (input_file == NULL)
       file = aub_file_stdin();
    else
       file = aub_file_open(input_file);

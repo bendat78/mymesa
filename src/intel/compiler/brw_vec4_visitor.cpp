@@ -993,7 +993,7 @@ vec4_visitor::emit_texture(ir_texture_opcode op,
                coordinate));
       inst->mlen++;
 
-      if (zero_mask) {
+      if (zero_mask != 0) {
          emit(MOV(dst_reg(MRF, param_base, coordinate.type, zero_mask),
                   brw_imm_d(0)));
       }
@@ -1270,7 +1270,7 @@ vec4_visitor::emit_generic_urb_slot(dst_reg reg, int varying, int component)
    assert(varying < VARYING_SLOT_MAX);
 
    unsigned num_comps = output_num_components[varying][component];
-   if (!num_comps)
+   if (num_comps == 0)
       return NULL;
 
    assert(output_reg[varying][component].type == reg.type);

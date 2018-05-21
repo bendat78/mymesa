@@ -407,7 +407,7 @@ static void si_log_chunk_type_cs_print(void *data, FILE *f)
 		last_trace_id = map[0];
 
 	if (chunk->gfx_end != chunk->gfx_begin) {
-		if (!chunk->gfx_begin) {
+		if (chunk->gfx_begin == 0) {
 			if (ctx->init_config)
 				ac_parse_ib(f, ctx->init_config->pm4, ctx->init_config->ndw,
 					    NULL, 0, "IB2: Init config", ctx->chip_class,
@@ -804,7 +804,7 @@ static void si_dump_descriptors(struct si_context *sctx,
 	    sctx->vb_descriptors_gpu_list &&
 	    sctx->vertex_elements) {
 		assert(info); /* only CS may not have an info struct */
-		struct si_descriptors desc = {0};
+		struct si_descriptors desc = {};
 
 		desc.buffer = sctx->vb_descriptors_buffer;
 		desc.list = sctx->vb_descriptors_gpu_list;

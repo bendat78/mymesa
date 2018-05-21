@@ -268,7 +268,7 @@ NineDevice9_ctor( struct NineDevice9 *This,
     /* Initialize CSMT */
     if (pCTX->csmt_force == 1)
         This->csmt_active = true;
-    else if (!pCTX->csmt_force)
+    else if (pCTX->csmt_force == 0)
         This->csmt_active = false;
     else
         /* r600 and radeonsi are thread safe. */
@@ -1413,7 +1413,7 @@ NineDevice9_UpdateTexture( struct NineDevice9 *This,
         struct NineTexture9 *dst = NineTexture9(dstb);
         struct NineTexture9 *src = NineTexture9(srcb);
 
-        if (!src->dirty_rect.width)
+        if (src->dirty_rect.width == 0)
             return D3D_OK;
 
         pipe_box_to_rect(&rect, &src->dirty_rect);
@@ -1440,7 +1440,7 @@ NineDevice9_UpdateTexture( struct NineDevice9 *This,
 
         /* GPUs usually have them stored as arrays of mip-mapped 2D textures. */
         for (z = 0; z < 6; ++z) {
-            if (!src->dirty_rect[z].width)
+            if (src->dirty_rect[z].width == 0)
                 continue;
 
             pipe_box_to_rect(&rect, &src->dirty_rect[z]);
@@ -1466,7 +1466,7 @@ NineDevice9_UpdateTexture( struct NineDevice9 *This,
         struct NineVolumeTexture9 *dst = NineVolumeTexture9(dstb);
         struct NineVolumeTexture9 *src = NineVolumeTexture9(srcb);
 
-        if (!src->dirty_box.width)
+        if (src->dirty_box.width == 0)
             return D3D_OK;
         for (l = 0; l <= last_dst_level; ++l, ++m)
             NineVolume9_CopyMemToDefault(dst->volumes[l],
@@ -1690,7 +1690,7 @@ NineDevice9_StretchRect( struct NineDevice9 *This,
                            dst->desc.Width, dst->desc.Height);
         if (xy < 0)
             return D3D_OK;
-        if (!xy)
+        if (xy == 0)
             xy = u_box_clip_2d(&box, &blit.src.box,
                                src->desc.Width, src->desc.Height);
         clamped = !!xy;
@@ -1845,7 +1845,7 @@ NineDevice9_SetRenderTarget( struct NineDevice9 *This,
     user_assert(!pRenderTarget ||
                 rt->desc.Usage & D3DUSAGE_RENDERTARGET, D3DERR_INVALIDCALL);
 
-    if (!i) {
+    if (i == 0) {
         This->state.viewport.X = 0;
         This->state.viewport.Y = 0;
         This->state.viewport.Width = rt->desc.Width;
@@ -2585,7 +2585,7 @@ NineDevice9_ValidateDevice( struct NineDevice9 *This,
     for (i = 0; i < This->caps.NumSimultaneousRTs; ++i) {
         if (!state->rt[i])
             continue;
-        if (!w) {
+        if (w == 0) {
             w = state->rt[i]->desc.Width;
             h = state->rt[i]->desc.Height;
         } else
@@ -3498,7 +3498,7 @@ NineDevice9_SetStreamSourceFreq( struct NineDevice9 *This,
     if (unlikely(This->is_recording)) {
         state->stream_freq[StreamNumber] = Setting;
         state->changed.stream_freq |= 1 << StreamNumber;
-        if (StreamNumber)
+        if (StreamNumber != 0)
             state->changed.group |= NINE_STATE_STREAMFREQ;
         return D3D_OK;
     }

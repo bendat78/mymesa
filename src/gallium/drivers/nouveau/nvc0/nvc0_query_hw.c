@@ -231,7 +231,7 @@ nvc0_hw_end_query(struct nvc0_context *nvc0, struct nvc0_query *q)
    case PIPE_QUERY_OCCLUSION_PREDICATE:
    case PIPE_QUERY_OCCLUSION_PREDICATE_CONSERVATIVE:
       nvc0_hw_query_get(push, q, 0, 0x0100f002);
-      if (!--nvc0->screen->num_occlusion_queries_active) {
+      if (--nvc0->screen->num_occlusion_queries_active == 0) {
          PUSH_SPACE(push, 1);
          IMMED_NVC0(push, NVC0_3D(SAMPLECNT_ENABLE), 0);
       }

@@ -136,7 +136,7 @@ get_group_offset_count(const char **atts, uint32_t *offset, uint32_t *count,
 
       if (strcmp(atts[i], "count") == 0) {
          *count = strtoul(atts[i + 1], &p, 0);
-         if (!*count)
+         if (*count == 0)
             *variable = true;
       } else if (strcmp(atts[i], "start") == 0) {
          *offset = strtoul(atts[i + 1], &p, 0);
@@ -334,7 +334,7 @@ create_and_append_field(struct parser_context *ctx,
    }
 
    field->next = list;
-   if (!prev)
+   if (prev == NULL)
       ctx->group->fields = field;
    else
       prev->next = field;
@@ -359,14 +359,14 @@ start_element(void *data, const char *element_name, const char **atts)
    }
 
    if (strcmp(element_name, "genxml") == 0) {
-      if (!name)
+      if (name == NULL)
          fail(&ctx->loc, "no platform name given");
-      if (!gen)
+      if (gen == NULL)
          fail(&ctx->loc, "no gen given");
 
       int major, minor;
       int n = sscanf(gen, "%d.%d", &major, &minor);
-      if (!n)
+      if (n == 0)
          fail(&ctx->loc, "invalid gen given: %s", gen);
       if (n == 1)
          minor = 0;
@@ -507,7 +507,7 @@ static uint32_t zlib_inflate(const void *compressed_data,
          break;
 
       out = realloc(out, 2*zstream.total_out);
-      if (!out) {
+      if (out == NULL) {
          inflateEnd(&zstream);
          return 0;
       }
@@ -543,7 +543,7 @@ gen_spec_load(const struct gen_device_info *devinfo)
       }
    }
 
-   if (!text_length) {
+   if (text_length == 0) {
       fprintf(stderr, "unable to find gen (%u) data\n", gen_10);
       return NULL;
    }
@@ -551,7 +551,7 @@ gen_spec_load(const struct gen_device_info *devinfo)
    memset(&ctx, 0, sizeof ctx);
    ctx.parser = XML_ParserCreate(NULL);
    XML_SetUserData(ctx.parser, &ctx);
-   if (!ctx.parser) {
+   if (ctx.parser == NULL) {
       fprintf(stderr, "failed to create parser\n");
       return NULL;
    }
@@ -616,7 +616,7 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
    assert(len < filename_len);
 
    input = fopen(filename, "r");
-   if (!input) {
+   if (input == NULL) {
       fprintf(stderr, "failed to open xml description\n");
       free(filename);
       return NULL;
@@ -625,7 +625,7 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
    memset(&ctx, 0, sizeof ctx);
    ctx.parser = XML_ParserCreate(NULL);
    XML_SetUserData(ctx.parser, &ctx);
-   if (!ctx.parser) {
+   if (ctx.parser == NULL) {
       fprintf(stderr, "failed to create parser\n");
       fclose(input);
       free(filename);
@@ -640,7 +640,7 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
    do {
       buf = XML_GetBuffer(ctx.parser, XML_BUFFER_SIZE);
       len = fread(buf, 1, XML_BUFFER_SIZE, input);
-      if (!len) {
+      if (len == 0) {
          fprintf(stderr, "fread: %m\n");
          free(ctx.spec);
          ctx.spec = NULL;
@@ -754,7 +754,7 @@ gen_group_get_length(struct gen_group *group, const uint32_t *p)
          else
             return -1;
       case 2: {
-         if (!opcode)
+         if (opcode == 0)
             return field_value(h, 0, 7) + 2;
          else if (opcode < 3)
             return field_value(h, 0, 15) + 2;
@@ -956,7 +956,7 @@ iter_decode_field(struct gen_field_iterator *iter)
    }
    }
 
-   if (!strlen(iter->group->name)) {
+   if (strlen(iter->group->name) == 0) {
       int length = strlen(iter->name);
       snprintf(iter->name + length, sizeof(iter->name) - length,
                "[%i]", iter->group_iter);

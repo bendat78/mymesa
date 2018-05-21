@@ -377,11 +377,11 @@ _mesa_IsQuery(GLuint id)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glIsQuery(%u)\n", id);
 
-   if (!id)
+   if (id == 0)
       return GL_FALSE;
 
    q = _mesa_lookup_query_object(ctx, id);
-   if (!q)
+   if (q == NULL)
       return GL_FALSE;
 
    return q->EverBound;
@@ -443,7 +443,7 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
       return;
    }
 
-   if (!id) {
+   if (id == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQuery{Indexed}(id==0)");
       return;
    }
@@ -588,7 +588,7 @@ _mesa_QueryCounter(GLuint id, GLenum target)
       return;
    }
 
-   if (!id) {
+   if (id == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glQueryCounter(id==0)");
       return;
    }

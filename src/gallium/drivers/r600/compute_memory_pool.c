@@ -147,7 +147,7 @@ static int compute_memory_grow_defrag_pool(struct compute_memory_pool *pool,
 
 		temp = r600_compute_buffer_alloc_vram(pool->screen, new_size_in_dw * 4);
 
-		if (temp) {
+		if (temp != NULL) {
 			struct pipe_resource *src = (struct pipe_resource *)pool->bo;
 			struct pipe_resource *dst = (struct pipe_resource *)temp;
 
@@ -167,7 +167,7 @@ static int compute_memory_grow_defrag_pool(struct compute_memory_pool *pool,
 
 			compute_memory_shadow(pool, pipe, 1);
 			pool->shadow = realloc(pool->shadow, new_size_in_dw * 4);
-			if (!pool->shadow)
+			if (pool->shadow == NULL)
 				return -1;
 
 			pool->size_in_dw = new_size_in_dw;
@@ -243,7 +243,7 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			unallocated += align(item->size_in_dw, ITEM_ALIGNMENT);
 	}
 
-	if (!unallocated) {
+	if (unallocated == 0) {
 		return 0;
 	}
 
@@ -385,7 +385,7 @@ void compute_memory_demote_item(struct compute_memory_pool *pool,
 
 	/* We check if the intermediate buffer exists, and if it
 	 * doesn't, we create it again */
-	if (!item->real_buffer) {
+	if (item->real_buffer == NULL) {
 		item->real_buffer = r600_compute_buffer_alloc_vram(
 				pool->screen, item->size_in_dw * 4);
 	}
@@ -456,7 +456,7 @@ static void compute_memory_move_item(struct compute_memory_pool *pool,
 		struct pipe_resource *tmp = (struct pipe_resource *)
 			r600_compute_buffer_alloc_vram(pool->screen, item->size_in_dw * 4);
 
-		if (tmp) {
+		if (tmp != NULL) {
 			rctx->b.b.resource_copy_region(pipe,
 				tmp, 0, 0, 0, 0,
 				src, 0, &box);

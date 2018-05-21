@@ -234,7 +234,6 @@ VkResult anv_QueuePresentKHR(
     const VkPresentInfoKHR*                  pPresentInfo)
 {
    ANV_FROM_HANDLE(anv_queue, queue, _queue);
-
    struct anv_physical_device *pdevice =
       &queue->device->instance->physicalDevice;
 

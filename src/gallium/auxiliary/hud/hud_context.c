@@ -979,7 +979,7 @@ hud_graph_add_value(struct hud_graph *gr, double value)
       gr->num_vertices++;
    }
 
-   if (gr->pane->dyn_ceiling) {
+   if (gr->pane->dyn_ceiling == true) {
       hud_pane_update_dyn_ceiling(gr, gr->pane);
    }
    if (value > gr->pane->max_value) {
@@ -1436,7 +1436,7 @@ hud_parse_env_var(struct hud_context *hud, struct pipe_screen *screen,
          }
       }
 
-      if (!*env)
+      if (*env == 0)
          break;
 
       /* parse a separator */
@@ -1813,7 +1813,7 @@ hud_create(struct cso_context *cso, struct hud_context *share)
 #ifdef PIPE_OS_UNIX
    unsigned signo = debug_get_num_option("GALLIUM_HUD_TOGGLE_SIGNAL", 0);
    static boolean sig_handled = FALSE;
-   struct sigaction action = {0};
+   struct sigaction action = {};
 #endif
    huds_visible = debug_get_bool_option("GALLIUM_HUD_VISIBLE", TRUE);
 
@@ -1899,9 +1899,9 @@ hud_create(struct cso_context *cso, struct hud_context *share)
    }
 #endif
 
-   if (!record_ctx)
+   if (record_ctx == 0)
       hud_set_record_context(hud, cso_get_pipe_context(cso));
-   if (!draw_ctx)
+   if (draw_ctx == 0)
       hud_set_draw_context(hud, cso);
 
    hud_parse_env_var(hud, screen, env);

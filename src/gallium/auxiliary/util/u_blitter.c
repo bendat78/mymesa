@@ -337,7 +337,7 @@ static void bind_vs_pos_only(struct blitter_context_priv *ctx,
       struct pipe_stream_output_info so;
       static const enum tgsi_semantic semantic_names[] =
          { TGSI_SEMANTIC_POSITION };
-      const uint semantic_indices[] = {0};
+      const uint semantic_indices[] = { 0 };
 
       memset(&so, 0, sizeof(so));
       so.num_outputs = 1;
@@ -377,7 +377,7 @@ static void *get_vs_passthrough_pos(struct blitter_context *blitter)
    if (!ctx->vs_nogeneric) {
       static const enum tgsi_semantic semantic_names[] =
          { TGSI_SEMANTIC_POSITION };
-      const uint semantic_indices[] = {0};
+      const uint semantic_indices[] = { 0 };
 
       ctx->vs_nogeneric =
          util_make_vertex_passthrough_shader(pipe, 1,
@@ -1377,7 +1377,7 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
-   struct pipe_stencil_ref sr = {0};
+   struct pipe_stencil_ref sr = { { 0 } };
 
    assert(ctx->has_layered || num_layers <= 1);
 
@@ -2191,7 +2191,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_framebuffer_state fb_state;
-   struct pipe_stencil_ref sr = {0};
+   struct pipe_stencil_ref sr = { { 0 } };
    unsigned num_layers;
 
    assert(dstsurf->texture);

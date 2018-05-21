@@ -646,7 +646,7 @@ static void
 intel_renderbuffer_move_temp_back(struct brw_context *brw,
                                   struct intel_renderbuffer *irb)
 {
-   if (!irb->align_wa_mt)
+   if (irb->align_wa_mt == NULL)
       return;
 
    brw_cache_flush_for_read(brw, irb->align_wa_mt->bo);
@@ -740,7 +740,7 @@ brw_prepare_drawing(struct gl_context *ctx,
     * and finalizing textures but before setting up any hardware state for
     * this draw call.
     */
-   bool draw_aux_buffer_disabled[MAX_DRAW_BUFFERS] = {0};
+   bool draw_aux_buffer_disabled[MAX_DRAW_BUFFERS] = { };
    brw_predraw_resolve_inputs(brw, true, draw_aux_buffer_disabled);
    brw_predraw_resolve_framebuffer(brw, draw_aux_buffer_disabled);
 
@@ -1029,7 +1029,7 @@ brw_draw_indirect_prims(struct gl_context *ctx,
    GLsizei i;
 
    prim = calloc(draw_count, sizeof(*prim));
-   if (!prim) {
+   if (prim == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "gl%sDraw%sIndirect%s",
                   (draw_count > 1) ? "Multi" : "",
                   ib ? "Elements" : "Arrays",

@@ -304,7 +304,7 @@ _eglConvertIntsToAttribs(const EGLint *int_list, EGLAttrib **out_attrib_list)
          ++len;
    }
 
-   if (!len) {
+   if (len == 0) {
       *out_attrib_list = NULL;
       return EGL_SUCCESS;
    }
@@ -625,7 +625,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
    }
 
    /* Update applications version of major and minor if not NULL */
-   if ((major) && (minor != NULL)) {
+   if ((major != NULL) && (minor != NULL)) {
       *major = disp->Version / 10;
       *minor = disp->Version % 10;
    }
@@ -665,7 +665,7 @@ eglQueryString(EGLDisplay dpy, EGLint name)
 
    if (dpy == EGL_NO_DISPLAY && name == EGL_EXTENSIONS) {
       const char *ret = _eglGetClientExtensionString();
-      if (ret)
+      if (ret != NULL)
          RETURN_EGL_SUCCESS(NULL, ret);
       else
          RETURN_EGL_ERROR(NULL, EGL_BAD_ALLOC, NULL);
@@ -877,7 +877,7 @@ _eglCreateWindowSurfaceCommon(_EGLDisplay *disp, EGLConfig config,
    EGLSurface ret;
 
 
-   if (!native_window)
+   if (native_window == NULL)
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
 
 #ifdef HAVE_SURFACELESS_PLATFORM
@@ -1025,7 +1025,7 @@ _eglCreatePixmapSurfaceCommon(_EGLDisplay *disp, EGLConfig config,
    if ((conf->SurfaceType & EGL_PIXMAP_BIT) == 0)
       RETURN_EGL_ERROR(disp, EGL_BAD_MATCH, EGL_NO_SURFACE);
 
-   if (!native_pixmap)
+   if (native_pixmap == NULL)
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_NO_SURFACE);
 
    surf = drv->API.CreatePixmapSurface(drv, disp, conf, native_pixmap,
@@ -1962,7 +1962,7 @@ _eglWaitSyncCommon(_EGLDisplay *disp, _EGLSync *s, EGLint flags)
       RETURN_EGL_ERROR(disp, EGL_BAD_MATCH, EGL_FALSE);
 
    /* the API doesn't allow any flags yet */
-   if (flags)
+   if (flags != 0)
       RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
 
    ret = drv->API.WaitSyncKHR(drv, disp, s);
@@ -2359,7 +2359,7 @@ eglLabelObjectKHR(EGLDisplay dpy, EGLenum objectType, EGLObjectKHR object,
    }
 
    disp = _eglLockDisplay(dpy);
-   if (!disp)
+   if (disp == NULL)
       RETURN_EGL_ERROR(disp, EGL_BAD_DISPLAY, EGL_BAD_DISPLAY);
 
    if (objectType == EGL_OBJECT_DISPLAY_KHR) {
@@ -2409,7 +2409,7 @@ eglDebugMessageControlKHR(EGLDEBUGPROCKHR callback,
    mtx_lock(_eglGlobal.Mutex);
 
    newEnabled = _eglGlobal.debugTypesEnabled;
-   if (attrib_list) {
+   if (attrib_list != NULL) {
       int i;
 
       for (i = 0; attrib_list[i] != EGL_NONE; i += 2) {
@@ -2434,7 +2434,7 @@ eglDebugMessageControlKHR(EGLDEBUGPROCKHR callback,
       }
    }
 
-   if (callback) {
+   if (callback != NULL) {
       _eglGlobal.debugCallback = callback;
       _eglGlobal.debugTypesEnabled = newEnabled;
    } else {

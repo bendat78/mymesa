@@ -96,12 +96,12 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 		       struct radeon_info *info,
 		       struct amdgpu_gpu_info *amdinfo)
 {
-	struct amdgpu_buffer_size_alignments alignment_info = {0};
+	struct amdgpu_buffer_size_alignments alignment_info = {};
 	struct amdgpu_heap_info vram, vram_vis, gtt;
-	struct drm_amdgpu_info_hw_ip dma = {0}, compute = {0}, uvd = {0};
-	struct drm_amdgpu_info_hw_ip uvd_enc = {0}, vce = {0}, vcn_dec = {0};
-	struct drm_amdgpu_info_hw_ip vcn_enc = {0}, gfx = {0};
-	struct amdgpu_gds_resource_info gds = {0};
+	struct drm_amdgpu_info_hw_ip dma = {}, compute = {}, uvd = {};
+	struct drm_amdgpu_info_hw_ip uvd_enc = {}, vce = {}, vcn_dec = {};
+	struct drm_amdgpu_info_hw_ip vcn_enc = {}, gfx = {};
+	struct amdgpu_gds_resource_info gds = {};
 	uint32_t vce_version = 0, vce_feature = 0, uvd_version = 0, uvd_feature = 0;
 	int r, i, j;
 	drmDevicePtr devinfo;

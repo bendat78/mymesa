@@ -150,10 +150,10 @@ VkResult anv_CreateDescriptorSetLayout(
       const VkDescriptorSetLayoutBinding *binding =
          (void *)set_layout->binding[b].immutable_samplers;
 
-      if (!binding)
+      if (binding == NULL)
          continue;
 
-      if (!binding->descriptorCount)
+      if (binding->descriptorCount == 0)
          continue;
 
 #ifndef NDEBUG
@@ -284,7 +284,7 @@ VkResult anv_CreatePipelineLayout(
 
    layout = vk_alloc2(&device->alloc, pAllocator, sizeof(*layout), 8,
                        VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!layout)
+   if (layout == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    layout->num_sets = pCreateInfo->setLayoutCount;
@@ -501,7 +501,7 @@ anv_descriptor_set_create(struct anv_device *device,
       }
    }
 
-   if (!set) {
+   if (set == NULL) {
       if (pool->free_list != EMPTY) {
          return vk_error(VK_ERROR_FRAGMENTED_POOL);
       } else {
@@ -948,7 +948,7 @@ VkResult anv_CreateDescriptorUpdateTemplate(
       pCreateInfo->descriptorUpdateEntryCount * sizeof(template->entries[0]);
    template = vk_alloc2(&device->alloc, pAllocator, size, 8,
                         VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-   if (!template)
+   if (template == NULL)
       return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
 
    template->bind_point = pCreateInfo->pipelineBindPoint;

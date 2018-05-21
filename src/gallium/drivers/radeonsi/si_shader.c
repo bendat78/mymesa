@@ -496,7 +496,7 @@ void si_llvm_load_input_vs(
 						    LLVMIntNE, vertex_id,
 						    ctx->i32_1, "");
 
-		if (!input_index) {
+		if (input_index == 0) {
 			/* Position: */
 			LLVMValueRef x1y1 = LLVMGetParam(ctx->main_fn,
 							 ctx->param_vs_blit_inputs);
@@ -798,7 +798,7 @@ LLVMValueRef si_get_indirect_index(struct si_shader_context *ctx,
 		result = ctx->addrs[ind->Index][ind->Swizzle];
 		result = LLVMBuildLoad(ctx->ac.builder, result, "");
 	} else {
-		struct tgsi_full_src_register src = {0};
+		struct tgsi_full_src_register src = {};
 
 		src.Register.File = ind->File;
 		src.Register.Index = ind->Index;
@@ -1093,7 +1093,7 @@ static LLVMValueRef buffer_load(struct lp_build_tgsi_context *bld_base,
 	LLVMValueRef value, value2;
 	LLVMTypeRef vec_type = LLVMVectorType(type, 4);
 
-	if (swizzle == (~0u)) {
+	if (swizzle == ~0) {
 		value = ac_build_buffer_load(&ctx->ac, buffer, 4, NULL, base, offset,
 					     0, 1, 0, can_speculate, false);
 
@@ -1132,7 +1132,7 @@ static LLVMValueRef lds_load(struct lp_build_tgsi_context *bld_base,
 	struct si_shader_context *ctx = si_shader_context(bld_base);
 	LLVMValueRef value;
 
-	if (swizzle == (~0u)) {
+	if (swizzle == ~0) {
 		LLVMValueRef values[TGSI_NUM_CHANNELS];
 
 		for (unsigned chan = 0; chan < TGSI_NUM_CHANNELS; chan++)
@@ -1515,7 +1515,7 @@ static void si_nir_store_output_tcs(struct ac_shader_abi *abi,
 		param_index = LLVMBuildAdd(ctx->ac.builder, param_index,
 					   LLVMConstInt(ctx->i32, const_index, 0), "");
 	} else {
-		if (const_index)
+		if (const_index != 0)
 			param_index = LLVMConstInt(ctx->i32, const_index, 0);
 	}
 
@@ -1652,7 +1652,7 @@ LLVMValueRef si_llvm_load_input_gs(struct ac_shader_abi *abi,
 	}
 
 	/* GFX6: input load from the ESGS ring in memory. */
-	if (swizzle == (~0u)) {
+	if (swizzle == ~0) {
 		LLVMValueRef values[TGSI_NUM_CHANNELS];
 		unsigned chan;
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
@@ -1963,7 +1963,7 @@ static LLVMValueRef get_block_size(struct ac_shader_abi *abi)
 	unsigned i;
 	unsigned *properties = ctx->shader->selector->info.properties;
 
-	if (properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH]) {
+	if (properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH] != 0) {
 		unsigned sizes[3] = {
 			properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH],
 			properties[TGSI_PROPERTY_CS_FIXED_BLOCK_HEIGHT],
@@ -2831,7 +2831,7 @@ static void si_llvm_emit_streamout(struct si_shader_context *ctx,
 
 		/* Load the descriptor and compute the write offset for each
 		 * enabled buffer. */
-		LLVMValueRef so_write_offset[4] = {0};
+		LLVMValueRef so_write_offset[4] = {};
 		LLVMValueRef so_buffers[4];
 		LLVMValueRef buf_ptr = LLVMGetParam(ctx->main_fn,
 						    ctx->param_rw_buffers);
@@ -2934,7 +2934,7 @@ static void si_llvm_export_vs(struct si_shader_context *ctx,
 			      unsigned noutput)
 {
 	struct si_shader *shader = ctx->shader;
-	struct ac_export_args pos_args[4] = {0};
+	struct ac_export_args pos_args[4] = {};
 	LLVMValueRef psize_value = NULL, edgeflag_value = NULL, layer_value = NULL, viewport_index_value = NULL;
 	unsigned pos_idx;
 	int i;
@@ -3864,7 +3864,7 @@ static void si_llvm_return_fs_outputs(struct ac_shader_abi *abi,
 	LLVMBuilderRef builder = ctx->ac.builder;
 	unsigned i, j, first_vgpr, vgpr;
 
-	LLVMValueRef color[8][4] = {0};
+	LLVMValueRef color[8][4] = {};
 	LLVMValueRef depth = NULL, stencil = NULL, samplemask = NULL;
 	LLVMValueRef ret;
 
@@ -5833,7 +5833,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 					       stream);
 		}
 
-		if (!stream)
+		if (stream == 0)
 			si_llvm_export_vs(&ctx, outputs, gsinfo->num_outputs);
 
 		LLVMBuildBr(builder, end_bb);
@@ -5863,7 +5863,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 
 	FREE(outputs);
 
-	if (r) {
+	if (r != 0) {
 		FREE(shader);
 		shader = NULL;
 	}
@@ -6821,7 +6821,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			parts[3] = ctx.main_fn;
 
 			/* VS as LS main part */
-			struct si_shader shader_ls = {0};
+			struct si_shader shader_ls = {};
 			shader_ls.selector = ls;
 			shader_ls.key.as_ls = 1;
 			shader_ls.key.mono = shader->key.mono;
@@ -6885,7 +6885,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 			gs_prolog = ctx.main_fn;
 
 			/* ES main part */
-			struct si_shader shader_es = {0};
+			struct si_shader shader_es = {};
 			shader_es.selector = es;
 			shader_es.key.as_es = 1;
 			shader_es.key.mono = shader->key.mono;
@@ -7114,7 +7114,7 @@ si_get_shader_part(struct si_screen *sscreen,
 	result = CALLOC_STRUCT(si_shader_part);
 	result->key = *key;
 
-	struct si_shader shader = {0};
+	struct si_shader shader = {};
 	struct si_shader_context ctx;
 
 	si_init_shader_ctx(&ctx, sscreen, compiler);
@@ -7808,7 +7808,7 @@ static void si_build_ps_epilog_function(struct si_shader_context *ctx,
 	struct si_function_info fninfo;
 	LLVMValueRef depth = NULL, stencil = NULL, samplemask = NULL;
 	int i;
-	struct si_ps_exports exp = {0};
+	struct si_ps_exports exp = {};
 
 	si_init_function_info(&fninfo);
 

@@ -1,8 +1,8 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
 #include <stdio.h>
@@ -173,7 +173,7 @@ st_NewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
 }
 
 /** called via ctx->Driver.DeleteTextureObject() */
-static void
+static void 
 st_DeleteTextureObject(struct gl_context *ctx,
                        struct gl_texture_object *texObj)
 {
@@ -384,7 +384,7 @@ static GLboolean
 guess_base_level_size(GLenum target,
                       GLuint width, GLuint height, GLuint depth, GLuint level,
                       GLuint *width0, GLuint *height0, GLuint *depth0)
-{
+{ 
    assert(width >= 1);
    assert(height >= 1);
    assert(depth >= 1);
@@ -1206,7 +1206,7 @@ try_pbo_upload_common(struct gl_context *ctx,
       templ.swizzle_a = PIPE_SWIZZLE_W;
 
       sampler_view = pipe->create_sampler_view(pipe, addr->buffer, &templ);
-      if (!sampler_view)
+      if (sampler_view == NULL)
          goto fail;
 
       cso_set_sampler_views(cso, PIPE_SHADER_FRAGMENT, 1, &sampler_view);
@@ -2263,8 +2263,8 @@ fallback_copy_texsubimage(struct gl_context *ctx,
           * need to fill-in/override the alpha channel with 1.0.
           */
          _mesa_texstore(ctx, dims,
-                        texImage->_BaseFormat,
-                        texImage->TexFormat,
+                        texImage->_BaseFormat, 
+                        texImage->TexFormat, 
                         dstRowStride,
                         &texDest,
                         width, height, 1,
@@ -2444,7 +2444,7 @@ copy_image_data_to_texture(struct st_context *st,
       /* Copy potentially with the blitter:
        */
       GLuint src_level;
-      if (!stImage->pt->last_level)
+      if (stImage->pt->last_level == 0)
          src_level = 0;
       else
          src_level = stImage->base.Level;

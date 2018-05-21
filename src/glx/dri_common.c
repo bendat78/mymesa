@@ -112,13 +112,13 @@ driOpenDriver(const char *driverName)
       if (!libPaths)
          libPaths = getenv("LIBGL_DRIVERS_DIR");        /* deprecated */
    }
-   if (!libPaths)
+   if (libPaths == NULL)
       libPaths = DEFAULT_DRIVER_DIR;
 
    handle = NULL;
    for (p = libPaths; *p; p = next) {
       next = strchr(p, ':');
-      if (!next) {
+      if (next == NULL) {
          len = strlen(p);
          next = p + len;
       }
@@ -134,14 +134,14 @@ driOpenDriver(const char *driverName)
       handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
 #endif
 
-      if (!handle) {
+      if (handle == NULL) {
          snprintf(realDriverName, sizeof realDriverName,
                   "%.*s/%s_dri.so", len, p, driverName);
          InfoMessageF("OpenDriver: trying %s\n", realDriverName);
          handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
       }
 
-      if (handle)
+      if (handle != NULL)
          break;
       else
          InfoMessageF("dlopen %s failed (%s)\n", realDriverName, dlerror());
@@ -176,7 +176,7 @@ driGetDriverExtensions(void *handle, const char *driver_name)
    }
 
    extensions = dlsym(handle, __DRI_DRIVER_EXTENSIONS);
-   if (!extensions) {
+   if (extensions == NULL) {
       ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
       return NULL;
    }
@@ -351,11 +351,11 @@ createDriMode(const __DRIcoreExtension * core,
          break;
    }
 
-   if (!driConfigs[i])
+   if (driConfigs[i] == NULL)
       return NULL;
 
    driConfig = malloc(sizeof *driConfig);
-   if (!driConfig)
+   if (driConfig == NULL)
       return NULL;
 
    driConfig->base = *config;
@@ -374,7 +374,7 @@ driConvertConfigs(const __DRIcoreExtension * core,
    head.next = NULL;
    for (m = configs; m; m = m->next) {
       tail->next = createDriMode(core, m, driConfigs);
-      if (!tail->next) {
+      if (tail->next == NULL) {
          /* no matching dri config for m */
          continue;
       }
@@ -416,14 +416,14 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
    struct glx_screen *psc;
    struct glx_config *config = gc->config;
 
-   if (!priv)
+   if (priv == NULL)
       return NULL;
 
    if (glxDrawable == None)
       return NULL;
 
    psc = priv->screens[gc->screen];
-   if (!priv->drawHash)
+   if (priv->drawHash == NULL)
       return NULL;
 
    if (__glxHashLookup(priv->drawHash, glxDrawable, (void *) &pdraw) == 0) {
@@ -431,15 +431,15 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
       return pdraw;
    }
 
-   if (!config)
+   if (config == NULL)
       config = driInferDrawableConfig(gc->psc, glxDrawable);
-   if (!config)
+   if (config == NULL)
       return NULL;
 
    pdraw = psc->driScreen->createDrawable(psc, glxDrawable, glxDrawable,
                                           config);
 
-   if (!pdraw) {
+   if (pdraw == NULL) {
       ErrorMessageF("failed to create drawable\n");
       return NULL;
    }
@@ -459,14 +459,14 @@ driReleaseDrawables(struct glx_context *gc)
    const struct glx_display *priv = gc->psc->display;
    __GLXDRIdrawable *pdraw;
 
-   if (!priv)
+   if (priv == NULL)
       return;
 
    if (__glxHashLookup(priv->drawHash,
 		       gc->currentDrawable, (void *) &pdraw) == 0) {
       if (pdraw->drawable == pdraw->xDrawable) {
 	 pdraw->refcount --;
-	 if (!pdraw->refcount) {
+	 if (pdraw->refcount == 0) {
 	    (*pdraw->destroyDrawable)(pdraw);
 	    __glxHashDelete(priv->drawHash, gc->currentDrawable);
 	 }
@@ -477,7 +477,7 @@ driReleaseDrawables(struct glx_context *gc)
 		       gc->currentReadable, (void *) &pdraw) == 0) {
       if (pdraw->drawable == pdraw->xDrawable) {
 	 pdraw->refcount --;
-	 if (!pdraw->refcount) {
+	 if (pdraw->refcount == 0) {
 	    (*pdraw->destroyDrawable)(pdraw);
 	    __glxHashDelete(priv->drawHash, gc->currentReadable);
 	 }
@@ -507,13 +507,13 @@ dri2_convert_glx_attribs(unsigned num_attribs, const uint32_t *attribs,
    *flags = 0;
    *api = __DRI_API_OPENGL;
 
-   if (!num_attribs) {
+   if (num_attribs == 0) {
       return true;
    }
 
    /* This is actually an internal error, but what the heck.
     */
-   if (!attribs) {
+   if (attribs == NULL) {
       *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
       return false;
    }

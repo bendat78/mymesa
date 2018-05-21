@@ -278,7 +278,7 @@ _mesa_initialize_texture_object( struct gl_context *ctx,
    obj->RefCount = 1;
    obj->Name = name;
    obj->Target = target;
-   if (target) {
+   if (target != 0) {
       obj->TargetIndex = _mesa_tex_target_to_index(ctx, target);
    }
    else {
@@ -487,7 +487,7 @@ _mesa_clear_texture_object(struct gl_context *ctx,
 {
    GLuint i, j;
 
-   if (!texObj->Target)
+   if (texObj->Target == 0)
       return;
 
    for (i = 0; i < MAX_FACES; i++) {
@@ -1171,7 +1171,7 @@ invalidate_tex_image_error_check(struct gl_context *ctx, GLuint texture,
     *     TEXTURE_2D_MULTISAMPLE, or TEXTURE_2D_MULTISAMPLE_ARRAY, and <level>
     *     is not zero, the error INVALID_VALUE is generated."
     */
-   if (level) {
+   if (level != 0) {
       switch (t->Target) {
       case GL_TEXTURE_RECTANGLE:
       case GL_TEXTURE_BUFFER:
@@ -1376,7 +1376,7 @@ unbind_texobj_from_texunits(struct gl_context *ctx,
    const gl_texture_index index = texObj->TargetIndex;
    GLuint u;
 
-   if (!texObj->Target) {
+   if (texObj->Target == 0) {
       /* texture was never bound */
       return;
    }
@@ -1681,7 +1681,7 @@ bind_texture_object(struct gl_context *ctx, unsigned unit,
    ctx->Texture.NumCurrentTexUsed = MAX2(ctx->Texture.NumCurrentTexUsed,
                                          unit + 1);
 
-   if (texObj->Name)
+   if (texObj->Name != 0)
       texUnit->_BoundTextures |= (1 << targetIndex);
    else
       texUnit->_BoundTextures &= ~(1 << targetIndex);
@@ -1707,7 +1707,7 @@ _mesa_bind_texture(struct gl_context *ctx, GLenum target,
 
    assert(targetIndex >= 0 && targetIndex < NUM_TEXTURE_TARGETS);
 
-   if (!tex_obj->Target)
+   if (tex_obj->Target == 0)
       finish_texture_init(ctx, target, tex_obj, targetIndex);
 
    assert(tex_obj->Target == target);
@@ -1741,7 +1741,7 @@ bind_texture(struct gl_context *ctx, GLenum target, GLuint texName,
    /*
     * Get pointer to new texture object (newTexObj)
     */
-   if (!texName) {
+   if (texName == 0) {
       /* Use a default texture object */
       newTexObj = ctx->Shared->DefaultTex[targetIndex];
    } else {
@@ -1758,7 +1758,7 @@ bind_texture(struct gl_context *ctx, GLenum target, GLuint texName,
                          "glBindTexture(target mismatch)" );
             return;
          }
-         if (!newTexObj->Target) {
+         if (newTexObj->Target == 0) {
             finish_texture_init(ctx, target, newTexObj, targetIndex);
          }
       }
@@ -1833,7 +1833,7 @@ bind_texture_unit(struct gl_context *ctx, GLuint unit, GLuint texture,
     *    beginning of this section is reset to its default texture for the
     *    corresponding texture image unit."
     */
-   if (!texture) {
+   if (texture == 0) {
       unbind_textures_from_unit(ctx, unit);
       return;
    }
@@ -1847,7 +1847,8 @@ bind_texture_unit(struct gl_context *ctx, GLuint unit, GLuint texture,
                      "glBindTextureUnit(non-gen name)");
          return;
       }
-      if (!texObj->Target) {
+
+      if (texObj->Target == 0) {
          /* Texture object was gen'd but never bound so the target is not set */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glBindTextureUnit(target)");
          return;
@@ -1918,7 +1919,7 @@ bind_textures(struct gl_context *ctx, GLuint first, GLsizei count,
       _mesa_HashLockMutex(ctx->Shared->TexObjects);
 
       for (i = 0; i < count; i++) {
-         if (textures[i]) {
+         if (textures[i] != 0) {
             struct gl_texture_unit *texUnit = &ctx->Texture.Unit[first + i];
             struct gl_texture_object *current = texUnit->_Current;
             struct gl_texture_object *texObj;
@@ -2068,7 +2069,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
    /* We only do error checking on the texture names */
    for (i = 0; i < n; i++) {
       struct gl_texture_object *t;
-      if (!texName[i]) {
+      if (texName[i] == 0) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident");
          return GL_FALSE;
       }

@@ -567,7 +567,7 @@ static void load_emit(
 		emit_data->output[emit_data->chan] =
 			ac_build_expand_to_vec4(&ctx->ac, result, num_channels);
 	} else {
-		struct ac_image_args args = {0};
+		struct ac_image_args args = {};
 		args.opcode = ac_image_load;
 		args.resource = emit_data->args[0];
 		memcpy(args.coords, &emit_data->args[1], sizeof(args.coords));
@@ -696,7 +696,7 @@ static void store_emit_buffer(
 		}
 
 		offset = base_offset;
-		if (start) {
+		if (start != 0) {
 			offset = LLVMBuildAdd(
 				builder, offset,
 				LLVMConstInt(ctx->i32, start * 4, 0), "");
@@ -773,7 +773,7 @@ static void store_emit(
 			emit_data->arg_count,
 			ac_get_store_intr_attribs(writeonly_memory));
 	} else {
-		struct ac_image_args args = {0};
+		struct ac_image_args args = {};
 		args.opcode = ac_image_store;
 		args.data[0] = emit_data->args[0];
 		args.resource = emit_data->args[1];
@@ -942,7 +942,7 @@ static void atomic_emit(
 		emit_data->output[emit_data->chan] = ac_to_float(&ctx->ac, tmp);
 	} else {
 		unsigned num_data = inst->Instruction.Opcode == TGSI_OPCODE_ATOMCAS ? 2 : 1;
-		struct ac_image_args args = {0};
+		struct ac_image_args args = {};
 
 		if (inst->Instruction.Opcode == TGSI_OPCODE_ATOMCAS) {
 			args.opcode = ac_image_atomic_cmpswap;
@@ -1035,7 +1035,7 @@ static void resq_fetch_args(
 				 &emit_data->args[0]);
 		emit_data->arg_count = 1;
 	} else {
-		struct ac_image_args args = {0};
+		struct ac_image_args args = {};
 		unsigned image_target;
 
 		if (inst->Memory.Texture == TGSI_TEXTURE_3D)
@@ -1214,7 +1214,7 @@ static void txq_fetch_args(
 	struct si_shader_context *ctx = si_shader_context(bld_base);
 	const struct tgsi_full_instruction *inst = emit_data->inst;
 	unsigned target = inst->Texture.Texture;
-	struct ac_image_args args = {0};
+	struct ac_image_args args = {};
 
 	tex_fetch_ptrs(bld_base, emit_data, &args.resource, NULL, NULL);
 
@@ -1261,7 +1261,7 @@ static void tex_fetch_args(
 	const struct tgsi_full_instruction *inst = emit_data->inst;
 	unsigned opcode = inst->Instruction.Opcode;
 	unsigned target = inst->Texture.Texture;
-	struct ac_image_args args = {0};
+	struct ac_image_args args = {};
 	int ref_pos = tgsi_util_get_shadow_ref_src_index(target);
 	unsigned chan;
 	bool has_offset = inst->Texture.NumOffsets > 0;
@@ -1612,9 +1612,9 @@ si_lower_gather4_integer(struct si_shader_context *ctx,
 		assert(!wa_8888);
 		half_texel[0] = half_texel[1] = LLVMConstReal(ctx->f32, -0.5);
 	} else {
-		struct tgsi_full_instruction txq_inst = {0};
-		struct ac_image_args txq_args = {0};
-		struct lp_build_emit_data txq_emit_data = {0};
+		struct tgsi_full_instruction txq_inst = {};
+		struct ac_image_args txq_args = {};
+		struct lp_build_emit_data txq_emit_data = {};
 		struct lp_build_if_state if_ctx;
 
 		if (wa_8888) {
@@ -1826,7 +1826,7 @@ static void si_llvm_emit_fbfetch(const struct lp_build_tgsi_action *action,
 				 struct lp_build_emit_data *emit_data)
 {
 	struct si_shader_context *ctx = si_shader_context(bld_base);
-	struct ac_image_args args = {0};
+	struct ac_image_args args = {};
 	LLVMValueRef ptr, image, fmask, addr_vec;
 
 	/* Ignore src0, because KHR_blend_func_extended disallows multiple render
@@ -1890,7 +1890,7 @@ static const struct lp_build_tgsi_action tex_action = {
 void si_shader_context_init_mem(struct si_shader_context *ctx)
 {
 	struct lp_build_tgsi_context *bld_base;
-	struct lp_build_tgsi_action tmpl = {0};
+	struct lp_build_tgsi_action tmpl = {};
 
 	bld_base = &ctx->bld_base;
 

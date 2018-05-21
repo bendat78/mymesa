@@ -1379,7 +1379,7 @@ convert_IF_ELSE_to_ADD(struct brw_codegen *p,
    brw_inst_set_opcode(devinfo, if_inst, BRW_OPCODE_ADD);
    brw_inst_set_pred_inv(devinfo, if_inst, true);
 
-   if (else_inst) {
+   if (else_inst != NULL) {
       /* Convert ELSE to an ADD instruction that points where the ENDIF
        * would be.
        */
@@ -1425,7 +1425,7 @@ patch_IF_ELSE(struct brw_codegen *p,
    assert(brw_inst_opcode(devinfo, endif_inst) == BRW_OPCODE_ENDIF);
    brw_inst_set_exec_size(devinfo, endif_inst, brw_inst_exec_size(devinfo, if_inst));
 
-   if (!else_inst) {
+   if (else_inst == NULL) {
       /* Patch IF -> ENDIF */
       if (devinfo->gen < 6) {
 	 /* Turn it into an IFF, which means no mask stack operations for
@@ -2634,7 +2634,7 @@ brw_find_next_block_end(struct brw_codegen *p, int start_offset)
          depth++;
          break;
       case BRW_OPCODE_ENDIF:
-         if (!depth)
+         if (depth == 0)
             return offset;
          depth--;
          break;
@@ -2647,7 +2647,7 @@ brw_find_next_block_end(struct brw_codegen *p, int start_offset)
          /* fallthrough */
       case BRW_OPCODE_ELSE:
       case BRW_OPCODE_HALT:
-         if (!depth)
+         if (depth == 0)
             return offset;
       }
    }
@@ -2746,7 +2746,7 @@ brw_set_uip_jip(struct brw_codegen *p, int start_offset)
 	  * The uip will have already been set by whoever set up the
 	  * instruction.
 	  */
-	 if (!block_end_offset) {
+	 if (block_end_offset == 0) {
             brw_inst_set_jip(devinfo, insn, brw_inst_uip(devinfo, insn));
 	 } else {
             brw_inst_set_jip(devinfo, insn, (block_end_offset - offset) / scale);

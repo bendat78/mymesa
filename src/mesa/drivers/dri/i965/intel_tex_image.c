@@ -266,7 +266,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    }
 
    void *map = brw_bo_map(brw, bo, MAP_WRITE | MAP_RAW);
-   if (!map) {
+   if (map == NULL) {
       DBG("%s: failed to map bo\n", __func__);
       return false;
    }
@@ -429,6 +429,7 @@ intel_set_texture_image_mt(struct brw_context *brw,
    /* Immediately validate the image to the object. */
    intel_miptree_reference(&intel_texobj->mt, mt);
 }
+
 
 void
 intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
@@ -613,7 +614,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 
    image = dri_screen->dri2.image->lookupEGLImage(dri_screen, image_handle,
                                                   dri_screen->loaderPrivate);
-   if (!image)
+   if (image == NULL)
       return;
 
    /* We support external textures only for EGLImages created with
@@ -636,7 +637,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 
    mt = intel_miptree_create_for_dri_image(brw, image, target, image->format,
                                            false);
-   if (!mt)
+   if (mt == NULL)
       return;
 
    struct intel_texture_object *intel_texobj = intel_texture_object(texObj);
@@ -774,7 +775,7 @@ intel_gettexsubimage_tiled_memcpy(struct gl_context *ctx,
    }
 
    void *map = brw_bo_map(brw, bo, MAP_READ | MAP_RAW);
-   if (!map) {
+   if (map == NULL) {
       DBG("%s: failed to map bo\n", __func__);
       return false;
    }

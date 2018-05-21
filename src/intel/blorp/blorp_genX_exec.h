@@ -97,7 +97,7 @@ static uint64_t
 _blorp_combine_address(struct blorp_batch *batch, void *location,
                        struct blorp_address address, uint32_t delta)
 {
-   if (!address.buffer) {
+   if (address.buffer == NULL) {
       return address.offset + delta;
    } else {
       return blorp_emit_reloc(batch, location, address, delta);
@@ -1042,7 +1042,7 @@ blorp_emit_depth_stencil_state(struct blorp_batch *batch,
       GENX(3DSTATE_WM_DEPTH_STENCIL_header),
    };
 #else
-   struct GENX(DEPTH_STENCIL_STATE) ds = {0};
+   struct GENX(DEPTH_STENCIL_STATE) ds = { 0 };
 #endif
 
    if (params->depth.enabled) {
@@ -1418,7 +1418,7 @@ blorp_emit_surface_states(struct blorp_batch *batch,
                                   surface_maps[BLORP_RENDERBUFFER_BT_INDEX],
                                   surface_offsets[BLORP_RENDERBUFFER_BT_INDEX],
                                   params->color_write_disable, true);
-         if (params->dst.clear_color_addr.buffer)
+         if (params->dst.clear_color_addr.buffer != NULL)
             has_indirect_clear_color = true;
       } else {
          assert(params->depth.enabled || params->stencil.enabled);
@@ -1434,7 +1434,7 @@ blorp_emit_surface_states(struct blorp_batch *batch,
                                   surface_maps[BLORP_TEXTURE_BT_INDEX],
                                   surface_offsets[BLORP_TEXTURE_BT_INDEX],
                                   NULL, false);
-         if (params->src.clear_color_addr.buffer)
+         if (params->src.clear_color_addr.buffer != NULL)
             has_indirect_clear_color = true;
       }
    }
@@ -1484,10 +1484,10 @@ blorp_emit_depth_stencil_config(struct blorp_batch *batch,
    const struct isl_device *isl_dev = batch->blorp->isl_dev;
 
    uint32_t *dw = blorp_emit_dwords(batch, isl_dev->ds.size / 4);
-   if (!dw)
+   if (dw == NULL)
       return;
 
-   struct isl_depth_stencil_hiz_emit_info info = {0};
+   struct isl_depth_stencil_hiz_emit_info info = { };
 
    if (params->depth.enabled) {
       info.view = &params->depth.view;

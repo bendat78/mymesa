@@ -1661,7 +1661,7 @@ svga_format_size(SVGA3dSurfaceFormat format,
    *block_height = format_cap_table[format].block_height;
    *bytes_per_block = format_cap_table[format].block_bytes;
    /* Make sure the table entry was valid */
-   if (!*block_width)
+   if (*block_width == 0)
       debug_printf("Bad table entry for %s\n", svga_format_name(format));
    assert(*block_width);
    assert(*block_height);
@@ -2028,7 +2028,7 @@ svga_format_is_shareable(const struct svga_screen *ss,
       if (format_compats[i].pformat == pformat) {
          const SVGA3dSurfaceFormat *compat_format =
             format_compats[i].compat_format;
-         while (*compat_format) {
+         while (*compat_format != 0) {
             if (*compat_format == sformat)
                return true;
             compat_format++;

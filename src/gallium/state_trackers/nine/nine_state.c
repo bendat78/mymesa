@@ -1476,7 +1476,7 @@ CSMT_ITEM_NO_WAIT(nine_context_set_stream_source_freq,
     else
         context->stream_instancedata_mask &= ~(1 << StreamNumber);
 
-    if (StreamNumber)
+    if (StreamNumber != 0)
         context->changed.group |= NINE_STATE_STREAMFREQ;
 }
 
@@ -1721,7 +1721,7 @@ CSMT_ITEM_NO_WAIT(nine_context_set_render_target,
     struct nine_context *context = &device->context;
     const unsigned i = RenderTargetIndex;
 
-    if (!i) {
+    if (i == 0) {
         context->viewport.X = 0;
         context->viewport.Y = 0;
         context->viewport.Width = rt->desc.Width;
@@ -2333,7 +2333,7 @@ CSMT_ITEM_NO_WAIT(nine_context_clear_fb,
 
     if (Flags & D3DCLEAR_TARGET) bufs |= PIPE_CLEAR_COLOR;
     /* Ignore Z buffer if not bound */
-    if (context->pipe_data.fb.zsbuf) {
+    if (context->pipe_data.fb.zsbuf != NULL) {
         if (Flags & D3DCLEAR_ZBUFFER) bufs |= PIPE_CLEAR_DEPTH;
         if (Flags & D3DCLEAR_STENCIL) bufs |= PIPE_CLEAR_STENCIL;
     }
