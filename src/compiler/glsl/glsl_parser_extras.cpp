@@ -2147,7 +2147,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    ralloc_free(state);
 }
 
-/* extern "C" */
+} /* extern "C" */
 /**
  * Do the set of common optimizations passes
  *
@@ -2301,4 +2301,3 @@ _mesa_destroy_shader_compiler_caches(void)
 }
 
 }
-
