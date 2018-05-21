@@ -159,12 +159,8 @@ intel_miptree_supports_ccs(struct brw_context *brw,
       return false;
 
    /* MCS is only supported for color buffers */
-   switch (_mesa_get_format_base_format(mt->format)) {
-   case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_STENCIL:
-   case GL_STENCIL_INDEX:
+   if (!_mesa_is_format_color_format(mt->format))
       return false;
-   }
 
    if (mt->cpp != 4 && mt->cpp != 8 && mt->cpp != 16)
       return false;
@@ -202,6 +198,13 @@ intel_miptree_supports_ccs(struct brw_context *brw,
     * the RT space: Horizontal Alignment = 128 and Vertical Alignment = 64.
     */
    if (devinfo->gen < 8 && (mip_mapped || arrayed))
+      return false;
+
+   /* The PRM doesn't say this explicitly, but fast-clears don't appear to
+    * work for 3D textures until gen9 where the layout of 3D textures changes
+    * to match 2D array textures.
+    */
+   if (devinfo->gen <= 8 && mt->surf.dim != ISL_SURF_DIM_2D)
       return false;
 
    /* There's no point in using an MCS buffer if the surface isn't in a
@@ -1793,7 +1796,7 @@ intel_miptree_alloc_aux(struct brw_context *brw,
    enum isl_aux_state initial_state;
    uint8_t memset_value;
    struct isl_surf aux_surf;
-   bool aux_surf_ok;
+   MAYBE_UNUSED bool aux_surf_ok;
 
    switch (mt->aux_usage) {
    case ISL_AUX_USAGE_NONE:
@@ -1801,16 +1804,10 @@ intel_miptree_alloc_aux(struct brw_context *brw,
       aux_surf_ok = true;
       break;
    case ISL_AUX_USAGE_HIZ:
-      assert(!_mesa_is_format_color_format(mt->format));
-
       initial_state = ISL_AUX_STATE_AUX_INVALID;
       aux_surf_ok = isl_surf_get_hiz_surf(&brw->isl_dev, &mt->surf, &aux_surf);
-      assert(aux_surf_ok);
       break;
    case ISL_AUX_USAGE_MCS:
-      assert(_mesa_is_format_color_format(mt->format));
-      assert(brw->screen->devinfo.gen >= 7); /* MCS only used on Gen7+ */
-
       /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
        *
        *     When MCS buffer is enabled and bound to MSRT, it is required that
@@ -1826,12 +1823,9 @@ intel_miptree_alloc_aux(struct brw_context *brw,
       initial_state = ISL_AUX_STATE_CLEAR;
       memset_value = 0xFF;
       aux_surf_ok = isl_surf_get_mcs_surf(&brw->isl_dev, &mt->surf, &aux_surf);
-      assert(aux_surf_ok);
       break;
    case ISL_AUX_USAGE_CCS_D:
    case ISL_AUX_USAGE_CCS_E:
-      assert(_mesa_is_format_color_format(mt->format));
-
       /* When CCS_E is used, we need to ensure that the CCS starts off in a
        * valid state.  From the Sky Lake PRM, "MCS Buffer for Render
        * Target(s)":
@@ -1852,9 +1846,8 @@ intel_miptree_alloc_aux(struct brw_context *brw,
       break;
    }
 
-   /* Ensure we have a valid aux_surf. */
-   if (aux_surf_ok == false)
-      return false;
+   /* We should have a valid aux_surf. */
+   assert(aux_surf_ok);
 
    /* No work is needed for a zero-sized auxiliary buffer. */
    if (aux_surf.size == 0)

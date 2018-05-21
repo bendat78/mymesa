@@ -480,7 +480,7 @@ create_llvm_function(LLVMContextRef ctx, LLVMModuleRef module,
                      unsigned num_return_elems,
 		     struct arg_info *args,
 		     unsigned max_workgroup_size,
-		     bool unsafe_math)
+		     const struct radv_nir_compiler_options *options)
 {
 	LLVMTypeRef main_function_type, ret_type;
 	LLVMBasicBlockRef main_function_body;
@@ -516,7 +516,7 @@ create_llvm_function(LLVMContextRef ctx, LLVMModuleRef module,
 						     "amdgpu-max-work-group-size",
 						     max_workgroup_size);
 	}
-	if (unsafe_math) {
+	if (options->unsafe_math) {
 		/* These were copied from some LLVM test. */
 		LLVMAddTargetDependentFunctionAttr(main_function,
 						   "less-precise-fpmad",
@@ -1106,8 +1106,7 @@ static void create_function(struct radv_shader_context *ctx,
 
 	ctx->main_function = create_llvm_function(
 	    ctx->context, ctx->ac.module, ctx->ac.builder, NULL, 0, &args,
-	    ctx->max_workgroup_size,
-	    ctx->options->unsafe_math);
+	    ctx->max_workgroup_size, ctx->options);
 	set_llvm_calling_convention(ctx->main_function, stage);
 
 
@@ -2076,9 +2075,6 @@ static void
 prepare_interp_optimize(struct radv_shader_context *ctx,
                         struct nir_shader *nir)
 {
-	if (!ctx->options->key.fs.multisample)
-		return;
-
 	bool uses_center = false;
 	bool uses_centroid = false;
 	nir_foreach_variable(variable, &nir->inputs) {
