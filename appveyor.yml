@@ -41,8 +41,8 @@ configuration: Release
 install:
 - ls -al
 - sh: sudo apt-get update
-- sh: sudo apt-get upgrade
-- sh: sudo apt-get build-dep mesa
+- sh: sudo apt-get upgrade -y
+- sh: sudo apt-get build-dep mesa -y
 
 build_script:
 - sh: ./configure
