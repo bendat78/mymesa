@@ -69,10 +69,10 @@ install:
 - set LLVM=%CD%\llvm
 
 build_script:
-- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1
+- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1 define=ENABLE_SHADER_CACHE
 
 after_build:
-- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1 check
+- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1 check define=ENABLE_SHADER_CACHE
 
 
 # It's possible to setup notification here, as described in
