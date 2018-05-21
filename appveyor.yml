@@ -41,7 +41,7 @@ configuration: Release
 install:
 - ls -al
 - sh: sudo apt-get update
-- sh: sudo apt-get upgrade -y -q
+- sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 - sh: sudo apt-get build-dep mesa -y
 
 build_script:
