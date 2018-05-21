@@ -23,7 +23,6 @@
 
 
 #include <ctype.h>
-#include <ftw.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
