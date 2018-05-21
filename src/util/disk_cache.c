@@ -904,10 +904,11 @@ cache_put(void *job, int thread_index)
    if (random == NULL)
       goto done;
 
-   if (asprintf(&filename_tmp, "%s_%s.tmp", filename, random) == -1)
+   if (asprintf(&filename_tmp, "%s.tmp", filename) == -1)
+//   if (asprintf(&filename_tmp, "%s_%s.tmp", filename, random) == -1)
       goto done;
 
-   fd = open(filename_tmp, O_WRONLY | O_CLOEXEC | O_CREAT, 0644);
+   fd = open(filename_tmp, O_WRONLY | O_CLOEXEC | O_CREAT | O_EXCL, 0644);
 
    /* Make the two-character subdirectory within the cache as needed. */
    if (fd == -1) {
@@ -1026,6 +1027,7 @@ cache_put(void *job, int thread_index)
       close(fd);
    free(filename_tmp);
    free(filename);
+   free(random);
 }
 
 void
