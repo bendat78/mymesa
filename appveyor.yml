@@ -42,6 +42,7 @@ os: Visual Studio 2015
 environment:
   WINFLEXBISON_ARCHIVE: win_flex_bison-2.5.9.zip
   LLVM_ARCHIVE: llvm-3.3.1-msvc2015-mtd.7z
+  ZLIB_ARCHIVE: zlib123.zip
 
 install:
 # Check pip
@@ -67,12 +68,16 @@ install:
 - 7z x -y "%LLVM_ARCHIVE%" > nul
 - mkdir llvm\bin
 - set LLVM=%CD%\llvm
+# Download and extract zLib
+- if not exist "%ZLIB_ARCHIVE%" appveyor DownloadFile "http://www.winimage.com/zLibDll/%ZLIB_ARCHIVE%"
+- 7z x -y -ozlib\ "%ZLIB_ARCHIVE%" > nul
+- set Path=%CD%\zlib;%Path%
 
 build_script:
-- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1 define=ENABLE_SHADER_CACHE
+- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1
 
 after_build:
-- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1 check define=ENABLE_SHADER_CACHE
+- scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1 check
 
 
 # It's possible to setup notification here, as described in
