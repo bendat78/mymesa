@@ -1166,6 +1166,14 @@ _mesa_compile_shader(struct gl_context *ctx, struct gl_shader *sh)
    }
 }
 
+#ifndef asprintf
+int asprintf(char *strp[], const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int r = vasprintf(strp, fmt, ap);
+    va_end(ap);
+    return r;}
+#endif // asprintf
 
 /**
  * Link a program's shaders.
