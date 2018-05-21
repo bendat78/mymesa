@@ -31,7 +31,7 @@
 //#include <sys/mman.h>
 //#include <unistd.h>
 #include <fcntl.h>
-#include <pwd.h>
+//#include <pwd.h>
 #include <errno.h>
 #include <dirent.h>
 #include "zlib.h"
