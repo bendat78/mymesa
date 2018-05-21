@@ -24,7 +24,7 @@
 #ifndef DISK_CACHE_H
 #define DISK_CACHE_H
 
-#include <dlfcn.h>
+//#include <dlfcn.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
