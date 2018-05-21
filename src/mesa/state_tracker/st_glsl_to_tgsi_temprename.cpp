@@ -1361,17 +1361,27 @@ the_end:
 bool should_merge (int distance)
 {
    switch (distance) {
-	case 12 ... 126: //lower bound interfering with llvm?, upper bound here
-	case 244 ... 768: // and lower bound here determined by one regressing tombraider shader
+	if (distance >= 12) && (distance <= 126) {
+           return true;
+	} //lower bound interfering with llvm?; upper bound here
+	if (distance >= 244) && (distance <= 768) {
+           return true;
+        } // and lower bound here determined by one regressing tombraider shader
 // nothing to see here
-	case 2432 ... 2496: // purely empiricily determined
-	case 2497 ... 2623: // Deus Ex
-	case 2624 ... 2688:
+	if (distance >= 2432) && (distance <= 2496) {
+           return true;
+        }// purely empiricily determined
+	if (distance >= 2497) && (distance <= 2623) {
+           return true;
+        }// Deus Ex
+	if (distance >= 2624) && (distance <= 2688) {
+           return true;
+        }
 //	case 2689 ... 2943: // causes regressions in ubershaders
-	case 2944 ... 3072: // above isnt used
-	   return true;
-	default:
-	   return false;
+	if (distance >= 2944) && (distance <= 3072) {
+           return true;
+        }// above isnt used
+   return false;
    }
 }
 
