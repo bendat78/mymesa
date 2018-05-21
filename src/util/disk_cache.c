@@ -21,7 +21,6 @@
  * IN THE SOFTWARE.
  */
 
-#ifdef ENABLE_SHADER_CACHE
 
 #include <ctype.h>
 #include <ftw.h>
@@ -1303,4 +1302,3 @@ disk_cache_set_callbacks(struct disk_cache *cache, disk_cache_put_cb put,
    cache->blob_get_cb = get;
 }
 
-#endif /* ENABLE_SHADER_CACHE */

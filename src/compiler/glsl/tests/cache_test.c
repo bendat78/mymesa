@@ -40,8 +40,6 @@
 
 bool error = false;
 
-#ifdef ENABLE_SHADER_CACHE
-
 static void
 expect_true(bool result, const char *test)
 {
@@ -493,12 +491,10 @@ test_put_key_and_get_key(void)
 
    disk_cache_destroy(cache);
 }
-#endif /* ENABLE_SHADER_CACHE */
 
 int
 main(void)
 {
-#ifdef ENABLE_SHADER_CACHE
    int err;
 
    test_disk_cache_create();
@@ -509,7 +505,6 @@ main(void)
 
    err = rmrf_local(CACHE_TEST_TMP);
    expect_equal(err, 0, "Removing " CACHE_TEST_TMP " again");
-#endif /* ENABLE_SHADER_CACHE */
 
    return error ? 1 : 0;
 }

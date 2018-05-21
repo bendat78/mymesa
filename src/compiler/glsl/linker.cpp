@@ -4773,10 +4773,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       return;
    }
 
-#ifdef ENABLE_SHADER_CACHE
    if (shader_cache_read_program_metadata(ctx, prog))
       return;
-#endif
 
    void *mem_ctx = ralloc_context(NULL); // temporary linker context
 

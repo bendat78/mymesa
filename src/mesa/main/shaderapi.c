@@ -1831,7 +1831,6 @@ _mesa_LinkProgram(GLuint programObj)
 }
 
 
-#ifdef ENABLE_SHADER_CACHE
 /**
  * Generate a SHA-1 hash value string for given source string.
  */
@@ -1944,9 +1943,6 @@ read_shader(const gl_shader_stage stage, const char *source)
    return buffer;
 }
 
-#endif /* ENABLE_SHADER_CACHE */
-
-
 
 /**
  * Called via glShaderSource() and glShaderSourceARB() API functions.
@@ -2021,7 +2017,6 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
    source[totalLength - 1] = '\0';
    source[totalLength - 2] = '\0';
 
-#ifdef ENABLE_SHADER_CACHE
    GLcharARB *replacement;
 
    /* Dump original shader source to MESA_SHADER_DUMP_PATH and replace
@@ -2034,7 +2029,6 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
       free(source);
       source = replacement;
    }
-#endif /* ENABLE_SHADER_CACHE */
 
    set_shader_source(sh, source);
 

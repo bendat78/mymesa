@@ -421,7 +421,6 @@ brw_disk_cache_write_compute_program(struct brw_context *brw)
 void
 brw_disk_cache_init(struct intel_screen *screen)
 {
-#ifdef ENABLE_SHADER_CACHE
    char renderer[10];
    MAYBE_UNUSED int len = snprintf(renderer, sizeof(renderer), "i965_%04x",
                                    screen->deviceID);
@@ -438,5 +437,4 @@ brw_disk_cache_init(struct intel_screen *screen)
    _mesa_sha1_format(timestamp, id_sha1);
 
    screen->disk_cache = disk_cache_create(renderer, timestamp, 0);
-#endif
 }
