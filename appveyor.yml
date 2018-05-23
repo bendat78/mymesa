@@ -33,22 +33,81 @@ branches:
 # - https://www.appveyor.com/blog/2014/06/04/shallow-clone-for-git-repositories
 clone_depth: 100
 
-image: ubuntu
-platform: Any CPU
-configuration: Release
+image:
+  - ubuntu
+  - Visual Studio 2015
+platform:
+  - x86
+  - x64
+configuration:
+  - Release
+  - Debug
+
+matrix:
+  allow_failures:
+    - image: ubuntu
 
 
-install:
-- ls -al
-# deb-src http://us
-- sh: sudo sed -i~orig -e 's$# deb-src http://us$deb-src http://us$' /etc/apt/sources.list
-- sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
-- sh: sudo apt-get update
-- sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
-- sh: sudo apt-get build-dep mesa -y
-- sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
+for:
+-
+  matrix:
+    only:
+      - image: Ubuntu
 
-build_script:
-- sh: ./autogen.sh --enable-dri --with-dri-drivers="nouveau i915 i965 r200 radeon swrast" --enable-osmesa --enable-glx-tls --enable-shared-glapi --enable-texture-float --enable-driglx-direct --enable-dri3 --with-platforms="x11 wayland drm" --enable-xa --enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-5.0 --enable-vdpau --enable-omx-bellagio --enable-va --enable-xvmc --enable-opencl --enable-opencl-icd --enable-nine --enable-gallium-extra-hud --enable-lmsensors --with-gallium-drivers=" nouveau svga r600 r300 i915 virgl radeonsi swrast" --enable-gles1 --enable-gles2 --enable-gle --with-vulkan-drivers=intel,radeon
-- sh: make
-- sh: sudo make install
+  install:
+  - ls -al
+  - sh: sudo sed -i~orig -e 's$# deb-src http://us$deb-src http://us$' /etc/apt/sources.list
+  - sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
+  - sh: sudo apt-get update
+  - sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
+  - sh: sudo apt-get build-dep mesa -y
+  - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
+
+  build_script:
+  - sh: ./autogen.sh --enable-dri --with-dri-drivers="nouveau i915 i965 r200 radeon swrast" --enable-osmesa --enable-glx-tls --enable-shared-glapi --enable-texture-float --enable-driglx-direct --enable-dri3 --with-platforms="x11 wayland drm" --enable-xa --enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-5.0 --enable-vdpau --enable-omx-bellagio --enable-va --enable-xvmc --enable-opencl --enable-opencl-icd --enable-nine --enable-gallium-extra-hud --enable-lmsensors --with-gallium-drivers=" nouveau svga r600 r300 i915 virgl radeonsi swrast" --enable-gles1 --enable-gles2 --enable-gle --with-vulkan-drivers=intel,radeon
+  - sh: make
+  - sh: sudo make install
+
+-
+  matrix:
+    only:
+      - image: Visual Studio 2015
+
+  cache:
+  - win_flex_bison-2.5.9.zip
+  - llvm-3.3.1-msvc2015-mtd.7z
+
+  environment:
+    WINFLEXBISON_ARCHIVE: win_flex_bison-2.5.9.zip
+    LLVM_ARCHIVE: llvm-3.3.1-msvc2015-mtd.7z
+
+  install:
+  # Check pip
+  - python --version
+  - python -m pip --version
+  # Install Mako
+  - python -m pip install Mako==1.0.6
+  # Install pywin32 extensions, needed by SCons
+  - python -m pip install pypiwin32
+  # Install python wheels, necessary to install SCons via pip
+  - python -m pip install wheel
+  # Install SCons
+  - python -m pip install scons==2.5.1
+  - scons --version
+  # Install flex/bison
+  - if not exist "%WINFLEXBISON_ARCHIVE%" appveyor DownloadFile "https://downloads.sourceforge.net/project/winflexbison/old_versions/%WINFLEXBISON_ARCHIVE%"
+  - 7z x -y -owinflexbison\ "%WINFLEXBISON_ARCHIVE%" > nul
+  - set Path=%CD%\winflexbison;%Path%
+  - win_flex --version
+  - win_bison --version
+  # Download and extract LLVM
+  - if not exist "%LLVM_ARCHIVE%" appveyor DownloadFile "https://people.freedesktop.org/~jrfonseca/llvm/%LLVM_ARCHIVE%"
+  - 7z x -y "%LLVM_ARCHIVE%" > nul
+  - mkdir llvm\bin
+  - set LLVM=%CD%\llvm
+
+  build_script:
+  - scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1
+
+  after_build:
+  - scons -j%NUMBER_OF_PROCESSORS% MSVC_VERSION=14.0 llvm=1 check
