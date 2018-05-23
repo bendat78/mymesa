@@ -627,6 +627,7 @@ make_surface(struct brw_context *brw, GLenum target, mesa_format format,
    if (!bo) {
       mt->bo = brw_bo_alloc_tiled(brw->bufmgr, "isl-miptree",
                                   mt->surf.size,
+                                  BRW_MEMZONE_OTHER,
                                   isl_tiling_to_i915_tiling(
                                      mt->surf.tiling),
                                   mt->surf.row_pitch, alloc_flags);
@@ -990,7 +991,8 @@ create_ccs_buf_for_image(struct brw_context *brw,
       mt->aux_buf->clear_color_bo =
          brw_bo_alloc_tiled(brw->bufmgr, "clear_color_bo",
                             brw->isl_dev.ss.clear_color_state_size,
-                            I915_TILING_NONE, 0, BO_ALLOC_ZEROED);
+                            BRW_MEMZONE_OTHER, I915_TILING_NONE, 0,
+                            BO_ALLOC_ZEROED);
       if (!mt->aux_buf->clear_color_bo) {
          free(mt->aux_buf);
          mt->aux_buf = NULL;
@@ -1565,6 +1567,7 @@ intel_miptree_copy_slice(struct brw_context *brw,
                          unsigned dst_level, unsigned dst_layer)
 
 {
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
    mesa_format format = src_mt->format;
    unsigned width = minify(src_mt->surf.phys_level0_sa.width,
                            src_level - src_mt->first_level);
@@ -1577,6 +1580,32 @@ intel_miptree_copy_slice(struct brw_context *brw,
    assert(_mesa_get_srgb_format_linear(src_mt->format) ==
           _mesa_get_srgb_format_linear(dst_mt->format));
 
+   DBG("validate blit mt %s %p %d,%d -> mt %s %p %d,%d (%dx%d)\n",
+       _mesa_get_format_name(src_mt->format),
+       src_mt, src_level, src_layer,
+       _mesa_get_format_name(dst_mt->format),
+       dst_mt, dst_level, dst_layer,
+       width, height);
+
+   if (devinfo->gen >= 6) {
+      /* On gen6 and above, we just use blorp.  It's faster than the blitter
+       * and can handle everything without software fallbacks.
+       */
+      brw_blorp_copy_miptrees(brw,
+                              src_mt, src_level, src_layer,
+                              dst_mt, dst_level, dst_layer,
+                              0, 0, 0, 0, width, height);
+
+      if (src_mt->stencil_mt) {
+         assert(dst_mt->stencil_mt);
+         brw_blorp_copy_miptrees(brw,
+                                 src_mt->stencil_mt, src_level, src_layer,
+                                 dst_mt->stencil_mt, dst_level, dst_layer,
+                                 0, 0, 0, 0, width, height);
+      }
+      return;
+   }
+
    if (dst_mt->compressed) {
       unsigned int i, j;
       _mesa_get_format_block_size(dst_mt->format, &i, &j);
@@ -1584,17 +1613,8 @@ intel_miptree_copy_slice(struct brw_context *brw,
       width = ALIGN_NPOT(width, i) / i;
    }
 
-   /* If it's a packed depth/stencil buffer with separate stencil, the blit
-    * below won't apply since we can't do the depth's Y tiling or the
-    * stencil's W tiling in the blitter.
-    */
-   if (src_mt->stencil_mt) {
-      intel_miptree_copy_slice_sw(brw,
-                                  src_mt, src_level, src_layer,
-                                  dst_mt, dst_level, dst_layer,
-                                  width, height);
-      return;
-   }
+   /* Gen4-5 doesn't support separate stencil */
+   assert(!src_mt->stencil_mt);
 
    uint32_t dst_x, dst_y, src_x, src_y;
    intel_miptree_get_image_offset(dst_mt, dst_level, dst_layer,
@@ -1701,8 +1721,8 @@ intel_alloc_aux_buffer(struct brw_context *brw,
     * trying to recalculate based on different format block sizes.
     */
    buf->bo = brw_bo_alloc_tiled(brw->bufmgr, "aux-miptree", size,
-                                I915_TILING_Y, aux_surf->row_pitch,
-                                alloc_flags);
+                                BRW_MEMZONE_OTHER, I915_TILING_Y,
+                                aux_surf->row_pitch, alloc_flags);
    if (!buf->bo) {
       free(buf);
       return NULL;
@@ -3033,6 +3053,9 @@ intel_miptree_map_gtt(struct brw_context *brw,
    y /= bh;
    x /= bw;
 
+   intel_miptree_access_raw(brw, mt, level, slice,
+                            map->mode & GL_MAP_WRITE_BIT);
+
    base = intel_miptree_map_raw(brw, mt, map->mode);
 
    if (base == NULL)
@@ -3067,16 +3090,23 @@ intel_miptree_unmap_blit(struct brw_context *brw,
 			 unsigned int level,
 			 unsigned int slice)
 {
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
    struct gl_context *ctx = &brw->ctx;
 
    intel_miptree_unmap_raw(map->linear_mt);
 
    if (map->mode & GL_MAP_WRITE_BIT) {
-      bool ok = intel_miptree_copy(brw,
-                                   map->linear_mt, 0, 0, 0, 0,
-                                   mt, level, slice, map->x, map->y,
-                                   map->w, map->h);
-      WARN_ONCE(!ok, "Failed to blit from linear temporary mapping");
+      if (devinfo->gen >= 6) {
+         brw_blorp_copy_miptrees(brw, map->linear_mt, 0, 0,
+                                 mt, level, slice,
+                                 0, 0, map->x, map->y, map->w, map->h);
+      } else {
+         bool ok = intel_miptree_copy(brw,
+                                      map->linear_mt, 0, 0, 0, 0,
+                                      mt, level, slice, map->x, map->y,
+                                      map->w, map->h);
+         WARN_ONCE(!ok, "Failed to blit from linear temporary mapping");
+      }
    }
 
    intel_miptree_release(&map->linear_mt);
@@ -3088,6 +3118,7 @@ intel_miptree_map_blit(struct brw_context *brw,
 		       struct intel_miptree_map *map,
 		       unsigned int level, unsigned int slice)
 {
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
    map->linear_mt = intel_miptree_create(brw, GL_TEXTURE_2D, mt->format,
                                          /* first_level */ 0,
                                          /* last_level */ 0,
@@ -3107,12 +3138,18 @@ intel_miptree_map_blit(struct brw_context *brw,
     * temporary buffer back out.
     */
    if (!(map->mode & GL_MAP_INVALIDATE_RANGE_BIT)) {
-      if (!intel_miptree_copy(brw,
-                              mt, level, slice, map->x, map->y,
-                              map->linear_mt, 0, 0, 0, 0,
-                              map->w, map->h)) {
-         fprintf(stderr, "Failed to blit\n");
-         goto fail;
+      if (devinfo->gen >= 6) {
+         brw_blorp_copy_miptrees(brw, mt, level, slice,
+                                 map->linear_mt, 0, 0,
+                                 map->x, map->y, 0, 0, map->w, map->h);
+      } else {
+         if (!intel_miptree_copy(brw,
+                                 mt, level, slice, map->x, map->y,
+                                 map->linear_mt, 0, 0, 0, 0,
+                                 map->w, map->h)) {
+            fprintf(stderr, "Failed to blit\n");
+            goto fail;
+         }
       }
    }
 
@@ -3156,6 +3193,8 @@ intel_miptree_map_movntdqa(struct brw_context *brw,
 {
    assert(map->mode & GL_MAP_READ_BIT);
    assert(!(map->mode & GL_MAP_WRITE_BIT));
+
+   intel_miptree_access_raw(brw, mt, level, slice, false);
 
    DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __func__,
        map->x, map->y, map->w, map->h,
@@ -3251,6 +3290,9 @@ intel_miptree_map_s8(struct brw_context *brw,
    if (!map->buffer)
       return;
 
+   intel_miptree_access_raw(brw, mt, level, slice,
+                            map->mode & GL_MAP_WRITE_BIT);
+
    /* One of either READ_BIT or WRITE_BIT or both is set.  READ_BIT implies no
     * INVALIDATE_RANGE_BIT.  WRITE_BIT needs the original values read in unless
     * invalidate is set, since we'll be writing the whole rectangle from our
@@ -3332,6 +3374,8 @@ intel_miptree_map_etc(struct brw_context *brw,
 
    assert(map->mode & GL_MAP_WRITE_BIT);
    assert(map->mode & GL_MAP_INVALIDATE_RANGE_BIT);
+
+   intel_miptree_access_raw(brw, mt, level, slice, true);
 
    map->stride = _mesa_format_row_stride(mt->etc_format, map->w);
    map->buffer = malloc(_mesa_format_image_size(mt->etc_format,
@@ -3425,6 +3469,9 @@ intel_miptree_map_depthstencil(struct brw_context *brw,
    map->buffer = map->ptr = malloc(map->stride * map->h);
    if (!map->buffer)
       return;
+
+   intel_miptree_access_raw(brw, mt, level, slice,
+                            map->mode & GL_MAP_WRITE_BIT);
 
    /* One of either READ_BIT or WRITE_BIT or both is set.  READ_BIT implies no
     * INVALIDATE_RANGE_BIT.  WRITE_BIT needs the original values read in unless
@@ -3606,9 +3653,6 @@ intel_miptree_map(struct brw_context *brw,
       *out_stride = 0;
       return;
    }
-
-   intel_miptree_access_raw(brw, mt, level, slice,
-                            map->mode & GL_MAP_WRITE_BIT);
 
    if (mt->format == MESA_FORMAT_S_UINT8) {
       intel_miptree_map_s8(brw, mt, map, level, slice);

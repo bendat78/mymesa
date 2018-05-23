@@ -461,12 +461,6 @@ struct brw_query_object {
    bool flushed;
 };
 
-enum brw_gpu_ring {
-   UNKNOWN_RING,
-   RENDER_RING,
-   BLT_RING,
-};
-
 struct brw_reloc_list {
    struct drm_i915_gem_relocation_entry *relocs;
    int reloc_count;
@@ -479,6 +473,7 @@ struct brw_growing_bo {
    struct brw_bo *partial_bo;
    uint32_t *partial_bo_map;
    unsigned partial_bytes;
+   enum brw_memory_zone memzone;
 };
 
 struct intel_batchbuffer {
@@ -496,7 +491,6 @@ struct intel_batchbuffer {
    uint32_t *map_next;
    uint32_t state_used;
 
-   enum brw_gpu_ring ring;
    bool use_shadow_copy;
    bool use_batch_first;
    bool needs_sol_reset;
@@ -965,6 +959,9 @@ struct brw_context
        * These bitfields indicate which workarounds are needed.
        */
       uint8_t attrib_wa_flags[VERT_ATTRIB_MAX];
+
+      /* High bits of the last seen vertex buffer address (for workarounds). */
+      uint16_t last_bo_high_bits[33];
    } vb;
 
    struct {
@@ -985,6 +982,9 @@ struct brw_context
        * referencing the same index buffer.
        */
       unsigned int start_vertex_offset;
+
+      /* High bits of the last seen index buffer address (for workarounds). */
+      uint16_t last_bo_high_bits;
    } ib;
 
    /* Active vertex program:
