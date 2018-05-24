@@ -61,13 +61,13 @@ for:
   - sh: sudo sed -i~orig -e 's$# deb-src http://us$deb-src http://us$' /etc/apt/sources.list
   - sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
   - sh: sudo apt-get update
-  - sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
+  - sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade -y
   - sh: sudo apt-get build-dep mesa -y
   - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
   - sh: export LC_ALL=C
   - sh: export LIBDRM_CFLAGS="-I/usr/include/libdrm -I/usr/include"
   - sh: export LIBDRM_LIBS="-L/usr/lib/i386-linux-gnu -ldrm"
-  - sh: sudo apt-get install schroot debootstrap
+  - sh: sudo apt-get install schroot debootstrap -y
   - sh: sudo mkdir /var/chroot
   - sh: printf '%s\n' [artful]' 'description=Ubuntu Artful' 'location=/var/chroot' 'priority=3' 'users=root' 'groups=sbuild' 'root-groups=root' 'personality=linux32' 'aliases=dokochroot,default'
   - sh: sudo debootstrap --variant=buildd --arch i386 artful /var/chroot/ http://archive.ubuntu.com/ubuntu/
@@ -76,13 +76,13 @@ for:
   - sh: sudo cp /etc/apt/sources.list /var/chroot/etc/apt/
   - sh: sudo chroot /var/chroot/
   - sh: apt-get update
-  - sh: apt-get install sudo
-  - sh: apt-get build-dep mesa
-  - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev
-  - sh: sudo apt-get install software-properties-common python-software-properties
+  - sh: apt-get install sudo -y
+  - sh: apt-get build-dep mesa -y
+  - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
+  - sh: sudo apt-get install software-properties-common python-software-properties -y
   - sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
   - sh: sudo apt update
-  - sh: sudo apt dist-upgrade
+  - sh: sudo apt DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade -y
 
   build_script:
   - sh: setarch i386 ./autogen.sh --prefix=/usr/local/32 --sysconfdir=/etc --libdir=\${prefix}/lib/ --localstatedir=/var --build=i686-linux-gnu --host=i686-linux-gnu --enable-dri --with-dri-drivers=" radeon swrast" --with-dri-driverdir=\${prefix}/lib/dri --with-dri-searchpath='/usr/local/lib/dri:\$${ORIGIN}/dri:/usr/lib/dri' --enable-osmesa --enable-glx-tls --enable-shared-glapi --enable-texture-float --enable-driglx-direct --enable-dri3 --with-platforms="x11 wayland drm" --enable-xa --enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-5.0 --enable-vdpau --enable-omx-bellagio --enable-va --enable-xvmc --enable-opencl --enable-opencl-icd --enable-nine --enable-gallium-extra-hud --enable-lmsensors --with-gallium-drivers=" svga virgl radeonsi swrast" --enable-gles1 --enable-gles2 --with-vulkan-drivers=radeon
