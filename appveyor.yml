@@ -57,7 +57,9 @@ for:
         configuration: Release
 
   install:
-  - ls -al
+  - sh: ls -al
+  - sh: whoami
+  - sh: id -Gn
   - sh: sudo sed -i~orig -e 's$# deb-src http://us$deb-src http://us$' /etc/apt/sources.list
   - sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
   - sh: sudo apt-get update
