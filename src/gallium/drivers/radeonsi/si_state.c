@@ -3340,7 +3340,7 @@ static void si_emit_msaa_config(struct si_context *sctx)
 			   S_028804_INCOHERENT_EQAA_READS(1) |
 			   S_028804_INTERPOLATE_COMP_Z(1) |
 			   S_028804_STATIC_ANCHOR_ASSOCIATIONS(1);
-	unsigned coverage_samples, color_samples;
+	unsigned coverage_samples, color_samples, z_samples;
 
 	/* S: Coverage samples (up to 16x):
 	 * - Scan conversion samples (PA_SC_AA_CONFIG.MSAA_NUM_SAMPLES)
@@ -3386,10 +3386,17 @@ static void si_emit_msaa_config(struct si_context *sctx)
 	if (sctx->framebuffer.nr_samples > 1) {
 		coverage_samples = sctx->framebuffer.nr_samples;
 		color_samples = sctx->framebuffer.nr_color_samples;
+
+		if (sctx->framebuffer.state.zsbuf) {
+			z_samples = sctx->framebuffer.state.zsbuf->texture->nr_samples;
+			z_samples = MAX2(1, z_samples);
+		} else {
+			z_samples = coverage_samples;
+		}
 	} else if (sctx->smoothing_enabled) {
-		coverage_samples = color_samples = SI_NUM_SMOOTH_AA_SAMPLES;
+		coverage_samples = color_samples = z_samples = SI_NUM_SMOOTH_AA_SAMPLES;
 	} else {
-		coverage_samples = color_samples = 1;
+		coverage_samples = color_samples = z_samples = 1;
 	}
 
 	/* Required by OpenGL line rasterization.
@@ -3411,10 +3418,9 @@ static void si_emit_msaa_config(struct si_context *sctx)
 			8, /* 16x MSAA */
 		};
 		unsigned log_samples = util_logbase2(coverage_samples);
+		unsigned log_z_samples = util_logbase2(z_samples);
 		unsigned ps_iter_samples = si_get_ps_iter_samples(sctx);
-		ps_iter_samples = MIN2(ps_iter_samples, color_samples);
-		unsigned log_ps_iter_samples =
-			util_logbase2(util_next_power_of_two(ps_iter_samples));
+		unsigned log_ps_iter_samples = util_logbase2(ps_iter_samples);
 
 		radeon_set_context_reg_seq(cs, R_028BDC_PA_SC_LINE_CNTL, 2);
 		radeon_emit(cs, sc_line_cntl |
@@ -3426,7 +3432,7 @@ static void si_emit_msaa_config(struct si_context *sctx)
 		if (sctx->framebuffer.nr_samples > 1) {
 			radeon_set_context_reg(cs, R_028804_DB_EQAA,
 					       db_eqaa |
-					       S_028804_MAX_ANCHOR_SAMPLES(log_samples) |
+					       S_028804_MAX_ANCHOR_SAMPLES(log_z_samples) |
 					       S_028804_PS_ITER_SAMPLES(log_ps_iter_samples) |
 					       S_028804_MASK_EXPORT_NUM_SAMPLES(log_samples) |
 					       S_028804_ALPHA_TO_MASK_NUM_SAMPLES(log_samples));
@@ -3468,6 +3474,9 @@ void si_update_ps_iter_samples(struct si_context *sctx)
 static void si_set_min_samples(struct pipe_context *ctx, unsigned min_samples)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+
+	/* The hardware can only do sample shading with 2^n samples. */
+	min_samples = util_next_power_of_two(min_samples);
 
 	if (sctx->ps_iter_samples == min_samples)
 		return;

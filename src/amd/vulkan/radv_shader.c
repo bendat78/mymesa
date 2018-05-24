@@ -277,7 +277,20 @@ radv_shader_compile_to_nir(struct radv_device *device,
 	nir_lower_tex(nir, &tex_options);
 
 	nir_lower_vars_to_ssa(nir);
+
+	if (nir->info.stage == MESA_SHADER_VERTEX ||
+	    nir->info.stage == MESA_SHADER_GEOMETRY) {
+		NIR_PASS_V(nir, nir_lower_io_to_temporaries,
+			   nir_shader_get_entrypoint(nir), true, true);
+	} else if (nir->info.stage == MESA_SHADER_TESS_EVAL||
+		   nir->info.stage == MESA_SHADER_FRAGMENT) {
+		NIR_PASS_V(nir, nir_lower_io_to_temporaries,
+			   nir_shader_get_entrypoint(nir), true, false);
+	}
+
+	nir_split_var_copies(nir);
 	nir_lower_var_copies(nir);
+
 	nir_lower_global_vars_to_local(nir);
 	nir_remove_dead_variables(nir, nir_var_local);
 	nir_lower_subgroups(nir, &(struct nir_lower_subgroups_options) {
