@@ -69,7 +69,7 @@ for:
   - sh: export LIBDRM_LIBS="-L/usr/lib/i386-linux-gnu -ldrm"
   - sh: sudo apt-get install schroot debootstrap -y
   - sh: sudo mkdir /var/chroot
-  - sh: printf '%s\n' '[artful]' 'description=Ubuntu Artful' 'location=/var/chroot' 'priority=3' 'users=root' 'groups=sbuild' 'root-groups=root' 'personality=linux32' 'aliases=dokochroot,default' >/etc/schroot/schroot.conf
+  - sh: sudo printf '%s\n' '[artful]' 'description=Ubuntu Artful' 'location=/var/chroot' 'priority=3' 'users=root' 'groups=sbuild' 'root-groups=root' 'personality=linux32' 'aliases=dokochroot,default' >/etc/schroot/schroot.conf
   - sh: sudo debootstrap --variant=buildd --arch i386 artful /var/chroot/ http://archive.ubuntu.com/ubuntu/
   - sh: sudo mount -o bind /proc /var/chroot/proc
   - sh: sudo cp /etc/resolv.conf /var/chroot/etc/resolv.conf
