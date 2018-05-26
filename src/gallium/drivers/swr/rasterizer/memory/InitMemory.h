@@ -1,5 +1,5 @@
 /****************************************************************************
-* Copyright (C) 2014-2018 Intel Corporation.   All Rights Reserved.
+* Copyright (C) 2018 Intel Corporation.   All Rights Reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,14 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 *
-* @file passes.h
+* @file InitMemory.h
 *
-* @brief Include file for llvm passes
+* @brief Provide access to tiles table initialization functions
 *
 ******************************************************************************/
+#include "common/os.h"
 
-#include "JitManager.h"
-#include "builder.h"
-
-namespace SwrJit
+extern "C"
 {
-    using namespace llvm;
-
-    FunctionPass* createLowerX86Pass(Builder* b);
+    SWR_VISIBLE void SWR_API InitTilesTable();
 }

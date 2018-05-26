@@ -1,5 +1,5 @@
 /****************************************************************************
-* Copyright (C) 2014-2018 Intel Corporation.   All Rights Reserved.
+* Copyright (C) 2018 Intel Corporation.   All Rights Reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,20 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 *
-* @file passes.h
+* @file InitMemory.cpp
 *
-* @brief Include file for llvm passes
+* @brief Provide access to tiles table initialization functions
 *
 ******************************************************************************/
+#include "memory/InitMemory.h"
 
-#include "JitManager.h"
-#include "builder.h"
+void InitSimLoadTilesTable();
+void InitSimStoreTilesTable();
+void InitSimClearTilesTable();
 
-namespace SwrJit
+void InitTilesTable()
 {
-    using namespace llvm;
-
-    FunctionPass* createLowerX86Pass(Builder* b);
+    InitSimLoadTilesTable();
+    InitSimStoreTilesTable();
+    InitSimClearTilesTable();
 }
