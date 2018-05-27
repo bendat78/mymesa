@@ -62,6 +62,7 @@ for:
   - sh: sudo apt install sbuild debhelper ubuntu-dev-tools piuparts -y
   - sh: sudo adduser $USER sbuild
   - sh: sudo mkdir -p $HOME/ubuntu/scratch
+  - sh: sudo chmod ugo+w /etc/schroot/sbuild/fstab
   - sh: sudo echo "/home/$USER/ubuntu/scratch /scratch none rw,bind 0 0" >> /etc/schroot/sbuild/fstab
   - sh: sudo echo "$maintainer_name='me';\n$distribution = 'bionic';\n$build_arch_all = 1;\n$purge_build_directory = 'successful';\n$purge_session = 'successful';\n$purge_build_deps = 'successful';\n$log_dir=$ENV{HOME}.'/ubuntu/logs';\n1;"
   - sh: sudo mkdir -p $HOME/ubuntu/{build,logs}
