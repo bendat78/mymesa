@@ -58,7 +58,6 @@ for:
 
   install:
   - sudo apt install fakeroot fakechroot debootstrap -y
-  - sudo export PATH=/usr/sbin:/sbin:$PATH
   - sudo fakechroot fakeroot debootstrap sid /tmp/sid
   - sudo fakechroot fakeroot chroot /tmp/sid
   - sudo cd /
