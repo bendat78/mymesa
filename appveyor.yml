@@ -57,6 +57,8 @@ for:
         configuration: Release
 
   install:
+  - sudo apt update
+  - sudo apt upgrade -y
   - sudo apt install fakeroot fakechroot debootstrap -y
   - sudo mkdir /var/chroot
   - sudo fakechroot fakeroot debootstrap --variant=buildd --arch i386 xenial /var/chroot/ http://archive.ubuntu.com/ubuntu/
