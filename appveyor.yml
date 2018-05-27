@@ -72,7 +72,7 @@ for:
   - sh: sudo apt-get install schroot debootstrap -y
   - sh: sudo mkdir /var/chroot
   - sh: sudo chmod ugo+w /etc/schroot/schroot.conf
-  - sh: sudo printf '%s\n' '[xenial]' 'description=Ubuntu Xenial' 'location=/var/chroot' 'priority=3' 'users=appveyor' 'groups=sbuild' 'root-groups=root' 'personality=linux32' 'aliases=dokochroot,default' >>/etc/schroot/schroot.conf
+  - sh: sudo printf '%s\n' '[xenial]' 'description=Ubuntu Xenial' 'location=/var/chroot' 'priority=3' 'users=appveyor' 'groups=sbuild appveyor adm cdrom sudo dip plugdev lxd lpadmin sambashare docker' 'root-groups=root appveyor adm cdrom sudo dip plugdev lxd lpadmin sambashare docker' 'personality=linux32' 'aliases=dokochroot,default' >>/etc/schroot/schroot.conf
   - sh: sudo debootstrap --variant=buildd --arch i386 xenial /var/chroot/ http://archive.ubuntu.com/ubuntu/
   - sh: sudo mount -o bind /proc /var/chroot/proc
   - sh: sudo mount -o bind /dev /var/chroot/dev
@@ -82,6 +82,9 @@ for:
   - sh: sudo cp /etc/apt/sources.list /var/chroot/etc/apt/
   - sh: set +m
   - sh: sudo chroot /var/chroot/
+  - whoami
+  - id -Gn
+  - ls -al
   - sudo apt-get update
   - sudo apt-get install sudo -y
   - sudo apt-get build-dep mesa -y
