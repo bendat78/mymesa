@@ -95,7 +95,7 @@ for:
   - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial-updates multiverse" >> /etc/apt/sources.list
   - sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
   - sh: sudo apt-get update
-  - sh: sudo apt-get upgrade -y
+  - sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
   - sh: sudo apt-get build-dep mesa -y
   - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
   - git clone git://anongit.freedesktop.org/git/mesa/mesa
