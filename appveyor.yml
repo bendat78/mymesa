@@ -100,7 +100,7 @@ for:
   - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
   - git clone git://anongit.freedesktop.org/git/mesa/mesa
   - cd mesa
-  - setarch i386 ./autogen.sh
+  - setarch i386 ./autogen.sh --enable-llvm
   - make -j$(grep -c ^processor /proc/cpuinfo)
   - sudo make install
 
