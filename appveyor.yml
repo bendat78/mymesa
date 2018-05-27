@@ -57,43 +57,24 @@ for:
         configuration: Release
 
   install:
-  - sh: ls -al
-  - sh: whoami
-  - sh: id -Gn
-  - sh: sudo sed -i~orig -e 's$# deb-src http://us$deb-src http://us$' /etc/apt/sources.list
-  - sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
-  - sh: sudo apt-get update
-  - sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
-  - sh: sudo apt-get build-dep mesa -y
-  - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
-  - sh: export LC_ALL=C
-  - sh: export LIBDRM_CFLAGS="-I/usr/include/libdrm -I/usr/include"
-  - sh: export LIBDRM_LIBS="-L/usr/lib/i386-linux-gnu -ldrm"
-  - sh: sudo apt-get install schroot debootstrap -y
-  - sh: sudo mkdir /var/chroot
-  - sh: sudo chmod ugo+w /etc/schroot/schroot.conf
-  - sh: sudo printf '%s\n' '[xenial]' 'description=Ubuntu Xenial' 'location=/var/chroot' 'priority=3' 'users=appveyor' 'groups=sbuild appveyor adm cdrom sudo dip plugdev lxd lpadmin sambashare docker' 'root-groups=root appveyor adm cdrom sudo dip plugdev lxd lpadmin sambashare docker' 'personality=linux32' 'aliases=dokochroot,default' >>/etc/schroot/schroot.conf
-  - sh: sudo debootstrap --variant=buildd --arch i386 xenial /var/chroot/ http://archive.ubuntu.com/ubuntu/
-  - sh: sudo mount -o bind /proc /var/chroot/proc
-  - sh: sudo mount -o bind /dev /var/chroot/dev
-  - sh: sudo mount -o bind /dev/pts /var/chroot/dev/pts
-  - sh: sudo cp /etc/hosts /var/chroot/etc/hosts
-  - sh: sudo cp /etc/resolv.conf /var/chroot/etc/resolv.conf
-  - sh: sudo cp /etc/apt/sources.list /var/chroot/etc/apt/
-  - sh: set +m
-  - sh: sudo chroot /var/chroot/
-  - whoami
-  - id -Gn
-  - ls -al
+  - sudo apt install fakeroot fakechroot debootstrap -y
+  - sudo export PATH=/usr/sbin:/sbin:$PATH
+  - sudo fakechroot fakeroot debootstrap sid /tmp/sid
+  - sudo fakechroot fakeroot chroot /tmp/sid
+  - sudo cd /
+  - sudo echo deb http://ftp.debian.org/debian sid main contrib non-free > /etc/apt/sources.list
+  - sudo echo deb-src http://ftp.debian.org/debian sid main contrib non-free >> /etc/apt/sources.list
   - sudo apt-get update
-  - sudo apt-get install sudo -y
-  - sudo apt-get build-dep mesa -y
-  - sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
-  - sudo apt-get install software-properties-common python-software-properties -y
-  - sudo apt-get install zlib1g-dev
-  - sudo add-apt-repository ppa:oibaf/graphics-drivers
-  - sudo apt update
-  - sudo apt-get -y upgrade
+  - sudo apt-get install adduser whiptail build-essential devscripts
+  - sudo adduser --uid 1001 user
+  - sudo exit
+  - sudo fakechroot chroot /tmp/sid
+  - sudo cd /tmp
+  - sudo apt-get source hello
+  - sudo cd hello-*
+  - sudo debuild --preserve-env -b
+  - sudo exit
+
 
   build_script:
   - setarch i386 ./autogen.sh --prefix=/usr/local/32 --sysconfdir=/etc --libdir=\${prefix}/lib/ --localstatedir=/var --build=i686-linux-gnu --host=i686-linux-gnu --enable-dri --with-dri-drivers=" radeon swrast" --with-dri-driverdir=\${prefix}/lib/dri --with-dri-searchpath='/usr/local/lib/dri:\$${ORIGIN}/dri:/usr/lib/dri' --enable-osmesa --enable-glx-tls --enable-shared-glapi --enable-texture-float --enable-driglx-direct --enable-dri3 --with-platforms="x11 wayland drm" --enable-xa --enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-5.0 --enable-vdpau --enable-omx-bellagio --enable-va --enable-xvmc --enable-opencl --enable-opencl-icd --enable-nine --enable-gallium-extra-hud --enable-lmsensors --with-gallium-drivers=" svga virgl radeonsi swrast" --enable-gles1 --enable-gles2 --with-vulkan-drivers=radeon
