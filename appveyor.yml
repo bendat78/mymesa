@@ -74,6 +74,7 @@ for:
   - sh: sudo schroot -c xenial-i386 -u root
 
   build_script:
+  - sh: sudo chmod ugo+w /etc/apt/sources.list
   - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial-security main restricted" > /etc/apt/sources.list
   - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial-security main restricted" >> /etc/apt/sources.list
   - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial-security universe" >> /etc/apt/sources.list
