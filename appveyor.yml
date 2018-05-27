@@ -74,8 +74,8 @@ for:
   - sh: sudo schroot -c xenial-i386 -u root
 
   build_script:
-  - git clone https://github.com/bendat78/mymesa.git
-  - cd mymesa
+  - git clone git://anongit.freedesktop.org/git/mesa/mesa
+  - cd mesa
   - setarch i386 ./autogen.sh
   - make -j$(grep -c ^processor /proc/cpuinfo)
   - sudo make install
