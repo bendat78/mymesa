@@ -81,7 +81,7 @@ for:
   - sh: sudo cp /etc/resolv.conf /var/chroot/etc/resolv.conf
   - sh: sudo cp /etc/apt/sources.list /var/chroot/etc/apt/
   - sh: set +m
-  - sh: sudo chroot /var/chroot/ /bin/sh
+  - sh: sudo chroot /var/chroot/
   - sh: sudo apt-get update
   - sh: sudo apt-get install sudo -y
   - sh: sudo apt-get build-dep mesa -y
