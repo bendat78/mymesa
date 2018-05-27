@@ -74,6 +74,27 @@ for:
   - sh: sudo schroot -c xenial-i386 -u root
 
   build_script:
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial-security main restricted" > /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial-security main restricted" >> /etc/apt/sources.list
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial-security universe" >> /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial-security universe" >> /etc/apt/sources.list
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial-security multiverse" >> /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial-security multiverse" >> /etc/apt/sources.list
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial main restricted" >> /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial main restricted" >> /etc/apt/sources.list
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial-updates main restricted" >> /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial-updates main restricted" >> /etc/apt/sources.list
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial universe" >> /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial universe" >> /etc/apt/sources.list
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial-updates universe" >> /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial-updates universe" >> /etc/apt/sources.list
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial multiverse" >> /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial multiverse" >> /etc/apt/sources.list
+  - sh: sudo echo "deb http://archive.ubuntu.com/ubuntu xenial-updates multiverse" >> /etc/apt/sources.list
+  - sh: sudo echo "deb-src http://archive.ubuntu.com/ubuntu xenial-updates multiverse" >> /etc/apt/sources.list
+  - sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
+  - sh: sudo apt-get update
+  - sh: sudo apt-get upgrade -y
   - sh: sudo apt-get build-dep mesa -y
   - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
   - git clone git://anongit.freedesktop.org/git/mesa/mesa
