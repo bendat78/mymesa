@@ -71,8 +71,6 @@ for:
   - sh: sudo sg sbuild
   - sh: sudo mk-sbuild xenial
   - sh: sudo mk-sbuild xenial --arch=i386
-  - sh: sudo sbuild-update -udcar xenial-amd64
-  - sh: sudo sbuild-update -udcar xenial-i386
   - sh: sudo schroot -c xenial-i386 -u root
 
   build_script:
