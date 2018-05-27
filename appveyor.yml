@@ -58,17 +58,15 @@ for:
 
   install:
   - sudo apt install fakeroot fakechroot debootstrap -y
-  - sudo fakechroot fakeroot debootstrap sid /tmp/sid
-  - sudo fakechroot fakeroot chroot /tmp/sid
+  - sudo fakechroot fakeroot debootstrap --variant=buildd --arch i386 xenial /var/chroot/ http://archive.ubuntu.com/ubuntu/
+  - sudo fakechroot fakeroot chroot /var/chroot
   - sudo cd /
-  - sudo echo deb http://ftp.debian.org/debian sid main contrib non-free > /etc/apt/sources.list
-  - sudo echo deb-src http://ftp.debian.org/debian sid main contrib non-free >> /etc/apt/sources.list
   - sudo apt-get update
   - sudo apt-get install adduser whiptail build-essential devscripts
   - sudo adduser --uid 1001 user
   - sudo exit
-  - sudo fakechroot chroot /tmp/sid
-  - sudo cd /tmp
+  - sudo fakechroot chroot /var/chroot
+  - sudo cd /var/chroot
   - sudo apt-get source hello
   - sudo cd hello-*
   - sudo debuild --preserve-env -b
