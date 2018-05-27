@@ -74,6 +74,8 @@ for:
   - sh: sudo schroot -c xenial-i386 -u root
 
   build_script:
+  - sh: sudo apt-get build-dep mesa -y
+  - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
   - git clone git://anongit.freedesktop.org/git/mesa/mesa
   - cd mesa
   - setarch i386 ./autogen.sh
