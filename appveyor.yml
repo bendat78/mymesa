@@ -57,23 +57,15 @@ for:
         configuration: Release
 
   install:
-  - sudo apt update
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
-  - sudo apt install fakeroot fakechroot debootstrap -y
-  - sudo mkdir /var/chroot
-  - sudo fakechroot fakeroot debootstrap --variant=buildd --arch i386 xenial /var/chroot/ http://archive.ubuntu.com/ubuntu/
-  - sudo fakechroot fakeroot chroot /var/chroot
-  - sudo cd /
-  - sudo apt-get update
-  - sudo apt-get install adduser whiptail build-essential devscripts
-  - sudo adduser --uid 1001 user
-  - sudo exit
-  - sudo fakechroot chroot /var/chroot
-  - sudo cd /var/chroot
-  - sudo apt-get source hello
-  - sudo cd hello-*
-  - sudo debuild --preserve-env -b
-  - sudo exit
+  - sudo apt-get install sbuild
+  - # sudo mkdir /root/.gnupg # To work around #792100
+  - # sudo sbuild-update --keygen # see #801798
+  - sudo sbuild-adduser $LOGNAME
+  - sudo newgrp sbuild #... *logout* and *re-login* or use `newgrp sbuild` in your current shell
+  - sudo sbuild-createchroot --include=eatmydata,ccache,gnupg unstable /var/chroot/unstable-amd64-sbuild http://deb.debian.org/debian
+  - # echo "union-type=aufs" | sudo tee -a /etc/schroot/chroot.d/unstable-amd64-sbuild-* # older kernels don't support the default "overlay" union-type
+  - sudo sbuild-update -udcar unstable-$arch-sbuild
+  - sudo sbuild
 
 
   build_script:
