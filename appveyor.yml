@@ -68,7 +68,6 @@ for:
   - sh: sudo mkdir -p $HOME/ubuntu/{build,logs}
   - sh: sudo echo 'SCHROOT_CONF_SUFFIX="source-root-users=root,sbuild,admin\nsource-root-groups=root,sbuild,admin\npreserve-environment=true"'  > ~/.mk-sbuild.rc
   - sh: sudo sg sbuild
-  - sh: sudo sbuild-update
   - sh: sudo mk-sbuild bionic
   - sh: sudo mk-sbuild bionic --arch=i386
   - sh: sudo schroot -c bionic-amd64 -u root
