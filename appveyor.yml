@@ -57,15 +57,20 @@ for:
         configuration: Release
 
   install:
-  - sudo apt-get install sbuild -y
-  - # sudo mkdir /root/.gnupg # To work around #792100
-  - # sudo sbuild-update --keygen # see #801798
-  - sudo sbuild-adduser $LOGNAME
-  - sudo newgrp sbuild #... *logout* and *re-login* or use `newgrp sbuild` in your current shell
-  - sudo sbuild-createchroot --include=eatmydata,ccache,gnupg xenial --arch=i386 /var/chroot/xenial_i386 http://archive.ubuntu.com/ubuntu/
-  - # echo "union-type=aufs" | sudo tee -a /etc/schroot/chroot.d/unstable-amd64-sbuild-* # older kernels don't support the default "overlay" union-type
-  - sudo setarch i386 sbuild-update -udcar xenial_i386
-  - sudo sbuild
+  - sh: sudo apt-get update
+  - sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
+  - sh: sudo apt install sbuild debhelper ubuntu-dev-tools piuparts
+  - sh: sudo adduser $USER sbuild
+  - sh: sudo mkdir -p $HOME/ubuntu/scratch
+  - sh: sudo echo "/home/$USER/ubuntu/scratch /scratch none rw,bind 0 0" >> /etc/schroot/sbuild/fstab
+  - sh: sudo echo "$maintainer_name='me';\n$distribution = 'bionic';\n$build_arch_all = 1;\n$purge_build_directory = 'successful';\n$purge_session = 'successful';\n$purge_build_deps = 'successful';\n$log_dir=$ENV{HOME}.'/ubuntu/logs';\n1;"
+  - sh: sudo mkdir -p $HOME/ubuntu/{build,logs}
+  - sh: sudo echo 'SCHROOT_CONF_SUFFIX="source-root-users=root,sbuild,admin\nsource-root-groups=root,sbuild,admin\npreserve-environment=true"'  > ~/.mk-sbuild.rc
+  - sh: sudo sg sbuild
+  - sh: sudo sbuild-update --keygen
+  - sh: sudo mk-sbuild bionic
+  - sh: sudo mk-sbuild bionic --arch=i386
+  - sh: sudo schroot -c bionic-amd64 -u root
 
   build_script:
   - setarch i386 ./autogen.sh --prefix=/usr/local/32 --sysconfdir=/etc --libdir=\${prefix}/lib/ --localstatedir=/var --build=i686-linux-gnu --host=i686-linux-gnu --enable-dri --with-dri-drivers=" radeon swrast" --with-dri-driverdir=\${prefix}/lib/dri --with-dri-searchpath='/usr/local/lib/dri:\$${ORIGIN}/dri:/usr/lib/dri' --enable-osmesa --enable-glx-tls --enable-shared-glapi --enable-texture-float --enable-driglx-direct --enable-dri3 --with-platforms="x11 wayland drm" --enable-xa --enable-llvm ac_cv_path_LLVM_CONFIG=llvm-config-5.0 --enable-vdpau --enable-omx-bellagio --enable-va --enable-xvmc --enable-opencl --enable-opencl-icd --enable-nine --enable-gallium-extra-hud --enable-lmsensors --with-gallium-drivers=" svga virgl radeonsi swrast" --enable-gles1 --enable-gles2 --with-vulkan-drivers=radeon
