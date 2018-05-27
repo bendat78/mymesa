@@ -58,7 +58,7 @@ for:
 
   install:
   - sudo apt update
-  - sudo apt upgrade -y
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
   - sudo apt install fakeroot fakechroot debootstrap -y
   - sudo mkdir /var/chroot
   - sudo fakechroot fakeroot debootstrap --variant=buildd --arch i386 xenial /var/chroot/ http://archive.ubuntu.com/ubuntu/
