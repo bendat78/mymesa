@@ -87,6 +87,7 @@ for:
   - sh: sudo apt-get build-dep mesa -y
   - sh: sudo apt-get install libxvmc-dev libxcb-xvmc0-dev libomxil-bellagio-dev -y
   - sh: sudo apt-get install software-properties-common python-software-properties -y
+  - sh: sudo apt-get install zlib1g-dev
   - sh: sudo add-apt-repository ppa:oibaf/graphics-drivers
   - sh: sudo apt update
   - sh: sudo apt-get -y upgrade
