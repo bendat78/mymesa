@@ -75,9 +75,6 @@ for:
   - sh: sudo printf '%s\n' '[artful]' 'description=Ubuntu Artful' 'location=/var/chroot' 'priority=3' 'users=appveyor' 'groups=sbuild' 'root-groups=root' 'personality=linux32' 'aliases=dokochroot,default' >>/etc/schroot/schroot.conf
   - sh: sudo debootstrap --variant=buildd --arch i386 artful /var/chroot/ http://archive.ubuntu.com/ubuntu/
   - sh: sudo mount -o bind /proc /var/chroot/proc
-  - sh: sudo mount -o bind /dev /var/chroot/dev
-  - sh: sudo mount -o bind /sys /var/chroot/sys
-  - sh: sudo mount -o bind /dev/pts /var/chroot/dev/pts
   - sh: sudo cp /etc/resolv.conf /var/chroot/etc/resolv.conf
   - sh: sudo cp /etc/apt/sources.list /var/chroot/etc/apt/
   - sh: set +m
