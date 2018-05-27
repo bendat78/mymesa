@@ -62,11 +62,11 @@ for:
   - # sudo sbuild-update --keygen # see #801798
   - sudo sbuild-adduser $LOGNAME
   - sudo newgrp sbuild #... *logout* and *re-login* or use `newgrp sbuild` in your current shell
-  - sudo sbuild-createchroot --include=eatmydata,ccache,gnupg unstable /var/chroot/unstable-amd64-sbuild http://deb.debian.org/debian
+  - sudo sbuild-createchroot --include=eatmydata,ccache,gnupg xenial --arch=i386 /var/chroot/xenial_i386 http://archive.ubuntu.com/ubuntu/
   - # echo "union-type=aufs" | sudo tee -a /etc/schroot/chroot.d/unstable-amd64-sbuild-* # older kernels don't support the default "overlay" union-type
-  - sudo sbuild-update -udcar unstable-$arch-sbuild
+  - sudo sbuild-update -udcar xenial_i386
   - sudo sbuild
-  - sudo sbuild-shell source:unstable-$arch-sbuild
+  - sudo sbuild-shell source:xenial_i386
 
 
   build_script:
