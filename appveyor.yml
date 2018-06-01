@@ -59,7 +59,7 @@ for:
   install:
 #  - sh: sudo apt-get update
 #  - sh: sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
-  - sh: sudo apt install sbuild debhelper ubuntu-dev-tools piuparts aufs-tools linux-image-extra-virtual -y
+  - sh: sudo apt install sbuild debhelper ubuntu-dev-tools piuparts aufs-tools -y
   - sh: sudo adduser $USER sbuild
   - sh: sudo adduser root sbuild
   - sh: sudo mkdir -p $HOME/ubuntu/scratch
