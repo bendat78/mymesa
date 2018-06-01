@@ -1,4 +1,4 @@
-# http://www.appveyor.com/doc{0}
+# http://www.appveyor.com/doc
 #
 # To setup AppVeyor for your own personal repositories do the following:
 # - Sign up
@@ -65,9 +65,9 @@ for:
   - sh: sudo mkdir -p $HOME/ubuntu/scratch
   - sh: sudo chmod ugo+w /etc/schroot/sbuild/fstab
   - sh: sudo echo "/home/$USER/ubuntu/scratch /scratch none rw,bind 0 0" >> /etc/schroot/sbuild/fstab
-  - sh: sudo echo "\$maintainer_name='me';\n\$distribution = 'xenial';\n\$build_arch_all = 1;\n\$purge_build_directory = 'successful';\n\$purge_session = 'successful';\n\$purge_build_deps = 'successful';\n\$log_dir=\$ENV{HOME}.'/ubuntu/logs';\n1;" > ~/.sbuildrc
+  - sh: sudo echo -e "\$maintainer_name='me';\n\$distribution = 'xenial';\n\$build_arch_all = 1;\n\$purge_build_directory = 'successful';\n\$purge_session = 'successful';\n\$purge_build_deps = 'successful';\n\$log_dir=\$ENV{HOME}.'/ubuntu/logs';\n1;" > ~/.sbuildrc
   - sh: sudo mkdir -p $HOME/ubuntu/{build,logs}
-  - sh: sudo echo 'SCHROOT_CONF_SUFFIX="source-root-users=root,sbuild,admin\nsource-root-groups=root,sbuild,admin\npreserve-environment=true"'  > ~/.mk-sbuild.rc
+  - sh: sudo echo -e 'SCHROOT_CONF_SUFFIX="source-root-users=root,sbuild,admin\nsource-root-groups=root,sbuild,admin\npreserve-environment=true"' > ~/.mk-sbuild.rc
   - sh: sudo sg sbuild
 #  - sh: sudo mk-sbuild xenial
   - sh: sudo mk-sbuild xenial --arch=i386
