@@ -3126,6 +3126,7 @@ AC_CONFIG_FILES([Makefile
                  src/util/Makefile
                  src/util/tests/hash_table/Makefile
                  src/util/tests/string_buffer/Makefile
+                 src/util/tests/vma/Makefile
                  src/util/xmlpool/Makefile
                  src/vulkan/Makefile])
 
