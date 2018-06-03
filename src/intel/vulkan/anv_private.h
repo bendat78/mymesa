@@ -47,7 +47,9 @@
 #include "blorp/blorp.h"
 #include "compiler/brw_compiler.h"
 #include "util/macros.h"
+#include "util/hash_table.h"
 #include "util/list.h"
+#include "util/set.h"
 #include "util/u_atomic.h"
 #include "util/u_vector.h"
 #include "util/vma.h"
@@ -617,6 +619,12 @@ struct anv_block_pool {
 
    struct anv_bo bo;
 
+   /* The address where the start of the pool is pinned. The various bos that
+    * are created as the pool grows will have addresses in the range
+    * [start_address, start_address + BLOCK_POOL_MEMFD_SIZE).
+    */
+   uint64_t start_address;
+
    /* The offset from the start of the bo to the "center" of the block
     * pool.  Pointers to allocated blocks are given by
     * bo.map + center_bo_offset + offsets.
@@ -713,6 +721,7 @@ struct anv_state_stream {
  */
 VkResult anv_block_pool_init(struct anv_block_pool *pool,
                              struct anv_device *device,
+                             uint64_t start_address,
                              uint32_t initial_size,
                              uint64_t bo_flags);
 void anv_block_pool_finish(struct anv_block_pool *pool);
@@ -723,6 +732,7 @@ int32_t anv_block_pool_alloc_back(struct anv_block_pool *pool,
 
 VkResult anv_state_pool_init(struct anv_state_pool *pool,
                              struct anv_device *device,
+                             uint64_t start_address,
                              uint32_t block_size,
                              uint64_t bo_flags);
 void anv_state_pool_finish(struct anv_state_pool *pool);
@@ -785,10 +795,12 @@ VkResult anv_bo_cache_init(struct anv_bo_cache *cache);
 void anv_bo_cache_finish(struct anv_bo_cache *cache);
 VkResult anv_bo_cache_alloc(struct anv_device *device,
                             struct anv_bo_cache *cache,
-                            uint64_t size, struct anv_bo **bo);
+                            uint64_t size, uint64_t bo_flags,
+                            struct anv_bo **bo);
 VkResult anv_bo_cache_import(struct anv_device *device,
                              struct anv_bo_cache *cache,
-                             int fd, struct anv_bo **bo);
+                             int fd, uint64_t bo_flags,
+                             struct anv_bo **bo);
 VkResult anv_bo_cache_export(struct anv_device *device,
                              struct anv_bo_cache *cache,
                              struct anv_bo *bo_in, int *fd_out);
@@ -947,6 +959,7 @@ struct anv_device {
 
     struct anv_state_pool                       dynamic_state_pool;
     struct anv_state_pool                       instruction_state_pool;
+    struct anv_state_pool                       binding_table_pool;
     struct anv_state_pool                       surface_state_pool;
 
     struct anv_bo                               workaround_bo;
@@ -968,6 +981,29 @@ struct anv_device {
     pthread_cond_t                              queue_submit;
     bool                                        lost;
 };
+
+static inline struct anv_state_pool *
+anv_binding_table_pool(struct anv_device *device)
+{
+   if (device->instance->physicalDevice.use_softpin)
+      return &device->binding_table_pool;
+   else
+      return &device->surface_state_pool;
+}
+
+static inline struct anv_state
+anv_binding_table_pool_alloc(struct anv_device *device) {
+   if (device->instance->physicalDevice.use_softpin)
+      return anv_state_pool_alloc(&device->binding_table_pool,
+                                  device->binding_table_pool.block_size, 0);
+   else
+      return anv_state_pool_alloc_back(&device->surface_state_pool);
+}
+
+static inline void
+anv_binding_table_pool_free(struct anv_device *device, struct anv_state state) {
+   anv_state_pool_free(anv_binding_table_pool(device), state);
+}
 
 static void inline
 anv_state_flush(struct anv_device *device, struct anv_state state)
@@ -1044,6 +1080,7 @@ struct anv_reloc_list {
    uint32_t                                     array_length;
    struct drm_i915_gem_relocation_entry *       relocs;
    struct anv_bo **                             reloc_bos;
+   struct set *                                 deps;
 };
 
 VkResult anv_reloc_list_init(struct anv_reloc_list *list,
