@@ -36,69 +36,485 @@
 using std::vector;
 
 using namespace tgsi_array_merge;
-using SwizzleRemapTest=testing::Test;
+using ArrayLiveRangeMerge=testing::Test;
 
-TEST_F(SwizzleRemapTest, ArrayRemappingBase_x_x)
+TEST_F(ArrayLiveRangeMerge, SimpleLiveRange)
 {
-   array_remapping map1(10, 1, 1);
-   ASSERT_EQ(map1.target_array_id(), 10u);
-   ASSERT_EQ(map1.map_writemask(1), 2);
-   ASSERT_EQ(map1.map_one_swizzle(0), 1);
-   ASSERT_EQ(map1.combined_access_mask(), 3);
+   array_live_range a1(1, 10, 1, 5, WRITEMASK_X);
+   array_live_range a2(2, 5, 6, 10, WRITEMASK_X);
+
+   array_live_range::merge(&a1, &a2);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 10);
+   EXPECT_EQ(a1.target_array_id(), 0);
+   EXPECT_EQ(a1.used_components(), 1);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a1.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a1.remap_one_swizzle(3), 3);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 6);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.target_array_id(), 1);
+   EXPECT_EQ(a2.used_components(), 1);
+   EXPECT_EQ(a2.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a2.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a2.remap_one_swizzle(3), 3);
 }
 
-TEST_F(SwizzleRemapTest, ArrayRemappingBase_xy_x)
+TEST_F(ArrayLiveRangeMerge, SimpleLiveRangeInverse)
 {
-   array_remapping map1(5, 3, 1);
-   ASSERT_EQ(map1.target_array_id(), 5u);
-   ASSERT_EQ(map1.map_writemask(1), 4);
-   ASSERT_EQ(map1.map_one_swizzle(0), 2);
-   ASSERT_EQ(map1.combined_access_mask(), 0x7);
+   array_live_range a1(1, 5, 1, 5, WRITEMASK_X);
+   array_live_range a2(2, 10, 6, 10, WRITEMASK_X);
+
+   array_live_range::merge(&a1, &a2);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 5);
+   EXPECT_EQ(a1.target_array_id(), 2);
+   EXPECT_EQ(a1.used_components(), 1);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a1.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a1.remap_one_swizzle(3), 3);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.target_array_id(), 0);
+   EXPECT_EQ(a2.used_components(), 1);
+   EXPECT_EQ(a2.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a2.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a2.remap_one_swizzle(3), 3);
 }
 
-TEST_F(SwizzleRemapTest, ArrayRemappingBase_no_reswizzle)
-{
-   array_remapping map1(5, 3);
-   ASSERT_EQ(map1.target_array_id(), 5u);
-   for (int i = 1; i < 16; ++i)
-      ASSERT_EQ(map1.map_writemask(i), i);
 
-   for (int i = 0; i < 4; ++i)
-      ASSERT_EQ(map1.map_one_swizzle(i), i);
+TEST_F(ArrayLiveRangeMerge, Interleave_x_xyz)
+{
+   array_live_range a1(1, 10, 1, 10, WRITEMASK_X);
+   array_live_range a2(2, 9, 1, 10, WRITEMASK_XYZ);
+
+   array_live_range::interleave(&a1, &a2);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 10);
+   EXPECT_EQ(a1.array_length(), 10u);
+   EXPECT_EQ(a1.target_array_id(), 0);
+   EXPECT_EQ(a1.used_components(), 4);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_XYZW);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a1.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a1.remap_one_swizzle(3), 3);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.target_array_id(), 1);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(1), 2);
+   EXPECT_EQ(a2.remap_one_swizzle(2), 3);
+   EXPECT_EQ(a2.remap_one_swizzle(3), -1);
 }
 
-TEST_F(SwizzleRemapTest, ArrayRemappingBase_xyz_x)
+TEST_F(ArrayLiveRangeMerge, Interleave_xyz_x)
 {
-   array_remapping map1(5, 7, 1);
-   ASSERT_EQ(map1.target_array_id(), 5u);
-   ASSERT_EQ(map1.map_writemask(1), 8);
-   ASSERT_EQ(map1.map_one_swizzle(0), 3);
-   ASSERT_EQ(map1.combined_access_mask(), 0xF);
+   array_live_range a1(1, 10, 1, 10, WRITEMASK_XYZ);
+   array_live_range a2(2, 9, 1, 10, WRITEMASK_X);
+
+   array_live_range::interleave(&a1, &a2);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 10);
+   EXPECT_EQ(a1.array_length(), 10u);
+   EXPECT_EQ(a1.target_array_id(), 0);
+   EXPECT_EQ(a1.used_components(), 4);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_XYZW);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a1.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a1.remap_one_swizzle(3), 3);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.target_array_id(), 1);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 3);
+   EXPECT_EQ(a2.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(3), -1);
 }
 
-TEST_F(SwizzleRemapTest, ArrayRemappingBase_xy_xy)
+
+TEST_F(ArrayLiveRangeMerge, SimpleInterleave)
 {
-   array_remapping map1(5, 3, 3);
-   ASSERT_EQ(map1.target_array_id(), 5u);
-   ASSERT_EQ(map1.map_writemask(1), 4);
-   ASSERT_EQ(map1.map_writemask(2), 8);
-   ASSERT_EQ(map1.map_writemask(3), 0xC);
-   ASSERT_EQ(map1.map_one_swizzle(0), 2);
-   ASSERT_EQ(map1.map_one_swizzle(1), 3);
-   ASSERT_EQ(map1.combined_access_mask(), 0xF);
+   array_live_range a1(1, 10, 1, 10, WRITEMASK_X);
+   array_live_range a2(2, 9, 1, 10, WRITEMASK_X);
+
+   array_live_range::interleave(&a1, &a2);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 10);
+   EXPECT_EQ(a1.array_length(), 10u);
+   EXPECT_EQ(a1.target_array_id(), 0);
+   EXPECT_EQ(a1.used_components(), 2);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_XY);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a1.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a1.remap_one_swizzle(3), 3);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.target_array_id(), 1);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(3), -1);
 }
 
-TEST_F(SwizzleRemapTest, ArrayRemappingBase_xz_xw)
+
+TEST_F(ArrayLiveRangeMerge, SimpleInterleaveInverse)
 {
-   array_remapping map1(5, 5, 9);
-   std::cerr << map1 << "\n";
-   ASSERT_EQ(map1.target_array_id(), 5u);
-   ASSERT_EQ(map1.map_writemask(1), 2);
-   ASSERT_EQ(map1.map_writemask(8), 8);
-   ASSERT_EQ(map1.map_writemask(9), 0xA);
-   ASSERT_EQ(map1.map_one_swizzle(0), 1);
-   ASSERT_EQ(map1.map_one_swizzle(3), 3);
-   ASSERT_EQ(map1.combined_access_mask(), 0xF);
+   array_live_range a1(1, 8, 1, 10, WRITEMASK_X);
+   array_live_range a2(2, 9, 1, 10, WRITEMASK_X);
+
+   array_live_range::interleave(&a1, &a2);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 10);
+   EXPECT_EQ(a1.target_array_id(), 2);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.target_array_id(), 0);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.array_length(), 9u);
+   EXPECT_EQ(a2.used_components(), 2);
+   EXPECT_EQ(a2.access_mask(), WRITEMASK_XY);
+}
+
+
+TEST_F(ArrayLiveRangeMerge, InterleaveRiveRangeExtend)
+{
+   array_live_range a1(1, 10, 2, 9, WRITEMASK_X);
+   array_live_range a2(2, 9, 1, 10, WRITEMASK_X);
+
+   array_live_range::interleave(&a1, &a2);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 10);
+   EXPECT_EQ(a1.array_length(), 10u);
+   EXPECT_EQ(a1.target_array_id(), 0);
+   EXPECT_EQ(a1.used_components(), 2);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_XY);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a1.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a1.remap_one_swizzle(3), 3);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.target_array_id(), 1);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(3), -1);
+}
+
+TEST_F(ArrayLiveRangeMerge, InterleaveLiveRangeExtendInverse)
+{
+   array_live_range a1(1, 8, 2, 11, WRITEMASK_X);
+   array_live_range a2(2, 9, 1, 10, WRITEMASK_X);
+
+   array_live_range::interleave(&a1, &a2);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 2);
+   EXPECT_EQ(a1.end(), 11);
+   EXPECT_EQ(a1.target_array_id(), 2);
+   EXPECT_EQ(a1.used_components(), 1);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 11);
+   EXPECT_EQ(a2.target_array_id(), 0);
+   EXPECT_EQ(a2.used_components(), 2);
+   EXPECT_EQ(a2.access_mask(), WRITEMASK_XY);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a2.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a2.remap_one_swizzle(3), 3);
+}
+
+TEST_F(ArrayLiveRangeMerge, InterleaveChained)
+{
+   array_live_range a1(1, 8, 2, 11, WRITEMASK_X);
+   array_live_range a2(2, 9, 1, 10, WRITEMASK_X);
+   array_live_range a3(3, 10, 1, 10, WRITEMASK_X);
+
+   array_live_range::interleave(&a1, &a2);
+   array_live_range::interleave(&a2, &a3);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 2);
+   EXPECT_EQ(a1.end(), 11);
+   EXPECT_EQ(a1.target_array_id(), 2);
+   EXPECT_EQ(a1.used_components(), 1);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 2);
+   EXPECT_EQ(a1.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 11);
+   EXPECT_EQ(a2.target_array_id(), 3);
+   EXPECT_EQ(a2.used_components(), 2);
+   EXPECT_EQ(a2.access_mask(), WRITEMASK_XY);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(1), 2);
+   EXPECT_EQ(a2.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a3.array_id(), 3);
+   EXPECT_EQ(a3.begin(), 1);
+   EXPECT_EQ(a3.end(), 11);
+   EXPECT_EQ(a3.target_array_id(), 0);
+   EXPECT_EQ(a3.used_components(), 3);
+   EXPECT_EQ(a3.access_mask(), WRITEMASK_XYZ);
+
+   EXPECT_EQ(a3.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a3.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a3.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a3.remap_one_swizzle(3), 3);
+}
+
+TEST_F(ArrayLiveRangeMerge, MergeInterleaveChained)
+{
+   array_live_range a1(1, 8, 1, 5, WRITEMASK_X);
+   array_live_range a2(2, 9, 6, 10, WRITEMASK_X);
+   array_live_range a3(3, 10, 1, 10, WRITEMASK_X);
+
+   array_live_range::merge(&a1, &a2);
+   array_live_range::interleave(&a2, &a3);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 5);
+   EXPECT_EQ(a1.target_array_id(), 2);
+   EXPECT_EQ(a1.used_components(), 1);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.target_array_id(), 3);
+   EXPECT_EQ(a2.used_components(), 1);
+   EXPECT_EQ(a2.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a3.array_id(), 3);
+   EXPECT_EQ(a3.begin(), 1);
+   EXPECT_EQ(a3.end(), 10);
+   EXPECT_EQ(a3.target_array_id(), 0);
+   EXPECT_EQ(a3.used_components(), 2);
+   EXPECT_EQ(a3.access_mask(), WRITEMASK_XY);
+
+   EXPECT_EQ(a3.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a3.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a3.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a3.remap_one_swizzle(3), 3);
+}
+
+TEST_F(ArrayLiveRangeMerge, MergeMergeAndInterleave)
+{
+   array_live_range a1(1, 5, 1, 5, WRITEMASK_X);
+   array_live_range a2(2, 4, 6, 7, WRITEMASK_X);
+   array_live_range a3(3, 3, 1, 5, WRITEMASK_X);
+   array_live_range a4(4, 2, 6, 8, WRITEMASK_X);
+
+   array_live_range::merge(&a1, &a2);
+   array_live_range::merge(&a3, &a4);
+   array_live_range::interleave(&a1, &a3);
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 8);
+   EXPECT_EQ(a1.target_array_id(), 0);
+   EXPECT_EQ(a1.used_components(), 2);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_XY);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a1.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a1.remap_one_swizzle(3), 3);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 6);
+   EXPECT_EQ(a2.end(), 7);
+   EXPECT_EQ(a2.target_array_id(), 1);
+   EXPECT_EQ(a2.used_components(), 1);
+   EXPECT_EQ(a2.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a2.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a2.remap_one_swizzle(3), 3);
+
+   EXPECT_EQ(a3.array_id(), 3);
+   EXPECT_EQ(a3.begin(), 1);
+   EXPECT_EQ(a3.end(), 8);
+   EXPECT_EQ(a3.target_array_id(), 1);
+   EXPECT_EQ(a3.used_components(), 1);
+   EXPECT_EQ(a3.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a3.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a3.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a3.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a3.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a4.array_id(), 4);
+   EXPECT_EQ(a4.begin(), 6);
+   EXPECT_EQ(a4.end(), 8);
+   EXPECT_EQ(a4.target_array_id(), 3);
+   EXPECT_EQ(a4.used_components(), 1);
+   EXPECT_EQ(a4.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a4.remap_one_swizzle(0), 1);
+   EXPECT_EQ(a4.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a4.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a4.remap_one_swizzle(3), -1);
+
+}
+
+
+TEST_F(ArrayLiveRangeMerge, MergeInterleaveMergeInterleaveChained)
+{
+   array_live_range a1(1, 8, 1, 5, WRITEMASK_X);
+   array_live_range a2(2, 9, 6, 10, WRITEMASK_X);
+   array_live_range a3(3, 10, 1, 10, WRITEMASK_X);
+   array_live_range a4(4, 11, 11, 20, WRITEMASK_XY);
+   array_live_range a5(5, 15, 5, 20, WRITEMASK_XY);
+
+   array_live_range::merge(&a1, &a2);
+   array_live_range::interleave(&a2, &a3);    // a2 -> a3
+   array_live_range::merge(&a3, &a4);
+   array_live_range::interleave(&a4, &a5);    // a4 -> a5
+
+
+   EXPECT_EQ(a1.array_id(), 1);
+   EXPECT_EQ(a1.begin(), 1);
+   EXPECT_EQ(a1.end(), 5);
+   EXPECT_EQ(a1.target_array_id(), 2);
+   EXPECT_EQ(a1.used_components(), 1);
+   EXPECT_EQ(a1.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a1.remap_one_swizzle(0), 3);
+   EXPECT_EQ(a1.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a1.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a2.array_id(), 2);
+   EXPECT_EQ(a2.begin(), 1);
+   EXPECT_EQ(a2.end(), 10);
+   EXPECT_EQ(a2.target_array_id(), 3);
+   EXPECT_EQ(a2.used_components(), 1);
+   EXPECT_EQ(a2.access_mask(), WRITEMASK_X);
+
+   EXPECT_EQ(a2.remap_one_swizzle(0), 3);
+   EXPECT_EQ(a2.remap_one_swizzle(1), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a2.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a3.array_id(), 3);
+   EXPECT_EQ(a3.begin(), 1);
+   EXPECT_EQ(a3.end(), 10);
+   EXPECT_EQ(a3.target_array_id(), 4);
+   EXPECT_EQ(a3.used_components(), 2);
+   EXPECT_EQ(a3.access_mask(), WRITEMASK_XY);
+
+   EXPECT_EQ(a3.remap_one_swizzle(0), 2);
+   EXPECT_EQ(a3.remap_one_swizzle(1), 3);
+   EXPECT_EQ(a3.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a3.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a4.array_id(), 4);
+   EXPECT_EQ(a4.begin(), 1);
+   EXPECT_EQ(a4.end(), 20);
+   EXPECT_EQ(a4.target_array_id(), 5);
+   EXPECT_EQ(a4.used_components(), 2);
+   EXPECT_EQ(a4.access_mask(), WRITEMASK_XY);
+
+   EXPECT_EQ(a4.remap_one_swizzle(0), 2);
+   EXPECT_EQ(a4.remap_one_swizzle(1), 3);
+   EXPECT_EQ(a4.remap_one_swizzle(2), -1);
+   EXPECT_EQ(a4.remap_one_swizzle(3), -1);
+
+   EXPECT_EQ(a5.array_id(), 5);
+   EXPECT_EQ(a5.begin(), 1);
+   EXPECT_EQ(a5.end(), 20);
+   EXPECT_EQ(a5.target_array_id(), 0);
+   EXPECT_EQ(a5.used_components(), 4);
+   EXPECT_EQ(a5.access_mask(), WRITEMASK_XYZW);
+
+   EXPECT_EQ(a5.remap_one_swizzle(0), 0);
+   EXPECT_EQ(a5.remap_one_swizzle(1), 1);
+   EXPECT_EQ(a5.remap_one_swizzle(2), 2);
+   EXPECT_EQ(a5.remap_one_swizzle(3), 3);
 }
 
 using ArrayMergeTest=testing::Test;
@@ -110,9 +526,10 @@ TEST_F(ArrayMergeTest, ArrayMergeTwoSwizzles)
       {2, 4, 2, 5, WRITEMASK_X},
    };
 
+   int8_t expect_swizzle[] = {1, -1, -1, -1};
    vector<array_remapping> expect = {
       {},
-      {1, WRITEMASK_X, WRITEMASK_X},
+      {1, expect_swizzle},
    };
 
    vector<array_remapping> result(alt.size() + 1);
@@ -133,11 +550,15 @@ TEST_F(ArrayMergeTest, ArrayMergeFourSwizzles)
       {4, 5, 4, 7, WRITEMASK_X},
    };
 
+   int8_t expect_swizzle1[] = {1, -1, -1, -1};
+   int8_t expect_swizzle2[] = {2, -1, -1, -1};
+   int8_t expect_swizzle3[] = {3, -1, -1, -1};
+
    vector<array_remapping> expect = {
       {},
-      {1, WRITEMASK_X, WRITEMASK_X},
-      {1, WRITEMASK_XY, WRITEMASK_X},
-      {1, WRITEMASK_XYZ, WRITEMASK_X},
+      {1, expect_swizzle1},
+      {1, expect_swizzle2},
+      {1, expect_swizzle3},
    };
 
    vector<array_remapping> result(alt.size() + 1);
@@ -159,16 +580,17 @@ TEST_F(ArrayMergeTest, SimpleChainMerge)
       {2, 2, 6, 7, WRITEMASK_XYZW},
    };
 
+   int8_t expect_swizzle[] = {0, 1, 2, 3};
    vector<array_remapping> expect = {
       {},
-      {1, WRITEMASK_XYZW},
+      {1, expect_swizzle},
    };
 
    vector<array_remapping> result(3);
    get_array_remapping(2, &input[0], &result[0]);
 
-   for (unsigned i = 0; i < expect.size(); ++i)
-      EXPECT_EQ(result[i + 1], expect[i]);
+   EXPECT_EQ(result[1], expect[0]);
+   EXPECT_EQ(result[2], expect[1]);
 }
 
 TEST_F(ArrayMergeTest, MergeAndInterleave)
@@ -180,17 +602,23 @@ TEST_F(ArrayMergeTest, MergeAndInterleave)
       {4, 2, 6, 7, WRITEMASK_X},
    };
 
+   int8_t expect_swizzle1[] = {0,  1,  2,  3};
+   int8_t expect_swizzle2[] = {1, -1, -1, -1};
+   int8_t expect_swizzle3[] = {1, -1, -1, -1};
+
    vector<array_remapping> expect = {
       {},
-      {1, WRITEMASK_X},
-      {1, WRITEMASK_X, WRITEMASK_X},
-      {1, WRITEMASK_X, WRITEMASK_X}
+      {1, expect_swizzle1},
+      {1, expect_swizzle2},
+      {1, expect_swizzle3}
    };
    vector<array_remapping> result(input.size() + 1);
    get_array_remapping(input.size(), &input[0], &result[0]);
 
-   for (unsigned i = 0; i < expect.size(); ++i)
-      EXPECT_EQ(result[i + 1], expect[i]);
+   EXPECT_EQ(result[1], expect[0]);
+   EXPECT_EQ(result[2], expect[1]);
+   EXPECT_EQ(result[3], expect[2]);
+   EXPECT_EQ(result[4], expect[3]);
 }
 
 TEST_F(ArrayMergeTest, MergeAndInterleave2)
@@ -202,17 +630,23 @@ TEST_F(ArrayMergeTest, MergeAndInterleave2)
       {4, 2, 6, 7, WRITEMASK_X},
    };
 
+   int8_t expect_swizzle1[] = {0,  1,  2,  3};
+   int8_t expect_swizzle2[] = {1,  2, -1, -1};
+   int8_t expect_swizzle3[] = {3, -1, -1, -1};
+
    vector<array_remapping> expect = {
       {},
-      {1, WRITEMASK_X},
-      {1, WRITEMASK_X, WRITEMASK_XY},
-      {1, WRITEMASK_XYZ, WRITEMASK_X}
+      {1, expect_swizzle1},
+      {1, expect_swizzle2},
+      {1, expect_swizzle3}
    };
    vector<array_remapping> result(input.size() + 1);
    get_array_remapping(input.size(), &input[0], &result[0]);
 
-   for (unsigned i = 0; i < expect.size(); ++i)
-      EXPECT_EQ(result[i + 1], expect[i]);
+   EXPECT_EQ(result[1], expect[0]);
+   EXPECT_EQ(result[2], expect[1]);
+   EXPECT_EQ(result[3], expect[2]);
+   EXPECT_EQ(result[4], expect[3]);
 }
 
 
@@ -224,16 +658,20 @@ TEST_F(ArrayMergeTest, MergeAndInterleave3)
       {3, 3, 1, 5, WRITEMASK_X}
    };
 
+   int8_t expect_swizzle1[] = {0, 1, 2, 3};
+   int8_t expect_swizzle2[] = {1, -1, -1, -1};
+
    vector<array_remapping> expect = {
       {},
-      {1, WRITEMASK_X},
-      {1, WRITEMASK_X, WRITEMASK_X}
+      {1, expect_swizzle1},
+      {1, expect_swizzle2}
    };
    vector<array_remapping> result(input.size() + 1);
    get_array_remapping(input.size(), &input[0], &result[0]);
 
-   for (unsigned i = 0; i < expect.size(); ++i)
-      EXPECT_EQ(result[i + 1], expect[i]);
+   EXPECT_EQ(result[1], expect[0]);
+   EXPECT_EQ(result[2], expect[1]);
+   EXPECT_EQ(result[3], expect[2]);
 }
 
 TEST_F(ArrayMergeTest, MergeAndInterleave4)
@@ -247,13 +685,19 @@ TEST_F(ArrayMergeTest, MergeAndInterleave4)
       {6, 2, 10, 11, WRITEMASK_XYZW},
    };
 
+   int8_t expect_swizzle1[] = {0, 1,  2,  3};
+   int8_t expect_swizzle2[] = {1, -1, -1, -1};
+   int8_t expect_swizzle3[] = {0, 1, 2, 3};
+   int8_t expect_swizzle4[] = {-1, -1, -1, 3};
+   int8_t expect_swizzle5[] = {0, 1, 2, 3};
+
    vector<array_remapping> expect = {
       {},
-      {1, WRITEMASK_XY},
-      {1, WRITEMASK_X, WRITEMASK_X},
-      {1, WRITEMASK_XYZ},
-      {1, WRITEMASK_XYZ, WRITEMASK_W},
-      {1, WRITEMASK_XYZW}
+      {1, expect_swizzle1},
+      {1, expect_swizzle2},
+      {1, expect_swizzle3}, /* W from below will be interleaved in */
+      {1, expect_swizzle4},
+      {1, expect_swizzle5}
    };
    vector<array_remapping> result(input.size() + 1);
    get_array_remapping(input.size(), &input[0], &result[0]);
@@ -277,11 +721,23 @@ TEST_F(ArrayMergeTest, MergeAndInterleave5)
       {5, 8, 1, 10, WRITEMASK_XY}
    };
 
+   /* 1. merge 3 into 2
+    * 2. interleave 2 into 1 (x -> y) --- (y -> w)
+    * 3. merge 4 into 1                 /
+    * 4. interleave 1 into 5 (x,y - z,w)
+    */
+
+   /* swizzle1 holds the summary mask */
+   int8_t expect_swizzle1[] = {2,  3, -1, -1};
+   int8_t expect_swizzle2[] = {3, -1, -1, -1};
+   int8_t expect_swizzle3[] = {3, -1, -1, -1};
+   int8_t expect_swizzle4[] = {2,  3, -1, -1};
+
    vector<array_remapping> expect = {
-      {5, WRITEMASK_XY, WRITEMASK_XY}, /* expect xy because of interleaving */
-      {5, WRITEMASK_XYZ, WRITEMASK_X},
-      {5, WRITEMASK_XYZ, WRITEMASK_X},
-      {5, WRITEMASK_XY, WRITEMASK_XY},
+      {5, expect_swizzle1},
+      {5, expect_swizzle2},
+      {5, expect_swizzle3},
+      {5, expect_swizzle4},
       {}
    };
    vector<array_remapping> result(input.size() + 1);
