@@ -5533,21 +5533,22 @@ glsl_to_tgsi_visitor::merge_registers(void)
    }
 
 
-   if (get_temp_registers_required_live_ranges(reg_live_ranges, &this->instructions,
+//   if (get_temp_registers_required_live_ranges(reg_live_ranges, &this->instructions,
+     get_temp_registers_required_live_ranges(reg_live_ranges, &this->instructions,
                                                this->next_temp, reg_live_ranges,
-                                               this->next_array, arr_live_ranges)) {
+                                               this->next_array, arr_live_ranges);//) {
       struct rename_reg_pair *renames =
             rzalloc_array(reg_live_ranges, struct rename_reg_pair, this->next_temp);
       get_temp_registers_remapping(reg_live_ranges, this->next_temp,
                                    reg_live_ranges, renames);
       rename_temp_registers(renames);
 
-      this->next_array =  merge_arrays(this->next_array, this->array_sizes,
-                                       &this->instructions, arr_live_ranges);
+//      this->next_array =  merge_arrays(this->next_array, this->array_sizes,
+//                                       &this->instructions, arr_live_ranges);
 
       if (arr_live_ranges)
          delete[] arr_live_ranges;
-   }
+//   }
    ralloc_free(reg_live_ranges);
 }
 
