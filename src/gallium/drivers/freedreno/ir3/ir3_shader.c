@@ -248,6 +248,7 @@ ir3_shader_variant(struct ir3_shader *shader, struct ir3_shader_key key,
 			key.vsaturate_t = 0;
 			key.vsaturate_r = 0;
 			key.vastc_srgb = 0;
+			key.vsamples = 0;
 		}
 		break;
 	case SHADER_VERTEX:
@@ -259,6 +260,7 @@ ir3_shader_variant(struct ir3_shader *shader, struct ir3_shader_key key,
 			key.fsaturate_t = 0;
 			key.fsaturate_r = 0;
 			key.fastc_srgb = 0;
+			key.fsamples = 0;
 		}
 		break;
 	default:
@@ -559,10 +561,8 @@ emit_user_consts(struct fd_context *ctx, const struct ir3_shader_variant *v,
 		struct fd_ringbuffer *ring, struct fd_constbuf_stateobj *constbuf)
 {
 	const unsigned index = 0;     /* user consts are index 0 */
-	/* TODO save/restore dirty_mask for binning pass instead: */
-	uint32_t dirty_mask = constbuf->enabled_mask;
 
-	if (dirty_mask & (1 << index)) {
+	if (constbuf->enabled_mask & (1 << index)) {
 		struct pipe_constant_buffer *cb = &constbuf->cb[index];
 		unsigned size = align(cb->buffer_size, 4) / 4; /* size in dwords */
 
@@ -587,7 +587,6 @@ emit_user_consts(struct fd_context *ctx, const struct ir3_shader_variant *v,
 			ctx->emit_const(ring, v->type, 0,
 					cb->buffer_offset, size,
 					cb->user_buffer, cb->buffer);
-			constbuf->dirty_mask &= ~(1 << index);
 		}
 	}
 }
@@ -669,7 +668,12 @@ emit_image_dims(struct fd_context *ctx, const struct ir3_shader_variant *v,
 				 * stride:
 				 */
 				dims[off + 1] = rsc->slices[lvl].pitch * rsc->cpp;
-				dims[off + 2] = rsc->slices[lvl].size0;
+				/* see corresponding logic in fd_resource_offset(): */
+				if (rsc->layer_first) {
+					dims[off + 2] = rsc->layer_size;
+				} else {
+					dims[off + 2] = rsc->slices[lvl].size0;
+				}
 			}
 		}
 

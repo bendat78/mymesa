@@ -74,6 +74,10 @@ dri_fill_st_options(struct dri_screen *screen)
       driQueryOptioni(optionCache, "force_glsl_version");
    options->allow_glsl_extension_directive_midshader =
       driQueryOptionb(optionCache, "allow_glsl_extension_directive_midshader");
+   options->allow_glsl_builtin_const_expression =
+      driQueryOptionb(optionCache, "allow_glsl_builtin_const_expression");
+   options->allow_glsl_relaxed_es =
+      driQueryOptionb(optionCache, "allow_glsl_relaxed_es");
    options->allow_glsl_builtin_variable_redeclaration =
       driQueryOptionb(optionCache, "allow_glsl_builtin_variable_redeclaration");
    options->allow_higher_compat_version =
@@ -298,7 +302,8 @@ dri_fill_in_modes(struct dri_screen *screen)
  * Roughly the converse of dri_fill_in_modes.
  */
 void
-dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
+dri_fill_st_visual(struct st_visual *stvis,
+                   const struct dri_screen *screen,
                    const struct gl_config *mode)
 {
    memset(stvis, 0, sizeof(*stvis));

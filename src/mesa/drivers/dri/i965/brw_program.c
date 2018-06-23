@@ -77,10 +77,11 @@ brw_create_nir(struct brw_context *brw,
 
    /* First, lower the GLSL/Mesa IR or SPIR-V to NIR */
    if (shader_prog) {
-      if (shader_prog->_LinkedShaders[stage]->spirv_data)
+      if (shader_prog->data->spirv) {
          nir = _mesa_spirv_to_nir(ctx, shader_prog, stage, options);
-      else
+      } else {
          nir = glsl_to_nir(shader_prog, stage, options);
+      }
       assert (nir);
 
       nir_remove_dead_variables(nir, nir_var_shader_in | nir_var_shader_out);

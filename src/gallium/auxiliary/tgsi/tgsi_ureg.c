@@ -718,7 +718,7 @@ struct ureg_src ureg_DECL_sampler( struct ureg_program *ureg,
    unsigned i;
 
    for (i = 0; i < ureg->nr_samplers; i++)
-      if (ureg->sampler[i].Index == nr)
+      if (ureg->sampler[i].Index == (int)nr)
          return ureg->sampler[i];
    
    if (i < PIPE_MAX_SAMPLERS) {
@@ -834,7 +834,6 @@ struct ureg_src ureg_DECL_memory(struct ureg_program *ureg,
 
 static int
 match_or_expand_immediate64( const unsigned *v,
-                             int type,
                              unsigned nr,
                              unsigned *v2,
                              unsigned *pnr2,
@@ -886,7 +885,7 @@ match_or_expand_immediate( const unsigned *v,
    if (type == TGSI_IMM_FLOAT64 ||
        type == TGSI_IMM_UINT64 ||
        type == TGSI_IMM_INT64)
-      return match_or_expand_immediate64(v, type, nr, v2, pnr2, swizzle);
+      return match_or_expand_immediate64(v, nr, v2, pnr2, swizzle);
 
    *swizzle = 0;
 
@@ -1818,7 +1817,7 @@ static void emit_decls( struct ureg_program *ureg )
    unsigned i,j;
 
    for (i = 0; i < ARRAY_SIZE(ureg->properties); i++)
-      if (ureg->properties[i] != ~0)
+      if (ureg->properties[i] != ~0u)
          emit_property(ureg, i, ureg->properties[i]);
 
    if (ureg->processor == PIPE_SHADER_VERTEX) {
@@ -2178,7 +2177,7 @@ struct ureg_program *
 ureg_create_with_screen(enum pipe_shader_type processor,
                         struct pipe_screen *screen)
 {
-   int i;
+   uint i;
    struct ureg_program *ureg = CALLOC_STRUCT( ureg_program );
    if (!ureg)
       goto no_ureg;

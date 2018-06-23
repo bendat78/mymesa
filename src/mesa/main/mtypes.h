@@ -2893,6 +2893,12 @@ struct gl_shader_program_data
 
    /* Mask of stages this program was linked against */
    unsigned linked_stages;
+
+   /* Whether the shaders of this program are loaded from SPIR-V binaries
+    * (all have the SPIR_V_BINARY_ARB state). This was introduced by the
+    * ARB_gl_spirv extension.
+    */
+   bool spirv;
 };
 
 /**
@@ -3722,6 +3728,18 @@ struct gl_constants
    GLboolean AllowGLSLExtensionDirectiveMidShader;
 
    /**
+    * Allow builtins as part of constant expressions. This was not allowed
+    * until GLSL 1.20 this allows it everywhere.
+    */
+   GLboolean AllowGLSLBuiltinConstantExpression;
+
+   /**
+    * Allow some relaxation of GLSL ES shader restrictions. This encompasses
+    * a number of relaxations to the ES shader rules.
+    */
+   GLboolean AllowGLSLRelaxedES;
+
+   /**
     * Allow GLSL built-in variables to be redeclared verbatim
     */
    GLboolean AllowGLSLBuiltinVariableRedeclaration;
@@ -4226,7 +4244,6 @@ struct gl_extensions
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
    GLboolean ATI_fragment_shader;
-   GLboolean ATI_separate_stencil;
    GLboolean GREMEDY_string_marker;
    GLboolean INTEL_conservative_rasterization;
    GLboolean INTEL_performance_query;

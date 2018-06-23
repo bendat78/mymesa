@@ -112,6 +112,19 @@ static inline uint32_t DRAW(enum pc_di_primtype prim_type,
 			(instances         << 24);
 }
 
+static inline uint32_t DRAW_A20X(enum pc_di_primtype prim_type,
+		enum pc_di_src_sel source_select, enum pc_di_index_size index_size,
+		enum pc_di_vis_cull_mode vis_cull_mode,
+		uint16_t count)
+{
+	return (prim_type         << 0) |
+			(source_select     << 6) |
+			((index_size & 1)  << 11) |
+			((index_size >> 1) << 13) |
+			(vis_cull_mode     << 9) |
+			(count         << 16);
+}
+
 /* for tracking cmdstream positions that need to be patched: */
 struct fd_cs_patch {
 	uint32_t *cs;
@@ -183,7 +196,6 @@ fd_half_precision(struct pipe_framebuffer_state *pfb)
 #define LOG_DWORDS 0
 
 static inline void emit_marker(struct fd_ringbuffer *ring, int scratch_idx);
-static inline void emit_marker5(struct fd_ringbuffer *ring, int scratch_idx);
 
 static inline void
 OUT_RING(struct fd_ringbuffer *ring, uint32_t data)
@@ -372,14 +384,6 @@ __OUT_IB5(struct fd_ringbuffer *ring, struct fd_ringbuffer *target)
 {
 	unsigned count = fd_ringbuffer_cmd_count(target);
 
-	/* for debug after a lock up, write a unique counter value
-	 * to scratch6 for each IB, to make it easier to match up
-	 * register dumps to cmdstream.  The combination of IB and
-	 * DRAW (scratch7) is enough to "triangulate" the particular
-	 * draw that caused lockup.
-	 */
-	emit_marker5(ring, 6);
-
 	for (unsigned i = 0; i < count; i++) {
 		uint32_t dwords;
 		OUT_PKT7(ring, CP_INDIRECT_BUFFER, 3);
@@ -387,8 +391,6 @@ __OUT_IB5(struct fd_ringbuffer *ring, struct fd_ringbuffer *target)
 		assert(dwords > 0);
 		OUT_RING(ring, dwords);
 	}
-
-	emit_marker5(ring, 6);
 }
 
 /* CP_SCRATCH_REG4 is used to hold base address for query results: */
@@ -406,16 +408,6 @@ emit_marker(struct fd_ringbuffer *ring, int scratch_idx)
 	if (reg == HW_QUERY_BASE_REG)
 		return;
 	OUT_PKT0(ring, reg, 1);
-	OUT_RING(ring, ++marker_cnt);
-}
-
-static inline void
-emit_marker5(struct fd_ringbuffer *ring, int scratch_idx)
-{
-	extern unsigned marker_cnt;
-//XXX	unsigned reg = REG_A5XX_CP_SCRATCH_REG(scratch_idx);
-	unsigned reg = 0x00000b78 + scratch_idx;
-	OUT_PKT4(ring, reg, 1);
 	OUT_RING(ring, ++marker_cnt);
 }
 
@@ -450,6 +442,22 @@ pack_rgba(enum pipe_format format, const float *rgba)
 
 
 #define BIT(bit) (1u << bit)
+
+/*
+ * a3xx+ helpers:
+ */
+
+static inline enum a3xx_msaa_samples
+fd_msaa_samples(unsigned samples)
+{
+	switch (samples) {
+	default:
+		debug_assert(0);
+	case 1: return MSAA_ONE;
+	case 2: return MSAA_TWO;
+	case 4: return MSAA_FOUR;
+	}
+}
 
 /*
  * a4xx+ helpers:

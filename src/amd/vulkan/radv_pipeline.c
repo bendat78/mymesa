@@ -1868,7 +1868,7 @@ radv_generate_graphics_pipeline_key(struct radv_pipeline *pipeline,
 	    pCreateInfo->pMultisampleState->rasterizationSamples > 1) {
 		uint32_t num_samples = pCreateInfo->pMultisampleState->rasterizationSamples;
 		uint32_t ps_iter_samples = radv_pipeline_get_ps_iter_samples(pCreateInfo->pMultisampleState);
-		key.log2_num_samples = util_logbase2(num_samples);
+		key.num_samples = num_samples;
 		key.log2_ps_iter_samples = util_logbase2(ps_iter_samples);
 	}
 
@@ -1912,7 +1912,7 @@ radv_fill_shader_keys(struct radv_shader_variant_key *keys,
 	keys[MESA_SHADER_FRAGMENT].fs.is_int8 = key->is_int8;
 	keys[MESA_SHADER_FRAGMENT].fs.is_int10 = key->is_int10;
 	keys[MESA_SHADER_FRAGMENT].fs.log2_ps_iter_samples = key->log2_ps_iter_samples;
-	keys[MESA_SHADER_FRAGMENT].fs.log2_num_samples = key->log2_num_samples;
+	keys[MESA_SHADER_FRAGMENT].fs.num_samples = key->num_samples;
 }
 
 static void
@@ -2493,7 +2493,7 @@ radv_compute_bin_size(struct radv_pipeline *pipeline, const VkGraphicsPipelineCr
 }
 
 static void
-radv_pipeline_generate_binning_state(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_binning_state(struct radeon_cmdbuf *cs,
 				     struct radv_pipeline *pipeline,
 				     const VkGraphicsPipelineCreateInfo *pCreateInfo)
 {
@@ -2549,7 +2549,7 @@ radv_pipeline_generate_binning_state(struct radeon_winsys_cs *cs,
 
 
 static void
-radv_pipeline_generate_depth_stencil_state(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_depth_stencil_state(struct radeon_cmdbuf *cs,
                                            struct radv_pipeline *pipeline,
                                            const VkGraphicsPipelineCreateInfo *pCreateInfo,
                                            const struct radv_graphics_pipeline_create_info *extra)
@@ -2631,7 +2631,7 @@ radv_pipeline_generate_depth_stencil_state(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_blend_state(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_blend_state(struct radeon_cmdbuf *cs,
                                    struct radv_pipeline *pipeline,
                                    const struct radv_blend_state *blend)
 {
@@ -2658,7 +2658,7 @@ radv_pipeline_generate_blend_state(struct radeon_winsys_cs *cs,
 
 
 static void
-radv_pipeline_generate_raster_state(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_raster_state(struct radeon_cmdbuf *cs,
                                     const VkGraphicsPipelineCreateInfo *pCreateInfo)
 {
 	const VkPipelineRasterizationStateCreateInfo *vkraster = pCreateInfo->pRasterizationState;
@@ -2699,7 +2699,7 @@ radv_pipeline_generate_raster_state(struct radeon_winsys_cs *cs,
 
 
 static void
-radv_pipeline_generate_multisample_state(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_multisample_state(struct radeon_cmdbuf *cs,
                                          struct radv_pipeline *pipeline)
 {
 	struct radv_multisample_state *ms = &pipeline->graphics.ms;
@@ -2710,39 +2710,10 @@ radv_pipeline_generate_multisample_state(struct radeon_winsys_cs *cs,
 
 	radeon_set_context_reg(cs, R_028804_DB_EQAA, ms->db_eqaa);
 	radeon_set_context_reg(cs, R_028A4C_PA_SC_MODE_CNTL_1, ms->pa_sc_mode_cntl_1);
-
-	if (pipeline->shaders[MESA_SHADER_FRAGMENT]->info.info.ps.needs_sample_positions) {
-		uint32_t offset;
-		struct radv_userdata_info *loc = radv_lookup_user_sgpr(pipeline, MESA_SHADER_FRAGMENT, AC_UD_PS_SAMPLE_POS_OFFSET);
-		uint32_t base_reg = pipeline->user_data_0[MESA_SHADER_FRAGMENT];
-		if (loc->sgpr_idx == -1)
-			return;
-		assert(loc->num_sgprs == 1);
-		assert(!loc->indirect);
-		switch (pipeline->graphics.ms.num_samples) {
-		default:
-			offset = 0;
-			break;
-		case 2:
-			offset = 1;
-			break;
-		case 4:
-			offset = 3;
-			break;
-		case 8:
-			offset = 7;
-			break;
-		case 16:
-			offset = 15;
-			break;
-		}
-
-		radeon_set_sh_reg(cs, base_reg + loc->sgpr_idx * 4, offset);
-	}
 }
 
 static void
-radv_pipeline_generate_vgt_gs_mode(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_vgt_gs_mode(struct radeon_cmdbuf *cs,
                                    const struct radv_pipeline *pipeline)
 {
 	const struct radv_vs_output_info *outinfo = get_vs_output_info(pipeline);
@@ -2766,7 +2737,7 @@ radv_pipeline_generate_vgt_gs_mode(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_hw_vs(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_hw_vs(struct radeon_cmdbuf *cs,
 			     struct radv_pipeline *pipeline,
 			     struct radv_shader_variant *shader)
 {
@@ -2825,7 +2796,7 @@ radv_pipeline_generate_hw_vs(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_hw_es(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_hw_es(struct radeon_cmdbuf *cs,
 			     struct radv_pipeline *pipeline,
 			     struct radv_shader_variant *shader)
 {
@@ -2839,7 +2810,7 @@ radv_pipeline_generate_hw_es(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_hw_ls(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_hw_ls(struct radeon_cmdbuf *cs,
 			     struct radv_pipeline *pipeline,
 			     struct radv_shader_variant *shader,
 			     const struct radv_tessellation_state *tess)
@@ -2862,7 +2833,7 @@ radv_pipeline_generate_hw_ls(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_hw_hs(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_hw_hs(struct radeon_cmdbuf *cs,
 			     struct radv_pipeline *pipeline,
 			     struct radv_shader_variant *shader,
 			     const struct radv_tessellation_state *tess)
@@ -2888,7 +2859,7 @@ radv_pipeline_generate_hw_hs(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_vertex_shader(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_vertex_shader(struct radeon_cmdbuf *cs,
 				     struct radv_pipeline *pipeline,
 				     const struct radv_tessellation_state *tess)
 {
@@ -2908,7 +2879,7 @@ radv_pipeline_generate_vertex_shader(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_tess_shaders(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_tess_shaders(struct radeon_cmdbuf *cs,
 				    struct radv_pipeline *pipeline,
 				    const struct radv_tessellation_state *tess)
 {
@@ -2941,7 +2912,7 @@ radv_pipeline_generate_tess_shaders(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_geometry_shader(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_geometry_shader(struct radeon_cmdbuf *cs,
 				       struct radv_pipeline *pipeline,
 				       const struct radv_gs_state *gs_state)
 {
@@ -3021,7 +2992,7 @@ static uint32_t offset_to_ps_input(uint32_t offset, bool flat_shade)
 }
 
 static void
-radv_pipeline_generate_ps_inputs(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_ps_inputs(struct radeon_cmdbuf *cs,
                                  struct radv_pipeline *pipeline)
 {
 	struct radv_shader_variant *ps = pipeline->shaders[MESA_SHADER_FRAGMENT];
@@ -3108,7 +3079,7 @@ radv_compute_db_shader_control(const struct radv_device *device,
 }
 
 static void
-radv_pipeline_generate_fragment_shader(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_fragment_shader(struct radeon_cmdbuf *cs,
 				       struct radv_pipeline *pipeline)
 {
 	struct radv_shader_variant *ps;
@@ -3151,7 +3122,7 @@ radv_pipeline_generate_fragment_shader(struct radeon_winsys_cs *cs,
 }
 
 static void
-radv_pipeline_generate_vgt_vertex_reuse(struct radeon_winsys_cs *cs,
+radv_pipeline_generate_vgt_vertex_reuse(struct radeon_cmdbuf *cs,
 					struct radv_pipeline *pipeline)
 {
 	if (pipeline->device->physical_device->rad_info.family < CHIP_POLARIS10)

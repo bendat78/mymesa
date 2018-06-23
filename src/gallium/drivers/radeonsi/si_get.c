@@ -215,7 +215,7 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 420;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
-		return 140;
+		return 330;
 
 	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
 		return MIN2(sscreen->info.max_alloc_size, INT_MAX);
@@ -497,6 +497,8 @@ static int si_get_shader_param(struct pipe_screen* pscreen,
 	case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
 	case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
 		return 0;
+	case PIPE_SHADER_CAP_SCALAR_ISA:
+		return 1;
 	}
 	return 0;
 }

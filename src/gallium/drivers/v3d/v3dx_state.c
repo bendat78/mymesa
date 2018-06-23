@@ -556,9 +556,17 @@ v3d_create_sampler_state(struct pipe_context *pctx,
                                                    15);
                 sampler.max_level_of_detail = MIN2(cso->max_lod, 15);
 
+                /* If we're not doing inter-miplevel filtering, we need to
+                 * clamp the LOD so that we only sample from baselevel.
+                 * However, we need to still allow the calculated LOD to be
+                 * fractionally over the baselevel, so that the HW can decide
+                 * between the min and mag filters.
+                 */
                 if (cso->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
-                        sampler.min_level_of_detail = 0;
-                        sampler.max_level_of_detail = 0;
+                        sampler.min_level_of_detail =
+                                MIN2(sampler.min_level_of_detail, 1.0 / 256.0);
+                        sampler.max_level_of_detail =
+                                MIN2(sampler.max_level_of_detail, 1.0 / 256.0);
                 }
 
                 if (cso->max_anisotropy) {
@@ -902,8 +910,12 @@ v3d_set_stream_output_targets(struct pipe_context *pctx,
 
         assert(num_targets <= ARRAY_SIZE(so->targets));
 
-        for (i = 0; i < num_targets; i++)
+        for (i = 0; i < num_targets; i++) {
+                if (offsets[i] != -1)
+                        so->offsets[i] = offsets[i];
+
                 pipe_so_target_reference(&so->targets[i], targets[i]);
+        }
 
         for (; i < so->num_targets; i++)
                 pipe_so_target_reference(&so->targets[i], NULL);

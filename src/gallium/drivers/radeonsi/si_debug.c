@@ -43,7 +43,7 @@ DEBUG_GET_ONCE_OPTION(replace_shaders, "RADEON_REPLACE_SHADERS", NULL)
  * Store a linearized copy of all chunks of \p cs together with the buffer
  * list in \p saved.
  */
-void si_save_cs(struct radeon_winsys *ws, struct radeon_winsys_cs *cs,
+void si_save_cs(struct radeon_winsys *ws, struct radeon_cmdbuf *cs,
 		struct radeon_saved_cs *saved, bool get_buffer_list)
 {
 	uint32_t *buf;
@@ -346,7 +346,7 @@ static void si_log_chunk_type_cs_destroy(void *data)
 	free(chunk);
 }
 
-static void si_parse_current_ib(FILE *f, struct radeon_winsys_cs *cs,
+static void si_parse_current_ib(FILE *f, struct radeon_cmdbuf *cs,
 				unsigned begin, unsigned end,
 				int *last_trace_id, unsigned trace_id_count,
 				const char *name, enum chip_class chip_class)
@@ -359,7 +359,7 @@ static void si_parse_current_ib(FILE *f, struct radeon_winsys_cs *cs,
 		name, begin);
 
 	for (unsigned prev_idx = 0; prev_idx < cs->num_prev; ++prev_idx) {
-		struct radeon_winsys_cs_chunk *chunk = &cs->prev[prev_idx];
+		struct radeon_cmdbuf_chunk *chunk = &cs->prev[prev_idx];
 
 		if (begin < chunk->cdw) {
 			ac_parse_ib_chunk(f, chunk->buf + begin,
@@ -590,23 +590,23 @@ static void si_dump_bo_list(struct si_context *sctx,
 static void si_dump_framebuffer(struct si_context *sctx, struct u_log_context *log)
 {
 	struct pipe_framebuffer_state *state = &sctx->framebuffer.state;
-	struct r600_texture *rtex;
+	struct si_texture *tex;
 	int i;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
 		if (!state->cbufs[i])
 			continue;
 
-		rtex = (struct r600_texture*)state->cbufs[i]->texture;
+		tex = (struct si_texture*)state->cbufs[i]->texture;
 		u_log_printf(log, COLOR_YELLOW "Color buffer %i:" COLOR_RESET "\n", i);
-		si_print_texture_info(sctx->screen, rtex, log);
+		si_print_texture_info(sctx->screen, tex, log);
 		u_log_printf(log, "\n");
 	}
 
 	if (state->zsbuf) {
-		rtex = (struct r600_texture*)state->zsbuf->texture;
+		tex = (struct si_texture*)state->zsbuf->texture;
 		u_log_printf(log, COLOR_YELLOW "Depth-stencil buffer:" COLOR_RESET "\n");
-		si_print_texture_info(sctx->screen, rtex, log);
+		si_print_texture_info(sctx->screen, tex, log);
 		u_log_printf(log, "\n");
 	}
 }

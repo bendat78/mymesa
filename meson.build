@@ -247,6 +247,13 @@ if _platforms.length() != 0 and _platforms != ['']
   egl_native_platform = _platforms[0]
 endif
 
+_xlib_lease = get_option('xlib-lease')
+if _xlib_lease == 'auto'
+  with_xlib_lease = with_platform_x11 and with_platform_drm
+else
+  with_xlib_lease = _xlib_lease == 'true'
+endif
+
 with_glx = get_option('glx')
 if with_glx == 'auto'
   if with_dri
@@ -391,16 +398,17 @@ elif not (with_gallium_r300 or with_gallium_r600 or with_gallium_radeonsi or
   else
     _vdpau = 'false'
   endif
-elif _vdpau == 'auto'
-  _vdpau = 'true'
 endif
-with_gallium_vdpau = _vdpau == 'true'
 dep_vdpau = null_dep
-if with_gallium_vdpau
-  dep_vdpau = dependency('vdpau', version : '>= 1.1')
-  dep_vdpau = declare_dependency(
-    compile_args : run_command(prog_pkgconfig, ['vdpau', '--cflags']).stdout().split()
-  )
+with_gallium_vdpau = false
+if _vdpau != 'false'
+  dep_vdpau = dependency('vdpau', version : '>= 1.1', required : _vdpau == 'true')
+  if dep_vdpau.found()
+    dep_vdpau = declare_dependency(
+      compile_args : run_command(prog_pkgconfig, ['vdpau', '--cflags']).stdout().split()
+    )
+    with_gallium_vdpau = true
+  endif
 endif
 
 if with_gallium_vdpau
@@ -430,13 +438,12 @@ elif not (with_gallium_r600 or with_gallium_nouveau)
   else
     _xvmc = 'false'
   endif
-elif _xvmc == 'auto'
-  _xvmc = 'true'
 endif
-with_gallium_xvmc = _xvmc == 'true'
 dep_xvmc = null_dep
-if with_gallium_xvmc
-  dep_xvmc = dependency('xvmc', version : '>= 1.0.6')
+with_gallium_xvmc = false
+if _xvmc != 'false'
+  dep_xvmc = dependency('xvmc', version : '>= 1.0.6', required : _xvmc == 'true')
+  with_gallium_xvmc = dep_xvmc.found()
 endif
 
 xvmc_drivers_path = get_option('xvmc-libs-path')
@@ -552,13 +559,16 @@ elif not (with_gallium_r600 or with_gallium_radeonsi or with_gallium_nouveau)
 elif _va == 'auto'
   _va = 'true'
 endif
-with_gallium_va = _va == 'true'
+with_gallium_va = false
 dep_va = null_dep
-if with_gallium_va
-  dep_va = dependency('libva', version : '>= 0.39.0')
-  dep_va_headers = declare_dependency(
-    compile_args : run_command(prog_pkgconfig, ['libva', '--cflags']).stdout().split()
-  )
+if _va != 'false'
+  dep_va = dependency('libva', version : '>= 0.38.0', required : _va == 'true')
+  if dep_va.found()
+    dep_va_headers = declare_dependency(
+      compile_args : run_command(prog_pkgconfig, ['libva', '--cflags']).stdout().split()
+    )
+    with_gallium_va = true
+  endif
 endif
 
 va_drivers_path = get_option('va-libs-path')
@@ -762,6 +772,10 @@ foreach a : ['-Wall', '-Werror=implicit-function-declaration',
     c_args += a
   endif
 endforeach
+if cc.has_argument('-Wmissing-field-initializers')
+  c_args += '-Wno-missing-field-initializers'
+endif
+
 c_vis_args = []
 if cc.has_argument('-fvisibility=hidden')
   c_vis_args += '-fvisibility=hidden'
@@ -778,9 +792,12 @@ endforeach
 
 # For some reason, the test for -Wno-foo always succeeds with gcc, even if the
 # option is not supported. Hence, check for -Wfoo instead.
-if cpp.has_argument('-Wnon-virtual-dtor')
-  cpp_args += '-Wno-non-virtual-dtor'
-endif
+
+foreach a : ['non-virtual-dtor', 'missing-field-initializers']
+  if cpp.has_argument('-W' + a)
+    cpp_args += '-Wno-' + a
+  endif
+endforeach
 
 no_override_init_args = []
 foreach a : ['override-init', 'initializer-overrides']
@@ -1130,10 +1147,8 @@ if with_gallium_opencl
   llvm_optional_modules += ['coroutines', 'opencl']
 endif
 
-if with_amd_vk or with_gallium_radeonsi
+if with_amd_vk or with_gallium_radeonsi or with_gallium_swr
   _llvm_version = '>= 5.0.0'
-elif with_gallium_swr
-  _llvm_version = '>= 4.0.0'
 elif with_gallium_opencl or with_gallium_r600
   _llvm_version = '>= 3.9.0'
 else
@@ -1293,6 +1308,8 @@ dep_xcb_present = null_dep
 dep_xcb_sync = null_dep
 dep_xcb_xfixes = null_dep
 dep_xshmfence = null_dep
+dep_xcb_xrandr = null_dep
+dep_xlib_xrandr = null_dep
 if with_platform_x11
   if with_glx == 'xlib' or with_glx == 'gallium-xlib'
     dep_x11 = dependency('x11')
@@ -1338,6 +1355,10 @@ if with_platform_x11
       with_gallium_vdpau or with_gallium_xvmc or with_gallium_xa or
       with_gallium_omx != 'disabled'))
     dep_xcb_xfixes = dependency('xcb-xfixes')
+  endif
+  if with_xlib_lease
+    dep_xcb_xrandr = dependency('xcb-randr', version : '>= 1.12')
+    dep_xlib_xrandr = dependency('xrandr', version : '>= 1.3')
   endif
 endif
 

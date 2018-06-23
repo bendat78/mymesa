@@ -35,6 +35,7 @@
 
 #include "nir/tgsi_to_nir.h"
 
+
 static const nir_shader_compiler_options options = {
 		.lower_fpow = true,
 		.lower_scmp = true,
@@ -204,6 +205,8 @@ ir3_optimize_nir(struct ir3_shader *shader, nir_shader *s,
 
 	OPT_V(s, nir_remove_dead_variables, nir_var_local);
 
+	OPT_V(s, nir_move_load_const);
+
 	if (fd_mesa_debug & FD_DBG_DISASM) {
 		debug_printf("----------------------\n");
 		nir_print_shader(s, stdout);
@@ -242,16 +245,16 @@ ir3_nir_scan_driver_consts(nir_shader *shader,
 						layout->ssbo_size.count;
 					layout->ssbo_size.count += 1; /* one const per */
 					break;
-				case nir_intrinsic_image_var_atomic_add:
-				case nir_intrinsic_image_var_atomic_min:
-				case nir_intrinsic_image_var_atomic_max:
-				case nir_intrinsic_image_var_atomic_and:
-				case nir_intrinsic_image_var_atomic_or:
-				case nir_intrinsic_image_var_atomic_xor:
-				case nir_intrinsic_image_var_atomic_exchange:
-				case nir_intrinsic_image_var_atomic_comp_swap:
-				case nir_intrinsic_image_var_store:
-					idx = intr->variables[0]->var->data.driver_location;
+				case nir_intrinsic_image_deref_atomic_add:
+				case nir_intrinsic_image_deref_atomic_min:
+				case nir_intrinsic_image_deref_atomic_max:
+				case nir_intrinsic_image_deref_atomic_and:
+				case nir_intrinsic_image_deref_atomic_or:
+				case nir_intrinsic_image_deref_atomic_xor:
+				case nir_intrinsic_image_deref_atomic_exchange:
+				case nir_intrinsic_image_deref_atomic_comp_swap:
+				case nir_intrinsic_image_deref_store:
+					idx = nir_intrinsic_get_var(intr, 0)->data.driver_location;
 					if (layout->image_dims.mask & (1 << idx))
 						break;
 					layout->image_dims.mask |= (1 << idx);

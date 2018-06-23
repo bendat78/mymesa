@@ -104,7 +104,7 @@ void si_init_resource_fields(struct si_screen *sscreen,
 			     struct r600_resource *res,
 			     uint64_t size, unsigned alignment)
 {
-	struct r600_texture *rtex = (struct r600_texture*)res;
+	struct si_texture *tex = (struct si_texture*)res;
 
 	res->bo_size = size;
 	res->bo_alignment = alignment;
@@ -142,8 +142,7 @@ void si_init_resource_fields(struct si_screen *sscreen,
 	}
 
 	if (res->b.b.target == PIPE_BUFFER &&
-	    res->b.b.flags & (PIPE_RESOURCE_FLAG_MAP_PERSISTENT |
-			      PIPE_RESOURCE_FLAG_MAP_COHERENT)) {
+	    res->b.b.flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT) {
 		/* Use GTT for all persistent mappings with older
 		 * kernels, because they didn't always flush the HDP
 		 * cache before CS execution.
@@ -151,13 +150,17 @@ void si_init_resource_fields(struct si_screen *sscreen,
 		 * Write-combined CPU mappings are fine, the kernel
 		 * ensures all CPU writes finish before the GPU
 		 * executes a command stream.
+		 *
+		 * radeon doesn't have good BO move throttling, so put all
+		 * persistent buffers into GTT to prevent VRAM CPU page faults.
 		 */
-		if (!sscreen->info.kernel_flushes_hdp_before_ib)
+		if (!sscreen->info.kernel_flushes_hdp_before_ib ||
+		    sscreen->info.drm_major == 2)
 			res->domains = RADEON_DOMAIN_GTT;
 	}
 
 	/* Tiled textures are unmappable. Always put them in VRAM. */
-	if ((res->b.b.target != PIPE_BUFFER && !rtex->surface.is_linear) ||
+	if ((res->b.b.target != PIPE_BUFFER && !tex->surface.is_linear) ||
 	    res->b.b.flags & SI_RESOURCE_FLAG_UNMAPPABLE) {
 		res->domains = RADEON_DOMAIN_VRAM;
 		res->flags |= RADEON_FLAG_NO_CPU_ACCESS |

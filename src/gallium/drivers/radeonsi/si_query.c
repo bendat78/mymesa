@@ -731,7 +731,7 @@ static unsigned event_type_for_stream(unsigned stream)
 	}
 }
 
-static void emit_sample_streamout(struct radeon_winsys_cs *cs, uint64_t va,
+static void emit_sample_streamout(struct radeon_cmdbuf *cs, uint64_t va,
 				  unsigned stream)
 {
 	radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
@@ -745,7 +745,7 @@ static void si_query_hw_do_emit_start(struct si_context *sctx,
 					struct r600_resource *buffer,
 					uint64_t va)
 {
-	struct radeon_winsys_cs *cs = sctx->gfx_cs;
+	struct radeon_cmdbuf *cs = sctx->gfx_cs;
 
 	switch (query->b.type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
@@ -829,7 +829,7 @@ static void si_query_hw_do_emit_stop(struct si_context *sctx,
 				       struct r600_resource *buffer,
 				       uint64_t va)
 {
-	struct radeon_winsys_cs *cs = sctx->gfx_cs;
+	struct radeon_cmdbuf *cs = sctx->gfx_cs;
 	uint64_t fence_va = 0;
 
 	switch (query->b.type) {
@@ -920,7 +920,7 @@ static void emit_set_predicate(struct si_context *ctx,
 			       struct r600_resource *buf, uint64_t va,
 			       uint32_t op)
 {
-	struct radeon_winsys_cs *cs = ctx->gfx_cs;
+	struct radeon_cmdbuf *cs = ctx->gfx_cs;
 
 	if (ctx->chip_class >= GFX9) {
 		radeon_emit(cs, PKT3(PKT3_SET_PREDICATION, 2, 0));
@@ -1942,7 +1942,11 @@ static struct pipe_driver_query_info si_driver_query_list[] = {
 	X("GPU-db-busy",		GPU_DB_BUSY,		UINT64, AVERAGE),
 	X("GPU-cp-busy",		GPU_CP_BUSY,		UINT64, AVERAGE),
 	X("GPU-cb-busy",		GPU_CB_BUSY,		UINT64, AVERAGE),
+
+	/* SRBM_STATUS2 */
 	X("GPU-sdma-busy",		GPU_SDMA_BUSY,		UINT64, AVERAGE),
+
+	/* CP_STAT */
 	X("GPU-pfp-busy",		GPU_PFP_BUSY,		UINT64, AVERAGE),
 	X("GPU-meq-busy",		GPU_MEQ_BUSY,		UINT64, AVERAGE),
 	X("GPU-me-busy",		GPU_ME_BUSY,		UINT64, AVERAGE),
@@ -1957,16 +1961,23 @@ static struct pipe_driver_query_info si_driver_query_list[] = {
 
 static unsigned si_get_num_queries(struct si_screen *sscreen)
 {
-	if (sscreen->info.drm_major == 2 && sscreen->info.drm_minor >= 42)
-		return ARRAY_SIZE(si_driver_query_list);
-	else if (sscreen->info.drm_major == 3) {
+	/* amdgpu */
+	if (sscreen->info.drm_major == 3) {
 		if (sscreen->info.chip_class >= VI)
 			return ARRAY_SIZE(si_driver_query_list);
 		else
 			return ARRAY_SIZE(si_driver_query_list) - 7;
 	}
-	else
-		return ARRAY_SIZE(si_driver_query_list) - 25;
+
+	/* radeon */
+	if (sscreen->info.has_read_registers_query) {
+		if (sscreen->info.chip_class == CIK)
+			return ARRAY_SIZE(si_driver_query_list) - 6;
+		else
+			return ARRAY_SIZE(si_driver_query_list) - 7;
+	}
+
+	return ARRAY_SIZE(si_driver_query_list) - 21;
 }
 
 static int si_get_driver_query_info(struct pipe_screen *screen,
