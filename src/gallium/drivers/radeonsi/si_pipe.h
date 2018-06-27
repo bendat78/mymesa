@@ -30,7 +30,6 @@
 
 #include "util/u_dynarray.h"
 #include "util/u_idalloc.h"
-#include "util/u_range.h"
 #include "util/u_threaded_context.h"
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
@@ -226,18 +225,10 @@ struct r600_resource {
 	unsigned			external_usage; /* PIPE_HANDLE_USAGE_* */
 };
 
-struct r600_transfer {
+struct si_transfer {
 	struct threaded_transfer	b;
 	struct r600_resource		*staging;
 	unsigned			offset;
-};
-
-struct r600_cmask_info {
-	uint64_t offset;
-	uint64_t size;
-	unsigned alignment;
-	unsigned slice_tile_max;
-	uint64_t base_address_reg;
 };
 
 struct si_texture {
@@ -249,7 +240,8 @@ struct si_texture {
 
 	/* Colorbuffer compression and fast clear. */
 	uint64_t			fmask_offset;
-	struct r600_cmask_info		cmask;
+	uint64_t			cmask_offset;
+	uint64_t			cmask_base_address_reg;
 	struct r600_resource		*cmask_buffer;
 	uint64_t			dcc_offset; /* 0 = disabled */
 	unsigned			cb_color_info; /* fast clear enable bit */
@@ -307,7 +299,7 @@ struct si_texture {
 	unsigned			num_slow_clears;
 };
 
-struct r600_surface {
+struct si_surface {
 	struct pipe_surface		base;
 
 	/* These can vary with block-compressed textures. */
@@ -388,11 +380,10 @@ union si_mmio_counters {
 	unsigned array[0];
 };
 
-struct r600_memory_object {
+struct si_memory_object {
 	struct pipe_memory_object	b;
 	struct pb_buffer		*buf;
 	uint32_t			stride;
-	uint32_t			offset;
 };
 
 /* Saved CS data for debugging features. */
@@ -1228,9 +1219,6 @@ bool si_prepare_for_dma_blit(struct si_context *sctx,
 			     struct si_texture *src,
 			     unsigned src_level,
 			     const struct pipe_box *src_box);
-void si_texture_get_cmask_info(struct si_screen *sscreen,
-			       struct si_texture *tex,
-			       struct r600_cmask_info *out);
 void si_eliminate_fast_color_clear(struct si_context *sctx,
 				   struct si_texture *tex);
 void si_texture_discard_cmask(struct si_screen *sscreen,

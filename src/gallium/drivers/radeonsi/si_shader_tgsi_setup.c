@@ -24,21 +24,8 @@
 
 #include "si_shader_internal.h"
 #include "si_pipe.h"
-
-#include "gallivm/lp_bld_const.h"
-#include "gallivm/lp_bld_gather.h"
-#include "gallivm/lp_bld_flow.h"
-#include "gallivm/lp_bld_init.h"
-#include "gallivm/lp_bld_intr.h"
-#include "gallivm/lp_bld_misc.h"
-#include "gallivm/lp_bld_swizzle.h"
-#include "tgsi/tgsi_info.h"
-#include "tgsi/tgsi_parse.h"
-#include "util/u_math.h"
+#include "ac_llvm_util.h"
 #include "util/u_memory.h"
-#include "util/u_debug.h"
-
-#include <stdio.h>
 
 enum si_llvm_calling_convention {
 	RADEON_LLVM_AMDGPU_VS = 87,
@@ -508,7 +495,7 @@ LLVMValueRef si_llvm_emit_fetch(struct lp_build_tgsi_context *bld_base,
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
 			values[chan] = si_llvm_emit_fetch(bld_base, reg, type, chan);
 		}
-		return lp_build_gather_values(&ctx->gallivm, values,
+		return ac_build_gather_values(&ctx->ac, values,
 					      TGSI_NUM_CHANNELS);
 	}
 
@@ -638,9 +625,8 @@ static void emit_declaration(struct lp_build_tgsi_context *bld_base,
 		for (idx = decl->Range.First; idx <= decl->Range.Last; idx++) {
 			unsigned chan;
 			for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
-				 ctx->addrs[idx][chan] = lp_build_alloca_undef(
-					&ctx->gallivm,
-					ctx->i32, "");
+				 ctx->addrs[idx][chan] = ac_build_alloca_undef(
+					&ctx->ac, ctx->i32, "");
 			}
 		}
 		break;
@@ -685,7 +671,7 @@ static void emit_declaration(struct lp_build_tgsi_context *bld_base,
 			 */
 			if (array_size > 16 ||
 			    !ctx->screen->llvm_has_working_vgpr_indexing) {
-				array_alloca = lp_build_alloca_undef(&ctx->gallivm,
+				array_alloca = ac_build_alloca_undef(&ctx->ac,
 					LLVMArrayType(ctx->f32,
 						      array_size), "array");
 				ctx->temp_array_allocas[id] = array_alloca;
@@ -703,7 +689,7 @@ static void emit_declaration(struct lp_build_tgsi_context *bld_base,
 					 first + i / 4, "xyzw"[i % 4]);
 #endif
 				ctx->temps[first * TGSI_NUM_CHANNELS + i] =
-					lp_build_alloca_undef(&ctx->gallivm,
+					ac_build_alloca_undef(&ctx->ac,
 							      ctx->f32,
 							      name);
 			}
@@ -721,9 +707,8 @@ static void emit_declaration(struct lp_build_tgsi_context *bld_base,
 				 * a shader ever reads from a channel that
 				 * it never writes to.
 				 */
-				ctx->undef_alloca = lp_build_alloca_undef(
-					&ctx->gallivm,
-					ctx->f32, "undef");
+				ctx->undef_alloca = ac_build_alloca_undef(
+					&ctx->ac, ctx->f32, "undef");
 			}
 
 			for (i = 0; i < decl_size; ++i) {
@@ -787,9 +772,8 @@ static void emit_declaration(struct lp_build_tgsi_context *bld_base,
 				snprintf(name, sizeof(name), "OUT%d.%c",
 					 idx, "xyzw"[chan % 4]);
 #endif
-				ctx->outputs[idx][chan] = lp_build_alloca_undef(
-					&ctx->gallivm,
-					ctx->f32, name);
+				ctx->outputs[idx][chan] = ac_build_alloca_undef(
+					&ctx->ac, ctx->f32, name);
 			}
 		}
 		break;

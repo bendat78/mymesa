@@ -82,7 +82,7 @@ bool si_prepare_for_dma_blit(struct si_context *sctx,
 	 *   dst: If overwriting the whole texture, discard CMASK and use
 	 *        SDMA. Otherwise, use the 3D path.
 	 */
-	if (dst->cmask.size && dst->dirty_level_mask & (1 << dst_level)) {
+	if (dst->cmask_buffer && dst->dirty_level_mask & (1 << dst_level)) {
 		/* The CMASK clear is only enabled for the first level. */
 		assert(dst_level == 0);
 		if (!util_texrange_covers_whole_level(&dst->buffer.b.b, dst_level,
@@ -94,7 +94,7 @@ bool si_prepare_for_dma_blit(struct si_context *sctx,
 	}
 
 	/* All requirements are met. Prepare textures for SDMA. */
-	if (src->cmask.size && src->dirty_level_mask & (1 << src_level))
+	if (src->cmask_buffer && src->dirty_level_mask & (1 << src_level))
 		sctx->b.flush_resource(&sctx->b, &src->buffer.b.b);
 
 	assert(!(src->dirty_level_mask & (1 << src_level)));
@@ -138,11 +138,11 @@ static void si_copy_region_with_blit(struct pipe_context *pipe,
 }
 
 /* Copy from a full GPU texture to a transfer's staging one. */
-static void si_copy_to_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
+static void si_copy_to_staging_texture(struct pipe_context *ctx, struct si_transfer *stransfer)
 {
 	struct si_context *sctx = (struct si_context*)ctx;
-	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
-	struct pipe_resource *dst = &rtransfer->staging->b.b;
+	struct pipe_transfer *transfer = (struct pipe_transfer*)stransfer;
+	struct pipe_resource *dst = &stransfer->staging->b.b;
 	struct pipe_resource *src = transfer->resource;
 
 	if (src->nr_samples > 1) {
@@ -156,12 +156,12 @@ static void si_copy_to_staging_texture(struct pipe_context *ctx, struct r600_tra
 }
 
 /* Copy from a transfer's staging texture to a full GPU one. */
-static void si_copy_from_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
+static void si_copy_from_staging_texture(struct pipe_context *ctx, struct si_transfer *stransfer)
 {
 	struct si_context *sctx = (struct si_context*)ctx;
-	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
+	struct pipe_transfer *transfer = (struct pipe_transfer*)stransfer;
 	struct pipe_resource *dst = transfer->resource;
-	struct pipe_resource *src = &rtransfer->staging->b.b;
+	struct pipe_resource *src = &stransfer->staging->b.b;
 	struct pipe_box sbox;
 
 	u_box_3d(0, 0, 0, transfer->box.width, transfer->box.height, transfer->box.depth, &sbox);
@@ -420,20 +420,21 @@ void si_eliminate_fast_color_clear(struct si_context *sctx,
 void si_texture_discard_cmask(struct si_screen *sscreen,
 			      struct si_texture *tex)
 {
-	if (!tex->cmask.size)
+	if (!tex->cmask_buffer)
 		return;
 
 	assert(tex->buffer.b.b.nr_samples <= 1);
 
 	/* Disable CMASK. */
-	memset(&tex->cmask, 0, sizeof(tex->cmask));
-	tex->cmask.base_address_reg = tex->buffer.gpu_address >> 8;
+	tex->cmask_base_address_reg = tex->buffer.gpu_address >> 8;
 	tex->dirty_level_mask = 0;
 
 	tex->cb_color_info &= ~S_028C70_FAST_CLEAR(1);
 
 	if (tex->cmask_buffer != &tex->buffer)
 	    r600_resource_reference(&tex->cmask_buffer, NULL);
+
+	tex->cmask_buffer = NULL;
 
 	/* Notify all contexts about the change. */
 	p_atomic_inc(&sscreen->dirty_tex_counter);
@@ -564,26 +565,56 @@ static void si_reallocate_texture_inplace(struct si_context *sctx,
 	tex->buffer.bo_alignment = new_tex->buffer.bo_alignment;
 	tex->buffer.domains = new_tex->buffer.domains;
 	tex->buffer.flags = new_tex->buffer.flags;
-	tex->size = new_tex->size;
-	tex->db_render_format = new_tex->db_render_format;
-	tex->db_compatible = new_tex->db_compatible;
-	tex->can_sample_z = new_tex->can_sample_z;
-	tex->can_sample_s = new_tex->can_sample_s;
+
 	tex->surface = new_tex->surface;
+	tex->size = new_tex->size;
+	si_texture_reference(&tex->flushed_depth_texture,
+			     new_tex->flushed_depth_texture);
+
 	tex->fmask_offset = new_tex->fmask_offset;
-	tex->cmask = new_tex->cmask;
+	tex->cmask_offset = new_tex->cmask_offset;
+	tex->cmask_base_address_reg = new_tex->cmask_base_address_reg;
+
+	if (tex->cmask_buffer == &tex->buffer)
+		tex->cmask_buffer = NULL;
+	else
+		r600_resource_reference(&tex->cmask_buffer, NULL);
+
+	if (new_tex->cmask_buffer == &new_tex->buffer)
+		tex->cmask_buffer = &tex->buffer;
+	else
+		r600_resource_reference(&tex->cmask_buffer, new_tex->cmask_buffer);
+
+	tex->dcc_offset = new_tex->dcc_offset;
 	tex->cb_color_info = new_tex->cb_color_info;
+	memcpy(tex->color_clear_value, new_tex->color_clear_value,
+	       sizeof(tex->color_clear_value));
 	tex->last_msaa_resolve_target_micro_mode = new_tex->last_msaa_resolve_target_micro_mode;
+
 	tex->htile_offset = new_tex->htile_offset;
+	tex->depth_clear_value = new_tex->depth_clear_value;
+	tex->dirty_level_mask = new_tex->dirty_level_mask;
+	tex->stencil_dirty_level_mask = new_tex->stencil_dirty_level_mask;
+	tex->db_render_format = new_tex->db_render_format;
+	tex->stencil_clear_value = new_tex->stencil_clear_value;
 	tex->tc_compatible_htile = new_tex->tc_compatible_htile;
 	tex->depth_cleared = new_tex->depth_cleared;
 	tex->stencil_cleared = new_tex->stencil_cleared;
+	tex->upgraded_depth = new_tex->upgraded_depth;
+	tex->db_compatible = new_tex->db_compatible;
+	tex->can_sample_z = new_tex->can_sample_z;
+	tex->can_sample_s = new_tex->can_sample_s;
+
+	tex->separate_dcc_dirty = new_tex->separate_dcc_dirty;
 	tex->dcc_gather_statistics = new_tex->dcc_gather_statistics;
-	tex->framebuffers_bound = new_tex->framebuffers_bound;
+	r600_resource_reference(&tex->dcc_separate_buffer,
+				new_tex->dcc_separate_buffer);
+	r600_resource_reference(&tex->last_dcc_separate_buffer,
+				new_tex->last_dcc_separate_buffer);
 
 	if (new_bind_flag == PIPE_BIND_LINEAR) {
 		assert(!tex->htile_offset);
-		assert(!tex->cmask.size);
+		assert(!tex->cmask_buffer);
 		assert(!tex->surface.fmask_size);
 		assert(!tex->dcc_offset);
 		assert(!tex->is_depth);
@@ -742,7 +773,7 @@ static boolean si_texture_get_handle(struct pipe_screen* screen,
 		}
 
 		if (!(usage & PIPE_HANDLE_USAGE_EXPLICIT_FLUSH) &&
-		    (tex->cmask.size || tex->dcc_offset)) {
+		    (tex->cmask_buffer || tex->dcc_offset)) {
 			/* Eliminate fast clear (both CMASK and DCC) */
 			si_eliminate_fast_color_clear(sctx, tex);
 			/* eliminate_fast_color_clear flushes the context */
@@ -751,7 +782,7 @@ static boolean si_texture_get_handle(struct pipe_screen* screen,
 			/* Disable CMASK if flush_resource isn't going
 			 * to be called.
 			 */
-			if (tex->cmask.size)
+			if (tex->cmask_buffer)
 				si_texture_discard_cmask(sscreen, tex);
 		}
 
@@ -849,71 +880,6 @@ static void si_texture_destroy(struct pipe_screen *screen,
 }
 
 static const struct u_resource_vtbl si_texture_vtbl;
-
-void si_texture_get_cmask_info(struct si_screen *sscreen,
-			       struct si_texture *tex,
-			       struct r600_cmask_info *out)
-{
-	unsigned pipe_interleave_bytes = sscreen->info.pipe_interleave_bytes;
-	unsigned num_pipes = sscreen->info.num_tile_pipes;
-	unsigned cl_width, cl_height;
-
-	if (sscreen->info.chip_class >= GFX9) {
-		out->alignment = tex->surface.u.gfx9.cmask_alignment;
-		out->size = tex->surface.u.gfx9.cmask_size;
-		return;
-	}
-
-	switch (num_pipes) {
-	case 2:
-		cl_width = 32;
-		cl_height = 16;
-		break;
-	case 4:
-		cl_width = 32;
-		cl_height = 32;
-		break;
-	case 8:
-		cl_width = 64;
-		cl_height = 32;
-		break;
-	case 16: /* Hawaii */
-		cl_width = 64;
-		cl_height = 64;
-		break;
-	default:
-		assert(0);
-		return;
-	}
-
-	unsigned base_align = num_pipes * pipe_interleave_bytes;
-
-	unsigned width = align(tex->buffer.b.b.width0, cl_width*8);
-	unsigned height = align(tex->buffer.b.b.height0, cl_height*8);
-	unsigned slice_elements = (width * height) / (8*8);
-
-	/* Each element of CMASK is a nibble. */
-	unsigned slice_bytes = slice_elements / 2;
-
-	out->slice_tile_max = (width * height) / (128*128);
-	if (out->slice_tile_max)
-		out->slice_tile_max -= 1;
-
-	out->alignment = MAX2(256, base_align);
-	out->size = util_num_layers(&tex->buffer.b.b, 0) *
-		    align(slice_bytes, base_align);
-}
-
-static void si_texture_allocate_cmask(struct si_screen *sscreen,
-				      struct si_texture *tex)
-{
-	si_texture_get_cmask_info(sscreen, tex, &tex->cmask);
-
-	tex->cmask.offset = align64(tex->size, tex->cmask.alignment);
-	tex->size = tex->cmask.offset + tex->cmask.size;
-
-	tex->cb_color_info |= S_028C70_FAST_CLEAR(1);
-}
 
 static void si_texture_get_htile_size(struct si_screen *sscreen,
 				      struct si_texture *tex)
@@ -1030,12 +996,12 @@ void si_print_texture_info(struct si_screen *sscreen,
 				tex->surface.u.gfx9.fmask.epitch);
 		}
 
-		if (tex->cmask.size) {
-			u_log_printf(log, "  CMask: offset=%"PRIu64", size=%"PRIu64", "
+		if (tex->cmask_buffer) {
+			u_log_printf(log, "  CMask: offset=%"PRIu64", size=%u, "
 				"alignment=%u, rb_aligned=%u, pipe_aligned=%u\n",
-				tex->cmask.offset,
-				tex->surface.u.gfx9.cmask_size,
-				tex->surface.u.gfx9.cmask_alignment,
+				tex->cmask_offset,
+				tex->surface.cmask_size,
+				tex->surface.cmask_alignment,
 				tex->surface.u.gfx9.cmask.rb_aligned,
 				tex->surface.u.gfx9.cmask.pipe_aligned);
 		}
@@ -1084,11 +1050,11 @@ void si_print_texture_info(struct si_screen *sscreen,
 			tex->surface.u.legacy.fmask.slice_tile_max,
 			tex->surface.u.legacy.fmask.tiling_index);
 
-	if (tex->cmask.size)
-		u_log_printf(log, "  CMask: offset=%"PRIu64", size=%"PRIu64", alignment=%u, "
+	if (tex->cmask_buffer)
+		u_log_printf(log, "  CMask: offset=%"PRIu64", size=%u, alignment=%u, "
 			"slice_tile_max=%u\n",
-			tex->cmask.offset, tex->cmask.size, tex->cmask.alignment,
-			tex->cmask.slice_tile_max);
+			tex->cmask_offset, tex->surface.cmask_size, tex->surface.cmask_alignment,
+			tex->surface.u.legacy.cmask_slice_tile_max);
 
 	if (tex->htile_offset)
 		u_log_printf(log, "  HTile: offset=%"PRIu64", size=%u, "
@@ -1228,10 +1194,13 @@ si_texture_create_object(struct pipe_screen *screen,
 						     tex->surface.fmask_alignment);
 			tex->size = tex->fmask_offset + tex->surface.fmask_size;
 
-			si_texture_allocate_cmask(sscreen, tex);
+			/* Allocate CMASK. */
+			tex->cmask_offset = align64(tex->size, tex->surface.cmask_alignment);
+			tex->size = tex->cmask_offset + tex->surface.cmask_size;
+			tex->cb_color_info |= S_028C70_FAST_CLEAR(1);
 			tex->cmask_buffer = &tex->buffer;
 
-			if (!tex->surface.fmask_size || !tex->cmask.size) {
+			if (!tex->surface.fmask_size || !tex->surface.cmask_size) {
 				FREE(tex);
 				return NULL;
 			}
@@ -1271,10 +1240,10 @@ si_texture_create_object(struct pipe_screen *screen,
 			resource->gart_usage = buf->size;
 	}
 
-	if (tex->cmask.size) {
+	if (tex->cmask_buffer) {
 		/* Initialize the cmask to 0xCC (= compressed state). */
 		si_screen_clear_buffer(sscreen, &tex->cmask_buffer->b.b,
-					 tex->cmask.offset, tex->cmask.size,
+					 tex->cmask_offset, tex->surface.cmask_size,
 					 0xCCCCCCCC);
 	}
 	if (tex->htile_offset) {
@@ -1298,8 +1267,8 @@ si_texture_create_object(struct pipe_screen *screen,
 	}
 
 	/* Initialize the CMASK base register value. */
-	tex->cmask.base_address_reg =
-		(tex->buffer.gpu_address + tex->cmask.offset) >> 8;
+	tex->cmask_base_address_reg =
+		(tex->buffer.gpu_address + tex->cmask_offset) >> 8;
 
 	if (sscreen->debug_flags & DBG(VM)) {
 		fprintf(stderr, "VM start=0x%"PRIX64"  end=0x%"PRIX64" | Texture %ix%ix%i, %i levels, %i samples, %s\n",
@@ -1452,45 +1421,62 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 					NULL, &surface);
 }
 
-static struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
-						    const struct pipe_resource *templ,
-						    struct winsys_handle *whandle,
-						    unsigned usage)
+static struct pipe_resource *si_texture_from_winsys_buffer(struct si_screen *sscreen,
+							   const struct pipe_resource *templ,
+							   struct pb_buffer *buf,
+							   unsigned stride,
+							   unsigned offset,
+							   unsigned usage,
+							   bool dedicated)
 {
-	struct si_screen *sscreen = (struct si_screen*)screen;
-	struct pb_buffer *buf = NULL;
-	unsigned stride = 0, offset = 0;
 	enum radeon_surf_mode array_mode;
 	struct radeon_surf surface = {};
-	int r;
 	struct radeon_bo_metadata metadata = {};
 	struct si_texture *tex;
 	bool is_scanout;
+	int r;
 
-	/* Support only 2D textures without mipmaps */
-	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT) ||
-	      templ->depth0 != 1 || templ->last_level != 0)
-		return NULL;
-
-	buf = sscreen->ws->buffer_from_handle(sscreen->ws, whandle, &stride, &offset);
-	if (!buf)
-		return NULL;
-
-	sscreen->ws->buffer_get_metadata(buf, &metadata);
-	si_surface_import_metadata(sscreen, &surface, &metadata,
-				     &array_mode, &is_scanout);
+	if (dedicated) {
+		sscreen->ws->buffer_get_metadata(buf, &metadata);
+		si_surface_import_metadata(sscreen, &surface, &metadata,
+					   &array_mode, &is_scanout);
+	} else {
+		/**
+		 * The bo metadata is unset for un-dedicated images. So we fall
+		 * back to linear. See answer to question 5 of the
+		 * VK_KHX_external_memory spec for some details.
+		 *
+		 * It is possible that this case isn't going to work if the
+		 * surface pitch isn't correctly aligned by default.
+		 *
+		 * In order to support it correctly we require multi-image
+		 * metadata to be syncrhonized between radv and radeonsi. The
+		 * semantics of associating multiple image metadata to a memory
+		 * object on the vulkan export side are not concretely defined
+		 * either.
+		 *
+		 * All the use cases we are aware of at the moment for memory
+		 * objects use dedicated allocations. So lets keep the initial
+		 * implementation simple.
+		 *
+		 * A possible alternative is to attempt to reconstruct the
+		 * tiling information when the TexParameter TEXTURE_TILING_EXT
+		 * is set.
+		 */
+		array_mode = RADEON_SURF_MODE_LINEAR_ALIGNED;
+		is_scanout = false;
+	}
 
 	unsigned num_color_samples = si_get_num_color_samples(sscreen, templ, true);
 
 	r = si_init_surface(sscreen, &surface, templ, num_color_samples,
 			    array_mode, stride, offset, true, is_scanout,
 			    false, false);
-	if (r) {
+	if (r)
 		return NULL;
-	}
 
-	tex = si_texture_create_object(screen, templ, num_color_samples,
-					buf, &surface);
+	tex = si_texture_create_object(&sscreen->b, templ, num_color_samples,
+				       buf, &surface);
 	if (!tex)
 		return NULL;
 
@@ -1501,6 +1487,28 @@ static struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 
 	assert(tex->surface.tile_swizzle == 0);
 	return &tex->buffer.b.b;
+}
+
+static struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
+						    const struct pipe_resource *templ,
+						    struct winsys_handle *whandle,
+						    unsigned usage)
+{
+	struct si_screen *sscreen = (struct si_screen*)screen;
+	struct pb_buffer *buf = NULL;
+	unsigned stride = 0, offset = 0;
+
+	/* Support only 2D textures without mipmaps */
+	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT) ||
+	      templ->depth0 != 1 || templ->last_level != 0)
+		return NULL;
+
+	buf = sscreen->ws->buffer_from_handle(sscreen->ws, whandle, &stride, &offset);
+	if (!buf)
+		return NULL;
+
+	return si_texture_from_winsys_buffer(sscreen, templ, buf, stride,
+					     offset, usage, true);
 }
 
 bool si_init_flushed_depth_texture(struct pipe_context *ctx,
@@ -1625,8 +1633,8 @@ static void si_texture_invalidate_storage(struct si_context *sctx,
 	si_alloc_resource(sscreen, &tex->buffer);
 
 	/* Initialize the CMASK base address (needed even without CMASK). */
-	tex->cmask.base_address_reg =
-		(tex->buffer.gpu_address + tex->cmask.offset) >> 8;
+	tex->cmask_base_address_reg =
+		(tex->buffer.gpu_address + tex->cmask_offset) >> 8;
 
 	p_atomic_inc(&sscreen->dirty_tex_counter);
 
@@ -1642,7 +1650,7 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 {
 	struct si_context *sctx = (struct si_context*)ctx;
 	struct si_texture *tex = (struct si_texture*)texture;
-	struct r600_transfer *trans;
+	struct si_transfer *trans;
 	struct r600_resource *buf;
 	unsigned offset = 0;
 	char *map;
@@ -1699,7 +1707,7 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 		}
 	}
 
-	trans = CALLOC_STRUCT(r600_transfer);
+	trans = CALLOC_STRUCT(si_transfer);
 	if (!trans)
 		return NULL;
 	pipe_resource_reference(&trans->b.b.resource, texture);
@@ -1821,24 +1829,24 @@ static void si_texture_transfer_unmap(struct pipe_context *ctx,
 				      struct pipe_transfer* transfer)
 {
 	struct si_context *sctx = (struct si_context*)ctx;
-	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+	struct si_transfer *stransfer = (struct si_transfer*)transfer;
 	struct pipe_resource *texture = transfer->resource;
 	struct si_texture *tex = (struct si_texture*)texture;
 
-	if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtransfer->staging) {
+	if ((transfer->usage & PIPE_TRANSFER_WRITE) && stransfer->staging) {
 		if (tex->is_depth && tex->buffer.b.b.nr_samples <= 1) {
 			ctx->resource_copy_region(ctx, texture, transfer->level,
 						  transfer->box.x, transfer->box.y, transfer->box.z,
-						  &rtransfer->staging->b.b, transfer->level,
+						  &stransfer->staging->b.b, transfer->level,
 						  &transfer->box);
 		} else {
-			si_copy_from_staging_texture(ctx, rtransfer);
+			si_copy_from_staging_texture(ctx, stransfer);
 		}
 	}
 
-	if (rtransfer->staging) {
-		sctx->num_alloc_tex_transfer_bytes += rtransfer->staging->buf->size;
-		r600_resource_reference(&rtransfer->staging, NULL);
+	if (stransfer->staging) {
+		sctx->num_alloc_tex_transfer_bytes += stransfer->staging->buf->size;
+		r600_resource_reference(&stransfer->staging, NULL);
 	}
 
 	/* Heuristic for {upload, draw, upload, draw, ..}:
@@ -1961,7 +1969,7 @@ struct pipe_surface *si_create_surface_custom(struct pipe_context *pipe,
 					      unsigned width0, unsigned height0,
 					      unsigned width, unsigned height)
 {
-	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
+	struct si_surface *surface = CALLOC_STRUCT(si_surface);
 
 	if (!surface)
 		return NULL;
@@ -2334,7 +2342,7 @@ si_memobj_from_handle(struct pipe_screen *screen,
 		      bool dedicated)
 {
 	struct si_screen *sscreen = (struct si_screen*)screen;
-	struct r600_memory_object *memobj = CALLOC_STRUCT(r600_memory_object);
+	struct si_memory_object *memobj = CALLOC_STRUCT(si_memory_object);
 	struct pb_buffer *buf = NULL;
 	uint32_t stride, offset;
 
@@ -2351,7 +2359,6 @@ si_memobj_from_handle(struct pipe_screen *screen,
 	memobj->b.dedicated = dedicated;
 	memobj->buf = buf;
 	memobj->stride = stride;
-	memobj->offset = offset;
 
 	return (struct pipe_memory_object *)memobj;
 
@@ -2361,7 +2368,7 @@ static void
 si_memobj_destroy(struct pipe_screen *screen,
 		  struct pipe_memory_object *_memobj)
 {
-	struct r600_memory_object *memobj = (struct r600_memory_object *)_memobj;
+	struct si_memory_object *memobj = (struct si_memory_object *)_memobj;
 
 	pb_reference(&memobj->buf, NULL);
 	free(memobj);
@@ -2373,71 +2380,22 @@ si_texture_from_memobj(struct pipe_screen *screen,
 		       struct pipe_memory_object *_memobj,
 		       uint64_t offset)
 {
-	int r;
 	struct si_screen *sscreen = (struct si_screen*)screen;
-	struct r600_memory_object *memobj = (struct r600_memory_object *)_memobj;
-	struct si_texture *tex;
-	struct radeon_surf surface = {};
-	struct radeon_bo_metadata metadata = {};
-	enum radeon_surf_mode array_mode;
-	bool is_scanout;
-	struct pb_buffer *buf = NULL;
-
-	if (memobj->b.dedicated) {
-		sscreen->ws->buffer_get_metadata(memobj->buf, &metadata);
-		si_surface_import_metadata(sscreen, &surface, &metadata,
-				     &array_mode, &is_scanout);
-	} else {
-		/**
-		 * The bo metadata is unset for un-dedicated images. So we fall
-		 * back to linear. See answer to question 5 of the
-		 * VK_KHX_external_memory spec for some details.
-		 *
-		 * It is possible that this case isn't going to work if the
-		 * surface pitch isn't correctly aligned by default.
-		 *
-		 * In order to support it correctly we require multi-image
-		 * metadata to be syncrhonized between radv and radeonsi. The
-		 * semantics of associating multiple image metadata to a memory
-		 * object on the vulkan export side are not concretely defined
-		 * either.
-		 *
-		 * All the use cases we are aware of at the moment for memory
-		 * objects use dedicated allocations. So lets keep the initial
-		 * implementation simple.
-		 *
-		 * A possible alternative is to attempt to reconstruct the
-		 * tiling information when the TexParameter TEXTURE_TILING_EXT
-		 * is set.
-		 */
-		array_mode = RADEON_SURF_MODE_LINEAR_ALIGNED;
-		is_scanout = false;
-	}
-
-	unsigned num_color_samples = si_get_num_color_samples(sscreen, templ, true);
-
-	r = si_init_surface(sscreen, &surface, templ, num_color_samples,
-			    array_mode, memobj->stride, offset, true,
-			    is_scanout, false, false);
-	if (r)
-		return NULL;
-
-	tex = si_texture_create_object(screen, templ, num_color_samples,
-					memobj->buf, &surface);
+	struct si_memory_object *memobj = (struct si_memory_object *)_memobj;
+	struct pipe_resource *tex =
+		si_texture_from_winsys_buffer(sscreen, templ, memobj->buf,
+					      memobj->stride, offset,
+					      PIPE_HANDLE_USAGE_READ_WRITE,
+					      memobj->b.dedicated);
 	if (!tex)
 		return NULL;
 
-	/* si_texture_create_object doesn't increment refcount of
+	/* si_texture_from_winsys_buffer doesn't increment refcount of
 	 * memobj->buf, so increment it here.
 	 */
+	struct pb_buffer *buf = NULL;
 	pb_reference(&buf, memobj->buf);
-
-	tex->buffer.b.is_shared = true;
-	tex->buffer.external_usage = PIPE_HANDLE_USAGE_READ_WRITE;
-
-	si_apply_opaque_metadata(sscreen, tex, &metadata);
-
-	return &tex->buffer.b.b;
+	return tex;
 }
 
 static bool si_check_resource_capability(struct pipe_screen *screen,
