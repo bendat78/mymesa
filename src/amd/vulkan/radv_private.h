@@ -933,6 +933,7 @@ struct radv_descriptor_state {
 	uint32_t valid;
 	struct radv_push_descriptor_set push_set;
 	bool push_dirty;
+	uint32_t dynamic_buffers[4 * MAX_DYNAMIC_BUFFERS];
 };
 
 struct radv_cmd_state {
@@ -1019,7 +1020,6 @@ struct radv_cmd_buffer {
 	uint32_t queue_family_index;
 
 	uint8_t push_constants[MAX_PUSH_CONSTANTS_SIZE];
-	uint32_t dynamic_buffers[4 * MAX_DYNAMIC_BUFFERS];
 	VkShaderStageFlags push_constant_stages;
 	struct radv_descriptor_set meta_push_descriptors;
 
@@ -1065,7 +1065,6 @@ uint32_t si_get_ia_multi_vgt_param(struct radv_cmd_buffer *cmd_buffer,
 				   bool instanced_draw, bool indirect_draw,
 				   uint32_t draw_vertex_count);
 void si_cs_emit_write_event_eop(struct radeon_cmdbuf *cs,
-				bool predicated,
 				enum chip_class chip_class,
 				bool is_mec,
 				unsigned event, unsigned event_flags,
@@ -1075,7 +1074,6 @@ void si_cs_emit_write_event_eop(struct radeon_cmdbuf *cs,
 				uint32_t new_fence);
 
 void si_emit_wait_fence(struct radeon_cmdbuf *cs,
-			bool predicated,
 			uint64_t va, uint32_t ref,
 			uint32_t mask);
 void si_cs_emit_cache_flush(struct radeon_cmdbuf *cs,
