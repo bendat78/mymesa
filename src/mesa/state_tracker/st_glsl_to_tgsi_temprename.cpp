@@ -1333,6 +1333,7 @@ static int register_merge_record_compare (const void *a, const void *b) {
 /* these magic numbers are determined by looking at the results of shader-db */
 bool should_merge (int distance)
 {
+#ifdef __linux__
    switch (distance) {
        case 12 ... 126: //lower bound interfering with llvm?, upper bound here
        case 244 ... 768: // and lower bound here determined by one regressing tombraider shader
@@ -1344,6 +1345,7 @@ bool should_merge (int distance)
        case 2944 ... 3072: // above isnt used
           return true;
        default:
+#endif
           return false;
    }
 }
