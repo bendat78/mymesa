@@ -240,7 +240,7 @@ static int si_init_surface(struct si_screen *sscreen,
 
 	if (!is_flushed_depth &&
 	    ptex->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT) {
-		bpe = 4; /* stencil is allocated separately on evergreen */
+		bpe = 4; /* stencil is allocated separately */
 	} else {
 		bpe = util_format_get_blocksize(ptex->format);
 		assert(util_is_power_of_two_or_zero(bpe));
@@ -2231,8 +2231,12 @@ void vi_separate_dcc_try_enable(struct si_context *sctx,
 	    !(tex->buffer.external_usage & PIPE_HANDLE_USAGE_EXPLICIT_FLUSH) ||
 	    tex->buffer.b.b.target != PIPE_TEXTURE_2D ||
 	    tex->buffer.b.b.last_level > 0 ||
-	    !tex->surface.dcc_size)
+	    !tex->surface.dcc_size ||
+	    sctx->screen->debug_flags & DBG(NO_DCC) ||
+	    sctx->screen->debug_flags & DBG(NO_DCC_FB))
 		return;
+
+	assert(sctx->chip_class >= VI);
 
 	if (tex->dcc_offset)
 		return; /* already enabled */

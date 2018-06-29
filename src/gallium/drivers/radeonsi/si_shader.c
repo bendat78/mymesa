@@ -2297,6 +2297,7 @@ void si_load_system_value(struct si_shader_context *ctx,
 void si_declare_compute_memory(struct si_shader_context *ctx)
 {
 	struct si_shader_selector *sel = ctx->shader->selector;
+	unsigned lds_size = sel->info.properties[TGSI_PROPERTY_CS_LOCAL_SIZE];
 
 	LLVMTypeRef i8p = LLVMPointerType(ctx->i8, AC_LOCAL_ADDR_SPACE);
 	LLVMValueRef var;
@@ -2304,7 +2305,7 @@ void si_declare_compute_memory(struct si_shader_context *ctx)
 	assert(!ctx->ac.lds);
 
 	var = LLVMAddGlobalInAddressSpace(ctx->ac.module,
-	                                  LLVMArrayType(ctx->i8, sel->local_size),
+	                                  LLVMArrayType(ctx->i8, lds_size),
 	                                  "compute_lds",
 	                                  AC_LOCAL_ADDR_SPACE);
 	LLVMSetAlignment(var, 4);
@@ -3448,7 +3449,7 @@ static void si_set_ls_return_value_for_tcs(struct si_shader_context *ctx)
 				  8 + SI_SGPR_VS_STATE_BITS);
 
 #if !HAVE_32BIT_POINTERS
-	ret = si_insert_input_ptr(ctx, ret, ctx->param_vs_state_bits + 1,
+	ret = si_insert_input_ptr(ctx, ret, ctx->param_vs_state_bits + 4,
 				  8 + GFX9_SGPR_2ND_SAMPLERS_AND_IMAGES);
 #endif
 
@@ -3488,7 +3489,7 @@ static void si_set_es_return_value_for_gs(struct si_shader_context *ctx)
 				  8 + SI_SGPR_BINDLESS_SAMPLERS_AND_IMAGES);
 
 #if !HAVE_32BIT_POINTERS
-	ret = si_insert_input_ptr(ctx, ret, ctx->param_vs_state_bits + 1,
+	ret = si_insert_input_ptr(ctx, ret, ctx->param_vs_state_bits + 4,
 				  8 + GFX9_SGPR_2ND_SAMPLERS_AND_IMAGES);
 #endif
 
@@ -3675,37 +3676,35 @@ static void si_llvm_emit_vs_epilogue(struct ac_shader_abi *abi,
 	 * an IF statement is added that clamps all colors if the constant
 	 * is true.
 	 */
-	if (ctx->type == PIPE_SHADER_VERTEX) {
-		struct lp_build_if_state if_ctx;
-		LLVMValueRef cond = NULL;
-		LLVMValueRef addr, val;
+	struct lp_build_if_state if_ctx;
+	LLVMValueRef cond = NULL;
+	LLVMValueRef addr, val;
 
-		for (i = 0; i < info->num_outputs; i++) {
-			if (info->output_semantic_name[i] != TGSI_SEMANTIC_COLOR &&
-			    info->output_semantic_name[i] != TGSI_SEMANTIC_BCOLOR)
-				continue;
+	for (i = 0; i < info->num_outputs; i++) {
+		if (info->output_semantic_name[i] != TGSI_SEMANTIC_COLOR &&
+		    info->output_semantic_name[i] != TGSI_SEMANTIC_BCOLOR)
+			continue;
 
-			/* We've found a color. */
-			if (!cond) {
-				/* The state is in the first bit of the user SGPR. */
-				cond = LLVMGetParam(ctx->main_fn,
-						    ctx->param_vs_state_bits);
-				cond = LLVMBuildTrunc(ctx->ac.builder, cond,
-						      ctx->i1, "");
-				lp_build_if(&if_ctx, &ctx->gallivm, cond);
-			}
-
-			for (j = 0; j < 4; j++) {
-				addr = addrs[4 * i + j];
-				val = LLVMBuildLoad(ctx->ac.builder, addr, "");
-				val = ac_build_clamp(&ctx->ac, val);
-				LLVMBuildStore(ctx->ac.builder, val, addr);
-			}
+		/* We've found a color. */
+		if (!cond) {
+			/* The state is in the first bit of the user SGPR. */
+			cond = LLVMGetParam(ctx->main_fn,
+					    ctx->param_vs_state_bits);
+			cond = LLVMBuildTrunc(ctx->ac.builder, cond,
+					      ctx->i1, "");
+			lp_build_if(&if_ctx, &ctx->gallivm, cond);
 		}
 
-		if (cond)
-			lp_build_endif(&if_ctx);
+		for (j = 0; j < 4; j++) {
+			addr = addrs[4 * i + j];
+			val = LLVMBuildLoad(ctx->ac.builder, addr, "");
+			val = ac_build_clamp(&ctx->ac, val);
+			LLVMBuildStore(ctx->ac.builder, val, addr);
+		}
 	}
+
+	if (cond)
+		lp_build_endif(&if_ctx);
 
 	for (i = 0; i < info->num_outputs; i++) {
 		outputs[i].semantic_name = info->output_semantic_name[i];
@@ -4634,10 +4633,10 @@ static void declare_global_desc_pointers(struct si_shader_context *ctx,
 static void declare_vs_specific_input_sgprs(struct si_shader_context *ctx,
 					    struct si_function_info *fninfo)
 {
+	ctx->param_vs_state_bits = add_arg(fninfo, ARG_SGPR, ctx->i32);
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.base_vertex);
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.start_instance);
 	add_arg_assign(fninfo, ARG_SGPR, ctx->i32, &ctx->abi.draw_id);
-	ctx->param_vs_state_bits = add_arg(fninfo, ARG_SGPR, ctx->i32);
 }
 
 static void declare_vs_input_vgprs(struct si_shader_context *ctx,
@@ -4744,7 +4743,7 @@ static void create_function(struct si_shader_context *ctx)
 			/* no extra parameters */
 		} else {
 			if (shader->is_gs_copy_shader) {
-				fninfo.num_params = ctx->param_rw_buffers + 1;
+				fninfo.num_params = ctx->param_vs_state_bits + 1;
 				fninfo.num_sgpr_params = fninfo.num_params;
 			}
 
@@ -4865,13 +4864,12 @@ static void create_function(struct si_shader_context *ctx)
 		if (ctx->type == PIPE_SHADER_VERTEX) {
 			declare_vs_specific_input_sgprs(ctx, &fninfo);
 		} else {
+			ctx->param_vs_state_bits = add_arg(&fninfo, ARG_SGPR, ctx->i32);
 			ctx->param_tcs_offchip_layout = add_arg(&fninfo, ARG_SGPR, ctx->i32);
 			ctx->param_tes_offchip_addr = add_arg(&fninfo, ARG_SGPR, ctx->i32);
-			if (!HAVE_32BIT_POINTERS) {
-				/* Declare as many input SGPRs as the VS has. */
+			/* Declare as many input SGPRs as the VS has. */
+			if (!HAVE_32BIT_POINTERS)
 				add_arg(&fninfo, ARG_SGPR, ctx->i32); /* unused */
-				ctx->param_vs_state_bits = add_arg(&fninfo, ARG_SGPR, ctx->i32); /* unused */
-			}
 		}
 
 		if (!HAVE_32BIT_POINTERS) {
@@ -4917,6 +4915,7 @@ static void create_function(struct si_shader_context *ctx)
 	case PIPE_SHADER_TESS_EVAL:
 		declare_global_desc_pointers(ctx, &fninfo);
 		declare_per_stage_desc_pointers(ctx, &fninfo, true);
+		ctx->param_vs_state_bits = add_arg(&fninfo, ARG_SGPR, ctx->i32);
 		ctx->param_tcs_offchip_layout = add_arg(&fninfo, ARG_SGPR, ctx->i32);
 		ctx->param_tes_offchip_addr = add_arg(&fninfo, ARG_SGPR, ctx->i32);
 
@@ -5727,20 +5726,14 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 	struct si_shader_context ctx;
 	struct si_shader *shader;
 	LLVMBuilderRef builder;
-	struct si_shader_output_values *outputs;
+	struct si_shader_output_values outputs[SI_MAX_VS_OUTPUTS];
 	struct tgsi_shader_info *gsinfo = &gs_selector->info;
 	int i, r;
 
-	outputs = MALLOC(gsinfo->num_outputs * sizeof(outputs[0]));
-
-	if (!outputs)
-		return NULL;
 
 	shader = CALLOC_STRUCT(si_shader);
-	if (!shader) {
-		FREE(outputs);
+	if (!shader)
 		return NULL;
-	}
 
 	/* We can leave the fence as permanently signaled because the GS copy
 	 * shader only becomes visible globally after it has been compiled. */
@@ -5831,8 +5824,51 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 					       stream);
 		}
 
-		if (stream == 0)
+		if (stream == 0) {
+			/* Vertex color clamping.
+			 *
+			 * This uses a state constant loaded in a user data SGPR and
+			 * an IF statement is added that clamps all colors if the constant
+			 * is true.
+			 */
+			struct lp_build_if_state if_ctx;
+			LLVMValueRef v[2], cond = NULL;
+			LLVMBasicBlockRef blocks[2];
+
+			for (unsigned i = 0; i < gsinfo->num_outputs; i++) {
+				if (gsinfo->output_semantic_name[i] != TGSI_SEMANTIC_COLOR &&
+				    gsinfo->output_semantic_name[i] != TGSI_SEMANTIC_BCOLOR)
+					continue;
+
+				/* We've found a color. */
+				if (!cond) {
+					/* The state is in the first bit of the user SGPR. */
+					cond = LLVMGetParam(ctx.main_fn,
+							    ctx.param_vs_state_bits);
+					cond = LLVMBuildTrunc(ctx.ac.builder, cond,
+							      ctx.i1, "");
+					lp_build_if(&if_ctx, &ctx.gallivm, cond);
+					/* Remember blocks for Phi. */
+					blocks[0] = if_ctx.true_block;
+					blocks[1] = if_ctx.entry_block;
+				}
+
+				for (unsigned j = 0; j < 4; j++) {
+					/* Insert clamp into the true block. */
+					v[0] = ac_build_clamp(&ctx.ac, outputs[i].values[j]);
+					v[1] = outputs[i].values[j];
+
+					/* Insert Phi into the endif block. */
+					LLVMPositionBuilderAtEnd(ctx.ac.builder, if_ctx.merge_block);
+					outputs[i].values[j] = ac_build_phi(&ctx.ac, ctx.f32, 2, v, blocks);
+					LLVMPositionBuilderAtEnd(ctx.ac.builder, if_ctx.true_block);
+				}
+			}
+			if (cond)
+				lp_build_endif(&if_ctx);
+
 			si_llvm_export_vs(&ctx, outputs, gsinfo->num_outputs);
+		}
 
 		LLVMBuildBr(builder, end_bb);
 	}
@@ -5858,8 +5894,6 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 	}
 
 	si_llvm_dispose(&ctx);
-
-	FREE(outputs);
 
 	if (r != 0) {
 		FREE(shader);
@@ -6140,16 +6174,24 @@ static bool si_compile_tgsi_main(struct si_shader_context *ctx)
 			if (!shader->is_monolithic)
 				ac_init_exec_full_mask(&ctx->ac);
 
-			/* The barrier must execute for all shaders in a
-			 * threadgroup.
-			 */
-			si_llvm_emit_barrier(NULL, bld_base, NULL);
-
 			LLVMValueRef num_threads = si_unpack_param(ctx, ctx->param_merged_wave_info, 8, 8);
 			LLVMValueRef ena =
 				LLVMBuildICmp(ctx->ac.builder, LLVMIntULT,
 					    ac_get_thread_id(&ctx->ac), num_threads, "");
 			lp_build_if(&ctx->merged_wrap_if_state, &ctx->gallivm, ena);
+
+			/* The barrier must execute for all shaders in a
+			 * threadgroup.
+			 *
+			 * Execute the barrier inside the conditional block,
+			 * so that empty waves can jump directly to s_endpgm,
+			 * which will also signal the barrier.
+			 *
+			 * If the shader is TCS and the TCS epilog is present
+			 * and contains a barrier, it will wait there and then
+			 * reach s_endpgm.
+			 */
+			si_llvm_emit_barrier(NULL, bld_base, NULL);
 		}
 	}
 

@@ -37,11 +37,12 @@ namespace SwrJit
 {
     using namespace llvm;
 
-    BuilderGfxMem::BuilderGfxMem(JitManager *pJitMgr) : Builder(pJitMgr)
+    BuilderGfxMem::BuilderGfxMem(JitManager* pJitMgr) : Builder(pJitMgr)
     {
-        mpTranslationFuncTy     = nullptr;
-        mpfnTranslateGfxAddress = nullptr;
-        mpParamSimDC            = nullptr;
+        mpTranslationFuncTy             = nullptr;
+        mpfnTranslateGfxAddressForRead  = nullptr;
+        mpfnTranslateGfxAddressForWrite = nullptr;
+        mpParamSimDC                    = nullptr;
 
     }
 
@@ -49,7 +50,7 @@ namespace SwrJit
     {
     }
 
-    void BuilderGfxMem::AssertGFXMemoryParams(Value *ptr, Builder::JIT_MEM_CLIENT usage)
+    void BuilderGfxMem::AssertGFXMemoryParams(Value* ptr, Builder::JIT_MEM_CLIENT usage)
     {
         SWR_ASSERT(!(ptr->getType() == mInt64Ty && usage == MEM_CLIENT_INTERNAL),
                    "Internal memory should not be gfxptr_t.");
@@ -64,10 +65,10 @@ namespace SwrJit
     /// @param vIndices - SIMD wide value of VB byte offsets
     /// @param vMask - SIMD wide mask that controls whether to access memory or the src values
     /// @param scale - value to scale indices by
-    Value *BuilderGfxMem::GATHERPS(Value *        vSrc,
-                                   Value *        pBase,
-                                   Value *        vIndices,
-                                   Value *        vMask,
+    Value* BuilderGfxMem::GATHERPS(Value*         vSrc,
+                                   Value*         pBase,
+                                   Value*         vIndices,
+                                   Value*         vMask,
                                    uint8_t        scale,
                                    JIT_MEM_CLIENT usage)
     {
@@ -77,7 +78,7 @@ namespace SwrJit
             pBase = INT_TO_PTR(pBase, PointerType::get(mInt8Ty, 0));
         }
 
-        Value *vGather = Builder::GATHERPS(vSrc, pBase, vIndices, vMask, scale);
+        Value* vGather = Builder::GATHERPS(vSrc, pBase, vIndices, vMask, scale);
         return vGather;
     }
 
@@ -89,10 +90,10 @@ namespace SwrJit
     /// @param vIndices - SIMD wide value of VB byte offsets
     /// @param vMask - SIMD wide mask that controls whether to access memory or the src values
     /// @param scale - value to scale indices by
-    Value *BuilderGfxMem::GATHERDD(Value *        vSrc,
-                                   Value *        pBase,
-                                   Value *        vIndices,
-                                   Value *        vMask,
+    Value* BuilderGfxMem::GATHERDD(Value*         vSrc,
+                                   Value*         pBase,
+                                   Value*         vIndices,
+                                   Value*         vMask,
                                    uint8_t        scale,
                                    JIT_MEM_CLIENT usage)
     {
@@ -103,42 +104,55 @@ namespace SwrJit
             pBase = INT_TO_PTR(pBase, PointerType::get(mInt8Ty, 0));
         }
 
-        Value *vGather = Builder::GATHERDD(vSrc, pBase, vIndices, vMask, scale);
+        Value* vGather = Builder::GATHERDD(vSrc, pBase, vIndices, vMask, scale);
         return vGather;
     }
 
+    void BuilderGfxMem::SCATTERPS(
+        Value* pDst, Value* vSrc, Value* vOffsets, Value* vMask, JIT_MEM_CLIENT usage)
+    {
 
-    Value *BuilderGfxMem::OFFSET_TO_NEXT_COMPONENT(Value *base, Constant *offset)
+        // address may be coming in as 64bit int now so get the pointer
+        if (pDst->getType() == mInt64Ty)
+        {
+            pDst = INT_TO_PTR(pDst, PointerType::get(mInt8Ty, 0));
+        }
+
+        Builder::SCATTERPS(pDst, vSrc, vOffsets, vMask, usage);
+    }
+
+
+    Value* BuilderGfxMem::OFFSET_TO_NEXT_COMPONENT(Value* base, Constant* offset)
     {
         return ADD(base, offset);
     }
 
-    Value *BuilderGfxMem::GEP(Value *Ptr, Value *Idx, Type *Ty, const Twine &Name)
+    Value* BuilderGfxMem::GEP(Value* Ptr, Value* Idx, Type* Ty, const Twine& Name)
     {
         Ptr = TranslationHelper(Ptr, Ty);
         return Builder::GEP(Ptr, Idx, nullptr, Name);
     }
 
-    Value *BuilderGfxMem::GEP(Type *Ty, Value *Ptr, Value *Idx, const Twine &Name)
+    Value* BuilderGfxMem::GEP(Type* Ty, Value* Ptr, Value* Idx, const Twine& Name)
     {
         Ptr = TranslationHelper(Ptr, Ty);
         return Builder::GEP(Ty, Ptr, Idx, Name);
     }
 
-    Value *BuilderGfxMem::GEP(Value *Ptr, const std::initializer_list<Value *> &indexList, Type *Ty)
+    Value* BuilderGfxMem::GEP(Value* Ptr, const std::initializer_list<Value*>& indexList, Type* Ty)
     {
         Ptr = TranslationHelper(Ptr, Ty);
         return Builder::GEP(Ptr, indexList);
     }
 
-    Value *
-    BuilderGfxMem::GEP(Value *Ptr, const std::initializer_list<uint32_t> &indexList, Type *Ty)
+    Value*
+    BuilderGfxMem::GEP(Value* Ptr, const std::initializer_list<uint32_t>& indexList, Type* Ty)
     {
         Ptr = TranslationHelper(Ptr, Ty);
         return Builder::GEP(Ptr, indexList);
     }
 
-    Value *BuilderGfxMem::TranslationHelper(Value *Ptr, Type *Ty)
+    Value* BuilderGfxMem::TranslationHelper(Value* Ptr, Type* Ty)
     {
         SWR_ASSERT(!(Ptr->getType() == mInt64Ty && Ty == nullptr),
                    "Access of GFX pointers must have non-null type specified.");
@@ -153,7 +167,7 @@ namespace SwrJit
         return Ptr;
     }
 
-    LoadInst *BuilderGfxMem::LOAD(Value *Ptr, const char *Name, Type *Ty, JIT_MEM_CLIENT usage)
+    LoadInst* BuilderGfxMem::LOAD(Value* Ptr, const char* Name, Type* Ty, JIT_MEM_CLIENT usage)
     {
         AssertGFXMemoryParams(Ptr, usage);
 
@@ -161,7 +175,7 @@ namespace SwrJit
         return Builder::LOAD(Ptr, Name);
     }
 
-    LoadInst *BuilderGfxMem::LOAD(Value *Ptr, const Twine &Name, Type *Ty, JIT_MEM_CLIENT usage)
+    LoadInst* BuilderGfxMem::LOAD(Value* Ptr, const Twine& Name, Type* Ty, JIT_MEM_CLIENT usage)
     {
         AssertGFXMemoryParams(Ptr, usage);
 
@@ -169,8 +183,9 @@ namespace SwrJit
         return Builder::LOAD(Ptr, Name);
     }
 
-    LoadInst *BuilderGfxMem::LOAD(
-        Value *Ptr, bool isVolatile, const Twine &Name, Type *Ty, JIT_MEM_CLIENT usage)
+
+    LoadInst* BuilderGfxMem::LOAD(
+        Value* Ptr, bool isVolatile, const Twine& Name, Type* Ty, JIT_MEM_CLIENT usage)
     {
         AssertGFXMemoryParams(Ptr, usage);
 
@@ -178,10 +193,10 @@ namespace SwrJit
         return Builder::LOAD(Ptr, isVolatile, Name);
     }
 
-    LoadInst *BuilderGfxMem::LOAD(Value *                                BasePtr,
-                                  const std::initializer_list<uint32_t> &offset,
-                                  const llvm::Twine &                    name,
-                                  Type *                                 Ty,
+    LoadInst* BuilderGfxMem::LOAD(Value*                                 BasePtr,
+                                  const std::initializer_list<uint32_t>& offset,
+                                  const llvm::Twine&                     name,
+                                  Type*                                  Ty,
                                   JIT_MEM_CLIENT                         usage)
     {
         AssertGFXMemoryParams(BasePtr, usage);
@@ -193,7 +208,7 @@ namespace SwrJit
             BasePtr          = INT_TO_PTR(BasePtr, Ty, name);
             bNeedTranslation = true;
         }
-        std::vector<Value *> valIndices;
+        std::vector<Value*> valIndices;
         for (auto i : offset)
         {
             valIndices.push_back(C(i));
@@ -207,12 +222,13 @@ namespace SwrJit
         return LOAD(BasePtr, name, Ty, usage);
     }
 
-    CallInst *BuilderGfxMem::MASKED_LOAD(Value *        Ptr,
+
+    CallInst* BuilderGfxMem::MASKED_LOAD(Value*         Ptr,
                                          unsigned       Align,
-                                         Value *        Mask,
-                                         Value *        PassThru,
-                                         const Twine &  Name,
-                                         Type *         Ty,
+                                         Value*         Mask,
+                                         Value*         PassThru,
+                                         const Twine&   Name,
+                                         Type*          Ty,
                                          JIT_MEM_CLIENT usage)
     {
         AssertGFXMemoryParams(Ptr, usage);
@@ -221,10 +237,10 @@ namespace SwrJit
         return Builder::MASKED_LOAD(Ptr, Align, Mask, PassThru, Name, Ty, usage);
     }
 
-    Value *BuilderGfxMem::TranslateGfxAddress(Value *      xpGfxAddress,
-                                              Type *       PtrTy,
-                                              const Twine &Name,
-                                              JIT_MEM_CLIENT /* usage */)
+    Value* BuilderGfxMem::TranslateGfxAddressForRead(Value*       xpGfxAddress,
+                                                     Type*        PtrTy,
+                                                     const Twine& Name,
+                                                     JIT_MEM_CLIENT /* usage */)
     {
         if (PtrTy == nullptr)
         {
@@ -232,4 +248,17 @@ namespace SwrJit
         }
         return INT_TO_PTR(xpGfxAddress, PtrTy, Name);
     }
+
+    Value* BuilderGfxMem::TranslateGfxAddressForWrite(Value*       xpGfxAddress,
+                                                      Type*        PtrTy,
+                                                      const Twine& Name,
+                                                      JIT_MEM_CLIENT /* usage */)
+    {
+        if (PtrTy == nullptr)
+        {
+            PtrTy = mInt8PtrTy;
+        }
+        return INT_TO_PTR(xpGfxAddress, PtrTy, Name);
+    }
+
 } // namespace SwrJit

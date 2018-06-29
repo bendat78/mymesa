@@ -1887,39 +1887,92 @@ genX(upload_wm)(struct brw_context *brw)
 
 #if GEN_GEN >= 6
    brw_batch_emit(brw, GENX(3DSTATE_WM), wm) {
+#else
+   ctx->NewDriverState |= BRW_NEW_GEN4_UNIT_STATE;
+   brw_state_emit(brw, GENX(WM_STATE), 64, &stage_state->state_offset, wm) {
+#endif
+
+#if GEN_GEN <= 6
+      wm._8PixelDispatchEnable = wm_prog_data->dispatch_8;
+      wm._16PixelDispatchEnable = wm_prog_data->dispatch_16;
+      wm._32PixelDispatchEnable = wm_prog_data->dispatch_32;
+#endif
+
+#if GEN_GEN == 4
+      /* On gen4, we only have one shader kernel */
+      if (brw_wm_state_has_ksp(wm, 0)) {
+         assert(brw_wm_prog_data_prog_offset(wm_prog_data, wm, 0) == 0);
+         wm.KernelStartPointer0 = KSP(brw, stage_state->prog_offset);
+         wm.GRFRegisterCount0 = brw_wm_prog_data_reg_blocks(wm_prog_data, wm, 0);
+         wm.DispatchGRFStartRegisterForConstantSetupData0 =
+            brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, wm, 0);
+      }
+#elif GEN_GEN == 5
+      /* On gen5, we have multiple shader kernels but only one GRF start
+       * register for all kernels
+       */
+      wm.KernelStartPointer0 = stage_state->prog_offset +
+                               brw_wm_prog_data_prog_offset(wm_prog_data, wm, 0);
+      wm.KernelStartPointer1 = stage_state->prog_offset +
+                               brw_wm_prog_data_prog_offset(wm_prog_data, wm, 1);
+      wm.KernelStartPointer2 = stage_state->prog_offset +
+                               brw_wm_prog_data_prog_offset(wm_prog_data, wm, 2);
+
+      wm.GRFRegisterCount0 = brw_wm_prog_data_reg_blocks(wm_prog_data, wm, 0);
+      wm.GRFRegisterCount1 = brw_wm_prog_data_reg_blocks(wm_prog_data, wm, 1);
+      wm.GRFRegisterCount2 = brw_wm_prog_data_reg_blocks(wm_prog_data, wm, 2);
+
+      wm.DispatchGRFStartRegisterForConstantSetupData0 =
+         wm_prog_data->base.dispatch_grf_start_reg;
+
+      /* Dispatch GRF Start should be the same for all shaders on gen5 */
+      if (brw_wm_state_has_ksp(wm, 1)) {
+         assert(wm_prog_data->base.dispatch_grf_start_reg ==
+                brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, wm, 1));
+      }
+      if (brw_wm_state_has_ksp(wm, 2)) {
+         assert(wm_prog_data->base.dispatch_grf_start_reg ==
+                brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, wm, 2));
+      }
+#elif GEN_GEN == 6
+      /* On gen5, we have multiple shader kernels and we no longer specify a
+       * register count for each one.
+       */
+      wm.KernelStartPointer0 = stage_state->prog_offset +
+                               brw_wm_prog_data_prog_offset(wm_prog_data, wm, 0);
+      wm.KernelStartPointer1 = stage_state->prog_offset +
+                               brw_wm_prog_data_prog_offset(wm_prog_data, wm, 1);
+      wm.KernelStartPointer2 = stage_state->prog_offset +
+                               brw_wm_prog_data_prog_offset(wm_prog_data, wm, 2);
+
+      wm.DispatchGRFStartRegisterForConstantSetupData0 =
+         brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, wm, 0);
+      wm.DispatchGRFStartRegisterForConstantSetupData1 =
+         brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, wm, 1);
+      wm.DispatchGRFStartRegisterForConstantSetupData2 =
+         brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, wm, 2);
+#endif
+
+#if GEN_GEN <= 5
+      wm.ConstantURBEntryReadLength = wm_prog_data->base.curb_read_length;
+      /* BRW_NEW_PUSH_CONSTANT_ALLOCATION */
+      wm.ConstantURBEntryReadOffset = brw->curbe.wm_start * 2;
+      wm.SetupURBEntryReadLength = wm_prog_data->num_varying_inputs * 2;
+      wm.SetupURBEntryReadOffset = 0;
+      wm.EarlyDepthTestEnable = true;
+#endif
+
+#if GEN_GEN >= 6
       wm.LineAntialiasingRegionWidth = _10pixels;
       wm.LineEndCapAntialiasingRegionWidth = _05pixels;
 
       wm.PointRasterizationRule = RASTRULE_UPPER_RIGHT;
       wm.BarycentricInterpolationMode = wm_prog_data->barycentric_interp_modes;
 #else
-   ctx->NewDriverState |= BRW_NEW_GEN4_UNIT_STATE;
-   brw_state_emit(brw, GENX(WM_STATE), 64, &stage_state->state_offset, wm) {
-      if (wm_prog_data->dispatch_8 && wm_prog_data->dispatch_16) {
-         /* These two fields should be the same pre-gen6, which is why we
-          * only have one hardware field to program for both dispatch
-          * widths.
-          */
-         assert(wm_prog_data->base.dispatch_grf_start_reg ==
-                wm_prog_data->dispatch_grf_start_reg_2);
-      }
-
-      if (wm_prog_data->dispatch_8 || wm_prog_data->dispatch_16)
-         wm.GRFRegisterCount0 = wm_prog_data->reg_blocks_0;
-
       if (stage_state->sampler_count)
          wm.SamplerStatePointer =
             ro_bo(brw->batch.state.bo, stage_state->sampler_offset);
-#if GEN_GEN == 5
-      if (wm_prog_data->prog_offset_2)
-         wm.GRFRegisterCount2 = wm_prog_data->reg_blocks_2;
-#endif
 
-      wm.SetupURBEntryReadLength = wm_prog_data->num_varying_inputs * 2;
-      wm.ConstantURBEntryReadLength = wm_prog_data->base.curb_read_length;
-      /* BRW_NEW_PUSH_CONSTANT_ALLOCATION */
-      wm.ConstantURBEntryReadOffset = brw->curbe.wm_start * 2;
-      wm.EarlyDepthTestEnable = true;
       wm.LineAntialiasingRegionWidth = _05pixels;
       wm.LineEndCapAntialiasingRegionWidth = _10pixels;
 
@@ -1954,21 +2007,6 @@ genX(upload_wm)(struct brw_context *brw)
       wm.BindingTableEntryCount =
          wm_prog_data->base.binding_table.size_bytes / 4;
       wm.MaximumNumberofThreads = devinfo->max_wm_threads - 1;
-      wm._8PixelDispatchEnable = wm_prog_data->dispatch_8;
-      wm._16PixelDispatchEnable = wm_prog_data->dispatch_16;
-      wm.DispatchGRFStartRegisterForConstantSetupData0 =
-         wm_prog_data->base.dispatch_grf_start_reg;
-      if (GEN_GEN == 6 ||
-          wm_prog_data->dispatch_8 || wm_prog_data->dispatch_16) {
-         wm.KernelStartPointer0 = KSP(brw, stage_state->prog_offset);
-      }
-
-#if GEN_GEN >= 5
-      if (GEN_GEN == 6 || wm_prog_data->prog_offset_2) {
-         wm.KernelStartPointer2 =
-            KSP(brw, stage_state->prog_offset + wm_prog_data->prog_offset_2);
-      }
-#endif
 
 #if GEN_GEN == 6
       wm.DualSourceBlendEnable =
@@ -1993,9 +2031,6 @@ genX(upload_wm)(struct brw_context *brw)
          wm.PositionXYOffsetSelect = POSOFFSET_SAMPLE;
       else
          wm.PositionXYOffsetSelect = POSOFFSET_NONE;
-
-      wm.DispatchGRFStartRegisterForConstantSetupData2 =
-         wm_prog_data->dispatch_grf_start_reg_2;
 #endif
 
       if (wm_prog_data->base.total_scratch) {
@@ -3995,14 +4030,37 @@ genX(upload_ps)(struct brw_context *brw)
 
       ps._8PixelDispatchEnable = prog_data->dispatch_8;
       ps._16PixelDispatchEnable = prog_data->dispatch_16;
-      ps.DispatchGRFStartRegisterForConstantSetupData0 =
-         prog_data->base.dispatch_grf_start_reg;
-      ps.DispatchGRFStartRegisterForConstantSetupData2 =
-         prog_data->dispatch_grf_start_reg_2;
+      ps._32PixelDispatchEnable = prog_data->dispatch_32;
 
-      ps.KernelStartPointer0 = stage_state->prog_offset;
+      /* From the Sky Lake PRM 3DSTATE_PS::32 Pixel Dispatch Enable:
+       *
+       *    "When NUM_MULTISAMPLES = 16 or FORCE_SAMPLE_COUNT = 16, SIMD32
+       *    Dispatch must not be enabled for PER_PIXEL dispatch mode."
+       *
+       * Since 16x MSAA is first introduced on SKL, we don't need to apply
+       * the workaround on any older hardware.
+       *
+       * BRW_NEW_NUM_SAMPLES
+       */
+      if (GEN_GEN >= 9 && !prog_data->persample_dispatch &&
+          brw->num_samples == 16) {
+         assert(ps._8PixelDispatchEnable || ps._16PixelDispatchEnable);
+         ps._32PixelDispatchEnable = false;
+      }
+
+      ps.DispatchGRFStartRegisterForConstantSetupData0 =
+         brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 0);
+      ps.DispatchGRFStartRegisterForConstantSetupData1 =
+         brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 1);
+      ps.DispatchGRFStartRegisterForConstantSetupData2 =
+         brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 2);
+
+      ps.KernelStartPointer0 = stage_state->prog_offset +
+                               brw_wm_prog_data_prog_offset(prog_data, ps, 0);
+      ps.KernelStartPointer1 = stage_state->prog_offset +
+                               brw_wm_prog_data_prog_offset(prog_data, ps, 1);
       ps.KernelStartPointer2 = stage_state->prog_offset +
-         prog_data->prog_offset_2;
+                               brw_wm_prog_data_prog_offset(prog_data, ps, 2);
 
       if (prog_data->base.total_scratch) {
          ps.ScratchSpaceBasePointer =
@@ -4015,6 +4073,7 @@ genX(upload_ps)(struct brw_context *brw)
 static const struct brw_tracked_state genX(ps_state) = {
    .dirty = {
       .mesa  = _NEW_MULTISAMPLE |
+               (GEN_GEN >= 9 ? BRW_NEW_NUM_SAMPLES : 0) |
                (GEN_GEN < 8 ? _NEW_BUFFERS |
                               _NEW_COLOR
                             : 0),

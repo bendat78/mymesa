@@ -185,11 +185,15 @@ emit_system_values_block(nir_block *block, fs_visitor *v)
              * masks for 2 and 3) in SIMD16.
              */
             fs_reg shifted = abld.vgrf(BRW_REGISTER_TYPE_UW, 1);
-            abld.SHR(shifted,
-                     stride(byte_offset(retype(brw_vec1_grf(1, 0),
-                                               BRW_REGISTER_TYPE_UB), 28),
-                            1, 8, 0),
-                     brw_imm_v(0x76543210));
+
+            for (unsigned i = 0; i < DIV_ROUND_UP(v->dispatch_width, 16); i++) {
+               const fs_builder hbld = abld.group(MIN2(16, v->dispatch_width), i);
+               hbld.SHR(offset(shifted, hbld, i),
+                        stride(retype(brw_vec1_grf(1 + i, 7),
+                                      BRW_REGISTER_TYPE_UB),
+                               1, 8, 0),
+                        brw_imm_v(0x76543210));
+            }
 
             /* A set bit in the pixel mask means the channel is enabled, but
              * that is the opposite of gl_HelperInvocation so we need to invert
@@ -385,6 +389,10 @@ fs_visitor::nir_emit_if(nir_if *if_stmt)
    nir_emit_cf_list(&if_stmt->else_list);
 
    bld.emit(BRW_OPCODE_ENDIF);
+
+   if (devinfo->gen < 7)
+      limit_dispatch_width(16, "Non-uniform control flow unsupported "
+                           "in SIMD32 mode.");
 }
 
 void
@@ -395,6 +403,10 @@ fs_visitor::nir_emit_loop(nir_loop *loop)
    nir_emit_cf_list(&loop->body);
 
    bld.emit(BRW_OPCODE_WHILE);
+
+   if (devinfo->gen < 7)
+      limit_dispatch_width(16, "Non-uniform control flow unsupported "
+                           "in SIMD32 mode.");
 }
 
 void
@@ -1787,21 +1799,8 @@ emit_pixel_interpolater_send(const fs_builder &bld,
 {
    struct brw_wm_prog_data *wm_prog_data =
       brw_wm_prog_data(bld.shader->stage_prog_data);
-   fs_inst *inst;
-   fs_reg payload;
-   int mlen;
 
-   if (src.file == BAD_FILE) {
-      /* Dummy payload */
-      payload = bld.vgrf(BRW_REGISTER_TYPE_F, 1);
-      mlen = 1;
-   } else {
-      payload = src;
-      mlen = 2 * bld.dispatch_width() / 8;
-   }
-
-   inst = bld.emit(opcode, dst, payload, desc);
-   inst->mlen = mlen;
+   fs_inst *inst = bld.emit(opcode, dst, src, desc);
    /* 2 floats per slot returned */
    inst->size_written = 2 * dst.component_size(inst->exec_size);
    inst->pi_noperspective = interpolation == INTERP_MODE_NOPERSPECTIVE;
@@ -3353,6 +3352,8 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
       if (devinfo->gen >= 6) {
          emit_discard_jump();
       }
+
+      limit_dispatch_width(16, "Fragment discard not implemented in SIMD32 mode.");
       break;
    }
 
@@ -3454,7 +3455,7 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
                                             FS_OPCODE_INTERPOLATE_AT_SAMPLE,
                                             dest,
                                             fs_reg(), /* src */
-                                            msg_data,
+                                            component(msg_data, 0),
                                             interpolation);
             set_predicate(BRW_PREDICATE_NORMAL, inst);
 

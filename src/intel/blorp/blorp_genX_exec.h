@@ -763,17 +763,37 @@ blorp_emit_ps_config(struct blorp_batch *batch,
       }
 
       if (prog_data) {
-         ps.DispatchGRFStartRegisterForConstantSetupData0 =
-            prog_data->base.dispatch_grf_start_reg;
-         ps.DispatchGRFStartRegisterForConstantSetupData2 =
-            prog_data->dispatch_grf_start_reg_2;
-
          ps._8PixelDispatchEnable = prog_data->dispatch_8;
          ps._16PixelDispatchEnable = prog_data->dispatch_16;
+         ps._32PixelDispatchEnable = prog_data->dispatch_32;
 
-         ps.KernelStartPointer0 = params->wm_prog_kernel;
-         ps.KernelStartPointer2 =
-            params->wm_prog_kernel + prog_data->prog_offset_2;
+         /* From the Sky Lake PRM 3DSTATE_PS::32 Pixel Dispatch Enable:
+          *
+          *    "When NUM_MULTISAMPLES = 16 or FORCE_SAMPLE_COUNT = 16, SIMD32
+          *    Dispatch must not be enabled for PER_PIXEL dispatch mode."
+          *
+          * Since 16x MSAA is first introduced on SKL, we don't need to apply
+          * the workaround on any older hardware.
+          */
+         if (GEN_GEN >= 9 && !prog_data->persample_dispatch &&
+             params->num_samples == 16) {
+            assert(ps._8PixelDispatchEnable || ps._16PixelDispatchEnable);
+            ps._32PixelDispatchEnable = false;
+         }
+
+         ps.DispatchGRFStartRegisterForConstantSetupData0 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 0);
+         ps.DispatchGRFStartRegisterForConstantSetupData1 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 1);
+         ps.DispatchGRFStartRegisterForConstantSetupData2 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 2);
+
+         ps.KernelStartPointer0 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, ps, 0);
+         ps.KernelStartPointer1 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, ps, 1);
+         ps.KernelStartPointer2 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, ps, 2);
       }
 
       /* 3DSTATE_PS expects the number of threads per PSD, which is always 64
@@ -867,17 +887,23 @@ blorp_emit_ps_config(struct blorp_batch *batch,
 #endif
 
       if (prog_data) {
-         ps.DispatchGRFStartRegisterForConstantSetupData0 =
-            prog_data->base.dispatch_grf_start_reg;
-         ps.DispatchGRFStartRegisterForConstantSetupData2 =
-            prog_data->dispatch_grf_start_reg_2;
-
-         ps.KernelStartPointer0 = params->wm_prog_kernel;
-         ps.KernelStartPointer2 =
-            params->wm_prog_kernel + prog_data->prog_offset_2;
-
          ps._8PixelDispatchEnable = prog_data->dispatch_8;
          ps._16PixelDispatchEnable = prog_data->dispatch_16;
+         ps._32PixelDispatchEnable = prog_data->dispatch_32;
+
+         ps.DispatchGRFStartRegisterForConstantSetupData0 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 0);
+         ps.DispatchGRFStartRegisterForConstantSetupData1 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 1);
+         ps.DispatchGRFStartRegisterForConstantSetupData2 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, ps, 2);
+
+         ps.KernelStartPointer0 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, ps, 0);
+         ps.KernelStartPointer1 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, ps, 1);
+         ps.KernelStartPointer2 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, ps, 2);
 
          ps.AttributeEnable = prog_data->num_varying_inputs > 0;
       } else {
@@ -929,17 +955,23 @@ blorp_emit_ps_config(struct blorp_batch *batch,
       if (prog_data) {
          wm.ThreadDispatchEnable = true;
 
-         wm.DispatchGRFStartRegisterForConstantSetupData0 =
-            prog_data->base.dispatch_grf_start_reg;
-         wm.DispatchGRFStartRegisterForConstantSetupData2 =
-            prog_data->dispatch_grf_start_reg_2;
-
-         wm.KernelStartPointer0 = params->wm_prog_kernel;
-         wm.KernelStartPointer2 =
-            params->wm_prog_kernel + prog_data->prog_offset_2;
-
          wm._8PixelDispatchEnable = prog_data->dispatch_8;
          wm._16PixelDispatchEnable = prog_data->dispatch_16;
+         wm._32PixelDispatchEnable = prog_data->dispatch_32;
+
+         wm.DispatchGRFStartRegisterForConstantSetupData0 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, wm, 0);
+         wm.DispatchGRFStartRegisterForConstantSetupData1 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, wm, 1);
+         wm.DispatchGRFStartRegisterForConstantSetupData2 =
+            brw_wm_prog_data_dispatch_grf_start_reg(prog_data, wm, 2);
+
+         wm.KernelStartPointer0 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, wm, 0);
+         wm.KernelStartPointer1 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, wm, 1);
+         wm.KernelStartPointer2 = params->wm_prog_kernel +
+                                  brw_wm_prog_data_prog_offset(prog_data, wm, 2);
 
          wm.NumberofSFOutputAttributes = prog_data->num_varying_inputs;
       }

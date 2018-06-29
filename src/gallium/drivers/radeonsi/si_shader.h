@@ -174,17 +174,20 @@ enum {
 #endif
 	SI_NUM_RESOURCE_SGPRS,
 
+	/* API VS, TES without GS, GS copy shader */
+	SI_SGPR_VS_STATE_BITS = SI_NUM_RESOURCE_SGPRS,
+	SI_NUM_VS_STATE_RESOURCE_SGPRS,
+
 	/* all VS variants */
-	SI_SGPR_BASE_VERTEX = SI_NUM_RESOURCE_SGPRS,
+	SI_SGPR_BASE_VERTEX = SI_NUM_VS_STATE_RESOURCE_SGPRS,
 	SI_SGPR_START_INSTANCE,
 	SI_SGPR_DRAWID,
-	SI_SGPR_VS_STATE_BITS,
 	SI_VS_NUM_USER_SGPR,
 
 	SI_SGPR_VS_BLIT_DATA = SI_SGPR_CONST_AND_SHADER_BUFFERS,
 
 	/* TES */
-	SI_SGPR_TES_OFFCHIP_LAYOUT = SI_NUM_RESOURCE_SGPRS,
+	SI_SGPR_TES_OFFCHIP_LAYOUT = SI_NUM_VS_STATE_RESOURCE_SGPRS,
 	SI_SGPR_TES_OFFCHIP_ADDR,
 	SI_TES_NUM_USER_SGPR,
 
@@ -225,7 +228,7 @@ enum {
 	GFX9_VSGS_NUM_USER_SGPR = GFX9_MERGED_NUM_USER_SGPR,
 	GFX9_TESGS_NUM_USER_SGPR = GFX9_MERGED_NUM_USER_SGPR,
 #endif
-	SI_GSCOPY_NUM_USER_SGPR = SI_SGPR_RW_BUFFERS + (HAVE_32BIT_POINTERS ? 1 : 2),
+	SI_GSCOPY_NUM_USER_SGPR = SI_NUM_VS_STATE_RESOURCE_SGPRS,
 
 	/* PS only */
 	SI_SGPR_ALPHA_REF	= SI_NUM_RESOURCE_SGPRS,
@@ -277,6 +280,9 @@ enum {
 };
 
 enum {
+	/* Use a property enum that CS wouldn't use. */
+	TGSI_PROPERTY_CS_LOCAL_SIZE = TGSI_PROPERTY_FS_COORD_ORIGIN,
+
 	/* Use a property enum that VS wouldn't use. */
 	TGSI_PROPERTY_VS_BLIT_SGPRS = TGSI_PROPERTY_FS_COORD_ORIGIN,
 
@@ -389,9 +395,6 @@ struct si_shader_selector {
 	 * ANDed with spi_shader_col_format.
 	 */
 	unsigned	colors_written_4bit;
-
-	/* CS parameters */
-	unsigned local_size;
 
 	uint64_t	outputs_written_before_ps; /* "get_unique_index" bits */
 	uint64_t	outputs_written;	/* "get_unique_index" bits */
