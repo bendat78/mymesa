@@ -73,36 +73,36 @@ functions = {
 
     # OpenGL 4.0 / GL_ARB_shader_subroutines. Mesa only exposes this
     # extension with core profile.
-    "GetSubroutineUniformLocation": exec_info(core=31),
-    "GetSubroutineIndex": exec_info(core=31),
-    "GetActiveSubroutineUniformiv": exec_info(core=31),
-    "GetActiveSubroutineUniformName": exec_info(core=31),
-    "GetActiveSubroutineName": exec_info(core=31),
-    "UniformSubroutinesuiv": exec_info(core=31),
-    "GetUniformSubroutineuiv": exec_info(core=31),
-    "GetProgramStageiv": exec_info(core=31),
+    "GetSubroutineUniformLocation": exec_info(compatibility=31, core=31),
+    "GetSubroutineIndex": exec_info(compatibility=31, core=31),
+    "GetActiveSubroutineUniformiv": exec_info(compatibility=31, core=31),
+    "GetActiveSubroutineUniformName": exec_info(compatibility=31, core=31),
+    "GetActiveSubroutineName": exec_info(compatibility=31, core=31),
+    "UniformSubroutinesuiv": exec_info(compatibility=31, core=31),
+    "GetUniformSubroutineuiv": exec_info(compatibility=31, core=31),
+    "GetProgramStageiv": exec_info(compatibility=31, core=31),
 
     # OpenGL 4.0 / GL_ARB_gpu_shader_fp64.  The extension spec says:
     #
     #     "OpenGL 3.2 and GLSL 1.50 are required."
-    "Uniform1d": exec_info(core=32),
-    "Uniform2d": exec_info(core=32),
-    "Uniform3d": exec_info(core=32),
-    "Uniform4d": exec_info(core=32),
-    "Uniform1dv": exec_info(core=32),
-    "Uniform2dv": exec_info(core=32),
-    "Uniform3dv": exec_info(core=32),
-    "Uniform4dv": exec_info(core=32),
-    "UniformMatrix2dv": exec_info(core=32),
-    "UniformMatrix3dv": exec_info(core=32),
-    "UniformMatrix4dv": exec_info(core=32),
-    "UniformMatrix2x3dv": exec_info(core=32),
-    "UniformMatrix2x4dv": exec_info(core=32),
-    "UniformMatrix3x2dv": exec_info(core=32),
-    "UniformMatrix3x4dv": exec_info(core=32),
-    "UniformMatrix4x2dv": exec_info(core=32),
-    "UniformMatrix4x3dv": exec_info(core=32),
-    "GetUniformdv": exec_info(core=32),
+    "Uniform1d": exec_info(compatibility=32, core=32),
+    "Uniform2d": exec_info(compatibility=32, core=32),
+    "Uniform3d": exec_info(compatibility=32, core=32),
+    "Uniform4d": exec_info(compatibility=32, core=32),
+    "Uniform1dv": exec_info(compatibility=32, core=32),
+    "Uniform2dv": exec_info(compatibility=32, core=32),
+    "Uniform3dv": exec_info(compatibility=32, core=32),
+    "Uniform4dv": exec_info(compatibility=32, core=32),
+    "UniformMatrix2dv": exec_info(compatibility=32, core=32),
+    "UniformMatrix3dv": exec_info(compatibility=32, core=32),
+    "UniformMatrix4dv": exec_info(compatibility=32, core=32),
+    "UniformMatrix2x3dv": exec_info(compatibility=32,core=32),
+    "UniformMatrix2x4dv": exec_info(compatibility=32, core=32),
+    "UniformMatrix3x2dv": exec_info(compatibility=32, core=32),
+    "UniformMatrix3x4dv": exec_info(compatibility=32, core=32),
+    "UniformMatrix4x2dv": exec_info(compatibility=32, core=32),
+    "UniformMatrix4x3dv": exec_info(compatibility=32, core=32),
+    "GetUniformdv": exec_info(compatibility=32, core=32),
 
     # OpenGL 4.1 / GL_ARB_vertex_attrib_64bit.  The extension spec says:
     #
@@ -113,16 +113,16 @@ functions = {
     # For Mesa this effectively means OpenGL 3.2 is required.  It seems
     # unlikely that Mesa will ever get support for any of the NV extensions
     # that add "equivalent functionality."
-    "VertexAttribL1d": exec_info(core=32),
-    "VertexAttribL2d": exec_info(core=32),
-    "VertexAttribL3d": exec_info(core=32),
-    "VertexAttribL4d": exec_info(core=32),
-    "VertexAttribL1dv": exec_info(core=32),
-    "VertexAttribL2dv": exec_info(core=32),
-    "VertexAttribL3dv": exec_info(core=32),
-    "VertexAttribL4dv": exec_info(core=32),
-    "VertexAttribLPointer": exec_info(core=32),
-    "GetVertexAttribLdv": exec_info(core=32),
+    "VertexAttribL1d": exec_info(compatibility=32, core=32),
+    "VertexAttribL2d": exec_info(compatibility=32, core=32),
+    "VertexAttribL3d": exec_info(compatibility=32, core=32),
+    "VertexAttribL4d": exec_info(compatibility=32, core=32),
+    "VertexAttribL1dv": exec_info(compatibility=32, core=32),
+    "VertexAttribL2dv": exec_info(compatibility=32, core=32),
+    "VertexAttribL3dv": exec_info(compatibility=32, core=32),
+    "VertexAttribL4dv": exec_info(compatibility=32, core=32),
+    "VertexAttribLPointer": exec_info(compatibility=32, core=32),
+    "GetVertexAttribLdv": exec_info(compatibility=32, core=32),
 
     # OpenGL 4.1 / GL_ARB_viewport_array.  The extension spec says:
     #
@@ -131,14 +131,14 @@ functions = {
     #
     # Mesa does not support either of the geometry shader extensions, so
     # OpenGL 3.2 is required.
-    "ViewportArrayv": exec_info(core=32, es2=31),
-    "ViewportIndexedf": exec_info(core=32, es2=31),
-    "ViewportIndexedfv": exec_info(core=32, es2=31),
-    "ScissorArrayv": exec_info(core=32, es2=31),
-    "ScissorIndexed": exec_info(core=32, es2=31),
-    "ScissorIndexedv": exec_info(core=32, es2=31),
-    "DepthRangeArrayv": exec_info(core=32),
-    "DepthRangeIndexed": exec_info(core=32),
+    "ViewportArrayv": exec_info(compatibility=32, core=32, es2=31),
+    "ViewportIndexedf": exec_info(compatibility=32, core=32, es2=31),
+    "ViewportIndexedfv": exec_info(compatibility=32, core=32, es2=31),
+    "ScissorArrayv": exec_info(compatibility=32, core=32, es2=31),
+    "ScissorIndexed": exec_info(compatibility=32, core=32, es2=31),
+    "ScissorIndexedv": exec_info(compatibility=32, core=32, es2=31),
+    "DepthRangeArrayv": exec_info(compatibility=32, core=32),
+    "DepthRangeIndexed": exec_info(compatibility=32, core=32),
     # GetFloati_v also GL_ARB_shader_atomic_counters
     # GetDoublei_v also GL_ARB_shader_atomic_counters
 

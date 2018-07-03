@@ -35,6 +35,7 @@
 #include "util/strtod.h"
 #include "util/debug.h"
 #include "util/build_id.h"
+#include "util/disk_cache.h"
 #include "util/mesa-sha1.h"
 #include "vk_util.h"
 #include "common/gen_defines.h"
@@ -233,6 +234,8 @@ anv_physical_device_init_uuids(struct anv_physical_device *device)
                        "build-id too short.  It needs to be a SHA");
    }
 
+   memcpy(device->driver_build_sha1, build_id_data(note), 20);
+
    struct mesa_sha1 sha1_ctx;
    uint8_t sha1[20];
    STATIC_ASSERT(VK_UUID_SIZE <= sizeof(sha1));
@@ -269,6 +272,35 @@ anv_physical_device_init_uuids(struct anv_physical_device *device)
    memcpy(device->device_uuid, sha1, VK_UUID_SIZE);
 
    return VK_SUCCESS;
+}
+
+static void
+anv_physical_device_init_disk_cache(struct anv_physical_device *device)
+{
+#ifdef ENABLE_SHADER_CACHE
+   char renderer[9];
+   MAYBE_UNUSED int len = snprintf(renderer, sizeof(renderer), "anv_%04x",
+                                   device->chipset_id);
+   assert(len == sizeof(renderer) - 1);
+
+   char timestamp[41];
+   _mesa_sha1_format(timestamp, device->driver_build_sha1);
+
+   device->disk_cache = disk_cache_create(renderer, timestamp, 0);
+#else
+   device->disk_cache = NULL;
+#endif
+}
+
+static void
+anv_physical_device_free_disk_cache(struct anv_physical_device *device)
+{
+#ifdef ENABLE_SHADER_CACHE
+   if (device->disk_cache)
+      disk_cache_destroy(device->disk_cache);
+#else
+   assert(device->disk_cache == NULL);
+#endif
 }
 
 static VkResult
@@ -434,12 +466,15 @@ anv_physical_device_init(struct anv_physical_device *device,
    device->compiler->supports_pull_constants = false;
    device->compiler->constant_buffer_0_is_relative =
       device->info.gen < 8 || !device->has_context_isolation;
+   device->compiler->supports_shader_constants = true;
 
    isl_device_init(&device->isl_dev, &device->info, swizzled);
 
    result = anv_physical_device_init_uuids(device);
    if (result != VK_SUCCESS)
       goto fail;
+
+   anv_physical_device_init_disk_cache(device);
 
    if (instance->enabled_extensions.KHR_display) {
       master_fd = open(primary_path, O_RDWR | O_CLOEXEC);
@@ -458,6 +493,7 @@ anv_physical_device_init(struct anv_physical_device *device,
    result = anv_init_wsi(device);
    if (result != VK_SUCCESS) {
       ralloc_free(device->compiler);
+      anv_physical_device_free_disk_cache(device);
       goto fail;
    }
 
@@ -480,6 +516,7 @@ static void
 anv_physical_device_finish(struct anv_physical_device *device)
 {
    anv_finish_wsi(device);
+   anv_physical_device_free_disk_cache(device);
    ralloc_free(device->compiler);
    close(device->local_fd);
    if (device->master_fd >= 0)
@@ -602,6 +639,9 @@ VkResult anv_CreateInstance(
       vk_free2(&default_alloc, pAllocator, instance);
       return vk_error(result);
    }
+
+   instance->pipeline_cache_enabled =
+      env_var_as_boolean("ANV_ENABLE_PIPELINE_CACHE", true);
 
    _mesa_locale_init();
 
@@ -1727,6 +1767,8 @@ VkResult anv_CreateDevice(
    if (result != VK_SUCCESS)
       goto fail_workaround_bo;
 
+   anv_pipeline_cache_init(&device->default_pipeline_cache, device, true);
+
    anv_device_init_blorp(device);
 
    anv_device_init_border_colors(device);
@@ -1771,11 +1813,14 @@ void anv_DestroyDevice(
     const VkAllocationCallbacks*                pAllocator)
 {
    ANV_FROM_HANDLE(anv_device, device, _device);
+   struct anv_physical_device *physical_device = &device->instance->physicalDevice;
 
    if (!device)
       return;
 
    anv_device_finish_blorp(device);
+
+   anv_pipeline_cache_finish(&device->default_pipeline_cache);
 
    anv_queue_finish(&device->queue);
 
@@ -1797,6 +1842,8 @@ void anv_DestroyDevice(
    if (device->info.gen >= 10)
       anv_gem_close(device, device->hiz_clear_bo.gem_handle);
 
+   if (physical_device->use_softpin)
+      anv_state_pool_finish(&device->binding_table_pool);
    anv_state_pool_finish(&device->surface_state_pool);
    anv_state_pool_finish(&device->instruction_state_pool);
    anv_state_pool_finish(&device->dynamic_state_pool);

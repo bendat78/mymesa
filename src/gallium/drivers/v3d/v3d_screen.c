@@ -109,6 +109,7 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_DRAW_INDIRECT:
         case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
         case PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET:
+        case PIPE_CAP_TGSI_CAN_READ_OUTPUTS:
                 return 1;
 
         case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -446,8 +447,7 @@ v3d_screen_is_format_supported(struct pipe_screen *pscreen,
         if (sample_count > 1 && sample_count != VC5_MAX_SAMPLES)
                 return FALSE;
 
-        if ((target >= PIPE_MAX_TEXTURE_TYPES) ||
-            !util_format_is_supported(format, usage)) {
+        if (target >= PIPE_MAX_TEXTURE_TYPES) {
                 return FALSE;
         }
 

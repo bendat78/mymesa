@@ -460,8 +460,7 @@ brw_nir_lower_fs_inputs(nir_shader *nir,
 }
 
 void
-brw_nir_lower_vue_outputs(nir_shader *nir,
-                          bool is_scalar)
+brw_nir_lower_vue_outputs(nir_shader *nir)
 {
    nir_foreach_variable(var, &nir->outputs) {
       var->data.driver_location = var->data.location;
@@ -593,7 +592,7 @@ brw_nir_optimize(nir_shader *nir, const struct brw_compiler *compiler,
 }
 
 static unsigned
-lower_bit_size_callback(const nir_alu_instr *alu, void *data)
+lower_bit_size_callback(const nir_alu_instr *alu, UNUSED void *data)
 {
    assert(alu->dest.dest.is_ssa);
    if (alu->dest.dest.ssa.bit_size != 16)
@@ -663,6 +662,13 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
                         nir_lower_divmod64);
 
    nir = brw_nir_optimize(nir, compiler, is_scalar);
+
+   /* This needs to be run after the first optimization pass but before we
+    * lower indirect derefs away
+    */
+   if (compiler->supports_shader_constants) {
+      OPT(nir_opt_large_constants, NULL, 32);
+   }
 
    nir_lower_bit_size(nir, lower_bit_size_callback, NULL);
 

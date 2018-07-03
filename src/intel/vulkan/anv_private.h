@@ -870,9 +870,12 @@ struct anv_physical_device {
       struct anv_memory_heap                    heaps[VK_MAX_MEMORY_HEAPS];
     } memory;
 
+    uint8_t                                     driver_build_sha1[20];
     uint8_t                                     pipeline_cache_uuid[VK_UUID_SIZE];
     uint8_t                                     driver_uuid[VK_UUID_SIZE];
     uint8_t                                     device_uuid[VK_UUID_SIZE];
+
+    struct disk_cache *                         disk_cache;
 
     struct wsi_device                       wsi_device;
     int                                         local_fd;
@@ -890,6 +893,8 @@ struct anv_instance {
 
     int                                         physicalDeviceCount;
     struct anv_physical_device                  physicalDevice;
+
+    bool                                        pipeline_cache_enabled;
 
     struct vk_debug_report_instance             debug_report_callbacks;
 };
@@ -930,9 +935,27 @@ struct anv_shader_bin *
 anv_pipeline_cache_upload_kernel(struct anv_pipeline_cache *cache,
                                  const void *key_data, uint32_t key_size,
                                  const void *kernel_data, uint32_t kernel_size,
+                                 const void *constant_data,
+                                 uint32_t constant_data_size,
                                  const struct brw_stage_prog_data *prog_data,
                                  uint32_t prog_data_size,
                                  const struct anv_pipeline_bind_map *bind_map);
+
+struct anv_shader_bin *
+anv_device_search_for_kernel(struct anv_device *device,
+                             struct anv_pipeline_cache *cache,
+                             const void *key_data, uint32_t key_size);
+
+struct anv_shader_bin *
+anv_device_upload_kernel(struct anv_device *device,
+                         struct anv_pipeline_cache *cache,
+                         const void *key_data, uint32_t key_size,
+                         const void *kernel_data, uint32_t kernel_size,
+                         const void *constant_data,
+                         uint32_t constant_data_size,
+                         const struct brw_stage_prog_data *prog_data,
+                         uint32_t prog_data_size,
+                         const struct anv_pipeline_bind_map *bind_map);
 
 struct anv_device {
     VK_LOADER_DATA                              _loader_data;
@@ -970,7 +993,7 @@ struct anv_device {
     struct anv_bo                               trivial_batch_bo;
     struct anv_bo                               hiz_clear_bo;
 
-    struct anv_pipeline_cache                   blorp_shader_cache;
+    struct anv_pipeline_cache                   default_pipeline_cache;
     struct blorp_context                        blorp;
 
     struct anv_state                            border_colors;
@@ -1568,6 +1591,7 @@ anv_descriptor_set_destroy(struct anv_device *device,
                            struct anv_descriptor_pool *pool,
                            struct anv_descriptor_set *set);
 
+#define ANV_DESCRIPTOR_SET_SHADER_CONSTANTS (UINT8_MAX - 1)
 #define ANV_DESCRIPTOR_SET_COLOR_ATTACHMENTS UINT8_MAX
 
 struct anv_pipeline_binding {
@@ -2300,6 +2324,9 @@ struct anv_shader_bin {
    struct anv_state kernel;
    uint32_t kernel_size;
 
+   struct anv_state constant_data;
+   uint32_t constant_data_size;
+
    const struct brw_stage_prog_data *prog_data;
    uint32_t prog_data_size;
 
@@ -2310,6 +2337,7 @@ struct anv_shader_bin *
 anv_shader_bin_create(struct anv_device *device,
                       const void *key, uint32_t key_size,
                       const void *kernel, uint32_t kernel_size,
+                      const void *constant_data, uint32_t constant_data_size,
                       const struct brw_stage_prog_data *prog_data,
                       uint32_t prog_data_size, const void *prog_data_param,
                       const struct anv_pipeline_bind_map *bind_map);

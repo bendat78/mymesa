@@ -480,29 +480,6 @@ anv_fill_binding_table(struct brw_stage_prog_data *prog_data, unsigned bias)
    prog_data->binding_table.image_start = bias;
 }
 
-static struct anv_shader_bin *
-anv_pipeline_upload_kernel(struct anv_pipeline *pipeline,
-                           struct anv_pipeline_cache *cache,
-                           const void *key_data, uint32_t key_size,
-                           const void *kernel_data, uint32_t kernel_size,
-                           const struct brw_stage_prog_data *prog_data,
-                           uint32_t prog_data_size,
-                           const struct anv_pipeline_bind_map *bind_map)
-{
-   if (cache) {
-      return anv_pipeline_cache_upload_kernel(cache, key_data, key_size,
-                                              kernel_data, kernel_size,
-                                              prog_data, prog_data_size,
-                                              bind_map);
-   } else {
-      return anv_shader_bin_create(pipeline->device, key_data, key_size,
-                                   kernel_data, kernel_size,
-                                   prog_data, prog_data_size,
-                                   prog_data->param, bind_map);
-   }
-}
-
-
 static void
 anv_pipeline_add_compiled_stage(struct anv_pipeline *pipeline,
                                 gl_shader_stage stage,
@@ -523,18 +500,16 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
       pipeline->device->instance->physicalDevice.compiler;
    struct brw_vs_prog_key key;
    struct anv_shader_bin *bin = NULL;
-   unsigned char sha1[20];
 
    populate_vs_prog_key(&pipeline->device->info, &key);
 
    ANV_FROM_HANDLE(anv_pipeline_layout, layout, info->layout);
 
-   if (cache) {
-      anv_pipeline_hash_shader(pipeline, layout, module, entrypoint,
-                               MESA_SHADER_VERTEX, spec_info,
-                               &key, sizeof(key), sha1);
-      bin = anv_pipeline_cache_search(cache, sha1, 20);
-   }
+   unsigned char sha1[20];
+   anv_pipeline_hash_shader(pipeline, layout, module, entrypoint,
+                            MESA_SHADER_VERTEX, spec_info,
+                            &key, sizeof(key), sha1);
+   bin = anv_device_search_for_kernel(pipeline->device, cache, sha1, 20);
 
    if (bin == NULL) {
       struct brw_vs_prog_data prog_data = {};
@@ -573,10 +548,12 @@ anv_pipeline_compile_vs(struct anv_pipeline *pipeline,
       }
 
       unsigned code_size = prog_data.base.base.program_size;
-      bin = anv_pipeline_upload_kernel(pipeline, cache, sha1, 20,
-                                       shader_code, code_size,
-                                       &prog_data.base.base, sizeof(prog_data),
-                                       &map);
+      bin = anv_device_upload_kernel(pipeline->device, cache, sha1, 20,
+                                     shader_code, code_size,
+                                     nir->constant_data,
+                                     nir->constant_data_size,
+                                     &prog_data.base.base, sizeof(prog_data),
+                                     &map);
       if (!bin) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -647,8 +624,6 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
    struct brw_tes_prog_key tes_key = {};
    struct anv_shader_bin *tcs_bin = NULL;
    struct anv_shader_bin *tes_bin = NULL;
-   unsigned char tcs_sha1[40];
-   unsigned char tes_sha1[40];
 
    populate_sampler_prog_key(&pipeline->device->info, &tcs_key.tex);
    populate_sampler_prog_key(&pipeline->device->info, &tes_key.tex);
@@ -656,18 +631,21 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
 
    ANV_FROM_HANDLE(anv_pipeline_layout, layout, info->layout);
 
-   if (cache) {
-      anv_pipeline_hash_shader(pipeline, layout, tcs_module, tcs_entrypoint,
-                               MESA_SHADER_TESS_CTRL, tcs_spec_info,
-                               &tcs_key, sizeof(tcs_key), tcs_sha1);
-      anv_pipeline_hash_shader(pipeline, layout, tes_module, tes_entrypoint,
-                               MESA_SHADER_TESS_EVAL, tes_spec_info,
-                               &tes_key, sizeof(tes_key), tes_sha1);
-      memcpy(&tcs_sha1[20], tes_sha1, 20);
-      memcpy(&tes_sha1[20], tcs_sha1, 20);
-      tcs_bin = anv_pipeline_cache_search(cache, tcs_sha1, sizeof(tcs_sha1));
-      tes_bin = anv_pipeline_cache_search(cache, tes_sha1, sizeof(tes_sha1));
-   }
+   unsigned char tcs_sha1[40];
+   unsigned char tes_sha1[40];
+   anv_pipeline_hash_shader(pipeline, layout, tcs_module, tcs_entrypoint,
+                            MESA_SHADER_TESS_CTRL, tcs_spec_info,
+                            &tcs_key, sizeof(tcs_key), tcs_sha1);
+   anv_pipeline_hash_shader(pipeline, layout, tes_module, tes_entrypoint,
+                            MESA_SHADER_TESS_EVAL, tes_spec_info,
+                            &tes_key, sizeof(tes_key), tes_sha1);
+   memcpy(&tcs_sha1[20], tes_sha1, 20);
+   memcpy(&tes_sha1[20], tcs_sha1, 20);
+
+   tcs_bin = anv_device_search_for_kernel(pipeline->device, cache,
+                                          tcs_sha1, sizeof(tcs_sha1));
+   tes_bin = anv_device_search_for_kernel(pipeline->device, cache,
+                                          tes_sha1, sizeof(tes_sha1));
 
    if (tcs_bin == NULL || tes_bin == NULL) {
       struct brw_tcs_prog_data tcs_prog_data = {};
@@ -739,12 +717,14 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
       }
 
       unsigned code_size = tcs_prog_data.base.base.program_size;
-      tcs_bin = anv_pipeline_upload_kernel(pipeline, cache,
-                                           tcs_sha1, sizeof(tcs_sha1),
-                                           shader_code, code_size,
-                                           &tcs_prog_data.base.base,
-                                           sizeof(tcs_prog_data),
-                                           &tcs_map);
+      tcs_bin = anv_device_upload_kernel(pipeline->device, cache,
+                                         tcs_sha1, sizeof(tcs_sha1),
+                                         shader_code, code_size,
+                                         tcs_nir->constant_data,
+                                         tcs_nir->constant_data_size,
+                                         &tcs_prog_data.base.base,
+                                         sizeof(tcs_prog_data),
+                                         &tcs_map);
       if (!tcs_bin) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -760,12 +740,14 @@ anv_pipeline_compile_tcs_tes(struct anv_pipeline *pipeline,
       }
 
       code_size = tes_prog_data.base.base.program_size;
-      tes_bin = anv_pipeline_upload_kernel(pipeline, cache,
-                                           tes_sha1, sizeof(tes_sha1),
-                                           shader_code, code_size,
-                                           &tes_prog_data.base.base,
-                                           sizeof(tes_prog_data),
-                                           &tes_map);
+      tes_bin = anv_device_upload_kernel(pipeline->device, cache,
+                                         tes_sha1, sizeof(tes_sha1),
+                                         shader_code, code_size,
+                                         tes_nir->constant_data,
+                                         tes_nir->constant_data_size,
+                                         &tes_prog_data.base.base,
+                                         sizeof(tes_prog_data),
+                                         &tes_map);
       if (!tes_bin) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -792,18 +774,16 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
       pipeline->device->instance->physicalDevice.compiler;
    struct brw_gs_prog_key key;
    struct anv_shader_bin *bin = NULL;
-   unsigned char sha1[20];
 
    populate_gs_prog_key(&pipeline->device->info, &key);
 
    ANV_FROM_HANDLE(anv_pipeline_layout, layout, info->layout);
 
-   if (cache) {
-      anv_pipeline_hash_shader(pipeline, layout, module, entrypoint,
-                               MESA_SHADER_GEOMETRY, spec_info,
-                               &key, sizeof(key), sha1);
-      bin = anv_pipeline_cache_search(cache, sha1, 20);
-   }
+   unsigned char sha1[20];
+   anv_pipeline_hash_shader(pipeline, layout, module, entrypoint,
+                            MESA_SHADER_GEOMETRY, spec_info,
+                            &key, sizeof(key), sha1);
+   bin = anv_device_search_for_kernel(pipeline->device, cache, sha1, 20);
 
    if (bin == NULL) {
       struct brw_gs_prog_data prog_data = {};
@@ -843,10 +823,12 @@ anv_pipeline_compile_gs(struct anv_pipeline *pipeline,
 
       /* TODO: SIMD8 GS */
       const unsigned code_size = prog_data.base.base.program_size;
-      bin = anv_pipeline_upload_kernel(pipeline, cache, sha1, 20,
-                                       shader_code, code_size,
-                                       &prog_data.base.base, sizeof(prog_data),
-                                       &map);
+      bin = anv_device_upload_kernel(pipeline->device, cache, sha1, 20,
+                                     shader_code, code_size,
+                                     nir->constant_data,
+                                     nir->constant_data_size,
+                                     &prog_data.base.base, sizeof(prog_data),
+                                     &map);
       if (!bin) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -872,18 +854,16 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
       pipeline->device->instance->physicalDevice.compiler;
    struct brw_wm_prog_key key;
    struct anv_shader_bin *bin = NULL;
-   unsigned char sha1[20];
 
    populate_wm_prog_key(pipeline, info, &key);
 
    ANV_FROM_HANDLE(anv_pipeline_layout, layout, info->layout);
 
-   if (cache) {
-      anv_pipeline_hash_shader(pipeline, layout, module, entrypoint,
-                               MESA_SHADER_FRAGMENT, spec_info,
-                               &key, sizeof(key), sha1);
-      bin = anv_pipeline_cache_search(cache, sha1, 20);
-   }
+   unsigned char sha1[20];
+   anv_pipeline_hash_shader(pipeline, layout, module, entrypoint,
+                            MESA_SHADER_FRAGMENT, spec_info,
+                            &key, sizeof(key), sha1);
+   bin = anv_device_search_for_kernel(pipeline->device, cache, sha1, 20);
 
    if (bin == NULL) {
       struct brw_wm_prog_data prog_data = {};
@@ -993,10 +973,12 @@ anv_pipeline_compile_fs(struct anv_pipeline *pipeline,
       }
 
       unsigned code_size = prog_data.base.program_size;
-      bin = anv_pipeline_upload_kernel(pipeline, cache, sha1, 20,
-                                       shader_code, code_size,
-                                       &prog_data.base, sizeof(prog_data),
-                                       &map);
+      bin = anv_device_upload_kernel(pipeline->device, cache, sha1, 20,
+                                     shader_code, code_size,
+                                     nir->constant_data,
+                                     nir->constant_data_size,
+                                     &prog_data.base, sizeof(prog_data),
+                                     &map);
       if (!bin) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -1022,18 +1004,16 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
       pipeline->device->instance->physicalDevice.compiler;
    struct brw_cs_prog_key key;
    struct anv_shader_bin *bin = NULL;
-   unsigned char sha1[20];
 
    populate_cs_prog_key(&pipeline->device->info, &key);
 
    ANV_FROM_HANDLE(anv_pipeline_layout, layout, info->layout);
 
-   if (cache) {
-      anv_pipeline_hash_shader(pipeline, layout, module, entrypoint,
-                               MESA_SHADER_COMPUTE, spec_info,
-                               &key, sizeof(key), sha1);
-      bin = anv_pipeline_cache_search(cache, sha1, 20);
-   }
+   unsigned char sha1[20];
+   anv_pipeline_hash_shader(pipeline, layout, module, entrypoint,
+                            MESA_SHADER_COMPUTE, spec_info,
+                            &key, sizeof(key), sha1);
+   bin = anv_device_search_for_kernel(pipeline->device, cache, sha1, 20);
 
    if (bin == NULL) {
       struct brw_cs_prog_data prog_data = {};
@@ -1069,10 +1049,12 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
       }
 
       const unsigned code_size = prog_data.base.program_size;
-      bin = anv_pipeline_upload_kernel(pipeline, cache, sha1, 20,
-                                       shader_code, code_size,
-                                       &prog_data.base, sizeof(prog_data),
-                                       &map);
+      bin = anv_device_upload_kernel(pipeline->device, cache, sha1, 20,
+                                     shader_code, code_size,
+                                     nir->constant_data,
+                                     nir->constant_data_size,
+                                     &prog_data.base, sizeof(prog_data),
+                                     &map);
       if (!bin) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
