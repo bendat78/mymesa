@@ -41,12 +41,6 @@
 #include "vl/vl_decoder.h"
 #include "driver_ddebug/dd_util.h"
 
-#include <llvm-c/Transforms/IPO.h>
-#include <llvm-c/Transforms/Scalar.h>
-#if HAVE_LLVM >= 0x0700
-#include <llvm-c/Transforms/Utils.h>
-#endif
-
 static const struct debug_named_value debug_options[] = {
 	/* Shader logging options: */
 	{ "vs", DBG(VS), "Print vertex shaders" },
@@ -112,59 +106,22 @@ static const struct debug_named_value debug_options[] = {
 };
 
 static void si_init_compiler(struct si_screen *sscreen,
-			     struct si_compiler *compiler)
+			     struct ac_llvm_compiler *compiler)
 {
 	enum ac_target_machine_options tm_options =
 		(sscreen->debug_flags & DBG(SI_SCHED) ? AC_TM_SISCHED : 0) |
 		(sscreen->info.chip_class >= GFX9 ? AC_TM_FORCE_ENABLE_XNACK : 0) |
 		(sscreen->info.chip_class < GFX9 ? AC_TM_FORCE_DISABLE_XNACK : 0) |
-		(!sscreen->llvm_has_working_vgpr_indexing ? AC_TM_PROMOTE_ALLOCA_TO_SCRATCH : 0);
+		(!sscreen->llvm_has_working_vgpr_indexing ? AC_TM_PROMOTE_ALLOCA_TO_SCRATCH : 0) |
+		(sscreen->debug_flags & DBG(CHECK_IR) ? AC_TM_CHECK_IR : 0);
 
-	const char *triple;
-	compiler->tm = ac_create_target_machine(sscreen->info.family,
-						tm_options, &triple);
-	if (!compiler->tm)
-		return;
-
-	compiler->target_library_info =
-		gallivm_create_target_library_info(triple);
-	if (!compiler->target_library_info)
-		return;
-
-	compiler->passmgr = LLVMCreatePassManager();
-	if (!compiler->passmgr)
-		return;
-
-	LLVMAddTargetLibraryInfo(compiler->target_library_info,
-				 compiler->passmgr);
-
-	/* Add LLVM passes into the pass manager. */
-	if (sscreen->debug_flags & DBG(CHECK_IR))
-		LLVMAddVerifierPass(compiler->passmgr);
-
-	LLVMAddAlwaysInlinerPass(compiler->passmgr);
-	/* This pass should eliminate all the load and store instructions. */
-	LLVMAddPromoteMemoryToRegisterPass(compiler->passmgr);
-	LLVMAddScalarReplAggregatesPass(compiler->passmgr);
-	LLVMAddLICMPass(compiler->passmgr);
-	LLVMAddAggressiveDCEPass(compiler->passmgr);
-	LLVMAddCFGSimplificationPass(compiler->passmgr);
-	/* This is recommended by the instruction combining pass. */
-	LLVMAddEarlyCSEMemSSAPass(compiler->passmgr);
-	LLVMAddInstructionCombiningPass(compiler->passmgr);
+	ac_init_llvm_once();
+	ac_init_llvm_compiler(compiler, true, sscreen->info.family, tm_options);
 }
 
-static void si_destroy_compiler(struct si_compiler *compiler)
+static void si_destroy_compiler(struct ac_llvm_compiler *compiler)
 {
-	if (compiler->passmgr)
-		LLVMDisposePassManager(compiler->passmgr);
-#if HAVE_LLVM >= 0x0700
-	/* This crashes on LLVM 5.0 and 6.0 and Ubuntu 18.04, so leak it there. */
-	if (compiler->target_library_info)
-		gallivm_dispose_target_library_info(compiler->target_library_info);
-#endif
-	if (compiler->tm)
-		LLVMDisposeTargetMachine(compiler->tm);
+	ac_destroy_llvm_compiler(compiler);
 }
 
 /*

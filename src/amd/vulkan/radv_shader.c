@@ -521,52 +521,9 @@ static void radv_init_llvm_target()
 
 static once_flag radv_init_llvm_target_once_flag = ONCE_FLAG_INIT;
 
-static LLVMTargetRef radv_get_llvm_target(const char *triple)
+static void radv_init_llvm_once(void)
 {
-	LLVMTargetRef target = NULL;
-	char *err_message = NULL;
-
 	call_once(&radv_init_llvm_target_once_flag, radv_init_llvm_target);
-
-	if (LLVMGetTargetFromTriple(triple, &target, &err_message)) {
-		fprintf(stderr, "Cannot find target for triple %s ", triple);
-		if (err_message) {
-			fprintf(stderr, "%s\n", err_message);
-		}
-		LLVMDisposeMessage(err_message);
-		return NULL;
-	}
-	return target;
-}
-
-static LLVMTargetMachineRef radv_create_target_machine(enum radeon_family family,
-						       enum ac_target_machine_options tm_options,
-						       const char **out_triple)
-{
-	assert(family >= CHIP_TAHITI);
-	char features[256];
-	const char *triple = (tm_options & AC_TM_SUPPORTS_SPILL) ? "amdgcn-mesa-mesa3d" : "amdgcn--";
-	LLVMTargetRef target = radv_get_llvm_target(triple);
-
-	snprintf(features, sizeof(features),
-		 "+DumpCode,+vgpr-spilling,-fp32-denormals,+fp64-denormals%s%s%s%s",
-		 tm_options & AC_TM_SISCHED ? ",+si-scheduler" : "",
-		 tm_options & AC_TM_FORCE_ENABLE_XNACK ? ",+xnack" : "",
-		 tm_options & AC_TM_FORCE_DISABLE_XNACK ? ",-xnack" : "",
-		 tm_options & AC_TM_PROMOTE_ALLOCA_TO_SCRATCH ? ",-promote-alloca" : "");
-
-	LLVMTargetMachineRef tm = LLVMCreateTargetMachine(
-	                             target,
-	                             triple,
-	                             ac_get_llvm_processor_name(family),
-				     features,
-	                             LLVMCodeGenLevelDefault,
-	                             LLVMRelocDefault,
-	                             LLVMCodeModelDefault);
-
-	if (out_triple)
-		*out_triple = triple;
-	return tm;
 }
 
 static struct radv_shader_variant *
@@ -584,7 +541,7 @@ shader_variant_create(struct radv_device *device,
 	enum ac_target_machine_options tm_options = 0;
 	struct radv_shader_variant *variant;
 	struct ac_shader_binary binary;
-	LLVMTargetMachineRef tm;
+	struct ac_llvm_compiler ac_llvm;
 
 	variant = calloc(1, sizeof(struct radv_shader_variant));
 	if (!variant)
@@ -604,20 +561,23 @@ shader_variant_create(struct radv_device *device,
 		tm_options |= AC_TM_SUPPORTS_SPILL;
 	if (device->instance->perftest_flags & RADV_PERFTEST_SISCHED)
 		tm_options |= AC_TM_SISCHED;
-	tm = radv_create_target_machine(chip_family, tm_options, NULL);
+	if (options->check_ir)
+		tm_options |= AC_TM_CHECK_IR;
 
+	radv_init_llvm_once();
+	ac_init_llvm_compiler(&ac_llvm, false, chip_family, tm_options);
 	if (gs_copy_shader) {
 		assert(shader_count == 1);
-		radv_compile_gs_copy_shader(tm, *shaders, &binary,
+		radv_compile_gs_copy_shader(&ac_llvm, *shaders, &binary,
 					    &variant->config, &variant->info,
 					    options);
 	} else {
-		radv_compile_nir_shader(tm, &binary, &variant->config,
+		radv_compile_nir_shader(&ac_llvm, &binary, &variant->config,
 					&variant->info, shaders, shader_count,
 					options);
 	}
 
-	LLVMDisposeTargetMachine(tm);
+	ac_destroy_llvm_compiler(&ac_llvm);
 
 	radv_fill_shader_variant(device, variant, &binary, stage);
 
