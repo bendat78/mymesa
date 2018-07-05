@@ -85,12 +85,7 @@ unsigned si_llvm_compile(LLVMModuleRef M, struct ac_shader_binary *binary,
 			 struct pipe_debug_callback *debug)
 {
 	struct si_llvm_diagnostics diag;
-	char *err;
 	LLVMContextRef llvm_ctx;
-	LLVMMemoryBufferRef out_buffer;
-	unsigned buffer_size;
-	const char *buffer_data;
-	LLVMBool mem_err;
 
 	diag.debug = debug;
 	diag.retval = 0;
@@ -100,34 +95,10 @@ unsigned si_llvm_compile(LLVMModuleRef M, struct ac_shader_binary *binary,
 
 	LLVMContextSetDiagnosticHandler(llvm_ctx, si_diagnostic_handler, &diag);
 
-	/* Compile IR*/
-	mem_err = LLVMTargetMachineEmitToMemoryBuffer(compiler->tm, M,
-						      LLVMObjectFile, &err,
-						      &out_buffer);
-
-	/* Process Errors/Warnings */
-	if (mem_err) {
-		fprintf(stderr, "%s: %s", __FUNCTION__, err);
-		pipe_debug_message(debug, SHADER_INFO,
-				   "LLVM emit error: %s", err);
-		FREE(err);
+	/* Compile IR. */
+	if (!ac_compile_module_to_binary(compiler->passes, M, binary))
 		diag.retval = 1;
-		goto out;
-	}
 
-	/* Extract Shader Code*/
-	buffer_size = LLVMGetBufferSize(out_buffer);
-	buffer_data = LLVMGetBufferStart(out_buffer);
-
-	if (!ac_elf_read(buffer_data, buffer_size, binary)) {
-		fprintf(stderr, "radeonsi: cannot read an ELF shader binary\n");
-		diag.retval = 1;
-	}
-
-	/* Clean up */
-	LLVMDisposeMemoryBuffer(out_buffer);
-
-out:
 	if (diag.retval != 0)
 		pipe_debug_message(debug, SHADER_INFO, "LLVM compile failed");
 	return diag.retval;
@@ -985,21 +956,18 @@ void si_llvm_context_init(struct si_shader_context *ctx,
 	ctx->screen = sscreen;
 	ctx->compiler = compiler;
 
-	ctx->gallivm.context = LLVMContextCreate();
-	ctx->gallivm.module = ac_create_module(compiler->tm, ctx->gallivm.context);
+	ac_llvm_context_init(&ctx->ac, sscreen->info.chip_class, sscreen->info.family);
+	ctx->ac.module = ac_create_module(compiler->tm, ctx->ac.context);
 
-	bool unsafe_fpmath = (sscreen->debug_flags & DBG(UNSAFE_MATH)) != 0;
 	enum ac_float_mode float_mode =
-		unsafe_fpmath ? AC_FLOAT_MODE_UNSAFE_FP_MATH :
-				AC_FLOAT_MODE_NO_SIGNED_ZEROS_FP_MATH;
+		sscreen->debug_flags & DBG(UNSAFE_MATH) ?
+			AC_FLOAT_MODE_UNSAFE_FP_MATH :
+			AC_FLOAT_MODE_NO_SIGNED_ZEROS_FP_MATH;
+	ctx->ac.builder = ac_create_builder(ctx->ac.context, float_mode);
 
-	ctx->gallivm.builder = ac_create_builder(ctx->gallivm.context,
-						 float_mode);
-
-	ac_llvm_context_init(&ctx->ac, ctx->gallivm.context,
-			     sscreen->info.chip_class, sscreen->info.family);
-	ctx->ac.module = ctx->gallivm.module;
-	ctx->ac.builder = ctx->gallivm.builder;
+	ctx->gallivm.context = ctx->ac.context;
+	ctx->gallivm.module = ctx->ac.module;
+	ctx->gallivm.builder = ctx->ac.builder;
 
 	struct lp_build_tgsi_context *bld_base = &ctx->bld_base;
 
