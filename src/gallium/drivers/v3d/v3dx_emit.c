@@ -276,9 +276,15 @@ static void
 emit_rt_blend(struct v3d_context *v3d, struct v3d_job *job,
               struct pipe_blend_state *blend, int rt)
 {
-        cl_emit(&job->bcl, BLEND_CONFIG, config) {
-                struct pipe_rt_blend_state *rtblend = &blend->rt[rt];
+        struct pipe_rt_blend_state *rtblend = &blend->rt[rt];
 
+#if V3D_VERSION >= 40
+        /* We don't need to emit blend state for disabled RTs. */
+        if (!rtblend->blend_enable)
+                return;
+#endif
+
+        cl_emit(&job->bcl, BLEND_CONFIG, config) {
 #if V3D_VERSION >= 40
                 config.render_target_mask = 1 << rt;
 #else
@@ -400,7 +406,7 @@ v3dX(emit_state)(struct pipe_context *pctx)
                         config.direct3d_provoking_vertex =
                                 v3d->rasterizer->base.flatshade_first;
 
-                        config.blend_enable = v3d->blend->rt[0].blend_enable;
+                        config.blend_enable = v3d->blend->blend_enables;
 
                         /* Note: EZ state may update based on the compiled FS,
                          * along with ZSA
@@ -481,19 +487,27 @@ v3dX(emit_state)(struct pipe_context *pctx)
                 }
         }
 
-        if (v3d->dirty & VC5_DIRTY_BLEND && v3d->blend->rt[0].blend_enable) {
-                struct pipe_blend_state *blend = v3d->blend;
+        if (v3d->dirty & VC5_DIRTY_BLEND) {
+                struct v3d_blend_state *blend = v3d->blend;
 
-                if (blend->independent_blend_enable) {
-                        for (int i = 0; i < VC5_MAX_DRAW_BUFFERS; i++)
-                                emit_rt_blend(v3d, job, blend, i);
-                } else {
-                        emit_rt_blend(v3d, job, blend, 0);
+                if (blend->blend_enables) {
+#if V3D_VERSION >= 40
+                        cl_emit(&job->bcl, BLEND_ENABLES, enables) {
+                                enables.mask = blend->blend_enables;
+                        }
+#endif
+
+                        if (blend->base.independent_blend_enable) {
+                                for (int i = 0; i < VC5_MAX_DRAW_BUFFERS; i++)
+                                        emit_rt_blend(v3d, job, &blend->base, i);
+                        } else {
+                                emit_rt_blend(v3d, job, &blend->base, 0);
+                        }
                 }
         }
 
         if (v3d->dirty & VC5_DIRTY_BLEND) {
-                struct pipe_blend_state *blend = v3d->blend;
+                struct pipe_blend_state *blend = &v3d->blend->base;
 
                 cl_emit(&job->bcl, COLOUR_WRITE_MASKS, mask) {
                         for (int i = 0; i < 4; i++) {
