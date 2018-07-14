@@ -33,6 +33,7 @@
 #include "compiler/brw_nir.h"
 #include "anv_nir.h"
 #include "spirv/nir_spirv.h"
+#include "vk_util.h"
 
 /* Needed for SWIZZLE macros */
 #include "program/prog_instruction.h"
@@ -153,6 +154,7 @@ anv_shader_compile_to_nir(struct anv_pipeline *pipeline,
          .subgroup_shuffle = true,
          .subgroup_vote = true,
          .stencil_export = device->instance->physicalDevice.info.gen >= 9,
+         .storage_8bit = device->instance->physicalDevice.info.gen >= 8,
       },
    };
 
@@ -1173,7 +1175,7 @@ copy_non_dynamic_state(struct anv_pipeline *pipeline,
     *    against does not use a depth/stencil attachment.
     */
    if (!pCreateInfo->pRasterizationState->rasterizerDiscardEnable &&
-       subpass->depth_stencil_attachment.attachment != VK_ATTACHMENT_UNUSED) {
+       subpass->depth_stencil_attachment) {
       assert(pCreateInfo->pDepthStencilState);
 
       if (states & (1 << VK_DYNAMIC_STATE_DEPTH_BOUNDS)) {
@@ -1234,7 +1236,7 @@ anv_pipeline_validate_create_info(const VkGraphicsPipelineCreateInfo *info)
       assert(info->pViewportState);
       assert(info->pMultisampleState);
 
-      if (subpass && subpass->depth_stencil_attachment.attachment != VK_ATTACHMENT_UNUSED)
+      if (subpass && subpass->depth_stencil_attachment)
          assert(info->pDepthStencilState);
 
       if (subpass && subpass->color_count > 0) {
@@ -1406,7 +1408,7 @@ anv_pipeline_init(struct anv_pipeline *pipeline,
       const VkVertexInputBindingDescription *desc =
          &vi_info->pVertexBindingDescriptions[i];
 
-      pipeline->binding_stride[desc->binding] = desc->stride;
+      pipeline->vb[desc->binding].stride = desc->stride;
 
       /* Step rate is programmed per vertex element (attribute), not
        * binding. Set up a map of which bindings step per instance, for
@@ -1414,11 +1416,38 @@ anv_pipeline_init(struct anv_pipeline *pipeline,
       switch (desc->inputRate) {
       default:
       case VK_VERTEX_INPUT_RATE_VERTEX:
-         pipeline->instancing_enable[desc->binding] = false;
+         pipeline->vb[desc->binding].instanced = false;
          break;
       case VK_VERTEX_INPUT_RATE_INSTANCE:
-         pipeline->instancing_enable[desc->binding] = true;
+         pipeline->vb[desc->binding].instanced = true;
          break;
+      }
+
+      pipeline->vb[desc->binding].instance_divisor = 1;
+   }
+
+   const VkPipelineVertexInputDivisorStateCreateInfoEXT *vi_div_state =
+      vk_find_struct_const(vi_info->pNext,
+                           PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO_EXT);
+   if (vi_div_state) {
+      for (uint32_t i = 0; i < vi_div_state->vertexBindingDivisorCount; i++) {
+         const VkVertexInputBindingDivisorDescriptionEXT *desc =
+            &vi_div_state->pVertexBindingDivisors[i];
+
+         pipeline->vb[desc->binding].instance_divisor = desc->divisor;
+      }
+   }
+
+   /* Our implementation of VK_KHR_multiview uses instancing to draw the
+    * different views.  If the client asks for instancing, we need to multiply
+    * the instance divisor by the number of views ensure that we repeat the
+    * client's per-instance data once for each view.
+    */
+   if (pipeline->subpass->view_mask) {
+      const uint32_t view_count = anv_subpass_view_count(pipeline->subpass);
+      for (uint32_t vb = 0; vb < MAX_VBS; vb++) {
+         if (pipeline->vb[vb].instanced)
+            pipeline->vb[vb].instance_divisor *= view_count;
       }
    }
 

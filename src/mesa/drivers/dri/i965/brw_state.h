@@ -163,11 +163,9 @@ void brw_upload_cache(struct brw_cache *cache,
                       GLuint aux_sz,
                       uint32_t *out_offset, void *out_aux);
 
-bool brw_search_cache(struct brw_cache *cache,
-                      enum brw_cache_id cache_id,
-                      const void *key,
-                      GLuint key_size,
-                      uint32_t *inout_offset, void *inout_aux);
+bool brw_search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
+                      const void *key, GLuint key_size, uint32_t *inout_offset,
+                      void *inout_aux, bool flag_state);
 
 const void *brw_find_previous_compile(struct brw_cache *cache,
                                       enum brw_cache_id cache_id,
@@ -179,6 +177,8 @@ void brw_init_caches( struct brw_context *brw );
 void brw_destroy_caches( struct brw_context *brw );
 
 void brw_print_program_cache(struct brw_context *brw);
+
+enum brw_cache_id brw_stage_cache_id(gl_shader_stage stage);
 
 /* intel_batchbuffer.c */
 void brw_require_statebuffer_space(struct brw_context *brw, int size);

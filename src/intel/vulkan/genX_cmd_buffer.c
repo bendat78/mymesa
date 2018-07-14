@@ -1372,7 +1372,7 @@ genX(BeginCommandBuffer)(
 
          if (iview) {
             VkImageLayout layout =
-                cmd_buffer->state.subpass->depth_stencil_attachment.layout;
+                cmd_buffer->state.subpass->depth_stencil_attachment->layout;
 
             enum isl_aux_usage aux_usage =
                anv_layout_to_aux_usage(&cmd_buffer->device->info, iview->image,
@@ -2517,18 +2517,13 @@ genX(cmd_buffer_flush_state)(struct anv_cmd_buffer *cmd_buffer)
 #if GEN_GEN >= 8
             .MemoryObjectControlState = GENX(MOCS),
 #else
-            .BufferAccessType = pipeline->instancing_enable[vb] ? INSTANCEDATA : VERTEXDATA,
-            /* Our implementation of VK_KHR_multiview uses instancing to draw
-             * the different views.  If the client asks for instancing, we
-             * need to use the Instance Data Step Rate to ensure that we
-             * repeat the client's per-instance data once for each view.
-             */
-            .InstanceDataStepRate = anv_subpass_view_count(pipeline->subpass),
+            .BufferAccessType = pipeline->vb[vb].instanced ? INSTANCEDATA : VERTEXDATA,
+            .InstanceDataStepRate = pipeline->vb[vb].instance_divisor,
             .VertexBufferMemoryObjectControlState = GENX(MOCS),
 #endif
 
             .AddressModifyEnable = true,
-            .BufferPitch = pipeline->binding_stride[vb],
+            .BufferPitch = pipeline->vb[vb].stride,
             .BufferStartingAddress = anv_address_add(buffer->address, offset),
 
 #if GEN_GEN >= 8
@@ -3417,7 +3412,7 @@ cmd_buffer_emit_depth_stencil(struct anv_cmd_buffer *cmd_buffer)
                               surface->offset);
 
       const uint32_t ds =
-         cmd_buffer->state.subpass->depth_stencil_attachment.attachment;
+         cmd_buffer->state.subpass->depth_stencil_attachment->attachment;
       info.hiz_usage = cmd_buffer->state.attachments[ds].aux_usage;
       if (info.hiz_usage == ISL_AUX_USAGE_HIZ) {
          info.hiz_surf = &image->planes[depth_plane].aux_surface.isl;
@@ -3892,6 +3887,15 @@ void genX(CmdBeginRenderPass)(
    cmd_buffer_begin_subpass(cmd_buffer, 0);
 }
 
+void genX(CmdBeginRenderPass2KHR)(
+    VkCommandBuffer                             commandBuffer,
+    const VkRenderPassBeginInfo*                pRenderPassBeginInfo,
+    const VkSubpassBeginInfoKHR*                pSubpassBeginInfo)
+{
+   genX(CmdBeginRenderPass)(commandBuffer, pRenderPassBeginInfo,
+                            pSubpassBeginInfo->contents);
+}
+
 void genX(CmdNextSubpass)(
     VkCommandBuffer                             commandBuffer,
     VkSubpassContents                           contents)
@@ -3906,6 +3910,14 @@ void genX(CmdNextSubpass)(
    uint32_t prev_subpass = anv_get_subpass_id(&cmd_buffer->state);
    cmd_buffer_end_subpass(cmd_buffer);
    cmd_buffer_begin_subpass(cmd_buffer, prev_subpass + 1);
+}
+
+void genX(CmdNextSubpass2KHR)(
+    VkCommandBuffer                             commandBuffer,
+    const VkSubpassBeginInfoKHR*                pSubpassBeginInfo,
+    const VkSubpassEndInfoKHR*                  pSubpassEndInfo)
+{
+   genX(CmdNextSubpass)(commandBuffer, pSubpassBeginInfo->contents);
 }
 
 void genX(CmdEndRenderPass)(
@@ -3930,4 +3942,11 @@ void genX(CmdEndRenderPass)(
    cmd_buffer->state.framebuffer = NULL;
    cmd_buffer->state.pass = NULL;
    cmd_buffer->state.subpass = NULL;
+}
+
+void genX(CmdEndRenderPass2KHR)(
+    VkCommandBuffer                             commandBuffer,
+    const VkSubpassEndInfoKHR*                  pSubpassEndInfo)
+{
+   genX(CmdEndRenderPass)(commandBuffer);
 }

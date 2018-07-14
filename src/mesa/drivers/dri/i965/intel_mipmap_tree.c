@@ -510,7 +510,7 @@ free_aux_state_map(enum isl_aux_state **state)
 }
 
 static bool
-need_to_retile_as_linear(struct brw_context *brw, unsigned row_pitch,
+need_to_retile_as_linear(struct brw_context *brw, unsigned blt_pitch,
                          enum isl_tiling tiling, unsigned samples)
 {
    if (samples > 1)
@@ -519,13 +519,9 @@ need_to_retile_as_linear(struct brw_context *brw, unsigned row_pitch,
    if (tiling == ISL_TILING_LINEAR)
       return false;
 
-    /* If the width is much smaller than a tile, don't bother tiling. */
-   if (row_pitch < 64)
-      return true;
-
-   if (ALIGN(row_pitch, 512) >= 32768) {
-      perf_debug("row pitch %u too large to blit, falling back to untiled",
-                 row_pitch);
+   if (blt_pitch >= 32768) {
+      perf_debug("blt pitch %u too large to blit, falling back to untiled",
+                 blt_pitch);
       return true;
    }
 
@@ -605,7 +601,7 @@ make_surface(struct brw_context *brw, GLenum target, mesa_format format,
    bool is_depth_stencil =
       mt->surf.usage & (ISL_SURF_USAGE_STENCIL_BIT | ISL_SURF_USAGE_DEPTH_BIT);
    if (!is_depth_stencil) {
-      if (need_to_retile_as_linear(brw, mt->surf.row_pitch,
+      if (need_to_retile_as_linear(brw, intel_miptree_blt_pitch(mt),
                                    mt->surf.tiling, mt->surf.samples)) {
          init_info.tiling_flags = 1u << ISL_TILING_LINEAR;
          if (!isl_surf_init_s(&brw->isl_dev, &mt->surf, &init_info))
@@ -653,28 +649,21 @@ fail:
    return NULL;
 }
 
-static bool
-make_separate_stencil_surface(struct brw_context *brw,
-                              struct intel_mipmap_tree *mt)
+/* Return the usual surface usage flags for the given format. */
+static isl_surf_usage_flags_t
+mt_surf_usage(mesa_format format)
 {
-   mt->stencil_mt = make_surface(brw, mt->target, MESA_FORMAT_S_UINT8,
-                                 0, mt->surf.levels - 1,
-                                 mt->surf.logical_level0_px.width,
-                                 mt->surf.logical_level0_px.height,
-                                 mt->surf.dim == ISL_SURF_DIM_3D ?
-                                    mt->surf.logical_level0_px.depth :
-                                    mt->surf.logical_level0_px.array_len,
-                                 mt->surf.samples, ISL_TILING_W_BIT,
-                                 ISL_SURF_USAGE_STENCIL_BIT |
-                                 ISL_SURF_USAGE_TEXTURE_BIT,
-                                 BO_ALLOC_BUSY, 0, NULL);
-
-   if (!mt->stencil_mt)
-      return false;
-
-   mt->stencil_mt->r8stencil_needs_update = true;
-
-   return true;
+   switch(_mesa_get_format_base_format(format)) {
+   case GL_DEPTH_COMPONENT:
+      return ISL_SURF_USAGE_DEPTH_BIT | ISL_SURF_USAGE_TEXTURE_BIT;
+   case GL_DEPTH_STENCIL:
+      return ISL_SURF_USAGE_DEPTH_BIT | ISL_SURF_USAGE_STENCIL_BIT |
+             ISL_SURF_USAGE_TEXTURE_BIT;
+   case GL_STENCIL_INDEX:
+      return ISL_SURF_USAGE_STENCIL_BIT | ISL_SURF_USAGE_TEXTURE_BIT;
+   default:
+      return ISL_SURF_USAGE_RENDER_TARGET_BIT | ISL_SURF_USAGE_TEXTURE_BIT;
+   }
 }
 
 static struct intel_mipmap_tree *
@@ -690,75 +679,48 @@ miptree_create(struct brw_context *brw,
                enum intel_miptree_create_flags flags)
 {
    const struct gen_device_info *devinfo = &brw->screen->devinfo;
+   const uint32_t alloc_flags =
+      (flags & MIPTREE_CREATE_BUSY || num_samples > 1) ? BO_ALLOC_BUSY : 0;
+   isl_tiling_flags_t tiling_flags = ISL_TILING_ANY_MASK;
 
-   if (format == MESA_FORMAT_S_UINT8)
-      return make_surface(brw, target, format, first_level, last_level,
-                          width0, height0, depth0, num_samples,
-                          ISL_TILING_W_BIT,
-                          ISL_SURF_USAGE_STENCIL_BIT |
-                          ISL_SURF_USAGE_TEXTURE_BIT,
-                          BO_ALLOC_BUSY,
-                          0,
-                          NULL);
+   /* TODO: This used to be because there wasn't BLORP to handle Y-tiling. */
+   if (devinfo->gen < 6 && _mesa_is_format_color_format(format))
+      tiling_flags &= ~ISL_TILING_Y0_BIT;
 
-   const GLenum base_format = _mesa_get_format_base_format(format);
-   if ((base_format == GL_DEPTH_COMPONENT ||
-        base_format == GL_DEPTH_STENCIL) &&
-       !(flags & MIPTREE_CREATE_LINEAR)) {
+   mesa_format mt_fmt;
+   if (_mesa_is_format_color_format(format)) {
+      mt_fmt = intel_lower_compressed_format(brw, format);
+   } else {
       /* Fix up the Z miptree format for how we're splitting out separate
-       * stencil.  Gen7 expects there to be no stencil bits in its depth buffer.
+       * stencil. Gen7 expects there to be no stencil bits in its depth buffer.
        */
-      const mesa_format depth_only_format =
-         intel_depth_format_for_depthstencil_format(format);
-      struct intel_mipmap_tree *mt = make_surface(
-         brw, target, devinfo->gen >= 6 ? depth_only_format : format,
-         first_level, last_level,
-         width0, height0, depth0, num_samples, ISL_TILING_Y0_BIT,
-         ISL_SURF_USAGE_DEPTH_BIT | ISL_SURF_USAGE_TEXTURE_BIT,
-         BO_ALLOC_BUSY, 0, NULL);
+      mt_fmt = (devinfo->gen < 6) ? format :
+               intel_depth_format_for_depthstencil_format(format);
+   }
 
-      if (needs_separate_stencil(brw, mt, format) &&
-          !make_separate_stencil_surface(brw, mt)) {
+   struct intel_mipmap_tree *mt =
+      make_surface(brw, target, mt_fmt, first_level, last_level,
+                   width0, height0, depth0, num_samples,
+                   tiling_flags, mt_surf_usage(mt_fmt),
+                   alloc_flags, 0, NULL);
+
+   if (mt == NULL)
+      return NULL;
+
+   if (needs_separate_stencil(brw, mt, format)) {
+      mt->stencil_mt =
+         make_surface(brw, target, MESA_FORMAT_S_UINT8, first_level, last_level,
+                      width0, height0, depth0, num_samples,
+                      ISL_TILING_W_BIT, mt_surf_usage(MESA_FORMAT_S_UINT8),
+                      alloc_flags, 0, NULL);
+      if (mt->stencil_mt == NULL) {
          intel_miptree_release(&mt);
          return NULL;
       }
-
-      if (!(flags & MIPTREE_CREATE_NO_AUX))
-         intel_miptree_choose_aux_usage(brw, mt);
-
-      return mt;
    }
 
-   mesa_format tex_format = format;
-   mesa_format etc_format = MESA_FORMAT_NONE;
-   uint32_t alloc_flags = 0;
-
-   format = intel_lower_compressed_format(brw, format);
-
-   etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
-
-   if (flags & MIPTREE_CREATE_BUSY)
-      alloc_flags |= BO_ALLOC_BUSY;
-
-   isl_tiling_flags_t tiling_flags = (flags & MIPTREE_CREATE_LINEAR) ?
-      ISL_TILING_LINEAR_BIT : ISL_TILING_ANY_MASK;
-
-   /* TODO: This used to be because there wasn't BLORP to handle Y-tiling. */
-   if (devinfo->gen < 6)
-      tiling_flags &= ~ISL_TILING_Y0_BIT;
-
-   struct intel_mipmap_tree *mt = make_surface(
-                                     brw, target, format,
-                                     first_level, last_level,
-                                     width0, height0, depth0,
-                                     num_samples, tiling_flags,
-                                     ISL_SURF_USAGE_RENDER_TARGET_BIT |
-                                     ISL_SURF_USAGE_TEXTURE_BIT,
-                                     alloc_flags, 0, NULL);
-   if (!mt)
-      return NULL;
-
-   mt->etc_format = etc_format;
+   mt->etc_format = (_mesa_is_format_color_format(format) && mt_fmt != format) ?
+                    format : MESA_FORMAT_NONE;
 
    if (!(flags & MIPTREE_CREATE_NO_AUX))
       intel_miptree_choose_aux_usage(brw, mt);
@@ -822,12 +784,11 @@ intel_miptree_create_for_bo(struct brw_context *brw,
 
    if ((base_format == GL_DEPTH_COMPONENT ||
         base_format == GL_DEPTH_STENCIL)) {
-      const mesa_format depth_only_format =
+      const mesa_format mt_fmt = (devinfo->gen < 6) ? format :
          intel_depth_format_for_depthstencil_format(format);
-      mt = make_surface(brw, target,
-                        devinfo->gen >= 6 ? depth_only_format : format,
+      mt = make_surface(brw, target, mt_fmt,
                         0, 0, width, height, depth, 1, ISL_TILING_Y0_BIT,
-                        ISL_SURF_USAGE_DEPTH_BIT | ISL_SURF_USAGE_TEXTURE_BIT,
+                        mt_surf_usage(mt_fmt),
                         0, pitch, bo);
       if (!mt)
          return NULL;
@@ -842,8 +803,7 @@ intel_miptree_create_for_bo(struct brw_context *brw,
       mt = make_surface(brw, target, MESA_FORMAT_S_UINT8,
                         0, 0, width, height, depth, 1,
                         ISL_TILING_W_BIT,
-                        ISL_SURF_USAGE_STENCIL_BIT |
-                        ISL_SURF_USAGE_TEXTURE_BIT,
+                        mt_surf_usage(MESA_FORMAT_S_UINT8),
                         0, pitch, bo);
       if (!mt)
          return NULL;
@@ -865,16 +825,10 @@ intel_miptree_create_for_bo(struct brw_context *brw,
     */
    assert(pitch >= 0);
 
-   /* The BO already has a tiling format and we shouldn't confuse the lower
-    * layers by making it try to find a tiling format again.
-    */
-   assert((flags & MIPTREE_CREATE_LINEAR) == 0);
-
    mt = make_surface(brw, target, format,
                      0, 0, width, height, depth, 1,
                      1lu << tiling,
-                     ISL_SURF_USAGE_RENDER_TARGET_BIT |
-                     ISL_SURF_USAGE_TEXTURE_BIT,
+                     mt_surf_usage(format),
                      0, pitch, bo);
    if (!mt)
       return NULL;
@@ -2466,11 +2420,13 @@ intel_miptree_finish_write(struct brw_context *brw,
                            uint32_t start_layer, uint32_t num_layers,
                            enum isl_aux_usage aux_usage)
 {
+   const struct gen_device_info *devinfo = &brw->screen->devinfo;
    num_layers = miptree_layer_range_length(mt, level, start_layer, num_layers);
 
    switch (mt->aux_usage) {
    case ISL_AUX_USAGE_NONE:
-      /* Nothing to do */
+      if (mt->format == MESA_FORMAT_S_UINT8 && devinfo->gen <= 7)
+         mt->r8stencil_needs_update = true;
       break;
 
    case ISL_AUX_USAGE_MCS:
@@ -2958,7 +2914,7 @@ intel_update_r8stencil(struct brw_context *brw,
    assert(devinfo->gen >= 7);
    struct intel_mipmap_tree *src =
       mt->format == MESA_FORMAT_S_UINT8 ? mt : mt->stencil_mt;
-   if (!src || devinfo->gen >= 8 || !src->r8stencil_needs_update)
+   if (!src || devinfo->gen >= 8)
       return;
 
    assert(src->surf.size > 0);
@@ -2981,6 +2937,9 @@ intel_update_r8stencil(struct brw_context *brw,
                             BO_ALLOC_BUSY, 0, NULL);
       assert(mt->r8stencil_mt);
    }
+
+   if (src->r8stencil_needs_update == false)
+      return;
 
    struct intel_mipmap_tree *dst = mt->r8stencil_mt;
 
@@ -3121,12 +3080,12 @@ intel_miptree_map_blit(struct brw_context *brw,
 		       unsigned int level, unsigned int slice)
 {
    const struct gen_device_info *devinfo = &brw->screen->devinfo;
-   map->linear_mt = intel_miptree_create(brw, GL_TEXTURE_2D, mt->format,
-                                         /* first_level */ 0,
-                                         /* last_level */ 0,
-                                         map->w, map->h, 1,
-                                         /* samples */ 1,
-                                         MIPTREE_CREATE_LINEAR);
+   map->linear_mt = make_surface(brw, GL_TEXTURE_2D, mt->format,
+                                 0, 0, map->w, map->h, 1, 1,
+                                 ISL_TILING_LINEAR_BIT,
+                                 ISL_SURF_USAGE_RENDER_TARGET_BIT |
+                                 ISL_SURF_USAGE_TEXTURE_BIT,
+                                 0, 0, NULL);
 
    if (!map->linear_mt) {
       fprintf(stderr, "Failed to allocate blit temporary\n");
@@ -3472,7 +3431,9 @@ intel_miptree_map_depthstencil(struct brw_context *brw,
    if (!map->buffer)
       return;
 
-   intel_miptree_access_raw(brw, mt, level, slice,
+   intel_miptree_access_raw(brw, z_mt, level, slice,
+                            map->mode & GL_MAP_WRITE_BIT);
+   intel_miptree_access_raw(brw, s_mt, level, slice,
                             map->mode & GL_MAP_WRITE_BIT);
 
    /* One of either READ_BIT or WRITE_BIT or both is set.  READ_BIT implies no
@@ -3583,7 +3544,7 @@ can_blit_slice(struct intel_mipmap_tree *mt,
                unsigned int level, unsigned int slice)
 {
    /* See intel_miptree_blit() for details on the 32k pitch limit. */
-   if (mt->surf.row_pitch >= 32768)
+   if (intel_miptree_blt_pitch(mt) >= 32768)
       return false;
 
    return true;

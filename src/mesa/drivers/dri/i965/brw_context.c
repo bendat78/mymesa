@@ -340,9 +340,13 @@ brw_init_driver_functions(struct brw_context *brw,
    /* GL_ARB_get_program_binary */
    brw_program_binary_init(brw->screen->deviceID);
    functions->GetProgramBinaryDriverSHA1 = brw_get_program_binary_driver_sha1;
-   functions->ProgramBinarySerializeDriverBlob = brw_program_serialize_nir;
+   functions->ProgramBinarySerializeDriverBlob = brw_serialize_program_binary;
    functions->ProgramBinaryDeserializeDriverBlob =
       brw_deserialize_program_binary;
+
+   if (brw->screen->disk_cache) {
+      functions->ShaderCacheSerializeDriverBlob = brw_program_serialize_nir;
+   }
 }
 
 static void

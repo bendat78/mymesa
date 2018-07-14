@@ -383,19 +383,20 @@ static void
 vtn_handle_extension(struct vtn_builder *b, SpvOp opcode,
                      const uint32_t *w, unsigned count)
 {
+   const char *ext = (const char *)&w[2];
    switch (opcode) {
    case SpvOpExtInstImport: {
       struct vtn_value *val = vtn_push_value(b, w[1], vtn_value_type_extension);
-      if (strcmp((const char *)&w[2], "GLSL.std.450") == 0) {
+      if (strcmp(ext, "GLSL.std.450") == 0) {
          val->ext_handler = vtn_handle_glsl450_instruction;
-      } else if ((strcmp((const char *)&w[2], "SPV_AMD_gcn_shader") == 0)
+      } else if ((strcmp(ext, "SPV_AMD_gcn_shader") == 0)
                 && (b->options && b->options->caps.gcn_shader)) {
          val->ext_handler = vtn_handle_amd_gcn_shader_instruction;
-      } else if ((strcmp((const char *)&w[2], "SPV_AMD_shader_trinary_minmax") == 0)
+      } else if ((strcmp(ext, "SPV_AMD_shader_trinary_minmax") == 0)
                 && (b->options && b->options->caps.trinary_minmax)) {
          val->ext_handler = vtn_handle_amd_shader_trinary_minmax_instruction;
       } else {
-         vtn_fail("Unsupported extension");
+         vtn_fail("Unsupported extension: %s", ext);
       }
       break;
    }
@@ -1493,8 +1494,19 @@ vtn_handle_constant(struct vtn_builder *b, SpvOp opcode,
                   spirv_op_to_string(opcode), elem_count, val->type->length);
 
       nir_constant **elems = ralloc_array(b, nir_constant *, elem_count);
-      for (unsigned i = 0; i < elem_count; i++)
-         elems[i] = vtn_value(b, w[i + 3], vtn_value_type_constant)->constant;
+      for (unsigned i = 0; i < elem_count; i++) {
+         struct vtn_value *val = vtn_untyped_value(b, w[i + 3]);
+
+         if (val->value_type == vtn_value_type_constant) {
+            elems[i] = val->constant;
+         } else {
+            vtn_fail_if(val->value_type != vtn_value_type_undef,
+                        "only constants or undefs allowed for "
+                        "SpvOpConstantComposite");
+            /* to make it easier, just insert a NULL constant for now */
+            elems[i] = vtn_null_constant(b, val->type->type);
+         }
+      }
 
       switch (val->type->base_type) {
       case vtn_base_type_vector: {
@@ -2798,7 +2810,7 @@ create_vec(struct vtn_builder *b, unsigned num_components, unsigned bit_size)
 {
    nir_op op;
    switch (num_components) {
-   case 1: op = nir_op_fmov; break;
+   case 1: op = nir_op_imov; break;
    case 2: op = nir_op_vec2; break;
    case 3: op = nir_op_vec3; break;
    case 4: op = nir_op_vec4; break;
@@ -2846,8 +2858,7 @@ vtn_ssa_transpose(struct vtn_builder *b, struct vtn_ssa_value *src)
 nir_ssa_def *
 vtn_vector_extract(struct vtn_builder *b, nir_ssa_def *src, unsigned index)
 {
-   unsigned swiz[4] = { index };
-   return nir_swizzle(&b->nb, src, swiz, 1, true);
+   return nir_channel(&b->nb, src, index);
 }
 
 nir_ssa_def *
@@ -3496,6 +3507,12 @@ vtn_handle_preamble_instruction(struct vtn_builder *b, SpvOp opcode,
 
       case SpvCapabilityShaderViewportIndexLayerEXT:
          spv_check_supported(shader_viewport_index_layer, cap);
+         break;
+
+      case SpvCapabilityStorageBuffer8BitAccess:
+      case SpvCapabilityUniformAndStorageBuffer8BitAccess:
+      case SpvCapabilityStoragePushConstant8:
+         spv_check_supported(storage_8bit, cap);
          break;
 
       case SpvCapabilityInputAttachmentArrayDynamicIndexingEXT:

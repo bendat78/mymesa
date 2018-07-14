@@ -1179,17 +1179,16 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       brw_pop_insn_state(p);
 
       /* dst = send(offset, a0.0 | <descriptor>) */
-      brw_inst *insn = brw_send_indirect_message(
-         p, BRW_SFID_SAMPLER, dst, src, addr);
-      brw_set_sampler_message(p, insn,
-                              0 /* surface */,
-                              0 /* sampler */,
-                              msg_type,
-                              inst->size_written / REG_SIZE,
-                              inst->mlen /* mlen */,
-                              inst->header_size != 0 /* header */,
-                              simd_mode,
-                              return_format);
+      brw_send_indirect_message(
+         p, BRW_SFID_SAMPLER, dst, src, addr,
+         brw_message_desc(devinfo, inst->mlen, inst->size_written / REG_SIZE,
+                          inst->header_size) |
+         brw_sampler_desc(devinfo,
+                          0 /* surface */,
+                          0 /* sampler */,
+                          msg_type,
+                          simd_mode,
+                          return_format));
 
       /* visitor knows more than we do about the surface limit required,
        * so has already done marking.
@@ -1422,15 +1421,16 @@ fs_generator::generate_uniform_pull_constant_load_gen7(fs_inst *inst,
       brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
       brw_pop_insn_state(p);
 
+      brw_inst_set_sfid(devinfo, send, GEN6_SFID_DATAPORT_CONSTANT_CACHE);
       brw_set_dest(p, send, retype(dst, BRW_REGISTER_TYPE_UD));
       brw_set_src0(p, send, retype(payload, BRW_REGISTER_TYPE_UD));
-      brw_set_dp_read_message(p, send, surf_index,
-                              BRW_DATAPORT_OWORD_BLOCK_DWORDS(inst->exec_size),
-                              GEN7_DATAPORT_DC_OWORD_BLOCK_READ,
-                              GEN6_SFID_DATAPORT_CONSTANT_CACHE,
-                              1, /* mlen */
-                              true, /* header */
-                              DIV_ROUND_UP(inst->size_written, REG_SIZE));
+      brw_set_desc(p, send,
+                   brw_message_desc(devinfo, 1, DIV_ROUND_UP(inst->size_written,
+                                                             REG_SIZE), true) |
+                   brw_dp_read_desc(devinfo, surf_index,
+                                    BRW_DATAPORT_OWORD_BLOCK_DWORDS(inst->exec_size),
+                                    GEN7_DATAPORT_DC_OWORD_BLOCK_READ,
+                                    BRW_DATAPORT_READ_TARGET_DATA_CACHE));
 
    } else {
       struct brw_reg addr = vec1(retype(brw_address_reg(0), BRW_REGISTER_TYPE_UD));
@@ -1446,17 +1446,16 @@ fs_generator::generate_uniform_pull_constant_load_gen7(fs_inst *inst,
       brw_set_src1(p, insn_and, brw_imm_ud(0x0ff));
 
       /* dst = send(payload, a0.0 | <descriptor>) */
-      brw_inst *insn = brw_send_indirect_message(
+      brw_send_indirect_message(
          p, GEN6_SFID_DATAPORT_CONSTANT_CACHE,
          retype(dst, BRW_REGISTER_TYPE_UD),
-         retype(payload, BRW_REGISTER_TYPE_UD), addr);
-      brw_set_dp_read_message(p, insn, 0 /* surface */,
-                              BRW_DATAPORT_OWORD_BLOCK_DWORDS(inst->exec_size),
-                              GEN7_DATAPORT_DC_OWORD_BLOCK_READ,
-                              GEN6_SFID_DATAPORT_CONSTANT_CACHE,
-                              1, /* mlen */
-                              true, /* header */
-                              DIV_ROUND_UP(inst->size_written, REG_SIZE));
+         retype(payload, BRW_REGISTER_TYPE_UD), addr,
+         brw_message_desc(devinfo, 1,
+                          DIV_ROUND_UP(inst->size_written, REG_SIZE), true) |
+         brw_dp_read_desc(devinfo, 0 /* surface */,
+                          BRW_DATAPORT_OWORD_BLOCK_DWORDS(inst->exec_size),
+                          GEN7_DATAPORT_DC_OWORD_BLOCK_READ,
+                          BRW_DATAPORT_READ_TARGET_DATA_CACHE));
 
       brw_pop_insn_state(p);
    }
@@ -1503,6 +1502,7 @@ fs_generator::generate_varying_pull_constant_load_gen4(fs_inst *inst,
 
    brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_inst_set_compression(devinfo, send, false);
+   brw_inst_set_sfid(devinfo, send, BRW_SFID_SAMPLER);
    brw_set_dest(p, send, retype(dst, BRW_REGISTER_TYPE_UW));
    brw_set_src0(p, send, header);
    if (devinfo->gen < 6)
@@ -1512,15 +1512,11 @@ fs_generator::generate_varying_pull_constant_load_gen4(fs_inst *inst,
     * stored in it.
     */
    uint32_t return_format = BRW_SAMPLER_RETURN_FORMAT_FLOAT32;
-   brw_set_sampler_message(p, send,
-                           surf_index,
-                           0, /* sampler (unused) */
-                           msg_type,
-                           rlen,
-                           inst->mlen,
-                           inst->header_size != 0,
-                           simd_mode,
-                           return_format);
+   brw_set_desc(p, send,
+                brw_message_desc(devinfo, inst->mlen, rlen, inst->header_size) |
+                brw_sampler_desc(devinfo, surf_index,
+                                 0, /* sampler (unused) */
+                                 msg_type, simd_mode, return_format));
 }
 
 void
@@ -1534,17 +1530,15 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
     * gen7, so the fact that it's a send message is hidden at the IR level.
     */
    assert(inst->header_size == 0);
-   assert(!inst->mlen);
+   assert(inst->mlen);
    assert(index.type == BRW_REGISTER_TYPE_UD);
 
-   uint32_t simd_mode, rlen, mlen;
+   uint32_t simd_mode, rlen;
    if (inst->exec_size == 16) {
-      mlen = 2;
       rlen = 8;
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
    } else {
       assert(inst->exec_size == 8);
-      mlen = 1;
       rlen = 4;
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
    }
@@ -1554,17 +1548,15 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
       uint32_t surf_index = index.ud;
 
       brw_inst *send = brw_next_insn(p, BRW_OPCODE_SEND);
+      brw_inst_set_sfid(devinfo, send, BRW_SFID_SAMPLER);
       brw_set_dest(p, send, retype(dst, BRW_REGISTER_TYPE_UW));
       brw_set_src0(p, send, offset);
-      brw_set_sampler_message(p, send,
-                              surf_index,
-                              0, /* LD message ignores sampler unit */
-                              GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
-                              rlen,
-                              mlen,
-                              false, /* no header */
-                              simd_mode,
-                              0);
+      brw_set_desc(p, send,
+                   brw_message_desc(devinfo, inst->mlen, rlen, false) |
+                   brw_sampler_desc(devinfo, surf_index,
+                                    0, /* LD message ignores sampler unit */
+                                    GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
+                                    simd_mode, 0));
 
    } else {
 
@@ -1583,18 +1575,16 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
       brw_pop_insn_state(p);
 
       /* dst = send(offset, a0.0 | <descriptor>) */
-      brw_inst *insn = brw_send_indirect_message(
+      brw_send_indirect_message(
          p, BRW_SFID_SAMPLER, retype(dst, BRW_REGISTER_TYPE_UW),
-         offset, addr);
-      brw_set_sampler_message(p, insn,
-                              0 /* surface */,
-                              0 /* sampler */,
-                              GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
-                              rlen /* rlen */,
-                              mlen /* mlen */,
-                              false /* header */,
-                              simd_mode,
-                              0);
+         offset, addr,
+         brw_message_desc(devinfo, inst->mlen, rlen, false) |
+         brw_sampler_desc(devinfo,
+                          0 /* surface */,
+                          0 /* sampler */,
+                          GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
+                          simd_mode,
+                          0));
    }
 }
 

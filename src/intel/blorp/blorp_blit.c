@@ -1698,7 +1698,7 @@ get_red_format_for_rgb_format(enum isl_format format)
    }
 }
 
-static void
+void
 surf_fake_rgb_with_red(const struct isl_device *isl_dev,
                        struct brw_blorp_surface_info *info)
 {
@@ -1950,6 +1950,10 @@ try_blorp_blit(struct blorp_batch *batch,
        */
       params->x0 *= 3;
       params->x1 *= 3;
+
+      /* If it happens to be sRGB, we need to force a conversion */
+      if (params->dst.view.format == ISL_FORMAT_R8G8B8_UNORM_SRGB)
+         wm_prog_key->dst_format = ISL_FORMAT_R9G9B9E5_SHAREDEXP;
 
       surf_fake_rgb_with_red(batch->blorp->isl_dev, &params->dst);
 

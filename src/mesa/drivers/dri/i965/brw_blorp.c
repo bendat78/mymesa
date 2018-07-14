@@ -48,8 +48,8 @@ brw_blorp_lookup_shader(struct blorp_context *blorp,
                         uint32_t *kernel_out, void *prog_data_out)
 {
    struct brw_context *brw = blorp->driver_ctx;
-   return brw_search_cache(&brw->cache, BRW_CACHE_BLORP_PROG,
-                           key, key_size, kernel_out, prog_data_out);
+   return brw_search_cache(&brw->cache, BRW_CACHE_BLORP_PROG, key, key_size,
+                           kernel_out, prog_data_out, true);
 }
 
 static bool
@@ -121,7 +121,7 @@ brw_blorp_init(struct brw_context *brw)
 static void
 blorp_surf_for_miptree(struct brw_context *brw,
                        struct blorp_surf *surf,
-                       struct intel_mipmap_tree *mt,
+                       const struct intel_mipmap_tree *mt,
                        enum isl_aux_usage aux_usage,
                        bool is_render_target,
                        unsigned *level,
@@ -155,10 +155,6 @@ blorp_surf_for_miptree(struct brw_context *brw,
       .tile_x_sa = mt->level[*level].level_x,
       .tile_y_sa = mt->level[*level].level_y,
    };
-
-   if (mt->format == MESA_FORMAT_S_UINT8 && is_render_target &&
-       devinfo->gen <= 7)
-      mt->r8stencil_needs_update = true;
 
    if (surf->aux_usage == ISL_AUX_USAGE_HIZ &&
        !intel_miptree_level_has_hiz(mt, *level))

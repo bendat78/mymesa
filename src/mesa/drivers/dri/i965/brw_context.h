@@ -1637,6 +1637,9 @@ extern void
 brw_program_binary_init(unsigned device_id);
 extern void
 brw_get_program_binary_driver_sha1(struct gl_context *ctx, uint8_t *sha1);
+void brw_serialize_program_binary(struct gl_context *ctx,
+                                  struct gl_shader_program *sh_prog,
+                                  struct gl_program *prog);
 extern void
 brw_deserialize_program_binary(struct gl_context *ctx,
                                struct gl_shader_program *shProg,
@@ -1644,8 +1647,9 @@ brw_deserialize_program_binary(struct gl_context *ctx,
 void
 brw_program_serialize_nir(struct gl_context *ctx, struct gl_program *prog);
 void
-brw_program_deserialize_nir(struct gl_context *ctx, struct gl_program *prog,
-                            gl_shader_stage stage);
+brw_program_deserialize_driver_blob(struct gl_context *ctx,
+                                    struct gl_program *prog,
+                                    gl_shader_stage stage);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the

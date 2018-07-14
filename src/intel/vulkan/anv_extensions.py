@@ -48,7 +48,7 @@ class ApiVersion:
         self.version = version
         self.enable = _bool_to_c_expr(enable)
 
-API_PATCH_VERSION = 76
+API_PATCH_VERSION = 80
 
 # Supported API versions.  Each one is the maximum patch version for the given
 # version.  Version come in increasing order and each version is available if
@@ -72,7 +72,9 @@ MAX_API_VERSION = None # Computed later
 EXTENSIONS = [
     Extension('VK_ANDROID_native_buffer',                 5, 'ANDROID'),
     Extension('VK_KHR_16bit_storage',                     1, 'device->info.gen >= 8'),
+    Extension('VK_KHR_8bit_storage',                      1, 'device->info.gen >= 8'),
     Extension('VK_KHR_bind_memory2',                      1, True),
+    Extension('VK_KHR_create_renderpass2',                1, True),
     Extension('VK_KHR_dedicated_allocation',              1, True),
     Extension('VK_KHR_descriptor_update_template',        1, True),
     Extension('VK_KHR_device_group',                      1, True),
@@ -88,6 +90,7 @@ EXTENSIONS = [
     Extension('VK_KHR_external_semaphore',                1, True),
     Extension('VK_KHR_external_semaphore_capabilities',   1, True),
     Extension('VK_KHR_external_semaphore_fd',             1, True),
+    Extension('VK_KHR_get_display_properties2',           1, 'VK_USE_PLATFORM_DISPLAY_KHR'),
     Extension('VK_KHR_get_memory_requirements2',          1, True),
     Extension('VK_KHR_get_physical_device_properties2',   1, True),
     Extension('VK_KHR_get_surface_capabilities2',         1, 'ANV_HAS_SURFACE'),
@@ -120,6 +123,7 @@ EXTENSIONS = [
               'device->has_context_priority'),
     Extension('VK_EXT_shader_viewport_index_layer',       1, True),
     Extension('VK_EXT_shader_stencil_export',             1, 'device->info.gen >= 9'),
+    Extension('VK_EXT_vertex_attribute_divisor',          2, True),
 ]
 
 class VkVersion:
