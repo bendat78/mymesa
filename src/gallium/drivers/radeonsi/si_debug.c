@@ -496,10 +496,6 @@ static const char *priority_to_string(enum radeon_bo_priority priority)
 	        ITEM(IB2),
 	        ITEM(DRAW_INDIRECT),
 	        ITEM(INDEX_BUFFER),
-	        ITEM(VCE),
-	        ITEM(UVD),
-	        ITEM(SDMA_BUFFER),
-	        ITEM(SDMA_TEXTURE),
 		ITEM(CP_DMA),
 	        ITEM(CONST_BUFFER),
 	        ITEM(DESCRIPTORS),
@@ -515,9 +511,7 @@ static const char *priority_to_string(enum radeon_bo_priority priority)
 	        ITEM(DEPTH_BUFFER),
 	        ITEM(COLOR_BUFFER_MSAA),
 	        ITEM(DEPTH_BUFFER_MSAA),
-	        ITEM(CMASK),
-	        ITEM(DCC),
-	        ITEM(HTILE),
+	        ITEM(SEPARATE_META),
 		ITEM(SHADER_BINARY),
 		ITEM(SHADER_RINGS),
 		ITEM(SCRATCH_BUFFER),
@@ -574,8 +568,8 @@ static void si_dump_bo_list(struct si_context *sctx,
 			size / page_size, va / page_size, (va + size) / page_size);
 
 		/* Print the usage. */
-		for (j = 0; j < 64; j++) {
-			if (!(saved->bo_list[i].priority_usage & (1ull << j)))
+		for (j = 0; j < 32; j++) {
+			if (!(saved->bo_list[i].priority_usage & (1u << j)))
 				continue;
 
 			fprintf(f, "%s%s", !hit ? "" : ", ", priority_to_string(j));

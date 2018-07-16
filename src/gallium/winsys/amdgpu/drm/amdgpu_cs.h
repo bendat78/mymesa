@@ -46,7 +46,7 @@ struct amdgpu_cs_buffer {
    struct amdgpu_winsys_bo *bo;
    union {
       struct {
-         uint64_t priority_usage;
+         uint32_t priority_usage;
       } real;
       struct {
          uint32_t real_idx; /* index of underlying real BO */
@@ -81,10 +81,6 @@ struct amdgpu_cs_context {
    unsigned                    num_real_buffers;
    struct amdgpu_cs_buffer     *real_buffers;
 
-   unsigned                    max_real_submit;
-   amdgpu_bo_handle            *handles;
-   uint8_t                     *flags;
-
    unsigned                    num_slab_buffers;
    unsigned                    max_slab_buffers;
    struct amdgpu_cs_buffer     *slab_buffers;
@@ -98,7 +94,7 @@ struct amdgpu_cs_context {
    struct amdgpu_winsys_bo     *last_added_bo;
    unsigned                    last_added_bo_index;
    unsigned                    last_added_bo_usage;
-   uint64_t                    last_added_bo_priority_usage;
+   uint32_t                    last_added_bo_priority_usage;
 
    struct pipe_fence_handle    **fence_dependencies;
    unsigned                    num_fence_dependencies;

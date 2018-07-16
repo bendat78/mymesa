@@ -629,7 +629,7 @@ static unsigned amdgpu_cs_add_buffer(struct radeon_cmdbuf *rcs,
     */
    if (bo == cs->last_added_bo &&
        (usage & cs->last_added_bo_usage) == usage &&
-       (1ull << priority) & cs->last_added_bo_priority_usage)
+       (1u << priority) & cs->last_added_bo_priority_usage)
       return cs->last_added_bo_index;
 
    if (!bo->sparse) {
@@ -658,7 +658,7 @@ static unsigned amdgpu_cs_add_buffer(struct radeon_cmdbuf *rcs,
       buffer = &cs->sparse_buffers[index];
    }
 
-   buffer->u.real.priority_usage |= 1ull << priority;
+   buffer->u.real.priority_usage |= 1u << priority;
    buffer->usage |= usage;
 
    cs->last_added_bo = bo;
@@ -902,9 +902,7 @@ static void amdgpu_cs_context_cleanup(struct amdgpu_cs_context *cs)
 static void amdgpu_destroy_cs_context(struct amdgpu_cs_context *cs)
 {
    amdgpu_cs_context_cleanup(cs);
-   FREE(cs->flags);
    FREE(cs->real_buffers);
-   FREE(cs->handles);
    FREE(cs->slab_buffers);
    FREE(cs->sparse_buffers);
    FREE(cs->fence_dependencies);
@@ -1302,14 +1300,7 @@ void amdgpu_cs_submit_ib(void *job, int thread_index)
       unsigned num = 0;
 
       simple_mtx_lock(&ws->global_bo_list_lock);
-
-      handles = malloc(sizeof(handles[0]) * ws->num_buffers);
-      if (!handles) {
-         simple_mtx_unlock(&ws->global_bo_list_lock);
-         amdgpu_cs_context_cleanup(cs);
-         cs->error_code = -ENOMEM;
-         return;
-      }
+      handles = alloca(sizeof(handles[0]) * ws->num_buffers);
 
       LIST_FOR_EACH_ENTRY(bo, &ws->global_bo_list, u.real.global_list_item) {
          assert(num < ws->num_buffers);
@@ -1318,29 +1309,22 @@ void amdgpu_cs_submit_ib(void *job, int thread_index)
 
       r = amdgpu_bo_list_create(ws->dev, ws->num_buffers,
                                 handles, NULL, &bo_list);
-      free(handles);
       simple_mtx_unlock(&ws->global_bo_list_lock);
+      if (r) {
+         fprintf(stderr, "amdgpu: buffer list creation failed (%d)\n", r);
+         goto cleanup;
+      }
    } else {
       unsigned num_handles;
 
       if (!amdgpu_add_sparse_backing_buffers(cs)) {
+         fprintf(stderr, "amdgpu: amdgpu_add_sparse_backing_buffers failed\n");
          r = -ENOMEM;
-         goto bo_list_error;
+         goto cleanup;
       }
 
-      if (cs->max_real_submit < cs->num_real_buffers) {
-         FREE(cs->handles);
-         FREE(cs->flags);
-
-         cs->handles = MALLOC(sizeof(*cs->handles) * cs->num_real_buffers);
-         cs->flags = MALLOC(sizeof(*cs->flags) * cs->num_real_buffers);
-
-         if (!cs->handles || !cs->flags) {
-            cs->max_real_submit = 0;
-            r = -ENOMEM;
-            goto bo_list_error;
-         }
-      }
+      amdgpu_bo_handle *handles = alloca(sizeof(*handles) * cs->num_real_buffers);
+      uint8_t *flags = alloca(sizeof(*flags) * cs->num_real_buffers);
 
       num_handles = 0;
       for (i = 0; i < cs->num_real_buffers; ++i) {
@@ -1351,29 +1335,23 @@ void amdgpu_cs_submit_ib(void *job, int thread_index)
 
          assert(buffer->u.real.priority_usage != 0);
 
-         cs->handles[num_handles] = buffer->bo->bo;
-         cs->flags[num_handles] = (util_last_bit64(buffer->u.real.priority_usage) - 1) / 4;
+         handles[num_handles] = buffer->bo->bo;
+         flags[num_handles] = (util_last_bit(buffer->u.real.priority_usage) - 1) / 2;
 	 ++num_handles;
       }
 
-      if (acs->ring_type == RING_GFX)
-         ws->gfx_bo_list_counter += cs->num_real_buffers;
-
       if (num_handles) {
          r = amdgpu_bo_list_create(ws->dev, num_handles,
-                                   cs->handles, cs->flags, &bo_list);
-      } else {
-         r = 0;
+                                   handles, flags, &bo_list);
+         if (r) {
+            fprintf(stderr, "amdgpu: buffer list creation failed (%d)\n", r);
+            goto cleanup;
+         }
       }
    }
-bo_list_error:
 
-   if (r) {
-      fprintf(stderr, "amdgpu: buffer list creation failed (%d)\n", r);
-      amdgpu_fence_signalled(cs->fence);
-      cs->error_code = r;
-      goto cleanup;
-   }
+   if (acs->ring_type == RING_GFX)
+      ws->gfx_bo_list_counter += cs->num_real_buffers;
 
    if (acs->ctx->num_rejected_cs) {
       r = -ECANCELED;
@@ -1475,7 +1453,6 @@ bo_list_error:
                                num_chunks, chunks, &seq_no);
    }
 
-   cs->error_code = r;
    if (r) {
       if (r == -ENOMEM)
          fprintf(stderr, "amdgpu: Not enough memory for command submission.\n");
@@ -1484,8 +1461,6 @@ bo_list_error:
       else
          fprintf(stderr, "amdgpu: The CS has been rejected, "
                  "see dmesg for more information (%i).\n", r);
-
-      amdgpu_fence_signalled(cs->fence);
 
       acs->ctx->num_rejected_cs++;
       ws->num_total_rejected_cs++;
@@ -1503,6 +1478,13 @@ bo_list_error:
       amdgpu_bo_list_destroy(bo_list);
 
 cleanup:
+   /* If there was an error, signal the fence, because it won't be signalled
+    * by the hardware. */
+   if (r)
+      amdgpu_fence_signalled(cs->fence);
+
+   cs->error_code = r;
+
    for (i = 0; i < cs->num_real_buffers; i++)
       p_atomic_dec(&cs->real_buffers[i].bo->num_active_ioctls);
    for (i = 0; i < cs->num_slab_buffers; i++)
