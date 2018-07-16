@@ -121,7 +121,7 @@ static void send_cmd(struct ruvd_decoder *dec, unsigned cmd,
 
 	reloc_idx = dec->ws->cs_add_buffer(dec->cs, buf, usage | RADEON_USAGE_SYNCHRONIZED,
 					   domain,
-					  RADEON_PRIO_UVD);
+					  0);
 	if (!dec->use_legacy) {
 		uint64_t addr;
 		addr = dec->ws->buffer_get_virtual_address(buf);

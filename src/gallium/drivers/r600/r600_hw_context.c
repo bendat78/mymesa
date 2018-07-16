@@ -600,9 +600,9 @@ void r600_dma_copy_buffer(struct r600_context *rctx,
 		csize = size < R600_DMA_COPY_MAX_SIZE_DW ? size : R600_DMA_COPY_MAX_SIZE_DW;
 		/* emit reloc before writing cs so that cs is always in consistent state */
 		radeon_add_to_buffer_list(&rctx->b, &rctx->b.dma, rsrc, RADEON_USAGE_READ,
-				      RADEON_PRIO_SDMA_BUFFER);
+				      0);
 		radeon_add_to_buffer_list(&rctx->b, &rctx->b.dma, rdst, RADEON_USAGE_WRITE,
-				      RADEON_PRIO_SDMA_BUFFER);
+				      0);
 		radeon_emit(cs, DMA_PACKET(DMA_PACKET_COPY, 0, 0, csize));
 		radeon_emit(cs, dst_offset & 0xfffffffc);
 		radeon_emit(cs, src_offset & 0xfffffffc);
