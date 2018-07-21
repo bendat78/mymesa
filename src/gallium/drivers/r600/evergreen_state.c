@@ -1599,7 +1599,7 @@ static void evergreen_set_min_samples(struct pipe_context *ctx, unsigned min_sam
 }
 
 /* 8xMSAA */
-static uint32_t sample_locs_8x[] = {
+static const uint32_t sample_locs_8x[] = {
 	FILL_SREG(-1,  1,  1,  5,  3, -5,  5,  3),
 	FILL_SREG(-7, -1, -3, -7,  7, -3, -5,  7),
 	FILL_SREG(-1,  1,  1,  5,  3, -5,  5,  3),
@@ -3970,7 +3970,7 @@ static void evergreen_set_hw_atomic_buffers(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_atomic_buffer_state *astate;
-	int i, idx;
+	unsigned i, idx;
 
 	astate = &rctx->atomic_buffer_state;
 
@@ -4006,7 +4006,7 @@ static void evergreen_set_shader_buffers(struct pipe_context *ctx,
 	struct r600_tex_color_info color;
 	struct eg_buf_res_params buf_params;
 	struct r600_resource *resource;
-	int i, idx;
+	unsigned i, idx;
 	unsigned old_mask;
 
 	if (shader != PIPE_SHADER_FRAGMENT &&
@@ -4100,7 +4100,7 @@ static void evergreen_set_shader_images(struct pipe_context *ctx,
 					const struct pipe_image_view *images)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	int i;
+	unsigned i;
 	struct r600_image_view *rview;
 	struct pipe_resource *image;
 	struct r600_resource *resource;

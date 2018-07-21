@@ -181,4 +181,59 @@ static inline void radeon_opt_set_context_reg3(struct si_context *sctx, unsigned
 	}
 }
 
+/**
+ * Set 4 consecutive registers if any registers value is different.
+ */
+static inline void radeon_opt_set_context_reg4(struct si_context *sctx, unsigned offset,
+					       enum si_tracked_reg reg, unsigned value1,
+					       unsigned value2, unsigned value3,
+					       unsigned value4)
+{
+	struct radeon_cmdbuf *cs = sctx->gfx_cs;
+
+	if (!(sctx->tracked_regs.reg_saved & (1 << reg)) ||
+	    !(sctx->tracked_regs.reg_saved & (1 << (reg + 1))) ||
+	    !(sctx->tracked_regs.reg_saved & (1 << (reg + 2))) ||
+	    !(sctx->tracked_regs.reg_saved & (1 << (reg + 3))) ||
+	    sctx->tracked_regs.reg_value[reg] != value1 ||
+	    sctx->tracked_regs.reg_value[reg+1] != value2 ||
+	    sctx->tracked_regs.reg_value[reg+2] != value3 ||
+	    sctx->tracked_regs.reg_value[reg+3] != value4 ) {
+
+		radeon_set_context_reg_seq(cs, offset, 4);
+		radeon_emit(cs, value1);
+		radeon_emit(cs, value2);
+		radeon_emit(cs, value3);
+		radeon_emit(cs, value4);
+
+		sctx->tracked_regs.reg_value[reg] = value1;
+		sctx->tracked_regs.reg_value[reg+1] = value2;
+		sctx->tracked_regs.reg_value[reg+2] = value3;
+		sctx->tracked_regs.reg_value[reg+3] = value4;
+		sctx->tracked_regs.reg_saved |= 0xf << reg;
+	}
+}
+
+/**
+ * Set consecutive registers if any registers value is different.
+ */
+static inline void radeon_opt_set_context_regn(struct si_context *sctx, unsigned offset,
+					       unsigned *value, unsigned *saved_val,
+					       unsigned num)
+{
+	struct radeon_cmdbuf *cs = sctx->gfx_cs;
+	int i, j;
+
+	for (i = 0; i < num; i++) {
+		if (saved_val[i] != value[i]) {
+			radeon_set_context_reg_seq(cs, offset, num);
+			for (j = 0; j < num; j++)
+				radeon_emit(cs, value[j]);
+
+			memcpy(saved_val, value, sizeof(uint32_t) * num);
+			break;
+		}
+	}
+}
+
 #endif

@@ -290,7 +290,7 @@ atomic3("atomic_counter_comp_swap")
 # and layout qualifiers that influence the semantics of the intrinsic.
 #
 # All image intrinsics take a four-coordinate vector and a sample index as
-# first two sources, determining the location within the image that will be
+# 2nd and 3rd sources, determining the location within the image that will be
 # accessed by the intrinsic.  Components not applicable to the image target
 # in use are undefined.  Image store takes an additional four-component
 # argument with the value to be written, and image atomic operations take
@@ -424,6 +424,9 @@ system_value("instance_id", 1)
 system_value("base_instance", 1)
 system_value("draw_id", 1)
 system_value("sample_id", 1)
+# sample_id_no_per_sample is like sample_id but does not imply per-
+# sample shading.  See the lower_helper_invocation option.
+system_value("sample_id_no_per_sample", 1)
 system_value("sample_pos", 2)
 system_value("sample_mask_in", 1)
 system_value("primitive_id", 1)

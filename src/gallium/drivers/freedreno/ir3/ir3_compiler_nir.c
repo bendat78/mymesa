@@ -220,6 +220,12 @@ compile_init(struct ir3_compiler *compiler,
 		nir_print_shader(ctx->s, stdout);
 	}
 
+	if (shader_debug_enabled(so->type)) {
+		fprintf(stderr, "NIR (final form) for %s shader:\n",
+			shader_stage_name(so->type));
+		nir_print_shader(ctx->s, stderr);
+	}
+
 	ir3_nir_scan_driver_consts(ctx->s, &so->const_layout);
 
 	so->num_uniforms = ctx->s->num_uniforms;
@@ -2445,6 +2451,7 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		dst[0] = ctx->instance_id;
 		break;
 	case nir_intrinsic_load_sample_id:
+	case nir_intrinsic_load_sample_id_no_per_sample:
 		if (!ctx->samp_id) {
 			ctx->samp_id = create_input(b, 0);
 			ctx->samp_id->regs[0]->flags |= IR3_REG_HALF;

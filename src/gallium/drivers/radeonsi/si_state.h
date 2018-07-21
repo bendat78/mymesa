@@ -276,12 +276,18 @@ enum si_tracked_reg {
 	SI_TRACKED_PA_SC_BINNER_CNTL_0,
 	SI_TRACKED_DB_DFSM_CONTROL,
 
+	SI_TRACKED_PA_CL_GB_VERT_CLIP_ADJ, /* 4 consecutive registers */
+	SI_TRACKED_PA_CL_GB_VERT_DISC_ADJ,
+	SI_TRACKED_PA_CL_GB_HORZ_CLIP_ADJ,
+	SI_TRACKED_PA_CL_GB_HORZ_DISC_ADJ,
+
 	SI_NUM_TRACKED_REGS,
 };
 
 struct si_tracked_regs {
 	uint32_t		reg_saved;
 	uint32_t		reg_value[SI_NUM_TRACKED_REGS];
+	uint32_t		spi_ps_input_cntl[32];
 };
 
 /* Private read-write buffer slots. */

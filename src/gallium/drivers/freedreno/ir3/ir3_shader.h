@@ -381,7 +381,7 @@ ir3_shader_create_compute(struct ir3_compiler *compiler,
 void ir3_shader_destroy(struct ir3_shader *shader);
 struct ir3_shader_variant * ir3_shader_variant(struct ir3_shader *shader,
 		struct ir3_shader_key key, struct pipe_debug_callback *debug);
-void ir3_shader_disasm(struct ir3_shader_variant *so, uint32_t *bin);
+void ir3_shader_disasm(struct ir3_shader_variant *so, uint32_t *bin, FILE *out);
 uint64_t ir3_shader_outputs(const struct ir3_shader *so);
 
 struct fd_ringbuffer;
@@ -525,6 +525,15 @@ ir3_find_sysval_regid(const struct ir3_shader_variant *so, unsigned slot)
 		if (so->inputs[j].sysval && (so->inputs[j].slot == slot))
 			return so->inputs[j].regid;
 	return regid(63, 0);
+}
+
+/* calculate register footprint in terms of half-regs (ie. one full
+ * reg counts as two half-regs).
+ */
+static inline uint32_t
+ir3_shader_halfregs(const struct ir3_shader_variant *v)
+{
+	return (2 * (v->info.max_reg + 1)) + (v->info.max_half_reg + 1);
 }
 
 #endif /* IR3_SHADER_H_ */

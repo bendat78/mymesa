@@ -40,6 +40,17 @@ aubinator_error_decode = executable(
   install : with_tools.contains('intel'),
 )
 
+error2aub = executable(
+  'intel_error2aub',
+  files('aub_write.h', 'aub_write.c', 'error2aub.c'),
+  dependencies : [dep_zlib, dep_dl, dep_thread, dep_m],
+  include_directories : [inc_common, inc_intel, inc_drm_uapi],
+  link_with : [libintel_dev],
+  c_args : [c_vis_args, no_override_init_args],
+  build_by_default : with_tools.contains('intel'),
+  install : with_tools.contains('intel'),
+)
+
 if with_tools.contains('intel')
   sanitize_data = configuration_data()
   sanitize_data.set(
@@ -73,7 +84,7 @@ if with_tools.contains('intel')
 
   libintel_dump_gpu = shared_library(
     'intel_dump_gpu',
-    files('intel_dump_gpu.c'),
+    files('aub_write.h', 'aub_write.c', 'intel_dump_gpu.c'),
     dependencies : dep_dl,
     include_directories : [inc_common, inc_intel, inc_drm_uapi],
     link_with : libintel_dev,

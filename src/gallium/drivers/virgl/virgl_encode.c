@@ -528,7 +528,7 @@ int virgl_encoder_inline_write(struct virgl_context *ctx,
 
    left_bytes = size;
    while (left_bytes) {
-      if (ctx->cbuf->cdw + 12 > VIRGL_MAX_CMDBUF_DWORDS)
+      if (ctx->cbuf->cdw + 12 >= VIRGL_MAX_CMDBUF_DWORDS)
          ctx->base.flush(&ctx->base, NULL, 0);
 
       thispass = (VIRGL_MAX_CMDBUF_DWORDS - ctx->cbuf->cdw - 12) * 4;
@@ -724,6 +724,13 @@ void virgl_encoder_set_sample_mask(struct virgl_context *ctx,
 {
    virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_SET_SAMPLE_MASK, 0, VIRGL_SET_SAMPLE_MASK_SIZE));
    virgl_encoder_write_dword(ctx->cbuf, sample_mask);
+}
+
+void virgl_encoder_set_min_samples(struct virgl_context *ctx,
+                                  unsigned min_samples)
+{
+   virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_SET_MIN_SAMPLES, 0, VIRGL_SET_MIN_SAMPLES_SIZE));
+   virgl_encoder_write_dword(ctx->cbuf, min_samples);
 }
 
 void virgl_encoder_set_clip_state(struct virgl_context *ctx,
