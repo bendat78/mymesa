@@ -203,6 +203,7 @@ enum virgl_formats {
 #define VIRGL_CAP_TEXTURE_VIEW         (1 << 1)
 #define VIRGL_CAP_SET_MIN_SAMPLES      (1 << 2)
 #define VIRGL_CAP_COPY_IMAGE           (1 << 3)
+#define VIRGL_CAP_TGSI_PRECISE         (1 << 4)
 
 #define VIRGL_BIND_DEPTH_STENCIL (1 << 0)
 #define VIRGL_BIND_RENDER_TARGET (1 << 1)
@@ -212,6 +213,7 @@ enum virgl_formats {
 #define VIRGL_BIND_CONSTANT_BUFFER (1 << 6)
 #define VIRGL_BIND_DISPLAY_TARGET (1 << 7)
 #define VIRGL_BIND_STREAM_OUTPUT (1 << 11)
+#define VIRGL_BIND_SHADER_BUFFER (1 << 14)
 #define VIRGL_BIND_CURSOR        (1 << 16)
 #define VIRGL_BIND_CUSTOM        (1 << 17)
 #define VIRGL_BIND_SCANOUT       (1 << 18)
@@ -303,6 +305,8 @@ struct virgl_caps_v2 {
         uint32_t capability_bits;
         uint32_t msaa_sample_positions[8];
         uint32_t max_vertex_attrib_stride;
+        uint32_t max_shader_buffer_frag_compute;
+        uint32_t max_shader_buffer_other_stages;
 };
 
 union virgl_caps {

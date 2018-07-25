@@ -155,6 +155,7 @@ anv_shader_compile_to_nir(struct anv_pipeline *pipeline,
          .subgroup_vote = true,
          .stencil_export = device->instance->physicalDevice.info.gen >= 9,
          .storage_8bit = device->instance->physicalDevice.info.gen >= 8,
+         .post_depth_coverage = device->instance->physicalDevice.info.gen >= 9,
       },
    };
 
@@ -464,7 +465,7 @@ anv_pipeline_compile(struct anv_pipeline *pipeline,
       anv_nir_apply_pipeline_layout(pipeline, layout, nir, prog_data, map);
 
    if (stage != MESA_SHADER_COMPUTE)
-      brw_nir_analyze_ubo_ranges(compiler, nir, prog_data->ubo_ranges);
+      brw_nir_analyze_ubo_ranges(compiler, nir, NULL, prog_data->ubo_ranges);
 
    assert(nir->num_uniforms == prog_data->nr_params * 4);
 

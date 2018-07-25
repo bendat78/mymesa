@@ -57,6 +57,7 @@ static const struct debug_named_value debug_options[] = {
 	/* Shader compiler options the shader cache should be aware of: */
 	{ "unsafemath", DBG(UNSAFE_MATH), "Enable unsafe math shader optimizations" },
 	{ "sisched", DBG(SI_SCHED), "Enable LLVM SI Machine Instruction Scheduler." },
+	{ "gisel", DBG(GISEL), "Enable LLVM global instruction selector." },
 
 	/* Shader compiler options (with no effect on the shader cache): */
 	{ "checkir", DBG(CHECK_IR), "Enable additional sanity checks on shader IR" },
@@ -110,6 +111,7 @@ static void si_init_compiler(struct si_screen *sscreen,
 {
 	enum ac_target_machine_options tm_options =
 		(sscreen->debug_flags & DBG(SI_SCHED) ? AC_TM_SISCHED : 0) |
+		(sscreen->debug_flags & DBG(GISEL) ? AC_TM_ENABLE_GLOBAL_ISEL : 0) |
 		(sscreen->info.chip_class >= GFX9 ? AC_TM_FORCE_ENABLE_XNACK : 0) |
 		(sscreen->info.chip_class < GFX9 ? AC_TM_FORCE_DISABLE_XNACK : 0) |
 		(!sscreen->llvm_has_working_vgpr_indexing ? AC_TM_PROMOTE_ALLOCA_TO_SCRATCH : 0) |
@@ -757,6 +759,7 @@ static void si_disk_cache_create(struct si_screen *sscreen)
 			/* These flags affect shader compilation. */
 			#define ALL_FLAGS (DBG(FS_CORRECT_DERIVS_AFTER_KILL) | \
 					   DBG(SI_SCHED) | \
+					   DBG(GISEL) | \
 					   DBG(UNSAFE_MATH) | \
 					   DBG(NIR))
 			uint64_t shader_debug_flags = sscreen->debug_flags &
@@ -789,6 +792,7 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 
 	sscreen->ws = ws;
 	ws->query_info(ws, &sscreen->info);
+	si_handle_env_var_force_family(sscreen);
 
 	sscreen->debug_flags = debug_get_flags_option("R600_DEBUG",
 							debug_options, 0);
@@ -877,8 +881,6 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 	       FREE(sscreen);
 	       return NULL;
 	}
-
-	si_handle_env_var_force_family(sscreen);
 
 	if (!debug_get_bool_option("RADEON_DISABLE_PERFCOUNTERS", false))
 		si_init_perfcounters(sscreen);
