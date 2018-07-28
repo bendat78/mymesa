@@ -55,7 +55,7 @@ v3d_start_draw(struct v3d_context *v3d)
         job->submit.bcl_start = job->bcl.bo->offset;
         v3d_job_add_bo(job, job->bcl.bo);
 
-        job->tile_alloc = v3d_bo_alloc(v3d->screen, 1024 * 1024, "tile alloc");
+        job->tile_alloc = v3d_bo_alloc(v3d->screen, 1024 * 1024, "tile_alloc");
         uint32_t tsda_per_tile_size = v3d->screen->devinfo.ver >= 40 ? 256 : 64;
         job->tile_state = v3d_bo_alloc(v3d->screen,
                                        job->draw_tiles_y *
@@ -577,7 +577,9 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 struct v3d_resource *rsc = v3d_resource(job->zsbuf->texture);
                 v3d_job_add_bo(job, rsc->bo);
 
-                job->resolve |= PIPE_CLEAR_DEPTH;
+                job->load |= PIPE_CLEAR_DEPTH & ~job->clear;
+                if (v3d->zsa->base.depth.writemask)
+                        job->store |= PIPE_CLEAR_DEPTH;
                 rsc->initialized_buffers = PIPE_CLEAR_DEPTH;
         }
 
@@ -588,18 +590,25 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
                 v3d_job_add_bo(job, rsc->bo);
 
-                job->resolve |= PIPE_CLEAR_STENCIL;
+                job->load |= PIPE_CLEAR_STENCIL & ~job->clear;
+                if (v3d->zsa->base.stencil[0].writemask ||
+                    v3d->zsa->base.stencil[1].writemask) {
+                        job->store |= PIPE_CLEAR_STENCIL;
+                }
                 rsc->initialized_buffers |= PIPE_CLEAR_STENCIL;
         }
 
         for (int i = 0; i < VC5_MAX_DRAW_BUFFERS; i++) {
                 uint32_t bit = PIPE_CLEAR_COLOR0 << i;
+                int blend_rt = v3d->blend->base.independent_blend_enable ? i : 0;
 
-                if (job->resolve & bit || !job->cbufs[i])
+                if (job->store & bit || !job->cbufs[i])
                         continue;
                 struct v3d_resource *rsc = v3d_resource(job->cbufs[i]->texture);
 
-                job->resolve |= bit;
+                job->load |= bit & ~job->clear;
+                if (v3d->blend->base.rt[blend_rt].colormask)
+                        job->store |= bit;
                 v3d_job_add_bo(job, rsc->bo);
         }
 
@@ -613,50 +622,60 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 v3d_flush(pctx);
 }
 
-/* GFXH-1461: If we were to emit a load of just depth or just stencil, then
- * the clear for the other may get lost.  Just fall back to drawing a quad in
- * that case.
+/**
+ * Implements gallium's clear() hook (glClear()) by drawing a pair of triangles.
  */
-static bool
-v3d_gfxh1461_clear_workaround(struct v3d_context *v3d,
-                              unsigned buffers, double depth, unsigned stencil)
+static void
+v3d_draw_clear(struct v3d_context *v3d,
+               unsigned buffers,
+               const union pipe_color_union *color,
+               double depth, unsigned stencil)
 {
-        unsigned zsclear = buffers & PIPE_CLEAR_DEPTHSTENCIL;
-        if (!zsclear || zsclear == PIPE_CLEAR_DEPTHSTENCIL)
-                return false;
-
         static const union pipe_color_union dummy_color = {};
+
+        /* The blitter util dereferences the color regardless, even though the
+         * gallium clear API may not pass one in when only Z/S are cleared.
+         */
+        if (!color)
+                color = &dummy_color;
 
         v3d_blitter_save(v3d);
         util_blitter_clear(v3d->blitter,
                            v3d->framebuffer.width,
                            v3d->framebuffer.height,
-                           1,
-                           zsclear,
-                           &dummy_color, depth, stencil);
-        return true;
+                           util_framebuffer_get_num_layers(&v3d->framebuffer),
+                           buffers, color, depth, stencil);
 }
 
-static void
-v3d_clear(struct pipe_context *pctx, unsigned buffers,
-          const union pipe_color_union *color, double depth, unsigned stencil)
+/**
+ * Attempts to perform the GL clear by using the TLB's fast clear at the start
+ * of the frame.
+ */
+static unsigned
+v3d_tlb_clear(struct v3d_job *job, unsigned buffers,
+              const union pipe_color_union *color,
+              double depth, unsigned stencil)
 {
-        struct v3d_context *v3d = v3d_context(pctx);
-        struct v3d_job *job = v3d_get_job_for_fbo(v3d);
+        struct v3d_context *v3d = job->v3d;
 
-        if (v3d_gfxh1461_clear_workaround(v3d, buffers, depth, stencil))
-                buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
-
-        if (!buffers)
-                return;
-
-        /* We can't flag new buffers for clearing once we've queued draws.  We
-         * could avoid this by using the 3d engine to clear.
-         */
         if (job->draw_calls_queued) {
-                perf_debug("Flushing rendering to process new clear.\n");
-                v3d_job_submit(v3d, job);
-                job = v3d_get_job_for_fbo(v3d);
+                /* If anything in the CL has drawn using the buffer, then the
+                 * TLB clear we're trying to add now would happen before that
+                 * drawing.
+                 */
+                buffers &= ~(job->load | job->store);
+        }
+
+        /* GFXH-1461: If we were to emit a load of just depth or just stencil,
+         * then the clear for the other may get lost.  We need to decide now
+         * if it would be possible to need to emit a load of just one after
+         * we've set up our TLB clears.
+         */
+        if (buffers & PIPE_CLEAR_DEPTHSTENCIL &&
+            (buffers & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL &&
+            job->zsbuf &&
+            util_format_is_depth_and_stencil(job->zsbuf->texture->format)) {
+                buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
         }
 
         for (int i = 0; i < VC5_MAX_DRAW_BUFFERS; i++) {
@@ -732,10 +751,25 @@ v3d_clear(struct pipe_context *pctx, unsigned buffers,
         job->draw_min_y = 0;
         job->draw_max_x = v3d->framebuffer.width;
         job->draw_max_y = v3d->framebuffer.height;
-        job->cleared |= buffers;
-        job->resolve |= buffers;
+        job->clear |= buffers;
+        job->store |= buffers;
 
         v3d_start_draw(v3d);
+
+        return buffers;
+}
+
+static void
+v3d_clear(struct pipe_context *pctx, unsigned buffers,
+          const union pipe_color_union *color, double depth, unsigned stencil)
+{
+        struct v3d_context *v3d = v3d_context(pctx);
+        struct v3d_job *job = v3d_get_job_for_fbo(v3d);
+
+        buffers &= ~v3d_tlb_clear(job, buffers, color, depth, stencil);
+
+        if (buffers)
+                v3d_draw_clear(v3d, buffers, color, depth, stencil);
 }
 
 static void

@@ -205,8 +205,13 @@ struct gen_batch_decode_bo {
 struct gen_disasm *disasm;
 
 struct gen_batch_decode_ctx {
-   struct gen_batch_decode_bo (*get_bo)(void *user_data,
-                                        uint64_t base_address);
+   /**
+    * Return information about the buffer containing the given address.
+    *
+    * If the given address is inside a buffer, the map pointer should be
+    * offset accordingly so it points at the data corresponding to address.
+    */
+   struct gen_batch_decode_bo (*get_bo)(void *user_data, uint64_t address);
    unsigned (*get_state_size)(void *user_data,
                               uint32_t offset_from_dynamic_state_base_addr);
    void *user_data;
@@ -217,9 +222,9 @@ struct gen_batch_decode_ctx {
 
    struct gen_disasm *disasm;
 
-   struct gen_batch_decode_bo surface_base;
-   struct gen_batch_decode_bo dynamic_base;
-   struct gen_batch_decode_bo instruction_base;
+   uint64_t surface_base;
+   uint64_t dynamic_base;
+   uint64_t instruction_base;
 
    int max_vbo_decoded_lines;
 };

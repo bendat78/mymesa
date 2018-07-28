@@ -280,11 +280,15 @@ struct v3d_job {
         /* Bitmask of PIPE_CLEAR_* of buffers that were cleared before the
          * first rendering.
          */
-        uint32_t cleared;
-        /* Bitmask of PIPE_CLEAR_* of buffers that have been rendered to
-         * (either clears or draws).
+        uint32_t clear;
+        /* Bitmask of PIPE_CLEAR_* of buffers that have been read by a draw
+         * call without having been cleared first.
          */
-        uint32_t resolve;
+        uint32_t load;
+        /* Bitmask of PIPE_CLEAR_* of buffers that have been rendered to
+         * (either clears or draws) and should be stored.
+         */
+        uint32_t store;
         uint32_t clear_color[4][4];
         float clear_z;
         uint8_t clear_s;
