@@ -832,6 +832,7 @@ dri2_allocate_textures(struct dri_context *ctx,
             templ.bind = drawable->textures[statt]->bind &
                          ~(PIPE_BIND_SCANOUT | PIPE_BIND_SHARED);
             templ.nr_samples = drawable->stvis.samples;
+            templ.nr_storage_samples = drawable->stvis.samples;
 
             /* Try to reuse the resource.
              * (the other resource parameters should be constant)
@@ -883,10 +884,12 @@ dri2_allocate_textures(struct dri_context *ctx,
 
          if (drawable->stvis.samples > 1) {
             templ.nr_samples = drawable->stvis.samples;
+            templ.nr_storage_samples = drawable->stvis.samples;
             zsbuf = &drawable->msaa_textures[statt];
          }
          else {
             templ.nr_samples = 0;
+            templ.nr_storage_samples = 0;
             zsbuf = &drawable->textures[statt];
          }
 
@@ -1486,7 +1489,7 @@ dri2_query_dma_buf_formats(__DRIscreen *_screen, int max, int *formats,
                                        fourcc_to_pipe_format(
                                           fourcc_formats[i]),
                                        screen->target,
-                                       0, bind)) {
+                                       0, 0, bind)) {
          if (j < max)
             formats[j] = fourcc_formats[i];
          j++;
@@ -1507,7 +1510,8 @@ dri2_query_dma_buf_modifiers(__DRIscreen *_screen, int fourcc, int max,
    const unsigned usage = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
 
    if (pscreen->query_dmabuf_modifiers != NULL &&
-       pscreen->is_format_supported(pscreen, format, screen->target, 0, usage)) {
+       pscreen->is_format_supported(pscreen, format, screen->target, 0, 0,
+                                    usage)) {
       pscreen->query_dmabuf_modifiers(pscreen, format, max, modifiers,
                                       external_only, count);
       return true;

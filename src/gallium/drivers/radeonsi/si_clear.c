@@ -237,7 +237,7 @@ void vi_dcc_clear_level(struct si_context *sctx,
 		assert(tex->buffer.b.b.last_level == 0);
 		/* 4x and 8x MSAA needs a sophisticated compute shader for
 		 * the clear. See AMDVLK. */
-		assert(tex->num_color_samples <= 2);
+		assert(tex->buffer.b.b.nr_storage_samples <= 2);
 		clear_size = tex->surface.dcc_size;
 	} else {
 		unsigned num_layers = util_num_layers(&tex->buffer.b.b, level);
@@ -248,7 +248,7 @@ void vi_dcc_clear_level(struct si_context *sctx,
 		 * dcc_fast_clear_size bytes for each layer. A compute shader
 		 * would be more efficient than separate per-layer clear operations.
 		 */
-		assert(tex->num_color_samples <= 2 || num_layers == 1);
+		assert(tex->buffer.b.b.nr_storage_samples <= 2 || num_layers == 1);
 
 		dcc_offset += tex->surface.u.legacy.level[level].dcc_offset;
 		clear_size = tex->surface.u.legacy.level[level].dcc_fast_clear_size *
@@ -736,7 +736,7 @@ static void si_clear_texture(struct pipe_context *pipe,
 			desc->unpack_rgba_float(color.f, 0, data, 0, 1, 1);
 
 		if (screen->is_format_supported(screen, tex->format,
-						tex->target, 0,
+						tex->target, 0, 0,
 						PIPE_BIND_RENDER_TARGET)) {
 			si_clear_render_target(pipe, sf, &color,
 					       box->x, box->y,

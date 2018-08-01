@@ -225,6 +225,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
    case PIPE_CAP_TILE_RASTER_ORDER:
    case PIPE_CAP_MAX_COMBINED_SHADER_OUTPUT_RESOURCES:
+   case PIPE_CAP_FRAMEBUFFER_MSAA_CONSTRAINTS:
    case PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET:
    case PIPE_CAP_CONTEXT_PRIORITY_MASK:
    case PIPE_CAP_FENCE_SIGNAL:
@@ -414,12 +415,16 @@ nv30_screen_is_format_supported(struct pipe_screen *pscreen,
                                 enum pipe_format format,
                                 enum pipe_texture_target target,
                                 unsigned sample_count,
+                                unsigned storage_sample_count,
                                 unsigned bindings)
 {
    if (sample_count > nv30_screen(pscreen)->max_sample_count)
       return false;
 
    if (!(0x00000017 & (1 << sample_count)))
+      return false;
+
+   if (MAX2(1, sample_count) != MAX2(1, storage_sample_count))
       return false;
 
    /* shared is always supported */

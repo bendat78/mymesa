@@ -161,11 +161,11 @@ store_general(struct v3d_job *job,
                 assert(buffer != ZSTENCIL);
                 store.raw_mode = true;
                 if (!last_store) {
-                        store.disable_colour_buffers_clear_on_write = true;
+                        store.disable_color_buffers_clear_on_write = true;
                         store.disable_z_buffer_clear_on_write = true;
                         store.disable_stencil_buffer_clear_on_write = true;
                 } else {
-                        store.disable_colour_buffers_clear_on_write =
+                        store.disable_color_buffers_clear_on_write =
                                 !(((pipe_bit & PIPE_CLEAR_COLOR_BUFFERS) &&
                                    general_color_clear &&
                                    (job->clear & pipe_bit)));
@@ -246,8 +246,8 @@ v3d_rcl_emit_loads(struct v3d_job *job, struct v3d_cl *cl)
          * tile coordinates.
          */
         if (loads_pending) {
-                cl_emit(cl, RELOAD_TILE_COLOUR_BUFFER, load) {
-                        load.disable_colour_buffer_load =
+                cl_emit(cl, RELOAD_TILE_COLOR_BUFFER, load) {
+                        load.disable_color_buffer_load =
                                 (~loads_pending &
                                  PIPE_CLEAR_COLOR_BUFFERS) >>
                                 PIPE_FIRST_COLOR_BUFFER_BIT;
@@ -356,7 +356,7 @@ v3d_rcl_emit_stores(struct v3d_job *job, struct v3d_cl *cl)
                         /* Note that when set this will clear all of the color
                          * buffers.
                          */
-                        store.disable_colour_buffers_clear_on_write =
+                        store.disable_color_buffers_clear_on_write =
                                 !needs_color_clear;
                         store.disable_z_buffer_clear_on_write =
                                 !needs_z_clear;
@@ -417,7 +417,7 @@ v3d_rcl_emit_generic_per_tile_list(struct v3d_job *job, int last_cbuf)
         /* The binner starts out writing tiles assuming that the initial mode
          * is triangles, so make sure that's the case.
          */
-        cl_emit(cl, PRIMITIVE_LIST_FORMAT, fmt) {
+        cl_emit(cl, PRIM_LIST_FORMAT, fmt) {
                 fmt.primitive_type = LIST_TRIANGLES;
         }
 
@@ -457,7 +457,7 @@ static void
 v3d_emit_z_stencil_config(struct v3d_job *job, struct v3d_surface *surf,
                           struct v3d_resource *rsc, bool is_separate_stencil)
 {
-        cl_emit(&job->rcl, TILE_RENDERING_MODE_CONFIGURATION_Z_STENCIL_CONFIG, zs) {
+        cl_emit(&job->rcl, TILE_RENDERING_MODE_CFG_Z_STENCIL, zs) {
                 zs.address = cl_address(rsc->bo, surf->offset);
 
                 if (!is_separate_stencil) {
@@ -501,12 +501,11 @@ v3dX(emit_rcl)(struct v3d_job *job)
                         nr_cbufs = i + 1;
         }
 
-        /* Comon config must be the first TILE_RENDERING_MODE_CONFIGURATION
+        /* Comon config must be the first TILE_RENDERING_MODE_CFG
          * and Z_STENCIL_CLEAR_VALUES must be last.  The ones in between are
          * optional updates to the previous HW state.
          */
-        cl_emit(&job->rcl, TILE_RENDERING_MODE_CONFIGURATION_COMMON_CONFIGURATION,
-                config) {
+        cl_emit(&job->rcl, TILE_RENDERING_MODE_CFG_COMMON, config) {
 #if V3D_VERSION < 40
                 config.enable_z_store = job->store & PIPE_CLEAR_DEPTH;
                 config.enable_stencil_store = job->store & PIPE_CLEAR_STENCIL;
@@ -572,7 +571,7 @@ v3dX(emit_rcl)(struct v3d_job *job)
                 }
 
 #if V3D_VERSION < 40
-                cl_emit(&job->rcl, TILE_RENDERING_MODE_CONFIGURATION_RENDER_TARGET_CONFIG, rt) {
+                cl_emit(&job->rcl, TILE_RENDERING_MODE_CFG_COLOR, rt) {
                         rt.address = cl_address(rsc->bo, surf->offset);
                         rt.internal_type = surf->internal_type;
                         rt.output_image_format = surf->format;
@@ -586,7 +585,7 @@ v3dX(emit_rcl)(struct v3d_job *job)
                 }
 #endif /* V3D_VERSION < 40 */
 
-                cl_emit(&job->rcl, TILE_RENDERING_MODE_CONFIGURATION_CLEAR_COLORS_PART1,
+                cl_emit(&job->rcl, TILE_RENDERING_MODE_CFG_CLEAR_COLORS_PART1,
                         clear) {
                         clear.clear_color_low_32_bits = job->clear_color[i][0];
                         clear.clear_color_next_24_bits = job->clear_color[i][1] & 0xffffff;
@@ -594,7 +593,7 @@ v3dX(emit_rcl)(struct v3d_job *job)
                 };
 
                 if (surf->internal_bpp >= V3D_INTERNAL_BPP_64) {
-                        cl_emit(&job->rcl, TILE_RENDERING_MODE_CONFIGURATION_CLEAR_COLORS_PART2,
+                        cl_emit(&job->rcl, TILE_RENDERING_MODE_CFG_CLEAR_COLORS_PART2,
                                 clear) {
                                 clear.clear_color_mid_low_32_bits =
                                         ((job->clear_color[i][1] >> 24) |
@@ -607,7 +606,7 @@ v3dX(emit_rcl)(struct v3d_job *job)
                 }
 
                 if (surf->internal_bpp >= V3D_INTERNAL_BPP_128 || clear_pad) {
-                        cl_emit(&job->rcl, TILE_RENDERING_MODE_CONFIGURATION_CLEAR_COLORS_PART3,
+                        cl_emit(&job->rcl, TILE_RENDERING_MODE_CFG_CLEAR_COLORS_PART3,
                                 clear) {
                                 clear.uif_padded_height_in_uif_blocks = clear_pad;
                                 clear.clear_color_high_16_bits = job->clear_color[i][3] >> 16;
@@ -617,7 +616,7 @@ v3dX(emit_rcl)(struct v3d_job *job)
         }
 
 #if V3D_VERSION >= 40
-        cl_emit(&job->rcl, TILE_RENDERING_MODE_CONFIGURATION_RENDER_TARGET_CONFIG, rt) {
+        cl_emit(&job->rcl, TILE_RENDERING_MODE_CFG_COLOR, rt) {
                 v3d_setup_render_target(job, 0,
                                         &rt.render_target_0_internal_bpp,
                                         &rt.render_target_0_internal_type,
@@ -659,7 +658,7 @@ v3dX(emit_rcl)(struct v3d_job *job)
 #endif /* V3D_VERSION < 40 */
 
         /* Ends rendering mode config. */
-        cl_emit(&job->rcl, TILE_RENDERING_MODE_CONFIGURATION_Z_STENCIL_CLEAR_VALUES,
+        cl_emit(&job->rcl, TILE_RENDERING_MODE_CFG_ZS_CLEAR_VALUES,
                 clear) {
                 clear.z_clear_value = job->clear_z;
                 clear.stencil_clear_value = job->clear_s;
@@ -683,7 +682,7 @@ v3dX(emit_rcl)(struct v3d_job *job)
                 list.address = cl_address(job->tile_alloc, 0);
         }
 
-        cl_emit(&job->rcl, MULTICORE_RENDERING_SUPERTILE_CONFIGURATION, config) {
+        cl_emit(&job->rcl, MULTICORE_RENDERING_SUPERTILE_CFG, config) {
                 uint32_t frame_w_in_supertiles, frame_h_in_supertiles;
                 const uint32_t max_supertiles = 256;
 

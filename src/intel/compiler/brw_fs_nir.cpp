@@ -1587,6 +1587,11 @@ fs_visitor::nir_emit_load_const(const fs_builder &bld,
    fs_reg reg = bld.vgrf(reg_type, instr->def.num_components);
 
    switch (instr->def.bit_size) {
+   case 8:
+      for (unsigned i = 0; i < instr->def.num_components; i++)
+         bld.MOV(offset(reg, bld, i), setup_imm_b(bld, instr->value.i8[i]));
+      break;
+
    case 16:
       for (unsigned i = 0; i < instr->def.num_components; i++)
          bld.MOV(offset(reg, bld, i), brw_imm_w(instr->value.i16[i]));
@@ -5395,4 +5400,20 @@ setup_imm_df(const fs_builder &bld, double v)
    ubld.MOV(horiz_offset(tmp, 1), brw_imm_ud(di.i2));
 
    return component(retype(tmp, BRW_REGISTER_TYPE_DF), 0);
+}
+
+fs_reg
+setup_imm_b(const fs_builder &bld, int8_t v)
+{
+   const fs_reg tmp = bld.vgrf(BRW_REGISTER_TYPE_B);
+   bld.MOV(tmp, brw_imm_w(v));
+   return tmp;
+}
+
+fs_reg
+setup_imm_ub(const fs_builder &bld, uint8_t v)
+{
+   const fs_reg tmp = bld.vgrf(BRW_REGISTER_TYPE_UB);
+   bld.MOV(tmp, brw_imm_uw(v));
+   return tmp;
 }

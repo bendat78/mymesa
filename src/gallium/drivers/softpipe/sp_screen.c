@@ -311,6 +311,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_ANY_REG_AS_ADDRESS:
    case PIPE_CAP_TILE_RASTER_ORDER:
    case PIPE_CAP_MAX_COMBINED_SHADER_OUTPUT_RESOURCES:
+   case PIPE_CAP_FRAMEBUFFER_MSAA_CONSTRAINTS:
    case PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET:
    case PIPE_CAP_CONTEXT_PRIORITY_MASK:
    case PIPE_CAP_FENCE_SIGNAL:
@@ -393,6 +394,7 @@ softpipe_is_format_supported( struct pipe_screen *screen,
                               enum pipe_format format,
                               enum pipe_texture_target target,
                               unsigned sample_count,
+                              unsigned storage_sample_count,
                               unsigned bind)
 {
    struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
@@ -407,6 +409,9 @@ softpipe_is_format_supported( struct pipe_screen *screen,
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE ||
           target == PIPE_TEXTURE_CUBE_ARRAY);
+
+   if (MAX2(1, sample_count) != MAX2(1, storage_sample_count))
+      return false;
 
    format_desc = util_format_description(format);
    if (!format_desc)

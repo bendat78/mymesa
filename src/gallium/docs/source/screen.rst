@@ -411,6 +411,17 @@ The integer capabilities:
 * ``PIPE_CAP_MAX_COMBINED_SHADER_OUTPUT_RESOURCES``: Limit on combined shader
   output resources (images + buffers + fragment outputs). If 0 the state
   tracker works it out.
+* ``PIPE_CAP_FRAMEBUFFER_MSAA_CONSTRAINTS``: This determines limitations
+  on the number of samples that framebuffer attachments can have.
+  Possible values:
+    0: color.nr_samples == zs.nr_samples == color.nr_storage_samples
+       (standard MSAA quality)
+    1: color.nr_samples >= zs.nr_samples == color.nr_storage_samples
+       (enhanced MSAA quality)
+    2: color.nr_samples >= zs.nr_samples >= color.nr_storage_samples
+       (full flexibility in tuning MSAA quality and performance)
+  All color attachments must have the same number of samples and the same
+  number of storage samples.
 * ``PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET``:
   Whether pipe_vertex_buffer::buffer_offset is treated as signed. The u_vbuf
   module needs this for optimal performance in workstation applications.
@@ -735,6 +746,9 @@ Determine if a resource in the given format can be used in a specific manner.
 **sample_count** the number of samples. 0 and 1 mean no multisampling,
 the maximum allowed legal value is 32.
 
+**storage_sample_count** the number of storage samples. This must be <=
+sample_count. See the documentation of ``pipe_resource::nr_storage_samples``.
+
 **bindings** is a bitmask of :ref:`PIPE_BIND` flags.
 
 Returns TRUE if all usages can be satisfied.
@@ -778,8 +792,27 @@ For cube maps this must be 6, for other textures 1.
 
 **last_level** the last mip map level present.
 
-**nr_samples** the nr of msaa samples. 0 (or 1) specifies a resource
-which isn't multisampled.
+**nr_samples**: Number of samples determining quality, driving the rasterizer,
+shading, and framebuffer. It is the number of samples seen by the whole
+graphics pipeline. 0 and 1 specify a resource which isn't multisampled.
+
+**nr_storage_samples**: Only color buffers can set this lower than nr_samples.
+Multiple samples within a pixel can have the same color. ``nr_storage_samples``
+determines how many slots for different colors there are per pixel.
+If there are not enough slots to store all sample colors, some samples will
+have an undefined color (called "undefined samples").
+
+The resolve blit behavior is driver-specific, but can be one of these two:
+1. Only defined samples will be averaged. Undefined samples will be ignored.
+2. Undefined samples will be approximated by looking at surrounding defined
+   samples (even in different pixels).
+
+Blits and MSAA texturing: If the sample being fetched is undefined, one of
+the defined samples is returned instead.
+
+Sample shading (``set_min_samples``) will operate at a sample frequency that
+is at most ``nr_storage_samples``. Greater ``min_samples`` values will be
+replaced by ``nr_storage_samples``.
 
 **usage** one of the :ref:`PIPE_USAGE` flags.
 

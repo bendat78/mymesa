@@ -63,26 +63,30 @@ v3d_start_draw(struct v3d_context *v3d)
                                        tsda_per_tile_size,
                                        "TSDA");
 
-#if V3D_VERSION < 40
+#if V3D_VERSION >= 40
+        cl_emit(&job->bcl, TILE_BINNING_MODE_CFG, config) {
+                config.width_in_pixels = v3d->framebuffer.width;
+                config.height_in_pixels = v3d->framebuffer.height;
+                config.number_of_render_targets =
+                        MAX2(v3d->framebuffer.nr_cbufs, 1);
+
+                config.multisample_mode_4x = job->msaa;
+
+                config.maximum_bpp_of_all_render_targets = job->internal_bpp;
+        }
+#else /* V3D_VERSION < 40 */
         /* "Binning mode lists start with a Tile Binning Mode Configuration
          * item (120)"
          *
          * Part1 signals the end of binning config setup.
          */
-        cl_emit(&job->bcl, TILE_BINNING_MODE_CONFIGURATION_PART2, config) {
+        cl_emit(&job->bcl, TILE_BINNING_MODE_CFG_PART2, config) {
                 config.tile_allocation_memory_address =
                         cl_address(job->tile_alloc, 0);
                 config.tile_allocation_memory_size = job->tile_alloc->size;
         }
-#endif
 
-        cl_emit(&job->bcl, TILE_BINNING_MODE_CONFIGURATION_PART1, config) {
-#if V3D_VERSION >= 40
-                config.width_in_pixels = v3d->framebuffer.width;
-                config.height_in_pixels = v3d->framebuffer.height;
-                config.number_of_render_targets =
-                        MAX2(v3d->framebuffer.nr_cbufs, 1);
-#else /* V3D_VERSION < 40 */
+        cl_emit(&job->bcl, TILE_BINNING_MODE_CFG_PART1, config) {
                 config.tile_state_data_array_base_address =
                         cl_address(job->tile_state, 0);
 
@@ -91,12 +95,12 @@ v3d_start_draw(struct v3d_context *v3d)
                 /* Must be >= 1 */
                 config.number_of_render_targets =
                         MAX2(v3d->framebuffer.nr_cbufs, 1);
-#endif /* V3D_VERSION < 40 */
 
                 config.multisample_mode_4x = job->msaa;
 
                 config.maximum_bpp_of_all_render_targets = job->internal_bpp;
         }
+#endif /* V3D_VERSION < 40 */
 
         /* There's definitely nothing in the VCD cache we want. */
         cl_emit(&job->bcl, FLUSH_VCD_CACHE, bin);
@@ -425,6 +429,20 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
         struct v3d_job *job = v3d_get_job_for_fbo(v3d);
 
+        /* If vertex texturing depends on the output of rendering, we need to
+         * ensure that that rendering is complete before we run a coordinate
+         * shader that depends on it.
+         *
+         * Given that doing that is unusual, for now we just block the binner
+         * on the last submitted render, rather than tracking the last
+         * rendering to each texture's BO.
+         */
+        if (v3d->verttex.num_textures) {
+                perf_debug("Blocking binner on last render "
+                           "due to vertex texturing.\n");
+                job->submit.in_sync_bcl = v3d->out_sync;
+        }
+
         /* Get space to emit our draw call into the BCL, using a branch to
          * jump to a new BO if necessary.
          */
@@ -507,7 +525,7 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 #endif
 
                 if (info->instance_count > 1) {
-                        cl_emit(&job->bcl, INDEXED_INSTANCED_PRIMITIVE_LIST, prim) {
+                        cl_emit(&job->bcl, INDEXED_INSTANCED_PRIM_LIST, prim) {
                                 prim.index_type = ffs(info->index_size) - 1;
 #if V3D_VERSION >= 40
                                 prim.index_offset = offset;
@@ -523,7 +541,7 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                                 prim.instance_length = info->count;
                         }
                 } else {
-                        cl_emit(&job->bcl, INDEXED_PRIMITIVE_LIST, prim) {
+                        cl_emit(&job->bcl, INDEXED_PRIM_LIST, prim) {
                                 prim.index_type = ffs(info->index_size) - 1;
                                 prim.length = info->count;
 #if V3D_VERSION >= 40
@@ -544,14 +562,14 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                         pipe_resource_reference(&prsc, NULL);
         } else {
                 if (info->instance_count > 1) {
-                        cl_emit(&job->bcl, VERTEX_ARRAY_INSTANCED_PRIMITIVES, prim) {
+                        cl_emit(&job->bcl, VERTEX_ARRAY_INSTANCED_PRIMS, prim) {
                                 prim.mode = info->mode | prim_tf_enable;
                                 prim.index_of_first_vertex = info->start;
                                 prim.number_of_instances = info->instance_count;
                                 prim.instance_length = info->count;
                         }
                 } else {
-                        cl_emit(&job->bcl, VERTEX_ARRAY_PRIMITIVES, prim) {
+                        cl_emit(&job->bcl, VERTEX_ARRAY_PRIMS, prim) {
                                 prim.mode = info->mode | prim_tf_enable;
                                 prim.length = info->count;
                                 prim.index_of_first_vertex = info->start;
