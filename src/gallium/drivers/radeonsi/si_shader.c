@@ -2450,30 +2450,6 @@ static LLVMValueRef fetch_constant(
 	/* Fast path when user data SGPRs point to constant buffer 0 directly. */
 	if (sel->info.const_buffers_declared == 1 &&
 	    sel->info.shader_buffers_declared == 0) {
-
-		/* This enables use of s_load_dword and flat_load_dword for const buffer 0
-		 * loads, and up to x4 load opcode merging. However, it leads to horrible
-		 * code reducing SIMD wave occupancy from 8 to 2 in many cases.
-		 *
-		 * Using s_buffer_load_dword (x1) seems to be the best option right now.
-		 *
-		 * LLVM 5.0 on SI doesn't insert a required s_nop between SALU setting
-		 * a descriptor and s_buffer_load_dword using it, so we can't expand
-		 * the pointer into a full descriptor like below. We have to use
-		 * s_load_dword instead. The only case when LLVM 5.0 would select
-		 * s_buffer_load_dword (that we have to prevent) is when we use use
-		 * a literal offset where we don't need bounds checking.
-		 */
-		if (ctx->screen->info.chip_class == SI && HAVE_LLVM < 0x0600 &&
-		    !reg->Register.Indirect) {
-			LLVMValueRef ptr =
-				LLVMGetParam(ctx->main_fn, ctx->param_const_and_shader_buffers);
-
-			addr = LLVMBuildLShr(ctx->ac.builder, addr, LLVMConstInt(ctx->i32, 2, 0), "");
-			LLVMValueRef result = ac_build_load_invariant(&ctx->ac, ptr, addr);
-			return bitcast(bld_base, type, result);
-		}
-
 		LLVMValueRef desc = load_const_buffer_desc_fast_path(ctx);
 		LLVMValueRef result = buffer_load_const(ctx, desc, addr);
 		return bitcast(bld_base, type, result);
@@ -5645,7 +5621,8 @@ static int si_compile_llvm(struct si_screen *sscreen,
 			   LLVMModuleRef mod,
 			   struct pipe_debug_callback *debug,
 			   unsigned processor,
-			   const char *name)
+			   const char *name,
+			   bool less_optimized)
 {
 	int r = 0;
 	unsigned count = p_atomic_inc_return(&sscreen->num_compilations);
@@ -5667,7 +5644,8 @@ static int si_compile_llvm(struct si_screen *sscreen,
 	}
 
 	if (!si_replace_shader(count, binary)) {
-		r = si_llvm_compile(mod, binary, compiler, debug);
+		r = si_llvm_compile(mod, binary, compiler, debug,
+				    less_optimized);
 		if (r)
 			return r;
 	}
@@ -5884,7 +5862,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 			    &ctx.shader->config, ctx.compiler,
 			    ctx.ac.module,
 			    debug, PIPE_SHADER_GEOMETRY,
-			    "GS Copy Shader");
+			    "GS Copy Shader", false);
 	if (!r) {
 		if (si_can_dump_shader(sscreen, PIPE_SHADER_GEOMETRY))
 			fprintf(stderr, "GS Copy Shader:\n");
@@ -6790,6 +6768,22 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 	LLVMBuildRetVoid(builder);
 }
 
+static bool si_should_optimize_less(struct ac_llvm_compiler *compiler,
+				    struct si_shader_selector *sel)
+{
+	if (!compiler->low_opt_passes)
+		return false;
+
+	/* Assume a slow CPU. */
+	assert(!sel->screen->info.has_dedicated_vram &&
+	       sel->screen->info.chip_class <= VI);
+
+	/* For a crazy dEQP test containing 2597 memory opcodes, mostly
+	 * buffer stores. */
+	return sel->type == PIPE_SHADER_COMPUTE &&
+	       sel->info.num_memory_instructions > 1000;
+}
+
 int si_compile_tgsi_shader(struct si_screen *sscreen,
 			   struct ac_llvm_compiler *compiler,
 			   struct si_shader *shader,
@@ -7022,7 +7016,8 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 
 	/* Compile to bytecode. */
 	r = si_compile_llvm(sscreen, &shader->binary, &shader->config, compiler,
-			    ctx.ac.module, debug, ctx.type, "TGSI shader");
+			    ctx.ac.module, debug, ctx.type, "TGSI shader",
+			    si_should_optimize_less(compiler, shader->selector));
 	si_llvm_dispose(&ctx);
 	if (r) {
 		fprintf(stderr, "LLVM failed to compile shader\n");
@@ -7189,7 +7184,7 @@ si_get_shader_part(struct si_screen *sscreen,
 	si_llvm_optimize_module(&ctx);
 
 	if (si_compile_llvm(sscreen, &result->binary, &result->config, compiler,
-			    ctx.ac.module, debug, ctx.type, name)) {
+			    ctx.ac.module, debug, ctx.type, name, false)) {
 		FREE(result);
 		result = NULL;
 		goto out;

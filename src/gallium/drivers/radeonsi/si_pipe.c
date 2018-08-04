@@ -102,6 +102,7 @@ static const struct debug_named_value debug_options[] = {
 	{ "testvmfaultcp", DBG(TEST_VMFAULT_CP), "Invoke a CP VM fault test and exit." },
 	{ "testvmfaultsdma", DBG(TEST_VMFAULT_SDMA), "Invoke a SDMA VM fault test and exit." },
 	{ "testvmfaultshader", DBG(TEST_VMFAULT_SHADER), "Invoke a shader VM fault test and exit." },
+	{ "testclearbufperf", DBG(TEST_CLEARBUF_PERF), "Test Clearbuffer Performance" },
 
 	DEBUG_NAMED_VALUE_END /* must be last */
 };
@@ -109,22 +110,32 @@ static const struct debug_named_value debug_options[] = {
 static void si_init_compiler(struct si_screen *sscreen,
 			     struct ac_llvm_compiler *compiler)
 {
+	/* Only create the less-optimizing version of the compiler on APUs
+	 * predating Ryzen (Raven). */
+	bool create_low_opt_compiler = !sscreen->info.has_dedicated_vram &&
+				       sscreen->info.chip_class <= VI;
+
 	enum ac_target_machine_options tm_options =
 		(sscreen->debug_flags & DBG(SI_SCHED) ? AC_TM_SISCHED : 0) |
 		(sscreen->debug_flags & DBG(GISEL) ? AC_TM_ENABLE_GLOBAL_ISEL : 0) |
 		(sscreen->info.chip_class >= GFX9 ? AC_TM_FORCE_ENABLE_XNACK : 0) |
 		(sscreen->info.chip_class < GFX9 ? AC_TM_FORCE_DISABLE_XNACK : 0) |
 		(!sscreen->llvm_has_working_vgpr_indexing ? AC_TM_PROMOTE_ALLOCA_TO_SCRATCH : 0) |
-		(sscreen->debug_flags & DBG(CHECK_IR) ? AC_TM_CHECK_IR : 0);
+		(sscreen->debug_flags & DBG(CHECK_IR) ? AC_TM_CHECK_IR : 0) |
+		(create_low_opt_compiler ? AC_TM_CREATE_LOW_OPT : 0);
 
 	ac_init_llvm_once();
 	ac_init_llvm_compiler(compiler, true, sscreen->info.family, tm_options);
 	compiler->passes = ac_create_llvm_passes(compiler->tm);
+
+	if (compiler->low_opt_tm)
+		compiler->low_opt_passes = ac_create_llvm_passes(compiler->low_opt_tm);
 }
 
 static void si_destroy_compiler(struct ac_llvm_compiler *compiler)
 {
 	ac_destroy_llvm_passes(compiler->passes);
+	ac_destroy_llvm_passes(compiler->low_opt_passes);
 	ac_destroy_llvm_compiler(compiler);
 }
 
@@ -536,7 +547,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 		/* Clear the NULL constant buffer, because loads should return zeros. */
 		si_clear_buffer(sctx, sctx->null_const_buf.buffer, 0,
 				sctx->null_const_buf.buffer->width0, 0,
-				SI_COHERENCY_SHADER);
+				SI_COHERENCY_SHADER, SI_METHOD_BEST);
 	}
 
 	uint64_t max_threads_per_block;
@@ -1059,6 +1070,10 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 
 	if (sscreen->debug_flags & DBG(TEST_DMA))
 		si_test_dma(sscreen);
+
+	if (sscreen->debug_flags & DBG(TEST_CLEARBUF_PERF)) {
+		si_test_clearbuffer(sscreen);
+	}
 
 	if (sscreen->debug_flags & (DBG(TEST_VMFAULT_CP) |
 				      DBG(TEST_VMFAULT_SDMA) |

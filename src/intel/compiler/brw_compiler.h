@@ -403,6 +403,7 @@ struct brw_wm_prog_key {
    bool force_dual_color_blend:1;
    bool coherent_fb_fetch:1;
 
+   uint8_t color_outputs_valid;
    uint64_t input_slots_valid;
    unsigned program_string_id;
    GLenum alpha_test_func;          /* < For Gen4/5 MRT alpha test */
@@ -1212,6 +1213,18 @@ DEFINE_PROG_DATA_DOWNCAST(sf)
 
 struct brw_compiler *
 brw_compiler_create(void *mem_ctx, const struct gen_device_info *devinfo);
+
+/**
+ * Returns a compiler configuration for use with disk shader cache
+ *
+ * This value only needs to change for settings that can cause different
+ * program generation between two runs on the same hardware.
+ *
+ * For example, it doesn't need to be different for gen 8 and gen 9 hardware,
+ * but it does need to be different if INTEL_DEBUG=nocompact is or isn't used.
+ */
+uint64_t
+brw_get_compiler_config_value(const struct brw_compiler *compiler);
 
 unsigned
 brw_prog_data_size(gl_shader_stage stage);
