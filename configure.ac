@@ -1418,6 +1418,7 @@ AM_CONDITIONAL(NEED_OPENGL_COMMON, test "x$enable_opengl" = xyes -o \
                                         "x$enable_gles1" = xyes -o \
                                         "x$enable_gles2" = xyes)
 AM_CONDITIONAL(NEED_KHRPLATFORM, test "x$enable_egl" = xyes -o \
+                                      "x$enable_opengl" = xyes -o \
                                       "x$enable_gles1" = xyes -o \
                                       "x$enable_gles2" = xyes)
 
@@ -1813,6 +1814,10 @@ for plat in $platforms; do
         PKG_CHECK_MODULES([WAYLAND_SCANNER], [wayland-scanner],
                           WAYLAND_SCANNER=`$PKG_CONFIG --variable=wayland_scanner wayland-scanner`,
                           WAYLAND_SCANNER='')
+        PKG_CHECK_EXISTS([wayland-scanner >= 1.15],
+                          AC_SUBST(SCANNER_ARG, 'private-code'),
+                          AC_SUBST(SCANNER_ARG, 'code'))
+
         if test "x$WAYLAND_SCANNER" = x; then
             AC_PATH_PROG([WAYLAND_SCANNER], [wayland-scanner], [:])
         fi

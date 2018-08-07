@@ -122,7 +122,13 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
-         surf->RenderBuffer = val;
+         surf->RequestedRenderBuffer = val;
+         if (surf->Config->SurfaceType & EGL_MUTABLE_RENDER_BUFFER_BIT_KHR) {
+            /* Unlike normal EGLSurfaces, one with a mutable render buffer
+             * uses the application-chosen render buffer.
+             */
+            surf->ActiveRenderBuffer = val;
+         }
          break;
       case EGL_POST_SUB_BUFFER_SUPPORTED_NV:
          if (!dpy->Extensions.NV_post_sub_buffer ||
@@ -285,7 +291,8 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
    surf->TextureTarget = EGL_NO_TEXTURE;
    surf->MipmapTexture = EGL_FALSE;
    surf->LargestPbuffer = EGL_FALSE;
-   surf->RenderBuffer = renderBuffer;
+   surf->RequestedRenderBuffer = renderBuffer;
+   surf->ActiveRenderBuffer = renderBuffer;
    surf->VGAlphaFormat = EGL_VG_ALPHA_FORMAT_NONPRE;
    surf->VGColorspace = EGL_VG_COLORSPACE_sRGB;
    surf->GLColorspace = EGL_GL_COLORSPACE_LINEAR_KHR;
@@ -358,7 +365,35 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       *value = surface->SwapBehavior;
       break;
    case EGL_RENDER_BUFFER:
-      *value = surface->RenderBuffer;
+      /* From the EGL_KHR_mutable_render_buffer spec (v12):
+       *
+       *    Querying EGL_RENDER_BUFFER returns the buffer which client API
+       *    rendering is requested to use. For a window surface, this is the
+       *    attribute value specified when the surface was created or last set
+       *    via eglSurfaceAttrib.
+       *
+       * In other words, querying a window surface returns the value most
+       * recently *requested* by the user.
+       *
+       * The paragraph continues in the EGL 1.5 spec (2014.08.27):
+       *
+       *    For a pbuffer surface, it is always EGL_BACK_BUFFER . For a pixmap
+       *    surface, it is always EGL_SINGLE_BUFFER . To determine the actual
+       *    buffer being rendered to by a context, call eglQueryContext.
+       */
+      switch (surface->Type) {
+      default:
+         unreachable("bad EGLSurface type");
+      case EGL_WINDOW_BIT:
+         *value = surface->RequestedRenderBuffer;
+         break;
+      case EGL_PBUFFER_BIT:
+         *value = EGL_BACK_BUFFER;
+         break;
+      case EGL_PIXMAP_BIT:
+         *value = EGL_SINGLE_BUFFER;
+         break;
+      }
       break;
    case EGL_PIXEL_ASPECT_RATIO:
       *value = surface->AspectRatio;
@@ -449,6 +484,31 @@ _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       if (err != EGL_SUCCESS)
          break;
       surface->MultisampleResolve = value;
+      break;
+   case EGL_RENDER_BUFFER:
+      if (!dpy->Extensions.KHR_mutable_render_buffer) {
+         err = EGL_BAD_ATTRIBUTE;
+         break;
+      }
+
+      if (value != EGL_BACK_BUFFER && value != EGL_SINGLE_BUFFER) {
+         err = EGL_BAD_PARAMETER;
+         break;
+      }
+
+      /* From the EGL_KHR_mutable_render_buffer spec (v12):
+       *
+       *    If attribute is EGL_RENDER_BUFFER, and the EGL_SURFACE_TYPE
+       *    attribute of the EGLConfig used to create surface does not contain
+       *    EGL_MUTABLE_RENDER_BUFFER_BIT_KHR, [...] an EGL_BAD_MATCH error is
+       *    generated [...].
+       */
+      if (!(surface->Config->SurfaceType & EGL_MUTABLE_RENDER_BUFFER_BIT_KHR)) {
+         err = EGL_BAD_MATCH;
+         break;
+      }
+
+      surface->RequestedRenderBuffer = value;
       break;
    case EGL_SWAP_BEHAVIOR:
       switch (value) {
@@ -550,4 +610,19 @@ _eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                  EGLint interval)
 {
    return EGL_TRUE;
+}
+
+EGLBoolean
+_eglSurfaceHasMutableRenderBuffer(_EGLSurface *surf)
+{
+   return surf->Type == EGL_WINDOW_BIT &&
+          surf->Config &&
+          (surf->Config->SurfaceType & EGL_MUTABLE_RENDER_BUFFER_BIT_KHR);
+}
+
+EGLBoolean
+_eglSurfaceInSharedBufferMode(_EGLSurface *surf)
+{
+   return _eglSurfaceHasMutableRenderBuffer(surf) &&
+          surf->ActiveRenderBuffer == EGL_SINGLE_BUFFER;
 }
