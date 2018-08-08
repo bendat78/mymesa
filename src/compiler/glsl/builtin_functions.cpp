@@ -272,6 +272,18 @@ shader_packing_or_es3_or_gpu_shader5(const _mesa_glsl_parse_state *state)
 }
 
 static bool
+gpu_shader4(const _mesa_glsl_parse_state *state)
+{
+   return state->EXT_gpu_shader4_enable;
+}
+
+static bool
+v130_gpu_shader4(const _mesa_glsl_parse_state *state)
+{
+   return state->is_version(130, 300) || state->EXT_gpu_shader4_enable;
+}
+
+static bool
 gpu_shader5(const _mesa_glsl_parse_state *state)
 {
    return state->is_version(400, 0) || state->ARB_gpu_shader5_enable;
@@ -793,6 +805,7 @@ private:
    BA1(abs)
    BA1(sign)
    BA1(floor)
+   BA1(truncate)
    BA1(trunc)
    BA1(round)
    BA1(roundEven)
@@ -1391,9 +1404,9 @@ builtin_builder::create_builtins()
                 _##NAME(always_available, glsl_type::ivec3_type), \
                 _##NAME(always_available, glsl_type::ivec4_type), \
                                                                   \
-                _##NAME(v130, glsl_type::uvec2_type),             \
-                _##NAME(v130, glsl_type::uvec3_type),             \
-                _##NAME(v130, glsl_type::uvec4_type),             \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec2_type), \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec3_type), \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec4_type), \
                 _##NAME(fp64, glsl_type::dvec2_type),  \
                 _##NAME(fp64, glsl_type::dvec3_type),  \
                 _##NAME(fp64, glsl_type::dvec4_type),  \
@@ -1430,9 +1443,9 @@ builtin_builder::create_builtins()
                 _##NAME(always_available, glsl_type::ivec3_type), \
                 _##NAME(always_available, glsl_type::ivec4_type), \
                                                                   \
-                _##NAME(v130, glsl_type::uvec2_type),             \
-                _##NAME(v130, glsl_type::uvec3_type),             \
-                _##NAME(v130, glsl_type::uvec4_type),             \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec2_type), \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec3_type), \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec4_type), \
                                                                   \
                 _##NAME(always_available, glsl_type::bvec2_type), \
                 _##NAME(always_available, glsl_type::bvec3_type), \
@@ -1471,14 +1484,14 @@ builtin_builder::create_builtins()
                 _##NAME(always_available, glsl_type::ivec3_type, glsl_type::ivec3_type), \
                 _##NAME(always_available, glsl_type::ivec4_type, glsl_type::ivec4_type), \
                                                                                          \
-                _##NAME(v130, glsl_type::uint_type,  glsl_type::uint_type),              \
-                _##NAME(v130, glsl_type::uvec2_type, glsl_type::uint_type),              \
-                _##NAME(v130, glsl_type::uvec3_type, glsl_type::uint_type),              \
-                _##NAME(v130, glsl_type::uvec4_type, glsl_type::uint_type),              \
+                _##NAME(v130_gpu_shader4, glsl_type::uint_type,  glsl_type::uint_type),  \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec2_type, glsl_type::uint_type),  \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec3_type, glsl_type::uint_type),  \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec4_type, glsl_type::uint_type),  \
                                                                                          \
-                _##NAME(v130, glsl_type::uvec2_type, glsl_type::uvec2_type),             \
-                _##NAME(v130, glsl_type::uvec3_type, glsl_type::uvec3_type),             \
-                _##NAME(v130, glsl_type::uvec4_type, glsl_type::uvec4_type),             \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec2_type, glsl_type::uvec2_type), \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec3_type, glsl_type::uvec3_type), \
+                _##NAME(v130_gpu_shader4, glsl_type::uvec4_type, glsl_type::uvec4_type), \
                                                                                          \
                 _##NAME(fp64, glsl_type::double_type, glsl_type::double_type),           \
                 _##NAME(fp64, glsl_type::dvec2_type, glsl_type::double_type),           \
@@ -1544,6 +1557,14 @@ builtin_builder::create_builtins()
    FD(roundEven)
    FD(ceil)
    FD(fract)
+
+   add_function("truncate",
+                _truncate(gpu_shader4, glsl_type::float_type),
+                _truncate(gpu_shader4, glsl_type::vec2_type),
+                _truncate(gpu_shader4, glsl_type::vec3_type),
+                _truncate(gpu_shader4, glsl_type::vec4_type),
+                NULL);
+
 
    add_function("mod",
                 _mod(always_available, glsl_type::float_type, glsl_type::float_type),
@@ -4073,6 +4094,7 @@ UNOPA(inversesqrt, ir_unop_rsq)
 UNOPA(abs,       ir_unop_abs)
 UNOPA(sign,      ir_unop_sign)
 UNOPA(floor,     ir_unop_floor)
+UNOPA(truncate,  ir_unop_trunc)
 UNOPA(trunc,     ir_unop_trunc)
 UNOPA(round,     ir_unop_round_even)
 UNOPA(roundEven, ir_unop_round_even)
