@@ -610,7 +610,8 @@ modulus_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
    const glsl_type *type_a = value_a->type;
    const glsl_type *type_b = value_b->type;
 
-   if (!state->check_version(130, 300, loc, "operator '%%' is reserved")) {
+   if (!state->EXT_gpu_shader4_enable &&
+       !state->check_version(130, 300, loc, "operator '%%' is reserved")) {
       return glsl_type::error_type;
    }
 
@@ -2999,7 +3000,7 @@ validate_fragment_flat_interpolation_input(struct _mesa_glsl_parse_state *state,
     * reasonable way to interpolate a fragment shader input that contains
     * an integer. See Khronos bug #15671.
     */
-   if (state->is_version(130, 300)
+   if ((state->is_version(130, 300) || state->EXT_gpu_shader4_enable)
        && var_type->contains_integer()) {
       _mesa_glsl_error(loc, state, "if a fragment input is (or contains) "
                        "an integer, then it must be qualified with 'flat'");
@@ -3080,7 +3081,7 @@ validate_interpolation_qualifier(struct _mesa_glsl_parse_state *state,
     *    not apply to inputs into a vertex shader or outputs from a
     *    fragment shader."
     */
-   if (state->is_version(130, 300)
+   if ((state->is_version(130, 300) || state->EXT_gpu_shader4_enable)
        && interpolation != INTERP_MODE_NONE) {
       const char *i = interpolation_string(interpolation);
       if (mode != ir_var_shader_in && mode != ir_var_shader_out)
@@ -3117,8 +3118,10 @@ validate_interpolation_qualifier(struct _mesa_glsl_parse_state *state,
     *    to the deprecated storage qualifiers varying or centroid varying."
     *
     * These deprecated storage qualifiers do not exist in GLSL ES 3.00.
+    *
+    * GL_EXT_gpu_shader4 allows this.
     */
-   if (state->is_version(130, 0)
+   if (state->is_version(130, 0) && !state->EXT_gpu_shader4_enable
        && interpolation != INTERP_MODE_NONE
        && qual->flags.q.varying) {
 
@@ -4108,7 +4111,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
          break;
       case GLSL_TYPE_UINT:
       case GLSL_TYPE_INT:
-         if (state->is_version(130, 300))
+         if (state->is_version(130, 300) || state->EXT_gpu_shader4_enable)
             break;
          _mesa_glsl_error(loc, state,
                           "varying variables must be of base type float in %s",
@@ -5101,6 +5104,7 @@ ast_declarator_list::hir(exec_list *instructions,
        * any extension that adds the 'layout' keyword.
        */
       if (!state->is_version(130, 300)
+          && !state->EXT_gpu_shader4_enable
           && !state->has_explicit_attrib_location()
           && !state->has_separate_shader_objects()
           && !state->ARB_fragment_coord_conventions_enable) {
