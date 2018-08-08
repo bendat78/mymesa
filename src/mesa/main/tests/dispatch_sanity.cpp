@@ -506,6 +506,7 @@ const struct function common_desktop_functions_possible[] = {
    { "glDrawElementsInstanced", 31, -1 },
    { "glPrimitiveRestartIndex", 31, -1 },
    { "glTexBuffer", 31, -1 },
+   { "glTexBufferEXT", 31, -1 },
 
    /* GL_ARB_texture_buffer_range */
    { "glTexBufferRange", 43, -1 },
