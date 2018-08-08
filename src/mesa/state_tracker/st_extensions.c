@@ -1024,6 +1024,7 @@ void st_init_extensions(struct pipe_screen *screen,
          extensions->ARB_shader_bit_encoding = GL_TRUE;
       }
 
+      extensions->EXT_gpu_shader4 = GL_TRUE;
       extensions->EXT_shader_integer_mix = GL_TRUE;
       extensions->ARB_arrays_of_arrays = GL_TRUE;
       extensions->MESA_shader_integer_functions = GL_TRUE;
