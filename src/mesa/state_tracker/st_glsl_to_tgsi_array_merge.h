@@ -45,7 +45,7 @@ public:
    array_live_range();
    array_live_range(unsigned aid, unsigned alength);
    array_live_range(unsigned aid, unsigned alength, int first_access,
-                  int last_access, int mask);
+                    int last_access, int mask);
 
    void set_live_range(int first_access, int last_access);
    void set_begin(int _begin){first_access = _begin;}
@@ -161,7 +161,7 @@ std::ostream& operator << (std::ostream& os, const array_remapping& am)
 
 /* Apply the array remapping (internal use, exposed here for testing) */
  bool get_array_remapping(int narrays, array_live_range *array_live_ranges,
-                         array_remapping *remapping);
+                          array_remapping *remapping);
 
 /* Apply the array remapping (internal use, exposed here for testing) */
 int remap_arrays(int narrays, unsigned *array_sizes,

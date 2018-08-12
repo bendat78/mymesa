@@ -1380,7 +1380,6 @@ void get_temp_registers_remapping(void *mem_ctx, int ntemps,
    register_merge_record *reg_access_end = reg_access + used_temps;
    register_merge_record *first_erase = reg_access_end;
    register_merge_record *search_start = trgt + 1;
-
    int rename_distance;
 
    while (trgt != reg_access_end) {
@@ -1453,4 +1452,3 @@ void dump_instruction(ostream& os, int line, prog_scope *scope,
    os << inst << "\n";
 }
 #endif
-

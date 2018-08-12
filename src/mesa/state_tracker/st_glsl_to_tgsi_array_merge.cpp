@@ -696,4 +696,3 @@ int  merge_arrays(int narrays,
    delete[] map;
    return narrays;
 }
-
