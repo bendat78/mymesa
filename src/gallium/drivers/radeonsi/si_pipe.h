@@ -805,6 +805,9 @@ struct si_context {
 	struct si_scissors		scissors;
 	struct si_streamout		streamout;
 	struct si_viewports		viewports;
+	unsigned			num_window_rectangles;
+	bool				window_rectangles_include;
+	struct pipe_scissor_state	window_rectangles[4];
 
 	/* Precomputed states. */
 	struct si_pm4_state		*init_config;
@@ -1106,21 +1109,25 @@ void si_init_clear_functions(struct si_context *sctx);
 			   SI_CPDMA_SKIP_GFX_SYNC | \
 			   SI_CPDMA_SKIP_BO_LIST_UPDATE)
 
+enum si_cache_policy {
+	L2_BYPASS,
+	L2_LRU,    /* same as SLC=0 */
+};
+
 enum si_coherency {
 	SI_COHERENCY_NONE, /* no cache flushes needed */
 	SI_COHERENCY_SHADER,
 	SI_COHERENCY_CB_META,
 };
 
-enum si_method {
-	SI_METHOD_CP_DMA,
-	SI_METHOD_BEST,
-};
-
 void si_cp_dma_wait_for_idle(struct si_context *sctx);
+void si_cp_dma_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
+			    uint64_t offset, uint64_t size, unsigned value,
+			    enum si_coherency coher,
+			    enum si_cache_policy cache_policy);
 void si_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
 		     uint64_t offset, uint64_t size, unsigned value,
-		     enum si_coherency coher, enum si_method xfer);
+		     enum si_coherency coher);
 void si_copy_buffer(struct si_context *sctx,
 		    struct pipe_resource *dst, struct pipe_resource *src,
 		    uint64_t dst_offset, uint64_t src_offset, unsigned size,
@@ -1170,7 +1177,6 @@ struct pipe_fence_handle *si_create_fence(struct pipe_context *ctx,
 					  struct tc_unflushed_batch_token *tc_token);
 
 /* si_get.c */
-const char *si_get_family_name(const struct si_screen *sscreen);
 void si_init_screen_get_functions(struct si_screen *sscreen);
 
 /* si_gfx_cs.c */
@@ -1202,6 +1208,12 @@ void si_init_screen_query_functions(struct si_screen *sscreen);
 void si_init_query_functions(struct si_context *sctx);
 void si_suspend_queries(struct si_context *sctx);
 void si_resume_queries(struct si_context *sctx);
+
+/* si_shaderlib_tgsi.c */
+void *si_get_blitter_vs(struct si_context *sctx, enum blitter_attrib_type type,
+			unsigned num_layers);
+void *si_create_fixed_func_tcs(struct si_context *sctx);
+void *si_create_query_result_cs(struct si_context *sctx);
 
 /* si_test_dma.c */
 void si_test_dma(struct si_screen *sscreen);

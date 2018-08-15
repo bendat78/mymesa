@@ -213,6 +213,7 @@ union si_state_atoms {
 		struct si_atom stencil_ref;
 		struct si_atom spi_map;
 		struct si_atom scratch_state;
+		struct si_atom window_rectangles;
 	} s;
 	struct si_atom array[0];
 };
@@ -280,6 +281,8 @@ enum si_tracked_reg {
 	SI_TRACKED_PA_CL_GB_VERT_DISC_ADJ,
 	SI_TRACKED_PA_CL_GB_HORZ_CLIP_ADJ,
 	SI_TRACKED_PA_CL_GB_HORZ_DISC_ADJ,
+
+	SI_TRACKED_PA_SC_CLIPRECT_RULE,
 
 	SI_NUM_TRACKED_REGS,
 };
@@ -511,8 +514,6 @@ void si_schedule_initial_compile(struct si_context *sctx, unsigned processor,
 void si_get_active_slot_masks(const struct tgsi_shader_info *info,
 			      uint32_t *const_and_shader_buffers,
 			      uint64_t *samplers_and_images);
-void *si_get_blit_vs(struct si_context *sctx, enum blitter_attrib_type type,
-		     unsigned num_layers);
 
 /* si_state_draw.c */
 void si_init_ia_multi_vgt_param_table(struct si_context *sctx);

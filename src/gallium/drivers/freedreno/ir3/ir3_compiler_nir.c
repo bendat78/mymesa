@@ -56,17 +56,22 @@ struct ir3_context {
 
 	nir_function_impl *impl;
 
-	/* For fragment shaders, from the hw perspective the only
-	 * actual input is r0.xy position register passed to bary.f.
-	 * But TGSI doesn't know that, it still declares things as
-	 * IN[] registers.  So we do all the input tracking normally
-	 * and fix things up after compile_instructions()
+	/* For fragment shaders, varyings are not actual shader inputs,
+	 * instead the hw passes a varying-coord which is used with
+	 * bary.f.
 	 *
-	 * NOTE that frag_pos is the hardware position (possibly it
+	 * But NIR doesn't know that, it still declares varyings as
+	 * inputs.  So we do all the input tracking normally and fix
+	 * things up after compile_instructions()
+	 *
+	 * NOTE that frag_vcoord is the hardware position (possibly it
 	 * is actually an index or tag or some such.. it is *not*
 	 * values that can be directly used for gl_FragCoord..)
 	 */
-	struct ir3_instruction *frag_pos, *frag_face, *frag_coord[4];
+	struct ir3_instruction *frag_vcoord;
+
+	/* for fragment shaders, for gl_FrontFacing and gl_FragCoord: */
+	struct ir3_instruction *frag_face, *frag_coord;
 
 	/* For vertex shaders, keep track of the system values sources */
 	struct ir3_instruction *vertex_id, *basevertex, *instance_id;
@@ -104,28 +109,6 @@ struct ir3_context {
 	 */
 	struct hash_table *block_ht;
 
-	/* a4xx (at least patchlevel 0) cannot seem to flat-interpolate
-	 * so we need to use ldlv.u32 to load the varying directly:
-	 */
-	bool flat_bypass;
-
-	/* on a3xx, we need to add one to # of array levels:
-	 */
-	bool levels_add_one;
-
-	/* on a3xx, we need to scale up integer coords for isaml based
-	 * on LoD:
-	 */
-	bool unminify_coords;
-
-	/* on a3xx do txf_ms w/ isaml and scaled coords: */
-	bool txf_ms_with_isaml;
-
-	/* on a4xx, for array textures we need to add 0.5 to the array
-	 * index coordinate:
-	 */
-	bool array_index_add_half;
-
 	/* on a4xx, bitmask of samplers which need astc+srgb workaround: */
 	unsigned astc_srgb;
 
@@ -156,13 +139,6 @@ compile_init(struct ir3_compiler *compiler,
 	struct ir3_context *ctx = rzalloc(NULL, struct ir3_context);
 
 	if (compiler->gpu_id >= 400) {
-		/* need special handling for "flat" */
-		ctx->flat_bypass = true;
-		ctx->levels_add_one = false;
-		ctx->unminify_coords = false;
-		ctx->txf_ms_with_isaml = false;
-		ctx->array_index_add_half = true;
-
 		if (so->type == SHADER_VERTEX) {
 			ctx->astc_srgb = so->key.vastc_srgb;
 		} else if (so->type == SHADER_FRAGMENT) {
@@ -170,13 +146,6 @@ compile_init(struct ir3_compiler *compiler,
 		}
 
 	} else {
-		/* no special handling for "flat" */
-		ctx->flat_bypass = false;
-		ctx->levels_add_one = true;
-		ctx->unminify_coords = true;
-		ctx->txf_ms_with_isaml = true;
-		ctx->array_index_add_half = false;
-
 		if (so->type == SHADER_VERTEX) {
 			ctx->samples = so->key.vsamples;
 		} else if (so->type == SHADER_FRAGMENT) {
@@ -772,12 +741,12 @@ create_indirect_load(struct ir3_context *ctx, unsigned arrsz, int n,
 }
 
 static struct ir3_instruction *
-create_input_compmask(struct ir3_block *block, unsigned n, unsigned compmask)
+create_input_compmask(struct ir3_context *ctx, unsigned n, unsigned compmask)
 {
 	struct ir3_instruction *in;
 
-	in = ir3_instr_create(block, OPC_META_INPUT);
-	in->inout.block = block;
+	in = ir3_instr_create(ctx->in_block, OPC_META_INPUT);
+	in->inout.block = ctx->in_block;
 	ir3_reg_create(in, n, 0);
 
 	in->regs[0]->wrmask = compmask;
@@ -786,9 +755,9 @@ create_input_compmask(struct ir3_block *block, unsigned n, unsigned compmask)
 }
 
 static struct ir3_instruction *
-create_input(struct ir3_block *block, unsigned n)
+create_input(struct ir3_context *ctx, unsigned n)
 {
-	return create_input_compmask(block, n, 0x1);
+	return create_input_compmask(ctx, n, 0x1);
 }
 
 static struct ir3_instruction *
@@ -804,48 +773,11 @@ create_frag_input(struct ir3_context *ctx, bool use_ldlv)
 		instr->cat6.type = TYPE_U32;
 		instr->cat6.iim_val = 1;
 	} else {
-		instr = ir3_BARY_F(block, inloc, 0, ctx->frag_pos, 0);
+		instr = ir3_BARY_F(block, inloc, 0, ctx->frag_vcoord, 0);
 		instr->regs[2]->wrmask = 0x3;
 	}
 
 	return instr;
-}
-
-static struct ir3_instruction *
-create_frag_coord(struct ir3_context *ctx, unsigned comp)
-{
-	struct ir3_block *block = ctx->block;
-	struct ir3_instruction *instr;
-
-	compile_assert(ctx, !ctx->frag_coord[comp]);
-
-	ctx->frag_coord[comp] = create_input(ctx->block, 0);
-
-	switch (comp) {
-	case 0: /* .x */
-	case 1: /* .y */
-		/* for frag_coord, we get unsigned values.. we need
-		 * to subtract (integer) 8 and divide by 16 (right-
-		 * shift by 4) then convert to float:
-		 *
-		 *    sub.s tmp, src, 8
-		 *    shr.b tmp, tmp, 4
-		 *    mov.u32f32 dst, tmp
-		 *
-		 */
-		instr = ir3_SUB_S(block, ctx->frag_coord[comp], 0,
-				create_immed(block, 8), 0);
-		instr = ir3_SHR_B(block, instr, 0,
-				create_immed(block, 4), 0);
-		instr = ir3_COV(block, instr, TYPE_U32, TYPE_F32);
-
-		return instr;
-	case 2: /* .z */
-	case 3: /* .w */
-	default:
-		/* seems that we can use these as-is: */
-		return ctx->frag_coord[comp];
-	}
 }
 
 static struct ir3_instruction *
@@ -2098,7 +2030,7 @@ emit_intrinsic_image_size(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 		dst[i] = tmp[i];
 
 	if (flags & IR3_INSTR_A) {
-		if (ctx->levels_add_one) {
+		if (ctx->compiler->levels_add_one) {
 			dst[ncoords-1] = ir3_ADD_U(b, tmp[3], 0, create_immed(b, 1), 0);
 		} else {
 			dst[ncoords-1] = ir3_MOV(b, tmp[3], TYPE_U32);
@@ -2437,14 +2369,14 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		if (!ctx->vertex_id) {
 			gl_system_value sv = (intr->intrinsic == nir_intrinsic_load_vertex_id) ?
 				SYSTEM_VALUE_VERTEX_ID : SYSTEM_VALUE_VERTEX_ID_ZERO_BASE;
-			ctx->vertex_id = create_input(b, 0);
+			ctx->vertex_id = create_input(ctx, 0);
 			add_sysval_input(ctx, sv, ctx->vertex_id);
 		}
 		dst[0] = ctx->vertex_id;
 		break;
 	case nir_intrinsic_load_instance_id:
 		if (!ctx->instance_id) {
-			ctx->instance_id = create_input(b, 0);
+			ctx->instance_id = create_input(ctx, 0);
 			add_sysval_input(ctx, SYSTEM_VALUE_INSTANCE_ID,
 					ctx->instance_id);
 		}
@@ -2453,7 +2385,7 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 	case nir_intrinsic_load_sample_id:
 	case nir_intrinsic_load_sample_id_no_per_sample:
 		if (!ctx->samp_id) {
-			ctx->samp_id = create_input(b, 0);
+			ctx->samp_id = create_input(ctx, 0);
 			ctx->samp_id->regs[0]->flags |= IR3_REG_HALF;
 			add_sysval_input(ctx, SYSTEM_VALUE_SAMPLE_ID,
 					ctx->samp_id);
@@ -2462,7 +2394,7 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		break;
 	case nir_intrinsic_load_sample_mask_in:
 		if (!ctx->samp_mask_in) {
-			ctx->samp_mask_in = create_input(b, 0);
+			ctx->samp_mask_in = create_input(ctx, 0);
 			add_sysval_input(ctx, SYSTEM_VALUE_SAMPLE_MASK_IN,
 					ctx->samp_mask_in);
 		}
@@ -2478,7 +2410,8 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 	case nir_intrinsic_load_front_face:
 		if (!ctx->frag_face) {
 			ctx->so->frag_face = true;
-			ctx->frag_face = create_input(b, 0);
+			ctx->frag_face = create_input(ctx, 0);
+			add_sysval_input(ctx, SYSTEM_VALUE_FRONT_FACE, ctx->frag_face);
 			ctx->frag_face->regs[0]->flags |= IR3_REG_HALF;
 		}
 		/* for fragface, we get -1 for back and 0 for front. However this is
@@ -2489,7 +2422,7 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		break;
 	case nir_intrinsic_load_local_invocation_id:
 		if (!ctx->local_invocation_id) {
-			ctx->local_invocation_id = create_input_compmask(b, 0, 0x7);
+			ctx->local_invocation_id = create_input_compmask(ctx, 0, 0x7);
 			add_sysval_input_compmask(ctx, SYSTEM_VALUE_LOCAL_INVOCATION_ID,
 					0x7, ctx->local_invocation_id);
 		}
@@ -2497,7 +2430,7 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		break;
 	case nir_intrinsic_load_work_group_id:
 		if (!ctx->work_group_id) {
-			ctx->work_group_id = create_input_compmask(b, 0, 0x7);
+			ctx->work_group_id = create_input_compmask(ctx, 0, 0x7);
 			add_sysval_input_compmask(ctx, SYSTEM_VALUE_WORK_GROUP_ID,
 					0x7, ctx->work_group_id);
 			ctx->work_group_id->regs[0]->flags |= IR3_REG_HIGH;
@@ -2731,7 +2664,7 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 	 * with scaled x coord according to requested sample:
 	 */
 	if (tex->op == nir_texop_txf_ms) {
-		if (ctx->txf_ms_with_isaml) {
+		if (ctx->compiler->txf_ms_with_isaml) {
 			/* the samples are laid out in x dimension as
 			 *     0 1 2 3
 			 * x_ms = (x << ms) + sample_index;
@@ -2749,7 +2682,7 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 	}
 
 	/* scale up integer coords for TXF based on the LOD */
-	if (ctx->unminify_coords && (opc == OPC_ISAML)) {
+	if (ctx->compiler->unminify_coords && (opc == OPC_ISAML)) {
 		assert(has_lod);
 		for (i = 0; i < coords; i++)
 			src0[i] = ir3_SHL_B(b, src0[i], 0, lod, 0);
@@ -2770,7 +2703,7 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 		struct ir3_instruction *idx = coord[coords];
 
 		/* the array coord for cube arrays needs 0.5 added to it */
-		if (ctx->array_index_add_half && (opc != OPC_ISAML))
+		if (ctx->compiler->array_index_add_half && (opc != OPC_ISAML))
 			idx = ir3_ADD_F(b, idx, 0, create_immed(b, fui(0.5)), 0);
 
 		src0[nsrc0++] = idx;
@@ -2899,7 +2832,7 @@ emit_tex_query_levels(struct ir3_context *ctx, nir_tex_instr *tex)
 	/* The # of levels comes from getinfo.z. We need to add 1 to it, since
 	 * the value in TEX_CONST_0 is zero-based.
 	 */
-	if (ctx->levels_add_one)
+	if (ctx->compiler->levels_add_one)
 		dst[0] = ir3_ADD_U(b, dst[0], 0, create_immed(b, 1), 0);
 
 	put_dst(ctx, &tex->dest);
@@ -2939,7 +2872,7 @@ emit_tex_txs(struct ir3_context *ctx, nir_tex_instr *tex)
 	 * returned, which means that we have to add 1 to it for arrays.
 	 */
 	if (tex->is_array) {
-		if (ctx->levels_add_one) {
+		if (ctx->compiler->levels_add_one) {
 			dst[coords] = ir3_ADD_U(b, dst[3], 0, create_immed(b, 1), 0);
 		} else {
 			dst[coords] = ir3_MOV(b, dst[3], TYPE_U32);
@@ -3146,7 +3079,7 @@ emit_stream_out(struct ir3_context *ctx)
 	 * so that it is seen as live over the entire duration
 	 * of the shader:
 	 */
-	vtxcnt = create_input(ctx->in_block, 0);
+	vtxcnt = create_input(ctx, 0);
 	add_sysval_input(ctx, SYSTEM_VALUE_VERTEX_CNT, vtxcnt);
 
 	maxvtxcnt = create_driver_param(ctx, IR3_DP_VTXCNT_MAX);
@@ -3260,6 +3193,46 @@ emit_function(struct ir3_context *ctx, nir_function_impl *impl)
 	ir3_END(ctx->block);
 }
 
+static struct ir3_instruction *
+create_frag_coord(struct ir3_context *ctx, unsigned comp)
+{
+	struct ir3_block *block = ctx->block;
+	struct ir3_instruction *instr;
+
+	if (!ctx->frag_coord) {
+		ctx->frag_coord = create_input_compmask(ctx, 0, 0xf);
+		/* defer add_sysval_input() until after all inputs created */
+	}
+
+	split_dest(block, &instr, ctx->frag_coord, comp, 1);
+
+	switch (comp) {
+	case 0: /* .x */
+	case 1: /* .y */
+		/* for frag_coord, we get unsigned values.. we need
+		 * to subtract (integer) 8 and divide by 16 (right-
+		 * shift by 4) then convert to float:
+		 *
+		 *    sub.s tmp, src, 8
+		 *    shr.b tmp, tmp, 4
+		 *    mov.u32f32 dst, tmp
+		 *
+		 */
+		instr = ir3_SUB_S(block, instr, 0,
+				create_immed(block, 8), 0);
+		instr = ir3_SHR_B(block, instr, 0,
+				create_immed(block, 4), 0);
+		instr = ir3_COV(block, instr, TYPE_U32, TYPE_F32);
+
+		return instr;
+	case 2: /* .z */
+	case 3: /* .w */
+	default:
+		/* seems that we can use these as-is: */
+		return instr;
+	}
+}
+
 static void
 setup_input(struct ir3_context *ctx, nir_variable *in)
 {
@@ -3322,7 +3295,7 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 					}
 				}
 
-				if (ctx->flat_bypass) {
+				if (ctx->compiler->flat_bypass) {
 					if ((so->inputs[n].interpolate == INTERP_MODE_FLAT) ||
 							(so->inputs[n].rasterflat && ctx->so->key.rasterflat))
 						use_ldlv = true;
@@ -3341,7 +3314,7 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 		for (int i = 0; i < ncomp; i++) {
 			unsigned idx = (n * 4) + i;
 			compile_assert(ctx, idx < ctx->ir->ninputs);
-			ctx->ir->inputs[idx] = create_input(ctx->block, idx);
+			ctx->ir->inputs[idx] = create_input(ctx, idx);
 		}
 	} else {
 		compile_error(ctx, "unknown shader type: %d\n", ctx->so->type);
@@ -3437,7 +3410,7 @@ max_drvloc(struct exec_list *vars)
 }
 
 static const unsigned max_sysvals[SHADER_MAX] = {
-	[SHADER_FRAGMENT] = 8,
+	[SHADER_FRAGMENT] = 24,  // TODO
 	[SHADER_VERTEX]  = 16,
 	[SHADER_COMPUTE] = 16, // TODO how many do we actually need?
 };
@@ -3464,22 +3437,35 @@ emit_instructions(struct ir3_context *ctx)
 
 	ninputs -= max_sysvals[ctx->so->type];
 
-	/* for fragment shader, we have a single input register (usually
-	 * r0.xy) which is used as the base for bary.f varying fetch instrs:
+	/* for fragment shader, the vcoord input register is used as the
+	 * base for bary.f varying fetch instrs:
 	 */
+	struct ir3_instruction *vcoord = NULL;
 	if (ctx->so->type == SHADER_FRAGMENT) {
-		// TODO maybe a helper for fi since we need it a few places..
-		struct ir3_instruction *instr;
-		instr = ir3_instr_create(ctx->block, OPC_META_FI);
-		ir3_reg_create(instr, 0, 0);
-		ir3_reg_create(instr, 0, IR3_REG_SSA);    /* r0.x */
-		ir3_reg_create(instr, 0, IR3_REG_SSA);    /* r0.y */
-		ctx->frag_pos = instr;
+		struct ir3_instruction *xy[2];
+
+		vcoord = create_input_compmask(ctx, 0, 0x3);
+		split_dest(ctx->block, xy, vcoord, 0, 2);
+
+		ctx->frag_vcoord = create_collect(ctx, xy, 2);
 	}
 
 	/* Setup inputs: */
 	nir_foreach_variable(var, &ctx->s->inputs) {
 		setup_input(ctx, var);
+	}
+
+	/* Defer add_sysval_input() stuff until after setup_inputs(),
+	 * because sysvals need to be appended after varyings:
+	 */
+	if (vcoord) {
+		add_sysval_input_compmask(ctx, SYSTEM_VALUE_VARYING_COORD,
+				0x3, vcoord);
+	}
+
+	if (ctx->frag_coord) {
+		add_sysval_input_compmask(ctx, SYSTEM_VALUE_FRAG_COORD,
+				0xf, ctx->frag_coord);
 	}
 
 	/* Setup outputs: */
@@ -3501,76 +3487,26 @@ emit_instructions(struct ir3_context *ctx)
 	emit_function(ctx, fxn);
 }
 
-/* from NIR perspective, we actually have inputs.  But most of the "inputs"
- * for a fragment shader are just bary.f instructions.  The *actual* inputs
- * from the hw perspective are the frag_pos and optionally frag_coord and
- * frag_face.
+/* from NIR perspective, we actually have varying inputs.  But the varying
+ * inputs, from an IR standpoint, are just bary.f/ldlv instructions.  The
+ * only actual inputs are the sysvals.
  */
 static void
 fixup_frag_inputs(struct ir3_context *ctx)
 {
 	struct ir3_shader_variant *so = ctx->so;
 	struct ir3 *ir = ctx->ir;
-	struct ir3_instruction **inputs;
-	struct ir3_instruction *instr;
-	int n, regid = 0;
+	unsigned i = 0;
 
-	ir->ninputs = 0;
+	/* sysvals should appear at the end of the inputs, drop everything else: */
+	while ((i < so->inputs_count) && !so->inputs[i].sysval)
+		i++;
 
-	n  = 4;  /* always have frag_pos */
-	n += COND(so->frag_face, 4);
-	n += COND(so->frag_coord, 4);
+	/* at IR level, inputs are always blocks of 4 scalars: */
+	i *= 4;
 
-	inputs = ir3_alloc(ctx->ir, n * (sizeof(struct ir3_instruction *)));
-
-	if (so->frag_face) {
-		/* this ultimately gets assigned to hr0.x so doesn't conflict
-		 * with frag_coord/frag_pos..
-		 */
-		inputs[ir->ninputs++] = ctx->frag_face;
-		ctx->frag_face->regs[0]->num = 0;
-
-		/* remaining channels not used, but let's avoid confusing
-		 * other parts that expect inputs to come in groups of vec4
-		 */
-		inputs[ir->ninputs++] = NULL;
-		inputs[ir->ninputs++] = NULL;
-		inputs[ir->ninputs++] = NULL;
-	}
-
-	/* since we don't know where to set the regid for frag_coord,
-	 * we have to use r0.x for it.  But we don't want to *always*
-	 * use r1.x for frag_pos as that could increase the register
-	 * footprint on simple shaders:
-	 */
-	if (so->frag_coord) {
-		ctx->frag_coord[0]->regs[0]->num = regid++;
-		ctx->frag_coord[1]->regs[0]->num = regid++;
-		ctx->frag_coord[2]->regs[0]->num = regid++;
-		ctx->frag_coord[3]->regs[0]->num = regid++;
-
-		inputs[ir->ninputs++] = ctx->frag_coord[0];
-		inputs[ir->ninputs++] = ctx->frag_coord[1];
-		inputs[ir->ninputs++] = ctx->frag_coord[2];
-		inputs[ir->ninputs++] = ctx->frag_coord[3];
-	}
-
-	/* we always have frag_pos: */
-	so->pos_regid = regid;
-
-	/* r0.x */
-	instr = create_input(ctx->in_block, ir->ninputs);
-	instr->regs[0]->num = regid++;
-	inputs[ir->ninputs++] = instr;
-	ctx->frag_pos->regs[1]->instr = instr;
-
-	/* r0.y */
-	instr = create_input(ctx->in_block, ir->ninputs);
-	instr->regs[0]->num = regid++;
-	inputs[ir->ninputs++] = instr;
-	ctx->frag_pos->regs[2]->instr = instr;
-
-	ir->inputs = inputs;
+	ir->inputs = &ir->inputs[i];
+	ir->ninputs -= i;
 }
 
 /* Fixup tex sampler state for astc/srgb workaround instructions.  We
@@ -3756,14 +3692,14 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 	actual_in = 0;
 	inloc = 0;
 	for (i = 0; i < so->inputs_count; i++) {
-		unsigned j, regid = ~0, compmask = 0, maxcomp = 0;
+		unsigned j, reg = regid(63,0), compmask = 0, maxcomp = 0;
 		so->inputs[i].ncomp = 0;
 		so->inputs[i].inloc = inloc;
 		for (j = 0; j < 4; j++) {
 			struct ir3_instruction *in = inputs[(i*4) + j];
 			if (in && !(in->flags & IR3_INSTR_UNUSED)) {
 				compmask |= (1 << j);
-				regid = in->regs[0]->num - j;
+				reg = in->regs[0]->num - j;
 				actual_in++;
 				so->inputs[i].ncomp++;
 				if ((so->type == SHADER_FRAGMENT) && so->inputs[i].bary) {
@@ -3781,7 +3717,7 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 		} else if (!so->inputs[i].sysval) {
 			so->inputs[i].compmask = compmask;
 		}
-		so->inputs[i].regid = regid;
+		so->inputs[i].regid = reg;
 	}
 
 	if (ctx->astc_srgb)

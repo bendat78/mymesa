@@ -5493,7 +5493,7 @@ void test_indirect_access(const st_reg& reg, bool *has_indirect_access)
          if (reg.reladdr)
             test_indirect_access(*reg.reladdr, has_indirect_access);
          if (reg.reladdr2)
-            test_indirect_access(*reg.reladdr, has_indirect_access);
+            test_indirect_access(*reg.reladdr2, has_indirect_access);
       }
    }
 }
@@ -5792,6 +5792,7 @@ _mesa_sysval_to_semantic(unsigned sysval)
    case SYSTEM_VALUE_LOCAL_INVOCATION_INDEX:
    case SYSTEM_VALUE_GLOBAL_INVOCATION_ID:
    case SYSTEM_VALUE_VERTEX_CNT:
+   case SYSTEM_VALUE_VARYING_COORD:
    default:
       assert(!"Unexpected SYSTEM_VALUE_ enum");
       return TGSI_SEMANTIC_COUNT;

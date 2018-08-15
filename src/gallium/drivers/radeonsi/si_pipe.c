@@ -547,7 +547,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 		/* Clear the NULL constant buffer, because loads should return zeros. */
 		si_clear_buffer(sctx, sctx->null_const_buf.buffer, 0,
 				sctx->null_const_buf.buffer->width0, 0,
-				SI_COHERENCY_SHADER, SI_METHOD_BEST);
+				SI_COHERENCY_SHADER);
 	}
 
 	uint64_t max_threads_per_block;
@@ -783,7 +783,7 @@ static void si_disk_cache_create(struct si_screen *sscreen)
 			shader_debug_flags |= (uint64_t)sscreen->info.address32_hi << 32;
 
 			sscreen->disk_shader_cache =
-				disk_cache_create(si_get_family_name(sscreen),
+				disk_cache_create(sscreen->info.name,
 						  timestamp_str,
 						  shader_debug_flags);
 			free(timestamp_str);
