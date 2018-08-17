@@ -325,7 +325,7 @@ anv_physical_device_init(struct anv_physical_device *device,
    device->instance = instance;
 
    assert(strlen(path) < ARRAY_SIZE(device->path));
-   strncpy(device->path, path, ARRAY_SIZE(device->path));
+   snprintf(device->path, ARRAY_SIZE(device->path), "%s", path);
 
    device->no_hw = getenv("INTEL_NO_HW") != NULL;
 
@@ -1445,7 +1445,6 @@ VkResult anv_EnumerateDeviceExtensionProperties(
 {
    ANV_FROM_HANDLE(anv_physical_device, device, physicalDevice);
    VK_OUTARRAY_MAKE(out, pProperties, pPropertyCount);
-   (void)device;
 
    for (int i = 0; i < ANV_DEVICE_EXTENSION_COUNT; i++) {
       if (device->supported_extensions.extensions[i]) {

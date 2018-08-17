@@ -211,7 +211,7 @@ fd_try_shadow_resource(struct fd_context *ctx, struct fd_resource *rsc,
 
 	mtx_unlock(&ctx->screen->lock);
 
-	struct pipe_blit_info blit = {0};
+	struct pipe_blit_info blit = {};
 	blit.dst.resource = prsc;
 	blit.dst.format   = prsc->format;
 	blit.src.resource = pshadow;
@@ -305,7 +305,7 @@ static void
 fd_blit_from_staging(struct fd_context *ctx, struct fd_transfer *trans)
 {
 	struct pipe_resource *dst = trans->base.resource;
-	struct pipe_blit_info blit = {0};
+	struct pipe_blit_info blit = {};
 
 	blit.dst.resource = dst;
 	blit.dst.format   = dst->format;
@@ -325,7 +325,7 @@ static void
 fd_blit_to_staging(struct fd_context *ctx, struct fd_transfer *trans)
 {
 	struct pipe_resource *src = trans->base.resource;
-	struct pipe_blit_info blit = {0};
+	struct pipe_blit_info blit = {};
 
 	blit.src.resource = src;
 	blit.src.format   = src->format;
@@ -372,7 +372,7 @@ flush_resource(struct fd_context *ctx, struct fd_resource *rsc, unsigned usage)
 	fd_batch_reference(&write_batch, rsc->write_batch);
 
 	if (usage & PIPE_TRANSFER_WRITE) {
-		struct fd_batch *batch, *batches[32] = {0};
+		struct fd_batch *batch, *batches[32] = {};
 		uint32_t batch_mask;
 
 		/* This is a bit awkward, probably a fd_batch_flush_locked()
@@ -844,7 +844,8 @@ fd_resource_create(struct pipe_screen *pscreen,
 	assert(rsc->cpp);
 
 	// XXX probably need some extra work if we hit rsc shadowing path w/ lrz..
-	if (is_a5xx(screen) && (fd_mesa_debug & FD_DBG_LRZ) && has_depth(format)) {
+	if ((is_a5xx(screen) || is_a6xx(screen)) &&
+		 (fd_mesa_debug & FD_DBG_LRZ) && has_depth(format)) {
 		const uint32_t flags = DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
 				DRM_FREEDRENO_GEM_TYPE_KMEM; /* TODO */
 		unsigned lrz_pitch  = align(DIV_ROUND_UP(tmpl->width0, 8), 32);
