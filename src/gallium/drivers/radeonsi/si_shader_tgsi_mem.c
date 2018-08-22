@@ -182,10 +182,8 @@ LLVMValueRef si_load_image_desc(struct si_shader_context *ctx,
 	LLVMValueRef rsrc;
 
 	if (desc_type == AC_DESC_BUFFER) {
-		index = LLVMBuildMul(builder, index,
-				     LLVMConstInt(ctx->i32, 2, 0), "");
-		index = LLVMBuildAdd(builder, index,
-				     ctx->i32_1, "");
+		index = ac_build_imad(&ctx->ac, index, LLVMConstInt(ctx->i32, 2, 0),
+				      ctx->i32_1);
 		list = LLVMBuildPointerCast(builder, list,
 					    ac_array_in_const32_addr_space(ctx->v4i32), "");
 	} else {
@@ -555,7 +553,7 @@ static void store_emit_buffer(struct si_shader_context *ctx,
 	while (writemask) {
 		int start, count;
 		const char *intrinsic_name;
-		LLVMValueRef data, voff, tmp;
+		LLVMValueRef data, voff;
 
 		u_bit_scan_consecutive_range(&writemask, &start, &count);
 
@@ -570,21 +568,14 @@ static void store_emit_buffer(struct si_shader_context *ctx,
 			data = base_data;
 			intrinsic_name = "llvm.amdgcn.buffer.store.v4f32";
 		} else if (count == 2) {
-			LLVMTypeRef v2f32 = LLVMVectorType(ctx->f32, 2);
+			LLVMValueRef values[2] = {
+				LLVMBuildExtractElement(builder, base_data,
+							LLVMConstInt(ctx->i32, start, 0), ""),
+				LLVMBuildExtractElement(builder, base_data,
+							LLVMConstInt(ctx->i32, start + 1, 0), ""),
+			};
 
-			tmp = LLVMBuildExtractElement(
-				builder, base_data,
-				LLVMConstInt(ctx->i32, start, 0), "");
-			data = LLVMBuildInsertElement(
-				builder, LLVMGetUndef(v2f32), tmp,
-				ctx->i32_0, "");
-
-			tmp = LLVMBuildExtractElement(
-				builder, base_data,
-				LLVMConstInt(ctx->i32, start + 1, 0), "");
-			data = LLVMBuildInsertElement(
-				builder, data, tmp, ctx->i32_1, "");
-
+			data = ac_build_gather_values(&ctx->ac, values, 2);
 			intrinsic_name = "llvm.amdgcn.buffer.store.v2f32";
 		} else {
 			assert(count == 1);
@@ -988,20 +979,20 @@ LLVMValueRef si_load_sampler_desc(struct si_shader_context *ctx,
 		break;
 	case AC_DESC_BUFFER:
 		/* The buffer is in [4:7]. */
-		index = LLVMBuildMul(builder, index, LLVMConstInt(ctx->i32, 4, 0), "");
-		index = LLVMBuildAdd(builder, index, ctx->i32_1, "");
+		index = ac_build_imad(&ctx->ac, index, LLVMConstInt(ctx->i32, 4, 0),
+				      ctx->i32_1);
 		list = LLVMBuildPointerCast(builder, list,
 					    ac_array_in_const32_addr_space(ctx->v4i32), "");
 		break;
 	case AC_DESC_FMASK:
 		/* The FMASK is at [8:15]. */
-		index = LLVMBuildMul(builder, index, LLVMConstInt(ctx->i32, 2, 0), "");
-		index = LLVMBuildAdd(builder, index, ctx->i32_1, "");
+		index = ac_build_imad(&ctx->ac, index, LLVMConstInt(ctx->i32, 2, 0),
+				      ctx->i32_1);
 		break;
 	case AC_DESC_SAMPLER:
 		/* The sampler state is at [12:15]. */
-		index = LLVMBuildMul(builder, index, LLVMConstInt(ctx->i32, 4, 0), "");
-		index = LLVMBuildAdd(builder, index, LLVMConstInt(ctx->i32, 3, 0), "");
+		index = ac_build_imad(&ctx->ac, index, LLVMConstInt(ctx->i32, 4, 0),
+				      LLVMConstInt(ctx->i32, 3, 0));
 		list = LLVMBuildPointerCast(builder, list,
 					    ac_array_in_const32_addr_space(ctx->v4i32), "");
 		break;

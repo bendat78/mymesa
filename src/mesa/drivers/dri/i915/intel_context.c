@@ -532,12 +532,10 @@ intelInitContext(struct intel_context *intel,
 
    intel_fbo_init(intel);
 
-   intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
-
    intel->prim.primitive = ~0;
 
    /* Force all software fallbacks */
-   if (driQueryOptionb(&intel->optionCache, "no_rast")) {
+   if (getenv("INTEL_NO_RAST")) {
       fprintf(stderr, "disabling 3D rasterization\n");
       intel->no_rast = 1;
    }

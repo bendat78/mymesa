@@ -101,15 +101,15 @@ static bool llvm_type_is_64bit(struct si_shader_context *ctx,
 	return false;
 }
 
-static bool is_merged_shader(struct si_shader *shader)
+static bool is_merged_shader(struct si_shader_context *ctx)
 {
-	if (shader->selector->screen->info.chip_class <= VI)
+	if (ctx->screen->info.chip_class <= VI)
 		return false;
 
-	return shader->key.as_ls ||
-	       shader->key.as_es ||
-	       shader->selector->type == PIPE_SHADER_TESS_CTRL ||
-	       shader->selector->type == PIPE_SHADER_GEOMETRY;
+	return ctx->shader->key.as_ls ||
+	       ctx->shader->key.as_es ||
+	       ctx->type == PIPE_SHADER_TESS_CTRL ||
+	       ctx->type == PIPE_SHADER_GEOMETRY;
 }
 
 static void si_init_function_info(struct si_function_info *fninfo)
@@ -378,10 +378,7 @@ get_tcs_out_current_patch_offset(struct si_shader_context *ctx)
 	LLVMValueRef patch_stride = get_tcs_out_patch_stride(ctx);
 	LLVMValueRef rel_patch_id = get_rel_patch_id(ctx);
 
-	return LLVMBuildAdd(ctx->ac.builder, patch0_offset,
-			    LLVMBuildMul(ctx->ac.builder, patch_stride,
-					 rel_patch_id, ""),
-			    "");
+	return ac_build_imad(&ctx->ac, patch_stride, rel_patch_id, patch0_offset);
 }
 
 static LLVMValueRef
@@ -392,10 +389,7 @@ get_tcs_out_current_patch_data_offset(struct si_shader_context *ctx)
 	LLVMValueRef patch_stride = get_tcs_out_patch_stride(ctx);
 	LLVMValueRef rel_patch_id = get_rel_patch_id(ctx);
 
-	return LLVMBuildAdd(ctx->ac.builder, patch0_patch_data_offset,
-			    LLVMBuildMul(ctx->ac.builder, patch_stride,
-					 rel_patch_id, ""),
-			    "");
+	return ac_build_imad(&ctx->ac, patch_stride, rel_patch_id, patch0_patch_data_offset);
 }
 
 static LLVMValueRef get_num_tcs_out_vertices(struct si_shader_context *ctx)
@@ -815,12 +809,8 @@ LLVMValueRef si_get_indirect_index(struct si_shader_context *ctx,
 		result = ac_to_integer(&ctx->ac, result);
 	}
 
-	if (addr_mul != 1)
-		result = LLVMBuildMul(ctx->ac.builder, result,
-				      LLVMConstInt(ctx->i32, addr_mul, 0), "");
-	result = LLVMBuildAdd(ctx->ac.builder, result,
-			      LLVMConstInt(ctx->i32, rel_index, 0), "");
-	return result;
+	return ac_build_imad(&ctx->ac, result, LLVMConstInt(ctx->i32, addr_mul, 0),
+			     LLVMConstInt(ctx->i32, rel_index, 0));
 }
 
 /**
@@ -847,15 +837,13 @@ static LLVMValueRef get_dw_address_from_generic_indices(struct si_shader_context
 							bool is_patch)
 {
 	if (vertex_dw_stride) {
-		base_addr = LLVMBuildAdd(ctx->ac.builder, base_addr,
-					 LLVMBuildMul(ctx->ac.builder, vertex_index,
-						      vertex_dw_stride, ""), "");
+		base_addr = ac_build_imad(&ctx->ac, vertex_index,
+					  vertex_dw_stride, base_addr);
 	}
 
 	if (param_index) {
-		base_addr = LLVMBuildAdd(ctx->ac.builder, base_addr,
-					 LLVMBuildMul(ctx->ac.builder, param_index,
-						      LLVMConstInt(ctx->i32, 4, 0), ""), "");
+		base_addr = ac_build_imad(&ctx->ac, param_index,
+					  LLVMConstInt(ctx->i32, 4, 0), base_addr);
 	}
 
 	int param = is_patch ?
@@ -975,22 +963,15 @@ static LLVMValueRef get_tcs_tes_buffer_address(struct si_shader_context *ctx,
 
 	constant16 = LLVMConstInt(ctx->i32, 16, 0);
 	if (vertex_index) {
-		base_addr = LLVMBuildMul(ctx->ac.builder, rel_patch_id,
-		                         vertices_per_patch, "");
-
-		base_addr = LLVMBuildAdd(ctx->ac.builder, base_addr,
-		                         vertex_index, "");
-
+		base_addr = ac_build_imad(&ctx->ac, rel_patch_id,
+					  vertices_per_patch, vertex_index);
 		param_stride = total_vertices;
 	} else {
 		base_addr = rel_patch_id;
 		param_stride = num_patches;
 	}
 
-	base_addr = LLVMBuildAdd(ctx->ac.builder, base_addr,
-	                         LLVMBuildMul(ctx->ac.builder, param_index,
-	                                      param_stride, ""), "");
-
+	base_addr = ac_build_imad(&ctx->ac, param_index, param_stride, base_addr);
 	base_addr = LLVMBuildMul(ctx->ac.builder, base_addr, constant16, "");
 
 	if (!vertex_index) {
@@ -2678,10 +2659,8 @@ static void si_llvm_emit_clipvertex(struct si_shader_context *ctx,
 								const_chan) * 4, 0);
 				base_elt = buffer_load_const(ctx, const_resource,
 							     addr);
-				args->out[chan] =
-					LLVMBuildFAdd(ctx->ac.builder, args->out[chan],
-						      LLVMBuildFMul(ctx->ac.builder, base_elt,
-								    out_elts[const_chan], ""), "");
+				args->out[chan] = ac_build_fmad(&ctx->ac, base_elt,
+								out_elts[const_chan], args->out[chan]);
 			}
 		}
 
@@ -2745,12 +2724,10 @@ static void emit_streamout_output(struct si_shader_context *ctx,
 		break;
 	case 2: /* as v2i32 */
 	case 3: /* as v4i32 (aligned to 4) */
+		out[3] = LLVMGetUndef(ctx->i32);
+		/* fall through */
 	case 4: /* as v4i32 */
-		vdata = LLVMGetUndef(LLVMVectorType(ctx->i32, util_next_power_of_two(num_comps)));
-		for (int j = 0; j < num_comps; j++) {
-			vdata = LLVMBuildInsertElement(ctx->ac.builder, vdata, out[j],
-						       LLVMConstInt(ctx->i32, j, 0), "");
-		}
+		vdata = ac_build_gather_values(&ctx->ac, out, util_next_power_of_two(num_comps));
 		break;
 	}
 
@@ -2823,9 +2800,9 @@ static void si_llvm_emit_streamout(struct si_shader_context *ctx,
 							      ctx->param_streamout_offset[i]);
 			so_offset = LLVMBuildMul(builder, so_offset, LLVMConstInt(ctx->i32, 4, 0), "");
 
-			so_write_offset[i] = LLVMBuildMul(builder, so_write_index,
-							  LLVMConstInt(ctx->i32, so->stride[i]*4, 0), "");
-			so_write_offset[i] = LLVMBuildAdd(builder, so_write_offset[i], so_offset, "");
+			so_write_offset[i] = ac_build_imad(&ctx->ac, so_write_index,
+							   LLVMConstInt(ctx->i32, so->stride[i]*4, 0),
+							   so_offset);
 		}
 
 		/* Write streamout data. */
@@ -3058,7 +3035,7 @@ static void si_copy_tcs_inputs(struct lp_build_tgsi_context *bld_base)
 {
 	struct si_shader_context *ctx = si_shader_context(bld_base);
 	LLVMValueRef invocation_id, buffer, buffer_offset;
-	LLVMValueRef lds_vertex_stride, lds_vertex_offset, lds_base;
+	LLVMValueRef lds_vertex_stride, lds_base;
 	uint64_t inputs;
 
 	invocation_id = unpack_llvm_param(ctx, ctx->abi.tcs_rel_ids, 8, 5);
@@ -3066,10 +3043,9 @@ static void si_copy_tcs_inputs(struct lp_build_tgsi_context *bld_base)
 	buffer_offset = LLVMGetParam(ctx->main_fn, ctx->param_tcs_offchip_offset);
 
 	lds_vertex_stride = get_tcs_in_vertex_dw_stride(ctx);
-	lds_vertex_offset = LLVMBuildMul(ctx->ac.builder, invocation_id,
-	                                 lds_vertex_stride, "");
 	lds_base = get_tcs_in_current_patch_offset(ctx);
-	lds_base = LLVMBuildAdd(ctx->ac.builder, lds_base, lds_vertex_offset, "");
+	lds_base = ac_build_imad(&ctx->ac, invocation_id, lds_vertex_stride,
+				 lds_base);
 
 	inputs = ctx->shader->key.mono.u.ff_tcs_inputs_to_copy;
 	while (inputs) {
@@ -4134,17 +4110,12 @@ static void build_interp_intrinsic(const struct lp_build_tgsi_action *action,
 								      ddxy_out, iy_ll, "");
 			LLVMValueRef interp_el = LLVMBuildExtractElement(ctx->ac.builder,
 									 interp_param, ix_ll, "");
-			LLVMValueRef temp1, temp2;
+			LLVMValueRef temp;
 
 			interp_el = ac_to_float(&ctx->ac, interp_el);
 
-			temp1 = LLVMBuildFMul(ctx->ac.builder, ddx_el, offset_x, "");
-
-			temp1 = LLVMBuildFAdd(ctx->ac.builder, temp1, interp_el, "");
-
-			temp2 = LLVMBuildFMul(ctx->ac.builder, ddy_el, offset_y, "");
-
-			ij_out[i] = LLVMBuildFAdd(ctx->ac.builder, temp2, temp1, "");
+			temp = ac_build_fmad(&ctx->ac, ddx_el, offset_x, interp_el);
+			ij_out[i] = ac_build_fmad(&ctx->ac, ddy_el, offset_y, temp);
 		}
 		interp_param = ac_build_gather_values(&ctx->ac, ij_out, 2);
 	}
@@ -4404,9 +4375,7 @@ static void si_llvm_emit_barrier(const struct lp_build_tgsi_action *action,
 		return;
 	}
 
-	ac_build_intrinsic(&ctx->ac,
-			   "llvm.amdgcn.s.barrier",
-			   ctx->voidt, NULL, 0, AC_FUNC_ATTR_CONVERGENT);
+	ac_build_s_barrier(&ctx->ac);
 }
 
 static void si_create_function(struct si_shader_context *ctx,
@@ -6580,7 +6549,7 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 	si_create_function(ctx, "wrapper", NULL, 0, &fninfo,
 			   si_get_max_workgroup_size(ctx->shader));
 
-	if (is_merged_shader(ctx->shader))
+	if (is_merged_shader(ctx))
 		ac_init_exec_full_mask(&ctx->ac);
 
 	/* Record the arguments of the function as if they were an output of
@@ -6638,7 +6607,7 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 
 		/* Merged shaders are executed conditionally depending
 		 * on the number of enabled threads passed in the input SGPRs. */
-		if (is_merged_shader(ctx->shader) && part == 0) {
+		if (is_merged_shader(ctx) && part == 0) {
 			LLVMValueRef ena, count = initial[3];
 
 			count = LLVMBuildAnd(builder, count,
@@ -6700,7 +6669,7 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 
 		ret = LLVMBuildCall(builder, parts[part], in, num_params, "");
 
-		if (is_merged_shader(ctx->shader) &&
+		if (is_merged_shader(ctx) &&
 		    part + 1 == next_shader_first_part) {
 			lp_build_endif(&if_state);
 
@@ -6994,7 +6963,8 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 
 	/* Compile to bytecode. */
 	r = si_compile_llvm(sscreen, &shader->binary, &shader->config, compiler,
-			    ctx.ac.module, debug, ctx.type, "TGSI shader",
+			    ctx.ac.module, debug, ctx.type,
+			    si_get_shader_name(shader, ctx.type),
 			    si_should_optimize_less(compiler, shader->selector));
 	si_llvm_dispose(&ctx);
 	if (r) {
@@ -7034,7 +7004,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 	}
 
 	/* Add the scratch offset to input SGPRs. */
-	if (shader->config.scratch_bytes_per_wave && !is_merged_shader(shader))
+	if (shader->config.scratch_bytes_per_wave && !is_merged_shader(&ctx))
 		shader->info.num_input_sgprs += 1; /* scratch byte offset */
 
 	/* Calculate the number of fragment input VGPRs. */
@@ -7180,22 +7150,18 @@ out:
 static LLVMValueRef si_prolog_get_rw_buffers(struct si_shader_context *ctx)
 {
 	LLVMValueRef ptr[2], list;
-	bool is_merged_shader =
-		ctx->screen->info.chip_class >= GFX9 &&
-		(ctx->type == PIPE_SHADER_TESS_CTRL ||
-		 ctx->type == PIPE_SHADER_GEOMETRY ||
-		 ctx->shader->key.as_ls || ctx->shader->key.as_es);
+	bool merged_shader = is_merged_shader(ctx);
 
 	if (HAVE_32BIT_POINTERS) {
-		ptr[0] = LLVMGetParam(ctx->main_fn, (is_merged_shader ? 8 : 0) + SI_SGPR_RW_BUFFERS);
+		ptr[0] = LLVMGetParam(ctx->main_fn, (merged_shader ? 8 : 0) + SI_SGPR_RW_BUFFERS);
 		list = LLVMBuildIntToPtr(ctx->ac.builder, ptr[0],
 					 ac_array_in_const32_addr_space(ctx->v4i32), "");
 		return list;
 	}
 
 	/* Get the pointer to rw buffers. */
-	ptr[0] = LLVMGetParam(ctx->main_fn, (is_merged_shader ? 8 : 0) + SI_SGPR_RW_BUFFERS);
-	ptr[1] = LLVMGetParam(ctx->main_fn, (is_merged_shader ? 8 : 0) + SI_SGPR_RW_BUFFERS + 1);
+	ptr[0] = LLVMGetParam(ctx->main_fn, (merged_shader ? 8 : 0) + SI_SGPR_RW_BUFFERS);
+	ptr[1] = LLVMGetParam(ctx->main_fn, (merged_shader ? 8 : 0) + SI_SGPR_RW_BUFFERS + 1);
 	list = ac_build_gather_values(&ctx->ac, ptr, 2);
 	list = LLVMBuildBitCast(ctx->ac.builder, list, ctx->i64, "");
 	list = LLVMBuildIntToPtr(ctx->ac.builder, list,
