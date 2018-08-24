@@ -1404,60 +1404,27 @@ error:
    return false;
 }
 
-static bool
-droid_probe_driver(int fd)
+static int
+droid_filter_device(_EGLDisplay *disp, int fd, const char *vendor)
 {
-   char *driver_name;
-
-   driver_name = loader_get_driver_for_fd(fd);
-   if (driver_name == NULL)
-      return false;
-
-   free(driver_name);
-   return true;
-}
-
-typedef enum {
-   probe_fail = -1,
-   probe_success = 0,
-   probe_filtered_out = 1,
-} probe_ret_t;
-
-static probe_ret_t
-droid_probe_device(_EGLDisplay *disp, int fd, const char *vendor)
-{
-   int ret;
-
    drmVersionPtr ver = drmGetVersion(fd);
    if (!ver)
-      return probe_fail;
+      return -1;
 
-   if (!ver->name) {
-      ret = probe_fail;
-      goto cleanup;
+   if (strcmp(vendor, ver->name) != 0) {
+      drmFreeVersion(ver);
+      return -1;
    }
 
-   if (vendor && strncmp(vendor, ver->name, PROPERTY_VALUE_MAX) != 0) {
-      ret = probe_filtered_out;
-      goto cleanup;
-   }
-
-   if (!droid_probe_driver(fd)) {
-      ret = probe_fail;
-      goto cleanup;
-   }
-
-   ret = probe_success;
-
-cleanup:
    drmFreeVersion(ver);
-   return ret;
+   return 0;
 }
 
 static int
 droid_open_device(_EGLDisplay *disp)
 {
-   const int MAX_DRM_DEVICES = 32;
+#define MAX_DRM_DEVICES 32
+   drmDevicePtr device, devices[MAX_DRM_DEVICES] = { NULL };
    int prop_set, num_devices;
    int fd = -1, fallback_fd = -1;
 
@@ -1467,49 +1434,38 @@ droid_open_device(_EGLDisplay *disp)
    if (property_get("drm.gpu.vendor_name", vendor_buf, NULL) > 0)
       vendor_name = vendor_buf;
 
-   const char *drm_dir_name = "/dev/dri";
-   DIR *sysdir = opendir(drm_dir_name);
+   num_devices = drmGetDevices2(0, devices, ARRAY_SIZE(devices));
+   if (num_devices < 0)
+      return num_devices;
 
-   if (!sysdir)
-       return -errno;
+   for (int i = 0; i < num_devices; i++) {
+      device = devices[i];
 
-   struct dirent *dent;
-   while ((dent = readdir(sysdir))) {
-      char dev_path[128];
-      const char render_dev_prefix[] = "renderD";
-      size_t prefix_len = sizeof(render_dev_prefix) - 1;
-
-      if (strncmp(render_dev_prefix, dent->d_name, prefix_len) != 0)
+      if (!(device->available_nodes & (1 << DRM_NODE_RENDER)))
          continue;
 
-      snprintf(dev_path, sizeof(dev_path), "%s/%s", drm_dir_name, dent->d_name);
-      fd = loader_open_device(dev_path);
+      fd = loader_open_device(device->nodes[DRM_NODE_RENDER]);
       if (fd < 0) {
          _eglLog(_EGL_WARNING, "%s() Failed to open DRM device %s",
-                 __func__, dev_path);
+                 __func__, device->nodes[DRM_NODE_RENDER]);
          continue;
       }
 
-      int ret = droid_probe_device(disp, fd, vendor_name);
-      switch (ret) {
-      case probe_success:
-         goto success;
-      case probe_filtered_out:
-         /* Set as fallback */
-         if (fallback_fd == -1)
+      if (vendor_name && droid_filter_device(disp, fd, vendor_name)) {
+         /* Match requested, but not found - set as fallback */
+         if (fallback_fd == -1) {
             fallback_fd = fd;
-         break;
-      case probe_fail:
-         break;
+         } else {
+            close(fd);
+            fd = -1;
+         }
+
+         continue;
       }
-
-      if (fallback_fd != fd)
-         close(fd);
-      fd = -1;
+      /* Found a device */
+      break;
    }
-
-success:
-   closedir(sysdir);
+   drmFreeDevices(devices, num_devices);
 
    if (fallback_fd < 0 && fd < 0) {
       _eglLog(_EGL_WARNING, "Failed to open any DRM device");
@@ -1523,6 +1479,7 @@ success:
 
    close(fallback_fd);
    return fd;
+#undef MAX_DRM_DEVICES
 }
 
 EGLBoolean

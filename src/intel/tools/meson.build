@@ -18,12 +18,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+libaub = static_library(
+  'aub',
+  files('aub_read.c', 'aub_mem.c'),
+  include_directories : [inc_common, inc_intel],
+  link_with : [libintel_common, libintel_dev, libmesa_util],
+  c_args : [c_vis_args, no_override_init_args],
+  install : false
+)
+
 aubinator = executable(
   'aubinator',
-  files('aubinator.c', 'intel_aub.h'),
+  files('aubinator.c'),
   dependencies : [dep_expat, dep_zlib, dep_dl, dep_thread, dep_m],
   include_directories : [inc_common, inc_intel],
-  link_with : [libintel_common, libintel_compiler, libintel_dev, libmesa_util],
+  link_with : [libintel_common, libintel_compiler, libintel_dev, libmesa_util, libaub],
   c_args : [c_vis_args, no_override_init_args],
   build_by_default : true,
   install : true
@@ -96,3 +105,19 @@ libintel_dump_gpu = shared_library(
   install_dir: get_option('libexecdir'),
   install: true
 )
+
+if with_tools.contains('intel-ui')
+  subdir('imgui')
+
+  aubinator_viewer = executable(
+    'aubinator_viewer',
+    files('aubinator_viewer.cpp', 'aubinator_viewer_decoder.cpp'),
+    dependencies : [dep_zlib, dep_dl, dep_thread, dep_m, libintel_imgui_gtk_dep],
+    include_directories : [inc_common, inc_intel],
+    link_with : [libintel_common, libintel_compiler, libintel_dev, libmesa_util, libaub],
+    c_args : [c_vis_args, no_override_init_args],
+    cpp_args : [ '-fpermissive', '-std=c++11', '-Wno-parentheses', '-Wno-class-memaccess' ],
+    build_by_default : true,
+    install : true
+  )
+endif

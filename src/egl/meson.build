@@ -93,7 +93,6 @@ if with_dri2
   )
   c_args_for_egl += [
     '-DDEFAULT_DRIVER_DIR="@0@"'.format(dri_search_path),
-    '-D_EGL_BUILT_IN_DRIVER_DRI2',
   ]
 endif
 
@@ -114,6 +113,7 @@ if with_platform_drm
 endif
 if with_platform_surfaceless
   files_egl += files('drivers/dri2/platform_surfaceless.c')
+  incs_for_egl += [inc_loader]
 endif
 if with_platform_wayland
   deps_for_egl += [dep_wayland_client, dep_wayland_server, dep_wayland_egl_headers]
@@ -129,6 +129,7 @@ endif
 if with_platform_android
   deps_for_egl += dep_android
   files_egl += files('drivers/dri2/platform_android.c')
+  incs_for_egl += [inc_loader]
 endif
 if with_platform_haiku
   incs_for_egl += inc_haikugl

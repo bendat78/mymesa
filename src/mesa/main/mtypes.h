@@ -2451,7 +2451,7 @@ struct gl_shader_info
       GLint VerticesOut;
       /**
        * 0 - Invocations count not declared in shader, or
-       * 1 .. MAX_GEOMETRY_SHADER_INVOCATIONS
+       * 1 .. Const.MaxGeometryShaderInvocations
        */
       GLint Invocations;
       /**
@@ -3587,7 +3587,7 @@ struct gl_program_constants
    struct gl_precision LowInt, MediumInt, HighInt;
    /* GL_ARB_uniform_buffer_object */
    GLuint MaxUniformBlocks;
-   GLuint MaxCombinedUniformComponents;
+   uint64_t MaxCombinedUniformComponents;
    GLuint MaxTextureImageUnits;
 
    /* GL_ARB_shader_atomic_counters */
@@ -3713,6 +3713,7 @@ struct gl_constants
    /** geometry shader */
    GLuint MaxGeometryOutputVertices;
    GLuint MaxGeometryTotalOutputComponents;
+   GLuint MaxGeometryShaderInvocations;
 
    GLuint GLSLVersion;  /**< Desktop GLSL version supported (ex: 120 = 1.20) */
    GLuint GLSLVersionCompat;  /**< Desktop compat GLSL version supported  */
@@ -4271,6 +4272,7 @@ struct gl_extensions
    GLboolean GREMEDY_string_marker;
    GLboolean INTEL_conservative_rasterization;
    GLboolean INTEL_performance_query;
+   GLboolean INTEL_shader_atomic_float_minmax;
    GLboolean KHR_blend_equation_advanced;
    GLboolean KHR_blend_equation_advanced_coherent;
    GLboolean KHR_robustness;
@@ -4289,6 +4291,7 @@ struct gl_extensions
    GLboolean NV_fog_distance;
    GLboolean NV_point_sprite;
    GLboolean NV_primitive_restart;
+   GLboolean NV_shader_atomic_float;
    GLboolean NV_texture_barrier;
    GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;

@@ -262,6 +262,11 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_PROGRAMMABLE_SAMPLE_LOCATIONS:
             return 0;
 
+        case PIPE_CAP_MAX_GS_INVOCATIONS:
+            return 32;
+       case PIPE_CAP_MAX_SHADER_BUFFER_SIZE:
+            return 1 << 27;
+
         /* SWTCL-only features. */
         case PIPE_CAP_PRIMITIVE_RESTART:
         case PIPE_CAP_USER_VERTEX_BUFFERS:

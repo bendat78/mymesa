@@ -43,9 +43,9 @@
 static struct gbm_bo *
 lock_front_buffer(struct gbm_surface *_surf)
 {
-   struct gbm_dri_surface *surf = (struct gbm_dri_surface *) _surf;
+   struct gbm_dri_surface *surf = gbm_dri_surface(_surf);
    struct dri2_egl_surface *dri2_surf = surf->dri_private;
-   struct gbm_dri_device *device = (struct gbm_dri_device *) _surf->gbm;
+   struct gbm_dri_device *device = gbm_dri_device(_surf->gbm);
    struct gbm_bo *bo;
 
    if (dri2_surf->current == NULL) {
@@ -66,7 +66,7 @@ lock_front_buffer(struct gbm_surface *_surf)
 static void
 release_buffer(struct gbm_surface *_surf, struct gbm_bo *bo)
 {
-   struct gbm_dri_surface *surf = (struct gbm_dri_surface *) _surf;
+   struct gbm_dri_surface *surf = gbm_dri_surface(_surf);
    struct dri2_egl_surface *dri2_surf = surf->dri_private;
 
    for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
@@ -80,7 +80,7 @@ release_buffer(struct gbm_surface *_surf, struct gbm_bo *bo)
 static int
 has_free_buffers(struct gbm_surface *_surf)
 {
-   struct gbm_dri_surface *surf = (struct gbm_dri_surface *) _surf;
+   struct gbm_dri_surface *surf = gbm_dri_surface(_surf);
    struct dri2_egl_surface *dri2_surf = surf->dri_private;
 
    for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++)
@@ -305,7 +305,7 @@ back_bo_to_dri_buffer(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
    struct gbm_dri_bo *bo;
    int name, pitch;
 
-   bo = (struct gbm_dri_bo *) dri2_surf->back->bo;
+   bo = gbm_dri_bo(dri2_surf->back->bo);
 
    dri2_dpy->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_NAME, &name);
    dri2_dpy->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_STRIDE, &pitch);
@@ -409,7 +409,7 @@ dri2_drm_image_get_buffers(__DRIdrawable *driDrawable,
    if (get_back_bo(dri2_surf) < 0)
       return 0;
 
-   bo = (struct gbm_dri_bo *) dri2_surf->back->bo;
+   bo = gbm_dri_bo(dri2_surf->back->bo);
    buffers->image_mask = __DRI_IMAGE_BUFFER_BACK;
    buffers->back = bo->image;
 

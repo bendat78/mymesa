@@ -189,6 +189,7 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 420;
 
 	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
+	case PIPE_CAP_MAX_SHADER_BUFFER_SIZE:
 		return MIN2(sscreen->info.max_alloc_size, INT_MAX);
 
 	case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
@@ -261,6 +262,10 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 1024;
 	case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
 		return 4095;
+	case PIPE_CAP_MAX_GS_INVOCATIONS:
+		/* The closed driver exposes 127, but 125 is the greatest
+		 * number that works. */
+		return 125;
 
 	case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
 		return 2048;
@@ -392,7 +397,7 @@ static int si_get_shader_param(struct pipe_screen* pscreen,
 	case PIPE_SHADER_CAP_MAX_TEMPS:
 		return 256; /* Max native temporaries. */
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFER_SIZE:
-		return 4096 * sizeof(float[4]); /* actually only memory limits this */
+		return MIN2(sscreen->info.max_alloc_size, INT_MAX - 3); /* aligned to 4 */
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
 		return SI_NUM_CONST_BUFFERS;
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
