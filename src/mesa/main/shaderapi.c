@@ -1169,6 +1169,8 @@ _mesa_compile_shader(struct gl_context *ctx, struct gl_shader *sh)
    }
 }
 
+static void
+generate_sha1(const char *source, char sha_str[64]);
 
 /**
  * Link a program's shaders.
@@ -1230,29 +1232,47 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
    /* Capture .shader_test files. */
    const char *capture_path = _mesa_get_shader_capture_path();
    if (shProg->Name != 0 && shProg->Name != ~0 && capture_path != NULL) {
-      FILE *file;
-      char *filename = ralloc_asprintf(NULL, "%s/%u.shader_test",
-                                       capture_path, shProg->Name);
-      file = fopen(filename, "w");
-      if (file) {
-         fprintf(file, "[require]\nGLSL%s >= %u.%02u\n",
-                 shProg->IsES ? " ES" : "",
-                 shProg->data->Version / 100, shProg->data->Version % 100);
-         if (shProg->SeparateShader)
-            fprintf(file, "GL_ARB_separate_shader_objects\nSSO ENABLED\n");
-         fprintf(file, "\n");
 
-         for (unsigned i = 0; i < shProg->NumShaders; i++) {
-            fprintf(file, "[%s shader]\n%s\n",
-                    _mesa_shader_stage_to_string(shProg->Shaders[i]->Stage),
-                    shProg->Shaders[i]->Source);
-         }
+      FILE *file;
+      char *filename = NULL;
+      char *fsource = NULL;
+      char *ftemp = NULL;
+
+      asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n",
+               shProg->IsES ? " ES" : "",
+               shProg->data->Version / 100, shProg->data->Version % 100);
+
+      if (shProg->SeparateShader) {
+         ftemp = fsource;
+         asprintf(&fsource, "%sGL_ARB_separate_shader_objects\nSSO ENABLED\n",
+                  ftemp);
+         free(ftemp);
+      }
+
+      for (unsigned i = 0; i < shProg->NumShaders; i++) {
+          ftemp = fsource;
+          asprintf(&fsource, "%s\n[%s shader]\n%s\n", ftemp,
+                   _mesa_shader_stage_to_string(shProg->Shaders[i]->Stage),
+                   shProg->Shaders[i]->Source);
+          free(ftemp);
+      }
+
+      char shabuf[64] = {""};
+      generate_sha1(fsource, shabuf);
+
+      asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
+               shabuf, shProg->Name);
+      file = fopen(filename, "w");
+
+      if (file) {
+         fprintf(file, "%s", fsource);
          fclose(file);
       } else {
          _mesa_warning(ctx, "Failed to open %s", filename);
       }
 
-      ralloc_free(filename);
+      free(filename);
+      free(fsource);
    }
 
    if (shProg->data->LinkStatus == LINKING_FAILURE &&
@@ -1778,7 +1798,6 @@ _mesa_LinkProgram(GLuint programObj)
    link_program_error(ctx, shProg);
 }
 
-#ifdef ENABLE_SHADER_CACHE
 /**
  * Generate a SHA-1 hash value string for given source string.
  */
@@ -1790,6 +1809,7 @@ generate_sha1(const char *source, char sha_str[64])
    _mesa_sha1_format(sha_str, sha);
 }
 
+#ifdef ENABLE_SHADER_CACHE
 /**
  * Construct a full path for shader replacement functionality using
  * following format:
