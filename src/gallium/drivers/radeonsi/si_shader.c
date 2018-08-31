@@ -1204,11 +1204,11 @@ static LLVMValueRef get_tess_ring_descriptor(struct si_shader_context *ctx,
 static LLVMValueRef fetch_input_tcs(
 	struct lp_build_tgsi_context *bld_base,
 	const struct tgsi_full_src_register *reg,
-	enum tgsi_opcode_type type, unsigned swizzle)
+	enum tgsi_opcode_type type, unsigned swizzle_in)
 {
 	struct si_shader_context *ctx = si_shader_context(bld_base);
 	LLVMValueRef dw_addr, stride;
-
+	unsigned swizzle = swizzle_in & 0xffff;
 	stride = get_tcs_in_vertex_dw_stride(ctx);
 	dw_addr = get_tcs_in_current_patch_offset(ctx);
 	dw_addr = get_dw_address(ctx, NULL, reg, stride, dw_addr);
@@ -1289,10 +1289,11 @@ static LLVMValueRef si_nir_load_tcs_varyings(struct ac_shader_abi *abi,
 static LLVMValueRef fetch_output_tcs(
 		struct lp_build_tgsi_context *bld_base,
 		const struct tgsi_full_src_register *reg,
-		enum tgsi_opcode_type type, unsigned swizzle)
+		enum tgsi_opcode_type type, unsigned swizzle_in)
 {
 	struct si_shader_context *ctx = si_shader_context(bld_base);
 	LLVMValueRef dw_addr, stride;
+	unsigned swizzle = (swizzle_in & 0xffff);
 
 	if (reg->Register.Dimension) {
 		stride = get_tcs_out_vertex_dw_stride(ctx);
@@ -1309,10 +1310,11 @@ static LLVMValueRef fetch_output_tcs(
 static LLVMValueRef fetch_input_tes(
 	struct lp_build_tgsi_context *bld_base,
 	const struct tgsi_full_src_register *reg,
-	enum tgsi_opcode_type type, unsigned swizzle)
+	enum tgsi_opcode_type type, unsigned swizzle_in)
 {
 	struct si_shader_context *ctx = si_shader_context(bld_base);
 	LLVMValueRef base, addr;
+	unsigned swizzle = (swizzle_in & 0xffff);
 
 	base = LLVMGetParam(ctx->main_fn, ctx->param_tcs_offchip_offset);
 	addr = get_tcs_tes_buffer_address_from_reg(ctx, NULL, reg);
@@ -1696,10 +1698,11 @@ static LLVMValueRef fetch_input_gs(
 	struct lp_build_tgsi_context *bld_base,
 	const struct tgsi_full_src_register *reg,
 	enum tgsi_opcode_type type,
-	unsigned swizzle)
+	unsigned swizzle_in)
 {
 	struct si_shader_context *ctx = si_shader_context(bld_base);
 	struct tgsi_shader_info *info = &ctx->shader->selector->info;
+	unsigned swizzle = swizzle_in & 0xffff;
 
 	unsigned semantic_name = info->input_semantic_name[reg->Register.Index];
 	if (swizzle != ~0 && semantic_name == TGSI_SEMANTIC_PRIMID)
@@ -2267,6 +2270,10 @@ void si_load_system_value(struct si_shader_context *ctx,
 		break;
 	}
 
+	case TGSI_SEMANTIC_CS_USER_DATA:
+		value = LLVMGetParam(ctx->main_fn, ctx->param_cs_user_data);
+		break;
+
 	default:
 		assert(!"unknown system value");
 		return;
@@ -2393,16 +2400,17 @@ static LLVMValueRef fetch_constant(
 	struct lp_build_tgsi_context *bld_base,
 	const struct tgsi_full_src_register *reg,
 	enum tgsi_opcode_type type,
-	unsigned swizzle)
+	unsigned swizzle_in)
 {
 	struct si_shader_context *ctx = si_shader_context(bld_base);
 	struct si_shader_selector *sel = ctx->shader->selector;
 	const struct tgsi_ind_register *ireg = &reg->Indirect;
 	unsigned buf, idx;
+	unsigned swizzle = swizzle_in & 0xffff;
 
 	LLVMValueRef addr, bufp;
 
-	if (swizzle == LP_CHAN_ALL) {
+	if (swizzle_in == LP_CHAN_ALL) {
 		unsigned chan;
 		LLVMValueRef values[4];
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan)
@@ -2416,7 +2424,7 @@ static LLVMValueRef fetch_constant(
 		LLVMValueRef lo, hi;
 
 		lo = fetch_constant(bld_base, reg, TGSI_TYPE_UNSIGNED, swizzle);
-		hi = fetch_constant(bld_base, reg, TGSI_TYPE_UNSIGNED, swizzle + 1);
+		hi = fetch_constant(bld_base, reg, TGSI_TYPE_UNSIGNED, (swizzle_in >> 16));
 		return si_llvm_emit_fetch_64bit(bld_base, tgsi2llvmtype(bld_base, type),
 						lo, hi);
 	}
@@ -4947,6 +4955,13 @@ static void create_function(struct si_shader_context *ctx)
 		if (shader->selector->info.uses_block_size &&
 		    shader->selector->info.properties[TGSI_PROPERTY_CS_FIXED_BLOCK_WIDTH] == 0)
 			ctx->param_block_size = add_arg(&fninfo, ARG_SGPR, v3i32);
+
+		unsigned cs_user_data_dwords =
+			shader->selector->info.properties[TGSI_PROPERTY_CS_USER_DATA_DWORDS];
+		if (cs_user_data_dwords) {
+			ctx->param_cs_user_data = add_arg(&fninfo, ARG_SGPR,
+							  LLVMVectorType(ctx->i32, cs_user_data_dwords));
+		}
 
 		for (i = 0; i < 3; i++) {
 			ctx->abi.workgroup_ids[i] = NULL;

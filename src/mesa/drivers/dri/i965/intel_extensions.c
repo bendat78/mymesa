@@ -247,6 +247,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.OES_primitive_bounding_box = true;
       ctx->Extensions.OES_texture_buffer = true;
       ctx->Extensions.ARB_fragment_shader_interlock = true;
+      ctx->Extensions.INTEL_fragment_shader_ordering = true;
 
       if (can_do_pipelined_register_writes(brw->screen)) {
          ctx->Extensions.ARB_draw_indirect = true;
@@ -302,6 +303,7 @@ intelInitExtensions(struct gl_context *ctx)
 
    if (devinfo->gen >= 9) {
       ctx->Extensions.ANDROID_extension_pack_es31a = true;
+      ctx->Extensions.AMD_depth_clamp_separate = true;
       ctx->Extensions.ARB_post_depth_coverage = true;
       ctx->Extensions.ARB_shader_stencil_export = true;
       ctx->Extensions.EXT_shader_framebuffer_fetch = true;

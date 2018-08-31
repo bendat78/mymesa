@@ -1694,70 +1694,6 @@ fs_visitor::get_nir_dest(const nir_dest &dest)
    }
 }
 
-fs_reg
-fs_visitor::get_nir_image_deref(nir_deref_instr *deref)
-{
-   fs_reg arr_offset = brw_imm_ud(0);
-   unsigned array_size = BRW_IMAGE_PARAM_SIZE * 4;
-   nir_deref_instr *head = deref;
-   while (head->deref_type != nir_deref_type_var) {
-      assert(head->deref_type == nir_deref_type_array);
-
-      /* This level's element size is the previous level's array size */
-      const unsigned elem_size = array_size;
-
-      fs_reg index = retype(get_nir_src_imm(head->arr.index),
-                            BRW_REGISTER_TYPE_UD);
-      if (arr_offset.file == BRW_IMMEDIATE_VALUE &&
-          index.file == BRW_IMMEDIATE_VALUE) {
-         arr_offset.ud += index.ud * elem_size;
-      } else if (index.file == BRW_IMMEDIATE_VALUE) {
-         bld.ADD(arr_offset, arr_offset, brw_imm_ud(index.ud * elem_size));
-      } else {
-         fs_reg tmp = bld.vgrf(BRW_REGISTER_TYPE_UD);
-         bld.MUL(tmp, index, brw_imm_ud(elem_size));
-         bld.ADD(tmp, tmp, arr_offset);
-         arr_offset = tmp;
-      }
-
-      head = nir_deref_instr_parent(head);
-      assert(glsl_type_is_array(head->type));
-      array_size = elem_size * glsl_get_length(head->type);
-   }
-
-   assert(head->deref_type == nir_deref_type_var);
-   const unsigned max_arr_offset = array_size - (BRW_IMAGE_PARAM_SIZE * 4);
-   fs_reg image(UNIFORM, head->var->data.driver_location / 4,
-                BRW_REGISTER_TYPE_UD);
-
-   if (arr_offset.file == BRW_IMMEDIATE_VALUE) {
-      /* The offset is in bytes but we want it in dwords */
-      return offset(image, bld, MIN2(arr_offset.ud, max_arr_offset) / 4);
-   } else {
-      /* Accessing an invalid surface index with the dataport can result
-       * in a hang.  According to the spec "if the index used to
-       * select an individual element is negative or greater than or
-       * equal to the size of the array, the results of the operation
-       * are undefined but may not lead to termination" -- which is one
-       * of the possible outcomes of the hang.  Clamp the index to
-       * prevent access outside of the array bounds.
-       */
-      bld.emit_minmax(arr_offset, arr_offset, brw_imm_ud(max_arr_offset),
-                      BRW_CONDITIONAL_L);
-
-      /* Emit a pile of MOVs to load the uniform into a temporary.  The
-       * dead-code elimination pass will get rid of what we don't use.
-       */
-      fs_reg tmp = bld.vgrf(BRW_REGISTER_TYPE_UD, BRW_IMAGE_PARAM_SIZE);
-      for (unsigned j = 0; j < BRW_IMAGE_PARAM_SIZE; j++) {
-         bld.emit(SHADER_OPCODE_MOV_INDIRECT,
-                  offset(tmp, bld, j), offset(image, bld, j),
-                  arr_offset, brw_imm_ud(max_arr_offset + 4));
-      }
-      return tmp;
-   }
-}
-
 void
 fs_visitor::emit_percomp(const fs_builder &bld, const fs_inst &inst,
                          unsigned wr_mask)
@@ -1792,36 +1728,6 @@ get_image_base_type(const glsl_type *type)
       return BRW_REGISTER_TYPE_F;
    default:
       unreachable("Not reached.");
-   }
-}
-
-/**
- * Get the appropriate atomic op for an image atomic intrinsic.
- */
-static unsigned
-get_image_atomic_op(nir_intrinsic_op op, const glsl_type *type)
-{
-   switch (op) {
-   case nir_intrinsic_image_deref_atomic_add:
-      return BRW_AOP_ADD;
-   case nir_intrinsic_image_deref_atomic_min:
-      return (get_image_base_type(type) == BRW_REGISTER_TYPE_D ?
-              BRW_AOP_IMIN : BRW_AOP_UMIN);
-   case nir_intrinsic_image_deref_atomic_max:
-      return (get_image_base_type(type) == BRW_REGISTER_TYPE_D ?
-              BRW_AOP_IMAX : BRW_AOP_UMAX);
-   case nir_intrinsic_image_deref_atomic_and:
-      return BRW_AOP_AND;
-   case nir_intrinsic_image_deref_atomic_or:
-      return BRW_AOP_OR;
-   case nir_intrinsic_image_deref_atomic_xor:
-      return BRW_AOP_XOR;
-   case nir_intrinsic_image_deref_atomic_exchange:
-      return BRW_AOP_MOV;
-   case nir_intrinsic_image_deref_atomic_comp_swap:
-      return BRW_AOP_CMPWR;
-   default:
-      unreachable("Not reachable.");
    }
 }
 
@@ -3604,6 +3510,21 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
    }
 }
 
+static int
+get_op_for_atomic_add(nir_intrinsic_instr *instr, unsigned src)
+{
+   const nir_const_value *const val = nir_src_as_const_value(instr->src[src]);
+
+   if (val != NULL) {
+      if (val->i32[0] == 1)
+         return BRW_AOP_INC;
+      else if (val->i32[0] == -1)
+         return BRW_AOP_DEC;
+   }
+
+   return BRW_AOP_ADD;
+}
+
 void
 fs_visitor::nir_emit_cs_intrinsic(const fs_builder &bld,
                                   nir_intrinsic_instr *instr)
@@ -3660,7 +3581,7 @@ fs_visitor::nir_emit_cs_intrinsic(const fs_builder &bld,
    }
 
    case nir_intrinsic_shared_atomic_add:
-      nir_emit_shared_atomic(bld, BRW_AOP_ADD, instr);
+      nir_emit_shared_atomic(bld, get_op_for_atomic_add(instr, 1), instr);
       break;
    case nir_intrinsic_shared_atomic_imin:
       nir_emit_shared_atomic(bld, BRW_AOP_IMIN, instr);
@@ -3862,6 +3783,43 @@ brw_cond_mod_for_nir_reduction_op(nir_op op)
    }
 }
 
+fs_reg
+fs_visitor::get_nir_image_intrinsic_image(const brw::fs_builder &bld,
+                                          nir_intrinsic_instr *instr)
+{
+   fs_reg image = retype(get_nir_src_imm(instr->src[0]), BRW_REGISTER_TYPE_UD);
+
+   if (stage_prog_data->binding_table.image_start > 0) {
+      if (image.file == BRW_IMMEDIATE_VALUE) {
+         image.d += stage_prog_data->binding_table.image_start;
+      } else {
+         bld.ADD(image, image,
+                 brw_imm_d(stage_prog_data->binding_table.image_start));
+      }
+   }
+
+   return bld.emit_uniformize(image);
+}
+
+static unsigned
+image_intrinsic_coord_components(nir_intrinsic_instr *instr)
+{
+   switch (nir_intrinsic_image_dim(instr)) {
+   case GLSL_SAMPLER_DIM_1D:
+      return 1 + nir_intrinsic_image_array(instr);
+   case GLSL_SAMPLER_DIM_2D:
+   case GLSL_SAMPLER_DIM_RECT:
+      return 2 + nir_intrinsic_image_array(instr);
+   case GLSL_SAMPLER_DIM_3D:
+   case GLSL_SAMPLER_DIM_CUBE:
+      return 3;
+   case GLSL_SAMPLER_DIM_BUF:
+      return 1;
+   default:
+      unreachable("Invalid image dimension");
+   }
+}
+
 void
 fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr)
 {
@@ -3870,65 +3828,157 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       dest = get_nir_dest(instr->dest);
 
    switch (instr->intrinsic) {
-   case nir_intrinsic_image_deref_load:
-   case nir_intrinsic_image_deref_store:
-   case nir_intrinsic_image_deref_atomic_add:
-   case nir_intrinsic_image_deref_atomic_min:
-   case nir_intrinsic_image_deref_atomic_max:
-   case nir_intrinsic_image_deref_atomic_and:
-   case nir_intrinsic_image_deref_atomic_or:
-   case nir_intrinsic_image_deref_atomic_xor:
-   case nir_intrinsic_image_deref_atomic_exchange:
-   case nir_intrinsic_image_deref_atomic_comp_swap: {
-      using namespace image_access;
-
+   case nir_intrinsic_image_load:
+   case nir_intrinsic_image_store:
+   case nir_intrinsic_image_atomic_add:
+   case nir_intrinsic_image_atomic_min:
+   case nir_intrinsic_image_atomic_max:
+   case nir_intrinsic_image_atomic_and:
+   case nir_intrinsic_image_atomic_or:
+   case nir_intrinsic_image_atomic_xor:
+   case nir_intrinsic_image_atomic_exchange:
+   case nir_intrinsic_image_atomic_comp_swap: {
       if (stage == MESA_SHADER_FRAGMENT &&
-          instr->intrinsic != nir_intrinsic_image_deref_load)
+          instr->intrinsic != nir_intrinsic_image_load)
          brw_wm_prog_data(prog_data)->has_side_effects = true;
-
-      /* Get the referenced image variable and type. */
-      nir_deref_instr *deref = nir_src_as_deref(instr->src[0]);
-      const nir_variable *var = nir_deref_instr_get_variable(deref);
-      const glsl_type *type = var->type->without_array();
-      const brw_reg_type base_type = get_image_base_type(type);
 
       /* Get some metadata from the image intrinsic. */
       const nir_intrinsic_info *info = &nir_intrinsic_infos[instr->intrinsic];
-      const unsigned arr_dims = type->sampler_array ? 1 : 0;
-      const unsigned surf_dims = type->coordinate_components() - arr_dims;
-      const unsigned format = var->data.image.format;
+      const unsigned dims = image_intrinsic_coord_components(instr);
+      const GLenum format = nir_intrinsic_format(instr);
       const unsigned dest_components = nir_intrinsic_dest_components(instr);
 
       /* Get the arguments of the image intrinsic. */
-      const fs_reg image = get_nir_image_deref(deref);
-      const fs_reg addr = retype(get_nir_src(instr->src[1]),
-                                 BRW_REGISTER_TYPE_UD);
-      const fs_reg src0 = (info->num_srcs >= 4 ?
-                           retype(get_nir_src(instr->src[3]), base_type) :
-                           fs_reg());
-      const fs_reg src1 = (info->num_srcs >= 5 ?
-                           retype(get_nir_src(instr->src[4]), base_type) :
-                           fs_reg());
+      const fs_reg image = get_nir_image_intrinsic_image(bld, instr);
+      const fs_reg coords = retype(get_nir_src(instr->src[1]),
+                                   BRW_REGISTER_TYPE_UD);
       fs_reg tmp;
 
       /* Emit an image load, store or atomic op. */
-      if (instr->intrinsic == nir_intrinsic_image_deref_load)
-         tmp = emit_image_load(bld, image, addr, surf_dims, arr_dims, format);
+      if (instr->intrinsic == nir_intrinsic_image_load) {
+         tmp = emit_typed_read(bld, image, coords, dims,
+                               instr->num_components);
+      } else if (instr->intrinsic == nir_intrinsic_image_store) {
+         const fs_reg src0 = get_nir_src(instr->src[3]);
+         emit_typed_write(bld, image, coords, src0, dims,
+                          instr->num_components);
+      } else {
+         int op;
+         unsigned num_srcs = info->num_srcs;
 
-      else if (instr->intrinsic == nir_intrinsic_image_deref_store)
-         emit_image_store(bld, image, addr, src0, surf_dims, arr_dims,
-                          var->data.image.write_only ? GL_NONE : format);
+         switch (instr->intrinsic) {
+         case nir_intrinsic_image_atomic_add:
+            assert(num_srcs == 4);
 
-      else
-         tmp = emit_image_atomic(bld, image, addr, src0, src1,
-                                 surf_dims, arr_dims, dest_components,
-                                 get_image_atomic_op(instr->intrinsic, type));
+            op = get_op_for_atomic_add(instr, 3);
+
+            if (op != BRW_AOP_ADD)
+               num_srcs = 3;
+            break;
+         case nir_intrinsic_image_atomic_min:
+            assert(format == GL_R32UI || format == GL_R32I);
+            op = (format == GL_R32I) ? BRW_AOP_IMIN : BRW_AOP_UMIN;
+            break;
+         case nir_intrinsic_image_atomic_max:
+            assert(format == GL_R32UI || format == GL_R32I);
+            op = (format == GL_R32I) ? BRW_AOP_IMAX : BRW_AOP_UMAX;
+            break;
+         case nir_intrinsic_image_atomic_and:
+            op = BRW_AOP_AND;
+            break;
+         case nir_intrinsic_image_atomic_or:
+            op = BRW_AOP_OR;
+            break;
+         case nir_intrinsic_image_atomic_xor:
+            op = BRW_AOP_XOR;
+            break;
+         case nir_intrinsic_image_atomic_exchange:
+            op = BRW_AOP_MOV;
+            break;
+         case nir_intrinsic_image_atomic_comp_swap:
+            op = BRW_AOP_CMPWR;
+            break;
+         default:
+            unreachable("Not reachable.");
+         }
+
+         const fs_reg src0 = (num_srcs >= 4 ?
+                              get_nir_src(instr->src[3]) : fs_reg());
+         const fs_reg src1 = (num_srcs >= 5 ?
+                              get_nir_src(instr->src[4]) : fs_reg());
+
+         tmp = emit_typed_atomic(bld, image, coords, src0, src1, dims, 1, op);
+      }
 
       /* Assign the result. */
       for (unsigned c = 0; c < dest_components; ++c) {
-         bld.MOV(offset(retype(dest, base_type), bld, c),
-               offset(tmp, bld, c));
+         bld.MOV(offset(retype(dest, tmp.type), bld, c),
+                 offset(tmp, bld, c));
       }
+      break;
+   }
+
+   case nir_intrinsic_image_size: {
+      /* Unlike the [un]typed load and store opcodes, the TXS that this turns
+       * into will handle the binding table index for us in the geneerator.
+       */
+      fs_reg image = retype(get_nir_src_imm(instr->src[0]),
+                            BRW_REGISTER_TYPE_UD);
+      image = bld.emit_uniformize(image);
+
+      /* Since the image size is always uniform, we can just emit a SIMD8
+       * query instruction and splat the result out.
+       */
+      const fs_builder ubld = bld.exec_all().group(8, 0);
+
+      /* The LOD also serves as the message payload */
+      fs_reg lod = ubld.vgrf(BRW_REGISTER_TYPE_UD);
+      ubld.MOV(lod, brw_imm_ud(0));
+
+      fs_reg tmp = ubld.vgrf(BRW_REGISTER_TYPE_UD, 4);
+      fs_inst *inst = ubld.emit(SHADER_OPCODE_IMAGE_SIZE, tmp, lod, image);
+      inst->mlen = 1;
+      inst->size_written = 4 * REG_SIZE;
+
+      for (unsigned c = 0; c < instr->dest.ssa.num_components; ++c) {
+         if (c == 2 && nir_intrinsic_image_dim(instr) == GLSL_SAMPLER_DIM_CUBE) {
+            bld.emit(SHADER_OPCODE_INT_QUOTIENT,
+                     offset(retype(dest, tmp.type), bld, c),
+                     component(offset(tmp, ubld, c), 0), brw_imm_ud(6));
+         } else {
+            bld.MOV(offset(retype(dest, tmp.type), bld, c),
+                    component(offset(tmp, ubld, c), 0));
+         }
+      }
+      break;
+   }
+
+   case nir_intrinsic_image_load_raw_intel: {
+      const fs_reg image = get_nir_image_intrinsic_image(bld, instr);
+      const fs_reg addr = retype(get_nir_src(instr->src[1]),
+                                 BRW_REGISTER_TYPE_UD);
+
+      fs_reg tmp = emit_untyped_read(bld, image, addr, 1,
+                                     instr->num_components);
+
+      for (unsigned c = 0; c < instr->num_components; ++c) {
+         bld.MOV(offset(retype(dest, tmp.type), bld, c),
+                 offset(tmp, bld, c));
+      }
+      break;
+   }
+
+   case nir_intrinsic_image_store_raw_intel: {
+      const fs_reg image = get_nir_image_intrinsic_image(bld, instr);
+      const fs_reg addr = retype(get_nir_src(instr->src[1]),
+                                 BRW_REGISTER_TYPE_UD);
+      const fs_reg data = retype(get_nir_src(instr->src[2]),
+                                 BRW_REGISTER_TYPE_UD);
+
+      brw_wm_prog_data(prog_data)->has_side_effects = true;
+
+      emit_untyped_write(bld, image, addr, data, 1,
+                         instr->num_components);
       break;
    }
 
@@ -3954,52 +4004,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       break;
    }
 
-   case nir_intrinsic_image_deref_size: {
-      /* Get the referenced image variable and type. */
-      nir_deref_instr *deref = nir_src_as_deref(instr->src[0]);
-      const nir_variable *var = nir_deref_instr_get_variable(deref);
-      const glsl_type *type = var->type->without_array();
-
-      /* Get the size of the image. */
-      const fs_reg image = get_nir_image_deref(deref);
-      const fs_reg size = offset(image, bld, BRW_IMAGE_PARAM_SIZE_OFFSET);
-
-      /* For 1DArray image types, the array index is stored in the Z component.
-       * Fix this by swizzling the Z component to the Y component.
-       */
-      const bool is_1d_array_image =
-                  type->sampler_dimensionality == GLSL_SAMPLER_DIM_1D &&
-                  type->sampler_array;
-
-      /* For CubeArray images, we should count the number of cubes instead
-       * of the number of faces. Fix it by dividing the (Z component) by 6.
-       */
-      const bool is_cube_array_image =
-                  type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE &&
-                  type->sampler_array;
-
-      /* Copy all the components. */
-      for (unsigned c = 0; c < instr->dest.ssa.num_components; ++c) {
-         if ((int)c >= type->coordinate_components()) {
-             bld.MOV(offset(retype(dest, BRW_REGISTER_TYPE_D), bld, c),
-                     brw_imm_d(1));
-         } else if (c == 1 && is_1d_array_image) {
-            bld.MOV(offset(retype(dest, BRW_REGISTER_TYPE_D), bld, c),
-                    offset(size, bld, 2));
-         } else if (c == 2 && is_cube_array_image) {
-            bld.emit(SHADER_OPCODE_INT_QUOTIENT,
-                     offset(retype(dest, BRW_REGISTER_TYPE_D), bld, c),
-                     offset(size, bld, c), brw_imm_d(6));
-         } else {
-            bld.MOV(offset(retype(dest, BRW_REGISTER_TYPE_D), bld, c),
-                    offset(size, bld, c));
-         }
-       }
-
-      break;
-   }
-
-   case nir_intrinsic_image_deref_samples:
+   case nir_intrinsic_image_samples:
       /* The driver does not support multi-sampled images. */
       bld.MOV(retype(dest, BRW_REGISTER_TYPE_D), brw_imm_d(1));
       break;
@@ -4378,7 +4383,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
    }
 
    case nir_intrinsic_ssbo_atomic_add:
-      nir_emit_ssbo_atomic(bld, BRW_AOP_ADD, instr);
+      nir_emit_ssbo_atomic(bld, get_op_for_atomic_add(instr, 2), instr);
       break;
    case nir_intrinsic_ssbo_atomic_imin:
       nir_emit_ssbo_atomic(bld, BRW_AOP_IMIN, instr);
@@ -4836,6 +4841,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       break;
    }
 
+   case nir_intrinsic_begin_fragment_shader_ordering:
    case nir_intrinsic_begin_invocation_interlock: {
       const fs_builder ubld = bld.group(8, 0);
       const fs_reg tmp = ubld.vgrf(BRW_REGISTER_TYPE_UD, 2);
@@ -4888,7 +4894,9 @@ fs_visitor::nir_emit_ssbo_atomic(const fs_builder &bld,
    }
 
    fs_reg offset = get_nir_src(instr->src[1]);
-   fs_reg data1 = get_nir_src(instr->src[2]);
+   fs_reg data1;
+   if (op != BRW_AOP_INC && op != BRW_AOP_DEC && op != BRW_AOP_PREDEC)
+      data1 = get_nir_src(instr->src[2]);
    fs_reg data2;
    if (op == BRW_AOP_CMPWR)
       data2 = get_nir_src(instr->src[3]);
@@ -4962,7 +4970,9 @@ fs_visitor::nir_emit_shared_atomic(const fs_builder &bld,
 
    fs_reg surface = brw_imm_ud(GEN7_BTI_SLM);
    fs_reg offset;
-   fs_reg data1 = get_nir_src(instr->src[1]);
+   fs_reg data1;
+   if (op != BRW_AOP_INC && op != BRW_AOP_DEC && op != BRW_AOP_PREDEC)
+      data1 = get_nir_src(instr->src[1]);
    fs_reg data2;
    if (op == BRW_AOP_CMPWR)
       data2 = get_nir_src(instr->src[2]);

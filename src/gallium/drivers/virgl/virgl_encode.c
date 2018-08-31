@@ -261,7 +261,8 @@ int virgl_encode_shader_state(struct virgl_context *ctx,
 
       bret = tgsi_dump_str(tokens, TGSI_DUMP_FLOAT_AS_HEX, str, str_total_size);
       if (bret == false) {
-         fprintf(stderr, "Failed to translate shader in available space - trying again\n");
+         if (virgl_debug & VIRGL_DEBUG_VERBOSE)
+            debug_printf("Failed to translate shader in available space - trying again\n");
          old_size = str_total_size;
          str_total_size = 65536 * ++retry_size;
          str = REALLOC(str, old_size, str_total_size);
@@ -272,6 +273,9 @@ int virgl_encode_shader_state(struct virgl_context *ctx,
 
    if (bret == false)
       return -1;
+
+   if (virgl_debug & VIRGL_DEBUG_TGSI)
+      debug_printf("TGSI:\n---8<---\n%s\n---8<---\n", str);
 
    shader_len = strlen(str) + 1;
 

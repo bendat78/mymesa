@@ -523,6 +523,8 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
    if (nir->info.num_ssbos > 0 || nir->info.num_images > 0)
       pipeline->needs_data_cache = true;
 
+   NIR_PASS_V(nir, brw_nir_lower_image_load_store, compiler->devinfo);
+
    /* Apply the actual pipeline layout to UBOs, SSBOs, and textures */
    if (layout) {
       anv_nir_apply_pipeline_layout(pipeline, layout, nir, prog_data,

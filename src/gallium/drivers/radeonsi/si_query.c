@@ -92,6 +92,19 @@ static enum radeon_value_id winsys_id_from_type(unsigned type)
 	}
 }
 
+static int64_t si_finish_dma_get_cpu_time(struct si_context *sctx)
+{
+	struct pipe_fence_handle *fence = NULL;
+
+	si_flush_dma_cs(sctx, 0, &fence);
+	if (fence) {
+		sctx->ws->fence_wait(sctx->ws, fence, PIPE_TIMEOUT_INFINITE);
+		sctx->ws->fence_reference(&fence, NULL);
+	}
+
+	return os_time_get_nano();
+}
+
 static bool si_query_sw_begin(struct si_context *sctx,
 			      struct si_query *rquery)
 {
@@ -101,6 +114,9 @@ static bool si_query_sw_begin(struct si_context *sctx,
 	switch(query->b.type) {
 	case PIPE_QUERY_TIMESTAMP_DISJOINT:
 	case PIPE_QUERY_GPU_FINISHED:
+		break;
+	case SI_QUERY_TIME_ELAPSED_SDMA_SI:
+		query->begin_result = si_finish_dma_get_cpu_time(sctx);
 		break;
 	case SI_QUERY_DRAW_CALLS:
 		query->begin_result = sctx->num_draw_calls;
@@ -261,6 +277,9 @@ static bool si_query_sw_end(struct si_context *sctx,
 		break;
 	case PIPE_QUERY_GPU_FINISHED:
 		sctx->b.flush(&sctx->b, &query->fence, PIPE_FLUSH_DEFERRED);
+		break;
+	case SI_QUERY_TIME_ELAPSED_SDMA_SI:
+		query->end_result = si_finish_dma_get_cpu_time(sctx);
 		break;
 	case SI_QUERY_DRAW_CALLS:
 		query->end_result = sctx->num_draw_calls;
@@ -648,6 +667,11 @@ static struct pipe_query *si_query_hw_create(struct si_screen *sscreen,
 		query->result_size += 16; /* for the fence + alignment */
 		query->num_cs_dw_end = 6 + si_gfx_write_fence_dwords(sscreen);
 		break;
+	case SI_QUERY_TIME_ELAPSED_SDMA:
+		/* GET_GLOBAL_TIMESTAMP only works if the offset is a multiple of 32. */
+		query->result_size = 64;
+		query->num_cs_dw_end = 0;
+		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		query->result_size = 24;
 		query->num_cs_dw_end = 8 + si_gfx_write_fence_dwords(sscreen);
@@ -747,6 +771,9 @@ static void si_query_hw_do_emit_start(struct si_context *sctx,
 	struct radeon_cmdbuf *cs = sctx->gfx_cs;
 
 	switch (query->b.type) {
+	case SI_QUERY_TIME_ELAPSED_SDMA:
+		si_dma_emit_timestamp(sctx, buffer, va - buffer->gpu_address);
+		return;
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 	case PIPE_QUERY_OCCLUSION_PREDICATE_CONSERVATIVE:
@@ -802,7 +829,8 @@ static void si_query_hw_emit_start(struct si_context *sctx,
 	si_update_occlusion_query_state(sctx, query->b.type, 1);
 	si_update_prims_generated_query_state(sctx, query->b.type, 1);
 
-	si_need_gfx_cs_space(sctx);
+	if (query->b.type != SI_QUERY_TIME_ELAPSED_SDMA)
+		si_need_gfx_cs_space(sctx);
 
 	/* Get a new query buffer if needed. */
 	if (query->buffer.results_end + query->result_size > query->buffer.buf->b.b.width0) {
@@ -832,6 +860,9 @@ static void si_query_hw_do_emit_stop(struct si_context *sctx,
 	uint64_t fence_va = 0;
 
 	switch (query->b.type) {
+	case SI_QUERY_TIME_ELAPSED_SDMA:
+		si_dma_emit_timestamp(sctx, buffer, va + 32 - buffer->gpu_address);
+		return;
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 	case PIPE_QUERY_OCCLUSION_PREDICATE_CONSERVATIVE:
@@ -1022,7 +1053,8 @@ static struct pipe_query *si_create_query(struct pipe_context *ctx, unsigned que
 
 	if (query_type == PIPE_QUERY_TIMESTAMP_DISJOINT ||
 	    query_type == PIPE_QUERY_GPU_FINISHED ||
-	    query_type >= PIPE_QUERY_DRIVER_SPECIFIC)
+	    (query_type >= PIPE_QUERY_DRIVER_SPECIFIC &&
+	     query_type != SI_QUERY_TIME_ELAPSED_SDMA))
 		return si_query_sw_create(query_type);
 
 	return si_query_hw_create(sscreen, query_type, index);
@@ -1238,6 +1270,9 @@ static void si_query_hw_add_result(struct si_screen *sscreen,
 	case PIPE_QUERY_TIME_ELAPSED:
 		result->u64 += si_query_read_result(buffer, 0, 2, false);
 		break;
+	case SI_QUERY_TIME_ELAPSED_SDMA:
+		result->u64 += si_query_read_result(buffer, 0, 32/4, false);
+		break;
 	case PIPE_QUERY_TIMESTAMP:
 		result->u64 = *(uint64_t*)buffer;
 		break;
@@ -1382,6 +1417,7 @@ bool si_query_hw_get_result(struct si_context *sctx,
 
 	/* Convert the time to expected units. */
 	if (rquery->type == PIPE_QUERY_TIME_ELAPSED ||
+	    rquery->type == SI_QUERY_TIME_ELAPSED_SDMA ||
 	    rquery->type == PIPE_QUERY_TIMESTAMP) {
 		result->u64 = (1000000 * result->u64) / sscreen->info.clock_crystal_freq;
 	}

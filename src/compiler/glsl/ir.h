@@ -667,8 +667,8 @@ public:
        * variable has been used.  For example, it is an error to redeclare a
        * variable as invariant after it has been used.
        *
-       * This is only maintained in the ast_to_hir.cpp path, not in
-       * Mesa's fixed function or ARB program paths.
+       * This is maintained in the ast_to_hir.cpp path and during linking,
+       * but not in Mesa's fixed function or ARB program paths.
        */
       unsigned used:1;
 
@@ -1122,6 +1122,7 @@ enum ir_intrinsic_id {
    ir_intrinsic_memory_barrier_shared,
    ir_intrinsic_begin_invocation_interlock,
    ir_intrinsic_end_invocation_interlock,
+   ir_intrinsic_begin_fragment_shader_ordering,
 
    ir_intrinsic_vote_all,
    ir_intrinsic_vote_any,

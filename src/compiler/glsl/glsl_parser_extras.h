@@ -815,6 +815,8 @@ struct _mesa_glsl_parse_state {
    bool EXT_texture_cube_map_array_warn;
    bool INTEL_conservative_rasterization_enable;
    bool INTEL_conservative_rasterization_warn;
+   bool INTEL_fragment_shader_ordering_enable;
+   bool INTEL_fragment_shader_ordering_warn;
    bool INTEL_shader_atomic_float_minmax_enable;
    bool INTEL_shader_atomic_float_minmax_warn;
    bool MESA_shader_integer_functions_enable;
@@ -869,6 +871,7 @@ struct _mesa_glsl_parse_state {
 
    bool allow_extension_directive_midshader;
    bool allow_builtin_variable_redeclaration;
+   bool allow_layout_qualifier_on_function_parameter;
 
    /**
     * Known subroutine type declarations.

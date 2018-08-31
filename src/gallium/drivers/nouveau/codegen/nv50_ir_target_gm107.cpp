@@ -64,6 +64,10 @@ TargetGM107::isOpSupported(operation op, DataType ty) const
       if (ty == TYPE_F64)
          return false;
       return chipset >= NVISA_GM200_CHIPSET;
+   case OP_XMAD:
+      if (isFloatType(ty))
+         return false;
+      break;
    default:
       break;
    }
@@ -166,7 +170,6 @@ TargetGM107::isBarrierRequired(const Instruction *insn) const
       }
       break;
    case OPCLASS_ARITH:
-      // TODO: IMUL/IMAD require barriers too, use of XMAD instead!
       if ((insn->op == OP_MUL || insn->op == OP_MAD) &&
           !isFloatType(insn->dType))
          return true;
@@ -234,6 +237,7 @@ TargetGM107::getLatency(const Instruction *insn) const
    case OP_SUB:
    case OP_VOTE:
    case OP_XOR:
+   case OP_XMAD:
       if (insn->dType != TYPE_F64)
          return 6;
       break;

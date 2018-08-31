@@ -9,6 +9,7 @@
 EXT(3DFX_texture_compression_FXT1           , TDFX_texture_compression_FXT1          , GLL, GLC,  x ,  x , 1999)
 
 EXT(AMD_conservative_depth                  , ARB_conservative_depth                 , GLL, GLC,  x ,  x , 2009)
+EXT(AMD_depth_clamp_separate                , AMD_depth_clamp_separate               , GLL, GLC,  x ,  x , 2009)
 EXT(AMD_draw_buffers_blend                  , ARB_draw_buffers_blend                 , GLL, GLC,  x ,  x , 2009)
 EXT(AMD_framebuffer_multisample_advanced    , AMD_framebuffer_multisample_advanced   , GLL, GLC,  x , ES2, 2018)
 EXT(AMD_gpu_shader_int64                    , ARB_gpu_shader_int64                   ,  x , GLC,  x ,  x , 2015)
@@ -58,7 +59,7 @@ EXT(ARB_depth_buffer_float                  , ARB_depth_buffer_float            
 EXT(ARB_depth_clamp                         , ARB_depth_clamp                        , GLL, GLC,  x ,  x , 2003)
 EXT(ARB_depth_texture                       , ARB_depth_texture                      , GLL,  x ,  x ,  x , 2001)
 EXT(ARB_derivative_control                  , ARB_derivative_control                 , GLL, GLC,  x ,  x , 2014)
-EXT(ARB_direct_state_access                 , dummy_true                             ,  45, GLC,  x ,  x , 2014)
+EXT(ARB_direct_state_access                 , dummy_true                             ,  31, GLC,  x ,  x , 2014)
 EXT(ARB_draw_buffers                        , dummy_true                             , GLL, GLC,  x ,  x , 2002)
 EXT(ARB_draw_buffers_blend                  , ARB_draw_buffers_blend                 , GLL, GLC,  x ,  x , 2009)
 EXT(ARB_draw_elements_base_vertex           , ARB_draw_elements_base_vertex          , GLL, GLC,  x ,  x , 2009)
@@ -317,6 +318,7 @@ EXT(IBM_texture_mirrored_repeat             , dummy_true                        
 EXT(INGR_blend_func_separate                , EXT_blend_func_separate                , GLL,  x ,  x ,  x , 1999)
 
 EXT(INTEL_conservative_rasterization        , INTEL_conservative_rasterization       ,  x , GLC,  x ,  31, 2013)
+EXT(INTEL_fragment_shader_ordering          , INTEL_fragment_shader_ordering         , GLL, GLC,  x ,  x , 2013)
 EXT(INTEL_performance_query                 , INTEL_performance_query                , GLL, GLC,  x , ES2, 2013)
 EXT(INTEL_shader_atomic_float_minmax        , INTEL_shader_atomic_float_minmax       , GLL, GLC,  x ,  x , 2018)
 

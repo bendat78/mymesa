@@ -1282,7 +1282,8 @@ struct gl_transform_attrib
    GLboolean Normalize;				/**< Normalize all normals? */
    GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */
    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
-   GLboolean DepthClamp;			/**< GL_ARB_depth_clamp */
+   GLboolean DepthClampNear;			/**< GL_AMD_depth_clamp_separate */
+   GLboolean DepthClampFar;			/**< GL_AMD_depth_clamp_separate */
    /** GL_ARB_clip_control */
    GLenum16 ClipOrigin;   /**< GL_LOWER_LEFT or GL_UPPER_LEFT */
    GLenum16 ClipDepthMode;/**< GL_NEGATIVE_ONE_TO_ONE or GL_ZERO_TO_ONE */
@@ -2013,7 +2014,9 @@ struct gl_bindless_image
    /** Whether this bindless image is bound to a unit. */
    GLboolean bound;
 
-   /** Access qualifier (GL_READ_WRITE, GL_READ_ONLY, GL_WRITE_ONLY) */
+   /** Access qualifier (GL_READ_WRITE, GL_READ_ONLY, GL_WRITE_ONLY, or
+    * GL_NONE to indicate both read-only and write-only)
+    */
    GLenum16 access;
 
    /** Pointer to the base of the data. */
@@ -2130,8 +2133,9 @@ struct gl_program
 
          /**
           * Access qualifier specified in the shader for each image uniform
-          * index.  Either \c GL_READ_ONLY, \c GL_WRITE_ONLY or \c
-          * GL_READ_WRITE.
+          * index.  Either \c GL_READ_ONLY, \c GL_WRITE_ONLY, \c
+          * GL_READ_WRITE, or \c GL_NONE to indicate both read-only and
+          * write-only.
           *
           * It may be different, though only more strict than the value of
           * \c gl_image_unit::Access for the corresponding image unit.
@@ -3765,6 +3769,11 @@ struct gl_constants
    GLboolean AllowHigherCompatVersion;
 
    /**
+    * Allow layout qualifiers on function parameters.
+    */
+   GLboolean AllowLayoutQualifiersOnFunctionParameters;
+
+   /**
     * Force computing the absolute value for sqrt() and inversesqrt() to follow
     * D3D9 when apps rely on this behaviour.
     */
@@ -4257,6 +4266,7 @@ struct gl_extensions
    GLboolean OES_viewport_array;
    /* vendor extensions */
    GLboolean AMD_framebuffer_multisample_advanced;
+   GLboolean AMD_depth_clamp_separate;
    GLboolean AMD_performance_monitor;
    GLboolean AMD_pinned_memory;
    GLboolean AMD_seamless_cubemap_per_texture;
@@ -4271,6 +4281,7 @@ struct gl_extensions
    GLboolean ATI_fragment_shader;
    GLboolean GREMEDY_string_marker;
    GLboolean INTEL_conservative_rasterization;
+   GLboolean INTEL_fragment_shader_ordering;
    GLboolean INTEL_performance_query;
    GLboolean INTEL_shader_atomic_float_minmax;
    GLboolean KHR_blend_equation_advanced;
