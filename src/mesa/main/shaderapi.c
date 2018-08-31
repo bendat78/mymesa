@@ -63,6 +63,7 @@
 #include "util/hash_table.h"
 #include "util/mesa-sha1.h"
 #include "util/crc32.h"
+#include "util/u_string.h"
 
 /**
  * Return mask of GLSL_x flags by examining the MESA_GLSL env var.
@@ -1238,20 +1239,20 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       char *fsource = NULL;
       char *ftemp = NULL;
 
-      asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n",
+      util_asprintf(&fsource, "[require]\nGLSL%s >= %u.%02u\n",
                shProg->IsES ? " ES" : "",
                shProg->data->Version / 100, shProg->data->Version % 100);
 
       if (shProg->SeparateShader) {
          ftemp = fsource;
-         asprintf(&fsource, "%sGL_ARB_separate_shader_objects\nSSO ENABLED\n",
+         util_asprintf(&fsource, "%sGL_ARB_separate_shader_objects\nSSO ENABLED\n",
                   ftemp);
          free(ftemp);
       }
 
       for (unsigned i = 0; i < shProg->NumShaders; i++) {
           ftemp = fsource;
-          asprintf(&fsource, "%s\n[%s shader]\n%s\n", ftemp,
+          util_asprintf(&fsource, "%s\n[%s shader]\n%s\n", ftemp,
                    _mesa_shader_stage_to_string(shProg->Shaders[i]->Stage),
                    shProg->Shaders[i]->Source);
           free(ftemp);
@@ -1260,7 +1261,7 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
       char shabuf[64] = {""};
       generate_sha1(fsource, shabuf);
 
-      asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
+      util_asprintf(&filename, "%s/%s_%u.shader_test", capture_path,
                shabuf, shProg->Name);
       file = fopen(filename, "w");
 

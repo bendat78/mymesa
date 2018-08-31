@@ -133,6 +133,15 @@ util_vasprintf(char **ret, const char *format, va_list ap)
    return util_vsnprintf(*ret, r + 1, format, ap);
 }
 
+static inline int
+util_asprintf(char **strp, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int r = util_vasprintf(strp, fmt, ap);
+    va_end(ap);
+    return r;
+}
+
 static inline char *
 util_strchr(const char *s, char c)
 {
@@ -211,6 +220,7 @@ util_strstr(const char *haystack, const char *needle)
 #define util_snprintf snprintf
 #define util_vsprintf vsprintf
 #define util_vasprintf vasprintf
+#define util_asprintf asprintf
 #define util_sprintf sprintf
 #define util_strchr strchr
 #define util_strcmp strcmp
