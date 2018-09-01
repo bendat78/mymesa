@@ -458,6 +458,9 @@ subpixel precision bias in bits during conservative rasterization.
   TGSI_PROPERTY_GS_INVOCATIONS.
 * ``PIPE_CAP_MAX_SHADER_BUFFER_SIZE``: Maximum supported size for binding
   with set_shader_buffers.
+* ``PIPE_CAP_MAX_TEXTURE_UPLOAD_MEMORY_BUDGET: Maximum recommend memory size
+  for all active texture uploads combined. This is a performance hint.
+  0 means no limit.
 
 .. _pipe_capf:
 
