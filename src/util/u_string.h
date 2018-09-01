@@ -134,10 +134,10 @@ util_vasprintf(char **ret, const char *format, va_list ap)
 }
 
 static inline int
-util_asprintf(char **strp, const char *fmt, ...) {
+util_asprintf(char **ret, const char *format, ...) {
     va_list ap;
-    va_start(ap, fmt);
-    int r = util_vasprintf(strp, fmt, ap);
+    va_start(ap, format);
+    int r = util_vasprintf(ret, format, ap);
     va_end(ap);
     return r;
 }
