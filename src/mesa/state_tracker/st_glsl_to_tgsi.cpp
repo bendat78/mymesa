@@ -5615,11 +5615,12 @@ glsl_to_tgsi_visitor::merge_registers(void)
       rename_temp_registers(renames);
 
 //      this->next_array =  merge_arrays(this->next_array, this->array_sizes,
-//                                       &this->instructions, arr_live_ranges);
+//				       &this->instructions, arr_live_ranges);
+   }
 
-      if (arr_live_ranges)
-         delete[] arr_live_ranges;
-//   }
+   if (arr_live_ranges)
+      delete[] arr_live_ranges;
+
    ralloc_free(reg_live_ranges);
 }
 

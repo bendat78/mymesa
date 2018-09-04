@@ -31,6 +31,7 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_hash_table.h"
+#include "util/u_screen.h"
 #include "util/ralloc.h"
 
 #include <xf86drm.h>
@@ -100,11 +101,9 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_SM3:
         case PIPE_CAP_TEXTURE_QUERY_LOD:
         case PIPE_CAP_PRIMITIVE_RESTART:
-        case PIPE_CAP_GLSL_OPTIMIZE_CONSERVATIVELY:
         case PIPE_CAP_OCCLUSION_QUERY:
         case PIPE_CAP_POINT_SPRITE:
         case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-        case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
         case PIPE_CAP_COMPUTE:
         case PIPE_CAP_DRAW_INDIRECT:
         case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
@@ -127,9 +126,6 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
 		return 140;
 
-        case PIPE_CAP_MAX_VIEWPORTS:
-                return 1;
-
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
                 return 1;
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
@@ -150,10 +146,9 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
                 return 1;
 
-
-                /* Stream output. */
         case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
                 return 4;
+
         case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
         case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
                 return 64;
@@ -296,24 +291,8 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_RENDER_TARGETS:
                 return 4;
 
-                /* Queries. */
-        case PIPE_CAP_QUERY_TIME_ELAPSED:
-        case PIPE_CAP_QUERY_TIMESTAMP:
-                return 0;
-
-        case PIPE_CAP_MAX_VERTEX_ATTRIB_STRIDE:
-                return 2048;
-
-        case PIPE_CAP_ENDIANNESS:
-                return PIPE_ENDIAN_LITTLE;
-
-        case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
-                return 64;
-
         case PIPE_CAP_VENDOR_ID:
                 return 0x14E4;
-        case PIPE_CAP_DEVICE_ID:
-                return 0xFFFFFFFF;
         case PIPE_CAP_ACCELERATED:
                 return 1;
         case PIPE_CAP_VIDEO_MEMORY: {
@@ -328,8 +307,7 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
                 return 1;
 
         default:
-                fprintf(stderr, "unknown param %d\n", param);
-                return 0;
+                return u_pipe_screen_get_param_defaults(pscreen, param);
         }
 }
 
