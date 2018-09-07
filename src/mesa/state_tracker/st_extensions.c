@@ -81,9 +81,8 @@ void st_init_limits(struct pipe_screen *screen,
 {
    int supported_irs;
    unsigned sh;
-   boolean can_ubo = TRUE;
+   bool can_ubo = true;
    int temp;
-   bool ssbo_atomic = true;
 
    c->MaxTextureLevels
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
@@ -112,6 +111,7 @@ void st_init_limits(struct pipe_screen *screen,
    c->MaxRenderbufferSize = c->MaxTextureRectSize;
 
    c->SubPixelBits =
+      screen->get_param(screen, PIPE_CAP_RASTERIZER_SUBPIXEL_BITS);
    c->ViewportSubpixelBits =
       screen->get_param(screen, PIPE_CAP_VIEWPORT_SUBPIXEL_BITS);
 
@@ -160,7 +160,7 @@ void st_init_limits(struct pipe_screen *screen,
    c->MaxUniformBlockSize = MIN2(c->MaxUniformBlockSize, INT_MAX - 127);
 
    if (c->MaxUniformBlockSize < 16384) {
-      can_ubo = FALSE;
+      can_ubo = false;
    }
 
    for (sh = 0; sh < PIPE_SHADER_TYPES; ++sh) {
@@ -241,20 +241,26 @@ void st_init_limits(struct pipe_screen *screen,
          pc->MaxUniformComponents +
          (uint64_t)c->MaxUniformBlockSize / 4 * pc->MaxUniformBlocks;
 
+      pc->MaxShaderStorageBlocks =
+         screen->get_shader_param(screen, sh,
+                                  PIPE_SHADER_CAP_MAX_SHADER_BUFFERS);
+
       temp = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS);
       if (temp) {
          /*
           * for separate atomic counters get the actual hw limits
           * per stage on atomic counters and buffers
           */
-         ssbo_atomic = false;
          pc->MaxAtomicCounters = temp;
          pc->MaxAtomicBuffers = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS);
-         pc->MaxShaderStorageBlocks = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_SHADER_BUFFERS);
       } else {
          pc->MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
-         pc->MaxAtomicBuffers = screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_SHADER_BUFFERS) / 2;
-         pc->MaxShaderStorageBlocks = pc->MaxAtomicBuffers;
+         /*
+          * without separate atomic counters, reserve half of the available
+          * SSBOs for atomic buffers, and the other half for normal SSBOs.
+          */
+         pc->MaxAtomicBuffers = pc->MaxShaderStorageBlocks / 2;
+         pc->MaxShaderStorageBlocks -= pc->MaxAtomicBuffers;
       }
       pc->MaxImageUniforms = screen->get_shader_param(
             screen, sh, PIPE_SHADER_CAP_MAX_SHADER_IMAGES);
@@ -301,7 +307,7 @@ void st_init_limits(struct pipe_screen *screen,
 
       if (pc->MaxNativeInstructions &&
           (options->EmitNoIndirectUniform || pc->MaxUniformBlocks < 12)) {
-         can_ubo = FALSE;
+         can_ubo = false;
       }
 
       if (options->EmitNoLoops)
@@ -434,18 +440,15 @@ void st_init_limits(struct pipe_screen *screen,
       c->NumProgramBinaryFormats = 1;
 
    c->MaxAtomicBufferBindings =
-          c->Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers;
+      c->Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers;
+   c->MaxAtomicBufferSize =
+      c->Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters * ATOMIC_COUNTER_SIZE;
 
-   if (!ssbo_atomic) {
-      /* for separate atomic buffers - there atomic buffer size will be
-         limited */
-      c->MaxAtomicBufferSize = c->Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters * ATOMIC_COUNTER_SIZE;
-      /* on all HW with separate atomic (evergreen) the following
-         lines are true. not sure it's worth adding CAPs for this at this
-         stage. */
-      c->MaxCombinedAtomicCounters = c->Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters;
-      c->MaxCombinedAtomicBuffers = c->Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers;
-   } else {
+   c->MaxCombinedAtomicBuffers =
+      MIN2(screen->get_param(screen,
+                             PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTER_BUFFERS),
+           MAX_COMBINED_ATOMIC_BUFFERS);
+   if (!c->MaxCombinedAtomicBuffers) {
       c->MaxCombinedAtomicBuffers =
          c->Program[MESA_SHADER_VERTEX].MaxAtomicBuffers +
          c->Program[MESA_SHADER_TESS_CTRL].MaxAtomicBuffers +
@@ -454,6 +457,11 @@ void st_init_limits(struct pipe_screen *screen,
          c->Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers;
       assert(c->MaxCombinedAtomicBuffers <= MAX_COMBINED_ATOMIC_BUFFERS);
    }
+
+   c->MaxCombinedAtomicCounters =
+      screen->get_param(screen, PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTERS);
+   if (!c->MaxCombinedAtomicCounters)
+      c->MaxCombinedAtomicCounters = MAX_ATOMIC_COUNTERS;
 
    if (c->MaxCombinedAtomicBuffers > 0) {
       extensions->ARB_shader_atomic_counters = GL_TRUE;
@@ -464,10 +472,20 @@ void st_init_limits(struct pipe_screen *screen,
    c->ShaderStorageBufferOffsetAlignment =
       screen->get_param(screen, PIPE_CAP_SHADER_BUFFER_OFFSET_ALIGNMENT);
    if (c->ShaderStorageBufferOffsetAlignment) {
-      /* for hw atomic counters leaves these at default for now */
-      if (ssbo_atomic)
-         c->MaxCombinedShaderStorageBlocks = c->MaxShaderStorageBufferBindings =
-            c->MaxCombinedAtomicBuffers;
+      c->MaxCombinedShaderStorageBlocks =
+         MIN2(screen->get_param(screen, PIPE_CAP_MAX_COMBINED_SHADER_BUFFERS),
+              MAX_COMBINED_SHADER_STORAGE_BUFFERS);
+      if (!c->MaxCombinedShaderStorageBlocks) {
+         c->MaxCombinedShaderStorageBlocks =
+            c->Program[MESA_SHADER_VERTEX].MaxShaderStorageBlocks +
+            c->Program[MESA_SHADER_TESS_CTRL].MaxShaderStorageBlocks +
+            c->Program[MESA_SHADER_TESS_EVAL].MaxShaderStorageBlocks +
+            c->Program[MESA_SHADER_GEOMETRY].MaxShaderStorageBlocks +
+            c->Program[MESA_SHADER_FRAGMENT].MaxShaderStorageBlocks;
+         assert(c->MaxCombinedShaderStorageBlocks < MAX_COMBINED_SHADER_STORAGE_BUFFERS);
+      }
+      c->MaxShaderStorageBufferBindings = c->MaxCombinedShaderStorageBlocks;
+
       c->MaxCombinedShaderOutputResources +=
          c->MaxCombinedShaderStorageBlocks;
       c->MaxShaderStorageBlockSize =
@@ -725,6 +743,7 @@ void st_init_extensions(struct pipe_screen *screen,
       { o(EXT_transform_feedback),           PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS        },
       { o(EXT_window_rectangles),            PIPE_CAP_MAX_WINDOW_RECTANGLES            },
 
+      { o(AMD_depth_clamp_separate),         PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE      },
       { o(AMD_framebuffer_multisample_advanced), PIPE_CAP_FRAMEBUFFER_MSAA_CONSTRAINTS },
       { o(AMD_pinned_memory),                PIPE_CAP_RESOURCE_FROM_USER_MEMORY        },
       { o(ATI_meminfo),                      PIPE_CAP_QUERY_MEMORY_INFO                },

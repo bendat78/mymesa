@@ -296,7 +296,6 @@ batch_flush(struct fd_batch *batch, bool force)
 	 */
 	fd_batch_set_stage(batch, FD_STAGE_NULL);
 
-	fd_context_all_dirty(batch->ctx);
 	batch_flush_reset_dependencies(batch, true);
 
 	batch->flushed = true;
@@ -352,10 +351,17 @@ fd_batch_flush(struct fd_batch *batch, bool sync, bool force)
 
 	if (newbatch) {
 		struct fd_context *ctx = batch->ctx;
-		struct fd_batch *new_batch =
-			fd_batch_from_fb(&ctx->screen->batch_cache, ctx, &batch->framebuffer);
+		struct fd_batch *new_batch;
 
-		util_copy_framebuffer_state(&new_batch->framebuffer, &batch->framebuffer);
+		if (ctx->screen->reorder) {
+			/* defer allocating new batch until one is needed for rendering
+			 * to avoid unused batches for apps that create many contexts
+			 */
+			new_batch = NULL;
+		} else {
+			new_batch = fd_batch_create(ctx, false);
+			util_copy_framebuffer_state(&new_batch->framebuffer, &batch->framebuffer);
+		}
 
 		fd_batch_reference(&batch, NULL);
 		ctx->batch = new_batch;

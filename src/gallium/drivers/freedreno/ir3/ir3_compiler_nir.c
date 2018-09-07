@@ -48,6 +48,8 @@ struct ir3_context {
 
 	struct nir_shader *s;
 
+	struct nir_instr *cur_instr;  /* current instruction, just for debug */
+
 	struct ir3 *ir;
 	struct ir3_shader_variant *so;
 
@@ -263,11 +265,21 @@ compile_init(struct ir3_compiler *compiler,
 static void
 compile_error(struct ir3_context *ctx, const char *format, ...)
 {
+	struct hash_table *errors = NULL;
 	va_list ap;
 	va_start(ap, format);
-	_debug_vprintf(format, ap);
+	if (ctx->cur_instr) {
+		errors = _mesa_hash_table_create(NULL,
+				_mesa_hash_pointer,
+				_mesa_key_pointer_equal);
+		char *msg = ralloc_vasprintf(errors, format, ap);
+		_mesa_hash_table_insert(errors, ctx->cur_instr, msg);
+	} else {
+		_debug_vprintf(format, ap);
+	}
 	va_end(ap);
-	nir_print_shader(ctx->s, stdout);
+	nir_print_shader_annotated(ctx->s, stdout, errors);
+	ralloc_free(errors);
 	ctx->error = true;
 	debug_assert(0);
 }
@@ -2999,7 +3011,9 @@ emit_block(struct ir3_context *ctx, nir_block *nblock)
 	}
 
 	nir_foreach_instr(instr, nblock) {
+		ctx->cur_instr = instr;
 		emit_instr(ctx, instr);
+		ctx->cur_instr = NULL;
 		if (ctx->error)
 			return;
 	}
@@ -3233,6 +3247,25 @@ create_frag_coord(struct ir3_context *ctx, unsigned comp)
 	}
 }
 
+static uint64_t
+input_bitmask(struct ir3_context *ctx, nir_variable *in)
+{
+	unsigned ncomp = glsl_get_components(in->type);
+	unsigned slot = in->data.location;
+
+	/* let's pretend things other than vec4 don't exist: */
+	ncomp = MAX2(ncomp, 4);
+
+	if (ctx->so->type == SHADER_FRAGMENT) {
+		/* see st_nir_fixup_varying_slots(): */
+		if (slot >= VARYING_SLOT_VAR9)
+			slot -= 9;
+	}
+
+	/* Note that info.inputs_read is in units of vec4 slots: */
+	return ((1ull << (ncomp/4)) - 1) << slot;
+}
+
 static void
 setup_input(struct ir3_context *ctx, nir_variable *in)
 {
@@ -3247,6 +3280,15 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 
 	/* let's pretend things other than vec4 don't exist: */
 	ncomp = MAX2(ncomp, 4);
+
+	/* skip unread inputs, we could end up with (for example), unsplit
+	 * matrix/etc inputs in the case they are not read, so just silently
+	 * skip these.
+	 *
+	 */
+	if (!(ctx->s->info.inputs_read & input_bitmask(ctx, in)))
+		return;
+
 	compile_assert(ctx, ncomp == 4);
 
 	so->inputs[n].slot = slot;
@@ -3264,7 +3306,7 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 				so->frag_coord = true;
 				instr = create_frag_coord(ctx, i);
 			} else if (slot == VARYING_SLOT_PNTC) {
-				/* see for example st_get_generic_varying_index().. this is
+				/* see for example st_nir_fixup_varying_slots().. this is
 				 * maybe a bit mesa/st specific.  But we need things to line
 				 * up for this in fdN_program:
 				 *    unsigned texmask = 1 << (slot - VARYING_SLOT_VAR0);
@@ -3636,6 +3678,20 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 	}
 
 	ir3_cp(ir, so);
+
+	/* Insert mov if there's same instruction for each output.
+	 * eg. dEQP-GLES31.functional.shaders.opaque_type_indexing.sampler.const_expression.vertex.sampler2dshadow
+	 */
+	for (int i = ir->noutputs - 1; i >= 0; i--) {
+		if (!ir->outputs[i])
+			continue;
+		for (unsigned j = 0; j < i; j++) {
+			if (ir->outputs[i] == ir->outputs[j]) {
+				ir->outputs[i] =
+					ir3_MOV(ir->outputs[i]->block, ir->outputs[i], TYPE_F32);
+			}
+		}
+	}
 
 	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
 		printf("BEFORE GROUPING:\n");

@@ -281,6 +281,8 @@ struct fd_context {
 	struct pipe_blend_color blend_color;
 	struct pipe_stencil_ref stencil_ref;
 	unsigned sample_mask;
+	/* local context fb state, for when ctx->batch is null: */
+	struct pipe_framebuffer_state framebuffer;
 	struct pipe_poly_stipple stipple;
 	struct pipe_viewport_state viewport;
 	struct fd_constbuf_stateobj constbuf[PIPE_SHADER_TYPES];
@@ -426,6 +428,19 @@ static inline bool
 fd_supported_prim(struct fd_context *ctx, unsigned prim)
 {
 	return (1 << prim) & ctx->primtype_mask;
+}
+
+static inline struct fd_batch *
+fd_context_batch(struct fd_context *ctx)
+{
+	if (unlikely(!ctx->batch)) {
+		struct fd_batch *batch =
+			fd_batch_from_fb(&ctx->screen->batch_cache, ctx, &ctx->framebuffer);
+		util_copy_framebuffer_state(&batch->framebuffer, &ctx->framebuffer);
+		ctx->batch = batch;
+		fd_context_all_dirty(ctx);
+	}
+	return ctx->batch;
 }
 
 static inline void

@@ -265,6 +265,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 	case PIPE_CAP_TEXTURE_SWIZZLE:
 	case PIPE_CAP_DEPTH_CLIP_DISABLE:
+	case PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE:
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
 	case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
@@ -384,8 +385,12 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_MAX_GS_INVOCATIONS:
 		return 32;
+
+	/* shader buffer objects */
 	case PIPE_CAP_MAX_SHADER_BUFFER_SIZE:
 		return 1 << 27;
+	case PIPE_CAP_MAX_COMBINED_SHADER_BUFFERS:
+		return 8;
 
 	/* Unsupported features. */
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
@@ -507,6 +512,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_VIEWPORTS:
 		return R600_MAX_VIEWPORTS;
 	case PIPE_CAP_VIEWPORT_SUBPIXEL_BITS:
+	case PIPE_CAP_RASTERIZER_SUBPIXEL_BITS:
 		return 8;
 
 	/* Timer queries, present when the clock frequency is non zero. */
@@ -549,6 +555,16 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return rscreen->b.info.pci_dev;
 	case PIPE_CAP_PCI_FUNCTION:
 		return rscreen->b.info.pci_func;
+
+	case PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTERS:
+		if (rscreen->b.family >= CHIP_CEDAR && rscreen->has_atomics)
+			return 8;
+		return 0;
+	case PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTER_BUFFERS:
+		if (rscreen->b.family >= CHIP_CEDAR && rscreen->has_atomics)
+			return EG_MAX_ATOMIC_BUFFERS;
+		return 0;
+
 	default:
 		return u_pipe_screen_get_param_defaults(pscreen, param);
 	}

@@ -25,8 +25,8 @@ project(
     [find_program('python', 'python2', 'python3'), 'bin/meson_get_version.py']
   ).stdout(),
   license : 'MIT',
-  meson_version : '>= 0.44.1',
-  default_options : ['buildtype=debugoptimized', 'c_std=c99', 'cpp_std=c++11']
+  meson_version : '>= 0.45',
+  default_options : ['buildtype=debugoptimized', 'b_ndebug=if-release', 'c_std=c99', 'cpp_std=c++11']
 )
 
 cc = meson.get_compiler('c')
@@ -1121,12 +1121,17 @@ endif
 
 # Loop over the enables versions and get the highest libdrm requirement for all
 # active drivers.
+_drm_blame = ''
 foreach d : _libdrm_checks
   ver = get_variable('_drm_@0@_ver'.format(d[0]))
   if d[1] and ver.version_compare('>' + _drm_ver)
     _drm_ver = ver
+    _drm_blame = d[0]
   endif
 endforeach
+if _drm_blame != ''
+  message('libdrm @0@ needed because @1@ has the highest requirement'.format(_drm_ver, _drm_blame))
+endif
 
 # Then get each libdrm module
 foreach d : _libdrm_checks
@@ -1200,10 +1205,6 @@ else
 endif
 if with_llvm
   _llvm_version = dep_llvm.version().split('.')
-  # Development versions of LLVM have an 'svn' or 'git' suffix, we don't want
-  # that for our version checks.
-  # svn suffixes are stripped by meson as of 0.43, and git suffixes are
-  # strippped as of 0.44, but we support older meson versions.
 
   # 3 digits versions in LLVM only started from 3.4.1 on
   if dep_llvm.version().version_compare('>= 3.4.1')
@@ -1212,11 +1213,6 @@ if with_llvm
     _llvm_patch = '0'
   endif
 
-  if _llvm_patch.endswith('svn')
-    _llvm_patch = _llvm_patch.split('s')[0]
-  elif _llvm_patch.contains('git')
-    _llvm_patch = _llvm_patch.split('g')[0]
-  endif
   pre_args += [
     '-DHAVE_LLVM=0x0@0@0@1@'.format(_llvm_version[0], _llvm_version[1]),
     '-DMESA_LLVM_VERSION_PATCH=@0@'.format(_llvm_patch),

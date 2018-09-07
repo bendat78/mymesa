@@ -283,6 +283,7 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return sws->have_vgpu10 ? 140 : 120;
 
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
+   case PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE:
       return 0;
 
    case PIPE_CAP_SM3:
@@ -1045,17 +1046,6 @@ svga_screen_create(struct svga_winsys_screen *sws)
       svgascreen->haveLineSmooth = TRUE;
       svgascreen->maxPointSize = 80.0F;
       svgascreen->max_color_buffers = SVGA3D_DX_MAX_RENDER_TARGETS;
-
-      /* Multisample samples per pixel */
-      if (debug_get_bool_option("SVGA_MSAA", TRUE)) {
-         svgascreen->ms_samples =
-            get_uint_cap(sws, SVGA3D_DEVCAP_MULTISAMPLE_MASKABLESAMPLES, 0);
-      }
-
-      /* We only support 4x, 8x, 16x MSAA */
-      svgascreen->ms_samples &= ((1 << (4-1)) |
-                                 (1 << (8-1)) |
-                                 (1 << (16-1)));
 
       /* Maximum number of constant buffers */
       svgascreen->max_const_buffers =
