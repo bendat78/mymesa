@@ -824,6 +824,7 @@ enum pipe_cap
    PIPE_CAP_MAX_COMBINED_SHADER_BUFFERS,
    PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTERS,
    PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTER_BUFFERS,
+   PIPE_CAP_MAX_TEXTURE_UPLOAD_MEMORY_BUDGET,
 };
 
 /**
@@ -951,6 +952,20 @@ enum pipe_compute_cap
    PIPE_COMPUTE_CAP_IMAGES_SUPPORTED,
    PIPE_COMPUTE_CAP_SUBGROUP_SIZE,
    PIPE_COMPUTE_CAP_MAX_VARIABLE_THREADS_PER_BLOCK,
+};
+
+/**
+ * Types of parameters for pipe_context::set_context_param.
+ */
+enum pipe_context_param
+{
+   /* A hint for the driver that it should pin its execution threads to
+    * a group of cores sharing a specific L3 cache if the CPU has multiple
+    * L3 caches. This is needed for good multithreading performance on
+    * AMD Zen CPUs. "value" is the L3 cache index. Drivers that don't have
+    * any internal threads or don't run on affected CPUs can ignore this.
+    */
+   PIPE_CONTEXT_PARAM_PIN_THREADS_TO_L3_CACHE,
 };
 
 /**

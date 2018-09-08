@@ -787,7 +787,7 @@ genX(cmd_buffer_mark_image_written)(struct anv_cmd_buffer *cmd_buffer,
                                     uint32_t layer_count)
 {
    /* The aspect must be exactly one of the image aspects. */
-   assert(_mesa_bitcount(aspect) == 1 && (aspect & image->aspects));
+   assert(util_bitcount(aspect) == 1 && (aspect & image->aspects));
 
    /* The only compression types with more than just fast-clears are MCS,
     * CCS_E, and HiZ.  With HiZ we just trust the layout and don't actually
@@ -1743,6 +1743,19 @@ genX(cmd_buffer_apply_pipe_flushes)(struct anv_cmd_buffer *cmd_buffer)
    }
 
    if (bits & ANV_PIPE_INVALIDATE_BITS) {
+      /* From the SKL PRM, Vol. 2a, "PIPE_CONTROL",
+       *
+       *    "If the VF Cache Invalidation Enable is set to a 1 in a
+       *    PIPE_CONTROL, a separate Null PIPE_CONTROL, all bitfields sets to
+       *    0, with the VF Cache Invalidation Enable set to 0 needs to be sent
+       *    prior to the PIPE_CONTROL with VF Cache Invalidation Enable set to
+       *    a 1."
+       *
+       * This appears to hang Broadwell, so we restrict it to just gen9.
+       */
+      if (GEN_GEN == 9 && (bits & ANV_PIPE_VF_CACHE_INVALIDATE_BIT))
+         anv_batch_emit(&cmd_buffer->batch, GENX(PIPE_CONTROL), pipe);
+
       anv_batch_emit(&cmd_buffer->batch, GENX(PIPE_CONTROL), pipe) {
          pipe.StateCacheInvalidationEnable =
             bits & ANV_PIPE_STATE_CACHE_INVALIDATE_BIT;
@@ -1754,6 +1767,18 @@ genX(cmd_buffer_apply_pipe_flushes)(struct anv_cmd_buffer *cmd_buffer)
             bits & ANV_PIPE_TEXTURE_CACHE_INVALIDATE_BIT;
          pipe.InstructionCacheInvalidateEnable =
             bits & ANV_PIPE_INSTRUCTION_CACHE_INVALIDATE_BIT;
+
+         /* From the SKL PRM, Vol. 2a, "PIPE_CONTROL",
+          *
+          *    "When VF Cache Invalidate is set “Post Sync Operation” must be
+          *    enabled to “Write Immediate Data” or “Write PS Depth Count” or
+          *    “Write Timestamp”.
+          */
+         if (GEN_GEN == 9 && pipe.VFCacheInvalidationEnable) {
+            pipe.PostSyncOperation = WriteImmediateData;
+            pipe.Address =
+               (struct anv_address) { &cmd_buffer->device->workaround_bo, 0 };
+         }
       }
 
       bits &= ~ANV_PIPE_INVALIDATE_BITS;
@@ -1859,7 +1884,7 @@ cmd_buffer_alloc_push_constants(struct anv_cmd_buffer *cmd_buffer)
 #endif
 
    const unsigned num_stages =
-      _mesa_bitcount(stages & VK_SHADER_STAGE_ALL_GRAPHICS);
+      util_bitcount(stages & VK_SHADER_STAGE_ALL_GRAPHICS);
    unsigned size_per_stage = push_constant_kb / num_stages;
 
    /* Broadwell+ and Haswell gt3 require that the push constant sizes be in
@@ -2491,6 +2516,8 @@ genX(cmd_buffer_flush_state)(struct anv_cmd_buffer *cmd_buffer)
    uint32_t *p;
 
    uint32_t vb_emit = cmd_buffer->state.gfx.vb_dirty & pipeline->vb_used;
+   if (cmd_buffer->state.gfx.dirty & ANV_CMD_DIRTY_PIPELINE)
+      vb_emit |= pipeline->vb_used;
 
    assert((pipeline->active_stages & VK_SHADER_STAGE_COMPUTE_BIT) == 0);
 
@@ -2610,7 +2637,8 @@ genX(cmd_buffer_flush_state)(struct anv_cmd_buffer *cmd_buffer)
                                           pipeline->depth_clamp_enable);
    }
 
-   if (cmd_buffer->state.gfx.dirty & ANV_CMD_DIRTY_DYNAMIC_SCISSOR)
+   if (cmd_buffer->state.gfx.dirty & (ANV_CMD_DIRTY_DYNAMIC_SCISSOR |
+                                      ANV_CMD_DIRTY_RENDER_TARGETS))
       gen7_cmd_buffer_emit_scissor(cmd_buffer);
 
    genX(cmd_buffer_flush_dynamic_state)(cmd_buffer);
