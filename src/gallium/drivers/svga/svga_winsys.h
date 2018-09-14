@@ -583,7 +583,8 @@ struct svga_winsys_screen
                          SVGA3dSurfaceFormat format,
                          SVGA3dSize size,
                          uint32 numLayers,
-                         uint32 numMipLevels);
+                         uint32 numMipLevels,
+                         uint32 numSamples);
 
    /**
     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
@@ -755,6 +756,9 @@ struct svga_winsys_screen
 
    /** Have VGPU v10 hardware? */
    boolean have_vgpu10;
+
+   /** Have SM4_1 hardware? */
+   boolean have_sm4_1;
 
    /** To rebind resources at the beginnning of a new command buffer */
    boolean need_to_rebind_resources;

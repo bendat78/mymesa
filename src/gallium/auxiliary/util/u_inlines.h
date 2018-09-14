@@ -66,7 +66,7 @@ pipe_is_referenced(struct pipe_reference *src)
 /**
  * Update reference counting.
  * The old thing pointed to, if any, will be unreferenced.
- * Both 'ptr' and 'reference' may be NULL.
+ * Both 'dst' and 'src' may be NULL.
  * \return TRUE if the object's refcount hits zero and should be destroyed.
  */
 static inline boolean
@@ -75,7 +75,7 @@ pipe_reference_described(struct pipe_reference *dst,
                          debug_reference_descriptor get_desc)
 {
    if (dst != src) {
-      /* bump the reference.count first */
+      /* bump the src.count first */
       if (src) {
          MAYBE_UNUSED int count = p_atomic_inc_return(&src->count);
          assert(count != 1); /* src had to be referenced */
@@ -155,9 +155,9 @@ pipe_resource_reference(struct pipe_resource **dst, struct pipe_resource *src)
 }
 
 /**
- * Set *ptr to \p view with proper reference counting.
+ * Set *dst to \p src with proper reference counting.
  *
- * The caller must guarantee that \p view and *ptr must have been created in
+ * The caller must guarantee that \p src and *dst were created in
  * the same context (if they exist), and that this must be the current context.
  */
 static inline void

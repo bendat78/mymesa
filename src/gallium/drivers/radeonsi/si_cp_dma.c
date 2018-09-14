@@ -301,7 +301,7 @@ void si_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
 	      * of them are moved to SDMA thanks to this. */
 	     !ws->cs_is_buffer_referenced(sctx->gfx_cs, rdst->buf,
 				          RADEON_USAGE_READWRITE))) {
-		sctx->dma_clear_buffer(sctx, dst, offset, dma_clear_size, value);
+		si_sdma_clear_buffer(sctx, dst, offset, dma_clear_size, value);
 
 		offset += dma_clear_size;
 		size -= dma_clear_size;
@@ -433,22 +433,18 @@ static void si_cp_dma_realign_engine(struct si_context *sctx, unsigned size,
  *
  * \param user_flags	bitmask of SI_CPDMA_*
  */
-void si_copy_buffer(struct si_context *sctx,
-		    struct pipe_resource *dst, struct pipe_resource *src,
-		    uint64_t dst_offset, uint64_t src_offset, unsigned size,
-		    unsigned user_flags, enum si_cache_policy cache_policy)
+void si_cp_dma_copy_buffer(struct si_context *sctx,
+			   struct pipe_resource *dst, struct pipe_resource *src,
+			   uint64_t dst_offset, uint64_t src_offset, unsigned size,
+			   unsigned user_flags, enum si_coherency coher,
+			   enum si_cache_policy cache_policy)
 {
 	uint64_t main_dst_offset, main_src_offset;
 	unsigned skipped_size = 0;
 	unsigned realign_size = 0;
-	enum si_coherency coher = SI_COHERENCY_SHADER;
 	bool is_first = true;
 
-	if (!size)
-		return;
-
-	if (cache_policy == -1)
-		cache_policy = get_cache_policy(sctx, coher);
+	assert(size);
 
 	if (dst != src || dst_offset != src_offset) {
 		/* Mark the buffer range of destination as valid (initialized),
@@ -527,6 +523,20 @@ void si_copy_buffer(struct si_context *sctx,
 		si_cp_dma_realign_engine(sctx, realign_size, user_flags, coher,
 					 cache_policy, &is_first);
 	}
+}
+
+void si_copy_buffer(struct si_context *sctx,
+		    struct pipe_resource *dst, struct pipe_resource *src,
+		    uint64_t dst_offset, uint64_t src_offset, unsigned size)
+{
+	enum si_coherency coher = SI_COHERENCY_SHADER;
+	enum si_cache_policy cache_policy = get_cache_policy(sctx, coher);
+
+	if (!size)
+		return;
+
+	si_cp_dma_copy_buffer(sctx, dst, src, dst_offset, src_offset, size,
+			      0, coher, cache_policy);
 
 	if (cache_policy != L2_BYPASS)
 		r600_resource(dst)->TC_L2_dirty = true;
@@ -541,7 +551,8 @@ void cik_prefetch_TC_L2_async(struct si_context *sctx, struct pipe_resource *buf
 {
 	assert(sctx->chip_class >= CIK);
 
-	si_copy_buffer(sctx, buf, buf, offset, offset, size, SI_CPDMA_SKIP_ALL, L2_LRU);
+	si_cp_dma_copy_buffer(sctx, buf, buf, offset, offset, size,
+			      SI_CPDMA_SKIP_ALL, SI_COHERENCY_SHADER, L2_LRU);
 }
 
 static void cik_prefetch_shader_async(struct si_context *sctx,
@@ -555,7 +566,7 @@ static void cik_prefetch_shader_async(struct si_context *sctx,
 
 static void cik_prefetch_VBO_descriptors(struct si_context *sctx)
 {
-	if (!sctx->vertex_elements)
+	if (!sctx->vertex_elements || !sctx->vertex_elements->desc_list_byte_size)
 		return;
 
 	cik_prefetch_TC_L2_async(sctx, &sctx->vb_descriptors_buffer->b.b,

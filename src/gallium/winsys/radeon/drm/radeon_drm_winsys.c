@@ -362,11 +362,13 @@ static bool do_winsys_init(struct radeon_drm_winsys *ws)
     if (ws->info.drm_minor < 49)
         ws->info.vram_vis_size = MIN2(ws->info.vram_vis_size, 256*1024*1024);
 
-    /* Radeon allocates all buffers as contigous, which makes large allocations
+    /* Radeon allocates all buffers contiguously, which makes large allocations
      * unlikely to succeed. */
-    ws->info.max_alloc_size = MAX2(ws->info.vram_size, ws->info.gart_size) * 0.7;
     if (ws->info.has_dedicated_vram)
-        ws->info.max_alloc_size = MIN2(ws->info.vram_size * 0.7, ws->info.max_alloc_size);
+	    ws->info.max_alloc_size = ws->info.vram_size * 0.7;
+    else
+	    ws->info.max_alloc_size = ws->info.gart_size * 0.7;
+
     if (ws->info.drm_minor < 40)
         ws->info.max_alloc_size = MIN2(ws->info.max_alloc_size, 256*1024*1024);
     /* Both 32-bit and 64-bit address spaces only have 4GB. */
@@ -525,6 +527,10 @@ static bool do_winsys_init(struct radeon_drm_winsys *ws)
 
     radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_SH_PER_SE, NULL,
                          &ws->info.max_sh_per_se);
+    if (ws->gen == DRV_SI) {
+        ws->info.num_good_cu_per_sh = ws->info.num_good_compute_units /
+                                      (ws->info.max_se * ws->info.max_sh_per_se);
+    }
 
     radeon_get_drm_value(ws->fd, RADEON_INFO_ACCEL_WORKING2, NULL,
                          &ws->accel_working2);

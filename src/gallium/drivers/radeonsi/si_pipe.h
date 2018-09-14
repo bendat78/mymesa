@@ -1030,9 +1030,6 @@ struct si_context {
 			 unsigned src_level,
 			 const struct pipe_box *src_box);
 
-	void (*dma_clear_buffer)(struct si_context *sctx, struct pipe_resource *dst,
-				 uint64_t offset, uint64_t size, unsigned value);
-
 	struct si_tracked_regs			tracked_regs;
 };
 
@@ -1131,10 +1128,14 @@ void si_cp_dma_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
 void si_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
 		     uint64_t offset, uint64_t size, unsigned value,
 		     enum si_coherency coher);
+void si_cp_dma_copy_buffer(struct si_context *sctx,
+			   struct pipe_resource *dst, struct pipe_resource *src,
+			   uint64_t dst_offset, uint64_t src_offset, unsigned size,
+			   unsigned user_flags, enum si_coherency coher,
+			   enum si_cache_policy cache_policy);
 void si_copy_buffer(struct si_context *sctx,
 		    struct pipe_resource *dst, struct pipe_resource *src,
-		    uint64_t dst_offset, uint64_t src_offset, unsigned size,
-		    unsigned user_flags, enum si_cache_policy cache_policy);
+		    uint64_t dst_offset, uint64_t src_offset, unsigned size);
 void cik_prefetch_TC_L2_async(struct si_context *sctx, struct pipe_resource *buf,
 			      uint64_t offset, unsigned size);
 void cik_emit_prefetch_L2(struct si_context *sctx, bool vertex_stage_only);
@@ -1160,6 +1161,8 @@ void si_init_dma_functions(struct si_context *sctx);
 /* si_dma_cs.c */
 void si_dma_emit_timestamp(struct si_context *sctx, struct r600_resource *dst,
 			   uint64_t offset);
+void si_sdma_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
+			  uint64_t offset, uint64_t size, unsigned clear_value);
 void si_need_dma_space(struct si_context *ctx, unsigned num_dw,
 		       struct r600_resource *dst, struct r600_resource *src);
 void si_flush_dma_cs(struct si_context *ctx, unsigned flags,

@@ -682,8 +682,8 @@ void anv_DestroyInstance(
       anv_physical_device_finish(&instance->physicalDevice);
    }
 
-   vk_free(&instance->alloc, instance->app_info.app_name);
-   vk_free(&instance->alloc, instance->app_info.engine_name);
+   vk_free(&instance->alloc, (char *)instance->app_info.app_name);
+   vk_free(&instance->alloc, (char *)instance->app_info.engine_name);
 
    VG(VALGRIND_DESTROY_MEMPOOL(instance));
 
@@ -931,6 +931,14 @@ void anv_GetPhysicalDeviceFeatures2(
          features->storageBuffer8BitAccess = pdevice->info.gen >= 8;
          features->uniformAndStorageBuffer8BitAccess = pdevice->info.gen >= 8;
          features->storagePushConstant8 = pdevice->info.gen >= 8;
+         break;
+      }
+
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT: {
+         VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *features =
+            (VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *)ext;
+         features->vertexAttributeInstanceRateDivisor = VK_TRUE;
+         features->vertexAttributeInstanceRateZeroDivisor = VK_TRUE;
          break;
       }
 
