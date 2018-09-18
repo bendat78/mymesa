@@ -836,15 +836,10 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		result = emit_bitfield_insert(&ctx->ac, src[0], src[1], src[2], src[3]);
 		break;
 	case nir_op_bitfield_reverse:
-		result = ac_build_intrinsic(&ctx->ac, "llvm.bitreverse.i32", ctx->ac.i32, src, 1, AC_FUNC_ATTR_READNONE);
+		result = ac_build_bitfield_reverse(&ctx->ac, src[0]);
 		break;
 	case nir_op_bit_count:
-		if (ac_get_elem_bits(&ctx->ac, LLVMTypeOf(src[0])) == 32)
-			result = ac_build_intrinsic(&ctx->ac, "llvm.ctpop.i32", ctx->ac.i32, src, 1, AC_FUNC_ATTR_READNONE);
-		else {
-			result = ac_build_intrinsic(&ctx->ac, "llvm.ctpop.i64", ctx->ac.i64, src, 1, AC_FUNC_ATTR_READNONE);
-			result = LLVMBuildTrunc(ctx->ac.builder, result, ctx->ac.i32, "");
-		}
+		result = ac_build_bit_count(&ctx->ac, src[0]);
 		break;
 	case nir_op_vec2:
 	case nir_op_vec3:
@@ -2244,7 +2239,8 @@ static void get_image_coords(struct ac_nir_context *ctx,
 							       fmask_load_address[1],
 							       fmask_load_address[2],
 							       sample_index,
-							       get_image_descriptor(ctx, instr, AC_DESC_FMASK, false));
+							       get_sampler_desc(ctx, nir_instr_as_deref(instr->src[0].ssa->parent_instr),
+										AC_DESC_FMASK, NULL, false, false));
 	}
 	if (count == 1 && !gfx9_1d) {
 		if (instr->src[1].ssa->num_components)
