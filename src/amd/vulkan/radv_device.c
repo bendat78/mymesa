@@ -77,7 +77,9 @@ radv_device_get_cache_uuid(enum radeon_family family, void *uuid)
 	struct mesa_sha1 ctx;
 	unsigned char sha1[20];
 	unsigned ptr_size = sizeof(void*);
+
 	memset(uuid, 0, VK_UUID_SIZE);
+	_mesa_sha1_init(&ctx);
 
 	if (!radv_get_build_id(radv_device_get_cache_uuid, &ctx) ||
 	    !radv_get_build_id(LLVMInitializeAMDGPUTargetInfo, &ctx))
@@ -761,7 +763,7 @@ void radv_GetPhysicalDeviceFeatures(
 		.shaderCullDistance                       = true,
 		.shaderFloat64                            = true,
 		.shaderInt64                              = true,
-		.shaderInt16                              = true,
+		.shaderInt16                              = pdevice->rad_info.chip_class >= GFX9 && HAVE_LLVM >= 0x700,
 		.sparseBinding                            = true,
 		.variableMultisampleRate                  = true,
 		.inheritedQueries                         = true,
@@ -1061,6 +1063,7 @@ void radv_GetPhysicalDeviceProperties2(
 			properties->subgroupSize = 64;
 			properties->supportedStages = VK_SHADER_STAGE_ALL;
 			properties->supportedOperations =
+							VK_SUBGROUP_FEATURE_ARITHMETIC_BIT |
 							VK_SUBGROUP_FEATURE_BASIC_BIT |
 							VK_SUBGROUP_FEATURE_BALLOT_BIT |
 							VK_SUBGROUP_FEATURE_QUAD_BIT |
