@@ -40,6 +40,91 @@
 #include "fd6_format.h"
 #include "fd6_zsa.h"
 
+/* some bits in common w/ a4xx: */
+#include "a4xx/fd4_draw.h"
+
+static void
+draw_emit_indirect(struct fd_batch *batch, struct fd_ringbuffer *ring,
+				   enum pc_di_primtype primtype,
+				   enum pc_di_vis_cull_mode vismode,
+				   const struct pipe_draw_info *info,
+				   unsigned index_offset)
+{
+	struct fd_resource *ind = fd_resource(info->indirect->buffer);
+
+	if (info->index_size) {
+		struct pipe_resource *idx = info->index.resource;
+		unsigned max_indicies = (idx->width0 - info->indirect->offset) /
+			info->index_size;
+
+		OUT_PKT7(ring, CP_DRAW_INDX_INDIRECT, 6);
+		OUT_RINGP(ring, DRAW4(primtype, DI_SRC_SEL_DMA,
+							  fd4_size2indextype(info->index_size), 0),
+				  &batch->draw_patches);
+		OUT_RELOC(ring, fd_resource(idx)->bo,
+				  index_offset, 0, 0);
+		// XXX: Check A5xx vs A6xx
+		OUT_RING(ring, A5XX_CP_DRAW_INDX_INDIRECT_3_MAX_INDICES(max_indicies));
+		OUT_RELOC(ring, ind->bo, info->indirect->offset, 0, 0);
+	} else {
+		OUT_PKT7(ring, CP_DRAW_INDIRECT, 3);
+		OUT_RINGP(ring, DRAW4(primtype, DI_SRC_SEL_AUTO_INDEX, 0, 0),
+				  &batch->draw_patches);
+		OUT_RELOC(ring, ind->bo, info->indirect->offset, 0, 0);
+	}
+}
+
+static void
+draw_emit(struct fd_batch *batch, struct fd_ringbuffer *ring,
+		  enum pc_di_primtype primtype,
+		  enum pc_di_vis_cull_mode vismode,
+		  const struct pipe_draw_info *info,
+		  unsigned index_offset)
+{
+	if (info->index_size) {
+		assert(!info->has_user_indices);
+
+		struct pipe_resource *idx_buffer = info->index.resource;
+		uint32_t idx_size = info->index_size * info->count;
+		uint32_t idx_offset = index_offset + info->start * info->index_size;
+
+		/* leave vis mode blank for now, it will be patched up when
+		 * we know if we are binning or not
+		 */
+		uint32_t draw = CP_DRAW_INDX_OFFSET_0_PRIM_TYPE(primtype) |
+			CP_DRAW_INDX_OFFSET_0_SOURCE_SELECT(DI_SRC_SEL_DMA) |
+			CP_DRAW_INDX_OFFSET_0_INDEX_SIZE(fd4_size2indextype(info->index_size)) |
+			0x2000;
+
+		OUT_PKT7(ring, CP_DRAW_INDX_OFFSET, 7);
+		if (vismode == USE_VISIBILITY) {
+			OUT_RINGP(ring, draw, &batch->draw_patches);
+		} else {
+			OUT_RING(ring, draw);
+		}
+		OUT_RING(ring, info->instance_count);    /* NumInstances */
+		OUT_RING(ring, info->count);             /* NumIndices */
+		OUT_RING(ring, 0x0);           /* XXX */
+		OUT_RELOC(ring, fd_resource(idx_buffer)->bo, idx_offset, 0, 0);
+		OUT_RING (ring, idx_size);
+	} else {
+		/* leave vis mode blank for now, it will be patched up when
+		 * we know if we are binning or not
+		 */
+		uint32_t draw = CP_DRAW_INDX_OFFSET_0_PRIM_TYPE(primtype) |
+			CP_DRAW_INDX_OFFSET_0_SOURCE_SELECT(DI_SRC_SEL_AUTO_INDEX) |
+			0x2000;
+
+		OUT_PKT7(ring, CP_DRAW_INDX_OFFSET, 3);
+		if (vismode == USE_VISIBILITY) {
+			OUT_RINGP(ring, draw, &batch->draw_patches);
+		} else {
+			OUT_RING(ring, draw);
+		}
+		OUT_RING(ring, info->instance_count);    /* NumInstances */
+		OUT_RING(ring, info->count);             /* NumIndices */
+	}
+}
 
 static void
 draw_impl(struct fd_context *ctx, struct fd_ringbuffer *ring,
@@ -62,9 +147,27 @@ draw_impl(struct fd_context *ctx, struct fd_ringbuffer *ring,
 			info->restart_index : 0xffffffff);
 
 	fd6_emit_render_cntl(ctx, false, emit->key.binning_pass);
-	fd6_draw_emit(ctx->batch, ring, primtype,
-			emit->key.binning_pass ? IGNORE_VISIBILITY : USE_VISIBILITY,
-			info, index_offset);
+
+	/* for debug after a lock up, write a unique counter value
+	 * to scratch7 for each draw, to make it easier to match up
+	 * register dumps to cmdstream.  The combination of IB
+	 * (scratch6) and DRAW is enough to "triangulate" the
+	 * particular draw that caused lockup.
+	 */
+	emit_marker6(ring, 7);
+
+	if (info->indirect) {
+		draw_emit_indirect(ctx->batch, ring, primtype,
+						   emit->key.binning_pass ? IGNORE_VISIBILITY : USE_VISIBILITY,
+						   info, index_offset);
+	} else {
+		draw_emit(ctx->batch, ring, primtype,
+				  emit->key.binning_pass ? IGNORE_VISIBILITY : USE_VISIBILITY,
+				  info, index_offset);
+	}
+
+	emit_marker6(ring, 7);
+	fd_reset_wfi(ctx->batch);
 }
 
 /* fixup dirty shader state in case some "unrelated" (from the state-
@@ -145,7 +248,8 @@ fd6_draw_vbo(struct fd_context *ctx, const struct pipe_draw_info *info,
 	/* figure out whether we need to disable LRZ write for binning
 	 * pass using draw pass's fp:
 	 */
-	emit.no_lrz_write = fp->writes_pos || fp->has_kill;
+	// TODO disable until lrz is wired up:
+	emit.no_lrz_write = true; // fp->writes_pos || fp->has_kill;
 
 	emit.key.binning_pass = false;
 	emit.dirty = dirty;
@@ -350,11 +454,6 @@ fd6_clear(struct fd_context *ctx, unsigned buffers,
 	if ((buffers & (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL)) &&
 			is_z32(pfb->zsbuf->format))
 		return false;
-
-	ctx->batch->max_scissor.minx = MIN2(ctx->batch->max_scissor.minx, scissor->minx);
-	ctx->batch->max_scissor.miny = MIN2(ctx->batch->max_scissor.miny, scissor->miny);
-	ctx->batch->max_scissor.maxx = MAX2(ctx->batch->max_scissor.maxx, scissor->maxx);
-	ctx->batch->max_scissor.maxy = MAX2(ctx->batch->max_scissor.maxy, scissor->maxy);
 
 	fd6_emit_render_cntl(ctx, true, false);
 

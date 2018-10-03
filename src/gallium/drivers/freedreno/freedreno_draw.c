@@ -137,16 +137,22 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	mtx_lock(&ctx->screen->lock);
 
 	if (fd_depth_enabled(ctx)) {
-		if (fd_resource(pfb->zsbuf->texture)->valid)
+		if (fd_resource(pfb->zsbuf->texture)->valid) {
 			restore_buffers |= FD_BUFFER_DEPTH;
+		} else {
+			batch->invalidated |= FD_BUFFER_DEPTH;
+		}
 		buffers |= FD_BUFFER_DEPTH;
 		resource_written(batch, pfb->zsbuf->texture);
 		batch->gmem_reason |= FD_GMEM_DEPTH_ENABLED;
 	}
 
 	if (fd_stencil_enabled(ctx)) {
-		if (fd_resource(pfb->zsbuf->texture)->valid)
+		if (fd_resource(pfb->zsbuf->texture)->valid) {
 			restore_buffers |= FD_BUFFER_STENCIL;
+		} else {
+			batch->invalidated |= FD_BUFFER_STENCIL;
+		}
 		buffers |= FD_BUFFER_STENCIL;
 		resource_written(batch, pfb->zsbuf->texture);
 		batch->gmem_reason |= FD_GMEM_STENCIL_ENABLED;
@@ -163,10 +169,13 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 
 		surf = pfb->cbufs[i]->texture;
 
-		resource_written(batch, surf);
-
-		if (fd_resource(surf)->valid)
+		if (fd_resource(surf)->valid) {
 			restore_buffers |= PIPE_CLEAR_COLOR0 << i;
+		} else {
+			batch->invalidated |= PIPE_CLEAR_COLOR0 << i;
+		}
+
+		resource_written(batch, surf);
 
 		buffers |= PIPE_CLEAR_COLOR0 << i;
 
@@ -242,7 +251,7 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	ctx->stats.prims_generated += prims;
 
 	/* any buffers that haven't been cleared yet, we need to restore: */
-	batch->restore |= restore_buffers & (FD_BUFFER_ALL & ~batch->cleared);
+	batch->restore |= restore_buffers & (FD_BUFFER_ALL & ~batch->invalidated);
 	/* and any buffers used, need to be resolved: */
 	batch->resolve |= buffers;
 
@@ -336,12 +345,6 @@ fd_blitter_clear(struct pipe_context *pctx, unsigned buffers,
 	fd_blitter_pipe_end(ctx);
 }
 
-/* TODO figure out how to make better use of existing state mechanism
- * for clear (and possibly gmem->mem / mem->gmem) so we can (a) keep
- * track of what state really actually changes, and (b) reduce the code
- * in the a2xx/a3xx parts.
- */
-
 static void
 fd_clear(struct pipe_context *pctx, unsigned buffers,
 		const union pipe_color_union *color, double depth, unsigned stencil)
@@ -349,7 +352,6 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	struct fd_context *ctx = fd_context(pctx);
 	struct fd_batch *batch = fd_context_batch(ctx);
 	struct pipe_framebuffer_state *pfb = &batch->framebuffer;
-	struct pipe_scissor_state *scissor = fd_context_get_scissor(ctx);
 	unsigned cleared_buffers;
 	int i;
 
@@ -362,6 +364,14 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 		fd_context_all_dirty(ctx);
 	}
 
+	/* pctx->clear() is only for full-surface clears, so scissor is
+	 * equivalent to having GL_SCISSOR_TEST disabled:
+	 */
+	batch->max_scissor.minx = 0;
+	batch->max_scissor.miny = 0;
+	batch->max_scissor.maxx = pfb->width;
+	batch->max_scissor.maxy = pfb->height;
+
 	/* for bookkeeping about which buffers have been cleared (and thus
 	 * can fully or partially skip mem2gmem) we need to ignore buffers
 	 * that have already had a draw, in case apps do silly things like
@@ -370,19 +380,9 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	 * the depth buffer, etc)
 	 */
 	cleared_buffers = buffers & (FD_BUFFER_ALL & ~batch->restore);
+	batch->cleared |= cleared_buffers;
+	batch->invalidated |= cleared_buffers;
 
-	/* do we have full-screen scissor? */
-	if (!memcmp(scissor, &ctx->disabled_scissor, sizeof(*scissor))) {
-		batch->cleared |= cleared_buffers;
-	} else {
-		batch->partial_cleared |= cleared_buffers;
-		if (cleared_buffers & PIPE_CLEAR_COLOR)
-			batch->cleared_scissor.color = *scissor;
-		if (cleared_buffers & PIPE_CLEAR_DEPTH)
-			batch->cleared_scissor.depth = *scissor;
-		if (cleared_buffers & PIPE_CLEAR_STENCIL)
-			batch->cleared_scissor.stencil = *scissor;
-	}
 	batch->resolve |= buffers;
 	batch->needs_flush = true;
 
@@ -429,6 +429,8 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	if (fallback) {
 		fd_blitter_clear(pctx, buffers, color, depth, stencil);
 	}
+
+	fd_batch_check_size(batch);
 }
 
 static void
@@ -467,7 +469,7 @@ fd_launch_grid(struct pipe_context *pctx, const struct pipe_grid_info *info)
 	 * read vs written, so just assume the worst
 	 */
 	foreach_bit(i, ctx->shaderbuf[PIPE_SHADER_COMPUTE].enabled_mask)
-		resource_read(batch, ctx->shaderbuf[PIPE_SHADER_COMPUTE].sb[i].buffer);
+		resource_written(batch, ctx->shaderbuf[PIPE_SHADER_COMPUTE].sb[i].buffer);
 
 	foreach_bit(i, ctx->shaderimg[PIPE_SHADER_COMPUTE].enabled_mask) {
 		struct pipe_image_view *img =

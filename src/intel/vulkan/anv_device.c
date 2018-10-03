@@ -37,6 +37,7 @@
 #include "util/build_id.h"
 #include "util/disk_cache.h"
 #include "util/mesa-sha1.h"
+#include "git_sha1.h"
 #include "vk_util.h"
 #include "common/gen_defines.h"
 
@@ -1114,6 +1115,28 @@ void anv_GetPhysicalDeviceProperties2(
          break;
       }
 
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES_KHR: {
+         VkPhysicalDeviceDriverPropertiesKHR *driver_props =
+            (VkPhysicalDeviceDriverPropertiesKHR *) ext;
+
+         driver_props->driverID = VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA_KHR;
+         memset(driver_props->driverName, 0, VK_MAX_DRIVER_NAME_SIZE_KHR);
+         strcpy(driver_props->driverName,
+                "Intel open-source Mesa driver");
+
+         memset(driver_props->driverInfo, 0, VK_MAX_DRIVER_INFO_SIZE_KHR);
+         strcpy(driver_props->driverInfo,
+                "Mesa " PACKAGE_VERSION MESA_GIT_SHA1);
+
+         driver_props->conformanceVersion = (VkConformanceVersionKHR) {
+            .major = 1,
+            .minor = 1,
+            .subminor = 2,
+            .patch = 0,
+         };
+         break;
+      }
+
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES: {
          VkPhysicalDeviceIDProperties *id_props =
             (VkPhysicalDeviceIDProperties *)ext;
@@ -1566,9 +1589,18 @@ vk_priority_to_gen(int priority)
 }
 
 static void
-anv_device_init_hiz_clear_batch(struct anv_device *device)
+anv_device_init_hiz_clear_value_bo(struct anv_device *device)
 {
    anv_bo_init_new(&device->hiz_clear_bo, device, 4096);
+
+   if (device->instance->physicalDevice.has_exec_async)
+      device->hiz_clear_bo.flags |= EXEC_OBJECT_ASYNC;
+
+   if (device->instance->physicalDevice.use_softpin)
+      device->hiz_clear_bo.flags |= EXEC_OBJECT_PINNED;
+
+   anv_vma_alloc(device, &device->hiz_clear_bo);
+
    uint32_t *map = anv_gem_mmap(device, device->hiz_clear_bo.gem_handle,
                                 0, 4096, 0);
 
@@ -1802,7 +1834,7 @@ VkResult anv_CreateDevice(
    anv_device_init_trivial_batch(device);
 
    if (device->info.gen >= 10)
-      anv_device_init_hiz_clear_batch(device);
+      anv_device_init_hiz_clear_value_bo(device);
 
    anv_scratch_pool_init(device, &device->scratch_pool);
 
@@ -2279,7 +2311,7 @@ VkResult anv_AllocateMemory(
             const uint32_t i915_tiling =
                isl_tiling_to_i915_tiling(image->planes[0].surface.isl.tiling);
             int ret = anv_gem_set_tiling(device, mem->bo->gem_handle,
-                                         image->planes[0].surface.isl.row_pitch,
+                                         image->planes[0].surface.isl.row_pitch_B,
                                          i915_tiling);
             if (ret) {
                anv_bo_cache_release(device, &device->bo_cache, mem->bo);
@@ -2897,9 +2929,9 @@ anv_fill_buffer_surface_state(struct anv_device *device, struct anv_state state,
    isl_buffer_fill_state(&device->isl_dev, state.map,
                          .address = anv_address_physical(address),
                          .mocs = device->default_mocs,
-                         .size = range,
+                         .size_B = range,
                          .format = format,
-                         .stride = stride);
+                         .stride_B = stride);
 
    anv_state_flush(device, state);
 }
