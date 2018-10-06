@@ -24,7 +24,8 @@ SUBDIRS = . \
 	tests/fast_idiv_by_const \
 	tests/hash_table \
 	tests/string_buffer \
-	tests/set
+	tests/set \
+	tests/uint_inverse
 
 if HAVE_STD_CXX11
 SUBDIRS += tests/vma
