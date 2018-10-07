@@ -463,14 +463,13 @@ character_data(void *data, const XML_Char *s, int len)
 }
 
 static int
-devinfo_to_gen(const struct gen_device_info *devinfo)
+devinfo_to_gen(const struct gen_device_info *devinfo, bool x10)
 {
-   int value = 10 * devinfo->gen;
+   if (devinfo->is_baytrail || devinfo->is_haswell) {
+      return devinfo->gen * 10 + 5;
+   }
 
-   if (devinfo->is_baytrail || devinfo->is_haswell)
-      value += 5;
-
-   return value;
+   return x10 ? devinfo->gen * 10 : devinfo->gen;
 }
 
 static uint32_t zlib_inflate(const void *compressed_data,
@@ -526,6 +525,30 @@ static uint32_t _hash_uint32(const void *key)
    return (uint32_t) (uintptr_t) key;
 }
 
+static struct gen_spec *
+gen_spec_init(void)
+{
+   struct gen_spec *spec;
+   spec = rzalloc(NULL, struct gen_spec);
+   if (spec == NULL)
+      return NULL;
+
+   spec->commands =
+      _mesa_hash_table_create(spec, _mesa_hash_string, _mesa_key_string_equal);
+   spec->structs =
+      _mesa_hash_table_create(spec, _mesa_hash_string, _mesa_key_string_equal);
+   spec->registers_by_name =
+      _mesa_hash_table_create(spec, _mesa_hash_string, _mesa_key_string_equal);
+   spec->registers_by_offset =
+      _mesa_hash_table_create(spec, _hash_uint32, _mesa_key_pointer_equal);
+   spec->enums =
+      _mesa_hash_table_create(spec, _mesa_hash_string, _mesa_key_string_equal);
+   spec->access_cache =
+      _mesa_hash_table_create(spec, _mesa_hash_string, _mesa_key_string_equal);
+
+   return spec;
+}
+
 struct gen_spec *
 gen_spec_load(const struct gen_device_info *devinfo)
 {
@@ -534,7 +557,7 @@ gen_spec_load(const struct gen_device_info *devinfo)
    uint8_t *text_data = NULL;
    uint32_t text_offset = 0, text_length = 0;
    MAYBE_UNUSED uint32_t total_length;
-   uint32_t gen_10 = devinfo_to_gen(devinfo);
+   uint32_t gen_10 = devinfo_to_gen(devinfo, true);
 
    for (int i = 0; i < ARRAY_SIZE(genxml_files_table); i++) {
       if (genxml_files_table[i].gen_10 == gen_10) {
@@ -560,21 +583,11 @@ gen_spec_load(const struct gen_device_info *devinfo)
    XML_SetElementHandler(ctx.parser, start_element, end_element);
    XML_SetCharacterDataHandler(ctx.parser, character_data);
 
-   ctx.spec = rzalloc(NULL, struct gen_spec);
-
-   ctx.spec->commands =
-      _mesa_hash_table_create(ctx.spec, _mesa_hash_string, _mesa_key_string_equal);
-   ctx.spec->structs =
-      _mesa_hash_table_create(ctx.spec, _mesa_hash_string, _mesa_key_string_equal);
-   ctx.spec->registers_by_name =
-      _mesa_hash_table_create(ctx.spec, _mesa_hash_string, _mesa_key_string_equal);
-   ctx.spec->registers_by_offset =
-      _mesa_hash_table_create(ctx.spec, _hash_uint32, _mesa_key_pointer_equal);
-   ctx.spec->enums =
-      _mesa_hash_table_create(ctx.spec, _mesa_hash_string, _mesa_key_string_equal);
-
-   ctx.spec->access_cache =
-      _mesa_hash_table_create(ctx.spec, _mesa_hash_string, _mesa_key_string_equal);
+   ctx.spec = gen_spec_init();
+   if (ctx.spec == NULL) {
+      fprintf(stderr, "Failed to create gen_spec\n");
+      return NULL;
+   }
 
    total_length = zlib_inflate(compress_genxmls,
                                sizeof(compress_genxmls),
@@ -613,7 +626,7 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
    FILE *input;
 
    len = snprintf(filename, filename_len, "%s/gen%i.xml",
-                  path, devinfo_to_gen(devinfo));
+                  path, devinfo_to_gen(devinfo, false));
    assert(len < filename_len);
 
    input = fopen(filename, "r");
@@ -636,24 +649,31 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
    XML_SetElementHandler(ctx.parser, start_element, end_element);
    XML_SetCharacterDataHandler(ctx.parser, character_data);
    ctx.loc.filename = filename;
-   ctx.spec = rzalloc(NULL, struct gen_spec);
+
+   ctx.spec = gen_spec_init();
+   if (ctx.spec == NULL) {
+      fprintf(stderr, "Failed to create gen_spec\n");
+      goto end;
+   }
 
    do {
       buf = XML_GetBuffer(ctx.parser, XML_BUFFER_SIZE);
       len = fread(buf, 1, XML_BUFFER_SIZE, input);
-      if (len == 0) {
+      if (ferror(input)) {
          fprintf(stderr, "fread: %m\n");
-         free(ctx.spec);
+         gen_spec_destroy(ctx.spec);
          ctx.spec = NULL;
          goto end;
-      }
+      } else if (feof(input))
+         goto end;
+
       if (XML_ParseBuffer(ctx.parser, len, len == 0) == 0) {
          fprintf(stderr,
                  "Error parsing XML at line %ld col %ld: %s\n",
                  XML_GetCurrentLineNumber(ctx.parser),
                  XML_GetCurrentColumnNumber(ctx.parser),
                  XML_ErrorString(XML_GetErrorCode(ctx.parser)));
-         free(ctx.spec);
+         gen_spec_destroy(ctx.spec);
          ctx.spec = NULL;
          goto end;
       }
@@ -664,6 +684,12 @@ gen_spec_load_from_path(const struct gen_device_info *devinfo,
 
    fclose(input);
    free(filename);
+
+   /* free ctx.spec if genxml is empty */
+   if (ctx.spec && _mesa_hash_table_num_entries(ctx.spec->commands) == 0) {
+      gen_spec_destroy(ctx.spec);
+      return NULL;
+   }
 
    return ctx.spec;
 }

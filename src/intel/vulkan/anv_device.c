@@ -1069,7 +1069,7 @@ void anv_GetPhysicalDeviceProperties(
       .maxClipDistances                         = 8,
       .maxCullDistances                         = 8,
       .maxCombinedClipAndCullDistances          = 8,
-      .discreteQueuePriorities                  = 1,
+      .discreteQueuePriorities                  = 2,
       .pointSizeRange                           = { 0.125, 255.875 },
       .lineWidthRange                           = { 0.0, 7.9921875 },
       .pointSizeGranularity                     = (1.0 / 8.0),
@@ -2255,8 +2255,8 @@ VkResult anv_AllocateMemory(
              fd_info->handleType ==
                VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
 
-      result = anv_bo_cache_import(device, &device->bo_cache,
-                                   fd_info->fd, bo_flags, &mem->bo);
+      result = anv_bo_cache_import(device, &device->bo_cache, fd_info->fd,
+                                   bo_flags | ANV_BO_EXTERNAL, &mem->bo);
       if (result != VK_SUCCESS)
          goto fail;
 
@@ -2293,6 +2293,11 @@ VkResult anv_AllocateMemory(
        */
       close(fd_info->fd);
    } else {
+      const VkExportMemoryAllocateInfoKHR *fd_info =
+         vk_find_struct_const(pAllocateInfo->pNext, EXPORT_MEMORY_ALLOCATE_INFO_KHR);
+      if (fd_info && fd_info->handleTypes)
+         bo_flags |= ANV_BO_EXTERNAL;
+
       result = anv_bo_cache_alloc(device, &device->bo_cache,
                                   pAllocateInfo->allocationSize, bo_flags,
                                   &mem->bo);

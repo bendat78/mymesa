@@ -1053,8 +1053,8 @@ void radv_CmdCopyQueryPoolResults(
 				uint64_t avail_dest_va = dest_va + elem_size;
 
 				radeon_emit(cs, PKT3(PKT3_COPY_DATA, 4, 0));
-				radeon_emit(cs, COPY_DATA_SRC_SEL(COPY_DATA_MEM) |
-						COPY_DATA_DST_SEL(COPY_DATA_MEM));
+				radeon_emit(cs, COPY_DATA_SRC_SEL(COPY_DATA_SRC_MEM) |
+						COPY_DATA_DST_SEL(COPY_DATA_DST_MEM_GRBM));
 				radeon_emit(cs, local_src_va);
 				radeon_emit(cs, local_src_va >> 32);
 				radeon_emit(cs, avail_dest_va);
@@ -1062,8 +1062,8 @@ void radv_CmdCopyQueryPoolResults(
 			}
 
 			radeon_emit(cs, PKT3(PKT3_COPY_DATA, 4, 0));
-			radeon_emit(cs, COPY_DATA_SRC_SEL(COPY_DATA_MEM) |
-					COPY_DATA_DST_SEL(COPY_DATA_MEM) |
+			radeon_emit(cs, COPY_DATA_SRC_SEL(COPY_DATA_SRC_MEM) |
+					COPY_DATA_DST_SEL(COPY_DATA_DST_MEM_GRBM) |
 					((flags & VK_QUERY_RESULT_64_BIT) ? COPY_DATA_COUNT_SEL : 0));
 			radeon_emit(cs, local_src_va);
 			radeon_emit(cs, local_src_va >> 32);
@@ -1088,20 +1088,18 @@ void radv_CmdResetQueryPool(
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	RADV_FROM_HANDLE(radv_query_pool, pool, queryPool);
+	uint32_t value = pool->type == VK_QUERY_TYPE_TIMESTAMP
+			 ? TIMESTAMP_NOT_READY : 0;
 	uint32_t flush_bits = 0;
 
 	flush_bits |= radv_fill_buffer(cmd_buffer, pool->bo,
 				       firstQuery * pool->stride,
-				       queryCount * pool->stride, 0);
+				       queryCount * pool->stride, value);
 
-	if (pool->type == VK_QUERY_TYPE_TIMESTAMP ||
-	    pool->type == VK_QUERY_TYPE_PIPELINE_STATISTICS) {
-		uint32_t value = pool->type == VK_QUERY_TYPE_TIMESTAMP
-				 ? TIMESTAMP_NOT_READY : 0;
-
+	if (pool->type == VK_QUERY_TYPE_PIPELINE_STATISTICS) {
 		flush_bits |= radv_fill_buffer(cmd_buffer, pool->bo,
 					       pool->availability_offset + firstQuery * 4,
-					       queryCount * 4, value);
+					       queryCount * 4, 0);
 	}
 
 	if (flush_bits) {

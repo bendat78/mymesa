@@ -45,13 +45,6 @@ struct si_shader_selector;
 struct si_texture;
 struct si_qbo_state;
 
-/* State atoms are callbacks which write a sequence of packets into a GPU
- * command buffer (AKA indirect buffer, AKA IB, AKA command stream, AKA CS).
- */
-struct si_atom {
-	void (*emit)(struct si_context *ctx);
-};
-
 struct si_state_blend {
 	struct si_pm4_state	pm4;
 	uint32_t		cb_target_mask;
@@ -284,11 +277,49 @@ enum si_tracked_reg {
 
 	SI_TRACKED_PA_SC_CLIPRECT_RULE,
 
+	SI_TRACKED_VGT_ESGS_RING_ITEMSIZE,
+
+	SI_TRACKED_VGT_GSVS_RING_OFFSET_1, /* 4 consecutive registers */
+	SI_TRACKED_VGT_GSVS_RING_OFFSET_2,
+	SI_TRACKED_VGT_GSVS_RING_OFFSET_3,
+	SI_TRACKED_VGT_GS_OUT_PRIM_TYPE,
+
+	SI_TRACKED_VGT_GSVS_RING_ITEMSIZE,
+	SI_TRACKED_VGT_GS_MAX_VERT_OUT,
+
+	SI_TRACKED_VGT_GS_VERT_ITEMSIZE, /* 4 consecutive registers */
+	SI_TRACKED_VGT_GS_VERT_ITEMSIZE_1,
+	SI_TRACKED_VGT_GS_VERT_ITEMSIZE_2,
+	SI_TRACKED_VGT_GS_VERT_ITEMSIZE_3,
+
+	SI_TRACKED_VGT_GS_INSTANCE_CNT,
+	SI_TRACKED_VGT_GS_ONCHIP_CNTL,
+	SI_TRACKED_VGT_GS_MAX_PRIMS_PER_SUBGROUP,
+	SI_TRACKED_VGT_GS_MODE,
+	SI_TRACKED_VGT_PRIMITIVEID_EN,
+	SI_TRACKED_VGT_REUSE_OFF,
+	SI_TRACKED_SPI_VS_OUT_CONFIG,
+	SI_TRACKED_SPI_SHADER_POS_FORMAT,
+	SI_TRACKED_PA_CL_VTE_CNTL,
+
+	SI_TRACKED_SPI_PS_INPUT_ENA, /* 2 consecutive registers */
+	SI_TRACKED_SPI_PS_INPUT_ADDR,
+
+	SI_TRACKED_SPI_BARYC_CNTL,
+	SI_TRACKED_SPI_PS_IN_CONTROL,
+
+	SI_TRACKED_SPI_SHADER_Z_FORMAT, /* 2 consecutive registers */
+	SI_TRACKED_SPI_SHADER_COL_FORMAT,
+
+	SI_TRACKED_CB_SHADER_MASK,
+	SI_TRACKED_VGT_TF_PARAM,
+	SI_TRACKED_VGT_VERTEX_REUSE_BLOCK_CNTL,
+
 	SI_NUM_TRACKED_REGS,
 };
 
 struct si_tracked_regs {
-	uint32_t		reg_saved;
+	uint64_t		reg_saved;
 	uint32_t		reg_value[SI_NUM_TRACKED_REGS];
 	uint32_t		spi_ps_input_cntl[32];
 };

@@ -29,7 +29,6 @@
  */
 
 #include <xf86drm.h>
-#include <fcntl.h>
 #include "GL/mesa_glinterop.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
@@ -45,14 +44,27 @@
 #include "main/bufferobj.h"
 #include "main/texobj.h"
 
+#include "dri_util.h"
+
 #include "dri_helpers.h"
 #include "dri_drawable.h"
 #include "dri_query_renderer.h"
-#include "dri2_buffer.h"
 
 #ifndef DRM_FORMAT_MOD_INVALID
 #define DRM_FORMAT_MOD_INVALID ((1ULL<<56) - 1)
 #endif
+
+struct dri2_buffer
+{
+   __DRIbuffer base;
+   struct pipe_resource *resource;
+};
+
+static inline struct dri2_buffer *
+dri2_buffer(__DRIbuffer * driBufferPriv)
+{
+   return (struct dri2_buffer *) driBufferPriv;
+}
 
 static const int fourcc_formats[] = {
    __DRI_IMAGE_FOURCC_ARGB2101010,
@@ -2090,7 +2102,6 @@ dri2_init_screen(__DRIscreen * sPriv)
    struct pipe_screen *pscreen = NULL;
    const struct drm_conf_ret *throttle_ret;
    const struct drm_conf_ret *dmabuf_ret;
-   int fd;
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
@@ -2102,11 +2113,7 @@ dri2_init_screen(__DRIscreen * sPriv)
 
    sPriv->driverPrivate = (void *)screen;
 
-   if (screen->fd < 0 || (fd = fcntl(screen->fd, F_DUPFD_CLOEXEC, 3)) < 0)
-      goto free_screen;
-
-
-   if (pipe_loader_drm_probe_fd(&screen->dev, fd)) {
+   if (pipe_loader_drm_probe_fd(&screen->dev, screen->fd)) {
       dri_init_options(screen);
 
       pscreen = pipe_loader_create_screen(screen->dev);
@@ -2167,10 +2174,7 @@ destroy_screen:
 release_pipe:
    if (screen->dev)
       pipe_loader_release(&screen->dev, 1);
-   else
-      close(fd);
 
-free_screen:
    FREE(screen);
    return NULL;
 }
@@ -2199,10 +2203,7 @@ dri_kms_init_screen(__DRIscreen * sPriv)
 
    sPriv->driverPrivate = (void *)screen;
 
-   if (screen->fd < 0 || (fd = fcntl(screen->fd, F_DUPFD_CLOEXEC, 3)) < 0)
-      goto free_screen;
-
-   if (pipe_loader_sw_probe_kms(&screen->dev, fd)) {
+   if (pipe_loader_sw_probe_kms(&screen->dev, screen->fd)) {
       dri_init_options(screen);
       pscreen = pipe_loader_create_screen(screen->dev);
    }
@@ -2244,10 +2245,7 @@ destroy_screen:
 release_pipe:
    if (screen->dev)
       pipe_loader_release(&screen->dev, 1);
-   else
-      close(fd);
 
-free_screen:
    FREE(screen);
 #endif // GALLIUM_SOFTPIPE
    return NULL;

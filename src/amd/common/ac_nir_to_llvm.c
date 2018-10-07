@@ -3311,7 +3311,7 @@ static LLVMValueRef apply_round_slice(struct ac_llvm_context *ctx,
 				      LLVMValueRef coord)
 {
 	coord = ac_to_float(ctx, coord);
-	coord = ac_build_intrinsic(ctx, "llvm.rint.f32", ctx->f32, &coord, 1, 0);
+	coord = ac_build_round(ctx, coord);
 	coord = ac_to_integer(ctx, coord);
 	return coord;
 }
@@ -3928,7 +3928,7 @@ setup_shared(struct ac_nir_context *ctx,
 			LLVMAddGlobalInAddressSpace(
 			   ctx->ac.module, glsl_to_llvm_type(&ctx->ac, variable->type),
 			   variable->name ? variable->name : "",
-			   AC_LOCAL_ADDR_SPACE);
+			   AC_ADDR_SPACE_LDS);
 		_mesa_hash_table_insert(ctx->vars, variable, shared);
 	}
 }

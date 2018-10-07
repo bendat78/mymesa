@@ -671,7 +671,7 @@ static void si_emit_draw_packets(struct si_context *sctx,
 				       t->stride_in_dw);
 
 		radeon_emit(cs, PKT3(PKT3_COPY_DATA, 4, 0));
-		radeon_emit(cs, COPY_DATA_SRC_SEL(COPY_DATA_MEM) |
+		radeon_emit(cs, COPY_DATA_SRC_SEL(COPY_DATA_SRC_MEM) |
 			    COPY_DATA_DST_SEL(COPY_DATA_REG) |
 			    COPY_DATA_WR_CONFIRM);
 		radeon_emit(cs, va);     /* src address lo */
@@ -962,7 +962,7 @@ void si_emit_cache_flush(struct si_context *sctx)
 	if (flags & SI_CONTEXT_CS_PARTIAL_FLUSH &&
 	    sctx->compute_is_busy) {
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
-		radeon_emit(cs, EVENT_TYPE(V_028A90_CS_PARTIAL_FLUSH | EVENT_INDEX(4)));
+		radeon_emit(cs, EVENT_TYPE(V_028A90_CS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 		sctx->num_cs_flushes++;
 		sctx->compute_is_busy = false;
 	}
