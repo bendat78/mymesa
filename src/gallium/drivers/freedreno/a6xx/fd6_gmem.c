@@ -159,9 +159,12 @@ emit_zs(struct fd_ringbuffer *ring, struct pipe_surface *zsbuf,
 
 		if (rsc->lrz) {
 			OUT_PKT4(ring, REG_A6XX_GRAS_LRZ_BUFFER_BASE_LO, 5);
-			OUT_RELOCW(ring, rsc->lrz, 0x1000, 0, 0);
+			OUT_RELOCW(ring, rsc->lrz, 0, 0, 0);
 			OUT_RING(ring, A6XX_GRAS_LRZ_BUFFER_PITCH_PITCH(rsc->lrz_pitch));
-			OUT_RELOCW(ring, rsc->lrz, 0, 0, 0); /* GRAS_LRZ_FAST_CLEAR_BUFFER_BASE_LO/HI */
+			//OUT_RELOCW(ring, rsc->lrz, 0, 0, 0); /* GRAS_LRZ_FAST_CLEAR_BUFFER_BASE_LO/HI */
+			// XXX a6xx seems to use a different buffer here.. not sure what for..
+			OUT_RING(ring, 0x00000000);
+			OUT_RING(ring, 0x00000000);
 		} else {
 			OUT_PKT4(ring, REG_A6XX_GRAS_LRZ_BUFFER_BASE_LO, 5);
 			OUT_RING(ring, 0x00000000);
@@ -441,13 +444,12 @@ fd6_emit_tile_init(struct fd_batch *batch)
 
 	fd6_emit_restore(batch, ring);
 
+	fd6_emit_lrz_flush(ring);
+
 	if (batch->lrz_clear)
 		ctx->emit_ib(ring, batch->lrz_clear);
 
-	fd6_emit_lrz_flush(ring);
-
-	OUT_PKT7(ring, CP_EVENT_WRITE, 1);
-	OUT_RING(ring, 0x31); /* vertex cache invalidate? */
+	fd6_cache_flush(batch, ring);
 
 	OUT_PKT7(ring, CP_SKIP_IB2_ENABLE_GLOBAL, 1);
 	OUT_RING(ring, 0x0);
@@ -469,7 +471,6 @@ fd6_emit_tile_init(struct fd_batch *batch)
 				A6XX_RB_BIN_CONTROL_BINNING_PASS | 0x6000000);
 		update_render_cntl(batch, true);
 		emit_binning_pass(batch);
-		fd6_emit_lrz_flush(ring);
 		patch_draws(batch, USE_VISIBILITY);
 
 		set_bin_size(ring, gmem->bin_w, gmem->bin_h,
@@ -623,7 +624,7 @@ emit_blit(struct fd_batch *batch, uint32_t base,
 	OUT_PKT4(ring, REG_A6XX_RB_BLIT_BASE_GMEM, 1);
 	OUT_RING(ring, base);
 
-	fd6_emit_blit(batch->ctx, ring);
+	fd6_emit_blit(batch, ring);
 }
 
 static void
@@ -792,9 +793,12 @@ fd6_emit_tile_fini(struct fd_batch *batch)
 {
 	struct fd_ringbuffer *ring = batch->gmem;
 
+	OUT_PKT4(ring, REG_A6XX_GRAS_LRZ_CNTL, 1);
+	OUT_RING(ring, A6XX_GRAS_LRZ_CNTL_ENABLE | A6XX_GRAS_LRZ_CNTL_UNK3);
+
 	fd6_emit_lrz_flush(ring);
 
-	fd6_cache_flush(batch, ring);
+	fd6_event_write(batch, ring, CACHE_FLUSH_TS, true);
 }
 
 static void
@@ -815,11 +819,8 @@ fd6_emit_sysmem_prep(struct fd_batch *batch)
 	OUT_PKT7(ring, CP_SKIP_IB2_ENABLE_GLOBAL, 1);
 	OUT_RING(ring, 0x0);
 
-	OUT_PKT7(ring, CP_EVENT_WRITE, 1);
-	OUT_RING(ring, PC_CCU_INVALIDATE_COLOR);
-
-	OUT_PKT7(ring, CP_EVENT_WRITE, 1);
-	OUT_RING(ring, 0x31); /* vertex cache invalidate? */
+	fd6_event_write(batch, ring, PC_CCU_INVALIDATE_COLOR, false);
+	fd6_cache_flush(batch, ring);
 
 #if 0
 	OUT_PKT4(ring, REG_A6XX_PC_POWER_CNTL, 1);
@@ -856,7 +857,6 @@ fd6_emit_sysmem_prep(struct fd_batch *batch)
 static void
 fd6_emit_sysmem_fini(struct fd_batch *batch)
 {
-	struct fd6_context *fd6_ctx = fd6_context(batch->ctx);
 	struct fd_ringbuffer *ring = batch->gmem;
 
 	OUT_PKT7(ring, CP_SKIP_IB2_ENABLE_GLOBAL, 1);
@@ -864,10 +864,7 @@ fd6_emit_sysmem_fini(struct fd_batch *batch)
 
 	fd6_emit_lrz_flush(ring);
 
-	OUT_PKT7(ring, CP_EVENT_WRITE, 4);
-	OUT_RING(ring, UNK_1D);
-	OUT_RELOCW(ring, fd6_ctx->blit_mem, 0, 0, 0);  /* ADDR_LO/HI */
-	OUT_RING(ring, 0x00000000);
+	fd6_event_write(batch, ring, UNK_1D, true);
 }
 
 void

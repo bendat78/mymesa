@@ -65,19 +65,12 @@ struct fd6_emit {
 	unsigned streamout_mask;
 };
 
-static inline enum a6xx_color_fmt fd6_emit_format(struct pipe_surface *surf)
-{
-	if (!surf)
-		return 0;
-	return fd6_pipe2color(surf->format);
-}
-
 static inline const struct ir3_shader_variant *
 fd6_emit_get_vp(struct fd6_emit *emit)
 {
 	if (!emit->vp) {
-		struct fd6_shader_stateobj *so = emit->prog->vp;
-		emit->vp = ir3_shader_variant(so->shader, emit->key, emit->debug);
+		struct ir3_shader *shader = emit->prog->vp;
+		emit->vp = ir3_shader_variant(shader, emit->key, emit->debug);
 	}
 	return emit->vp;
 }
@@ -91,38 +84,39 @@ fd6_emit_get_fp(struct fd6_emit *emit)
 			static const struct ir3_shader_variant binning_fp = {};
 			emit->fp = &binning_fp;
 		} else {
-			struct fd6_shader_stateobj *so = emit->prog->fp;
-			emit->fp = ir3_shader_variant(so->shader, emit->key, emit->debug);
+			struct ir3_shader *shader = emit->prog->fp;
+			emit->fp = ir3_shader_variant(shader, emit->key,emit->debug);
 		}
 	}
 	return emit->fp;
 }
 
 static inline void
-fd6_cache_flush(struct fd_batch *batch, struct fd_ringbuffer *ring)
+fd6_event_write(struct fd_batch *batch, struct fd_ringbuffer *ring,
+		enum vgt_event_type evt, bool timestamp)
 {
 	fd_reset_wfi(batch);
-#if 0
-	OUT_PKT4(ring, REG_A6XX_UCHE_CACHE_INVALIDATE_MIN_LO, 5);
-	OUT_RING(ring, 0x00000000);   /* UCHE_CACHE_INVALIDATE_MIN_LO */
-	OUT_RING(ring, 0x00000000);   /* UCHE_CACHE_INVALIDATE_MIN_HI */
-	OUT_RING(ring, 0x00000000);   /* UCHE_CACHE_INVALIDATE_MAX_LO */
-	OUT_RING(ring, 0x00000000);   /* UCHE_CACHE_INVALIDATE_MAX_HI */
-	OUT_RING(ring, 0x00000012);   /* UCHE_CACHE_INVALIDATE */
-	fd_wfi(batch, ring);
-#else
-	DBG("fd6_cache_flush stub");
-#endif
+
+	OUT_PKT7(ring, CP_EVENT_WRITE, timestamp ? 4 : 1);
+	OUT_RING(ring, CP_EVENT_WRITE_0_EVENT(evt));
+	if (timestamp) {
+		struct fd6_context *fd6_ctx = fd6_context(batch->ctx);
+		OUT_RELOCW(ring, fd6_ctx->blit_mem, 0, 0, 0);  /* ADDR_LO/HI */
+		OUT_RING(ring, ++fd6_ctx->seqno);
+	}
 }
 
 static inline void
-fd6_emit_blit(struct fd_context *ctx, struct fd_ringbuffer *ring)
+fd6_cache_flush(struct fd_batch *batch, struct fd_ringbuffer *ring)
+{
+	fd6_event_write(batch, ring, 0x31, false);
+}
+
+static inline void
+fd6_emit_blit(struct fd_batch *batch, struct fd_ringbuffer *ring)
 {
 	emit_marker6(ring, 7);
-
-	OUT_PKT7(ring, CP_EVENT_WRITE, 1);
-	OUT_RING(ring, CP_EVENT_WRITE_0_EVENT(BLIT));
-
+	fd6_event_write(batch, ring, BLIT, false);
 	emit_marker6(ring, 7);
 }
 
@@ -159,17 +153,8 @@ fd6_emit_render_cntl(struct fd_context *ctx, bool blit, bool binning)
 static inline void
 fd6_emit_lrz_flush(struct fd_ringbuffer *ring)
 {
-	/* TODO I think the extra writes to GRAS_LRZ_CNTL are probably
-	 * a workaround and not needed on all a5xx.
-	 */
-	OUT_PKT4(ring, REG_A6XX_GRAS_LRZ_CNTL, 1);
-	OUT_RING(ring, A6XX_GRAS_LRZ_CNTL_ENABLE);
-
 	OUT_PKT7(ring, CP_EVENT_WRITE, 1);
 	OUT_RING(ring, LRZ_FLUSH);
-
-	OUT_PKT4(ring, REG_A6XX_GRAS_LRZ_CNTL, 1);
-	OUT_RING(ring, 0x0);
 }
 
 static inline enum a6xx_state_block
