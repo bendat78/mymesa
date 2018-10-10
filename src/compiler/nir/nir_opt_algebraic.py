@@ -105,6 +105,11 @@ optimizations = [
    (('imul', a, 1), a),
    (('fmul', a, -1.0), ('fneg', a)),
    (('imul', a, -1), ('ineg', a)),
+   # If a < 0: fsign(a)*a*a => -1*a*a => -a*a => abs(a)*a
+   # If a > 0: fsign(a)*a*a => 1*a*a => a*a => abs(a)*a
+   # If a == 0: fsign(a)*a*a => 0*0*0 => abs(0)*0
+   (('fmul', ('fsign', a), ('fmul', a, a)), ('fmul', ('fabs', a), a)),
+   (('fmul', ('fmul', ('fsign', a), a), a), ('fmul', ('fabs', a), a)),
    (('~ffma', 0.0, a, b), b),
    (('~ffma', a, 0.0, b), b),
    (('~ffma', a, b, 0.0), ('fmul', a, b)),
@@ -324,6 +329,7 @@ optimizations = [
    (('imax', a, ('ineg', a)), ('iabs', a)),
    (('~fmin', ('fmax', a, 0.0), 1.0), ('fsat', a), '!options->lower_fsat'),
    (('~fmax', ('fmin', a, 1.0), 0.0), ('fsat', a), '!options->lower_fsat'),
+   (('fsat', ('fsign', a)), ('b2f', ('flt', 0.0, a))),
    (('fsat', a), ('fmin', ('fmax', a, 0.0), 1.0), 'options->lower_fsat'),
    (('fsat', ('fsat', a)), ('fsat', a)),
    (('fmin', ('fmax', ('fmin', ('fmax', a, b), c), b), c), ('fmin', ('fmax', a, b), c)),

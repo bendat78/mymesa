@@ -430,7 +430,7 @@ TEST(fast_idiv_by_const, util_fast_udiv32_nuw)
 
       struct util_fast_udiv_info m =
          util_compute_fast_udiv_info(d, 32, 32);
-      EXPECT_EQ(util_fast_udiv32(n, m), n / d);
+      EXPECT_EQ(util_fast_udiv32_nuw(n, m), n / d);
    }
 }
 
