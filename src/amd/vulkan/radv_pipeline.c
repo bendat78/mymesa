@@ -1986,7 +1986,7 @@ static
 void radv_create_shaders(struct radv_pipeline *pipeline,
                          struct radv_device *device,
                          struct radv_pipeline_cache *cache,
-                         struct radv_pipeline_key key,
+                         const struct radv_pipeline_key *key,
                          const VkPipelineShaderStageCreateInfo **pStages,
                          const VkPipelineCreateFlags flags)
 {
@@ -2010,7 +2010,7 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
 		}
 	}
 
-	radv_hash_shaders(hash, pStages, pipeline->layout, &key, get_hash_flags(device));
+	radv_hash_shaders(hash, pStages, pipeline->layout, key, get_hash_flags(device));
 	memcpy(gs_copy_hash, hash, 20);
 	gs_copy_hash[0] ^= 1;
 
@@ -2091,7 +2091,7 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
 			nir_print_shader(nir[i], stderr);
 	}
 
-	radv_fill_shader_keys(keys, &key, nir);
+	radv_fill_shader_keys(keys, key, nir);
 
 	if (nir[MESA_SHADER_FRAGMENT]) {
 		if (!pipeline->shaders[MESA_SHADER_FRAGMENT]) {
@@ -3411,6 +3411,17 @@ radv_compute_ia_multi_vgt_param_helpers(struct radv_pipeline *pipeline,
 		}
 	}
 
+	/* Workaround for a VGT hang when strip primitive types are used with
+	 * primitive restart.
+	 */
+	if (pipeline->graphics.prim_restart_enable &&
+	    (prim == V_008958_DI_PT_LINESTRIP ||
+	     prim == V_008958_DI_PT_TRISTRIP ||
+	     prim == V_008958_DI_PT_LINESTRIP_ADJ ||
+	     prim == V_008958_DI_PT_TRISTRIP_ADJ)) {
+		ia_multi_vgt_param.partial_vs_wave = true;
+	}
+
 	ia_multi_vgt_param.base =
 		S_028AA8_PRIMGROUP_SIZE(ia_multi_vgt_param.primgroup_size - 1) |
 		/* The following field was moved to VGT_SHADER_STAGES_EN in GFX9. */
@@ -3493,9 +3504,8 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		pStages[stage] = &pCreateInfo->pStages[i];
 	}
 
-	radv_create_shaders(pipeline, device, cache, 
-	                    radv_generate_graphics_pipeline_key(pipeline, pCreateInfo, &blend, has_view_index),
-	                    pStages, pCreateInfo->flags);
+	struct radv_pipeline_key key = radv_generate_graphics_pipeline_key(pipeline, pCreateInfo, &blend, has_view_index);
+	radv_create_shaders(pipeline, device, cache, &key, pStages, pCreateInfo->flags);
 
 	pipeline->graphics.spi_baryc_cntl = S_0286E0_FRONT_FACE_ALL_BITS(1);
 	radv_pipeline_init_multisample_state(pipeline, &blend, pCreateInfo);
@@ -3728,7 +3738,7 @@ static VkResult radv_compute_pipeline_create(
 	assert(pipeline->layout);
 
 	pStages[MESA_SHADER_COMPUTE] = &pCreateInfo->stage;
-	radv_create_shaders(pipeline, device, cache, (struct radv_pipeline_key) {0}, pStages, pCreateInfo->flags);
+	radv_create_shaders(pipeline, device, cache, &(struct radv_pipeline_key) {0}, pStages, pCreateInfo->flags);
 
 	pipeline->user_data_0[MESA_SHADER_COMPUTE] = radv_pipeline_stage_to_user_data_0(pipeline, MESA_SHADER_COMPUTE, device->physical_device->rad_info.chip_class);
 	pipeline->need_indirect_descriptor_sets |= pipeline->shaders[MESA_SHADER_COMPUTE]->info.need_indirect_descriptor_sets;
