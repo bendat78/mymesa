@@ -3202,7 +3202,6 @@ AC_CONFIG_FILES([Makefile
                  src/util/tests/hash_table/Makefile
                  src/util/tests/set/Makefile
                  src/util/tests/string_buffer/Makefile
-                 src/util/tests/uint_inverse/Makefile
                  src/util/tests/vma/Makefile
                  src/util/xmlpool/Makefile
                  src/vulkan/Makefile])
