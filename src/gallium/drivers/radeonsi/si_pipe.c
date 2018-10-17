@@ -103,6 +103,7 @@ static const struct debug_named_value debug_options[] = {
 	{ "testvmfaultsdma", DBG(TEST_VMFAULT_SDMA), "Invoke a SDMA VM fault test and exit." },
 	{ "testvmfaultshader", DBG(TEST_VMFAULT_SHADER), "Invoke a shader VM fault test and exit." },
 	{ "testdmaperf", DBG(TEST_DMA_PERF), "Test DMA performance" },
+	{ "testgds", DBG(TEST_GDS), "Test GDS." },
 
 	DEBUG_NAMED_VALUE_END /* must be last */
 };
@@ -160,6 +161,7 @@ static void si_destroy_context(struct pipe_context *context)
 	pipe_resource_reference(&sctx->gsvs_ring, NULL);
 	pipe_resource_reference(&sctx->tess_rings, NULL);
 	pipe_resource_reference(&sctx->null_const_buf.buffer, NULL);
+	pipe_resource_reference(&sctx->sample_pos_buffer, NULL);
 	r600_resource_reference(&sctx->border_color_buffer, NULL);
 	free(sctx->border_color_table);
 	r600_resource_reference(&sctx->scratch_buffer, NULL);
@@ -194,6 +196,10 @@ static void si_destroy_context(struct pipe_context *context)
 		sctx->b.delete_vs_state(&sctx->b, sctx->vs_blit_color_layered);
 	if (sctx->vs_blit_texcoord)
 		sctx->b.delete_vs_state(&sctx->b, sctx->vs_blit_texcoord);
+	if (sctx->cs_clear_buffer)
+		sctx->b.delete_compute_state(&sctx->b, sctx->cs_clear_buffer);
+	if (sctx->cs_copy_buffer)
+		sctx->b.delete_compute_state(&sctx->b, sctx->cs_copy_buffer);
 
 	if (sctx->blitter)
 		util_blitter_destroy(sctx->blitter);
@@ -415,7 +421,8 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 
 	sctx->allocator_zeroed_memory =
 			u_suballocator_create(&sctx->b, sscreen->info.gart_page_size,
-					      0, PIPE_USAGE_DEFAULT, 0, true);
+					      0, PIPE_USAGE_DEFAULT,
+					      SI_RESOURCE_FLAG_SO_FILLED_SIZE, true);
 	if (!sctx->allocator_zeroed_memory)
 		goto fail;
 
@@ -452,7 +459,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	si_init_clear_functions(sctx);
 	si_init_blit_functions(sctx);
 	si_init_compute_functions(sctx);
-	si_init_cp_dma_functions(sctx);
+	si_init_compute_blit_functions(sctx);
 	si_init_debug_functions(sctx);
 	si_init_msaa_functions(sctx);
 	si_init_streamout_functions(sctx);
@@ -501,6 +508,14 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 
 	if (sscreen->debug_flags & DBG(FORCE_DMA))
 		sctx->b.resource_copy_region = sctx->dma_copy;
+
+	bool dst_stream_policy = SI_COMPUTE_DST_CACHE_POLICY != L2_LRU;
+	sctx->cs_clear_buffer = si_create_dma_compute_shader(&sctx->b,
+					     SI_COMPUTE_CLEAR_DW_PER_THREAD,
+					     dst_stream_policy, false);
+	sctx->cs_copy_buffer = si_create_dma_compute_shader(&sctx->b,
+					     SI_COMPUTE_COPY_DW_PER_THREAD,
+					     dst_stream_policy, true);
 
 	sctx->blitter = util_blitter_create(&sctx->b);
 	if (sctx->blitter == NULL)
@@ -560,9 +575,10 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 				 &sctx->null_const_buf);
 
 		/* Clear the NULL constant buffer, because loads should return zeros. */
+		uint32_t clear_value = 0;
 		si_clear_buffer(sctx, sctx->null_const_buf.buffer, 0,
-				sctx->null_const_buf.buffer->width0, 0,
-				SI_COHERENCY_SHADER);
+				sctx->null_const_buf.buffer->width0,
+				&clear_value, 4, SI_COHERENCY_SHADER);
 	}
 
 	uint64_t max_threads_per_block;
@@ -598,6 +614,12 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	util_dynarray_init(&sctx->resident_tex_needs_color_decompress, NULL);
 	util_dynarray_init(&sctx->resident_img_needs_color_decompress, NULL);
 	util_dynarray_init(&sctx->resident_tex_needs_depth_decompress, NULL);
+
+	sctx->sample_pos_buffer =
+		pipe_buffer_create(sctx->b.screen, 0, PIPE_USAGE_DEFAULT,
+				   sizeof(sctx->sample_positions));
+	pipe_buffer_write(&sctx->b, sctx->sample_pos_buffer, 0,
+			  sizeof(sctx->sample_positions), &sctx->sample_positions);
 
 	/* this must be last */
 	si_begin_new_gfx_cs(sctx);
@@ -818,6 +840,15 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 	sscreen->ws = ws;
 	ws->query_info(ws, &sscreen->info);
 	si_handle_env_var_force_family(sscreen);
+
+	if (sscreen->info.chip_class >= GFX9) {
+		sscreen->se_tile_repeat = 32 * sscreen->info.max_se;
+	} else {
+		ac_get_raster_config(&sscreen->info,
+				     &sscreen->pa_sc_raster_config,
+				     &sscreen->pa_sc_raster_config_1,
+				     &sscreen->se_tile_repeat);
+	}
 
 	sscreen->debug_flags = debug_get_flags_option("R600_DEBUG",
 							debug_options, 0);
@@ -1095,6 +1126,9 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 				      DBG(TEST_VMFAULT_SDMA) |
 				      DBG(TEST_VMFAULT_SHADER)))
 		si_test_vmfault(sscreen);
+
+	if (sscreen->debug_flags & DBG(TEST_GDS))
+		si_test_gds((struct si_context*)sscreen->aux_context);
 
 	return &sscreen->b;
 }

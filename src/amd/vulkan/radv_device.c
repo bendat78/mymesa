@@ -389,6 +389,7 @@ radv_physical_device_init(struct radv_physical_device *device,
 	if ((device->instance->debug_flags & RADV_DEBUG_INFO))
 		ac_print_gpu_info(&device->rad_info);
 
+	device->bus_info = *drm_device->businfo.pci;
 	return VK_SUCCESS;
 
 fail:
@@ -979,7 +980,7 @@ void radv_GetPhysicalDeviceProperties(
 		.maxClipDistances                         = 8,
 		.maxCullDistances                         = 8,
 		.maxCombinedClipAndCullDistances          = 8,
-		.discreteQueuePriorities                  = 1,
+		.discreteQueuePriorities                  = 2,
 		.pointSizeRange                           = { 0.125, 255.875 },
 		.lineWidthRange                           = { 0.0, 7.9921875 },
 		.pointSizeGranularity                     = (1.0 / 8.0),
@@ -1056,12 +1057,14 @@ void radv_GetPhysicalDeviceProperties2(
 			    (VkPhysicalDeviceSubgroupProperties*)ext;
 			properties->subgroupSize = 64;
 			properties->supportedStages = VK_SHADER_STAGE_ALL;
+			/* TODO: Enable VK_SUBGROUP_FEATURE_VOTE_BIT when wwm
+			 * is fixed in LLVM.
+			 */
 			properties->supportedOperations =
 							VK_SUBGROUP_FEATURE_ARITHMETIC_BIT |
 							VK_SUBGROUP_FEATURE_BASIC_BIT |
 							VK_SUBGROUP_FEATURE_BALLOT_BIT |
-							VK_SUBGROUP_FEATURE_QUAD_BIT |
-							VK_SUBGROUP_FEATURE_VOTE_BIT;
+							VK_SUBGROUP_FEATURE_QUAD_BIT;
 			if (pdevice->rad_info.chip_class >= VI) {
 				properties->supportedOperations |=
 							VK_SUBGROUP_FEATURE_SHUFFLE_BIT |
@@ -1188,6 +1191,15 @@ void radv_GetPhysicalDeviceProperties2(
 			properties->degenerateLinesRasterized = VK_FALSE;
 			properties->fullyCoveredFragmentShaderInputVariable = VK_FALSE;
 			properties->conservativeRasterizationPostDepthCoverage = VK_FALSE;
+			break;
+		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT: {
+			VkPhysicalDevicePCIBusInfoPropertiesEXT *properties =
+				(VkPhysicalDevicePCIBusInfoPropertiesEXT *)ext;
+			properties->pciDomain = pdevice->bus_info.domain;
+			properties->pciBus = pdevice->bus_info.bus;
+			properties->pciDevice = pdevice->bus_info.dev;
+			properties->pciFunction = pdevice->bus_info.func;
 			break;
 		}
 		default:

@@ -71,6 +71,7 @@ struct si_state_rasterizer {
 	float			max_point_size;
 	unsigned		sprite_coord_enable:8;
 	unsigned		clip_plane_enable:8;
+	unsigned		half_pixel_center:1;
 	unsigned		flatshade:1;
 	unsigned		two_side:1;
 	unsigned		multisample_enable:1;
@@ -131,7 +132,7 @@ struct si_stencil_ref {
 
 struct si_vertex_elements
 {
-	uint32_t			instance_divisors[SI_MAX_ATTRIBS];
+	struct r600_resource		*instance_divisor_factor_buffer;
 	uint32_t			rsrc_word3[SI_MAX_ATTRIBS];
 	uint16_t			src_offset[SI_MAX_ATTRIBS];
 	uint8_t				fix_fetch[SI_MAX_ATTRIBS];
@@ -170,17 +171,13 @@ union si_state {
 #define SI_STATE_BIT(name) (1 << SI_STATE_IDX(name))
 #define SI_NUM_STATES (sizeof(union si_state) / sizeof(struct si_pm4_state *))
 
-static inline unsigned si_states_that_roll_context(void)
+static inline unsigned si_states_that_always_roll_context(void)
 {
 	return (SI_STATE_BIT(blend) |
 		SI_STATE_BIT(rasterizer) |
 		SI_STATE_BIT(dsa) |
 		SI_STATE_BIT(poly_offset) |
-		SI_STATE_BIT(es) |
-		SI_STATE_BIT(gs) |
-		SI_STATE_BIT(vgt_shader_config) |
-		SI_STATE_BIT(vs) |
-		SI_STATE_BIT(ps));
+		SI_STATE_BIT(vgt_shader_config));
 }
 
 union si_state_atoms {
@@ -215,25 +212,18 @@ union si_state_atoms {
 			         sizeof(struct si_atom)))
 #define SI_NUM_ATOMS (sizeof(union si_state_atoms)/sizeof(struct si_atom*))
 
-static inline unsigned si_atoms_that_roll_context(void)
+static inline unsigned si_atoms_that_always_roll_context(void)
 {
 	return (SI_ATOM_BIT(streamout_begin) |
 		SI_ATOM_BIT(streamout_enable) |
 		SI_ATOM_BIT(framebuffer) |
 		SI_ATOM_BIT(msaa_sample_locs) |
-		SI_ATOM_BIT(db_render_state) |
-		SI_ATOM_BIT(dpbb_state) |
-		SI_ATOM_BIT(msaa_config) |
 		SI_ATOM_BIT(sample_mask) |
-		SI_ATOM_BIT(cb_render_state) |
 		SI_ATOM_BIT(blend_color) |
-		SI_ATOM_BIT(clip_regs) |
 		SI_ATOM_BIT(clip_state) |
-		SI_ATOM_BIT(guardband) |
 		SI_ATOM_BIT(scissors) |
 		SI_ATOM_BIT(viewports) |
 		SI_ATOM_BIT(stencil_ref) |
-		SI_ATOM_BIT(spi_map) |
 		SI_ATOM_BIT(scratch_state));
 }
 
@@ -262,6 +252,7 @@ enum si_tracked_reg {
 	SI_TRACKED_DB_EQAA,
 	SI_TRACKED_PA_SC_MODE_CNTL_1,
 
+	SI_TRACKED_PA_SU_PRIM_FILTER_CNTL,
 	SI_TRACKED_PA_SU_SMALL_PRIM_FILTER_CNTL,
 
 	SI_TRACKED_PA_CL_VS_OUT_CNTL,
@@ -274,6 +265,9 @@ enum si_tracked_reg {
 	SI_TRACKED_PA_CL_GB_VERT_DISC_ADJ,
 	SI_TRACKED_PA_CL_GB_HORZ_CLIP_ADJ,
 	SI_TRACKED_PA_CL_GB_HORZ_DISC_ADJ,
+
+	SI_TRACKED_PA_SU_HARDWARE_SCREEN_OFFSET,
+	SI_TRACKED_PA_SU_VTX_CNTL,
 
 	SI_TRACKED_PA_SC_CLIPRECT_RULE,
 
