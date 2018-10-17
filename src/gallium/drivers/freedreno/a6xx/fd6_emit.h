@@ -38,13 +38,35 @@
 
 struct fd_ringbuffer;
 
+/* To collect all the state objects to emit in a single CP_SET_DRAW_STATE
+ * packet, the emit tracks a collection of however many state_group's that
+ * need to be emit'd.
+ */
+enum fd6_state_id {
+	FD6_GROUP_PROG,
+	FD6_GROUP_PROG_BINNING,
+	FD6_GROUP_ZSA,
+	FD6_GROUP_ZSA_BINNING,
+	FD6_GROUP_VBO,
+	FD6_GROUP_VBO_BINNING,
+	FD6_GROUP_VS_CONST,
+	FD6_GROUP_FS_CONST,
+	FD6_GROUP_VS_TEX,
+	FD6_GROUP_FS_TEX,
+};
+
+struct fd6_state_group {
+	struct fd_ringbuffer *stateobj;
+	enum fd6_state_id group_id;
+	uint8_t enable_mask;
+};
+
 /* grouped together emit-state for prog/vertex/state emit: */
 struct fd6_emit {
-	struct pipe_debug_callback *debug;
+	struct fd_context *ctx;
 	const struct fd_vertex_state *vtx;
-	const struct fd_program_stateobj *prog;
 	const struct pipe_draw_info *info;
-	struct ir3_shader_key key;
+	struct ir3_cache_key key;
 	enum fd_dirty_3d_state dirty;
 
 	uint32_t sprite_coord_enable;  /* bitmask */
@@ -58,37 +80,42 @@ struct fd6_emit {
 	 */
 	bool no_lrz_write;
 
-	/* cached to avoid repeated lookups of same variants: */
-	const struct ir3_shader_variant *vp, *fp;
-	/* TODO: other shader stages.. */
+	/* cached to avoid repeated lookups: */
+	const struct fd6_program_state *prog;
+
+	struct ir3_shader_variant *bs;
+	struct ir3_shader_variant *vs;
+	struct ir3_shader_variant *fs;
 
 	unsigned streamout_mask;
+
+	struct fd6_state_group groups[32];
+	unsigned num_groups;
 };
 
-static inline const struct ir3_shader_variant *
-fd6_emit_get_vp(struct fd6_emit *emit)
+static inline const struct fd6_program_state *
+fd6_emit_get_prog(struct fd6_emit *emit)
 {
-	if (!emit->vp) {
-		struct ir3_shader *shader = emit->prog->vp;
-		emit->vp = ir3_shader_variant(shader, emit->key, emit->debug);
+	if (!emit->prog) {
+		struct fd6_context *fd6_ctx = fd6_context(emit->ctx);
+		struct ir3_program_state *s =
+				ir3_cache_lookup(fd6_ctx->shader_cache, &emit->key, &emit->ctx->debug);
+		emit->prog = fd6_program_state(s);
 	}
-	return emit->vp;
+	return emit->prog;
 }
 
-static inline const struct ir3_shader_variant *
-fd6_emit_get_fp(struct fd6_emit *emit)
+static inline void
+fd6_emit_add_group(struct fd6_emit *emit, struct fd_ringbuffer *stateobj,
+		enum fd6_state_id group_id, unsigned enable_mask)
 {
-	if (!emit->fp) {
-		if (emit->key.binning_pass) {
-			/* use dummy stateobj to simplify binning vs non-binning: */
-			static const struct ir3_shader_variant binning_fp = {};
-			emit->fp = &binning_fp;
-		} else {
-			struct ir3_shader *shader = emit->prog->fp;
-			emit->fp = ir3_shader_variant(shader, emit->key,emit->debug);
-		}
-	}
-	return emit->fp;
+	debug_assert(emit->num_groups < ARRAY_SIZE(emit->groups));
+	if (fd_ringbuffer_size(stateobj) == 0)
+		return;
+	struct fd6_state_group *g = &emit->groups[emit->num_groups++];
+	g->stateobj = fd_ringbuffer_ref(stateobj);
+	g->group_id = group_id;
+	g->enable_mask = enable_mask;
 }
 
 static inline void
@@ -121,36 +148,6 @@ fd6_emit_blit(struct fd_batch *batch, struct fd_ringbuffer *ring)
 }
 
 static inline void
-fd6_emit_render_cntl(struct fd_context *ctx, bool blit, bool binning)
-{
-#if 0
-	struct fd_ringbuffer *ring = binning ? ctx->batch->binning : ctx->batch->draw;
-
-	/* TODO eventually this partially depends on the pfb state, ie.
-	 * which of the cbuf(s)/zsbuf has an UBWC flag buffer.. that part
-	 * we could probably cache and just regenerate if framebuffer
-	 * state is dirty (or something like that)..
-	 *
-	 * Other bits seem to depend on query state, like if samples-passed
-	 * query is active.
-	 */
-	bool samples_passed = (fd6_context(ctx)->samples_passed_queries > 0);
-	OUT_PKT4(ring, REG_A6XX_RB_RENDER_CNTL, 1);
-	OUT_RING(ring, 0x00000000 |   /* RB_RENDER_CNTL */
-			COND(binning, A6XX_RB_RENDER_CNTL_BINNING_PASS) |
-			COND(binning, A6XX_RB_RENDER_CNTL_DISABLE_COLOR_PIPE) |
-			COND(samples_passed, A6XX_RB_RENDER_CNTL_SAMPLES_PASSED) |
-			COND(!blit, 0x8));
-	OUT_PKT4(ring, REG_A6XX_GRAS_SC_CNTL, 1);
-	OUT_RING(ring, 0x00000008 |   /* GRAS_SC_CNTL */
-			COND(binning, A6XX_GRAS_SC_CNTL_BINNING_PASS) |
-			COND(samples_passed, A6XX_GRAS_SC_CNTL_SAMPLES_PASSED));
-#else
-	DBG("render ctl stub");
-#endif
-}
-
-static inline void
 fd6_emit_lrz_flush(struct fd_ringbuffer *ring)
 {
 	OUT_PKT7(ring, CP_EVENT_WRITE, 1);
@@ -173,10 +170,13 @@ fd6_stage2shadersb(enum shader_t type)
 	}
 }
 
-void fd6_emit_vertex_bufs(struct fd_ringbuffer *ring, struct fd6_emit *emit);
+bool fd6_emit_textures(struct fd_pipe *pipe, struct fd_ringbuffer *ring,
+		enum a6xx_state_block sb, struct fd_texture_stateobj *tex,
+		unsigned bcolor_offset);
 
-void fd6_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
-		struct fd6_emit *emit);
+struct fd_ringbuffer * fd6_build_vbo_state(struct fd6_emit *emit, const struct ir3_shader_variant *vp);
+
+void fd6_emit_state(struct fd_ringbuffer *ring, struct fd6_emit *emit);
 
 void fd6_emit_cs_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		struct ir3_shader_variant *cp);

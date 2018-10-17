@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -274,7 +272,7 @@ OUT_RB(struct fd_ringbuffer *ring, struct fd_ringbuffer *target)
 
 static inline void BEGIN_RING(struct fd_ringbuffer *ring, uint32_t ndwords)
 {
-	if (ring->cur + ndwords >= ring->end)
+	if (ring->cur + ndwords > ring->end)
 		fd_ringbuffer_grow(ring, ndwords);
 }
 

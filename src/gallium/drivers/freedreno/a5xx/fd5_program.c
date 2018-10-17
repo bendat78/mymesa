@@ -38,6 +38,8 @@
 #include "fd5_texture.h"
 #include "fd5_format.h"
 
+#include "ir3_cache.h"
+
 static struct ir3_shader *
 create_shader_stateobj(struct pipe_context *pctx, const struct pipe_shader_state *cso,
 		enum shader_t type)
@@ -442,13 +444,13 @@ fd5_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
 			A5XX_SP_VS_CTRL_REG0_FULLREGFOOTPRINT(s[VS].i->max_reg + 1) |
 			0x6 | /* XXX seems to be always set? */
 			A5XX_SP_VS_CTRL_REG0_BRANCHSTACK(0x3) |  // XXX need to figure this out somehow..
-			COND(s[VS].v->has_samp, A5XX_SP_VS_CTRL_REG0_PIXLODENABLE));
+			COND(s[VS].v->num_samp > 0, A5XX_SP_VS_CTRL_REG0_PIXLODENABLE));
 
 	struct ir3_shader_linkage l = {0};
 	ir3_link_shaders(&l, s[VS].v, s[FS].v);
 
 	if ((s[VS].v->shader->stream_output.num_outputs > 0) &&
-			!emit->key.binning_pass)
+			!emit->binning_pass)
 		link_stream_out(&l, s[VS].v);
 
 	BITSET_DECLARE(varbs, 128) = {0};
@@ -474,7 +476,7 @@ fd5_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	}
 
 	if ((s[VS].v->shader->stream_output.num_outputs > 0) &&
-			!emit->key.binning_pass) {
+			!emit->binning_pass) {
 		emit_stream_out(ring, s[VS].v, &l);
 
 		OUT_PKT4(ring, REG_A5XX_VPC_SO_OVERRIDE, 1);
@@ -534,7 +536,7 @@ fd5_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
 
 	fd5_context(ctx)->max_loc = l.max_loc;
 
-	if (emit->key.binning_pass) {
+	if (emit->binning_pass) {
 		OUT_PKT4(ring, REG_A5XX_SP_FS_OBJ_START_LO, 2);
 		OUT_RING(ring, 0x00000000);    /* SP_FS_OBJ_START_LO */
 		OUT_RING(ring, 0x00000000);    /* SP_FS_OBJ_START_HI */
@@ -566,7 +568,7 @@ fd5_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
 			A5XX_SP_FS_CTRL_REG0_HALFREGFOOTPRINT(s[FS].i->max_half_reg + 1) |
 			A5XX_SP_FS_CTRL_REG0_FULLREGFOOTPRINT(s[FS].i->max_reg + 1) |
 			A5XX_SP_FS_CTRL_REG0_BRANCHSTACK(0x3) |  // XXX need to figure this out somehow..
-			COND(s[FS].v->has_samp, A5XX_SP_FS_CTRL_REG0_PIXLODENABLE));
+			COND(s[FS].v->num_samp > 0, A5XX_SP_FS_CTRL_REG0_PIXLODENABLE));
 
 	OUT_PKT4(ring, REG_A5XX_HLSQ_UPDATE_CNTL, 1);
 	OUT_RING(ring, 0x020fffff);        /* XXX */
@@ -613,7 +615,7 @@ fd5_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	OUT_RING(ring, A5XX_VPC_PACK_NUMNONPOSVAR(s[FS].v->total_in) |
 			A5XX_VPC_PACK_PSIZELOC(psize_loc));
 
-	if (!emit->key.binning_pass) {
+	if (!emit->binning_pass) {
 		uint32_t vinterp[8], vpsrepl[8];
 
 		memset(vinterp, 0, sizeof(vinterp));
@@ -704,7 +706,7 @@ fd5_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
 			OUT_RING(ring, vpsrepl[i]);   /* VPC_VARYING_PS_REPL[i] */
 	}
 
-	if (!emit->key.binning_pass)
+	if (!emit->binning_pass)
 		if (s[FS].instrlen)
 			fd5_emit_shader(ring, s[FS].v);
 
