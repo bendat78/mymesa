@@ -176,18 +176,18 @@ static void si_emit_guardband(struct si_context *ctx)
 	/* Determine the optimal hardware screen offset to center the viewport
 	 * within the viewport range in order to maximize the guardband size.
 	 */
-	int hw_screen_offset_x = (vp_as_scissor.maxx - vp_as_scissor.minx) / 2;
-	int hw_screen_offset_y = (vp_as_scissor.maxy - vp_as_scissor.miny) / 2;
+	int hw_screen_offset_x = (vp_as_scissor.maxx + vp_as_scissor.minx) / 2;
+	int hw_screen_offset_y = (vp_as_scissor.maxy + vp_as_scissor.miny) / 2;
 
 	const unsigned hw_screen_offset_max = 8176;
 	/* SI-CI need to align the offset to an ubertile consisting of all SEs. */
 	const unsigned hw_screen_offset_alignment =
 		ctx->chip_class >= VI ? 16 : MAX2(ctx->screen->se_tile_repeat, 16);
 
-	hw_screen_offset_x = MIN2(hw_screen_offset_x, hw_screen_offset_max);
-	hw_screen_offset_y = MIN2(hw_screen_offset_y, hw_screen_offset_max);
+	hw_screen_offset_x = CLAMP(hw_screen_offset_x, 0, hw_screen_offset_max);
+	hw_screen_offset_y = CLAMP(hw_screen_offset_y, 0, hw_screen_offset_max);
 
-	/* Align the screen offset by dropping the low 4 bits. */
+	/* Align the screen offset by dropping the low bits. */
 	hw_screen_offset_x &= ~(hw_screen_offset_alignment - 1);
 	hw_screen_offset_y &= ~(hw_screen_offset_alignment - 1);
 
