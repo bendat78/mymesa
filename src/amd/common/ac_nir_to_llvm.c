@@ -1685,8 +1685,8 @@ static LLVMValueRef visit_load_buffer(struct ac_nir_context *ctx,
 		};
 
 		if (num_bytes > 16 && num_components == 3) {
-			/* we end up with a v4f32 and v2f32 but shuffle fails on that */
-			results[1] = ac_build_expand_to_vec4(&ctx->ac, results[1], 2);
+			/* we end up with a v2i64 and i64 but shuffle fails on that */
+			results[1] = ac_build_expand(&ctx->ac, results[1], 1, 2);
 		}
 
 		LLVMValueRef swizzle = LLVMConstVector(masks, num_components);
@@ -3635,7 +3635,6 @@ static void visit_post_phi(struct ac_nir_context *ctx,
 
 static void phi_post_pass(struct ac_nir_context *ctx)
 {
-	struct hash_entry *entry;
 	hash_table_foreach(ctx->phis, entry) {
 		visit_post_phi(ctx, (nir_phi_instr*)entry->key,
 		               (LLVMValueRef)entry->data);
