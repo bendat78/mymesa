@@ -358,7 +358,7 @@ fd_batch_flush(struct fd_batch *batch, bool sync, bool force)
 			 */
 			new_batch = NULL;
 		} else {
-			new_batch = fd_batch_create(ctx, false);
+			new_batch = fd_bc_alloc_batch(&ctx->screen->batch_cache, ctx, false);
 			util_copy_framebuffer_state(&new_batch->framebuffer, &batch->framebuffer);
 		}
 
@@ -468,8 +468,10 @@ fd_batch_resource_used(struct fd_batch *batch, struct fd_resource *rsc, bool wri
 			flush_write_batch(rsc);
 	}
 
-	if (rsc->batch_mask & (1 << batch->idx))
+	if (rsc->batch_mask & (1 << batch->idx)) {
+		debug_assert(_mesa_set_search(batch->resources, rsc));
 		return;
+	}
 
 	debug_assert(!_mesa_set_search(batch->resources, rsc));
 
