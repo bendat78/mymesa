@@ -45,14 +45,16 @@ struct fd_ringbuffer;
 enum fd6_state_id {
 	FD6_GROUP_PROG,
 	FD6_GROUP_PROG_BINNING,
-	FD6_GROUP_ZSA,
-	FD6_GROUP_ZSA_BINNING,
+	FD6_GROUP_LRZ,
+	FD6_GROUP_LRZ_BINNING,
 	FD6_GROUP_VBO,
 	FD6_GROUP_VBO_BINNING,
 	FD6_GROUP_VS_CONST,
 	FD6_GROUP_FS_CONST,
 	FD6_GROUP_VS_TEX,
 	FD6_GROUP_FS_TEX,
+	FD6_GROUP_RASTERIZER,
+	FD6_GROUP_ZSA,
 };
 
 struct fd6_state_group {
@@ -172,8 +174,6 @@ bool fd6_emit_textures(struct fd_pipe *pipe, struct fd_ringbuffer *ring,
 		enum a6xx_state_block sb, struct fd_texture_stateobj *tex,
 		unsigned bcolor_offset);
 
-struct fd_ringbuffer * fd6_build_vbo_state(struct fd6_emit *emit, const struct ir3_shader_variant *vp);
-
 void fd6_emit_state(struct fd_ringbuffer *ring, struct fd6_emit *emit);
 
 void fd6_emit_cs_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
@@ -182,6 +182,14 @@ void fd6_emit_cs_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 void fd6_emit_restore(struct fd_batch *batch, struct fd_ringbuffer *ring);
 
 void fd6_emit_init(struct pipe_context *pctx);
+
+static inline void
+fd6_emit_ib(struct fd_ringbuffer *ring, struct fd_ringbuffer *target)
+{
+	emit_marker6(ring, 6);
+	__OUT_IB5(ring, target);
+	emit_marker6(ring, 6);
+}
 
 #define WRITE(reg, val) do {					\
 		OUT_PKT4(ring, reg, 1);					\
