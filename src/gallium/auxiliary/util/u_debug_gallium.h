@@ -1,6 +1,7 @@
 /**************************************************************************
  *
- * Copyright 2015 Advanced Micro Devices, Inc.
+ * Copyright 2008 VMware, Inc.
+ * Copyright (c) 2008 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,56 +26,42 @@
  *
  **************************************************************************/
 
-#include <assert.h>
+#ifndef _U_DEBUG_GALLIUM_H_
+#define _U_DEBUG_GALLIUM_H_
 
-#include "pipe/p_screen.h"
-#include "pipe-loader/pipe_loader.h"
-#include "state_tracker/drm_driver.h"
+#include "pipe/p_defines.h"
 
-#include "util/u_memory.h"
-#include "vl/vl_winsys.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-static void
-vl_drm_screen_destroy(struct vl_screen *vscreen);
+unsigned long
+debug_memory_begin(void);
 
-struct vl_screen *
-vl_drm_screen_create(int fd)
-{
-   struct vl_screen *vscreen;
+void 
+debug_memory_end(unsigned long beginning);
 
-   vscreen = CALLOC_STRUCT(vl_screen);
-   if (!vscreen)
-      return NULL;
+#ifdef DEBUG
+void debug_print_format(const char *msg, unsigned fmt);
+#else
+#define debug_print_format(_msg, _fmt) ((void)0)
+#endif
 
-   if (pipe_loader_drm_probe_fd(&vscreen->dev, fd))
-      vscreen->pscreen = pipe_loader_create_screen(vscreen->dev);
+#ifdef DEBUG
 
-   if (!vscreen->pscreen)
-      goto release_pipe;
+void
+debug_print_transfer_flags(const char *msg, unsigned usage);
 
-   vscreen->destroy = vl_drm_screen_destroy;
-   vscreen->texture_from_drawable = NULL;
-   vscreen->get_dirty_area = NULL;
-   vscreen->get_timestamp = NULL;
-   vscreen->set_next_timestamp = NULL;
-   vscreen->get_private = NULL;
-   return vscreen;
+void
+debug_print_bind_flags(const char *msg, unsigned usage);
 
-release_pipe:
-   if (vscreen->dev)
-      pipe_loader_release(&vscreen->dev, 1);
+void
+debug_print_usage_enum(const char *msg, enum pipe_resource_usage usage);
 
-   FREE(vscreen);
-   return NULL;
+#endif
+
+#ifdef __cplusplus
 }
+#endif
 
-static void
-vl_drm_screen_destroy(struct vl_screen *vscreen)
-{
-   assert(vscreen);
-
-   vscreen->pscreen->destroy(vscreen->pscreen);
-   pipe_loader_release(&vscreen->dev, 1);
-   /* CHECK: The VAAPI loader/user preserves ownership of the original fd */
-   FREE(vscreen);
-}
+#endif
