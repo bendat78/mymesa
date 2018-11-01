@@ -2544,6 +2544,7 @@ radv_pipeline_generate_binning_state(struct radeon_cmdbuf *cs,
 		fpovs_per_batch = 63;
 		break;
 	case CHIP_RAVEN:
+	case CHIP_RAVEN2:
 		context_states_per_bin = 6;
 		persistent_states_per_bin = 32;
 		fpovs_per_batch = 63;
@@ -2781,6 +2782,15 @@ radv_pipeline_generate_multisample_state(struct radeon_cmdbuf *cs,
 
 	radeon_set_context_reg(cs, R_028804_DB_EQAA, ms->db_eqaa);
 	radeon_set_context_reg(cs, R_028A4C_PA_SC_MODE_CNTL_1, ms->pa_sc_mode_cntl_1);
+
+	/* The exclusion bits can be set to improve rasterization efficiency
+	 * if no sample lies on the pixel boundary (-8 sample offset). It's
+	 * currently always TRUE because the driver doesn't support 16 samples.
+	 */
+	bool exclusion = pipeline->device->physical_device->rad_info.chip_class >= CIK;
+	radeon_set_context_reg(cs, R_02882C_PA_SU_PRIM_FILTER_CNTL,
+			       S_02882C_XMAX_RIGHT_EXCLUSION(exclusion) |
+			       S_02882C_YMAX_BOTTOM_EXCLUSION(exclusion));
 }
 
 static void
@@ -3156,8 +3166,10 @@ radv_pipeline_generate_ps_inputs(struct radeon_cmdbuf *cs,
 
 static uint32_t
 radv_compute_db_shader_control(const struct radv_device *device,
+			       const struct radv_pipeline *pipeline,
                                const struct radv_shader_variant *ps)
 {
+	const struct radv_multisample_state *ms = &pipeline->graphics.ms;
 	unsigned z_order;
 	if (ps->info.fs.early_fragment_test || !ps->info.info.ps.writes_memory)
 		z_order = V_02880C_EARLY_Z_THEN_LATE_Z;
@@ -3167,10 +3179,16 @@ radv_compute_db_shader_control(const struct radv_device *device,
 	bool disable_rbplus = device->physical_device->has_rbplus &&
 	                      !device->physical_device->rbplus_allowed;
 
+	/* Do not enable the gl_SampleMask fragment shader output if MSAA is
+	 * disabled.
+	 */
+	bool mask_export_enable = ms->num_samples > 1 &&
+				  ps->info.info.ps.writes_sample_mask;
+
 	return  S_02880C_Z_EXPORT_ENABLE(ps->info.info.ps.writes_z) |
 		S_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(ps->info.info.ps.writes_stencil) |
 		S_02880C_KILL_ENABLE(!!ps->info.fs.can_discard) |
-		S_02880C_MASK_EXPORT_ENABLE(ps->info.info.ps.writes_sample_mask) |
+		S_02880C_MASK_EXPORT_ENABLE(mask_export_enable) |
 		S_02880C_Z_ORDER(z_order) |
 		S_02880C_DEPTH_BEFORE_SHADER(ps->info.fs.early_fragment_test) |
 		S_02880C_EXEC_ON_HIER_FAIL(ps->info.info.ps.writes_memory) |
@@ -3196,7 +3214,8 @@ radv_pipeline_generate_fragment_shader(struct radeon_cmdbuf *cs,
 	radeon_emit(cs, ps->rsrc2);
 
 	radeon_set_context_reg(cs, R_02880C_DB_SHADER_CONTROL,
-	                       radv_compute_db_shader_control(pipeline->device, ps));
+	                       radv_compute_db_shader_control(pipeline->device,
+							      pipeline, ps));
 
 	radeon_set_context_reg(cs, R_0286CC_SPI_PS_INPUT_ENA,
 			       ps->config.spi_ps_input_ena);
