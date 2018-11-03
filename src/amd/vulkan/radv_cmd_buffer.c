@@ -1950,6 +1950,8 @@ radv_flush_streamout_descriptors(struct radv_cmd_buffer *cmd_buffer)
 
 			va = radv_buffer_get_va(buffer->bo) + buffer->offset;
 
+			va += sb[i].offset;
+
 			/* Set the descriptor.
 			 *
 			 * On VI, the format must be non-INVALID, otherwise
@@ -4741,28 +4743,30 @@ void radv_CmdBeginTransformFeedbackEXT(
 	struct radv_streamout_binding *sb = cmd_buffer->streamout_bindings;
 	struct radv_streamout_state *so = &cmd_buffer->state.streamout;
 	struct radeon_cmdbuf *cs = cmd_buffer->cs;
+	uint32_t i;
 
 	radv_flush_vgt_streamout(cmd_buffer);
 
 	assert(firstCounterBuffer + counterBufferCount <= MAX_SO_BUFFERS);
-	for (uint32_t i = firstCounterBuffer; i < counterBufferCount; i++) {
-		if (!(so->enabled_mask & (1 << i)))
-			continue;
+	for_each_bit(i, so->enabled_mask) {
+		int32_t counter_buffer_idx = i - firstCounterBuffer;
+		if (counter_buffer_idx >= 0 && counter_buffer_idx > counterBufferCount)
+			counter_buffer_idx = -1;
 
 		/* SI binds streamout buffers as shader resources.
 		 * VGT only counts primitives and tells the shader through
 		 * SGPRs what to do.
 		 */
 		radeon_set_context_reg_seq(cs, R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 + 16*i, 2);
-		radeon_emit(cs, (sb[i].offset + sb[i].size) >> 2);	/* BUFFER_SIZE (in DW) */
+		radeon_emit(cs, sb[i].size >> 2);	/* BUFFER_SIZE (in DW) */
 		radeon_emit(cs, so->stride_in_dw[i]);			/* VTX_STRIDE (in DW) */
 
-		if (pCounterBuffers && pCounterBuffers[i]) {
+		if (counter_buffer_idx >= 0 && pCounterBuffers && pCounterBuffers[counter_buffer_idx]) {
 			/* The array of counter buffers is optional. */
-			RADV_FROM_HANDLE(radv_buffer, buffer, pCounterBuffers[i]);
+			RADV_FROM_HANDLE(radv_buffer, buffer, pCounterBuffers[counter_buffer_idx]);
 			uint64_t va = radv_buffer_get_va(buffer->bo);
 
-			va += buffer->offset + pCounterBufferOffsets[i];
+			va += buffer->offset + pCounterBufferOffsets[counter_buffer_idx];
 
 			/* Append */
 			radeon_emit(cs, PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0));
@@ -4783,7 +4787,7 @@ void radv_CmdBeginTransformFeedbackEXT(
 					STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_FROM_PACKET)); /* control */
 			radeon_emit(cs, 0); /* unused */
 			radeon_emit(cs, 0); /* unused */
-			radeon_emit(cs, sb[i].offset >> 2); /* buffer offset in DW */
+			radeon_emit(cs, 0); /* unused */
 			radeon_emit(cs, 0); /* unused */
 		}
 	}
@@ -4801,20 +4805,22 @@ void radv_CmdEndTransformFeedbackEXT(
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	struct radv_streamout_state *so = &cmd_buffer->state.streamout;
 	struct radeon_cmdbuf *cs = cmd_buffer->cs;
+	uint32_t i;
 
 	radv_flush_vgt_streamout(cmd_buffer);
 
 	assert(firstCounterBuffer + counterBufferCount <= MAX_SO_BUFFERS);
-	for (uint32_t i = firstCounterBuffer; i < counterBufferCount; i++) {
-		if (!(so->enabled_mask & (1 << i)))
-			continue;
+	for_each_bit(i, so->enabled_mask) {
+		int32_t counter_buffer_idx = i - firstCounterBuffer;
+		if (counter_buffer_idx >= 0 && counter_buffer_idx > counterBufferCount)
+			counter_buffer_idx = -1;
 
-		if (pCounterBuffers && pCounterBuffers[i]) {
+		if (counter_buffer_idx >= 0 && pCounterBuffers && pCounterBuffers[counter_buffer_idx]) {
 			/* The array of counters buffer is optional. */
-			RADV_FROM_HANDLE(radv_buffer, buffer, pCounterBuffers[i]);
+			RADV_FROM_HANDLE(radv_buffer, buffer, pCounterBuffers[counter_buffer_idx]);
 			uint64_t va = radv_buffer_get_va(buffer->bo);
 
-			va += buffer->offset + pCounterBufferOffsets[i];
+			va += buffer->offset + pCounterBufferOffsets[counter_buffer_idx];
 
 			radeon_emit(cs, PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0));
 			radeon_emit(cs, STRMOUT_SELECT_BUFFER(i) |
