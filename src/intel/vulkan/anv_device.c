@@ -37,6 +37,7 @@
 #include "util/build_id.h"
 #include "util/disk_cache.h"
 #include "util/mesa-sha1.h"
+#include "util/u_string.h"
 #include "git_sha1.h"
 #include "vk_util.h"
 #include "common/gen_defines.h"
@@ -659,12 +660,9 @@ VkResult anv_CreateInstance(
       if (!anv_device_entrypoint_is_enabled(i, instance->app_info.api_version,
                                             &instance->enabled_extensions, NULL)) {
          instance->device_dispatch.entrypoints[i] = NULL;
-      } else if (anv_device_dispatch_table.entrypoints[i] != NULL) {
-         instance->device_dispatch.entrypoints[i] =
-            anv_device_dispatch_table.entrypoints[i];
       } else {
          instance->device_dispatch.entrypoints[i] =
-            anv_tramp_device_dispatch_table.entrypoints[i];
+            anv_device_dispatch_table.entrypoints[i];
       }
    }
 
@@ -1138,12 +1136,10 @@ void anv_GetPhysicalDeviceProperties2(
             (VkPhysicalDeviceDriverPropertiesKHR *) ext;
 
          driver_props->driverID = VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA_KHR;
-         memset(driver_props->driverName, 0, VK_MAX_DRIVER_NAME_SIZE_KHR);
-         strcpy(driver_props->driverName,
+         util_snprintf(driver_props->driverName, VK_MAX_DRIVER_NAME_SIZE_KHR,
                 "Intel open-source Mesa driver");
 
-         memset(driver_props->driverInfo, 0, VK_MAX_DRIVER_INFO_SIZE_KHR);
-         strcpy(driver_props->driverInfo,
+         util_snprintf(driver_props->driverInfo, VK_MAX_DRIVER_INFO_SIZE_KHR,
                 "Mesa " PACKAGE_VERSION MESA_GIT_SHA1);
 
          driver_props->conformanceVersion = (VkConformanceVersionKHR) {
@@ -1715,7 +1711,7 @@ VkResult anv_CreateDevice(
    device->instance = physical_device->instance;
    device->chipset_id = physical_device->chipset_id;
    device->no_hw = physical_device->no_hw;
-   device->lost = false;
+   device->_lost = false;
 
    if (pAllocator)
       device->alloc = *pAllocator;
@@ -2053,32 +2049,48 @@ void anv_GetDeviceQueue2(
 }
 
 VkResult
+_anv_device_set_lost(struct anv_device *device,
+                     const char *file, int line,
+                     const char *msg, ...)
+{
+   VkResult err;
+   va_list ap;
+
+   device->_lost = true;
+
+   va_start(ap, msg);
+   err = __vk_errorv(device->instance, device,
+                     VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT,
+                     VK_ERROR_DEVICE_LOST, file, line, msg, ap);
+   va_end(ap);
+
+   if (env_var_as_boolean("ANV_ABORT_ON_DEVICE_LOSS", false))
+      abort();
+
+   return err;
+}
+
+VkResult
 anv_device_query_status(struct anv_device *device)
 {
    /* This isn't likely as most of the callers of this function already check
     * for it.  However, it doesn't hurt to check and it potentially lets us
     * avoid an ioctl.
     */
-   if (unlikely(device->lost))
+   if (anv_device_is_lost(device))
       return VK_ERROR_DEVICE_LOST;
 
    uint32_t active, pending;
    int ret = anv_gem_gpu_get_reset_stats(device, &active, &pending);
    if (ret == -1) {
       /* We don't know the real error. */
-      device->lost = true;
-      return vk_errorf(device->instance, device, VK_ERROR_DEVICE_LOST,
-                       "get_reset_stats failed: %m");
+      return anv_device_set_lost(device, "get_reset_stats failed: %m");
    }
 
    if (active) {
-      device->lost = true;
-      return vk_errorf(device->instance, device, VK_ERROR_DEVICE_LOST,
-                       "GPU hung on one of our command buffers");
+      return anv_device_set_lost(device, "GPU hung on one of our command buffers");
    } else if (pending) {
-      device->lost = true;
-      return vk_errorf(device->instance, device, VK_ERROR_DEVICE_LOST,
-                       "GPU hung with commands in-flight");
+      return anv_device_set_lost(device, "GPU hung with commands in-flight");
    }
 
    return VK_SUCCESS;
@@ -2096,9 +2108,7 @@ anv_device_bo_busy(struct anv_device *device, struct anv_bo *bo)
       return VK_NOT_READY;
    } else if (ret == -1) {
       /* We don't know the real error. */
-      device->lost = true;
-      return vk_errorf(device->instance, device, VK_ERROR_DEVICE_LOST,
-                       "gem wait failed: %m");
+      return anv_device_set_lost(device, "gem wait failed: %m");
    }
 
    /* Query for device status after the busy call.  If the BO we're checking
@@ -2119,9 +2129,7 @@ anv_device_wait(struct anv_device *device, struct anv_bo *bo,
       return VK_TIMEOUT;
    } else if (ret == -1) {
       /* We don't know the real error. */
-      device->lost = true;
-      return vk_errorf(device->instance, device, VK_ERROR_DEVICE_LOST,
-                       "gem wait failed: %m");
+      return anv_device_set_lost(device, "gem wait failed: %m");
    }
 
    /* Query for device status after the wait.  If the BO we're waiting on got
@@ -2136,7 +2144,7 @@ VkResult anv_DeviceWaitIdle(
     VkDevice                                    _device)
 {
    ANV_FROM_HANDLE(anv_device, device, _device);
-   if (unlikely(device->lost))
+   if (anv_device_is_lost(device))
       return VK_ERROR_DEVICE_LOST;
 
    struct anv_batch batch;
@@ -2810,7 +2818,7 @@ VkResult anv_QueueBindSparse(
     VkFence                                     fence)
 {
    ANV_FROM_HANDLE(anv_queue, queue, _queue);
-   if (unlikely(queue->device->lost))
+   if (anv_device_is_lost(queue->device))
       return VK_ERROR_DEVICE_LOST;
 
    return vk_error(VK_ERROR_FEATURE_NOT_PRESENT);
@@ -2868,7 +2876,7 @@ VkResult anv_GetEventStatus(
    ANV_FROM_HANDLE(anv_device, device, _device);
    ANV_FROM_HANDLE(anv_event, event, _event);
 
-   if (unlikely(device->lost))
+   if (anv_device_is_lost(device))
       return VK_ERROR_DEVICE_LOST;
 
    if (!device->info.has_llc) {
@@ -3033,6 +3041,133 @@ void anv_DestroyFramebuffer(
       return;
 
    vk_free2(&device->alloc, pAllocator, fb);
+}
+
+static const VkTimeDomainEXT anv_time_domains[] = {
+   VK_TIME_DOMAIN_DEVICE_EXT,
+   VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT,
+   VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT,
+};
+
+VkResult anv_GetPhysicalDeviceCalibrateableTimeDomainsEXT(
+   VkPhysicalDevice                             physicalDevice,
+   uint32_t                                     *pTimeDomainCount,
+   VkTimeDomainEXT                              *pTimeDomains)
+{
+   int d;
+   VK_OUTARRAY_MAKE(out, pTimeDomains, pTimeDomainCount);
+
+   for (d = 0; d < ARRAY_SIZE(anv_time_domains); d++) {
+      vk_outarray_append(&out, i) {
+         *i = anv_time_domains[d];
+      }
+   }
+
+   return vk_outarray_status(&out);
+}
+
+static uint64_t
+anv_clock_gettime(clockid_t clock_id)
+{
+   struct timespec current;
+   int ret;
+
+   ret = clock_gettime(clock_id, &current);
+   if (ret < 0 && clock_id == CLOCK_MONOTONIC_RAW)
+      ret = clock_gettime(CLOCK_MONOTONIC, &current);
+   if (ret < 0)
+      return 0;
+
+   return (uint64_t) current.tv_sec * 1000000000ULL + current.tv_nsec;
+}
+
+#define TIMESTAMP 0x2358
+
+VkResult anv_GetCalibratedTimestampsEXT(
+   VkDevice                                     _device,
+   uint32_t                                     timestampCount,
+   const VkCalibratedTimestampInfoEXT           *pTimestampInfos,
+   uint64_t                                     *pTimestamps,
+   uint64_t                                     *pMaxDeviation)
+{
+   ANV_FROM_HANDLE(anv_device, device, _device);
+   uint64_t timestamp_frequency = device->info.timestamp_frequency;
+   int  ret;
+   int d;
+   uint64_t begin, end;
+   uint64_t max_clock_period = 0;
+
+   begin = anv_clock_gettime(CLOCK_MONOTONIC_RAW);
+
+   for (d = 0; d < timestampCount; d++) {
+      switch (pTimestampInfos[d].timeDomain) {
+      case VK_TIME_DOMAIN_DEVICE_EXT:
+         ret = anv_gem_reg_read(device, TIMESTAMP | 1,
+                                &pTimestamps[d]);
+
+         if (ret != 0) {
+            return anv_device_set_lost(device, "Failed to read the TIMESTAMP "
+                                               "register: %m");
+         }
+         uint64_t device_period = DIV_ROUND_UP(1000000000, timestamp_frequency);
+         max_clock_period = MAX2(max_clock_period, device_period);
+         break;
+      case VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT:
+         pTimestamps[d] = anv_clock_gettime(CLOCK_MONOTONIC);
+         max_clock_period = MAX2(max_clock_period, 1);
+         break;
+
+      case VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT:
+         pTimestamps[d] = begin;
+         break;
+      default:
+         pTimestamps[d] = 0;
+         break;
+      }
+   }
+
+   end = anv_clock_gettime(CLOCK_MONOTONIC_RAW);
+
+    /*
+     * The maximum deviation is the sum of the interval over which we
+     * perform the sampling and the maximum period of any sampled
+     * clock. That's because the maximum skew between any two sampled
+     * clock edges is when the sampled clock with the largest period is
+     * sampled at the end of that period but right at the beginning of the
+     * sampling interval and some other clock is sampled right at the
+     * begining of its sampling period and right at the end of the
+     * sampling interval. Let's assume the GPU has the longest clock
+     * period and that the application is sampling GPU and monotonic:
+     *
+     *                               s                 e
+     *			 w x y z 0 1 2 3 4 5 6 7 8 9 a b c d e f
+     *	Raw              -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
+     *
+     *                               g
+     *		  0         1         2         3
+     *	GPU       -----_____-----_____-----_____-----_____
+     *
+     *                                                m
+     *					    x y z 0 1 2 3 4 5 6 7 8 9 a b c
+     *	Monotonic                           -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
+     *
+     *	Interval                     <----------------->
+     *	Deviation           <-------------------------->
+     *
+     *		s  = read(raw)       2
+     *		g  = read(GPU)       1
+     *		m  = read(monotonic) 2
+     *		e  = read(raw)       b
+     *
+     * We round the sample interval up by one tick to cover sampling error
+     * in the interval clock
+     */
+
+   uint64_t sample_interval = end - begin + 1;
+
+   *pMaxDeviation = sample_interval + max_clock_period;
+
+   return VK_SUCCESS;
 }
 
 /* vk_icd.h does not declare this function, so we declare it here to

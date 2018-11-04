@@ -1570,7 +1570,7 @@ static LLVMValueRef visit_atomic_ssbo(struct ac_nir_context *ctx,
 						 true);
 	params[arg_count++] = ctx->ac.i32_0; /* vindex */
 	params[arg_count++] = get_src(ctx, instr->src[1]);      /* voffset */
-	params[arg_count++] = LLVMConstInt(ctx->ac.i1, 0, false);  /* slc */
+	params[arg_count++] = ctx->ac.i1false;  /* slc */
 
 	switch (instr->intrinsic) {
 	case nir_intrinsic_ssbo_atomic_add:
@@ -1685,8 +1685,8 @@ static LLVMValueRef visit_load_buffer(struct ac_nir_context *ctx,
 		};
 
 		if (num_bytes > 16 && num_components == 3) {
-			/* we end up with a v4f32 and v2f32 but shuffle fails on that */
-			results[1] = ac_build_expand_to_vec4(&ctx->ac, results[1], 2);
+			/* we end up with a v2i64 and i64 but shuffle fails on that */
+			results[1] = ac_build_expand(&ctx->ac, results[1], 1, 2);
 		}
 
 		LLVMValueRef swizzle = LLVMConstVector(masks, num_components);
@@ -2594,7 +2594,7 @@ static void emit_discard(struct ac_nir_context *ctx,
 				     ctx->ac.i32_0, "");
 	} else {
 		assert(instr->intrinsic == nir_intrinsic_discard);
-		cond = LLVMConstInt(ctx->ac.i1, false, 0);
+		cond = ctx->ac.i1false;
 	}
 
 	ctx->abi->emit_kill(ctx->abi, cond);
@@ -2652,7 +2652,7 @@ visit_first_invocation(struct ac_nir_context *ctx)
 	LLVMValueRef active_set = ac_build_ballot(&ctx->ac, ctx->ac.i32_1);
 
 	/* The second argument is whether cttz(0) should be defined, but we do not care. */
-	LLVMValueRef args[] = {active_set, LLVMConstInt(ctx->ac.i1, 0, false)};
+	LLVMValueRef args[] = {active_set, ctx->ac.i1false};
 	LLVMValueRef result =  ac_build_intrinsic(&ctx->ac,
 	                                          "llvm.cttz.i64",
 	                                          ctx->ac.i64, args, 2,
@@ -3635,7 +3635,6 @@ static void visit_post_phi(struct ac_nir_context *ctx,
 
 static void phi_post_pass(struct ac_nir_context *ctx)
 {
-	struct hash_entry *entry;
 	hash_table_foreach(ctx->phis, entry) {
 		visit_post_phi(ctx, (nir_phi_instr*)entry->key,
 		               (LLVMValueRef)entry->data);

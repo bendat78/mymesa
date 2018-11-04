@@ -48,6 +48,7 @@
 #define SI_BASE_VERTEX_UNKNOWN		INT_MIN
 #define SI_RESTART_INDEX_UNKNOWN	INT_MIN
 #define SI_NUM_SMOOTH_AA_SAMPLES	8
+#define SI_MAX_POINT_SIZE		2048
 #define SI_GS_PER_ES			128
 /* Alignment for optimal CP DMA performance. */
 #define SI_CPDMA_ALIGNMENT		32
@@ -617,6 +618,7 @@ struct si_framebuffer {
 	ubyte				color_is_int8;
 	ubyte				color_is_int10;
 	ubyte				dirty_cbufs;
+	ubyte				dcc_overwrite_combiner_watermark;
 	bool				dirty_zsbuf;
 	bool				any_dst_linear;
 	bool				CB_has_shader_readable_metadata;

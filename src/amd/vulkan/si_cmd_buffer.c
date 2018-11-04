@@ -337,6 +337,7 @@ si_emit_graphics(struct radv_physical_device *physical_device,
 			pc_lines = 4096;
 			break;
 		case CHIP_RAVEN:
+		case CHIP_RAVEN2:
 			pc_lines = 1024;
 			break;
 		default:
@@ -516,16 +517,16 @@ si_write_scissors(struct radeon_cmdbuf *cs, int first,
 		VkRect2D scissor = si_intersect_scissor(&scissors[i], &viewport_scissor);
 
 		get_viewport_xform(viewports + i, scale, translate);
-		scale[0] = abs(scale[0]);
-		scale[1] = abs(scale[1]);
+		scale[0] = fabsf(scale[0]);
+		scale[1] = fabsf(scale[1]);
 
 		if (scale[0] < 0.5)
 			scale[0] = 0.5;
 		if (scale[1] < 0.5)
 			scale[1] = 0.5;
 
-		guardband_x = MIN2(guardband_x, (max_range - abs(translate[0])) / scale[0]);
-		guardband_y = MIN2(guardband_y, (max_range - abs(translate[1])) / scale[1]);
+		guardband_x = MIN2(guardband_x, (max_range - fabsf(translate[0])) / scale[0]);
+		guardband_y = MIN2(guardband_y, (max_range - fabsf(translate[1])) / scale[1]);
 
 		radeon_emit(cs, S_028250_TL_X(scissor.offset.x) |
 			    S_028250_TL_Y(scissor.offset.y) |
@@ -881,6 +882,12 @@ si_cs_emit_cache_flush(struct radeon_cmdbuf *cs,
 	if (flush_bits & RADV_CMD_FLAG_VGT_FLUSH) {
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
+	}
+
+	/* VGT streamout state sync */
+	if (flush_bits & RADV_CMD_FLAG_VGT_STREAMOUT_SYNC) {
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_STREAMOUT_SYNC) | EVENT_INDEX(0));
 	}
 
 	/* Make sure ME is idle (it executes most packets) before continuing.

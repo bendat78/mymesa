@@ -573,12 +573,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 				 &sctx->null_const_buf);
 		si_set_rw_buffer(sctx, SI_PS_CONST_SAMPLE_POSITIONS,
 				 &sctx->null_const_buf);
-
-		/* Clear the NULL constant buffer, because loads should return zeros. */
-		uint32_t clear_value = 0;
-		si_clear_buffer(sctx, sctx->null_const_buf.buffer, 0,
-				sctx->null_const_buf.buffer->width0,
-				&clear_value, 4, SI_COHERENCY_SHADER);
 	}
 
 	uint64_t max_threads_per_block;
@@ -623,6 +617,14 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 
 	/* this must be last */
 	si_begin_new_gfx_cs(sctx);
+
+	if (sctx->chip_class == CIK) {
+		/* Clear the NULL constant buffer, because loads should return zeros. */
+		uint32_t clear_value = 0;
+		si_clear_buffer(sctx, sctx->null_const_buf.buffer, 0,
+				sctx->null_const_buf.buffer->width0,
+				&clear_value, 4, SI_COHERENCY_SHADER);
+	}
 	return &sctx->b;
 fail:
 	fprintf(stderr, "radeonsi: Failed to create a context.\n");
@@ -792,39 +794,39 @@ static void si_disk_cache_create(struct si_screen *sscreen)
 	if (sscreen->debug_flags & DBG_ALL_SHADERS)
 		return;
 
-	uint32_t mesa_id;
-	if (disk_cache_get_function_identifier(si_disk_cache_create, &mesa_id)) {
-		char *driver_id_str;
-		int res = -1;
-		uint32_t llvm_id;
-		if (disk_cache_get_function_identifier(LLVMInitializeAMDGPUTargetInfo,
-						       &llvm_id)) {
-			res = asprintf(&driver_id_str, "%u_%u", mesa_id, llvm_id);
-		}
+	struct mesa_sha1 ctx;
+	unsigned char sha1[20];
+	char cache_id[20 * 2 + 1];
 
-		if (res != -1) {
-			/* These flags affect shader compilation. */
-			#define ALL_FLAGS (DBG(FS_CORRECT_DERIVS_AFTER_KILL) | \
-					   DBG(SI_SCHED) | \
-					   DBG(GISEL) | \
-					   DBG(UNSAFE_MATH) | \
-					   DBG(NIR))
-			uint64_t shader_debug_flags = sscreen->debug_flags &
-						      ALL_FLAGS;
+	_mesa_sha1_init(&ctx);
 
-			/* Add the high bits of 32-bit addresses, which affects
-			 * how 32-bit addresses are expanded to 64 bits.
-			 */
-			STATIC_ASSERT(ALL_FLAGS <= UINT_MAX);
-			shader_debug_flags |= (uint64_t)sscreen->info.address32_hi << 32;
+	if (!disk_cache_get_function_identifier(si_disk_cache_create, &ctx) ||
+	    !disk_cache_get_function_identifier(LLVMInitializeAMDGPUTargetInfo,
+						&ctx))
+		return;
 
-			sscreen->disk_shader_cache =
-				disk_cache_create(sscreen->info.name,
-						  driver_id_str,
-						  shader_debug_flags);
-			free(driver_id_str);
-		}
-	}
+	_mesa_sha1_final(&ctx, sha1);
+	disk_cache_format_hex_id(cache_id, sha1, 20 * 2);
+
+	/* These flags affect shader compilation. */
+	#define ALL_FLAGS (DBG(FS_CORRECT_DERIVS_AFTER_KILL) |	\
+			   DBG(SI_SCHED) |			\
+			   DBG(GISEL) |				\
+			   DBG(UNSAFE_MATH) |			\
+			   DBG(NIR))
+	uint64_t shader_debug_flags = sscreen->debug_flags &
+		ALL_FLAGS;
+
+	/* Add the high bits of 32-bit addresses, which affects
+	 * how 32-bit addresses are expanded to 64 bits.
+	 */
+	STATIC_ASSERT(ALL_FLAGS <= UINT_MAX);
+	shader_debug_flags |= (uint64_t)sscreen->info.address32_hi << 32;
+
+	sscreen->disk_shader_cache =
+		disk_cache_create(sscreen->info.name,
+				  cache_id,
+				  shader_debug_flags);
 }
 
 struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
@@ -992,8 +994,10 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 	}
 
 	/* The mere presense of CLEAR_STATE in the IB causes random GPU hangs
-	 * on SI. */
-	sscreen->has_clear_state = sscreen->info.chip_class >= CIK;
+        * on SI. Some CLEAR_STATE cause asic hang on radeon kernel, etc.
+        * SPI_VS_OUT_CONFIG. So only enable CI CLEAR_STATE on amdgpu kernel.*/
+       sscreen->has_clear_state = sscreen->info.chip_class >= CIK &&
+                                  sscreen->info.drm_major == 3;
 
 	sscreen->has_distributed_tess =
 		sscreen->info.chip_class >= VI &&
@@ -1030,10 +1034,11 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 	if (sscreen->debug_flags & DBG(DPBB)) {
 		sscreen->dpbb_allowed = true;
 	} else {
-		/* Only enable primitive binning on Raven by default. */
+		/* Only enable primitive binning on APUs by default. */
 		/* TODO: Investigate if binning is profitable on Vega12. */
-		sscreen->dpbb_allowed = sscreen->info.family == CHIP_RAVEN &&
-					!(sscreen->debug_flags & DBG(NO_DPBB));
+		sscreen->dpbb_allowed = !(sscreen->debug_flags & DBG(NO_DPBB)) &&
+					(sscreen->info.family == CHIP_RAVEN ||
+					 sscreen->info.family == CHIP_RAVEN2);
 	}
 
 	if (sscreen->debug_flags & DBG(DFSM)) {
@@ -1060,7 +1065,8 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 			!(sscreen->debug_flags & DBG(NO_RB_PLUS)) &&
 			(sscreen->info.family == CHIP_STONEY ||
 			 sscreen->info.family == CHIP_VEGA12 ||
-			 sscreen->info.family == CHIP_RAVEN);
+			 sscreen->info.family == CHIP_RAVEN ||
+			 sscreen->info.family == CHIP_RAVEN2);
 	}
 
 	sscreen->dcc_msaa_allowed =

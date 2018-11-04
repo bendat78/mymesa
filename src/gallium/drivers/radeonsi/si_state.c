@@ -113,13 +113,15 @@ static void si_emit_cb_render_state(struct si_context *sctx)
 				  blend &&
 				  blend->blend_enable_4bit & cb_target_mask &&
 				  sctx->framebuffer.nr_samples >= 2;
+		unsigned watermark = sctx->framebuffer.dcc_overwrite_combiner_watermark;
 
 		radeon_opt_set_context_reg(
 				sctx, R_028424_CB_DCC_CONTROL,
 				SI_TRACKED_CB_DCC_CONTROL,
 				S_028424_OVERWRITE_COMBINER_MRT_SHARING_DISABLE(1) |
-				S_028424_OVERWRITE_COMBINER_WATERMARK(4) |
-				S_028424_OVERWRITE_COMBINER_DISABLE(oc_disable));
+				S_028424_OVERWRITE_COMBINER_WATERMARK(watermark) |
+				S_028424_OVERWRITE_COMBINER_DISABLE(oc_disable) |
+				S_028424_DISABLE_CONSTANT_ENCODE_REG(sctx->family == CHIP_RAVEN2));
 	}
 
 	/* RB+ register settings. */
@@ -898,7 +900,7 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 
 	if (state->point_size_per_vertex) {
 		psize_min = util_get_min_point_size(state);
-		psize_max = 8192;
+		psize_max = SI_MAX_POINT_SIZE;
 	} else {
 		/* Force the point size to be as if the vertex output was disabled. */
 		psize_min = state->point_size;
@@ -2855,6 +2857,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	sctx->framebuffer.any_dst_linear = false;
 	sctx->framebuffer.CB_has_shader_readable_metadata = false;
 	sctx->framebuffer.DB_has_shader_readable_metadata = false;
+	unsigned num_bpp64_colorbufs = 0;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
 		if (!state->cbufs[i])
@@ -2901,6 +2904,8 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 
 		if (tex->surface.is_linear)
 			sctx->framebuffer.any_dst_linear = true;
+		if (tex->surface.bpe >= 8)
+			num_bpp64_colorbufs++;
 
 		if (vi_dcc_enabled(tex, surf->base.u.tex.level))
 			sctx->framebuffer.CB_has_shader_readable_metadata = true;
@@ -2915,6 +2920,14 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 			vi_separate_dcc_start_query(sctx, tex);
 		}
 	}
+
+	/* For optimal DCC performance. */
+	if (sctx->chip_class == VI)
+		sctx->framebuffer.dcc_overwrite_combiner_watermark = 4;
+	else if (num_bpp64_colorbufs >= 5)
+		sctx->framebuffer.dcc_overwrite_combiner_watermark = 8;
+	else
+		sctx->framebuffer.dcc_overwrite_combiner_watermark = 6;
 
 	struct si_texture *zstex = NULL;
 
@@ -4899,8 +4912,9 @@ static void si_init_config(struct si_context *sctx)
 	bool has_clear_state = sscreen->has_clear_state;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 
-	/* Only SI can disable CLEAR_STATE for now. */
-	assert(has_clear_state || sscreen->info.chip_class == SI);
+       /* SI, radeon kernel disabled CLEAR_STATE. */
+       assert(has_clear_state || sscreen->info.chip_class == SI ||
+              sscreen->info.drm_major != 3);
 
 	if (!pm4)
 		return;
@@ -5087,6 +5101,7 @@ static void si_init_config(struct si_context *sctx)
 			pc_lines = 4096;
 			break;
 		case CHIP_RAVEN:
+		case CHIP_RAVEN2:
 			pc_lines = 1024;
 			break;
 		default:

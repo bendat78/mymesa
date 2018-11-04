@@ -755,14 +755,14 @@ sanitize_ds_state(VkPipelineDepthStencilStateCreateInfo *state,
 {
    *stencilWriteEnable = state->stencilTestEnable;
 
-   /* If the depth test is disabled, we won't be writing anything. */
-   if (!state->depthTestEnable)
-      state->depthWriteEnable = false;
-
-   /* The Vulkan spec requires that if either depth or stencil is not present,
-    * the pipeline is to act as if the test silently passes.
+   /* If the depth test is disabled, we won't be writing anything. Make sure we
+    * treat the test as always passing later on as well.
+    *
+    * Also, the Vulkan spec requires that if either depth or stencil is not
+    * present, the pipeline is to act as if the test silently passes. In that
+    * case we won't write either.
     */
-   if (!(ds_aspects & VK_IMAGE_ASPECT_DEPTH_BIT)) {
+   if (!state->depthTestEnable || !(ds_aspects & VK_IMAGE_ASPECT_DEPTH_BIT)) {
       state->depthWriteEnable = false;
       state->depthCompareOp = VK_COMPARE_OP_ALWAYS;
    }
@@ -882,13 +882,22 @@ emit_ds_state(struct anv_pipeline *pipeline,
 #endif
 }
 
+MAYBE_UNUSED static bool
+is_dual_src_blend_factor(VkBlendFactor factor)
+{
+   return factor == VK_BLEND_FACTOR_SRC1_COLOR ||
+          factor == VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR ||
+          factor == VK_BLEND_FACTOR_SRC1_ALPHA ||
+          factor == VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+}
+
 static void
 emit_cb_state(struct anv_pipeline *pipeline,
               const VkPipelineColorBlendStateCreateInfo *info,
               const VkPipelineMultisampleStateCreateInfo *ms_info)
 {
    struct anv_device *device = pipeline->device;
-
+   const struct brw_wm_prog_data *wm_prog_data = get_wm_prog_data(pipeline);
 
    struct GENX(BLEND_STATE) blend_state = {
 #if GEN_GEN >= 8
@@ -973,6 +982,32 @@ emit_cb_state(struct anv_pipeline *pipeline,
 #else
          entry.IndependentAlphaBlendEnable = true;
 #endif
+      }
+
+      /* The Dual Source Blending documentation says:
+       *
+       * "If SRC1 is included in a src/dst blend factor and
+       * a DualSource RT Write message is not used, results
+       * are UNDEFINED. (This reflects the same restriction in DX APIs,
+       * where undefined results are produced if “o1” is not written
+       * by a PS – there are no default values defined)."
+       *
+       * There is no way to gracefully fix this undefined situation
+       * so we just disable the blending to prevent possible issues.
+       */
+      if (!wm_prog_data->dual_src_blend &&
+          (is_dual_src_blend_factor(a->srcColorBlendFactor) ||
+           is_dual_src_blend_factor(a->dstColorBlendFactor) ||
+           is_dual_src_blend_factor(a->srcAlphaBlendFactor) ||
+           is_dual_src_blend_factor(a->dstAlphaBlendFactor))) {
+         vk_debug_report(&device->instance->debug_report_callbacks,
+                         VK_DEBUG_REPORT_WARNING_BIT_EXT,
+                         VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT,
+                         (uint64_t)(uintptr_t)device,
+                         0, 0, "anv",
+                         "Enabled dual-src blend factors without writing both targets "
+                         "in the shader.  Disabling blending to avoid GPU hangs.");
+         entry.ColorBufferBlendEnable = false;
       }
 
       if (a->colorWriteMask != 0)
@@ -1163,7 +1198,12 @@ emit_3dstate_vs(struct anv_pipeline *pipeline)
       vs.SingleVertexDispatch       = false;
 #endif
       vs.VectorMaskEnable           = false;
-      vs.SamplerCount               = get_sampler_count(vs_bin);
+      /* WA_1606682166:
+       * Incorrect TDL's SSP address shift in SARB for 16:6 & 18:8 modes.
+       * Disable the Sampler state prefetch functionality in the SARB by
+       * programming 0xB000[30] to '1'.
+       */
+      vs.SamplerCount               = GEN_GEN == 11 ? 0 : get_sampler_count(vs_bin);
      /* Gen 11 workarounds table #2056 WABTPPrefetchDisable suggests to
       * disable prefetching of binding tables on A0 and B0 steppings.
       * TODO: Revisit this WA on newer steppings.
@@ -1238,8 +1278,8 @@ emit_3dstate_hs_te_ds(struct anv_pipeline *pipeline,
       hs.Enable = true;
       hs.StatisticsEnable = true;
       hs.KernelStartPointer = tcs_bin->kernel.offset;
-
-      hs.SamplerCount = get_sampler_count(tcs_bin);
+      /* WA_1606682166 */
+      hs.SamplerCount = GEN_GEN == 11 ? 0 : get_sampler_count(tcs_bin);
       /* Gen 11 workarounds table #2056 WABTPPrefetchDisable */
       hs.BindingTableEntryCount = GEN_GEN == 11 ? 0 : get_binding_table_entry_count(tcs_bin);
       hs.MaximumNumberofThreads = devinfo->max_tcs_threads - 1;
@@ -1289,8 +1329,8 @@ emit_3dstate_hs_te_ds(struct anv_pipeline *pipeline,
       ds.Enable = true;
       ds.StatisticsEnable = true;
       ds.KernelStartPointer = tes_bin->kernel.offset;
-
-      ds.SamplerCount = get_sampler_count(tes_bin);
+      /* WA_1606682166 */
+      ds.SamplerCount = GEN_GEN == 11 ? 0 : get_sampler_count(tes_bin);
       /* Gen 11 workarounds table #2056 WABTPPrefetchDisable */
       ds.BindingTableEntryCount = GEN_GEN == 11 ? 0 : get_binding_table_entry_count(tes_bin);
       ds.MaximumNumberofThreads = devinfo->max_tes_threads - 1;
@@ -1348,7 +1388,8 @@ emit_3dstate_gs(struct anv_pipeline *pipeline)
 
       gs.SingleProgramFlow       = false;
       gs.VectorMaskEnable        = false;
-      gs.SamplerCount            = get_sampler_count(gs_bin);
+      /* WA_1606682166 */
+      gs.SamplerCount            = GEN_GEN == 11 ? 0 : get_sampler_count(gs_bin);
       /* Gen 11 workarounds table #2056 WABTPPrefetchDisable */
       gs.BindingTableEntryCount  = GEN_GEN == 11 ? 0 : get_binding_table_entry_count(gs_bin);
       gs.IncludeVertexHandles    = gs_prog_data->base.include_vue_handles;
@@ -1445,12 +1486,12 @@ emit_3dstate_wm(struct anv_pipeline *pipeline, struct anv_subpass *subpass,
             wm.EarlyDepthStencilControl         = EDSC_NORMAL;
          }
 
-#if GEN_GEN == 8
-         /* Gen8 and later hardware tries to compute ThreadDispatchEnable for
-          * us but doesn't take into account KillPixels when no depth or
-          * stencil writes are enabled.  In order for occlusion queries to
-          * work correctly with no attachments, we need to force-enable PS
-          * thread dispatch.
+#if GEN_GEN >= 8
+         /* Gen8 hardware tries to compute ThreadDispatchEnable for us but
+          * doesn't take into account KillPixels when no depth or stencil
+          * writes are enabled.  In order for occlusion queries to work
+          * correctly with no attachments, we need to force-enable PS thread
+          * dispatch.
           *
           * The BDW docs are pretty clear that that this bit isn't validated
           * and probably shouldn't be used in production:
@@ -1460,9 +1501,7 @@ emit_3dstate_wm(struct anv_pipeline *pipeline, struct anv_subpass *subpass,
           *
           * Unfortunately, however, the other mechanism we have for doing this
           * is 3DSTATE_PS_EXTRA::PixelShaderHasUAV which causes hangs on BDW.
-          * Given two bad options, we choose the one which works.  On Skylake
-          * and later, setting ForceThreadDispatchEnable causes GPU hangs so
-          * we use the PixelShaderHasUAV mechanism there.
+          * Given two bad options, we choose the one which works.
           */
          if ((wm_prog_data->has_side_effects || wm_prog_data->uses_kill) &&
              !has_color_buffer_write_enabled(pipeline, blend))
@@ -1508,15 +1547,6 @@ emit_3dstate_wm(struct anv_pipeline *pipeline, struct anv_subpass *subpass,
 #endif
       }
    }
-}
-
-UNUSED static bool
-is_dual_src_blend_factor(VkBlendFactor factor)
-{
-   return factor == VK_BLEND_FACTOR_SRC1_COLOR ||
-          factor == VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR ||
-          factor == VK_BLEND_FACTOR_SRC1_ALPHA ||
-          factor == VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
 }
 
 static void
@@ -1592,7 +1622,8 @@ emit_3dstate_ps(struct anv_pipeline *pipeline,
 
       ps.SingleProgramFlow          = false;
       ps.VectorMaskEnable           = true;
-      ps.SamplerCount               = get_sampler_count(fs_bin);
+      /* WA_1606682166 */
+      ps.SamplerCount               = GEN_GEN == 11 ? 0 : get_sampler_count(fs_bin);
       /* Gen 11 workarounds table #2056 WABTPPrefetchDisable */
       ps.BindingTableEntryCount     = GEN_GEN == 11 ? 0 : get_binding_table_entry_count(fs_bin);
       ps.PushConstantEnable         = wm_prog_data->base.nr_params > 0 ||
@@ -1665,32 +1696,6 @@ emit_3dstate_ps_extra(struct anv_pipeline *pipeline,
                                          wm_prog_data->uses_kill;
 
 #if GEN_GEN >= 9
-      /* Gen8 and later hardware tries to compute ThreadDispatchEnable for us
-       * but doesn't take into account KillPixels when no depth or stencil
-       * writes are enabled.  In order for occlusion queries to work correctly
-       * with no attachments, we need to force-enable PS thread dispatch.
-       *
-       * The stricter cross-primitive coherency guarantees that the hardware
-       * gives us with the "Accesses UAV" bit set for at least one shader stage
-       * and the "UAV coherency required" bit set on the 3DPRIMITIVE command are
-       * redundant within the current image, atomic counter and SSBO GL and
-       * Vulkan APIs, which all have very loose ordering and coherency
-       * requirements and generally rely on the application to insert explicit
-       * barriers when a shader invocation is expected to see the memory
-       * writes performed by the invocations of some previous primitive.
-       * Regardless of the value of "UAV coherency required", the "Accesses
-       * UAV" bits will implicitly cause an in most cases useless DC flush
-       * when the lowermost stage with the bit set finishes execution.
-       *
-       * Unfortunately, however, the other mechanism we have for doing this is
-       * 3DSTATE_WM::ForceThreadDispatchEnable which causes GPU hangs on
-       * Skylake and later hardware.  On Broadwell, however, setting this bit
-       * causes GPU hangs so we use ForceThreadDispatchEnable there.
-       */
-      if ((wm_prog_data->has_side_effects || wm_prog_data->uses_kill) &&
-          !has_color_buffer_write_enabled(pipeline, blend))
-         ps.PixelShaderHasUAV = true;
-
       ps.PixelShaderComputesStencil = wm_prog_data->computed_stencil;
       ps.PixelShaderPullsBary    = wm_prog_data->pulls_bary;
 
@@ -1949,8 +1954,8 @@ compute_pipeline_create(
 
    struct GENX(INTERFACE_DESCRIPTOR_DATA) desc = {
       .KernelStartPointer     = cs_bin->kernel.offset,
-
-      .SamplerCount           = get_sampler_count(cs_bin),
+      /* WA_1606682166 */
+      .SamplerCount           = GEN_GEN == 11 ? 0 : get_sampler_count(cs_bin),
       /* Gen 11 workarounds table #2056 WABTPPrefetchDisable */
       .BindingTableEntryCount = GEN_GEN == 11 ? 0 : get_binding_table_entry_count(cs_bin),
       .BarrierEnable          = cs_prog_data->uses_barrier,
