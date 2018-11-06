@@ -40,12 +40,6 @@
 #endif
 
 
-#ifdef VK_USE_PLATFORM_MIR_KHR
-#include <mir_toolkit/client_types.h>
-#include "vulkan_mir.h"
-#endif
-
-
 #ifdef VK_USE_PLATFORM_VI_NN
 #include "vulkan_vi.h"
 #endif
