@@ -1631,33 +1631,6 @@ _mesa_base_format_has_channel(GLenum base_format, GLenum pname)
 
 
 /**
- * Returns the number of channels/components for a base format.
- */
-GLint
-_mesa_base_format_component_count(GLenum base_format)
-{
-   switch (base_format) {
-   case GL_LUMINANCE:
-   case GL_RED:
-   case GL_ALPHA:
-   case GL_INTENSITY:
-   case GL_DEPTH_COMPONENT:
-      return 1;
-   case GL_RG:
-   case GL_LUMINANCE_ALPHA:
-   case GL_DEPTH_STENCIL:
-      return 2;
-   case GL_RGB:
-      return 3;
-   case GL_RGBA:
-      return 4;
-   default:
-      return -1;
-   }
-}
-
-
-/**
  * If format is a generic compressed format, return the corresponding
  * non-compressed format.  For other formats, return the format as-is.
  */
@@ -2513,6 +2486,15 @@ _mesa_base_tex_format(const struct gl_context *ctx, GLint internalFormat)
       }
    }
 
+   if (ctx->Extensions.EXT_texture_sRGB_R8) {
+      switch (internalFormat) {
+      case GL_SR8_EXT:
+         return GL_RED;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    if (ctx->Version >= 30 ||
        ctx->Extensions.EXT_texture_integer) {
       switch (internalFormat) {
@@ -2829,6 +2811,17 @@ _mesa_es3_error_check_format_and_type(const struct gl_context *ctx,
 
       internalFormat = effectiveInternalFormat;
    }
+
+   /* The GLES variant of EXT_texture_compression_s3tc is very vague and
+    * doesn't list valid types. Just do exactly what the spec says.
+    */
+   if (ctx->Extensions.EXT_texture_compression_s3tc &&
+       (internalFormat == GL_COMPRESSED_RGB_S3TC_DXT1_EXT ||
+        internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ||
+        internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT ||
+        internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT))
+      return format == GL_RGB || format == GL_RGBA ? GL_NO_ERROR :
+                                                     GL_INVALID_OPERATION;
 
    switch (format) {
    case GL_BGRA_EXT:
@@ -3231,9 +3224,11 @@ _mesa_es3_error_check_format_and_type(const struct gl_context *ctx,
          return GL_INVALID_OPERATION;
       switch (type) {
       case GL_UNSIGNED_BYTE:
-         if (internalFormat != GL_R8)
-            return GL_INVALID_OPERATION;
-         break;
+         if (internalFormat == GL_R8 ||
+             ((internalFormat == GL_SR8_EXT) &&
+              ctx->Extensions.EXT_texture_sRGB_R8))
+            break;
+         return GL_INVALID_OPERATION;
 
       case GL_BYTE:
          if (internalFormat != GL_R8_SNORM)

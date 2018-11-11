@@ -72,6 +72,20 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
       brw_load_register_imm32(brw, GEN11_SAMPLER_MODE,
                               HEADERLESS_MESSAGE_FOR_PREEMPTABLE_CONTEXTS_MASK |
                               HEADERLESS_MESSAGE_FOR_PREEMPTABLE_CONTEXTS);
+
+      /* Bit 1 "Enabled Texel Offset Precision Fix" must be set in
+       * HALF_SLICE_CHICKEN7 register.
+       */
+      brw_load_register_imm32(brw, HALF_SLICE_CHICKEN7,
+                              TEXEL_OFFSET_FIX_MASK |
+                              TEXEL_OFFSET_FIX_ENABLE);
+
+      /* WA_1406697149: Bit 9 "Error Detection Behavior Control" must be set
+       * in L3CNTLREG register. The default setting of the bit is not the
+       * desirable behavior.
+       */
+      brw_load_register_imm32(brw, GEN8_L3CNTLREG,
+                              GEN8_L3CNTLREG_EDBC_NO_HANG);
    }
 
    if (devinfo->gen == 10 || devinfo->gen == 11) {

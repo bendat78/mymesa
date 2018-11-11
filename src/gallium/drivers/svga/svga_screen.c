@@ -92,8 +92,6 @@ svga_get_name( struct pipe_screen *pscreen )
     */
    build = "build: DEBUG;";
    mutex = "mutex: " PIPE_ATOMIC ";";
-#elif defined(VMX86_STATS)
-   build = "build: OPT;";
 #else
    build = "build: RELEASE;";
 #endif
@@ -280,7 +278,7 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return sws->have_vgpu10 ? 330 : 120;
 
    case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
-      return sws->have_vgpu10 ? 140 : 120;
+      return sws->have_vgpu10 ? 330 : 120;
 
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
    case PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE:

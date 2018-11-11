@@ -401,6 +401,9 @@ enum pipe_flush_flags
  */
 #define PIPE_CONTEXT_LOW_PRIORITY      (1 << 5)
 
+/** Stop execution if the device is reset. */
+#define PIPE_CONTEXT_LOSE_CONTEXT_ON_RESET (1 << 6)
+
 /**
  * Flags for pipe_context::memory_barrier.
  */
@@ -621,12 +624,10 @@ enum pipe_conservative_raster_mode
  * resource_get_handle flags.
  */
 /* Requires pipe_context::flush_resource before external use. */
-#define PIPE_HANDLE_USAGE_EXPLICIT_FLUSH  (1 << 0)
+#define PIPE_HANDLE_USAGE_EXPLICIT_FLUSH     (1 << 0)
 /* Expected external use of the resource: */
-#define PIPE_HANDLE_USAGE_READ            (1 << 1)
-#define PIPE_HANDLE_USAGE_WRITE           (1 << 2)
-#define PIPE_HANDLE_USAGE_READ_WRITE      (PIPE_HANDLE_USAGE_READ | \
-                                           PIPE_HANDLE_USAGE_WRITE)
+#define PIPE_HANDLE_USAGE_FRAMEBUFFER_WRITE  (1 << 1)
+#define PIPE_HANDLE_USAGE_SHADER_WRITE       (1 << 2)
 
 /**
  * pipe_image_view access flags.

@@ -74,11 +74,10 @@ AC_SUBST([OPENCL_VERSION])
 # in the first entry.
 LIBDRM_REQUIRED=2.4.75
 LIBDRM_RADEON_REQUIRED=2.4.71
-LIBDRM_AMDGPU_REQUIRED=2.4.93
+LIBDRM_AMDGPU_REQUIRED=2.4.95
 LIBDRM_INTEL_REQUIRED=2.4.75
 LIBDRM_NVVIEUX_REQUIRED=2.4.66
 LIBDRM_NOUVEAU_REQUIRED=2.4.66
-LIBDRM_FREEDRENO_REQUIRED=2.4.93
 LIBDRM_ETNAVIV_REQUIRED=2.4.89
 LIBDRM_VC4_REQUIRED=2.4.89
 
@@ -125,9 +124,7 @@ AC_PROG_GREP
 AC_PROG_NM
 AM_PROG_AS
 AX_CHECK_GNU_MAKE
-AM_PATH_PYTHON([2.7],, [:])
-PYTHON2=$PYTHON
-AC_SUBST([PYTHON2])
+AM_PATH_PYTHON([2.7],, [AM_PATH_PYTHON([3.4],, [:])])
 
 AC_PROG_SED
 AC_PROG_MKDIR_P
@@ -160,7 +157,7 @@ fi
 
 AX_CHECK_PYTHON_MAKO_MODULE($PYTHON_MAKO_REQUIRED)
 
-if test "$PYTHON2" = ":"; then
+if test "$PYTHON" = ":"; then
     if test ! -f "$srcdir/src/util/format_srgb.c"; then
         AC_MSG_ERROR([Python not found - unable to generate sources])
     fi
@@ -301,6 +298,12 @@ esac
 
 AM_CONDITIONAL(HAVE_ANDROID, test "x$android" = xyes)
 
+# Toggle Werror since at some point clang started treating unknown -W
+# flags as warnings, succeeding with the build, yet issuing an annoying
+# warning.
+save_CFLAGS="$CFLAGS"
+export CFLAGS="$CFLAGS -Werror"
+
 dnl
 dnl Check compiler flags
 dnl
@@ -310,11 +313,17 @@ AX_CHECK_COMPILE_FLAG([-Werror=missing-prototypes],            [CFLAGS="$CFLAGS 
 AX_CHECK_COMPILE_FLAG([-Wmissing-prototypes],                  [CFLAGS="$CFLAGS -Wmissing-prototypes"])
 dnl Dylan Baker: gcc and clang always accepr -Wno-*, hence check for the original warning, then set the no-* flag
 AX_CHECK_COMPILE_FLAG([-Wmissing-field-initializers],          [CFLAGS="$CFLAGS -Wno-missing-field-initializers"])
+AX_CHECK_COMPILE_FLAG([-Wformat-truncation],                   [CFLAGS="$CFLAGS -Wno-format-truncation"])
 AX_CHECK_COMPILE_FLAG([-fno-math-errno],                       [CFLAGS="$CFLAGS -fno-math-errno"])
 
 AX_CHECK_COMPILE_FLAG([-fno-trapping-math],                    [CFLAGS="$CFLAGS -fno-trapping-math"])
 AX_CHECK_COMPILE_FLAG([-fvisibility=hidden],                   [VISIBILITY_CFLAGS="-fvisibility=hidden"])
 
+CFLAGS="$save_CFLAGS"
+
+# Toggle Werror since at some point clang started treating unknown -W
+# flags as warnings, succeeding with the build, yet issuing an annoying
+# warning.
 dnl
 dnl Check C++ compiler flags
 dnl
@@ -324,6 +333,7 @@ AX_CHECK_COMPILE_FLAG([-fno-math-errno],                       [CXXFLAGS="$CXXFL
 AX_CHECK_COMPILE_FLAG([-fno-trapping-math],                    [CXXFLAGS="$CXXFLAGS -fno-trapping-math"])
 AX_CHECK_COMPILE_FLAG([-fvisibility=hidden],                   [VISIBILITY_CXXFLAGS="-fvisibility=hidden"])
 AX_CHECK_COMPILE_FLAG([-Wmissing-field-initializers],          [CXXFLAGS="$CXXFLAGS -Wno-missing-field-initializers"])
+AX_CHECK_COMPILE_FLAG([-Wformat-truncation],                   [CXXFLAGS="$CXXFLAGS -Wno-format-truncation"])
 AC_LANG_POP([C++])
 
 # Flags to help ensure that certain portions of the code -- and only those
@@ -2723,7 +2733,6 @@ if test -n "$with_gallium_drivers"; then
             ;;
         xfreedreno)
             HAVE_GALLIUM_FREEDRENO=yes
-            PKG_CHECK_MODULES([FREEDRENO], [libdrm >= $LIBDRM_FREEDRENO_REQUIRED libdrm_freedreno >= $LIBDRM_FREEDRENO_REQUIRED])
             require_libdrm "freedreno"
             ;;
         xetnaviv)
@@ -3196,6 +3205,7 @@ AC_CONFIG_FILES([Makefile
                  src/mesa/main/tests/Makefile
                  src/mesa/state_tracker/tests/Makefile
                  src/util/Makefile
+                 src/util/tests/fast_idiv_by_const/Makefile
                  src/util/tests/hash_table/Makefile
                  src/util/tests/set/Makefile
                  src/util/tests/string_buffer/Makefile
@@ -3367,7 +3377,7 @@ if test "x$enable_llvm" = xyes; then
     echo "        LLVM_LDFLAGS:    $LLVM_LDFLAGS"
     echo ""
 fi
-echo "        PYTHON2:         $PYTHON2"
+echo "        PYTHON:         $PYTHON"
 
 echo ""
 echo "        Run '${MAKE-make}' to build Mesa"

@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "os/os_misc.h"
+#include "util/os_misc.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
@@ -109,6 +109,7 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
         case PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET:
         case PIPE_CAP_TGSI_CAN_READ_OUTPUTS:
+        case PIPE_CAP_TGSI_PACK_HALF_FLOAT:
                 return 1;
 
         case PIPE_CAP_INDEP_BLEND_ENABLE:

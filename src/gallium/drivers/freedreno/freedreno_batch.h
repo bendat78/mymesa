@@ -84,6 +84,10 @@ struct fd_batch {
 	 * The 'cleared' bits will be set for buffers which are *entirely*
 	 * cleared, and 'partial_cleared' bits will be set if you must
 	 * check cleared_scissor.
+	 *
+	 * The 'invalidated' bits are set for cleared buffers, and buffers
+	 * where the contents are undefined, ie. what we don't need to restore
+	 * to gmem.
 	 */
 	enum {
 		/* align bitmask values w/ PIPE_CLEAR_*.. since that is convenient.. */
@@ -91,7 +95,7 @@ struct fd_batch {
 		FD_BUFFER_DEPTH   = PIPE_CLEAR_DEPTH,
 		FD_BUFFER_STENCIL = PIPE_CLEAR_STENCIL,
 		FD_BUFFER_ALL     = FD_BUFFER_COLOR | FD_BUFFER_DEPTH | FD_BUFFER_STENCIL,
-	} cleared, partial_cleared, restore, resolve;
+	} invalidated, cleared, restore, resolve;
 
 	/* is this a non-draw batch (ie compute/blit which has no pfb state)? */
 	bool nondraw : 1;
@@ -127,14 +131,6 @@ struct fd_batch {
 	 */
 	struct pipe_scissor_state max_scissor;
 
-	/* Track the cleared scissor for color/depth/stencil, so we know
-	 * which, if any, tiles need to be restored (mem2gmem).  Only valid
-	 * if the corresponding bit in ctx->cleared is set.
-	 */
-	struct {
-		struct pipe_scissor_state color, depth, stencil;
-	} cleared_scissor;
-
 	/* Keep track of DRAW initiators that need to be patched up depending
 	 * on whether we using binning or not:
 	 */
@@ -154,6 +150,8 @@ struct fd_batch {
 	struct util_dynarray rbrc_patches;
 
 	struct pipe_framebuffer_state framebuffer;
+
+	struct fd_submit *submit;
 
 	/** draw pass cmdstream: */
 	struct fd_ringbuffer *draw;

@@ -55,6 +55,8 @@
 
 static void
 intel_batchbuffer_reset(struct brw_context *brw);
+static void
+brw_new_batch(struct brw_context *brw);
 
 static void
 dump_validation_list(struct intel_batchbuffer *batch)
@@ -311,6 +313,8 @@ intel_batchbuffer_reset_to_saved(struct brw_context *brw)
    brw->batch.exec_count = brw->batch.saved.exec_count;
 
    brw->batch.map_next = brw->batch.saved.map_next;
+   if (USED_BATCH(brw->batch) == 0)
+      brw_new_batch(brw);
 }
 
 void
@@ -721,10 +725,10 @@ execbuffer(int fd,
 
       /* Update brw_bo::gtt_offset */
       if (batch->validation_list[i].offset != bo->gtt_offset) {
-         assert(!(bo->kflags & EXEC_OBJECT_PINNED));
          DBG("BO %d migrated: 0x%" PRIx64 " -> 0x%llx\n",
              bo->gem_handle, bo->gtt_offset,
              batch->validation_list[i].offset);
+         assert(!(bo->kflags & EXEC_OBJECT_PINNED));
          bo->gtt_offset = batch->validation_list[i].offset;
       }
    }

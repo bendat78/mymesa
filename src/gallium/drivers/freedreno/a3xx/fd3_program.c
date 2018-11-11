@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2013 Rob Clark <robclark@freedesktop.org>
  *
@@ -251,7 +249,7 @@ fd3_program_emit(struct fd_ringbuffer *ring, struct fd3_emit *emit,
 
 	OUT_PKT0(ring, REG_A3XX_SP_SP_CTRL_REG, 1);
 	OUT_RING(ring, A3XX_SP_SP_CTRL_REG_CONSTMODE(constmode) |
-			COND(emit->key.binning_pass, A3XX_SP_SP_CTRL_REG_BINNING) |
+			COND(emit->binning_pass, A3XX_SP_SP_CTRL_REG_BINNING) |
 			A3XX_SP_SP_CTRL_REG_SLEEPMODE(1) |
 			A3XX_SP_SP_CTRL_REG_L0MODE(0));
 
@@ -311,7 +309,7 @@ fd3_program_emit(struct fd_ringbuffer *ring, struct fd3_emit *emit,
 			A3XX_SP_VS_OBJ_OFFSET_REG_SHADEROBJOFFSET(0));
 	OUT_RELOC(ring, vp->bo, 0, 0, 0);  /* SP_VS_OBJ_START_REG */
 
-	if (emit->key.binning_pass) {
+	if (emit->binning_pass) {
 		OUT_PKT0(ring, REG_A3XX_SP_FS_LENGTH_REG, 1);
 		OUT_RING(ring, 0x00000000);
 
@@ -336,7 +334,7 @@ fd3_program_emit(struct fd_ringbuffer *ring, struct fd3_emit *emit,
 				A3XX_SP_FS_CTRL_REG0_INOUTREGOVERLAP |
 				A3XX_SP_FS_CTRL_REG0_THREADSIZE(FOUR_QUADS) |
 				A3XX_SP_FS_CTRL_REG0_SUPERTHREADMODE |
-				COND(fp->has_samp > 0, A3XX_SP_FS_CTRL_REG0_PIXLODENABLE) |
+				COND(fp->num_samp > 0, A3XX_SP_FS_CTRL_REG0_PIXLODENABLE) |
 				A3XX_SP_FS_CTRL_REG0_LENGTH(fpbuffersz));
 		OUT_RING(ring, A3XX_SP_FS_CTRL_REG1_CONSTLENGTH(fp->constlen) |
 				A3XX_SP_FS_CTRL_REG1_INITIALOUTSTANDING(fp->total_in) |
@@ -369,7 +367,7 @@ fd3_program_emit(struct fd_ringbuffer *ring, struct fd3_emit *emit,
 		OUT_RING(ring, mrt_reg);
 	}
 
-	if (emit->key.binning_pass) {
+	if (emit->binning_pass) {
 		OUT_PKT0(ring, REG_A3XX_VPC_ATTR, 2);
 		OUT_RING(ring, A3XX_VPC_ATTR_THRDASSIGN(1) |
 				A3XX_VPC_ATTR_LMSIZE(1) |
@@ -474,7 +472,7 @@ fd3_program_emit(struct fd_ringbuffer *ring, struct fd3_emit *emit,
 	OUT_PKT0(ring, REG_A3XX_VFD_PERFCOUNTER0_SELECT, 1);
 	OUT_RING(ring, 0x00000000);        /* VFD_PERFCOUNTER0_SELECT */
 
-	if (!emit->key.binning_pass) {
+	if (!emit->binning_pass) {
 		if (fpbuffer == BUFFER)
 			emit_shader(ring, fp);
 

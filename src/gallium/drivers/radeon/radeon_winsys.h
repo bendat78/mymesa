@@ -87,6 +87,7 @@ enum ring_type {
     RING_UVD_ENC,
     RING_VCN_DEC,
     RING_VCN_ENC,
+    RING_VCN_JPEG,
     RING_LAST,
 };
 
@@ -463,10 +464,11 @@ struct radeon_winsys {
      * \param user      User pointer that will be passed to the flush callback.
      */
     struct radeon_cmdbuf *(*cs_create)(struct radeon_winsys_ctx *ctx,
-                                          enum ring_type ring_type,
-                                          void (*flush)(void *ctx, unsigned flags,
-							struct pipe_fence_handle **fence),
-                                          void *flush_ctx);
+                                       enum ring_type ring_type,
+                                       void (*flush)(void *ctx, unsigned flags,
+                                                     struct pipe_fence_handle **fence),
+                                       void *flush_ctx,
+                                       bool stop_exec_on_failure);
 
     /**
      * Destroy a command stream.

@@ -1274,6 +1274,10 @@ glsl_to_tgsi_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
    st_src_reg a, b, c;
    st_dst_reg result_dst;
 
+   // there is no TGSI opcode for this
+   if (ir->type->is_integer_64())
+      return false;
+
    ir_expression *expr = ir->operands[mul_operand]->as_expression();
    if (!expr || expr->operation != ir_binop_mul)
       return false;
@@ -2084,7 +2088,7 @@ glsl_to_tgsi_visitor::visit_expression(ir_expression* ir, st_src_reg *op)
             emit_asm(ir, TGSI_OPCODE_USHR, st_dst_reg(index_reg), offset,
                  st_src_reg_for_int(4));
             cbuf.reladdr = ralloc(mem_ctx, st_src_reg);
-            memcpy(cbuf.reladdr, &index_reg, sizeof(index_reg));
+            *cbuf.reladdr = index_reg;
          }
 
          if (const_uniform_block) {
@@ -2093,7 +2097,7 @@ glsl_to_tgsi_visitor::visit_expression(ir_expression* ir, st_src_reg *op)
          } else {
             /* Relative/variable constant buffer */
             cbuf.reladdr2 = ralloc(mem_ctx, st_src_reg);
-            memcpy(cbuf.reladdr2, &op[0], sizeof(st_src_reg));
+            *cbuf.reladdr2 = op[0];
          }
          cbuf.has_index2 = true;
 
@@ -2804,12 +2808,12 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
 
       if (is_2D) {
          src.reladdr2 = ralloc(mem_ctx, st_src_reg);
-         memcpy(src.reladdr2, &index_reg, sizeof(index_reg));
+         *src.reladdr2 = index_reg;
          src.index2D = 0;
          src.has_index2 = true;
       } else {
          src.reladdr = ralloc(mem_ctx, st_src_reg);
-         memcpy(src.reladdr, &index_reg, sizeof(index_reg));
+         *src.reladdr = index_reg;
       }
    }
 
@@ -4068,6 +4072,7 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
    case ir_intrinsic_generic_atomic_comp_swap:
    case ir_intrinsic_begin_invocation_interlock:
    case ir_intrinsic_end_invocation_interlock:
+   case ir_intrinsic_begin_fragment_shader_ordering:
       unreachable("Invalid intrinsic");
    }
 }
@@ -4145,8 +4150,7 @@ glsl_to_tgsi_visitor::get_deref_offsets(ir_dereference *ir,
    unsigned location = 0;
    ir_variable *var = ir->variable_referenced();
 
-   memset(reladdr, 0, sizeof(*reladdr));
-   reladdr->file = PROGRAM_UNDEFINED;
+   reladdr->reset();
 
    *base = 0;
    *array_size = 1;
@@ -4655,6 +4659,7 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    ctx = NULL;
    prog = NULL;
    precise = 0;
+   need_uarl = false;
    shader_program = NULL;
    shader = NULL;
    options = NULL;
@@ -5593,7 +5598,7 @@ glsl_to_tgsi_visitor::split_arrays(void)
 void
 glsl_to_tgsi_visitor::merge_registers(void)
 {
-   struct array_live_range *arr_live_ranges = NULL;
+   class array_live_range *arr_live_ranges = NULL;
    struct register_live_range *reg_live_ranges =
          rzalloc_array(mem_ctx, struct register_live_range, this->next_temp);
 
@@ -6265,6 +6270,34 @@ compile_tgsi_instruction(struct st_translate *t,
    }
 }
 
+/* Invert SamplePos.y when rendering to the default framebuffer. */
+static void
+emit_samplepos_adjustment(struct st_translate *t, int wpos_y_transform)
+{
+   struct ureg_program *ureg = t->ureg;
+
+   assert(wpos_y_transform >= 0);
+   struct ureg_src trans_const = ureg_DECL_constant(ureg, wpos_y_transform);
+   struct ureg_src samplepos_sysval = t->systemValues[SYSTEM_VALUE_SAMPLE_POS];
+   struct ureg_dst samplepos_flipped = ureg_DECL_temporary(ureg);
+   struct ureg_dst is_fbo = ureg_DECL_temporary(ureg);
+
+   ureg_ADD(ureg, ureg_writemask(samplepos_flipped, TGSI_WRITEMASK_Y),
+            ureg_imm1f(ureg, 1), ureg_negate(samplepos_sysval));
+
+   /* If trans.x == 1, use samplepos.y, else use 1 - samplepos.y. */
+   ureg_FSEQ(ureg, ureg_writemask(is_fbo, TGSI_WRITEMASK_Y),
+             ureg_scalar(trans_const, TGSI_SWIZZLE_X), ureg_imm1f(ureg, 1));
+   ureg_UCMP(ureg, ureg_writemask(samplepos_flipped, TGSI_WRITEMASK_Y),
+             ureg_src(is_fbo), samplepos_sysval, ureg_src(samplepos_flipped));
+   ureg_MOV(ureg, ureg_writemask(samplepos_flipped, TGSI_WRITEMASK_X),
+            samplepos_sysval);
+
+   /* Use the result in place of the system value. */
+   t->systemValues[SYSTEM_VALUE_SAMPLE_POS] = ureg_src(samplepos_flipped);
+}
+
+
 /**
  * Emit the TGSI instructions for inverting and adjusting WPOS.
  * This code is unavoidable because it also depends on whether
@@ -6832,6 +6865,10 @@ st_translate_program(
                emit_wpos(st_context(ctx), t, proginfo, ureg,
                          program->wpos_transform_const);
 
+            if (procType == PIPE_SHADER_FRAGMENT &&
+                semName == TGSI_SEMANTIC_SAMPLEPOS)
+               emit_samplepos_adjustment(t, program->wpos_transform_const);
+
             sysInputs &= ~(1ull << i);
          }
       }
@@ -7143,7 +7180,8 @@ get_mesa_program_tgsi(struct gl_context *ctx,
    /* This must be done before the uniform storage is associated. */
    if (shader->Stage == MESA_SHADER_FRAGMENT &&
        (prog->info.inputs_read & VARYING_BIT_POS ||
-        prog->info.system_values_read & (1ull << SYSTEM_VALUE_FRAG_COORD))) {
+        prog->info.system_values_read & (1ull << SYSTEM_VALUE_FRAG_COORD) ||
+        prog->info.system_values_read & (1ull << SYSTEM_VALUE_SAMPLE_POS))) {
       static const gl_state_index16 wposTransformState[STATE_LENGTH] = {
          STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM
       };
@@ -7432,24 +7470,16 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 }
 
 void
-st_translate_stream_output_info(glsl_to_tgsi_visitor *glsl_to_tgsi,
-                                const ubyte outputMapping[],
-                                struct pipe_stream_output_info *so)
-{
-   if (!glsl_to_tgsi->shader_program->last_vert_prog)
-      return;
-
-   struct gl_transform_feedback_info *info =
-      glsl_to_tgsi->shader_program->last_vert_prog->sh.LinkedTransformFeedback;
-   st_translate_stream_output_info2(info, outputMapping, so);
-}
-
-void
-st_translate_stream_output_info2(struct gl_transform_feedback_info *info,
+st_translate_stream_output_info(struct gl_transform_feedback_info *info,
                                 const ubyte outputMapping[],
                                 struct pipe_stream_output_info *so)
 {
    unsigned i;
+
+   if (!info) {
+      so->num_outputs = 0;
+      return;
+   }
 
    for (i = 0; i < info->NumOutputs; i++) {
       so->output[i].register_index =

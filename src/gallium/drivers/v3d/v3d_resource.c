@@ -396,7 +396,7 @@ v3d_get_ub_pad(struct v3d_resource *rsc, uint32_t height)
 }
 
 static void
-v3d_setup_slices(struct v3d_resource *rsc)
+v3d_setup_slices(struct v3d_resource *rsc, uint32_t winsys_stride)
 {
         struct pipe_resource *prsc = &rsc->base;
         uint32_t width = prsc->width0;
@@ -498,7 +498,10 @@ v3d_setup_slices(struct v3d_resource *rsc)
                 }
 
                 slice->offset = offset;
-                slice->stride = level_width * rsc->cpp;
+                if (winsys_stride)
+                        slice->stride = winsys_stride;
+                else
+                        slice->stride = level_width * rsc->cpp;
                 slice->padded_height = level_height;
                 slice->size = level_height * slice->stride;
 
@@ -674,7 +677,7 @@ v3d_resource_create_with_modifiers(struct pipe_screen *pscreen,
 
         rsc->internal_format = prsc->format;
 
-        v3d_setup_slices(rsc);
+        v3d_setup_slices(rsc, 0);
         if (!v3d_resource_bo_alloc(rsc))
                 goto fail;
 
@@ -730,12 +733,10 @@ v3d_resource_from_handle(struct pipe_screen *pscreen,
 
         switch (whandle->type) {
         case WINSYS_HANDLE_TYPE_SHARED:
-                rsc->bo = v3d_bo_open_name(screen,
-                                           whandle->handle, whandle->stride);
+                rsc->bo = v3d_bo_open_name(screen, whandle->handle);
                 break;
         case WINSYS_HANDLE_TYPE_FD:
-                rsc->bo = v3d_bo_open_dmabuf(screen,
-                                             whandle->handle, whandle->stride);
+                rsc->bo = v3d_bo_open_dmabuf(screen, whandle->handle);
                 break;
         default:
                 fprintf(stderr,
@@ -749,7 +750,7 @@ v3d_resource_from_handle(struct pipe_screen *pscreen,
 
         rsc->internal_format = prsc->format;
 
-        v3d_setup_slices(rsc);
+        v3d_setup_slices(rsc, whandle->stride);
         v3d_debug_resource_layout(rsc, "import");
 
         if (whandle->stride != slice->stride) {
@@ -809,6 +810,12 @@ v3d_create_surface(struct pipe_context *pctx,
         surface->tiling = slice->tiling;
 
         surface->format = v3d_get_rt_format(&screen->devinfo, psurf->format);
+
+        const struct util_format_description *desc =
+                util_format_description(psurf->format);
+
+        surface->swap_rb = (desc->swizzle[0] == PIPE_SWIZZLE_Z &&
+                            psurf->format != PIPE_FORMAT_B5G6R5_UNORM);
 
         if (util_format_is_depth_or_stencil(psurf->format)) {
                 switch (psurf->format) {
@@ -909,7 +916,8 @@ v3d_resource_screen_init(struct pipe_screen *pscreen)
         pscreen->resource_get_handle = v3d_resource_get_handle;
         pscreen->resource_destroy = u_transfer_helper_resource_destroy;
         pscreen->transfer_helper = u_transfer_helper_create(&transfer_vtbl,
-                                                            true, true, true);
+                                                            true, false,
+                                                            true, true);
 }
 
 void

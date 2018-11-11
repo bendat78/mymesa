@@ -1646,6 +1646,7 @@ enum brw_pixel_shader_coverage_mask_mode {
 # define GEN8_L3CNTLREG_DC_ALLOC_MASK      INTEL_MASK(24, 18)
 # define GEN8_L3CNTLREG_ALL_ALLOC_SHIFT    25
 # define GEN8_L3CNTLREG_ALL_ALLOC_MASK     INTEL_MASK(31, 25)
+# define GEN8_L3CNTLREG_EDBC_NO_HANG       (1 << 9)
 
 #define GEN10_CACHE_MODE_SS            0x0e420
 #define GEN10_FLOAT_BLEND_OPTIMIZATION_ENABLE (1 << 4)
@@ -1672,6 +1673,10 @@ enum brw_pixel_shader_coverage_mask_mode {
 # define GLK_SCEC_BARRIER_MODE_GPGPU       (0 << 7)
 # define GLK_SCEC_BARRIER_MODE_3D_HULL     (1 << 7)
 # define GLK_SCEC_BARRIER_MODE_MASK        REG_MASK(1 << 7)
+
+#define HALF_SLICE_CHICKEN7                0xE194
+# define TEXEL_OFFSET_FIX_ENABLE           (1 << 1)
+# define TEXEL_OFFSET_FIX_MASK             REG_MASK(1 << 1)
 
 #define GEN11_SAMPLER_MODE                                  0xE18C
 # define HEADERLESS_MESSAGE_FOR_PREEMPTABLE_CONTEXTS        (1 << 5)

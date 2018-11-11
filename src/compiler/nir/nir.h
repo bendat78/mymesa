@@ -700,6 +700,22 @@ nir_src_num_components(nir_src src)
    return src.is_ssa ? src.ssa->num_components : src.reg.reg->num_components;
 }
 
+static inline bool
+nir_src_is_const(nir_src src)
+{
+   return src.is_ssa &&
+          src.ssa->parent_instr->type == nir_instr_type_load_const;
+}
+
+int64_t nir_src_as_int(nir_src src);
+uint64_t nir_src_as_uint(nir_src src);
+bool nir_src_as_bool(nir_src src);
+double nir_src_as_float(nir_src src);
+int64_t nir_src_comp_as_int(nir_src src, unsigned component);
+uint64_t nir_src_comp_as_uint(nir_src src, unsigned component);
+bool nir_src_comp_as_bool(nir_src src, unsigned component);
+double nir_src_comp_as_float(nir_src src, unsigned component);
+
 static inline unsigned
 nir_dest_bit_size(nir_dest dest)
 {
@@ -934,6 +950,19 @@ nir_alu_instr_channel_used(const nir_alu_instr *instr, unsigned src,
       return channel < nir_op_infos[instr->op].input_sizes[src];
 
    return (instr->dest.write_mask >> channel) & 1;
+}
+
+static inline nir_component_mask_t
+nir_alu_instr_src_read_mask(const nir_alu_instr *instr, unsigned src)
+{
+   nir_component_mask_t read_mask = 0;
+   for (unsigned c = 0; c < NIR_MAX_VEC_COMPONENTS; c++) {
+      if (!nir_alu_instr_channel_used(instr, src, c))
+         continue;
+
+      read_mask |= (1 << instr->src[src].swizzle[c]);
+   }
+   return read_mask;
 }
 
 /*
@@ -2520,6 +2549,29 @@ bool nir_foreach_dest(nir_instr *instr, nir_foreach_dest_cb cb, void *state);
 bool nir_foreach_src(nir_instr *instr, nir_foreach_src_cb cb, void *state);
 
 nir_const_value *nir_src_as_const_value(nir_src src);
+
+static inline struct nir_instr *
+nir_src_instr(const struct nir_src *src)
+{
+   return src->is_ssa ? src->ssa->parent_instr : NULL;
+}
+
+#define NIR_SRC_AS_(name, c_type, type_enum, cast_macro)                \
+static inline c_type *                                                  \
+nir_src_as_ ## name (struct nir_src *src)                               \
+{                                                                       \
+    return src->is_ssa && src->ssa->parent_instr->type == type_enum     \
+           ? cast_macro(src->ssa->parent_instr) : NULL;                 \
+}                                                                       \
+static inline const c_type *                                            \
+nir_src_as_ ## name ## _const(const struct nir_src *src)                \
+{                                                                       \
+    return src->is_ssa && src->ssa->parent_instr->type == type_enum     \
+           ? cast_macro(src->ssa->parent_instr) : NULL;                 \
+}
+
+NIR_SRC_AS_(alu_instr, nir_alu_instr, nir_instr_type_alu, nir_instr_as_alu)
+
 bool nir_src_is_dynamically_uniform(nir_src src);
 bool nir_srcs_equal(nir_src src1, nir_src src2);
 void nir_instr_rewrite_src(nir_instr *instr, nir_src *src, nir_src new_src);
@@ -2625,7 +2677,7 @@ nir_variable *nir_variable_clone(const nir_variable *c, nir_shader *shader);
 nir_shader *nir_shader_serialize_deserialize(void *mem_ctx, nir_shader *s);
 
 #ifndef NDEBUG
-void nir_validate_shader(nir_shader *shader);
+void nir_validate_shader(nir_shader *shader, const char *when);
 void nir_metadata_set_validation_flag(nir_shader *shader);
 void nir_metadata_check_validation_flag(nir_shader *shader);
 
@@ -2659,7 +2711,7 @@ should_print_nir(void)
    return should_print;
 }
 #else
-static inline void nir_validate_shader(nir_shader *shader) { (void) shader; }
+static inline void nir_validate_shader(nir_shader *shader, const char *when) { (void) shader; (void)when; }
 static inline void nir_metadata_set_validation_flag(nir_shader *shader) { (void) shader; }
 static inline void nir_metadata_check_validation_flag(nir_shader *shader) { (void) shader; }
 static inline bool should_clone_nir(void) { return false; }
@@ -2667,9 +2719,9 @@ static inline bool should_serialize_deserialize_nir(void) { return false; }
 static inline bool should_print_nir(void) { return false; }
 #endif /* NDEBUG */
 
-#define _PASS(nir, do_pass) do {                                     \
+#define _PASS(pass, nir, do_pass) do {                               \
    do_pass                                                           \
-   nir_validate_shader(nir);                                         \
+   nir_validate_shader(nir, "after " #pass);                         \
    if (should_clone_nir()) {                                         \
       nir_shader *clone = nir_shader_clone(ralloc_parent(nir), nir); \
       ralloc_free(nir);                                              \
@@ -2681,7 +2733,7 @@ static inline bool should_print_nir(void) { return false; }
    }                                                                 \
 } while (0)
 
-#define NIR_PASS(progress, nir, pass, ...) _PASS(nir,                \
+#define NIR_PASS(progress, nir, pass, ...) _PASS(pass, nir,          \
    nir_metadata_set_validation_flag(nir);                            \
    if (should_print_nir())                                           \
       printf("%s\n", #pass);                                         \
@@ -2693,7 +2745,7 @@ static inline bool should_print_nir(void) { return false; }
    }                                                                 \
 )
 
-#define NIR_PASS_V(nir, pass, ...) _PASS(nir,                        \
+#define NIR_PASS_V(nir, pass, ...) _PASS(pass, nir,                  \
    if (should_print_nir())                                           \
       printf("%s\n", #pass);                                         \
    pass(nir, ##__VA_ARGS__);                                         \
@@ -2755,8 +2807,13 @@ void nir_assign_var_locations(struct exec_list *var_list, unsigned *size,
 
 /* Some helpers to do very simple linking */
 bool nir_remove_unused_varyings(nir_shader *producer, nir_shader *consumer);
+bool nir_remove_unused_io_vars(nir_shader *shader, struct exec_list *var_list,
+                               uint64_t *used_by_other_stage,
+                               uint64_t *used_by_other_stage_patches);
 void nir_compact_varyings(nir_shader *producer, nir_shader *consumer,
                           bool default_to_smooth_interp);
+void nir_link_xfb_varyings(nir_shader *producer, nir_shader *consumer);
+bool nir_link_constant_varyings(nir_shader *producer, nir_shader *consumer);
 
 typedef enum {
    /* If set, this forces all non-flat fragment shader inputs to be
@@ -3012,6 +3069,7 @@ bool nir_convert_from_ssa(nir_shader *shader, bool phi_webs_only);
 
 bool nir_lower_phis_to_regs_block(nir_block *block);
 bool nir_lower_ssa_defs_to_regs_block(nir_block *block);
+bool nir_rematerialize_derefs_in_use_blocks_impl(nir_function_impl *impl);
 
 bool nir_opt_algebraic(nir_shader *shader);
 bool nir_opt_algebraic_before_ffma(nir_shader *shader);
@@ -3029,6 +3087,8 @@ bool nir_opt_cse(nir_shader *shader);
 bool nir_opt_dce(nir_shader *shader);
 
 bool nir_opt_dead_cf(nir_shader *shader);
+
+bool nir_opt_dead_write_vars(nir_shader *shader);
 
 bool nir_opt_find_array_copies(nir_shader *shader);
 

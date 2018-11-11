@@ -62,7 +62,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 					       gl_shader_stage stage,
                                                void *mem_ctx)
    : ctx(_ctx), cs_input_local_size_specified(false), cs_input_local_size(),
-     switch_state()
+     switch_state(), warnings_enabled(true)
 {
    assert(stage < MESA_SHADER_STAGES);
    this->stage = stage;
@@ -527,11 +527,13 @@ void
 _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		   const char *fmt, ...)
 {
-   va_list ap;
+   if (state->warnings_enabled) {
+      va_list ap;
 
-   va_start(ap, fmt);
-   _mesa_glsl_msg(locp, state, MESA_DEBUG_TYPE_OTHER, fmt, ap);
-   va_end(ap);
+      va_start(ap, fmt);
+      _mesa_glsl_msg(locp, state, MESA_DEBUG_TYPE_OTHER, fmt, ap);
+      va_end(ap);
+   }
 }
 
 
@@ -719,6 +721,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(EXT_separate_shader_objects),
    EXT(EXT_shader_framebuffer_fetch),
    EXT(EXT_shader_framebuffer_fetch_non_coherent),
+   EXT(EXT_shader_implicit_conversions),
    EXT(EXT_shader_integer_mix),
    EXT_AEP(EXT_shader_io_blocks),
    EXT(EXT_shader_samples_identical),

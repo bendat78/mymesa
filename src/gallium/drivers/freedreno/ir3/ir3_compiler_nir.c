@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2015 Rob Clark <robclark@freedesktop.org>
  *
@@ -184,10 +182,9 @@ compile_init(struct ir3_compiler *compiler,
 	NIR_PASS_V(ctx->s, nir_convert_from_ssa, true);
 
 	if (fd_mesa_debug & FD_DBG_DISASM) {
-		DBG("dump nir%dv%d: type=%d, k={bp=%u,cts=%u,hp=%u}",
+		DBG("dump nir%dv%d: type=%d, k={cts=%u,hp=%u}",
 			so->shader->id, so->id, so->type,
-			so->key.binning_pass, so->key.color_two_side,
-			so->key.half_precision);
+			so->key.color_two_side, so->key.half_precision);
 		nir_print_shader(ctx->s, stdout);
 	}
 
@@ -1626,8 +1623,8 @@ emit_intrinsic_atomic_ssbo(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 	case nir_intrinsic_ssbo_atomic_comp_swap:
 		/* for cmpxchg, src0 is [ui]vec2(data, compare): */
 		src0 = create_collect(ctx, (struct ir3_instruction*[]){
-			src0,
 			get_src(ctx, &intr->src[3])[0],
+			src0,
 		}, 2);
 		atomic = ir3_ATOMIC_CMPXCHG_G(b, ssbo, 0, src0, 0, src1, 0, src2, 0);
 		break;
@@ -2038,6 +2035,29 @@ emit_intrinsic_image_size(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 
 	split_dest(b, tmp, sam, 0, 4);
 
+	/* get_size instruction returns size in bytes instead of texels
+	 * for imageBuffer, so we need to divide it by the pixel size
+	 * of the image format.
+	 *
+	 * TODO: This is at least true on a5xx. Check other gens.
+	 */
+	enum glsl_sampler_dim dim =
+		glsl_get_sampler_dim(glsl_without_array(var->type));
+	if (dim == GLSL_SAMPLER_DIM_BUF) {
+		/* Since all the possible values the divisor can take are
+		 * power-of-two (4, 8, or 16), the division is implemented
+		 * as a shift-right.
+		 * During shader setup, the log2 of the image format's
+		 * bytes-per-pixel should have been emitted in 2nd slot of
+		 * image_dims. See ir3_shader::emit_image_dims().
+		 */
+		unsigned cb = regid(ctx->so->constbase.image_dims, 0) +
+			ctx->so->const_layout.image_dims.off[var->data.driver_location];
+		struct ir3_instruction *aux = create_uniform(ctx, cb + 1);
+
+		tmp[0] = ir3_SHR_B(b, tmp[0], 0, aux, 0);
+	}
+
 	for (unsigned i = 0; i < ncoords; i++)
 		dst[i] = tmp[i];
 
@@ -2095,8 +2115,8 @@ emit_intrinsic_atomic_image(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 	case nir_intrinsic_image_deref_atomic_comp_swap:
 		/* for cmpxchg, src0 is [ui]vec2(data, compare): */
 		src0 = create_collect(ctx, (struct ir3_instruction*[]){
-			src0,
 			get_src(ctx, &intr->src[4])[0],
+			src0,
 		}, 2);
 		atomic = ir3_ATOMIC_CMPXCHG_G(b, image, 0, src0, 0, src1, 0, src2, 0);
 		break;
@@ -2967,7 +2987,6 @@ get_block(struct ir3_context *ctx, const nir_block *nblock)
 {
 	struct ir3_block *block;
 	struct hash_entry *hentry;
-	struct set_entry *sentry;
 	unsigned i;
 
 	hentry = _mesa_hash_table_search(ctx->block_ht, nblock);
@@ -3199,7 +3218,7 @@ emit_function(struct ir3_context *ctx, nir_function_impl *impl)
 	 */
 	if ((ctx->compiler->gpu_id < 500) &&
 			(ctx->so->shader->stream_output.num_outputs > 0) &&
-			!ctx->so->key.binning_pass) {
+			!ctx->so->binning_pass) {
 		debug_assert(ctx->so->type == SHADER_VERTEX);
 		emit_stream_out(ctx);
 	}
@@ -3247,25 +3266,6 @@ create_frag_coord(struct ir3_context *ctx, unsigned comp)
 	}
 }
 
-static uint64_t
-input_bitmask(struct ir3_context *ctx, nir_variable *in)
-{
-	unsigned ncomp = glsl_get_components(in->type);
-	unsigned slot = in->data.location;
-
-	/* let's pretend things other than vec4 don't exist: */
-	ncomp = MAX2(ncomp, 4);
-
-	if (ctx->so->type == SHADER_FRAGMENT) {
-		/* see st_nir_fixup_varying_slots(): */
-		if (slot >= VARYING_SLOT_VAR9)
-			slot -= 9;
-	}
-
-	/* Note that info.inputs_read is in units of vec4 slots: */
-	return ((1ull << (ncomp/4)) - 1) << slot;
-}
-
 static void
 setup_input(struct ir3_context *ctx, nir_variable *in)
 {
@@ -3284,9 +3284,8 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 	/* skip unread inputs, we could end up with (for example), unsplit
 	 * matrix/etc inputs in the case they are not read, so just silently
 	 * skip these.
-	 *
 	 */
-	if (!(ctx->s->info.inputs_read & input_bitmask(ctx, in)))
+	if (ncomp > 4)
 		return;
 
 	compile_assert(ctx, ncomp == 4);
@@ -3585,6 +3584,32 @@ fixup_astc_srgb(struct ir3_context *ctx)
 	}
 }
 
+static void
+fixup_binning_pass(struct ir3_context *ctx)
+{
+	struct ir3_shader_variant *so = ctx->so;
+	struct ir3 *ir = ctx->ir;
+	unsigned i, j;
+
+	for (i = 0, j = 0; i < so->outputs_count; i++) {
+		unsigned slot = so->outputs[i].slot;
+
+		/* throw away everything but first position/psize */
+		if ((slot == VARYING_SLOT_POS) || (slot == VARYING_SLOT_PSIZ)) {
+			if (i != j) {
+				so->outputs[j] = so->outputs[i];
+				ir->outputs[(j*4)+0] = ir->outputs[(i*4)+0];
+				ir->outputs[(j*4)+1] = ir->outputs[(i*4)+1];
+				ir->outputs[(j*4)+2] = ir->outputs[(i*4)+2];
+				ir->outputs[(j*4)+3] = ir->outputs[(i*4)+3];
+			}
+			j++;
+		}
+	}
+	so->outputs_count = j;
+	ir->noutputs = j * 4;
+}
+
 int
 ir3_compile_shader_nir(struct ir3_compiler *compiler,
 		struct ir3_shader_variant *so)
@@ -3592,7 +3617,7 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 	struct ir3_context *ctx;
 	struct ir3 *ir;
 	struct ir3_instruction **inputs;
-	unsigned i, j, actual_in, inloc;
+	unsigned i, actual_in, inloc;
 	int ret = 0, max_bary;
 
 	assert(!so->ir);
@@ -3622,25 +3647,8 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 		fixup_frag_inputs(ctx);
 
 	/* at this point, for binning pass, throw away unneeded outputs: */
-	if (so->key.binning_pass) {
-		for (i = 0, j = 0; i < so->outputs_count; i++) {
-			unsigned slot = so->outputs[i].slot;
-
-			/* throw away everything but first position/psize */
-			if ((slot == VARYING_SLOT_POS) || (slot == VARYING_SLOT_PSIZ)) {
-				if (i != j) {
-					so->outputs[j] = so->outputs[i];
-					ir->outputs[(j*4)+0] = ir->outputs[(i*4)+0];
-					ir->outputs[(j*4)+1] = ir->outputs[(i*4)+1];
-					ir->outputs[(j*4)+2] = ir->outputs[(i*4)+2];
-					ir->outputs[(j*4)+3] = ir->outputs[(i*4)+3];
-				}
-				j++;
-			}
-		}
-		so->outputs_count = j;
-		ir->noutputs = j * 4;
-	}
+	if (so->binning_pass && (ctx->compiler->gpu_id < 600))
+		fixup_binning_pass(ctx);
 
 	/* if we want half-precision outputs, mark the output registers
 	 * as half:
@@ -3678,6 +3686,14 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 	}
 
 	ir3_cp(ir, so);
+
+	/* at this point, for binning pass, throw away unneeded outputs:
+	 * Note that for a6xx and later, we do this after ir3_cp to ensure
+	 * that the uniform/constant layout for BS and VS matches, so that
+	 * we can re-use same VS_CONST state group.
+	 */
+	if (so->binning_pass && (ctx->compiler->gpu_id >= 600))
+		fixup_binning_pass(ctx);
 
 	/* Insert mov if there's same instruction for each output.
 	 * eg. dEQP-GLES31.functional.shaders.opaque_type_indexing.sampler.const_expression.vertex.sampler2dshadow
@@ -3782,7 +3798,7 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 	/* We need to do legalize after (for frag shader's) the "bary.f"
 	 * offsets (inloc) have been assigned.
 	 */
-	ir3_legalize(ir, &so->has_samp, &so->has_ssbo, &max_bary);
+	ir3_legalize(ir, &so->num_samp, &so->has_ssbo, &max_bary);
 
 	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
 		printf("AFTER LEGALIZE:\n");

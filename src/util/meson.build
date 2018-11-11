@@ -23,6 +23,7 @@ inc_util = include_directories('.')
 subdir('xmlpool')
 
 files_mesa_util = files(
+  'bigmath.h',
   'bitscan.c',
   'bitscan.h',
   'bitset.h',
@@ -34,6 +35,8 @@ files_mesa_util = files(
   'debug.h',
   'disk_cache.c',
   'disk_cache.h',
+  'fast_idiv_by_const.c',
+  'fast_idiv_by_const.h',
   'format_r11g11b10f.h',
   'format_rgb9e5.h',
   'format_srgb.h',
@@ -48,6 +51,8 @@ files_mesa_util = files(
   'mesa-sha1.h',
   'os_time.c',
   'os_time.h',
+  'os_misc.c',
+  'os_misc.h',
   'u_process.c',
   'u_process.h',
   'sha1/sha1.c',
@@ -87,6 +92,10 @@ files_mesa_util = files(
   'u_vector.h',
   'u_math.c',
   'u_math.h',
+  'u_debug.c',
+  'u_debug.h',
+  'u_cpu_detect.c',
+  'u_cpu_detect.h',
   'vma.c',
   'vma.h',
 )
@@ -110,7 +119,7 @@ libmesa_util = static_library(
   'mesa_util',
   [files_mesa_util, format_srgb],
   include_directories : inc_common,
-  dependencies : [dep_zlib, dep_clock, dep_thread, dep_atomic],
+  dependencies : [dep_zlib, dep_clock, dep_thread, dep_atomic, dep_m],
   c_args : [c_msvc_compat_args, c_vis_args],
   build_by_default : false
 )
@@ -167,6 +176,7 @@ if with_tests
     )
   )
 
+  subdir('tests/fast_idiv_by_const')
   subdir('tests/hash_table')
   subdir('tests/string_buffer')
   subdir('tests/vma')

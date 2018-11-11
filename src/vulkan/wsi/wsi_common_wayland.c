@@ -455,18 +455,17 @@ wsi_wl_get_presentation_support(struct wsi_device *wsi_device,
       (struct wsi_wayland *)wsi_device->wsi[VK_ICD_WSI_PLATFORM_WAYLAND];
 
    struct wsi_wl_display display;
-   int ret = wsi_wl_display_init(wsi, &display, wl_display, false);
-   wsi_wl_display_finish(&display);
+   VkResult ret = wsi_wl_display_init(wsi, &display, wl_display, false);
+   if (ret == VK_SUCCESS)
+      wsi_wl_display_finish(&display);
 
-   return ret == 0;
+   return ret == VK_SUCCESS;
 }
 
 static VkResult
 wsi_wl_surface_get_support(VkIcdSurfaceBase *surface,
                            struct wsi_device *wsi_device,
-                           const VkAllocationCallbacks *alloc,
                            uint32_t queueFamilyIndex,
-                           int local_fd,
                            VkBool32* pSupported)
 {
    *pSupported = true;
@@ -602,6 +601,25 @@ wsi_wl_surface_get_present_modes(VkIcdSurfaceBase *surface,
       return VK_SUCCESS;
 }
 
+static VkResult
+wsi_wl_surface_get_present_rectangles(VkIcdSurfaceBase *surface,
+                                      struct wsi_device *wsi_device,
+                                      uint32_t* pRectCount,
+                                      VkRect2D* pRects)
+{
+   VK_OUTARRAY_MAKE(out, pRects, pRectCount);
+
+   vk_outarray_append(&out, rect) {
+      /* We don't know a size so just return the usual "I don't know." */
+      *rect = (VkRect2D) {
+         .offset = { 0, 0 },
+         .extent = { -1, -1 },
+      };
+   }
+
+   return vk_outarray_status(&out);
+}
+
 VkResult wsi_create_wl_surface(const VkAllocationCallbacks *pAllocator,
 			       const VkWaylandSurfaceCreateInfoKHR *pCreateInfo,
 			       VkSurfaceKHR *pSurface)
@@ -658,8 +676,7 @@ wsi_wl_swapchain_get_wsi_image(struct wsi_swapchain *wsi_chain,
 
 static VkResult
 wsi_wl_swapchain_acquire_next_image(struct wsi_swapchain *wsi_chain,
-                                    uint64_t timeout,
-                                    VkSemaphore semaphore,
+                                    const VkAcquireNextImageInfoKHR *info,
                                     uint32_t *image_index)
 {
    struct wsi_wl_swapchain *chain = (struct wsi_wl_swapchain *)wsi_chain;
@@ -890,7 +907,6 @@ static VkResult
 wsi_wl_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
                                 VkDevice device,
                                 struct wsi_device *wsi_device,
-                                int local_fd,
                                 const VkSwapchainCreateInfoKHR* pCreateInfo,
                                 const VkAllocationCallbacks* pAllocator,
                                 struct wsi_swapchain **swapchain_out)
@@ -1014,6 +1030,7 @@ wsi_wl_init_wsi(struct wsi_device *wsi_device,
    wsi->base.get_formats = wsi_wl_surface_get_formats;
    wsi->base.get_formats2 = wsi_wl_surface_get_formats2;
    wsi->base.get_present_modes = wsi_wl_surface_get_present_modes;
+   wsi->base.get_present_rectangles = wsi_wl_surface_get_present_rectangles;
    wsi->base.create_swapchain = wsi_wl_surface_create_swapchain;
 
    wsi_device->wsi[VK_ICD_WSI_PLATFORM_WAYLAND] = &wsi->base;

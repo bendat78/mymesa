@@ -25,6 +25,10 @@
 #include "vulkan_android.h"
 #endif
 
+#ifdef VK_USE_PLATFORM_FUCHSIA
+#include <zircon/types.h>
+#include "vulkan_fuchsia.h"
+#endif
 
 #ifdef VK_USE_PLATFORM_IOS_MVK
 #include "vulkan_ios.h"
@@ -33,12 +37,6 @@
 
 #ifdef VK_USE_PLATFORM_MACOS_MVK
 #include "vulkan_macos.h"
-#endif
-
-
-#ifdef VK_USE_PLATFORM_MIR_KHR
-#include <mir_toolkit/client_types.h>
-#include "vulkan_mir.h"
 #endif
 
 

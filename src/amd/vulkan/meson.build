@@ -129,7 +129,7 @@ endif
 
 libvulkan_radeon = shared_library(
   'vulkan_radeon',
-  [libradv_files, radv_entrypoints, radv_extensions_c, vk_format_table_c],
+  [libradv_files, radv_entrypoints, radv_extensions_c, vk_format_table_c, sha1_h],
   include_directories : [
     inc_common, inc_amd, inc_amd_common, inc_compiler, inc_vulkan_util,
     inc_vulkan_wsi,
@@ -144,6 +144,7 @@ libvulkan_radeon = shared_library(
     idep_nir,
   ],
   c_args : [c_vis_args, no_override_init_args, radv_flags],
+  cpp_args : [cpp_vis_args, radv_flags],
   link_args : [ld_args_bsymbolic, ld_args_gc_sections],
   install : true,
 )

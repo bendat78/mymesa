@@ -434,22 +434,20 @@ dri2_drm_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
       return EGL_TRUE;
    }
 
-   if (dri2_surf->base.Type == EGL_WINDOW_BIT) {
-      if (dri2_surf->current)
-         _eglError(EGL_BAD_SURFACE, "dri2_swap_buffers");
-      for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++)
-         if (dri2_surf->color_buffers[i].age > 0)
-            dri2_surf->color_buffers[i].age++;
+   if (dri2_surf->current)
+      _eglError(EGL_BAD_SURFACE, "dri2_swap_buffers");
+   for (unsigned i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++)
+      if (dri2_surf->color_buffers[i].age > 0)
+         dri2_surf->color_buffers[i].age++;
 
-      /* Make sure we have a back buffer in case we're swapping without
-       * ever rendering. */
-      if (get_back_bo(dri2_surf) < 0)
-         return _eglError(EGL_BAD_ALLOC, "dri2_swap_buffers");
+   /* Make sure we have a back buffer in case we're swapping without
+    * ever rendering. */
+   if (get_back_bo(dri2_surf) < 0)
+      return _eglError(EGL_BAD_ALLOC, "dri2_swap_buffers");
 
-      dri2_surf->current = dri2_surf->back;
-      dri2_surf->current->age = 1;
-      dri2_surf->back = NULL;
-   }
+   dri2_surf->current = dri2_surf->back;
+   dri2_surf->current->age = 1;
+   dri2_surf->back = NULL;
 
    dri2_flush_drawable_for_swapbuffers(disp, draw);
    dri2_dpy->flush->invalidate(dri2_surf->dri_drawable);
@@ -696,6 +694,7 @@ static const struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
 EGLBoolean
 dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 {
+   _EGLDevice *dev;
    struct dri2_egl_display *dri2_dpy;
    struct gbm_device *gbm;
    const char *err;
@@ -737,6 +736,14 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
       err = "DRI2: gbm device using incorrect/incompatible backend";
       goto cleanup;
    }
+
+   dev = _eglAddDevice(dri2_dpy->fd, false);
+   if (!dev) {
+      err = "DRI2: failed to find EGLDevice";
+      goto cleanup;
+   }
+
+   disp->Device = dev;
 
    dri2_dpy->gbm_dri = gbm_dri_device(gbm);
    dri2_dpy->driver_name = strdup(dri2_dpy->gbm_dri->driver_name);

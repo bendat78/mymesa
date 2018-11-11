@@ -40,6 +40,23 @@ C_SOURCES := \
 	freedreno_util.c \
 	freedreno_util.h
 
+drm_SOURCES := \
+	drm/freedreno_bo.c \
+	drm/freedreno_bo_cache.c \
+	drm/freedreno_device.c \
+	drm/freedreno_drmif.h \
+	drm/freedreno_pipe.c \
+	drm/freedreno_priv.h \
+	drm/freedreno_ringbuffer.c \
+	drm/freedreno_ringbuffer.h \
+	drm/msm_bo.c \
+	drm/msm_device.c \
+	drm/msm_drm.h \
+	drm/msm_pipe.c \
+	drm/msm_priv.h \
+	drm/msm_ringbuffer.c \
+	drm/msm_ringbuffer_sp.c
+
 a2xx_SOURCES := \
 	a2xx/a2xx.xml.h \
 	a2xx/disasm-a2xx.c \
@@ -165,6 +182,8 @@ a6xx_SOURCES := \
 	a6xx/a6xx.xml.h \
 	a6xx/fd6_blend.c \
 	a6xx/fd6_blend.h \
+	a6xx/fd6_blitter.c \
+	a6xx/fd6_blitter.h \
 	a6xx/fd6_context.c \
 	a6xx/fd6_context.h \
 	a6xx/fd6_draw.c \
@@ -196,6 +215,8 @@ ir3_SOURCES := \
 	ir3/disasm-a3xx.c \
 	ir3/instr-a3xx.h \
 	ir3/ir3.c \
+	ir3/ir3_cache.c \
+	ir3/ir3_cache.h \
 	ir3/ir3_compiler_nir.c \
 	ir3/ir3_compiler.c \
 	ir3/ir3_compiler.h \

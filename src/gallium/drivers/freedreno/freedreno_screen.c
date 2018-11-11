@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -88,6 +86,7 @@ static const struct debug_named_value debug_options[] = {
 		{"hiprio",    FD_DBG_HIPRIO, "Force high-priority context"},
 		{"ttile",     FD_DBG_TTILE,  "Enable texture tiling (a5xx)"},
 		{"perfcntrs", FD_DBG_PERFC,  "Expose performance counters"},
+		{"softpin",   FD_DBG_SOFTPIN,"Enable softpin command submission (experimental)"},
 		DEBUG_NAMED_VALUE_END
 };
 
@@ -826,7 +825,11 @@ fd_screen_create(struct fd_device *dev)
 		goto fail;
 	}
 
-	if (screen->gpu_id >= 500) {
+	if (screen->gpu_id >= 600) {
+		screen->gmem_alignw = 32;
+		screen->gmem_alignh = 32;
+		screen->num_vsc_pipes = 32;
+	} else if (screen->gpu_id >= 500) {
 		screen->gmem_alignw = 64;
 		screen->gmem_alignh = 32;
 		screen->num_vsc_pipes = 16;

@@ -1,5 +1,3 @@
-/* -*- mode: C; c-file-style: "k&r"; tab-width 4; indent-tabs-mode: t; -*- */
-
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -211,6 +209,19 @@ fd_set_framebuffer_state(struct pipe_context *pctx,
 	struct fd_context *ctx = fd_context(pctx);
 	struct pipe_framebuffer_state *cso;
 
+	DBG("%ux%u, %u layers, %u samples",
+		framebuffer->width, framebuffer->height,
+		framebuffer->layers, framebuffer->samples);
+
+	cso = &ctx->framebuffer;
+
+	if (util_framebuffer_state_equal(cso, framebuffer))
+		return;
+
+	util_copy_framebuffer_state(cso, framebuffer);
+
+	cso->samples = util_framebuffer_get_num_samples(cso);
+
 	if (ctx->screen->reorder) {
 		struct fd_batch *old_batch = NULL;
 
@@ -236,13 +247,8 @@ fd_set_framebuffer_state(struct pipe_context *pctx,
 		DBG("%d: cbufs[0]=%p, zsbuf=%p", ctx->batch->needs_flush,
 				framebuffer->cbufs[0], framebuffer->zsbuf);
 		fd_batch_flush(ctx->batch, false, false);
+		util_copy_framebuffer_state(&ctx->batch->framebuffer, cso);
 	}
-
-	cso = &ctx->framebuffer;
-
-	util_copy_framebuffer_state(cso, framebuffer);
-
-	cso->samples = util_framebuffer_get_num_samples(cso);
 
 	ctx->dirty |= FD_DIRTY_FRAMEBUFFER;
 
