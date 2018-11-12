@@ -79,6 +79,7 @@ template = """\
 #include <math.h>
 #include "util/rounding.h" /* for _mesa_roundeven */
 #include "util/half_float.h"
+#include "util/bigmath.h"
 #include "nir_constant_expressions.h"
 
 /**

@@ -3029,6 +3029,7 @@ typedef enum {
    nir_lower_isign64 = (1 << 1),
    /** Lower all int64 modulus and division opcodes */
    nir_lower_divmod64 = (1 << 2),
+   nir_lower_imul_high64 = (1 << 3),
 } nir_lower_int64_options;
 
 bool nir_lower_int64(nir_shader *shader, nir_lower_int64_options options);
@@ -3094,6 +3095,8 @@ bool nir_opt_dead_write_vars(nir_shader *shader);
 bool nir_opt_find_array_copies(nir_shader *shader);
 
 bool nir_opt_gcm(nir_shader *shader, bool value_number);
+
+bool nir_opt_idiv_const(nir_shader *shader, unsigned min_bit_size);
 
 bool nir_opt_if(nir_shader *shader);
 
