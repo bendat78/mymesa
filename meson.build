@@ -787,7 +787,7 @@ endif
 
 # Check for generic C arguments
 c_args = []
-foreach a : ['-Wall', '-Werror=implicit-function-declaration',
+foreach a : ['-Werror=implicit-function-declaration',
              '-Werror=missing-prototypes', '-Werror=return-type',
              '-fno-math-errno',
              '-fno-trapping-math', '-Qunused-arguments']
@@ -809,7 +809,7 @@ endif
 
 # Check for generic C++ arguments
 cpp_args = []
-foreach a : ['-Wall', '-Werror=return-type',
+foreach a : ['-Werror=return-type',
              '-fno-math-errno', '-fno-trapping-math',
              '-Qunused-arguments']
   if cpp.has_argument(a)
@@ -905,8 +905,9 @@ if not cc.links('''#include <stdint.h>
                    int main() {
                      return __sync_add_and_fetch(&v, (uint64_t)1);
                    }''',
+                dependencies : dep_atomic,
                 name : 'GCC 64bit atomics')
-  pre_args += '-DMISSING_64_BIT_ATOMICS'
+  pre_args += '-DMISSING_64BIT_ATOMICS'
 endif
 
 # TODO: shared/static? Is this even worth doing?
