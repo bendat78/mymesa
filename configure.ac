@@ -107,8 +107,8 @@ dnl LLVM versions
 LLVM_REQUIRED_GALLIUM=3.3.0
 LLVM_REQUIRED_OPENCL=3.9.0
 LLVM_REQUIRED_R600=3.9.0
-LLVM_REQUIRED_RADEONSI=6.0.0
-LLVM_REQUIRED_RADV=6.0.0
+LLVM_REQUIRED_RADEONSI=7.0.0
+LLVM_REQUIRED_RADV=7.0.0
 LLVM_REQUIRED_SWR=6.0.0
 
 dnl Check for progs
@@ -1719,6 +1719,8 @@ xdri)
             if test x"$enable_dri" = xyes; then
                dri_modules="$dri_modules xcb-dri2 >= $XCBDRI2_REQUIRED"
             fi
+
+            dri_modules="$dri_modules xxf86vm"
         fi
         if test x"$dri_platform" = xapple ; then
             DEFINES="$DEFINES -DGLX_USE_APPLEGL"
@@ -1727,8 +1729,6 @@ xdri)
             DEFINES="$DEFINES -DGLX_USE_WINDOWSGL"
         fi
     fi
-
-    dri_modules="$dri_modules xxf86vm"
 
     PKG_CHECK_MODULES([DRIGL], [$dri_modules])
     GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV $dri_modules"
@@ -3000,6 +3000,7 @@ AM_CONDITIONAL(HAVE_AMD_DRIVERS, test "x$HAVE_GALLIUM_RADEONSI" = xyes -o \
 AM_CONDITIONAL(HAVE_BROADCOM_DRIVERS, test "x$HAVE_GALLIUM_VC4" = xyes -o \
                                       "x$HAVE_GALLIUM_V3D" = xyes)
 
+AM_CONDITIONAL(HAVE_FREEDRENO_DRIVERS, test "x$HAVE_GALLIUM_FREEDRENO" = xyes)
 AM_CONDITIONAL(HAVE_INTEL_DRIVERS, test "x$HAVE_INTEL_VULKAN" = xyes -o \
                                         "x$HAVE_I965_DRI" = xyes)
 
@@ -3092,6 +3093,7 @@ AC_CONFIG_FILES([Makefile
                  src/amd/vulkan/Makefile
                  src/broadcom/Makefile
                  src/compiler/Makefile
+                 src/freedreno/Makefile
                  src/egl/Makefile
                  src/egl/main/egl.pc
                  src/egl/wayland/wayland-drm/Makefile

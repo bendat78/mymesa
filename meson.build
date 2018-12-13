@@ -43,8 +43,7 @@ pre_args = [
   '-D__STDC_CONSTANT_MACROS',
   '-D__STDC_FORMAT_MACROS',
   '-D__STDC_LIMIT_MACROS',
-  '-DVERSION="@0@"'.format(meson.project_version()),
-  '-DPACKAGE_VERSION=VERSION',
+  '-DPACKAGE_VERSION="@0@"'.format(meson.project_version()),
   '-DPACKAGE_BUGREPORT="https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa"',
 ]
 
@@ -918,7 +917,7 @@ endif
 # case of cross compiling where we can use asm, and that's x86_64 -> x86 when
 # host OS == build OS, since in that case the build machine can run the host's
 # binaries.
-if meson.is_cross_build() 
+if with_asm and meson.is_cross_build()
   if build_machine.system() != host_machine.system()
     # TODO: It may be possible to do this with an exe_wrapper (like wine).
     message('Cross compiling from one OS to another, disabling assembly.')
@@ -1163,7 +1162,7 @@ endif
 llvm_modules = ['bitwriter', 'engine', 'mcdisassembler', 'mcjit']
 llvm_optional_modules = []
 if with_amd_vk or with_gallium_radeonsi or with_gallium_r600
-  llvm_modules += ['amdgpu', 'bitreader', 'ipo']
+  llvm_modules += ['amdgpu', 'native', 'bitreader', 'ipo']
   if with_gallium_r600
     llvm_modules += 'asmparser'
   endif
@@ -1177,7 +1176,7 @@ if with_gallium_opencl
 endif
 
 if with_amd_vk or with_gallium_radeonsi
-  _llvm_version = '>= 6.0.0'
+  _llvm_version = '>= 7.0.0'
 elif with_gallium_swr
   _llvm_version = '>= 6.0.0'
 elif with_gallium_opencl or with_gallium_r600
@@ -1350,7 +1349,6 @@ if with_platform_x11
     dep_xdamage = dependency('xdamage', version : '>= 1.1')
     dep_xfixes = dependency('xfixes')
     dep_xcb_glx = dependency('xcb-glx', version : '>= 1.8.1')
-    dep_xxf86vm = dependency('xxf86vm')
   endif
   if (with_any_vk or with_glx == 'dri' or
        (with_gallium_vdpau or with_gallium_xvmc or with_gallium_va or
@@ -1377,6 +1375,7 @@ if with_platform_x11
   if with_glx == 'dri'
     if with_dri_platform == 'drm'
       dep_dri2proto = dependency('dri2proto', version : '>= 2.8')
+      dep_xxf86vm = dependency('xxf86vm')
     endif
     dep_glproto = dependency('glproto', version : '>= 1.4.14')
   endif
@@ -1427,8 +1426,8 @@ elif with_glx == 'dri'
     'xcb-glx >= 1.8.1']
   if with_dri_platform == 'drm'
     gl_priv_reqs += 'xcb-dri2 >= 1.8'
+    gl_priv_reqs += 'xxf86vm'
   endif
-  gl_priv_reqs += 'xxf86vm'
 endif
 if dep_libdrm.found()
   gl_priv_reqs += 'libdrm >= 2.4.75'

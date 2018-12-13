@@ -71,6 +71,17 @@ lower_mul_high64(nir_builder *b, nir_ssa_def *x, nir_ssa_def *y,
    for (unsigned i = 0; i < 4; i++) {
       nir_ssa_def *carry = NULL;
       for (unsigned j = 0; j < 4; j++) {
+         /* The maximum values of x32[i] and y32[i] are UINT32_MAX so the
+          * maximum value of tmp is UINT32_MAX * UINT32_MAX.  The maximum
+          * value that will fit in tmp is
+          *
+          *    UINT64_MAX = UINT32_MAX << 32 + UINT32_MAX
+          *               = UINT32_MAX * (UINT32_MAX + 1) + UINT32_MAX
+          *               = UINT32_MAX * UINT32_MAX + 2 * UINT32_MAX
+          *
+          * so we're guaranteed that we can add in two more 32-bit values
+          * without overflowing tmp.
+          */
          nir_ssa_def *tmp =
             nir_pack_64_2x32_split(b, nir_imul(b, x32[i], y32[j]),
                                       nir_umul_high(b, x32[i], y32[j]));
@@ -95,7 +106,7 @@ lower_isign64(nir_builder *b, nir_ssa_def *x)
 
    nir_ssa_def *is_non_zero = nir_i2b(b, nir_ior(b, x_lo, x_hi));
    nir_ssa_def *res_hi = nir_ishr(b, x_hi, nir_imm_int(b, 31));
-   nir_ssa_def *res_lo = nir_ior(b, res_hi, nir_b2i(b, is_non_zero));
+   nir_ssa_def *res_lo = nir_ior(b, res_hi, nir_b2i32(b, is_non_zero));
 
    return nir_pack_64_2x32_split(b, res_lo, res_hi);
 }

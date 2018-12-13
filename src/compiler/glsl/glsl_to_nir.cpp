@@ -97,8 +97,6 @@ private:
    /* most recent deref instruction created */
    nir_deref_instr *deref;
 
-   nir_variable *var; /* variable created by ir_variable visitor */
-
    /* whether the IR we're operating on is per-function or global */
    bool is_global;
 
@@ -180,7 +178,6 @@ nir_visitor::nir_visitor(nir_shader *shader)
                                                   _mesa_key_pointer_equal);
    this->result = NULL;
    this->impl = NULL;
-   this->var = NULL;
    memset(&this->b, 0, sizeof(this->b));
 }
 
@@ -454,7 +451,6 @@ nir_visitor::visit(ir_variable *ir)
       nir_shader_add_variable(shader, var);
 
    _mesa_hash_table_insert(var_table, ir, var);
-   this->var = var;
 }
 
 ir_visitor_status
@@ -751,9 +747,6 @@ nir_visitor::visit(ir_call *ir)
       case ir_intrinsic_end_invocation_interlock:
          op = nir_intrinsic_end_invocation_interlock;
          break;
-      case ir_intrinsic_begin_fragment_shader_ordering:
-         op = nir_intrinsic_begin_fragment_shader_ordering;
-         break;
       case ir_intrinsic_group_memory_barrier:
          op = nir_intrinsic_group_memory_barrier;
          break;
@@ -990,9 +983,6 @@ nir_visitor::visit(ir_call *ir)
          nir_builder_instr_insert(&b, &instr->instr);
          break;
       case nir_intrinsic_end_invocation_interlock:
-         nir_builder_instr_insert(&b, &instr->instr);
-         break;
-      case nir_intrinsic_begin_fragment_shader_ordering:
          nir_builder_instr_insert(&b, &instr->instr);
          break;
       case nir_intrinsic_store_ssbo: {
@@ -1537,7 +1527,7 @@ nir_visitor::visit(ir_expression *ir)
       result = supports_ints ? nir_u2f32(&b, srcs[0]) : nir_fmov(&b, srcs[0]);
       break;
    case ir_unop_b2f:
-      result = supports_ints ? nir_b2f(&b, srcs[0]) : nir_fmov(&b, srcs[0]);
+      result = supports_ints ? nir_b2f32(&b, srcs[0]) : nir_fmov(&b, srcs[0]);
       break;
    case ir_unop_f2i:
    case ir_unop_f2u:

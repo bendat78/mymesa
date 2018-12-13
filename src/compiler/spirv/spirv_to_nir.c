@@ -2174,6 +2174,13 @@ vtn_handle_texture(struct vtn_builder *b, SpvOp opcode,
          texop = nir_texop_txf_ms;
          (*p++) = vtn_tex_src(b, w[idx++], nir_tex_src_ms_index);
       }
+
+      if (operands & SpvImageOperandsMinLodMask) {
+         vtn_assert(texop == nir_texop_tex ||
+                    texop == nir_texop_txb ||
+                    texop == nir_texop_txd);
+         (*p++) = vtn_tex_src(b, w[idx++], nir_tex_src_min_lod);
+      }
    }
    /* We should have now consumed exactly all of the arguments */
    vtn_assert(idx == count);
@@ -3416,13 +3423,15 @@ vtn_handle_preamble_instruction(struct vtn_builder *b, SpvOp opcode,
       case SpvCapabilityVector16:
       case SpvCapabilityFloat16Buffer:
       case SpvCapabilityFloat16:
-      case SpvCapabilityInt64Atomics:
       case SpvCapabilityStorageImageMultisample:
       case SpvCapabilityInt8:
       case SpvCapabilitySparseResidency:
-      case SpvCapabilityMinLod:
          vtn_warn("Unsupported SPIR-V capability: %s",
                   spirv_capability_to_string(cap));
+         break;
+
+      case SpvCapabilityMinLod:
+         spv_check_supported(min_lod, cap);
          break;
 
       case SpvCapabilityAtomicStorage:
@@ -3445,6 +3454,10 @@ vtn_handle_preamble_instruction(struct vtn_builder *b, SpvOp opcode,
 
       case SpvCapabilityGeometryStreams:
          spv_check_supported(geometry_streams, cap);
+         break;
+
+      case SpvCapabilityInt64Atomics:
+         spv_check_supported(int64_atomics, cap);
          break;
 
       case SpvCapabilityAddresses:

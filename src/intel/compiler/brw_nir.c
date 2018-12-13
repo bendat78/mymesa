@@ -570,7 +570,7 @@ brw_nir_optimize(nir_shader *nir, const struct brw_compiler *compiler,
       OPT(nir_opt_cse);
       OPT(nir_opt_peephole_select, 0);
       OPT(nir_opt_intrinsics);
-      OPT(nir_opt_idiv_const, 0);
+      OPT(nir_opt_idiv_const, 32);
       OPT(nir_opt_algebraic);
       OPT(nir_opt_constant_folding);
       OPT(nir_opt_dead_cf);
@@ -657,6 +657,9 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
       .lower_txf_offset = true,
       .lower_rect_offset = true,
       .lower_txd_cube_map = true,
+      .lower_txb_shadow_clamp = true,
+      .lower_txd_shadow_clamp = true,
+      .lower_txd_offset_clamp = true,
    };
 
    OPT(nir_lower_tex, &tex_options);

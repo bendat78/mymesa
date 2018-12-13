@@ -788,8 +788,13 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
       inst->saturate = instr->dest.saturate;
       break;
 
-   case nir_op_b2i:
-   case nir_op_b2f:
+   case nir_op_b2i8:
+   case nir_op_b2i16:
+   case nir_op_b2i32:
+   case nir_op_b2i64:
+   case nir_op_b2f16:
+   case nir_op_b2f32:
+   case nir_op_b2f64:
       op[0].type = BRW_REGISTER_TYPE_D;
       op[0].negate = !op[0].negate;
       /* fallthrough */
@@ -1218,15 +1223,15 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
       inst->saturate = instr->dest.saturate;
       break;
 
-   case nir_op_i2b:
-   case nir_op_f2b: {
+   case nir_op_i2b32:
+   case nir_op_f2b32: {
       uint32_t bit_size = nir_src_bit_size(instr->src[0].src);
       if (bit_size == 64) {
          /* two-argument instructions can't take 64-bit immediates */
          fs_reg zero;
          fs_reg tmp;
 
-         if (instr->op == nir_op_f2b) {
+         if (instr->op == nir_op_f2b32) {
             zero = vgrf(glsl_type::double_type);
             tmp = vgrf(glsl_type::double_type);
             bld.MOV(zero, setup_imm_df(bld, 0.0));
@@ -1245,10 +1250,10 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
       } else {
          fs_reg zero;
          if (bit_size == 32) {
-            zero = instr->op == nir_op_f2b ? brw_imm_f(0.0f) : brw_imm_d(0);
+            zero = instr->op == nir_op_f2b32 ? brw_imm_f(0.0f) : brw_imm_d(0);
          } else {
             assert(bit_size == 16);
-            zero = instr->op == nir_op_f2b ?
+            zero = instr->op == nir_op_f2b32 ?
                retype(brw_imm_w(0), BRW_REGISTER_TYPE_HF) : brw_imm_w(0);
          }
          bld.CMP(result, op[0], zero, BRW_CONDITIONAL_NZ);
@@ -2968,7 +2973,7 @@ fs_visitor::emit_non_coherent_fb_read(const fs_builder &bld, const fs_reg &dst,
 
    /* Emit the instruction. */
    const fs_reg srcs[] = { coords, fs_reg(), brw_imm_ud(0), fs_reg(),
-                           sample, mcs,
+                           fs_reg(), sample, mcs,
                            brw_imm_ud(surface), brw_imm_ud(0),
                            fs_reg(), brw_imm_ud(3), brw_imm_ud(0) };
    STATIC_ASSERT(ARRAY_SIZE(srcs) == TEX_LOGICAL_NUM_SRCS);
@@ -4572,7 +4577,6 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       break;
    }
 
-   case nir_intrinsic_begin_fragment_shader_ordering:
    case nir_intrinsic_begin_invocation_interlock: {
       const fs_builder ubld = bld.group(8, 0);
       const fs_reg tmp = ubld.vgrf(BRW_REGISTER_TYPE_UD, 2);
@@ -4792,6 +4796,10 @@ fs_visitor::nir_emit_texture(const fs_builder &bld, nir_tex_instr *instr)
                retype(get_nir_src_imm(instr->src[i].src), BRW_REGISTER_TYPE_F);
             break;
          }
+         break;
+      case nir_tex_src_min_lod:
+         srcs[TEX_LOGICAL_SRC_MIN_LOD] =
+            retype(get_nir_src_imm(instr->src[i].src), BRW_REGISTER_TYPE_F);
          break;
       case nir_tex_src_ms_index:
          srcs[TEX_LOGICAL_SRC_SAMPLE_INDEX] = retype(src, BRW_REGISTER_TYPE_UD);

@@ -1398,6 +1398,7 @@ typedef enum {
    nir_tex_src_offset,
    nir_tex_src_bias,
    nir_tex_src_lod,
+   nir_tex_src_min_lod,
    nir_tex_src_ms_index, /* MSAA sample index */
    nir_tex_src_ms_mcs, /* MSAA compression value */
    nir_tex_src_ddx,
@@ -1568,8 +1569,8 @@ nir_alu_instr_is_comparison(const nir_alu_instr *instr)
    case nir_op_uge:
    case nir_op_ieq:
    case nir_op_ine:
-   case nir_op_i2b:
-   case nir_op_f2b:
+   case nir_op_i2b32:
+   case nir_op_f2b32:
    case nir_op_inot:
    case nir_op_fnot:
       return true;
@@ -1886,9 +1887,11 @@ typedef struct {
    /* Number of instructions in the loop */
    unsigned num_instructions;
 
-   /* How many times the loop is run (if known) */
-   unsigned trip_count;
-   bool is_trip_count_known;
+   /* Maximum number of times the loop is run (if known) */
+   unsigned max_trip_count;
+
+   /* Do we know the exact number of times the loop will be run */
+   bool exact_trip_count_known;
 
    /* Unroll the loop regardless of its size */
    bool force_unroll;
@@ -2129,6 +2132,9 @@ typedef struct nir_shader_compiler_options {
 
    /** lowers ffract to fsub+ffloor: */
    bool lower_ffract;
+
+   /** lowers fceil to fneg+ffloor+fneg: */
+   bool lower_fceil;
 
    bool lower_ldexp;
 
@@ -3007,6 +3013,24 @@ typedef struct nir_lower_tex_options {
     * Implies lower_txd_cube_map and lower_txd_shadow.
     */
    bool lower_txd;
+
+   /**
+    * If true, lower nir_texop_txb that try to use shadow compare and min_lod
+    * at the same time to a nir_texop_lod, some math, and nir_texop_tex.
+    */
+   bool lower_txb_shadow_clamp;
+
+   /**
+    * If true, lower nir_texop_txd on shadow samplers when it uses min_lod
+    * with nir_texop_txl.  This includes cube maps.
+    */
+   bool lower_txd_shadow_clamp;
+
+   /**
+    * If true, lower nir_texop_txd on when it uses both offset and min_lod
+    * with nir_texop_txl.  This includes cube maps.
+    */
+   bool lower_txd_offset_clamp;
 } nir_lower_tex_options;
 
 bool nir_lower_tex(nir_shader *shader,
@@ -3082,6 +3106,7 @@ typedef enum {
    nir_lower_isign64 = (1 << 1),
    /** Lower all int64 modulus and division opcodes */
    nir_lower_divmod64 = (1 << 2),
+   /** Lower all 64-bit umul_high and imul_high opcodes */
    nir_lower_imul_high64 = (1 << 3),
 } nir_lower_int64_options;
 
