@@ -3550,6 +3550,7 @@ builtin_builder::create_builtins()
 
    add_function("shadowCubeGrad",
                 _texture(ir_txd, gpu_shader4, glsl_type::vec4_type,  glsl_type::samplerCubeShadow_type, glsl_type::vec4_type),
+                NULL);
 
    add_function("texture4",
                 _texture(ir_tg4, texture_texture4, glsl_type::vec4_type, glsl_type::sampler2D_type, glsl_type::vec2_type),
