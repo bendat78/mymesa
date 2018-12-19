@@ -1399,6 +1399,11 @@ struct anv_device_memory {
    struct anv_memory_type *                     type;
    VkDeviceSize                                 map_size;
    void *                                       map;
+
+   /* If set, we are holding reference to AHardwareBuffer
+    * which we must release when memory is freed.
+    */
+   struct AHardwareBuffer *                     ahw;
 };
 
 /**
@@ -2550,6 +2555,7 @@ struct anv_format_plane {
 
 struct anv_format {
    struct anv_format_plane planes[3];
+   VkFormat vk_format;
    uint8_t n_planes;
    bool can_ycbcr;
 };
@@ -2663,6 +2669,7 @@ struct anv_image {
    uint32_t samples; /**< VkImageCreateInfo::samples */
    uint32_t n_planes;
    VkImageUsageFlags usage; /**< Superset of VkImageCreateInfo::usage. */
+   VkImageCreateFlags create_flags; /* Flags used when creating image. */
    VkImageTiling tiling; /** VkImageCreateInfo::tiling */
 
    /** True if this is needs to be bound to an appropriately tiled BO.
@@ -2687,6 +2694,14 @@ struct anv_image {
     * single one with different offsets.
     */
    bool disjoint;
+
+   /* All the formats that can be used when creating views of this image
+    * are CCS_E compatible.
+    */
+   bool ccs_e_compatible;
+
+   /* Image was created with external format. */
+   bool external_format;
 
    /**
     * Image subsurfaces
@@ -3062,6 +3077,7 @@ struct anv_image_create_info {
    isl_surf_usage_flags_t isl_extra_usage_flags;
 
    uint32_t stride;
+   bool external_format;
 };
 
 VkResult anv_image_create(VkDevice _device,
@@ -3108,6 +3124,11 @@ anv_sanitize_image_offset(const VkImageType imageType,
    }
 }
 
+VkFormatFeatureFlags
+anv_get_image_format_features(const struct gen_device_info *devinfo,
+                              VkFormat vk_format,
+                              const struct anv_format *anv_format,
+                              VkImageTiling vk_tiling);
 
 void anv_fill_buffer_surface_state(struct anv_device *device,
                                    struct anv_state state,

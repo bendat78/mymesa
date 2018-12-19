@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright © 2018 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,9 +27,7 @@
 
 using namespace brw;
 
-int ret = 0;
-
-class copy_propagation_test : public ::testing::Test {
+class dead_code_eliminate_test : public ::testing::Test {
    virtual void SetUp();
 
 public:
@@ -41,10 +39,10 @@ public:
    vec4_visitor *v;
 };
 
-class copy_propagation_vec4_visitor : public vec4_visitor
+class dead_code_eliminate_vec4_visitor : public vec4_visitor
 {
 public:
-   copy_propagation_vec4_visitor(struct brw_compiler *compiler,
+   dead_code_eliminate_vec4_visitor(struct brw_compiler *compiler,
                                  nir_shader *shader,
                                  struct brw_vue_prog_data *prog_data)
       : vec4_visitor(compiler, NULL, NULL, prog_data, shader, NULL,
@@ -86,7 +84,7 @@ protected:
 };
 
 
-void copy_propagation_test::SetUp()
+void dead_code_eliminate_test::SetUp()
 {
    ctx = (struct gl_context *)calloc(1, sizeof(*ctx));
    compiler = (struct brw_compiler *)calloc(1, sizeof(*compiler));
@@ -97,13 +95,13 @@ void copy_propagation_test::SetUp()
    nir_shader *shader =
       nir_shader_create(NULL, MESA_SHADER_VERTEX, NULL, NULL);
 
-   v = new copy_propagation_vec4_visitor(compiler, shader, prog_data);
+   v = new dead_code_eliminate_vec4_visitor(compiler, shader, prog_data);
 
    devinfo->gen = 4;
 }
 
 static void
-copy_propagation(vec4_visitor *v)
+dead_code_eliminate(vec4_visitor *v)
 {
    bool print = false;
 
@@ -113,7 +111,7 @@ copy_propagation(vec4_visitor *v)
    }
 
    v->calculate_cfg();
-   v->opt_copy_propagation();
+   v->dead_code_eliminate();
 
    if (print) {
       fprintf(stderr, "instructions after:\n");
@@ -121,61 +119,45 @@ copy_propagation(vec4_visitor *v)
    }
 }
 
-TEST_F(copy_propagation_test, test_swizzle_swizzle)
+TEST_F(dead_code_eliminate_test, some_dead_channels_all_flags_used)
 {
-   dst_reg a = dst_reg(v, glsl_type::vec4_type);
-   dst_reg b = dst_reg(v, glsl_type::vec4_type);
-   dst_reg c = dst_reg(v, glsl_type::vec4_type);
+   const vec4_builder bld = vec4_builder(v).at_end();
+   src_reg r1 = src_reg(v, glsl_type::vec4_type);
+   src_reg r2 = src_reg(v, glsl_type::vec4_type);
+   src_reg r3 = src_reg(v, glsl_type::vec4_type);
+   src_reg r4 = src_reg(v, glsl_type::vec4_type);
+   src_reg r5 = src_reg(v, glsl_type::vec4_type);
+   src_reg r6 = src_reg(v, glsl_type::vec4_type);
 
-   v->emit(v->ADD(a, src_reg(a), src_reg(a)));
+   /* Sequence like the following should not be modified by DCE.
+    *
+    *     cmp.l.f0(8)     g4<1>F         g2<4,4,1>.wF   g1<4,4,1>.xF
+    *     mov(8)          g5<1>.xF       g4<4,4,1>.xF
+    *     (+f0.x) sel(8)  g6<1>UD        g3<4>UD        g6<4>UD
+    */
+   vec4_instruction *test_cmp =
+      bld.CMP(dst_reg(r4), r2, r1, BRW_CONDITIONAL_L);
 
-   v->emit(v->MOV(b, swizzle(src_reg(a), BRW_SWIZZLE4(SWIZZLE_Y,
-                                                      SWIZZLE_Z,
-                                                      SWIZZLE_W,
-                                                      SWIZZLE_X))));
+   test_cmp->src[0].swizzle = BRW_SWIZZLE_WWWW;
+   test_cmp->src[1].swizzle = BRW_SWIZZLE_XXXX;
 
    vec4_instruction *test_mov =
-      v->MOV(c, swizzle(src_reg(b), BRW_SWIZZLE4(SWIZZLE_Y,
-                                                 SWIZZLE_Z,
-                                                 SWIZZLE_W,
-                                                 SWIZZLE_X)));
-   v->emit(test_mov);
+      bld.MOV(dst_reg(r5), r4);
 
-   copy_propagation(v);
+   test_mov->dst.writemask = WRITEMASK_X;
+   test_mov->src[0].swizzle = BRW_SWIZZLE_XXXX;
 
-   EXPECT_EQ(test_mov->src[0].nr, a.nr);
-   EXPECT_EQ(test_mov->src[0].swizzle, BRW_SWIZZLE4(SWIZZLE_Z,
-                                                    SWIZZLE_W,
-                                                    SWIZZLE_X,
-                                                    SWIZZLE_Y));
-}
+   vec4_instruction *test_sel =
+      bld.SEL(dst_reg(r6), r3, r6);
 
-TEST_F(copy_propagation_test, test_swizzle_writemask)
-{
-   dst_reg a = dst_reg(v, glsl_type::vec4_type);
-   dst_reg b = dst_reg(v, glsl_type::vec4_type);
-   dst_reg c = dst_reg(v, glsl_type::vec4_type);
+   set_predicate(BRW_PREDICATE_NORMAL, test_sel);
 
-   v->emit(v->MOV(b, swizzle(src_reg(a), BRW_SWIZZLE4(SWIZZLE_X,
-                                                      SWIZZLE_Y,
-                                                      SWIZZLE_X,
-                                                      SWIZZLE_Z))));
+   /* The scratch write is here just to make r5 and r6 be live so that the
+    * whole program doesn't get eliminated by DCE.
+    */
+   v->emit(v->SCRATCH_WRITE(dst_reg(r4), r6, r5));
 
-   v->emit(v->MOV(writemask(a, WRITEMASK_XYZ), brw_imm_f(1.0f)));
+   dead_code_eliminate(v);
 
-   vec4_instruction *test_mov =
-      v->MOV(c, swizzle(src_reg(b), BRW_SWIZZLE4(SWIZZLE_W,
-                                                 SWIZZLE_W,
-                                                 SWIZZLE_W,
-                                                 SWIZZLE_W)));
-   v->emit(test_mov);
-
-   copy_propagation(v);
-
-   /* should not copy propagate */
-   EXPECT_EQ(test_mov->src[0].nr, b.nr);
-   EXPECT_EQ(test_mov->src[0].swizzle, BRW_SWIZZLE4(SWIZZLE_W,
-                                                    SWIZZLE_W,
-                                                    SWIZZLE_W,
-                                                    SWIZZLE_W));
+   EXPECT_EQ(test_cmp->dst.writemask, WRITEMASK_XYZW);
 }
