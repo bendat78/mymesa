@@ -86,6 +86,8 @@ static void si_build_ps_prolog_function(struct si_shader_context *ctx,
 					union si_shader_part_key *key);
 static void si_build_ps_epilog_function(struct si_shader_context *ctx,
 					union si_shader_part_key *key);
+static void si_fix_resource_usage(struct si_screen *sscreen,
+				  struct si_shader *shader);
 
 /* Ideally pass the sample mask input to the PS epilog as v14, which
  * is its usual location, so that the shader doesn't have to add v_mov.
@@ -3254,9 +3256,7 @@ si_insert_input_ptr(struct si_shader_context *ctx, LLVMValueRef ret,
 		    unsigned param, unsigned return_index)
 {
 	LLVMBuilderRef builder = ctx->ac.builder;
-	LLVMValueRef ptr, lo, hi;
-
-	ptr = LLVMGetParam(ctx->main_fn, param);
+	LLVMValueRef ptr = LLVMGetParam(ctx->main_fn, param);
 	ptr = LLVMBuildPtrToInt(builder, ptr, ctx->i32, "");
 	return LLVMBuildInsertValue(builder, ret, ptr, return_index, "");
 }
@@ -5783,6 +5783,8 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 	if (r != 0) {
 		FREE(shader);
 		shader = NULL;
+	} else {
+		si_fix_resource_usage(sscreen, shader);
 	}
 	return shader;
 }

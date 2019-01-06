@@ -122,15 +122,15 @@ realloc_bo(struct fd_resource *rsc, uint32_t size)
 static void
 do_blit(struct fd_context *ctx, const struct pipe_blit_info *blit, bool fallback)
 {
+	struct pipe_context *pctx = &ctx->base;
+
 	/* TODO size threshold too?? */
 	if (!fallback) {
 		/* do blit on gpu: */
-		fd_blitter_pipe_begin(ctx, false, true, FD_STAGE_BLIT);
-		ctx->blit(ctx, blit);
-		fd_blitter_pipe_end(ctx);
+		pctx->blit(pctx, blit);
 	} else {
 		/* do blit on cpu: */
-		util_resource_copy_region(&ctx->base,
+		util_resource_copy_region(pctx,
 				blit->dst.resource, blit->dst.level, blit->dst.box.x,
 				blit->dst.box.y, blit->dst.box.z,
 				blit->src.resource, blit->src.level, &blit->src.box);
@@ -294,8 +294,16 @@ fd_alloc_staging(struct fd_context *ctx, struct fd_resource *rsc,
 
 	tmpl.width0  = box->width;
 	tmpl.height0 = box->height;
-	tmpl.depth0  = box->depth;
-	tmpl.array_size = 1;
+	/* for array textures, box->depth is the array_size, otherwise
+	 * for 3d textures, it is the depth:
+	 */
+	if (tmpl.array_size > 1) {
+		tmpl.array_size = box->depth;
+		tmpl.depth0 = 1;
+	} else {
+		tmpl.array_size = 1;
+		tmpl.depth0 = box->depth;
+	}
 	tmpl.last_level = 0;
 	tmpl.bind |= PIPE_BIND_LINEAR;
 
@@ -345,17 +353,6 @@ fd_blit_to_staging(struct fd_context *ctx, struct fd_transfer *trans)
 	blit.filter = PIPE_TEX_FILTER_NEAREST;
 
 	do_blit(ctx, &blit, false);
-}
-
-static unsigned
-fd_resource_layer_offset(struct fd_resource *rsc,
-						 struct fd_resource_slice *slice,
-						 unsigned layer)
-{
-	if (rsc->layer_first)
-		return layer * rsc->layer_size;
-	else
-		return layer * slice->size0;
 }
 
 static void fd_resource_transfer_flush_region(struct pipe_context *pctx,
@@ -626,10 +623,10 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 	}
 
 	buf = fd_bo_map(rsc->bo);
-	offset = slice->offset +
+	offset =
 		box->y / util_format_get_blockheight(format) * ptrans->stride +
 		box->x / util_format_get_blockwidth(format) * rsc->cpp +
-		fd_resource_layer_offset(rsc, slice, box->z);
+		fd_resource_offset(rsc, level, box->z);
 
 	if (usage & PIPE_TRANSFER_WRITE)
 		rsc->valid = true;
@@ -986,21 +983,9 @@ fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
 {
 	struct fd_context *ctx = fd_context(pctx);
 	struct pipe_blit_info info = *blit_info;
-	bool discard = false;
 
 	if (info.render_condition_enable && !fd_render_condition_check(pctx))
 		return;
-
-	if (!info.scissor_enable && !info.alpha_blend) {
-		discard = util_texrange_covers_whole_level(info.dst.resource,
-				info.dst.level, info.dst.box.x, info.dst.box.y,
-				info.dst.box.z, info.dst.box.width,
-				info.dst.box.height, info.dst.box.depth);
-	}
-
-	if (util_try_blit_via_copy_region(pctx, &info)) {
-		return; /* done */
-	}
 
 	if (info.mask & PIPE_MASK_S) {
 		DBG("cannot blit stencil, skipping");
@@ -1014,9 +999,8 @@ fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
 		return;
 	}
 
-	fd_blitter_pipe_begin(ctx, info.render_condition_enable, discard, FD_STAGE_BLIT);
-	ctx->blit(ctx, &info);
-	fd_blitter_pipe_end(ctx);
+	if (!(ctx->blit && ctx->blit(ctx, &info)))
+		fd_blitter_blit(ctx, &info);
 }
 
 void

@@ -572,6 +572,18 @@ nir_imul_imm(nir_builder *build, nir_ssa_def *x, uint64_t y)
 }
 
 static inline nir_ssa_def *
+nir_fadd_imm(nir_builder *build, nir_ssa_def *x, double y)
+{
+   return nir_fadd(build, x, nir_imm_floatN_t(build, y, x->bit_size));
+}
+
+static inline nir_ssa_def *
+nir_fmul_imm(nir_builder *build, nir_ssa_def *x, double y)
+{
+   return nir_fmul(build, x, nir_imm_floatN_t(build, y, x->bit_size));
+}
+
+static inline nir_ssa_def *
 nir_pack_bits(nir_builder *b, nir_ssa_def *src, unsigned dest_bit_size)
 {
    assert(src->num_components * src->bit_size == dest_bit_size);
@@ -983,6 +995,18 @@ static inline nir_ssa_def *
 nir_i2b(nir_builder *build, nir_ssa_def *i)
 {
    return nir_i2b1(build, i);
+}
+
+static inline nir_ssa_def *
+nir_b2f(nir_builder *build, nir_ssa_def *b, uint32_t bit_size)
+{
+   switch (bit_size) {
+   case 64: return nir_b2f64(build, b);
+   case 32: return nir_b2f32(build, b);
+   case 16: return nir_b2f16(build, b);
+   default:
+      unreachable("Invalid bit-size");
+   };
 }
 
 static inline nir_ssa_def *

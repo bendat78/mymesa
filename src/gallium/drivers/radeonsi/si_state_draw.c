@@ -315,10 +315,12 @@ static unsigned si_num_prims_for_vertices(const struct pipe_draw_info *info)
 	switch (info->mode) {
 	case PIPE_PRIM_PATCHES:
 		return info->count / info->vertices_per_patch;
+	case PIPE_PRIM_POLYGON:
+		return info->count >= 3;
 	case SI_PRIM_RECTANGLE_LIST:
 		return info->count / 3;
 	default:
-		return u_prims_for_vertices(info->mode, info->count);
+		return u_decomposed_prims_for_vertices(info->mode, info->count);
 	}
 }
 
@@ -813,10 +815,15 @@ static void si_emit_draw_packets(struct si_context *sctx,
 			radeon_emit(cs, di_src_sel);
 		}
 	} else {
+		unsigned instance_count = info->instance_count;
 		int base_vertex;
 
-		radeon_emit(cs, PKT3(PKT3_NUM_INSTANCES, 0, 0));
-		radeon_emit(cs, info->instance_count);
+		if (sctx->last_instance_count == SI_INSTANCE_COUNT_UNKNOWN ||
+		    sctx->last_instance_count != instance_count) {
+			radeon_emit(cs, PKT3(PKT3_NUM_INSTANCES, 0, 0));
+			radeon_emit(cs, instance_count);
+			sctx->last_instance_count = instance_count;
+		}
 
 		/* Base vertex and start instance. */
 		base_vertex = index_size ? info->index_bias : info->start;
@@ -1051,7 +1058,8 @@ void si_emit_cache_flush(struct si_context *sctx)
 				  EOP_DATA_SEL_VALUE_32BIT,
 				  sctx->wait_mem_scratch, va,
 				  sctx->wait_mem_number, SI_NOT_QUERY);
-		si_cp_wait_mem(sctx, va, sctx->wait_mem_number, 0xffffffff, 0);
+		si_cp_wait_mem(sctx, cs, va, sctx->wait_mem_number, 0xffffffff,
+			       WAIT_REG_MEM_EQUAL);
 	}
 
 	/* Make sure ME is idle (it executes most packets) before continuing.

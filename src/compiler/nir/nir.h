@@ -2725,6 +2725,7 @@ void nir_index_blocks(nir_function_impl *impl);
 void nir_print_shader(nir_shader *shader, FILE *fp);
 void nir_print_shader_annotated(nir_shader *shader, FILE *fp, struct hash_table *errors);
 void nir_print_instr(const nir_instr *instr, FILE *fp);
+void nir_print_deref(const nir_deref_instr *deref, FILE *fp);
 
 nir_shader *nir_shader_clone(void *mem_ctx, const nir_shader *s);
 nir_function_impl *nir_function_impl_clone(const nir_function_impl *fi);
@@ -2870,7 +2871,7 @@ bool nir_remove_unused_io_vars(nir_shader *shader, struct exec_list *var_list,
 void nir_compact_varyings(nir_shader *producer, nir_shader *consumer,
                           bool default_to_smooth_interp);
 void nir_link_xfb_varyings(nir_shader *producer, nir_shader *consumer);
-bool nir_link_constant_varyings(nir_shader *producer, nir_shader *consumer);
+bool nir_link_opt_varyings(nir_shader *producer, nir_shader *consumer);
 
 typedef enum {
    /* If set, this forces all non-flat fragment shader inputs to be
@@ -2931,6 +2932,16 @@ bool nir_lower_subgroups(nir_shader *shader,
                          const nir_lower_subgroups_options *options);
 
 bool nir_lower_system_values(nir_shader *shader);
+
+enum PACKED nir_lower_tex_packing {
+   nir_lower_tex_packing_none = 0,
+   /* The sampler returns up to 2 32-bit words of half floats or 16-bit signed
+    * or unsigned ints based on the sampler type
+    */
+   nir_lower_tex_packing_16,
+   /* The sampler returns 1 32-bit word of 4x8 unorm */
+   nir_lower_tex_packing_8,
+};
 
 typedef struct nir_lower_tex_options {
    /**
@@ -3043,6 +3054,8 @@ typedef struct nir_lower_tex_options {
     * with nir_texop_txl.  This includes cube maps.
     */
    bool lower_txd_offset_clamp;
+
+   enum nir_lower_tex_packing lower_tex_packing[32];
 } nir_lower_tex_options;
 
 bool nir_lower_tex(nir_shader *shader,
@@ -3205,7 +3218,6 @@ bool nir_opt_move_load_ubo(nir_shader *shader);
 bool nir_opt_peephole_select(nir_shader *shader, unsigned limit,
                              bool indirect_load_ok, bool expensive_alu_ok);
 
-bool nir_opt_remove_phis_impl(nir_function_impl *impl);
 bool nir_opt_remove_phis(nir_shader *shader);
 
 bool nir_opt_shrink_load(nir_shader *shader);

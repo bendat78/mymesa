@@ -381,9 +381,9 @@ endif
 if with_any_vk and (with_platform_x11 and not with_dri3)
   error('Vulkan drivers require dri3 for X11 support')
 endif
-if with_dri or with_gallium
-  if with_glx == 'disabled' and not with_egl and not with_platform_haiku
-    error('building dri or gallium drivers require at least one window system')
+if with_dri
+  if with_glx == 'disabled' and not with_egl and not with_gbm
+    error('building dri drivers require at least one windowing system')
   endif
 endif
 
@@ -648,6 +648,7 @@ if get_option('power8') != 'false'
 endif
 
 _opencl = get_option('gallium-opencl')
+clover_cpp_std = []
 if _opencl != 'disabled'
   if not with_gallium
     error('OpenCL Clover implementation requires at least one gallium driver.')
@@ -656,6 +657,14 @@ if _opencl != 'disabled'
   dep_clc = dependency('libclc')
   with_gallium_opencl = true
   with_opencl_icd = _opencl == 'icd'
+
+  if host_machine.cpu_family().startswith('ppc') and cpp.compiles('''
+      #if !defined(__VEC__) || !defined(__ALTIVEC__)
+      #error "AltiVec not enabled"
+      #endif''',
+      name : 'Altivec')
+    clover_cpp_std += ['cpp_std=gnu++11']
+  endif
 else
   dep_clc = null_dep
   with_gallium_opencl = false
@@ -1222,6 +1231,9 @@ if with_llvm
   # programs, so we need to build all C++ code in mesa without rtti as well to
   # ensure that linking works.
   if dep_llvm.get_configtool_variable('has-rtti') == 'NO'
+    if with_gallium_nouveau
+      error('The Nouveau driver requires rtti. You either need to turn off nouveau or use an LLVM built with LLVM_ENABLE_RTTI.')
+    endif
     cpp_args += '-fno-rtti'
   endif
 elif with_amd_vk or with_gallium_radeonsi or with_gallium_swr

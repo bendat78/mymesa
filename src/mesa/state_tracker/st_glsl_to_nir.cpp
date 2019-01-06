@@ -81,7 +81,7 @@ st_nir_fixup_varying_slots(struct st_context *st, struct exec_list *var_list)
  * on varying-slot w/ the VS outputs)
  */
 static void
-st_nir_assign_vs_in_locations(struct gl_program *prog, nir_shader *nir)
+st_nir_assign_vs_in_locations(nir_shader *nir)
 {
    nir->num_inputs = 0;
    nir_foreach_variable_safe(var, &nir->inputs) {
@@ -588,7 +588,7 @@ st_nir_link_shaders(nir_shader **producer, nir_shader **consumer, bool scalar)
 {
    nir_lower_io_arrays_to_elements(*producer, *consumer);
 
-   if (nir_link_constant_varyings(*producer, *consumer))
+   if (nir_link_opt_varyings(*producer, *consumer))
       st_nir_opts(*consumer, scalar);
 
    NIR_PASS_V(*producer, nir_remove_dead_variables, nir_var_shader_out);
@@ -702,8 +702,10 @@ st_link_nir(struct gl_context *ctx,
 
       nir_shader *nir = shader->Program->nir;
 
-      if (is_scalar[i])
+      if (is_scalar[i]) {
          NIR_PASS_V(nir, nir_lower_io_to_scalar_early, mask);
+         NIR_PASS_V(nir, nir_lower_load_const_to_scalar);
+      }
 
       st_nir_opts(nir, is_scalar[i]);
    }
@@ -810,7 +812,7 @@ st_finalize_nir(struct st_context *st, struct gl_program *prog,
 
    if (nir->info.stage == MESA_SHADER_VERTEX) {
       /* Needs special handling so drvloc matches the vbo state: */
-      st_nir_assign_vs_in_locations(prog, nir);
+      st_nir_assign_vs_in_locations(nir);
       /* Re-lower global vars, to deal with any dead VS inputs. */
       NIR_PASS_V(nir, nir_lower_global_vars_to_local);
 

@@ -47,6 +47,7 @@
  * the number shouldn't be a commonly-used one. */
 #define SI_BASE_VERTEX_UNKNOWN		INT_MIN
 #define SI_RESTART_INDEX_UNKNOWN	INT_MIN
+#define SI_INSTANCE_COUNT_UNKNOWN	INT_MIN
 #define SI_NUM_SMOOTH_AA_SAMPLES	8
 #define SI_MAX_POINT_SIZE		2048
 #define SI_GS_PER_ES			128
@@ -926,6 +927,7 @@ struct si_context {
 	int			last_index_size;
 	int			last_base_vertex;
 	int			last_start_instance;
+	int			last_instance_count;
 	int			last_drawid;
 	int			last_sh_base_reg;
 	int			last_primitive_restart_en;
@@ -1212,7 +1214,7 @@ void si_cp_release_mem(struct si_context *ctx,
 		       struct r600_resource *buf, uint64_t va,
 		       uint32_t new_fence, unsigned query_type);
 unsigned si_cp_write_fence_dwords(struct si_screen *screen);
-void si_cp_wait_mem(struct si_context *ctx,
+void si_cp_wait_mem(struct si_context *ctx, struct radeon_cmdbuf *cs,
 		      uint64_t va, uint32_t ref, uint32_t mask, unsigned flags);
 void si_init_fence_functions(struct si_context *ctx);
 void si_init_screen_fence_functions(struct si_screen *screen);
@@ -1375,6 +1377,7 @@ static inline void
 si_invalidate_draw_sh_constants(struct si_context *sctx)
 {
 	sctx->last_base_vertex = SI_BASE_VERTEX_UNKNOWN;
+	sctx->last_instance_count = SI_INSTANCE_COUNT_UNKNOWN;
 }
 
 static inline unsigned

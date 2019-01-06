@@ -275,6 +275,8 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TGSI_BALLOT:
    case PIPE_CAP_BINDLESS_TEXTURE:
       return class_3d >= NVE4_3D_CLASS;
+   case PIPE_CAP_TGSI_ATOMFADD:
+      return class_3d < GM107_3D_CLASS; /* needs additional lowering */
    case PIPE_CAP_POLYGON_MODE_FILL_RECTANGLE:
    case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
    case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
@@ -331,6 +333,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_MAX_COMBINED_SHADER_BUFFERS:
    case PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTERS:
    case PIPE_CAP_MAX_COMBINED_HW_ATOMIC_COUNTER_BUFFERS:
+   case PIPE_CAP_SURFACE_SAMPLE_COUNT:
       return 0;
 
    case PIPE_CAP_VENDOR_ID:

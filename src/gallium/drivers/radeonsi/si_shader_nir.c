@@ -278,7 +278,6 @@ static void scan_instruction(struct tgsi_shader_info *info,
 }
 
 void si_nir_scan_tess_ctrl(const struct nir_shader *nir,
-			   const struct tgsi_shader_info *info,
 			   struct tgsi_tessctrl_info *out)
 {
 	memset(out, 0, sizeof(*out));
@@ -286,14 +285,8 @@ void si_nir_scan_tess_ctrl(const struct nir_shader *nir,
 	if (nir->info.stage != MESA_SHADER_TESS_CTRL)
 		return;
 
-	/* Initial value = true. Here the pass will accumulate results from
-	 * multiple segments surrounded by barriers. If tess factors aren't
-	 * written at all, it's a shader bug and we don't care if this will be
-	 * true.
-	 */
-	out->tessfactors_are_def_in_all_invocs = true;
-
-	/* TODO: Implement scanning of tess factors, see tgsi backend. */
+	out->tessfactors_are_def_in_all_invocs =
+		ac_are_tessfactors_def_in_all_invocs(nir);
 }
 
 void si_nir_scan_shader(const struct nir_shader *nir,
@@ -822,8 +815,6 @@ si_lower_nir(struct si_shader_selector* sel)
 	NIR_PASS_V(sel->nir, nir_lower_subgroups, &subgroups_options);
 
 	ac_lower_indirect_derefs(sel->nir, sel->screen->info.chip_class);
-
-	NIR_PASS_V(sel->nir, nir_lower_load_const_to_scalar);
 
 	bool progress;
 	do {
