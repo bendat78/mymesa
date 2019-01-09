@@ -1580,7 +1580,7 @@ struct anv_descriptor_update_template {
 
    /* The descriptor set this template corresponds to. This value is only
     * valid if the template was created with the templateType
-    * VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_DESCRIPTOR_SET_KHR.
+    * VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_DESCRIPTOR_SET.
     */
    uint8_t set;
 
@@ -2938,6 +2938,7 @@ anv_image_hiz_clear(struct anv_cmd_buffer *cmd_buffer,
 void
 anv_image_mcs_op(struct anv_cmd_buffer *cmd_buffer,
                  const struct anv_image *image,
+                 enum isl_format format,
                  VkImageAspectFlagBits aspect,
                  uint32_t base_layer, uint32_t layer_count,
                  enum isl_aux_op mcs_op, union isl_color_value *clear_value,
@@ -2945,6 +2946,7 @@ anv_image_mcs_op(struct anv_cmd_buffer *cmd_buffer,
 void
 anv_image_ccs_op(struct anv_cmd_buffer *cmd_buffer,
                  const struct anv_image *image,
+                 enum isl_format format,
                  VkImageAspectFlagBits aspect, uint32_t level,
                  uint32_t base_layer, uint32_t layer_count,
                  enum isl_aux_op ccs_op, union isl_color_value *clear_value,
@@ -3346,7 +3348,7 @@ ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_buffer_view, VkBufferView)
 ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_descriptor_pool, VkDescriptorPool)
 ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_descriptor_set, VkDescriptorSet)
 ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_descriptor_set_layout, VkDescriptorSetLayout)
-ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_descriptor_update_template, VkDescriptorUpdateTemplateKHR)
+ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_descriptor_update_template, VkDescriptorUpdateTemplate)
 ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_device_memory, VkDeviceMemory)
 ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_fence, VkFence)
 ANV_DEFINE_NONDISP_HANDLE_CASTS(anv_event, VkEvent)

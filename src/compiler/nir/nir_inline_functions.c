@@ -137,7 +137,7 @@ inline_function_impl(nir_function_impl *impl, struct set *inlined)
  * For most use-cases, function inlining is a multi-step process.  The general
  * pattern employed by SPIR-V consumers and others is as follows:
  *
- *  1. nir_lower_constant_initializers(shader, nir_var_local)
+ *  1. nir_lower_constant_initializers(shader, nir_var_function)
  *
  *     This is needed because local variables from the callee are simply added
  *     to the locals list for the caller and the information about where the
@@ -164,14 +164,16 @@ inline_function_impl(nir_function_impl *impl, struct set *inlined)
  *     This does the actual function inlining and the resulting shader will
  *     contain no call instructions.
  *
- *  4. nir_copy_prop(shader)
+ *  4. nir_opt_deref(shader)
  *
  *     Most functions contain pointer parameters where the result of a deref
  *     instruction is passed in as a parameter, loaded via a load_param
- *     intrinsic, and then turned back into a deref via a cast.  Running copy
- *     propagation gets rid of the intermediate steps and results in a whole
- *     deref chain again.  This is currently required by a number of
- *     optimizations and lowering passes at least for certain variable modes.
+ *     intrinsic, and then turned back into a deref via a cast.  Function
+ *     inlining will get rid of the load_param but we are still left with a
+ *     cast.  Running nir_opt_deref gets rid of the intermediate cast and
+ *     results in a whole deref chain again.  This is currently required by a
+ *     number of optimizations and lowering passes at least for certain
+ *     variable modes.
  *
  *  5. Loop over the functions and delete all but the main entrypoint.
  *
@@ -190,7 +192,7 @@ inline_function_impl(nir_function_impl *impl, struct set *inlined)
  *    spirv_to_nir returns the root function and so we can just use == whereas
  *    with GL, you may have to look for a function named "main".
  *
- *  6. nir_lower_constant_initializers(shader, ~nir_var_local)
+ *  6. nir_lower_constant_initializers(shader, ~nir_var_function)
  *
  *     Lowering constant initializers on inputs, outputs, global variables,
  *     etc. requires that we know the main entrypoint so that we know where to

@@ -134,9 +134,9 @@ gather_vars_written(struct copy_prop_var_state *state,
       nir_foreach_instr(instr, block) {
          if (instr->type == nir_instr_type_call) {
             written->modes |= nir_var_shader_out |
-                              nir_var_global |
-                              nir_var_local |
-                              nir_var_shader_storage |
+                              nir_var_private |
+                              nir_var_function |
+                              nir_var_ssbo |
                               nir_var_shared;
             continue;
          }
@@ -149,7 +149,7 @@ gather_vars_written(struct copy_prop_var_state *state,
          case nir_intrinsic_barrier:
          case nir_intrinsic_memory_barrier:
             written->modes |= nir_var_shader_out |
-                              nir_var_shader_storage |
+                              nir_var_ssbo |
                               nir_var_shared;
             break;
 
@@ -615,9 +615,9 @@ copy_prop_vars_block(struct copy_prop_var_state *state,
    nir_foreach_instr_safe(instr, block) {
       if (instr->type == nir_instr_type_call) {
          apply_barrier_for_modes(copies, nir_var_shader_out |
-                                         nir_var_global |
-                                         nir_var_local |
-                                         nir_var_shader_storage |
+                                         nir_var_private |
+                                         nir_var_function |
+                                         nir_var_ssbo |
                                          nir_var_shared);
          continue;
       }
@@ -630,7 +630,7 @@ copy_prop_vars_block(struct copy_prop_var_state *state,
       case nir_intrinsic_barrier:
       case nir_intrinsic_memory_barrier:
          apply_barrier_for_modes(copies, nir_var_shader_out |
-                                         nir_var_shader_storage |
+                                         nir_var_ssbo |
                                          nir_var_shared);
          break;
 

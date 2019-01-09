@@ -893,9 +893,26 @@ void anv_GetPhysicalDeviceFeatures2(
 
    vk_foreach_struct(ext, pFeatures->pNext) {
       switch (ext->sType) {
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES: {
-         VkPhysicalDeviceProtectedMemoryFeatures *features = (void *)ext;
-         features->protectedMemory = VK_FALSE;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR: {
+         VkPhysicalDevice8BitStorageFeaturesKHR *features =
+            (VkPhysicalDevice8BitStorageFeaturesKHR *)ext;
+         ANV_FROM_HANDLE(anv_physical_device, pdevice, physicalDevice);
+
+         features->storageBuffer8BitAccess = pdevice->info.gen >= 8;
+         features->uniformAndStorageBuffer8BitAccess = pdevice->info.gen >= 8;
+         features->storagePushConstant8 = pdevice->info.gen >= 8;
+         break;
+      }
+
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES: {
+         VkPhysicalDevice16BitStorageFeatures *features =
+            (VkPhysicalDevice16BitStorageFeatures *)ext;
+         ANV_FROM_HANDLE(anv_physical_device, pdevice, physicalDevice);
+
+         features->storageBuffer16BitAccess = pdevice->info.gen >= 8;
+         features->uniformAndStorageBuffer16BitAccess = pdevice->info.gen >= 8;
+         features->storagePushConstant16 = pdevice->info.gen >= 8;
+         features->storageInputOutput16 = false;
          break;
       }
 
@@ -908,10 +925,9 @@ void anv_GetPhysicalDeviceFeatures2(
          break;
       }
 
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES: {
-         VkPhysicalDeviceVariablePointerFeatures *features = (void *)ext;
-         features->variablePointersStorageBuffer = true;
-         features->variablePointers = true;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES: {
+         VkPhysicalDeviceProtectedMemoryFeatures *features = (void *)ext;
+         features->protectedMemory = VK_FALSE;
          break;
       }
 
@@ -935,26 +951,10 @@ void anv_GetPhysicalDeviceFeatures2(
          break;
       }
 
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES_KHR: {
-         VkPhysicalDevice16BitStorageFeaturesKHR *features =
-            (VkPhysicalDevice16BitStorageFeaturesKHR *)ext;
-         ANV_FROM_HANDLE(anv_physical_device, pdevice, physicalDevice);
-
-         features->storageBuffer16BitAccess = pdevice->info.gen >= 8;
-         features->uniformAndStorageBuffer16BitAccess = pdevice->info.gen >= 8;
-         features->storagePushConstant16 = pdevice->info.gen >= 8;
-         features->storageInputOutput16 = false;
-         break;
-      }
-
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR: {
-         VkPhysicalDevice8BitStorageFeaturesKHR *features =
-            (VkPhysicalDevice8BitStorageFeaturesKHR *)ext;
-         ANV_FROM_HANDLE(anv_physical_device, pdevice, physicalDevice);
-
-         features->storageBuffer8BitAccess = pdevice->info.gen >= 8;
-         features->uniformAndStorageBuffer8BitAccess = pdevice->info.gen >= 8;
-         features->storagePushConstant8 = pdevice->info.gen >= 8;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES: {
+         VkPhysicalDeviceVariablePointerFeatures *features = (void *)ext;
+         features->variablePointersStorageBuffer = true;
+         features->variablePointers = true;
          break;
       }
 
@@ -1130,14 +1130,6 @@ void anv_GetPhysicalDeviceProperties2(
 
    vk_foreach_struct(ext, pProperties->pNext) {
       switch (ext->sType) {
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR: {
-         VkPhysicalDevicePushDescriptorPropertiesKHR *properties =
-            (VkPhysicalDevicePushDescriptorPropertiesKHR *) ext;
-
-         properties->maxPushDescriptors = MAX_PUSH_DESCRIPTORS;
-         break;
-      }
-
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES_KHR: {
          VkPhysicalDeviceDriverPropertiesKHR *driver_props =
             (VkPhysicalDeviceDriverPropertiesKHR *) ext;
@@ -1205,6 +1197,21 @@ void anv_GetPhysicalDeviceProperties2(
          break;
       }
 
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES: {
+         VkPhysicalDeviceProtectedMemoryProperties *props =
+            (VkPhysicalDeviceProtectedMemoryProperties *)ext;
+         props->protectedNoFault = false;
+         break;
+      }
+
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR: {
+         VkPhysicalDevicePushDescriptorPropertiesKHR *properties =
+            (VkPhysicalDevicePushDescriptorPropertiesKHR *) ext;
+
+         properties->maxPushDescriptors = MAX_PUSH_DESCRIPTORS;
+         break;
+      }
+
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES_EXT: {
          VkPhysicalDeviceSamplerFilterMinmaxPropertiesEXT *properties =
             (VkPhysicalDeviceSamplerFilterMinmaxPropertiesEXT *)ext;
@@ -1242,13 +1249,6 @@ void anv_GetPhysicalDeviceProperties2(
             (VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *)ext;
          /* We have to restrict this a bit for multiview */
          props->maxVertexAttribDivisor = UINT32_MAX / 16;
-         break;
-      }
-
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES: {
-         VkPhysicalDeviceProtectedMemoryProperties *props =
-            (VkPhysicalDeviceProtectedMemoryProperties *)ext;
-         props->protectedNoFault = false;
          break;
       }
 
@@ -2359,9 +2359,9 @@ VkResult anv_AllocateMemory(
        */
       if (mem->bo->size < aligned_alloc_size) {
          result = vk_errorf(device->instance, device,
-                            VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR,
+                            VK_ERROR_INVALID_EXTERNAL_HANDLE,
                             "aligned allocationSize too large for "
-                            "VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR: "
+                            "VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT: "
                             "%"PRIu64"B > %"PRIu64"B",
                             aligned_alloc_size, mem->bo->size);
          anv_bo_cache_release(device, &device->bo_cache, mem->bo);
@@ -2392,8 +2392,8 @@ VkResult anv_AllocateMemory(
    if (result != VK_SUCCESS)
       goto fail;
 
-   const VkMemoryDedicatedAllocateInfoKHR *dedicated_info =
-      vk_find_struct_const(pAllocateInfo->pNext, MEMORY_DEDICATED_ALLOCATE_INFO_KHR);
+   const VkMemoryDedicatedAllocateInfo *dedicated_info =
+      vk_find_struct_const(pAllocateInfo->pNext, MEMORY_DEDICATED_ALLOCATE_INFO);
    if (dedicated_info && dedicated_info->image != VK_NULL_HANDLE) {
       ANV_FROM_HANDLE(anv_image, image, dedicated_info->image);
 
@@ -2444,7 +2444,7 @@ VkResult anv_GetMemoryFdKHR(
 
 VkResult anv_GetMemoryFdPropertiesKHR(
     VkDevice                                    _device,
-    VkExternalMemoryHandleTypeFlagBitsKHR       handleType,
+    VkExternalMemoryHandleTypeFlagBits          handleType,
     int                                         fd,
     VkMemoryFdPropertiesKHR*                    pMemoryFdProperties)
 {
@@ -2738,8 +2738,8 @@ void anv_GetImageMemoryRequirements2(
       switch (ext->sType) {
       case VK_STRUCTURE_TYPE_IMAGE_PLANE_MEMORY_REQUIREMENTS_INFO: {
          struct anv_physical_device *pdevice = &device->instance->physicalDevice;
-         const VkImagePlaneMemoryRequirementsInfoKHR *plane_reqs =
-            (const VkImagePlaneMemoryRequirementsInfoKHR *) ext;
+         const VkImagePlaneMemoryRequirementsInfo *plane_reqs =
+            (const VkImagePlaneMemoryRequirementsInfo *) ext;
          uint32_t plane = anv_image_aspect_to_plane(image->aspects,
                                                     plane_reqs->planeAspect);
 
