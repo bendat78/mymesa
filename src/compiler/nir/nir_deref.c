@@ -474,8 +474,7 @@ rematerialize_deref_in_block(nir_deref_instr *deref,
       return deref;
 
    if (!state->cache) {
-      state->cache = _mesa_hash_table_create(NULL, _mesa_hash_pointer,
-                                             _mesa_key_pointer_equal);
+      state->cache = _mesa_pointer_hash_table_create(NULL);
    }
 
    struct hash_entry *cached = _mesa_hash_table_search(state->cache, deref);
@@ -721,6 +720,10 @@ nir_opt_deref_impl(nir_function_impl *impl)
    if (progress) {
       nir_metadata_preserve(impl, nir_metadata_block_index |
                                   nir_metadata_dominance);
+   } else {
+#ifndef NDEBUG
+      impl->valid_metadata &= ~nir_metadata_not_properly_reset;
+#endif
    }
 
    return progress;

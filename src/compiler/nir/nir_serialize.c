@@ -1048,6 +1048,8 @@ write_function(write_ctx *ctx, const nir_function *fxn)
       blob_write_uint32(ctx->blob, val);
    }
 
+   blob_write_uint32(ctx->blob, fxn->is_entrypoint);
+
    /* At first glance, it looks like we should write the function_impl here.
     * However, call instructions need to be able to reference at least the
     * function and those will get processed as we write the function_impls.
@@ -1072,14 +1074,15 @@ read_function(read_ctx *ctx)
       fxn->params[i].num_components = val & 0xff;
       fxn->params[i].bit_size = (val >> 8) & 0xff;
    }
+
+   fxn->is_entrypoint = blob_read_uint32(ctx->blob);
 }
 
 void
 nir_serialize(struct blob *blob, const nir_shader *nir)
 {
    write_ctx ctx;
-   ctx.remap_table = _mesa_hash_table_create(NULL, _mesa_hash_pointer,
-                                             _mesa_key_pointer_equal);
+   ctx.remap_table = _mesa_pointer_hash_table_create(NULL);
    ctx.next_idx = 0;
    ctx.blob = blob;
    ctx.nir = nir;

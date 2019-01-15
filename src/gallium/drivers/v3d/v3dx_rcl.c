@@ -374,6 +374,15 @@ v3d_rcl_emit_stores(struct v3d_job *job, struct v3d_cl *cl)
                 }
         }
 #else /* V3D_VERSION >= 40 */
+        /* If we're emitting an RCL with GL_ARB_framebuffer_no_attachments,
+         * we still need to emit some sort of store.
+         */
+        if (!job->store) {
+                cl_emit(cl, STORE_TILE_BUFFER_GENERAL, store) {
+                        store.buffer_to_store = NONE;
+                }
+        }
+
         assert(!stores_pending);
 
         /* GFXH-1461/GFXH-1689: The per-buffer store command's clear
@@ -784,6 +793,21 @@ v3dX(emit_rcl)(struct v3d_job *job)
                                 coords.row_number_in_supertiles = y;
                         }
                 }
+        }
+
+        if (job->tmu_dirty_rcl) {
+           cl_emit(&job->rcl, L1_CACHE_FLUSH_CONTROL, flush) {
+              flush.tmu_config_cache_clear = 0xf;
+              flush.tmu_data_cache_clear = 0xf;
+              flush.uniforms_cache_clear = 0xf;
+              flush.instruction_cache_clear = 0xf;
+           }
+
+           cl_emit(&job->rcl, L2T_CACHE_FLUSH_CONTROL, flush) {
+              flush.l2t_flush_mode = L2T_FLUSH_MODE_CLEAN;
+              flush.l2t_flush_start = cl_address(NULL, 0);
+              flush.l2t_flush_end = cl_address(NULL, ~0);
+           }
         }
 
         cl_emit(&job->rcl, END_OF_RENDERING, end);

@@ -58,6 +58,7 @@ void v3d_job_add_bo(struct v3d_job *job, struct v3d_bo *bo);
 #define VC5_DIRTY_ZSA           (1 <<  2)
 #define VC5_DIRTY_FRAGTEX       (1 <<  3)
 #define VC5_DIRTY_VERTTEX       (1 <<  4)
+#define VC5_DIRTY_SHADER_IMAGE  (1 <<  5)
 
 #define VC5_DIRTY_BLEND_COLOR   (1 <<  7)
 #define VC5_DIRTY_STENCIL_REF   (1 <<  8)
@@ -82,6 +83,7 @@ void v3d_job_add_bo(struct v3d_job *job, struct v3d_bo *bo);
 #define VC5_DIRTY_OQ            (1 << 28)
 #define VC5_DIRTY_CENTROID_FLAGS (1 << 29)
 #define VC5_DIRTY_NOPERSPECTIVE_FLAGS (1 << 30)
+#define VC5_DIRTY_SSBO          (1 << 31)
 
 #define VC5_MAX_FS_INPUTS 64
 
@@ -203,6 +205,11 @@ struct v3d_streamout_stateobj {
         unsigned num_targets;
 };
 
+struct v3d_ssbo_stateobj {
+        struct pipe_shader_buffer sb[PIPE_MAX_SHADER_BUFFERS];
+        uint32_t enabled_mask;
+};
+
 /* Hash table key for v3d->jobs */
 struct v3d_job_key {
         struct pipe_surface *cbufs[4];
@@ -214,6 +221,18 @@ enum v3d_ez_state {
         VC5_EZ_GT_GE,
         VC5_EZ_LT_LE,
         VC5_EZ_DISABLED,
+};
+
+struct v3d_image_view {
+        struct pipe_image_view base;
+        /* V3D 4.x texture shader state struct */
+        struct pipe_resource *tex_state;
+        uint32_t tex_state_offset;
+};
+
+struct v3d_shaderimg_stateobj {
+        struct v3d_image_view si[PIPE_MAX_SHADER_IMAGES];
+        uint32_t enabled_mask;
 };
 
 /**
@@ -307,6 +326,11 @@ struct v3d_job {
          * DRM_IOCTL_VC5_SUBMIT_CL.
          */
         bool needs_flush;
+
+        /* Set if any shader has dirtied cachelines in the TMU that need to be
+         * flushed before job end.
+         */
+        bool tmu_dirty_rcl;
 
         /**
          * Set if a packet enabling TF has been emitted in the job (V3D 4.x).
@@ -428,6 +452,8 @@ struct v3d_context {
         struct pipe_poly_stipple stipple;
         struct pipe_clip_state clip;
         struct pipe_viewport_state viewport;
+        struct v3d_ssbo_stateobj ssbo[PIPE_SHADER_TYPES];
+        struct v3d_shaderimg_stateobj shaderimg[PIPE_SHADER_TYPES];
         struct v3d_constbuf_stateobj constbuf[PIPE_SHADER_TYPES];
         struct v3d_texture_stateobj tex[PIPE_SHADER_TYPES];
         struct v3d_vertexbuf_stateobj vertexbuf;

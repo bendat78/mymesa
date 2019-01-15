@@ -91,7 +91,7 @@ brw_set_dest(struct brw_codegen *p, brw_inst *inst, struct brw_reg dest)
 
    if (dest.file == BRW_MESSAGE_REGISTER_FILE)
       assert((dest.nr & ~BRW_MRF_COMPR4) < BRW_MAX_MRF(devinfo->gen));
-   else if (dest.file != BRW_ARCHITECTURE_REGISTER_FILE)
+   else if (dest.file == BRW_GENERAL_REGISTER_FILE)
       assert(dest.nr < 128);
 
    gen7_convert_mrf_to_grf(p, &dest);
@@ -170,7 +170,7 @@ brw_set_src0(struct brw_codegen *p, brw_inst *inst, struct brw_reg reg)
 
    if (reg.file == BRW_MESSAGE_REGISTER_FILE)
       assert((reg.nr & ~BRW_MRF_COMPR4) < BRW_MAX_MRF(devinfo->gen));
-   else if (reg.file != BRW_ARCHITECTURE_REGISTER_FILE)
+   else if (reg.file == BRW_GENERAL_REGISTER_FILE)
       assert(reg.nr < 128);
 
    gen7_convert_mrf_to_grf(p, &reg);
@@ -275,7 +275,7 @@ brw_set_src1(struct brw_codegen *p, brw_inst *inst, struct brw_reg reg)
 {
    const struct gen_device_info *devinfo = p->devinfo;
 
-   if (reg.file != BRW_ARCHITECTURE_REGISTER_FILE)
+   if (reg.file == BRW_GENERAL_REGISTER_FILE)
       assert(reg.nr < 128);
 
    /* From the IVB PRM Vol. 4, Pt. 3, Section 3.3.3.5:
@@ -654,9 +654,9 @@ brw_alu3(struct brw_codegen *p, unsigned opcode, struct brw_reg dest,
    gen7_convert_mrf_to_grf(p, &dest);
 
    assert(dest.nr < 128);
-   assert(src0.nr < 128);
-   assert(src1.nr < 128);
-   assert(src2.nr < 128);
+   assert(src0.file != BRW_IMMEDIATE_VALUE || src0.nr < 128);
+   assert(src1.file != BRW_IMMEDIATE_VALUE || src1.nr < 128);
+   assert(src2.file != BRW_IMMEDIATE_VALUE || src2.nr < 128);
    assert(dest.address_mode == BRW_ADDRESS_DIRECT);
    assert(src0.address_mode == BRW_ADDRESS_DIRECT);
    assert(src1.address_mode == BRW_ADDRESS_DIRECT);
@@ -942,8 +942,8 @@ brw_MOV(struct brw_codegen *p, struct brw_reg dest, struct brw_reg src0)
    const struct gen_device_info *devinfo = p->devinfo;
 
    /* When converting F->DF on IVB/BYT, every odd source channel is ignored.
-    * To avoid the problems that causes, we use a <1,2,0> source region to read
-    * each element twice.
+    * To avoid the problems that causes, we use an <X,2,0> source region to
+    * read each element twice.
     */
    if (devinfo->gen == 7 && !devinfo->is_haswell &&
        brw_get_default_access_mode(p) == BRW_ALIGN_1 &&
@@ -952,11 +952,8 @@ brw_MOV(struct brw_codegen *p, struct brw_reg dest, struct brw_reg src0)
         src0.type == BRW_REGISTER_TYPE_D ||
         src0.type == BRW_REGISTER_TYPE_UD) &&
        !has_scalar_region(src0)) {
-      assert(src0.vstride == BRW_VERTICAL_STRIDE_4 &&
-             src0.width == BRW_WIDTH_4 &&
-             src0.hstride == BRW_HORIZONTAL_STRIDE_1);
-
-      src0.vstride = BRW_VERTICAL_STRIDE_1;
+      assert(src0.vstride == src0.width + src0.hstride);
+      src0.vstride = src0.hstride;
       src0.width = BRW_WIDTH_2;
       src0.hstride = BRW_HORIZONTAL_STRIDE_0;
    }

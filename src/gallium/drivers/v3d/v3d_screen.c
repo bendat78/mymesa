@@ -128,6 +128,7 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_TGSI_CAN_READ_OUTPUTS:
         case PIPE_CAP_TGSI_PACK_HALF_FLOAT:
         case PIPE_CAP_TEXTURE_HALF_FLOAT_LINEAR:
+        case PIPE_CAP_FRAMEBUFFER_NO_ATTACHMENT:
                 return 1;
 
         case PIPE_CAP_GENERATE_MIPMAP:
@@ -148,7 +149,7 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
                 return 4;
 
         case PIPE_CAP_GLSL_FEATURE_LEVEL:
-                return 400;
+                return 330;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
 		return 140;
@@ -369,6 +370,8 @@ static int
 v3d_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
                            enum pipe_shader_cap param)
 {
+        struct v3d_screen *screen = v3d_screen(pscreen);
+
         if (shader != PIPE_SHADER_VERTEX &&
             shader != PIPE_SHADER_FRAGMENT) {
                 return 0;
@@ -427,9 +430,17 @@ v3d_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
                 return 1;
         case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
         case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
-        case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
-        case PIPE_SHADER_CAP_MAX_SHADER_BUFFERS:
                 return VC5_MAX_TEXTURE_SAMPLERS;
+
+        case PIPE_SHADER_CAP_MAX_SHADER_BUFFERS:
+                return PIPE_MAX_SHADER_BUFFERS;
+
+        case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
+                if (screen->devinfo.ver < 41)
+                        return 0;
+                else
+                        return PIPE_MAX_SHADER_IMAGES;
+
         case PIPE_SHADER_CAP_PREFERRED_IR:
                 return PIPE_SHADER_IR_NIR;
         case PIPE_SHADER_CAP_SUPPORTED_IRS:
@@ -526,7 +537,11 @@ v3d_screen_is_format_supported(struct pipe_screen *pscreen,
                 }
         }
 
+        /* FORMAT_NONE gets allowed for ARB_framebuffer_no_attachments's probe
+         * of FRAMEBUFFER_MAX_SAMPLES
+         */
         if ((usage & PIPE_BIND_RENDER_TARGET) &&
+            format != PIPE_FORMAT_NONE &&
             !v3d_rt_format_supported(&screen->devinfo, format)) {
                 return FALSE;
         }
