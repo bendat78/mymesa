@@ -296,7 +296,7 @@ v3d_shader_state_create(struct pipe_context *pctx,
 
         v3d_optimize_nir(s);
 
-        NIR_PASS_V(s, nir_remove_dead_variables, nir_var_function);
+        NIR_PASS_V(s, nir_remove_dead_variables, nir_var_function_temp);
 
         /* Garbage collect dead instructions */
         nir_sweep(s);
@@ -515,7 +515,7 @@ v3d_update_compiled_fs(struct v3d_context *v3d, uint8_t prim_mode)
         if (job->msaa) {
                 key->msaa = v3d->rasterizer->base.multisample;
                 key->sample_coverage = (v3d->rasterizer->base.multisample &&
-                                        v3d->sample_mask != (1 << VC5_MAX_SAMPLES) - 1);
+                                        v3d->sample_mask != (1 << V3D_MAX_SAMPLES) - 1);
                 key->sample_alpha_to_coverage = v3d->blend->base.alpha_to_coverage;
                 key->sample_alpha_to_one = v3d->blend->base.alpha_to_one;
         }

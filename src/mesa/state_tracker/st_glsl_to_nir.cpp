@@ -103,7 +103,7 @@ st_nir_assign_vs_in_locations(nir_shader *nir)
           * set.
           */
          exec_node_remove(&var->node);
-         var->data.mode = nir_var_private;
+         var->data.mode = nir_var_shader_temp;
          exec_list_push_tail(&nir->globals, &var->node);
       }
    }
@@ -253,7 +253,7 @@ st_nir_assign_uniform_locations(struct gl_context *ctx,
        * UBO's have their own address spaces, so don't count them towards the
        * number of global uniforms
        */
-      if (uniform->data.mode == nir_var_ubo || uniform->data.mode == nir_var_ssbo)
+      if (uniform->data.mode == nir_var_mem_ubo || uniform->data.mode == nir_var_mem_ssbo)
          continue;
 
       const struct glsl_type *type = glsl_without_array(uniform->type);
@@ -463,6 +463,9 @@ st_glsl_to_nir_post_opts(struct st_context *st, struct gl_program *prog,
    NIR_PASS_V(nir, st_nir_lower_builtin);
    NIR_PASS_V(nir, gl_nir_lower_atomics, shader_program, true);
 
+   nir_variable_mode mask = nir_var_function_temp;
+   nir_remove_dead_variables(nir, mask);
+
    if (st->ctx->_Shader->Flags & GLSL_DUMP) {
       _mesa_log("\n");
       _mesa_log("NIR IR for linked %s program %d:\n",
@@ -616,7 +619,7 @@ st_nir_link_shaders(nir_shader **producer, nir_shader **consumer, bool scalar)
        * See the following thread for more details of the problem:
        * https://lists.freedesktop.org/archives/mesa-dev/2017-July/162106.html
        */
-      nir_variable_mode indirect_mask = nir_var_function;
+      nir_variable_mode indirect_mask = nir_var_function_temp;
 
       NIR_PASS_V(*producer, nir_lower_indirect_derefs, indirect_mask);
       NIR_PASS_V(*consumer, nir_lower_indirect_derefs, indirect_mask);

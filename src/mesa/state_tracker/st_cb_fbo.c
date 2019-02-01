@@ -139,7 +139,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    /* If an sRGB framebuffer is unsupported, sRGB formats behave like linear
     * formats.
     */
-   if (!ctx->Extensions.EXT_framebuffer_sRGB) {
+   if (!ctx->Extensions.EXT_sRGB) {
       internalFormat = _mesa_get_linear_internalformat(internalFormat);
    }
 
@@ -662,7 +662,7 @@ st_validate_attachment(struct gl_context *ctx,
    /* If the encoding is sRGB and sRGB rendering cannot be enabled,
     * check for linear format support instead.
     * Later when we create a surface, we change the format to a linear one. */
-   if (!ctx->Extensions.EXT_framebuffer_sRGB &&
+   if (!ctx->Extensions.EXT_sRGB &&
        _mesa_get_format_color_encoding(texFormat) == GL_SRGB) {
       const mesa_format linearFormat = _mesa_get_srgb_format_linear(texFormat);
       format = st_mesa_format_to_pipe_format(st_context(ctx), linearFormat);
@@ -759,6 +759,30 @@ st_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
          }
       }
    }
+}
+
+
+/**
+ * Called by ctx->Driver.DiscardFramebuffer
+ */
+static void
+st_discard_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
+                       struct gl_renderbuffer_attachment *att)
+{
+   struct st_context *st = st_context(ctx);
+   struct pipe_resource *prsc;
+
+   if (!att->Renderbuffer)
+      return;
+
+   prsc = st_renderbuffer(att->Renderbuffer)->surface->texture;
+
+   /* using invalidate_resource will only work for simple 2D resources */
+   if (prsc->depth0 != 1 || prsc->array_size != 1 || prsc->last_level != 0)
+      return;
+
+   if (st->pipe->invalidate_resource)
+      st->pipe->invalidate_resource(st->pipe, prsc);
 }
 
 
@@ -939,6 +963,7 @@ st_init_fbo_functions(struct dd_function_table *functions)
    functions->RenderTexture = st_render_texture;
    functions->FinishRenderTexture = st_finish_render_texture;
    functions->ValidateFramebuffer = st_validate_framebuffer;
+   functions->DiscardFramebuffer = st_discard_framebuffer;
 
    functions->DrawBufferAllocate = st_DrawBufferAllocate;
    functions->ReadBuffer = st_ReadBuffer;

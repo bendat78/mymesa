@@ -73,7 +73,8 @@ upload_blorp_shader(struct blorp_batch *batch,
       anv_pipeline_cache_upload_kernel(&device->default_pipeline_cache,
                                        key, key_size, kernel, kernel_size,
                                        NULL, 0,
-                                       prog_data, prog_data_size, &bind_map);
+                                       prog_data, prog_data_size,
+                                       NULL, &bind_map);
 
    if (!bin)
       return false;
@@ -475,6 +476,8 @@ void anv_CmdCopyImageToBuffer(
 
    copy_buffer_to_image(cmd_buffer, dst_buffer, src_image, srcImageLayout,
                         regionCount, pRegions, false);
+
+   cmd_buffer->state.pending_pipe_bits |= ANV_PIPE_RENDER_TARGET_BUFFER_WRITES;
 }
 
 static bool
@@ -682,6 +685,8 @@ void anv_CmdCopyBuffer(
    }
 
    blorp_batch_finish(&batch);
+
+   cmd_buffer->state.pending_pipe_bits |= ANV_PIPE_RENDER_TARGET_BUFFER_WRITES;
 }
 
 void anv_CmdUpdateBuffer(
@@ -718,10 +723,8 @@ void anv_CmdUpdateBuffer(
 
       memcpy(tmp_data.map, pData, copy_size);
 
-      anv_state_flush(cmd_buffer->device, tmp_data);
-
       struct blorp_address src = {
-         .buffer = &cmd_buffer->device->dynamic_state_pool.block_pool.bo,
+         .buffer = cmd_buffer->device->dynamic_state_pool.block_pool.bo,
          .offset = tmp_data.offset,
          .mocs = cmd_buffer->device->default_mocs,
       };
@@ -739,6 +742,8 @@ void anv_CmdUpdateBuffer(
    }
 
    blorp_batch_finish(&batch);
+
+   cmd_buffer->state.pending_pipe_bits |= ANV_PIPE_RENDER_TARGET_BUFFER_WRITES;
 }
 
 void anv_CmdFillBuffer(
@@ -826,6 +831,8 @@ void anv_CmdFillBuffer(
    }
 
    blorp_batch_finish(&batch);
+
+   cmd_buffer->state.pending_pipe_bits |= ANV_PIPE_RENDER_TARGET_BUFFER_WRITES;
 }
 
 void anv_CmdClearColorImage(
@@ -1146,8 +1153,12 @@ void anv_CmdClearAttachments(
     * trash our depth and stencil buffers.
     */
    struct blorp_batch batch;
-   blorp_batch_init(&cmd_buffer->device->blorp, &batch, cmd_buffer,
-                    BLORP_BATCH_NO_EMIT_DEPTH_STENCIL);
+   enum blorp_batch_flags flags = BLORP_BATCH_NO_EMIT_DEPTH_STENCIL;
+   if (cmd_buffer->state.conditional_render_enabled) {
+      anv_cmd_emit_conditional_render_predicate(cmd_buffer);
+      flags |= BLORP_BATCH_PREDICATE_ENABLE;
+   }
+   blorp_batch_init(&cmd_buffer->device->blorp, &batch, cmd_buffer, flags);
 
    for (uint32_t a = 0; a < attachmentCount; ++a) {
       if (pAttachments[a].aspectMask & VK_IMAGE_ASPECT_ANY_COLOR_BIT_ANV) {

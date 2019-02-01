@@ -334,6 +334,8 @@ void st_init_limits(struct pipe_screen *screen,
 
    c->GLSLOptimizeConservatively =
       screen->get_param(screen, PIPE_CAP_GLSL_OPTIMIZE_CONSERVATIVELY);
+   c->GLSLTessLevelsAsInputs =
+      screen->get_param(screen, PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS);
    c->LowerTessLevel = true;
    c->LowerCsDerivedVariables = true;
    c->PrimitiveRestartForPatches =
@@ -787,7 +789,7 @@ void st_init_extensions(struct pipe_screen *screen,
           PIPE_FORMAT_B10G10R10A2_UINT },
          GL_TRUE }, /* at least one format must be supported */
 
-      { { o(EXT_framebuffer_sRGB) },
+      { { o(EXT_sRGB) },
         { PIPE_FORMAT_A8B8G8R8_SRGB,
           PIPE_FORMAT_B8G8R8A8_SRGB,
           PIPE_FORMAT_R8G8B8A8_SRGB },
@@ -840,6 +842,12 @@ void st_init_extensions(struct pipe_screen *screen,
           PIPE_FORMAT_DXT1_RGBA,
           PIPE_FORMAT_DXT3_RGBA,
           PIPE_FORMAT_DXT5_RGBA } },
+
+      { { o(EXT_texture_compression_s3tc_srgb) },
+        { PIPE_FORMAT_DXT1_SRGB,
+          PIPE_FORMAT_DXT1_SRGBA,
+          PIPE_FORMAT_DXT3_SRGBA,
+          PIPE_FORMAT_DXT5_SRGBA } },
 
       { { o(ARB_texture_compression_bptc) },
         { PIPE_FORMAT_BPTC_RGBA_UNORM,
@@ -1325,6 +1333,10 @@ void st_init_extensions(struct pipe_screen *screen,
       extensions->ARB_texture_buffer_range &&
       extensions->ARB_texture_buffer_object_rgb32 &&
       extensions->ARB_shader_image_load_store;
+
+   extensions->EXT_framebuffer_sRGB =
+         screen->get_param(screen, PIPE_CAP_DEST_SURFACE_SRGB_CONTROL) &&
+         extensions->EXT_sRGB;
 
    /* Unpacking a varying in the fragment shader costs 1 texture indirection.
     * If the number of available texture indirections is very limited, then we

@@ -77,6 +77,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+   case PIPE_CAP_RGB_OVERRIDE_DST_ALPHA_BLEND:
       return 0;
 
    case PIPE_CAP_MIN_TEXEL_OFFSET:
@@ -262,6 +263,9 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_GLSL_OPTIMIZE_CONSERVATIVELY:
       return 1;
 
+   case PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS:
+      return 0;
+
    case PIPE_CAP_TGSI_FS_FBFETCH:
    case PIPE_CAP_TGSI_MUL_ZERO_WINS:
    case PIPE_CAP_DOUBLES:
@@ -330,6 +334,8 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
 
    case PIPE_CAP_SURFACE_SAMPLE_COUNT:
       return 0;
+   case PIPE_CAP_DEST_SURFACE_SRGB_CONTROL:
+      return 1;
 
    default:
       unreachable("bad PIPE_CAP_*");

@@ -43,6 +43,7 @@
 #include "freedreno_query_hw.h"
 #include "freedreno_util.h"
 
+#include <drm_fourcc.h>
 #include <errno.h>
 
 /* XXX this should go away, needed for 'struct winsys_handle' */
@@ -498,7 +499,21 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 
 			if (usage & PIPE_TRANSFER_READ) {
 				fd_blit_to_staging(ctx, trans);
-				fd_bo_cpu_prep(rsc->bo, ctx->pipe, DRM_FREEDRENO_PREP_READ);
+
+				struct fd_batch *batch = NULL;
+				fd_batch_reference(&batch, staging_rsc->write_batch);
+
+				/* we can't fd_bo_cpu_prep() until the blit to staging
+				 * is submitted to kernel.. in that case write_batch
+				 * wouldn't be NULL yet:
+				 */
+				if (batch) {
+					fd_batch_sync(batch);
+					fd_batch_reference(&batch, NULL);
+				}
+
+				fd_bo_cpu_prep(staging_rsc->bo, ctx->pipe,
+						DRM_FREEDRENO_PREP_READ);
 			}
 
 			buf = fd_bo_map(staging_rsc->bo);
@@ -648,8 +663,21 @@ fd_resource_destroy(struct pipe_screen *pscreen,
 	fd_bc_invalidate_resource(rsc, true);
 	if (rsc->bo)
 		fd_bo_del(rsc->bo);
+	if (rsc->scanout)
+		renderonly_scanout_destroy(rsc->scanout, fd_screen(pscreen)->ro);
+
 	util_range_destroy(&rsc->valid_buffer_range);
 	FREE(rsc);
+}
+
+static uint64_t
+fd_resource_modifier(struct fd_resource *rsc)
+{
+	if (!rsc->tile_mode)
+		return DRM_FORMAT_MOD_LINEAR;
+
+	/* TODO invent a modifier for tiled but not UBWC buffers: */
+	return DRM_FORMAT_MOD_INVALID;
 }
 
 static boolean
@@ -661,7 +689,9 @@ fd_resource_get_handle(struct pipe_screen *pscreen,
 {
 	struct fd_resource *rsc = fd_resource(prsc);
 
-	return fd_screen_bo_get_handle(pscreen, rsc->bo,
+	handle->modifier = fd_resource_modifier(rsc);
+
+	return fd_screen_bo_get_handle(pscreen, rsc->bo, rsc->scanout,
 			rsc->slices[0].pitch * rsc->cpp, handle);
 }
 
@@ -796,18 +826,58 @@ has_depth(enum pipe_format format)
 	}
 }
 
+static bool
+find_modifier(uint64_t needle, const uint64_t *haystack, int count)
+{
+	int i;
+
+	for (i = 0; i < count; i++) {
+		if (haystack[i] == needle)
+			return true;
+	}
+
+	return false;
+}
+
 /**
  * Create a new texture object, using the given template info.
  */
 static struct pipe_resource *
-fd_resource_create(struct pipe_screen *pscreen,
-		const struct pipe_resource *tmpl)
+fd_resource_create_with_modifiers(struct pipe_screen *pscreen,
+		const struct pipe_resource *tmpl,
+		const uint64_t *modifiers, int count)
 {
 	struct fd_screen *screen = fd_screen(pscreen);
-	struct fd_resource *rsc = CALLOC_STRUCT(fd_resource);
-	struct pipe_resource *prsc = &rsc->base;
+	struct fd_resource *rsc;
+	struct pipe_resource *prsc;
 	enum pipe_format format = tmpl->format;
 	uint32_t size;
+
+	if (screen->ro && (tmpl->bind & PIPE_BIND_SCANOUT)) {
+		struct pipe_resource scanout_templat = *tmpl;
+		struct renderonly_scanout *scanout;
+		struct winsys_handle handle;
+
+		scanout = renderonly_scanout_for_resource(&scanout_templat,
+												  screen->ro, &handle);
+		if (!scanout)
+			return NULL;
+
+		renderonly_scanout_destroy(scanout, screen->ro);
+
+		assert(handle.type == WINSYS_HANDLE_TYPE_FD);
+		rsc = fd_resource(pscreen->resource_from_handle(pscreen, tmpl,
+														&handle,
+														PIPE_HANDLE_USAGE_FRAMEBUFFER_WRITE));
+		close(handle.handle);
+		if (!rsc)
+			return NULL;
+
+		return &rsc->base;
+	}
+
+	rsc = CALLOC_STRUCT(fd_resource);
+	prsc = &rsc->base;
 
 	DBG("%p: target=%d, format=%s, %ux%ux%u, array_size=%u, last_level=%u, "
 			"nr_samples=%u, usage=%u, bind=%x, flags=%x", prsc,
@@ -826,10 +896,26 @@ fd_resource_create(struct pipe_screen *pscreen,
 	 PIPE_BIND_LINEAR  | \
 	 PIPE_BIND_DISPLAY_TARGET)
 
+	bool linear = find_modifier(DRM_FORMAT_MOD_LINEAR, modifiers, count);
+	if (tmpl->bind & LINEAR)
+		linear = true;
+
+	/* Normally, for non-shared buffers, allow buffer compression if
+	 * not shared, otherwise only allow if QCOM_COMPRESSED modifier
+	 * is requested:
+	 *
+	 * TODO we should probably also limit tiled in a similar way,
+	 * except we don't have a format modifier for tiled.  (We probably
+	 * should.)
+	 */
+	bool allow_ubwc = find_modifier(DRM_FORMAT_MOD_INVALID, modifiers, count);
+	if (tmpl->bind & PIPE_BIND_SHARED)
+		allow_ubwc = find_modifier(DRM_FORMAT_MOD_QCOM_COMPRESSED, modifiers, count);
+
 	if (screen->tile_mode &&
 			(tmpl->target != PIPE_BUFFER) &&
 			(tmpl->bind & PIPE_BIND_SAMPLER_VIEW) &&
-			!(tmpl->bind & LINEAR)) {
+			!linear) {
 		rsc->tile_mode = screen->tile_mode(tmpl);
 	}
 
@@ -841,8 +927,7 @@ fd_resource_create(struct pipe_screen *pscreen,
 
 	rsc->internal_format = format;
 	rsc->cpp = util_format_get_blocksize(format);
-	prsc->nr_samples = MAX2(1, prsc->nr_samples);
-	rsc->cpp *= prsc->nr_samples;
+	rsc->cpp *= fd_resource_nr_samples(prsc);
 
 	assert(rsc->cpp);
 
@@ -874,6 +959,9 @@ fd_resource_create(struct pipe_screen *pscreen,
 
 	size = screen->setup_slices(rsc);
 
+	if (allow_ubwc && screen->fill_ubwc_buffer_sizes && rsc->tile_mode)
+		size += screen->fill_ubwc_buffer_sizes(rsc);
+
 	/* special case for hw-query buffer, which we need to allocate before we
 	 * know the size:
 	 */
@@ -898,6 +986,34 @@ fail:
 	return NULL;
 }
 
+static struct pipe_resource *
+fd_resource_create(struct pipe_screen *pscreen,
+		const struct pipe_resource *tmpl)
+{
+	const uint64_t mod = DRM_FORMAT_MOD_INVALID;
+	return fd_resource_create_with_modifiers(pscreen, tmpl, &mod, 1);
+}
+
+static bool
+is_supported_modifier(struct pipe_screen *pscreen, enum pipe_format pfmt,
+		uint64_t mod)
+{
+	int count;
+
+	/* Get the count of supported modifiers: */
+	pscreen->query_dmabuf_modifiers(pscreen, pfmt, 0, NULL, NULL, &count);
+
+	/* Get the supported modifiers: */
+	uint64_t modifiers[count];
+	pscreen->query_dmabuf_modifiers(pscreen, pfmt, 0, modifiers, NULL, &count);
+
+	for (int i = 0; i < count; i++)
+		if (modifiers[i] == mod)
+			return true;
+
+	return false;
+}
+
 /**
  * Create a texture from a winsys_handle. The handle is often created in
  * another process by first creating a pipe texture and then calling
@@ -908,6 +1024,7 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 		const struct pipe_resource *tmpl,
 		struct winsys_handle *handle, unsigned usage)
 {
+	struct fd_screen *screen = fd_screen(pscreen);
 	struct fd_resource *rsc = CALLOC_STRUCT(fd_resource);
 	struct fd_resource_slice *slice = &rsc->slices[0];
 	struct pipe_resource *prsc = &rsc->base;
@@ -935,9 +1052,9 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 	if (!rsc->bo)
 		goto fail;
 
-	prsc->nr_samples = MAX2(1, prsc->nr_samples);
 	rsc->internal_format = tmpl->format;
-	rsc->cpp = prsc->nr_samples * util_format_get_blocksize(tmpl->format);
+	rsc->cpp = util_format_get_blocksize(tmpl->format);
+	rsc->cpp *= fd_resource_nr_samples(prsc);
 	slice->pitch = handle->stride / rsc->cpp;
 	slice->offset = handle->offset;
 	slice->size0 = handle->stride * prsc->height0;
@@ -946,7 +1063,26 @@ fd_resource_from_handle(struct pipe_screen *pscreen,
 			(slice->pitch & (pitchalign - 1)))
 		goto fail;
 
+	if (handle->modifier == DRM_FORMAT_MOD_QCOM_COMPRESSED) {
+		if (!is_supported_modifier(pscreen, tmpl->format,
+				DRM_FORMAT_MOD_QCOM_COMPRESSED)) {
+			DBG("bad modifier: %lx", handle->modifier);
+			goto fail;
+		}
+		debug_assert(screen->fill_ubwc_buffer_sizes);
+		screen->fill_ubwc_buffer_sizes(rsc);
+	} else if (handle->modifier &&
+			(handle->modifier != DRM_FORMAT_MOD_INVALID)) {
+		goto fail;
+	}
+
 	assert(rsc->cpp);
+
+	if (screen->ro) {
+		rsc->scanout =
+			renderonly_create_gpu_import_for_resource(prsc, screen->ro, NULL);
+		/* failure is expected in some cases.. */
+	}
 
 	return prsc;
 
@@ -1052,24 +1188,30 @@ fd_blitter_pipe_end(struct fd_context *ctx)
 static void
 fd_invalidate_resource(struct pipe_context *pctx, struct pipe_resource *prsc)
 {
+	struct fd_context *ctx = fd_context(pctx);
 	struct fd_resource *rsc = fd_resource(prsc);
 
 	/*
 	 * TODO I guess we could track that the resource is invalidated and
 	 * use that as a hint to realloc rather than stall in _transfer_map(),
 	 * even in the non-DISCARD_WHOLE_RESOURCE case?
+	 *
+	 * Note: we set dirty bits to trigger invalidate logic fd_draw_vbo
 	 */
 
 	if (rsc->write_batch) {
 		struct fd_batch *batch = rsc->write_batch;
 		struct pipe_framebuffer_state *pfb = &batch->framebuffer;
 
-		if (pfb->zsbuf && pfb->zsbuf->texture == prsc)
+		if (pfb->zsbuf && pfb->zsbuf->texture == prsc) {
 			batch->resolve &= ~(FD_BUFFER_DEPTH | FD_BUFFER_STENCIL);
+			ctx->dirty |= FD_DIRTY_ZSA;
+		}
 
 		for (unsigned i = 0; i < pfb->nr_cbufs; i++) {
 			if (pfb->cbufs[i] && pfb->cbufs[i]->texture == prsc) {
 				batch->resolve &= ~(PIPE_CLEAR_COLOR0 << i);
+				ctx->dirty |= FD_DIRTY_FRAMEBUFFER;
 			}
 		}
 	}
@@ -1117,6 +1259,10 @@ fd_resource_screen_init(struct pipe_screen *pscreen)
 	bool fake_rgtc = screen->gpu_id < 400;
 
 	pscreen->resource_create = u_transfer_helper_resource_create;
+	/* NOTE: u_transfer_helper does not yet support the _with_modifiers()
+	 * variant:
+	 */
+	pscreen->resource_create_with_modifiers = fd_resource_create_with_modifiers;
 	pscreen->resource_from_handle = fd_resource_from_handle;
 	pscreen->resource_get_handle = fd_resource_get_handle;
 	pscreen->resource_destroy = u_transfer_helper_resource_destroy;

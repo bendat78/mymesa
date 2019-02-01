@@ -323,7 +323,6 @@ schedule_node::set_latency_gen7(bool is_haswell)
       break;
 
    case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN4:
-   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7:
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7:
    case VS_OPCODE_PULL_CONSTANT_LOAD:
@@ -412,6 +411,102 @@ schedule_node::set_latency_gen7(bool is_haswell)
        * standard deviation 0.9%.
        */
       latency = is_haswell ? 300 : 600;
+      break;
+
+   case SHADER_OPCODE_SEND:
+      switch (inst->sfid) {
+      case BRW_SFID_SAMPLER: {
+         unsigned msg_type = (inst->desc >> 12) & 0x1f;
+         switch (msg_type) {
+         case GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO:
+         case GEN6_SAMPLER_MESSAGE_SAMPLE_SAMPLEINFO:
+            /* See also SHADER_OPCODE_TXS */
+            latency = 100;
+            break;
+
+         default:
+            /* See also SHADER_OPCODE_TEX */
+            latency = 200;
+            break;
+         }
+         break;
+      }
+
+      case GEN6_SFID_DATAPORT_RENDER_CACHE:
+         switch ((inst->desc >> 14) & 0x1f) {
+         case GEN7_DATAPORT_RC_TYPED_SURFACE_WRITE:
+         case GEN7_DATAPORT_RC_TYPED_SURFACE_READ:
+            /* See also SHADER_OPCODE_TYPED_SURFACE_READ */
+            assert(!is_haswell);
+            latency = 600;
+            break;
+
+         case GEN7_DATAPORT_RC_TYPED_ATOMIC_OP:
+            /* See also SHADER_OPCODE_TYPED_ATOMIC */
+            assert(!is_haswell);
+            latency = 14000;
+            break;
+
+         default:
+            unreachable("Unknown render cache message");
+         }
+         break;
+
+      case GEN7_SFID_DATAPORT_DATA_CACHE:
+         switch ((inst->desc >> 14) & 0x1f) {
+         case HSW_DATAPORT_DC_PORT0_BYTE_SCATTERED_READ:
+         case HSW_DATAPORT_DC_PORT0_BYTE_SCATTERED_WRITE:
+            /* We have no data for this but assume it's roughly the same as
+             * untyped surface read/write.
+             */
+            latency = 300;
+            break;
+
+         case GEN7_DATAPORT_DC_UNTYPED_SURFACE_READ:
+         case GEN7_DATAPORT_DC_UNTYPED_SURFACE_WRITE:
+            /* See also SHADER_OPCODE_UNTYPED_SURFACE_READ */
+            assert(!is_haswell);
+            latency = 600;
+            break;
+
+         case GEN7_DATAPORT_DC_UNTYPED_ATOMIC_OP:
+            /* See also SHADER_OPCODE_UNTYPED_ATOMIC */
+            assert(!is_haswell);
+            latency = 14000;
+            break;
+
+         default:
+            unreachable("Unknown data cache message");
+         }
+         break;
+
+      case HSW_SFID_DATAPORT_DATA_CACHE_1:
+         switch ((inst->desc >> 14) & 0x1f) {
+         case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ:
+         case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE:
+         case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ:
+         case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE:
+            /* See also SHADER_OPCODE_UNTYPED_SURFACE_READ */
+            latency = 300;
+            break;
+
+         case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP:
+         case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2:
+         case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2:
+         case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP:
+         case GEN9_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_FLOAT_OP:
+            /* See also SHADER_OPCODE_UNTYPED_ATOMIC */
+            latency = 14000;
+            break;
+
+         default:
+            unreachable("Unknown data cache message");
+         }
+         break;
+
+      default:
+         unreachable("Unknown SFID");
+      }
       break;
 
    default:

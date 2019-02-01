@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
+ * Copyright © 2019 Broadcom
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -16,21 +16,26 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- * Authors:
- *    Rob Clark <robclark@freedesktop.org>
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#ifndef FD2_COMPILER_H_
-#define FD2_COMPILER_H_
+#ifndef V3D_LIMITS_H
+#define V3D_LIMITS_H
 
-#include "fd2_program.h"
-#include "fd2_util.h"
+#define V3D_MAX_FS_INPUTS 64
+#define V3D_MAX_VS_INPUTS 64
 
-int fd2_compile_shader(struct fd_program_stateobj *prog,
-		struct fd2_shader_stateobj *so);
+/* Not specifically a hardware limit, just coordination between compiler and
+ * driver.
+ */
+#define V3D_MAX_TEXTURE_SAMPLERS 16
 
-#endif /* FD2_COMPILER_H_ */
+#define V3D_MAX_MIP_LEVELS 12
+
+#define V3D_MAX_SAMPLES 4
+
+#define V3D_MAX_DRAW_BUFFERS 4
+
+#endif /* V3D_LIMITS_H */

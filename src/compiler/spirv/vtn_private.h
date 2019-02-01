@@ -417,8 +417,10 @@ enum vtn_variable_mode {
    vtn_variable_mode_uniform,
    vtn_variable_mode_ubo,
    vtn_variable_mode_ssbo,
+   vtn_variable_mode_phys_ssbo,
    vtn_variable_mode_push_constant,
    vtn_variable_mode_workgroup,
+   vtn_variable_mode_cross_workgroup,
    vtn_variable_mode_input,
    vtn_variable_mode_output,
 };
@@ -472,6 +474,12 @@ struct vtn_variable {
    bool patch;
 
    nir_variable *var;
+
+   /* If the variable is a struct with a location set on it then this will be
+    * stored here. This will be used to calculate locations for members that
+    * don’t have their own explicit location.
+    */
+   int base_location;
 
    int shared_location;
 
@@ -603,6 +611,9 @@ struct vtn_builder {
    unsigned func_param_idx;
 
    bool has_loop_continue;
+
+   /* false by default, set to true by the ContractionOff execution mode */
+   bool exact;
 };
 
 nir_ssa_def *

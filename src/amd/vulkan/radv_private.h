@@ -1055,6 +1055,8 @@ struct radv_cmd_state {
 	/* Conditional rendering info. */
 	int predication_type; /* -1: disabled, 0: normal, 1: inverted */
 	uint64_t predication_va;
+
+	bool context_roll_without_scissor_emitted;
 };
 
 struct radv_cmd_pool {
@@ -1114,8 +1116,7 @@ struct radv_cmd_buffer {
 
 	VkResult record_result;
 
-	uint32_t gfx9_fence_offset;
-	struct radeon_winsys_bo *gfx9_fence_bo;
+	uint64_t gfx9_fence_va;
 	uint32_t gfx9_fence_idx;
 	uint64_t gfx9_eop_bug_va;
 
@@ -1150,7 +1151,6 @@ void si_cs_emit_write_event_eop(struct radeon_cmdbuf *cs,
 				unsigned event, unsigned event_flags,
 				unsigned data_sel,
 				uint64_t va,
-				uint32_t old_fence,
 				uint32_t new_fence,
 				uint64_t gfx9_eop_bug_va);
 
@@ -1365,6 +1365,8 @@ struct radv_pipeline {
 	VkShaderStageFlags                           active_stages;
 
 	struct radeon_cmdbuf                      cs;
+	uint32_t                                  ctx_cs_hash;
+	struct radeon_cmdbuf                      ctx_cs;
 
 	struct radv_vertex_elements_info             vertex_elements;
 
@@ -1931,6 +1933,9 @@ void radv_compile_nir_shader(struct ac_llvm_compiler *ac_llvm,
 			     struct nir_shader *const *nir,
 			     int nir_count,
 			     const struct radv_nir_compiler_options *options);
+
+unsigned radv_nir_get_max_workgroup_size(enum chip_class chip_class,
+					 const struct nir_shader *nir);
 
 /* radv_shader_info.h */
 struct radv_shader_info;

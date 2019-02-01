@@ -37,6 +37,7 @@
 #include "v3d_screen.h"
 #include "v3d_context.h"
 #include "v3d_resource.h"
+#include "broadcom/compiler/v3d_compiler.h"
 
 void
 v3d_flush(struct pipe_context *pctx)
@@ -224,7 +225,7 @@ v3d_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
 
         V3D_DEBUG |= saved_shaderdb_flag;
 
-        v3d->sample_mask = (1 << VC5_MAX_SAMPLES) - 1;
+        v3d->sample_mask = (1 << V3D_MAX_SAMPLES) - 1;
         v3d->active_queries = true;
 
         return &v3d->base;

@@ -206,6 +206,9 @@ brw_instruction_name(const struct gen_device_info *devinfo, enum opcode op)
    case SHADER_OPCODE_COS:
       return "cos";
 
+   case SHADER_OPCODE_SEND:
+      return "send";
+
    case SHADER_OPCODE_TEX:
       return "tex";
    case SHADER_OPCODE_TEX_LOGICAL:
@@ -269,6 +272,8 @@ brw_instruction_name(const struct gen_device_info *devinfo, enum opcode op)
 
    case SHADER_OPCODE_IMAGE_SIZE:
       return "image_size";
+   case SHADER_OPCODE_IMAGE_SIZE_LOGICAL:
+      return "image_size_logical";
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
       return "shader_time_add";
@@ -402,8 +407,6 @@ brw_instruction_name(const struct gen_device_info *devinfo, enum opcode op)
       return "uniform_pull_const_gen7";
    case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN4:
       return "varying_pull_const_gen4";
-   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7:
-      return "varying_pull_const_gen7";
    case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_LOGICAL:
       return "varying_pull_const_logical";
 
@@ -997,6 +1000,9 @@ bool
 backend_instruction::has_side_effects() const
 {
    switch (opcode) {
+   case SHADER_OPCODE_SEND:
+      return send_has_side_effects;
+
    case SHADER_OPCODE_UNTYPED_ATOMIC:
    case SHADER_OPCODE_UNTYPED_ATOMIC_LOGICAL:
    case SHADER_OPCODE_UNTYPED_ATOMIC_FLOAT:
@@ -1033,6 +1039,9 @@ bool
 backend_instruction::is_volatile() const
 {
    switch (opcode) {
+   case SHADER_OPCODE_SEND:
+      return send_is_volatile;
+
    case SHADER_OPCODE_UNTYPED_SURFACE_READ:
    case SHADER_OPCODE_UNTYPED_SURFACE_READ_LOGICAL:
    case SHADER_OPCODE_TYPED_SURFACE_READ:

@@ -593,8 +593,8 @@ build_tfb_query_shader(struct radv_device *device)
 	nir_builder_instr_insert(&b, &src_buf->instr);
 
 	/* Compute global ID. */
-	nir_ssa_def *invoc_id = nir_load_system_value(&b, nir_intrinsic_load_local_invocation_id, 0);
-	nir_ssa_def *wg_id = nir_load_system_value(&b, nir_intrinsic_load_work_group_id, 0);
+	nir_ssa_def *invoc_id = nir_load_local_invocation_id(&b);
+	nir_ssa_def *wg_id = nir_load_work_group_id(&b);
 	nir_ssa_def *block_size = nir_imm_ivec4(&b,
 	                                        b.shader->info.cs.local_size[0],
 	                                        b.shader->info.cs.local_size[1],
@@ -1061,7 +1061,8 @@ VkResult radv_CreateQueryPool(
 		pool->size += 4 * pCreateInfo->queryCount;
 
 	pool->bo = device->ws->buffer_create(device->ws, pool->size,
-					     64, RADEON_DOMAIN_GTT, RADEON_FLAG_NO_INTERPROCESS_SHARING);
+					     64, RADEON_DOMAIN_GTT, RADEON_FLAG_NO_INTERPROCESS_SHARING,
+					     RADV_BO_PRIORITY_QUERY_POOL);
 
 	if (!pool->bo) {
 		vk_free2(&device->alloc, pAllocator, pool);
@@ -1569,7 +1570,7 @@ static void emit_end_query(struct radv_cmd_buffer *cmd_buffer,
 					   radv_cmd_buffer_uses_mec(cmd_buffer),
 					   V_028A90_BOTTOM_OF_PIPE_TS, 0,
 					   EOP_DATA_SEL_VALUE_32BIT,
-					   avail_va, 0, 1,
+					   avail_va, 1,
 					   cmd_buffer->gfx9_eop_bug_va);
 		break;
 	case VK_QUERY_TYPE_TRANSFORM_FEEDBACK_STREAM_EXT:
@@ -1692,7 +1693,7 @@ void radv_CmdWriteTimestamp(
 			radeon_emit(cs, PKT3(PKT3_COPY_DATA, 4, 0));
 			radeon_emit(cs, COPY_DATA_COUNT_SEL | COPY_DATA_WR_CONFIRM |
 				    COPY_DATA_SRC_SEL(COPY_DATA_TIMESTAMP) |
-				    COPY_DATA_DST_SEL(V_370_MEM_ASYNC));
+				    COPY_DATA_DST_SEL(V_370_MEM));
 			radeon_emit(cs, 0);
 			radeon_emit(cs, 0);
 			radeon_emit(cs, query_va);
@@ -1704,7 +1705,7 @@ void radv_CmdWriteTimestamp(
 						   mec,
 						   V_028A90_BOTTOM_OF_PIPE_TS, 0,
 						   EOP_DATA_SEL_TIMESTAMP,
-						   query_va, 0, 0,
+						   query_va, 0,
 						   cmd_buffer->gfx9_eop_bug_va);
 			break;
 		}

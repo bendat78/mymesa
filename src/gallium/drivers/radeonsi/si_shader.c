@@ -5242,7 +5242,7 @@ int si_shader_binary_upload(struct si_screen *sscreen, struct si_shader *shader)
 	       !mainb->rodata_size);
 	assert(!epilog || !epilog->rodata_size);
 
-	r600_resource_reference(&shader->bo, NULL);
+	si_resource_reference(&shader->bo, NULL);
 	shader->bo = si_aligned_buffer_create(&sscreen->b,
 					      sscreen->cpdma_prefetch_writes_memory ?
 						0 : SI_RESOURCE_FLAG_READ_ONLY,
@@ -5380,10 +5380,9 @@ static void si_calculate_max_simd_waves(struct si_shader *shader)
 
 	/* Compute the per-SIMD wave counts. */
 	if (conf->num_sgprs) {
-		if (sscreen->info.chip_class >= VI)
-			max_simd_waves = MIN2(max_simd_waves, 800 / conf->num_sgprs);
-		else
-			max_simd_waves = MIN2(max_simd_waves, 512 / conf->num_sgprs);
+		max_simd_waves =
+			MIN2(max_simd_waves,
+			     ac_get_num_physical_sgprs(sscreen->info.chip_class) / conf->num_sgprs);
 	}
 
 	if (conf->num_vgprs)
@@ -8118,9 +8117,9 @@ int si_shader_create(struct si_screen *sscreen, struct ac_llvm_compiler *compile
 void si_shader_destroy(struct si_shader *shader)
 {
 	if (shader->scratch_bo)
-		r600_resource_reference(&shader->scratch_bo, NULL);
+		si_resource_reference(&shader->scratch_bo, NULL);
 
-	r600_resource_reference(&shader->bo, NULL);
+	si_resource_reference(&shader->bo, NULL);
 
 	if (!shader->is_binary_shared)
 		ac_shader_binary_clean(&shader->binary);

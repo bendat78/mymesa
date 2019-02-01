@@ -32,6 +32,7 @@
 #include "anv_private.h"
 #include "compiler/brw_nir.h"
 #include "anv_nir.h"
+#include "nir/nir_xfb_info.h"
 #include "spirv/nir_spirv.h"
 #include "vk_util.h"
 
@@ -104,8 +105,9 @@ anv_shader_compile_to_nir(struct anv_device *device,
                           gl_shader_stage stage,
                           const VkSpecializationInfo *spec_info)
 {
-   const struct brw_compiler *compiler =
-      device->instance->physicalDevice.compiler;
+   const struct anv_physical_device *pdevice =
+      &device->instance->physicalDevice;
+   const struct brw_compiler *compiler = pdevice->compiler;
    const nir_shader_compiler_options *nir_options =
       compiler->glsl_compiler_options[stage].NirOptions;
 
@@ -136,17 +138,18 @@ anv_shader_compile_to_nir(struct anv_device *device,
       .caps = {
          .device_group = true,
          .draw_parameters = true,
-         .float64 = device->instance->physicalDevice.info.gen >= 8,
+         .float64 = pdevice->info.gen >= 8,
+         .geometry_streams = true,
          .image_write_without_format = true,
-         .int16 = device->instance->physicalDevice.info.gen >= 8,
-         .int64 = device->instance->physicalDevice.info.gen >= 8,
+         .int16 = pdevice->info.gen >= 8,
+         .int64 = pdevice->info.gen >= 8,
          .min_lod = true,
          .multiview = true,
-         .post_depth_coverage = device->instance->physicalDevice.info.gen >= 9,
+         .post_depth_coverage = pdevice->info.gen >= 9,
          .shader_viewport_index_layer = true,
-         .stencil_export = device->instance->physicalDevice.info.gen >= 9,
-         .storage_8bit = device->instance->physicalDevice.info.gen >= 8,
-         .storage_16bit = device->instance->physicalDevice.info.gen >= 8,
+         .stencil_export = pdevice->info.gen >= 9,
+         .storage_8bit = pdevice->info.gen >= 8,
+         .storage_16bit = pdevice->info.gen >= 8,
          .subgroup_arithmetic = true,
          .subgroup_basic = true,
          .subgroup_ballot = true,
@@ -154,6 +157,7 @@ anv_shader_compile_to_nir(struct anv_device *device,
          .subgroup_shuffle = true,
          .subgroup_vote = true,
          .tessellation = true,
+         .transform_feedback = pdevice->info.gen >= 8,
          .variable_pointers = true,
       },
       .ubo_ptr_type = glsl_vector_type(GLSL_TYPE_UINT, 2),
@@ -183,7 +187,7 @@ anv_shader_compile_to_nir(struct anv_device *device,
     * inline functions.  That way they get properly initialized at the top
     * of the function and not at the top of its caller.
     */
-   NIR_PASS_V(nir, nir_lower_constant_initializers, nir_var_function);
+   NIR_PASS_V(nir, nir_lower_constant_initializers, nir_var_function_temp);
    NIR_PASS_V(nir, nir_lower_returns);
    NIR_PASS_V(nir, nir_inline_functions);
    NIR_PASS_V(nir, nir_opt_deref);
@@ -211,7 +215,7 @@ anv_shader_compile_to_nir(struct anv_device *device,
    NIR_PASS_V(nir, nir_remove_dead_variables,
               nir_var_shader_in | nir_var_shader_out | nir_var_system_value);
 
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_ubo | nir_var_ssbo,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo | nir_var_mem_ssbo,
               nir_address_format_vk_index_offset);
 
    NIR_PASS_V(nir, nir_propagate_invariant);
@@ -835,7 +839,7 @@ anv_pipeline_link_fs(const struct brw_compiler *compiler,
           !(stage->key.wm.color_outputs_valid & (1 << rt))) {
          /* Unused or out-of-bounds, throw it away */
          deleted_output = true;
-         var->data.mode = nir_var_function;
+         var->data.mode = nir_var_function_temp;
          exec_node_remove(&var->node);
          exec_list_push_tail(&impl->locals, &var->node);
          continue;
@@ -1081,6 +1085,12 @@ anv_pipeline_compile_graphics(struct anv_pipeline *pipeline,
 
       void *stage_ctx = ralloc_context(NULL);
 
+      nir_xfb_info *xfb_info = NULL;
+      if (s == MESA_SHADER_VERTEX ||
+          s == MESA_SHADER_TESS_EVAL ||
+          s == MESA_SHADER_GEOMETRY)
+         xfb_info = nir_gather_xfb_info(stages[s].nir, stage_ctx);
+
       anv_pipeline_lower_nir(pipeline, stage_ctx, &stages[s], layout);
 
       const unsigned *code;
@@ -1122,7 +1132,7 @@ anv_pipeline_compile_graphics(struct anv_pipeline *pipeline,
                                   stages[s].nir->constant_data_size,
                                   &stages[s].prog_data.base,
                                   brw_prog_data_size(s),
-                                  &stages[s].bind_map);
+                                  xfb_info, &stages[s].bind_map);
       if (!bin) {
          ralloc_free(stage_ctx);
          result = vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -1236,7 +1246,7 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
                                      stage.nir->constant_data_size,
                                      &stage.prog_data.base,
                                      sizeof(stage.prog_data.cs),
-                                     &stage.bind_map);
+                                     NULL, &stage.bind_map);
       if (!bin) {
          ralloc_free(mem_ctx);
          return vk_error(VK_ERROR_OUT_OF_HOST_MEMORY);

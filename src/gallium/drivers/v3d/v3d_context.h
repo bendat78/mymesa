@@ -38,6 +38,7 @@
 #include "xf86drm.h"
 #include "v3d_drm.h"
 #include "v3d_screen.h"
+#include "broadcom/common/v3d_limits.h"
 
 struct v3d_job;
 struct v3d_bo;
@@ -87,6 +88,35 @@ void v3d_job_add_bo(struct v3d_job *job, struct v3d_bo *bo);
 
 #define VC5_MAX_FS_INPUTS 64
 
+enum v3d_sampler_state_variant {
+        V3D_SAMPLER_STATE_BORDER_0,
+        V3D_SAMPLER_STATE_F16,
+        V3D_SAMPLER_STATE_F16_UNORM,
+        V3D_SAMPLER_STATE_F16_SNORM,
+        V3D_SAMPLER_STATE_F16_BGRA,
+        V3D_SAMPLER_STATE_F16_BGRA_UNORM,
+        V3D_SAMPLER_STATE_F16_BGRA_SNORM,
+        V3D_SAMPLER_STATE_F16_A,
+        V3D_SAMPLER_STATE_F16_A_SNORM,
+        V3D_SAMPLER_STATE_F16_A_UNORM,
+        V3D_SAMPLER_STATE_F16_LA,
+        V3D_SAMPLER_STATE_F16_LA_UNORM,
+        V3D_SAMPLER_STATE_F16_LA_SNORM,
+        V3D_SAMPLER_STATE_32,
+        V3D_SAMPLER_STATE_32_UNORM,
+        V3D_SAMPLER_STATE_32_SNORM,
+        V3D_SAMPLER_STATE_32_A,
+        V3D_SAMPLER_STATE_32_A_UNORM,
+        V3D_SAMPLER_STATE_32_A_SNORM,
+        V3D_SAMPLER_STATE_1010102U,
+        V3D_SAMPLER_STATE_16U,
+        V3D_SAMPLER_STATE_16I,
+        V3D_SAMPLER_STATE_8I,
+        V3D_SAMPLER_STATE_8U,
+
+        V3D_SAMPLER_STATE_VARIANT_COUNT,
+};
+
 struct v3d_sampler_view {
         struct pipe_sampler_view base;
         uint32_t p0;
@@ -97,6 +127,8 @@ struct v3d_sampler_view {
         uint8_t texture_shader_state[32];
         /* V3D 4.x: Texture state struct. */
         struct v3d_bo *bo;
+
+        enum v3d_sampler_state_variant sampler_variant;
 
         /* Actual texture to be read by this sampler view.  May be different
          * from base.texture in the case of having a shadow tiled copy of a
@@ -113,15 +145,18 @@ struct v3d_sampler_state {
         /* V3D 3.x: Packed texture state. */
         uint8_t texture_shader_state[32];
         /* V3D 4.x: Sampler state struct. */
-        struct v3d_bo *bo;
+        struct pipe_resource *sampler_state;
+        uint32_t sampler_state_offset[V3D_SAMPLER_STATE_VARIANT_COUNT];
+
+        bool border_color_variants;
 };
 
 struct v3d_texture_stateobj {
-        struct pipe_sampler_view *textures[PIPE_MAX_SAMPLERS];
+        struct pipe_sampler_view *textures[V3D_MAX_TEXTURE_SAMPLERS];
         unsigned num_textures;
-        struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
+        struct pipe_sampler_state *samplers[V3D_MAX_TEXTURE_SAMPLERS];
         unsigned num_samplers;
-        struct v3d_cl_reloc texture_state[PIPE_MAX_SAMPLERS];
+        struct v3d_cl_reloc texture_state[V3D_MAX_TEXTURE_SAMPLERS];
 };
 
 struct v3d_shader_uniform_info {
@@ -190,10 +225,10 @@ struct v3d_vertexbuf_stateobj {
 };
 
 struct v3d_vertex_stateobj {
-        struct pipe_vertex_element pipe[VC5_MAX_ATTRIBUTES];
+        struct pipe_vertex_element pipe[V3D_MAX_VS_INPUTS / 4];
         unsigned num_elements;
 
-        uint8_t attrs[16 * VC5_MAX_ATTRIBUTES];
+        uint8_t attrs[16 * (V3D_MAX_VS_INPUTS / 4)];
         struct pipe_resource *defaults;
         uint32_t defaults_offset;
 };

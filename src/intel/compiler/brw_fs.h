@@ -103,6 +103,7 @@ public:
    void setup_vs_payload();
    void setup_gs_payload();
    void setup_cs_payload();
+   bool fixup_sends_duplicate_payload();
    void fixup_3src_null_dest();
    void assign_curb_setup();
    void calculate_urb_setup();
@@ -406,6 +407,12 @@ private:
                       struct brw_reg payload,
                       struct brw_reg implied_header,
                       GLuint nr);
+   void generate_send(fs_inst *inst,
+                      struct brw_reg dst,
+                      struct brw_reg desc,
+                      struct brw_reg ex_desc,
+                      struct brw_reg payload,
+                      struct brw_reg payload2);
    void generate_fb_write(fs_inst *inst, struct brw_reg payload);
    void generate_fb_read(fs_inst *inst, struct brw_reg dst,
                          struct brw_reg payload);
@@ -415,7 +422,7 @@ private:
    void generate_barrier(fs_inst *inst, struct brw_reg src);
    bool generate_linterp(fs_inst *inst, struct brw_reg dst,
 			 struct brw_reg *src);
-   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+   void generate_tex(fs_inst *inst, struct brw_reg dst,
                      struct brw_reg surface_index,
                      struct brw_reg sampler_index);
    void generate_get_buffer_size(fs_inst *inst, struct brw_reg dst,
@@ -438,10 +445,6 @@ private:
    void generate_varying_pull_constant_load_gen4(fs_inst *inst,
                                                  struct brw_reg dst,
                                                  struct brw_reg index);
-   void generate_varying_pull_constant_load_gen7(fs_inst *inst,
-                                                 struct brw_reg dst,
-                                                 struct brw_reg index,
-                                                 struct brw_reg offset);
    void generate_mov_dispatch_to_flags(fs_inst *inst);
 
    void generate_pixel_interpolator_query(fs_inst *inst,

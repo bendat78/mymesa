@@ -213,7 +213,6 @@ struct radv_shader_info {
 struct radv_userdata_info {
 	int8_t sgpr_idx;
 	uint8_t num_sgprs;
-	bool indirect;
 };
 
 struct radv_userdata_locations {
@@ -406,12 +405,6 @@ static inline unsigned shader_io_get_unique_index(gl_varying_slot slot)
 	if (slot >= VARYING_SLOT_VAR0 && slot <= VARYING_SLOT_VAR31)
 		return 4 + (slot - VARYING_SLOT_VAR0);
 	unreachable("illegal slot in get unique index\n");
-}
-
-static inline uint32_t
-radv_get_num_physical_sgprs(struct radv_physical_device *physical_device)
-{
-	return physical_device->rad_info.chip_class >= VI ? 800 : 512;
 }
 
 #endif

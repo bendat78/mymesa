@@ -899,14 +899,6 @@ radv_image_can_fast_clear(struct radv_device *device,  struct radv_image *image)
 	} else {
 		if (!radv_image_has_htile(image))
 			return false;
-
-		/* GFX8 only supports 32-bit depth surfaces but we can enable
-		 * TC-compat HTILE for 16-bit surfaces if no Z planes are
-		 * compressed. Though, fast HTILE clears don't seem to work.
-		 */
-		if (device->physical_device->rad_info.chip_class == VI &&
-		    image->vk_format == VK_FORMAT_D16_UNORM)
-			return false;
 	}
 
 	/* Do not fast clears 3D images. */
@@ -1036,8 +1028,8 @@ build_clear_htile_mask_shader()
 	b.shader->info.cs.local_size[1] = 1;
 	b.shader->info.cs.local_size[2] = 1;
 
-	nir_ssa_def *invoc_id = nir_load_system_value(&b, nir_intrinsic_load_local_invocation_id, 0);
-	nir_ssa_def *wg_id = nir_load_system_value(&b, nir_intrinsic_load_work_group_id, 0);
+	nir_ssa_def *invoc_id = nir_load_local_invocation_id(&b);
+	nir_ssa_def *wg_id = nir_load_work_group_id(&b);
 	nir_ssa_def *block_size = nir_imm_ivec4(&b,
 						b.shader->info.cs.local_size[0],
 						b.shader->info.cs.local_size[1],

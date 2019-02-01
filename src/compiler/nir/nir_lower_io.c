@@ -43,6 +43,56 @@ struct lower_io_state {
    nir_lower_io_options options;
 };
 
+static nir_intrinsic_op
+ssbo_atomic_for_deref(nir_intrinsic_op deref_op)
+{
+   switch (deref_op) {
+#define OP(O) case nir_intrinsic_deref_##O: return nir_intrinsic_ssbo_##O;
+   OP(atomic_exchange)
+   OP(atomic_comp_swap)
+   OP(atomic_add)
+   OP(atomic_imin)
+   OP(atomic_umin)
+   OP(atomic_imax)
+   OP(atomic_umax)
+   OP(atomic_and)
+   OP(atomic_or)
+   OP(atomic_xor)
+   OP(atomic_fadd)
+   OP(atomic_fmin)
+   OP(atomic_fmax)
+   OP(atomic_fcomp_swap)
+#undef OP
+   default:
+      unreachable("Invalid SSBO atomic");
+   }
+}
+
+static nir_intrinsic_op
+global_atomic_for_deref(nir_intrinsic_op deref_op)
+{
+   switch (deref_op) {
+#define OP(O) case nir_intrinsic_deref_##O: return nir_intrinsic_global_##O;
+   OP(atomic_exchange)
+   OP(atomic_comp_swap)
+   OP(atomic_add)
+   OP(atomic_imin)
+   OP(atomic_umin)
+   OP(atomic_imax)
+   OP(atomic_umax)
+   OP(atomic_and)
+   OP(atomic_or)
+   OP(atomic_xor)
+   OP(atomic_fadd)
+   OP(atomic_fmin)
+   OP(atomic_fmax)
+   OP(atomic_fcomp_swap)
+#undef OP
+   default:
+      unreachable("Invalid SSBO atomic");
+   }
+}
+
 void
 nir_assign_var_locations(struct exec_list *var_list, unsigned *size,
                          int (*type_size)(const struct glsl_type *))
@@ -54,7 +104,7 @@ nir_assign_var_locations(struct exec_list *var_list, unsigned *size,
        * UBOs have their own address spaces, so don't count them towards the
        * number of global uniforms
        */
-      if (var->data.mode == nir_var_ubo || var->data.mode == nir_var_ssbo)
+      if (var->data.mode == nir_var_mem_ubo || var->data.mode == nir_var_mem_ssbo)
          continue;
 
       var->data.driver_location = location;
@@ -189,7 +239,7 @@ lower_load(nir_intrinsic_instr *intrin, struct lower_io_state *state,
    case nir_var_uniform:
       op = nir_intrinsic_load_uniform;
       break;
-   case nir_var_shared:
+   case nir_var_mem_shared:
       op = nir_intrinsic_load_shared;
       break;
    default:
@@ -228,7 +278,7 @@ lower_store(nir_intrinsic_instr *intrin, struct lower_io_state *state,
    nir_variable_mode mode = var->data.mode;
 
    nir_intrinsic_op op;
-   if (mode == nir_var_shared) {
+   if (mode == nir_var_mem_shared) {
       op = nir_intrinsic_store_shared;
    } else {
       assert(mode == nir_var_shader_out);
@@ -261,7 +311,7 @@ static nir_intrinsic_instr *
 lower_atomic(nir_intrinsic_instr *intrin, struct lower_io_state *state,
              nir_variable *var, nir_ssa_def *offset)
 {
-   assert(var->data.mode == nir_var_shared);
+   assert(var->data.mode == nir_var_mem_shared);
 
    nir_intrinsic_op op;
    switch (intrin->intrinsic) {
@@ -407,7 +457,7 @@ nir_lower_io_block(nir_block *block,
 
       if (mode != nir_var_shader_in &&
           mode != nir_var_shader_out &&
-          mode != nir_var_shared &&
+          mode != nir_var_mem_shared &&
           mode != nir_var_uniform)
          continue;
 
@@ -544,6 +594,11 @@ build_addr_iadd(nir_builder *b, nir_ssa_def *addr,
    assert(addr->bit_size == offset->bit_size);
 
    switch (addr_format) {
+   case nir_address_format_32bit_global:
+   case nir_address_format_64bit_global:
+      assert(addr->num_components == 1);
+      return nir_iadd(b, addr, offset);
+
    case nir_address_format_vk_index_offset:
       assert(addr->num_components == 2);
       return nir_vec2(b, nir_channel(b, addr, 0),
@@ -578,6 +633,31 @@ addr_to_offset(nir_builder *b, nir_ssa_def *addr,
    return nir_channel(b, addr, 1);
 }
 
+/** Returns true if the given address format resolves to a global address */
+static bool
+addr_format_is_global(nir_address_format addr_format)
+{
+   return addr_format == nir_address_format_32bit_global ||
+          addr_format == nir_address_format_64bit_global;
+}
+
+static nir_ssa_def *
+addr_to_global(nir_builder *b, nir_ssa_def *addr,
+               nir_address_format addr_format)
+{
+   switch (addr_format) {
+   case nir_address_format_32bit_global:
+   case nir_address_format_64bit_global:
+      assert(addr->num_components == 1);
+      return addr;
+
+   case nir_address_format_vk_index_offset:
+      unreachable("Cannot get a 64-bit address with this address format");
+   }
+
+   unreachable("Invalid address format");
+}
+
 static nir_ssa_def *
 build_explicit_io_load(nir_builder *b, nir_intrinsic_instr *intrin,
                        nir_ssa_def *addr, nir_address_format addr_format,
@@ -587,11 +667,18 @@ build_explicit_io_load(nir_builder *b, nir_intrinsic_instr *intrin,
 
    nir_intrinsic_op op;
    switch (mode) {
-   case nir_var_ubo:
+   case nir_var_mem_ubo:
       op = nir_intrinsic_load_ubo;
       break;
-   case nir_var_ssbo:
-      op = nir_intrinsic_load_ssbo;
+   case nir_var_mem_ssbo:
+      if (addr_format_is_global(addr_format))
+         op = nir_intrinsic_load_global;
+      else
+         op = nir_intrinsic_load_ssbo;
+      break;
+   case nir_var_mem_global:
+      assert(addr_format_is_global(addr_format));
+      op = nir_intrinsic_load_global;
       break;
    default:
       unreachable("Unsupported explicit IO variable mode");
@@ -599,10 +686,15 @@ build_explicit_io_load(nir_builder *b, nir_intrinsic_instr *intrin,
 
    nir_intrinsic_instr *load = nir_intrinsic_instr_create(b->shader, op);
 
-   load->src[0] = nir_src_for_ssa(addr_to_index(b, addr, addr_format));
-   load->src[1] = nir_src_for_ssa(addr_to_offset(b, addr, addr_format));
+   if (addr_format_is_global(addr_format)) {
+      assert(op == nir_intrinsic_load_global);
+      load->src[0] = nir_src_for_ssa(addr_to_global(b, addr, addr_format));
+   } else {
+      load->src[0] = nir_src_for_ssa(addr_to_index(b, addr, addr_format));
+      load->src[1] = nir_src_for_ssa(addr_to_offset(b, addr, addr_format));
+   }
 
-   if (mode != nir_var_ubo)
+   if (mode != nir_var_mem_ubo)
       nir_intrinsic_set_access(load, nir_intrinsic_access(intrin));
 
    /* TODO: We should try and provide a better alignment.  For OpenCL, we need
@@ -628,8 +720,15 @@ build_explicit_io_store(nir_builder *b, nir_intrinsic_instr *intrin,
 
    nir_intrinsic_op op;
    switch (mode) {
-   case nir_var_ssbo:
-      op = nir_intrinsic_store_ssbo;
+   case nir_var_mem_ssbo:
+      if (addr_format_is_global(addr_format))
+         op = nir_intrinsic_store_global;
+      else
+         op = nir_intrinsic_store_ssbo;
+      break;
+   case nir_var_mem_global:
+      assert(addr_format_is_global(addr_format));
+      op = nir_intrinsic_store_global;
       break;
    default:
       unreachable("Unsupported explicit IO variable mode");
@@ -638,8 +737,12 @@ build_explicit_io_store(nir_builder *b, nir_intrinsic_instr *intrin,
    nir_intrinsic_instr *store = nir_intrinsic_instr_create(b->shader, op);
 
    store->src[0] = nir_src_for_ssa(value);
-   store->src[1] = nir_src_for_ssa(addr_to_index(b, addr, addr_format));
-   store->src[2] = nir_src_for_ssa(addr_to_offset(b, addr, addr_format));
+   if (addr_format_is_global(addr_format)) {
+      store->src[1] = nir_src_for_ssa(addr_to_global(b, addr, addr_format));
+   } else {
+      store->src[1] = nir_src_for_ssa(addr_to_index(b, addr, addr_format));
+      store->src[2] = nir_src_for_ssa(addr_to_offset(b, addr, addr_format));
+   }
 
    nir_intrinsic_set_write_mask(store, write_mask);
 
@@ -666,27 +769,15 @@ build_explicit_io_atomic(nir_builder *b, nir_intrinsic_instr *intrin,
 
    nir_intrinsic_op op;
    switch (mode) {
-   case nir_var_ssbo:
-      switch (intrin->intrinsic) {
-#define OP(O) case nir_intrinsic_deref_##O: op = nir_intrinsic_ssbo_##O; break;
-      OP(atomic_exchange)
-      OP(atomic_comp_swap)
-      OP(atomic_add)
-      OP(atomic_imin)
-      OP(atomic_umin)
-      OP(atomic_imax)
-      OP(atomic_umax)
-      OP(atomic_and)
-      OP(atomic_or)
-      OP(atomic_xor)
-      OP(atomic_fadd)
-      OP(atomic_fmin)
-      OP(atomic_fmax)
-      OP(atomic_fcomp_swap)
-#undef OP
-      default:
-         unreachable("Invalid SSBO atomic");
-      }
+   case nir_var_mem_ssbo:
+      if (addr_format_is_global(addr_format))
+         op = global_atomic_for_deref(intrin->intrinsic);
+      else
+         op = ssbo_atomic_for_deref(intrin->intrinsic);
+      break;
+   case nir_var_mem_global:
+      assert(addr_format_is_global(addr_format));
+      op = global_atomic_for_deref(intrin->intrinsic);
       break;
    default:
       unreachable("Unsupported explicit IO variable mode");
@@ -694,11 +785,15 @@ build_explicit_io_atomic(nir_builder *b, nir_intrinsic_instr *intrin,
 
    nir_intrinsic_instr *atomic = nir_intrinsic_instr_create(b->shader, op);
 
-   atomic->src[0] = nir_src_for_ssa(addr_to_index(b, addr, addr_format));
-   atomic->src[1] = nir_src_for_ssa(addr_to_offset(b, addr, addr_format));
+   unsigned src = 0;
+   if (addr_format_is_global(addr_format)) {
+      atomic->src[src++] = nir_src_for_ssa(addr_to_global(b, addr, addr_format));
+   } else {
+      atomic->src[src++] = nir_src_for_ssa(addr_to_index(b, addr, addr_format));
+      atomic->src[src++] = nir_src_for_ssa(addr_to_offset(b, addr, addr_format));
+   }
    for (unsigned i = 0; i < num_data_srcs; i++) {
-      assert(intrin->src[1 + i].is_ssa);
-      atomic->src[2 + i] = nir_src_for_ssa(intrin->src[1 + i].ssa);
+      atomic->src[src++] = nir_src_for_ssa(intrin->src[1 + i].ssa);
    }
 
    assert(intrin->dest.ssa.num_components == 1);
@@ -944,6 +1039,7 @@ nir_get_io_offset_src(nir_intrinsic_instr *instr)
    case nir_intrinsic_load_output:
    case nir_intrinsic_load_shared:
    case nir_intrinsic_load_uniform:
+   case nir_intrinsic_load_global:
       return &instr->src[0];
    case nir_intrinsic_load_ubo:
    case nir_intrinsic_load_ssbo:
@@ -952,6 +1048,7 @@ nir_get_io_offset_src(nir_intrinsic_instr *instr)
    case nir_intrinsic_load_interpolated_input:
    case nir_intrinsic_store_output:
    case nir_intrinsic_store_shared:
+   case nir_intrinsic_store_global:
       return &instr->src[1];
    case nir_intrinsic_store_ssbo:
    case nir_intrinsic_store_per_vertex_output:

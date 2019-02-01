@@ -126,8 +126,8 @@ radv_optimize_nir(struct nir_shader *shader, bool optimize_conservatively,
         do {
                 progress = false;
 
-		NIR_PASS(progress, shader, nir_split_array_vars, nir_var_function);
-		NIR_PASS(progress, shader, nir_shrink_vec_array_vars, nir_var_function);
+		NIR_PASS(progress, shader, nir_split_array_vars, nir_var_function_temp);
+		NIR_PASS(progress, shader, nir_shrink_vec_array_vars, nir_var_function_temp);
 
                 NIR_PASS_V(shader, nir_lower_vars_to_ssa);
 		NIR_PASS_V(shader, nir_lower_pack);
@@ -267,7 +267,7 @@ radv_shader_compile_to_nir(struct radv_device *device,
 		 * inline functions.  That way they get properly initialized at the top
 		 * of the function and not at the top of its caller.
 		 */
-		NIR_PASS_V(nir, nir_lower_constant_initializers, nir_var_function);
+		NIR_PASS_V(nir, nir_lower_constant_initializers, nir_var_function_temp);
 		NIR_PASS_V(nir, nir_lower_returns);
 		NIR_PASS_V(nir, nir_inline_functions);
 		NIR_PASS_V(nir, nir_opt_deref);
@@ -329,7 +329,7 @@ radv_shader_compile_to_nir(struct radv_device *device,
 	nir_split_var_copies(nir);
 
 	nir_lower_global_vars_to_local(nir);
-	nir_remove_dead_variables(nir, nir_var_function);
+	nir_remove_dead_variables(nir, nir_var_function_temp);
 	nir_lower_subgroups(nir, &(struct nir_lower_subgroups_options) {
 			.subgroup_size = 64,
 			.ballot_bit_size = 64,
@@ -395,7 +395,8 @@ radv_alloc_shader_memory(struct radv_device *device,
 	                                     RADEON_DOMAIN_VRAM,
 					     RADEON_FLAG_NO_INTERPROCESS_SHARING |
 					     (device->physical_device->cpdma_prefetch_writes_memory ?
-					             0 : RADEON_FLAG_READ_ONLY));
+					             0 : RADEON_FLAG_READ_ONLY),
+					     RADV_BO_PRIORITY_SHADER);
 	slab->ptr = (char*)device->ws->buffer_map(slab->bo);
 	list_inithead(&slab->shaders);
 
@@ -732,7 +733,8 @@ generate_shader_stats(struct radv_device *device,
 		      gl_shader_stage stage,
 		      struct _mesa_string_buffer *buf)
 {
-	unsigned lds_increment = device->physical_device->rad_info.chip_class >= CIK ? 512 : 256;
+	enum chip_class chip_class = device->physical_device->rad_info.chip_class;
+	unsigned lds_increment = chip_class >= CIK ? 512 : 256;
 	struct ac_shader_config *conf;
 	unsigned max_simd_waves;
 	unsigned lds_per_wave = 0;
@@ -745,12 +747,17 @@ generate_shader_stats(struct radv_device *device,
 		lds_per_wave = conf->lds_size * lds_increment +
 			       align(variant->info.fs.num_interp * 48,
 				     lds_increment);
+	} else if (stage == MESA_SHADER_COMPUTE) {
+		unsigned max_workgroup_size =
+				radv_nir_get_max_workgroup_size(chip_class, variant->nir);
+		lds_per_wave = (conf->lds_size * lds_increment) /
+			       DIV_ROUND_UP(max_workgroup_size, 64);
 	}
 
 	if (conf->num_sgprs)
 		max_simd_waves =
 			MIN2(max_simd_waves,
-			     radv_get_num_physical_sgprs(device->physical_device) / conf->num_sgprs);
+			     ac_get_num_physical_sgprs(chip_class) / conf->num_sgprs);
 
 	if (conf->num_vgprs)
 		max_simd_waves =
@@ -835,7 +842,7 @@ radv_GetShaderInfoAMD(VkDevice _device,
 			VkShaderStatisticsInfoAMD statistics = {};
 			statistics.shaderStageMask = shaderStage;
 			statistics.numPhysicalVgprs = RADV_NUM_PHYSICAL_VGPRS;
-			statistics.numPhysicalSgprs = radv_get_num_physical_sgprs(device->physical_device);
+			statistics.numPhysicalSgprs = ac_get_num_physical_sgprs(device->physical_device->rad_info.chip_class);
 			statistics.numAvailableSgprs = statistics.numPhysicalSgprs;
 
 			if (stage == MESA_SHADER_COMPUTE) {

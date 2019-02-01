@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christian Gmeiner <christian.gmeiner@gmail.com>
+ * Copyright (C) 2019 Jonathan Marek <jonathan@marek.ca>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,30 +21,15 @@
  * SOFTWARE.
  *
  * Authors:
- *    Christian Gmeiner <christian.gmeiner@gmail.com>
+ *    Jonathan Marek <jonathan@marek.ca>
+ *    Rob Clark <robclark@freedesktop.org>
  */
 
-#include "imx_drm_public.h"
-#include "etnaviv/drm/etnaviv_drm_public.h"
-#include "renderonly/renderonly.h"
+#ifndef FD2_QUERY_H_
+#define FD2_QUERY_H_
 
-#include <fcntl.h>
-#include <unistd.h>
+#include "pipe/p_context.h"
 
-struct pipe_screen *imx_drm_screen_create(int fd)
-{
-   struct renderonly ro = {
-      .create_for_resource = renderonly_create_kms_dumb_buffer_for_resource,
-      .kms_fd = fd,
-      .gpu_fd = open("/dev/dri/renderD128", O_RDWR | O_CLOEXEC)
-   };
+void fd2_query_context_init(struct pipe_context *pctx);
 
-   if (ro.gpu_fd < 0)
-      return NULL;
-
-   struct pipe_screen *screen = etna_drm_screen_create_renderonly(&ro);
-   if (!screen)
-      close(ro.gpu_fd);
-
-   return screen;
-}
+#endif /* FD2_QUERY_H_ */

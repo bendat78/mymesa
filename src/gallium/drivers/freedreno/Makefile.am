@@ -3,6 +3,7 @@ include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
 	-Wno-packed-bitfield-compat \
+	-I$(top_srcdir)/include/drm-uapi \
 	-I$(top_srcdir)/src/gallium/drivers/freedreno/ir3 \
 	-I$(top_srcdir)/src/freedreno \
 	-I$(top_srcdir)/src/freedreno/registers \
@@ -22,4 +23,6 @@ libfreedreno_la_SOURCES = \
 	$(a6xx_SOURCES) \
 	$(ir3_SOURCES)
 
-EXTRA_DIST = meson.build
+EXTRA_DIST = \
+	ir3/ir3_cmdline.c \
+	meson.build

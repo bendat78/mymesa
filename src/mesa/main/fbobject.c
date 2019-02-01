@@ -1003,6 +1003,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    fb->_HasSNormOrFloatColorBuffer = GL_FALSE;
    fb->_HasAttachments = true;
    fb->_IntegerBuffers = 0;
+   fb->_RGBBuffers = 0;
 
    /* Start at -2 to more easily loop over all attachment points.
     *  -2: depth buffer
@@ -1148,6 +1149,9 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          /* check if integer color */
          if (_mesa_is_format_integer_color(attFormat))
             fb->_IntegerBuffers |= (1 << i);
+
+         if (f == GL_RGB)
+            fb->_RGBBuffers |= (1 << i);
 
          fb->_AllColorBuffersFixedPoint =
             fb->_AllColorBuffersFixedPoint &&
@@ -4270,7 +4274,7 @@ get_framebuffer_attachment_parameter(struct gl_context *ctx,
          }
       }
       else {
-         if (ctx->Extensions.EXT_framebuffer_sRGB) {
+         if (ctx->Extensions.EXT_sRGB) {
             *params =
                _mesa_get_format_color_encoding(att->Renderbuffer->Format);
          }
@@ -4637,6 +4641,82 @@ invalid_enum:
    return;
 }
 
+static struct gl_renderbuffer_attachment *
+get_fb_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
+                  const GLenum attachment)
+{
+   switch (attachment) {
+   case GL_COLOR:
+      return &fb->Attachment[BUFFER_BACK_LEFT];
+   case GL_COLOR_ATTACHMENT0:
+   case GL_COLOR_ATTACHMENT1:
+   case GL_COLOR_ATTACHMENT2:
+   case GL_COLOR_ATTACHMENT3:
+   case GL_COLOR_ATTACHMENT4:
+   case GL_COLOR_ATTACHMENT5:
+   case GL_COLOR_ATTACHMENT6:
+   case GL_COLOR_ATTACHMENT7:
+   case GL_COLOR_ATTACHMENT8:
+   case GL_COLOR_ATTACHMENT9:
+   case GL_COLOR_ATTACHMENT10:
+   case GL_COLOR_ATTACHMENT11:
+   case GL_COLOR_ATTACHMENT12:
+   case GL_COLOR_ATTACHMENT13:
+   case GL_COLOR_ATTACHMENT14:
+   case GL_COLOR_ATTACHMENT15:
+      return &fb->Attachment[BUFFER_COLOR0 + attachment - GL_COLOR_ATTACHMENT0];
+   case GL_DEPTH:
+   case GL_DEPTH_ATTACHMENT:
+   case GL_DEPTH_STENCIL_ATTACHMENT:
+      return &fb->Attachment[BUFFER_DEPTH];
+   case GL_STENCIL:
+   case GL_STENCIL_ATTACHMENT:
+      return &fb->Attachment[BUFFER_STENCIL];
+   default:
+      return NULL;
+   }
+}
+
+static void
+discard_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
+                    GLsizei numAttachments, const GLenum *attachments)
+{
+   if (!ctx->Driver.DiscardFramebuffer)
+      return;
+
+   for (int i = 0; i < numAttachments; i++) {
+      struct gl_renderbuffer_attachment *att =
+            get_fb_attachment(ctx, fb, attachments[i]);
+
+      if (!att)
+         continue;
+
+      /* If we're asked to invalidate just depth or just stencil, but the
+       * attachment is packed depth/stencil, then we can only use
+       * Driver.DiscardFramebuffer if the attachments list includes both depth
+       * and stencil and they both point at the same renderbuffer.
+       */
+      if ((attachments[i] == GL_DEPTH_ATTACHMENT ||
+           attachments[i] == GL_STENCIL_ATTACHMENT) &&
+          (!att->Renderbuffer ||
+           att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL)) {
+         GLenum other_format = (attachments[i] == GL_DEPTH_ATTACHMENT ?
+                                GL_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT);
+         bool has_both = false;
+         for (int j = 0; j < numAttachments; j++) {
+            if (attachments[j] == other_format)
+               has_both = true;
+            break;
+         }
+
+         if (fb->Attachment[BUFFER_DEPTH].Renderbuffer !=
+             fb->Attachment[BUFFER_STENCIL].Renderbuffer || !has_both)
+            continue;
+      }
+
+      ctx->Driver.DiscardFramebuffer(ctx, fb, att);
+   }
+}
 
 void GLAPIENTRY
 _mesa_InvalidateSubFramebuffer_no_error(GLenum target, GLsizei numAttachments,
@@ -4697,12 +4777,18 @@ _mesa_InvalidateNamedFramebufferSubData(GLuint framebuffer,
                                   "glInvalidateNamedFramebufferSubData");
 }
 
-
 void GLAPIENTRY
 _mesa_InvalidateFramebuffer_no_error(GLenum target, GLsizei numAttachments,
                                      const GLenum *attachments)
 {
-   /* no-op */
+   struct gl_framebuffer *fb;
+   GET_CURRENT_CONTEXT(ctx);
+
+   fb = get_framebuffer_target(ctx, target);
+   if (!fb)
+      return;
+
+   discard_framebuffer(ctx, fb, numAttachments, attachments);
 }
 
 
@@ -4738,6 +4824,8 @@ _mesa_InvalidateFramebuffer(GLenum target, GLsizei numAttachments,
                                   ctx->Const.MaxViewportWidth,
                                   ctx->Const.MaxViewportHeight,
                                   "glInvalidateFramebuffer");
+
+   discard_framebuffer(ctx, fb, numAttachments, attachments);
 }
 
 
@@ -4824,8 +4912,7 @@ _mesa_DiscardFramebufferEXT(GLenum target, GLsizei numAttachments,
       }
    }
 
-   if (ctx->Driver.DiscardFramebuffer)
-      ctx->Driver.DiscardFramebuffer(ctx, target, numAttachments, attachments);
+   discard_framebuffer(ctx, fb, numAttachments, attachments);
 
    return;
 

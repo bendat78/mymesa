@@ -24,11 +24,11 @@
  *    Christian Gmeiner <christian.gmeiner@gmail.com>
  */
 
-#ifndef __IMX_DRM_PUBLIC_H__
-#define __IMX_DRM_PUBLIC_H__
+#ifndef __KMSRO_DRM_PUBLIC_H__
+#define __KMSRO_DRM_PUBLIC_H__
 
 struct pipe_screen;
 
-struct pipe_screen *imx_drm_screen_create(int fd);
+struct pipe_screen *kmsro_drm_screen_create(int fd);
 
-#endif /* __IMX_DRM_PUBLIC_H__ */
+#endif /* __KMSRO_DRM_PUBLIC_H__ */

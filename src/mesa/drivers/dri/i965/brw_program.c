@@ -40,8 +40,9 @@
 #include "tnl/tnl.h"
 #include "util/ralloc.h"
 #include "compiler/glsl/ir.h"
+#include "compiler/glsl/program.h"
 #include "compiler/glsl/glsl_to_nir.h"
-#include "compiler/glsl/float64_glsl.h"
+#include "glsl/float64_glsl.h"
 
 #include "brw_program.h"
 #include "brw_context.h"
@@ -87,7 +88,7 @@ compile_fp64_funcs(struct gl_context *ctx,
 
    sh->Source = float64_source;
    sh->CompileStatus = COMPILE_FAILURE;
-   _mesa_compile_shader(ctx, sh);
+   _mesa_glsl_compile_shader(ctx, sh, false, false, true);
 
    if (!sh->CompileStatus) {
       if (sh->InfoLog) {
