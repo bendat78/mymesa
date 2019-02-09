@@ -199,11 +199,10 @@ v3d_shader_precompile(struct v3d_context *v3d,
 
                 nir_foreach_variable(var, &s->outputs) {
                         if (var->data.location == FRAG_RESULT_COLOR) {
-                                key.nr_cbufs = 1;
-                        } else if (var->data.location == FRAG_RESULT_DATA0) {
-                                key.nr_cbufs = MAX2(key.nr_cbufs,
-                                                    var->data.location -
-                                                    FRAG_RESULT_DATA0 + 1);
+                                key.cbufs |= 1 << 0;
+                        } else if (var->data.location >= FRAG_RESULT_DATA0) {
+                                key.cbufs |= 1 << (var->data.location -
+                                                   FRAG_RESULT_DATA0);
                         }
                 }
 
@@ -277,8 +276,6 @@ v3d_shader_state_create(struct pipe_context *pctx,
                         fprintf(stderr, "\n");
                 }
                 s = tgsi_to_nir(cso->tokens, &v3d_nir_options);
-
-                so->was_tgsi = true;
         }
 
         nir_variable_mode lower_mode = nir_var_all & ~nir_var_uniform;
@@ -488,6 +485,7 @@ v3d_update_compiled_fs(struct v3d_context *v3d, uint8_t prim_mode)
         struct v3d_job *job = v3d->job;
         struct v3d_fs_key local_key;
         struct v3d_fs_key *key = &local_key;
+        nir_shader *s = v3d->prog.bind_fs->base.ir.nir;
 
         if (!(v3d->dirty & (VC5_DIRTY_PRIM_MODE |
                             VC5_DIRTY_BLEND |
@@ -527,16 +525,18 @@ v3d_update_compiled_fs(struct v3d_context *v3d, uint8_t prim_mode)
                 key->alpha_test_func = v3d->zsa->base.alpha.func;
         }
 
-        /* gl_FragColor's propagation to however many bound color buffers
-         * there are means that the buffer count needs to be in the key.
-         */
-        key->nr_cbufs = v3d->framebuffer.nr_cbufs;
         key->swap_color_rb = v3d->swap_color_rb;
 
-        for (int i = 0; i < key->nr_cbufs; i++) {
+        for (int i = 0; i < v3d->framebuffer.nr_cbufs; i++) {
                 struct pipe_surface *cbuf = v3d->framebuffer.cbufs[i];
                 if (!cbuf)
                         continue;
+
+                /* gl_FragColor's propagation to however many bound color
+                 * buffers there are means that the shader compile needs to
+                 * know what buffers are present.
+                 */
+                key->cbufs |= 1 << i;
 
                 const struct util_format_description *desc =
                         util_format_description(cbuf->format);
@@ -546,7 +546,7 @@ v3d_update_compiled_fs(struct v3d_context *v3d, uint8_t prim_mode)
                         key->f32_color_rb |= 1 << i;
                 }
 
-                if (v3d->prog.bind_fs->was_tgsi) {
+                if (s->info.fs.untyped_color_outputs) {
                         if (util_format_is_pure_uint(cbuf->format))
                                 key->uint_color_rb |= 1 << i;
                         else if (util_format_is_pure_sint(cbuf->format))

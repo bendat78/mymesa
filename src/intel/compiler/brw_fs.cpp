@@ -789,6 +789,43 @@ fs_inst::components_read(unsigned i) const
       else
          return 1;
 
+   case SHADER_OPCODE_A64_UNTYPED_READ_LOGICAL:
+      assert(src[2].file == IMM);
+      return 1;
+
+   case SHADER_OPCODE_A64_UNTYPED_WRITE_LOGICAL:
+      assert(src[2].file == IMM);
+      return i == 1 ? src[2].ud : 1;
+
+   case SHADER_OPCODE_A64_UNTYPED_ATOMIC_LOGICAL:
+      assert(src[2].file == IMM);
+      if (i == 1) {
+         /* Data source */
+         const unsigned op = src[2].ud;
+         switch (op) {
+         case BRW_AOP_INC:
+         case BRW_AOP_DEC:
+         case BRW_AOP_PREDEC:
+            return 0;
+         case BRW_AOP_CMPWR:
+            return 2;
+         default:
+            return 1;
+         }
+      } else {
+         return 1;
+      }
+
+   case SHADER_OPCODE_A64_UNTYPED_ATOMIC_FLOAT_LOGICAL:
+      assert(src[2].file == IMM);
+      if (i == 1) {
+         /* Data source */
+         const unsigned op = src[2].ud;
+         return op == BRW_AOP_FCMPWR ? 2 : 1;
+      } else {
+         return 1;
+      }
+
    case SHADER_OPCODE_BYTE_SCATTERED_READ_LOGICAL:
       /* Scattered logical opcodes use the following params:
        * src[0] Surface coordinates
@@ -3799,8 +3836,12 @@ fs_visitor::lower_load_payload()
       }
 
       for (uint8_t i = inst->header_size; i < inst->sources; i++) {
-         if (inst->src[i].file != BAD_FILE)
-            ibld.MOV(retype(dst, inst->src[i].type), inst->src[i]);
+         if (inst->src[i].file != BAD_FILE) {
+            dst.type = inst->src[i].type;
+            ibld.MOV(dst, inst->src[i]);
+         } else {
+            dst.type = BRW_REGISTER_TYPE_UD;
+         }
          dst = offset(dst, ibld, 1);
       }
 
@@ -5204,6 +5245,117 @@ lower_surface_logical_send(const fs_builder &bld, fs_inst *inst)
 }
 
 static void
+lower_a64_logical_send(const fs_builder &bld, fs_inst *inst)
+{
+   const gen_device_info *devinfo = bld.shader->devinfo;
+
+   const fs_reg &addr = inst->src[0];
+   const fs_reg &src = inst->src[1];
+   const unsigned src_comps = inst->components_read(1);
+   assert(inst->src[2].file == IMM);
+   const unsigned arg = inst->src[2].ud;
+   const bool has_side_effects = inst->has_side_effects();
+
+   /* If the surface message has side effects and we're a fragment shader, we
+    * have to predicate with the sample mask to avoid helper invocations.
+    */
+   if (has_side_effects && bld.shader->stage == MESA_SHADER_FRAGMENT) {
+      inst->flag_subreg = 2;
+      inst->predicate = BRW_PREDICATE_NORMAL;
+      inst->predicate_inverse = false;
+
+      fs_reg sample_mask = bld.sample_mask_reg();
+      const fs_builder ubld = bld.group(1, 0).exec_all();
+      ubld.MOV(retype(brw_flag_subreg(inst->flag_subreg), sample_mask.type),
+               sample_mask);
+   }
+
+   fs_reg payload, payload2;
+   unsigned mlen, ex_mlen = 0;
+   if (devinfo->gen >= 9) {
+      /* On Skylake and above, we have SENDS */
+      mlen = 2 * (inst->exec_size / 8);
+      ex_mlen = src_comps * (inst->exec_size / 8);
+      payload = retype(bld.move_to_vgrf(addr, 1), BRW_REGISTER_TYPE_UD);
+      payload2 = retype(bld.move_to_vgrf(src, src_comps),
+                        BRW_REGISTER_TYPE_UD);
+   } else {
+      /* Add two because the address is 64-bit */
+      const unsigned dwords = 2 + src_comps;
+      mlen = dwords * (inst->exec_size / 8);
+
+      fs_reg sources[5];
+
+      sources[0] = addr;
+
+      for (unsigned i = 0; i < src_comps; i++)
+         sources[1 + i] = offset(src, bld, i);
+
+      payload = bld.vgrf(BRW_REGISTER_TYPE_UD, dwords);
+      bld.LOAD_PAYLOAD(payload, sources, 1 + src_comps, 0);
+   }
+
+   uint32_t desc;
+   switch (inst->opcode) {
+   case SHADER_OPCODE_A64_UNTYPED_READ_LOGICAL:
+      desc = brw_dp_a64_untyped_surface_rw_desc(devinfo, inst->exec_size,
+                                                arg,   /* num_channels */
+                                                false  /* write */);
+      break;
+
+   case SHADER_OPCODE_A64_UNTYPED_WRITE_LOGICAL:
+      desc = brw_dp_a64_untyped_surface_rw_desc(devinfo, inst->exec_size,
+                                                arg,   /* num_channels */
+                                                true   /* write */);
+      break;
+
+   case SHADER_OPCODE_A64_BYTE_SCATTERED_READ_LOGICAL:
+      desc = brw_dp_a64_byte_scattered_rw_desc(devinfo, inst->exec_size,
+                                               arg,   /* bit_size */
+                                               false  /* write */);
+      break;
+
+   case SHADER_OPCODE_A64_BYTE_SCATTERED_WRITE_LOGICAL:
+      desc = brw_dp_a64_byte_scattered_rw_desc(devinfo, inst->exec_size,
+                                               arg,   /* bit_size */
+                                               true   /* write */);
+      break;
+
+   case SHADER_OPCODE_A64_UNTYPED_ATOMIC_LOGICAL:
+      desc = brw_dp_a64_untyped_atomic_desc(devinfo, inst->exec_size, 32,
+                                            arg,   /* atomic_op */
+                                            !inst->dst.is_null());
+      break;
+
+   case SHADER_OPCODE_A64_UNTYPED_ATOMIC_FLOAT_LOGICAL:
+      desc = brw_dp_a64_untyped_atomic_float_desc(devinfo, inst->exec_size,
+                                                  arg,   /* atomic_op */
+                                                  !inst->dst.is_null());
+      break;
+
+   default:
+      unreachable("Unknown A64 logical instruction");
+   }
+
+   /* Update the original instruction. */
+   inst->opcode = SHADER_OPCODE_SEND;
+   inst->mlen = mlen;
+   inst->ex_mlen = ex_mlen;
+   inst->header_size = 0;
+   inst->send_has_side_effects = has_side_effects;
+   inst->send_is_volatile = !has_side_effects;
+
+   /* Set up SFID and descriptors */
+   inst->sfid = HSW_SFID_DATAPORT_DATA_CACHE_1;
+   inst->desc = desc;
+   inst->resize_sources(4);
+   inst->src[0] = brw_imm_ud(0); /* desc */
+   inst->src[1] = brw_imm_ud(0); /* ex_desc */
+   inst->src[2] = payload;
+   inst->src[3] = payload2;
+}
+
+static void
 lower_varying_pull_constant_logical_send(const fs_builder &bld, fs_inst *inst)
 {
    const gen_device_info *devinfo = bld.shader->devinfo;
@@ -5375,6 +5527,15 @@ fs_visitor::lower_logical_sends()
       case SHADER_OPCODE_TYPED_SURFACE_WRITE_LOGICAL:
       case SHADER_OPCODE_TYPED_ATOMIC_LOGICAL:
          lower_surface_logical_send(ibld, inst);
+         break;
+
+      case SHADER_OPCODE_A64_UNTYPED_WRITE_LOGICAL:
+      case SHADER_OPCODE_A64_UNTYPED_READ_LOGICAL:
+      case SHADER_OPCODE_A64_BYTE_SCATTERED_WRITE_LOGICAL:
+      case SHADER_OPCODE_A64_BYTE_SCATTERED_READ_LOGICAL:
+      case SHADER_OPCODE_A64_UNTYPED_ATOMIC_LOGICAL:
+      case SHADER_OPCODE_A64_UNTYPED_ATOMIC_FLOAT_LOGICAL:
+         lower_a64_logical_send(ibld, inst);
          break;
 
       case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_LOGICAL:
@@ -5873,6 +6034,16 @@ get_lowered_simd_width(const struct gen_device_info *devinfo,
    case SHADER_OPCODE_BYTE_SCATTERED_WRITE_LOGICAL:
    case SHADER_OPCODE_BYTE_SCATTERED_READ_LOGICAL:
       return MIN2(16, inst->exec_size);
+
+   case SHADER_OPCODE_A64_UNTYPED_WRITE_LOGICAL:
+   case SHADER_OPCODE_A64_UNTYPED_READ_LOGICAL:
+   case SHADER_OPCODE_A64_BYTE_SCATTERED_WRITE_LOGICAL:
+   case SHADER_OPCODE_A64_BYTE_SCATTERED_READ_LOGICAL:
+      return devinfo->gen <= 8 ? 8 : MIN2(16, inst->exec_size);
+
+   case SHADER_OPCODE_A64_UNTYPED_ATOMIC_LOGICAL:
+   case SHADER_OPCODE_A64_UNTYPED_ATOMIC_FLOAT_LOGICAL:
+      return 8;
 
    case SHADER_OPCODE_URB_READ_SIMD8:
    case SHADER_OPCODE_URB_READ_SIMD8_PER_SLOT:

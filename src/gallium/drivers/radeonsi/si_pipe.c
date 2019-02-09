@@ -206,6 +206,10 @@ static void si_destroy_context(struct pipe_context *context)
 		sctx->b.delete_compute_state(&sctx->b, sctx->cs_copy_image);
 	if (sctx->cs_copy_image_1d_array)
 		sctx->b.delete_compute_state(&sctx->b, sctx->cs_copy_image_1d_array);
+	if (sctx->cs_clear_render_target)
+		sctx->b.delete_compute_state(&sctx->b, sctx->cs_clear_render_target);
+	if (sctx->cs_clear_render_target_1d_array)
+		sctx->b.delete_compute_state(&sctx->b, sctx->cs_clear_render_target_1d_array);
 
 	if (sctx->blitter)
 		util_blitter_destroy(sctx->blitter);
@@ -427,9 +431,10 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	}
 
 	sctx->allocator_zeroed_memory =
-			u_suballocator_create(&sctx->b, sscreen->info.gart_page_size,
-					      0, PIPE_USAGE_DEFAULT,
-					      SI_RESOURCE_FLAG_SO_FILLED_SIZE, true);
+		u_suballocator_create(&sctx->b, 128 * 1024,
+				      0, PIPE_USAGE_DEFAULT,
+				      SI_RESOURCE_FLAG_UNMAPPABLE |
+				      SI_RESOURCE_FLAG_CLEAR, false);
 	if (!sctx->allocator_zeroed_memory)
 		goto fail;
 

@@ -1904,11 +1904,16 @@ typedef struct nir_if {
 typedef struct {
    nir_if *nif;
 
+   /** Instruction that generates nif::condition. */
    nir_instr *conditional_instr;
 
+   /** Block within ::nif that has the break instruction. */
    nir_block *break_block;
+
+   /** Last block for the then- or else-path that does not contain the break. */
    nir_block *continue_from_block;
 
+   /** True when ::break_block is in the else-path of ::nif. */
    bool continue_from_then;
 
    struct list_head loop_terminator_link;
@@ -2825,7 +2830,7 @@ should_print_nir(void)
 static inline void nir_validate_shader(nir_shader *shader, const char *when) { (void) shader; (void)when; }
 static inline void nir_metadata_set_validation_flag(nir_shader *shader) { (void) shader; }
 static inline void nir_metadata_check_validation_flag(nir_shader *shader) { (void) shader; }
-static inline bool should_skip_nir(const char *pass_name) { return false; }
+static inline bool should_skip_nir(UNUSED const char *pass_name) { return false; }
 static inline bool should_clone_nir(void) { return false; }
 static inline bool should_serialize_deserialize_nir(void) { return false; }
 static inline bool should_print_nir(void) { return false; }

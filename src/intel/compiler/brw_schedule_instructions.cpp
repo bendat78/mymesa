@@ -486,6 +486,10 @@ schedule_node::set_latency_gen7(bool is_haswell)
          case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE:
          case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ:
          case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE:
+         case GEN8_DATAPORT_DC_PORT1_A64_UNTYPED_SURFACE_WRITE:
+         case GEN8_DATAPORT_DC_PORT1_A64_UNTYPED_SURFACE_READ:
+         case GEN8_DATAPORT_DC_PORT1_A64_SCATTERED_WRITE:
+         case GEN9_DATAPORT_DC_PORT1_A64_SCATTERED_READ:
             /* See also SHADER_OPCODE_UNTYPED_SURFACE_READ */
             latency = 300;
             break;
@@ -495,6 +499,8 @@ schedule_node::set_latency_gen7(bool is_haswell)
          case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2:
          case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP:
          case GEN9_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_FLOAT_OP:
+         case GEN8_DATAPORT_DC_PORT1_A64_UNTYPED_ATOMIC_OP:
+         case GEN9_DATAPORT_DC_PORT1_A64_UNTYPED_ATOMIC_FLOAT_OP:
             /* See also SHADER_OPCODE_UNTYPED_ATOMIC */
             latency = 14000;
             break;

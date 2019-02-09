@@ -182,6 +182,13 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return class_3d >= GM200_3D_CLASS ? 8 : 0;
    case PIPE_CAP_MAX_TEXTURE_UPLOAD_MEMORY_BUDGET:
       return 64 * 1024 * 1024;
+   case PIPE_CAP_MAX_VARYINGS:
+      /* NOTE: These only count our slots for GENERIC varyings.
+       * The address space may be larger, but the actual hard limit seems to be
+       * less than what the address space layout permits, so don't add TEXCOORD,
+       * COLOR, etc. here.
+       */
+      return 0x1f0 / 16;
 
    /* supported caps */
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
@@ -266,6 +273,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_CAN_BIND_CONST_BUFFER_AS_VERTEX:
    case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
    case PIPE_CAP_QUERY_SO_OVERFLOW:
+   case PIPE_CAP_DEST_SURFACE_SRGB_CONTROL:
       return 1;
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
       return nouveau_screen(pscreen)->vram_domain & NOUVEAU_BO_VRAM ? 1 : 0;
@@ -336,6 +344,8 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SURFACE_SAMPLE_COUNT:
    case PIPE_CAP_QUERY_PIPELINE_STATISTICS_SINGLE:
    case PIPE_CAP_RGB_OVERRIDE_DST_ALPHA_BLEND:
+   case PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS:
+   case PIPE_CAP_NIR_COMPACT_ARRAYS:
       return 0;
 
    case PIPE_CAP_VENDOR_ID:
@@ -392,18 +402,6 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen,
    case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
       return 16;
    case PIPE_SHADER_CAP_MAX_INPUTS:
-      if (shader == PIPE_SHADER_VERTEX)
-         return 32;
-      /* NOTE: These only count our slots for GENERIC varyings.
-       * The address space may be larger, but the actual hard limit seems to be
-       * less than what the address space layout permits, so don't add TEXCOORD,
-       * COLOR, etc. here.
-       */
-      if (shader == PIPE_SHADER_FRAGMENT)
-         return 0x1f0 / 16;
-      /* Actually this counts CLIPVERTEX, which occupies the last generic slot,
-       * and excludes 0x60 per-patch inputs.
-       */
       return 0x200 / 16;
    case PIPE_SHADER_CAP_MAX_OUTPUTS:
       return 32;
@@ -1306,6 +1304,8 @@ nvc0_screen_create(struct nouveau_device *dev)
    MK_MACRO(NVC0_3D_MACRO_DRAW_ELEMENTS_INDIRECT_COUNT, mme9097_draw_elts_indirect_count);
    MK_MACRO(NVC0_3D_MACRO_QUERY_BUFFER_WRITE, mme9097_query_buffer_write);
    MK_MACRO(NVC0_3D_MACRO_CONSERVATIVE_RASTER_STATE, mme9097_conservative_raster_state);
+   MK_MACRO(NVC0_3D_MACRO_COMPUTE_COUNTER, mme9097_compute_counter);
+   MK_MACRO(NVC0_3D_MACRO_COMPUTE_COUNTER_TO_QUERY, mme9097_compute_counter_to_query);
    MK_MACRO(NVC0_CP_MACRO_LAUNCH_GRID_INDIRECT, mme90c0_launch_grid_indirect);
 
    BEGIN_NVC0(push, NVC0_3D(RASTERIZE_ENABLE), 1);

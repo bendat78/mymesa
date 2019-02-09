@@ -3782,7 +3782,8 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       const fs_reg data = retype(get_nir_src(instr->src[2]),
                                  BRW_REGISTER_TYPE_UD);
 
-      brw_wm_prog_data(prog_data)->has_side_effects = true;
+      if (stage == MESA_SHADER_FRAGMENT)
+         brw_wm_prog_data(prog_data)->has_side_effects = true;
 
       emit_untyped_write(bld, image, addr, data, 1,
                          instr->num_components);
@@ -3969,6 +3970,104 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       }
       break;
    }
+
+   case nir_intrinsic_load_global: {
+      assert(devinfo->gen >= 8);
+
+      if (nir_intrinsic_align(instr) >= 4) {
+         assert(nir_dest_bit_size(instr->dest) == 32);
+         fs_inst *inst = bld.emit(SHADER_OPCODE_A64_UNTYPED_READ_LOGICAL,
+                                  dest,
+                                  get_nir_src(instr->src[0]), /* Address */
+                                  fs_reg(), /* No source data */
+                                  brw_imm_ud(instr->num_components));
+         inst->size_written = instr->num_components *
+                              inst->dst.component_size(inst->exec_size);
+      } else {
+         const unsigned bit_size = nir_dest_bit_size(instr->dest);
+         assert(bit_size <= 32);
+         assert(nir_dest_num_components(instr->dest) == 1);
+         brw_reg_type data_type =
+            brw_reg_type_from_bit_size(bit_size, BRW_REGISTER_TYPE_UD);
+         fs_reg tmp = bld.vgrf(BRW_REGISTER_TYPE_UD);
+         bld.emit(SHADER_OPCODE_A64_BYTE_SCATTERED_READ_LOGICAL,
+                  tmp,
+                  get_nir_src(instr->src[0]), /* Address */
+                  fs_reg(), /* No source data */
+                  brw_imm_ud(bit_size));
+         bld.MOV(retype(dest, data_type), tmp);
+      }
+      break;
+   }
+
+   case nir_intrinsic_store_global:
+      assert(devinfo->gen >= 8);
+
+      if (stage == MESA_SHADER_FRAGMENT)
+         brw_wm_prog_data(prog_data)->has_side_effects = true;
+
+      if (nir_intrinsic_align(instr) >= 4) {
+         assert(nir_src_bit_size(instr->src[0]) == 32);
+         bld.emit(SHADER_OPCODE_A64_UNTYPED_WRITE_LOGICAL,
+                  fs_reg(),
+                  get_nir_src(instr->src[1]), /* Address */
+                  get_nir_src(instr->src[0]), /* Data */
+                  brw_imm_ud(instr->num_components));
+      } else {
+         const unsigned bit_size = nir_src_bit_size(instr->src[0]);
+         assert(bit_size <= 32);
+         assert(nir_src_num_components(instr->src[0]) == 1);
+         brw_reg_type data_type =
+            brw_reg_type_from_bit_size(bit_size, BRW_REGISTER_TYPE_UD);
+         fs_reg tmp = bld.vgrf(BRW_REGISTER_TYPE_UD);
+         bld.MOV(tmp, retype(get_nir_src(instr->src[0]), data_type));
+         bld.emit(SHADER_OPCODE_A64_BYTE_SCATTERED_WRITE_LOGICAL,
+                  fs_reg(),
+                  get_nir_src(instr->src[1]), /* Address */
+                  tmp, /* Data */
+                  brw_imm_ud(nir_src_bit_size(instr->src[0])));
+      }
+      break;
+
+   case nir_intrinsic_global_atomic_add:
+      nir_emit_global_atomic(bld, get_op_for_atomic_add(instr, 1), instr);
+      break;
+   case nir_intrinsic_global_atomic_imin:
+      nir_emit_global_atomic(bld, BRW_AOP_IMIN, instr);
+      break;
+   case nir_intrinsic_global_atomic_umin:
+      nir_emit_global_atomic(bld, BRW_AOP_UMIN, instr);
+      break;
+   case nir_intrinsic_global_atomic_imax:
+      nir_emit_global_atomic(bld, BRW_AOP_IMAX, instr);
+      break;
+   case nir_intrinsic_global_atomic_umax:
+      nir_emit_global_atomic(bld, BRW_AOP_UMAX, instr);
+      break;
+   case nir_intrinsic_global_atomic_and:
+      nir_emit_global_atomic(bld, BRW_AOP_AND, instr);
+      break;
+   case nir_intrinsic_global_atomic_or:
+      nir_emit_global_atomic(bld, BRW_AOP_OR, instr);
+      break;
+   case nir_intrinsic_global_atomic_xor:
+      nir_emit_global_atomic(bld, BRW_AOP_XOR, instr);
+      break;
+   case nir_intrinsic_global_atomic_exchange:
+      nir_emit_global_atomic(bld, BRW_AOP_MOV, instr);
+      break;
+   case nir_intrinsic_global_atomic_comp_swap:
+      nir_emit_global_atomic(bld, BRW_AOP_CMPWR, instr);
+      break;
+   case nir_intrinsic_global_atomic_fmin:
+      nir_emit_global_atomic_float(bld, BRW_AOP_FMIN, instr);
+      break;
+   case nir_intrinsic_global_atomic_fmax:
+      nir_emit_global_atomic_float(bld, BRW_AOP_FMAX, instr);
+      break;
+   case nir_intrinsic_global_atomic_fcomp_swap:
+      nir_emit_global_atomic_float(bld, BRW_AOP_FCMPWR, instr);
+      break;
 
    case nir_intrinsic_load_ssbo: {
       assert(devinfo->gen >= 7);
@@ -4641,6 +4740,60 @@ fs_visitor::nir_emit_shared_atomic_float(const fs_builder &bld,
                                                     BRW_PREDICATE_NONE);
    dest.type = atomic_result.type;
    bld.MOV(dest, atomic_result);
+}
+
+void
+fs_visitor::nir_emit_global_atomic(const fs_builder &bld,
+                                   int op, nir_intrinsic_instr *instr)
+{
+   if (stage == MESA_SHADER_FRAGMENT)
+      brw_wm_prog_data(prog_data)->has_side_effects = true;
+
+   fs_reg dest;
+   if (nir_intrinsic_infos[instr->intrinsic].has_dest)
+      dest = get_nir_dest(instr->dest);
+
+   fs_reg addr = get_nir_src(instr->src[0]);
+
+   fs_reg data;
+   if (op != BRW_AOP_INC && op != BRW_AOP_DEC && op != BRW_AOP_PREDEC)
+      data = get_nir_src(instr->src[1]);
+
+   if (op == BRW_AOP_CMPWR) {
+      fs_reg tmp = bld.vgrf(data.type, 2);
+      fs_reg sources[2] = { data, get_nir_src(instr->src[2]) };
+      bld.LOAD_PAYLOAD(tmp, sources, 2, 0);
+      data = tmp;
+   }
+
+   bld.emit(SHADER_OPCODE_A64_UNTYPED_ATOMIC_LOGICAL,
+            dest, addr, data, brw_imm_ud(op));
+}
+
+void
+fs_visitor::nir_emit_global_atomic_float(const fs_builder &bld,
+                                         int op, nir_intrinsic_instr *instr)
+{
+   if (stage == MESA_SHADER_FRAGMENT)
+      brw_wm_prog_data(prog_data)->has_side_effects = true;
+
+   assert(nir_intrinsic_infos[instr->intrinsic].has_dest);
+   fs_reg dest = get_nir_dest(instr->dest);
+
+   fs_reg addr = get_nir_src(instr->src[0]);
+
+   assert(op != BRW_AOP_INC && op != BRW_AOP_DEC && op != BRW_AOP_PREDEC);
+   fs_reg data = get_nir_src(instr->src[1]);
+
+   if (op == BRW_AOP_FCMPWR) {
+      fs_reg tmp = bld.vgrf(data.type, 2);
+      fs_reg sources[2] = { data, get_nir_src(instr->src[2]) };
+      bld.LOAD_PAYLOAD(tmp, sources, 2, 0);
+      data = tmp;
+   }
+
+   bld.emit(SHADER_OPCODE_A64_UNTYPED_ATOMIC_LOGICAL,
+            dest, addr, data, brw_imm_ud(op));
 }
 
 void

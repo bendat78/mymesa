@@ -321,7 +321,9 @@ void st_init_limits(struct pipe_screen *screen,
             screen->get_shader_param(screen, sh,
                                   PIPE_SHADER_CAP_MAX_UNROLL_ITERATIONS_HINT);
 
-      options->LowerCombinedClipCullDistance = true;
+      if (!screen->get_param(screen, PIPE_CAP_NIR_COMPACT_ARRAYS))
+         options->LowerCombinedClipCullDistance = true;
+
       options->LowerBufferInterfaceBlocks = true;
    }
 
@@ -336,7 +338,8 @@ void st_init_limits(struct pipe_screen *screen,
       screen->get_param(screen, PIPE_CAP_GLSL_OPTIMIZE_CONSERVATIVELY);
    c->GLSLTessLevelsAsInputs =
       screen->get_param(screen, PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS);
-   c->LowerTessLevel = true;
+   c->LowerTessLevel =
+      !screen->get_param(screen, PIPE_CAP_NIR_COMPACT_ARRAYS);
    c->LowerCsDerivedVariables = true;
    c->PrimitiveRestartForPatches =
       screen->get_param(screen, PIPE_CAP_PRIMITIVE_RESTART_FOR_PATCHES);
@@ -362,10 +365,7 @@ void st_init_limits(struct pipe_screen *screen,
    c->Program[MESA_SHADER_VERTEX].MaxAttribs =
       MIN2(c->Program[MESA_SHADER_VERTEX].MaxAttribs, 16);
 
-   /* PIPE_SHADER_CAP_MAX_INPUTS for the FS specifies the maximum number
-    * of inputs. It's always 2 colors + N generic inputs. */
-   c->MaxVarying = screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
-                                            PIPE_SHADER_CAP_MAX_INPUTS);
+   c->MaxVarying = screen->get_param(screen, PIPE_CAP_MAX_VARYINGS);
    c->MaxVarying = MIN2(c->MaxVarying, MAX_VARYING);
    c->MaxGeometryOutputVertices =
       screen->get_param(screen, PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES);
