@@ -110,12 +110,12 @@ static void *virgl_texture_transfer_map(struct pipe_context *ctx,
    struct virgl_hw_res *hw_res;
    bool doflushwait;
 
-   doflushwait = virgl_res_needs_flush_wait(vctx, vtex, usage);
+   trans = virgl_resource_create_transfer(&vctx->transfer_pool, resource,
+                                          &vtex->metadata, level, usage, box);
+
+   doflushwait = virgl_res_needs_flush_wait(vctx, trans);
    if (doflushwait)
       ctx->flush(ctx, NULL, 0);
-
-   trans = virgl_resource_create_transfer(ctx, resource, &vtex->metadata,
-                                          level, usage, box);
 
    if (resource->nr_samples > 1) {
       struct pipe_resource tmp_resource;
@@ -137,7 +137,7 @@ static void *virgl_texture_transfer_map(struct pipe_context *ctx,
       trans->resolve_tmp = NULL;
    }
 
-   readback = virgl_res_needs_readback(vctx, vtex, usage);
+   readback = virgl_res_needs_readback(vctx, vtex, usage, level);
    if (readback)
       vs->vws->transfer_get(vs->vws, hw_res, box, trans->base.stride,
                             trans->l_stride, trans->offset, level);
@@ -147,7 +147,7 @@ static void *virgl_texture_transfer_map(struct pipe_context *ctx,
 
    ptr = vs->vws->resource_map(vs->vws, hw_res);
    if (!ptr) {
-      slab_free(&vctx->transfer_pool, trans);
+      virgl_resource_destroy_transfer(&vctx->transfer_pool, trans);
       return NULL;
    }
 
@@ -165,20 +165,23 @@ static void virgl_texture_transfer_unmap(struct pipe_context *ctx,
    if (trans->base.usage & PIPE_TRANSFER_WRITE) {
       if (!(transfer->usage & PIPE_TRANSFER_FLUSH_EXPLICIT)) {
          struct virgl_screen *vs = virgl_screen(ctx->screen);
-         vtex->clean = FALSE;
          vctx->num_transfers++;
-         vs->vws->transfer_put(vs->vws, vtex->hw_res,
-                               &transfer->box, trans->base.stride,
-                               trans->l_stride, trans->offset,
-                               transfer->level);
 
+         if (trans->resolve_tmp) {
+            vs->vws->transfer_put(vs->vws, vtex->hw_res,
+                                  &transfer->box, trans->base.stride,
+                                  trans->l_stride, trans->offset,
+                                  transfer->level);
+         } else {
+            virgl_transfer_queue_unmap(&vctx->queue, trans);
+         }
       }
    }
 
-   if (trans->resolve_tmp)
+   if (trans->resolve_tmp) {
       pipe_resource_reference((struct pipe_resource **)&trans->resolve_tmp, NULL);
-
-   virgl_resource_destroy_transfer(vctx, trans);
+      virgl_resource_destroy_transfer(&vctx->transfer_pool, trans);
+   }
 }
 
 static const struct u_resource_vtbl virgl_texture_vtbl =

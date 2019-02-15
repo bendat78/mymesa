@@ -73,20 +73,6 @@ panfrost_shader_compile(struct panfrost_context *ctx, struct mali_shader_meta *m
         int size = program.compiled.size;
         dst = program.compiled.data;
 
-        /* Inject an external shader */
-#if 0
-        char buf[4096];
-
-        if (type != JOB_TYPE_VERTEX) {
-                FILE *fp = fopen("/home/alyssa/panfrost/midgard/good.bin", "rb");
-                fread(buf, 1, 2816, fp);
-                fclose(fp);
-                dst = buf;
-                size = 2816;
-        }
-
-#endif
-
         /* Upload the shader. The lookahead tag is ORed on as a tagged pointer.
          * I bet someone just thought that would be a cute pun. At least,
          * that's how I'd do it. */
@@ -110,8 +96,8 @@ panfrost_shader_compile(struct panfrost_context *ctx, struct mali_shader_meta *m
         if (type == JOB_TYPE_VERTEX)
                 meta->varying_count += 1;
 
-        /* gl_FragCoord does -not- eat an extra spot; it will be included in our count if we need it */
-
+	/* Note: gl_FragCoord does -not- eat an extra spot; it will be included
+	 * in our count if we need it */
 
         meta->midgard1.unknown2 = 8; /* XXX */
 

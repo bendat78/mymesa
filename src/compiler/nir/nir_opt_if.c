@@ -96,7 +96,7 @@ phi_has_constant_from_outside_and_one_from_inside_loop(nir_phi_instr *phi,
  *    block block_1:
  *    vec1 32 ssa_2 = phi block_0: ssa_0, block_7: ssa_5
  *    vec1 32 ssa_3 = phi block_0: ssa_0, block_7: ssa_1
- *    if ssa_2 {
+ *    if ssa_3 {
  *       block block_2:
  *       vec1 32 ssa_4 = load_const (0x00000001)
  *       vec1 32 ssa_5 = iadd ssa_2, ssa_4
@@ -121,9 +121,9 @@ phi_has_constant_from_outside_and_one_from_inside_loop(nir_phi_instr *phi,
  * // Stuff from block 3
  * loop {
  *    block block_1:
- *    vec1 32 ssa_3 = phi block_0: ssa_0, block_7: ssa_1
+ *    vec1 32 ssa_2 = phi block_0: ssa_0, block_7: ssa_5
  *    vec1 32 ssa_6 = load_const (0x00000004)
- *    vec1 32 ssa_7 = ilt ssa_5, ssa_6
+ *    vec1 32 ssa_7 = ilt ssa_2, ssa_6
  *    if ssa_7 {
  *       block block_5:
  *    } else {
@@ -241,12 +241,29 @@ opt_peel_loop_initial_if(nir_loop *loop)
    nir_cf_reinsert(&header,
                    nir_after_block_before_jump(find_continue_block(loop)));
 
+   bool continue_list_jumps =
+      nir_block_ends_in_jump(exec_node_data(nir_block,
+                                            exec_list_get_tail(continue_list),
+                                            cf_node.node));
+
    nir_cf_extract(&tmp, nir_before_cf_list(continue_list),
                         nir_after_cf_list(continue_list));
 
-   /* Get continue block again as the previous reinsert might have removed the block. */
+   /* Get continue block again as the previous reinsert might have removed the
+    * block.  Also, if both the continue list and the continue block ends in
+    * jump instructions, removes the jump from the latter, as it will not be
+    * executed if we insert the continue list before it. */
+
+   nir_block *continue_block = find_continue_block(loop);
+
+   if (continue_list_jumps) {
+      nir_instr *last_instr = nir_block_last_instr(continue_block);
+      if (last_instr && last_instr->type == nir_instr_type_jump)
+         nir_instr_remove(last_instr);
+   }
+
    nir_cf_reinsert(&tmp,
-                   nir_after_block_before_jump(find_continue_block(loop)));
+                   nir_after_block_before_jump(continue_block));
 
    nir_cf_node_remove(&nif->cf_node);
 
@@ -488,7 +505,7 @@ opt_split_alu_of_phi(nir_builder *b, nir_loop *loop)
           *
           * Insert the new instruction at the end of the continue block.
           */
-         b->cursor = nir_after_block(continue_block);
+         b->cursor = nir_after_block_before_jump(continue_block);
 
          nir_ssa_def *const alu_copy =
             clone_alu_and_replace_src_defs(b, alu, continue_srcs);
@@ -842,6 +859,13 @@ opt_if_loop_last_continue(nir_loop *loop)
       return false;
 
    if (!then_ends_in_continue && !else_ends_in_continue)
+      return false;
+
+   /* if the block after the if/else is empty we bail, otherwise we might end
+    * up looping forever
+    */
+   if (&nif->cf_node == nir_cf_node_prev(&last_block->cf_node) &&
+       exec_list_is_empty(&last_block->instr_list))
       return false;
 
    /* Move the last block of the loop inside the last if-statement */

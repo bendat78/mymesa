@@ -447,7 +447,7 @@ mark_textures_used_for_txf(BITSET_WORD *used_for_txf,
    if (!prog)
       return;
 
-   unsigned mask = prog->SamplersUsed & prog->info.textures_used_by_txf;
+   uint32_t mask = prog->info.textures_used_by_txf;
    while (mask) {
       int s = u_bit_scan(&mask);
       BITSET_SET(used_for_txf, prog->SamplerUnits[s]);
@@ -815,15 +815,15 @@ brw_prepare_drawing(struct gl_context *ctx,
     * index.
     */
    brw->wm.base.sampler_count =
-      util_last_bit(ctx->FragmentProgram._Current->SamplersUsed);
+      util_last_bit(ctx->FragmentProgram._Current->info.textures_used);
    brw->gs.base.sampler_count = ctx->GeometryProgram._Current ?
-      util_last_bit(ctx->GeometryProgram._Current->SamplersUsed) : 0;
+      util_last_bit(ctx->GeometryProgram._Current->info.textures_used) : 0;
    brw->tes.base.sampler_count = ctx->TessEvalProgram._Current ?
-      util_last_bit(ctx->TessEvalProgram._Current->SamplersUsed) : 0;
+      util_last_bit(ctx->TessEvalProgram._Current->info.textures_used) : 0;
    brw->tcs.base.sampler_count = ctx->TessCtrlProgram._Current ?
-      util_last_bit(ctx->TessCtrlProgram._Current->SamplersUsed) : 0;
+      util_last_bit(ctx->TessCtrlProgram._Current->info.textures_used) : 0;
    brw->vs.base.sampler_count =
-      util_last_bit(ctx->VertexProgram._Current->SamplersUsed);
+      util_last_bit(ctx->VertexProgram._Current->info.textures_used);
 
    intel_prepare_render(brw);
 

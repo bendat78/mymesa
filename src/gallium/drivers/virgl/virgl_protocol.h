@@ -94,6 +94,8 @@ enum virgl_context_cmd {
    VIRGL_CCMD_SET_ATOMIC_BUFFERS,
    VIRGL_CCMD_SET_DEBUG_FLAGS,
    VIRGL_CCMD_GET_QUERY_RESULT_QBO,
+   VIRGL_CCMD_TRANSFER3D,
+   VIRGL_CCMD_END_TRANSFERS,
 };
 
 /*
@@ -103,6 +105,7 @@ enum virgl_context_cmd {
 */
 
 #define VIRGL_CMD0(cmd, obj, len) ((cmd) | ((obj) << 8) | ((len) << 16))
+#define VIRGL_CMD0_MAX_DWORDS (((1ULL << 16) - 1) / 4) * 4
 
 /* hw specification */
 #define VIRGL_MAX_COLOR_BUFS 8
@@ -564,5 +567,14 @@ enum virgl_context_cmd {
 #define VIRGL_QUERY_RESULT_QBO_RESULT_TYPE 4
 #define VIRGL_QUERY_RESULT_QBO_OFFSET 5
 #define VIRGL_QUERY_RESULT_QBO_INDEX 6
+
+#define VIRGL_TRANSFER_TO_HOST   1
+#define VIRGL_TRANSFER_FROM_HOST 2
+
+/* Transfer */
+#define VIRGL_TRANSFER3D_SIZE 13
+/* The first 11 dwords are the same as VIRGL_RESOURCE_IW_*  */
+#define VIRGL_TRANSFER3D_DATA_OFFSET 12
+#define VIRGL_TRANSFER3D_DIRECTION 13
 
 #endif

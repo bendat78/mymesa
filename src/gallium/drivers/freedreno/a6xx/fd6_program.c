@@ -549,7 +549,8 @@ setup_stateobj(struct fd_ringbuffer *ring,
 					A6XX_GRAS_CNTL_XCOORD |
 					A6XX_GRAS_CNTL_YCOORD |
 					A6XX_GRAS_CNTL_ZCOORD |
-					A6XX_GRAS_CNTL_WCOORD));
+					A6XX_GRAS_CNTL_WCOORD) |
+			COND(s[FS].v->frag_face, A6XX_GRAS_CNTL_UNK3));
 
 	OUT_PKT4(ring, REG_A6XX_RB_RENDER_CONTROL0, 2);
 	OUT_RING(ring, COND(enable_varyings, A6XX_RB_RENDER_CONTROL0_VARYING |
@@ -559,7 +560,9 @@ setup_stateobj(struct fd_ringbuffer *ring,
 					A6XX_RB_RENDER_CONTROL0_XCOORD |
 					A6XX_RB_RENDER_CONTROL0_YCOORD |
 					A6XX_RB_RENDER_CONTROL0_ZCOORD |
-					A6XX_RB_RENDER_CONTROL0_WCOORD));
+					A6XX_RB_RENDER_CONTROL0_WCOORD) |
+			COND(s[FS].v->frag_face, A6XX_RB_RENDER_CONTROL0_UNK3));
+
 	OUT_RING(ring, COND(s[FS].v->frag_face, A6XX_RB_RENDER_CONTROL1_FACENESS));
 
 	OUT_PKT4(ring, REG_A6XX_SP_FS_OUTPUT_REG(0), 8);
@@ -648,8 +651,7 @@ fd6_program_emit(struct fd_ringbuffer *ring, struct fd6_emit *emit)
 		memset(vinterp, 0, sizeof(vinterp));
 		memset(vpsrepl, 0, sizeof(vpsrepl));
 
-		for (int i = 0; i < state->fs_inputs_count; i++) {
-			int j = state->fs_inputs[i];
+		for (int j = -1; (j = ir3_next_varying(fs, j)) < (int)fs->inputs_count; ) {
 
 			/* NOTE: varyings are packed, so if compmask is 0xb
 			 * then first, third, and fourth component occupy
@@ -663,7 +665,7 @@ fd6_program_emit(struct fd_ringbuffer *ring, struct fd6_emit *emit)
 					(fs->inputs[j].rasterflat && emit->rasterflat)) {
 				uint32_t loc = inloc;
 
-				for (i = 0; i < 4; i++) {
+				for (int i = 0; i < 4; i++) {
 					if (compmask & (1 << i)) {
 						vinterp[loc / 16] |= 1 << ((loc % 16) * 2);
 						loc++;

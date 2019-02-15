@@ -1874,12 +1874,26 @@ radv_generate_graphics_pipeline_key(struct radv_pipeline *pipeline,
 	}
 
 	for (unsigned i = 0; i < input_state->vertexAttributeDescriptionCount; ++i) {
-		unsigned location = input_state->pVertexAttributeDescriptions[i].location;
-		unsigned binding = input_state->pVertexAttributeDescriptions[i].binding;
+		const VkVertexInputAttributeDescription *desc =
+			&input_state->pVertexAttributeDescriptions[i];
+		const struct vk_format_description *format_desc;
+		unsigned location = desc->location;
+		unsigned binding = desc->binding;
+		unsigned num_format, data_format;
+		int first_non_void;
+
 		if (binding_input_rate & (1u << binding)) {
 			key.instance_rate_inputs |= 1u << location;
 			key.instance_rate_divisors[location] = instance_rate_divisors[binding];
 		}
+
+		format_desc = vk_format_description(desc->format);
+		first_non_void = vk_format_get_first_non_void_channel(desc->format);
+
+		num_format = radv_translate_buffer_numformat(format_desc, first_non_void);
+		data_format = radv_translate_buffer_dataformat(format_desc, first_non_void);
+
+		key.vertex_attribute_formats[location] = data_format | (num_format << 4);
 
 		if (pipeline->device->physical_device->rad_info.chip_class <= VI &&
 		    pipeline->device->physical_device->rad_info.family != CHIP_STONEY) {
@@ -1932,8 +1946,10 @@ radv_fill_shader_keys(struct radv_shader_variant_key *keys,
 {
 	keys[MESA_SHADER_VERTEX].vs.instance_rate_inputs = key->instance_rate_inputs;
 	keys[MESA_SHADER_VERTEX].vs.alpha_adjust = key->vertex_alpha_adjust;
-	for (unsigned i = 0; i < MAX_VERTEX_ATTRIBS; ++i)
+	for (unsigned i = 0; i < MAX_VERTEX_ATTRIBS; ++i) {
 		keys[MESA_SHADER_VERTEX].vs.instance_rate_divisors[i] = key->instance_rate_divisors[i];
+		keys[MESA_SHADER_VERTEX].vs.vertex_attribute_formats[i] = key->vertex_attribute_formats[i];
+	}
 
 	if (nir[MESA_SHADER_TESS_CTRL]) {
 		keys[MESA_SHADER_VERTEX].vs.as_ls = true;
@@ -3183,11 +3199,11 @@ radv_compute_db_shader_control(const struct radv_device *device,
 	bool disable_rbplus = device->physical_device->has_rbplus &&
 	                      !device->physical_device->rbplus_allowed;
 
-	/* Do not enable the gl_SampleMask fragment shader output if MSAA is
-	 * disabled.
+	/* It shouldn't be needed to export gl_SampleMask when MSAA is disabled
+	 * but this appears to break Project Cars (DXVK). See
+	 * https://bugs.freedesktop.org/show_bug.cgi?id=109401
 	 */
-	bool mask_export_enable = ms->num_samples > 1 &&
-				  ps->info.info.ps.writes_sample_mask;
+	bool mask_export_enable = ps->info.info.ps.writes_sample_mask;
 
 	return  S_02880C_Z_EXPORT_ENABLE(ps->info.info.ps.writes_z) |
 		S_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(ps->info.info.ps.writes_stencil) |
@@ -3543,8 +3559,7 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 		   struct radv_device *device,
 		   struct radv_pipeline_cache *cache,
 		   const VkGraphicsPipelineCreateInfo *pCreateInfo,
-		   const struct radv_graphics_pipeline_create_info *extra,
-		   const VkAllocationCallbacks *alloc)
+		   const struct radv_graphics_pipeline_create_info *extra)
 {
 	VkResult result;
 	bool has_view_index = false;
@@ -3553,8 +3568,6 @@ radv_pipeline_init(struct radv_pipeline *pipeline,
 	struct radv_subpass *subpass = pass->subpasses + pCreateInfo->subpass;
 	if (subpass->view_mask)
 		has_view_index = true;
-	if (alloc == NULL)
-		alloc = &device->alloc;
 
 	pipeline->device = device;
 	pipeline->layout = radv_pipeline_layout_from_handle(pCreateInfo->layout);
@@ -3682,7 +3695,7 @@ radv_graphics_pipeline_create(
 		return vk_error(device->instance, VK_ERROR_OUT_OF_HOST_MEMORY);
 
 	result = radv_pipeline_init(pipeline, device, cache,
-				    pCreateInfo, extra, pAllocator);
+				    pCreateInfo, extra);
 	if (result != VK_SUCCESS) {
 		radv_pipeline_destroy(device, pipeline, pAllocator);
 		return result;

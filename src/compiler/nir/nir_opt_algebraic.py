@@ -377,6 +377,11 @@ optimizations = [
    (('iand', ('uge(is_used_once)', a, b), ('uge', a, c)), ('uge', a, ('umax', b, c))),
    (('iand', ('uge(is_used_once)', a, c), ('uge', b, c)), ('uge', ('umin', a, b), c)),
 
+   # Common pattern like 'if (i == 0 || i == 1 || ...)'
+   (('ior', ('ieq', a, 0), ('ieq', a, 1)), ('uge', 1, a)),
+   (('ior', ('uge', 1, a), ('ieq', a, 2)), ('uge', 2, a)),
+   (('ior', ('uge', 2, a), ('ieq', a, 3)), ('uge', 3, a)),
+
    (('ior', 'a@bool', ('ieq', a, False)), True),
    (('ior', a, ('inot', a)), -1),
 
@@ -564,6 +569,19 @@ optimizations = [
    (('~f2i32', ('u2f', 'a@32')), a),
    (('~f2u32', ('i2f', 'a@32')), a),
    (('~f2u32', ('u2f', 'a@32')), a),
+
+   # Section 5.4.1 (Conversion and Scalar Constructors) of the GLSL 4.60 spec
+   # says:
+   #
+   #    It is undefined to convert a negative floating-point value to an
+   #    uint.
+   #
+   # Assuming that (uint)some_float behaves like (uint)(int)some_float allows
+   # some optimizations in the i965 backend to proceed.
+   (('ige', ('f2u', a), b), ('ige', ('f2i', a), b)),
+   (('ige', b, ('f2u', a)), ('ige', b, ('f2i', a))),
+   (('ilt', ('f2u', a), b), ('ilt', ('f2i', a), b)),
+   (('ilt', b, ('f2u', a)), ('ilt', b, ('f2i', a))),
 
    # Packing and then unpacking does nothing
    (('unpack_64_2x32_split_x', ('pack_64_2x32_split', a, b)), a),
@@ -758,6 +776,8 @@ optimizations = [
                                                             ('extract_i8', 'v', 3))),
                                            127.0))),
      'options->lower_unpack_snorm_4x8'),
+
+   (('isign', a), ('imin', ('imax', a, -1), 1), 'options->lower_isign'),
 ]
 
 invert = OrderedDict([('feq', 'fne'), ('fne', 'feq'), ('fge', 'flt'), ('flt', 'fge')])

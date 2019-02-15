@@ -2156,6 +2156,9 @@ typedef struct nir_shader_compiler_options {
    /** enables rules to lower idiv by power-of-two: */
    bool lower_idiv;
 
+   /** enables rules to lower isign to imin+imax */
+   bool lower_isign;
+
    /* Does the native fdot instruction replicate its result for four
     * components?  If so, then opt_algebraic_late will turn all fdotN
     * instructions into fdot_replicatedN instructions.
@@ -3094,6 +3097,9 @@ typedef struct nir_lower_tex_options {
     * while 4 and 5 represent 0 and 1 respectively.
     */
    uint8_t swizzles[32][4];
+
+   /* Can be used to scale sampled values in range required by the format. */
+   float scale_factors[32];
 
    /**
     * Bitmap of textures that need srgb to linear conversion.  If

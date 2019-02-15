@@ -28,6 +28,8 @@
 #include "util/slab.h"
 #include "util/list.h"
 
+#include "virgl_transfer_queue.h"
+
 struct pipe_screen;
 struct tgsi_token;
 struct u_upload_mgr;
@@ -64,8 +66,9 @@ struct virgl_context {
    struct pipe_framebuffer_state framebuffer;
 
    struct slab_child_pool transfer_pool;
-
+   struct virgl_transfer_queue queue;
    struct u_upload_mgr *uploader;
+   bool encoded_transfers;
 
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    unsigned num_vertex_buffers;
@@ -79,8 +82,7 @@ struct virgl_context {
 
    struct pipe_resource *ssbos[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_BUFFERS];
    struct pipe_resource *images[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_BUFFERS];
-   int num_transfers;
-   int num_draws;
+   uint32_t num_transfers, num_draws, num_compute;
 
    struct pipe_resource *atomic_buffers[PIPE_MAX_HW_ATOMIC_BUFFERS];
 

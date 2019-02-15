@@ -50,9 +50,7 @@
 #include "dri_drawable.h"
 #include "dri_query_renderer.h"
 
-#ifndef DRM_FORMAT_MOD_INVALID
-#define DRM_FORMAT_MOD_INVALID ((1ULL<<56) - 1)
-#endif
+#include "drm-uapi/drm_fourcc.h"
 
 struct dri2_buffer
 {
