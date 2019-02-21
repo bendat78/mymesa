@@ -35,6 +35,7 @@
 
 #include <panfrost-misc.h>
 #include "pan_allocate.h"
+#include "pan_trace.h"
 
 struct panfrost_context;
 struct panfrost_resource;
@@ -58,7 +59,11 @@ struct panfrost_driver {
 		               int extra_flags,
 		               int commit_count,
 		               int extent);
-	void (*enable_counters) (struct panfrost_screen *screen);
+        void (*free_slab) (struct panfrost_screen *screen,
+                           struct panfrost_memory *mem);
+        void (*free_imported_bo) (struct panfrost_screen *screen,
+                             struct panfrost_bo *bo);
+        void (*enable_counters) (struct panfrost_screen *screen);
 };
 
 struct panfrost_screen {

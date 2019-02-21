@@ -97,6 +97,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_blend_func_separate = true;
    ctx->Extensions.EXT_blend_minmax = true;
    ctx->Extensions.EXT_draw_buffers2 = true;
+   ctx->Extensions.EXT_float_blend = true;
    ctx->Extensions.EXT_framebuffer_sRGB = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
    ctx->Extensions.EXT_packed_float = true;
@@ -287,12 +288,20 @@ intelInitExtensions(struct gl_context *ctx)
    }
 
    if (devinfo->gen >= 8 || devinfo->is_baytrail) {
-      /* For now, we only enable OES_copy_image on platforms that support
-       * ETC2 natively in hardware.  We would need more hacks to support it
-       * elsewhere. Same with OES_texture_view.
+      /* For now, we can't enable OES_texture_view on Gen 7 because of
+       * some piglit failures coming from
+       * piglit/tests/spec/arb_texture_view/rendering-formats.c that need
+       * investigation.
+       */
+      ctx->Extensions.OES_texture_view = true;
+   }
+
+   if (devinfo->gen >= 7) {
+      /* We can safely enable OES_copy_image on Gen 7, since we emulate
+       * the ETC2 support using the shadow_miptree to store the
+       * compressed data.
        */
       ctx->Extensions.OES_copy_image = true;
-      ctx->Extensions.OES_texture_view = true;
    }
 
    if (devinfo->gen >= 8) {

@@ -31,6 +31,7 @@ files_panfrost = files(
   'midgard/disassemble.c',
 
   'pan_context.c',
+  'pan_trace.c',
   'pan_drm.c',
   'pan_allocate.c',
   'pan_assemble.c',
@@ -115,6 +116,28 @@ midgard_compiler = executable(
   link_with : [
     libgallium,
     libglsl_standalone,
+    libmesa_util
+  ],
+  build_by_default : true
+)
+
+files_pandecode = files(
+  'pandecode/cmdline.c',
+  'pandecode/decode.c',
+
+  'pan_pretty_print.c',
+
+  'midgard/disassemble.c'
+)
+
+pandecode = executable(
+  'pandecode',
+  files_pandecode,
+  include_directories : inc_panfrost,
+  dependencies : [
+    dep_thread,
+  ],
+  link_with : [
     libmesa_util
   ],
   build_by_default : true

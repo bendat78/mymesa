@@ -575,7 +575,7 @@ static void StreamOut(
         // Call SOS
         SWR_ASSERT(state.pfnSoFunc[streamIndex] != nullptr,
                    "Trying to execute uninitialized streamout jit function.");
-        state.pfnSoFunc[streamIndex](soContext);
+        state.pfnSoFunc[streamIndex](GetPrivateState(pDC), soContext);
     }
 
     // Update SO write offset. The driver provides memory for the update.
@@ -583,7 +583,9 @@ static void StreamOut(
     {
         if (state.soBuffer[i].pWriteOffset)
         {
-            *state.soBuffer[i].pWriteOffset = soContext.pBuffer[i]->streamOffset * sizeof(uint32_t);
+            bool nullTileAccessed = false;
+            void* pWriteOffset = pDC->pContext->pfnTranslateGfxptrForWrite(GetPrivateState(pDC), soContext.pBuffer[i]->pWriteOffset, &nullTileAccessed);
+            *((uint32_t*)pWriteOffset) = soContext.pBuffer[i]->streamOffset * sizeof(uint32_t);
         }
 
         if (state.soBuffer[i].soWriteEnable)
@@ -782,19 +784,19 @@ void TransposeSOAtoAOS(uint8_t* pDst, uint8_t* pSrc, uint32_t numVerts, uint32_t
 
         for (uint32_t a = 0; a < numAttribs; ++a)
         {
-            auto attribGatherX = SIMD_T::template mask_i32gather_ps<ScaleFactor<SIMD_T>(1)>(
+            auto attribGatherX = SIMD_T::mask_i32gather_ps(
                 SIMD_T::setzero_ps(), (const float*)pSrcBase, vGatherOffsets, vMask);
-            auto attribGatherY = SIMD_T::template mask_i32gather_ps<ScaleFactor<SIMD_T>(1)>(
+            auto attribGatherY = SIMD_T::mask_i32gather_ps(
                 SIMD_T::setzero_ps(),
                 (const float*)(pSrcBase + sizeof(float)),
                 vGatherOffsets,
                 vMask);
-            auto attribGatherZ = SIMD_T::template mask_i32gather_ps<ScaleFactor<SIMD_T>(1)>(
+            auto attribGatherZ = SIMD_T::mask_i32gather_ps(
                 SIMD_T::setzero_ps(),
                 (const float*)(pSrcBase + sizeof(float) * 2),
                 vGatherOffsets,
                 vMask);
-            auto attribGatherW = SIMD_T::template mask_i32gather_ps<ScaleFactor<SIMD_T>(1)>(
+            auto attribGatherW = SIMD_T::mask_i32gather_ps(
                 SIMD_T::setzero_ps(),
                 (const float*)(pSrcBase + sizeof(float) * 3),
                 vGatherOffsets,
@@ -1840,9 +1842,10 @@ void ProcessDraw(SWR_CONTEXT* pContext, DRAW_CONTEXT* pDC, uint32_t workerId, vo
         {
             vIndex = _simd16_add_epi32(_simd16_set1_epi32(work.startVertexID), vScale);
 
-            fetchInfo_lo.xpIndices = (gfxptr_t)&vIndex;
-            fetchInfo_hi.xpIndices =
-                (gfxptr_t)&vIndex + KNOB_SIMD_WIDTH * sizeof(int32_t); // 1/2 of KNOB_SIMD16_WIDTH
+            fetchInfo_lo.xpIndices = pDC->pContext->pfnMakeGfxPtr(GetPrivateState(pDC), &vIndex);
+            fetchInfo_hi.xpIndices = pDC->pContext->pfnMakeGfxPtr(
+                GetPrivateState(pDC),
+                &vIndex + KNOB_SIMD_WIDTH * sizeof(int32_t)); // 1/2 of KNOB_SIMD16_WIDTH
         }
 
         fetchInfo_lo.CurInstance = instanceNum;

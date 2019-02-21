@@ -520,8 +520,8 @@ static void brw_update_texture_surface(struct gl_context *ctx,
           * is safe because texture views aren't allowed on depth/stencil.
           */
          mesa_fmt = mt->format;
-      } else if (mt->etc_format != MESA_FORMAT_NONE) {
-         mesa_fmt = mt->format;
+      } else if (intel_miptree_has_etc_shadow(brw, mt)) {
+         mesa_fmt = mt->shadow_mt->format;
       } else if (plane > 0) {
          mesa_fmt = mt->format;
       } else {
@@ -571,16 +571,19 @@ static void brw_update_texture_surface(struct gl_context *ctx,
 
       if (obj->StencilSampling && firstImage->_BaseFormat == GL_DEPTH_STENCIL) {
          if (devinfo->gen <= 7) {
-            assert(mt->r8stencil_mt && !mt->stencil_mt->r8stencil_needs_update);
-            mt = mt->r8stencil_mt;
+            assert(mt->shadow_mt && !mt->stencil_mt->shadow_needs_update);
+            mt = mt->shadow_mt;
          } else {
             mt = mt->stencil_mt;
          }
          format = ISL_FORMAT_R8_UINT;
       } else if (devinfo->gen <= 7 && mt->format == MESA_FORMAT_S_UINT8) {
-         assert(mt->r8stencil_mt && !mt->r8stencil_needs_update);
-         mt = mt->r8stencil_mt;
+         assert(mt->shadow_mt && !mt->shadow_needs_update);
+         mt = mt->shadow_mt;
          format = ISL_FORMAT_R8_UINT;
+      } else if (intel_miptree_needs_fake_etc(brw, mt)) {
+         assert(mt->shadow_mt && !mt->shadow_needs_update);
+         mt = mt->shadow_mt;
       }
 
       const int surf_index = surf_offset - &brw->wm.base.surf_offset[0];

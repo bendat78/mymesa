@@ -64,11 +64,13 @@ typedef struct {
 struct midgard_block;
 
 /* Target types. Defaults to TARGET_GOTO (the type corresponding directly to
- * the hardware), hence why that must be zero */
+ * the hardware), hence why that must be zero. TARGET_DISCARD signals this
+ * instruction is actually a discard op. */
 
 #define TARGET_GOTO 0
 #define TARGET_BREAK 1
 #define TARGET_CONTINUE 2
+#define TARGET_DISCARD 3
 
 typedef struct midgard_branch {
         /* If conditional, the condition is specified in r31.w */
@@ -126,6 +128,7 @@ typedef struct midgard_instruction {
                 midgard_load_store_word load_store;
                 midgard_vector_alu alu;
                 midgard_texture_word texture;
+                midgard_branch_extended branch_extended;
                 uint16_t br_compact;
 
                 /* General branch, rather than packed br_compact. Higher level
@@ -293,7 +296,7 @@ v_branch(bool conditional, bool invert)
 {
         midgard_instruction ins = {
                 .type = TAG_ALU_4,
-                .unit = ALU_ENAB_BR_COMPACT,
+                .unit = ALU_ENAB_BRANCH,
                 .compact_branch = true,
                 .branch = {
                         .conditional = conditional,
@@ -302,6 +305,33 @@ v_branch(bool conditional, bool invert)
         };
 
         return ins;
+}
+
+static midgard_branch_extended
+midgard_create_branch_extended( midgard_condition cond,
+                                midgard_jmp_writeout_op op,
+                                unsigned dest_tag,
+                                signed quadword_offset)
+{
+        /* For unclear reasons, the condition code is repeated 8 times */
+        uint16_t duplicated_cond =
+                (cond << 14) |
+                (cond << 12) |
+                (cond << 10) |
+                (cond << 8) |
+                (cond << 6) |
+                (cond << 4) |
+                (cond << 2) |
+                (cond << 0);
+
+        midgard_branch_extended branch = {
+                .op = op,
+                .dest_tag = dest_tag,
+                .offset = quadword_offset,
+                .cond = duplicated_cond
+        };
+
+        return branch;
 }
 
 typedef struct midgard_bundle {
@@ -1123,10 +1153,11 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
         /* fallthrough */
 
         case nir_intrinsic_discard: {
-                midgard_condition cond = instr->intrinsic == nir_intrinsic_discard_if ?
-                                         midgard_condition_true : midgard_condition_always;
+                bool conditional = instr->intrinsic == nir_intrinsic_discard_if;
+                struct midgard_instruction discard = v_branch(conditional, false);
+                discard.branch.target_type = TARGET_DISCARD;
+                emit_mir_instruction(ctx, discard);
 
-                EMIT(alu_br_compact_cond, midgard_jmp_writeout_op_discard, 0, 2, cond);
                 ctx->can_discard = true;
                 break;
         }
@@ -2267,9 +2298,15 @@ schedule_bundle(compiler_context *ctx, midgard_block *block, midgard_instruction
                                         }
                                 }
 
-                                bundle.body_size[bundle.body_words_count] = sizeof(ains->br_compact);
-                                memcpy(&bundle.body_words[bundle.body_words_count++], &ains->br_compact, sizeof(ains->br_compact));
-                                bytes_emitted += sizeof(ains->br_compact);
+                                if (ains->unit == ALU_ENAB_BRANCH) {
+                                        bundle.body_size[bundle.body_words_count] = sizeof(midgard_branch_extended);
+                                        memcpy(&bundle.body_words[bundle.body_words_count++], &ains->branch_extended, sizeof(midgard_branch_extended));
+                                        bytes_emitted += sizeof(midgard_branch_extended);
+                                } else {
+                                        bundle.body_size[bundle.body_words_count] = sizeof(ains->br_compact);
+                                        memcpy(&bundle.body_words[bundle.body_words_count++], &ains->br_compact, sizeof(ains->br_compact));
+                                        bytes_emitted += sizeof(ains->br_compact);
+                                }
                         } else {
                                 memcpy(&bundle.register_words[bundle.register_words_count++], &ains->registers, sizeof(ains->registers));
                                 bytes_emitted += sizeof(midgard_reg_info);
@@ -2455,7 +2492,11 @@ emit_binary_bundle(compiler_context *ctx, midgard_bundle *bundle, struct util_dy
                                         memcpy(util_dynarray_grow(emission, sizeof(midgard_vector_alu)), &ins.alu, sizeof(midgard_vector_alu));
                                 }
 
-                                memcpy(util_dynarray_grow(emission, sizeof(ins->br_compact)), &ins->br_compact, sizeof(ins->br_compact));
+                                if (ins->unit == ALU_ENAB_BR_COMPACT) {
+                                        memcpy(util_dynarray_grow(emission, sizeof(ins->br_compact)), &ins->br_compact, sizeof(ins->br_compact));
+                                } else {
+                                        memcpy(util_dynarray_grow(emission, sizeof(ins->branch_extended)), &ins->branch_extended, sizeof(ins->branch_extended));
+                                }
                         } else {
                                 /* Scalar */
                                 midgard_scalar_alu scalarised = vector_to_scalar_alu(ins->alu, ins);
@@ -2919,13 +2960,15 @@ write_transformed_position(nir_builder *b, nir_src input_point_src, int uniform_
 
         /* gl_Position will be written out in screenspace xyz, with w set to
          * the reciprocal we computed earlier. The transformed w component is
-         * then used for perspective-correct varying interpolation */
+         * then used for perspective-correct varying interpolation. The
+         * transformed w component must preserve its original sign; this is
+         * used in depth clipping computations */
 
         nir_ssa_def *screen_space = nir_vec4(b,
                                              nir_channel(b, viewport_xy, 0),
                                              nir_channel(b, viewport_xy, 1),
                                              screen_depth,
-                                             nir_fabs(b, w_recip));
+                                             w_recip);
 
         /* Finally, write out the transformed values to the varying */
 
@@ -3180,20 +3223,20 @@ emit_if(struct compiler_context *ctx, nir_if *nif)
         int else_idx = ctx->block_count;
         int count_in = ctx->instruction_count;
         midgard_block *else_block = emit_cf_list(ctx, &nif->else_list);
+        int after_else_idx = ctx->block_count;
 
         /* Now that we have the subblocks emitted, fix up the branches */
 
         assert(then_block);
         assert(else_block);
 
-
         if (ctx->instruction_count == count_in) {
                 /* The else block is empty, so don't emit an exit jump */
                 mir_remove_instruction(then_exit);
-                then_branch->branch.target_block = else_idx + 1;
+                then_branch->branch.target_block = after_else_idx;
         } else {
                 then_branch->branch.target_block = else_idx;
-                then_exit->branch.target_block = else_idx + 1;
+                then_exit->branch.target_block = after_else_idx;
         }
 }
 
@@ -3279,6 +3322,33 @@ emit_cf_list(struct compiler_context *ctx, struct exec_list *list)
         }
 
         return start_block;
+}
+
+/* Due to lookahead, we need to report the first tag executed in the command
+ * stream and in branch targets. An initial block might be empty, so iterate
+ * until we find one that 'works' */
+
+static unsigned
+midgard_get_first_tag_from_block(compiler_context *ctx, unsigned block_idx)
+{
+        midgard_block *initial_block = mir_get_block(ctx, block_idx);
+
+        unsigned first_tag = 0;
+
+        do {
+                midgard_bundle *initial_bundle = util_dynarray_element(&initial_block->bundles, midgard_bundle, 0);
+
+                if (initial_bundle) {
+                        first_tag = initial_bundle->tag;
+                        break;
+                }
+
+                /* Initial block is empty, try the next block */
+                initial_block = list_first_entry(&(initial_block->link), midgard_block, link);
+        } while(initial_block != NULL);
+
+        assert(first_tag);
+        return first_tag;
 }
 
 int
@@ -3451,28 +3521,44 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
                         for (int c = 0; c < bundle->instruction_count; ++c) {
                                 midgard_instruction *ins = &bundle->instructions[c];
 
-                                if (ins->unit != ALU_ENAB_BR_COMPACT) continue;
+                                if (!midgard_is_branch_unit(ins->unit)) continue;
 
                                 if (ins->prepacked_branch) continue;
 
-                                uint16_t compact;
+                                /* Parse some basic branch info */
+                                bool is_compact = ins->unit == ALU_ENAB_BR_COMPACT;
+                                bool is_conditional = ins->branch.conditional;
+                                bool is_inverted = ins->branch.invert_conditional;
+                                bool is_discard = ins->branch.target_type == TARGET_DISCARD;
 
                                 /* Determine the block we're jumping to */
                                 int target_number = ins->branch.target_block;
 
-                                midgard_block *target = mir_get_block(ctx, target_number);
-                                assert(target);
-
-                                /* Determine the destination tag */
-                                midgard_bundle *first = util_dynarray_element(&target->bundles, midgard_bundle, 0);
-                                assert(first);
-
-                                int dest_tag = first->tag;
+                                /* Report the destination tag. Discards don't need this */
+                                int dest_tag = is_discard ? 0 : midgard_get_first_tag_from_block(ctx, target_number);
 
                                 /* Count up the number of quadwords we're jumping over. That is, the number of quadwords in each of the blocks between (br_block_idx, target_number) */
                                 int quadword_offset = 0;
 
-                                if (target_number > br_block_idx) {
+                                if (is_discard) {
+                                        /* Jump to the end of the shader. We
+                                         * need to include not only the
+                                         * following blocks, but also the
+                                         * contents of our current block (since
+                                         * discard can come in the middle of
+                                         * the block) */
+
+                                        midgard_block *blk = mir_get_block(ctx, br_block_idx + 1);
+
+                                        for (midgard_bundle *bun = bundle + 1; bun < (midgard_bundle *)((char*) block->bundles.data + block->bundles.size); ++bun) {
+                                                quadword_offset += quadword_size(bun->tag);
+                                        }
+
+                                        mir_foreach_block_from(ctx, blk, b) {
+                                                quadword_offset += b->quadword_count;
+                                        }
+
+                                } else if (target_number > br_block_idx) {
                                         /* Jump forward */
 
                                         for (int idx = br_block_idx + 1; idx < target_number; ++idx) {
@@ -3492,31 +3578,57 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
                                         }
                                 }
 
-                                if (ins->branch.conditional) {
+                                /* Unconditional extended branches (far jumps)
+                                 * have issues, so we always use a conditional
+                                 * branch, setting the condition to always for
+                                 * unconditional. For compact unconditional
+                                 * branches, cond isn't used so it doesn't
+                                 * matter what we pick. */
+
+                                midgard_condition cond =
+                                        !is_conditional ? midgard_condition_always :
+                                        is_inverted ? midgard_condition_false :
+                                        midgard_condition_true;
+
+                                midgard_jmp_writeout_op op =
+                                        is_discard ? midgard_jmp_writeout_op_discard :
+                                        (is_compact && !is_conditional) ? midgard_jmp_writeout_op_branch_uncond :
+                                        midgard_jmp_writeout_op_branch_cond;
+
+                                if (!is_compact) {
+                                        midgard_branch_extended branch =
+                                                midgard_create_branch_extended(
+                                                        cond, op,
+                                                        dest_tag,
+                                                        quadword_offset);
+
+                                        memcpy(&ins->branch_extended, &branch, sizeof(branch));
+                                } else if (is_conditional || is_discard) {
                                         midgard_branch_cond branch = {
-                                                .op = midgard_jmp_writeout_op_branch_cond,
+                                                .op = op,
                                                 .dest_tag = dest_tag,
                                                 .offset = quadword_offset,
-                                                .cond = ins->branch.invert_conditional ? midgard_condition_false : midgard_condition_true
+                                                .cond = cond
                                         };
 
-                                        memcpy(&compact, &branch, sizeof(branch));
+                                        assert(branch.offset == quadword_offset);
+
+                                        memcpy(&ins->br_compact, &branch, sizeof(branch));
                                 } else {
+                                        assert(op == midgard_jmp_writeout_op_branch_uncond);
+
                                         midgard_branch_uncond branch = {
-                                                .op = midgard_jmp_writeout_op_branch_uncond,
+                                                .op = op,
                                                 .dest_tag = dest_tag,
                                                 .offset = quadword_offset,
                                                 .unknown = 1
                                         };
 
-                                        memcpy(&compact, &branch, sizeof(branch));
+                                        assert(branch.offset == quadword_offset);
+
+                                        memcpy(&ins->br_compact, &branch, sizeof(branch));
                                 }
-
-                                /* Swap in the generic branch for our actual branch */
-                                ins->unit = ALU_ENAB_BR_COMPACT;
-                                ins->br_compact = compact;
                         }
-
                 }
 
                 ++br_block_idx;
@@ -3566,28 +3678,8 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
 
         free(source_order_bundles);
 
-        /* Due to lookahead, we need to report in the command stream the first
-         * tag executed. An initial block might be empty, so iterate until we
-         * find one that 'works' */
-
-        midgard_block *initial_block = list_first_entry(&ctx->blocks, midgard_block, link);
-
-        program->first_tag = 0;
-
-        do {
-                midgard_bundle *initial_bundle = util_dynarray_element(&initial_block->bundles, midgard_bundle, 0);
-
-                if (initial_bundle) {
-                        program->first_tag = initial_bundle->tag;
-                        break;
-                }
-
-                /* Initial block is empty, try the next block */
-                initial_block = list_first_entry(&(initial_block->link), midgard_block, link);
-        } while(initial_block != NULL);
-
-        /* Make sure we actually set the tag */
-        assert(program->first_tag);
+        /* Report the very first tag executed */
+        program->first_tag = midgard_get_first_tag_from_block(ctx, 0);
 
         /* Deal with off-by-one related to the fencepost problem */
         program->work_register_count = ctx->work_registers + 1;

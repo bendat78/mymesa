@@ -524,6 +524,14 @@ radv_pipeline_compute_spi_color_formats(struct radv_pipeline *pipeline,
 		col_format |= cf << (4 * i);
 	}
 
+	if (!col_format && blend->need_src_alpha & (1 << 0)) {
+		/* When a subpass doesn't have any color attachments, write the
+		 * alpha channel of MRT0 when alpha coverage is enabled because
+		 * the depth attachment needs it.
+		 */
+		col_format |= V_028714_SPI_SHADER_32_ABGR;
+	}
+
 	/* If the i-th target format is set, all previous target formats must
 	 * be non-zero to avoid hangs.
 	 */
@@ -689,6 +697,7 @@ radv_pipeline_init_blend_state(struct radv_pipeline *pipeline,
 
 	if (vkms && vkms->alphaToCoverageEnable) {
 		blend.db_alpha_to_mask |= S_028B70_ALPHA_TO_MASK_ENABLE(1);
+		blend.need_src_alpha |= 0x1;
 	}
 
 	blend.cb_target_mask = 0;
@@ -2648,8 +2657,7 @@ radv_pipeline_generate_depth_stencil_state(struct radeon_cmdbuf *ctx_cs,
 	db_render_override |= S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
 			      S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
 
-	if (pipeline->device->enabled_extensions.EXT_depth_range_unrestricted &&
-	    !pCreateInfo->pRasterizationState->depthClampEnable &&
+	if (!pCreateInfo->pRasterizationState->depthClampEnable &&
 	    ps->info.info.ps.writes_z) {
 		/* From VK_EXT_depth_range_unrestricted spec:
 		 *
@@ -2718,11 +2726,18 @@ radv_pipeline_generate_raster_state(struct radeon_cmdbuf *ctx_cs,
 	const VkConservativeRasterizationModeEXT mode =
 		radv_get_conservative_raster_mode(vkraster);
 	uint32_t pa_sc_conservative_rast = S_028C4C_NULL_SQUAD_AA_MASK_ENABLE(1);
+	bool depth_clip_disable = vkraster->depthClampEnable;
+
+	const VkPipelineRasterizationDepthClipStateCreateInfoEXT *depth_clip_state =
+		vk_find_struct_const(vkraster->pNext, PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT);
+	if (depth_clip_state) {
+		depth_clip_disable = !depth_clip_state->depthClipEnable;
+	}
 
 	radeon_set_context_reg(ctx_cs, R_028810_PA_CL_CLIP_CNTL,
 	                       S_028810_DX_CLIP_SPACE_DEF(1) | // vulkan uses DX conventions.
-	                       S_028810_ZCLIP_NEAR_DISABLE(vkraster->depthClampEnable ? 1 : 0) |
-	                       S_028810_ZCLIP_FAR_DISABLE(vkraster->depthClampEnable ? 1 : 0) |
+	                       S_028810_ZCLIP_NEAR_DISABLE(depth_clip_disable ? 1 : 0) |
+	                       S_028810_ZCLIP_FAR_DISABLE(depth_clip_disable ? 1 : 0) |
 	                       S_028810_DX_RASTERIZATION_KILL(vkraster->rasterizerDiscardEnable ? 1 : 0) |
 	                       S_028810_DX_LINEAR_ATTR_CLIP_ENA(1));
 
@@ -3189,7 +3204,6 @@ radv_compute_db_shader_control(const struct radv_device *device,
 			       const struct radv_pipeline *pipeline,
                                const struct radv_shader_variant *ps)
 {
-	const struct radv_multisample_state *ms = &pipeline->graphics.ms;
 	unsigned z_order;
 	if (ps->info.fs.early_fragment_test || !ps->info.info.ps.writes_memory)
 		z_order = V_02880C_EARLY_Z_THEN_LATE_Z;

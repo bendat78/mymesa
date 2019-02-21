@@ -265,6 +265,7 @@ static void si_destroy_context(struct pipe_context *context)
 	util_dynarray_fini(&sctx->resident_tex_needs_color_decompress);
 	util_dynarray_fini(&sctx->resident_img_needs_color_decompress);
 	util_dynarray_fini(&sctx->resident_tex_needs_depth_decompress);
+	si_unref_sdma_uploads(sctx);
 	FREE(sctx);
 }
 
@@ -444,14 +445,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	if (!sctx->b.stream_uploader)
 		goto fail;
 
-	sctx->b.const_uploader = u_upload_create(&sctx->b, 128 * 1024,
-						   0, PIPE_USAGE_DEFAULT,
-						   SI_RESOURCE_FLAG_32BIT |
-						   (sscreen->cpdma_prefetch_writes_memory ?
-							    0 : SI_RESOURCE_FLAG_READ_ONLY));
-	if (!sctx->b.const_uploader)
-		goto fail;
-
 	sctx->cached_gtt_allocator = u_upload_create(&sctx->b, 16 * 1024,
 						       0, PIPE_USAGE_STAGING, 0);
 	if (!sctx->cached_gtt_allocator)
@@ -466,6 +459,20 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 						   (void*)si_flush_dma_cs,
 						   sctx, stop_exec_on_failure);
 	}
+
+	bool use_sdma_upload = sscreen->info.has_dedicated_vram && sctx->dma_cs;
+	sctx->b.const_uploader = u_upload_create(&sctx->b, 256 * 1024,
+						 0, PIPE_USAGE_DEFAULT,
+						 SI_RESOURCE_FLAG_32BIT |
+						 (use_sdma_upload ?
+							  SI_RESOURCE_FLAG_UPLOAD_FLUSH_EXPLICIT_VIA_SDMA :
+							  (sscreen->cpdma_prefetch_writes_memory ?
+								   0 : SI_RESOURCE_FLAG_READ_ONLY)));
+	if (!sctx->b.const_uploader)
+		goto fail;
+
+	if (use_sdma_upload)
+		u_upload_enable_flush_explicit(sctx->b.const_uploader);
 
 	si_init_buffer_functions(sctx);
 	si_init_clear_functions(sctx);
@@ -873,7 +880,8 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 		sscreen->debug_flags |= DBG(FS_CORRECT_DERIVS_AFTER_KILL);
 	if (driQueryOptionb(config->options, "radeonsi_enable_sisched"))
 		sscreen->debug_flags |= DBG(SI_SCHED);
-
+	if (driQueryOptionb(config->options, "radeonsi_enable_nir"))
+		sscreen->debug_flags |= DBG(NIR);
 
 	if (sscreen->debug_flags & DBG(INFO))
 		ac_print_gpu_info(&sscreen->info);

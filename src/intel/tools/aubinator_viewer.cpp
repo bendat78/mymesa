@@ -221,13 +221,13 @@ update_mem_for_exec(struct aub_mem *mem, struct aub_file *file, int exec_idx)
 
 #include <epoxy/gl.h>
 
-#include "imgui.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_memory_editor.h"
 #include "imgui_impl_gtk3.h"
 #include "imgui_impl_opengl3.h"
 
 #include "aubinator_viewer.h"
 #include "aubinator_viewer_urb.h"
-#include "imgui_memory_editor.h"
 
 struct window {
    struct list_head link; /* link in the global list of windows */
@@ -322,6 +322,8 @@ static struct Context {
    struct window commands_window;
    struct window registers_window;
 } context;
+
+thread_local ImGuiContext* __MesaImGui;
 
 static int
 map_key(int k)

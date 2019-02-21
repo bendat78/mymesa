@@ -657,8 +657,7 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		break;
 	case nir_op_frcp:
 		src[0] = ac_to_float(&ctx->ac, src[0]);
-		result = ac_build_fdiv(&ctx->ac, instr->dest.dest.ssa.bit_size == 32 ? ctx->ac.f32_1 : ctx->ac.f64_1,
-				       src[0]);
+		result = ac_build_fdiv(&ctx->ac, LLVMConstReal(LLVMTypeOf(src[0]), 1.0), src[0]);
 		break;
 	case nir_op_iand:
 		result = LLVMBuildAnd(ctx->ac.builder, src[0], src[1], "");
@@ -789,8 +788,7 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 	case nir_op_frsq:
 		result = emit_intrin_1f_param(&ctx->ac, "llvm.sqrt",
 		                              ac_to_float_type(&ctx->ac, def_type), src[0]);
-		result = ac_build_fdiv(&ctx->ac, instr->dest.dest.ssa.bit_size == 32 ? ctx->ac.f32_1 : ctx->ac.f64_1,
-				       result);
+		result = ac_build_fdiv(&ctx->ac, LLVMConstReal(LLVMTypeOf(result), 1.0), result);
 		break;
 	case nir_op_frexp_exp:
 		src[0] = ac_to_float(&ctx->ac, src[0]);
@@ -802,6 +800,10 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		src[0] = ac_to_float(&ctx->ac, src[0]);
 		result = ac_build_intrinsic(&ctx->ac, "llvm.amdgcn.frexp.mant.f64",
 					    ctx->ac.f64, src, 1, AC_FUNC_ATTR_READNONE);
+		break;
+	case nir_op_fpow:
+		result = emit_intrin_2f_param(&ctx->ac, "llvm.pow",
+		                              ac_to_float_type(&ctx->ac, def_type), src[0], src[1]);
 		break;
 	case nir_op_fmax:
 		result = emit_intrin_2f_param(&ctx->ac, "llvm.maxnum",
@@ -831,8 +833,10 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		break;
 	case nir_op_ldexp:
 		src[0] = ac_to_float(&ctx->ac, src[0]);
-		if (ac_get_elem_bits(&ctx->ac, LLVMTypeOf(src[0])) == 32)
+		if (ac_get_elem_bits(&ctx->ac, def_type) == 32)
 			result = ac_build_intrinsic(&ctx->ac, "llvm.amdgcn.ldexp.f32", ctx->ac.f32, src, 2, AC_FUNC_ATTR_READNONE);
+		else if (ac_get_elem_bits(&ctx->ac, def_type) == 16)
+			result = ac_build_intrinsic(&ctx->ac, "llvm.amdgcn.ldexp.f16", ctx->ac.f16, src, 2, AC_FUNC_ATTR_READNONE);
 		else
 			result = ac_build_intrinsic(&ctx->ac, "llvm.amdgcn.ldexp.f64", ctx->ac.f64, src, 2, AC_FUNC_ATTR_READNONE);
 		break;
@@ -884,6 +888,8 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		break;
 	case nir_op_f2f16_rtz:
 		src[0] = ac_to_float(&ctx->ac, src[0]);
+		if (LLVMTypeOf(src[0]) == ctx->ac.f64)
+			src[0] = LLVMBuildFPTrunc(ctx->ac.builder, src[0], ctx->ac.f32, "");
 		LLVMValueRef param[2] = { src[0], ctx->ac.f32_0 };
 		result = ac_build_cvt_pkrtz_f16(&ctx->ac, param);
 		result = LLVMBuildExtractElement(ctx->ac.builder, result, ctx->ac.i32_0, "");
@@ -1114,6 +1120,10 @@ static void visit_load_const(struct ac_nir_context *ctx,
 
 	for (unsigned i = 0; i < instr->def.num_components; ++i) {
 		switch (instr->def.bit_size) {
+		case 8:
+			values[i] = LLVMConstInt(element_type,
+			                         instr->value.u8[i], false);
+			break;
 		case 16:
 			values[i] = LLVMConstInt(element_type,
 			                         instr->value.u16[i], false);
@@ -1926,14 +1936,18 @@ static LLVMValueRef visit_load_var(struct ac_nir_context *ctx,
 	if (var) {
 		bool vs_in = ctx->stage == MESA_SHADER_VERTEX &&
 			var->data.mode == nir_var_shader_in;
-		if (var->data.compact)
-			stride = 1;
 		idx = var->data.driver_location;
 		comp = var->data.location_frac;
 		mode = var->data.mode;
 
 		get_deref_offset(ctx, deref, vs_in, NULL, NULL,
 				 &const_index, &indir_index);
+
+		if (var->data.compact) {
+			stride = 1;
+			const_index += comp;
+			comp = 0;
+		}
 	}
 
 	if (instr->dest.ssa.bit_size == 64 &&
@@ -2081,6 +2095,11 @@ visit_store_var(struct ac_nir_context *ctx,
 		                 NULL, NULL, &const_index, &indir_index);
 		idx = var->data.driver_location;
 		comp = var->data.location_frac;
+
+		if (var->data.compact) {
+			const_index += comp;
+			comp = 0;
+		}
 	}
 
 	if (ac_get_elem_bits(&ctx->ac, LLVMTypeOf(src)) == 64 &&

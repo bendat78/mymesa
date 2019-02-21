@@ -287,16 +287,18 @@ panfrost_destroy_bo(struct panfrost_screen *screen, struct panfrost_bo *pbo)
 {
 	struct panfrost_bo *bo = (struct panfrost_bo *)pbo;
 
-        if (bo->entry[0] != NULL) {
-                /* Most allocations have an entry to free */
-                bo->entry[0]->freed = true;
-                pb_slab_free(&screen->slabs, &bo->entry[0]->base);
+        for (int l = 0; l < MAX_MIP_LEVELS; ++l) {
+                if (bo->entry[l] != NULL) {
+                        /* Most allocations have an entry to free */
+                        bo->entry[l]->freed = true;
+                        pb_slab_free(&screen->slabs, &bo->entry[l]->base);
+                }
         }
 
         if (bo->tiled) {
                 /* Tiled has a malloc'd CPU, so just plain ol' free needed */
 
-                for (int l = 0; bo->cpu[l]; l++) {
+                for (int l = 0; l < MAX_MIP_LEVELS; ++l) {
                         free(bo->cpu[l]);
                 }
         }
@@ -309,6 +311,10 @@ panfrost_destroy_bo(struct panfrost_screen *screen, struct panfrost_bo *pbo)
         if (bo->has_checksum) {
                 /* TODO */
                 printf("--leaking checksum (%zd bytes)--\n", bo->checksum_slab.size);
+        }
+
+        if (bo->imported) {
+                screen->driver->free_imported_bo(screen, bo);
         }
 }
 
@@ -408,12 +414,6 @@ panfrost_tile_texture(struct panfrost_screen *screen, struct panfrost_resource *
 
         int swizzled_sz = panfrost_swizzled_size(width, height, bytes_per_pixel);
 
-        /* Allocate the transfer given that known size but do not copy */
-        struct pb_slab_entry *entry = pb_slab_alloc(&screen->slabs, swizzled_sz, HEAP_TEXTURE);
-        struct panfrost_memory_entry *p_entry = (struct panfrost_memory_entry *) entry;
-        struct panfrost_memory *backing = (struct panfrost_memory *) entry->slab;
-        uint8_t *swizzled = backing->cpu + p_entry->offset;
-
         /* Save the entry. But if there was already an entry here (from a
          * previous upload of the resource), free that one so we don't leak */
 
@@ -421,6 +421,12 @@ panfrost_tile_texture(struct panfrost_screen *screen, struct panfrost_resource *
                 bo->entry[level]->freed = true;
                 pb_slab_free(&screen->slabs, &bo->entry[level]->base);
         }
+
+        /* Allocate the transfer given that known size but do not copy */
+        struct pb_slab_entry *entry = pb_slab_alloc(&screen->slabs, swizzled_sz, HEAP_TEXTURE);
+        struct panfrost_memory_entry *p_entry = (struct panfrost_memory_entry *) entry;
+        struct panfrost_memory *backing = (struct panfrost_memory *) entry->slab;
+        uint8_t *swizzled = backing->cpu + p_entry->offset;
 
         bo->entry[level] = p_entry;
         bo->gpu[level] = backing->gpu + p_entry->offset;
@@ -509,9 +515,10 @@ panfrost_slab_can_reclaim(void *priv, struct pb_slab_entry *entry)
 static void
 panfrost_slab_free(void *priv, struct pb_slab *slab)
 {
-        /* STUB */
-        //struct panfrost_memory *mem = (struct panfrost_memory *) slab;
-        printf("stub: Tried to free slab\n");
+        struct panfrost_memory *mem = (struct panfrost_memory *) slab;
+        struct panfrost_screen *screen = (struct panfrost_screen *) priv;
+
+        screen->driver->free_slab(screen, mem);
 }
 
 static void
@@ -520,15 +527,34 @@ panfrost_invalidate_resource(struct pipe_context *pctx, struct pipe_resource *pr
         //fprintf(stderr, "TODO %s\n", __func__);
 }
 
+static enum pipe_format
+panfrost_resource_get_internal_format(struct pipe_resource *prsrc)
+{
+        return prsrc->format;
+}
+
+static void
+panfrost_resource_set_stencil(struct pipe_resource *prsrc,
+                              struct pipe_resource *stencil)
+{
+        pan_resource(prsrc)->separate_stencil = pan_resource(stencil);
+}
+
+static struct pipe_resource *
+panfrost_resource_get_stencil(struct pipe_resource *prsrc)
+{
+        return &pan_resource(prsrc)->separate_stencil->base;
+}
+
 static const struct u_transfer_vtbl transfer_vtbl = {
         .resource_create          = panfrost_resource_create,
         .resource_destroy         = panfrost_resource_destroy,
         .transfer_map             = panfrost_transfer_map,
         .transfer_unmap           = panfrost_transfer_unmap,
         .transfer_flush_region    = u_default_transfer_flush_region,
-        //.get_internal_format      = panfrost_resource_get_internal_format,
-        //.set_stencil              = panfrost_resource_set_stencil,
-        //.get_stencil              = panfrost_resource_get_stencil,
+        .get_internal_format      = panfrost_resource_get_internal_format,
+        .set_stencil              = panfrost_resource_set_stencil,
+        .get_stencil              = panfrost_resource_get_stencil,
 };
 
 void
@@ -541,7 +567,7 @@ panfrost_resource_screen_init(struct panfrost_screen *pscreen)
         pscreen->base.resource_from_handle = panfrost_resource_from_handle;
         pscreen->base.resource_get_handle = panfrost_resource_get_handle;
         pscreen->base.transfer_helper = u_transfer_helper_create(&transfer_vtbl,
-                                                            true, true,
+                                                            true, false,
                                                             true, true);
 
         pb_slabs_init(&pscreen->slabs,

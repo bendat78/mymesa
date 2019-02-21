@@ -45,6 +45,12 @@ struct panfrost_bo {
         /* Memory entry corresponding to gpu above */
         struct panfrost_memory_entry *entry[MAX_MIP_LEVELS];
 
+        /* Set if this bo was imported rather than allocated */
+        bool imported;
+
+        /* Number of bytes of the imported allocation */
+        size_t imported_size;
+
         /* Set for tiled, clear for linear. */
         bool tiled;
 
@@ -70,6 +76,8 @@ struct panfrost_resource {
 
         struct panfrost_bo *bo;
         struct renderonly_scanout *scanout;
+
+        struct panfrost_resource *separate_stencil;
 };
 
 static inline struct panfrost_resource *

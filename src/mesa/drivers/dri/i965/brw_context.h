@@ -1006,6 +1006,9 @@ struct brw_context
 
       /* High bits of the last seen index buffer address (for workarounds). */
       uint16_t last_bo_high_bits;
+
+      /* Used to understand is GPU state of primitive restart is up to date */
+      bool enable_cut_index;
    } ib;
 
    /* Active vertex program:
@@ -1455,6 +1458,16 @@ key_debug(struct brw_context *brw, const char *name, int a, int b)
 {
    if (a != b) {
       perf_debug("  %s %d->%d\n", name, a, b);
+      return true;
+   }
+   return false;
+}
+
+static inline bool
+key_debug_float(struct brw_context *brw, const char *name, float a, float b)
+{
+   if (a != b) {
+      perf_debug("  %s %f->%f\n", name, a, b);
       return true;
    }
    return false;

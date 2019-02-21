@@ -203,14 +203,19 @@ v3d_emit_gl_shader_state(struct v3d_context *v3d,
                  * shader needs to write the Z value (even just discards).
                  */
                 shader.fragment_shader_does_z_writes =
-                        (v3d->prog.fs->prog_data.fs->writes_z ||
-                         v3d->prog.fs->prog_data.fs->discard);
+                        v3d->prog.fs->prog_data.fs->writes_z;
+                /* Set if the EZ test must be disabled (due to shader side
+                 * effects and the early_z flag not being present in the
+                 * shader).
+                 */
+                shader.turn_off_early_z_test =
+                        v3d->prog.fs->prog_data.fs->disable_ez;
 
                 shader.fragment_shader_uses_real_pixel_centre_w_in_addition_to_centroid_w2 =
                         v3d->prog.fs->prog_data.fs->uses_center_w;
 
                 shader.number_of_varyings_in_fragment_shader =
-                        v3d->prog.fs->prog_data.base->num_inputs;
+                        v3d->prog.fs->prog_data.fs->num_inputs;
 
                 shader.coordinate_shader_propagate_nans = true;
                 shader.vertex_shader_propagate_nans = true;
@@ -479,9 +484,9 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
          * on the last submitted render, rather than tracking the last
          * rendering to each texture's BO.
          */
-        if (v3d->tex[PIPE_SHADER_VERTEX].num_textures) {
+        if (v3d->tex[PIPE_SHADER_VERTEX].num_textures || info->indirect) {
                 perf_debug("Blocking binner on last render "
-                           "due to vertex texturing.\n");
+                           "due to vertex texturing or indirect drawing.\n");
                 job->submit.in_sync_bcl = v3d->out_sync;
         }
 

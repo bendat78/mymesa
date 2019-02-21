@@ -238,11 +238,9 @@ setup_stream_out(struct fd6_program_state *state, const struct ir3_shader_varian
 struct stage {
 	const struct ir3_shader_variant *v;
 	const struct ir3_info *i;
-	/* const sizes are in units of 4 * vec4 */
-	uint8_t constoff;
+	/* const sizes are in units of vec4, aligned to 4*vec4 */
 	uint8_t constlen;
 	/* instr sizes are in units of 16 instructions */
-	uint8_t instroff;
 	uint8_t instrlen;
 };
 
@@ -287,16 +285,6 @@ setup_stages(struct fd6_program_state *state, struct stage *s, bool binning_pass
 			s[i].instrlen = 0;
 		}
 	}
-
-	unsigned constoff = 0;
-	for (i = 0; i < MAX_STAGES; i++) {
-		s[i].constoff = constoff;
-		constoff += s[i].constlen;
-	}
-
-	s[VS].instroff = 0;
-	s[FS].instroff = 64 - s[FS].instrlen;
-	s[HS].instroff = s[DS].instroff = s[GS].instroff = s[FS].instroff;
 }
 
 static void
@@ -349,6 +337,7 @@ setup_stateobj(struct fd_ringbuffer *ring,
 
 	OUT_PKT4(ring, REG_A6XX_SP_VS_CONFIG, 2);
 	OUT_RING(ring, COND(s[VS].v, A6XX_SP_VS_CONFIG_ENABLED) |
+			 A6XX_SP_VS_CONFIG_NIBO(s[VS].v->image_mapping.num_ibo) |
 			 A6XX_SP_VS_CONFIG_NTEX(s[VS].v->num_samp) |
 			 A6XX_SP_VS_CONFIG_NSAMP(s[VS].v->num_samp));     /* SP_VS_CONFIG */
 	OUT_RING(ring, s[VS].instrlen);							  /* SP_VS_INSTRLEN */
@@ -382,6 +371,7 @@ setup_stateobj(struct fd_ringbuffer *ring,
 
 	OUT_PKT4(ring, REG_A6XX_SP_FS_CONFIG, 2);
 	OUT_RING(ring, COND(s[FS].v, A6XX_SP_FS_CONFIG_ENABLED) |
+			 A6XX_SP_FS_CONFIG_NIBO(s[FS].v->image_mapping.num_ibo) |
 			 A6XX_SP_FS_CONFIG_NTEX(s[FS].v->num_samp) |
 			 A6XX_SP_FS_CONFIG_NSAMP(s[FS].v->num_samp));     /* SP_FS_CONFIG */
 	OUT_RING(ring, s[FS].instrlen);							  /* SP_FS_INSTRLEN */
@@ -391,13 +381,15 @@ setup_stateobj(struct fd_ringbuffer *ring,
 			 0xfcfc0000);
 
 	OUT_PKT4(ring, REG_A6XX_HLSQ_VS_CNTL, 4);
-	OUT_RING(ring, A6XX_HLSQ_VS_CNTL_CONSTLEN(s[VS].constlen) | 0x100);    /* HLSQ_VS_CONSTLEN */
+	OUT_RING(ring, A6XX_HLSQ_VS_CNTL_CONSTLEN(s[VS].constlen) |
+			 A6XX_HLSQ_VS_CNTL_ENABLED);
 	OUT_RING(ring, A6XX_HLSQ_HS_CNTL_CONSTLEN(s[HS].constlen));    /* HLSQ_HS_CONSTLEN */
 	OUT_RING(ring, A6XX_HLSQ_DS_CNTL_CONSTLEN(s[DS].constlen));    /* HLSQ_DS_CONSTLEN */
 	OUT_RING(ring, A6XX_HLSQ_GS_CNTL_CONSTLEN(s[GS].constlen));    /* HLSQ_GS_CONSTLEN */
 
 	OUT_PKT4(ring, REG_A6XX_HLSQ_FS_CNTL, 1);
-	OUT_RING(ring, A6XX_HLSQ_VS_CNTL_CONSTLEN(s[FS].constlen) | 0x100);    /* HLSQ_FS_CONSTLEN */
+	OUT_RING(ring, A6XX_HLSQ_FS_CNTL_CONSTLEN(s[FS].constlen) |
+			 A6XX_HLSQ_FS_CNTL_ENABLED);
 
 	OUT_PKT4(ring, REG_A6XX_SP_VS_CTRL_REG0, 1);
 	OUT_RING(ring, A6XX_SP_VS_CTRL_REG0_THREADSIZE(fssz) |
@@ -563,7 +555,12 @@ setup_stateobj(struct fd_ringbuffer *ring,
 					A6XX_RB_RENDER_CONTROL0_WCOORD) |
 			COND(s[FS].v->frag_face, A6XX_RB_RENDER_CONTROL0_UNK3));
 
-	OUT_RING(ring, COND(s[FS].v->frag_face, A6XX_RB_RENDER_CONTROL1_FACENESS));
+	OUT_RING(ring,
+			COND(samp_mask_regid != regid(63, 0),
+				A6XX_RB_RENDER_CONTROL1_SAMPLEMASK) |
+			COND(samp_id_regid != regid(63, 0),
+				A6XX_RB_RENDER_CONTROL1_SAMPLEID) |
+			COND(s[FS].v->frag_face, A6XX_RB_RENDER_CONTROL1_FACENESS));
 
 	OUT_PKT4(ring, REG_A6XX_SP_FS_OUTPUT_REG(0), 8);
 	for (i = 0; i < 8; i++) {
