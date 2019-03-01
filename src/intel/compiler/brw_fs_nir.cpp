@@ -381,13 +381,30 @@ fs_visitor::nir_emit_cf_list(exec_list *list)
 void
 fs_visitor::nir_emit_if(nir_if *if_stmt)
 {
+   bool invert;
+   fs_reg cond_reg;
+
+   /* If the condition has the form !other_condition, use other_condition as
+    * the source, but invert the predicate on the if instruction.
+    */
+   nir_alu_instr *const cond = nir_src_as_alu_instr(&if_stmt->condition);
+   if (cond != NULL && cond->op == nir_op_inot) {
+      assert(!cond->src[0].negate);
+      assert(!cond->src[0].abs);
+
+      invert = true;
+      cond_reg = get_nir_src(cond->src[0].src);
+   } else {
+      invert = false;
+      cond_reg = get_nir_src(if_stmt->condition);
+   }
+
    /* first, put the condition into f0 */
    fs_inst *inst = bld.MOV(bld.null_reg_d(),
-                            retype(get_nir_src(if_stmt->condition),
-                                   BRW_REGISTER_TYPE_D));
+                           retype(cond_reg, BRW_REGISTER_TYPE_D));
    inst->conditional_mod = BRW_CONDITIONAL_NZ;
 
-   bld.IF(BRW_PREDICATE_NORMAL);
+   bld.IF(BRW_PREDICATE_NORMAL)->predicate_inverse = invert;
 
    nir_emit_cf_list(&if_stmt->then_list);
 
@@ -671,18 +688,19 @@ brw_rnd_mode_from_nir_op (const nir_op op) {
    }
 }
 
-void
-fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
+fs_reg
+fs_visitor::prepare_alu_destination_and_sources(const fs_builder &bld,
+                                                nir_alu_instr *instr,
+                                                fs_reg *op,
+                                                bool need_dest)
 {
-   struct brw_wm_prog_key *fs_key = (struct brw_wm_prog_key *) this->key;
-   fs_inst *inst;
+   fs_reg result =
+      need_dest ? get_nir_dest(instr->dest.dest) : bld.null_reg_ud();
 
-   fs_reg result = get_nir_dest(instr->dest.dest);
    result.type = brw_type_for_nir_type(devinfo,
       (nir_alu_type)(nir_op_infos[instr->op].output_type |
                      nir_dest_bit_size(instr->dest.dest)));
 
-   fs_reg op[4];
    for (unsigned i = 0; i < nir_op_infos[instr->op].num_inputs; i++) {
       op[i] = get_nir_src(instr->src[i].src);
       op[i].type = brw_type_for_nir_type(devinfo,
@@ -692,10 +710,111 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
       op[i].negate = instr->src[i].negate;
    }
 
-   /* We get a bunch of mov's out of the from_ssa pass and they may still
-    * be vectorized.  We'll handle them as a special-case.  We'll also
-    * handle vecN here because it's basically the same thing.
+   /* Move and vecN instrutions may still be vectored.  Return the raw,
+    * vectored source and destination so that fs_visitor::nir_emit_alu can
+    * handle it.  Other callers should not have to handle these kinds of
+    * instructions.
     */
+   switch (instr->op) {
+   case nir_op_imov:
+   case nir_op_fmov:
+   case nir_op_vec2:
+   case nir_op_vec3:
+   case nir_op_vec4:
+      return result;
+   default:
+      break;
+   }
+
+   /* At this point, we have dealt with any instruction that operates on
+    * more than a single channel.  Therefore, we can just adjust the source
+    * and destination registers for that channel and emit the instruction.
+    */
+   unsigned channel = 0;
+   if (nir_op_infos[instr->op].output_size == 0) {
+      /* Since NIR is doing the scalarizing for us, we should only ever see
+       * vectorized operations with a single channel.
+       */
+      assert(util_bitcount(instr->dest.write_mask) == 1);
+      channel = ffs(instr->dest.write_mask) - 1;
+
+      result = offset(result, bld, channel);
+   }
+
+   for (unsigned i = 0; i < nir_op_infos[instr->op].num_inputs; i++) {
+      assert(nir_op_infos[instr->op].input_sizes[i] < 2);
+      op[i] = offset(op[i], bld, instr->src[i].swizzle[channel]);
+   }
+
+   return result;
+}
+
+void
+fs_visitor::resolve_inot_sources(const fs_builder &bld, nir_alu_instr *instr,
+                                 fs_reg *op)
+{
+   for (unsigned i = 0; i < 2; i++) {
+      nir_alu_instr *const inot_instr =
+         nir_src_as_alu_instr(&instr->src[i].src);
+
+      if (inot_instr != NULL && inot_instr->op == nir_op_inot &&
+          !inot_instr->src[0].abs && !inot_instr->src[0].negate) {
+         /* The source of the inot is now the source of instr. */
+         prepare_alu_destination_and_sources(bld, inot_instr, &op[i], false);
+
+         assert(!op[i].negate);
+         op[i].negate = true;
+      } else {
+         op[i] = resolve_source_modifiers(op[i]);
+      }
+   }
+}
+
+bool
+fs_visitor::try_emit_b2fi_of_inot(const fs_builder &bld,
+                                  fs_reg result,
+                                  nir_alu_instr *instr)
+{
+   if (devinfo->gen < 6 || devinfo->gen >= 12)
+      return false;
+
+   nir_alu_instr *const inot_instr = nir_src_as_alu_instr(&instr->src[0].src);
+
+   if (inot_instr == NULL || inot_instr->op != nir_op_inot)
+      return false;
+
+   /* HF is also possible as a destination on BDW+.  For nir_op_b2i, the set
+    * of valid size-changing combinations is a bit more complex.
+    *
+    * The source restriction is just because I was lazy about generating the
+    * constant below.
+    */
+   if (nir_dest_bit_size(instr->dest.dest) != 32 ||
+       nir_src_bit_size(inot_instr->src[0].src) != 32)
+      return false;
+
+   /* b2[fi](inot(a)) maps a=0 => 1, a=-1 => 0.  Since a can only be 0 or -1,
+    * this is float(1 + a).
+    */
+   fs_reg op;
+
+   prepare_alu_destination_and_sources(bld, inot_instr, &op, false);
+
+   bld.ADD(result, op, brw_imm_d(1));
+   assert(!instr->dest.saturate);
+
+   return true;
+}
+
+void
+fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
+{
+   struct brw_wm_prog_key *fs_key = (struct brw_wm_prog_key *) this->key;
+   fs_inst *inst;
+
+   fs_reg op[4];
+   fs_reg result = prepare_alu_destination_and_sources(bld, instr, op, true);
+
    switch (instr->op) {
    case nir_op_imov:
    case nir_op_fmov:
@@ -741,31 +860,7 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
       }
       return;
    }
-   default:
-      break;
-   }
 
-   /* At this point, we have dealt with any instruction that operates on
-    * more than a single channel.  Therefore, we can just adjust the source
-    * and destination registers for that channel and emit the instruction.
-    */
-   unsigned channel = 0;
-   if (nir_op_infos[instr->op].output_size == 0) {
-      /* Since NIR is doing the scalarizing for us, we should only ever see
-       * vectorized operations with a single channel.
-       */
-      assert(util_bitcount(instr->dest.write_mask) == 1);
-      channel = ffs(instr->dest.write_mask) - 1;
-
-      result = offset(result, bld, channel);
-   }
-
-   for (unsigned i = 0; i < nir_op_infos[instr->op].num_inputs; i++) {
-      assert(nir_op_infos[instr->op].input_sizes[i] < 2);
-      op[i] = offset(op[i], bld, instr->src[i].swizzle[channel]);
-   }
-
-   switch (instr->op) {
    case nir_op_i2f32:
    case nir_op_u2f32:
       if (optimize_extract_to_float(instr, result))
@@ -802,6 +897,8 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
    case nir_op_b2f16:
    case nir_op_b2f32:
    case nir_op_b2f64:
+      if (try_emit_b2fi_of_inot(bld, result, instr))
+         break;
       op[0].type = BRW_REGISTER_TYPE_D;
       op[0].negate = !op[0].negate;
       /* fallthrough */
@@ -1113,28 +1210,84 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
 
    case nir_op_inot:
       if (devinfo->gen >= 8) {
+         nir_alu_instr *const inot_src_instr =
+            nir_src_as_alu_instr(&instr->src[0].src);
+
+         if (inot_src_instr != NULL &&
+             (inot_src_instr->op == nir_op_ior ||
+              inot_src_instr->op == nir_op_ixor ||
+              inot_src_instr->op == nir_op_iand) &&
+             !inot_src_instr->src[0].abs &&
+             !inot_src_instr->src[0].negate &&
+             !inot_src_instr->src[1].abs &&
+             !inot_src_instr->src[1].negate) {
+            /* The sources of the source logical instruction are now the
+             * sources of the instruction that will be generated.
+             */
+            prepare_alu_destination_and_sources(bld, inot_src_instr, op, false);
+            resolve_inot_sources(bld, inot_src_instr, op);
+
+            /* Smash all of the sources and destination to be signed.  This
+             * doesn't matter for the operation of the instruction, but cmod
+             * propagation fails on unsigned sources with negation (due to
+             * fs_inst::can_do_cmod returning false).
+             */
+            result.type =
+               brw_type_for_nir_type(devinfo,
+                                     (nir_alu_type)(nir_type_int |
+                                                    nir_dest_bit_size(instr->dest.dest)));
+            op[0].type =
+               brw_type_for_nir_type(devinfo,
+                                     (nir_alu_type)(nir_type_int |
+                                                    nir_src_bit_size(inot_src_instr->src[0].src)));
+            op[1].type =
+               brw_type_for_nir_type(devinfo,
+                                     (nir_alu_type)(nir_type_int |
+                                                    nir_src_bit_size(inot_src_instr->src[1].src)));
+
+            /* For XOR, only invert one of the sources.  Arbitrarily choose
+             * the first source.
+             */
+            op[0].negate = !op[0].negate;
+            if (inot_src_instr->op != nir_op_ixor)
+               op[1].negate = !op[1].negate;
+
+            switch (inot_src_instr->op) {
+            case nir_op_ior:
+               bld.AND(result, op[0], op[1]);
+               return;
+
+            case nir_op_iand:
+               bld.OR(result, op[0], op[1]);
+               return;
+
+            case nir_op_ixor:
+               bld.XOR(result, op[0], op[1]);
+               return;
+
+            default:
+               unreachable("impossible opcode");
+            }
+         }
          op[0] = resolve_source_modifiers(op[0]);
       }
       bld.NOT(result, op[0]);
       break;
    case nir_op_ixor:
       if (devinfo->gen >= 8) {
-         op[0] = resolve_source_modifiers(op[0]);
-         op[1] = resolve_source_modifiers(op[1]);
+         resolve_inot_sources(bld, instr, op);
       }
       bld.XOR(result, op[0], op[1]);
       break;
    case nir_op_ior:
       if (devinfo->gen >= 8) {
-         op[0] = resolve_source_modifiers(op[0]);
-         op[1] = resolve_source_modifiers(op[1]);
+         resolve_inot_sources(bld, instr, op);
       }
       bld.OR(result, op[0], op[1]);
       break;
    case nir_op_iand:
       if (devinfo->gen >= 8) {
-         op[0] = resolve_source_modifiers(op[0]);
-         op[1] = resolve_source_modifiers(op[1]);
+         resolve_inot_sources(bld, instr, op);
       }
       bld.AND(result, op[0], op[1]);
       break;
