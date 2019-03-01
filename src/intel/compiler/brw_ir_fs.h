@@ -358,6 +358,13 @@ public:
    bool has_source_and_destination_hazard() const;
 
    /**
+    * Return whether \p arg is a control source of a virtual instruction which
+    * shouldn't contribute to the execution type and usual regioning
+    * restriction calculations of arithmetic instructions.
+    */
+   bool is_control_source(unsigned arg) const;
+
+   /**
     * Return the subset of flag registers read by the instruction as a bitset
     * with byte granularity.
     */
@@ -461,7 +468,8 @@ get_exec_type(const fs_inst *inst)
    brw_reg_type exec_type = BRW_REGISTER_TYPE_B;
 
    for (int i = 0; i < inst->sources; i++) {
-      if (inst->src[i].file != BAD_FILE) {
+      if (inst->src[i].file != BAD_FILE &&
+          !inst->is_control_source(i)) {
          const brw_reg_type t = get_exec_type(inst->src[i].type);
          if (type_sz(t) > type_sz(exec_type))
             exec_type = t;
@@ -534,11 +542,19 @@ has_dst_aligned_region_restriction(const gen_device_info *devinfo,
                                    const fs_inst *inst)
 {
    const brw_reg_type exec_type = get_exec_type(inst);
-   const bool is_int_multiply = !brw_reg_type_is_floating_point(exec_type) &&
-         (inst->opcode == BRW_OPCODE_MUL || inst->opcode == BRW_OPCODE_MAD);
+   /* Even though the hardware spec claims that "integer DWord multiply"
+    * operations are restricted, empirical evidence and the behavior of the
+    * simulator suggest that only 32x32-bit integer multiplication is
+    * restricted.
+    */
+   const bool is_dword_multiply = !brw_reg_type_is_floating_point(exec_type) &&
+      ((inst->opcode == BRW_OPCODE_MUL &&
+        MIN2(type_sz(inst->src[0].type), type_sz(inst->src[1].type)) >= 4) ||
+       (inst->opcode == BRW_OPCODE_MAD &&
+        MIN2(type_sz(inst->src[1].type), type_sz(inst->src[2].type)) >= 4));
 
    if (type_sz(inst->dst.type) > 4 || type_sz(exec_type) > 4 ||
-       (type_sz(exec_type) == 4 && is_int_multiply))
+       (type_sz(exec_type) == 4 && is_dword_multiply))
       return devinfo->is_cherryview || gen_device_info_is_9lp(devinfo);
    else
       return false;

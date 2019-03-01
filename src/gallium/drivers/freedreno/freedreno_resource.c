@@ -126,10 +126,7 @@ do_blit(struct fd_context *ctx, const struct pipe_blit_info *blit, bool fallback
 	struct pipe_context *pctx = &ctx->base;
 
 	/* TODO size threshold too?? */
-	if (!fallback) {
-		/* do blit on gpu: */
-		pctx->blit(pctx, blit);
-	} else {
+	if (fallback || !fd_blit(pctx, blit)) {
 		/* do blit on cpu: */
 		util_resource_copy_region(pctx,
 				blit->dst.resource, blit->dst.level, blit->dst.box.x,
@@ -373,7 +370,9 @@ flush_resource(struct fd_context *ctx, struct fd_resource *rsc, unsigned usage)
 {
 	struct fd_batch *write_batch = NULL;
 
-	fd_batch_reference(&write_batch, rsc->write_batch);
+	mtx_lock(&ctx->screen->lock);
+	fd_batch_reference_locked(&write_batch, rsc->write_batch);
+	mtx_unlock(&ctx->screen->lock);
 
 	if (usage & PIPE_TRANSFER_WRITE) {
 		struct fd_batch *batch, *batches[32] = {};
@@ -387,7 +386,7 @@ flush_resource(struct fd_context *ctx, struct fd_resource *rsc, unsigned usage)
 		mtx_lock(&ctx->screen->lock);
 		batch_mask = rsc->batch_mask;
 		foreach_batch(batch, &ctx->screen->batch_cache, batch_mask)
-			fd_batch_reference(&batches[batch->idx], batch);
+			fd_batch_reference_locked(&batches[batch->idx], batch);
 		mtx_unlock(&ctx->screen->lock);
 
 		foreach_batch(batch, &ctx->screen->batch_cache, batch_mask)
@@ -501,7 +500,10 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 				fd_blit_to_staging(ctx, trans);
 
 				struct fd_batch *batch = NULL;
-				fd_batch_reference(&batch, staging_rsc->write_batch);
+
+				fd_context_lock(ctx);
+				fd_batch_reference_locked(&batch, staging_rsc->write_batch);
+				fd_context_unlock(ctx);
 
 				/* we can't fd_bo_cpu_prep() until the blit to staging
 				 * is submitted to kernel.. in that case write_batch
@@ -550,7 +552,9 @@ fd_resource_transfer_map(struct pipe_context *pctx,
 		struct fd_batch *write_batch = NULL;
 
 		/* hold a reference, so it doesn't disappear under us: */
-		fd_batch_reference(&write_batch, rsc->write_batch);
+		fd_context_lock(ctx);
+		fd_batch_reference_locked(&write_batch, rsc->write_batch);
+		fd_context_unlock(ctx);
 
 		if ((usage & PIPE_TRANSFER_WRITE) && write_batch &&
 				write_batch->back_blit) {
@@ -853,7 +857,13 @@ fd_resource_create_with_modifiers(struct pipe_screen *pscreen,
 	enum pipe_format format = tmpl->format;
 	uint32_t size;
 
-	if (screen->ro && (tmpl->bind & PIPE_BIND_SCANOUT)) {
+	/* when using kmsro, scanout buffers are allocated on the display device
+	 * create_with_modifiers() doesn't give us usage flags, so we have to
+	 * assume that all calls with modifiers are scanout-possible
+	 */
+	if (screen->ro &&
+		((tmpl->bind & PIPE_BIND_SCANOUT) ||
+		 !(count == 1 && modifiers[0] == DRM_FORMAT_MOD_INVALID))) {
 		struct pipe_resource scanout_templat = *tmpl;
 		struct renderonly_scanout *scanout;
 		struct winsys_handle handle;
@@ -911,6 +921,12 @@ fd_resource_create_with_modifiers(struct pipe_screen *pscreen,
 	bool allow_ubwc = find_modifier(DRM_FORMAT_MOD_INVALID, modifiers, count);
 	if (tmpl->bind & PIPE_BIND_SHARED)
 		allow_ubwc = find_modifier(DRM_FORMAT_MOD_QCOM_COMPRESSED, modifiers, count);
+
+	/* TODO turn on UBWC for all internal buffers
+	 * Manhattan benchmark shows artifacts when enabled.  Once this
+	 * is fixed the following line can be removed.
+	 */
+	allow_ubwc &= !!(fd_mesa_debug & FD_DBG_UBWC);
 
 	if (screen->tile_mode &&
 			(tmpl->target != PIPE_BUFFER) &&
@@ -1004,7 +1020,7 @@ is_supported_modifier(struct pipe_screen *pscreen, enum pipe_format pfmt,
 
 	/* Get the supported modifiers: */
 	uint64_t modifiers[count];
-	pscreen->query_dmabuf_modifiers(pscreen, pfmt, 0, modifiers, NULL, &count);
+	pscreen->query_dmabuf_modifiers(pscreen, pfmt, count, modifiers, NULL, &count);
 
 	for (int i = 0; i < count; i++)
 		if (modifiers[i] == mod)
@@ -1242,6 +1258,13 @@ fd_get_sample_position(struct pipe_context *context,
 	pos_out[1] = ptr[sample_index][1] / 16.0f;
 }
 
+static void
+fd_blit_pipe(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
+{
+	/* wrap fd_blit to return void */
+	fd_blit(pctx, blit_info);
+}
+
 void
 fd_resource_context_init(struct pipe_context *pctx)
 {
@@ -1253,7 +1276,7 @@ fd_resource_context_init(struct pipe_context *pctx)
 	pctx->create_surface = fd_create_surface;
 	pctx->surface_destroy = fd_surface_destroy;
 	pctx->resource_copy_region = fd_resource_copy_region;
-	pctx->blit = fd_blit;
+	pctx->blit = fd_blit_pipe;
 	pctx->flush_resource = fd_flush_resource;
 	pctx->invalidate_resource = fd_invalidate_resource;
 	pctx->get_sample_position = fd_get_sample_position;

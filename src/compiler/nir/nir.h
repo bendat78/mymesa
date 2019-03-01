@@ -3058,6 +3058,7 @@ typedef struct nir_lower_tex_options {
    unsigned lower_yx_xuxv_external;
    unsigned lower_xy_uxvx_external;
    unsigned lower_ayuv_external;
+   unsigned lower_xyuv_external;
 
    /**
     * To emulate certain texture wrap modes, this can be used
@@ -3204,7 +3205,8 @@ bool nir_lower_atomics_to_ssbo(nir_shader *shader, unsigned ssbo_offset);
 typedef enum  {
    nir_lower_int_source_mods = 1 << 0,
    nir_lower_float_source_mods = 1 << 1,
-   nir_lower_all_source_mods = (1 << 2) - 1
+   nir_lower_triop_abs = 1 << 2,
+   nir_lower_all_source_mods = (1 << 3) - 1
 } nir_lower_to_source_mods_flags;
 
 

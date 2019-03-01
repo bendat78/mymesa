@@ -43,9 +43,8 @@
 #include "pan_blend_shaders.h"
 #include "pan_wallpaper.h"
 
-#ifdef DUMP_PERFORMANCE_COUNTERS
 static int performance_counter_number = 0;
-#endif
+extern const char *pan_counters_base;
 
 /* Do not actually send anything to the GPU; merely generate the cmdstream as fast as possible. Disables framebuffer writes */
 //#define DRY_RUN
@@ -80,7 +79,7 @@ panfrost_set_framebuffer_msaa(struct panfrost_context *ctx, bool enabled)
         if (require_sfbd) {
                 SET_BIT(ctx->fragment_sfbd.format, MALI_FRAMEBUFFER_MSAA_A | MALI_FRAMEBUFFER_MSAA_B, enabled);
         } else {
-                SET_BIT(ctx->fragment_rts[0].format, MALI_MFBD_FORMAT_MSAA, enabled);
+                SET_BIT(ctx->fragment_rts[0].format.flags, MALI_MFBD_FORMAT_MSAA, enabled);
 
                 SET_BIT(ctx->fragment_mfbd.unk1, (1 << 4) | (1 << 1), enabled);
 
@@ -167,7 +166,7 @@ panfrost_set_fragment_afbc(struct panfrost_context *ctx)
                 ctx->fragment_rts[0].afbc.stride = 0;
                 ctx->fragment_rts[0].afbc.unk = 0x30009;
 
-                ctx->fragment_rts[0].format |= MALI_MFBD_FORMAT_AFBC;
+                ctx->fragment_rts[0].format.flags |= MALI_MFBD_FORMAT_AFBC;
 
                 /* Point rendering to our special framebuffer */
                 ctx->fragment_rts[0].framebuffer = rsrc->bo->afbc_slab.gpu + rsrc->bo->afbc_metadata_size;
@@ -210,7 +209,12 @@ panfrost_set_fragment_afbc(struct panfrost_context *ctx)
                         assert(0);
                 }
 
-                ctx->fragment_rts[0].format = 0x80008000;
+                struct mali_rt_format null_rt = {
+                        .unk1 = 0x4000000,
+                        .unk4 = 0x8
+                };
+
+                ctx->fragment_rts[0].format = null_rt;
                 ctx->fragment_rts[0].framebuffer = 0;
                 ctx->fragment_rts[0].framebuffer_stride = 0;
         }
@@ -256,7 +260,28 @@ static struct bifrost_framebuffer
 panfrost_emit_mfbd(struct panfrost_context *ctx)
 {
         struct bifrost_framebuffer framebuffer = {
-                .tiler_meta = 0xf00000c600,
+                /* It is not yet clear what tiler_meta means or how it's
+                 * calculated, but we can tell the lower 32-bits are a
+                 * (monotonically increasing?) function of tile count and
+                 * geometry complexity; I suspect it defines a memory size of
+                 * some kind? for the tiler. It's really unclear at the
+                 * moment... but to add to the confusion, the hardware is happy
+                 * enough to accept a zero in this field, so we don't even have
+                 * to worry about it right now.
+                 *
+                 * The byte (just after the 32-bit mark) is much more
+                 * interesting. The higher nibble I've only ever seen as 0xF,
+                 * but the lower one I've seen as 0x0 or 0xF, and it's not
+                 * obvious what the difference is. But what -is- obvious is
+                 * that when the lower nibble is zero, performance is severely
+                 * degraded compared to when the lower nibble is set.
+                 * Evidently, that nibble enables some sort of fast path,
+                 * perhaps relating to caching or tile flush? Regardless, at
+                 * this point there's no clear reason not to set it, aside from
+                 * substantially increased memory requirements (of the misc_0
+                 * buffer) */
+
+                .tiler_meta = ((uint64_t) 0xff << 32) | 0x0,
 
                 .width1 = MALI_POSITIVE(ctx->pipe_framebuffer.width),
                 .height1 = MALI_POSITIVE(ctx->pipe_framebuffer.height),
@@ -271,10 +296,23 @@ panfrost_emit_mfbd(struct panfrost_context *ctx)
 
                 .unknown2 = 0x1f,
 
-                /* Presumably corresponds to unknown_address_X of SFBD */
+                /* Corresponds to unknown_address_X of SFBD */
                 .scratchpad = ctx->scratchpad.gpu,
                 .tiler_scratch_start  = ctx->misc_0.gpu,
-                .tiler_scratch_middle = ctx->misc_0.gpu + /*ctx->misc_0.size*/40960, /* Size depends on the size of the framebuffer and the number of vertices */
+
+                /* The constant added here is, like the lower word of
+                 * tiler_meta, (loosely) another product of framebuffer size
+                 * and geometry complexity. It must be sufficiently large for
+                 * the tiler_meta fast path to work; if it's too small, there
+                 * will be DATA_INVALID_FAULTs. Conversely, it must be less
+                 * than the total size of misc_0, or else there's no room. It's
+                 * possible this constant configures a partition between two
+                 * parts of misc_0? We haven't investigated the functionality,
+                 * as these buffers are internally used by the hardware
+                 * (presumably by the tiler) but not seemingly touched by the driver
+                 */
+
+                .tiler_scratch_middle = ctx->misc_0.gpu + 0xf0000,
 
                 .tiler_heap_start = ctx->tiler_heap.gpu,
                 .tiler_heap_end = ctx->tiler_heap.gpu + ctx->tiler_heap.size,
@@ -341,9 +379,20 @@ panfrost_new_frag_framebuffer(struct panfrost_context *ctx)
                 fb.rt_count_2 = 1;
                 fb.unk3 = 0x100;
 
+                /* By default, Gallium seems to need a BGR framebuffer */
+                unsigned char bgra[4] = {
+                        PIPE_SWIZZLE_Z, PIPE_SWIZZLE_Y, PIPE_SWIZZLE_X, PIPE_SWIZZLE_W
+                };
+
                 struct bifrost_render_target rt = {
-                        .unk1 = 0x4000000,
-                        .format = 0x860a8899, /* RGBA32, no MSAA */
+                        .format = {
+                                .unk1 = 0x4000000,
+                                .unk2 = 0x1,
+                                .nr_channels = MALI_POSITIVE(4),
+                                .flags = 0x444,
+                                .swizzle = panfrost_translate_swizzle_4(bgra),
+                                .unk4 = 0x8
+                        },
                         .framebuffer = framebuffer,
                         .framebuffer_stride = (stride / 16) & 0xfffffff,
                 };
@@ -1536,13 +1585,15 @@ panfrost_submit_frame(struct panfrost_context *ctx, bool flush_immediate)
         if (panfrost_is_scanout(ctx) && flush_immediate)
                 screen->driver->force_flush_fragment(ctx);
 
-#ifdef DUMP_PERFORMANCE_COUNTERS
-        char filename[128];
-        snprintf(filename, sizeof(filename), "/dev/shm/frame%d.mdgprf", ++performance_counter_number);
-        FILE *fp = fopen(filename, "wb");
-        fwrite(screen->perf_counters.cpu,  4096, sizeof(uint32_t), fp);
-        fclose(fp);
-#endif
+        if (screen->driver->dump_counters && pan_counters_base) {
+                screen->driver->dump_counters(screen);
+
+                char filename[128];
+                snprintf(filename, sizeof(filename), "%s/frame%d.mdgprf", pan_counters_base, ++performance_counter_number);
+                FILE *fp = fopen(filename, "wb");
+                fwrite(screen->perf_counters.cpu,  4096, sizeof(uint32_t), fp);
+                fclose(fp);
+        }
 
 #endif
 }
@@ -2693,10 +2744,10 @@ panfrost_setup_hardware(struct panfrost_context *ctx)
         }
 
         screen->driver->allocate_slab(screen, &ctx->scratchpad, 64, false, 0, 0, 0);
-        screen->driver->allocate_slab(screen, &ctx->varying_mem, 16384, false, 0, 0, 0);
+        screen->driver->allocate_slab(screen, &ctx->varying_mem, 16384, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_COHERENT_LOCAL, 0, 0);
         screen->driver->allocate_slab(screen, &ctx->shaders, 4096, true, PAN_ALLOCATE_EXECUTE, 0, 0);
-        screen->driver->allocate_slab(screen, &ctx->tiler_heap, 32768, false, PAN_ALLOCATE_GROWABLE, 1, 128);
-        screen->driver->allocate_slab(screen, &ctx->misc_0, 128, false, PAN_ALLOCATE_GROWABLE, 1, 128);
+        screen->driver->allocate_slab(screen, &ctx->tiler_heap, 32768, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
+        screen->driver->allocate_slab(screen, &ctx->misc_0, 128*128, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
 
 }
 

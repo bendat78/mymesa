@@ -371,13 +371,10 @@ iris_format_for_usage(const struct gen_device_info *devinfo,
 
    enum isl_format format = iris_isl_format_for_pipe_format(pformat);
 
-   /* Convert RGBX into RGBA for rendering or typed image access. */
+   /* Convert RGBX into RGBA for rendering */
    if (isl_format_is_rgbx(format) &&
-       (((usage & ISL_SURF_USAGE_RENDER_TARGET_BIT) &&
-         !isl_format_supports_rendering(devinfo, format)) ||
-        ((usage & ISL_SURF_USAGE_STORAGE_BIT) &&
-         !(isl_format_supports_typed_writes(devinfo, format) &&
-           isl_format_supports_typed_reads(devinfo, format))))) {
+       (usage & ISL_SURF_USAGE_RENDER_TARGET_BIT) &&
+       !isl_format_supports_rendering(devinfo, format)) {
       format = isl_format_rgbx_to_rgba(format);
    }
 
@@ -430,9 +427,16 @@ iris_is_format_supported(struct pipe_screen *pscreen,
    }
 
    if (usage & PIPE_BIND_RENDER_TARGET) {
-      supported &= isl_format_supports_rendering(devinfo, format);
+      enum isl_format rt_format = format;
+
+      if (isl_format_is_rgbx(format) &&
+          !isl_format_supports_rendering(devinfo, format))
+         rt_format = isl_format_rgbx_to_rgba(format);
+
+      supported &= isl_format_supports_rendering(devinfo, rt_format);
+
       if (!is_integer)
-         supported &= isl_format_supports_alpha_blending(devinfo, format);
+         supported &= isl_format_supports_alpha_blending(devinfo, rt_format);
    }
 
    if (usage & PIPE_BIND_SHADER_IMAGE) {

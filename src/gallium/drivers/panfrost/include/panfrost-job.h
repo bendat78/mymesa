@@ -294,6 +294,8 @@ struct mali_channel_swizzle {
  * bits mean.
  */
 
+#define MALI_CHANNEL_4 2
+
 #define MALI_CHANNEL_8 3
 
 #define MALI_CHANNEL_16 4
@@ -306,6 +308,8 @@ struct mali_channel_swizzle {
 #define MALI_CHANNEL_FLOAT 7
 
 enum mali_format {
+	MALI_RGB565         = MALI_FORMAT_SPECIAL | 0x0,
+	MALI_RGB5_A1_UNORM  = MALI_FORMAT_SPECIAL | 0x2,
 	MALI_RGB10_A2_UNORM = MALI_FORMAT_SPECIAL | 0x3,
 	MALI_RGB10_A2_SNORM = MALI_FORMAT_SPECIAL | 0x5,
 	MALI_RGB10_A2UI     = MALI_FORMAT_SPECIAL | 0x7,
@@ -365,6 +369,7 @@ enum mali_format {
 	MALI_RGB16_UNORM  = MALI_FORMAT_UNORM | MALI_NR_CHANNELS(3) | MALI_CHANNEL_16,
 	MALI_RGB32_UNORM  = MALI_FORMAT_UNORM | MALI_NR_CHANNELS(3) | MALI_CHANNEL_32,
 	MALI_RGB32F = MALI_FORMAT_UNORM | MALI_NR_CHANNELS(3) | MALI_CHANNEL_FLOAT,
+	MALI_RGBA4_UNORM  = MALI_FORMAT_UNORM | MALI_NR_CHANNELS(4) | MALI_CHANNEL_4,
 	MALI_RGBA8_UNORM  = MALI_FORMAT_UNORM | MALI_NR_CHANNELS(4) | MALI_CHANNEL_8,
 	MALI_RGBA16_UNORM = MALI_FORMAT_UNORM | MALI_NR_CHANNELS(4) | MALI_CHANNEL_16,
 	MALI_RGBA32_UNORM = MALI_FORMAT_UNORM | MALI_NR_CHANNELS(4) | MALI_CHANNEL_32,
@@ -1346,15 +1351,26 @@ struct mali_single_framebuffer {
         /* More below this, maybe */
 } __attribute__((packed));
 
-/* Format bits for the render target */
+/* Format bits for the render target flags */
 
-#define MALI_MFBD_FORMAT_AFBC 	  (1 << 10)
-#define MALI_MFBD_FORMAT_MSAA 	  (1 << 12)
-#define MALI_MFBD_FORMAT_NO_ALPHA (1 << 25)
+#define MALI_MFBD_FORMAT_AFBC 	  (1 << 5)
+#define MALI_MFBD_FORMAT_MSAA 	  (1 << 7)
+
+struct mali_rt_format {
+        unsigned unk1 : 32;
+        unsigned unk2 : 3;
+
+        unsigned nr_channels : 2; /* MALI_POSITIVE */
+
+        unsigned flags : 11;
+
+        unsigned swizzle : 12;
+
+        unsigned unk4 : 4;
+} __attribute__((packed));
 
 struct bifrost_render_target {
-        u32 unk1; // = 0x4000000
-        u32 format;
+        struct mali_rt_format format;
 
         u64 zero1;
 

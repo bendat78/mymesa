@@ -88,6 +88,7 @@ static const struct debug_named_value debug_options[] = {
 		{"ttile",     FD_DBG_TTILE,  "Enable texture tiling (a5xx)"},
 		{"perfcntrs", FD_DBG_PERFC,  "Expose performance counters"},
 		{"softpin",   FD_DBG_SOFTPIN,"Enable softpin command submission (experimental)"},
+		{"ubwc",      FD_DBG_UBWC,   "Enable UBWC for all internal buffers (experimental)"},
 		DEBUG_NAMED_VALUE_END
 };
 
@@ -283,7 +284,8 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return is_ir3(screen) ? 140 : 120;
 
 	case PIPE_CAP_SHADER_BUFFER_OFFSET_ALIGNMENT:
-		if (is_a5xx(screen) || is_a6xx(screen))
+		if (is_a6xx(screen)) return 64;
+		if (is_a5xx(screen)) return 4;
 			return 4;
 		return 0;
 

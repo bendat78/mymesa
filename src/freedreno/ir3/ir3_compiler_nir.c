@@ -1443,16 +1443,17 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 	struct ir3_instruction * const *coord, * const *off, * const *ddx, * const *ddy;
 	struct ir3_instruction *lod, *compare, *proj, *sample_index;
 	bool has_bias = false, has_lod = false, has_proj = false, has_off = false;
-	unsigned i, coords, flags;
+	unsigned i, coords, flags, ncomp;
 	unsigned nsrc0 = 0, nsrc1 = 0;
 	type_t type;
 	opc_t opc = 0;
 
+	ncomp = nir_dest_num_components(tex->dest);
+
 	coord = off = ddx = ddy = NULL;
 	lod = proj = compare = sample_index = NULL;
 
-	/* TODO: might just be one component for gathers? */
-	dst = ir3_get_dst(ctx, &tex->dest, 4);
+	dst = ir3_get_dst(ctx, &tex->dest, ncomp);
 
 	for (unsigned i = 0; i < tex->num_srcs; i++) {
 		switch (tex->src[i].src_type) {
@@ -1542,27 +1543,6 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 
 	nsrc0 = i;
 
-	/* NOTE a3xx (and possibly a4xx?) might be different, using isaml
-	 * with scaled x coord according to requested sample:
-	 */
-	if (tex->op == nir_texop_txf_ms) {
-		if (ctx->compiler->txf_ms_with_isaml) {
-			/* the samples are laid out in x dimension as
-			 *     0 1 2 3
-			 * x_ms = (x << ms) + sample_index;
-			 */
-			struct ir3_instruction *ms;
-			ms = create_immed(b, (ctx->samples >> (2 * tex->texture_index)) & 3);
-
-			src0[0] = ir3_SHL_B(b, src0[0], 0, ms, 0);
-			src0[0] = ir3_ADD_U(b, src0[0], 0, sample_index, 0);
-
-			opc = OPC_ISAML;
-		} else {
-			src0[nsrc0++] = sample_index;
-		}
-	}
-
 	/* scale up integer coords for TXF based on the LOD */
 	if (ctx->compiler->unminify_coords && (opc == OPC_ISAML)) {
 		assert(has_lod);
@@ -1574,16 +1554,10 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 		/* hw doesn't do 1d, so we treat it as 2d with
 		 * height of 1, and patch up the y coord.
 		 */
-		switch (opc) {
-		case OPC_ISAM:
-		case OPC_ISAML:
-		case OPC_ISAMM:
-			/* These instructions expect integer coord: */
+		if (is_isam(opc)) {
 			src0[nsrc0++] = create_immed(b, 0);
-			break;
-		default:
+		} else {
 			src0[nsrc0++] = create_immed(b, fui(0.5));
-			break;
 		}
 	}
 
@@ -1594,7 +1568,7 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 		struct ir3_instruction *idx = coord[coords];
 
 		/* the array coord for cube arrays needs 0.5 added to it */
-		if (ctx->compiler->array_index_add_half && (opc != OPC_ISAML))
+		if (ctx->compiler->array_index_add_half && !is_isam(opc))
 			idx = ir3_ADD_F(b, idx, 0, create_immed(b, fui(0.5)), 0);
 
 		src0[nsrc0++] = idx;
@@ -1617,6 +1591,27 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 			src0[nsrc0++] = ddy[i];
 		if (coords < 2)
 			src0[nsrc0++] = create_immed(b, fui(0.0));
+	}
+
+	/* NOTE a3xx (and possibly a4xx?) might be different, using isaml
+	 * with scaled x coord according to requested sample:
+	 */
+	if (tex->op == nir_texop_txf_ms) {
+		if (ctx->compiler->txf_ms_with_isaml) {
+			/* the samples are laid out in x dimension as
+			 *     0 1 2 3
+			 * x_ms = (x << ms) + sample_index;
+			 */
+			struct ir3_instruction *ms;
+			ms = create_immed(b, (ctx->samples >> (2 * tex->texture_index)) & 3);
+
+			src0[0] = ir3_SHL_B(b, src0[0], 0, ms, 0);
+			src0[0] = ir3_ADD_U(b, src0[0], 0, sample_index, 0);
+
+			opc = OPC_ISAML;
+		} else {
+			src0[nsrc0++] = sample_index;
+		}
 	}
 
 	/*
@@ -1667,7 +1662,7 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 	struct ir3_instruction *col0 = ir3_create_collect(ctx, src0, nsrc0);
 	struct ir3_instruction *col1 = ir3_create_collect(ctx, src1, nsrc1);
 
-	sam = ir3_SAM(b, opc, type, 0b1111, flags,
+	sam = ir3_SAM(b, opc, type, MASK(ncomp), flags,
 			tex_idx, tex_idx, col0, col1);
 
 	if ((ctx->astc_srgb & (1 << tex_idx)) && !nir_tex_instr_is_query(tex)) {
@@ -1687,7 +1682,7 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 		ir3_split_dest(b, &dst[3], sam, 3, 1);
 	} else {
 		/* normal (non-workaround) case: */
-		ir3_split_dest(b, dst, sam, 0, 4);
+		ir3_split_dest(b, dst, sam, 0, ncomp);
 	}
 
 	/* GETLOD returns results in 4.8 fixed point */

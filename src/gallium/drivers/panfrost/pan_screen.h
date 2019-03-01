@@ -41,11 +41,11 @@ struct panfrost_context;
 struct panfrost_resource;
 struct panfrost_screen;
 
-//#define DUMP_PERFORMANCE_COUNTERS
-
 /* Flags for allocated memory */
 #define PAN_ALLOCATE_EXECUTE (1 << 0)
 #define PAN_ALLOCATE_GROWABLE (1 << 1)
+#define PAN_ALLOCATE_INVISIBLE (1 << 2)
+#define PAN_ALLOCATE_COHERENT_LOCAL (1 << 3)
 
 struct panfrost_driver {
 	struct panfrost_bo * (*import_bo) (struct panfrost_screen *screen, struct winsys_handle *whandle);
@@ -64,6 +64,7 @@ struct panfrost_driver {
         void (*free_imported_bo) (struct panfrost_screen *screen,
                              struct panfrost_bo *bo);
         void (*enable_counters) (struct panfrost_screen *screen);
+        void (*dump_counters) (struct panfrost_screen *screen);
 };
 
 struct panfrost_screen {

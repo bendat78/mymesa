@@ -2481,7 +2481,8 @@ brw_send_indirect_message(struct brw_codegen *p,
                           struct brw_reg dst,
                           struct brw_reg payload,
                           struct brw_reg desc,
-                          unsigned desc_imm)
+                          unsigned desc_imm,
+                          bool eot)
 {
    const struct gen_device_info *devinfo = p->devinfo;
    struct brw_inst *send;
@@ -2518,6 +2519,7 @@ brw_send_indirect_message(struct brw_codegen *p,
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, retype(payload, BRW_REGISTER_TYPE_UD));
    brw_inst_set_sfid(devinfo, send, sfid);
+   brw_inst_set_eot(devinfo, send, eot);
 }
 
 void
@@ -2529,7 +2531,8 @@ brw_send_indirect_split_message(struct brw_codegen *p,
                                 struct brw_reg desc,
                                 unsigned desc_imm,
                                 struct brw_reg ex_desc,
-                                unsigned ex_desc_imm)
+                                unsigned ex_desc_imm,
+                                bool eot)
 {
    const struct gen_device_info *devinfo = p->devinfo;
    struct brw_inst *send;
@@ -2574,13 +2577,13 @@ brw_send_indirect_split_message(struct brw_codegen *p,
        * so the caller can specify additional descriptor bits with the
        * desc_imm immediate.
        *
-       * Even though the instruction dispatcher always pulls the SFID from the
-       * instruction itself, the extended descriptor sent to the actual unit
-       * gets the SFID from the extended descriptor which comes from the
-       * address register.  If we don't OR it in, the external unit gets
-       * confused and hangs the GPU.
+       * Even though the instruction dispatcher always pulls the SFID and EOT
+       * fields from the instruction itself, actual external unit which
+       * processes the message gets the SFID and EOT from the extended
+       * descriptor which comes from the address register.  If we don't OR
+       * those two bits in, the external unit may get confused and hang.
        */
-      brw_OR(p, addr, ex_desc, brw_imm_ud(ex_desc_imm | sfid));
+      brw_OR(p, addr, ex_desc, brw_imm_ud(ex_desc_imm | sfid | eot << 5));
 
       brw_pop_insn_state(p);
       ex_desc = addr;
@@ -2613,6 +2616,7 @@ brw_send_indirect_split_message(struct brw_codegen *p,
    }
 
    brw_inst_set_sfid(devinfo, send, sfid);
+   brw_inst_set_eot(devinfo, send, eot);
 }
 
 static void
@@ -2645,7 +2649,7 @@ brw_send_indirect_surface_message(struct brw_codegen *p,
       surface = addr;
    }
 
-   brw_send_indirect_message(p, sfid, dst, payload, surface, desc_imm);
+   brw_send_indirect_message(p, sfid, dst, payload, surface, desc_imm, false);
 }
 
 static bool
@@ -2972,95 +2976,6 @@ brw_untyped_surface_write(struct brw_codegen *p,
                                      payload, surface, desc);
 }
 
-void
-brw_typed_atomic(struct brw_codegen *p,
-                 struct brw_reg dst,
-                 struct brw_reg payload,
-                 struct brw_reg surface,
-                 unsigned atomic_op,
-                 unsigned msg_length,
-                 bool response_expected,
-                 bool header_present) {
-   const struct gen_device_info *devinfo = p->devinfo;
-   const unsigned sfid = (devinfo->gen >= 8 || devinfo->is_haswell ?
-                          HSW_SFID_DATAPORT_DATA_CACHE_1 :
-                          GEN6_SFID_DATAPORT_RENDER_CACHE);
-   const bool align1 = brw_get_default_access_mode(p) == BRW_ALIGN_1;
-   /* SIMD4x2 typed atomic instructions only exist on HSW+ */
-   const bool has_simd4x2 = devinfo->gen >= 8 || devinfo->is_haswell;
-   const unsigned exec_size = align1 ? 1 << brw_get_default_exec_size(p) :
-                              has_simd4x2 ? 0 : 8;
-   /* Typed atomics don't support SIMD16 */
-   assert(exec_size <= 8);
-   const unsigned response_length =
-      brw_surface_payload_size(p, response_expected, exec_size);
-   const unsigned desc =
-      brw_message_desc(devinfo, msg_length, response_length, header_present) |
-      brw_dp_typed_atomic_desc(devinfo, exec_size, brw_get_default_group(p),
-                               atomic_op, response_expected);
-   /* Mask out unused components -- See comment in brw_untyped_atomic(). */
-   const unsigned mask = align1 ? WRITEMASK_XYZW : WRITEMASK_X;
-
-   brw_send_indirect_surface_message(p, sfid, brw_writemask(dst, mask),
-                                     payload, surface, desc);
-}
-
-void
-brw_typed_surface_read(struct brw_codegen *p,
-                       struct brw_reg dst,
-                       struct brw_reg payload,
-                       struct brw_reg surface,
-                       unsigned msg_length,
-                       unsigned num_channels,
-                       bool header_present)
-{
-   const struct gen_device_info *devinfo = p->devinfo;
-   const unsigned sfid = (devinfo->gen >= 8 || devinfo->is_haswell ?
-                          HSW_SFID_DATAPORT_DATA_CACHE_1 :
-                          GEN6_SFID_DATAPORT_RENDER_CACHE);
-   const bool align1 = brw_get_default_access_mode(p) == BRW_ALIGN_1;
-   /* SIMD4x2 typed read instructions only exist on HSW+ */
-   const bool has_simd4x2 = devinfo->gen >= 8 || devinfo->is_haswell;
-   const unsigned exec_size = align1 ? 1 << brw_get_default_exec_size(p) :
-                              has_simd4x2 ? 0 : 8;
-   const unsigned response_length =
-      brw_surface_payload_size(p, num_channels, exec_size);
-   const unsigned desc =
-      brw_message_desc(devinfo, msg_length, response_length, header_present) |
-      brw_dp_typed_surface_rw_desc(devinfo, exec_size, brw_get_default_group(p),
-                                   num_channels, false);
-
-   brw_send_indirect_surface_message(p, sfid, dst, payload, surface, desc);
-}
-
-void
-brw_typed_surface_write(struct brw_codegen *p,
-                        struct brw_reg payload,
-                        struct brw_reg surface,
-                        unsigned msg_length,
-                        unsigned num_channels,
-                        bool header_present)
-{
-   const struct gen_device_info *devinfo = p->devinfo;
-   const unsigned sfid = (devinfo->gen >= 8 || devinfo->is_haswell ?
-                          HSW_SFID_DATAPORT_DATA_CACHE_1 :
-                          GEN6_SFID_DATAPORT_RENDER_CACHE);
-   const bool align1 = brw_get_default_access_mode(p) == BRW_ALIGN_1;
-   /* SIMD4x2 typed read instructions only exist on HSW+ */
-   const bool has_simd4x2 = devinfo->gen >= 8 || devinfo->is_haswell;
-   const unsigned exec_size = align1 ? 1 << brw_get_default_exec_size(p) :
-                              has_simd4x2 ? 0 : 8;
-   const unsigned desc =
-      brw_message_desc(devinfo, msg_length, 0, header_present) |
-      brw_dp_typed_surface_rw_desc(devinfo, exec_size, brw_get_default_group(p),
-                                   num_channels, true);
-   /* Mask out unused components -- See comment in brw_untyped_atomic(). */
-   const unsigned mask = !has_simd4x2 && !align1 ? WRITEMASK_X : WRITEMASK_XYZW;
-
-   brw_send_indirect_surface_message(p, sfid, brw_writemask(brw_null_reg(), mask),
-                                     payload, surface, desc);
-}
-
 static void
 brw_set_memory_fence_message(struct brw_codegen *p,
                              struct brw_inst *insn,
@@ -3164,7 +3079,8 @@ brw_pixel_interpolator_query(struct brw_codegen *p,
                              dest,
                              mrf,
                              vec1(data),
-                             desc);
+                             desc,
+                             false);
 }
 
 void

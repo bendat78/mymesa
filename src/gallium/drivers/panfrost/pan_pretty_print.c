@@ -36,6 +36,8 @@ char *pandecode_format_name(enum mali_format format)
 	static char unk_format_str[5];
 
 	switch (format) {
+	DEFINE_CASE(RGB565);
+	DEFINE_CASE(RGB5_A1_UNORM);
 	DEFINE_CASE(RGB10_A2_UNORM);
 	DEFINE_CASE(RGB10_A2_SNORM);
 	DEFINE_CASE(RGB10_A2UI);
@@ -88,6 +90,7 @@ char *pandecode_format_name(enum mali_format format)
 	DEFINE_CASE(RGB16_UNORM);
 	DEFINE_CASE(RGB32_UNORM);
 	DEFINE_CASE(RGB32F);
+	DEFINE_CASE(RGBA4_UNORM);
 	DEFINE_CASE(RGBA8_UNORM);
 	DEFINE_CASE(RGBA16_UNORM);
 	DEFINE_CASE(RGBA32_UNORM);

@@ -195,8 +195,12 @@ static unsigned alu_opcode_props[256] = {
         [midgard_alu_op_imin]		 = UNITS_MOST,
         [midgard_alu_op_imax]		 = UNITS_MOST,
         [midgard_alu_op_fmov]		 = UNITS_ALL | QUIRK_FLIPPED_R24,
+        [midgard_alu_op_fround]          = UNITS_ADD,
+        [midgard_alu_op_froundeven]      = UNITS_ADD,
+        [midgard_alu_op_ftrunc]          = UNITS_ADD,
         [midgard_alu_op_ffloor]		 = UNITS_ADD,
         [midgard_alu_op_fceil]		 = UNITS_ADD,
+        [midgard_alu_op_ffma]		 = UNIT_VLUT,
 
         /* Though they output a scalar, they need to run on a vector unit
          * since they process vectors */
@@ -212,7 +216,7 @@ static unsigned alu_opcode_props[256] = {
         /* For vector comparisons, use ball etc */
         [midgard_alu_op_feq]		 = UNITS_MOST,
         [midgard_alu_op_fne]		 = UNITS_MOST,
-        [midgard_alu_op_flt]		 = UNIT_SADD,
+        [midgard_alu_op_flt]		 = UNITS_MOST,
         [midgard_alu_op_ieq]		 = UNITS_MOST,
         [midgard_alu_op_ine]		 = UNITS_MOST,
         [midgard_alu_op_ilt]		 = UNITS_MOST,
