@@ -80,6 +80,7 @@ unsigned glsl_get_aoa_size(const struct glsl_type *type);
 unsigned glsl_count_attribute_slots(const struct glsl_type *type,
                                     bool is_gl_vertex_input);
 unsigned glsl_get_component_slots(const struct glsl_type *type);
+unsigned glsl_varying_count(const struct glsl_type *type);
 
 const char *glsl_get_struct_elem_name(const struct glsl_type *type,
                                       unsigned index);
@@ -89,7 +90,7 @@ enum glsl_base_type glsl_get_sampler_result_type(const struct glsl_type *type);
 unsigned glsl_get_sampler_target(const struct glsl_type *type);
 int glsl_get_sampler_coordinate_components(const struct glsl_type *type);
 
-unsigned glsl_get_record_location_offset(const struct glsl_type *type,
+unsigned glsl_get_struct_location_offset(const struct glsl_type *type,
                                          unsigned length);
 
 unsigned glsl_atomic_size(const struct glsl_type *type);
@@ -144,6 +145,7 @@ bool glsl_type_is_array(const struct glsl_type *type);
 bool glsl_type_is_array_of_arrays(const struct glsl_type *type);
 bool glsl_type_is_array_or_matrix(const struct glsl_type *type);
 bool glsl_type_is_struct(const struct glsl_type *type);
+bool glsl_type_is_struct_or_ifc(const struct glsl_type *type);
 bool glsl_type_is_sampler(const struct glsl_type *type);
 bool glsl_type_is_image(const struct glsl_type *type);
 bool glsl_type_is_dual_slot(const struct glsl_type *type);

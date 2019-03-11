@@ -21,13 +21,13 @@
  * SOFTWARE.
  */
 
+#include "main/mtypes.h"
 #include "compiler/glsl/standalone.h"
 #include "compiler/glsl/glsl_to_nir.h"
 #include "compiler/nir_types.h"
 #include "midgard_compile.h"
 #include "disassemble.h"
 #include "util/u_dynarray.h"
-#include "main/mtypes.h"
 
 bool c_do_mat_op_to_vec(struct exec_list *instructions);
 
@@ -53,7 +53,9 @@ compile_shader(char **argv)
                 .do_link = true,
         };
 
-        prog = standalone_compile_shader(&options, 2, argv);
+        static struct gl_context local_ctx;
+
+        prog = standalone_compile_shader(&options, 2, argv, &local_ctx);
         prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program->info.stage = MESA_SHADER_FRAGMENT;
 
         for (unsigned i = 0; i < MESA_SHADER_STAGES; ++i) {
@@ -64,11 +66,11 @@ compile_shader(char **argv)
         }
 
         midgard_program compiled;
-        nir = glsl_to_nir(prog, MESA_SHADER_VERTEX, &midgard_nir_options);
+        nir = glsl_to_nir(&local_ctx, prog, MESA_SHADER_VERTEX, &midgard_nir_options);
         midgard_compile_shader_nir(nir, &compiled, false);
         finalise_to_disk("vertex.bin", &compiled.compiled);
 
-        nir = glsl_to_nir(prog, MESA_SHADER_FRAGMENT, &midgard_nir_options);
+        nir = glsl_to_nir(&local_ctx, prog, MESA_SHADER_FRAGMENT, &midgard_nir_options);
         midgard_compile_shader_nir(nir, &compiled, false);
         finalise_to_disk("fragment.bin", &compiled.compiled);
 }
@@ -83,11 +85,13 @@ compile_blend(char **argv)
                 .glsl_version = 140,
         };
 
-        prog = standalone_compile_shader(&options, 1, argv);
+        static struct gl_context local_ctx;
+
+        prog = standalone_compile_shader(&options, 1, argv, &local_ctx);
         prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program->info.stage = MESA_SHADER_FRAGMENT;
 
         midgard_program program;
-        nir = glsl_to_nir(prog, MESA_SHADER_FRAGMENT, &midgard_nir_options);
+        nir = glsl_to_nir(&local_ctx, prog, MESA_SHADER_FRAGMENT, &midgard_nir_options);
         midgard_compile_shader_nir(nir, &program, true);
         finalise_to_disk("blend.bin", &program.compiled);
 }

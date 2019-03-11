@@ -25,14 +25,19 @@
  *
  */
 
+#include "float64_glsl.h"
 #include "glsl_to_nir.h"
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
 #include "ir.h"
+#include "ir_optimization.h"
+#include "program.h"
 #include "compiler/nir/nir_control_flow.h"
 #include "compiler/nir/nir_builder.h"
+#include "main/errors.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "main/shaderobj.h"
 #include "util/u_math.h"
 
 /*
@@ -129,14 +134,73 @@ private:
    nir_visitor *visitor;
 };
 
+/* glsl_to_nir can only handle converting certain function paramaters
+ * to NIR. This visitor checks for parameters it can't currently handle.
+ */
+class ir_function_param_visitor : public ir_hierarchical_visitor
+{
+public:
+   ir_function_param_visitor()
+      : unsupported(false)
+   {
+   }
+
+   virtual ir_visitor_status visit_enter(ir_function_signature *ir)
+   {
+
+      if (ir->is_intrinsic())
+         return visit_continue;
+
+      foreach_in_list(ir_variable, param, &ir->parameters) {
+         if (!param->type->is_vector() || !param->type->is_scalar()) {
+            unsupported = true;
+            return visit_stop;
+         }
+
+         if (param->data.mode == ir_var_function_inout) {
+            unsupported = true;
+            return visit_stop;
+         }
+      }
+
+      return visit_continue;
+   }
+
+   bool unsupported;
+};
+
 } /* end of anonymous namespace */
 
+
+static bool
+has_unsupported_function_param(exec_list *ir)
+{
+   ir_function_param_visitor visitor;
+   visit_list_elements(&visitor, ir);
+   return visitor.unsupported;
+}
+
 nir_shader *
-glsl_to_nir(const struct gl_shader_program *shader_prog,
+glsl_to_nir(struct gl_context *ctx,
+            const struct gl_shader_program *shader_prog,
             gl_shader_stage stage,
             const nir_shader_compiler_options *options)
 {
    struct gl_linked_shader *sh = shader_prog->_LinkedShaders[stage];
+
+   const struct gl_shader_compiler_options *gl_options =
+      &ctx->Const.ShaderCompilerOptions[stage];
+
+   /* glsl_to_nir can only handle converting certain function paramaters
+    * to NIR. If we find something we can't handle then we get the GLSL IR
+    * opts to remove it before we continue on.
+    *
+    * TODO: add missing glsl ir to nir support and remove this loop.
+    */
+   while (has_unsupported_function_param(sh->ir)) {
+      do_common_optimization(sh->ir, true, true, gl_options,
+                             ctx->Const.NativeIntegers);
+   }
 
    nir_shader *shader = nir_shader_create(NULL, stage, options,
                                           &sh->Program->info);
@@ -146,7 +210,27 @@ glsl_to_nir(const struct gl_shader_program *shader_prog,
    v2.run(sh->ir);
    visit_exec_list(sh->ir, &v1);
 
+   nir_validate_shader(shader, "after glsl to nir, before function inline");
+
+   /* We have to lower away local constant initializers right before we
+    * inline functions.  That way they get properly initialized at the top
+    * of the function and not at the top of its caller.
+    */
    nir_lower_constant_initializers(shader, (nir_variable_mode)~0);
+   nir_lower_returns(shader);
+   nir_inline_functions(shader);
+   nir_opt_deref(shader);
+
+   nir_validate_shader(shader, "after function inlining and return lowering");
+
+   /* Now that we have inlined everything remove all of the functions except
+    * main().
+    */
+   foreach_list_typed_safe(nir_function, function, node, &(shader)->functions){
+      if (strcmp("main", function->name) != 0) {
+         exec_node_remove(&function->node);
+      }
+   }
 
    /* Remap the locations to slots so those requiring two slots will occupy
     * two locations. For instance, if we have in the IR code a dvec3 attr0 in
@@ -1865,8 +1949,18 @@ nir_visitor::visit(ir_expression *ir)
                                        : nir_isub(&b, srcs[0], srcs[1]);
       break;
    case ir_binop_mul:
-      result = type_is_float(out_type) ? nir_fmul(&b, srcs[0], srcs[1])
-                                       : nir_imul(&b, srcs[0], srcs[1]);
+      if (type_is_float(out_type))
+         result = nir_fmul(&b, srcs[0], srcs[1]);
+      else if (out_type == GLSL_TYPE_INT64 &&
+               (ir->operands[0]->type->base_type == GLSL_TYPE_INT ||
+                ir->operands[1]->type->base_type == GLSL_TYPE_INT))
+         result = nir_imul_2x32_64(&b, srcs[0], srcs[1]);
+      else if (out_type == GLSL_TYPE_UINT64 &&
+               (ir->operands[0]->type->base_type == GLSL_TYPE_UINT ||
+                ir->operands[1]->type->base_type == GLSL_TYPE_UINT))
+         result = nir_umul_2x32_64(&b, srcs[0], srcs[1]);
+      else
+         result = nir_imul(&b, srcs[0], srcs[1]);
       break;
    case ir_binop_div:
       if (type_is_float(out_type))
@@ -2313,4 +2407,46 @@ nir_visitor::visit(ir_barrier *)
    nir_intrinsic_instr *instr =
       nir_intrinsic_instr_create(this->shader, nir_intrinsic_barrier);
    nir_builder_instr_insert(&b, &instr->instr);
+}
+
+nir_shader *
+glsl_float64_funcs_to_nir(struct gl_context *ctx,
+                          const nir_shader_compiler_options *options)
+{
+   /* We pretend it's a vertex shader.  Ultimately, the stage shouldn't
+    * matter because we're not optimizing anything here.
+    */
+   struct gl_shader *sh = _mesa_new_shader(-1, MESA_SHADER_VERTEX);
+   sh->Source = float64_source;
+   sh->CompileStatus = COMPILE_FAILURE;
+   _mesa_glsl_compile_shader(ctx, sh, false, false, true);
+
+   if (!sh->CompileStatus) {
+      if (sh->InfoLog) {
+         _mesa_problem(ctx,
+                       "fp64 software impl compile failed:\n%s\nsource:\n%s\n",
+                       sh->InfoLog, float64_source);
+      }
+      return NULL;
+   }
+
+   nir_shader *nir = nir_shader_create(NULL, MESA_SHADER_VERTEX, options, NULL);
+
+   nir_visitor v1(nir);
+   nir_function_visitor v2(&v1);
+   v2.run(sh->ir);
+   visit_exec_list(sh->ir, &v1);
+
+   /* _mesa_delete_shader will try to free sh->Source but it's static const */
+   sh->Source = NULL;
+   _mesa_delete_shader(ctx, sh);
+
+   nir_validate_shader(nir, "float64_funcs_to_nir");
+
+   NIR_PASS_V(nir, nir_lower_constant_initializers, nir_var_function_temp);
+   NIR_PASS_V(nir, nir_lower_returns);
+   NIR_PASS_V(nir, nir_inline_functions);
+   NIR_PASS_V(nir, nir_opt_deref);
+
+   return nir;
 }

@@ -218,9 +218,6 @@ anv_shader_compile_to_nir(struct anv_device *device,
    NIR_PASS_V(nir, nir_remove_dead_variables,
               nir_var_shader_in | nir_var_shader_out | nir_var_system_value);
 
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo | nir_var_mem_ssbo,
-              nir_address_format_vk_index_offset);
-
    NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_global,
               nir_address_format_64bit_global);
 
@@ -231,7 +228,7 @@ anv_shader_compile_to_nir(struct anv_device *device,
    /* Vulkan uses the separate-shader linking model */
    nir->info.separate_shader = true;
 
-   nir = brw_preprocess_nir(compiler, nir);
+   nir = brw_preprocess_nir(compiler, nir, NULL);
 
    return nir;
 }
@@ -600,6 +597,11 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
                                     pipeline->device->robust_buffer_access,
                                     layout, nir, prog_data,
                                     &stage->bind_map);
+
+      NIR_PASS_V(nir, nir_lower_explicit_io,
+                 nir_var_mem_ubo | nir_var_mem_ssbo,
+                 nir_address_format_vk_index_offset);
+
       NIR_PASS_V(nir, nir_opt_constant_folding);
    }
 
@@ -612,23 +614,10 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
 }
 
 static void
-anv_fill_binding_table(struct brw_stage_prog_data *prog_data, unsigned bias)
-{
-   prog_data->binding_table.size_bytes = 0;
-   prog_data->binding_table.texture_start = bias;
-   prog_data->binding_table.gather_texture_start = bias;
-   prog_data->binding_table.ubo_start = bias;
-   prog_data->binding_table.ssbo_start = bias;
-   prog_data->binding_table.image_start = bias;
-}
-
-static void
 anv_pipeline_link_vs(const struct brw_compiler *compiler,
                      struct anv_pipeline_stage *vs_stage,
                      struct anv_pipeline_stage *next_stage)
 {
-   anv_fill_binding_table(&vs_stage->prog_data.vs.base.base, 0);
-
    if (next_stage)
       brw_nir_link_shaders(compiler, &vs_stage->nir, &next_stage->nir);
 }
@@ -636,6 +625,7 @@ anv_pipeline_link_vs(const struct brw_compiler *compiler,
 static const unsigned *
 anv_pipeline_compile_vs(const struct brw_compiler *compiler,
                         void *mem_ctx,
+                        struct anv_device *device,
                         struct anv_pipeline_stage *vs_stage)
 {
    brw_compute_vue_map(compiler->devinfo,
@@ -643,7 +633,7 @@ anv_pipeline_compile_vs(const struct brw_compiler *compiler,
                        vs_stage->nir->info.outputs_written,
                        vs_stage->nir->info.separate_shader);
 
-   return brw_compile_vs(compiler, NULL, mem_ctx, &vs_stage->key.vs,
+   return brw_compile_vs(compiler, device, mem_ctx, &vs_stage->key.vs,
                          &vs_stage->prog_data.vs, vs_stage->nir, -1, NULL);
 }
 
@@ -693,8 +683,6 @@ anv_pipeline_link_tcs(const struct brw_compiler *compiler,
 {
    assert(tes_stage && tes_stage->stage == MESA_SHADER_TESS_EVAL);
 
-   anv_fill_binding_table(&tcs_stage->prog_data.tcs.base.base, 0);
-
    brw_nir_link_shaders(compiler, &tcs_stage->nir, &tes_stage->nir);
 
    nir_lower_patch_vertices(tes_stage->nir,
@@ -703,9 +691,6 @@ anv_pipeline_link_tcs(const struct brw_compiler *compiler,
 
    /* Copy TCS info into the TES info */
    merge_tess_info(&tes_stage->nir->info, &tcs_stage->nir->info);
-
-   anv_fill_binding_table(&tcs_stage->prog_data.tcs.base.base, 0);
-   anv_fill_binding_table(&tes_stage->prog_data.tes.base.base, 0);
 
    /* Whacking the key after cache lookup is a bit sketchy, but all of
     * this comes from the SPIR-V, which is part of the hash used for the
@@ -722,6 +707,7 @@ anv_pipeline_link_tcs(const struct brw_compiler *compiler,
 static const unsigned *
 anv_pipeline_compile_tcs(const struct brw_compiler *compiler,
                          void *mem_ctx,
+                         struct anv_device *device,
                          struct anv_pipeline_stage *tcs_stage,
                          struct anv_pipeline_stage *prev_stage)
 {
@@ -730,7 +716,7 @@ anv_pipeline_compile_tcs(const struct brw_compiler *compiler,
    tcs_stage->key.tcs.patch_outputs_written =
       tcs_stage->nir->info.patch_outputs_written;
 
-   return brw_compile_tcs(compiler, NULL, mem_ctx, &tcs_stage->key.tcs,
+   return brw_compile_tcs(compiler, device, mem_ctx, &tcs_stage->key.tcs,
                           &tcs_stage->prog_data.tcs, tcs_stage->nir,
                           -1, NULL);
 }
@@ -740,8 +726,6 @@ anv_pipeline_link_tes(const struct brw_compiler *compiler,
                       struct anv_pipeline_stage *tes_stage,
                       struct anv_pipeline_stage *next_stage)
 {
-   anv_fill_binding_table(&tes_stage->prog_data.tes.base.base, 0);
-
    if (next_stage)
       brw_nir_link_shaders(compiler, &tes_stage->nir, &next_stage->nir);
 }
@@ -749,6 +733,7 @@ anv_pipeline_link_tes(const struct brw_compiler *compiler,
 static const unsigned *
 anv_pipeline_compile_tes(const struct brw_compiler *compiler,
                          void *mem_ctx,
+                         struct anv_device *device,
                          struct anv_pipeline_stage *tes_stage,
                          struct anv_pipeline_stage *tcs_stage)
 {
@@ -757,7 +742,7 @@ anv_pipeline_compile_tes(const struct brw_compiler *compiler,
    tes_stage->key.tes.patch_inputs_read =
       tcs_stage->nir->info.patch_outputs_written;
 
-   return brw_compile_tes(compiler, NULL, mem_ctx, &tes_stage->key.tes,
+   return brw_compile_tes(compiler, device, mem_ctx, &tes_stage->key.tes,
                           &tcs_stage->prog_data.tcs.base.vue_map,
                           &tes_stage->prog_data.tes, tes_stage->nir,
                           NULL, -1, NULL);
@@ -768,8 +753,6 @@ anv_pipeline_link_gs(const struct brw_compiler *compiler,
                      struct anv_pipeline_stage *gs_stage,
                      struct anv_pipeline_stage *next_stage)
 {
-   anv_fill_binding_table(&gs_stage->prog_data.gs.base.base, 0);
-
    if (next_stage)
       brw_nir_link_shaders(compiler, &gs_stage->nir, &next_stage->nir);
 }
@@ -777,6 +760,7 @@ anv_pipeline_link_gs(const struct brw_compiler *compiler,
 static const unsigned *
 anv_pipeline_compile_gs(const struct brw_compiler *compiler,
                         void *mem_ctx,
+                        struct anv_device *device,
                         struct anv_pipeline_stage *gs_stage,
                         struct anv_pipeline_stage *prev_stage)
 {
@@ -785,7 +769,7 @@ anv_pipeline_compile_gs(const struct brw_compiler *compiler,
                        gs_stage->nir->info.outputs_written,
                        gs_stage->nir->info.separate_shader);
 
-   return brw_compile_gs(compiler, NULL, mem_ctx, &gs_stage->key.gs,
+   return brw_compile_gs(compiler, device, mem_ctx, &gs_stage->key.gs,
                          &gs_stage->prog_data.gs, gs_stage->nir,
                          NULL, -1, NULL);
 }
@@ -880,13 +864,12 @@ anv_pipeline_link_fs(const struct brw_compiler *compiler,
    typed_memcpy(stage->bind_map.surface_to_descriptor,
                 rt_bindings, num_rts);
    stage->bind_map.surface_count += num_rts;
-
-   anv_fill_binding_table(&stage->prog_data.wm.base, 0);
 }
 
 static const unsigned *
 anv_pipeline_compile_fs(const struct brw_compiler *compiler,
                         void *mem_ctx,
+                        struct anv_device *device,
                         struct anv_pipeline_stage *fs_stage,
                         struct anv_pipeline_stage *prev_stage)
 {
@@ -898,7 +881,7 @@ anv_pipeline_compile_fs(const struct brw_compiler *compiler,
       prev_stage->prog_data.vue.vue_map.slots_valid;
 
    const unsigned *code =
-      brw_compile_fs(compiler, NULL, mem_ctx, &fs_stage->key.wm,
+      brw_compile_fs(compiler, device, mem_ctx, &fs_stage->key.wm,
                      &fs_stage->prog_data.wm, fs_stage->nir,
                      NULL, -1, -1, -1, true, false, NULL, NULL);
 
@@ -1102,22 +1085,23 @@ anv_pipeline_compile_graphics(struct anv_pipeline *pipeline,
       const unsigned *code;
       switch (s) {
       case MESA_SHADER_VERTEX:
-         code = anv_pipeline_compile_vs(compiler, stage_ctx, &stages[s]);
+         code = anv_pipeline_compile_vs(compiler, stage_ctx, pipeline->device,
+                                        &stages[s]);
          break;
       case MESA_SHADER_TESS_CTRL:
-         code = anv_pipeline_compile_tcs(compiler, stage_ctx,
+         code = anv_pipeline_compile_tcs(compiler, stage_ctx, pipeline->device,
                                          &stages[s], prev_stage);
          break;
       case MESA_SHADER_TESS_EVAL:
-         code = anv_pipeline_compile_tes(compiler, stage_ctx,
+         code = anv_pipeline_compile_tes(compiler, stage_ctx, pipeline->device,
                                          &stages[s], prev_stage);
          break;
       case MESA_SHADER_GEOMETRY:
-         code = anv_pipeline_compile_gs(compiler, stage_ctx,
+         code = anv_pipeline_compile_gs(compiler, stage_ctx, pipeline->device,
                                         &stages[s], prev_stage);
          break;
       case MESA_SHADER_FRAGMENT:
-         code = anv_pipeline_compile_fs(compiler, stage_ctx,
+         code = anv_pipeline_compile_fs(compiler, stage_ctx, pipeline->device,
                                         &stages[s], prev_stage);
          break;
       default:
@@ -1221,6 +1205,12 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
          .sampler_to_descriptor = stage.sampler_to_descriptor
       };
 
+      /* Set up a binding for the gl_NumWorkGroups */
+      stage.bind_map.surface_count = 1;
+      stage.bind_map.surface_to_descriptor[0] = (struct anv_pipeline_binding) {
+         .set = ANV_DESCRIPTOR_SET_NUM_WORK_GROUPS,
+      };
+
       void *mem_ctx = ralloc_context(NULL);
 
       stage.nir = anv_pipeline_stage_get_nir(pipeline, cache, mem_ctx, &stage);
@@ -1234,10 +1224,8 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
       NIR_PASS_V(stage.nir, anv_nir_add_base_work_group_id,
                  &stage.prog_data.cs);
 
-      anv_fill_binding_table(&stage.prog_data.cs.base, 1);
-
       const unsigned *shader_code =
-         brw_compile_cs(compiler, NULL, mem_ctx, &stage.key.cs,
+         brw_compile_cs(compiler, pipeline->device, mem_ctx, &stage.key.cs,
                         &stage.prog_data.cs, stage.nir, -1, NULL);
       if (shader_code == NULL) {
          ralloc_free(mem_ctx);

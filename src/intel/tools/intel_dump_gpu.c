@@ -187,6 +187,24 @@ gem_get_param(int fd, uint32_t param)
    return value;
 }
 
+static enum drm_i915_gem_engine_class
+engine_class_from_ring_flag(uint32_t ring_flag)
+{
+   switch (ring_flag) {
+   case I915_EXEC_DEFAULT:
+   case I915_EXEC_RENDER:
+      return I915_ENGINE_CLASS_RENDER;
+   case I915_EXEC_BSD:
+      return I915_ENGINE_CLASS_VIDEO;
+   case I915_EXEC_BLT:
+      return I915_ENGINE_CLASS_COPY;
+   case I915_EXEC_VEBOX:
+      return I915_ENGINE_CLASS_VIDEO_ENHANCE;
+   default:
+      return I915_ENGINE_CLASS_INVALID;
+   }
+}
+
 static void
 dump_execbuffer2(int fd, struct drm_i915_gem_execbuffer2 *execbuffer2)
 {
@@ -208,10 +226,10 @@ dump_execbuffer2(int fd, struct drm_i915_gem_execbuffer2 *execbuffer2)
       fail_if(!gen_get_device_info(device, &devinfo),
               "failed to identify chipset=0x%x\n", device);
 
-      aub_file_init(&aub_file, output_file, device);
-      if (verbose == 2)
-         aub_file.verbose_log_file = stdout;
-      aub_write_header(&aub_file, program_invocation_short_name);
+      aub_file_init(&aub_file, output_file,
+                    verbose == 2 ? stdout : NULL,
+                    device, program_invocation_short_name);
+      aub_write_default_setup(&aub_file);
 
       if (verbose)
          printf("[running, output file %s, chipset id 0x%04x, gen %d]\n",
@@ -288,7 +306,7 @@ dump_execbuffer2(int fd, struct drm_i915_gem_execbuffer2 *execbuffer2)
 
    aub_write_exec(&aub_file,
                   batch_bo->offset + execbuffer2->batch_start_offset,
-                  offset, ring_flag);
+                  offset, engine_class_from_ring_flag(ring_flag));
 
    if (device_override &&
        (execbuffer2->flags & I915_EXEC_FENCE_ARRAY) != 0) {

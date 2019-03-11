@@ -30,6 +30,7 @@
 #include "anv_private.h"
 
 #include "vk_format_info.h"
+#include "vk_util.h"
 
 /** \file anv_cmd_buffer.c
  *
@@ -128,8 +129,13 @@ static void
 anv_cmd_pipeline_state_finish(struct anv_cmd_buffer *cmd_buffer,
                               struct anv_cmd_pipeline_state *pipe_state)
 {
-   for (uint32_t i = 0; i < ARRAY_SIZE(pipe_state->push_descriptors); i++)
-      vk_free(&cmd_buffer->pool->alloc, pipe_state->push_descriptors[i]);
+   for (uint32_t i = 0; i < ARRAY_SIZE(pipe_state->push_descriptors); i++) {
+      if (pipe_state->push_descriptors[i]) {
+         anv_descriptor_set_layout_unref(cmd_buffer->device,
+             pipe_state->push_descriptors[i]->set.layout);
+         vk_free(&cmd_buffer->pool->alloc, pipe_state->push_descriptors[i]);
+      }
+   }
 }
 
 static void
@@ -957,10 +963,11 @@ anv_cmd_buffer_get_depth_stencil_view(const struct anv_cmd_buffer *cmd_buffer)
    return iview;
 }
 
-static struct anv_push_descriptor_set *
-anv_cmd_buffer_get_push_descriptor_set(struct anv_cmd_buffer *cmd_buffer,
-                                       VkPipelineBindPoint bind_point,
-                                       uint32_t set)
+static struct anv_descriptor_set *
+anv_cmd_buffer_push_descriptor_set(struct anv_cmd_buffer *cmd_buffer,
+                                   VkPipelineBindPoint bind_point,
+                                   struct anv_descriptor_set_layout *layout,
+                                   uint32_t _set)
 {
    struct anv_cmd_pipeline_state *pipe_state;
    if (bind_point == VK_PIPELINE_BIND_POINT_COMPUTE) {
@@ -971,19 +978,62 @@ anv_cmd_buffer_get_push_descriptor_set(struct anv_cmd_buffer *cmd_buffer,
    }
 
    struct anv_push_descriptor_set **push_set =
-      &pipe_state->push_descriptors[set];
+      &pipe_state->push_descriptors[_set];
 
    if (*push_set == NULL) {
-      *push_set = vk_alloc(&cmd_buffer->pool->alloc,
-                           sizeof(struct anv_push_descriptor_set), 8,
-                           VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+      *push_set = vk_zalloc(&cmd_buffer->pool->alloc,
+                            sizeof(struct anv_push_descriptor_set), 8,
+                            VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
       if (*push_set == NULL) {
          anv_batch_set_error(&cmd_buffer->batch, VK_ERROR_OUT_OF_HOST_MEMORY);
          return NULL;
       }
    }
 
-   return *push_set;
+   struct anv_descriptor_set *set = &(*push_set)->set;
+
+   if (set->layout != layout) {
+      if (set->layout)
+         anv_descriptor_set_layout_unref(cmd_buffer->device, set->layout);
+      anv_descriptor_set_layout_ref(layout);
+      set->layout = layout;
+   }
+   set->size = anv_descriptor_set_layout_size(layout);
+   set->buffer_view_count = layout->buffer_view_count;
+   set->buffer_views = (*push_set)->buffer_views;
+
+   if (layout->descriptor_buffer_size &&
+       ((*push_set)->set_used_on_gpu ||
+        set->desc_mem.alloc_size < layout->descriptor_buffer_size)) {
+      /* The previous buffer is either actively used by some GPU command (so
+       * we can't modify it) or is too small.  Allocate a new one.
+       */
+      struct anv_state desc_mem =
+         anv_state_stream_alloc(&cmd_buffer->dynamic_state_stream,
+                                layout->descriptor_buffer_size, 32);
+      if (set->desc_mem.alloc_size) {
+         /* TODO: Do we really need to copy all the time? */
+         memcpy(desc_mem.map, set->desc_mem.map,
+                MIN2(desc_mem.alloc_size, set->desc_mem.alloc_size));
+      }
+      set->desc_mem = desc_mem;
+
+      struct anv_address addr = {
+         .bo = cmd_buffer->dynamic_state_stream.state_pool->block_pool.bo,
+         .offset = set->desc_mem.offset,
+      };
+
+      const struct isl_device *isl_dev = &cmd_buffer->device->isl_dev;
+      set->desc_surface_state =
+         anv_state_stream_alloc(&cmd_buffer->surface_state_stream,
+                                isl_dev->ss.size, isl_dev->ss.align);
+      anv_fill_buffer_surface_state(cmd_buffer->device,
+                                    set->desc_surface_state,
+                                    ISL_FORMAT_R32G32B32A32_FLOAT,
+                                    addr, layout->descriptor_buffer_size, 1);
+   }
+
+   return set;
 }
 
 void anv_CmdPushDescriptorSetKHR(
@@ -1001,18 +1051,11 @@ void anv_CmdPushDescriptorSetKHR(
 
    struct anv_descriptor_set_layout *set_layout = layout->set[_set].layout;
 
-   struct anv_push_descriptor_set *push_set =
-      anv_cmd_buffer_get_push_descriptor_set(cmd_buffer,
-                                             pipelineBindPoint, _set);
-   if (!push_set)
+   struct anv_descriptor_set *set =
+      anv_cmd_buffer_push_descriptor_set(cmd_buffer, pipelineBindPoint,
+                                         set_layout, _set);
+   if (!set)
       return;
-
-   struct anv_descriptor_set *set = &push_set->set;
-
-   set->layout = set_layout;
-   set->size = anv_descriptor_set_layout_size(set_layout);
-   set->buffer_count = set_layout->buffer_count;
-   set->buffer_views = push_set->buffer_views;
 
    /* Go through the user supplied descriptors. */
    for (uint32_t i = 0; i < descriptorWriteCount; i++) {
@@ -1025,7 +1068,7 @@ void anv_CmdPushDescriptorSetKHR(
       case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
       case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
          for (uint32_t j = 0; j < write->descriptorCount; j++) {
-            anv_descriptor_set_write_image_view(set, &cmd_buffer->device->info,
+            anv_descriptor_set_write_image_view(cmd_buffer->device, set,
                                                 write->pImageInfo + j,
                                                 write->descriptorType,
                                                 write->dstBinding,
@@ -1039,7 +1082,7 @@ void anv_CmdPushDescriptorSetKHR(
             ANV_FROM_HANDLE(anv_buffer_view, bview,
                             write->pTexelBufferView[j]);
 
-            anv_descriptor_set_write_buffer_view(set,
+            anv_descriptor_set_write_buffer_view(cmd_buffer->device, set,
                                                  write->descriptorType,
                                                  bview,
                                                  write->dstBinding,
@@ -1056,8 +1099,7 @@ void anv_CmdPushDescriptorSetKHR(
             ANV_FROM_HANDLE(anv_buffer, buffer, write->pBufferInfo[j].buffer);
             assert(buffer);
 
-            anv_descriptor_set_write_buffer(set,
-                                            cmd_buffer->device,
+            anv_descriptor_set_write_buffer(cmd_buffer->device, set,
                                             &cmd_buffer->surface_state_stream,
                                             write->descriptorType,
                                             buffer,
@@ -1067,6 +1109,19 @@ void anv_CmdPushDescriptorSetKHR(
                                             write->pBufferInfo[j].range);
          }
          break;
+
+      case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT: {
+         const VkWriteDescriptorSetInlineUniformBlockEXT *inline_write =
+            vk_find_struct_const(write->pNext,
+                                 WRITE_DESCRIPTOR_SET_INLINE_UNIFORM_BLOCK_EXT);
+         assert(inline_write->dataSize == write->descriptorCount);
+         anv_descriptor_set_write_inline_uniform_data(cmd_buffer->device, set,
+                                                      write->dstBinding,
+                                                      inline_write->pData,
+                                                      write->dstArrayElement,
+                                                      inline_write->dataSize);
+         break;
+      }
 
       default:
          break;
@@ -1093,21 +1148,13 @@ void anv_CmdPushDescriptorSetWithTemplateKHR(
 
    struct anv_descriptor_set_layout *set_layout = layout->set[_set].layout;
 
-   struct anv_push_descriptor_set *push_set =
-      anv_cmd_buffer_get_push_descriptor_set(cmd_buffer,
-                                             template->bind_point, _set);
-   if (!push_set)
+   struct anv_descriptor_set *set =
+      anv_cmd_buffer_push_descriptor_set(cmd_buffer, template->bind_point,
+                                         set_layout, _set);
+   if (!set)
       return;
 
-   struct anv_descriptor_set *set = &push_set->set;
-
-   set->layout = set_layout;
-   set->size = anv_descriptor_set_layout_size(set_layout);
-   set->buffer_count = set_layout->buffer_count;
-   set->buffer_views = push_set->buffer_views;
-
-   anv_descriptor_set_write_template(set,
-                                     cmd_buffer->device,
+   anv_descriptor_set_write_template(cmd_buffer->device, set,
                                      &cmd_buffer->surface_state_stream,
                                      template,
                                      pData);

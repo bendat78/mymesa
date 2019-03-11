@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-inc_common = include_directories(
-  '../include', '.', 'mapi', 'mesa', 'gallium/include', 'gallium/auxiliary')
+inc_common = [inc_include, include_directories(
+  '.', 'mapi', 'mesa', 'gallium/include', 'gallium/auxiliary')]
 inc_mesa = include_directories('mesa')
 inc_mapi = include_directories('mapi')
 inc_src = include_directories('.')
@@ -64,7 +64,7 @@ endif
 if with_gallium_vc4 or with_gallium_v3d
   subdir('broadcom')
 endif
-if with_gallium_freedreno
+if with_gallium_freedreno or with_freedreno_vk
   subdir('freedreno')
 endif
 if with_dri_i965 or with_intel_vk or with_gallium_iris

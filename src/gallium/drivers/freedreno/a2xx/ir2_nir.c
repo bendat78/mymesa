@@ -43,9 +43,14 @@ static const nir_shader_compiler_options options = {
 };
 
 struct nir_shader *
-ir2_tgsi_to_nir(const struct tgsi_token *tokens)
+ir2_tgsi_to_nir(const struct tgsi_token *tokens,
+		struct pipe_screen *screen)
 {
-	return tgsi_to_nir(tokens, &options);
+	if (!screen) {
+		return tgsi_to_nir_noscreen(tokens, &options);
+	}
+
+	return tgsi_to_nir(tokens, screen);
 }
 
 const nir_shader_compiler_options *

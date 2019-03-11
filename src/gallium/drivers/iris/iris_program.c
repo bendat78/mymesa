@@ -41,6 +41,7 @@
 #include "intel/compiler/brw_compiler.h"
 #include "intel/compiler/brw_nir.h"
 #include "iris_context.h"
+#include "nir/tgsi_to_nir.h"
 
 #define KEY_INIT_NO_ID(gen)                       \
    .tex.swizzles[0 ... MAX_SAMPLERS - 1] = 0x688, \
@@ -626,15 +627,22 @@ iris_update_compiled_vs(struct iris_context *ice)
       const bool needs_sgvs_element = uses_draw_params ||
                                       vs_prog_data->uses_instanceid ||
                                       vs_prog_data->uses_vertexid;
+      bool needs_edge_flag = false;
+      nir_foreach_variable(var, &ish->nir->inputs) {
+         if (var->data.location == VERT_ATTRIB_EDGEFLAG)
+            needs_edge_flag = true;
+      }
 
       if (ice->state.vs_uses_draw_params != uses_draw_params ||
-          ice->state.vs_uses_derived_draw_params != uses_derived_draw_params) {
+          ice->state.vs_uses_derived_draw_params != uses_derived_draw_params ||
+          ice->state.vs_needs_edge_flag != needs_edge_flag) {
          ice->state.dirty |= IRIS_DIRTY_VERTEX_BUFFERS |
                              IRIS_DIRTY_VERTEX_ELEMENTS;
       }
       ice->state.vs_uses_draw_params = uses_draw_params;
       ice->state.vs_uses_derived_draw_params = uses_derived_draw_params;
       ice->state.vs_needs_sgvs_element = needs_sgvs_element;
+      ice->state.vs_needs_edge_flag = needs_edge_flag;
    }
 }
 
@@ -1384,7 +1392,7 @@ iris_create_uncompiled_shader(struct pipe_context *ctx,
    if (!ish)
       return NULL;
 
-   nir = brw_preprocess_nir(screen->compiler, nir);
+   nir = brw_preprocess_nir(screen->compiler, nir, NULL);
 
    NIR_PASS_V(nir, brw_nir_lower_image_load_store, devinfo);
    NIR_PASS_V(nir, iris_lower_storage_image_derefs);
@@ -1403,10 +1411,14 @@ static struct iris_uncompiled_shader *
 iris_create_shader_state(struct pipe_context *ctx,
                          const struct pipe_shader_state *state)
 {
-   assert(state->type == PIPE_SHADER_IR_NIR);
+   struct nir_shader *nir;
 
-   return iris_create_uncompiled_shader(ctx, state->ir.nir,
-                                        &state->stream_output);
+   if (state->type == PIPE_SHADER_IR_TGSI)
+      nir = tgsi_to_nir(state->tokens, ctx->screen);
+   else
+      nir = state->ir.nir;
+
+   return iris_create_uncompiled_shader(ctx, nir, &state->stream_output);
 }
 
 static void *
@@ -1601,6 +1613,14 @@ bind_state(struct iris_context *ice,
 {
    uint64_t dirty_bit = IRIS_DIRTY_UNCOMPILED_VS << stage;
    const uint64_t nos = ish ? ish->nos : 0;
+
+   const struct shader_info *old_info = iris_get_shader_info(ice, stage);
+   const struct shader_info *new_info = ish ? &ish->nir->info : NULL;
+
+   if ((old_info ? util_last_bit(old_info->textures_used) : 0) !=
+       (new_info ? util_last_bit(new_info->textures_used) : 0)) {
+      ice->state.dirty |= IRIS_DIRTY_SAMPLER_STATES_VS << stage;
+   }
 
    ice->shaders.uncompiled[stage] = ish;
    ice->state.dirty |= dirty_bit;

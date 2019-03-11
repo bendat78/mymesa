@@ -170,7 +170,7 @@ __gen_combine_address(struct iris_batch *batch, void *location,
 #endif
 
 static uint32_t
-mocs(struct iris_bo *bo)
+mocs(const struct iris_bo *bo)
 {
    return bo && bo->external ? MOCS_PTE : MOCS_WB;
 }
@@ -1027,7 +1027,7 @@ iris_create_zsa_state(struct pipe_context *ctx,
    cso->depth_writes_enabled = state->depth.writemask;
    cso->stencil_writes_enabled =
       state->stencil[0].writemask != 0 ||
-      (two_sided_stencil && state->stencil[1].writemask != 1);
+      (two_sided_stencil && state->stencil[1].writemask != 0);
 
    /* The state tracker needs to optimize away EQUAL writes for us. */
    assert(!(state->depth.func == PIPE_FUNC_EQUAL && state->depth.writemask));
@@ -1437,19 +1437,7 @@ iris_create_sampler_state(struct pipe_context *ctx,
 
 /**
  * The pipe->bind_sampler_states() driver hook.
- *
- * Now that we know all the sampler states, we upload them all into a
- * contiguous area of GPU memory, for 3DSTATE_SAMPLER_STATE_POINTERS_*.
- * We also fill out the border color state pointers at this point.
- *
- * We could defer this work to draw time, but we assume that binding
- * will be less frequent than drawing.
  */
-// XXX: this may be a bad idea, need to make sure that st/mesa calls us
-// XXX: with the complete set of shaders.  If it makes multiple calls to
-// XXX: things one at a time, we could waste a lot of time assembling things.
-// XXX: it doesn't even BUY us anything to do it here, because we only flag
-// XXX: IRIS_DIRTY_SAMPLER_STATE when this is called...
 static void
 iris_bind_sampler_states(struct pipe_context *ctx,
                          enum pipe_shader_type p_stage,
@@ -1465,6 +1453,29 @@ iris_bind_sampler_states(struct pipe_context *ctx,
    for (int i = 0; i < count; i++) {
       shs->samplers[start + i] = states[i];
    }
+
+   ice->state.dirty |= IRIS_DIRTY_SAMPLER_STATES_VS << stage;
+}
+
+/**
+ * Upload the sampler states into a contiguous area of GPU memory, for
+ * for 3DSTATE_SAMPLER_STATE_POINTERS_*.
+ *
+ * Also fill out the border color state pointers.
+ */
+static void
+iris_upload_sampler_states(struct iris_context *ice, gl_shader_stage stage)
+{
+   struct iris_shader_state *shs = &ice->state.shaders[stage];
+   const struct shader_info *info = iris_get_shader_info(ice, stage);
+
+   /* We assume the state tracker will call pipe->bind_sampler_states()
+    * if the program's number of textures changes.
+    */
+   unsigned count = info ? util_last_bit(info->textures_used) : 0;
+
+   if (!count)
+      return;
 
    /* Assemble the SAMPLER_STATEs into a contiguous table that lives
     * in the dynamic state memory zone, so we can point to it via the
@@ -1483,19 +1494,50 @@ iris_bind_sampler_states(struct pipe_context *ctx,
    /* Make sure all land in the same BO */
    iris_border_color_pool_reserve(ice, IRIS_MAX_TEXTURE_SAMPLERS);
 
+   ice->state.need_border_colors &= ~(1 << stage);
+
    for (int i = 0; i < count; i++) {
       struct iris_sampler_state *state = shs->samplers[i];
+      struct iris_sampler_view *tex = shs->textures[i];
 
       if (!state) {
          memset(map, 0, 4 * GENX(SAMPLER_STATE_length));
       } else if (!state->needs_border_color) {
          memcpy(map, state->sampler_state, 4 * GENX(SAMPLER_STATE_length));
       } else {
-         ice->state.need_border_colors = true;
+         ice->state.need_border_colors |= 1 << stage;
+
+         /* We may need to swizzle the border color for format faking.
+          * A/LA formats are faked as R/RG with 000R or R00G swizzles.
+          * This means we need to move the border color's A channel into
+          * the R or G channels so that those read swizzles will move it
+          * back into A.
+          */
+         union pipe_color_union *color = &state->border_color;
+         if (tex) {
+            union pipe_color_union tmp;
+            enum pipe_format internal_format = tex->res->internal_format;
+
+            if (util_format_is_alpha(internal_format)) {
+               unsigned char swz[4] = {
+                  PIPE_SWIZZLE_W, PIPE_SWIZZLE_0,
+                  PIPE_SWIZZLE_0, PIPE_SWIZZLE_0
+               };
+               util_format_apply_color_swizzle(&tmp, color, swz, true);
+               color = &tmp;
+            } else if (util_format_is_luminance_alpha(internal_format) &&
+                       internal_format != PIPE_FORMAT_L8A8_SRGB) {
+               unsigned char swz[4] = {
+                  PIPE_SWIZZLE_X, PIPE_SWIZZLE_W,
+                  PIPE_SWIZZLE_0, PIPE_SWIZZLE_0
+               };
+               util_format_apply_color_swizzle(&tmp, color, swz, true);
+               color = &tmp;
+            }
+         }
 
          /* Stream out the border color and merge the pointer. */
-         uint32_t offset =
-            iris_upload_border_color(ice, &state->border_color);
+         uint32_t offset = iris_upload_border_color(ice, color);
 
          uint32_t dynamic[GENX(SAMPLER_STATE_length)];
          iris_pack_state(GENX(SAMPLER_STATE), dynamic, dyns) {
@@ -1508,8 +1550,6 @@ iris_bind_sampler_states(struct pipe_context *ctx,
 
       map += GENX(SAMPLER_STATE_length);
    }
-
-   ice->state.dirty |= IRIS_DIRTY_SAMPLER_STATES_VS << stage;
 }
 
 static enum isl_channel_select
@@ -1531,6 +1571,7 @@ fill_buffer_surface_state(struct isl_device *isl_dev,
                           struct iris_bo *bo,
                           void *map,
                           enum isl_format format,
+                          struct isl_swizzle swizzle,
                           unsigned offset,
                           unsigned size)
 {
@@ -1560,6 +1601,7 @@ fill_buffer_surface_state(struct isl_device *isl_dev,
                          .address = bo->gtt_offset + offset,
                          .size_B = final_size,
                          .format = format,
+                         .swizzle = swizzle,
                          .stride_B = cpp,
                          .mocs = mocs(bo));
 }
@@ -1696,8 +1738,8 @@ iris_create_sampler_view(struct pipe_context *ctx,
       }
    } else {
       fill_buffer_surface_state(&screen->isl_dev, isv->res->bo, map,
-                                isv->view.format, tmpl->u.buf.offset,
-                                tmpl->u.buf.size);
+                                isv->view.format, isv->view.swizzle,
+                                tmpl->u.buf.offset, tmpl->u.buf.size);
    }
 
    return &isv->base;
@@ -1902,7 +1944,8 @@ iris_set_shader_images(struct pipe_context *ctx,
 
             if (untyped_fallback) {
                fill_buffer_surface_state(&screen->isl_dev, res->bo, map,
-                                         isl_fmt, 0, res->bo->size);
+                                         isl_fmt, ISL_SWIZZLE_IDENTITY,
+                                         0, res->bo->size);
             } else {
                /* Images don't support compression */
                unsigned aux_modes = 1 << ISL_AUX_USAGE_NONE;
@@ -1920,8 +1963,8 @@ iris_set_shader_images(struct pipe_context *ctx,
                                       &res->surf, &view);
          } else {
             fill_buffer_surface_state(&screen->isl_dev, res->bo, map,
-                                      isl_fmt, img->u.buf.offset,
-                                      img->u.buf.size);
+                                      isl_fmt, ISL_SWIZZLE_IDENTITY,
+                                      img->u.buf.offset, img->u.buf.size);
             fill_buffer_image_param(&shs->image[start_slot + i].param,
                                     img->format, img->u.buf.size);
          }
@@ -2352,6 +2395,7 @@ upload_ubo_surf_state(struct iris_context *ice,
                          .size_B = MIN2(buffer_size,
                                         res->bo->size - cbuf->data.offset),
                          .format = ISL_FORMAT_R32G32B32A32_FLOAT,
+                         .swizzle = ISL_SWIZZLE_IDENTITY,
                          .stride_B = 1,
                          .mocs = mocs(res->bo))
 }
@@ -2509,6 +2553,7 @@ iris_set_shader_buffers(struct pipe_context *ctx,
                                   MIN2(buffer->buffer_size,
                                        res->bo->size - buffer->buffer_offset),
                                .format = ISL_FORMAT_RAW,
+                               .swizzle = ISL_SWIZZLE_IDENTITY,
                                .stride_B = 1,
                                .mocs = mocs(res->bo));
       } else {
@@ -2586,6 +2631,8 @@ iris_set_vertex_buffers(struct pipe_context *ctx,
 struct iris_vertex_element_state {
    uint32_t vertex_elements[1 + 33 * GENX(VERTEX_ELEMENT_STATE_length)];
    uint32_t vf_instancing[33 * GENX(3DSTATE_VF_INSTANCING_length)];
+   uint32_t edgeflag_ve[GENX(VERTEX_ELEMENT_STATE_length)];
+   uint32_t edgeflag_vfi[GENX(3DSTATE_VF_INSTANCING_length)];
    unsigned count;
 };
 
@@ -2593,7 +2640,12 @@ struct iris_vertex_element_state {
  * The pipe->create_vertex_elements() driver hook.
  *
  * This translates pipe_vertex_element to our 3DSTATE_VERTEX_ELEMENTS
- * and 3DSTATE_VF_INSTANCING commands.  SGVs are handled at draw time.
+ * and 3DSTATE_VF_INSTANCING commands. The vertex_elements and vf_instancing
+ * arrays are ready to be emitted at draw time if no EdgeFlag or SGVs are
+ * needed. In these cases we will need information available at draw time.
+ * We setup edgeflag_ve and edgeflag_vfi as alternatives last
+ * 3DSTATE_VERTEX_ELEMENT and 3DSTATE_VF_INSTANCING that can be used at
+ * draw time if we detect that EdgeFlag is needed by the Vertex Shader.
  */
 static void *
 iris_create_vertex_elements(struct pipe_context *ctx,
@@ -2607,11 +2659,6 @@ iris_create_vertex_elements(struct pipe_context *ctx,
 
    cso->count = count;
 
-   /* TODO:
-    *  - create edge flag one
-    *  - create SGV ones
-    *  - if those are necessary, use count + 1/2/3... OR in the length
-    */
    iris_pack_command(GENX(3DSTATE_VERTEX_ELEMENTS), cso->vertex_elements, ve) {
       ve.DWordLength =
          1 + GENX(VERTEX_ELEMENT_STATE_length) * MAX2(count, 1) - 2;
@@ -2650,6 +2697,7 @@ iris_create_vertex_elements(struct pipe_context *ctx,
          break;
       }
       iris_pack_state(GENX(VERTEX_ELEMENT_STATE), ve_pack_dest, ve) {
+         ve.EdgeFlagEnable = false;
          ve.VertexBufferIndex = state[i].vertex_buffer_index;
          ve.Valid = true;
          ve.SourceElementOffset = state[i].src_offset;
@@ -2668,6 +2716,33 @@ iris_create_vertex_elements(struct pipe_context *ctx,
 
       ve_pack_dest += GENX(VERTEX_ELEMENT_STATE_length);
       vfi_pack_dest += GENX(3DSTATE_VF_INSTANCING_length);
+   }
+
+   /* An alternative version of the last VE and VFI is stored so it
+    * can be used at draw time in case Vertex Shader uses EdgeFlag
+    */
+   if (count) {
+      const unsigned edgeflag_index = count - 1;
+      const struct iris_format_info fmt =
+         iris_format_for_usage(devinfo, state[edgeflag_index].src_format, 0);
+      iris_pack_state(GENX(VERTEX_ELEMENT_STATE), cso->edgeflag_ve, ve) {
+         ve.EdgeFlagEnable = true ;
+         ve.VertexBufferIndex = state[edgeflag_index].vertex_buffer_index;
+         ve.Valid = true;
+         ve.SourceElementOffset = state[edgeflag_index].src_offset;
+         ve.SourceElementFormat = fmt.fmt;
+         ve.Component0Control = VFCOMP_STORE_SRC;
+         ve.Component1Control = VFCOMP_STORE_0;
+         ve.Component2Control = VFCOMP_STORE_0;
+         ve.Component3Control = VFCOMP_STORE_0;
+      }
+      iris_pack_command(GENX(3DSTATE_VF_INSTANCING), cso->edgeflag_vfi, vi) {
+         /* The vi.VertexElementIndex of the EdgeFlag Vertex Element is filled
+          * at draw time, as it should change if SGVs are emitted.
+          */
+         vi.InstancingEnable = state[edgeflag_index].instance_divisor > 0;
+         vi.InstanceDataStepRate = state[edgeflag_index].instance_divisor;
+      }
    }
 
    return cso;
@@ -3595,47 +3670,6 @@ iris_store_derived_program_state(struct iris_context *ice,
 
 /* ------------------------------------------------------------------- */
 
-/**
- * Configure the URB.
- *
- * XXX: write a real comment.
- */
-static void
-iris_upload_urb_config(struct iris_context *ice, struct iris_batch *batch)
-{
-   const struct gen_device_info *devinfo = &batch->screen->devinfo;
-   const unsigned push_size_kB = 32;
-   unsigned entries[4];
-   unsigned start[4];
-   unsigned size[4];
-
-   for (int i = MESA_SHADER_VERTEX; i <= MESA_SHADER_GEOMETRY; i++) {
-      if (!ice->shaders.prog[i]) {
-         size[i] = 1;
-      } else {
-         struct brw_vue_prog_data *vue_prog_data =
-            (void *) ice->shaders.prog[i]->prog_data;
-         size[i] = vue_prog_data->urb_entry_size;
-      }
-      assert(size[i] != 0);
-   }
-
-   gen_get_urb_config(devinfo, 1024 * push_size_kB,
-                      1024 * ice->shaders.urb_size,
-                      ice->shaders.prog[MESA_SHADER_TESS_EVAL] != NULL,
-                      ice->shaders.prog[MESA_SHADER_GEOMETRY] != NULL,
-                      size, entries, start);
-
-   for (int i = MESA_SHADER_VERTEX; i <= MESA_SHADER_GEOMETRY; i++) {
-      iris_emit_cmd(batch, GENX(3DSTATE_URB_VS), urb) {
-         urb._3DCommandSubOpcode += i;
-         urb.VSURBStartingAddress     = start[i];
-         urb.VSURBEntryAllocationSize = size[i] - 1;
-         urb.VSNumberofURBEntries     = entries[i];
-      }
-   }
-}
-
 static const uint32_t push_constant_opcodes[] = {
    [MESA_SHADER_VERTEX]    = 21,
    [MESA_SHADER_TESS_CTRL] = 25, /* HS */
@@ -4234,7 +4268,22 @@ iris_upload_dirty_render_state(struct iris_context *ice,
    }
 
    if (dirty & IRIS_DIRTY_URB) {
-      iris_upload_urb_config(ice, batch);
+      unsigned size[4];
+
+      for (int i = MESA_SHADER_VERTEX; i <= MESA_SHADER_GEOMETRY; i++) {
+         if (!ice->shaders.prog[i]) {
+            size[i] = 1;
+         } else {
+            struct brw_vue_prog_data *vue_prog_data =
+               (void *) ice->shaders.prog[i]->prog_data;
+            size[i] = vue_prog_data->urb_entry_size;
+         }
+         assert(size[i] != 0);
+      }
+
+      genX(emit_urb_setup)(ice, batch, size,
+                           ice->shaders.prog[MESA_SHADER_TESS_EVAL] != NULL,
+                           ice->shaders.prog[MESA_SHADER_GEOMETRY] != NULL);
    }
 
    if (dirty & IRIS_DIRTY_BLEND_STATE) {
@@ -4404,13 +4453,12 @@ iris_upload_dirty_render_state(struct iris_context *ice,
       }
    }
 
-   if (ice->state.need_border_colors)
-      iris_use_pinned_bo(batch, ice->state.border_color_pool.bo, false);
-
    for (int stage = 0; stage <= MESA_SHADER_FRAGMENT; stage++) {
       if (!(dirty & (IRIS_DIRTY_SAMPLER_STATES_VS << stage)) ||
           !ice->shaders.prog[stage])
          continue;
+
+      iris_upload_sampler_states(ice, stage);
 
       struct iris_shader_state *shs = &ice->state.shaders[stage];
       struct pipe_resource *res = shs->sampler_table.res;
@@ -4422,6 +4470,9 @@ iris_upload_dirty_render_state(struct iris_context *ice,
          ptr.PointertoVSSamplerState = shs->sampler_table.offset;
       }
    }
+
+   if (ice->state.need_border_colors)
+      iris_use_pinned_bo(batch, ice->state.border_color_pool.bo, false);
 
    if (dirty & IRIS_DIRTY_MULTISAMPLE) {
       iris_emit_cmd(batch, GENX(3DSTATE_MULTISAMPLE), ms) {
@@ -4774,12 +4825,13 @@ iris_upload_dirty_render_state(struct iris_context *ice,
       struct iris_vertex_element_state *cso = ice->state.cso_vertex_elements;
       const unsigned entries = MAX2(cso->count, 1);
       if (!(ice->state.vs_needs_sgvs_element ||
-            ice->state.vs_uses_derived_draw_params)) {
+            ice->state.vs_uses_derived_draw_params ||
+            ice->state.vs_needs_edge_flag)) {
          iris_batch_emit(batch, cso->vertex_elements, sizeof(uint32_t) *
                          (1 + entries * GENX(VERTEX_ELEMENT_STATE_length)));
       } else {
          uint32_t dynamic_ves[1 + 33 * GENX(VERTEX_ELEMENT_STATE_length)];
-         const int dyn_count = cso->count +
+         const unsigned dyn_count = cso->count +
             ice->state.vs_needs_sgvs_element +
             ice->state.vs_uses_derived_draw_params;
 
@@ -4788,10 +4840,12 @@ iris_upload_dirty_render_state(struct iris_context *ice,
             ve.DWordLength =
                1 + GENX(VERTEX_ELEMENT_STATE_length) * dyn_count - 2;
          }
-         memcpy(&dynamic_ves[1], &cso->vertex_elements[1], cso->count *
+         memcpy(&dynamic_ves[1], &cso->vertex_elements[1],
+                (cso->count - ice->state.vs_needs_edge_flag) *
                 GENX(VERTEX_ELEMENT_STATE_length) * sizeof(uint32_t));
          uint32_t *ve_pack_dest =
-            &dynamic_ves[1 + cso->count * GENX(VERTEX_ELEMENT_STATE_length)];
+            &dynamic_ves[1 + (cso->count - ice->state.vs_needs_edge_flag) *
+                         GENX(VERTEX_ELEMENT_STATE_length)];
 
          if (ice->state.vs_needs_sgvs_element) {
             uint32_t base_ctrl = ice->state.vs_uses_draw_params ?
@@ -4822,12 +4876,38 @@ iris_upload_dirty_render_state(struct iris_context *ice,
             }
             ve_pack_dest += GENX(VERTEX_ELEMENT_STATE_length);
          }
+         if (ice->state.vs_needs_edge_flag) {
+            for (int i = 0; i < GENX(VERTEX_ELEMENT_STATE_length);  i++)
+               ve_pack_dest[i] = cso->edgeflag_ve[i];
+         }
+
          iris_batch_emit(batch, &dynamic_ves, sizeof(uint32_t) *
                          (1 + dyn_count * GENX(VERTEX_ELEMENT_STATE_length)));
       }
 
-      iris_batch_emit(batch, cso->vf_instancing, sizeof(uint32_t) *
-                      entries * GENX(3DSTATE_VF_INSTANCING_length));
+      if (!ice->state.vs_needs_edge_flag) {
+         iris_batch_emit(batch, cso->vf_instancing, sizeof(uint32_t) *
+                         entries * GENX(3DSTATE_VF_INSTANCING_length));
+      } else {
+         assert(cso->count > 0);
+         const unsigned edgeflag_index = cso->count - 1;
+         uint32_t dynamic_vfi[33 * GENX(3DSTATE_VF_INSTANCING_length)];
+         memcpy(&dynamic_vfi[0], cso->vf_instancing, edgeflag_index *
+                GENX(3DSTATE_VF_INSTANCING_length) * sizeof(uint32_t));
+
+         uint32_t *vfi_pack_dest = &dynamic_vfi[0] +
+            edgeflag_index * GENX(3DSTATE_VF_INSTANCING_length);
+         iris_pack_command(GENX(3DSTATE_VF_INSTANCING), vfi_pack_dest, vi) {
+            vi.VertexElementIndex = edgeflag_index +
+               ice->state.vs_needs_sgvs_element +
+               ice->state.vs_uses_derived_draw_params;
+         }
+         for (int i = 0; i < GENX(3DSTATE_VF_INSTANCING_length);  i++)
+            vfi_pack_dest[i] |= cso->edgeflag_vfi[i];
+
+         iris_batch_emit(batch, &dynamic_vfi[0], sizeof(uint32_t) *
+                         entries * GENX(3DSTATE_VF_INSTANCING_length));
+      }
    }
 
    if (dirty & IRIS_DIRTY_VF_SGVS) {
@@ -4839,13 +4919,15 @@ iris_upload_dirty_render_state(struct iris_context *ice,
          if (vs_prog_data->uses_vertexid) {
             sgv.VertexIDEnable = true;
             sgv.VertexIDComponentNumber = 2;
-            sgv.VertexIDElementOffset = cso->count;
+            sgv.VertexIDElementOffset =
+               cso->count - ice->state.vs_needs_edge_flag;
          }
 
          if (vs_prog_data->uses_instanceid) {
             sgv.InstanceIDEnable = true;
             sgv.InstanceIDComponentNumber = 3;
-            sgv.InstanceIDElementOffset = cso->count;
+            sgv.InstanceIDElementOffset =
+               cso->count - ice->state.vs_needs_edge_flag;
          }
       }
    }
@@ -5034,6 +5116,9 @@ iris_upload_compute_state(struct iris_context *ice,
 
    if (dirty & IRIS_DIRTY_BINDINGS_CS)
       iris_populate_binding_table(ice, batch, MESA_SHADER_COMPUTE, false);
+
+   if (dirty & IRIS_DIRTY_SAMPLER_STATES_CS)
+      iris_upload_sampler_states(ice, MESA_SHADER_COMPUTE);
 
    iris_use_optional_res(batch, shs->sampler_table.res, false);
    iris_use_pinned_bo(batch, iris_resource_bo(shader->assembly.res), false);
@@ -5771,6 +5856,34 @@ iris_emit_raw_pipe_control(struct iris_batch *batch, uint32_t flags,
 }
 
 void
+genX(emit_urb_setup)(struct iris_context *ice,
+                     struct iris_batch *batch,
+                     const unsigned size[4],
+                     bool tess_present, bool gs_present)
+{
+   const struct gen_device_info *devinfo = &batch->screen->devinfo;
+   const unsigned push_size_kB = 32;
+   unsigned entries[4];
+   unsigned start[4];
+
+   ice->shaders.last_vs_entry_size = size[MESA_SHADER_VERTEX];
+
+   gen_get_urb_config(devinfo, 1024 * push_size_kB,
+                      1024 * ice->shaders.urb_size,
+                      tess_present, gs_present,
+                      size, entries, start);
+
+   for (int i = MESA_SHADER_VERTEX; i <= MESA_SHADER_GEOMETRY; i++) {
+      iris_emit_cmd(batch, GENX(3DSTATE_URB_VS), urb) {
+         urb._3DCommandSubOpcode += i;
+         urb.VSURBStartingAddress     = start[i];
+         urb.VSURBEntryAllocationSize = size[i] - 1;
+         urb.VSNumberofURBEntries     = entries[i];
+      }
+   }
+}
+
+void
 genX(init_state)(struct iris_context *ice)
 {
    struct pipe_context *ctx = &ice->ctx;
@@ -5842,6 +5955,7 @@ genX(init_state)(struct iris_context *ice)
    ice->vtbl.populate_gs_key = iris_populate_gs_key;
    ice->vtbl.populate_fs_key = iris_populate_fs_key;
    ice->vtbl.populate_cs_key = iris_populate_cs_key;
+   ice->vtbl.mocs = mocs;
 
    ice->state.dirty = ~0ull;
 

@@ -162,10 +162,10 @@ struct PACKED bcolor_entry {
 	uint32_t rgb10a2;
 	uint32_t z24; /* also s8? */
 	uint16_t srgb[4];      /* appears to duplicate fp16[], but clamped, used for srgb */
-	uint8_t  __pad1[24];
+	uint8_t  __pad1[56];
 };
 
-#define FD6_BORDER_COLOR_SIZE        0x60
+#define FD6_BORDER_COLOR_SIZE        sizeof(struct bcolor_entry)
 #define FD6_BORDER_COLOR_UPLOAD_SIZE (2 * PIPE_MAX_SAMPLERS * FD6_BORDER_COLOR_SIZE)
 
 static void
@@ -196,7 +196,8 @@ setup_border_colors(struct fd_texture_stateobj *tex, struct bcolor_entry *entrie
 		if ((i >= tex->num_textures) || !tex->textures[i])
 			continue;
 
-		enum pipe_format format = tex->textures[i]->format;
+		struct pipe_sampler_view *view = tex->textures[i];
+		enum pipe_format format = view->format;
 		const struct util_format_description *desc =
 				util_format_description(format);
 
@@ -206,8 +207,14 @@ setup_border_colors(struct fd_texture_stateobj *tex, struct bcolor_entry *entrie
 		e->rgb10a2 = 0;
 		e->z24 = 0;
 
+		unsigned char swiz[4];
+
+		fd6_tex_swiz(format, swiz,
+				view->swizzle_r, view->swizzle_g,
+				view->swizzle_b, view->swizzle_a);
+
 		for (j = 0; j < 4; j++) {
-			int c = desc->swizzle[j];
+			int c = swiz[j];
 			int cd = c;
 
 			/*

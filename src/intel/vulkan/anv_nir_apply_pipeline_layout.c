@@ -27,6 +27,8 @@
 #include "compiler/brw_nir.h"
 
 struct apply_pipeline_layout_state {
+   const struct anv_physical_device *pdevice;
+
    nir_shader *shader;
    nir_builder builder;
 
@@ -38,6 +40,9 @@ struct apply_pipeline_layout_state {
    bool uses_constants;
    uint8_t constants_offset;
    struct {
+      bool desc_buffer_used;
+      uint8_t desc_offset;
+
       BITSET_WORD *used;
       uint8_t *surface_offsets;
       uint8_t *sampler_offsets;
@@ -49,20 +54,25 @@ static void
 add_binding(struct apply_pipeline_layout_state *state,
             uint32_t set, uint32_t binding)
 {
-   BITSET_SET(state->set[set].used, binding);
-}
+   const struct anv_descriptor_set_binding_layout *bind_layout =
+      &state->layout->set[set].layout->binding[binding];
 
-static void
-add_var_binding(struct apply_pipeline_layout_state *state, nir_variable *var)
-{
-   add_binding(state, var->data.descriptor_set, var->data.binding);
+   BITSET_SET(state->set[set].used, binding);
+
+   /* Only flag the descriptor buffer as used if there's actually data for
+    * this binding.  This lets us be lazy and call this function constantly
+    * without worrying about unnecessarily enabling the buffer.
+    */
+   if (anv_descriptor_size(bind_layout))
+      state->set[set].desc_buffer_used = true;
 }
 
 static void
 add_deref_src_binding(struct apply_pipeline_layout_state *state, nir_src src)
 {
    nir_deref_instr *deref = nir_src_as_deref(src);
-   add_var_binding(state, nir_deref_instr_get_variable(deref));
+   nir_variable *var = nir_deref_instr_get_variable(deref);
+   add_binding(state, var->data.descriptor_set, var->data.binding);
 }
 
 static void
@@ -140,18 +150,31 @@ lower_res_index_intrinsic(nir_intrinsic_instr *intrin,
    uint32_t set = nir_intrinsic_desc_set(intrin);
    uint32_t binding = nir_intrinsic_binding(intrin);
 
+   const struct anv_descriptor_set_binding_layout *bind_layout =
+      &state->layout->set[set].layout->binding[binding];
+
    uint32_t surface_index = state->set[set].surface_offsets[binding];
-   uint32_t array_size =
-      state->layout->set[set].layout->binding[binding].array_size;
+   uint32_t array_size = bind_layout->array_size;
 
    nir_ssa_def *array_index = nir_ssa_for_src(b, intrin->src[0], 1);
    if (nir_src_is_const(intrin->src[0]) || state->add_bounds_checks)
       array_index = nir_umin(b, array_index, nir_imm_int(b, array_size - 1));
 
-   nir_ssa_def *block_index = nir_iadd_imm(b, array_index, surface_index);
+   nir_ssa_def *index;
+   if (bind_layout->data & ANV_DESCRIPTOR_INLINE_UNIFORM) {
+      /* This is an inline uniform block.  Just reference the descriptor set
+       * and use the descriptor offset as the base.
+       */
+      index = nir_imm_ivec2(b, state->set[set].desc_offset,
+                               bind_layout->descriptor_offset);
+   } else {
+      /* We're using nir_address_format_vk_index_offset */
+      index = nir_vec2(b, nir_iadd_imm(b, array_index, surface_index),
+                          nir_imm_int(b, 0));
+   }
 
    assert(intrin->dest.is_ssa);
-   nir_ssa_def_rewrite_uses(&intrin->dest.ssa, nir_src_for_ssa(block_index));
+   nir_ssa_def_rewrite_uses(&intrin->dest.ssa, nir_src_for_ssa(index));
    nir_instr_remove(&intrin->instr);
 }
 
@@ -168,8 +191,12 @@ lower_res_reindex_intrinsic(nir_intrinsic_instr *intrin,
     * add of the two indices.
     */
    assert(intrin->src[0].is_ssa && intrin->src[1].is_ssa);
-   nir_ssa_def *new_index = nir_iadd(b, intrin->src[0].ssa,
-                                        intrin->src[1].ssa);
+   nir_ssa_def *old_index = intrin->src[0].ssa;
+   nir_ssa_def *offset = intrin->src[1].ssa;
+
+   nir_ssa_def *new_index =
+      nir_vec2(b, nir_iadd(b, nir_channel(b, old_index, 0), offset),
+                  nir_channel(b, old_index, 1));
 
    assert(intrin->dest.is_ssa);
    nir_ssa_def_rewrite_uses(&intrin->dest.ssa, nir_src_for_ssa(new_index));
@@ -186,11 +213,30 @@ lower_load_vulkan_descriptor(nir_intrinsic_instr *intrin,
 
    /* We follow the nir_address_format_vk_index_offset model */
    assert(intrin->src[0].is_ssa);
-   nir_ssa_def *vec2 = nir_vec2(b, intrin->src[0].ssa, nir_imm_int(b, 0));
+   nir_ssa_def *index = intrin->src[0].ssa;
 
    assert(intrin->dest.is_ssa);
-   nir_ssa_def_rewrite_uses(&intrin->dest.ssa, nir_src_for_ssa(vec2));
+   nir_ssa_def_rewrite_uses(&intrin->dest.ssa, nir_src_for_ssa(index));
    nir_instr_remove(&intrin->instr);
+}
+
+static void
+lower_get_buffer_size(nir_intrinsic_instr *intrin,
+                      struct apply_pipeline_layout_state *state)
+{
+   nir_builder *b = &state->builder;
+
+   b->cursor = nir_before_instr(&intrin->instr);
+
+   assert(intrin->src[0].is_ssa);
+   nir_ssa_def *index = intrin->src[0].ssa;
+
+   /* We're following the nir_address_format_vk_index_offset model so the
+    * binding table index is the first component of the address.  The
+    * back-end wants a scalar binding table index source.
+    */
+   nir_instr_rewrite_src(&intrin->instr, &intrin->src[0],
+                         nir_src_for_ssa(nir_channel(b, index, 0)));
 }
 
 static void
@@ -392,6 +438,9 @@ apply_pipeline_layout_block(nir_block *block,
          case nir_intrinsic_load_vulkan_descriptor:
             lower_load_vulkan_descriptor(intrin, state);
             break;
+         case nir_intrinsic_get_buffer_size:
+            lower_get_buffer_size(intrin, state);
+            break;
          case nir_intrinsic_image_deref_load:
          case nir_intrinsic_image_deref_store:
          case nir_intrinsic_image_deref_atomic_add:
@@ -444,9 +493,8 @@ anv_nir_apply_pipeline_layout(const struct anv_physical_device *pdevice,
                               struct brw_stage_prog_data *prog_data,
                               struct anv_pipeline_bind_map *map)
 {
-   gl_shader_stage stage = shader->info.stage;
-
    struct apply_pipeline_layout_state state = {
+      .pdevice = pdevice,
       .shader = shader,
       .layout = layout,
       .add_bounds_checks = robust_buffer_access,
@@ -471,6 +519,18 @@ anv_nir_apply_pipeline_layout(const struct anv_physical_device *pdevice,
          get_used_bindings_block(block, &state);
    }
 
+   for (unsigned s = 0; s < layout->num_sets; s++) {
+      if (state.set[s].desc_buffer_used) {
+         map->surface_to_descriptor[map->surface_count] =
+            (struct anv_pipeline_binding) {
+               .set = ANV_DESCRIPTOR_SET_DESCRIPTORS,
+               .binding = s,
+            };
+         state.set[s].desc_offset = map->surface_count;
+         map->surface_count++;
+      }
+   }
+
    if (state.uses_constants) {
       state.constants_offset = map->surface_count;
       map->surface_to_descriptor[map->surface_count].set =
@@ -487,7 +547,10 @@ anv_nir_apply_pipeline_layout(const struct anv_physical_device *pdevice,
          struct anv_descriptor_set_binding_layout *binding =
             &set_layout->binding[b];
 
-         if (binding->stage[stage].surface_index >= 0) {
+         if (binding->array_size == 0)
+            continue;
+
+         if (binding->data & ANV_DESCRIPTOR_SURFACE_STATE) {
             state.set[set].surface_offsets[b] = map->surface_count;
             struct anv_sampler **samplers = binding->immutable_samplers;
             for (unsigned i = 0; i < binding->array_size; i++) {
@@ -504,7 +567,7 @@ anv_nir_apply_pipeline_layout(const struct anv_physical_device *pdevice,
             }
          }
 
-         if (binding->stage[stage].sampler_index >= 0) {
+         if (binding->data & ANV_DESCRIPTOR_SAMPLER_STATE) {
             state.set[set].sampler_offsets[b] = map->sampler_count;
             struct anv_sampler **samplers = binding->immutable_samplers;
             for (unsigned i = 0; i < binding->array_size; i++) {
@@ -521,23 +584,23 @@ anv_nir_apply_pipeline_layout(const struct anv_physical_device *pdevice,
             }
          }
 
-         if (binding->stage[stage].image_index >= 0) {
-            state.set[set].image_offsets[b] = map->image_count;
-            map->image_count += binding->array_size;
+         if (binding->data & ANV_DESCRIPTOR_IMAGE_PARAM) {
+            state.set[set].image_offsets[b] = map->image_param_count;
+            map->image_param_count += binding->array_size;
          }
       }
    }
 
-   if (map->image_count > 0 && pdevice->compiler->devinfo->gen < 9) {
-      assert(map->image_count <= MAX_GEN8_IMAGES);
+   if (map->image_param_count > 0) {
+      assert(map->image_param_count <= MAX_GEN8_IMAGES);
       assert(shader->num_uniforms == prog_data->nr_params * 4);
       state.first_image_uniform = shader->num_uniforms;
       uint32_t *param = brw_stage_prog_data_add_params(prog_data,
-                                                       map->image_count *
+                                                       map->image_param_count *
                                                        BRW_IMAGE_PARAM_SIZE);
       struct anv_push_constants *null_data = NULL;
       const struct brw_image_param *image_param = null_data->images;
-      for (uint32_t i = 0; i < map->image_count; i++) {
+      for (uint32_t i = 0; i < map->image_param_count; i++) {
          setup_vec4_uniform_value(param + BRW_IMAGE_PARAM_OFFSET_OFFSET,
                                   (uintptr_t)image_param->offset, 2);
          setup_vec4_uniform_value(param + BRW_IMAGE_PARAM_SIZE_OFFSET,
@@ -554,7 +617,8 @@ anv_nir_apply_pipeline_layout(const struct anv_physical_device *pdevice,
       }
       assert(param == prog_data->param + prog_data->nr_params);
 
-      shader->num_uniforms += map->image_count * BRW_IMAGE_PARAM_SIZE * 4;
+      shader->num_uniforms += map->image_param_count *
+                              BRW_IMAGE_PARAM_SIZE * 4;
       assert(shader->num_uniforms == prog_data->nr_params * 4);
    }
 

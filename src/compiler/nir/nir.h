@@ -918,6 +918,9 @@ typedef struct {
    nir_alu_type input_types[NIR_MAX_VEC_COMPONENTS];
 
    nir_op_algebraic_property algebraic_properties;
+
+   /* Whether this represents a numeric conversion opcode */
+   bool is_conversion;
 } nir_op_info;
 
 extern const nir_op_info nir_op_infos[nir_num_opcodes];
@@ -1912,8 +1915,8 @@ typedef struct {
 } nir_loop_terminator;
 
 typedef struct {
-   /* Number of instructions in the loop */
-   unsigned num_instructions;
+   /* Estimated cost (in number of instructions) of the loop */
+   unsigned instr_cost;
 
    /* Maximum number of times the loop is run (if known) */
    unsigned max_trip_count;
@@ -2103,6 +2106,37 @@ typedef struct nir_function {
    bool is_entrypoint;
 } nir_function;
 
+typedef enum {
+   nir_lower_imul64 = (1 << 0),
+   nir_lower_isign64 = (1 << 1),
+   /** Lower all int64 modulus and division opcodes */
+   nir_lower_divmod64 = (1 << 2),
+   /** Lower all 64-bit umul_high and imul_high opcodes */
+   nir_lower_imul_high64 = (1 << 3),
+   nir_lower_mov64 = (1 << 4),
+   nir_lower_icmp64 = (1 << 5),
+   nir_lower_iadd64 = (1 << 6),
+   nir_lower_iabs64 = (1 << 7),
+   nir_lower_ineg64 = (1 << 8),
+   nir_lower_logic64 = (1 << 9),
+   nir_lower_minmax64 = (1 << 10),
+   nir_lower_shift64 = (1 << 11),
+   nir_lower_imul_2x32_64 = (1 << 12),
+} nir_lower_int64_options;
+
+typedef enum {
+   nir_lower_drcp = (1 << 0),
+   nir_lower_dsqrt = (1 << 1),
+   nir_lower_drsq = (1 << 2),
+   nir_lower_dtrunc = (1 << 3),
+   nir_lower_dfloor = (1 << 4),
+   nir_lower_dceil = (1 << 5),
+   nir_lower_dfract = (1 << 6),
+   nir_lower_dround_even = (1 << 7),
+   nir_lower_dmod = (1 << 8),
+   nir_lower_fp64_full_software = (1 << 9),
+} nir_lower_doubles_options;
+
 typedef struct nir_shader_compiler_options {
    bool lower_fdiv;
    bool lower_ffma;
@@ -2221,6 +2255,9 @@ typedef struct nir_shader_compiler_options {
    /* Set if nir_lower_wpos_ytransform() should also invert gl_PointCoord. */
    bool lower_wpos_pntc;
 
+   bool lower_hadd;
+   bool lower_add_sat;
+
    /**
     * Should nir_lower_io() create load_interpolated_input intrinsics?
     *
@@ -2229,7 +2266,13 @@ typedef struct nir_shader_compiler_options {
     */
    bool use_interpolated_input_intrinsics;
 
+   /* Lowers when 32x32->64 bit multiplication is not supported */
+   bool lower_mul_2x32_64;
+
    unsigned max_unroll_iterations;
+
+   nir_lower_int64_options lower_int64_options;
+   nir_lower_doubles_options lower_doubles_options;
 } nir_shader_compiler_options;
 
 typedef struct nir_shader {
@@ -2764,7 +2807,8 @@ void nir_print_instr(const nir_instr *instr, FILE *fp);
 void nir_print_deref(const nir_deref_instr *deref, FILE *fp);
 
 nir_shader *nir_shader_clone(void *mem_ctx, const nir_shader *s);
-nir_function_impl *nir_function_impl_clone(const nir_function_impl *fi);
+nir_function_impl *nir_function_impl_clone(nir_shader *shader,
+                                           const nir_function_impl *fi);
 nir_constant *nir_constant_clone(const nir_constant *c, nir_variable *var);
 nir_variable *nir_variable_clone(const nir_variable *c, nir_shader *shader);
 
@@ -2897,6 +2941,9 @@ bool nir_split_struct_vars(nir_shader *shader, nir_variable_mode modes);
 bool nir_lower_returns_impl(nir_function_impl *impl);
 bool nir_lower_returns(nir_shader *shader);
 
+void nir_inline_function_impl(struct nir_builder *b,
+                              const nir_function_impl *impl,
+                              nir_ssa_def **params);
 bool nir_inline_functions(nir_shader *shader);
 
 bool nir_propagate_invariant(nir_shader *shader);
@@ -2998,6 +3045,8 @@ void nir_lower_io_arrays_to_elements_no_indirects(nir_shader *shader,
                                                   bool outputs_only);
 void nir_lower_io_to_scalar(nir_shader *shader, nir_variable_mode mask);
 void nir_lower_io_to_scalar_early(nir_shader *shader, nir_variable_mode mask);
+
+bool nir_lower_uniforms_to_ubo(nir_shader *shader, int multiplier);
 
 typedef struct nir_lower_subgroups_options {
    uint8_t subgroup_size;
@@ -3143,6 +3192,12 @@ typedef struct nir_lower_tex_options {
    bool lower_txd_offset_clamp;
 
    /**
+    * If true, lower nir_texop_txd with min_lod to a nir_texop_txl if the
+    * sampler index is not statically determinable to be less than 16.
+    */
+   bool lower_txd_clamp_if_sampler_index_not_lt_16;
+
+   /**
     * If true, apply a .bagr swizzle on tg4 results to handle Broadcom's
     * mixed-up tg4 locations.
     */
@@ -3220,39 +3275,12 @@ bool nir_lower_bit_size(nir_shader *shader,
                         nir_lower_bit_size_callback callback,
                         void *callback_data);
 
-typedef enum {
-   nir_lower_imul64 = (1 << 0),
-   nir_lower_isign64 = (1 << 1),
-   /** Lower all int64 modulus and division opcodes */
-   nir_lower_divmod64 = (1 << 2),
-   /** Lower all 64-bit umul_high and imul_high opcodes */
-   nir_lower_imul_high64 = (1 << 3),
-   nir_lower_mov64 = (1 << 4),
-   nir_lower_icmp64 = (1 << 5),
-   nir_lower_iadd64 = (1 << 6),
-   nir_lower_iabs64 = (1 << 7),
-   nir_lower_ineg64 = (1 << 8),
-   nir_lower_logic64 = (1 << 9),
-   nir_lower_minmax64 = (1 << 10),
-   nir_lower_shift64 = (1 << 11),
-} nir_lower_int64_options;
-
+nir_lower_int64_options nir_lower_int64_op_to_options_mask(nir_op opcode);
 bool nir_lower_int64(nir_shader *shader, nir_lower_int64_options options);
 
-typedef enum {
-   nir_lower_drcp = (1 << 0),
-   nir_lower_dsqrt = (1 << 1),
-   nir_lower_drsq = (1 << 2),
-   nir_lower_dtrunc = (1 << 3),
-   nir_lower_dfloor = (1 << 4),
-   nir_lower_dceil = (1 << 5),
-   nir_lower_dfract = (1 << 6),
-   nir_lower_dround_even = (1 << 7),
-   nir_lower_dmod = (1 << 8),
-   nir_lower_fp64_full_software = (1 << 9),
-} nir_lower_doubles_options;
-
-bool nir_lower_doubles(nir_shader *shader, nir_lower_doubles_options options);
+nir_lower_doubles_options nir_lower_doubles_op_to_options_mask(nir_op opcode);
+bool nir_lower_doubles(nir_shader *shader, const nir_shader *softfp64,
+                       nir_lower_doubles_options options);
 bool nir_lower_pack(nir_shader *shader);
 
 bool nir_normalize_cubemap_coords(nir_shader *shader);
@@ -3298,6 +3326,7 @@ bool nir_opt_dead_cf(nir_shader *shader);
 
 bool nir_opt_dead_write_vars(nir_shader *shader);
 
+bool nir_opt_deref_impl(nir_function_impl *impl);
 bool nir_opt_deref(nir_shader *shader);
 
 bool nir_opt_find_array_copies(nir_shader *shader);

@@ -14,16 +14,12 @@ matrix:
     - env:
         - LABEL="macOS make"
         - BUILD=make
-        - MAKEFLAGS="-j4"
-        - MAKE_CHECK_COMMAND="make check"
         - DRI_LOADERS="--with-platforms=x11 --disable-egl"
       os: osx
     - env:
         - LABEL="macOS meson"
         - BUILD=meson
-        - UNWIND="false"
-        - DRI_LOADERS="-Dglx=dri -Dgbm=false -Degl=false -Dplatforms=x11 -Dosmesa=none"
-        - GALLIUM_ST="-Ddri3=true -Dgallium-vdpau=false -Dgallium-xvmc=false -Dgallium-omx=disabled -Dgallium-va=false -Dgallium-xa=false -Dgallium-nine=false -Dgallium-opencl=disabled"
+        - DRI_LOADERS="-Dplatforms=x11"
       os: osx
 
 before_install:
@@ -68,21 +64,20 @@ install:
 script:
   - if test "x$BUILD" = xmake; then
       export CFLAGS="$CFLAGS -isystem`pwd`";
+      export MAKEFLAGS="-j4";
 
       mkdir build &&
       cd build &&
       ../autogen.sh
         --enable-autotools
         --enable-debug
-        $LIBUNWIND_FLAGS
         $DRI_LOADERS
         --with-dri-drivers=$DRI_DRIVERS
-        $GALLIUM_ST
         --with-gallium-drivers=$GALLIUM_DRIVERS
         --with-vulkan-drivers=$VULKAN_DRIVERS
         --disable-llvm-shared-libs
         &&
-      make && eval $MAKE_CHECK_COMMAND;
+      make && make check;
     fi
 
   - |
@@ -102,10 +97,8 @@ script:
       meson _build \
                    --native-file=native.file \
                    -Dbuild-tests=true \
-                   -Dlibunwind=${UNWIND} \
                    ${DRI_LOADERS} \
                    -Ddri-drivers=${DRI_DRIVERS:-[]} \
-                   ${GALLIUM_ST} \
                    -Dgallium-drivers=${GALLIUM_DRIVERS:-[]} \
                    -Dvulkan-drivers=${VULKAN_DRIVERS:-[]}
       meson configure _build

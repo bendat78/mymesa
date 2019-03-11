@@ -343,6 +343,11 @@ void si_nir_scan_shader(const struct nir_shader *nir,
 	info->properties[TGSI_PROPERTY_NEXT_SHADER] =
 		pipe_shader_type_from_mesa(nir->info.next_stage);
 
+	if (nir->info.stage == MESA_SHADER_VERTEX) {
+		info->properties[TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION] =
+			nir->info.vs.window_space_position;
+	}
+
 	if (nir->info.stage == MESA_SHADER_TESS_CTRL) {
 		info->properties[TGSI_PROPERTY_TCS_VERTICES_OUT] =
 			nir->info.tess.tcs_vertices_out;
@@ -836,7 +841,6 @@ si_lower_nir(struct si_shader_selector* sel)
 	 * - ensure constant offsets for texture instructions are folded
 	 *   and copy-propagated
 	 */
-	NIR_PASS_V(sel->nir, nir_lower_returns);
 	NIR_PASS_V(sel->nir, nir_lower_vars_to_ssa);
 	NIR_PASS_V(sel->nir, nir_lower_alu_to_scalar);
 	NIR_PASS_V(sel->nir, nir_lower_phis_to_scalar);

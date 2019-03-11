@@ -149,6 +149,9 @@ typedef struct shader_info {
       struct {
          /* Which inputs are doubles */
          uint64_t double_inputs;
+
+         /* True if the shader writes position in window space coordinates pre-transform */
+         bool window_space_position;
       } vs;
 
       struct {
@@ -240,6 +243,15 @@ typedef struct shader_info {
           * Size of shared variables accessed by the compute shader.
           */
          unsigned shared_size;
+
+
+         /**
+          * pointer size is:
+          *   AddressingModelLogical:    0    (default)
+          *   AddressingModelPhysical32: 32
+          *   AddressingModelPhysical64: 64
+          */
+         unsigned ptr_size;
       } cs;
 
       /* Applies to both TCS and TES. */

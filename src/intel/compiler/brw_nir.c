@@ -653,7 +653,8 @@ lower_bit_size_callback(const nir_alu_instr *alu, UNUSED void *data)
  * is_scalar = true to scalarize everything prior to code gen.
  */
 nir_shader *
-brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
+brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir,
+                   const nir_shader *softfp64)
 {
    const struct gen_device_info *devinfo = compiler->devinfo;
    UNUSED bool progress; /* Written by OPT */
@@ -663,72 +664,6 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
    if (is_scalar) {
       OPT(nir_lower_alu_to_scalar);
    }
-
-   /* Run opt_algebraic before int64 lowering so we can hopefully get rid
-    * of some int64 instructions.
-    */
-   OPT(nir_opt_algebraic);
-
-   /* Lower 64-bit operations before nir_optimize so that loop unrolling sees
-    * their actual cost.
-    */
-   nir_lower_int64_options int64_options =
-      nir_lower_imul64 |
-      nir_lower_isign64 |
-      nir_lower_divmod64 |
-      nir_lower_imul_high64;
-   nir_lower_doubles_options fp64_options =
-      nir_lower_drcp |
-      nir_lower_dsqrt |
-      nir_lower_drsq |
-      nir_lower_dtrunc |
-      nir_lower_dfloor |
-      nir_lower_dceil |
-      nir_lower_dfract |
-      nir_lower_dround_even |
-      nir_lower_dmod;
-
-   if (!devinfo->has_64bit_types) {
-      int64_options |= nir_lower_mov64 |
-                       nir_lower_icmp64 |
-                       nir_lower_iadd64 |
-                       nir_lower_iabs64 |
-                       nir_lower_ineg64 |
-                       nir_lower_logic64 |
-                       nir_lower_minmax64 |
-                       nir_lower_shift64;
-      fp64_options |= nir_lower_fp64_full_software;
-   }
-
-   bool lowered_64bit_ops = false;
-   do {
-      progress = false;
-
-      OPT(nir_lower_int64, int64_options);
-      OPT(nir_lower_doubles, fp64_options);
-
-      /* Necessary to lower add -> sub and div -> mul/rcp */
-      OPT(nir_opt_algebraic);
-
-      lowered_64bit_ops |= progress;
-   } while (progress);
-
-   if (lowered_64bit_ops) {
-      OPT(nir_lower_constant_initializers, nir_var_function_temp);
-      OPT(nir_lower_returns);
-      OPT(nir_inline_functions);
-      OPT(nir_opt_deref);
-   }
-
-   const nir_function *entry_point = nir_shader_get_entrypoint(nir)->function;
-   foreach_list_typed_safe(nir_function, func, node, &nir->functions) {
-      if (func != entry_point) {
-         exec_node_remove(&func->node);
-      }
-   }
-   assert(exec_list_length(&nir->functions) == 1);
-
-   OPT(nir_lower_constant_initializers, ~nir_var_function_temp);
 
    if (nir->info.stage == MESA_SHADER_GEOMETRY)
       OPT(nir_lower_gs_intrinsics);
@@ -757,6 +692,19 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
    OPT(nir_split_struct_vars, nir_var_function_temp);
 
    nir = brw_nir_optimize(nir, compiler, is_scalar, true);
+
+   bool lowered_64bit_ops = false;
+   do {
+      progress = false;
+
+      OPT(nir_lower_int64, nir->options->lower_int64_options);
+      OPT(nir_lower_doubles, softfp64, nir->options->lower_doubles_options);
+
+      /* Necessary to lower add -> sub and div -> mul/rcp */
+      OPT(nir_opt_algebraic);
+
+      lowered_64bit_ops |= progress;
+   } while (progress);
 
    /* This needs to be run after the first optimization pass but before we
     * lower indirect derefs away
@@ -791,8 +739,6 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir)
    nir_variable_mode indirect_mask =
       brw_nir_no_indirect_mask(compiler, nir->info.stage);
    OPT(nir_lower_indirect_derefs, indirect_mask);
-
-   OPT(brw_nir_lower_mem_access_bit_sizes);
 
    /* Get rid of split copies */
    nir = brw_nir_optimize(nir, compiler, is_scalar, false);
@@ -861,6 +807,7 @@ brw_postprocess_nir(nir_shader *nir, const struct brw_compiler *compiler,
 
    UNUSED bool progress; /* Written by OPT */
 
+   OPT(brw_nir_lower_mem_access_bit_sizes);
 
    do {
       progress = false;
@@ -932,7 +879,9 @@ brw_nir_apply_sampler_key(nir_shader *nir,
                           bool is_scalar)
 {
    const struct gen_device_info *devinfo = compiler->devinfo;
-   nir_lower_tex_options tex_options = { 0 };
+   nir_lower_tex_options tex_options = {
+      .lower_txd_clamp_if_sampler_index_not_lt_16 = true,
+   };
 
    /* Iron Lake and prior require lowering of all rectangle textures */
    if (devinfo->gen < 6)
@@ -1126,7 +1075,7 @@ brw_nir_create_passthrough_tcs(void *mem_ctx, const struct brw_compiler *compile
 
    nir_validate_shader(nir, "in brw_nir_create_passthrough_tcs");
 
-   nir = brw_preprocess_nir(compiler, nir);
+   nir = brw_preprocess_nir(compiler, nir, NULL);
 
    return nir;
 }

@@ -115,9 +115,11 @@ dump_validation_list(struct iris_batch *batch)
  * Return BO information to the batch decoder (for debugging).
  */
 static struct gen_batch_decode_bo
-decode_get_bo(void *v_batch, uint64_t address)
+decode_get_bo(void *v_batch, bool ppgtt, uint64_t address)
 {
    struct iris_batch *batch = v_batch;
+
+   assert(ppgtt);
 
    for (int i = 0; i < batch->exec_count; i++) {
       struct iris_bo *bo = batch->exec_bos[i];
@@ -145,7 +147,7 @@ decode_batch(struct iris_batch *batch)
 {
    void *map = iris_bo_map(batch->dbg, batch->exec_bos[0], MAP_READ);
    gen_print_batch(&batch->decoder, map, batch->primary_batch_size,
-                   batch->exec_bos[0]->gtt_offset);
+                   batch->exec_bos[0]->gtt_offset, false);
 }
 
 void
@@ -155,7 +157,8 @@ iris_init_batch(struct iris_batch *batch,
                 struct pipe_debug_callback *dbg,
                 struct iris_batch *all_batches,
                 enum iris_batch_name name,
-                uint8_t engine)
+                uint8_t engine,
+                int priority)
 {
    batch->screen = screen;
    batch->vtbl = vtbl;
@@ -169,6 +172,8 @@ iris_init_batch(struct iris_batch *batch,
 
    batch->hw_ctx_id = iris_create_hw_context(screen->bufmgr);
    assert(batch->hw_ctx_id);
+
+   iris_hw_context_set_priority(screen->bufmgr, batch->hw_ctx_id, priority);
 
    util_dynarray_init(&batch->exec_fences, ralloc_context(NULL));
    util_dynarray_init(&batch->syncpts, ralloc_context(NULL));

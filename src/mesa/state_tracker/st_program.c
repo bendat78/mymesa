@@ -1774,7 +1774,9 @@ st_get_cp_variant(struct st_context *st,
    struct st_basic_variant *v;
    struct st_basic_variant_key key;
 
+   /* use memset, not an initializer to be sure all memory is zeroed */
    memset(&key, 0, sizeof(key));
+
    key.st = st->has_shareable_shaders ? NULL : st;
 
    /* Search for existing variant */
@@ -1999,6 +2001,7 @@ st_precompile_shader_variant(struct st_context *st,
       struct st_vp_variant_key key;
 
       memset(&key, 0, sizeof(key));
+
       key.st = st->has_shareable_shaders ? NULL : st;
       st_get_vp_variant(st, p, &key);
       break;
@@ -2027,6 +2030,7 @@ st_precompile_shader_variant(struct st_context *st,
       struct st_fp_variant_key key;
 
       memset(&key, 0, sizeof(key));
+
       key.st = st->has_shareable_shaders ? NULL : st;
       st_get_fp_variant(st, p, &key);
       break;

@@ -157,6 +157,12 @@ glsl_get_component_slots(const struct glsl_type *type)
    return type->component_slots();
 }
 
+unsigned
+glsl_varying_count(const struct glsl_type *type)
+{
+   return type->varying_count();
+}
+
 const char *
 glsl_get_struct_elem_name(const struct glsl_type *type, unsigned index)
 {
@@ -192,10 +198,10 @@ glsl_get_sampler_coordinate_components(const struct glsl_type *type)
 }
 
 unsigned
-glsl_get_record_location_offset(const struct glsl_type *type,
+glsl_get_struct_location_offset(const struct glsl_type *type,
                                 unsigned length)
 {
-   return type->record_location_offset(length);
+   return type->struct_location_offset(length);
 }
 
 bool
@@ -280,7 +286,13 @@ glsl_type_is_array_or_matrix(const struct glsl_type *type)
 bool
 glsl_type_is_struct(const struct glsl_type *type)
 {
-   return type->is_record() || type->is_interface();
+   return type->is_struct();
+}
+
+bool
+glsl_type_is_struct_or_ifc(const struct glsl_type *type)
+{
+   return type->is_struct() || type->is_interface();
 }
 
 bool
@@ -486,7 +498,7 @@ const glsl_type *
 glsl_struct_type(const glsl_struct_field *fields,
                  unsigned num_fields, const char *name)
 {
-   return glsl_type::get_record_instance(fields, num_fields, name);
+   return glsl_type::get_struct_instance(fields, num_fields, name);
 }
 
 const glsl_type *

@@ -594,7 +594,7 @@ ir_to_mesa_visitor::get_temp(const glsl_type *type)
    src.reladdr = NULL;
    next_temp += type_size(type);
 
-   if (type->is_array() || type->is_record()) {
+   if (type->is_array() || type->is_struct()) {
       src.swizzle = SWIZZLE_NOOP;
    } else {
       src.swizzle = swizzle_for_size(type->vector_elements);
@@ -1679,7 +1679,7 @@ calc_sampler_offsets(struct gl_shader_program *prog, ir_dereference *deref,
       ir_dereference_record *deref_record = deref->as_dereference_record();
       unsigned field_index = deref_record->field_idx;
       *location +=
-         deref_record->record->type->record_location_offset(field_index);
+         deref_record->record->type->struct_location_offset(field_index);
       calc_sampler_offsets(prog, deref_record->record->as_dereference(),
                            offset, array_elements, location);
       break;
@@ -1879,7 +1879,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
     * get lucky, copy propagation will eliminate the extra moves.
     */
 
-   if (ir->type->is_record()) {
+   if (ir->type->is_struct()) {
       src_reg temp_base = get_temp(ir->type);
       dst_reg temp = dst_reg(temp_base);
 
@@ -3053,6 +3053,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 do_mat_op_to_vec(ir);
 	 lower_instructions(ir, (MOD_TO_FLOOR | DIV_TO_MUL_RCP | EXP_TO_EXP2
 				 | LOG_TO_LOG2 | INT_DIV_TO_MUL_RCP
+				 | MUL64_TO_MUL_AND_MUL_HIGH
 				 | ((options->EmitNoPow) ? POW_TO_EXP2 : 0)));
 
 	 progress = do_common_optimization(ir, true, true,

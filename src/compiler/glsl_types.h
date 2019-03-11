@@ -312,7 +312,7 @@ public:
    /**
     * Get the instance of a record type
     */
-   static const glsl_type *get_record_instance(const glsl_struct_field *fields,
+   static const glsl_type *get_struct_instance(const glsl_struct_field *fields,
 					       unsigned num_fields,
 					       const char *name);
 
@@ -365,7 +365,7 @@ public:
     * For the initial call, length is the index of the member to find the
     * offset for.
     */
-   unsigned record_location_offset(unsigned length) const;
+   unsigned struct_location_offset(unsigned length) const;
 
    /**
     * Calculate the number of unique values from glGetUniformLocation for the
@@ -663,7 +663,7 @@ public:
    /**
     * Query whether or not a type is a record
     */
-   bool is_record() const
+   bool is_struct() const
    {
       return base_type == GLSL_TYPE_STRUCT;
    }
@@ -954,8 +954,8 @@ private:
    /** Hash table containing the known array types. */
    static struct hash_table *array_types;
 
-   /** Hash table containing the known record types. */
-   static struct hash_table *record_types;
+   /** Hash table containing the known struct types. */
+   static struct hash_table *struct_types;
 
    /** Hash table containing the known interface types. */
    static struct hash_table *interface_types;

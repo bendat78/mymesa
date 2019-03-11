@@ -45,7 +45,7 @@ class ApiVersion:
         self.version = version
         self.enable = _bool_to_c_expr(enable)
 
-API_PATCH_VERSION = 96
+API_PATCH_VERSION = 102
 
 # Supported API versions.  Each one is the maximum patch version for the given
 # version.  Version come in increasing order and each version is available if
@@ -123,8 +123,10 @@ EXTENSIONS = [
     Extension('VK_EXT_display_control',                   1, 'VK_USE_PLATFORM_DISPLAY_KHR'),
     Extension('VK_EXT_display_surface_counter',           1, 'VK_USE_PLATFORM_DISPLAY_KHR'),
     Extension('VK_EXT_external_memory_dma_buf',           1, True),
+    Extension('VK_EXT_external_memory_host',              1, True),
     Extension('VK_EXT_global_priority',                   1,
               'device->has_context_priority'),
+    Extension('VK_EXT_inline_uniform_block',              1, True),
     Extension('VK_EXT_pci_bus_info',                      2, True),
     Extension('VK_EXT_post_depth_coverage',               1, 'device->info.gen >= 9'),
     Extension('VK_EXT_sampler_filter_minmax',             1, 'device->info.gen >= 9'),
@@ -133,6 +135,7 @@ EXTENSIONS = [
     Extension('VK_EXT_shader_viewport_index_layer',       1, True),
     Extension('VK_EXT_transform_feedback',                1, True),
     Extension('VK_EXT_vertex_attribute_divisor',          3, True),
+    Extension('VK_EXT_ycbcr_image_arrays',                1, True),
     Extension('VK_ANDROID_external_memory_android_hardware_buffer', 3, 'ANDROID'),
     Extension('VK_ANDROID_native_buffer',                 5, 'ANDROID'),
     Extension('VK_GOOGLE_decorate_string',                1, True),

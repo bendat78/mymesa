@@ -2029,6 +2029,31 @@ dynamic_offset_for_binding(const struct anv_cmd_pipeline_state *pipe_state,
    return pipe_state->dynamic_offsets[dynamic_offset_idx];
 }
 
+static struct anv_address
+anv_descriptor_set_address(struct anv_cmd_buffer *cmd_buffer,
+                           struct anv_descriptor_set *set)
+{
+   if (set->pool) {
+      /* This is a normal descriptor set */
+      return (struct anv_address) {
+         .bo = &set->pool->bo,
+         .offset = set->desc_mem.offset,
+      };
+   } else {
+      /* This is a push descriptor set.  We have to flag it as used on the GPU
+       * so that the next time we push descriptors, we grab a new memory.
+       */
+      struct anv_push_descriptor_set *push_set =
+         (struct anv_push_descriptor_set *)set;
+      push_set->set_used_on_gpu = true;
+
+      return (struct anv_address) {
+         .bo = cmd_buffer->dynamic_state_stream.state_pool->block_pool.bo,
+         .offset = set->desc_mem.offset,
+      };
+   }
+}
+
 static VkResult
 emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
                    gl_shader_stage stage,
@@ -2038,16 +2063,14 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
    struct anv_subpass *subpass = cmd_buffer->state.subpass;
    struct anv_cmd_pipeline_state *pipe_state;
    struct anv_pipeline *pipeline;
-   uint32_t bias, state_offset;
+   uint32_t state_offset;
 
    switch (stage) {
    case  MESA_SHADER_COMPUTE:
       pipe_state = &cmd_buffer->state.compute.base;
-      bias = 1;
       break;
    default:
       pipe_state = &cmd_buffer->state.gfx.base;
-      bias = 0;
       break;
    }
    pipeline = pipe_state->pipeline;
@@ -2058,42 +2081,21 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
    }
 
    struct anv_pipeline_bind_map *map = &pipeline->shaders[stage]->bind_map;
-   if (bias + map->surface_count == 0) {
+   if (map->surface_count == 0) {
       *bt_state = (struct anv_state) { 0, };
       return VK_SUCCESS;
    }
 
    *bt_state = anv_cmd_buffer_alloc_binding_table(cmd_buffer,
-                                                  bias + map->surface_count,
+                                                  map->surface_count,
                                                   &state_offset);
    uint32_t *bt_map = bt_state->map;
 
    if (bt_state->map == NULL)
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 
-   if (stage == MESA_SHADER_COMPUTE &&
-       get_cs_prog_data(pipeline)->uses_num_work_groups) {
-      struct anv_state surface_state;
-      surface_state =
-         anv_cmd_buffer_alloc_surface_state(cmd_buffer);
-
-      const enum isl_format format =
-         anv_isl_format_for_descriptor_type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-      anv_fill_buffer_surface_state(cmd_buffer->device, surface_state,
-                                    format,
-                                    cmd_buffer->state.compute.num_workgroups,
-                                    12, 1);
-
-      bt_map[0] = surface_state.offset + state_offset;
-      add_surface_reloc(cmd_buffer, surface_state,
-                        cmd_buffer->state.compute.num_workgroups);
-   }
-
-   if (map->surface_count == 0)
-      goto out;
-
    /* We only use push constant space for images before gen9 */
-   if (map->image_count > 0 && devinfo->gen < 9) {
+   if (map->image_param_count > 0) {
       VkResult result =
          anv_cmd_buffer_ensure_push_constant_field(cmd_buffer, stage, images);
       if (result != VK_SUCCESS)
@@ -2131,7 +2133,7 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
             surface_state = cmd_buffer->state.null_surface_state;
          }
 
-         bt_map[bias + s] = surface_state.offset + state_offset;
+         bt_map[s] = surface_state.offset + state_offset;
          continue;
       } else if (binding->set == ANV_DESCRIPTOR_SET_SHADER_CONSTANTS) {
          struct anv_state surface_state =
@@ -2150,8 +2152,39 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
                                        surface_state, format,
                                        constant_data, constant_data_size, 1);
 
-         bt_map[bias + s] = surface_state.offset + state_offset;
+         bt_map[s] = surface_state.offset + state_offset;
          add_surface_reloc(cmd_buffer, surface_state, constant_data);
+         continue;
+      } else if (binding->set == ANV_DESCRIPTOR_SET_NUM_WORK_GROUPS) {
+         /* This is always the first binding for compute shaders */
+         assert(stage == MESA_SHADER_COMPUTE && s == 0);
+         if (!get_cs_prog_data(pipeline)->uses_num_work_groups)
+            continue;
+
+         struct anv_state surface_state =
+            anv_cmd_buffer_alloc_surface_state(cmd_buffer);
+
+         const enum isl_format format =
+            anv_isl_format_for_descriptor_type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+         anv_fill_buffer_surface_state(cmd_buffer->device, surface_state,
+                                       format,
+                                       cmd_buffer->state.compute.num_workgroups,
+                                       12, 1);
+         bt_map[s] = surface_state.offset + state_offset;
+         add_surface_reloc(cmd_buffer, surface_state,
+                           cmd_buffer->state.compute.num_workgroups);
+         continue;
+      } else if (binding->set == ANV_DESCRIPTOR_SET_DESCRIPTORS) {
+         /* This is a descriptor set buffer so the set index is actually
+          * given by binding->binding.  (Yes, that's confusing.)
+          */
+         struct anv_descriptor_set *set =
+            pipe_state->descriptors[binding->binding];
+         assert(set->desc_mem.alloc_size);
+         assert(set->desc_surface_state.alloc_size);
+         bt_map[s] = set->desc_surface_state.offset + state_offset;
+         add_surface_reloc(cmd_buffer, set->desc_surface_state,
+                           anv_descriptor_set_address(cmd_buffer, set));
          continue;
       }
 
@@ -2207,14 +2240,17 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
          assert(surface_state.alloc_size);
          add_surface_state_relocs(cmd_buffer, sstate);
          if (devinfo->gen < 9) {
+            /* We only need the image params on gen8 and earlier.  No image
+             * workarounds that require tiling information are required on
+             * SKL and above.
+             */
             assert(image < MAX_GEN8_IMAGES);
             struct brw_image_param *image_param =
-               &cmd_buffer->state.push_constants[stage]->images[image];
+               &cmd_buffer->state.push_constants[stage]->images[image++];
 
             *image_param =
                desc->image_view->planes[binding->plane].storage_image_param;
          }
-         image++;
          break;
       }
 
@@ -2262,11 +2298,10 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
          if (devinfo->gen < 9) {
             assert(image < MAX_GEN8_IMAGES);
             struct brw_image_param *image_param =
-               &cmd_buffer->state.push_constants[stage]->images[image];
+               &cmd_buffer->state.push_constants[stage]->images[image++];
 
             *image_param = desc->buffer_view->storage_image_param;
          }
-         image++;
          break;
 
       default:
@@ -2274,11 +2309,10 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
          continue;
       }
 
-      bt_map[bias + s] = surface_state.offset + state_offset;
+      bt_map[s] = surface_state.offset + state_offset;
    }
-   assert(image == map->image_count);
+   assert(image == map->image_param_count);
 
- out:
 #if GEN_GEN >= 11
    /* The PIPE_CONTROL command description says:
     *
@@ -2520,6 +2554,21 @@ cmd_buffer_flush_push_constants(struct anv_cmd_buffer *cmd_buffer,
                   read_len = MIN2(range->length,
                      DIV_ROUND_UP(constant_data_size, 32) - range->start);
                   read_addr = anv_address_add(constant_data,
+                                              range->start * 32);
+               } else if (binding->set == ANV_DESCRIPTOR_SET_DESCRIPTORS) {
+                  /* This is a descriptor set buffer so the set index is
+                   * actually given by binding->binding.  (Yes, that's
+                   * confusing.)
+                   */
+                  struct anv_descriptor_set *set =
+                     gfx_state->base.descriptors[binding->binding];
+                  struct anv_address desc_buffer_addr =
+                     anv_descriptor_set_address(cmd_buffer, set);
+                  const unsigned desc_buffer_size = set->desc_mem.alloc_size;
+
+                  read_len = MIN2(range->length,
+                     DIV_ROUND_UP(desc_buffer_size, 32) - range->start);
+                  read_addr = anv_address_add(desc_buffer_addr,
                                               range->start * 32);
                } else {
                   const struct anv_descriptor *desc =

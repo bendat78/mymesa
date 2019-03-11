@@ -720,6 +720,7 @@ struct x11_swapchain {
 
    struct x11_image                             images[0];
 };
+WSI_DEFINE_NONDISP_HANDLE_CASTS(x11_swapchain, VkSwapchainKHR)
 
 /**
  * Update the swapchain status with the result of an operation, and return
@@ -835,19 +836,9 @@ x11_handle_dri3_present_event(struct x11_swapchain *chain,
 }
 
 
-static uint64_t wsi_get_current_time(void)
-{
-   uint64_t current_time;
-   struct timespec tv;
-
-   clock_gettime(CLOCK_MONOTONIC, &tv);
-   current_time = tv.tv_nsec + tv.tv_sec*1000000000ull;
-   return current_time;
-}
-
 static uint64_t wsi_get_absolute_timeout(uint64_t timeout)
 {
-   uint64_t current_time = wsi_get_current_time();
+   uint64_t current_time = wsi_common_get_current_time();
 
    timeout = MIN2(UINT64_MAX - current_time, timeout);
 
@@ -898,7 +889,7 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
             /* If a non-special event happens, the fd will still
              * poll. So recalculate the timeout now just in case.
              */
-            uint64_t current_time = wsi_get_current_time();
+            uint64_t current_time = wsi_common_get_current_time();
             if (atimeout > current_time)
                timeout = atimeout - current_time;
             else
@@ -1370,7 +1361,7 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
     * mode which provokes reallocation when anything changes, to make
     * sure we have the most optimal allocation.
     */
-   struct x11_swapchain *old_chain = (void *)(intptr_t) pCreateInfo->oldSwapchain;
+   WSI_FROM_HANDLE(x11_swapchain, old_chain, pCreateInfo->oldSwapchain);
    if (old_chain)
       chain->last_present_mode = old_chain->last_present_mode;
    else

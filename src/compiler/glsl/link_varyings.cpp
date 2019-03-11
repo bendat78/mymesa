@@ -79,7 +79,7 @@ create_xfb_varying_names(void *mem_ctx, const glsl_type *t, char **name,
 
       create_xfb_varying_names(mem_ctx, ifc_member_t, name, new_length, count,
                                NULL, NULL, varying_names);
-   } else if (t->is_record()) {
+   } else if (t->is_struct()) {
       for (unsigned i = 0; i < t->length; i++) {
          const char *field = t->fields.structure[i].name;
          size_t new_length = name_length;
@@ -90,7 +90,7 @@ create_xfb_varying_names(void *mem_ctx, const glsl_type *t, char **name,
                                   new_length, count, NULL, NULL,
                                   varying_names);
       }
-   } else if (t->without_array()->is_record() ||
+   } else if (t->without_array()->is_struct() ||
               t->without_array()->is_interface() ||
               (t->is_array() && t->fields.array->is_array())) {
       for (unsigned i = 0; i < t->length; i++) {
@@ -461,7 +461,7 @@ check_location_aliasing(struct explicit_location_info explicit_locations[][4],
                         gl_shader_stage stage)
 {
    unsigned last_comp;
-   if (type->without_array()->is_record()) {
+   if (type->without_array()->is_struct()) {
       /* The component qualifier can't be used on structs so just treat
        * all component slots as used.
        */
@@ -1619,7 +1619,7 @@ varying_matches::is_varying_packing_safe(const glsl_type *type,
        producer_stage == MESA_SHADER_TESS_CTRL)
       return false;
 
-   return xfb_enabled && (type->is_array() || type->is_record() ||
+   return xfb_enabled && (type->is_array() || type->is_struct() ||
                           type->is_matrix() || var->data.is_xfb_only);
 }
 
@@ -1926,7 +1926,7 @@ varying_matches::store_locations() const
          if (enhanced_layouts_enabled) {
             const glsl_type *type =
                get_varying_type(producer_var, producer_stage);
-            if (type->is_array() || type->is_matrix() || type->is_record() ||
+            if (type->is_array() || type->is_matrix() || type->is_struct() ||
                 type->is_double()) {
                unsigned comp_slots = type->component_slots() + offset;
                unsigned slots = comp_slots / 4;
@@ -2124,9 +2124,11 @@ class tfeedback_candidate_generator : public program_resource_visitor
 {
 public:
    tfeedback_candidate_generator(void *mem_ctx,
-                                 hash_table *tfeedback_candidates)
+                                 hash_table *tfeedback_candidates,
+                                 gl_shader_stage stage)
       : mem_ctx(mem_ctx),
         tfeedback_candidates(tfeedback_candidates),
+        stage(stage),
         toplevel_var(NULL),
         varying_floats(0)
    {
@@ -2136,10 +2138,17 @@ public:
    {
       /* All named varying interface blocks should be flattened by now */
       assert(!var->is_interface_instance());
+      assert(var->data.mode == ir_var_shader_out);
 
       this->toplevel_var = var;
       this->varying_floats = 0;
-      program_resource_visitor::process(var, false);
+      const glsl_type *t =
+         var->data.from_named_ifc_block ? var->get_interface_type() : var->type;
+      if (!var->data.patch && stage == MESA_SHADER_TESS_CTRL) {
+         assert(t->is_array());
+         t = t->fields.array;
+      }
+      program_resource_visitor::process(var, t, false);
    }
 
 private:
@@ -2149,7 +2158,7 @@ private:
                             const enum glsl_interface_packing,
                             bool /* last_field */)
    {
-      assert(!type->without_array()->is_record());
+      assert(!type->without_array()->is_struct());
       assert(!type->without_array()->is_interface());
 
       tfeedback_candidate *candidate
@@ -2172,6 +2181,8 @@ private:
     * Hash table in which tfeedback_candidate objects should be stored.
     */
    hash_table * const tfeedback_candidates;
+
+   gl_shader_stage stage;
 
    /**
     * Pointer to the toplevel variable that is being traversed.
@@ -2503,8 +2514,28 @@ assign_varying_locations(struct gl_context *ctx,
                  producer->Stage == MESA_SHADER_GEOMETRY));
 
          if (num_tfeedback_decls > 0) {
-            tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
-            g.process(output_var);
+            tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates, producer->Stage);
+            /* From OpenGL 4.6 (Core Profile) spec, section 11.1.2.1
+             * ("Vertex Shader Variables / Output Variables")
+             *
+             * "Each program object can specify a set of output variables from
+             * one shader to be recorded in transform feedback mode (see
+             * section 13.3). The variables that can be recorded are those
+             * emitted by the first active shader, in order, from the
+             * following list:
+             *
+             *  * geometry shader
+             *  * tessellation evaluation shader
+             *  * tessellation control shader
+             *  * vertex shader"
+             *
+             * But on OpenGL ES 3.2, section 11.1.2.1 ("Vertex Shader
+             * Variables / Output Variables") tessellation control shader is
+             * not included in the stages list.
+             */
+            if (!prog->IsES || producer->Stage != MESA_SHADER_TESS_CTRL) {
+               g.process(output_var);
+            }
          }
 
          ir_variable *const input_var =

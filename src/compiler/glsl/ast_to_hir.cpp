@@ -2390,7 +2390,7 @@ precision_qualifier_allowed(const glsl_type *type)
    const glsl_type *const t = type->without_array();
 
    return (t->is_float() || t->is_integer() || t->contains_opaque()) &&
-          !t->is_record();
+          !t->is_struct();
 }
 
 const glsl_type *
@@ -2808,7 +2808,7 @@ validate_xfb_offset_qualifier(YYLTYPE *loc,
    /* Make sure nested structs don't contain unsized arrays, and validate
     * any xfb_offsets on interface members.
     */
-   if (t_without_array->is_record() || t_without_array->is_interface())
+   if (t_without_array->is_struct() || t_without_array->is_interface())
       for (unsigned int i = 0; i < t_without_array->length; i++) {
          const glsl_type *member_t = t_without_array->fields.structure[i].type;
 
@@ -3694,7 +3694,7 @@ apply_layout_qualifier_to_variable(const struct ast_type_qualifier *qual,
             const glsl_type *type = var->type->without_array();
             unsigned components = type->component_slots();
 
-            if (type->is_matrix() || type->is_record()) {
+            if (type->is_matrix() || type->is_struct()) {
                _mesa_glsl_error(loc, state, "component layout qualifier "
                                 "cannot be applied to a matrix, a structure, "
                                 "a block, or an array containing any of "
@@ -5306,15 +5306,15 @@ ast_declarator_list::hir(exec_list *instructions,
                                    _mesa_shader_stage_to_string(state->stage));
                }
                if (var->type->is_array() &&
-                   var->type->fields.array->is_record()) {
+                   var->type->fields.array->is_struct()) {
                   _mesa_glsl_error(&loc, state,
                                    "fragment shader input "
                                    "cannot have an array of structs");
                }
-               if (var->type->is_record()) {
+               if (var->type->is_struct()) {
                   for (unsigned i = 0; i < var->type->length; i++) {
                      if (var->type->fields.structure[i].type->is_array() ||
-                         var->type->fields.structure[i].type->is_record())
+                         var->type->fields.structure[i].type->is_struct())
                         _mesa_glsl_error(&loc, state,
                                          "fragment shader input cannot have "
                                          "a struct that contains an "
@@ -5341,7 +5341,7 @@ ast_declarator_list::hir(exec_list *instructions,
           *     * A structure
           */
          if (state->stage == MESA_SHADER_FRAGMENT) {
-            if (check_type->is_record() || check_type->is_matrix())
+            if (check_type->is_struct() || check_type->is_matrix())
                _mesa_glsl_error(&loc, state,
                                 "fragment shader output "
                                 "cannot have struct or matrix type");
@@ -5412,16 +5412,16 @@ ast_declarator_list::hir(exec_list *instructions,
                   type = var->type->fields.array;
                }
 
-               if (type->is_array() && type->fields.array->is_record()) {
+               if (type->is_array() && type->fields.array->is_struct()) {
                   _mesa_glsl_error(&loc, state,
                                    "%s shader output cannot have "
                                    "an array of structs",
                                    _mesa_shader_stage_to_string(state->stage));
                }
-               if (type->is_record()) {
+               if (type->is_struct()) {
                   for (unsigned i = 0; i < type->length; i++) {
                      if (type->fields.structure[i].type->is_array() ||
-                         type->fields.structure[i].type->is_record())
+                         type->fields.structure[i].type->is_struct())
                         _mesa_glsl_error(&loc, state,
                                          "%s shader output cannot have a "
                                          "struct that contains an "
@@ -7472,7 +7472,7 @@ ast_process_struct_or_iface_block_members(exec_list *instructions,
          if (is_interface && layout &&
              (layout->flags.q.uniform || layout->flags.q.buffer) &&
              (field_type->without_array()->is_matrix()
-              || field_type->without_array()->is_record())) {
+              || field_type->without_array()->is_struct())) {
             /* If no layout is specified for the field, inherit the layout
              * from the block.
              */
@@ -7585,7 +7585,7 @@ ast_struct_specifier::hir(exec_list *instructions,
 
    validate_identifier(this->name, loc, state);
 
-   type = glsl_type::get_record_instance(fields, decl_count, this->name);
+   type = glsl_type::get_struct_instance(fields, decl_count, this->name);
 
    if (!type->is_anonymous() && !state->symbols->add_type(name, type)) {
       const glsl_type *match = state->symbols->get_type(name);

@@ -800,8 +800,10 @@ fs_visitor::try_emit_b2fi_of_inot(const fs_builder &bld,
 
    prepare_alu_destination_and_sources(bld, inot_instr, &op, false);
 
+   /* Ignore the saturate modifier, if there is one.  The result of the
+    * arithmetic can only be 0 or 1, so the clamping will do nothing anyway.
+    */
    bld.ADD(result, op, brw_imm_d(1));
-   assert(!instr->dest.saturate);
 
    return true;
 }
@@ -1051,6 +1053,11 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
    case nir_op_fmul:
       inst = bld.MUL(result, op[0], op[1]);
       inst->saturate = instr->dest.saturate;
+      break;
+
+   case nir_op_imul_2x32_64:
+   case nir_op_umul_2x32_64:
+      bld.MUL(result, op[0], op[1]);
       break;
 
    case nir_op_imul:
@@ -1625,16 +1632,25 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
        *    Use two instructions and a word or DWord intermediate integer type.
        */
       if (nir_dest_bit_size(instr->dest.dest) == 64) {
-         const brw_reg_type type = brw_int_type(2, instr->op == nir_op_extract_i8);
+         const brw_reg_type type = brw_int_type(1, instr->op == nir_op_extract_i8);
 
          if (instr->op == nir_op_extract_i8) {
             /* If we need to sign extend, extract to a word first */
             fs_reg w_temp = bld.vgrf(BRW_REGISTER_TYPE_W);
             bld.MOV(w_temp, subscript(op[0], type, byte));
             bld.MOV(result, w_temp);
+         } else if (byte & 1) {
+            /* Extract the high byte from the word containing the desired byte
+             * offset.
+             */
+            bld.SHR(result,
+                    subscript(op[0], BRW_REGISTER_TYPE_UW, byte / 2),
+                    brw_imm_uw(8));
          } else {
             /* Otherwise use an AND with 0xff and a word type */
-            bld.AND(result, subscript(op[0], type, byte / 2), brw_imm_uw(0xff));
+            bld.AND(result,
+                    subscript(op[0], BRW_REGISTER_TYPE_UW, byte / 2),
+                    brw_imm_uw(0xff));
          }
       } else {
          const brw_reg_type type = brw_int_type(1, instr->op == nir_op_extract_i8);
@@ -4361,6 +4377,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       break;
 
    case nir_intrinsic_get_buffer_size: {
+      assert(nir_src_num_components(instr->src[0]) == 1);
       unsigned ssbo_index = nir_src_is_const(instr->src[0]) ?
                             nir_src_as_uint(instr->src[0]) : 0;
 

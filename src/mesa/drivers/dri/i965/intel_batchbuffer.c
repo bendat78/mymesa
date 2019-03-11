@@ -81,7 +81,7 @@ dump_validation_list(struct intel_batchbuffer *batch)
 }
 
 static struct gen_batch_decode_bo
-decode_get_bo(void *v_brw, uint64_t address)
+decode_get_bo(void *v_brw, bool ppgtt, uint64_t address)
 {
    struct brw_context *brw = v_brw;
    struct intel_batchbuffer *batch = &brw->batch;
@@ -828,7 +828,7 @@ submit_batch(struct brw_context *brw, int in_fence_fd, int *out_fence_fd)
    if (unlikely(INTEL_DEBUG & DEBUG_BATCH)) {
       gen_print_batch(&batch->decoder, batch->batch.map,
                       4 * USED_BATCH(*batch),
-                      batch->batch.bo->gtt_offset);
+                      batch->batch.bo->gtt_offset, false);
    }
 
    if (brw->ctx.Const.ResetStrategy == GL_LOSE_CONTEXT_ON_RESET_ARB)

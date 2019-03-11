@@ -395,6 +395,8 @@ vtn_handle_extension(struct vtn_builder *b, SpvOp opcode,
       } else if ((strcmp(ext, "SPV_AMD_shader_trinary_minmax") == 0)
                 && (b->options && b->options->caps.trinary_minmax)) {
          val->ext_handler = vtn_handle_amd_shader_trinary_minmax_instruction;
+      } else if (strcmp(ext, "OpenCL.std") == 0) {
+         val->ext_handler = vtn_handle_opencl_instruction;
       } else {
          vtn_fail("Unsupported extension: %s", ext);
       }
@@ -2154,6 +2156,7 @@ vtn_handle_texture(struct vtn_builder *b, SpvOp opcode,
    case nir_texop_txl:
    case nir_texop_txd:
    case nir_texop_tg4:
+   case nir_texop_lod:
       /* These operations require a sampler */
       p->src = nir_src_for_ssa(&sampler->dest.ssa);
       p->src_type = nir_tex_src_sampler_deref;
@@ -2162,7 +2165,6 @@ vtn_handle_texture(struct vtn_builder *b, SpvOp opcode,
    case nir_texop_txf:
    case nir_texop_txf_ms:
    case nir_texop_txs:
-   case nir_texop_lod:
    case nir_texop_query_levels:
    case nir_texop_texture_samples:
    case nir_texop_samples_identical:
@@ -3732,12 +3734,38 @@ vtn_handle_preamble_instruction(struct vtn_builder *b, SpvOp opcode,
       break;
 
    case SpvOpMemoryModel:
-      vtn_assert(w[1] == SpvAddressingModelLogical ||
-                 (b->options &&
-                  b->options->caps.physical_storage_buffer_address &&
-                  w[1] == SpvAddressingModelPhysicalStorageBuffer64EXT));
+      switch (w[1]) {
+      case SpvAddressingModelPhysical32:
+         vtn_fail_if(b->shader->info.stage != MESA_SHADER_KERNEL,
+                     "AddressingModelPhysical32 only supported for kernels");
+         b->shader->info.cs.ptr_size = 32;
+         b->physical_ptrs = true;
+         break;
+      case SpvAddressingModelPhysical64:
+         vtn_fail_if(b->shader->info.stage != MESA_SHADER_KERNEL,
+                     "AddressingModelPhysical64 only supported for kernels");
+         b->shader->info.cs.ptr_size = 64;
+         b->physical_ptrs = true;
+         break;
+      case SpvAddressingModelLogical:
+         vtn_fail_if(b->shader->info.stage >= MESA_SHADER_STAGES,
+                     "AddressingModelLogical only supported for shaders");
+         b->shader->info.cs.ptr_size = 0;
+         b->physical_ptrs = false;
+         break;
+      case SpvAddressingModelPhysicalStorageBuffer64EXT:
+         vtn_fail_if(!b->options ||
+                     !b->options->caps.physical_storage_buffer_address,
+                     "AddressingModelPhysicalStorageBuffer64EXT not supported");
+         break;
+      default:
+         vtn_fail("Unknown addressing model");
+         break;
+      }
+
       vtn_assert(w[2] == SpvMemoryModelSimple ||
-                 w[2] == SpvMemoryModelGLSL450);
+                 w[2] == SpvMemoryModelGLSL450 ||
+                 w[2] == SpvMemoryModelOpenCL);
       break;
 
    case SpvOpEntryPoint:
@@ -4440,6 +4468,8 @@ spirv_to_nir(const uint32_t *words, size_t word_count,
    /* Skip the SPIR-V header, handled at vtn_create_builder */
    words+= 5;
 
+   b->shader = nir_shader_create(b, stage, nir_options, NULL);
+
    /* Handle all the preamble instructions */
    words = vtn_foreach_instruction(b, words, word_end,
                                    vtn_handle_preamble_instruction);
@@ -4449,8 +4479,6 @@ spirv_to_nir(const uint32_t *words, size_t word_count,
       ralloc_free(b);
       return NULL;
    }
-
-   b->shader = nir_shader_create(b, stage, nir_options, NULL);
 
    /* Set shader info defaults */
    b->shader->info.gs.invocations = 1;

@@ -69,9 +69,6 @@ enum qfile {
          * or physical registers later.
          */
         QFILE_TEMP,
-        QFILE_UNIF,
-        QFILE_TLB,
-        QFILE_TLBU,
 
         /**
          * VPM reads use this with an index value to say what part of the VPM
@@ -105,6 +102,11 @@ static inline struct qreg vir_reg(enum qfile file, uint32_t index)
         return (struct qreg){file, index};
 }
 
+static inline struct qreg vir_magic_reg(uint32_t index)
+{
+        return (struct qreg){QFILE_MAGIC, index};
+}
+
 static inline struct qreg vir_nop_reg(void)
 {
         return (struct qreg){QFILE_NULL, 0};
@@ -134,12 +136,11 @@ struct qinst {
         /* Pre-register-allocation references to src/dst registers */
         struct qreg dst;
         struct qreg src[3];
-        bool cond_is_exec_mask;
-        bool has_implicit_uniform;
         bool is_last_thrsw;
 
-        /* After vir_to_qpu.c: If instr reads a uniform, which uniform from
-         * the uncompiled stream it is.
+        /* If the instruction reads a uniform (other than through src[i].file
+         * == QFILE_UNIF), that uniform's index in c->uniform_contents.  ~0
+         * otherwise.
          */
         int uniform;
 };
@@ -419,6 +420,8 @@ struct qblock {
 
         /** @{ used by v3d_vir_live_variables.c */
         BITSET_WORD *def;
+        BITSET_WORD *defin;
+        BITSET_WORD *defout;
         BITSET_WORD *use;
         BITSET_WORD *live_in;
         BITSET_WORD *live_out;
@@ -475,6 +478,8 @@ vir_after_block(struct qblock *block)
 struct v3d_compiler {
         const struct v3d_device_info *devinfo;
         struct ra_regs *regs;
+        unsigned int reg_class_any[3];
+        unsigned int reg_class_r5[3];
         unsigned int reg_class_phys[3];
         unsigned int reg_class_phys_or_acc[3];
 };
@@ -562,7 +567,7 @@ struct v3d_compile {
         int local_invocation_index_bits;
 
         uint8_t vattr_sizes[V3D_MAX_VS_INPUTS / 4];
-        uint32_t num_vpm_writes;
+        uint32_t vpm_output_size;
 
         /* Size in bytes of registers that have been spilled. This is how much
          * space needs to be available in the spill BO per thread per QPU.
@@ -606,10 +611,8 @@ struct v3d_compile {
         enum quniform_contents *uniform_contents;
         uint32_t uniform_array_size;
         uint32_t num_uniforms;
-        uint32_t num_outputs;
         uint32_t output_position_index;
         nir_variable *output_color_var[4];
-        uint32_t output_point_size_index;
         uint32_t output_sample_mask_index;
 
         struct qreg undef;
@@ -728,6 +731,12 @@ struct v3d_fs_prog_data {
         bool uses_center_w;
 };
 
+static inline bool
+vir_has_uniform(struct qinst *inst)
+{
+        return inst->uniform != ~0;
+}
+
 /* Special nir_load_input intrinsic index for loading the current TLB
  * destination color.
  */
@@ -764,8 +773,12 @@ struct qinst *vir_add_inst(enum v3d_qpu_add_op op, struct qreg dst,
                            struct qreg src0, struct qreg src1);
 struct qinst *vir_mul_inst(enum v3d_qpu_mul_op op, struct qreg dst,
                            struct qreg src0, struct qreg src1);
-struct qinst *vir_branch_inst(enum v3d_qpu_branch_cond cond, struct qreg src0);
+struct qinst *vir_branch_inst(struct v3d_compile *c,
+                              enum v3d_qpu_branch_cond cond);
 void vir_remove_instruction(struct v3d_compile *c, struct qinst *qinst);
+uint32_t vir_get_uniform_index(struct v3d_compile *c,
+                               enum quniform_contents contents,
+                               uint32_t data);
 struct qreg vir_uniform(struct v3d_compile *c,
                         enum quniform_contents contents,
                         uint32_t data);
@@ -783,9 +796,6 @@ void vir_set_unpack(struct qinst *inst, int src,
 struct qreg vir_get_temp(struct v3d_compile *c);
 void vir_emit_last_thrsw(struct v3d_compile *c);
 void vir_calculate_live_intervals(struct v3d_compile *c);
-bool vir_has_implicit_uniform(struct qinst *inst);
-int vir_get_implicit_uniform_src(struct qinst *inst);
-int vir_get_non_sideband_nsrc(struct qinst *inst);
 int vir_get_nsrc(struct qinst *inst);
 bool vir_has_side_effects(struct v3d_compile *c, struct qinst *inst);
 bool vir_get_add_op(struct qinst *inst, enum v3d_qpu_add_op *op);
@@ -1123,7 +1133,7 @@ static inline struct qinst *
 vir_BRANCH(struct v3d_compile *c, enum v3d_qpu_branch_cond cond)
 {
         /* The actual uniform_data value will be set at scheduling time */
-        return vir_emit_nondef(c, vir_branch_inst(cond, vir_uniform_ui(c, 0)));
+        return vir_emit_nondef(c, vir_branch_inst(c, cond));
 }
 
 #define vir_for_each_block(block, c)                                    \
