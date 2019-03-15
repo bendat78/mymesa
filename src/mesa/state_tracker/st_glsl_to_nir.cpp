@@ -288,13 +288,16 @@ st_nir_assign_uniform_locations(struct gl_context *ctx,
       } else {
          loc = st_nir_lookup_parameter_index(prog->Parameters, uniform->name);
 
-         if (ctx->Const.PackedDriverUniformStorage) {
+         /* We need to check that loc is not -1 here before accessing the
+          * array. It can be negative for example when we have a struct that
+          * only contains opaque types.
+          */
+         if (loc >= 0 && ctx->Const.PackedDriverUniformStorage) {
             loc = prog->Parameters->ParameterValueOffset[loc];
          }
       }
 
       uniform->data.driver_location = loc;
-
       max = MAX2(max, loc + type_size(uniform->type));
    }
    *size = max;
@@ -411,6 +414,10 @@ st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
    }
 
    st_nir_opts(nir, is_scalar);
+
+   NIR_PASS_V(nir, gl_nir_lower_buffers, shader_program);
+   /* Do a round of constant folding to clean up address calculations */
+   NIR_PASS_V(nir, nir_opt_constant_folding);
 
    if (lower_64bit) {
       bool lowered_64bit_ops = false;

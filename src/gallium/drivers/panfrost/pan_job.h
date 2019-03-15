@@ -33,6 +33,9 @@ struct panfrost_job_key {
         struct pipe_surface *zsbuf;
 };
 
+#define PAN_REQ_MSAA            (1 << 0)
+#define PAN_REQ_DEPTH_WRITE     (1 << 1)
+
 /* A panfrost_job corresponds to a bound FBO we're rendering to,
  * collecting over multiple draws. */
 
@@ -47,6 +50,11 @@ struct panfrost_job {
         uint32_t clear_color;
         float clear_depth;
         unsigned clear_stencil;
+
+        /* Whether this job uses the corresponding requirement (PAN_REQ_*
+         * bitmask) */
+        unsigned requirements;
+
 };
 
 /* Functions for managing the above */

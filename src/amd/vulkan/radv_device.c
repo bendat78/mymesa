@@ -1016,7 +1016,7 @@ void radv_GetPhysicalDeviceProperties(
 		.maxCullDistances                         = 8,
 		.maxCombinedClipAndCullDistances          = 8,
 		.discreteQueuePriorities                  = 2,
-		.pointSizeRange                           = { 0.125, 255.875 },
+		.pointSizeRange                           = { 0.0, 8192.0 },
 		.lineWidthRange                           = { 0.0, 7.9921875 },
 		.pointSizeGranularity                     = (1.0 / 8.0),
 		.lineWidthGranularity                     = (1.0 / 128.0),
@@ -2815,7 +2815,7 @@ VkResult radv_QueueSubmit(
 	struct radeon_winsys_fence *base_fence = fence ? fence->fence : NULL;
 	struct radeon_winsys_ctx *ctx = queue->hw_ctx;
 	int ret;
-	uint32_t max_cs_submission = queue->device->trace_bo ? 1 : UINT32_MAX;
+	uint32_t max_cs_submission = queue->device->trace_bo ? 1 : RADV_MAX_IBS_PER_SUBMIT;
 	uint32_t scratch_size = 0;
 	uint32_t compute_scratch_size = 0;
 	uint32_t esgs_ring_size = 0, gsvs_ring_size = 0;

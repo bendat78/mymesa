@@ -59,6 +59,12 @@ struct prim_convert_context;
 #define PAN_DIRTY_SAMPLERS   (1 << 8)
 #define PAN_DIRTY_TEXTURES   (1 << 9)
 
+#define SET_BIT(lval, bit, cond) \
+	if (cond) \
+		lval |= (bit); \
+	else \
+		lval &= ~(bit);
+
 struct panfrost_constant_buffer {
         bool dirty;
         size_t size;
@@ -128,20 +134,6 @@ struct panfrost_context {
 
         struct panfrost_query *occlusion_query;
 
-        /* Each render job has multiple framebuffer descriptors associated with
-         * it, used for various purposes with more or less the same format. The
-         * most obvious is the fragment framebuffer descriptor, which carries
-         * e.g. clearing information */
-
-        union {
-                struct mali_single_framebuffer fragment_sfbd;
-                struct {
-                        struct bifrost_framebuffer fragment_mfbd;
-                        struct bifrost_fb_extra fragment_extra;
-                        struct bifrost_render_target fragment_rts[4];
-                };
-        };
-
         /* Each draw has corresponding vertex and tiler payloads */
         struct midgard_payload_vertex_tiler payload_vertex;
         struct midgard_payload_vertex_tiler payload_tiler;
@@ -178,7 +170,6 @@ struct panfrost_context {
 
         unsigned varying_height;
 
-        struct mali_viewport *viewport;
         struct mali_single_framebuffer vt_framebuffer_sfbd;
         struct bifrost_framebuffer vt_framebuffer_mfbd;
 
@@ -360,6 +351,21 @@ panfrost_flush(
         struct pipe_context *pipe,
         struct pipe_fence_handle **fence,
         unsigned flags);
+
+bool
+panfrost_is_scanout(struct panfrost_context *ctx);
+
+mali_ptr
+panfrost_sfbd_fragment(struct panfrost_context *ctx, bool flip_y);
+
+mali_ptr
+panfrost_mfbd_fragment(struct panfrost_context *ctx, bool flip_y);
+
+struct bifrost_framebuffer
+panfrost_emit_mfbd(struct panfrost_context *ctx);
+
+struct mali_single_framebuffer
+panfrost_emit_sfbd(struct panfrost_context *ctx);
 
 mali_ptr
 panfrost_fragment_job(struct panfrost_context *ctx);

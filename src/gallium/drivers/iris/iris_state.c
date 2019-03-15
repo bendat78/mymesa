@@ -2023,11 +2023,13 @@ iris_set_tess_state(struct pipe_context *ctx,
                     const float default_inner_level[2])
 {
    struct iris_context *ice = (struct iris_context *) ctx;
+   struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_TESS_CTRL];
 
    memcpy(&ice->state.default_outer_level[0], &default_outer_level[0], 4 * sizeof(float));
    memcpy(&ice->state.default_inner_level[0], &default_inner_level[0], 2 * sizeof(float));
 
    ice->state.dirty |= IRIS_DIRTY_CONSTANTS_TCS;
+   shs->cbuf0_needs_upload = true;
 }
 
 static void
@@ -2488,10 +2490,19 @@ upload_uniforms(struct iris_context *ice,
             assert(stage == MESA_SHADER_TESS_EVAL);
             const struct shader_info *tcs_info =
                iris_get_shader_info(ice, MESA_SHADER_TESS_CTRL);
-            assert(tcs_info);
-
-            value = tcs_info->tess.tcs_vertices_out;
+            if (tcs_info)
+               value = tcs_info->tess.tcs_vertices_out;
+            else
+               value = ice->state.vertices_per_patch;
          }
+      } else if (sysval >= BRW_PARAM_BUILTIN_TESS_LEVEL_OUTER_X &&
+                 sysval <= BRW_PARAM_BUILTIN_TESS_LEVEL_OUTER_W) {
+         unsigned i = sysval - BRW_PARAM_BUILTIN_TESS_LEVEL_OUTER_X;
+         value = fui(ice->state.default_outer_level[i]);
+      } else if (sysval == BRW_PARAM_BUILTIN_TESS_LEVEL_INNER_X) {
+         value = fui(ice->state.default_inner_level[0]);
+      } else if (sysval == BRW_PARAM_BUILTIN_TESS_LEVEL_INNER_Y) {
+         value = fui(ice->state.default_inner_level[1]);
       } else {
          assert(!"unhandled system value");
       }
@@ -3932,6 +3943,30 @@ iris_use_optional_res(struct iris_batch *batch,
    }
 }
 
+static void
+pin_depth_and_stencil_buffers(struct iris_batch *batch,
+                              struct pipe_surface *zsbuf,
+                              struct iris_depth_stencil_alpha_state *cso_zsa)
+{
+   if (!zsbuf)
+      return;
+
+   struct iris_resource *zres, *sres;
+   iris_get_depth_stencil_resources(zsbuf->texture, &zres, &sres);
+
+   if (zres) {
+      iris_use_pinned_bo(batch, zres->bo, cso_zsa->depth_writes_enabled);
+      if (zres->aux.bo) {
+         iris_use_pinned_bo(batch, zres->aux.bo,
+                            cso_zsa->depth_writes_enabled);
+      }
+   }
+
+   if (sres) {
+      iris_use_pinned_bo(batch, sres->bo, cso_zsa->stencil_writes_enabled);
+   }
+}
+
 /* ------------------------------------------------------------------- */
 
 /**
@@ -4050,31 +4085,10 @@ iris_restore_render_saved_bos(struct iris_context *ice,
       }
    }
 
-   if (clean & IRIS_DIRTY_DEPTH_BUFFER) {
+   if ((clean & IRIS_DIRTY_DEPTH_BUFFER) &&
+       (clean & IRIS_DIRTY_WM_DEPTH_STENCIL)) {
       struct pipe_framebuffer_state *cso_fb = &ice->state.framebuffer;
-
-      if (cso_fb->zsbuf) {
-         struct iris_resource *zres, *sres;
-         iris_get_depth_stencil_resources(cso_fb->zsbuf->texture,
-                                          &zres, &sres);
-         if (zres) {
-            iris_cache_flush_for_depth(batch, zres->bo);
-
-            iris_use_pinned_bo(batch, zres->bo,
-                               ice->state.depth_writes_enabled);
-            if (zres->aux.bo) {
-               iris_use_pinned_bo(batch, zres->aux.bo,
-                                  ice->state.depth_writes_enabled);
-            }
-         }
-
-         if (sres) {
-            iris_cache_flush_for_depth(batch, sres->bo);
-
-            iris_use_pinned_bo(batch, sres->bo,
-                               ice->state.stencil_writes_enabled);
-         }
-      }
+      pin_depth_and_stencil_buffers(batch, cso_fb->zsbuf, ice->state.cso_zsa);
    }
 
    if (draw->index_size == 0 && ice->state.last_res.index_buffer) {
@@ -4349,43 +4363,6 @@ iris_upload_dirty_render_state(struct iris_context *ice,
       }
    }
 
-   /* Upload constants for TCS passthrough. */
-   if ((dirty & IRIS_DIRTY_CONSTANTS_TCS) &&
-       ice->shaders.prog[MESA_SHADER_TESS_CTRL] &&
-       !ice->shaders.uncompiled[MESA_SHADER_TESS_CTRL]) {
-      struct iris_compiled_shader *tes_shader = ice->shaders.prog[MESA_SHADER_TESS_EVAL];
-      assert(tes_shader);
-
-      /* Passthrough always copies 2 vec4s, so when uploading data we ensure
-       * it is in the right layout for TES.
-       */
-      float hdr[8] = {};
-      struct brw_tes_prog_data *tes_prog_data = (void *) tes_shader->prog_data;
-      switch (tes_prog_data->domain) {
-      case BRW_TESS_DOMAIN_QUAD:
-         for (int i = 0; i < 4; i++)
-            hdr[7 - i] = ice->state.default_outer_level[i];
-         hdr[3] = ice->state.default_inner_level[0];
-         hdr[2] = ice->state.default_inner_level[1];
-         break;
-      case BRW_TESS_DOMAIN_TRI:
-         for (int i = 0; i < 3; i++)
-            hdr[7 - i] = ice->state.default_outer_level[i];
-         hdr[4] = ice->state.default_inner_level[0];
-         break;
-      case BRW_TESS_DOMAIN_ISOLINE:
-         hdr[7] = ice->state.default_outer_level[1];
-         hdr[6] = ice->state.default_outer_level[0];
-         break;
-      }
-
-      struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_TESS_CTRL];
-      struct iris_const_buffer *cbuf = &shs->constbuf[0];
-      u_upload_data(ice->ctx.const_uploader, 0, sizeof(hdr), 32,
-                    &hdr[0], &cbuf->data.offset,
-                    &cbuf->data.res);
-   }
-
    for (int stage = 0; stage <= MESA_SHADER_FRAGMENT; stage++) {
       if (!(dirty & (IRIS_DIRTY_CONSTANTS_VS << stage)))
          continue;
@@ -4655,29 +4632,15 @@ iris_upload_dirty_render_state(struct iris_context *ice,
    }
 
    if (dirty & IRIS_DIRTY_DEPTH_BUFFER) {
-      struct pipe_framebuffer_state *cso_fb = &ice->state.framebuffer;
       struct iris_depth_buffer_state *cso_z = &ice->state.genx->depth_buffer;
 
       iris_batch_emit(batch, cso_z->packets, sizeof(cso_z->packets));
+   }
 
-      if (cso_fb->zsbuf) {
-         struct iris_resource *zres, *sres;
-         iris_get_depth_stencil_resources(cso_fb->zsbuf->texture,
-                                          &zres, &sres);
-         if (zres) {
-            iris_use_pinned_bo(batch, zres->bo,
-                               ice->state.depth_writes_enabled);
-            if (zres->aux.bo) {
-               iris_use_pinned_bo(batch, zres->aux.bo,
-                                  ice->state.depth_writes_enabled);
-            }
-         }
-
-         if (sres) {
-            iris_use_pinned_bo(batch, sres->bo,
-                               ice->state.stencil_writes_enabled);
-         }
-      }
+   if (dirty & (IRIS_DIRTY_DEPTH_BUFFER | IRIS_DIRTY_WM_DEPTH_STENCIL)) {
+      /* Listen for buffer changes, and also write enable changes. */
+      struct pipe_framebuffer_state *cso_fb = &ice->state.framebuffer;
+      pin_depth_and_stencil_buffers(batch, cso_fb->zsbuf, ice->state.cso_zsa);
    }
 
    if (dirty & IRIS_DIRTY_POLYGON_STIPPLE) {

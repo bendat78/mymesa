@@ -49,6 +49,9 @@ const struct glsl_type *glsl_get_struct_field(const struct glsl_type *type,
 int glsl_get_struct_field_offset(const struct glsl_type *type,
                                  unsigned index);
 
+const struct glsl_struct_field *
+glsl_get_struct_field_data(const struct glsl_type *type, unsigned index);
+
 unsigned glsl_get_explicit_stride(const struct glsl_type *type);
 const struct glsl_type *glsl_get_array_element(const struct glsl_type *type);
 const struct glsl_type *glsl_without_array(const struct glsl_type *type);
@@ -145,6 +148,7 @@ bool glsl_type_is_array(const struct glsl_type *type);
 bool glsl_type_is_array_of_arrays(const struct glsl_type *type);
 bool glsl_type_is_array_or_matrix(const struct glsl_type *type);
 bool glsl_type_is_struct(const struct glsl_type *type);
+bool glsl_type_is_interface(const struct glsl_type *type);
 bool glsl_type_is_struct_or_ifc(const struct glsl_type *type);
 bool glsl_type_is_sampler(const struct glsl_type *type);
 bool glsl_type_is_image(const struct glsl_type *type);

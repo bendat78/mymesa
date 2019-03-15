@@ -1244,25 +1244,6 @@ si_conv_prim_to_gs_out(enum VkPrimitiveTopology topology)
 	}
 }
 
-static unsigned si_map_swizzle(unsigned swizzle)
-{
-	switch (swizzle) {
-	case VK_SWIZZLE_Y:
-		return V_008F0C_SQ_SEL_Y;
-	case VK_SWIZZLE_Z:
-		return V_008F0C_SQ_SEL_Z;
-	case VK_SWIZZLE_W:
-		return V_008F0C_SQ_SEL_W;
-	case VK_SWIZZLE_0:
-		return V_008F0C_SQ_SEL_0;
-	case VK_SWIZZLE_1:
-		return V_008F0C_SQ_SEL_1;
-	default: /* VK_SWIZZLE_X */
-		return V_008F0C_SQ_SEL_X;
-	}
-}
-
-
 static unsigned radv_dynamic_state_mask(VkDynamicState state)
 {
 	switch(state) {
@@ -1903,6 +1884,9 @@ radv_generate_graphics_pipeline_key(struct radv_pipeline *pipeline,
 		data_format = radv_translate_buffer_dataformat(format_desc, first_non_void);
 
 		key.vertex_attribute_formats[location] = data_format | (num_format << 4);
+		key.vertex_attribute_bindings[location] = desc->binding;
+		key.vertex_attribute_offsets[location] = desc->offset;
+		key.vertex_attribute_strides[location] = input_state->pVertexBindingDescriptions[desc->binding].stride;
 
 		if (pipeline->device->physical_device->rad_info.chip_class <= VI &&
 		    pipeline->device->physical_device->rad_info.family != CHIP_STONEY) {
@@ -1926,6 +1910,26 @@ radv_generate_graphics_pipeline_key(struct radv_pipeline *pipeline,
 				break;
 			}
 			key.vertex_alpha_adjust |= adjust << (2 * location);
+		}
+
+		switch (desc->format) {
+		case VK_FORMAT_B8G8R8A8_UNORM:
+		case VK_FORMAT_B8G8R8A8_SNORM:
+		case VK_FORMAT_B8G8R8A8_USCALED:
+		case VK_FORMAT_B8G8R8A8_SSCALED:
+		case VK_FORMAT_B8G8R8A8_UINT:
+		case VK_FORMAT_B8G8R8A8_SINT:
+		case VK_FORMAT_B8G8R8A8_SRGB:
+		case VK_FORMAT_A2R10G10B10_UNORM_PACK32:
+		case VK_FORMAT_A2R10G10B10_SNORM_PACK32:
+		case VK_FORMAT_A2R10G10B10_USCALED_PACK32:
+		case VK_FORMAT_A2R10G10B10_SSCALED_PACK32:
+		case VK_FORMAT_A2R10G10B10_UINT_PACK32:
+		case VK_FORMAT_A2R10G10B10_SINT_PACK32:
+			key.vertex_post_shuffle |= 1 << location;
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -1955,9 +1959,13 @@ radv_fill_shader_keys(struct radv_shader_variant_key *keys,
 {
 	keys[MESA_SHADER_VERTEX].vs.instance_rate_inputs = key->instance_rate_inputs;
 	keys[MESA_SHADER_VERTEX].vs.alpha_adjust = key->vertex_alpha_adjust;
+	keys[MESA_SHADER_VERTEX].vs.post_shuffle = key->vertex_post_shuffle;
 	for (unsigned i = 0; i < MAX_VERTEX_ATTRIBS; ++i) {
 		keys[MESA_SHADER_VERTEX].vs.instance_rate_divisors[i] = key->instance_rate_divisors[i];
 		keys[MESA_SHADER_VERTEX].vs.vertex_attribute_formats[i] = key->vertex_attribute_formats[i];
+		keys[MESA_SHADER_VERTEX].vs.vertex_attribute_bindings[i] = key->vertex_attribute_bindings[i];
+		keys[MESA_SHADER_VERTEX].vs.vertex_attribute_offsets[i] = key->vertex_attribute_offsets[i];
+		keys[MESA_SHADER_VERTEX].vs.vertex_attribute_strides[i] = key->vertex_attribute_strides[i];
 	}
 
 	if (nir[MESA_SHADER_TESS_CTRL]) {
@@ -3530,24 +3538,10 @@ radv_compute_vertex_input_state(struct radv_pipeline *pipeline,
 			&vi_info->pVertexAttributeDescriptions[i];
 		unsigned loc = desc->location;
 		const struct vk_format_description *format_desc;
-		int first_non_void;
-		uint32_t num_format, data_format;
+
 		format_desc = vk_format_description(desc->format);
-		first_non_void = vk_format_get_first_non_void_channel(desc->format);
 
-		num_format = radv_translate_buffer_numformat(format_desc, first_non_void);
-		data_format = radv_translate_buffer_dataformat(format_desc, first_non_void);
-
-		velems->rsrc_word3[loc] = S_008F0C_DST_SEL_X(si_map_swizzle(format_desc->swizzle[0])) |
-			S_008F0C_DST_SEL_Y(si_map_swizzle(format_desc->swizzle[1])) |
-			S_008F0C_DST_SEL_Z(si_map_swizzle(format_desc->swizzle[2])) |
-			S_008F0C_DST_SEL_W(si_map_swizzle(format_desc->swizzle[3])) |
-			S_008F0C_NUM_FORMAT(num_format) |
-			S_008F0C_DATA_FORMAT(data_format);
 		velems->format_size[loc] = format_desc->block.bits / 8;
-		velems->offset[loc] = desc->offset;
-		velems->binding[loc] = desc->binding;
-		velems->count = MAX2(velems->count, loc + 1);
 	}
 
 	for (uint32_t i = 0; i < vi_info->vertexBindingDescriptionCount; i++) {
@@ -3555,6 +3549,8 @@ radv_compute_vertex_input_state(struct radv_pipeline *pipeline,
 			&vi_info->pVertexBindingDescriptions[i];
 
 		pipeline->binding_stride[desc->binding] = desc->stride;
+		pipeline->num_vertex_bindings =
+			MAX2(pipeline->num_vertex_bindings, desc->binding + 1);
 	}
 }
 

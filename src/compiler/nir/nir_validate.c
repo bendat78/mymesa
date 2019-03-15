@@ -525,6 +525,9 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
       validate_assert(state, instr->num_components ==
                              glsl_get_vector_elements(src->type));
       dest_bit_size = glsl_get_bit_size(src->type);
+      /* Also allow 32-bit boolean load operations */
+      if (glsl_type_is_boolean(src->type))
+         dest_bit_size |= 32;
       break;
    }
 
@@ -534,6 +537,9 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
       validate_assert(state, instr->num_components ==
                              glsl_get_vector_elements(dst->type));
       src_bit_sizes[1] = glsl_get_bit_size(dst->type);
+      /* Also allow 32-bit boolean store operations */
+      if (glsl_type_is_boolean(dst->type))
+         src_bit_sizes[1] |= 32;
       validate_assert(state, (dst->mode & (nir_var_shader_in |
                                            nir_var_uniform)) == 0);
       validate_assert(state, (nir_intrinsic_write_mask(instr) & ~((1 << instr->num_components) - 1)) == 0);
@@ -543,7 +549,8 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
    case nir_intrinsic_copy_deref: {
       nir_deref_instr *dst = nir_src_as_deref(instr->src[0]);
       nir_deref_instr *src = nir_src_as_deref(instr->src[1]);
-      validate_assert(state, dst->type == src->type);
+      validate_assert(state, glsl_get_bare_type(dst->type) ==
+                             glsl_get_bare_type(src->type));
       validate_assert(state, (dst->mode & (nir_var_shader_in |
                                            nir_var_uniform)) == 0);
       break;

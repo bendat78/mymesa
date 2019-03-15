@@ -30,12 +30,14 @@
 #include <stdio.h>
 #include <err.h>
 
+#include "main/mtypes.h"
 #include "compiler/glsl/glsl_to_nir.h"
 #include "compiler/nir_types.h"
 #include "main/imports.h"
 #include "compiler/nir/nir_builder.h"
 #include "util/half_float.h"
 #include "util/register_allocate.h"
+#include "util/u_debug.h"
 #include "util/u_dynarray.h"
 #include "util/list.h"
 #include "main/mtypes.h"
@@ -46,6 +48,21 @@
 #include "helpers.h"
 
 #include "disassemble.h"
+
+static const struct debug_named_value debug_options[] = {
+	{"msgs",      MIDGARD_DBG_MSGS,		"Print debug messages"},
+	{"shaders",   MIDGARD_DBG_SHADERS,	"Dump shaders in NIR and MIR"},
+	DEBUG_NAMED_VALUE_END
+};
+
+DEBUG_GET_ONCE_FLAGS_OPTION(midgard_debug, "MIDGARD_MESA_DEBUG", debug_options, 0)
+
+int midgard_debug = 0;
+
+#define DBG(fmt, ...) \
+		do { if (midgard_debug & MIDGARD_DBG_MSGS) \
+			fprintf(stderr, "%s:%d: "fmt, \
+				__FUNCTION__, __LINE__, ##__VA_ARGS__); } while (0)
 
 /* Instruction arguments represented as block-local SSA indices, rather than
  * registers. Negative values mean unused. */
@@ -973,6 +990,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(frcp, frcp);
                 ALU_CASE(frsq, frsqrt);
                 ALU_CASE(fsqrt, fsqrt);
+                ALU_CASE(fpow, fpow);
                 ALU_CASE(fexp2, fexp2);
                 ALU_CASE(flog2, flog2);
 
@@ -1041,7 +1059,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
         }
 
         default:
-                printf("Unhandled ALU op %s\n", nir_op_infos[instr->op].name);
+                DBG("Unhandled ALU op %s\n", nir_op_infos[instr->op].name);
                 assert(0);
                 return;
         }
@@ -1188,7 +1206,7 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
 
                                 /* XXX */
                                 if (!entry) {
-                                        printf("WARNING: Unknown uniform %d\n", offset);
+                                        DBG("WARNING: Unknown uniform %d\n", offset);
                                         break;
                                 }
 
@@ -1332,7 +1350,7 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
 
                                 emit_mir_instruction(ctx, fmul);
                         } else {
-                                printf("Unknown input in blend shader\n");
+                                DBG("Unknown input in blend shader\n");
                                 assert(0);
                         }
                 } else if (ctx->stage == MESA_SHADER_VERTEX) {
@@ -1341,7 +1359,7 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                         ins.load_store.mask = (1 << instr->num_components) - 1;
                         emit_mir_instruction(ctx, ins);
                 } else {
-                        printf("Unknown load\n");
+                        DBG("Unknown load\n");
                         assert(0);
                 }
 
@@ -1385,7 +1403,7 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                         void *entry = _mesa_hash_table_u64_search(ctx->varying_nir_to_mdg, offset + 1);
 
                         if (!entry) {
-                                printf("WARNING: skipping varying\n");
+                                DBG("WARNING: skipping varying\n");
                                 break;
                         }
 
@@ -1420,7 +1438,7 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                                 _mesa_hash_table_u64_insert(ctx->ssa_varyings, reg + 1, (void *) ((uintptr_t) (offset + 1)));
                         }
                 } else {
-                        printf("Unknown store\n");
+                        DBG("Unknown store\n");
                         assert(0);
                 }
 
@@ -1459,7 +1477,7 @@ midgard_tex_format(enum glsl_sampler_dim dim)
                 return TEXTURE_CUBE;
 
         default:
-                printf("Unknown sampler dim type\n");
+                DBG("Unknown sampler dim type\n");
                 assert(0);
                 return 0;
         }
@@ -1502,7 +1520,7 @@ emit_tex(compiler_context *ctx, nir_tex_instr *instr)
                 }
 
                 default: {
-                        printf("Unknown source type\n");
+                        DBG("Unknown source type\n");
                         //assert(0);
                         break;
                 }
@@ -1577,12 +1595,12 @@ emit_jump(compiler_context *ctx, nir_jump_instr *instr)
                         br.branch.target_break = ctx->current_loop;
                         emit_mir_instruction(ctx, br);
 
-                        printf("break..\n");
+                        DBG("break..\n");
                         break;
                 }
 
                 default:
-                        printf("Unknown jump type %d\n", instr->type);
+                        DBG("Unknown jump type %d\n", instr->type);
                         break;
         }
 }
@@ -1616,7 +1634,7 @@ emit_instr(compiler_context *ctx, struct nir_instr *instr)
                 break;
 
         default:
-                printf("Unhandled instruction type\n");
+                DBG("Unhandled instruction type\n");
                 break;
         }
 }
@@ -1646,7 +1664,7 @@ dealias_register(compiler_context *ctx, struct ra_graph *g, int reg, int maxreg)
                 return REGISTER_UNUSED;
 
         default:
-                printf("Unknown SSA register alias %d\n", reg);
+                DBG("Unknown SSA register alias %d\n", reg);
                 assert(0);
                 return 31;
         }
@@ -1731,8 +1749,8 @@ allocate_registers(compiler_context *ctx)
                         ins->ssa_args.src1 = find_or_allocate_temp(ctx, ins->ssa_args.src1);
                         ins->ssa_args.dest = find_or_allocate_temp(ctx, ins->ssa_args.dest);
                 }
-
-                print_mir_block(block);
+		if (midgard_debug & MIDGARD_DBG_SHADERS)
+	                print_mir_block(block);
         }
 
         /* Let's actually do register allocation */
@@ -1836,7 +1854,7 @@ allocate_registers(compiler_context *ctx)
         ra_set_select_reg_callback(g, midgard_ra_select_callback, NULL);
 
         if (!ra_allocate(g)) {
-                printf("Error allocating registers\n");
+                DBG("Error allocating registers\n");
                 assert(0);
         }
 
@@ -2285,7 +2303,7 @@ schedule_bundle(compiler_context *ctx, midgard_block *block, midgard_instruction
 
                                                 /* ERRATA (?): In a bundle ending in a fragment writeout, the register dependencies of r0 cannot be written within this bundle (discovered in -bshading:shading=phong) */
                                                 if (register_dep_mask & written_mask) {
-                                                        printf("ERRATA WORKAROUND: Breakup for writeout dependency masks %X vs %X (common %X)\n", register_dep_mask, written_mask, register_dep_mask & written_mask);
+                                                        DBG("ERRATA WORKAROUND: Breakup for writeout dependency masks %X vs %X (common %X)\n", register_dep_mask, written_mask, register_dep_mask & written_mask);
                                                         break;
                                                 }
 
@@ -2570,7 +2588,7 @@ emit_binary_bundle(compiler_context *ctx, midgard_bundle *bundle, struct util_dy
         }
 
         default:
-                printf("Unknown midgard instruction type\n");
+                DBG("Unknown midgard instruction type\n");
                 assert(0);
                 break;
         }
@@ -2668,7 +2686,7 @@ embedded_to_inline_constant(compiler_context *ctx)
                         case midgard_alu_op_fcsel:
                         case midgard_alu_op_icsel:
                         case midgard_alu_op_isub:
-                                printf("Missed non-commutative flip (%s)\n", alu_opcode_names[op]);
+                                DBG("Missed non-commutative flip (%s)\n", alu_opcode_names[op]);
                                 break;
 
                         /* These ops are commutative and Just Flip */
@@ -2734,7 +2752,7 @@ embedded_to_inline_constant(compiler_context *ctx)
                         /* We don't know how to handle these with a constant */
 
                         if (src->abs || src->negate || src->half || src->rep_low || src->rep_high) {
-                                printf("Bailing inline constant...\n");
+                                DBG("Bailing inline constant...\n");
                                 continue;
                         }
 
@@ -3278,7 +3296,8 @@ emit_loop(struct compiler_context *ctx, nir_loop *nloop)
          * now that we can allocate a block number for them */
 
         list_for_each_entry_from(struct midgard_block, block, start_block, &ctx->blocks, link) {
-                print_mir_block(block);
+		if (midgard_debug & MIDGARD_DBG_SHADERS)
+	                print_mir_block(block);
                 mir_foreach_instr_in_block(block, ins) {
                         if (ins->type != TAG_ALU_4) continue;
                         if (!ins->compact_branch) continue;
@@ -3363,6 +3382,8 @@ int
 midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_blend)
 {
         struct util_dynarray *compiled = &program->compiled;
+
+	midgard_debug = debug_get_option_midgard_debug();
 
         compiler_context ictx = {
                 .nir = nir,
@@ -3491,7 +3512,9 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
 
         optimise_nir(nir);
 
-        nir_print_shader(nir, stdout);
+	if (midgard_debug & MIDGARD_DBG_SHADERS) {
+	        nir_print_shader(nir, stdout);
+	}
 
         /* Assign counts, now that we're sure (post-optimisation) */
         program->uniform_count = nir->num_uniforms;
@@ -3697,7 +3720,8 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
 
         program->blend_patch_offset = ctx->blend_constant_offset;
 
-        disassemble_midgard(program->compiled.data, program->compiled.size);
+	if (midgard_debug & MIDGARD_DBG_SHADERS)
+		disassemble_midgard(program->compiled.data, program->compiled.size);
 
         return 0;
 }

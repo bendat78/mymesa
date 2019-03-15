@@ -289,11 +289,11 @@ static const struct intel_image_format intel_image_formats[] = {
 
    { __DRI_IMAGE_FOURCC_P010, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R16, 2 },
-       { 1, 1, 1, __DRI_IMAGE_FORMAT_GR1616, 4 } } , 65535.0f/1023.0f },
+       { 1, 1, 1, __DRI_IMAGE_FORMAT_GR1616, 4 } } },
 
    { __DRI_IMAGE_FOURCC_P012, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R16, 2 },
-       { 1, 1, 1, __DRI_IMAGE_FORMAT_GR1616, 4 } } , 65535.0f/4095.0f },
+       { 1, 1, 1, __DRI_IMAGE_FORMAT_GR1616, 4 } } },
 
    { __DRI_IMAGE_FOURCC_P016, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_R16, 2 },
@@ -2442,10 +2442,10 @@ shader_debug_log_mesa(void *data, const char *fmt, ...)
 
    va_start(args, fmt);
    GLuint msg_id = 0;
-   _mesa_gl_vdebug(&brw->ctx, &msg_id,
-                   MESA_DEBUG_SOURCE_SHADER_COMPILER,
-                   MESA_DEBUG_TYPE_OTHER,
-                   MESA_DEBUG_SEVERITY_NOTIFICATION, fmt, args);
+   _mesa_gl_vdebugf(&brw->ctx, &msg_id,
+                    MESA_DEBUG_SOURCE_SHADER_COMPILER,
+                    MESA_DEBUG_TYPE_OTHER,
+                    MESA_DEBUG_SEVERITY_NOTIFICATION, fmt, args);
    va_end(args);
 }
 
@@ -2466,10 +2466,10 @@ shader_perf_log_mesa(void *data, const char *fmt, ...)
 
    if (brw->perf_debug) {
       GLuint msg_id = 0;
-      _mesa_gl_vdebug(&brw->ctx, &msg_id,
-                      MESA_DEBUG_SOURCE_SHADER_COMPILER,
-                      MESA_DEBUG_TYPE_PERFORMANCE,
-                      MESA_DEBUG_SEVERITY_MEDIUM, fmt, args);
+      _mesa_gl_vdebugf(&brw->ctx, &msg_id,
+                       MESA_DEBUG_SOURCE_SHADER_COMPILER,
+                       MESA_DEBUG_TYPE_PERFORMANCE,
+                       MESA_DEBUG_SEVERITY_MEDIUM, fmt, args);
    }
    va_end(args);
 }

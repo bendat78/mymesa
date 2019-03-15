@@ -1910,6 +1910,18 @@ typedef struct {
 
    /** True when ::break_block is in the else-path of ::nif. */
    bool continue_from_then;
+   bool induction_rhs;
+
+   /* This is true if the terminators exact trip count is unknown. For
+    * example:
+    *
+    *    for (int i = 0; i < imin(x, 4); i++)
+    *       ...
+    *
+    * Here loop analysis would have set a max_trip_count of 4 however we dont
+    * know for sure that this is the exact trip count.
+    */
+   bool exact_trip_count_unknown;
 
    struct list_head loop_terminator_link;
 } nir_loop_terminator;
@@ -1917,6 +1929,9 @@ typedef struct {
 typedef struct {
    /* Estimated cost (in number of instructions) of the loop */
    unsigned instr_cost;
+
+   /* Guessed trip count based on array indexing */
+   unsigned guessed_trip_count;
 
    /* Maximum number of times the loop is run (if known) */
    unsigned max_trip_count;
@@ -1945,6 +1960,7 @@ typedef struct {
    struct exec_list body; /** < list of nir_cf_node */
 
    nir_loop_info *info;
+   bool partially_unrolled;
 } nir_loop;
 
 /**
@@ -3005,9 +3021,9 @@ typedef enum {
 
    /**
     * An address format which is comprised of a vec2 where the first
-    * component is a vulkan descriptor index and the second is an offset.
+    * component is a buffer index and the second is an offset.
     */
-   nir_address_format_vk_index_offset,
+   nir_address_format_32bit_index_offset,
 } nir_address_format;
 bool nir_lower_explicit_io(nir_shader *shader,
                            nir_variable_mode modes,
@@ -3045,6 +3061,7 @@ void nir_lower_io_arrays_to_elements_no_indirects(nir_shader *shader,
                                                   bool outputs_only);
 void nir_lower_io_to_scalar(nir_shader *shader, nir_variable_mode mask);
 void nir_lower_io_to_scalar_early(nir_shader *shader, nir_variable_mode mask);
+bool nir_lower_io_to_vector(nir_shader *shader, nir_variable_mode mask);
 
 bool nir_lower_uniforms_to_ubo(nir_shader *shader, int multiplier);
 
@@ -3312,6 +3329,8 @@ bool nir_opt_algebraic_before_ffma(nir_shader *shader);
 bool nir_opt_algebraic_late(nir_shader *shader);
 bool nir_opt_constant_folding(nir_shader *shader);
 
+bool nir_opt_combine_stores(nir_shader *shader, nir_variable_mode modes);
+
 bool nir_opt_global_to_local(nir_shader *shader);
 
 bool nir_copy_prop(nir_shader *shader);
@@ -3361,6 +3380,8 @@ bool nir_opt_trivial_continues(nir_shader *shader);
 bool nir_opt_undef(nir_shader *shader);
 
 bool nir_opt_conditional_discard(nir_shader *shader);
+
+void nir_strip(nir_shader *shader);
 
 void nir_sweep(nir_shader *shader);
 

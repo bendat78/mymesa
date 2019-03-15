@@ -584,13 +584,14 @@ iris_resource_create_with_modifiers(struct pipe_screen *pscreen,
       }
    }
 
-   // XXX: we don't actually do aux yet
-   res->aux.possible_usages = 1 << ISL_AUX_USAGE_NONE;
-
    res->aux.usage = util_last_bit(res->aux.possible_usages) - 1;
 
    const char *name = "miptree";
    enum iris_memory_zone memzone = IRIS_MEMZONE_OTHER;
+
+   unsigned int flags = 0;
+   if (templ->usage == PIPE_USAGE_STAGING)
+      flags |= BO_ALLOC_COHERENT;
 
    /* These are for u_upload_mgr buffers only */
    assert(!(templ->flags & (IRIS_RESOURCE_FLAG_SHADER_MEMZONE |
@@ -600,7 +601,7 @@ iris_resource_create_with_modifiers(struct pipe_screen *pscreen,
    res->bo = iris_bo_alloc_tiled(screen->bufmgr, name, res->surf.size_B,
                                  memzone,
                                  isl_tiling_to_i915_tiling(res->surf.tiling),
-                                 res->surf.row_pitch_B, 0);
+                                 res->surf.row_pitch_B, flags);
 
    if (!res->bo)
       goto fail;
@@ -751,7 +752,6 @@ iris_resource_get_handle(struct pipe_screen *pscreen,
                          struct winsys_handle *whandle,
                          unsigned usage)
 {
-   struct iris_context *ice = (struct iris_context *)ctx;
    struct iris_resource *res = (struct iris_resource *)resource;
 
    /* If this is a buffer, stride should be 0 - no need to special case */
@@ -760,25 +760,16 @@ iris_resource_get_handle(struct pipe_screen *pscreen,
       res->mod_info ? res->mod_info->modifier
                     : tiling_to_modifier(res->bo->tiling_mode);
 
-   if (ctx &&
-       (!res->mod_info || res->mod_info->aux_usage != res->aux.usage)) {
-      struct iris_batch *render_batch = &ice->batches[IRIS_BATCH_RENDER];
-      iris_resource_prepare_access(ice, render_batch, res,
-                                   0, INTEL_REMAINING_LEVELS,
-                                   0, INTEL_REMAINING_LAYERS,
-                                   ISL_AUX_USAGE_NONE, false);
-      if (res->aux.usage != ISL_AUX_USAGE_NONE) {
-         iris_resource_disable_aux(res);
-         ice->state.dirty |= IRIS_ALL_DIRTY_BINDINGS;
-      }
-   } else {
-      if (res->aux.usage != ISL_AUX_USAGE_NONE) {
-         enum isl_aux_state aux_state =
-            iris_resource_get_aux_state(res, 0, 0);
-         assert(aux_state == ISL_AUX_STATE_RESOLVED ||
-                aux_state == ISL_AUX_STATE_PASS_THROUGH);
-      }
+#ifndef NDEBUG
+   enum isl_aux_usage allowed_usage =
+      res->mod_info ? res->mod_info->aux_usage : ISL_AUX_USAGE_NONE;
+
+   if (res->aux.usage != allowed_usage) {
+      enum isl_aux_state aux_state = iris_resource_get_aux_state(res, 0, 0);
+      assert(aux_state == ISL_AUX_STATE_RESOLVED ||
+             aux_state == ISL_AUX_STATE_PASS_THROUGH);
    }
+#endif
 
    switch (whandle->type) {
    case WINSYS_HANDLE_TYPE_SHARED:
@@ -960,6 +951,7 @@ static void
 iris_unmap_s8(struct iris_transfer *map)
 {
    struct pipe_transfer *xfer = &map->base;
+   const struct pipe_box *box = &xfer->box;
    struct iris_resource *res = (struct iris_resource *) xfer->resource;
    struct isl_surf *surf = &res->surf;
    const bool has_swizzling = false;
@@ -969,24 +961,20 @@ iris_unmap_s8(struct iris_transfer *map)
       uint8_t *tiled_s8_map =
          iris_bo_map(map->dbg, res->bo, xfer->usage | MAP_RAW);
 
-      struct pipe_box box = xfer->box;
-
-      for (int s = 0; s < box.depth; s++) {
+      for (int s = 0; s < box->depth; s++) {
          unsigned x0_el, y0_el;
-         get_image_offset_el(surf, xfer->level, box.z, &x0_el, &y0_el);
+         get_image_offset_el(surf, xfer->level, box->z + s, &x0_el, &y0_el);
 
-         for (uint32_t y = 0; y < box.height; y++) {
-            for (uint32_t x = 0; x < box.width; x++) {
+         for (uint32_t y = 0; y < box->height; y++) {
+            for (uint32_t x = 0; x < box->width; x++) {
                ptrdiff_t offset = s8_offset(surf->row_pitch_B,
-                                            x0_el + box.x + x,
-                                            y0_el + box.y + y,
+                                            x0_el + box->x + x,
+                                            y0_el + box->y + y,
                                             has_swizzling);
                tiled_s8_map[offset] =
                   untiled_s8_map[s * xfer->layer_stride + y * xfer->stride + x];
             }
          }
-
-         box.z++;
       }
    }
 
@@ -997,17 +985,18 @@ static void
 iris_map_s8(struct iris_transfer *map)
 {
    struct pipe_transfer *xfer = &map->base;
+   const struct pipe_box *box = &xfer->box;
    struct iris_resource *res = (struct iris_resource *) xfer->resource;
    struct isl_surf *surf = &res->surf;
 
    xfer->stride = surf->row_pitch_B;
-   xfer->layer_stride = xfer->stride * xfer->box.height;
+   xfer->layer_stride = xfer->stride * box->height;
 
    /* The tiling and detiling functions require that the linear buffer has
     * a 16-byte alignment (that is, its `x0` is 16-byte aligned).  Here we
     * over-allocate the linear buffer to get the proper alignment.
     */
-   map->buffer = map->ptr = malloc(xfer->layer_stride * xfer->box.depth);
+   map->buffer = map->ptr = malloc(xfer->layer_stride * box->depth);
    assert(map->buffer);
 
    const bool has_swizzling = false;
@@ -1022,24 +1011,20 @@ iris_map_s8(struct iris_transfer *map)
       uint8_t *tiled_s8_map =
          iris_bo_map(map->dbg, res->bo, xfer->usage | MAP_RAW);
 
-      struct pipe_box box = xfer->box;
-
-      for (int s = 0; s < box.depth; s++) {
+      for (int s = 0; s < box->depth; s++) {
          unsigned x0_el, y0_el;
-         get_image_offset_el(surf, xfer->level, box.z, &x0_el, &y0_el);
+         get_image_offset_el(surf, xfer->level, box->z + s, &x0_el, &y0_el);
 
-         for (uint32_t y = 0; y < box.height; y++) {
-            for (uint32_t x = 0; x < box.width; x++) {
+         for (uint32_t y = 0; y < box->height; y++) {
+            for (uint32_t x = 0; x < box->width; x++) {
                ptrdiff_t offset = s8_offset(surf->row_pitch_B,
-                                            x0_el + box.x + x,
-                                            y0_el + box.y + y,
+                                            x0_el + box->x + x,
+                                            y0_el + box->y + y,
                                             has_swizzling);
                untiled_s8_map[s * xfer->layer_stride + y * xfer->stride + x] =
                   tiled_s8_map[offset];
             }
          }
-
-         box.z++;
       }
    }
 
@@ -1052,7 +1037,7 @@ iris_map_s8(struct iris_transfer *map)
 static inline void
 tile_extents(struct isl_surf *surf,
              const struct pipe_box *box,
-             unsigned level,
+             unsigned level, int z,
              unsigned *x1_B, unsigned *x2_B,
              unsigned *y1_el, unsigned *y2_el)
 {
@@ -1063,7 +1048,7 @@ tile_extents(struct isl_surf *surf,
    assert(box->y % fmtl->bh == 0);
 
    unsigned x0_el, y0_el;
-   get_image_offset_el(surf, level, box->z, &x0_el, &y0_el);
+   get_image_offset_el(surf, level, box->z + z, &x0_el, &y0_el);
 
    *x1_B = (box->x / fmtl->bw + x0_el) * cpp;
    *y1_el = box->y / fmtl->bh + y0_el;
@@ -1075,7 +1060,7 @@ static void
 iris_unmap_tiled_memcpy(struct iris_transfer *map)
 {
    struct pipe_transfer *xfer = &map->base;
-   struct pipe_box box = xfer->box;
+   const struct pipe_box *box = &xfer->box;
    struct iris_resource *res = (struct iris_resource *) xfer->resource;
    struct isl_surf *surf = &res->surf;
 
@@ -1084,16 +1069,15 @@ iris_unmap_tiled_memcpy(struct iris_transfer *map)
    if (xfer->usage & PIPE_TRANSFER_WRITE) {
       char *dst = iris_bo_map(map->dbg, res->bo, xfer->usage | MAP_RAW);
 
-      for (int s = 0; s < box.depth; s++) {
+      for (int s = 0; s < box->depth; s++) {
          unsigned x1, x2, y1, y2;
-         tile_extents(surf, &box, xfer->level, &x1, &x2, &y1, &y2);
+         tile_extents(surf, box, xfer->level, s, &x1, &x2, &y1, &y2);
 
          void *ptr = map->ptr + s * xfer->layer_stride;
 
          isl_memcpy_linear_to_tiled(x1, x2, y1, y2, dst, ptr,
                                     surf->row_pitch_B, xfer->stride,
                                     has_swizzling, surf->tiling, ISL_MEMCPY);
-         box.z++;
       }
    }
    os_free_aligned(map->buffer);
@@ -1104,21 +1088,22 @@ static void
 iris_map_tiled_memcpy(struct iris_transfer *map)
 {
    struct pipe_transfer *xfer = &map->base;
+   const struct pipe_box *box = &xfer->box;
    struct iris_resource *res = (struct iris_resource *) xfer->resource;
    struct isl_surf *surf = &res->surf;
 
    xfer->stride = ALIGN(surf->row_pitch_B, 16);
-   xfer->layer_stride = xfer->stride * xfer->box.height;
+   xfer->layer_stride = xfer->stride * box->height;
 
    unsigned x1, x2, y1, y2;
-   tile_extents(surf, &xfer->box, xfer->level, &x1, &x2, &y1, &y2);
+   tile_extents(surf, box, xfer->level, 0, &x1, &x2, &y1, &y2);
 
    /* The tiling and detiling functions require that the linear buffer has
     * a 16-byte alignment (that is, its `x0` is 16-byte aligned).  Here we
     * over-allocate the linear buffer to get the proper alignment.
     */
    map->buffer =
-      os_malloc_aligned(xfer->layer_stride * xfer->box.depth, 16);
+      os_malloc_aligned(xfer->layer_stride * box->depth, 16);
    assert(map->buffer);
    map->ptr = (char *)map->buffer + (x1 & 0xf);
 
@@ -1128,19 +1113,16 @@ iris_map_tiled_memcpy(struct iris_transfer *map)
    if (!(xfer->usage & PIPE_TRANSFER_DISCARD_RANGE)) {
       char *src = iris_bo_map(map->dbg, res->bo, xfer->usage | MAP_RAW);
 
-      struct pipe_box box = xfer->box;
-
-      for (int s = 0; s < box.depth; s++) {
+      for (int s = 0; s < box->depth; s++) {
          unsigned x1, x2, y1, y2;
-         tile_extents(surf, &box, xfer->level, &x1, &x2, &y1, &y2);
+         tile_extents(surf, box, xfer->level, s, &x1, &x2, &y1, &y2);
 
-         /* Use 's' rather than 'box.z' to rebase the first slice to 0. */
+         /* Use 's' rather than 'box->z' to rebase the first slice to 0. */
          void *ptr = map->ptr + s * xfer->layer_stride;
 
          isl_memcpy_tiled_to_linear(x1, x2, y1, y2, ptr, src, xfer->stride,
                                     surf->row_pitch_B, has_swizzling,
-                                    surf->tiling, ISL_MEMCPY);
-         box.z++;
+                                    surf->tiling, ISL_MEMCPY_STREAMING_LOAD);
       }
    }
 
@@ -1334,6 +1316,16 @@ iris_transfer_unmap(struct pipe_context *ctx, struct pipe_transfer *xfer)
 static void
 iris_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
 {
+   struct iris_context *ice = (struct iris_context *)ctx;
+   struct iris_batch *render_batch = &ice->batches[IRIS_BATCH_RENDER];
+   struct iris_resource *res = (void *) resource;
+   const struct isl_drm_modifier_info *mod = res->mod_info;
+
+   iris_resource_prepare_access(ice, render_batch, res,
+                                0, INTEL_REMAINING_LEVELS,
+                                0, INTEL_REMAINING_LAYERS,
+                                mod ? mod->aux_usage : ISL_AUX_USAGE_NONE,
+                                mod ? mod->supports_clear_color : false);
 }
 
 void

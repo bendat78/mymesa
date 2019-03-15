@@ -1576,6 +1576,8 @@ static void visit_store_ssbo(struct ac_nir_context *ctx,
 		if (num_bytes == 2) {
 			store_name = "llvm.amdgcn.tbuffer.store.i32";
 			data_type = ctx->ac.i32;
+			data = LLVMBuildBitCast(ctx->ac.builder, data, ctx->ac.i16, "");
+			data = LLVMBuildZExt(ctx->ac.builder, data, data_type, "");
 			LLVMValueRef tbuffer_params[] = {
 				data,
 				rsrc,
@@ -1710,11 +1712,10 @@ static LLVMValueRef visit_load_buffer(struct ac_nir_context *ctx,
 		if (load_bytes == 2) {
 			ret = ac_build_tbuffer_load_short(&ctx->ac,
 							  rsrc,
-							  vindex,
 							  offset,
 							  ctx->ac.i32_0,
 							  immoffset,
-							  glc);
+							  cache_policy & ac_glc);
 		} else {
 			const char *load_name;
 			LLVMTypeRef data_type;
@@ -1781,11 +1782,10 @@ static LLVMValueRef visit_load_ubo_buffer(struct ac_nir_context *ctx,
 		for (unsigned i = 0; i < num_components; ++i) {
 			results[i] = ac_build_tbuffer_load_short(&ctx->ac,
 								 rsrc,
-								 ctx->ac.i32_0,
 								 offset,
 								 ctx->ac.i32_0,
 								 LLVMConstInt(ctx->ac.i32, 2 * i, 0),
-								 ctx->ac.i1false);
+								 false);
 		}
 		ret = ac_build_gather_values(&ctx->ac, results, num_components);
 	} else {

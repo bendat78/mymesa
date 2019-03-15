@@ -555,6 +555,7 @@ brw_nir_optimize(nir_shader *nir, const struct brw_compiler *compiler,
       }
       OPT(nir_opt_copy_prop_vars);
       OPT(nir_opt_dead_write_vars);
+      OPT(nir_opt_combine_stores, nir_var_all);
 
       if (is_scalar) {
          OPT(nir_lower_alu_to_scalar);
@@ -569,6 +570,7 @@ brw_nir_optimize(nir_shader *nir, const struct brw_compiler *compiler,
       OPT(nir_copy_prop);
       OPT(nir_opt_dce);
       OPT(nir_opt_cse);
+      OPT(nir_opt_combine_stores, nir_var_all);
 
       /* Passing 0 to the peephole select pass causes it to convert
        * if-statements that contain only move instructions in the branches
@@ -787,6 +789,24 @@ brw_nir_link_shaders(const struct brw_compiler *compiler,
 
       *producer = brw_nir_optimize(*producer, compiler, p_is_scalar, false);
       *consumer = brw_nir_optimize(*consumer, compiler, c_is_scalar, false);
+   }
+
+   NIR_PASS_V(*producer, nir_lower_io_to_vector, nir_var_shader_out);
+   NIR_PASS_V(*producer, nir_opt_combine_stores, nir_var_shader_out);
+   NIR_PASS_V(*consumer, nir_lower_io_to_vector, nir_var_shader_in);
+
+   if ((*producer)->info.stage != MESA_SHADER_TESS_CTRL) {
+      /* Calling lower_io_to_vector creates output variable writes with
+       * write-masks.  On non-TCS outputs, the back-end can't handle it and we
+       * need to call nir_lower_io_to_temporaries to get rid of them.  This,
+       * in turn, creates temporary variables and extra copy_deref intrinsics
+       * that we need to clean up.
+       */
+      NIR_PASS_V(*producer, nir_lower_io_to_temporaries,
+                 nir_shader_get_entrypoint(*producer), true, false);
+      NIR_PASS_V(*producer, nir_lower_global_vars_to_local);
+      NIR_PASS_V(*producer, nir_split_var_copies);
+      NIR_PASS_V(*producer, nir_lower_var_copies);
    }
 }
 
