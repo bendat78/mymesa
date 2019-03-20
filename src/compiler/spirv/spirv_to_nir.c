@@ -32,6 +32,8 @@
 #include "nir/nir_deref.h"
 #include "spirv_info.h"
 
+#include "util/u_math.h"
+
 #include <stdio.h>
 
 void
@@ -819,6 +821,13 @@ struct_member_decoration_cb(struct vtn_builder *b,
       break;
 
    case SpvDecorationCPacked:
+      if (b->shader->info.stage != MESA_SHADER_KERNEL)
+         vtn_warn("Decoration only allowed for CL-style kernels: %s",
+                  spirv_decoration_to_string(dec->decoration));
+      else
+         ctx->type->packed = true;
+      break;
+
    case SpvDecorationSaturatedConversion:
    case SpvDecorationFuncParamAttr:
    case SpvDecorationFPRoundingMode:
@@ -979,6 +988,13 @@ type_decoration_cb(struct vtn_builder *b,
       break;
 
    case SpvDecorationCPacked:
+      if (b->shader->info.stage != MESA_SHADER_KERNEL)
+         vtn_warn("Decoration only allowed for CL-style kernels: %s",
+                  spirv_decoration_to_string(dec->decoration));
+      else
+         type->packed = true;
+      break;
+
    case SpvDecorationSaturatedConversion:
    case SpvDecorationFuncParamAttr:
    case SpvDecorationFPRoundingMode:
@@ -1228,7 +1244,8 @@ vtn_handle_type(struct vtn_builder *b, SpvOp opcode,
 
       val->type->base_type = vtn_base_type_array;
       val->type->array_element = array_element;
-      val->type->stride = 0;
+      if (b->shader->info.stage == MESA_SHADER_KERNEL)
+         val->type->stride = glsl_get_cl_size(array_element->type);
 
       vtn_foreach_decoration(b, val, array_stride_decoration_cb, NULL);
       val->type->type = glsl_array_type(array_element->type, val->type->length,
@@ -1242,6 +1259,7 @@ vtn_handle_type(struct vtn_builder *b, SpvOp opcode,
       val->type->length = num_fields;
       val->type->members = ralloc_array(b, struct vtn_type *, num_fields);
       val->type->offsets = ralloc_array(b, unsigned, num_fields);
+      val->type->packed = false;
 
       NIR_VLA(struct glsl_struct_field, fields, count);
       for (unsigned i = 0; i < num_fields; i++) {
@@ -1255,6 +1273,15 @@ vtn_handle_type(struct vtn_builder *b, SpvOp opcode,
          };
       }
 
+      if (b->shader->info.stage == MESA_SHADER_KERNEL) {
+         unsigned offset = 0;
+         for (unsigned i = 0; i < num_fields; i++) {
+            offset = align(offset, glsl_get_cl_alignment(fields[i].type));
+            fields[i].offset = offset;
+            offset += glsl_get_cl_size(fields[i].type);
+         }
+      }
+
       struct member_decoration_ctx ctx = {
          .num_fields = num_fields,
          .fields = fields,
@@ -1266,7 +1293,7 @@ vtn_handle_type(struct vtn_builder *b, SpvOp opcode,
 
       const char *name = val->name ? val->name : "struct";
 
-      val->type->type = glsl_struct_type(fields, num_fields, name);
+      val->type->type = glsl_struct_type(fields, num_fields, name, false);
       break;
    }
 
@@ -1292,6 +1319,7 @@ vtn_handle_type(struct vtn_builder *b, SpvOp opcode,
        * declaration.
        */
       val = vtn_untyped_value(b, w[1]);
+      struct vtn_type *deref_type = vtn_untyped_value(b, w[3])->type;
 
       SpvStorageClass storage_class = w[2];
 
@@ -1320,6 +1348,19 @@ vtn_handle_type(struct vtn_builder *b, SpvOp opcode,
             break;
          case SpvStorageClassWorkgroup:
             val->type->type = b->options->shared_ptr_type;
+            if (b->physical_ptrs)
+               val->type->stride = align(glsl_get_cl_size(deref_type->type), glsl_get_cl_alignment(deref_type->type));
+            break;
+         case SpvStorageClassCrossWorkgroup:
+            val->type->type = b->options->global_ptr_type;
+            if (b->physical_ptrs)
+               val->type->stride = align(glsl_get_cl_size(deref_type->type), glsl_get_cl_alignment(deref_type->type));
+            break;
+         case SpvStorageClassFunction:
+            if (b->physical_ptrs) {
+               val->type->type = b->options->temp_ptr_type;
+               val->type->stride = align(glsl_get_cl_size(deref_type->type), glsl_get_cl_alignment(deref_type->type));
+            }
             break;
          default:
             /* In this case, no variable pointers are allowed so all deref
@@ -3047,12 +3088,7 @@ nir_ssa_def *
 vtn_vector_extract_dynamic(struct vtn_builder *b, nir_ssa_def *src,
                            nir_ssa_def *index)
 {
-   nir_ssa_def *dest = vtn_vector_extract(b, src, 0);
-   for (unsigned i = 1; i < src->num_components; i++)
-      dest = nir_bcsel(&b->nb, nir_ieq_imm(&b->nb, index, i),
-                       vtn_vector_extract(b, src, i), dest);
-
-   return dest;
+   return nir_vector_extract(&b->nb, src, nir_i2i(&b->nb, index, 32));
 }
 
 nir_ssa_def *
@@ -3741,12 +3777,18 @@ vtn_handle_preamble_instruction(struct vtn_builder *b, SpvOp opcode,
                      "AddressingModelPhysical32 only supported for kernels");
          b->shader->info.cs.ptr_size = 32;
          b->physical_ptrs = true;
+         b->options->shared_ptr_type = glsl_uint_type();
+         b->options->global_ptr_type = glsl_uint_type();
+         b->options->temp_ptr_type = glsl_uint_type();
          break;
       case SpvAddressingModelPhysical64:
          vtn_fail_if(b->shader->info.stage != MESA_SHADER_KERNEL,
                      "AddressingModelPhysical64 only supported for kernels");
          b->shader->info.cs.ptr_size = 64;
          b->physical_ptrs = true;
+         b->options->shared_ptr_type = glsl_uint64_t_type();
+         b->options->global_ptr_type = glsl_uint64_t_type();
+         b->options->temp_ptr_type = glsl_uint64_t_type();
          break;
       case SpvAddressingModelLogical:
          vtn_fail_if(b->shader->info.stage >= MESA_SHADER_STAGES,
@@ -4076,6 +4118,7 @@ vtn_handle_body_instruction(struct vtn_builder *b, SpvOp opcode,
    case SpvOpAccessChain:
    case SpvOpPtrAccessChain:
    case SpvOpInBoundsAccessChain:
+   case SpvOpInBoundsPtrAccessChain:
    case SpvOpArrayLength:
    case SpvOpConvertPtrToU:
    case SpvOpConvertUToPtr:
@@ -4392,6 +4435,10 @@ vtn_create_builder(const uint32_t *words, size_t word_count,
 {
    /* Initialize the vtn_builder object */
    struct vtn_builder *b = rzalloc(NULL, struct vtn_builder);
+   struct spirv_to_nir_options *dup_options =
+      ralloc(b, struct spirv_to_nir_options);
+   *dup_options = *options;
+
    b->spirv = words;
    b->spirv_word_count = word_count;
    b->file = NULL;
@@ -4400,7 +4447,7 @@ vtn_create_builder(const uint32_t *words, size_t word_count,
    exec_list_make_empty(&b->functions);
    b->entry_point_stage = stage;
    b->entry_point_name = entry_point_name;
-   b->options = options;
+   b->options = dup_options;
 
    /*
     * Handle the SPIR-V header (first 5 dwords).
@@ -4441,6 +4488,68 @@ vtn_create_builder(const uint32_t *words, size_t word_count,
  fail:
    ralloc_free(b);
    return NULL;
+}
+
+static nir_function *
+vtn_emit_kernel_entry_point_wrapper(struct vtn_builder *b,
+                                    nir_function *entry_point)
+{
+   vtn_assert(entry_point == b->entry_point->func->impl->function);
+   vtn_fail_if(!entry_point->name, "entry points are required to have a name");
+   const char *func_name =
+      ralloc_asprintf(b->shader, "__wrapped_%s", entry_point->name);
+
+   /* we shouldn't have any inputs yet */
+   vtn_assert(!entry_point->shader->num_inputs);
+   vtn_assert(b->shader->info.stage == MESA_SHADER_KERNEL);
+
+   nir_function *main_entry_point = nir_function_create(b->shader, func_name);
+   main_entry_point->impl = nir_function_impl_create(main_entry_point);
+   nir_builder_init(&b->nb, main_entry_point->impl);
+   b->nb.cursor = nir_after_cf_list(&main_entry_point->impl->body);
+   b->func_param_idx = 0;
+
+   nir_call_instr *call = nir_call_instr_create(b->nb.shader, entry_point);
+
+   for (unsigned i = 0; i < entry_point->num_params; ++i) {
+      struct vtn_type *param_type = b->entry_point->func->type->params[i];
+
+      /* consider all pointers to function memory to be parameters passed
+       * by value
+       */
+      bool is_by_val = param_type->base_type == vtn_base_type_pointer &&
+         param_type->storage_class == SpvStorageClassFunction;
+
+      /* input variable */
+      nir_variable *in_var = rzalloc(b->nb.shader, nir_variable);
+      in_var->data.mode = nir_var_shader_in;
+      in_var->data.read_only = true;
+      in_var->data.location = i;
+
+      if (is_by_val)
+         in_var->type = param_type->deref->type;
+      else
+         in_var->type = param_type->type;
+
+      nir_shader_add_variable(b->nb.shader, in_var);
+      b->nb.shader->num_inputs++;
+
+      /* we have to copy the entire variable into function memory */
+      if (is_by_val) {
+         nir_variable *copy_var =
+            nir_local_variable_create(main_entry_point->impl, in_var->type,
+                                      "copy_in");
+         nir_copy_var(&b->nb, copy_var, in_var);
+         call->params[i] =
+            nir_src_for_ssa(&nir_build_deref_var(&b->nb, copy_var)->dest.ssa);
+      } else {
+         call->params[i] = nir_src_for_ssa(nir_load_var(&b->nb, in_var));
+      }
+   }
+
+   nir_builder_instr_insert(&b->nb, &call->instr);
+
+   return main_entry_point;
 }
 
 nir_function *
@@ -4531,6 +4640,10 @@ spirv_to_nir(const uint32_t *words, size_t word_count,
    vtn_assert(b->entry_point->value_type == vtn_value_type_function);
    nir_function *entry_point = b->entry_point->func->impl->function;
    vtn_assert(entry_point);
+
+   /* post process entry_points with input params */
+   if (entry_point->num_params && b->shader->info.stage == MESA_SHADER_KERNEL)
+      entry_point = vtn_emit_kernel_entry_point_wrapper(b, entry_point);
 
    entry_point->is_entrypoint = true;
 

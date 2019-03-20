@@ -31,6 +31,7 @@
 #include "shader_enums.h"
 #include "blob.h"
 #include "c11/threads.h"
+#include "util/macros.h"
 
 #ifdef __cplusplus
 #include "main/config.h"
@@ -114,6 +115,42 @@ static inline bool glsl_base_type_is_integer(enum glsl_base_type type)
           type == GLSL_TYPE_IMAGE;
 }
 
+static inline unsigned int
+glsl_base_type_get_bit_size(const enum glsl_base_type base_type)
+{
+   switch (base_type) {
+   case GLSL_TYPE_BOOL:
+      return 1;
+
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_FLOAT: /* TODO handle mediump */
+   case GLSL_TYPE_SUBROUTINE:
+      return 32;
+
+   case GLSL_TYPE_FLOAT16:
+   case GLSL_TYPE_UINT16:
+   case GLSL_TYPE_INT16:
+      return 16;
+
+   case GLSL_TYPE_UINT8:
+   case GLSL_TYPE_INT8:
+      return 8;
+
+   case GLSL_TYPE_DOUBLE:
+   case GLSL_TYPE_INT64:
+   case GLSL_TYPE_UINT64:
+   case GLSL_TYPE_IMAGE:
+   case GLSL_TYPE_SAMPLER:
+      return 64;
+
+   default:
+      unreachable("unknown base type");
+   }
+
+   return 0;
+}
+
 enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_1D = 0,
    GLSL_SAMPLER_DIM_2D,
@@ -175,6 +212,13 @@ struct glsl_type {
    unsigned sampler_array:1;
    unsigned interface_packing:2;
    unsigned interface_row_major:1;
+
+   /**
+    * For \c GLSL_TYPE_STRUCT this specifies if the struct is packed or not.
+    *
+    * Only used for Compute kernels
+    */
+   unsigned packed:1;
 
 private:
    glsl_type() : mem_ctx(NULL)
@@ -314,7 +358,8 @@ public:
     */
    static const glsl_type *get_struct_instance(const glsl_struct_field *fields,
 					       unsigned num_fields,
-					       const char *name);
+					       const char *name,
+					       bool packed = false);
 
    /**
     * Get the instance of an interface block type
@@ -445,6 +490,16 @@ public:
     * Gets an explicitly laid out interface type.
     */
    const glsl_type *get_explicit_interface_type(bool supports_std430) const;
+
+   /**
+    * Alignment in bytes of the start of this type in OpenCL memory.
+    */
+   unsigned cl_alignment() const;
+
+   /**
+    * Size in bytes of this type in OpenCL memory
+    */
+   unsigned cl_size() const;
 
    /**
     * \brief Can this type be implicitly converted to another?
@@ -946,7 +1001,7 @@ private:
 
    /** Constructor for record types */
    glsl_type(const glsl_struct_field *fields, unsigned num_fields,
-	     const char *name);
+	     const char *name, bool packed = false);
 
    /** Constructor for interface types */
    glsl_type(const glsl_struct_field *fields, unsigned num_fields,

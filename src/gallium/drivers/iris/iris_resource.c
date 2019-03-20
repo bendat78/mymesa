@@ -567,21 +567,18 @@ iris_resource_create_with_modifiers(struct pipe_screen *pscreen,
 
    if (res->mod_info) {
       res->aux.possible_usages |= 1 << res->mod_info->aux_usage;
-   } else if (res->surf.samples > 1) {
-      if (supports_mcs(&res->surf))
-         res->aux.possible_usages |= 1 << ISL_AUX_USAGE_MCS;
-   } else {
-      if (has_depth) {
-         if (likely(!(INTEL_DEBUG & DEBUG_NO_HIZ)))
-            res->aux.possible_usages |= 1 << ISL_AUX_USAGE_HIZ;
-      } else if (likely(!(INTEL_DEBUG & DEBUG_NO_RBC)) &&
-                 supports_ccs(devinfo, &res->surf)) {
-         if (isl_format_supports_ccs_e(devinfo, res->surf.format))
-            res->aux.possible_usages |= 1 << ISL_AUX_USAGE_CCS_E;
+   } else if (supports_mcs(&res->surf)) {
+      res->aux.possible_usages |= 1 << ISL_AUX_USAGE_MCS;
+   } else if (has_depth) {
+      if (likely(!(INTEL_DEBUG & DEBUG_NO_HIZ)))
+         res->aux.possible_usages |= 1 << ISL_AUX_USAGE_HIZ;
+   } else if (likely(!(INTEL_DEBUG & DEBUG_NO_RBC)) &&
+              supports_ccs(devinfo, &res->surf)) {
+      if (isl_format_supports_ccs_e(devinfo, res->surf.format))
+         res->aux.possible_usages |= 1 << ISL_AUX_USAGE_CCS_E;
 
-         if (isl_format_supports_ccs_d(devinfo, res->surf.format))
-            res->aux.possible_usages |= 1 << ISL_AUX_USAGE_CCS_D;
-      }
+      if (isl_format_supports_ccs_d(devinfo, res->surf.format))
+         res->aux.possible_usages |= 1 << ISL_AUX_USAGE_CCS_D;
    }
 
    res->aux.usage = util_last_bit(res->aux.possible_usages) - 1;
@@ -1256,9 +1253,11 @@ iris_transfer_map(struct pipe_context *ctx,
       iris_map_copy_region(map);
    } else {
       /* Otherwise we're free to map on the CPU.  Flush if needed. */
-      for (int i = 0; i < IRIS_BATCH_COUNT; i++) {
-         if (iris_batch_references(&ice->batches[i], res->bo))
-            iris_batch_flush(&ice->batches[i]);
+      if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+         for (int i = 0; i < IRIS_BATCH_COUNT; i++) {
+            if (iris_batch_references(&ice->batches[i], res->bo))
+               iris_batch_flush(&ice->batches[i]);
+         }
       }
 
       if (surf->tiling == ISL_TILING_W) {

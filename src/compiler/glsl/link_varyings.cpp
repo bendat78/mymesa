@@ -687,7 +687,8 @@ cross_validate_outputs_to_inputs(struct gl_context *ctx,
                                  gl_linked_shader *consumer)
 {
    glsl_symbol_table parameters;
-   struct explicit_location_info explicit_locations[MAX_VARYING][4] = { 0 };
+   struct explicit_location_info output_explicit_locations[MAX_VARYING][4] = { 0 };
+   struct explicit_location_info input_explicit_locations[MAX_VARYING][4] = { 0 };
 
    /* Find all shader outputs in the "producer" stage.
     */
@@ -705,7 +706,7 @@ cross_validate_outputs_to_inputs(struct gl_context *ctx,
           * differently because they do not need to have matching names.
           */
          if (!validate_explicit_variable_location(ctx,
-                                                  explicit_locations,
+                                                  output_explicit_locations,
                                                   var, prog, producer)) {
             return;
          }
@@ -763,6 +764,12 @@ cross_validate_outputs_to_inputs(struct gl_context *ctx,
                compute_variable_location_slot(input, consumer->Stage);
             unsigned slot_limit = idx + num_elements;
 
+            if (!validate_explicit_variable_location(ctx,
+                                                     input_explicit_locations,
+                                                     input, prog, consumer)) {
+               return;
+            }
+
             while (idx < slot_limit) {
                if (idx >= MAX_VARYING) {
                   linker_error(prog,
@@ -771,10 +778,22 @@ cross_validate_outputs_to_inputs(struct gl_context *ctx,
                   return;
                }
 
-               output = explicit_locations[idx][input->data.location_frac].var;
+               output = output_explicit_locations[idx][input->data.location_frac].var;
 
-               if (output == NULL ||
-                   input->data.location != output->data.location) {
+               if (output == NULL) {
+                  /* A linker failure should only happen when there is no
+                   * output declaration and there is Static Use of the
+                   * declared input.
+                   */
+                  if (input->data.used) {
+                     linker_error(prog,
+                                  "%s shader input `%s' with explicit location "
+                                  "has no matching output\n",
+                                  _mesa_shader_stage_to_string(consumer->Stage),
+                                  input->name);
+                     break;
+                  }
+               } else if (input->data.location != output->data.location) {
                   linker_error(prog,
                                "%s shader input `%s' with explicit location "
                                "has no matching output\n",
@@ -804,7 +823,7 @@ cross_validate_outputs_to_inputs(struct gl_context *ctx,
              */
             assert(!input->data.assigned);
             if (input->data.used && !input->get_interface_type() &&
-                !input->data.explicit_location && !prog->SeparateShader)
+                !input->data.explicit_location)
                linker_error(prog,
                             "%s shader input `%s' "
                             "has no matching output in the previous stage\n",
@@ -1166,8 +1185,7 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
          return false;
       }
 
-      if ((this->offset / 4) / info->Buffers[buffer].Stride !=
-          (xfb_offset - 1) / info->Buffers[buffer].Stride) {
+      if (xfb_offset > info->Buffers[buffer].Stride) {
          linker_error(prog, "xfb_offset (%d) overflows xfb_stride (%d) for "
                       "buffer (%d)", xfb_offset * 4,
                       info->Buffers[buffer].Stride * 4, buffer);

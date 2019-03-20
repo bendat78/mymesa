@@ -59,6 +59,7 @@ extern "C" {
 #define NIR_FALSE 0u
 #define NIR_TRUE (~0u)
 #define NIR_MAX_VEC_COMPONENTS 4
+#define NIR_MAX_MATRIX_COLUMNS 4
 typedef uint8_t nir_component_mask_t;
 
 /** Defines a cast function
@@ -141,7 +142,7 @@ typedef struct nir_constant {
     * by the type associated with the \c nir_variable.  Constants may be
     * scalars, vectors, or matrices.
     */
-   nir_const_value values[NIR_MAX_VEC_COMPONENTS];
+   nir_const_value values[NIR_MAX_MATRIX_COLUMNS];
 
    /* we could get this from the var->type but makes clone *much* easier to
     * not have to care about the type.
@@ -2972,6 +2973,16 @@ bool nir_lower_var_copies(nir_shader *shader);
 void nir_fixup_deref_modes(nir_shader *shader);
 
 bool nir_lower_global_vars_to_local(nir_shader *shader);
+
+typedef enum {
+   nir_lower_direct_array_deref_of_vec_load     = (1 << 0),
+   nir_lower_indirect_array_deref_of_vec_load   = (1 << 1),
+   nir_lower_direct_array_deref_of_vec_store    = (1 << 2),
+   nir_lower_indirect_array_deref_of_vec_store  = (1 << 3),
+} nir_lower_array_deref_of_vec_options;
+
+bool nir_lower_array_deref_of_vec(nir_shader *shader, nir_variable_mode modes,
+                                  nir_lower_array_deref_of_vec_options options);
 
 bool nir_lower_indirect_derefs(nir_shader *shader, nir_variable_mode modes);
 

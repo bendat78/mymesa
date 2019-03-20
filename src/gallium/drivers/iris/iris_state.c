@@ -1731,8 +1731,13 @@ iris_create_sampler_view(struct pipe_context *ctx,
       while (aux_modes) {
          enum isl_aux_usage aux_usage = u_bit_scan(&aux_modes);
 
-         fill_surface_state(&screen->isl_dev, map, isv->res, &isv->view,
-                            aux_usage);
+         /* If we have a multisampled depth buffer, do not create a sampler
+          * surface state with HiZ.
+          */
+         if (!(aux_usage == ISL_AUX_USAGE_HIZ && isv->res->surf.samples > 1)) {
+            fill_surface_state(&screen->isl_dev, map, isv->res, &isv->view,
+                               aux_usage);
+         }
 
          map += SURFACE_STATE_ALIGNMENT;
       }
@@ -2623,7 +2628,7 @@ iris_set_vertex_buffers(struct pipe_context *ctx,
          vb.AddressModifyEnable = true;
          vb.BufferPitch = buffer->stride;
          if (res) {
-            vb.BufferSize = res->bo->size;
+            vb.BufferSize = res->bo->size - (int) buffer->buffer_offset;
             vb.BufferStartingAddress =
                ro_bo(NULL, res->bo->gtt_offset + (int) buffer->buffer_offset);
             vb.MOCS = mocs(res->bo);
@@ -2699,9 +2704,9 @@ iris_create_vertex_elements(struct pipe_context *ctx,
                            VFCOMP_STORE_SRC, VFCOMP_STORE_SRC };
 
       switch (isl_format_get_num_channels(fmt.fmt)) {
-      case 0: comp[0] = VFCOMP_STORE_0;
-      case 1: comp[1] = VFCOMP_STORE_0;
-      case 2: comp[2] = VFCOMP_STORE_0;
+      case 0: comp[0] = VFCOMP_STORE_0; /* fallthrough */
+      case 1: comp[1] = VFCOMP_STORE_0; /* fallthrough */
+      case 2: comp[2] = VFCOMP_STORE_0; /* fallthrough */
       case 3:
          comp[3] = isl_format_has_int_channel(fmt.fmt) ? VFCOMP_STORE_1_INT
                                                        : VFCOMP_STORE_1_FP;
@@ -4947,7 +4952,7 @@ iris_upload_render_state(struct iris_context *ice,
       iris_emit_cmd(batch, GENX(3DSTATE_INDEX_BUFFER), ib) {
          ib.IndexFormat = draw->index_size >> 1;
          ib.MOCS = mocs(bo);
-         ib.BufferSize = bo->size;
+         ib.BufferSize = bo->size - offset;
          ib.BufferStartingAddress = ro_bo(bo, offset);
       }
 
