@@ -87,6 +87,18 @@ struct iris_resource {
       uint32_t offset;
 
       /**
+       * Fast clear color for this surface.  For depth surfaces, the clear
+       * value is stored as a float32 in the red component.
+       */
+      union isl_color_value clear_color;
+
+      /** Buffer object containing the indirect clear color.  */
+      struct iris_bo *clear_color_bo;
+
+      /** Offset into bo where the clear color can be found.  */
+      uint64_t clear_color_offset;
+
+      /**
        * \brief The type of auxiliary compression used by this resource.
        *
        * This describes the type of auxiliary compression that is intended to
@@ -147,6 +159,8 @@ struct iris_sampler_view {
    struct pipe_sampler_view base;
    struct isl_view view;
 
+   union isl_color_value clear_color;
+
    /* A short-cut (not a reference) to the actual resource being viewed.
     * Multi-planar (or depth+stencil) images may have multiple resources
     * chained together; this skips having to traverse base->texture->*.
@@ -166,6 +180,7 @@ struct iris_sampler_view {
 struct iris_surface {
    struct pipe_surface base;
    struct isl_view view;
+   union isl_color_value clear_color;
 
    /** The resource (BO) holding our SURFACE_STATE. */
    struct iris_state_ref surface_state;
@@ -207,6 +222,13 @@ struct pipe_resource *iris_resource_get_separate_stencil(struct pipe_resource *)
 void iris_get_depth_stencil_resources(struct pipe_resource *res,
                                       struct iris_resource **out_z,
                                       struct iris_resource **out_s);
+bool iris_resource_set_clear_color(struct iris_context *ice,
+                                   struct iris_resource *res,
+                                   union isl_color_value color);
+union isl_color_value
+iris_resource_get_clear_color(const struct iris_resource *res,
+                              struct iris_bo **clear_color_bo,
+                              uint64_t *clear_color_offset);
 
 void iris_init_screen_resource_functions(struct pipe_screen *pscreen);
 
@@ -227,7 +249,8 @@ iris_hiz_exec(struct iris_context *ice,
               struct iris_batch *batch,
               struct iris_resource *res,
               unsigned int level, unsigned int start_layer,
-              unsigned int num_layers, enum isl_aux_op op);
+              unsigned int num_layers, enum isl_aux_op op,
+              bool update_clear_depth);
 
 /**
  * Prepare a miptree for access

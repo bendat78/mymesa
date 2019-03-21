@@ -253,6 +253,14 @@ iris_blorp_surf_for_resource(struct iris_vtable *vtbl,
          .reloc_flags = is_render_target ? EXEC_OBJECT_WRITE : 0,
          .mocs = vtbl->mocs(res->bo),
       };
+      surf->clear_color =
+         iris_resource_get_clear_color(res, NULL, NULL);
+      surf->clear_color_addr = (struct blorp_address) {
+         .buffer = res->aux.clear_color_bo,
+         .offset = res->aux.clear_color_offset,
+         .reloc_flags = 0,
+         .mocs = vtbl->mocs(res->aux.clear_color_bo),
+      };
    }
 
    // XXX: ASTC

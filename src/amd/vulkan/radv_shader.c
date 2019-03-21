@@ -249,6 +249,7 @@ radv_shader_compile_to_nir(struct radv_device *device,
 				.transform_feedback = true,
 				.trinary_minmax = true,
 				.variable_pointers = true,
+				.storage_8bit = true,
 			},
 			.ubo_ptr_type = glsl_vector_type(GLSL_TYPE_UINT, 2),
 			.ssbo_ptr_type = glsl_vector_type(GLSL_TYPE_UINT, 2),
@@ -313,6 +314,7 @@ radv_shader_compile_to_nir(struct radv_device *device,
 
 	static const nir_lower_tex_options tex_options = {
 	  .lower_txp = ~0,
+	  .lower_tg4_offsets = true,
 	};
 
 	nir_lower_tex(nir, &tex_options);

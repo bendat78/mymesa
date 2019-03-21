@@ -1482,6 +1482,9 @@ typedef struct {
    /* gather component selector */
    unsigned component : 2;
 
+   /* gather offsets */
+   int8_t tg4_offsets[4][2];
+
    /** The texture index
     *
     * If this texture instruction has a nir_tex_src_texture_offset source,
@@ -1698,6 +1701,8 @@ void nir_tex_instr_add_src(nir_tex_instr *tex,
                            nir_src src);
 
 void nir_tex_instr_remove_src(nir_tex_instr *tex, unsigned src_idx);
+
+bool nir_tex_instr_has_explicit_tg4_offsets(nir_tex_instr *tex);
 
 typedef struct {
    nir_instr instr;
@@ -3230,6 +3235,11 @@ typedef struct nir_lower_tex_options {
     * mixed-up tg4 locations.
     */
    bool lower_tg4_broadcom_swizzle;
+
+   /**
+    * If true, lowers tg4 with 4 constant offsets to 4 tg4 calls
+    */
+   bool lower_tg4_offsets;
 
    enum nir_lower_tex_packing lower_tex_packing[32];
 } nir_lower_tex_options;

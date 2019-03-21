@@ -1651,7 +1651,7 @@ fill_surface_state(struct isl_device *isl_dev,
       f.aux_surf = &res->aux.surf;
       f.aux_usage = aux_usage;
       f.aux_address = res->aux.bo->gtt_offset + res->aux.offset;
-      // XXX: clear color
+      f.clear_color = res->aux.clear_color;
    }
 
    isl_surf_fill_state_s(isl_dev, map, &f);
@@ -1706,6 +1706,8 @@ iris_create_sampler_view(struct pipe_context *ctx,
 
    const struct iris_format_info fmt =
       iris_format_for_usage(devinfo, tmpl->format, usage);
+
+   isv->clear_color = isv->res->aux.clear_color;
 
    isv->view = (struct isl_view) {
       .format = fmt.fmt,
@@ -1822,6 +1824,8 @@ iris_create_surface(struct pipe_context *ctx,
       .swizzle = ISL_SWIZZLE_IDENTITY,
       .usage = usage,
    };
+
+   surf->clear_color = res->aux.clear_color;
 
    /* Bail early for depth/stencil - we don't want SURFACE_STATE for them. */
    if (res->surf.usage & (ISL_SURF_USAGE_DEPTH_BIT |
@@ -3727,6 +3731,41 @@ surf_state_offset_for_aux(struct iris_resource *res,
           util_bitcount(res->aux.possible_usages & ((1 << aux_usage) - 1));
 }
 
+static void
+surf_state_update_clear_value(struct iris_batch *batch,
+                              struct iris_resource *res,
+                              struct iris_state_ref *state,
+                              enum isl_aux_usage aux_usage)
+{
+   struct isl_device *isl_dev = &batch->screen->isl_dev;
+   struct iris_bo *state_bo = iris_resource_bo(state->res);
+   uint64_t real_offset = state->offset +
+      IRIS_MEMZONE_BINDER_START;
+   uint32_t offset_into_bo = real_offset - state_bo->gtt_offset;
+   uint32_t clear_offset = offset_into_bo +
+      isl_dev->ss.clear_value_offset +
+      surf_state_offset_for_aux(res, aux_usage);
+
+   batch->vtbl->copy_mem_mem(batch, state_bo, clear_offset,
+                             res->aux.clear_color_bo,
+                             res->aux.clear_color_offset,
+                             isl_dev->ss.clear_value_size);
+}
+
+static void
+update_clear_value(struct iris_batch *batch,
+                   struct iris_resource *res,
+                   struct iris_state_ref *state)
+{
+   unsigned aux_modes = res->aux.possible_usages;
+   aux_modes &= ~ISL_AUX_USAGE_NONE;
+
+   while (aux_modes) {
+      enum isl_aux_usage aux_usage = u_bit_scan(&aux_modes);
+      surf_state_update_clear_value(batch, res, state, aux_usage);
+   }
+}
+
 /**
  * Add a surface to the validation list, as well as the buffer containing
  * the corresponding SURFACE_STATE.
@@ -3745,8 +3784,16 @@ use_surface(struct iris_batch *batch,
    iris_use_pinned_bo(batch, iris_resource_bo(p_surf->texture), writeable);
    iris_use_pinned_bo(batch, iris_resource_bo(surf->surface_state.res), false);
 
-   if (res->aux.bo)
+   if (res->aux.bo) {
       iris_use_pinned_bo(batch, res->aux.bo, writeable);
+      iris_use_pinned_bo(batch, res->aux.clear_color_bo, false);
+
+      if (memcmp(&res->aux.clear_color, &surf->clear_color,
+                 sizeof(surf->clear_color)) != 0) {
+         update_clear_value(batch, res, &surf->surface_state);
+         surf->clear_color = res->aux.clear_color;
+      }
+   }
 
    return surf->surface_state.offset +
           surf_state_offset_for_aux(res, aux_usage);
@@ -3764,8 +3811,15 @@ use_sampler_view(struct iris_context *ice,
    iris_use_pinned_bo(batch, isv->res->bo, false);
    iris_use_pinned_bo(batch, iris_resource_bo(isv->surface_state.res), false);
 
-   if (isv->res->aux.bo)
+   if (isv->res->aux.bo) {
       iris_use_pinned_bo(batch, isv->res->aux.bo, false);
+      iris_use_pinned_bo(batch, isv->res->aux.clear_color_bo, false);
+      if (memcmp(&isv->res->aux.clear_color, &isv->clear_color,
+                 sizeof(isv->clear_color)) != 0) {
+         update_clear_value(batch, isv->res, &isv->surface_state);
+         isv->clear_color = isv->res->aux.clear_color;
+      }
+   }
 
    return isv->surface_state.offset +
           surf_state_offset_for_aux(isv->res, aux_usage);
@@ -4639,7 +4693,30 @@ iris_upload_dirty_render_state(struct iris_context *ice,
    if (dirty & IRIS_DIRTY_DEPTH_BUFFER) {
       struct iris_depth_buffer_state *cso_z = &ice->state.genx->depth_buffer;
 
-      iris_batch_emit(batch, cso_z->packets, sizeof(cso_z->packets));
+      /* Do not emit the clear params yets. We need to update the clear value
+       * first.
+       */
+      uint32_t clear_length = GENX(3DSTATE_CLEAR_PARAMS_length) * 4;
+      uint32_t cso_z_size = sizeof(cso_z->packets) - clear_length;
+      iris_batch_emit(batch, cso_z->packets, cso_z_size);
+
+      union isl_color_value clear_value = { .f32 = { 0, } };
+
+      struct pipe_framebuffer_state *cso_fb = &ice->state.framebuffer;
+      if (cso_fb->zsbuf) {
+         struct iris_resource *zres, *sres;
+         iris_get_depth_stencil_resources(cso_fb->zsbuf->texture,
+                                          &zres, &sres);
+         if (zres && zres->aux.bo)
+            clear_value = iris_resource_get_clear_color(zres, NULL, NULL);
+      }
+
+      uint32_t clear_params[GENX(3DSTATE_CLEAR_PARAMS_length)];
+      iris_pack_command(GENX(3DSTATE_CLEAR_PARAMS), clear_params, clear) {
+         clear.DepthClearValueValid = true;
+         clear.DepthClearValue = clear_value.f32[0];
+      }
+      iris_batch_emit(batch, clear_params, clear_length);
    }
 
    if (dirty & (IRIS_DIRTY_DEPTH_BUFFER | IRIS_DIRTY_WM_DEPTH_STENCIL)) {
