@@ -2274,7 +2274,6 @@ exec_tex(struct tgsi_exec_machine *mach,
          FETCH(&r[last], 0, TGSI_CHAN_W);
       }
       else {
-         assert(shadow_ref != 4);
          FETCH(&r[last], 1, TGSI_CHAN_X);
       }
 
@@ -4912,8 +4911,13 @@ micro_ibfe(union tgsi_exec_channel *dst,
 {
    int i;
    for (i = 0; i < 4; i++) {
-      int width = src2->i[i] & 0x1f;
+      int width = src2->i[i];
       int offset = src1->i[i] & 0x1f;
+      if (width == 32 && offset == 0) {
+         dst->i[i] = src0->i[i];
+         continue;
+      }
+      width &= 0x1f;
       if (width == 0)
          dst->i[i] = 0;
       else if (width + offset < 32)
@@ -4934,8 +4938,13 @@ micro_ubfe(union tgsi_exec_channel *dst,
 {
    int i;
    for (i = 0; i < 4; i++) {
-      int width = src2->u[i] & 0x1f;
+      int width = src2->u[i];
       int offset = src1->u[i] & 0x1f;
+      if (width == 32 && offset == 0) {
+         dst->u[i] = src0->u[i];
+         continue;
+      }
+      width &= 0x1f;
       if (width == 0)
          dst->u[i] = 0;
       else if (width + offset < 32)
@@ -4957,10 +4966,14 @@ micro_bfi(union tgsi_exec_channel *dst,
 {
    int i;
    for (i = 0; i < 4; i++) {
-      int width = src3->u[i] & 0x1f;
+      int width = src3->u[i];
       int offset = src2->u[i] & 0x1f;
-      int bitmask = ((1 << width) - 1) << offset;
-      dst->u[i] = ((src1->u[i] << offset) & bitmask) | (src0->u[i] & ~bitmask);
+      if (width == 32) {
+         dst->u[i] = src1->u[i];
+      } else {
+         int bitmask = ((1 << width) - 1) << offset;
+         dst->u[i] = ((src1->u[i] << offset) & bitmask) | (src0->u[i] & ~bitmask);
+      }
    }
 }
 

@@ -53,20 +53,20 @@ vir_dump_uniform(enum quniform_contents contents,
 
         case QUNIFORM_TMU_CONFIG_P0:
                 fprintf(stderr, "tex[%d].p0 | 0x%x",
-                        v3d_tmu_config_data_get_unit(data),
-                        v3d_tmu_config_data_get_value(data));
+                        v3d_unit_data_get_unit(data),
+                        v3d_unit_data_get_offset(data));
                 break;
 
         case QUNIFORM_TMU_CONFIG_P1:
                 fprintf(stderr, "tex[%d].p1 | 0x%x",
-                        v3d_tmu_config_data_get_unit(data),
-                        v3d_tmu_config_data_get_value(data));
+                        v3d_unit_data_get_unit(data),
+                        v3d_unit_data_get_offset(data));
                 break;
 
         case QUNIFORM_IMAGE_TMU_CONFIG_P0:
                 fprintf(stderr, "img[%d].p0 | 0x%x",
-                        v3d_tmu_config_data_get_unit(data),
-                        v3d_tmu_config_data_get_value(data));
+                        v3d_unit_data_get_unit(data),
+                        v3d_unit_data_get_offset(data));
                 break;
 
         case QUNIFORM_TEXTURE_WIDTH:
@@ -99,7 +99,9 @@ vir_dump_uniform(enum quniform_contents contents,
                 break;
 
         case QUNIFORM_UBO_ADDR:
-                fprintf(stderr, "ubo[%d]", data);
+                fprintf(stderr, "ubo[%d]+0x%x",
+                        v3d_unit_data_get_unit(data),
+                        v3d_unit_data_get_offset(data));
                 break;
 
         case QUNIFORM_SSBO_OFFSET:

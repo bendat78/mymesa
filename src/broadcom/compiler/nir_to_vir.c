@@ -219,6 +219,10 @@ ntq_emit_tmu_general(struct v3d_compile *c, nir_intrinsic_instr *instr,
                 }
         }
 
+        uint32_t const_offset = 0;
+        if (nir_src_is_const(instr->src[offset_src]))
+                const_offset = nir_src_as_uint(instr->src[offset_src]);
+
         /* Make sure we won't exceed the 16-entry TMU fifo if each thread is
          * storing at the same time.
          */
@@ -227,41 +231,18 @@ ntq_emit_tmu_general(struct v3d_compile *c, nir_intrinsic_instr *instr,
 
         struct qreg offset;
         if (instr->intrinsic == nir_intrinsic_load_uniform) {
-                offset = vir_uniform(c, QUNIFORM_UBO_ADDR, 0);
-
-                /* Find what variable in the default uniform block this
-                 * uniform load is coming from.
-                 */
-                uint32_t base = nir_intrinsic_base(instr);
-                int i;
-                struct v3d_ubo_range *range = NULL;
-                for (i = 0; i < c->num_ubo_ranges; i++) {
-                        range = &c->ubo_ranges[i];
-                        if (base >= range->src_offset &&
-                            base < range->src_offset + range->size) {
-                                break;
-                        }
-                }
-                /* The driver-location-based offset always has to be within a
-                 * declared uniform range.
-                 */
-                assert(i != c->num_ubo_ranges);
-                if (!c->ubo_range_used[i]) {
-                        c->ubo_range_used[i] = true;
-                        range->dst_offset = c->next_ubo_dst_offset;
-                        c->next_ubo_dst_offset += range->size;
-                }
-
-                base = base - range->src_offset + range->dst_offset;
-
-                if (base != 0)
-                        offset = vir_ADD(c, offset, vir_uniform_ui(c, base));
+                const_offset += nir_intrinsic_base(instr);
+                offset = vir_uniform(c, QUNIFORM_UBO_ADDR,
+                                     v3d_unit_data_create(0, const_offset));
+                const_offset = 0;
         } else if (instr->intrinsic == nir_intrinsic_load_ubo) {
+                uint32_t index = nir_src_as_uint(instr->src[0]) + 1;
                 /* Note that QUNIFORM_UBO_ADDR takes a UBO index shifted up by
                  * 1 (0 is gallium's constant buffer 0).
                  */
                 offset = vir_uniform(c, QUNIFORM_UBO_ADDR,
-                                     nir_src_as_uint(instr->src[0]) + 1);
+                                     v3d_unit_data_create(index, const_offset));
+                const_offset = 0;
         } else if (is_shared) {
                 /* Shared variables have no buffer index, and all start from a
                  * common base that we set up at the start of dispatch
@@ -295,8 +276,7 @@ ntq_emit_tmu_general(struct v3d_compile *c, nir_intrinsic_instr *instr,
                 dest = vir_reg(QFILE_MAGIC, V3D_QPU_WADDR_TMUAU);
 
         struct qinst *tmu;
-        if (nir_src_is_const(instr->src[offset_src]) &&
-            nir_src_as_uint(instr->src[offset_src]) == 0) {
+        if (nir_src_is_const(instr->src[offset_src]) && const_offset == 0) {
                 tmu = vir_MOV_dest(c, dest, offset);
         } else {
                 tmu = vir_ADD_dest(c, dest,
@@ -662,27 +642,6 @@ add_output(struct v3d_compile *c,
 
         c->output_slots[decl_offset] =
                 v3d_slot_from_slot_and_component(slot, swizzle);
-}
-
-static void
-declare_uniform_range(struct v3d_compile *c, uint32_t start, uint32_t size)
-{
-        unsigned array_id = c->num_ubo_ranges++;
-        if (array_id >= c->ubo_ranges_array_size) {
-                c->ubo_ranges_array_size = MAX2(c->ubo_ranges_array_size * 2,
-                                                array_id + 1);
-                c->ubo_ranges = reralloc(c, c->ubo_ranges,
-                                         struct v3d_ubo_range,
-                                         c->ubo_ranges_array_size);
-                c->ubo_range_used = reralloc(c, c->ubo_range_used,
-                                             bool,
-                                             c->ubo_ranges_array_size);
-        }
-
-        c->ubo_ranges[array_id].dst_offset = 0;
-        c->ubo_ranges[array_id].src_offset = start;
-        c->ubo_ranges[array_id].size = size;
-        c->ubo_range_used[array_id] = false;
 }
 
 /**
@@ -1532,23 +1491,6 @@ ntq_setup_outputs(struct v3d_compile *c)
         }
 }
 
-static void
-ntq_setup_uniforms(struct v3d_compile *c)
-{
-        nir_foreach_variable(var, &c->s->uniforms) {
-                uint32_t vec4_count = glsl_count_attribute_slots(var->type,
-                                                                 false);
-                unsigned vec4_size = 4 * sizeof(float);
-
-                if (var->data.mode != nir_var_uniform)
-                        continue;
-
-                declare_uniform_range(c, var->data.driver_location * vec4_size,
-                                      vec4_count * vec4_size);
-
-        }
-}
-
 /**
  * Sets up the mapping from nir_register to struct qreg *.
  *
@@ -2357,7 +2299,6 @@ nir_to_vir(struct v3d_compile *c)
                 ntq_setup_vpm_inputs(c);
 
         ntq_setup_outputs(c);
-        ntq_setup_uniforms(c);
         ntq_setup_registers(c, &c->s->registers);
 
         /* Find the main function and emit the body. */

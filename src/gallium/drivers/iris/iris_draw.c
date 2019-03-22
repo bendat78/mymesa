@@ -133,22 +133,24 @@ iris_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
    iris_update_compiled_shaders(ice);
 
-   bool draw_aux_buffer_disabled[BRW_MAX_DRAW_BUFFERS] = { };
-   for (gl_shader_stage stage = 0; stage < MESA_SHADER_COMPUTE; stage++) {
-      if (ice->shaders.prog[stage])
-         iris_predraw_resolve_inputs(ice,batch, &ice->state.shaders[stage],
-                                     draw_aux_buffer_disabled, true);
+   if (ice->state.dirty & IRIS_DIRTY_RENDER_RESOLVES_AND_FLUSHES) {
+      bool draw_aux_buffer_disabled[BRW_MAX_DRAW_BUFFERS] = { };
+      for (gl_shader_stage stage = 0; stage < MESA_SHADER_COMPUTE; stage++) {
+         if (ice->shaders.prog[stage])
+            iris_predraw_resolve_inputs(ice, batch, draw_aux_buffer_disabled,
+                                        stage, true);
+      }
+      iris_predraw_resolve_framebuffer(ice, batch, draw_aux_buffer_disabled);
    }
-   iris_predraw_resolve_framebuffer(ice, batch, draw_aux_buffer_disabled);
 
    iris_binder_reserve_3d(ice);
 
    ice->vtbl.update_surface_base_address(batch, &ice->state.binder);
    ice->vtbl.upload_render_state(ice, batch, info);
 
-   ice->state.dirty &= ~IRIS_ALL_DIRTY_FOR_RENDER;
-
    iris_postdraw_update_resolve_tracking(ice, batch);
+
+   ice->state.dirty &= ~IRIS_ALL_DIRTY_FOR_RENDER;
 }
 
 static void
@@ -214,9 +216,10 @@ iris_launch_grid(struct pipe_context *ctx, const struct pipe_grid_info *grid)
    /* We can't do resolves on the compute engine, so awkwardly, we have to
     * do them on the render batch...
     */
-   iris_predraw_resolve_inputs(ice, &ice->batches[IRIS_BATCH_RENDER],
-                               &ice->state.shaders[MESA_SHADER_COMPUTE],
-                               NULL, false);
+   if (ice->state.dirty & IRIS_DIRTY_COMPUTE_RESOLVES_AND_FLUSHES) {
+      iris_predraw_resolve_inputs(ice, &ice->batches[IRIS_BATCH_RENDER], NULL,
+                                  MESA_SHADER_COMPUTE, false);
+   }
 
    iris_batch_maybe_flush(batch, 1500);
 

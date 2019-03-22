@@ -125,12 +125,15 @@ enum iris_param_domain {
 #define IRIS_DIRTY_VF_SGVS                  (1ull << 52)
 #define IRIS_DIRTY_VF                       (1ull << 53)
 #define IRIS_DIRTY_VF_TOPOLOGY              (1ull << 54)
+#define IRIS_DIRTY_RENDER_RESOLVES_AND_FLUSHES  (1ull << 55)
+#define IRIS_DIRTY_COMPUTE_RESOLVES_AND_FLUSHES (1ull << 56)
 
 #define IRIS_ALL_DIRTY_FOR_COMPUTE (IRIS_DIRTY_CS | \
                                     IRIS_DIRTY_SAMPLER_STATES_CS | \
                                     IRIS_DIRTY_UNCOMPILED_CS | \
                                     IRIS_DIRTY_CONSTANTS_CS | \
-                                    IRIS_DIRTY_BINDINGS_CS)
+                                    IRIS_DIRTY_BINDINGS_CS | \
+                                    IRIS_DIRTY_COMPUTE_RESOLVES_AND_FLUSHES)
 
 #define IRIS_ALL_DIRTY_FOR_RENDER ~IRIS_ALL_DIRTY_FOR_COMPUTE
 
@@ -792,8 +795,8 @@ void iris_resolve_conditional_render(struct iris_context *ice);
 
 void iris_predraw_resolve_inputs(struct iris_context *ice,
                                  struct iris_batch *batch,
-                                 struct iris_shader_state *shs,
                                  bool *draw_aux_buffer_disabled,
+                                 gl_shader_stage stage,
                                  bool consider_framebuffer);
 void iris_predraw_resolve_framebuffer(struct iris_context *ice,
                                       struct iris_batch *batch,
