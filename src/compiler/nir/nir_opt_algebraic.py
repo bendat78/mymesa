@@ -128,6 +128,7 @@ optimizations = [
    (('~flrp', 0.0, a, b), ('fmul', a, b)),
    (('~flrp', a, b, ('b2f', 'c@1')), ('bcsel', c, b, a), 'options->lower_flrp32'),
    (('~flrp', a, 0.0, c), ('fadd', ('fmul', ('fneg', a), c), a)),
+   (('flrp@16', a, b, c), ('fadd', ('fmul', c, ('fsub', b, a)), a), 'options->lower_flrp16'),
    (('flrp@32', a, b, c), ('fadd', ('fmul', c, ('fsub', b, a)), a), 'options->lower_flrp32'),
    (('flrp@64', a, b, c), ('fadd', ('fmul', c, ('fsub', b, a)), a), 'options->lower_flrp64'),
    (('ffloor', a), ('fsub', a, ('ffract', a)), 'options->lower_ffloor'),
@@ -674,6 +675,7 @@ optimizations = [
    (('bcsel', ('ine', a, -1), ('ifind_msb', a), -1), ('ifind_msb', a)),
 
    # Misc. lowering
+   (('fmod@16', a, b), ('fsub', a, ('fmul', b, ('ffloor', ('fdiv', a, b)))), 'options->lower_fmod16'),
    (('fmod@32', a, b), ('fsub', a, ('fmul', b, ('ffloor', ('fdiv', a, b)))), 'options->lower_fmod32'),
    (('fmod@64', a, b), ('fsub', a, ('fmul', b, ('ffloor', ('fdiv', a, b)))), 'options->lower_fmod64'),
    (('frem', a, b), ('fsub', a, ('fmul', b, ('ftrunc', ('fdiv', a, b)))), 'options->lower_fmod32'),
@@ -849,7 +851,9 @@ for x, y in itertools.product(['f', 'u', 'i'], ['f', 'u', 'i']):
 
 def fexp2i(exp, bits):
    # We assume that exp is already in the right range.
-   if bits == 32:
+   if bits == 16:
+      return ('i2i16', ('ishl', ('iadd', exp, 15), 10))
+   elif bits == 32:
       return ('ishl', ('iadd', exp, 127), 23)
    elif bits == 64:
       return ('pack_64_2x32_split', 0, ('ishl', ('iadd', exp, 1023), 20))
@@ -867,7 +871,9 @@ def ldexp(f, exp, bits):
    # handles a range on exp of [-252, 254] which allows you to create any
    # value (including denorms if the hardware supports it) and to adjust the
    # exponent of any normal value to anything you want.
-   if bits == 32:
+   if bits == 16:
+      exp = ('imin', ('imax', exp, -28), 30)
+   elif bits == 32:
       exp = ('imin', ('imax', exp, -252), 254)
    elif bits == 64:
       exp = ('imin', ('imax', exp, -2044), 2046)
@@ -887,6 +893,7 @@ def ldexp(f, exp, bits):
    return ('fmul', ('fmul', f, pow2_1), pow2_2)
 
 optimizations += [
+   (('ldexp@16', 'x', 'exp'), ldexp('x', 'exp', 16), 'options->lower_ldexp'),
    (('ldexp@32', 'x', 'exp'), ldexp('x', 'exp', 32), 'options->lower_ldexp'),
    (('ldexp@64', 'x', 'exp'), ldexp('x', 'exp', 64), 'options->lower_ldexp'),
 ]

@@ -30,14 +30,20 @@ a = 'a'
 b = 'b'
 
 algebraic = [
-    (('b2i32', a), ('iand@32', "a@32", 1)),
-    (('fge', a, b), ('flt', b, a)),
-
     # XXX: We have hw ops for this, just unknown atm..
     #(('fsign@32', a), ('i2f32@32', ('isign', ('f2i32@32', ('fmul', a, 0x43800000)))))
     #(('fsign', a), ('fcsel', ('fge', a, 0), 1.0, ('fcsel', ('flt', a, 0.0), -1.0, 0.0)))
     (('fsign', a), ('bcsel', ('fge', a, 0), 1.0, -1.0)),
 ]
+
+algebraic_late = [
+    # ineg must be lowered late, but only for integers; floats will try to
+    # have modifiers attached... hence why this has to be here rather than
+    # a more standard lower_negate approach
+
+    (('ineg', a), ('isub', 0, a)),
+]
+
 
 # Midgard scales fsin/fcos arguments by pi.
 # Pass must be run only once, after the main loop
@@ -61,6 +67,9 @@ def run():
     print('#include "midgard_nir.h"')
     print(nir_algebraic.AlgebraicPass("midgard_nir_lower_algebraic",
                                       algebraic).render())
+
+    print(nir_algebraic.AlgebraicPass("midgard_nir_lower_algebraic_late",
+                                      algebraic_late).render())
 
     print(nir_algebraic.AlgebraicPass("midgard_nir_scale_trig",
                                       scale_trig).render())

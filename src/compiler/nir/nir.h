@@ -1434,6 +1434,8 @@ typedef enum {
    nir_tex_src_sampler_deref, /* < deref pointing to the sampler */
    nir_tex_src_texture_offset, /* < dynamically uniform indirect offset */
    nir_tex_src_sampler_offset, /* < dynamically uniform indirect offset */
+   nir_tex_src_texture_handle, /* < bindless texture handle */
+   nir_tex_src_sampler_handle, /* < bindless sampler handle */
    nir_tex_src_plane,          /* < selects plane for planar textures */
    nir_num_tex_src_types
 } nir_tex_src_type;
@@ -1484,6 +1486,12 @@ typedef struct {
 
    /* gather offsets */
    int8_t tg4_offsets[4][2];
+
+   /* True if the texture index or handle is not dynamically uniform */
+   bool texture_non_uniform;
+
+   /* True if the sampler index or handle is not dynamically uniform */
+   bool sampler_non_uniform;
 
    /** The texture index
     *
@@ -1894,9 +1902,16 @@ nir_block_ends_in_jump(nir_block *block)
 #define nir_foreach_instr_reverse_safe(instr, block) \
    foreach_list_typed_reverse_safe(nir_instr, instr, node, &(block)->instr_list)
 
+typedef enum {
+   nir_selection_control_none = 0x0,
+   nir_selection_control_flatten = 0x1,
+   nir_selection_control_dont_flatten = 0x2,
+} nir_selection_control;
+
 typedef struct nir_if {
    nir_cf_node cf_node;
    nir_src condition;
+   nir_selection_control control;
 
    struct exec_list then_list; /** < list of nir_cf_node */
    struct exec_list else_list; /** < list of nir_cf_node */
@@ -1960,12 +1975,19 @@ typedef struct {
    struct list_head loop_terminator_list;
 } nir_loop_info;
 
+typedef enum {
+   nir_loop_control_none = 0x0,
+   nir_loop_control_unroll = 0x1,
+   nir_loop_control_dont_unroll = 0x2,
+} nir_loop_control;
+
 typedef struct {
    nir_cf_node cf_node;
 
    struct exec_list body; /** < list of nir_cf_node */
 
    nir_loop_info *info;
+   nir_loop_control control;
    bool partially_unrolled;
 } nir_loop;
 
@@ -2163,12 +2185,14 @@ typedef struct nir_shader_compiler_options {
    bool lower_fdiv;
    bool lower_ffma;
    bool fuse_ffma;
+   bool lower_flrp16;
    bool lower_flrp32;
    /** Lowers flrp when it does not support doubles */
    bool lower_flrp64;
    bool lower_fpow;
    bool lower_fsat;
    bool lower_fsqrt;
+   bool lower_fmod16;
    bool lower_fmod32;
    bool lower_fmod64;
    /** Lowers ibitfield_extract/ubitfield_extract to ibfe/ubfe. */
@@ -3036,6 +3060,16 @@ typedef enum {
    nir_address_format_64bit_global,
 
    /**
+    * An address format which is a bounds-checked 64-bit global GPU address.
+    *
+    * The address is comprised as a 32-bit vec4 where .xy are a uint64_t base
+    * address stored with the low bits in .x and high bits in .y, .z is a
+    * size, and .w is an offset.  When the final I/O operation is lowered, .w
+    * is checked against .z and the operation is predicated on the result.
+    */
+   nir_address_format_64bit_bounded_global,
+
+   /**
     * An address format which is comprised of a vec2 where the first
     * component is a buffer index and the second is an offset.
     */
@@ -3246,6 +3280,16 @@ typedef struct nir_lower_tex_options {
 
 bool nir_lower_tex(nir_shader *shader,
                    const nir_lower_tex_options *options);
+
+enum nir_lower_non_uniform_access_type {
+   nir_lower_non_uniform_ubo_access     = (1 << 0),
+   nir_lower_non_uniform_ssbo_access    = (1 << 1),
+   nir_lower_non_uniform_texture_access = (1 << 2),
+   nir_lower_non_uniform_image_access   = (1 << 3),
+};
+
+bool nir_lower_non_uniform_access(nir_shader *shader,
+                                  enum nir_lower_non_uniform_access_type);
 
 bool nir_lower_idiv(nir_shader *shader);
 

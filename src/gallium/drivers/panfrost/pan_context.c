@@ -85,8 +85,9 @@ panfrost_enable_afbc(struct panfrost_context *ctx, struct panfrost_resource *rsr
 
         /* Compressed textured reads use a tagged pointer to the metadata */
 
-        rsrc->bo->gpu[0] = rsrc->bo->afbc_slab.gpu | (ds ? 0 : 1);
-        rsrc->bo->cpu[0] = rsrc->bo->afbc_slab.cpu;
+        rsrc->bo->gpu = rsrc->bo->afbc_slab.gpu | (ds ? 0 : 1);
+        rsrc->bo->cpu = rsrc->bo->afbc_slab.cpu;
+        rsrc->bo->gem_handle = rsrc->bo->afbc_slab.gem_handle;
 }
 
 static void
@@ -772,10 +773,10 @@ panfrost_emit_vertex_data(struct panfrost_context *ctx)
                  * rsrc->gpu. However, attribute buffers must be 64 aligned. If
                  * it is not, for now we have to duplicate the buffer. */
 
-                mali_ptr effective_address = (rsrc->bo->gpu[0] + buf->buffer_offset);
+                mali_ptr effective_address = (rsrc->bo->gpu + buf->buffer_offset);
 
                 if (effective_address & 0x3F) {
-                        attrs[i].elements = panfrost_upload_transient(ctx, rsrc->bo->cpu[0] + buf->buffer_offset, attrs[i].size) | 1;
+                        attrs[i].elements = panfrost_upload_transient(ctx, rsrc->bo->cpu + buf->buffer_offset, attrs[i].size) | 1;
                 } else {
                         attrs[i].elements = effective_address | 1;
                 }
@@ -1018,31 +1019,12 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                                 struct panfrost_resource *rsrc = (struct panfrost_resource *) tex_rsrc;
 
                                 /* Inject the address in. */
-                                for (int l = 0; l < (tex_rsrc->last_level + 1); ++l)
-                                        ctx->sampler_views[t][i]->hw.swizzled_bitmaps[l] = rsrc->bo->gpu[l];
-
-                                /* Workaround maybe-errata (?) with non-mipmaps */
-                                int s = ctx->sampler_views[t][i]->hw.nr_mipmap_levels;
-
-                                if (!rsrc->bo->is_mipmap) {
-                                        if (ctx->is_t6xx) {
-                                                /* HW ERRATA, not needed after t6XX */
-                                                ctx->sampler_views[t][i]->hw.swizzled_bitmaps[1] = rsrc->bo->gpu[0];
-
-                                                ctx->sampler_views[t][i]->hw.unknown3A = 1;
-                                        }
-
-                                        ctx->sampler_views[t][i]->hw.nr_mipmap_levels = 0;
+                                for (int l = 0; l <= tex_rsrc->last_level; ++l) {
+                                        ctx->sampler_views[t][i]->hw.swizzled_bitmaps[l] =
+                                                rsrc->bo->gpu + rsrc->bo->slices[l].offset;
                                 }
 
                                 trampolines[i] = panfrost_upload_transient(ctx, &ctx->sampler_views[t][i]->hw, sizeof(struct mali_texture_descriptor));
-
-                                /* Restore */
-                                ctx->sampler_views[t][i]->hw.nr_mipmap_levels = s;
-
-				if (ctx->is_t6xx) {
-					ctx->sampler_views[t][i]->hw.unknown3A = 0;
-				}
                         }
 
                         mali_ptr trampoline = panfrost_upload_transient(ctx, trampolines, sizeof(uint64_t) * ctx->sampler_view_count[t]);
@@ -1059,12 +1041,21 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
         /* Generate the viewport vector of the form: <width/2, height/2, centerx, centery> */
         const struct pipe_viewport_state *vp = &ctx->pipe_viewport;
 
+        /* For flipped-Y buffers (signaled by negative scale), the translate is
+         * flipped as well */
+
+        bool invert_y = vp->scale[1] < 0.0;
+        float translate_y = vp->translate[1];
+
+        if (invert_y)
+                translate_y = ctx->pipe_framebuffer.height - translate_y;
+
         float viewport_vec4[] = {
                 vp->scale[0],
                 fabsf(vp->scale[1]),
 
                 vp->translate[0],
-                /* -1.0 * vp->translate[1] */ fabs(1.0 * vp->scale[1]) /* XXX */
+                translate_y
         };
 
         for (int i = 0; i < PIPE_SHADER_TYPES; ++i) {
@@ -1147,17 +1138,27 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 .clip_maxz = 1.0,
         };
 
-        if (ss && ctx->rasterizer && ctx->rasterizer->base.scissor && 0) {
+        /* Always scissor to the viewport by default. */
+        view.viewport0[0] = (int) (vp->translate[0] - vp->scale[0]);
+        view.viewport1[0] = MALI_POSITIVE((int) (vp->translate[0] + vp->scale[0]));
+
+        view.viewport0[1] = (int) (translate_y - fabs(vp->scale[1]));
+        view.viewport1[1] = MALI_POSITIVE((int) (translate_y + fabs(vp->scale[1])));
+
+        if (ss && ctx->rasterizer && ctx->rasterizer->base.scissor) {
+                /* Invert scissor if needed */
+                unsigned miny = invert_y ?
+                        ctx->pipe_framebuffer.height - ss->maxy : ss->miny;
+
+                unsigned maxy = invert_y ?
+                        ctx->pipe_framebuffer.height - ss->miny : ss->maxy;
+
+                /* Set the actual scissor */
                 view.viewport0[0] = ss->minx;
-                view.viewport0[1] = ss->miny;
+                view.viewport0[1] = miny;
                 view.viewport1[0] = MALI_POSITIVE(ss->maxx);
-                view.viewport1[1] = MALI_POSITIVE(ss->maxy);
-        } else {
-                view.viewport0[0] = 0;
-                view.viewport0[1] = 0;
-                view.viewport1[0] = MALI_POSITIVE(ctx->pipe_framebuffer.width);
-                view.viewport1[1] = MALI_POSITIVE(ctx->pipe_framebuffer.height);
-        }
+                view.viewport1[1] = MALI_POSITIVE(maxy);
+        } 
 
         ctx->payload_tiler.postfix.viewport =
                 panfrost_upload_transient(ctx,
@@ -1362,7 +1363,7 @@ panfrost_get_index_buffer_raw(const struct pipe_draw_info *info)
                 return (const uint8_t *) info->index.user;
         } else {
                 struct panfrost_resource *rsrc = (struct panfrost_resource *) (info->index.resource);
-                return (const uint8_t *) rsrc->bo->cpu[0];
+                return (const uint8_t *) rsrc->bo->cpu;
         }
 }
 
@@ -1378,7 +1379,7 @@ panfrost_get_index_buffer_mapped(struct panfrost_context *ctx, const struct pipe
 
         if (!info->has_user_indices) {
                 /* Only resources can be directly mapped */
-                return rsrc->bo->gpu[0] + offset;
+                return rsrc->bo->gpu + offset;
         } else {
                 /* Otherwise, we need to upload to transient memory */
                 const uint8_t *ibuf8 = panfrost_get_index_buffer_raw(info);
@@ -1662,8 +1663,8 @@ panfrost_create_sampler_state(
                         cso->border_color.f[2],
                         cso->border_color.f[3]
                 },
-                .min_lod = FIXED_16(0.0),
-                .max_lod = FIXED_16(31.0),
+                .min_lod = FIXED_16(cso->min_lod),
+                .max_lod = FIXED_16(cso->max_lod),
                 .unknown2 = 1,
         };
 
@@ -1856,7 +1857,7 @@ panfrost_set_constant_buffer(
         struct panfrost_resource *rsrc = (struct panfrost_resource *) (buf->buffer);
 
         if (rsrc) {
-                cpu = rsrc->bo->cpu[0];
+                cpu = rsrc->bo->cpu;
         } else if (buf->user_buffer) {
                 cpu = buf->user_buffer;
         } else {
@@ -1963,7 +1964,11 @@ panfrost_create_sampler_view(
         /* TODO: Other base levels require adjusting dimensions / level numbers / etc */
         assert (template->u.tex.first_level == 0);
 
-        texture_descriptor.nr_mipmap_levels = template->u.tex.last_level - template->u.tex.first_level;
+        /* Disable mipmapping for now to avoid regressions while automipmapping
+         * is being implemented. TODO: Remove me once automipmaps work */
+
+        //texture_descriptor.nr_mipmap_levels = template->u.tex.last_level - template->u.tex.first_level;
+        texture_descriptor.nr_mipmap_levels = 0;
 
         so->hw = texture_descriptor;
 
@@ -2384,6 +2389,46 @@ panfrost_get_query_result(struct pipe_context *pipe,
         return true;
 }
 
+static struct pipe_stream_output_target *
+panfrost_create_stream_output_target(struct pipe_context *pctx,
+                                struct pipe_resource *prsc,
+                                unsigned buffer_offset,
+                                unsigned buffer_size)
+{
+        struct pipe_stream_output_target *target;
+
+        target = CALLOC_STRUCT(pipe_stream_output_target);
+
+        if (!target)
+                return NULL;
+
+        pipe_reference_init(&target->reference, 1);
+        pipe_resource_reference(&target->buffer, prsc);
+
+        target->context = pctx;
+        target->buffer_offset = buffer_offset;
+        target->buffer_size = buffer_size;
+
+        return target;
+}
+
+static void
+panfrost_stream_output_target_destroy(struct pipe_context *pctx,
+                                 struct pipe_stream_output_target *target)
+{
+        pipe_resource_reference(&target->buffer, NULL);
+        free(target);
+}
+
+static void
+panfrost_set_stream_output_targets(struct pipe_context *pctx,
+                              unsigned num_targets,
+                              struct pipe_stream_output_target **targets,
+                              const unsigned *offsets)
+{
+        /* STUB */
+}
+
 static void
 panfrost_setup_hardware(struct panfrost_context *ctx)
 {
@@ -2487,6 +2532,10 @@ panfrost_create_context(struct pipe_screen *screen, void *priv, unsigned flags)
         gallium->begin_query = panfrost_begin_query;
         gallium->end_query = panfrost_end_query;
         gallium->get_query_result = panfrost_get_query_result;
+
+        gallium->create_stream_output_target = panfrost_create_stream_output_target;
+        gallium->stream_output_target_destroy = panfrost_stream_output_target_destroy;
+        gallium->set_stream_output_targets = panfrost_set_stream_output_targets;
 
         panfrost_resource_context_init(gallium);
 

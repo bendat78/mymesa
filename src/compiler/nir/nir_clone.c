@@ -537,6 +537,7 @@ static nir_if *
 clone_if(clone_state *state, struct exec_list *cf_list, const nir_if *i)
 {
    nir_if *ni = nir_if_create(state->ns);
+   ni->control = i->control;
 
    __clone_src(state, ni, &ni->condition, &i->condition);
 
@@ -552,6 +553,7 @@ static nir_loop *
 clone_loop(clone_state *state, struct exec_list *cf_list, const nir_loop *loop)
 {
    nir_loop *nloop = nir_loop_create(state->ns);
+   nloop->control = loop->control;
    nloop->partially_unrolled = loop->partially_unrolled;
 
    nir_cf_node_insert_end(cf_list, &nloop->cf_node);

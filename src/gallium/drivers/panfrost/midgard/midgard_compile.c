@@ -204,6 +204,10 @@ const midgard_vector_alu_src blank_alu_src = {
         .swizzle = SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_W),
 };
 
+const midgard_vector_alu_src blank_alu_src_xxxx = {
+        .swizzle = SWIZZLE(COMPONENT_X, COMPONENT_X, COMPONENT_X, COMPONENT_X),
+};
+
 const midgard_scalar_alu_src blank_scalar_alu_src = {
         .full = true
 };
@@ -744,11 +748,18 @@ optimise_nir(nir_shader *nir)
         } while (progress);
 
         NIR_PASS(progress, nir, nir_opt_algebraic_late);
+        NIR_PASS(progress, nir, midgard_nir_lower_algebraic_late);
 
-        /* Lower mods */
-        NIR_PASS(progress, nir, nir_lower_to_source_mods, nir_lower_all_source_mods);
+        /* Lower mods for float ops only. Integer ops don't support modifiers
+         * (saturate doesn't make sense on integers, neg/abs require dedicated
+         * instructions) */
+
+        NIR_PASS(progress, nir, nir_lower_to_source_mods, nir_lower_float_source_mods);
         NIR_PASS(progress, nir, nir_copy_prop);
         NIR_PASS(progress, nir, nir_opt_dce);
+
+        /* We implement booleans as 32-bit 0/~0 */
+        NIR_PASS(progress, nir, nir_lower_bool_to_int32);
 
         /* Take us out of SSA */
         NIR_PASS(progress, nir, nir_lower_locals_to_regs);
@@ -904,10 +915,6 @@ emit_condition(compiler_context *ctx, nir_src *src, bool for_branch)
         /* XXX: Force component correct */
         int condition = nir_src_index(ctx, src);
 
-        const midgard_vector_alu_src alu_src = {
-                .swizzle = SWIZZLE(COMPONENT_X, COMPONENT_X, COMPONENT_X, COMPONENT_X),
-        };
-
         /* There is no boolean move instruction. Instead, we simulate a move by
          * ANDing the condition with itself to get it into r31.w */
 
@@ -924,8 +931,8 @@ emit_condition(compiler_context *ctx, nir_src *src, bool for_branch)
                         .reg_mode = midgard_reg_mode_full,
                         .dest_override = midgard_dest_override_none,
                         .mask = (0x3 << 6), /* w */
-                        .src1 = vector_alu_srco_unsigned(alu_src),
-                        .src2 = vector_alu_srco_unsigned(alu_src)
+                        .src1 = vector_alu_srco_unsigned(blank_alu_src_xxxx),
+                        .src2 = vector_alu_srco_unsigned(blank_alu_src_xxxx)
                 },
         };
 
@@ -972,22 +979,43 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(iadd, iadd);
                 ALU_CASE(isub, isub);
                 ALU_CASE(imul, imul);
+                ALU_CASE(iabs, iabs);
 
                 /* XXX: Use fmov, not imov, since imov was causing major
                  * issues with texture precision? XXX research */
                 ALU_CASE(imov, fmov);
 
-                ALU_CASE(feq, feq);
-                ALU_CASE(fne, fne);
-                ALU_CASE(flt, flt);
-                ALU_CASE(ieq, ieq);
-                ALU_CASE(ine, ine);
-                ALU_CASE(ilt, ilt);
+                ALU_CASE(feq32, feq);
+                ALU_CASE(fne32, fne);
+                ALU_CASE(flt32, flt);
+                ALU_CASE(ieq32, ieq);
+                ALU_CASE(ine32, ine);
+                ALU_CASE(ilt32, ilt);
+                ALU_CASE(ult32, ult);
+
+                /* We don't have a native b2f32 instruction. Instead, like many
+                 * GPUs, we exploit booleans as 0/~0 for false/true, and
+                 * correspondingly AND
+                 * by 1.0 to do the type conversion. For the moment, prime us
+                 * to emit:
+                 *
+                 * iand [whatever], #0
+                 *
+                 * At the end of emit_alu (as MIR), we'll fix-up the constant
+                 */
+
+                ALU_CASE(b2f32, iand);
+                ALU_CASE(b2i32, iand);
+
+                /* Likewise, we don't have a dedicated f2b32 instruction, but
+                 * we can do a "not equal to 0.0" test. */
+
+                ALU_CASE(f2b32, fne);
+                ALU_CASE(i2b32, ine);
 
                 ALU_CASE(frcp, frcp);
                 ALU_CASE(frsq, frsqrt);
                 ALU_CASE(fsqrt, fsqrt);
-                ALU_CASE(fpow, fpow);
                 ALU_CASE(fexp2, fexp2);
                 ALU_CASE(flog2, flog2);
 
@@ -1007,16 +1035,35 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(ishr, iasr);
                 ALU_CASE(ushr, ilsr);
 
-                ALU_CASE(ball_fequal4, fball_eq);
-                ALU_CASE(bany_fnequal4, fbany_neq);
-                ALU_CASE(ball_iequal4, iball_eq);
-                ALU_CASE(bany_inequal4, ibany_neq);
+                ALU_CASE(b32all_fequal2, fball_eq);
+                ALU_CASE(b32all_fequal3, fball_eq);
+                ALU_CASE(b32all_fequal4, fball_eq);
 
-        /* For greater-or-equal, we use less-or-equal and flip the
+                ALU_CASE(b32any_fnequal2, fbany_neq);
+                ALU_CASE(b32any_fnequal3, fbany_neq);
+                ALU_CASE(b32any_fnequal4, fbany_neq);
+
+                ALU_CASE(b32all_iequal2, iball_eq);
+                ALU_CASE(b32all_iequal3, iball_eq);
+                ALU_CASE(b32all_iequal4, iball_eq);
+
+                ALU_CASE(b32any_inequal2, ibany_neq);
+                ALU_CASE(b32any_inequal3, ibany_neq);
+                ALU_CASE(b32any_inequal4, ibany_neq);
+
+        /* For greater-or-equal, we lower to less-or-equal and flip the
          * arguments */
 
-        case nir_op_ige: {
-                op = midgard_alu_op_ile;
+        case nir_op_fge:
+        case nir_op_fge32:
+        case nir_op_ige32:
+        case nir_op_uge32: {
+                op =
+                        instr->op == nir_op_fge   ? midgard_alu_op_fle :
+                        instr->op == nir_op_fge32 ? midgard_alu_op_fle :
+                        instr->op == nir_op_ige32 ? midgard_alu_op_ile :
+                        instr->op == nir_op_uge32 ? midgard_alu_op_ule :
+                        0;
 
                 /* Swap via temporary */
                 nir_alu_src temp = instr->src[1];
@@ -1026,7 +1073,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 break;
         }
 
-        case nir_op_bcsel: {
+        case nir_op_b32csel: {
                 op = midgard_alu_op_fcsel;
 
                 /* csel works as a two-arg in Midgard, since the condition is hardcoded in r31.w */
@@ -1039,19 +1086,6 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                  * Midgard */
 
                 memmove(instr->src, instr->src + 1, 2 * sizeof(nir_alu_src));
-                break;
-        }
-
-        /* We don't have a native b2f32 instruction. Instead, like many GPUs,
-         * we exploit booleans as 0/~0 for false/true, and correspondingly AND
-         * by 1.0 to do the type conversion. For the moment, prime us to emit:
-         *
-         * iand [whatever], #0
-         *
-         * At the end of emit_alu (as MIR), we'll fix-up the constant */
-
-        case nir_op_b2f32: {
-                op = midgard_alu_op_iand;
                 break;
         }
 
@@ -1120,7 +1154,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
 
         /* Late fixup for emulated instructions */
 
-        if (instr->op == nir_op_b2f32) {
+        if (instr->op == nir_op_b2f32 || instr->op == nir_op_b2i32) {
                 /* Presently, our second argument is an inline #0 constant.
                  * Switch over to an embedded 1.0 constant (that can't fit
                  * inline, since we're 32-bit, not 16-bit like the inline
@@ -1129,7 +1163,22 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ins.ssa_args.inline_constant = false;
                 ins.ssa_args.src1 = SSA_FIXED_REGISTER(REGISTER_CONSTANT);
                 ins.has_constants = true;
-                ins.constants[0] = 1.0;
+
+                if (instr->op == nir_op_b2f32) {
+                        ins.constants[0] = 1.0f;
+                } else {
+                        /* Type pun it into place */
+                        uint32_t one = 0x1;
+                        memcpy(&ins.constants[0], &one, sizeof(uint32_t));
+                }
+
+                ins.alu.src2 = vector_alu_srco_unsigned(blank_alu_src_xxxx);
+        } else if (instr->op == nir_op_f2b32 || instr->op == nir_op_i2b32) {
+                ins.ssa_args.inline_constant = false;
+                ins.ssa_args.src1 = SSA_FIXED_REGISTER(REGISTER_CONSTANT);
+                ins.has_constants = true;
+                ins.constants[0] = 0.0f;
+                ins.alu.src2 = vector_alu_srco_unsigned(blank_alu_src_xxxx);
         }
 
         if ((opcode_props & UNITS_ALL) == UNIT_VLUT) {

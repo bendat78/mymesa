@@ -142,6 +142,7 @@ midgard_is_integer_op(int op)
         //case midgard_alu_op_f2i:
         //case midgard_alu_op_f2u:
         case midgard_alu_op_ieq:
+        case midgard_alu_op_iabs:
         case midgard_alu_op_ine:
         case midgard_alu_op_ilt:
         case midgard_alu_op_ile:
@@ -209,6 +210,7 @@ static unsigned alu_opcode_props[256] = {
 
         /* Incredibly, iadd can run on vmul, etc */
         [midgard_alu_op_iadd]		 = UNITS_MOST,
+        [midgard_alu_op_iabs]		 = UNITS_MOST,
         [midgard_alu_op_isub]		 = UNITS_MOST,
         [midgard_alu_op_imul]		 = UNITS_MOST,
         [midgard_alu_op_imov]		 = UNITS_MOST | QUIRK_FLIPPED_R24,
@@ -216,19 +218,23 @@ static unsigned alu_opcode_props[256] = {
         /* For vector comparisons, use ball etc */
         [midgard_alu_op_feq]		 = UNITS_MOST,
         [midgard_alu_op_fne]		 = UNITS_MOST,
+        [midgard_alu_op_fle]		 = UNITS_MOST,
         [midgard_alu_op_flt]		 = UNITS_MOST,
         [midgard_alu_op_ieq]		 = UNITS_MOST,
         [midgard_alu_op_ine]		 = UNITS_MOST,
         [midgard_alu_op_ilt]		 = UNITS_MOST,
         [midgard_alu_op_ile]		 = UNITS_MOST,
+        [midgard_alu_op_ule]		 = UNITS_MOST,
+        [midgard_alu_op_ult]		 = UNITS_MOST,
 
         [midgard_alu_op_icsel]		 = UNITS_ADD,
+        [midgard_alu_op_fcsel_i]	 = UNITS_ADD,
         [midgard_alu_op_fcsel]		 = UNITS_ADD | UNIT_SMUL,
 
         [midgard_alu_op_frcp]		 = UNIT_VLUT,
         [midgard_alu_op_frsqrt]		 = UNIT_VLUT,
         [midgard_alu_op_fsqrt]		 = UNIT_VLUT,
-        [midgard_alu_op_fpow]		 = UNIT_VLUT,
+        [midgard_alu_op_fpow_pt1]	 = UNIT_VLUT,
         [midgard_alu_op_fexp2]		 = UNIT_VLUT,
         [midgard_alu_op_flog2]		 = UNIT_VLUT,
 
@@ -250,8 +256,8 @@ static unsigned alu_opcode_props[256] = {
         [midgard_alu_op_ilsr]		 = UNITS_ADD,
         [midgard_alu_op_ilsr]		 = UNITS_ADD,
 
-        [midgard_alu_op_fball_eq]	 = UNITS_MOST,
-        [midgard_alu_op_fbany_neq]	 = UNITS_MOST,
-        [midgard_alu_op_iball_eq]	 = UNITS_MOST,
-        [midgard_alu_op_ibany_neq]	 = UNITS_MOST
+        [midgard_alu_op_fball_eq]	 = UNITS_VECTOR,
+        [midgard_alu_op_fbany_neq]	 = UNITS_VECTOR,
+        [midgard_alu_op_iball_eq]	 = UNITS_VECTOR,
+        [midgard_alu_op_ibany_neq]	 = UNITS_VECTOR
 };

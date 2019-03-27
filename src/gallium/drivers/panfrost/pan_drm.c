@@ -136,7 +136,7 @@ panfrost_drm_import_bo(struct panfrost_screen *screen, struct winsys_handle *wha
         assert(!ret);
 
 	bo->gem_handle = gem_handle;
-        bo->gpu[0] = (mali_ptr) get_bo_offset.offset;
+        bo->gpu = (mali_ptr) get_bo_offset.offset;
 
 	// TODO map and unmap on demand?
 	mmap_bo.handle = gem_handle;
@@ -146,17 +146,17 @@ panfrost_drm_import_bo(struct panfrost_screen *screen, struct winsys_handle *wha
 		assert(0);
 	}
 
-        bo->size[0] = lseek(whandle->handle, 0, SEEK_END);
-        assert(bo->size[0] > 0);
-        bo->cpu[0] = mmap(NULL, bo->size[0], PROT_READ | PROT_WRITE, MAP_SHARED,
+        bo->size = lseek(whandle->handle, 0, SEEK_END);
+        assert(bo->size > 0);
+        bo->cpu = mmap(NULL, bo->size, PROT_READ | PROT_WRITE, MAP_SHARED,
                        drm->fd, mmap_bo.offset);
-        if (bo->cpu[0] == MAP_FAILED) {
-                fprintf(stderr, "mmap failed: %p\n", bo->cpu[0]);
+        if (bo->cpu == MAP_FAILED) {
+                fprintf(stderr, "mmap failed: %p\n", bo->cpu);
 		assert(0);
 	}
 
         /* Record the mmap if we're tracing */
-        pantrace_mmap(bo->gpu[0], bo->cpu[0], bo->size[0], NULL);
+        pantrace_mmap(bo->gpu, bo->cpu, bo->size, NULL);
 
         return bo;
 }
@@ -196,7 +196,7 @@ panfrost_drm_free_imported_bo(struct panfrost_screen *screen, struct panfrost_bo
 	}
 
 	bo->gem_handle = -1;
-	bo->gpu[0] = (mali_ptr)NULL;
+	bo->gpu = (mali_ptr)NULL;
 }
 
 static int
@@ -206,6 +206,7 @@ panfrost_drm_submit_job(struct panfrost_context *ctx, u64 job_desc, int reqs, st
         struct panfrost_screen *screen = pan_screen(gallium->screen);
 	struct panfrost_drm *drm = (struct panfrost_drm *)screen->driver;
         struct drm_panfrost_submit submit = {0,};
+        int bo_handles[7];
 
         submit.in_syncs = (u64) (uintptr_t) &ctx->out_sync;
         submit.in_sync_count = 1;
@@ -217,9 +218,20 @@ panfrost_drm_submit_job(struct panfrost_context *ctx, u64 job_desc, int reqs, st
 
 	if (surf) {
 		struct panfrost_resource *res = pan_resource(surf->texture);
-		submit.bo_handles = (u64) &res->bo->gem_handle;
-		submit.bo_handle_count = 1;
+		assert(res->bo->gem_handle > 0);
+		bo_handles[submit.bo_handle_count++] = res->bo->gem_handle;
+
+		if (res->bo->checksum_slab.gem_handle)
+			bo_handles[submit.bo_handle_count++] = res->bo->checksum_slab.gem_handle;
 	}
+
+	/* TODO: Add here the transient pools */
+	bo_handles[submit.bo_handle_count++] = ctx->shaders.gem_handle;
+	bo_handles[submit.bo_handle_count++] = ctx->scratchpad.gem_handle;
+	bo_handles[submit.bo_handle_count++] = ctx->tiler_heap.gem_handle;
+	bo_handles[submit.bo_handle_count++] = ctx->varying_mem.gem_handle;
+	bo_handles[submit.bo_handle_count++] = ctx->misc_0.gem_handle;
+	submit.bo_handles = (u64)bo_handles;
 
         /* Dump memory _before_ submitting so we're not corrupted with actual GPU results */
         pantrace_dump_memory();
@@ -248,9 +260,8 @@ panfrost_drm_submit_vs_fs_job(struct panfrost_context *ctx, bool has_draws, bool
 	}
 
 	ret = panfrost_drm_submit_job(ctx, panfrost_fragment_job(ctx), PANFROST_JD_REQ_FS, surf);
-	assert(!ret);
 
-        return 0;
+        return ret;
 }
 
 static struct panfrost_fence *
@@ -285,6 +296,14 @@ panfrost_drm_force_flush_fragment(struct panfrost_context *ctx,
 				  struct pipe_fence_handle **fence)
 {
         struct pipe_context *gallium = (struct pipe_context *) ctx;
+        struct panfrost_screen *screen = pan_screen(gallium->screen);
+        struct panfrost_drm *drm = (struct panfrost_drm *)screen->driver;
+        int ret;
+
+        if (!screen->last_fragment_flushed) {
+		drmSyncobjWait(drm->fd, &ctx->out_sync, 1, INT64_MAX, 0, NULL);
+                screen->last_fragment_flushed = true;
+	}
 
         if (fence) {
                 struct panfrost_fence *f = panfrost_fence_create(ctx);

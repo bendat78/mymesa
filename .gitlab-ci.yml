@@ -20,10 +20,6 @@ variables:
   UBUNTU_IMAGE: "$CI_REGISTRY_IMAGE/ubuntu:$UBUNTU_TAG"
   UBUNTU_IMAGE_MAIN: "registry.freedesktop.org/mesa/mesa/ubuntu:$UBUNTU_TAG"
 
-cache:
-  paths:
-    - ccache
-
 stages:
   - containers-build
   - build+test
@@ -35,6 +31,10 @@ stages:
     - master
     - merge_requests
     - /^ci([-/].*)?$/
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
 
 
 # CONTAINERS
@@ -69,6 +69,9 @@ ubuntu:
   extends: .ci-run-policy
   image: $UBUNTU_IMAGE
   stage: build+test
+  cache:
+    paths:
+      - ccache
   artifacts:
     when: on_failure
     untracked: true
@@ -167,8 +170,8 @@ meson-clang:
     UNWIND: "true"
     DRI_DRIVERS: "auto"
     GALLIUM_DRIVERS: "auto"
-    CC: clang-7
-    CXX: clang++-7
+    CC: "ccache clang-7"
+    CXX: "ccache clang++-7"
 
 meson-vulkan:
   extends: .meson-build

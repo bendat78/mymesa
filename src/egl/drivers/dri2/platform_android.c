@@ -1206,33 +1206,6 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *disp)
    return (config_count != 0);
 }
 
-static EGLBoolean
-droid_probe_device(_EGLDisplay *disp);
-
-#ifdef HAVE_DRM_GRALLOC
-static EGLBoolean
-droid_open_device_drm_gralloc(_EGLDisplay *disp)
-{
-   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-   int fd = -1, err = -EINVAL;
-
-   if (dri2_dpy->gralloc->perform)
-         err = dri2_dpy->gralloc->perform(dri2_dpy->gralloc,
-                                          GRALLOC_MODULE_PERFORM_GET_DRM_FD,
-                                          &fd);
-   if (err || fd < 0) {
-      _eglLog(_EGL_WARNING, "fail to get drm fd");
-      return EGL_FALSE;
-   }
-
-   dri2_dpy->fd = fcntl(fd, F_DUPFD_CLOEXEC, 3);
-   if (dri2_dpy->fd < 0)
-     return EGL_FALSE;
-
-   return droid_probe_device(disp);
-}
-#endif /* HAVE_DRM_GRALLOC */
-
 static const struct dri2_egl_display_vtbl droid_display_vtbl = {
    .authenticate = NULL,
    .create_window_surface = droid_create_window_surface,
@@ -1268,17 +1241,7 @@ static const __DRIdri2LoaderExtension droid_dri2_loader_extension = {
    .getBuffersWithFormat = droid_get_buffers_with_format,
    .getCapability        = droid_get_capability,
 };
-#endif /* HAVE_DRM_GRALLOC */
 
-static const __DRIimageLoaderExtension droid_image_loader_extension = {
-   .base = { __DRI_IMAGE_LOADER, 2 },
-
-   .getBuffers          = droid_image_get_buffers,
-   .flushFrontBuffer    = droid_flush_front_buffer,
-   .getCapability       = droid_get_capability,
-};
-
-#ifdef HAVE_DRM_GRALLOC
 static const __DRIextension *droid_dri2_loader_extensions[] = {
    &droid_dri2_loader_extension.base,
    &image_lookup_extension.base,
@@ -1289,6 +1252,14 @@ static const __DRIextension *droid_dri2_loader_extensions[] = {
    NULL,
 };
 #endif /* HAVE_DRM_GRALLOC */
+
+static const __DRIimageLoaderExtension droid_image_loader_extension = {
+   .base = { __DRI_IMAGE_LOADER, 2 },
+
+   .getBuffers          = droid_image_get_buffers,
+   .flushFrontBuffer    = droid_flush_front_buffer,
+   .getCapability       = droid_get_capability,
+};
 
 static void
 droid_display_shared_buffer(__DRIdrawable *driDrawable, int fence_fd,
@@ -1375,7 +1346,7 @@ static const __DRIextension *droid_image_loader_extensions[] = {
 };
 
 static EGLBoolean
-droid_load_driver(_EGLDisplay *disp)
+droid_load_driver(_EGLDisplay *disp, bool swrast)
 {
    struct dri2_egl_display *dri2_dpy = disp->DriverData;
    const char *err;
@@ -1384,29 +1355,37 @@ droid_load_driver(_EGLDisplay *disp)
    if (dri2_dpy->driver_name == NULL)
       return false;
 
-   dri2_dpy->is_render_node = drmGetNodeTypeFromFd(dri2_dpy->fd) == DRM_NODE_RENDER;
-
-   if (!dri2_dpy->is_render_node) {
 #ifdef HAVE_DRM_GRALLOC
-       /* Handle control nodes using __DRI_DRI2_LOADER extension and GEM names
-        * for backwards compatibility with drm_gralloc. (Do not use on new
-        * systems.) */
-       dri2_dpy->loader_extensions = droid_dri2_loader_extensions;
-       if (!dri2_load_driver(disp)) {
-          err = "DRI2: failed to load driver";
-          goto error;
-       }
+   /* Handle control nodes using __DRI_DRI2_LOADER extension and GEM names
+    * for backwards compatibility with drm_gralloc. (Do not use on new
+    * systems.) */
+   dri2_dpy->loader_extensions = droid_dri2_loader_extensions;
+   if (!dri2_load_driver(disp)) {
+      err = "DRI2: failed to load driver";
+      goto error;
+   }
 #else
-       err = "DRI2: handle is not for a render node";
-       goto error;
+   if (swrast) {
+      /* Use kms swrast only with vgem / virtio_gpu.
+       * virtio-gpu fallbacks to software rendering when 3D features
+       * are unavailable since 6c5ab.
+       */
+      if (strcmp(dri2_dpy->driver_name, "vgem") == 0 ||
+          strcmp(dri2_dpy->driver_name, "virtio_gpu") == 0) {
+         free(dri2_dpy->driver_name);
+         dri2_dpy->driver_name = strdup("kms_swrast");
+      } else {
+         err = "DRI3: failed to find software capable driver";
+         goto error;
+      }
+   }
+
+   dri2_dpy->loader_extensions = droid_image_loader_extensions;
+   if (!dri2_load_driver_dri3(disp)) {
+      err = "DRI3: failed to load driver";
+      goto error;
+   }
 #endif
-   } else {
-       dri2_dpy->loader_extensions = droid_image_loader_extensions;
-       if (!dri2_load_driver_dri3(disp)) {
-          err = "DRI3: failed to load driver";
-          goto error;
-       }
-    }
 
    return true;
 
@@ -1444,13 +1423,13 @@ droid_filter_device(_EGLDisplay *disp, int fd, const char *vendor)
 }
 
 static EGLBoolean
-droid_probe_device(_EGLDisplay *disp)
+droid_probe_device(_EGLDisplay *disp, bool swrast)
 {
   /* Check that the device is supported, by attempting to:
    * - load the dri module
    * - and, create a screen
    */
-   if (!droid_load_driver(disp))
+   if (!droid_load_driver(disp, swrast))
       return EGL_FALSE;
 
    if (!dri2_create_screen(disp)) {
@@ -1461,8 +1440,37 @@ droid_probe_device(_EGLDisplay *disp)
    return EGL_TRUE;
 }
 
+#ifdef HAVE_DRM_GRALLOC
 static EGLBoolean
-droid_open_device(_EGLDisplay *disp)
+droid_open_device(_EGLDisplay *disp, bool swrast)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   int fd = -1, err = -EINVAL;
+
+   if (swrast)
+      return EGL_FALSE;
+
+   if (dri2_dpy->gralloc->perform)
+      err = dri2_dpy->gralloc->perform(dri2_dpy->gralloc,
+                                       GRALLOC_MODULE_PERFORM_GET_DRM_FD,
+                                       &fd);
+   if (err || fd < 0) {
+      _eglLog(_EGL_WARNING, "fail to get drm fd");
+      return EGL_FALSE;
+   }
+
+   dri2_dpy->fd = fcntl(fd, F_DUPFD_CLOEXEC, 3);
+   if (dri2_dpy->fd < 0)
+      return EGL_FALSE;
+
+   if (drmGetNodeTypeFromFd(dri2_dpy->fd) == DRM_NODE_RENDER)
+      return EGL_FALSE;
+
+   return droid_probe_device(disp, swrast);
+}
+#else
+static EGLBoolean
+droid_open_device(_EGLDisplay *disp, bool swrast)
 {
 #define MAX_DRM_DEVICES 64
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
@@ -1471,6 +1479,12 @@ droid_open_device(_EGLDisplay *disp)
 
    char *vendor_name = NULL;
    char vendor_buf[PROPERTY_VALUE_MAX];
+
+#ifdef EGL_FORCE_RENDERNODE
+   const unsigned node_type = DRM_NODE_RENDER;
+#else
+   const unsigned node_type = swrast ? DRM_NODE_PRIMARY : DRM_NODE_RENDER;
+#endif
 
    if (property_get("drm.gpu.vendor_name", vendor_buf, NULL) > 0)
       vendor_name = vendor_buf;
@@ -1482,13 +1496,13 @@ droid_open_device(_EGLDisplay *disp)
    for (int i = 0; i < num_devices; i++) {
       device = devices[i];
 
-      if (!(device->available_nodes & (1 << DRM_NODE_RENDER)))
+      if (!(device->available_nodes & (1 << node_type)))
          continue;
 
-      dri2_dpy->fd = loader_open_device(device->nodes[DRM_NODE_RENDER]);
+      dri2_dpy->fd = loader_open_device(device->nodes[node_type]);
       if (dri2_dpy->fd < 0) {
          _eglLog(_EGL_WARNING, "%s() Failed to open DRM device %s",
-                 __func__, device->nodes[DRM_NODE_RENDER]);
+                 __func__, device->nodes[node_type]);
          continue;
       }
 
@@ -1505,14 +1519,14 @@ droid_open_device(_EGLDisplay *disp)
          /* If the requested device matches - use it. Regardless if
           * init fails, do not fall-back to any other device.
           */
-         if (!droid_probe_device(disp)) {
+         if (!droid_probe_device(disp, false)) {
             close(dri2_dpy->fd);
             dri2_dpy->fd = -1;
          }
 
          break;
       }
-      if (droid_probe_device(disp))
+      if (droid_probe_device(disp, swrast))
          break;
 
       /* No explicit request - attempt the next device */
@@ -1531,17 +1545,16 @@ droid_open_device(_EGLDisplay *disp)
 #undef MAX_DRM_DEVICES
 }
 
+#endif
+
 EGLBoolean
 dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *disp)
 {
    _EGLDevice *dev;
+   bool device_opened = false;
    struct dri2_egl_display *dri2_dpy;
    const char *err;
    int ret;
-
-   /* Not supported yet */
-   if (disp->Options.ForceSoftware)
-      return EGL_FALSE;
 
    dri2_dpy = calloc(1, sizeof(*dri2_dpy));
    if (!dri2_dpy)
@@ -1556,12 +1569,12 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *disp)
    }
 
    disp->DriverData = (void *) dri2_dpy;
+   if (!disp->Options.ForceSoftware)
+      device_opened = droid_open_device(disp, false);
+   if (!device_opened)
+      device_opened = droid_open_device(disp, true);
 
-#ifdef HAVE_DRM_GRALLOC
-   if (!droid_open_device_drm_gralloc(disp)) {
-#else
-   if (!droid_open_device(disp)) {
-#endif
+   if (!device_opened) {
       err = "DRI2: failed to open device";
       goto cleanup;
    }

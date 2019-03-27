@@ -490,6 +490,7 @@ vtn_ssa_offset_pointer_dereference(struct vtn_builder *b,
          break;
       }
 
+      case GLSL_TYPE_INTERFACE:
       case GLSL_TYPE_STRUCT: {
          vtn_assert(deref_chain->link[idx].mode == vtn_access_mode_literal);
          unsigned member = deref_chain->link[idx].id;
@@ -589,13 +590,14 @@ vtn_pointer_to_deref(struct vtn_builder *b, struct vtn_pointer *ptr)
 
 static void
 _vtn_local_load_store(struct vtn_builder *b, bool load, nir_deref_instr *deref,
-                      struct vtn_ssa_value *inout)
+                      struct vtn_ssa_value *inout,
+                      enum gl_access_qualifier access)
 {
    if (glsl_type_is_vector_or_scalar(deref->type)) {
       if (load) {
-         inout->def = nir_load_deref(&b->nb, deref);
+         inout->def = nir_load_deref_with_access(&b->nb, deref, access);
       } else {
-         nir_store_deref(&b->nb, deref, inout->def, ~0);
+         nir_store_deref_with_access(&b->nb, deref, inout->def, ~0, access);
       }
    } else if (glsl_type_is_array(deref->type) ||
               glsl_type_is_matrix(deref->type)) {
@@ -603,14 +605,14 @@ _vtn_local_load_store(struct vtn_builder *b, bool load, nir_deref_instr *deref,
       for (unsigned i = 0; i < elems; i++) {
          nir_deref_instr *child =
             nir_build_deref_array_imm(&b->nb, deref, i);
-         _vtn_local_load_store(b, load, child, inout->elems[i]);
+         _vtn_local_load_store(b, load, child, inout->elems[i], access);
       }
    } else {
       vtn_assert(glsl_type_is_struct_or_ifc(deref->type));
       unsigned elems = glsl_get_length(deref->type);
       for (unsigned i = 0; i < elems; i++) {
          nir_deref_instr *child = nir_build_deref_struct(&b->nb, deref, i);
-         _vtn_local_load_store(b, load, child, inout->elems[i]);
+         _vtn_local_load_store(b, load, child, inout->elems[i], access);
       }
    }
 }
@@ -643,11 +645,12 @@ get_deref_tail(nir_deref_instr *deref)
 }
 
 struct vtn_ssa_value *
-vtn_local_load(struct vtn_builder *b, nir_deref_instr *src)
+vtn_local_load(struct vtn_builder *b, nir_deref_instr *src,
+               enum gl_access_qualifier access)
 {
    nir_deref_instr *src_tail = get_deref_tail(src);
    struct vtn_ssa_value *val = vtn_create_ssa_value(b, src_tail->type);
-   _vtn_local_load_store(b, true, src_tail, val);
+   _vtn_local_load_store(b, true, src_tail, val, access);
 
    if (src_tail != src) {
       val->type = src->type;
@@ -663,13 +666,13 @@ vtn_local_load(struct vtn_builder *b, nir_deref_instr *src)
 
 void
 vtn_local_store(struct vtn_builder *b, struct vtn_ssa_value *src,
-                nir_deref_instr *dest)
+                nir_deref_instr *dest, enum gl_access_qualifier access)
 {
    nir_deref_instr *dest_tail = get_deref_tail(dest);
 
    if (dest_tail != dest) {
       struct vtn_ssa_value *val = vtn_create_ssa_value(b, dest_tail->type);
-      _vtn_local_load_store(b, true, dest_tail, val);
+      _vtn_local_load_store(b, true, dest_tail, val, access);
 
       if (nir_src_is_const(dest->arr.index))
          val->def = vtn_vector_insert(b, val->def, src->def,
@@ -677,9 +680,9 @@ vtn_local_store(struct vtn_builder *b, struct vtn_ssa_value *src,
       else
          val->def = vtn_vector_insert_dynamic(b, val->def, src->def,
                                               dest->arr.index.ssa);
-      _vtn_local_load_store(b, false, dest_tail, val);
+      _vtn_local_load_store(b, false, dest_tail, val, access);
    } else {
-      _vtn_local_load_store(b, false, dest_tail, src);
+      _vtn_local_load_store(b, false, dest_tail, src, access);
    }
 }
 
@@ -934,6 +937,7 @@ _vtn_block_load_store(struct vtn_builder *b, nir_intrinsic_op op, bool load,
       return;
    }
 
+   case GLSL_TYPE_INTERFACE:
    case GLSL_TYPE_STRUCT: {
       unsigned elems = glsl_get_length(type->type);
       for (unsigned i = 0; i < elems; i++) {
@@ -1012,6 +1016,7 @@ vtn_block_store(struct vtn_builder *b, struct vtn_ssa_value *src,
 static void
 _vtn_variable_load_store(struct vtn_builder *b, bool load,
                          struct vtn_pointer *ptr,
+                         enum gl_access_qualifier access,
                          struct vtn_ssa_value **inout)
 {
    enum glsl_base_type base_type = glsl_get_base_type(ptr->type->type);
@@ -1043,21 +1048,24 @@ _vtn_variable_load_store(struct vtn_builder *b, bool load,
              */
             if (load) {
                *inout = vtn_create_ssa_value(b, ptr->type->type);
-               (*inout)->def = nir_load_deref(&b->nb, deref);
+               (*inout)->def = nir_load_deref_with_access(&b->nb, deref,
+                                                          ptr->type->access | access);
             } else {
-               nir_store_deref(&b->nb, deref, (*inout)->def, ~0);
+               nir_store_deref_with_access(&b->nb, deref, (*inout)->def, ~0,
+                                           ptr->type->access | access);
             }
          } else {
             if (load) {
-               *inout = vtn_local_load(b, deref);
+               *inout = vtn_local_load(b, deref, ptr->type->access | access);
             } else {
-               vtn_local_store(b, *inout, deref);
+               vtn_local_store(b, *inout, deref, ptr->type->access | access);
             }
          }
          return;
       }
       /* Fall through */
 
+   case GLSL_TYPE_INTERFACE:
    case GLSL_TYPE_ARRAY:
    case GLSL_TYPE_STRUCT: {
       unsigned elems = glsl_get_length(ptr->type->type);
@@ -1077,7 +1085,8 @@ _vtn_variable_load_store(struct vtn_builder *b, bool load,
       for (unsigned i = 0; i < elems; i++) {
          chain.link[0].id = i;
          struct vtn_pointer *elem = vtn_pointer_dereference(b, ptr, &chain);
-         _vtn_variable_load_store(b, load, elem, &(*inout)->elems[i]);
+         _vtn_variable_load_store(b, load, elem, ptr->type->access | access,
+                                  &(*inout)->elems[i]);
       }
       return;
    }
@@ -1094,7 +1103,7 @@ vtn_variable_load(struct vtn_builder *b, struct vtn_pointer *src)
       return vtn_block_load(b, src);
    } else {
       struct vtn_ssa_value *val = NULL;
-      _vtn_variable_load_store(b, true, src, &val);
+      _vtn_variable_load_store(b, true, src, src->access, &val);
       return val;
    }
 }
@@ -1108,7 +1117,7 @@ vtn_variable_store(struct vtn_builder *b, struct vtn_ssa_value *src,
                  dest->mode == vtn_variable_mode_workgroup);
       vtn_block_store(b, src, dest);
    } else {
-      _vtn_variable_load_store(b, false, dest, &src);
+      _vtn_variable_load_store(b, false, dest, dest->access, &src);
    }
 }
 
@@ -1140,6 +1149,7 @@ _vtn_variable_copy(struct vtn_builder *b, struct vtn_pointer *dest,
       vtn_variable_store(b, vtn_variable_load(b, src), dest);
       return;
 
+   case GLSL_TYPE_INTERFACE:
    case GLSL_TYPE_ARRAY:
    case GLSL_TYPE_STRUCT: {
       struct vtn_access_chain chain = {
@@ -1684,6 +1694,22 @@ var_decoration_cb(struct vtn_builder *b, struct vtn_value *val, int member,
    }
 }
 
+static void
+ptr_decoration_cb(struct vtn_builder *b, struct vtn_value *val, int member,
+                  const struct vtn_decoration *dec, void *void_ptr)
+{
+   struct vtn_pointer *ptr = void_ptr;
+
+   switch (dec->decoration) {
+   case SpvDecorationNonUniformEXT:
+      ptr->access |= ACCESS_NON_UNIFORM;
+      break;
+
+   default:
+      break;
+   }
+}
+
 static enum vtn_variable_mode
 vtn_storage_class_to_mode(struct vtn_builder *b,
                           SpvStorageClass class,
@@ -2190,6 +2216,7 @@ vtn_create_variable(struct vtn_builder *b, struct vtn_value *val,
    }
 
    vtn_foreach_decoration(b, val, var_decoration_cb, var);
+   vtn_foreach_decoration(b, val, ptr_decoration_cb, val->pointer);
 
    if ((var->mode == vtn_variable_mode_input ||
         var->mode == vtn_variable_mode_output) &&
@@ -2367,12 +2394,17 @@ vtn_handle_variables(struct vtn_builder *b, SpvOp opcode,
          val->sampled_image->image =
             vtn_pointer_dereference(b, base_val->sampled_image->image, chain);
          val->sampled_image->sampler = base_val->sampled_image->sampler;
+         vtn_foreach_decoration(b, val, ptr_decoration_cb,
+                                val->sampled_image->image);
+         vtn_foreach_decoration(b, val, ptr_decoration_cb,
+                                val->sampled_image->sampler);
       } else {
          vtn_assert(base_val->value_type == vtn_value_type_pointer);
          struct vtn_value *val =
             vtn_push_value(b, w[2], vtn_value_type_pointer);
          val->pointer = vtn_pointer_dereference(b, base_val->pointer, chain);
          val->pointer->ptr_type = ptr_type;
+         vtn_foreach_decoration(b, val, ptr_decoration_cb, val->pointer);
       }
       break;
    }

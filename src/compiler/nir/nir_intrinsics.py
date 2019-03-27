@@ -306,12 +306,13 @@ atomic3("atomic_counter_comp_swap")
 
 # Image load, store and atomic intrinsics.
 #
-# All image intrinsics come in two versions.  One which take an image target
-# passed as a deref chain as the first source and one which takes an index or
-# handle as the first source.  In the first version, the image variable
-# contains the memory and layout qualifiers that influence the semantics of
-# the intrinsic.  In the second, the image format and access qualifiers are
-# provided as constant indices.
+# All image intrinsics come in three versions.  One which take an image target
+# passed as a deref chain as the first source, one which takes an index as the
+# first source, and one which takes a bindless handle as the first source.
+# In the first version, the image variable contains the memory and layout
+# qualifiers that influence the semantics of the intrinsic.  In the second and
+# third, the image format and access qualifiers are provided as constant
+# indices.
 #
 # All image intrinsics take a four-coordinate vector and a sample index as
 # 2nd and 3rd sources, determining the location within the image that will be
@@ -323,6 +324,8 @@ atomic3("atomic_counter_comp_swap")
 def image(name, src_comp=[], **kwargs):
     intrinsic("image_deref_" + name, src_comp=[1] + src_comp, **kwargs)
     intrinsic("image_" + name, src_comp=[1] + src_comp,
+              indices=[IMAGE_DIM, IMAGE_ARRAY, FORMAT, ACCESS], **kwargs)
+    intrinsic("bindless_image_" + name, src_comp=[1] + src_comp,
               indices=[IMAGE_DIM, IMAGE_ARRAY, FORMAT, ACCESS], **kwargs)
 
 image("load", src_comp=[4, 1], dest_comp=0, flags=[CAN_ELIMINATE])
@@ -388,20 +391,20 @@ intrinsic("load_vulkan_descriptor", src_comp=[-1], dest_comp=0,
 # 1: The data parameter to the atomic function (i.e. the value to add
 #    in shared_atomic_add, etc).
 # 2: For CompSwap only: the second data parameter.
-intrinsic("deref_atomic_add",  src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_imin", src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_umin", src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_imax", src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_umax", src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_and",  src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_or",   src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_xor",  src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_exchange", src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_comp_swap", src_comp=[-1, 1, 1], dest_comp=1)
-intrinsic("deref_atomic_fadd",  src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_fmin",  src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_fmax",  src_comp=[-1, 1], dest_comp=1)
-intrinsic("deref_atomic_fcomp_swap", src_comp=[-1, 1, 1], dest_comp=1)
+intrinsic("deref_atomic_add",  src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_imin", src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_umin", src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_imax", src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_umax", src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_and",  src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_or",   src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_xor",  src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_exchange", src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_comp_swap", src_comp=[-1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_fadd",  src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_fmin",  src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_fmax",  src_comp=[-1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("deref_atomic_fcomp_swap", src_comp=[-1, 1, 1], dest_comp=1, indices=[ACCESS])
 
 # SSBO atomic intrinsics
 #
@@ -418,20 +421,20 @@ intrinsic("deref_atomic_fcomp_swap", src_comp=[-1, 1, 1], dest_comp=1)
 # 2: The data parameter to the atomic function (i.e. the value to add
 #    in ssbo_atomic_add, etc).
 # 3: For CompSwap only: the second data parameter.
-intrinsic("ssbo_atomic_add",  src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_imin", src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_umin", src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_imax", src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_umax", src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_and",  src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_or",   src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_xor",  src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_exchange", src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_comp_swap", src_comp=[1, 1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_fadd", src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_fmin", src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_fmax", src_comp=[1, 1, 1], dest_comp=1)
-intrinsic("ssbo_atomic_fcomp_swap", src_comp=[1, 1, 1, 1], dest_comp=1)
+intrinsic("ssbo_atomic_add",  src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_imin", src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_umin", src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_imax", src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_umax", src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_and",  src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_or",   src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_xor",  src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_exchange", src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_comp_swap", src_comp=[1, 1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_fadd", src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_fmin", src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_fmax", src_comp=[1, 1, 1], dest_comp=1, indices=[ACCESS])
+intrinsic("ssbo_atomic_fcomp_swap", src_comp=[1, 1, 1, 1], dest_comp=1, indices=[ACCESS])
 
 # CS shared variable atomic intrinsics
 #

@@ -542,6 +542,7 @@ type_size_scalar(const struct glsl_type *type)
    case GLSL_TYPE_ARRAY:
       return type_size_scalar(type->fields.array) * type->length;
    case GLSL_TYPE_STRUCT:
+   case GLSL_TYPE_INTERFACE:
       size = 0;
       for (i = 0; i < type->length; i++) {
 	 size += type_size_scalar(type->fields.structure[i].type);
@@ -558,7 +559,6 @@ type_size_scalar(const struct glsl_type *type)
       return 1;
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
-   case GLSL_TYPE_INTERFACE:
    case GLSL_TYPE_FUNCTION:
       unreachable("not reached");
    }
@@ -4237,7 +4237,7 @@ lower_fb_write_logical_send(const fs_builder &bld, fs_inst *inst,
       /* Set "Source0 Alpha Present to RenderTarget" bit in message
        * header.
        */
-      if (inst->target > 0 && key->replicate_alpha)
+      if (inst->target > 0 && prog_data->replicate_alpha)
          g00_bits |= 1 << 11;
 
       /* Set computes stencil to render target */
@@ -4281,6 +4281,23 @@ lower_fb_write_logical_send(const fs_builder &bld, fs_inst *inst,
       length++;
    }
 
+   if (src0_alpha.file != BAD_FILE) {
+      for (unsigned i = 0; i < bld.dispatch_width() / 8; i++) {
+         const fs_builder &ubld = bld.exec_all().group(8, i)
+                                    .annotate("FB write src0 alpha");
+         const fs_reg tmp = ubld.vgrf(BRW_REGISTER_TYPE_F);
+         ubld.MOV(tmp, horiz_offset(src0_alpha, i * 8));
+         setup_color_payload(ubld, key, &sources[length], tmp, 1);
+         length++;
+      }
+   } else if (prog_data->replicate_alpha && inst->target != 0) {
+      /* Handle the case when fragment shader doesn't write to draw buffer
+       * zero. No need to call setup_color_payload() for src0_alpha because
+       * alpha value will be undefined.
+       */
+      length += bld.dispatch_width() / 8;
+   }
+
    if (sample_mask.file != BAD_FILE) {
       sources[length] = fs_reg(VGRF, bld.shader->alloc.allocate(1),
                                BRW_REGISTER_TYPE_UD);
@@ -4303,24 +4320,6 @@ lower_fb_write_logical_send(const fs_builder &bld, fs_inst *inst,
    }
 
    payload_header_size = length;
-
-   if (src0_alpha.file != BAD_FILE) {
-      /* FIXME: This is being passed at the wrong location in the payload and
-       * doesn't work when gl_SampleMask and MRTs are used simultaneously.
-       * It's supposed to be immediately before oMask but there seems to be no
-       * reasonable way to pass them in the correct order because LOAD_PAYLOAD
-       * requires header sources to form a contiguous segment at the beginning
-       * of the message and src0_alpha has per-channel semantics.
-       */
-      setup_color_payload(bld, key, &sources[length], src0_alpha, 1);
-      length++;
-   } else if (key->replicate_alpha && inst->target != 0) {
-      /* Handle the case when fragment shader doesn't write to draw buffer
-       * zero. No need to call setup_color_payload() for src0_alpha because
-       * alpha value will be undefined.
-       */
-      length++;
-   }
 
    setup_color_payload(bld, key, &sources[length], color0, components);
    length += 4;
