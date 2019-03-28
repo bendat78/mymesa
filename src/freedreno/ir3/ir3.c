@@ -46,11 +46,12 @@ void * ir3_alloc(struct ir3 *shader, int sz)
 }
 
 struct ir3 * ir3_create(struct ir3_compiler *compiler,
-		unsigned nin, unsigned nout)
+		gl_shader_stage type, unsigned nin, unsigned nout)
 {
 	struct ir3 *shader = rzalloc(compiler, struct ir3);
 
 	shader->compiler = compiler;
+	shader->type = type;
 	shader->ninputs = nin;
 	shader->inputs = ir3_alloc(shader, sizeof(shader->inputs[0]) * nin);
 
@@ -451,9 +452,12 @@ static int emit_cat5(struct ir3_instruction *instr, void *ptr,
 	 * than tex/sampler idx, we use the first src reg in the ir to hold
 	 * samp_tex hvec2:
 	 */
-	struct ir3_register *src1 = instr->regs[2];
-	struct ir3_register *src2 = instr->regs[3];
+	struct ir3_register *src1;
+	struct ir3_register *src2;
 	instr_cat5_t *cat5 = ptr;
+
+	iassert((instr->regs_count == 2) ||
+			(instr->regs_count == 3) || (instr->regs_count == 4));
 
 	switch (instr->opc) {
 	case OPC_DSX:
@@ -462,11 +466,11 @@ static int emit_cat5(struct ir3_instruction *instr, void *ptr,
 	case OPC_DSYPP_1:
 		iassert((instr->flags & IR3_INSTR_S2EN) == 0);
 		src1 = instr->regs[1];
-		src2 = instr->regs[2];
+		src2 = instr->regs_count > 2 ? instr->regs[2] : NULL;
 		break;
 	default:
 		src1 = instr->regs[2];
-		src2 = instr->regs[3];
+		src2 = instr->regs_count > 3 ? instr->regs[3] : NULL;
 		break;
 	}
 
