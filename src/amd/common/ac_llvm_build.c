@@ -1953,6 +1953,12 @@ ac_build_umsb(struct ac_llvm_context *ctx,
 		highest_bit = LLVMConstInt(ctx->i16, 15, false);
 		zero = ctx->i16_0;
 		break;
+	case 8:
+		intrin_name = "llvm.ctlz.i8";
+		type = ctx->i8;
+		highest_bit = LLVMConstInt(ctx->i8, 7, false);
+		zero = ctx->i8_0;
+		break;
 	default:
 		unreachable(!"invalid bitsize");
 		break;
@@ -1970,7 +1976,12 @@ ac_build_umsb(struct ac_llvm_context *ctx,
 	/* The HW returns the last bit index from MSB, but TGSI/NIR wants
 	 * the index from LSB. Invert it by doing "31 - msb". */
 	msb = LLVMBuildSub(ctx->builder, highest_bit, msb, "");
-	msb = LLVMBuildTruncOrBitCast(ctx->builder, msb, ctx->i32, "");
+
+	if (bitsize == 64) {
+		msb = LLVMBuildTrunc(ctx->builder, msb, ctx->i32, "");
+	} else if (bitsize < 32) {
+		msb = LLVMBuildSExt(ctx->builder, msb, ctx->i32, "");
+	}
 
 	/* check for zero */
 	return LLVMBuildSelect(ctx->builder,
@@ -2547,6 +2558,15 @@ LLVMValueRef ac_build_bit_count(struct ac_llvm_context *ctx, LLVMValueRef src0)
 		result = ac_build_intrinsic(ctx, "llvm.ctpop.i16", ctx->i16,
 					    (LLVMValueRef []) { src0 }, 1,
 					    AC_FUNC_ATTR_READNONE);
+
+		result = LLVMBuildZExt(ctx->builder, result, ctx->i32, "");
+		break;
+	case 8:
+		result = ac_build_intrinsic(ctx, "llvm.ctpop.i8", ctx->i8,
+					    (LLVMValueRef []) { src0 }, 1,
+					    AC_FUNC_ATTR_READNONE);
+
+		result = LLVMBuildZExt(ctx->builder, result, ctx->i32, "");
 		break;
 	default:
 		unreachable(!"invalid bitsize");
@@ -2565,6 +2585,13 @@ LLVMValueRef ac_build_bitfield_reverse(struct ac_llvm_context *ctx,
 	bitsize = ac_get_elem_bits(ctx, LLVMTypeOf(src0));
 
 	switch (bitsize) {
+	case 64:
+		result = ac_build_intrinsic(ctx, "llvm.bitreverse.i64", ctx->i64,
+					    (LLVMValueRef []) { src0 }, 1,
+					    AC_FUNC_ATTR_READNONE);
+
+		result = LLVMBuildTrunc(ctx->builder, result, ctx->i32, "");
+		break;
 	case 32:
 		result = ac_build_intrinsic(ctx, "llvm.bitreverse.i32", ctx->i32,
 					    (LLVMValueRef []) { src0 }, 1,
@@ -2574,6 +2601,15 @@ LLVMValueRef ac_build_bitfield_reverse(struct ac_llvm_context *ctx,
 		result = ac_build_intrinsic(ctx, "llvm.bitreverse.i16", ctx->i16,
 					    (LLVMValueRef []) { src0 }, 1,
 					    AC_FUNC_ATTR_READNONE);
+
+		result = LLVMBuildZExt(ctx->builder, result, ctx->i32, "");
+		break;
+	case 8:
+		result = ac_build_intrinsic(ctx, "llvm.bitreverse.i8", ctx->i8,
+					    (LLVMValueRef []) { src0 }, 1,
+					    AC_FUNC_ATTR_READNONE);
+
+		result = LLVMBuildZExt(ctx->builder, result, ctx->i32, "");
 		break;
 	default:
 		unreachable(!"invalid bitsize");
@@ -2915,6 +2951,11 @@ LLVMValueRef ac_find_lsb(struct ac_llvm_context *ctx,
 		type = ctx->i16;
 		zero = ctx->i16_0;
 		break;
+	case 8:
+		intrin_name = "llvm.cttz.i8";
+		type = ctx->i8;
+		zero = ctx->i8_0;
+		break;
 	default:
 		unreachable(!"invalid bitsize");
 	}
@@ -2940,6 +2981,8 @@ LLVMValueRef ac_find_lsb(struct ac_llvm_context *ctx,
 
 	if (src0_bitsize == 64) {
 		lsb = LLVMBuildTrunc(ctx->builder, lsb, ctx->i32, "");
+	} else if (src0_bitsize < 32) {
+		lsb = LLVMBuildSExt(ctx->builder, lsb, ctx->i32, "");
 	}
 
 	/* TODO: We need an intrinsic to skip this conditional. */
@@ -3942,7 +3985,7 @@ ac_build_frexp_exp(struct ac_llvm_context *ctx, LLVMValueRef src0,
 		type = ctx->i32;
 	} else {
 		intr = "llvm.amdgcn.frexp.exp.i32.f64";
-		type = ctx->i64;
+		type = ctx->i32;
 	}
 
 	LLVMValueRef params[] = {

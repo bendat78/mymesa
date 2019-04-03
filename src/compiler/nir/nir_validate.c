@@ -26,6 +26,7 @@
  */
 
 #include "nir.h"
+#include "c11/threads.h"
 #include <assert.h>
 
 /*
@@ -596,6 +597,17 @@ validate_tex_instr(nir_tex_instr *instr, validate_state *state)
       src_type_seen[instr->src[i].src_type] = true;
       validate_src(&instr->src[i].src, state,
                    0, nir_tex_instr_src_size(instr, i));
+
+      switch (instr->src[i].src_type) {
+      case nir_tex_src_texture_deref:
+      case nir_tex_src_sampler_deref:
+         validate_assert(state, instr->src[i].src.is_ssa);
+         validate_assert(state,
+                         instr->src[i].src.ssa->parent_instr->type == nir_instr_type_deref);
+         break;
+      default:
+         break;
+      }
    }
 
    if (nir_tex_instr_has_explicit_tg4_offsets(instr)) {
@@ -1169,10 +1181,17 @@ destroy_validate_state(validate_state *state)
    _mesa_hash_table_destroy(state->errors, NULL);
 }
 
+mtx_t fail_dump_mutex = _MTX_INITIALIZER_NP;
+
 static void
 dump_errors(validate_state *state, const char *when)
 {
    struct hash_table *errors = state->errors;
+
+   /* Lock around dumping so that we get clean dumps in a multi-threaded
+    * scenario
+    */
+   mtx_lock(&fail_dump_mutex);
 
    if (when) {
       fprintf(stderr, "NIR validation failed %s\n", when);
@@ -1191,6 +1210,8 @@ dump_errors(validate_state *state, const char *when)
          fprintf(stderr, "%s\n", (char *)entry->data);
       }
    }
+
+   mtx_unlock(&fail_dump_mutex);
 
    abort();
 }

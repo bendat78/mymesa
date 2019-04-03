@@ -238,7 +238,7 @@ etna_resource_alloc(struct pipe_screen *pscreen, unsigned layout,
    if (!screen->specs.use_blt && templat->target != PIPE_BUFFER)
       etna_adjust_rs_align(screen->specs.pixel_pipes, NULL, &paddingY);
 
-   if (templat->bind & PIPE_BIND_SCANOUT) {
+   if (templat->bind & PIPE_BIND_SCANOUT && screen->ro->kms_fd >= 0) {
       struct pipe_resource scanout_templat = *templat;
       struct renderonly_scanout *scanout;
       struct winsys_handle handle;
@@ -666,9 +666,18 @@ etna_resource_used(struct etna_context *ctx, struct pipe_resource *prsc,
          struct etna_context *extctx = (struct etna_context *)entry->key;
          struct pipe_context *pctx = &extctx->base;
 
+         if (extctx == ctx)
+            continue;
+
          pctx->flush(pctx, NULL, 0);
+         /* It's safe to clear the status here. If we need to flush it means
+          * either another context had the resource in exclusive (write) use,
+          * or we transition the resource to exclusive use in our context.
+          * In both cases the new status accurately reflects the resource use
+          * after the flush.
+          */
+         rsc->status = 0;
       }
-      rsc->status = 0;
    }
 
    rsc->status |= status;

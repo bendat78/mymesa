@@ -160,6 +160,7 @@ files_libnir = files(
   'nir_move_vec_src_uses_to_dest.c',
   'nir_normalize_cubemap_coords.c',
   'nir_opt_combine_stores.c',
+  'nir_opt_comparison_pre.c',
   'nir_opt_conditional_discard.c',
   'nir_opt_constant_folding.c',
   'nir_opt_copy_prop_vars.c',
@@ -281,5 +282,17 @@ if with_tests
       join_paths(meson.current_source_dir(), 'tests/algebraic_parser_test.py')
     ],
     suite : ['compiler', 'nir'],
+  )
+
+  test(
+    'negative_equal',
+    executable(
+      'negative_equal',
+      files('tests/negative_equal_tests.cpp'),
+      c_args : [c_vis_args, c_msvc_compat_args, no_override_init_args],
+      include_directories : [inc_common],
+      dependencies : [dep_thread, idep_gtest, idep_nir],
+      link_with : libmesa_util,
+    )
   )
 endif

@@ -988,8 +988,18 @@ nir_ssa_alu_instr_src_components(const nir_alu_instr *instr, unsigned src)
    return instr->dest.dest.ssa.num_components;
 }
 
+bool nir_const_value_negative_equal(const nir_const_value *c1,
+                                    const nir_const_value *c2,
+                                    unsigned components,
+                                    nir_alu_type base_type,
+                                    unsigned bits);
+
 bool nir_alu_srcs_equal(const nir_alu_instr *alu1, const nir_alu_instr *alu2,
                         unsigned src1, unsigned src2);
+
+bool nir_alu_srcs_negative_equal(const nir_alu_instr *alu1,
+                                 const nir_alu_instr *alu2,
+                                 unsigned src1, unsigned src2);
 
 typedef enum {
    nir_deref_type_var,
@@ -2263,6 +2273,7 @@ typedef struct nir_shader_compiler_options {
    bool lower_extract_word;
 
    bool lower_all_io_to_temps;
+   bool lower_all_io_to_elements;
 
    /**
     * Does the driver support real 32-bit integers?  (Otherwise, integers
@@ -3390,6 +3401,8 @@ bool nir_convert_from_ssa(nir_shader *shader, bool phi_webs_only);
 bool nir_lower_phis_to_regs_block(nir_block *block);
 bool nir_lower_ssa_defs_to_regs_block(nir_block *block);
 bool nir_rematerialize_derefs_in_use_blocks_impl(nir_function_impl *impl);
+
+bool nir_opt_comparison_pre(nir_shader *shader);
 
 bool nir_opt_algebraic(nir_shader *shader);
 bool nir_opt_algebraic_before_ffma(nir_shader *shader);

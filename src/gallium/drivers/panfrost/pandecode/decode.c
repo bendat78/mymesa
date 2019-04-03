@@ -985,6 +985,8 @@ pandecode_replay_vertex_tiler_prefix(struct mali_vertex_tiler_prefix *p, int job
         if (p->index_count)
                 pandecode_prop("index_count = MALI_POSITIVE(%" PRId32 ")", p->index_count + 1);
 
+        pandecode_prop("negative_start = %d", p->negative_start);
+
         DYN_MEMORY_PROP(p, job_no, indices);
 
         if (p->zero1) {
@@ -1463,7 +1465,13 @@ pandecode_replay_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix
                                         pandecode_log(".swizzled_bitmaps = {\n");
                                         pandecode_indent++;
 
-                                        int bitmap_count = 1 + t->nr_mipmap_levels + t->unknown3A;
+                                        int bitmap_count = MALI_NEGATIVE(t->nr_mipmap_levels);
+
+                                        if (!f.is_not_cubemap) {
+                                                /* Miptree for each face */
+                                                bitmap_count *= 6;
+                                        }
+
                                         int max_count = sizeof(t->swizzled_bitmaps) / sizeof(t->swizzled_bitmaps[0]);
 
                                         if (bitmap_count > max_count) {

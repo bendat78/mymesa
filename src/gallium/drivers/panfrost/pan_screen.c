@@ -63,7 +63,6 @@ DEBUG_GET_ONCE_FLAGS_OPTION(pan_debug, "PAN_MESA_DEBUG", debug_options, 0)
 int pan_debug = 0;
 
 struct panfrost_driver *panfrost_create_drm_driver(int fd);
-struct panfrost_driver *panfrost_create_nondrm_driver(int fd);
 
 const char *pan_counters_base = NULL;
 
@@ -440,6 +439,9 @@ panfrost_is_format_supported( struct pipe_screen *screen,
         if (format == PIPE_FORMAT_Z24X8_UNORM || format == PIPE_FORMAT_X8Z24_UNORM)
                 return FALSE;
 
+        if (format == PIPE_FORMAT_A1B5G5R5_UNORM || format == PIPE_FORMAT_X1B5G5R5_UNORM)
+                return FALSE;
+
         if (bind & PIPE_BIND_RENDER_TARGET) {
                 /* We don't support rendering into anything but RGBA8 yet. We
                  * need more formats for spec compliance, but for now, honesty
@@ -467,7 +469,8 @@ panfrost_is_format_supported( struct pipe_screen *screen,
         }
 
         if (format_desc->layout == UTIL_FORMAT_LAYOUT_BPTC ||
-                        format_desc->layout == UTIL_FORMAT_LAYOUT_ASTC) {
+                        format_desc->layout == UTIL_FORMAT_LAYOUT_ASTC ||
+                        format_desc->layout == UTIL_FORMAT_LAYOUT_ETC) {
                 /* Compressed formats not yet hooked up. */
                 return FALSE;
         }
@@ -545,7 +548,7 @@ panfrost_screen_get_compiler_options(struct pipe_screen *pscreen,
 }
 
 struct pipe_screen *
-panfrost_create_screen(int fd, struct renderonly *ro, bool is_drm)
+panfrost_create_screen(int fd, struct renderonly *ro)
 {
         struct panfrost_screen *screen = CALLOC_STRUCT(panfrost_screen);
 
@@ -563,16 +566,7 @@ panfrost_create_screen(int fd, struct renderonly *ro, bool is_drm)
                 }
         }
 
-        if (is_drm) {
-                screen->driver = panfrost_create_drm_driver(fd);
-        } else {
-#ifdef PAN_NONDRM_OVERLAY
-                screen->driver = panfrost_create_nondrm_driver(fd);
-#else
-                fprintf(stderr, "Legacy (non-DRM) operation requires out-of-tree overlay\n");
-                return NULL;
-#endif
-        }
+        screen->driver = panfrost_create_drm_driver(fd);
 
         /* Dump memory and/or performance counters iff asked for in the environment */
         const char *pantrace_base = getenv("PANTRACE_BASE");

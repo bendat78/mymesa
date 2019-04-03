@@ -773,12 +773,14 @@ panfrost_emit_vertex_data(struct panfrost_context *ctx)
                  * rsrc->gpu. However, attribute buffers must be 64 aligned. If
                  * it is not, for now we have to duplicate the buffer. */
 
-                mali_ptr effective_address = (rsrc->bo->gpu + buf->buffer_offset);
+                mali_ptr effective_address = rsrc ? (rsrc->bo->gpu + buf->buffer_offset) : 0;
 
-                if (effective_address & 0x3F) {
-                        attrs[i].elements = panfrost_upload_transient(ctx, rsrc->bo->cpu + buf->buffer_offset, attrs[i].size) | 1;
+                if (effective_address) {
+                        attrs[i].elements = panfrost_upload_transient(ctx, rsrc->bo->cpu + buf->buffer_offset, attrs[i].size) | MALI_ATTR_LINEAR;
+                } else if (effective_address) {
+                        attrs[i].elements = effective_address | MALI_ATTR_LINEAR;
                 } else {
-                        attrs[i].elements = effective_address | 1;
+                        /* Leave unset? */
                 }
         }
 
@@ -1018,10 +1020,18 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                                 struct pipe_resource *tex_rsrc = ctx->sampler_views[t][i]->base.texture;
                                 struct panfrost_resource *rsrc = (struct panfrost_resource *) tex_rsrc;
 
-                                /* Inject the address in. */
+                                /* Inject the addresses in, interleaving cube
+                                 * faces and mip levels appropriately. */
+
                                 for (int l = 0; l <= tex_rsrc->last_level; ++l) {
-                                        ctx->sampler_views[t][i]->hw.swizzled_bitmaps[l] =
-                                                rsrc->bo->gpu + rsrc->bo->slices[l].offset;
+                                        for (int f = 0; f < tex_rsrc->array_size; ++f) {
+                                                unsigned idx = (l * tex_rsrc->array_size) + f;
+
+                                                ctx->sampler_views[t][i]->hw.swizzled_bitmaps[idx] =
+                                                        rsrc->bo->gpu +
+                                                        rsrc->bo->slices[l].offset +
+                                                        f * rsrc->bo->cubemap_stride;
+                                        }
                                 }
 
                                 trampolines[i] = panfrost_upload_transient(ctx, &ctx->sampler_views[t][i]->hw, sizeof(struct mali_texture_descriptor));
@@ -1442,14 +1452,17 @@ panfrost_draw_vbo(
         ctx->payload_tiler.prefix.unknown_draw &= ~(0x3000 | 0x18000);
         ctx->payload_tiler.prefix.unknown_draw |= (mode == PIPE_PRIM_POINTS || ctx->vertex_count > 65535) ? 0x3000 : 0x18000;
 
+        /* Clean index state */
+        ctx->payload_tiler.prefix.unknown_draw &= ~MALI_DRAW_INDEXED_UINT32;
+
         if (info->index_size) {
                 /* Calculate the min/max index used so we can figure out how
                  * many times to invoke the vertex shader */
 
                 const uint8_t *ibuf8 = panfrost_get_index_buffer_raw(info);
 
-                int min_index = INT_MAX;
-                int max_index = 0;
+                unsigned min_index = UINT_MAX;
+                unsigned max_index = 0;
 
                 if (info->index_size == 1) {
                         CALCULATE_MIN_MAX_INDEX(uint8_t, ibuf8, info->start, info->count);
@@ -1464,9 +1477,8 @@ panfrost_draw_vbo(
                 }
 
                 /* Make sure we didn't go crazy */
-                assert(min_index < INT_MAX);
-                assert(max_index > 0);
-                assert(max_index > min_index);
+                assert(min_index < UINT_MAX);
+                assert(max_index >= min_index);
 
                 /* Use the corresponding values */
                 invocation_count = max_index - min_index + 1;
@@ -1490,7 +1502,6 @@ panfrost_draw_vbo(
                 ctx->payload_tiler.prefix.index_count = MALI_POSITIVE(ctx->vertex_count);
 
                 /* Reverse index state */
-                ctx->payload_tiler.prefix.unknown_draw &= ~MALI_DRAW_INDEXED_UINT32;
                 ctx->payload_tiler.prefix.indices = (uintptr_t) NULL;
         }
 
@@ -1905,9 +1916,6 @@ panfrost_create_sampler_view(
          * (data) itself. So, we serialise the descriptor here and cache it for
          * later. */
 
-        /* TODO: Other types of textures */
-        assert(template->target == PIPE_TEXTURE_2D);
-
         /* Make sure it's something with which we're familiar */
         assert(bytes_per_pixel >= 1 && bytes_per_pixel <= 4);
 
@@ -1953,7 +1961,7 @@ panfrost_create_sampler_view(
                         .format = format,
 
                         .usage1 = 0x0,
-                        .is_not_cubemap = 1,
+                        .is_not_cubemap = texture->target != PIPE_TEXTURE_CUBE,
 
                         .usage2 = usage2_layout
                 },

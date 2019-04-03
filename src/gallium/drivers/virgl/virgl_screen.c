@@ -144,7 +144,8 @@ virgl_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_VERTEX_COLOR_CLAMPED:
       return vscreen->caps.caps.v1.bset.color_clamping;
    case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
-      return vscreen->caps.caps.v2.capability_bits & VIRGL_CAP_FBO_MIXED_COLOR_FORMATS;
+      return (vscreen->caps.caps.v2.capability_bits & VIRGL_CAP_FBO_MIXED_COLOR_FORMATS) ||
+            (vscreen->caps.caps.v2.host_feature_check_version < 1);
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
       return vscreen->caps.caps.v1.glsl_level;
    case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
@@ -216,7 +217,8 @@ virgl_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_CULL_DISTANCE:
       return vscreen->caps.caps.v1.bset.has_cull;
    case PIPE_CAP_MAX_VERTEX_STREAMS:
-      return vscreen->caps.caps.v1.glsl_level >= 400 ? 4 : 1;
+      return ((vscreen->caps.caps.v2.capability_bits & VIRGL_CAP_TRANSFORM_FEEDBACK3) ||
+              (vscreen->caps.caps.v2.host_feature_check_version < 2)) ? 4 : 1;
    case PIPE_CAP_CONDITIONAL_RENDER_INVERTED:
       return vscreen->caps.caps.v1.bset.conditional_render_inverted;
    case PIPE_CAP_TGSI_FS_FINE_DERIVATIVE:
@@ -614,11 +616,20 @@ virgl_is_format_supported( struct pipe_screen *screen,
       return virgl_is_vertex_format_supported(screen, format);
    }
 
+   if (util_format_is_compressed(format) && target == PIPE_BUFFER)
+      return FALSE;
+
    /* Allow 3-comp 32 bit textures only for TBOs (needed for ARB_tbo_rgb32) */
    if ((format == PIPE_FORMAT_R32G32B32_FLOAT ||
        format == PIPE_FORMAT_R32G32B32_SINT ||
        format == PIPE_FORMAT_R32G32B32_UINT) &&
        target != PIPE_BUFFER)
+      return FALSE;
+
+   if ((format_desc->layout == UTIL_FORMAT_LAYOUT_RGTC ||
+        format_desc->layout == UTIL_FORMAT_LAYOUT_ETC ||
+        format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) &&
+       target == PIPE_TEXTURE_3D)
       return FALSE;
 
    if (bind & PIPE_BIND_RENDER_TARGET) {
