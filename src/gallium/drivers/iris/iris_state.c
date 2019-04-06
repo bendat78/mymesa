@@ -1532,8 +1532,8 @@ iris_upload_sampler_states(struct iris_context *ice, gl_shader_stage stage)
           * back into A.
           */
          union pipe_color_union *color = &state->border_color;
+         union pipe_color_union tmp;
          if (tex) {
-            union pipe_color_union tmp;
             enum pipe_format internal_format = tex->res->internal_format;
 
             if (util_format_is_alpha(internal_format)) {
@@ -2561,7 +2561,8 @@ static void
 iris_set_shader_buffers(struct pipe_context *ctx,
                         enum pipe_shader_type p_stage,
                         unsigned start_slot, unsigned count,
-                        const struct pipe_shader_buffer *buffers)
+                        const struct pipe_shader_buffer *buffers,
+                        unsigned writable_bitmask)
 {
    struct iris_context *ice = (struct iris_context *) ctx;
    struct iris_screen *screen = (struct iris_screen *)ctx->screen;
@@ -2642,7 +2643,8 @@ iris_set_vertex_buffers(struct pipe_context *ctx,
          continue;
       }
 
-      assert(!buffer->is_user_buffer);
+      /* We may see user buffers that are NULL bindings. */
+      assert(!(buffer->is_user_buffer && buffer->buffer.user != NULL));
 
       pipe_resource_reference(&state->resource, buffer->buffer.resource);
       struct iris_resource *res = (void *) state->resource;

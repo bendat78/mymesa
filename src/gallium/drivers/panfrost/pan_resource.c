@@ -390,8 +390,6 @@ panfrost_transfer_map(struct pipe_context *pctx,
         transfer->base.level = level;
         transfer->base.usage = usage;
         transfer->base.box = *box;
-        transfer->base.stride = bo->slices[level].stride;
-        transfer->base.layer_stride = bo->cubemap_stride;
 
         pipe_resource_reference(&transfer->base.resource, resource);
 
@@ -413,11 +411,17 @@ panfrost_transfer_map(struct pipe_context *pctx,
                 if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
                         return NULL;
 
+                transfer->base.stride = box->width * bytes_per_pixel;
+                transfer->base.layer_stride = transfer->base.stride * box->height;
+
                 /* TODO: Reads */
-                transfer->map = malloc(ALIGN(box->width, 16) * ALIGN(box->height, 16) * bytes_per_pixel);
+                transfer->map = malloc(transfer->base.layer_stride * box->depth);
 
                 return transfer->map;
         } else {
+                transfer->base.stride = bo->slices[level].stride;
+                transfer->base.layer_stride = bo->cubemap_stride;
+
                 return bo->cpu
                         + bo->slices[level].offset
                         + transfer->base.box.z * bo->cubemap_stride
@@ -439,7 +443,7 @@ panfrost_tile_texture(struct panfrost_screen *screen, struct panfrost_resource *
                         trans->base.box.width,
                         trans->base.box.height,
                         util_format_get_blocksize(rsrc->base.format),
-                        bo->slices[level].stride,
+                        u_minify(rsrc->base.width0, level),
                         trans->map,
                         bo->cpu
                                 + bo->slices[level].offset
@@ -448,36 +452,33 @@ panfrost_tile_texture(struct panfrost_screen *screen, struct panfrost_resource *
 }
 
 static void
-panfrost_unmap_bo(struct panfrost_context *ctx,
-                         struct pipe_transfer *transfer)
-{
-        struct panfrost_gtransfer *trans = pan_transfer(transfer);
-	struct panfrost_bo *bo = (struct panfrost_bo *)pan_resource(transfer->resource)->bo;
-
-        if (transfer->usage & PIPE_TRANSFER_WRITE) {
-                struct panfrost_resource *prsrc = (struct panfrost_resource *) transfer->resource;
-
-                /* Gallium thinks writeback happens here; instead, this is our cue to tile */
-                if (bo->layout == PAN_AFBC) {
-                        DBG("Warning: writes to afbc surface can't possibly work out well for you...\n");
-                } else if (bo->layout == PAN_TILED) {
-                        struct pipe_context *gallium = (struct pipe_context *) ctx;
-                        struct panfrost_screen *screen = pan_screen(gallium->screen);
-                        assert(transfer->box.depth == 1);
-                        panfrost_tile_texture(screen, prsrc, trans);
-                }
-        }
-
-        free(trans->map);
-}
-
-static void
 panfrost_transfer_unmap(struct pipe_context *pctx,
                         struct pipe_transfer *transfer)
 {
         struct panfrost_context *ctx = pan_context(pctx);
 
-	panfrost_unmap_bo(ctx, transfer);
+        /* Gallium expects writeback here, so we tile */
+
+        struct panfrost_gtransfer *trans = pan_transfer(transfer);
+
+        if (trans->map) {
+                struct panfrost_resource *prsrc = (struct panfrost_resource *) transfer->resource;
+                struct panfrost_bo *bo = prsrc->bo;
+
+                if (transfer->usage & PIPE_TRANSFER_WRITE) {
+
+                        if (bo->layout == PAN_AFBC) {
+                                DBG("Unimplemented: writes to AFBC\n");
+                        } else if (bo->layout == PAN_TILED) {
+                                struct pipe_context *gallium = (struct pipe_context *) ctx;
+                                struct panfrost_screen *screen = pan_screen(gallium->screen);
+                                assert(transfer->box.depth == 1);
+                                panfrost_tile_texture(screen, prsrc, trans);
+                        }
+                }
+
+                free(trans->map);
+        }
 
         /* Derefence the resource */
         pipe_resource_reference(&transfer->resource, NULL);
