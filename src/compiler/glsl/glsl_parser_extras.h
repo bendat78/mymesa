@@ -447,6 +447,12 @@ struct _mesa_glsl_parse_state {
    bool cs_input_local_size_variable_specified;
 
    /**
+    * Arrangement of invocations used to calculate derivatives in a compute
+    * shader.  From NV_compute_shader_derivatives.
+    */
+   enum gl_derivative_group cs_derivative_group;
+
+   /**
     * True if a shader declare bindless_sampler/bindless_image, and
     * respectively bound_sampler/bound_image at global scope as specified by
     * ARB_bindless_texture.
@@ -845,6 +851,8 @@ struct _mesa_glsl_parse_state {
    bool INTEL_shader_atomic_float_minmax_warn;
    bool MESA_shader_integer_functions_enable;
    bool MESA_shader_integer_functions_warn;
+   bool NV_compute_shader_derivatives_enable;
+   bool NV_compute_shader_derivatives_warn;
    bool NV_fragment_shader_interlock_enable;
    bool NV_fragment_shader_interlock_warn;
    bool NV_image_formats_enable;

@@ -271,12 +271,14 @@ virgl_get_param(struct pipe_screen *screen, enum pipe_cap param)
       /* If the host supports only one sample (e.g., if it is using softpipe),
        * fake multisampling to able to advertise higher GL versions. */
       return (vscreen->caps.caps.v1.max_samples == 1) ? 1 : 0;
+   case PIPE_CAP_MULTI_DRAW_INDIRECT:
+      return !!(vscreen->caps.caps.v2.capability_bits & VIRGL_CAP_MULTI_DRAW_INDIRECT);
+   case PIPE_CAP_MULTI_DRAW_INDIRECT_PARAMS:
+      return !!(vscreen->caps.caps.v2.capability_bits & VIRGL_CAP_INDIRECT_PARAMS);
    case PIPE_CAP_TEXTURE_GATHER_SM5:
    case PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT:
    case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
    case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
-   case PIPE_CAP_MULTI_DRAW_INDIRECT:
-   case PIPE_CAP_MULTI_DRAW_INDIRECT_PARAMS:
    case PIPE_CAP_CLIP_HALFZ:
    case PIPE_CAP_VERTEXID_NOBASE:
    case PIPE_CAP_MULTISAMPLE_Z_RESOLVE:
@@ -355,6 +357,8 @@ virgl_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return vscreen->vws->supports_fences;
    case PIPE_CAP_DEST_SURFACE_SRGB_CONTROL:
       return vscreen->caps.caps.v2.capability_bits & VIRGL_CAP_SRGB_WRITE_CONTROL;
+   case PIPE_CAP_TGSI_SKIP_SHRINK_IO_ARRAYS:
+      return vscreen->caps.caps.v2.capability_bits & VIRGL_CAP_INDIRECT_INPUT_ADDR;
    default:
       return u_pipe_screen_get_param_defaults(screen, param);
    }
@@ -393,6 +397,9 @@ virgl_get_shader_param(struct pipe_screen *screen,
       case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
       case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
          return 1;
+      case PIPE_SHADER_CAP_TGSI_ANY_INOUT_DECL_RANGE:
+      case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
+         return vscreen->caps.caps.v2.capability_bits & VIRGL_CAP_INDIRECT_INPUT_ADDR;
       case PIPE_SHADER_CAP_MAX_INPUTS:
          if (vscreen->caps.caps.v1.glsl_level < 150)
             return vscreen->caps.caps.v2.max_vertex_attribs;

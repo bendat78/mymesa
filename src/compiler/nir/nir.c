@@ -58,10 +58,8 @@ nir_shader_create(void *mem_ctx,
    }
 
    exec_list_make_empty(&shader->functions);
-   exec_list_make_empty(&shader->registers);
    exec_list_make_empty(&shader->globals);
    exec_list_make_empty(&shader->system_values);
-   shader->reg_alloc = 0;
 
    shader->num_inputs = 0;
    shader->num_outputs = 0;
@@ -83,20 +81,9 @@ reg_create(void *mem_ctx, struct exec_list *list)
    reg->num_components = 0;
    reg->bit_size = 32;
    reg->num_array_elems = 0;
-   reg->is_packed = false;
    reg->name = NULL;
 
    exec_list_push_tail(list, &reg->node);
-
-   return reg;
-}
-
-nir_register *
-nir_global_reg_create(nir_shader *shader)
-{
-   nir_register *reg = reg_create(shader, &shader->registers);
-   reg->index = shader->reg_alloc++;
-   reg->is_global = true;
 
    return reg;
 }
@@ -106,7 +93,6 @@ nir_local_reg_create(nir_function_impl *impl)
 {
    nir_register *reg = reg_create(ralloc_parent(impl), &impl->registers);
    reg->index = impl->reg_alloc++;
-   reg->is_global = false;
 
    return reg;
 }
@@ -929,16 +915,6 @@ nir_index_local_regs(nir_function_impl *impl)
       reg->index = index++;
    }
    impl->reg_alloc = index;
-}
-
-void
-nir_index_global_regs(nir_shader *shader)
-{
-   unsigned index = 0;
-   foreach_list_typed(nir_register, reg, node, &shader->registers) {
-      reg->index = index++;
-   }
-   shader->reg_alloc = index;
 }
 
 static bool

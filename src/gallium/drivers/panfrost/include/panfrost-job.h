@@ -408,6 +408,13 @@ enum mali_format {
 /* Applies to unknown1 */
 #define MALI_NO_ALPHA_TO_COVERAGE (1 << 10)
 
+/* Flags denoting the fragment shader's use of tilebuffer readback. If the
+ * shader might read any part of the tilebuffer, set MALI_READS_TILEBUFFER. If
+ * it might read depth/stencil in particular, also set MALI_READS_ZS */
+
+#define MALI_READS_ZS (1 << 12)
+#define MALI_READS_TILEBUFFER (1 << 16)
+
 struct mali_blend_meta {
 #ifndef BIFROST
         /* Base value of 0x200.
@@ -1213,14 +1220,6 @@ struct mali_viewport {
         u16 viewport0[2];
         u16 viewport1[2];
 } __attribute__((packed));
-
-/* TODO: Varying meta is symmetrical with attr_meta, but there is some
- * weirdness associated. Figure it out. */
-
-struct mali_unknown6 {
-        u64 unknown0;
-        u64 unknown1;
-};
 
 /* From presentations, 16x16 tiles externally. Use shift for fast computation
  * of tile numbers. */

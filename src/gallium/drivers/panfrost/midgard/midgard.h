@@ -74,7 +74,9 @@ typedef enum {
         midgard_alu_op_isub       = 0x46,
         midgard_alu_op_imul       = 0x58,
         midgard_alu_op_imin       = 0x60,
+        midgard_alu_op_umin       = 0x61,
         midgard_alu_op_imax       = 0x62,
+        midgard_alu_op_umax       = 0x63,
         midgard_alu_op_iasr       = 0x68,
         midgard_alu_op_ilsr       = 0x69,
         midgard_alu_op_ishl       = 0x6E,
@@ -83,6 +85,8 @@ typedef enum {
         midgard_alu_op_inot       = 0x72,
         midgard_alu_op_iandnot    = 0x74, /* (a, b) -> a & ~b, used for not/b2f */
         midgard_alu_op_ixor       = 0x76,
+        midgard_alu_op_ilzcnt     = 0x78, /* Number of zeroes on left. 31 - ilzcnt(x) = findMSB(x) */
+        midgard_alu_op_ibitcount8 = 0x7A, /* Counts bits in 8-bit increments */
         midgard_alu_op_imov       = 0x7B,
         midgard_alu_op_iabs       = 0x7C,
         midgard_alu_op_feq        = 0x80,
@@ -219,18 +223,50 @@ __attribute__((__packed__))
 }
 midgard_reg_info;
 
+/* In addition to conditional branches and jumps (unconditional branches),
+ * Midgard implements a bit of fixed function functionality used in fragment
+ * shaders via specially crafted branches. These have special branch opcodes,
+ * which perform a fixed-function operation and/or use the results of a
+ * fixed-function operation as the branch condition.  */
+
 typedef enum {
+        /* Regular branches */
         midgard_jmp_writeout_op_branch_uncond = 1,
         midgard_jmp_writeout_op_branch_cond = 2,
+
+        /* In a fragment shader, execute a discard_if instruction, with the
+         * corresponding condition code. Terminates the shader, so generally
+         * set the branch target to out of the shader */
         midgard_jmp_writeout_op_discard = 4,
+
+        /* Branch if the tilebuffer is not yet ready. At the beginning of a
+         * fragment shader that reads from the tile buffer, for instance via
+         * ARM_shader_framebuffer_fetch or EXT_pixel_local_storage, this branch
+         * operation should be used as a loop. An instruction like
+         * "br.tilebuffer.always -1" does the trick, corresponding to
+         * "while(!is_tilebuffer_ready) */
+        midgard_jmp_writeout_op_tilebuffer_pending = 6,
+
+        /* In a fragment shader, try to write out the value pushed to r0 to the
+         * tilebuffer, subject to unknown state in r1.z and r1.w. If this
+         * succeeds, the shader terminates. If it fails, it branches to the
+         * specified branch target. Generally, this should be used in a loop to
+         * itself, acting as "do { write(r0); } while(!write_successful);" */
         midgard_jmp_writeout_op_writeout = 7,
 } midgard_jmp_writeout_op;
 
 typedef enum {
         midgard_condition_write0 = 0,
+
+        /* These condition codes denote a conditional branch on FALSE and on
+         * TRUE respectively */
         midgard_condition_false = 1,
         midgard_condition_true = 2,
-        midgard_condition_always = 3, /* Special for writeout/uncond discard */
+
+        /* This condition code always branches. For a pure branch, the
+         * unconditional branch coding should be used instead, but for
+         * fixed-function branch opcodes, this is still useful */
+        midgard_condition_always = 3,
 } midgard_condition;
 
 typedef struct
@@ -448,7 +484,9 @@ static char *alu_opcode_names[256] = {
         [midgard_alu_op_fdot4]      = "fdot4",
         [midgard_alu_op_freduce]    = "freduce",
         [midgard_alu_op_imin]       = "imin",
+        [midgard_alu_op_umin]       = "umin",
         [midgard_alu_op_imax]       = "imax",
+        [midgard_alu_op_umax]       = "umax",
         [midgard_alu_op_ishl]       = "ishl",
         [midgard_alu_op_iasr]       = "iasr",
         [midgard_alu_op_ilsr]       = "ilsr",
@@ -463,6 +501,8 @@ static char *alu_opcode_names[256] = {
         [midgard_alu_op_inot]       = "inot",
         [midgard_alu_op_iandnot]    = "iandnot",
         [midgard_alu_op_ixor]       = "ixor",
+        [midgard_alu_op_ilzcnt]     = "ilzcnt",
+        [midgard_alu_op_ibitcount8] = "ibitcount8",
         [midgard_alu_op_feq]        = "feq",
         [midgard_alu_op_fne]        = "fne",
         [midgard_alu_op_flt]        = "flt",

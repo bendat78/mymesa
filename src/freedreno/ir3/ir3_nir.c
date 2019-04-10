@@ -147,7 +147,7 @@ ir3_optimize_loop(nir_shader *s)
 			OPT(s, nir_copy_prop);
 			OPT(s, nir_opt_dce);
 		}
-		progress |= OPT(s, nir_opt_if);
+		progress |= OPT(s, nir_opt_if, false);
 		progress |= OPT(s, nir_opt_remove_phis);
 		progress |= OPT(s, nir_opt_undef);
 
@@ -195,7 +195,6 @@ ir3_optimize_nir(struct ir3_shader *shader, nir_shader *s,
 		debug_printf("----------------------\n");
 	}
 
-	OPT_V(s, nir_opt_global_to_local);
 	OPT_V(s, nir_lower_regs_to_ssa);
 	OPT_V(s, ir3_nir_lower_io_offsets);
 

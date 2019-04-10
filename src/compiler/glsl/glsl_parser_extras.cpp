@@ -735,6 +735,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(INTEL_conservative_rasterization),
    EXT(INTEL_shader_atomic_float_minmax),
    EXT(MESA_shader_integer_functions),
+   EXT(NV_compute_shader_derivatives),
    EXT(NV_fragment_shader_interlock),
    EXT(NV_image_formats),
    EXT(NV_shader_atomic_float),
@@ -1716,11 +1717,9 @@ set_shader_inout_layout(struct gl_shader *shader,
 		     struct _mesa_glsl_parse_state *state)
 {
    /* Should have been prevented by the parser. */
-   if (shader->Stage == MESA_SHADER_TESS_CTRL ||
-       shader->Stage == MESA_SHADER_VERTEX) {
-      assert(!state->in_qualifier->flags.i);
-   } else if (shader->Stage != MESA_SHADER_GEOMETRY &&
-              shader->Stage != MESA_SHADER_TESS_EVAL) {
+   if (shader->Stage != MESA_SHADER_GEOMETRY &&
+       shader->Stage != MESA_SHADER_TESS_EVAL &&
+       shader->Stage != MESA_SHADER_COMPUTE) {
       assert(!state->in_qualifier->flags.i);
    }
 
@@ -1728,6 +1727,7 @@ set_shader_inout_layout(struct gl_shader *shader,
       /* Should have been prevented by the parser. */
       assert(!state->cs_input_local_size_specified);
       assert(!state->cs_input_local_size_variable_specified);
+      assert(state->cs_derivative_group == DERIVATIVE_GROUP_NONE);
    }
 
    if (shader->Stage != MESA_SHADER_FRAGMENT) {
@@ -1852,6 +1852,36 @@ set_shader_inout_layout(struct gl_shader *shader,
 
       shader->info.Comp.LocalSizeVariable =
          state->cs_input_local_size_variable_specified;
+
+      shader->info.Comp.DerivativeGroup = state->cs_derivative_group;
+
+      if (state->NV_compute_shader_derivatives_enable) {
+         /* We allow multiple cs_input_layout nodes, but do not store them in
+          * a convenient place, so for now live with an empty location error.
+          */
+         YYLTYPE loc = {0};
+         if (shader->info.Comp.DerivativeGroup == DERIVATIVE_GROUP_QUADS) {
+            if (shader->info.Comp.LocalSize[0] % 2 != 0) {
+               _mesa_glsl_error(&loc, state, "derivative_group_quadsNV must be used with a "
+                                "local group size whose first dimension "
+                                "is a multiple of 2\n");
+            }
+            if (shader->info.Comp.LocalSize[1] % 2 != 0) {
+               _mesa_glsl_error(&loc, state, "derivative_group_quadsNV must be used with a "
+                                "local group size whose second dimension "
+                                "is a multiple of 2\n");
+            }
+         } else if (shader->info.Comp.DerivativeGroup == DERIVATIVE_GROUP_LINEAR) {
+            if ((shader->info.Comp.LocalSize[0] *
+                 shader->info.Comp.LocalSize[1] *
+                 shader->info.Comp.LocalSize[2]) % 4 != 0) {
+               _mesa_glsl_error(&loc, state, "derivative_group_linearNV must be used with a "
+                            "local group size whose total number of invocations "
+                            "is a multiple of 4\n");
+            }
+         }
+      }
+
       break;
 
    case MESA_SHADER_FRAGMENT:

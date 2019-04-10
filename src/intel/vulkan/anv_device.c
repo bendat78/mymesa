@@ -1051,6 +1051,14 @@ void anv_GetPhysicalDeviceFeatures2(
          break;
       }
 
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV: {
+         VkPhysicalDeviceComputeShaderDerivativesFeaturesNV *features =
+            (VkPhysicalDeviceComputeShaderDerivativesFeaturesNV *)ext;
+         features->computeDerivativeGroupQuads = true;
+         features->computeDerivativeGroupLinear = true;
+         break;
+      }
+
       default:
          anv_debug_ignored_stype(ext->sType);
          break;
@@ -1139,8 +1147,8 @@ void anv_GetPhysicalDeviceProperties(
          16 * devinfo->max_cs_threads,
       },
       .subPixelPrecisionBits                    = 8,
-      .subTexelPrecisionBits                    = 4 /* FIXME */,
-      .mipmapPrecisionBits                      = 4 /* FIXME */,
+      .subTexelPrecisionBits                    = 8,
+      .mipmapPrecisionBits                      = 8,
       .maxDrawIndexedIndexValue                 = UINT32_MAX,
       .maxDrawIndirectCount                     = UINT32_MAX,
       .maxSamplerLodBias                        = 16,

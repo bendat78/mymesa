@@ -237,7 +237,12 @@ enum virgl_formats {
 #define VIRGL_CAP_TRANSFER             (1 << 17)
 #define VIRGL_CAP_FBO_MIXED_COLOR_FORMATS (1 << 18)
 #define VIRGL_CAP_FAKE_FP64            (1 << 19)
+#define VIRGL_CAP_BIND_COMMAND_ARGS    (1 << 20)
+#define VIRGL_CAP_MULTI_DRAW_INDIRECT  (1 << 21)
+#define VIRGL_CAP_INDIRECT_PARAMS      (1 << 22)
 #define VIRGL_CAP_TRANSFORM_FEEDBACK3  (1 << 23)
+#define VIRGL_CAP_INDIRECT_INPUT_ADDR  (1 << 25)
+
 
 /* virgl bind flags - these are compatible with mesa 10.5 gallium.
  * but are fixed, no other should be passed to virgl either.
@@ -249,6 +254,7 @@ enum virgl_formats {
 #define VIRGL_BIND_INDEX_BUFFER  (1 << 5)
 #define VIRGL_BIND_CONSTANT_BUFFER (1 << 6)
 #define VIRGL_BIND_DISPLAY_TARGET (1 << 7)
+#define VIRGL_BIND_COMMAND_ARGS  (1 << 8)
 #define VIRGL_BIND_STREAM_OUTPUT (1 << 11)
 #define VIRGL_BIND_SHADER_BUFFER (1 << 14)
 #define VIRGL_BIND_QUERY_BUFFER  (1 << 15)

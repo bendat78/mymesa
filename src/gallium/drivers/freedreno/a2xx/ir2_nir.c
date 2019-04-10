@@ -94,7 +94,7 @@ ir2_optimize_loop(nir_shader *s)
 			OPT(s, nir_opt_dce);
 		}
 		progress |= OPT(s, nir_opt_loop_unroll, nir_var_all);
-		progress |= OPT(s, nir_opt_if);
+		progress |= OPT(s, nir_opt_if, false);
 		progress |= OPT(s, nir_opt_remove_phis);
 		progress |= OPT(s, nir_opt_undef);
 
@@ -119,7 +119,6 @@ ir2_optimize_nir(nir_shader *s, bool lower)
 		debug_printf("----------------------\n");
 	}
 
-	OPT_V(s, nir_opt_global_to_local);
 	OPT_V(s, nir_lower_regs_to_ssa);
 	OPT_V(s, nir_lower_vars_to_ssa);
 	OPT_V(s, nir_lower_indirect_derefs, nir_var_shader_in | nir_var_shader_out);
