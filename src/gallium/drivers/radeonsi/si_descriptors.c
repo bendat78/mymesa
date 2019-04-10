@@ -956,8 +956,11 @@ static void si_bind_sampler_states(struct pipe_context *ctx,
 		unsigned slot = start + i;
 		unsigned desc_slot = si_get_sampler_slot(slot);
 
-		if (!sstates[i] ||
-		    sstates[i] == samplers->sampler_states[slot])
+		if(!sstates) {
+			samplers->sampler_states[slot] = NULL;
+			continue;
+		} else if (!sstates[i] ||
+			    sstates[i] == samplers->sampler_states[slot])
 			continue;
 
 #ifdef DEBUG
