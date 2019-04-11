@@ -58,7 +58,7 @@ libgallium_dri = shared_library(
     driver_swrast, driver_r300, driver_r600, driver_radeonsi, driver_nouveau,
     driver_kmsro, driver_v3d, driver_vc4, driver_freedreno, driver_etnaviv,
     driver_tegra, driver_i915, driver_svga, driver_virgl,
-    driver_swr, driver_panfrost, driver_iris
+    driver_swr, driver_panfrost, driver_iris, driver_lima
   ],
   # Will be deleted during installation, see install_megadrivers.py
   install : true,
@@ -66,6 +66,7 @@ libgallium_dri = shared_library(
 )
 
 foreach d : [[with_gallium_kmsro, [
+               'exynos_dri.so',
                'hx8357d_dri.so',
                'ili9225_dri.so',
                'ili9341_dri.so',
@@ -77,6 +78,7 @@ foreach d : [[with_gallium_kmsro, [
                'rockchip_dri.so',
                'st7586.so',
                'st7735r.so',
+	       'sun4i-drm_dri.so',
              ]],
              [with_gallium_radeonsi, 'radeonsi_dri.so'],
              [with_gallium_nouveau, 'nouveau_dri.so'],
@@ -93,7 +95,8 @@ foreach d : [[with_gallium_kmsro, [
              [with_gallium_r300, 'r300_dri.so'],
              [with_gallium_r600, 'r600_dri.so'],
              [with_gallium_svga, 'vmwgfx_dri.so'],
-             [with_gallium_virgl, 'virtio_gpu_dri.so']]
+             [with_gallium_virgl, 'virtio_gpu_dri.so'],
+             [with_gallium_lima, 'lima_dri.so']]
   if d[0]
     gallium_dri_drivers += d[1]
   endif
