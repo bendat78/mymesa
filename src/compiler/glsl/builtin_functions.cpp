@@ -3175,7 +3175,6 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture1D",
-                _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::float_type),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type,  glsl_type::isampler1D_type, glsl_type::float_type),
                 _texture(ir_txb, gpu_shader4_fs_only, glsl_type::ivec4_type,  glsl_type::isampler1D_type, glsl_type::float_type),
                 _texture(ir_tex, gpu_shader4,         glsl_type::uvec4_type,  glsl_type::usampler1D_type, glsl_type::float_type),
@@ -3194,8 +3193,6 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("texture1DProj",
-                _texture(ir_txb, v110_fs_only,        glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
-                _texture(ir_txb, v110_fs_only,        glsl_type::vec4_type,  glsl_type::sampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type,  glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type,  glsl_type::isampler1D_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_txb, gpu_shader4_fs_only, glsl_type::ivec4_type,  glsl_type::isampler1D_type, glsl_type::vec2_type, TEX_PROJECT),
@@ -3233,7 +3230,6 @@ builtin_builder::create_builtins()
 
    add_function("texture2D",
                 _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec2_type),
-                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec2_type),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type,  glsl_type::isampler2D_type, glsl_type::vec2_type),
                 _texture(ir_txb, gpu_shader4_fs_only, glsl_type::ivec4_type,  glsl_type::isampler2D_type, glsl_type::vec2_type),
                 _texture(ir_tex, gpu_shader4,         glsl_type::uvec4_type,  glsl_type::usampler2D_type, glsl_type::vec2_type),
@@ -3254,8 +3250,6 @@ builtin_builder::create_builtins()
    add_function("texture2DProj",
                 _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
                 _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
-                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type,  glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type,  glsl_type::isampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_txb, gpu_shader4_fs_only, glsl_type::ivec4_type,  glsl_type::isampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
@@ -3293,7 +3287,6 @@ builtin_builder::create_builtins()
 
    add_function("texture3D",
                 _texture(ir_tex, tex3d,    glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec3_type),
-                _texture(ir_txb, fs_tex3d, glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec3_type),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type),
                 _texture(ir_txb, gpu_shader4_fs_only, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec3_type),
                 _texture(ir_tex, gpu_shader4,         glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec3_type),
@@ -3302,7 +3295,6 @@ builtin_builder::create_builtins()
 
    add_function("texture3DProj",
                 _texture(ir_tex, tex3d,    glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
-                _texture(ir_txb, fs_tex3d, glsl_type::vec4_type,  glsl_type::sampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_txb, gpu_shader4_fs_only, glsl_type::ivec4_type, glsl_type::isampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_tex, gpu_shader4,         glsl_type::uvec4_type, glsl_type::usampler3D_type, glsl_type::vec4_type, TEX_PROJECT),
@@ -3325,7 +3317,6 @@ builtin_builder::create_builtins()
 
    add_function("textureCube",
                 _texture(ir_tex, always_available, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
-                _texture(ir_txb, fs_only,          glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
                 _texture(ir_tex, gpu_shader4,         glsl_type::ivec4_type,  glsl_type::isamplerCube_type, glsl_type::vec3_type),
                 _texture(ir_txb, gpu_shader4_fs_only, glsl_type::ivec4_type,  glsl_type::isamplerCube_type, glsl_type::vec3_type),
                 _texture(ir_tex, gpu_shader4,         glsl_type::uvec4_type,  glsl_type::usamplerCube_type, glsl_type::vec3_type),
