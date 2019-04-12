@@ -525,7 +525,7 @@ vir_compile_init(const struct v3d_compiler *compiler,
 }
 
 static int
-type_size_vec4(const struct glsl_type *type)
+type_size_vec4(const struct glsl_type *type, bool bindless)
 {
         return glsl_count_attribute_slots(type, false);
 }
@@ -1014,6 +1014,7 @@ vir_optimize(struct v3d_compile *c)
                 bool progress = false;
 
                 OPTPASS(vir_opt_copy_propagate);
+                OPTPASS(vir_opt_redundant_flags);
                 OPTPASS(vir_opt_dead_code);
                 OPTPASS(vir_opt_small_immediates);
 

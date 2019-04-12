@@ -1407,6 +1407,10 @@ nir_intrinsic_align(const nir_intrinsic_instr *intrin)
    return align_offset ? 1 << (ffs(align_offset) - 1) : align_mul;
 }
 
+/* Converts a image_deref_* intrinsic into a image_* one */
+void nir_rewrite_image_intrinsic(nir_intrinsic_instr *instr,
+                                 nir_ssa_def *handle, bool bindless);
+
 /**
  * \group texture information
  *
@@ -3011,7 +3015,7 @@ void nir_lower_io_to_temporaries(nir_shader *shader,
 void nir_shader_gather_info(nir_shader *shader, nir_function_impl *entrypoint);
 
 void nir_assign_var_locations(struct exec_list *var_list, unsigned *size,
-                              int (*type_size)(const struct glsl_type *));
+                              int (*type_size)(const struct glsl_type *, bool));
 
 /* Some helpers to do very simple linking */
 bool nir_remove_unused_varyings(nir_shader *producer, nir_shader *consumer);
@@ -3032,7 +3036,7 @@ typedef enum {
 } nir_lower_io_options;
 bool nir_lower_io(nir_shader *shader,
                   nir_variable_mode modes,
-                  int (*type_size)(const struct glsl_type *),
+                  int (*type_size)(const struct glsl_type *, bool),
                   nir_lower_io_options);
 
 typedef enum {
