@@ -553,7 +553,7 @@ write_load_const(write_ctx *ctx, const nir_load_const_instr *lc)
    uint32_t val = lc->def.num_components;
    val |= lc->def.bit_size << 3;
    blob_write_uint32(ctx->blob, val);
-   blob_write_bytes(ctx->blob, (uint8_t *) &lc->value, sizeof(lc->value));
+   blob_write_bytes(ctx->blob, lc->value, sizeof(*lc->value) * lc->def.num_components);
    write_add_object(ctx, &lc->def);
 }
 
@@ -565,7 +565,7 @@ read_load_const(read_ctx *ctx)
    nir_load_const_instr *lc =
       nir_load_const_instr_create(ctx->nir, val & 0x7, val >> 3);
 
-   blob_copy_bytes(ctx->blob, (uint8_t *) &lc->value, sizeof(lc->value));
+   blob_copy_bytes(ctx->blob, lc->value, sizeof(*lc->value) * lc->def.num_components);
    read_add_object(ctx, &lc->def);
    return lc;
 }
@@ -1122,6 +1122,7 @@ nir_serialize(struct blob *blob, const nir_shader *nir)
    blob_write_uint32(blob, nir->num_uniforms);
    blob_write_uint32(blob, nir->num_outputs);
    blob_write_uint32(blob, nir->num_shared);
+   blob_write_uint32(blob, nir->scratch_size);
 
    blob_write_uint32(blob, exec_list_length(&nir->functions));
    nir_foreach_function(fxn, nir) {
@@ -1179,6 +1180,7 @@ nir_deserialize(void *mem_ctx,
    ctx.nir->num_uniforms = blob_read_uint32(blob);
    ctx.nir->num_outputs = blob_read_uint32(blob);
    ctx.nir->num_shared = blob_read_uint32(blob);
+   ctx.nir->scratch_size = blob_read_uint32(blob);
 
    unsigned num_functions = blob_read_uint32(blob);
    for (unsigned i = 0; i < num_functions; i++)

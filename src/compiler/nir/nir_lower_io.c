@@ -754,10 +754,8 @@ build_explicit_io_load(nir_builder *b, nir_intrinsic_instr *intrin,
        * as to what we can do with an OOB read.  Unfortunately, returning
        * undefined values isn't one of them so we return an actual zero.
        */
-      nir_const_value zero_val;
-      memset(&zero_val, 0, sizeof(zero_val));
-      nir_ssa_def *zero = nir_build_imm(b, load->num_components,
-                                        load->dest.ssa.bit_size, zero_val);
+      nir_ssa_def *zero = nir_imm_zero(b, load->num_components,
+                                          load->dest.ssa.bit_size);
 
       const unsigned load_size =
          (load->dest.ssa.bit_size / 8) * load->num_components;
@@ -1178,6 +1176,7 @@ nir_get_io_offset_src(nir_intrinsic_instr *instr)
    case nir_intrinsic_load_shared:
    case nir_intrinsic_load_uniform:
    case nir_intrinsic_load_global:
+   case nir_intrinsic_load_scratch:
       return &instr->src[0];
    case nir_intrinsic_load_ubo:
    case nir_intrinsic_load_ssbo:
@@ -1187,6 +1186,7 @@ nir_get_io_offset_src(nir_intrinsic_instr *instr)
    case nir_intrinsic_store_output:
    case nir_intrinsic_store_shared:
    case nir_intrinsic_store_global:
+   case nir_intrinsic_store_scratch:
       return &instr->src[1];
    case nir_intrinsic_store_ssbo:
    case nir_intrinsic_store_per_vertex_output:

@@ -353,18 +353,18 @@ vec4_visitor::nir_emit_load_const(nir_load_const_instr *instr)
 
       for (unsigned j = i; j < instr->def.num_components; j++) {
          if ((instr->def.bit_size == 32 &&
-              instr->value.u32[i] == instr->value.u32[j]) ||
+              instr->value[i].u32 == instr->value[j].u32) ||
              (instr->def.bit_size == 64 &&
-              instr->value.f64[i] == instr->value.f64[j])) {
+              instr->value[i].f64 == instr->value[j].f64)) {
             writemask |= 1 << j;
          }
       }
 
       reg.writemask = writemask;
       if (instr->def.bit_size == 64) {
-         emit(MOV(reg, setup_imm_df(ibld, instr->value.f64[i])));
+         emit(MOV(reg, setup_imm_df(ibld, instr->value[i].f64)));
       } else {
-         emit(MOV(reg, brw_imm_d(instr->value.i32[i])));
+         emit(MOV(reg, brw_imm_d(instr->value[i].i32)));
       }
 
       remaining &= ~writemask;
@@ -2061,19 +2061,12 @@ vec4_visitor::nir_emit_texture(nir_tex_instr *instr)
          break;
       }
 
-      case nir_tex_src_offset: {
-         nir_const_value *const_offset =
-            nir_src_as_const_value(instr->src[i].src);
-         assert(nir_src_bit_size(instr->src[i].src) == 32);
-         if (!const_offset ||
-             !brw_texture_offset(const_offset->i32,
-                                 nir_tex_instr_src_size(instr, i),
-                                 &constant_offset)) {
+      case nir_tex_src_offset:
+         if (!brw_texture_offset(instr, i, &constant_offset)) {
             offset_value =
                get_nir_src(instr->src[i].src, BRW_REGISTER_TYPE_D, 2);
          }
          break;
-      }
 
       case nir_tex_src_texture_offset: {
          /* Emit code to evaluate the actual indexing expression */

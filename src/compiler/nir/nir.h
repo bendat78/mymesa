@@ -121,18 +121,24 @@ typedef enum {
 } nir_rounding_mode;
 
 typedef union {
-   bool b[NIR_MAX_VEC_COMPONENTS];
-   float f32[NIR_MAX_VEC_COMPONENTS];
-   double f64[NIR_MAX_VEC_COMPONENTS];
-   int8_t i8[NIR_MAX_VEC_COMPONENTS];
-   uint8_t u8[NIR_MAX_VEC_COMPONENTS];
-   int16_t i16[NIR_MAX_VEC_COMPONENTS];
-   uint16_t u16[NIR_MAX_VEC_COMPONENTS];
-   int32_t i32[NIR_MAX_VEC_COMPONENTS];
-   uint32_t u32[NIR_MAX_VEC_COMPONENTS];
-   int64_t i64[NIR_MAX_VEC_COMPONENTS];
-   uint64_t u64[NIR_MAX_VEC_COMPONENTS];
+   bool b;
+   float f32;
+   double f64;
+   int8_t i8;
+   uint8_t u8;
+   int16_t i16;
+   uint16_t u16;
+   int32_t i32;
+   uint32_t u32;
+   int64_t i64;
+   uint64_t u64;
 } nir_const_value;
+
+#define nir_const_value_to_array(arr, c, components, m) \
+{ \
+   for (unsigned i = 0; i < components; ++i) \
+      arr[i] = c[i].m; \
+} while (false)
 
 typedef struct nir_constant {
    /**
@@ -142,7 +148,7 @@ typedef struct nir_constant {
     * by the type associated with the \c nir_variable.  Constants may be
     * scalars, vectors, or matrices.
     */
-   nir_const_value values[NIR_MAX_MATRIX_COLUMNS];
+   nir_const_value values[NIR_MAX_MATRIX_COLUMNS][NIR_MAX_VEC_COMPONENTS];
 
    /* we could get this from the var->type but makes clone *much* easier to
     * not have to care about the type.
@@ -1715,10 +1721,15 @@ bool nir_tex_instr_has_explicit_tg4_offsets(nir_tex_instr *tex);
 typedef struct {
    nir_instr instr;
 
-   nir_const_value value;
-
    nir_ssa_def def;
+
+   nir_const_value value[];
 } nir_load_const_instr;
+
+#define nir_const_load_to_arr(arr, l, m) \
+{ \
+   nir_const_value_to_array(arr, l->value, l->def.num_components, m); \
+} while (false);
 
 typedef enum {
    nir_jump_return,
@@ -2246,6 +2257,8 @@ typedef struct nir_shader_compiler_options {
    /** lowers fceil to fneg+ffloor+fneg: */
    bool lower_fceil;
 
+   bool lower_ftrunc;
+
    bool lower_ldexp;
 
    bool lower_pack_half_2x16;
@@ -2358,6 +2371,9 @@ typedef struct nir_shader {
     * access plus one
     */
    unsigned num_inputs, num_uniforms, num_outputs, num_shared;
+
+   /** Size in bytes of required scratch space */
+   unsigned scratch_size;
 
    /** Constant data associated with this shader.
     *
@@ -3012,6 +3028,11 @@ void nir_lower_io_to_temporaries(nir_shader *shader,
                                  nir_function_impl *entrypoint,
                                  bool outputs, bool inputs);
 
+bool nir_lower_vars_to_scratch(nir_shader *shader,
+                               nir_variable_mode modes,
+                               int size_threshold,
+                               glsl_type_size_align_func size_align);
+
 void nir_shader_gather_info(nir_shader *shader, nir_function_impl *entrypoint);
 
 void nir_assign_var_locations(struct exec_list *var_list, unsigned *size,
@@ -3104,6 +3125,7 @@ void nir_lower_io_to_scalar(nir_shader *shader, nir_variable_mode mask);
 void nir_lower_io_to_scalar_early(nir_shader *shader, nir_variable_mode mask);
 bool nir_lower_io_to_vector(nir_shader *shader, nir_variable_mode mask);
 
+void nir_lower_viewport_transform(nir_shader *shader);
 bool nir_lower_uniforms_to_ubo(nir_shader *shader, int multiplier);
 
 typedef struct nir_lower_subgroups_options {

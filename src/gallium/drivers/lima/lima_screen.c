@@ -57,9 +57,6 @@ lima_screen_destroy(struct pipe_screen *pscreen)
    if (screen->ro)
       free(screen->ro);
 
-   if (screen->gp_buffer)
-      lima_bo_free(screen->gp_buffer);
-
    if (screen->pp_buffer)
       lima_bo_free(screen->pp_buffer);
 
@@ -275,6 +272,9 @@ lima_screen_is_format_supported(struct pipe_screen *pscreen,
       case PIPE_FORMAT_B8G8R8X8_UNORM:
       case PIPE_FORMAT_R8G8B8A8_UNORM:
       case PIPE_FORMAT_R8G8B8X8_UNORM:
+      case PIPE_FORMAT_Z16_UNORM:
+      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+      case PIPE_FORMAT_Z24X8_UNORM:
          break;
       default:
          return FALSE;
@@ -320,6 +320,9 @@ lima_screen_is_format_supported(struct pipe_screen *pscreen,
       case PIPE_FORMAT_B8G8R8A8_UNORM:
       case PIPE_FORMAT_A8B8G8R8_SRGB:
       case PIPE_FORMAT_B8G8R8A8_SRGB:
+      case PIPE_FORMAT_Z16_UNORM:
+      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+      case PIPE_FORMAT_Z24X8_UNORM:
          break;
       default:
          return FALSE;
@@ -454,13 +457,9 @@ lima_screen_create(int fd, struct renderonly *ro)
    if (!screen->pp_ra)
       goto err_out1;
 
-   screen->gp_buffer = lima_bo_create(screen, gp_buffer_size, 0);
-   if (!screen->gp_buffer)
-      goto err_out1;
-
    screen->pp_buffer = lima_bo_create(screen, pp_buffer_size, 0);
    if (!screen->pp_buffer)
-      goto err_out2;
+      goto err_out1;
 
    /* fs program for clear buffer?
     * const0 1 0 0 -1.67773, mov.v0 $0 ^const0.xxxx, stop
@@ -507,7 +506,7 @@ lima_screen_create(int fd, struct renderonly *ro)
       screen->ro = renderonly_dup(ro);
       if (!screen->ro) {
          fprintf(stderr, "Failed to dup renderonly object\n");
-         goto err_out3;
+         goto err_out2;
       }
    }
 
@@ -534,10 +533,8 @@ lima_screen_create(int fd, struct renderonly *ro)
 
    return &screen->base;
 
-err_out3:
-   lima_bo_free(screen->pp_buffer);
 err_out2:
-   lima_bo_free(screen->gp_buffer);
+   lima_bo_free(screen->pp_buffer);
 err_out1:
    lima_bo_table_fini(screen);
 err_out0:

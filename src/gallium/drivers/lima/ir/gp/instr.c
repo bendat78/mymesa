@@ -90,7 +90,7 @@ static bool gpir_instr_insert_alu_check(gpir_instr *instr, gpir_node *node)
     * complex1 won't be any of this instr's store node's child,
     * because it has two instr latency before store can use it.
     */
-   for (int i = GPIR_INSTR_SLOT_STORE0; i < GPIR_INSTR_SLOT_STORE3; i++) {
+   for (int i = GPIR_INSTR_SLOT_STORE0; i <= GPIR_INSTR_SLOT_STORE3; i++) {
       gpir_store_node *s = gpir_node_to_store(instr->slots[i]);
       if (s && s->child == node) {
          /* acc node may consume 2 slots, so even it's the child of a
@@ -119,7 +119,7 @@ static void gpir_instr_remove_alu(gpir_instr *instr, gpir_node *node)
 {
    int consume_slot = gpir_instr_get_consume_slot(instr, node);
 
-   for (int i = GPIR_INSTR_SLOT_STORE0; i < GPIR_INSTR_SLOT_STORE3; i++) {
+   for (int i = GPIR_INSTR_SLOT_STORE0; i <= GPIR_INSTR_SLOT_STORE3; i++) {
       gpir_store_node *s = gpir_node_to_store(instr->slots[i]);
       if (s && s->child == node) {
          instr->alu_num_slot_needed_by_store++;
@@ -273,7 +273,7 @@ static bool gpir_instr_insert_store_check(gpir_instr *instr, gpir_node *node)
     * already in this instr's alu slot, so instr must have some free
     * alu slot to insert this node's child
     */
-   if (instr->alu_num_slot_free <= instr->alu_num_slot_needed_by_store)
+   if (gpir_instr_alu_slot_is_full(instr))
       return false;
 
    instr->alu_num_slot_needed_by_store++;

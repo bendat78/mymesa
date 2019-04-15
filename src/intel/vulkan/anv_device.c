@@ -171,7 +171,11 @@ anv_physical_device_init_heaps(struct anv_physical_device *device, int fd)
       device->memory.heap_count = 2;
       device->memory.heaps[0] = (struct anv_memory_heap) {
          .vma_start = HIGH_HEAP_MIN_ADDRESS,
-         .vma_size = gtt_size - HIGH_HEAP_MIN_ADDRESS,
+         /* Leave the last 4GiB out of the high vma range, so that no state
+          * base address + size can overflow 48 bits. For more information see
+          * the comment about Wa32bitGeneralStateOffset in anv_allocator.c
+          */
+         .vma_size = gtt_size - (1ull << 32) - HIGH_HEAP_MIN_ADDRESS,
          .size = heap_size_48bit,
          .flags = VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
          .supports_48bit_addresses = true,
@@ -949,8 +953,8 @@ void anv_GetPhysicalDeviceFeatures2(
          break;
       }
 
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_ADDRESS_FEATURES_EXT: {
-         VkPhysicalDeviceBufferAddressFeaturesEXT *features = (void *)ext;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT: {
+         VkPhysicalDeviceBufferDeviceAddressFeaturesEXT *features = (void *)ext;
          features->bufferDeviceAddress = pdevice->use_softpin &&
                                          pdevice->info.gen >= 8;
          features->bufferDeviceAddressCaptureReplay = false;
@@ -1021,14 +1025,14 @@ void anv_GetPhysicalDeviceFeatures2(
          break;
       }
 
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES: {
-         VkPhysicalDeviceShaderDrawParameterFeatures *features = (void *)ext;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES: {
+         VkPhysicalDeviceShaderDrawParametersFeatures *features = (void *)ext;
          features->shaderDrawParameters = true;
          break;
       }
 
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES: {
-         VkPhysicalDeviceVariablePointerFeatures *features = (void *)ext;
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES: {
+         VkPhysicalDeviceVariablePointersFeatures *features = (void *)ext;
          features->variablePointersStorageBuffer = true;
          features->variablePointers = true;
          break;
@@ -1988,10 +1992,6 @@ VkResult anv_CreateDevice(
       util_vma_heap_init(&device->vma_lo, low_heap->vma_start, low_heap->vma_size);
       device->vma_lo_available = low_heap->size;
 
-      /* Leave the last 4GiB out of the high vma range, so that no state base
-       * address + size can overflow 48 bits. For more information see the
-       * comment about Wa32bitGeneralStateOffset in anv_allocator.c
-       */
       struct anv_memory_heap *high_heap =
          &physical_device->memory.heaps[0];
       util_vma_heap_init(&device->vma_hi, high_heap->vma_start, high_heap->vma_size);

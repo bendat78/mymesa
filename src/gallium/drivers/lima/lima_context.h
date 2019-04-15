@@ -227,7 +227,10 @@ struct lima_context {
    unsigned plb_gp_size;
 
    struct lima_bo *plb[LIMA_CTX_PLB_MAX_NUM];
+   struct lima_bo *gp_tile_heap[LIMA_CTX_PLB_MAX_NUM];
+   #define gp_tile_heap_size         0x100000
    struct lima_bo *plb_gp_stream;
+
    struct hash_table *plb_pp_stream;
    uint32_t plb_index;
 
@@ -289,5 +292,6 @@ lima_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags);
 void lima_flush(struct lima_context *ctx);
 
 bool lima_need_flush(struct lima_context *ctx, struct lima_bo *bo, bool write);
+bool lima_is_scanout(struct lima_context *ctx);
 
 #endif

@@ -139,6 +139,8 @@ lima_context_destroy(struct pipe_context *pctx)
    for (int i = 0; i < LIMA_CTX_PLB_MAX_NUM; i++) {
       if (ctx->plb[i])
          lima_bo_free(ctx->plb[i]);
+      if (ctx->gp_tile_heap[i])
+         lima_bo_free(ctx->gp_tile_heap[i]);
    }
 
    if (ctx->plb_gp_stream)
@@ -223,6 +225,9 @@ lima_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
       ctx->plb[i] = lima_bo_create(screen, ctx->plb_size, 0);
       if (!ctx->plb[i])
          goto err_out;
+      ctx->gp_tile_heap[i] = lima_bo_create(screen, gp_tile_heap_size, 0);
+      if (!ctx->gp_tile_heap[i])
+         goto err_out;
    }
 
    unsigned plb_gp_stream_size =
@@ -267,4 +272,16 @@ lima_need_flush(struct lima_context *ctx, struct lima_bo *bo, bool write)
 {
    return lima_submit_has_bo(ctx->gp_submit, bo, write) ||
       lima_submit_has_bo(ctx->pp_submit, bo, write);
+}
+
+bool
+lima_is_scanout(struct lima_context *ctx)
+{
+        /* If there is no color buffer, it's an FBO */
+        if (!ctx->framebuffer.base.nr_cbufs)
+                return false;
+
+        return ctx->framebuffer.base.cbufs[0]->texture->bind & PIPE_BIND_DISPLAY_TARGET ||
+               ctx->framebuffer.base.cbufs[0]->texture->bind & PIPE_BIND_SCANOUT ||
+               ctx->framebuffer.base.cbufs[0]->texture->bind & PIPE_BIND_SHARED;
 }

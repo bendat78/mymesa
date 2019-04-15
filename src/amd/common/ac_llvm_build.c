@@ -2042,6 +2042,13 @@ LLVMValueRef ac_build_umin(struct ac_llvm_context *ctx, LLVMValueRef a,
 	return LLVMBuildSelect(ctx->builder, cmp, a, b, "");
 }
 
+LLVMValueRef ac_build_umax(struct ac_llvm_context *ctx, LLVMValueRef a,
+			   LLVMValueRef b)
+{
+	LLVMValueRef cmp = LLVMBuildICmp(ctx->builder, LLVMIntUGE, a, b, "");
+	return LLVMBuildSelect(ctx->builder, cmp, a, b, "");
+}
+
 LLVMValueRef ac_build_clamp(struct ac_llvm_context *ctx, LLVMValueRef value)
 {
 	LLVMTypeRef t = LLVMTypeOf(value);
@@ -3284,6 +3291,7 @@ void ac_apply_fmask_to_sample(struct ac_llvm_context *ac, LLVMValueRef fmask,
 	fmask_load.resource = fmask;
 	fmask_load.dmask = 0xf;
 	fmask_load.dim = is_array_tex ? ac_image_2darray : ac_image_2d;
+	fmask_load.attributes = AC_FUNC_ATTR_READNONE;
 
 	fmask_load.coords[0] = addr[0];
 	fmask_load.coords[1] = addr[1];
@@ -4029,4 +4037,34 @@ ac_build_frexp_mant(struct ac_llvm_context *ctx, LLVMValueRef src0,
 	};
 	return ac_build_intrinsic(ctx, intr, type, params, 1,
 				  AC_FUNC_ATTR_READNONE);
+}
+
+/*
+ * this takes an I,J coordinate pair,
+ * and works out the X and Y derivatives.
+ * it returns DDX(I), DDX(J), DDY(I), DDY(J).
+ */
+LLVMValueRef
+ac_build_ddxy_interp(struct ac_llvm_context *ctx, LLVMValueRef interp_ij)
+{
+	LLVMValueRef result[4], a;
+	unsigned i;
+
+	for (i = 0; i < 2; i++) {
+		a = LLVMBuildExtractElement(ctx->builder, interp_ij,
+					    LLVMConstInt(ctx->i32, i, false), "");
+		result[i] = ac_build_ddxy(ctx, AC_TID_MASK_TOP_LEFT, 1, a);
+		result[2+i] = ac_build_ddxy(ctx, AC_TID_MASK_TOP_LEFT, 2, a);
+	}
+	return ac_build_gather_values(ctx, result, 4);
+}
+
+LLVMValueRef
+ac_build_load_helper_invocation(struct ac_llvm_context *ctx)
+{
+	LLVMValueRef result = ac_build_intrinsic(ctx, "llvm.amdgcn.ps.live",
+						 ctx->i1, NULL, 0,
+						 AC_FUNC_ATTR_READNONE);
+	result = LLVMBuildNot(ctx->builder, result, "");
+	return LLVMBuildSExt(ctx->builder, result, ctx->i32, "");
 }

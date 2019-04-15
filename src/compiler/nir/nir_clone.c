@@ -355,7 +355,7 @@ clone_load_const(clone_state *state, const nir_load_const_instr *lc)
       nir_load_const_instr_create(state->ns, lc->def.num_components,
                                   lc->def.bit_size);
 
-   memcpy(&nlc->value, &lc->value, sizeof(nlc->value));
+   memcpy(&nlc->value, &lc->value, sizeof(*nlc->value) * lc->def.num_components);
 
    add_remap(state, &nlc->def, &lc->def);
 
@@ -735,6 +735,7 @@ nir_shader_clone(void *mem_ctx, const nir_shader *s)
    ns->num_uniforms = s->num_uniforms;
    ns->num_outputs = s->num_outputs;
    ns->num_shared = s->num_shared;
+   ns->scratch_size = s->scratch_size;
 
    ns->constant_data_size = s->constant_data_size;
    if (s->constant_data_size > 0) {
