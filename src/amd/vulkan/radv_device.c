@@ -476,6 +476,7 @@ static const struct debug_control radv_perftest_options[] = {
 	{"sisched", RADV_PERFTEST_SISCHED},
 	{"localbos", RADV_PERFTEST_LOCAL_BOS},
 	{"dccmsaa", RADV_PERFTEST_DCC_MSAA},
+	{"bolist", RADV_PERFTEST_BO_LIST},
 	{NULL, 0}
 };
 
@@ -901,9 +902,8 @@ void radv_GetPhysicalDeviceFeatures2(
 		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR: {
 			VkPhysicalDeviceFloat16Int8FeaturesKHR *features =
 				(VkPhysicalDeviceFloat16Int8FeaturesKHR*)ext;
-			bool enabled = pdevice->rad_info.chip_class >= VI;
-			features->shaderFloat16 = enabled && HAVE_LLVM >= 0x0800;
-			features->shaderInt8 = enabled;
+			features->shaderFloat16 = pdevice->rad_info.chip_class >= VI && HAVE_LLVM >= 0x0800;
+			features->shaderInt8 = true;
 			break;
 		}
 		default:
@@ -1729,6 +1729,7 @@ VkResult radv_CreateDevice(
 	 * from the descriptor set anymore, so we have to use a global BO list.
 	 */
 	device->use_global_bo_list =
+		(device->instance->perftest_flags & RADV_PERFTEST_BO_LIST) ||
 		device->enabled_extensions.EXT_descriptor_indexing ||
 		device->enabled_extensions.EXT_buffer_device_address;
 
@@ -3187,8 +3188,12 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 		if (mem_type_index == RADV_MEM_TYPE_GTT_WRITE_COMBINE)
 			flags |= RADEON_FLAG_GTT_WC;
 
-		if (!dedicate_info && !import_info && (!export_info || !export_info->handleTypes))
+		if (!dedicate_info && !import_info && (!export_info || !export_info->handleTypes)) {
 			flags |= RADEON_FLAG_NO_INTERPROCESS_SHARING;
+			if (device->use_global_bo_list) {
+				flags |= RADEON_FLAG_PREFER_LOCAL_BO;
+			}
+		}
 
 		mem->bo = device->ws->buffer_create(device->ws, alloc_size, device->physical_device->rad_info.max_alignment,
 		                                    domain, flags, priority);

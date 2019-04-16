@@ -1243,7 +1243,6 @@ link_program(struct gl_context *ctx, struct gl_shader_program *shProg,
    /* Capture .shader_test files. */
    const char *capture_path = _mesa_get_shader_capture_path();
    if (shProg->Name != 0 && shProg->Name != ~0 && capture_path != NULL) {
-<<<<<<< HEAD
 
       FILE *file;
       char *filename = NULL;

@@ -878,24 +878,37 @@ iris_resource_get_handle(struct pipe_screen *pscreen,
 }
 
 static void
-iris_unmap_copy_region(struct iris_transfer *map)
+iris_flush_staging_region(struct pipe_transfer *xfer,
+                          const struct pipe_box *flush_box)
 {
-   struct pipe_transfer *xfer = &map->base;
-   struct pipe_box *dst_box = &xfer->box;
-   struct pipe_box src_box = (struct pipe_box) {
-      .x = xfer->resource->target == PIPE_BUFFER ?
-           xfer->box.x % IRIS_MAP_BUFFER_ALIGNMENT : 0,
-      .width = dst_box->width,
-      .height = dst_box->height,
-      .depth = dst_box->depth,
+   if (!(xfer->usage & PIPE_TRANSFER_WRITE))
+      return;
+
+   struct iris_transfer *map = (void *) xfer;
+
+   struct pipe_box src_box = *flush_box;
+
+   /* Account for extra alignment padding in staging buffer */
+   if (xfer->resource->target == PIPE_BUFFER)
+      src_box.x += xfer->box.x % IRIS_MAP_BUFFER_ALIGNMENT;
+
+   struct pipe_box dst_box = (struct pipe_box) {
+      .x = xfer->box.x + flush_box->x,
+      .y = xfer->box.y + flush_box->y,
+      .z = xfer->box.z + flush_box->z,
+      .width = flush_box->width,
+      .height = flush_box->height,
+      .depth = flush_box->depth,
    };
 
-   if (xfer->usage & PIPE_TRANSFER_WRITE) {
-      iris_copy_region(map->blorp, map->batch, xfer->resource, xfer->level,
-                       dst_box->x, dst_box->y, dst_box->z, map->staging, 0,
-                       &src_box);
-   }
+   iris_copy_region(map->blorp, map->batch, xfer->resource, xfer->level,
+                    dst_box.x, dst_box.y, dst_box.z, map->staging, 0,
+                    &src_box);
+}
 
+static void
+iris_unmap_copy_region(struct iris_transfer *map)
+{
    iris_resource_destroy(map->staging->screen, map->staging);
 
    map->ptr = NULL;
@@ -968,7 +981,8 @@ iris_map_copy_region(struct iris_transfer *map)
    if (iris_batch_references(map->batch, staging_bo))
       iris_batch_flush(map->batch);
 
-   map->ptr = iris_bo_map(map->dbg, staging_bo, xfer->usage) + extra;
+   map->ptr =
+      iris_bo_map(map->dbg, staging_bo, xfer->usage & MAP_FLAGS) + extra;
 
    map->unmap = iris_unmap_copy_region;
 }
@@ -1052,7 +1066,7 @@ iris_unmap_s8(struct iris_transfer *map)
    if (xfer->usage & PIPE_TRANSFER_WRITE) {
       uint8_t *untiled_s8_map = map->ptr;
       uint8_t *tiled_s8_map =
-         iris_bo_map(map->dbg, res->bo, xfer->usage | MAP_RAW);
+         iris_bo_map(map->dbg, res->bo, (xfer->usage | MAP_RAW) & MAP_FLAGS);
 
       for (int s = 0; s < box->depth; s++) {
          unsigned x0_el, y0_el;
@@ -1102,7 +1116,7 @@ iris_map_s8(struct iris_transfer *map)
    if (!(xfer->usage & PIPE_TRANSFER_DISCARD_RANGE)) {
       uint8_t *untiled_s8_map = map->ptr;
       uint8_t *tiled_s8_map =
-         iris_bo_map(map->dbg, res->bo, xfer->usage | MAP_RAW);
+         iris_bo_map(map->dbg, res->bo, (xfer->usage | MAP_RAW) & MAP_FLAGS);
 
       for (int s = 0; s < box->depth; s++) {
          unsigned x0_el, y0_el;
@@ -1160,7 +1174,8 @@ iris_unmap_tiled_memcpy(struct iris_transfer *map)
    const bool has_swizzling = false;
 
    if (xfer->usage & PIPE_TRANSFER_WRITE) {
-      char *dst = iris_bo_map(map->dbg, res->bo, xfer->usage | MAP_RAW);
+      char *dst =
+         iris_bo_map(map->dbg, res->bo, (xfer->usage | MAP_RAW) & MAP_FLAGS);
 
       for (int s = 0; s < box->depth; s++) {
          unsigned x1, x2, y1, y2;
@@ -1204,7 +1219,8 @@ iris_map_tiled_memcpy(struct iris_transfer *map)
 
    // XXX: PIPE_TRANSFER_READ?
    if (!(xfer->usage & PIPE_TRANSFER_DISCARD_RANGE)) {
-      char *src = iris_bo_map(map->dbg, res->bo, xfer->usage | MAP_RAW);
+      char *src =
+         iris_bo_map(map->dbg, res->bo, (xfer->usage | MAP_RAW) & MAP_FLAGS);
 
       for (int s = 0; s < box->depth; s++) {
          unsigned x1, x2, y1, y2;
@@ -1229,7 +1245,7 @@ iris_map_direct(struct iris_transfer *map)
    struct pipe_box *box = &xfer->box;
    struct iris_resource *res = (struct iris_resource *) xfer->resource;
 
-   void *ptr = iris_bo_map(map->dbg, res->bo, xfer->usage);
+   void *ptr = iris_bo_map(map->dbg, res->bo, xfer->usage & MAP_FLAGS);
 
    if (res->base.target == PIPE_BUFFER) {
       xfer->stride = 0;
@@ -1308,13 +1324,6 @@ iris_transfer_map(struct pipe_context *ctx,
    xfer->box = *box;
    *ptransfer = xfer;
 
-   xfer->usage &= (PIPE_TRANSFER_READ |
-                   PIPE_TRANSFER_WRITE |
-                   PIPE_TRANSFER_UNSYNCHRONIZED |
-                   PIPE_TRANSFER_PERSISTENT |
-                   PIPE_TRANSFER_COHERENT |
-                   PIPE_TRANSFER_DISCARD_RANGE);
-
    /* Avoid using GPU copies for persistent/coherent buffers, as the idea
     * there is to access them simultaneously on the CPU & GPU.  This also
     * avoids trying to use GPU copies for our u_upload_mgr buffers which
@@ -1376,6 +1385,10 @@ iris_transfer_flush_region(struct pipe_context *ctx,
 {
    struct iris_context *ice = (struct iris_context *)ctx;
    struct iris_resource *res = (struct iris_resource *) xfer->resource;
+   struct iris_transfer *map = (void *) xfer;
+
+   if (map->staging)
+      iris_flush_staging_region(xfer, box);
 
    for (int i = 0; i < IRIS_BATCH_COUNT; i++) {
       if (ice->batches[i].contains_draw ||
@@ -1391,18 +1404,19 @@ iris_transfer_unmap(struct pipe_context *ctx, struct pipe_transfer *xfer)
 {
    struct iris_context *ice = (struct iris_context *)ctx;
    struct iris_transfer *map = (void *) xfer;
-   struct iris_resource *res = (struct iris_resource *) xfer->resource;
+
+   if (!(xfer->usage & PIPE_TRANSFER_FLUSH_EXPLICIT)) {
+      struct pipe_box flush_box = {
+         .x = 0, .y = 0, .z = 0,
+         .width  = xfer->box.width,
+         .height = xfer->box.height,
+         .depth  = xfer->box.depth,
+      };
+      iris_transfer_flush_region(ctx, xfer, &flush_box);
+   }
 
    if (map->unmap)
       map->unmap(map);
-
-   for (int i = 0; i < IRIS_BATCH_COUNT; i++) {
-      if (ice->batches[i].contains_draw ||
-          ice->batches[i].cache.render->entries) {
-         iris_batch_maybe_flush(&ice->batches[i], 24);
-         iris_flush_and_dirty_for_history(ice, &ice->batches[i], res);
-      }
-   }
 
    pipe_resource_reference(&xfer->resource, NULL);
    slab_free(&ice->transfer_pool, map);

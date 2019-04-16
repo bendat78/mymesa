@@ -474,7 +474,6 @@ static struct virgl_cmd_buf *virgl_vtest_cmd_buf_create(struct virgl_winsys *vws
    }
    cbuf->ws = vws;
    cbuf->base.buf = cbuf->buf;
-   cbuf->base.in_fence_fd = -1;
    return &cbuf->base;
 }
 
@@ -487,9 +486,23 @@ static void virgl_vtest_cmd_buf_destroy(struct virgl_cmd_buf *_cbuf)
    FREE(cbuf);
 }
 
+static struct pipe_fence_handle *
+virgl_vtest_fence_create(struct virgl_winsys *vws)
+{
+   struct virgl_hw_res *res;
+
+   res = virgl_vtest_winsys_resource_cache_create(vws,
+                                                PIPE_BUFFER,
+                                                PIPE_FORMAT_R8_UNORM,
+                                                VIRGL_BIND_CUSTOM,
+                                                8, 1, 1, 0, 0, 0, 8);
+
+   return (struct pipe_fence_handle *)res;
+}
+
 static int virgl_vtest_winsys_submit_cmd(struct virgl_winsys *vws,
                                          struct virgl_cmd_buf *_cbuf,
-                                         int in_fence_fd, int *out_fence_fd)
+                                         struct pipe_fence_handle **fence)
 {
    struct virgl_vtest_winsys *vtws = virgl_vtest_winsys(vws);
    struct virgl_vtest_cmd_buf *cbuf = virgl_vtest_cmd_buf(_cbuf);
@@ -498,10 +511,9 @@ static int virgl_vtest_winsys_submit_cmd(struct virgl_winsys *vws,
    if (cbuf->base.cdw == 0)
       return 0;
 
-   assert(in_fence_fd == -1);
-   assert(out_fence_fd == NULL);
-
    ret = virgl_vtest_submit_cmd(vtws, cbuf);
+   if (fence && ret == 0)
+      *fence = virgl_vtest_fence_create(vws);
 
    virgl_vtest_release_all_res(vtws, cbuf);
    memset(cbuf->is_handle_added, 0, sizeof(cbuf->is_handle_added));
@@ -545,15 +557,7 @@ static int virgl_vtest_get_caps(struct virgl_winsys *vws,
 static struct pipe_fence_handle *
 virgl_cs_create_fence(struct virgl_winsys *vws, int fd)
 {
-   struct virgl_hw_res *res;
-
-   res = virgl_vtest_winsys_resource_cache_create(vws,
-                                                PIPE_BUFFER,
-                                                PIPE_FORMAT_R8_UNORM,
-                                                VIRGL_BIND_CUSTOM,
-                                                8, 1, 1, 0, 0, 0, 8);
-
-   return (struct pipe_fence_handle *)res;
+   return virgl_vtest_fence_create(vws);
 }
 
 static bool virgl_fence_wait(struct virgl_winsys *vws,
