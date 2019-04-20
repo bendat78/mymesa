@@ -2242,6 +2242,9 @@ typedef struct nir_shader_compiler_options {
    /** enables rules to lower isign to imin+imax */
    bool lower_isign;
 
+   /** enables rules to lower fsign to fsub and flt */
+   bool lower_fsign;
+
    /* Does the native fdot instruction replicate its result for four
     * components?  If so, then opt_algebraic_late will turn all fdotN
     * instructions into fdot_replicatedN instructions.
@@ -2306,6 +2309,14 @@ typedef struct nir_shader_compiler_options {
     * Note: See also issue #22 in ARB_shader_image_load_store
     */
    bool lower_helper_invocation;
+
+   /**
+    * Convert gl_SampleMaskIn to gl_HelperInvocation as follows:
+    *
+    *   gl_SampleMaskIn == 0 ---> gl_HelperInvocation
+    *   gl_SampleMaskIn != 0 ---> !gl_HelperInvocation
+    */
+   bool optimize_sample_mask_in;
 
    bool lower_cs_local_index_from_id;
    bool lower_cs_local_id_from_index;
@@ -2740,27 +2751,17 @@ bool nir_foreach_src(nir_instr *instr, nir_foreach_src_cb cb, void *state);
 
 nir_const_value *nir_src_as_const_value(nir_src src);
 
-static inline struct nir_instr *
-nir_src_instr(const struct nir_src *src)
-{
-   return src->is_ssa ? src->ssa->parent_instr : NULL;
-}
-
 #define NIR_SRC_AS_(name, c_type, type_enum, cast_macro)                \
 static inline c_type *                                                  \
-nir_src_as_ ## name (struct nir_src *src)                               \
+nir_src_as_ ## name (nir_src src)                                       \
 {                                                                       \
-    return src->is_ssa && src->ssa->parent_instr->type == type_enum     \
-           ? cast_macro(src->ssa->parent_instr) : NULL;                 \
-}                                                                       \
-static inline const c_type *                                            \
-nir_src_as_ ## name ## _const(const struct nir_src *src)                \
-{                                                                       \
-    return src->is_ssa && src->ssa->parent_instr->type == type_enum     \
-           ? cast_macro(src->ssa->parent_instr) : NULL;                 \
+    return src.is_ssa && src.ssa->parent_instr->type == type_enum       \
+           ? cast_macro(src.ssa->parent_instr) : NULL;                  \
 }
 
 NIR_SRC_AS_(alu_instr, nir_alu_instr, nir_instr_type_alu, nir_instr_as_alu)
+NIR_SRC_AS_(intrinsic, nir_intrinsic_instr,
+            nir_instr_type_intrinsic, nir_instr_as_intrinsic)
 
 bool nir_src_is_dynamically_uniform(nir_src src);
 bool nir_srcs_equal(nir_src src1, nir_src src2);
@@ -3087,6 +3088,49 @@ typedef enum {
     */
    nir_address_format_32bit_index_offset,
 } nir_address_format;
+
+static inline unsigned
+nir_address_format_bit_size(nir_address_format addr_format)
+{
+   switch (addr_format) {
+   case nir_address_format_32bit_global:           return 32;
+   case nir_address_format_64bit_global:           return 64;
+   case nir_address_format_64bit_bounded_global:   return 32;
+   case nir_address_format_32bit_index_offset:     return 32;
+   }
+   unreachable("Invalid address format");
+}
+
+static inline unsigned
+nir_address_format_num_components(nir_address_format addr_format)
+{
+   switch (addr_format) {
+   case nir_address_format_32bit_global:           return 1;
+   case nir_address_format_64bit_global:           return 1;
+   case nir_address_format_64bit_bounded_global:   return 4;
+   case nir_address_format_32bit_index_offset:     return 2;
+   }
+   unreachable("Invalid address format");
+}
+
+static inline const struct glsl_type *
+nir_address_format_to_glsl_type(nir_address_format addr_format)
+{
+   unsigned bit_size = nir_address_format_bit_size(addr_format);
+   assert(bit_size == 32 || bit_size == 64);
+   return glsl_vector_type(bit_size == 32 ? GLSL_TYPE_UINT : GLSL_TYPE_UINT64,
+                           nir_address_format_num_components(addr_format));
+}
+
+nir_ssa_def * nir_explicit_io_address_from_deref(struct nir_builder *b,
+                                                 nir_deref_instr *deref,
+                                                 nir_ssa_def *base_addr,
+                                                 nir_address_format addr_format);
+void nir_lower_explicit_io_instr(struct nir_builder *b,
+                                 nir_intrinsic_instr *io_instr,
+                                 nir_ssa_def *addr,
+                                 nir_address_format addr_format);
+
 bool nir_lower_explicit_io(nir_shader *shader,
                            nir_variable_mode modes,
                            nir_address_format);
@@ -3270,6 +3314,12 @@ typedef struct nir_lower_tex_options {
     * with nir_texop_txl.  This includes cube maps.
     */
    bool lower_txd_offset_clamp;
+
+   /**
+    * If true, lower nir_texop_txd with min_lod to a nir_texop_txl if the
+    * sampler is bindless.
+    */
+   bool lower_txd_clamp_bindless_sampler;
 
    /**
     * If true, lower nir_texop_txd with min_lod to a nir_texop_txl if the

@@ -53,12 +53,12 @@ static void *virgl_buffer_transfer_map(struct pipe_context *ctx,
       ctx->flush(ctx, NULL, 0);
 
    readback = virgl_res_needs_readback(vctx, vbuf, usage, 0);
-   if (readback) {
+   if (readback)
       vs->vws->transfer_get(vs->vws, vbuf->hw_res, box, trans->base.stride,
                             trans->l_stride, trans->offset, level);
 
+   if (readback || flush)
       vs->vws->resource_wait(vs->vws, vbuf->hw_res);
-   }
 
    ptr = vs->vws->resource_map(vs->vws, vbuf->hw_res);
    if (!ptr) {
@@ -88,7 +88,6 @@ static void virgl_buffer_transfer_unmap(struct pipe_context *ctx,
          trans->offset = transfer->box.x;
       }
 
-      vctx->num_transfers++;
       virgl_transfer_queue_unmap(&vctx->queue, trans);
    } else
       virgl_resource_destroy_transfer(&vctx->transfer_pool, trans);

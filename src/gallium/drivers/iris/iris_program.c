@@ -510,6 +510,30 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
    *out_num_cbufs = num_cbufs;
 }
 
+static void
+iris_debug_recompile(struct iris_context *ice,
+                     struct shader_info *info,
+                     unsigned program_string_id,
+                     const void *key)
+{
+   struct iris_screen *screen = (struct iris_screen *) ice->ctx.screen;
+   const struct brw_compiler *c = screen->compiler;
+
+   if (!info)
+      return;
+
+   c->shader_perf_log(&ice->dbg, "Recompiling %s shader for program %s: %s\n",
+                      _mesa_shader_stage_to_string(info->stage),
+                      info->name ? info->name : "(no identifier)",
+                      info->label ? info->label : "");
+
+   const void *old_key =
+      iris_find_previous_compile(ice, info->stage, program_string_id);
+
+   brw_debug_key_recompile(c, &ice->dbg, info->stage, old_key, key);
+}
+
+
 /**
  * Compile a vertex shader, and upload the assembly.
  */
@@ -570,6 +594,12 @@ iris_compile_vs(struct iris_context *ice,
       return false;
    }
 
+   if (ish->compiled_once) {
+      iris_debug_recompile(ice, &nir->info, key->program_string_id, key);
+   } else {
+      ish->compiled_once = true;
+   }
+
    uint32_t *so_decls =
       ice->vtbl.create_so_decl_list(&ish->stream_output,
                                     &vue_prog_data->vue_map);
@@ -578,12 +608,6 @@ iris_compile_vs(struct iris_context *ice,
       iris_upload_shader(ice, IRIS_CACHE_VS, sizeof(*key), key, program,
                          prog_data, so_decls, system_values, num_system_values,
                          num_cbufs);
-
-   if (ish->compiled_once) {
-      perf_debug(&ice->dbg, "Recompiling vertex shader\n");
-   } else {
-      ish->compiled_once = true;
-   }
 
    ralloc_free(mem_ctx);
    return shader;
@@ -763,18 +787,18 @@ iris_compile_tcs(struct iris_context *ice,
       return false;
    }
 
-   struct iris_compiled_shader *shader =
-      iris_upload_shader(ice, IRIS_CACHE_TCS, sizeof(*key), key, program,
-                         prog_data, NULL, system_values, num_system_values,
-                         num_cbufs);
-
    if (ish) {
       if (ish->compiled_once) {
-         perf_debug(&ice->dbg, "Recompiling tessellation control shader\n");
+         iris_debug_recompile(ice, &nir->info, key->program_string_id, key);
       } else {
          ish->compiled_once = true;
       }
    }
+
+   struct iris_compiled_shader *shader =
+      iris_upload_shader(ice, IRIS_CACHE_TCS, sizeof(*key), key, program,
+                         prog_data, NULL, system_values, num_system_values,
+                         num_cbufs);
 
    ralloc_free(mem_ctx);
    return shader;
@@ -862,6 +886,12 @@ iris_compile_tes(struct iris_context *ice,
       return false;
    }
 
+   if (ish->compiled_once) {
+      iris_debug_recompile(ice, &nir->info, key->program_string_id, key);
+   } else {
+      ish->compiled_once = true;
+   }
+
    uint32_t *so_decls =
       ice->vtbl.create_so_decl_list(&ish->stream_output,
                                     &vue_prog_data->vue_map);
@@ -871,12 +901,6 @@ iris_compile_tes(struct iris_context *ice,
       iris_upload_shader(ice, IRIS_CACHE_TES, sizeof(*key), key, program,
                          prog_data, so_decls, system_values, num_system_values,
                          num_cbufs);
-
-   if (ish->compiled_once) {
-      perf_debug(&ice->dbg, "Recompiling tessellation evaluation shader\n");
-   } else {
-      ish->compiled_once = true;
-   }
 
    ralloc_free(mem_ctx);
    return shader;
@@ -963,6 +987,12 @@ iris_compile_gs(struct iris_context *ice,
       return false;
    }
 
+   if (ish->compiled_once) {
+      iris_debug_recompile(ice, &nir->info, key->program_string_id, key);
+   } else {
+      ish->compiled_once = true;
+   }
+
    uint32_t *so_decls =
       ice->vtbl.create_so_decl_list(&ish->stream_output,
                                     &vue_prog_data->vue_map);
@@ -971,12 +1001,6 @@ iris_compile_gs(struct iris_context *ice,
       iris_upload_shader(ice, IRIS_CACHE_GS, sizeof(*key), key, program,
                          prog_data, so_decls, system_values, num_system_values,
                          num_cbufs);
-
-   if (ish->compiled_once) {
-      perf_debug(&ice->dbg, "Recompiling geometry shader\n");
-   } else {
-      ish->compiled_once = true;
-   }
 
    ralloc_free(mem_ctx);
    return shader;
@@ -1057,16 +1081,16 @@ iris_compile_fs(struct iris_context *ice,
       return false;
    }
 
+   if (ish->compiled_once) {
+      iris_debug_recompile(ice, &nir->info, key->program_string_id, key);
+   } else {
+      ish->compiled_once = true;
+   }
+
    struct iris_compiled_shader *shader =
       iris_upload_shader(ice, IRIS_CACHE_FS, sizeof(*key), key, program,
                          prog_data, NULL, system_values, num_system_values,
                          num_cbufs);
-
-   if (ish->compiled_once) {
-      perf_debug(&ice->dbg, "Recompiling fragment shader\n");
-   } else {
-      ish->compiled_once = true;
-   }
 
    ralloc_free(mem_ctx);
    return shader;
@@ -1291,16 +1315,16 @@ iris_compile_cs(struct iris_context *ice,
       return false;
    }
 
+   if (ish->compiled_once) {
+      iris_debug_recompile(ice, &nir->info, key->program_string_id, key);
+   } else {
+      ish->compiled_once = true;
+   }
+
    struct iris_compiled_shader *shader =
       iris_upload_shader(ice, IRIS_CACHE_CS, sizeof(*key), key, program,
                          prog_data, NULL, system_values, num_system_values,
                          num_cbufs);
-
-   if (ish->compiled_once) {
-      perf_debug(&ice->dbg, "Recompiling compute shader\n");
-   } else {
-      ish->compiled_once = true;
-   }
 
    ralloc_free(mem_ctx);
    return shader;

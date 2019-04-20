@@ -522,6 +522,7 @@ void virgl_transfer_inline_write(struct pipe_context *ctx,
                                 unsigned layer_stride)
 {
    struct virgl_context *vctx = virgl_context(ctx);
+   struct virgl_screen *vs = virgl_screen(ctx->screen);
    struct virgl_resource *grres = virgl_resource(res);
    struct virgl_transfer trans = { 0 };
 
@@ -535,8 +536,10 @@ void virgl_transfer_inline_write(struct pipe_context *ctx,
 
    virgl_resource_dirty(grres, 0);
 
-   if (virgl_res_needs_flush(vctx, &trans))
+   if (virgl_res_needs_flush(vctx, &trans)) {
       ctx->flush(ctx, NULL, 0);
+      vs->vws->resource_wait(vs->vws, grres->hw_res);
+   }
 
    virgl_encoder_inline_write(vctx, grres, level, usage,
                               box, data, stride, layer_stride);
@@ -755,7 +758,7 @@ static void virgl_flush_eq(struct virgl_context *ctx, void *closure,
       u_upload_unmap(ctx->uploader);
 
    /* send the buffer to the remote side for decoding */
-   ctx->num_transfers = ctx->num_draws = ctx->num_compute = 0;
+   ctx->num_draws = ctx->num_compute = 0;
 
    virgl_transfer_queue_clear(&ctx->queue, ctx->cbuf);
    rs->vws->submit_cmd(rs->vws, ctx->cbuf, fence);

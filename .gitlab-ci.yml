@@ -17,14 +17,14 @@
 # at "01" unless you have multiple updates on the same day :)
 variables:
   UPSTREAM_REPO: mesa/mesa
-  UBUNTU_TAG: "2019-04-02"
-  UBUNTU_VERSION: bionic
-  UBUNTU_IMAGE: "$CI_REGISTRY_IMAGE/ubuntu/$UBUNTU_VERSION:$UBUNTU_TAG"
+  DEBIAN_TAG: "2019-04-16"
+  DEBIAN_VERSION: stretch-slim
+  DEBIAN_IMAGE: "$CI_REGISTRY_IMAGE/debian/$DEBIAN_VERSION:$DEBIAN_TAG"
 
 include:
   - project: 'wayland/ci-templates'
     ref: c73dae8b84697ef18e2dbbf4fed7386d9652b0cd
-    file: '/templates/ubuntu.yml'
+    file: '/templates/debian.yml'
 
 stages:
   - containers-build
@@ -45,20 +45,20 @@ stages:
 
 # CONTAINERS
 
-ubuntu:
-  extends: .ubuntu@container-ifnot-exists
+debian:
+  extends: .debian@container-ifnot-exists
   stage: containers-build
   <<: *ci-run-policy
   variables:
     GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
-    UBUNTU_EXEC: 'bash .gitlab-ci/ubuntu-install.sh'
+    DEBIAN_EXEC: 'bash .gitlab-ci/debian-install.sh'
 
 
 # BUILD
 
 .build:
   <<: *ci-run-policy
-  image: $UBUNTU_IMAGE
+  image: $DEBIAN_IMAGE
   stage: build+test
   cache:
     paths:
@@ -66,12 +66,13 @@ ubuntu:
   artifacts:
     when: on_failure
     untracked: true
+  variables:
+    CCACHE_COMPILERCHECK: "content"
   # Use ccache transparently, and print stats before/after
   before_script:
     - export PATH="/usr/lib/ccache:$PATH"
     - export CCACHE_BASEDIR="$PWD"
     - export CCACHE_DIR="$PWD/ccache"
-    - export CCACHE_COMPILERCHECK=content
     - ccache --zero-stats || true
     - ccache --show-stats || true
   after_script:
@@ -104,7 +105,7 @@ ubuntu:
     - cd _build
     - meson configure
     - ninja -j4
-    - ninja test
+    - LC_ALL=C.UTF-8 ninja test
 
 .scons-build:
   extends: .build
@@ -146,8 +147,13 @@ meson-clang:
     UNWIND: "true"
     DRI_DRIVERS: "auto"
     GALLIUM_DRIVERS: "auto"
-    CC: "ccache clang-7"
-    CXX: "ccache clang++-7"
+    CC: "ccache clang-8"
+    CXX: "ccache clang++-8"
+  before_script:
+    - export CCACHE_BASEDIR="$PWD" CCACHE_DIR="$PWD/ccache"
+    - ccache --zero-stats --show-stats || true
+     # clang++ breaks if it picks up the GCC 8 directory without libstdc++.so
+    - apt-get remove -y libgcc-8-dev
 
 meson-vulkan:
   extends: .meson-build
@@ -309,7 +315,9 @@ scons-llvm:
   variables:
     SCONS_TARGET: "llvm=1"
     SCONS_CHECK_COMMAND: "scons llvm=1 check"
-    LLVM_VERSION: "3.9"
+    LLVM_VERSION: "3.4"
+    # LLVM 3.4 packages were built with an old libstdc++ ABI
+    CXX: "g++ -D_GLIBCXX_USE_CXX11_ABI=0"
 
 scons-swr:
   extends: .scons-build

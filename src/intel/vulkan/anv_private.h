@@ -158,10 +158,21 @@ struct gen_l3_config;
 #define MAX_PUSH_CONSTANTS_SIZE 128
 #define MAX_DYNAMIC_BUFFERS 16
 #define MAX_IMAGES 64
-#define MAX_GEN8_IMAGES 8
 #define MAX_PUSH_DESCRIPTORS 32 /* Minimum requirement */
 #define MAX_INLINE_UNIFORM_BLOCK_SIZE 4096
 #define MAX_INLINE_UNIFORM_BLOCK_DESCRIPTORS 32
+
+/* From the Skylake PRM Vol. 7 "Binding Table Surface State Model":
+ *
+ *    "The surface state model is used when a Binding Table Index (specified
+ *    in the message descriptor) of less than 240 is specified. In this model,
+ *    the Binding Table Index is used to index into the binding table, and the
+ *    binding table entry contains a pointer to the SURFACE_STATE."
+ *
+ * Binding table values above 240 are used for various things in the hardware
+ * such as stateless, stateless with incoherent cache, SLM, and bindless.
+ */
+#define MAX_BINDING_TABLE_SIZE 240
 
 /* The kernel relocation API has a limitation of a 32-bit delta value
  * applied to the address before it is written which, in spite of it being
@@ -938,6 +949,14 @@ struct anv_physical_device {
     bool                                        has_context_priority;
     bool                                        use_softpin;
     bool                                        has_context_isolation;
+    bool                                        always_use_bindless;
+
+    /** True if we can access buffers using A64 messages */
+    bool                                        has_a64_buffer_access;
+    /** True if we can use bindless access for images */
+    bool                                        has_bindless_images;
+    /** True if we can use bindless access for samplers */
+    bool                                        has_bindless_samplers;
 
     struct anv_device_extension_table           supported_extensions;
 
@@ -1093,6 +1112,9 @@ struct anv_device {
     uint64_t                                    vma_lo_available;
     uint64_t                                    vma_hi_available;
 
+    /** List of all anv_device_memory objects */
+    struct list_head                            memory_objects;
+
     struct anv_bo_pool                          batch_bo_pool;
 
     struct anv_bo_cache                         bo_cache;
@@ -1105,12 +1127,6 @@ struct anv_device {
     struct anv_bo                               workaround_bo;
     struct anv_bo                               trivial_batch_bo;
     struct anv_bo                               hiz_clear_bo;
-
-    /* Set of pointers to anv_buffer objects for all pinned buffers.  Pinned
-     * buffers are always resident because they could be used at any time via
-     * VK_EXT_buffer_device_address.
-     */
-    struct set *                                pinned_buffers;
 
     struct anv_pipeline_cache                   default_pipeline_cache;
     struct blorp_context                        blorp;
@@ -1483,6 +1499,8 @@ _anv_combine_address(struct anv_batch *batch, void *location,
 #define GEN11_EXTERNAL_MOCS GEN9_EXTERNAL_MOCS
 
 struct anv_device_memory {
+   struct list_head                             link;
+
    struct anv_bo *                              bo;
    struct anv_memory_type *                     type;
    VkDeviceSize                                 map_size;
@@ -1507,6 +1525,51 @@ struct anv_vue_header {
    float PointWidth;
 };
 
+/** Struct representing a sampled image descriptor
+ *
+ * This descriptor layout is used for sampled images, bare sampler, and
+ * combined image/sampler descriptors.
+ */
+struct anv_sampled_image_descriptor {
+   /** Bindless image handle
+    *
+    * This is expected to already be shifted such that the 20-bit
+    * SURFACE_STATE table index is in the top 20 bits.
+    */
+   uint32_t image;
+
+   /** Bindless sampler handle
+    *
+    * This is assumed to be a 32B-aligned SAMPLER_STATE pointer relative
+    * to the dynamic state base address.
+    */
+   uint32_t sampler;
+};
+
+/** Struct representing a storage image descriptor */
+struct anv_storage_image_descriptor {
+   /** Bindless image handles
+    *
+    * These are expected to already be shifted such that the 20-bit
+    * SURFACE_STATE table index is in the top 20 bits.
+    */
+   uint32_t read_write;
+   uint32_t write_only;
+};
+
+/** Struct representing a address/range descriptor
+ *
+ * The fields of this struct correspond directly to the data layout of
+ * nir_address_format_64bit_bounded_global addresses.  The last field is the
+ * offset in the NIR address so it must be zero so that when you load the
+ * descriptor you get a pointer to the start of the range.
+ */
+struct anv_address_range_descriptor {
+   uint64_t address;
+   uint32_t range;
+   uint32_t zero;
+};
+
 enum anv_descriptor_data {
    /** The descriptor contains a BTI reference to a surface state */
    ANV_DESCRIPTOR_SURFACE_STATE  = (1 << 0),
@@ -1518,6 +1581,12 @@ enum anv_descriptor_data {
    ANV_DESCRIPTOR_IMAGE_PARAM    = (1 << 3),
    /** The descriptor contains auxiliary image layout data */
    ANV_DESCRIPTOR_INLINE_UNIFORM = (1 << 4),
+   /** anv_address_range_descriptor with a buffer address and range */
+   ANV_DESCRIPTOR_ADDRESS_RANGE  = (1 << 5),
+   /** Bindless surface handle */
+   ANV_DESCRIPTOR_SAMPLED_IMAGE  = (1 << 6),
+   /** Storage image handles */
+   ANV_DESCRIPTOR_STORAGE_IMAGE  = (1 << 7),
 };
 
 struct anv_descriptor_set_binding_layout {
@@ -1526,8 +1595,14 @@ struct anv_descriptor_set_binding_layout {
    VkDescriptorType type;
 #endif
 
+   /* Flags provided when this binding was created */
+   VkDescriptorBindingFlagsEXT flags;
+
    /* Bitfield representing the type of data this descriptor contains */
    enum anv_descriptor_data data;
+
+   /* Maximum number of YCbCr texture/sampler planes */
+   uint8_t max_plane_count;
 
    /* Number of array elements in this binding (or size in bytes for inline
     * uniform data)
@@ -1554,6 +1629,14 @@ unsigned anv_descriptor_size(const struct anv_descriptor_set_binding_layout *lay
 
 unsigned anv_descriptor_type_size(const struct anv_physical_device *pdevice,
                                   VkDescriptorType type);
+
+bool anv_descriptor_supports_bindless(const struct anv_physical_device *pdevice,
+                                      const struct anv_descriptor_set_binding_layout *binding,
+                                      bool sampler);
+
+bool anv_descriptor_requires_bindless(const struct anv_physical_device *pdevice,
+                                      const struct anv_descriptor_set_binding_layout *binding,
+                                      bool sampler);
 
 struct anv_descriptor_set_layout {
    /* Descriptor set layouts can be destroyed at almost any time */
@@ -2064,7 +2147,12 @@ struct anv_xfb_binding {
 };
 
 #define ANV_PARAM_PUSH(offset)         ((1 << 16) | (uint32_t)(offset))
+#define ANV_PARAM_IS_PUSH(param)       ((uint32_t)(param) >> 16 == 1)
 #define ANV_PARAM_PUSH_OFFSET(param)   ((param) & 0xffff)
+
+#define ANV_PARAM_DYN_OFFSET(offset)      ((2 << 16) | (uint32_t)(offset))
+#define ANV_PARAM_IS_DYN_OFFSET(param)    ((uint32_t)(param) >> 16 == 2)
+#define ANV_PARAM_DYN_OFFSET_IDX(param)   ((param) & 0xffff)
 
 struct anv_push_constants {
    /* Current allocated size of this push constants data structure.
@@ -2078,9 +2166,6 @@ struct anv_push_constants {
 
    /* Used for vkCmdDispatchBase */
    uint32_t base_work_group_id[3];
-
-   /* Image data for image_load_store on pre-SKL */
-   struct brw_image_param images[MAX_GEN8_IMAGES];
 };
 
 struct anv_dynamic_state {
@@ -2588,7 +2673,6 @@ mesa_to_vk_shader_stage(gl_shader_stage mesa_stage)
 struct anv_pipeline_bind_map {
    uint32_t surface_count;
    uint32_t sampler_count;
-   uint32_t image_param_count;
 
    struct anv_pipeline_binding *                surface_to_descriptor;
    struct anv_pipeline_binding *                sampler_to_descriptor;
@@ -2663,6 +2747,7 @@ struct anv_pipeline {
    struct {
       const struct gen_l3_config *              l3_config;
       uint32_t                                  total_size;
+      unsigned                                  entry_size[4];
    } urb;
 
    VkShaderStageFlags                           active_stages;
@@ -3412,6 +3497,11 @@ struct anv_sampler {
    uint32_t                     state[3][4];
    uint32_t                     n_planes;
    struct anv_ycbcr_conversion *conversion;
+
+   /* Blob of sampler state data which is guaranteed to be 32-byte aligned
+    * and with a 32-byte stride for use as bindless samplers.
+    */
+   struct anv_state             bindless_state;
 };
 
 struct anv_framebuffer {

@@ -50,13 +50,13 @@
 
 static bool
 cmod_propagate_cmp_to_add(const gen_device_info *devinfo, bblock_t *block,
-                          fs_inst *inst)
+                          fs_inst *inst, unsigned dispatch_width)
 {
    bool read_flag = false;
 
    foreach_inst_in_block_reverse_starting_from(fs_inst, scan_inst, inst) {
       if (scan_inst->opcode == BRW_OPCODE_ADD &&
-          !scan_inst->is_partial_write() &&
+          !scan_inst->is_partial_var_write(dispatch_width) &&
           scan_inst->exec_size == inst->exec_size) {
          bool negate;
 
@@ -126,7 +126,7 @@ cmod_propagate_cmp_to_add(const gen_device_info *devinfo, bblock_t *block,
  */
 static bool
 cmod_propagate_not(const gen_device_info *devinfo, bblock_t *block,
-                   fs_inst *inst)
+                   fs_inst *inst, unsigned dispatch_width)
 {
    const enum brw_conditional_mod cond = brw_negate_cmod(inst->conditional_mod);
    bool read_flag = false;
@@ -141,7 +141,7 @@ cmod_propagate_not(const gen_device_info *devinfo, bblock_t *block,
              scan_inst->opcode != BRW_OPCODE_AND)
             break;
 
-         if (scan_inst->is_partial_write() ||
+         if (scan_inst->is_partial_var_write(dispatch_width) ||
              scan_inst->dst.offset != inst->src[0].offset ||
              scan_inst->exec_size != inst->exec_size)
             break;
@@ -166,7 +166,9 @@ cmod_propagate_not(const gen_device_info *devinfo, bblock_t *block,
 }
 
 static bool
-opt_cmod_propagation_local(const gen_device_info *devinfo, bblock_t *block)
+opt_cmod_propagation_local(const gen_device_info *devinfo,
+                           bblock_t *block,
+                           unsigned dispatch_width)
 {
    bool progress = false;
    int ip = block->end_ip + 1;
@@ -219,14 +221,14 @@ opt_cmod_propagation_local(const gen_device_info *devinfo, bblock_t *block)
        */
       if (inst->opcode == BRW_OPCODE_CMP && !inst->src[1].is_zero()) {
          if (brw_reg_type_is_floating_point(inst->src[0].type) &&
-             cmod_propagate_cmp_to_add(devinfo, block, inst))
+             cmod_propagate_cmp_to_add(devinfo, block, inst, dispatch_width))
             progress = true;
 
          continue;
       }
 
       if (inst->opcode == BRW_OPCODE_NOT) {
-         progress = cmod_propagate_not(devinfo, block, inst) || progress;
+         progress = cmod_propagate_not(devinfo, block, inst, dispatch_width) || progress;
          continue;
       }
 
@@ -234,7 +236,7 @@ opt_cmod_propagation_local(const gen_device_info *devinfo, bblock_t *block)
       foreach_inst_in_block_reverse_starting_from(fs_inst, scan_inst, inst) {
          if (regions_overlap(scan_inst->dst, scan_inst->size_written,
                              inst->src[0], inst->size_read(0))) {
-            if (scan_inst->is_partial_write() ||
+            if (scan_inst->is_partial_var_write(dispatch_width) ||
                 scan_inst->dst.offset != inst->src[0].offset ||
                 scan_inst->exec_size != inst->exec_size)
                break;
@@ -242,8 +244,7 @@ opt_cmod_propagation_local(const gen_device_info *devinfo, bblock_t *block)
             /* CMP's result is the same regardless of dest type. */
             if (inst->conditional_mod == BRW_CONDITIONAL_NZ &&
                 scan_inst->opcode == BRW_OPCODE_CMP &&
-                (inst->dst.type == BRW_REGISTER_TYPE_D ||
-                 inst->dst.type == BRW_REGISTER_TYPE_UD)) {
+                brw_reg_type_is_integer(inst->dst.type)) {
                inst->remove(block);
                progress = true;
                break;
@@ -264,6 +265,12 @@ opt_cmod_propagation_local(const gen_device_info *devinfo, bblock_t *block)
 
             /* Comparisons operate differently for ints and floats */
             if (scan_inst->dst.type != inst->dst.type) {
+               /* Comparison result may be altered if the bit-size changes
+                * since that affects range, denorms, etc
+                */
+               if (type_sz(scan_inst->dst.type) != type_sz(inst->dst.type))
+                  break;
+
                /* We should propagate from a MOV to another instruction in a
                 * sequence like:
                 *
@@ -277,8 +284,8 @@ opt_cmod_propagation_local(const gen_device_info *devinfo, bblock_t *block)
                        scan_inst->dst.type != BRW_REGISTER_TYPE_UD)) {
                      break;
                   }
-               } else if (scan_inst->dst.type == BRW_REGISTER_TYPE_F ||
-                          inst->dst.type == BRW_REGISTER_TYPE_F) {
+               } else if (brw_reg_type_is_floating_point(scan_inst->dst.type) !=
+                          brw_reg_type_is_floating_point(inst->dst.type)) {
                   break;
                }
             }
@@ -364,7 +371,7 @@ fs_visitor::opt_cmod_propagation()
    bool progress = false;
 
    foreach_block_reverse(block, cfg) {
-      progress = opt_cmod_propagation_local(devinfo, block) || progress;
+      progress = opt_cmod_propagation_local(devinfo, block, dispatch_width) || progress;
    }
 
    if (progress)

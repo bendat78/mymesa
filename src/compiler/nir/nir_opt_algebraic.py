@@ -35,6 +35,7 @@ a = 'a'
 b = 'b'
 c = 'c'
 d = 'd'
+e = 'e'
 
 # Written in the form (<search>, <replace>) where <search> is an expression
 # and <replace> is either an expression or a value.  An expression is
@@ -145,6 +146,9 @@ optimizations = [
    (('ffma', a, b, c), ('fadd', ('fmul', a, b), c), 'options->lower_ffma'),
    (('~fadd', ('fmul', a, b), c), ('ffma', a, b, c), 'options->fuse_ffma'),
 
+   (('~fmul', ('fadd', ('iand', ('ineg', ('b2i32', 'a@bool')), ('fmul', b, c)), '#d'), '#e'),
+    ('bcsel', a, ('fmul', ('fadd', ('fmul', b, c), d), e), ('fmul', d, e))),
+
    (('fdot4', ('vec4', a, b,   c,   1.0), d), ('fdph',  ('vec3', a, b, c), d)),
    (('fdot4', ('vec4', a, 0.0, 0.0, 0.0), b), ('fmul', a, b)),
    (('fdot4', ('vec4', a, b,   0.0, 0.0), c), ('fdot2', ('vec2', a, b), c)),
@@ -217,6 +221,9 @@ optimizations = [
    # !(a || b)
    (('fge', ('fneg', ('fadd', ('b2f', 'a@1'), ('b2f', 'b@1'))), 0.0), ('inot', ('ior', a, b))),
    (('fge', 0.0, ('fadd', ('b2f', 'a@1'), ('b2f', 'b@1'))), ('inot', ('ior', a, b))),
+
+   (('flt', a, ('fneg', a)), ('flt', a, 0.0)),
+   (('fge', a, ('fneg', a)), ('fge', a, 0.0)),
 
    # Some optimizations (below) convert things like (a < b || c < b) into
    # (min(a, c) < b).  However, this interfers with the previous optimizations
@@ -394,8 +401,17 @@ optimizations = [
    (('ior', ('uge', 1, a), ('ieq', a, 2)), ('uge', 2, a)),
    (('ior', ('uge', 2, a), ('ieq', a, 3)), ('uge', 3, a)),
 
+   # The (i2f32, ...) part is an open-coded fsign.  When that is combined with
+   # the bcsel, it's basically copysign(1.0, a).  There is no copysign in NIR,
+   # so emit an open-coded version of that.
+   (('bcsel@32', ('feq', a, 0.0), 1.0, ('i2f32', ('iadd', ('b2i32', ('flt', 0.0, 'a@32')), ('ineg', ('b2i32', ('flt', 'a@32', 0.0)))))),
+    ('ior', 0x3f800000, ('iand', a, 0x80000000))),
+
    (('ior', a, ('ieq', a, False)), True),
    (('ior', a, ('inot', a)), -1),
+
+   (('ine', ('ineg', ('b2i32', 'a@1')), ('ineg', ('b2i32', 'b@1'))), ('ine', a, b)),
+   (('b2i32', ('ine', 'a@1', 'b@1')), ('b2i32', ('ixor', a, b))),
 
    (('iand', ('ieq', 'a@32', 0), ('ieq', 'b@32', 0)), ('ieq', ('ior', 'a@32', 'b@32'), 0)),
 
@@ -824,6 +840,7 @@ optimizations.extend([
      'options->lower_unpack_snorm_4x8'),
 
    (('isign', a), ('imin', ('imax', a, -1), 1), 'options->lower_isign'),
+   (('fsign', a), ('fsub', ('b2f', ('flt', 0.0, a)), ('b2f', ('flt', a, 0.0))), 'options->lower_fsign'),
 ])
 
 # bit_size dependent lowerings

@@ -73,12 +73,11 @@ struct virgl_hw_res {
    uint32_t bind;
    boolean cacheable;
    int64_t start, end;
-
 };
 
 struct virgl_vtest_cmd_buf {
    struct virgl_cmd_buf base;
-   uint32_t buf[VIRGL_MAX_CMDBUF_DWORDS];
+   uint32_t *buf;
    unsigned nres;
    unsigned cres;
    struct virgl_winsys *ws;
@@ -122,7 +121,8 @@ int virgl_vtest_send_resource_create(struct virgl_vtest_winsys *vws,
                                      uint32_t array_size,
                                      uint32_t last_level,
                                      uint32_t nr_samples,
-                                     uint32_t size);
+                                     uint32_t size,
+                                     int *out_fd);
 
 int virgl_vtest_send_resource_unref(struct virgl_vtest_winsys *vws,
                                     uint32_t handle);

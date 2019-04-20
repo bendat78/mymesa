@@ -1254,10 +1254,9 @@ fs_generator::generate_ddx(const fs_inst *inst,
       width = BRW_WIDTH_4;
    }
 
-   struct brw_reg src0 = src;
+   struct brw_reg src0 = byte_offset(src, type_sz(src.type));;
    struct brw_reg src1 = src;
 
-   src0.subnr   = sizeof(float);
    src0.vstride = vstride;
    src0.width   = width;
    src0.hstride = BRW_HORIZONTAL_STRIDE_0;
@@ -1276,23 +1275,38 @@ void
 fs_generator::generate_ddy(const fs_inst *inst,
                            struct brw_reg dst, struct brw_reg src)
 {
-   if (inst->opcode == FS_OPCODE_DDY_FINE) {
-      /* produce accurate derivatives */
-      if (devinfo->gen >= 11) {
-         src = stride(src, 0, 2, 1);
-         struct brw_reg src_0  = byte_offset(src,  0 * sizeof(float));
-         struct brw_reg src_2  = byte_offset(src,  2 * sizeof(float));
-         struct brw_reg src_4  = byte_offset(src,  4 * sizeof(float));
-         struct brw_reg src_6  = byte_offset(src,  6 * sizeof(float));
-         struct brw_reg src_8  = byte_offset(src,  8 * sizeof(float));
-         struct brw_reg src_10 = byte_offset(src, 10 * sizeof(float));
-         struct brw_reg src_12 = byte_offset(src, 12 * sizeof(float));
-         struct brw_reg src_14 = byte_offset(src, 14 * sizeof(float));
+   const uint32_t type_size = type_sz(src.type);
 
-         struct brw_reg dst_0  = byte_offset(dst,  0 * sizeof(float));
-         struct brw_reg dst_4  = byte_offset(dst,  4 * sizeof(float));
-         struct brw_reg dst_8  = byte_offset(dst,  8 * sizeof(float));
-         struct brw_reg dst_12 = byte_offset(dst, 12 * sizeof(float));
+   if (inst->opcode == FS_OPCODE_DDY_FINE) {
+      /* produce accurate derivatives.
+       *
+       * From the Broadwell PRM, Volume 7 (3D-Media-GPGPU)
+       * "Register Region Restrictions", Section "1. Special Restrictions":
+       *
+       *    "In Align16 mode, the channel selects and channel enables apply to
+       *     a pair of half-floats, because these parameters are defined for
+       *     DWord elements ONLY. This is applicable when both source and
+       *     destination are half-floats."
+       *
+       * So for half-float operations we use the Gen11+ Align1 path. CHV
+       * inherits its FP16 hardware from SKL, so it is not affected.
+       */
+      if (devinfo->gen >= 11 ||
+          (devinfo->is_broadwell && src.type == BRW_REGISTER_TYPE_HF)) {
+         src = stride(src, 0, 2, 1);
+         struct brw_reg src_0  = byte_offset(src,  0 * type_size);
+         struct brw_reg src_2  = byte_offset(src,  2 * type_size);
+         struct brw_reg src_4  = byte_offset(src,  4 * type_size);
+         struct brw_reg src_6  = byte_offset(src,  6 * type_size);
+         struct brw_reg src_8  = byte_offset(src,  8 * type_size);
+         struct brw_reg src_10 = byte_offset(src, 10 * type_size);
+         struct brw_reg src_12 = byte_offset(src, 12 * type_size);
+         struct brw_reg src_14 = byte_offset(src, 14 * type_size);
+
+         struct brw_reg dst_0  = byte_offset(dst,  0 * type_size);
+         struct brw_reg dst_4  = byte_offset(dst,  4 * type_size);
+         struct brw_reg dst_8  = byte_offset(dst,  8 * type_size);
+         struct brw_reg dst_12 = byte_offset(dst, 12 * type_size);
 
          brw_push_insn_state(p);
          brw_set_default_exec_size(p, BRW_EXECUTE_4);
@@ -1319,10 +1333,8 @@ fs_generator::generate_ddy(const fs_inst *inst,
       }
    } else {
       /* replicate the derivative at the top-left pixel to other pixels */
-      struct brw_reg src0 = stride(src, 4, 4, 0);
-      struct brw_reg src1 = stride(src, 4, 4, 0);
-      src0.subnr = 0 * sizeof(float);
-      src1.subnr = 2 * sizeof(float);
+      struct brw_reg src0 = byte_offset(stride(src, 4, 4, 0), 0 * type_size);
+      struct brw_reg src1 = byte_offset(stride(src, 4, 4, 0), 2 * type_size);
 
       brw_ADD(p, dst, negate(src0), src1);
    }

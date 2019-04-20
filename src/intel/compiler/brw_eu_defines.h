@@ -423,6 +423,7 @@ enum opcode {
    SHADER_OPCODE_A64_BYTE_SCATTERED_READ_LOGICAL,
    SHADER_OPCODE_A64_BYTE_SCATTERED_WRITE_LOGICAL,
    SHADER_OPCODE_A64_UNTYPED_ATOMIC_LOGICAL,
+   SHADER_OPCODE_A64_UNTYPED_ATOMIC_INT64_LOGICAL,
    SHADER_OPCODE_A64_UNTYPED_ATOMIC_FLOAT_LOGICAL,
 
    SHADER_OPCODE_TYPED_ATOMIC_LOGICAL,
@@ -834,6 +835,10 @@ enum tex_logical_srcs {
    TEX_LOGICAL_SRC_SURFACE,
    /** Texture sampler index */
    TEX_LOGICAL_SRC_SAMPLER,
+   /** Texture surface bindless handle */
+   TEX_LOGICAL_SRC_SURFACE_HANDLE,
+   /** Texture sampler bindless handle */
+   TEX_LOGICAL_SRC_SAMPLER_HANDLE,
    /** Texel offset for gathers */
    TEX_LOGICAL_SRC_TG4_OFFSET,
    /** REQUIRED: Number of coordinate components (as UD immediate) */
@@ -847,6 +852,8 @@ enum tex_logical_srcs {
 enum surface_logical_srcs {
    /** Surface binding table index */
    SURFACE_LOGICAL_SRC_SURFACE,
+   /** Surface bindless handle */
+   SURFACE_LOGICAL_SRC_SURFACE_HANDLE,
    /** Surface address; could be multi-dimensional for typed opcodes */
    SURFACE_LOGICAL_SRC_ADDRESS,
    /** Data to be written or used in an atomic op */
@@ -1223,6 +1230,7 @@ enum brw_message_target {
  */
 #define GEN8_BTI_STATELESS_IA_COHERENT   255
 #define GEN8_BTI_STATELESS_NON_COHERENT  253
+#define GEN9_BTI_BINDLESS                252
 
 /* Dataport atomic operations for Untyped Atomic Integer Operation message
  * (and others).

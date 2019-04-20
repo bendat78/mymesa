@@ -36,6 +36,8 @@
 #include "util/u_memory.h"
 #include "util/u_vbuf.h"
 #include "util/half_float.h"
+#include "util/u_helpers.h"
+#include "util/u_format.h"
 #include "indices/u_primconvert.h"
 #include "tgsi/tgsi_parse.h"
 
@@ -733,59 +735,53 @@ panfrost_emit_varying_descriptor(
         ctx->payload_tiler.postfix.varyings = varyings_p;
 }
 
+static mali_ptr
+panfrost_vertex_buffer_address(struct panfrost_context *ctx, unsigned i)
+{
+        struct pipe_vertex_buffer *buf = &ctx->vertex_buffers[i];
+        struct panfrost_resource *rsrc = (struct panfrost_resource *) (buf->buffer.resource);
+
+        return rsrc->bo->gpu + buf->buffer_offset;
+}
+
 /* Emits attributes and varying descriptors, which should be called every draw,
  * excepting some obscure circumstances */
 
 static void
-panfrost_emit_vertex_data(struct panfrost_context *ctx)
+panfrost_emit_vertex_data(struct panfrost_context *ctx, struct panfrost_job *job)
 {
-        /* TODO: Only update the dirtied buffers */
+        /* Staged mali_attr, and index into them. i =/= k, depending on the
+         * vertex buffer mask */
         union mali_attr attrs[PIPE_MAX_ATTRIBS];
+        unsigned k = 0;
 
         unsigned invocation_count = MALI_NEGATIVE(ctx->payload_tiler.prefix.invocation_count);
 
-        for (int i = 0; i < ctx->vertex_buffer_count; ++i) {
+        for (int i = 0; i < ARRAY_SIZE(ctx->vertex_buffers); ++i) {
+                if (!(ctx->vb_mask & (1 << i))) continue;
+
                 struct pipe_vertex_buffer *buf = &ctx->vertex_buffers[i];
                 struct panfrost_resource *rsrc = (struct panfrost_resource *) (buf->buffer.resource);
 
-                /* Let's figure out the layout of the attributes in memory so
-                 * we can be smart about size computation. The idea is to
-                 * figure out the maximum src_offset, which tells us the latest
-                 * spot a vertex could start. Meanwhile, we figure out the size
-                 * of the attribute memory (assuming interleaved
-                 * representation) and tack on the max src_offset for a
-                 * reasonably good upper bound on the size.
-                 *
-                 * Proving correctness is left as an exercise to the reader.
-                 */
+                if (!rsrc) continue;
 
-                unsigned max_src_offset = 0;
+                /* Align to 64 bytes by masking off the lower bits. This
+                 * will be adjusted back when we fixup the src_offset in
+                 * mali_attr_meta */
 
-                for (unsigned j = 0; j < ctx->vertex->num_elements; ++j) {
-                        if (ctx->vertex->pipe[j].vertex_buffer_index != i) continue;
-                        max_src_offset = MAX2(max_src_offset, ctx->vertex->pipe[j].src_offset);
-                }
+                mali_ptr addr = panfrost_vertex_buffer_address(ctx, i) & ~63;
 
                 /* Offset vertex count by draw_start to make sure we upload enough */
-                attrs[i].stride = buf->stride;
-                attrs[i].size = buf->stride * (ctx->payload_vertex.draw_start + invocation_count) + max_src_offset;
+                attrs[k].stride = buf->stride;
+                attrs[k].size = rsrc->base.width0;
 
-                /* Vertex elements are -already- GPU-visible, at
-                 * rsrc->gpu. However, attribute buffers must be 64 aligned. If
-                 * it is not, for now we have to duplicate the buffer. */
+                panfrost_job_add_bo(job, rsrc->bo);
+                attrs[k].elements = addr | MALI_ATTR_LINEAR;
 
-                mali_ptr effective_address = rsrc ? (rsrc->bo->gpu + buf->buffer_offset) : 0;
-
-                if (effective_address) {
-                        attrs[i].elements = panfrost_upload_transient(ctx, rsrc->bo->cpu + buf->buffer_offset, attrs[i].size) | MALI_ATTR_LINEAR;
-                } else if (effective_address) {
-                        attrs[i].elements = effective_address | MALI_ATTR_LINEAR;
-                } else {
-                        /* Leave unset? */
-                }
+                ++k;
         }
 
-        ctx->payload_vertex.postfix.attributes = panfrost_upload_transient(ctx, attrs, ctx->vertex_buffer_count * sizeof(union mali_attr));
+        ctx->payload_vertex.postfix.attributes = panfrost_upload_transient(ctx, attrs, k * sizeof(union mali_attr));
 
         panfrost_emit_varying_descriptor(ctx, invocation_count);
 }
@@ -799,6 +795,53 @@ panfrost_writes_point_size(struct panfrost_context *ctx)
         return vs->writes_point_size && ctx->payload_tiler.prefix.draw_mode == MALI_POINTS;
 }
 
+/* Stage the attribute descriptors so we can adjust src_offset
+ * to let BOs align nicely */
+
+static void
+panfrost_stage_attributes(struct panfrost_context *ctx)
+{
+        struct panfrost_vertex_state *so = ctx->vertex;
+
+        size_t sz = sizeof(struct mali_attr_meta) * so->num_elements;
+        struct panfrost_transfer transfer = panfrost_allocate_transient(ctx, sz);
+        struct mali_attr_meta *target = (struct mali_attr_meta *) transfer.cpu;
+
+        /* Copy as-is for the first pass */
+        memcpy(target, so->hw, sz);
+
+        /* Fixup offsets for the second pass. Recall that the hardware
+         * calculates attribute addresses as:
+         *
+         *      addr = base + (stride * vtx) + src_offset;
+         *
+         * However, on Mali, base must be aligned to 64-bytes, so we
+         * instead let:
+         *
+         *      base' = base & ~63 = base - (base & 63)
+         * 
+         * To compensate when using base' (see emit_vertex_data), we have
+         * to adjust src_offset by the masked off piece:
+         *
+         *      addr' = base' + (stride * vtx) + (src_offset + (base & 63))
+         *            = base - (base & 63) + (stride * vtx) + src_offset + (base & 63)
+         *            = base + (stride * vtx) + src_offset
+         *            = addr;
+         *
+         * QED.
+         */
+
+        for (unsigned i = 0; i < so->num_elements; ++i) {
+                unsigned vbi = so->pipe[i].vertex_buffer_index;
+                mali_ptr addr = panfrost_vertex_buffer_address(ctx, vbi);
+
+                /* Adjust by the masked off bits of the offset */
+                target[i].src_offset += (addr & 63);
+        }
+
+        ctx->payload_vertex.postfix.attribute_meta = transfer.gpu;
+}
+
 /* Go through dirty flags and actualise them in the cmdstream. */
 
 void
@@ -807,7 +850,7 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
         struct panfrost_job *job = panfrost_get_job_for_fbo(ctx);
 
         if (with_vertex_data) {
-                panfrost_emit_vertex_data(ctx);
+                panfrost_emit_vertex_data(ctx, job);
         }
 
         bool msaa = ctx->rasterizer->base.multisample;
@@ -982,9 +1025,8 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 }
         }
 
-        if (ctx->dirty & PAN_DIRTY_VERTEX) {
-                ctx->payload_vertex.postfix.attribute_meta = ctx->vertex->descriptor_ptr;
-        }
+        /* We stage to transient, so always dirty.. */
+        panfrost_stage_attributes(ctx);
 
         if (ctx->dirty & PAN_DIRTY_SAMPLERS) {
                 /* Upload samplers back to back, no padding */
@@ -1252,7 +1294,8 @@ panfrost_link_jobs(struct panfrost_context *ctx)
 
 static void
 panfrost_submit_frame(struct panfrost_context *ctx, bool flush_immediate,
-		      struct pipe_fence_handle **fence)
+		      struct pipe_fence_handle **fence,
+                      struct panfrost_job *job)
 {
         struct pipe_context *gallium = (struct pipe_context *) ctx;
         struct panfrost_screen *screen = pan_screen(gallium->screen);
@@ -1274,15 +1317,15 @@ panfrost_submit_frame(struct panfrost_context *ctx, bool flush_immediate,
 #ifndef DRY_RUN
         
         bool is_scanout = panfrost_is_scanout(ctx);
-        int fragment_id = screen->driver->submit_vs_fs_job(ctx, has_draws, is_scanout);
+        screen->driver->submit_vs_fs_job(ctx, has_draws, is_scanout);
 
         /* If visual, we can stall a frame */
 
         if (!flush_immediate)
                 screen->driver->force_flush_fragment(ctx, fence);
 
-        screen->last_fragment_id = fragment_id;
         screen->last_fragment_flushed = false;
+        screen->last_job = job;
 
         /* If readback, flush now (hurts the pipelined performance) */
         if (flush_immediate)
@@ -1317,7 +1360,7 @@ panfrost_flush(
         bool flush_immediate = flags & PIPE_FLUSH_END_OF_FRAME;
 
         /* Submit the frame itself */
-        panfrost_submit_frame(ctx, flush_immediate, fence);
+        panfrost_submit_frame(ctx, flush_immediate, fence, job);
 
         /* Prepare for the next frame */
         panfrost_invalidate_frame(ctx);
@@ -1543,15 +1586,10 @@ panfrost_create_vertex_elements_state(
         unsigned num_elements,
         const struct pipe_vertex_element *elements)
 {
-        struct panfrost_context *ctx = pan_context(pctx);
         struct panfrost_vertex_state *so = CALLOC_STRUCT(panfrost_vertex_state);
 
         so->num_elements = num_elements;
         memcpy(so->pipe, elements, sizeof(*elements) * num_elements);
-
-        struct panfrost_transfer transfer = panfrost_allocate_chunk(ctx, sizeof(struct mali_attr_meta) * num_elements, HEAP_DESCRIPTOR);
-        so->hw = (struct mali_attr_meta *) transfer.cpu;
-        so->descriptor_ptr = transfer.gpu;
 
         /* Allocate memory for the descriptor state */
 
@@ -1793,22 +1831,8 @@ panfrost_set_vertex_buffers(
         const struct pipe_vertex_buffer *buffers)
 {
         struct panfrost_context *ctx = pan_context(pctx);
-        assert(num_buffers <= PIPE_MAX_ATTRIBS);
 
-        /* XXX: Dirty tracking? etc */
-        if (buffers) {
-                size_t sz = sizeof(buffers[0]) * num_buffers;
-                ctx->vertex_buffers = malloc(sz);
-                ctx->vertex_buffer_count = num_buffers;
-                memcpy(ctx->vertex_buffers, buffers, sz);
-        } else {
-                if (ctx->vertex_buffers) {
-                        free(ctx->vertex_buffers);
-                        ctx->vertex_buffers = NULL;
-                }
-
-                ctx->vertex_buffer_count = 0;
-        }
+        util_set_vertex_buffers_mask(ctx->vertex_buffers, &ctx->vb_mask, buffers, start_slot, num_buffers);
 }
 
 static void

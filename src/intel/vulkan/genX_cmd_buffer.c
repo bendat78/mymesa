@@ -110,10 +110,18 @@ genX(cmd_buffer_emit_state_base_address)(struct anv_cmd_buffer *cmd_buffer)
       sba.InstructionBuffersizeModifyEnable     = true;
 #  endif
 #  if (GEN_GEN >= 9)
-      sba.BindlessSurfaceStateBaseAddress = (struct anv_address) { NULL, 0 };
+      if (cmd_buffer->device->instance->physicalDevice.use_softpin) {
+         sba.BindlessSurfaceStateBaseAddress = (struct anv_address) {
+            .bo = device->surface_state_pool.block_pool.bo,
+            .offset = 0,
+         };
+         sba.BindlessSurfaceStateSize = (1 << 20) - 1;
+      } else {
+         sba.BindlessSurfaceStateBaseAddress = ANV_NULL_ADDRESS;
+         sba.BindlessSurfaceStateSize = 0;
+      }
       sba.BindlessSurfaceStateMOCS = GENX(MOCS);
       sba.BindlessSurfaceStateBaseAddressModifyEnable = true;
-      sba.BindlessSurfaceStateSize = 0;
 #  endif
 #  if (GEN_GEN >= 10)
       sba.BindlessSamplerStateBaseAddress = (struct anv_address) { NULL, 0 };
@@ -2010,7 +2018,6 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
                    gl_shader_stage stage,
                    struct anv_state *bt_state)
 {
-   const struct gen_device_info *devinfo = &cmd_buffer->device->info;
    struct anv_subpass *subpass = cmd_buffer->state.subpass;
    struct anv_cmd_pipeline_state *pipe_state;
    struct anv_pipeline *pipeline;
@@ -2045,17 +2052,12 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
    if (bt_state->map == NULL)
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 
-   /* We only use push constant space for images before gen9 */
-   if (map->image_param_count > 0) {
-      VkResult result =
-         anv_cmd_buffer_ensure_push_constant_field(cmd_buffer, stage, images);
-      if (result != VK_SUCCESS)
-         return result;
+   /* We only need to emit relocs if we're not using softpin.  If we are using
+    * softpin then we always keep all user-allocated memory objects resident.
+    */
+   const bool need_client_mem_relocs =
+      !cmd_buffer->device->instance->physicalDevice.use_softpin;
 
-      cmd_buffer->state.push_constants_dirty |= 1 << stage;
-   }
-
-   uint32_t image = 0;
    for (uint32_t s = 0; s < map->surface_count; s++) {
       struct anv_pipeline_binding *binding = &map->surface_to_descriptor[s];
 
@@ -2122,8 +2124,10 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
                                        cmd_buffer->state.compute.num_workgroups,
                                        12, 1);
          bt_map[s] = surface_state.offset + state_offset;
-         add_surface_reloc(cmd_buffer, surface_state,
-                           cmd_buffer->state.compute.num_workgroups);
+         if (need_client_mem_relocs) {
+            add_surface_reloc(cmd_buffer, surface_state,
+                              cmd_buffer->state.compute.num_workgroups);
+         }
          continue;
       } else if (binding->set == ANV_DESCRIPTOR_SET_DESCRIPTORS) {
          /* This is a descriptor set buffer so the set index is actually
@@ -2155,7 +2159,8 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
             desc->image_view->planes[binding->plane].optimal_sampler_surface_state;
          surface_state = sstate.state;
          assert(surface_state.alloc_size);
-         add_surface_state_relocs(cmd_buffer, sstate);
+         if (need_client_mem_relocs)
+            add_surface_state_relocs(cmd_buffer, sstate);
          break;
       }
       case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
@@ -2170,7 +2175,8 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
                desc->image_view->planes[binding->plane].optimal_sampler_surface_state;
             surface_state = sstate.state;
             assert(surface_state.alloc_size);
-            add_surface_state_relocs(cmd_buffer, sstate);
+            if (need_client_mem_relocs)
+               add_surface_state_relocs(cmd_buffer, sstate);
          } else {
             /* For color input attachments, we create the surface state at
              * vkBeginRenderPass time so that we can include aux and clear
@@ -2189,19 +2195,8 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
             : desc->image_view->planes[binding->plane].storage_surface_state;
          surface_state = sstate.state;
          assert(surface_state.alloc_size);
-         add_surface_state_relocs(cmd_buffer, sstate);
-         if (devinfo->gen < 9) {
-            /* We only need the image params on gen8 and earlier.  No image
-             * workarounds that require tiling information are required on
-             * SKL and above.
-             */
-            assert(image < MAX_GEN8_IMAGES);
-            struct brw_image_param *image_param =
-               &cmd_buffer->state.push_constants[stage]->images[image++];
-
-            *image_param =
-               desc->image_view->planes[binding->plane].storage_image_param;
-         }
+         if (need_client_mem_relocs)
+            add_surface_state_relocs(cmd_buffer, sstate);
          break;
       }
 
@@ -2210,8 +2205,10 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
       case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
          surface_state = desc->buffer_view->surface_state;
          assert(surface_state.alloc_size);
-         add_surface_reloc(cmd_buffer, surface_state,
-                           desc->buffer_view->address);
+         if (need_client_mem_relocs) {
+            add_surface_reloc(cmd_buffer, surface_state,
+                              desc->buffer_view->address);
+         }
          break;
 
       case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
@@ -2235,7 +2232,8 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
 
          anv_fill_buffer_surface_state(cmd_buffer->device, surface_state,
                                        format, address, range, 1);
-         add_surface_reloc(cmd_buffer, surface_state, address);
+         if (need_client_mem_relocs)
+            add_surface_reloc(cmd_buffer, surface_state, address);
          break;
       }
 
@@ -2244,14 +2242,9 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
             ? desc->buffer_view->writeonly_storage_surface_state
             : desc->buffer_view->storage_surface_state;
          assert(surface_state.alloc_size);
-         add_surface_reloc(cmd_buffer, surface_state,
-                           desc->buffer_view->address);
-         if (devinfo->gen < 9) {
-            assert(image < MAX_GEN8_IMAGES);
-            struct brw_image_param *image_param =
-               &cmd_buffer->state.push_constants[stage]->images[image++];
-
-            *image_param = desc->buffer_view->storage_image_param;
+         if (need_client_mem_relocs) {
+            add_surface_reloc(cmd_buffer, surface_state,
+                              desc->buffer_view->address);
          }
          break;
 
@@ -2262,7 +2255,6 @@ emit_binding_table(struct anv_cmd_buffer *cmd_buffer,
 
       bt_map[s] = surface_state.offset + state_offset;
    }
-   assert(image == map->image_param_count);
 
 #if GEN_GEN >= 11
    /* The PIPE_CONTROL command description says:

@@ -134,22 +134,28 @@ anv_shader_compile_to_nir(struct anv_device *device,
       }
    }
 
+   nir_address_format ssbo_addr_format =
+      anv_nir_ssbo_addr_format(pdevice, device->robust_buffer_access);
    struct spirv_to_nir_options spirv_options = {
       .lower_workgroup_access_to_offsets = true,
       .caps = {
          .derivative_group = true,
+         .descriptor_array_dynamic_indexing = true,
          .device_group = true,
          .draw_parameters = true,
+         .float16 = pdevice->info.gen >= 8,
          .float64 = pdevice->info.gen >= 8,
          .geometry_streams = true,
          .image_write_without_format = true,
+         .int8 = pdevice->info.gen >= 8,
          .int16 = pdevice->info.gen >= 8,
          .int64 = pdevice->info.gen >= 8,
+         .int64_atomics = pdevice->info.gen >= 9 && pdevice->use_softpin,
          .min_lod = true,
          .multiview = true,
-         .physical_storage_buffer_address = pdevice->info.gen >= 8 &&
-                                            pdevice->use_softpin,
+         .physical_storage_buffer_address = pdevice->has_a64_buffer_access,
          .post_depth_coverage = pdevice->info.gen >= 9,
+         .runtime_descriptor_array = true,
          .shader_viewport_index_layer = true,
          .stencil_export = pdevice->info.gen >= 9,
          .storage_8bit = pdevice->info.gen >= 8,
@@ -165,11 +171,12 @@ anv_shader_compile_to_nir(struct anv_device *device,
          .variable_pointers = true,
       },
       .ubo_ptr_type = glsl_vector_type(GLSL_TYPE_UINT, 2),
-      .ssbo_ptr_type = glsl_vector_type(GLSL_TYPE_UINT, 2),
+      .ssbo_ptr_type = nir_address_format_to_glsl_type(ssbo_addr_format),
       .phys_ssbo_ptr_type = glsl_vector_type(GLSL_TYPE_UINT64, 1),
       .push_const_ptr_type = glsl_uint_type(),
       .shared_ptr_type = glsl_uint_type(),
    };
+
 
    nir_function *entry_point =
       spirv_to_nir(spirv, module->size / 4,
@@ -552,8 +559,9 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
                        struct anv_pipeline_stage *stage,
                        struct anv_pipeline_layout *layout)
 {
-   const struct brw_compiler *compiler =
-      pipeline->device->instance->physicalDevice.compiler;
+   const struct anv_physical_device *pdevice =
+      &pipeline->device->instance->physicalDevice;
+   const struct brw_compiler *compiler = pdevice->compiler;
 
    struct brw_stage_prog_data *prog_data = &stage->prog_data.base;
    nir_shader *nir = stage->nir;
@@ -606,16 +614,25 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
 
    /* Apply the actual pipeline layout to UBOs, SSBOs, and textures */
    if (layout) {
-      anv_nir_apply_pipeline_layout(&pipeline->device->instance->physicalDevice,
+      anv_nir_apply_pipeline_layout(pdevice,
                                     pipeline->device->robust_buffer_access,
                                     layout, nir, prog_data,
                                     &stage->bind_map);
 
-      NIR_PASS_V(nir, nir_lower_explicit_io,
-                 nir_var_mem_ubo | nir_var_mem_ssbo,
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo,
                  nir_address_format_32bit_index_offset);
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ssbo,
+                 anv_nir_ssbo_addr_format(pdevice,
+                    pipeline->device->robust_buffer_access));
 
       NIR_PASS_V(nir, nir_opt_constant_folding);
+
+      /* We don't support non-uniform UBOs and non-uniform SSBO access is
+       * handled naturally by falling back to A64 messages.
+       */
+      NIR_PASS_V(nir, nir_lower_non_uniform_access,
+                 nir_lower_non_uniform_texture_access |
+                 nir_lower_non_uniform_image_access);
    }
 
    if (nir->info.stage != MESA_SHADER_COMPUTE)

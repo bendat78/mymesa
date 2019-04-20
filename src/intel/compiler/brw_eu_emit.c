@@ -94,6 +94,17 @@ brw_set_dest(struct brw_codegen *p, brw_inst *inst, struct brw_reg dest)
    else if (dest.file == BRW_GENERAL_REGISTER_FILE)
       assert(dest.nr < 128);
 
+   /* The hardware has a restriction where if the destination is Byte,
+    * the instruction needs to have a stride of 2 (except for packed byte
+    * MOV). This seems to be required even if the destination is the NULL
+    * register.
+    */
+   if (dest.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+       dest.nr == BRW_ARF_NULL &&
+       type_sz(dest.type) == 1) {
+      dest.hstride = BRW_HORIZONTAL_STRIDE_2;
+   }
+
    gen7_convert_mrf_to_grf(p, &dest);
 
    if (brw_inst_opcode(devinfo, inst) == BRW_OPCODE_SENDS ||
@@ -797,7 +808,8 @@ brw_alu3(struct brw_codegen *p, unsigned opcode, struct brw_reg dest,
       assert(dest.type == BRW_REGISTER_TYPE_F  ||
              dest.type == BRW_REGISTER_TYPE_DF ||
              dest.type == BRW_REGISTER_TYPE_D  ||
-             dest.type == BRW_REGISTER_TYPE_UD);
+             dest.type == BRW_REGISTER_TYPE_UD ||
+             (dest.type == BRW_REGISTER_TYPE_HF && devinfo->gen >= 8));
       if (devinfo->gen == 6) {
          brw_inst_set_3src_a16_dst_reg_file(devinfo, inst,
                                             dest.file == BRW_MESSAGE_REGISTER_FILE);
@@ -842,6 +854,22 @@ brw_alu3(struct brw_codegen *p, unsigned opcode, struct brw_reg dest,
           */
          brw_inst_set_3src_a16_src_type(devinfo, inst, dest.type);
          brw_inst_set_3src_a16_dst_type(devinfo, inst, dest.type);
+
+         /* From the Bspec, 3D Media GPGPU, Instruction fields, srcType:
+          *
+          *    "Three source instructions can use operands with mixed-mode
+          *     precision. When SrcType field is set to :f or :hf it defines
+          *     precision for source 0 only, and fields Src1Type and Src2Type
+          *     define precision for other source operands:
+          *
+          *     0b = :f. Single precision Float (32-bit).
+          *     1b = :hf. Half precision Float (16-bit)."
+          */
+         if (src1.type == BRW_REGISTER_TYPE_HF)
+            brw_inst_set_3src_a16_src1_type(devinfo, inst, 1);
+
+         if (src2.type == BRW_REGISTER_TYPE_HF)
+            brw_inst_set_3src_a16_src2_type(devinfo, inst, 1);
       }
    }
 
@@ -1916,8 +1944,10 @@ void gen6_math(struct brw_codegen *p,
       assert(src1.file == BRW_GENERAL_REGISTER_FILE ||
              (devinfo->gen >= 8 && src1.file == BRW_IMMEDIATE_VALUE));
    } else {
-      assert(src0.type == BRW_REGISTER_TYPE_F);
-      assert(src1.type == BRW_REGISTER_TYPE_F);
+      assert(src0.type == BRW_REGISTER_TYPE_F ||
+             (src0.type == BRW_REGISTER_TYPE_HF && devinfo->gen >= 9));
+      assert(src1.type == BRW_REGISTER_TYPE_F ||
+             (src1.type == BRW_REGISTER_TYPE_HF && devinfo->gen >= 9));
    }
 
    /* Source modifiers are ignored for extended math instructions on Gen6. */

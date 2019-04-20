@@ -1643,21 +1643,11 @@ static void visit_store_ssbo(struct ac_nir_context *ctx,
 static LLVMValueRef visit_atomic_ssbo(struct ac_nir_context *ctx,
                                       const nir_intrinsic_instr *instr)
 {
+	LLVMTypeRef return_type = LLVMTypeOf(get_src(ctx, instr->src[2]));
 	const char *op;
-	char name[64];
+	char name[64], type[8];
 	LLVMValueRef params[6];
 	int arg_count = 0;
-
-	if (instr->intrinsic == nir_intrinsic_ssbo_atomic_comp_swap) {
-		params[arg_count++] = ac_llvm_extract_elem(&ctx->ac, get_src(ctx, instr->src[3]), 0);
-	}
-	params[arg_count++] = ac_llvm_extract_elem(&ctx->ac, get_src(ctx, instr->src[2]), 0);
-	params[arg_count++] = ctx->abi->load_ssbo(ctx->abi,
-						 get_src(ctx, instr->src[0]),
-						 true);
-	params[arg_count++] = ctx->ac.i32_0; /* vindex */
-	params[arg_count++] = get_src(ctx, instr->src[1]);      /* voffset */
-	params[arg_count++] = ctx->ac.i1false;  /* slc */
 
 	switch (instr->intrinsic) {
 	case nir_intrinsic_ssbo_atomic_add:
@@ -1694,16 +1684,37 @@ static LLVMValueRef visit_atomic_ssbo(struct ac_nir_context *ctx,
 		abort();
 	}
 
-	if (HAVE_LLVM >= 0x900 &&
-	    instr->intrinsic != nir_intrinsic_ssbo_atomic_comp_swap) {
+	if (instr->intrinsic == nir_intrinsic_ssbo_atomic_comp_swap) {
+		params[arg_count++] = ac_llvm_extract_elem(&ctx->ac, get_src(ctx, instr->src[3]), 0);
+	}
+	params[arg_count++] = ac_llvm_extract_elem(&ctx->ac, get_src(ctx, instr->src[2]), 0);
+	params[arg_count++] = ctx->abi->load_ssbo(ctx->abi,
+						  get_src(ctx, instr->src[0]),
+						  true);
+
+	if (HAVE_LLVM >= 0x900) {
+		/* XXX: The new raw/struct atomic intrinsics are buggy with
+		 * LLVM 8, see r358579.
+		 */
+		params[arg_count++] = get_src(ctx, instr->src[1]); /* voffset */
+		params[arg_count++] = ctx->ac.i32_0; /* soffset */
+		params[arg_count++] = ctx->ac.i32_0; /* slc */
+
+		ac_build_type_name_for_intr(return_type, type, sizeof(type));
 		snprintf(name, sizeof(name),
-			 "llvm.amdgcn.buffer.atomic.%s.i32", op);
+		         "llvm.amdgcn.raw.buffer.atomic.%s.%s", op, type);
 	} else {
+		params[arg_count++] = ctx->ac.i32_0; /* vindex */
+		params[arg_count++] = get_src(ctx, instr->src[1]); /* voffset */
+		params[arg_count++] = ctx->ac.i1false; /* slc */
+
+		assert(return_type == ctx->ac.i32);
 		snprintf(name, sizeof(name),
 			 "llvm.amdgcn.buffer.atomic.%s", op);
 	}
 
-	return ac_build_intrinsic(&ctx->ac, name, ctx->ac.i32, params, arg_count, 0);
+	return ac_build_intrinsic(&ctx->ac, name, return_type, params,
+				  arg_count, 0);
 }
 
 static LLVMValueRef visit_load_buffer(struct ac_nir_context *ctx,
@@ -2625,7 +2636,10 @@ static LLVMValueRef visit_image_atomic(struct ac_nir_context *ctx,
 		params[param_count++] = LLVMBuildExtractElement(ctx->ac.builder, get_src(ctx, instr->src[1]),
 								ctx->ac.i32_0, ""); /* vindex */
 		params[param_count++] = ctx->ac.i32_0; /* voffset */
-		if (HAVE_LLVM >= 0x800) {
+		if (HAVE_LLVM >= 0x900) {
+			/* XXX: The new raw/struct atomic intrinsics are buggy
+			 * with LLVM 8, see r358579.
+			 */
 			params[param_count++] = ctx->ac.i32_0; /* soffset */
 			params[param_count++] = ctx->ac.i32_0;  /* slc */
 

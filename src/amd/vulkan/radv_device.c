@@ -48,6 +48,7 @@
 #include "util/build_id.h"
 #include "util/debug.h"
 #include "util/mesa-sha1.h"
+#include "compiler/glsl_types.h"
 
 static int
 radv_device_get_cache_uuid(enum radeon_family family, void *uuid)
@@ -582,6 +583,7 @@ VkResult radv_CreateInstance(
 	}
 
 	_mesa_locale_init();
+	glsl_type_singleton_init_or_ref();
 
 	VG(VALGRIND_CREATE_MEMPOOL(instance, 0, false));
 
@@ -607,6 +609,7 @@ void radv_DestroyInstance(
 
 	VG(VALGRIND_DESTROY_MEMPOOL(instance));
 
+	glsl_type_singleton_decref();
 	_mesa_locale_fini();
 
 	vk_debug_report_instance_destroy(&instance->debug_report_callbacks);
@@ -906,6 +909,24 @@ void radv_GetPhysicalDeviceFeatures2(
 			features->shaderInt8 = true;
 			break;
 		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR: {
+			VkPhysicalDeviceShaderAtomicInt64FeaturesKHR *features =
+				(VkPhysicalDeviceShaderAtomicInt64FeaturesKHR *)ext;
+			/* TODO: Enable this once the driver supports 64-bit
+			 * compare&swap atomic operations.
+			 */
+			features->shaderBufferInt64Atomics = false;
+			features->shaderSharedInt64Atomics = false;
+			break;
+		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES_EXT: {
+			VkPhysicalDeviceInlineUniformBlockFeaturesEXT *features =
+				(VkPhysicalDeviceInlineUniformBlockFeaturesEXT *)ext;
+
+			features->inlineUniformBlock = true;
+			features->descriptorBindingInlineUniformBlockUpdateAfterBind = true;
+			break;
+		}
 		default:
 			break;
 		}
@@ -1200,7 +1221,8 @@ void radv_GetPhysicalDeviceProperties2(
 			properties->robustBufferAccessUpdateAfterBind = false;
 			properties->quadDivergentImplicitLod = false;
 
-			size_t max_descriptor_set_size = ((1ull << 31) - 16 * MAX_DYNAMIC_BUFFERS) /
+			size_t max_descriptor_set_size = ((1ull << 31) - 16 * MAX_DYNAMIC_BUFFERS -
+				MAX_INLINE_UNIFORM_BLOCK_SIZE * MAX_INLINE_UNIFORM_BLOCK_COUNT) /
 			          (32 /* uniform buffer, 32 due to potential space wasted on alignment */ +
 			           32 /* storage buffer, 32 due to potential space wasted on alignment */ +
 			           32 /* sampler, largest when combined with image */ +
@@ -1286,6 +1308,17 @@ void radv_GetPhysicalDeviceProperties2(
 			properties->transformFeedbackStreamsLinesTriangles = false;
 			properties->transformFeedbackRasterizationStreamSelect = false;
 			properties->transformFeedbackDraw = true;
+			break;
+		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES_EXT: {
+			VkPhysicalDeviceInlineUniformBlockPropertiesEXT *props =
+				(VkPhysicalDeviceInlineUniformBlockPropertiesEXT *)ext;
+
+			props->maxInlineUniformBlockSize = MAX_INLINE_UNIFORM_BLOCK_SIZE;
+			props->maxPerStageDescriptorInlineUniformBlocks = MAX_INLINE_UNIFORM_BLOCK_SIZE * MAX_SETS;
+			props->maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks = MAX_INLINE_UNIFORM_BLOCK_SIZE * MAX_SETS;
+			props->maxDescriptorSetInlineUniformBlocks = MAX_INLINE_UNIFORM_BLOCK_COUNT;
+			props->maxDescriptorSetUpdateAfterBindInlineUniformBlocks = MAX_INLINE_UNIFORM_BLOCK_COUNT;
 			break;
 		}
 		default:

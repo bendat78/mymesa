@@ -932,8 +932,20 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
    }
 
    for (unsigned i = 0; i < this->alloc.count; i++) {
+      int live_length = virtual_grf_end[i] - virtual_grf_start[i];
+      if (live_length <= 0)
+         continue;
+
+      /* Divide the cost (in number of spills/fills) by the log of the length
+       * of the live range of the register.  This will encourage spill logic
+       * to spill long-living things before spilling short-lived things where
+       * spilling is less likely to actually do us any good.  We use the log
+       * of the length because it will fall off very quickly and not cause us
+       * to spill medium length registers with more uses.
+       */
+      float adjusted_cost = spill_costs[i] / logf(live_length);
       if (!no_spill[i])
-	 ra_set_node_spill_cost(g, i, spill_costs[i]);
+	 ra_set_node_spill_cost(g, i, adjusted_cost);
    }
 
    return ra_get_best_spill_node(g);
@@ -1054,7 +1066,7 @@ fs_visitor::spill_reg(unsigned spill_reg)
           * write, there should be no need for the unspill since the
           * instruction will be overwriting the whole destination in any case.
 	  */
-         if (inst->is_partial_write() ||
+         if (inst->is_partial_reg_write() ||
              (!inst->force_writemask_all && !per_channel))
             emit_unspill(ubld, spill_src, subset_spill_offset,
                          regs_written(inst));

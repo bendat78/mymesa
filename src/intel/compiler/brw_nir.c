@@ -628,8 +628,10 @@ static unsigned
 lower_bit_size_callback(const nir_alu_instr *alu, UNUSED void *data)
 {
    assert(alu->dest.dest.is_ssa);
-   if (alu->dest.dest.ssa.bit_size != 16)
+   if (alu->dest.dest.ssa.bit_size >= 32)
       return 0;
+
+   const struct brw_compiler *compiler = (const struct brw_compiler *) data;
 
    switch (alu->op) {
    case nir_op_idiv:
@@ -637,7 +639,21 @@ lower_bit_size_callback(const nir_alu_instr *alu, UNUSED void *data)
    case nir_op_irem:
    case nir_op_udiv:
    case nir_op_umod:
+   case nir_op_fceil:
+   case nir_op_ffloor:
+   case nir_op_ffract:
+   case nir_op_fround_even:
+   case nir_op_ftrunc:
       return 32;
+   case nir_op_frcp:
+   case nir_op_frsq:
+   case nir_op_fsqrt:
+   case nir_op_fpow:
+   case nir_op_fexp2:
+   case nir_op_flog2:
+   case nir_op_fsin:
+   case nir_op_fcos:
+      return compiler->devinfo->gen < 9 ? 32 : 0;
    default:
       return 0;
    }
@@ -714,7 +730,7 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir,
       OPT(nir_opt_large_constants, NULL, 32);
    }
 
-   OPT(nir_lower_bit_size, lower_bit_size_callback, NULL);
+   OPT(nir_lower_bit_size, lower_bit_size_callback, (void *)compiler);
 
    if (is_scalar) {
       OPT(nir_lower_load_const_to_scalar);
@@ -838,6 +854,7 @@ brw_postprocess_nir(nir_shader *nir, const struct brw_compiler *compiler,
    UNUSED bool progress; /* Written by OPT */
 
    OPT(brw_nir_lower_mem_access_bit_sizes);
+   OPT(nir_lower_int64, nir->options->lower_int64_options);
 
    do {
       progress = false;
@@ -872,6 +889,8 @@ brw_postprocess_nir(nir_shader *nir, const struct brw_compiler *compiler,
    }
 
    OPT(nir_opt_algebraic_late);
+
+   OPT(brw_nir_lower_conversions);
 
    OPT(nir_lower_to_source_mods, nir_lower_all_source_mods);
    OPT(nir_copy_prop);
@@ -930,6 +949,7 @@ brw_nir_apply_sampler_key(nir_shader *nir,
 {
    const struct gen_device_info *devinfo = compiler->devinfo;
    nir_lower_tex_options tex_options = {
+      .lower_txd_clamp_bindless_sampler = true,
       .lower_txd_clamp_if_sampler_index_not_lt_16 = true,
    };
 
