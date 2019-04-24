@@ -456,14 +456,21 @@ The integer capabilities:
   as opposed to padding to vec4s.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_POST_SNAP_TRIANGLES``: Whether the
   ``PIPE_CONSERVATIVE_RASTER_POST_SNAP`` mode is supported for triangles.
+  The post-snap mode means the conservative rasterization occurs after
+  the conversion from floating-point to fixed-point coordinates
+  on the subpixel grid.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_POST_SNAP_POINTS_LINES``: Whether the
   ``PIPE_CONSERVATIVE_RASTER_POST_SNAP`` mode is supported for points and lines.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_TRIANGLES``: Whether the
   ``PIPE_CONSERVATIVE_RASTER_PRE_SNAP`` mode is supported for triangles.
+  The pre-snap mode means the conservative rasterization occurs before
+  the conversion from floating-point to fixed-point coordinates.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_PRE_SNAP_POINTS_LINES``: Whether the
   ``PIPE_CONSERVATIVE_RASTER_PRE_SNAP`` mode is supported for points and lines.
 * ``PIPE_CAP_CONSERVATIVE_RASTER_POST_DEPTH_COVERAGE``: Whether
   ``PIPE_CAP_POST_DEPTH_COVERAGE`` works with conservative rasterization.
+* ``PIPE_CAP_CONSERVATIVE_RASTER_INNER_COVERAGE``: Whether
+  inner_coverage from GL_INTEL_conservative_rasterization is supported.
 * ``PIPE_CAP_MAX_CONSERVATIVE_RASTER_SUBPIXEL_PRECISION_BIAS``: The maximum
   subpixel precision bias in bits during conservative rasterization.
 * ``PIPE_CAP_PROGRAMMABLE_SAMPLE_LOCATIONS``: True is the driver supports
@@ -512,6 +519,13 @@ The integer capabilities:
   A driver might rely on the input mapping that was defined with the original
   GLSL code.
 * ``PIPE_CAP_IMAGE_LOAD_FORMATTED``: True if a format for image loads does not need to be specified in the shader IR
+* ``PIPE_CAP_MAX_FRAMES_IN_FLIGHT``: Maximum number of frames that state
+  trackers should allow to be in flight before throttling pipe_context
+  execution. 0 = throttling is disabled.
+* ``PIPE_CAP_DMABUF``: Whether Linux DMABUF handles are supported by
+  resource_from_handle and resource_get_handle.
+* ``PIPE_CAP_PREFER_COMPUTE_BLIT_FOR_MULTIMEDIA``: Whether VDPAU, VAAPI, and
+  OpenMAX should use a compute-based blit instead of pipe_context::blit.
 
 .. _pipe_capf:
 

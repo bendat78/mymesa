@@ -772,6 +772,7 @@ void st_init_extensions(struct pipe_screen *screen,
       { o(ATI_meminfo),                      PIPE_CAP_QUERY_MEMORY_INFO                },
       { o(AMD_seamless_cubemap_per_texture), PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE    },
       { o(ATI_texture_mirror_once),          PIPE_CAP_TEXTURE_MIRROR_CLAMP             },
+      { o(INTEL_conservative_rasterization), PIPE_CAP_CONSERVATIVE_RASTER_INNER_COVERAGE },
       { o(MESA_tile_raster_order),           PIPE_CAP_TILE_RASTER_ORDER                },
       { o(NV_compute_shader_derivatives),    PIPE_CAP_COMPUTE_SHADER_DERIVATIVES       },
       { o(NV_conditional_render),            PIPE_CAP_CONDITIONAL_RENDER               },
@@ -952,6 +953,11 @@ void st_init_extensions(struct pipe_screen *screen,
         { PIPE_FORMAT_X24S8_UINT,
           PIPE_FORMAT_S8X24_UINT },
         GL_TRUE }, /* at least one format must be supported */
+
+      { { o(AMD_compressed_ATC_texture) },
+        { PIPE_FORMAT_ATC_RGB,
+          PIPE_FORMAT_ATC_RGBA_EXPLICIT,
+          PIPE_FORMAT_ATC_RGBA_INTERPOLATED } },
    };
 
    /* Required: vertex fetch support. */

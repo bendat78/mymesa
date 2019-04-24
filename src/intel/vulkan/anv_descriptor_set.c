@@ -676,10 +676,10 @@ VkResult anv_CreateDescriptorPool(
     * of them to 32B.
     */
    descriptor_bo_size += 32 * pCreateInfo->maxSets;
-   descriptor_bo_size = ALIGN(descriptor_bo_size, 4096);
    /* We align inline uniform blocks to 32B */
    if (inline_info)
       descriptor_bo_size += 32 * inline_info->maxInlineUniformBlockBindings;
+   descriptor_bo_size = ALIGN(descriptor_bo_size, 4096);
 
    const size_t pool_size =
       pCreateInfo->maxSets * sizeof(struct anv_descriptor_set) +
@@ -745,19 +745,18 @@ void anv_DestroyDescriptorPool(
    if (!pool)
       return;
 
-   if (pool->bo.size) {
-      anv_gem_munmap(pool->bo.map, pool->bo.size);
-      anv_vma_free(device, &pool->bo);
-      anv_gem_close(device, pool->bo.gem_handle);
-   }
-   anv_state_stream_finish(&pool->surface_state_stream);
-
    list_for_each_entry_safe(struct anv_descriptor_set, set,
                             &pool->desc_sets, pool_link) {
       anv_descriptor_set_destroy(device, pool, set);
    }
 
-   util_vma_heap_finish(&pool->bo_heap);
+   if (pool->bo.size) {
+      anv_gem_munmap(pool->bo.map, pool->bo.size);
+      anv_vma_free(device, &pool->bo);
+      anv_gem_close(device, pool->bo.gem_handle);
+      util_vma_heap_finish(&pool->bo_heap);
+   }
+   anv_state_stream_finish(&pool->surface_state_stream);
 
    vk_free2(&device->alloc, pAllocator, pool);
 }
@@ -840,8 +839,6 @@ anv_descriptor_pool_free_set(struct anv_descriptor_pool *pool,
       entry->size = set->size;
       pool->free_list = (char *) entry - pool->data;
    }
-
-   list_del(&set->pool_link);
 }
 
 struct surface_state_free_list_entry {
@@ -971,6 +968,8 @@ anv_descriptor_set_create(struct anv_device *device,
          anv_descriptor_pool_alloc_state(pool);
    }
 
+   list_addtail(&set->pool_link, &pool->desc_sets);
+
    *out_set = set;
 
    return VK_SUCCESS;
@@ -992,6 +991,8 @@ anv_descriptor_set_destroy(struct anv_device *device,
 
    for (uint32_t b = 0; b < set->buffer_view_count; b++)
       anv_descriptor_pool_free_state(pool, set->buffer_views[b].surface_state);
+
+   list_del(&set->pool_link);
 
    anv_descriptor_pool_free_set(pool, set);
 }
@@ -1015,8 +1016,6 @@ VkResult anv_AllocateDescriptorSets(
       result = anv_descriptor_set_create(device, pool, layout, &set);
       if (result != VK_SUCCESS)
          break;
-
-      list_addtail(&set->pool_link, &pool->desc_sets);
 
       pDescriptorSets[i] = anv_descriptor_set_to_handle(set);
    }

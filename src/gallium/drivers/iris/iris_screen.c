@@ -43,6 +43,7 @@
 #include "util/u_transfer_helper.h"
 #include "util/u_upload_mgr.h"
 #include "util/ralloc.h"
+#include "util/xmlconfig.h"
 #include "drm-uapi/i915_drm.h"
 #include "iris_context.h"
 #include "iris_defines.h"
@@ -177,7 +178,9 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_DRAW_PARAMETERS:
    case PIPE_CAP_TGSI_FS_FACE_IS_INTEGER_SYSVAL:
    case PIPE_CAP_COMPUTE_SHADER_DERIVATIVES:
+   case PIPE_CAP_INVALIDATE_BUFFER:
       return true;
+   case PIPE_CAP_CONSERVATIVE_RASTER_INNER_COVERAGE:
    case PIPE_CAP_TGSI_FS_FBFETCH:
    case PIPE_CAP_POST_DEPTH_COVERAGE:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
@@ -552,7 +555,7 @@ iris_shader_perf_log(void *data, const char *fmt, ...)
 }
 
 struct pipe_screen *
-iris_screen_create(int fd)
+iris_screen_create(int fd, const struct pipe_screen_config *config)
 {
    struct iris_screen *screen = rzalloc(NULL, struct iris_screen);
    if (!screen)
@@ -583,6 +586,9 @@ iris_screen_create(int fd)
       return NULL;
 
    brw_process_intel_debug_variable();
+
+   screen->driconf.dual_color_blend_by_location =
+      driQueryOptionb(config->options, "dual_color_blend_by_location");
 
    screen->precompile = env_var_as_boolean("shader_precompile", true);
 

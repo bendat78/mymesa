@@ -1211,7 +1211,7 @@ fs_visitor::emit_fragcoord_interpolation(fs_reg wpos)
    } else {
       bld.emit(FS_OPCODE_LINTERP, wpos,
                this->delta_xy[BRW_BARYCENTRIC_PERSPECTIVE_PIXEL],
-               component(interp_reg(VARYING_SLOT_POS, 2), 0));
+               interp_reg(VARYING_SLOT_POS, 2));
    }
    wpos = offset(wpos, bld, 1);
 
@@ -3864,6 +3864,47 @@ fs_visitor::lower_load_payload()
             dst.type = BRW_REGISTER_TYPE_UD;
          }
          dst = offset(dst, ibld, 1);
+      }
+
+      inst->remove(block);
+      progress = true;
+   }
+
+   if (progress)
+      invalidate_live_intervals();
+
+   return progress;
+}
+
+bool
+fs_visitor::lower_linterp()
+{
+   bool progress = false;
+
+   if (devinfo->gen < 11)
+      return false;
+
+   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
+      const fs_builder ibld(this, block, inst);
+
+      if (inst->opcode != FS_OPCODE_LINTERP)
+         continue;
+
+      fs_reg dwP = component(inst->src[1], 0);
+      fs_reg dwQ = component(inst->src[1], 1);
+      fs_reg dwR = component(inst->src[1], 3);
+      for (unsigned i = 0; i < DIV_ROUND_UP(dispatch_width, 8); i++) {
+         const fs_builder hbld(ibld.half(i));
+         fs_reg dst = half(inst->dst, i);
+         fs_reg delta_xy = offset(inst->src[0], ibld, i);
+         hbld.MAD(dst, dwR, half(delta_xy, 0), dwP);
+         fs_inst *mad = hbld.MAD(dst, dst, half(delta_xy, 1), dwQ);
+
+         /* Propagate conditional mod and saturate from the original
+          * instruction to the second MAD instruction.
+          */
+         set_saturate(inst->saturate, mad);
+         set_condmod(inst->conditional_mod, mad);
       }
 
       inst->remove(block);
@@ -7069,6 +7110,11 @@ fs_visitor::optimize()
 
       OPT(compact_virtual_grfs);
    } while (progress);
+
+   if (OPT(lower_linterp)) {
+      OPT(opt_copy_propagation);
+      OPT(dead_code_eliminate);
+   }
 
    /* Do this after cmod propagation has had every possible opportunity to
     * propagate results into SEL instructions.

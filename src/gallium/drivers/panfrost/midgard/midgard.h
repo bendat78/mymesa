@@ -112,7 +112,7 @@ typedef enum {
         midgard_alu_op_ilt        = 0xA4,
         midgard_alu_op_ile        = 0xA5,
         midgard_alu_op_iball_eq   = 0xA8,
-        midgard_alu_op_ball       = 0xA9,
+        midgard_alu_op_iball_neq  = 0xA9,
         midgard_alu_op_uball_lt   = 0xAA,
         midgard_alu_op_uball_lte  = 0xAB,
         midgard_alu_op_iball_lt   = 0xAC,
@@ -161,11 +161,22 @@ typedef enum {
         midgard_dest_override_none = 2
 } midgard_dest_override;
 
+typedef enum {
+        midgard_int_sign_extend = 0,
+        midgard_int_zero_extend = 1,
+        midgard_int_normal = 2,
+        midgard_int_reserved = 3
+} midgard_int_mod;
+
+#define MIDGARD_FLOAT_MOD_ABS (1 << 0)
+#define MIDGARD_FLOAT_MOD_NEG (1 << 1)
+
 typedef struct
 __attribute__((__packed__))
 {
-        bool abs         : 1;
-        bool negate      : 1;
+        /* Either midgard_int_mod or from midgard_float_mod_*, depending on the
+         * type of op */
+        unsigned mod : 2;
 
         /* replicate lower half if dest = half, or low/high half selection if
          * dest = full
@@ -465,94 +476,6 @@ __attribute__((__packed__))
         unsigned sampler_handle : 16;
 }
 midgard_texture_word;
-
-/* Opcode name table */
-
-static char *alu_opcode_names[256] = {
-        [midgard_alu_op_fadd]       = "fadd",
-        [midgard_alu_op_fmul]       = "fmul",
-        [midgard_alu_op_fmin]       = "fmin",
-        [midgard_alu_op_fmax]       = "fmax",
-        [midgard_alu_op_fmov]       = "fmov",
-        [midgard_alu_op_froundeven] = "froundeven",
-        [midgard_alu_op_ftrunc]     = "ftrunc",
-        [midgard_alu_op_ffloor]     = "ffloor",
-        [midgard_alu_op_fceil]      = "fceil",
-        [midgard_alu_op_ffma]       = "ffma",
-        [midgard_alu_op_fdot3]      = "fdot3",
-        [midgard_alu_op_fdot3r]     = "fdot3r",
-        [midgard_alu_op_fdot4]      = "fdot4",
-        [midgard_alu_op_freduce]    = "freduce",
-        [midgard_alu_op_imin]       = "imin",
-        [midgard_alu_op_umin]       = "umin",
-        [midgard_alu_op_imax]       = "imax",
-        [midgard_alu_op_umax]       = "umax",
-        [midgard_alu_op_ishl]       = "ishl",
-        [midgard_alu_op_iasr]       = "iasr",
-        [midgard_alu_op_ilsr]       = "ilsr",
-        [midgard_alu_op_iadd]       = "iadd",
-        [midgard_alu_op_ishladd]    = "ishladd",
-        [midgard_alu_op_isub]       = "isub",
-        [midgard_alu_op_imul]       = "imul",
-        [midgard_alu_op_imov]       = "imov",
-        [midgard_alu_op_iabs]       = "iabs",
-        [midgard_alu_op_iand]       = "iand",
-        [midgard_alu_op_ior]        = "ior",
-        [midgard_alu_op_inot]       = "inot",
-        [midgard_alu_op_iandnot]    = "iandnot",
-        [midgard_alu_op_ixor]       = "ixor",
-        [midgard_alu_op_ilzcnt]     = "ilzcnt",
-        [midgard_alu_op_ibitcount8] = "ibitcount8",
-        [midgard_alu_op_feq]        = "feq",
-        [midgard_alu_op_fne]        = "fne",
-        [midgard_alu_op_flt]        = "flt",
-        [midgard_alu_op_fle]        = "fle",
-        [midgard_alu_op_fball_eq]   = "fball_eq",
-        [midgard_alu_op_fbany_neq]  = "fbany_neq",
-        [midgard_alu_op_bball_eq]   = "bball_eq",
-        [midgard_alu_op_fball_lt]   = "fball_lt",
-        [midgard_alu_op_fball_lte]  = "fball_lte",
-        [midgard_alu_op_bbany_neq]  = "bbany_neq",
-        [midgard_alu_op_fbany_lt]   = "fbany_lt",
-        [midgard_alu_op_fbany_lte]  = "fbany_lte",
-        [midgard_alu_op_f2i]        = "f2i",
-        [midgard_alu_op_f2u]        = "f2u",
-        [midgard_alu_op_f2u8]       = "f2u8",
-        [midgard_alu_op_ieq]        = "ieq",
-        [midgard_alu_op_ine]        = "ine",
-        [midgard_alu_op_ult]        = "ult",
-        [midgard_alu_op_ule]        = "ule",
-        [midgard_alu_op_ilt]        = "ilt",
-        [midgard_alu_op_ile]        = "ile",
-        [midgard_alu_op_iball_eq]   = "iball_eq",
-        [midgard_alu_op_ball]       = "ball",
-        [midgard_alu_op_uball_lt]   = "uball_lt",
-        [midgard_alu_op_uball_lte]  = "uball_lte",
-        [midgard_alu_op_iball_lt]   = "iball_lt",
-        [midgard_alu_op_iball_lte]  = "iball_lte",
-        [midgard_alu_op_iball_eq]   = "iball_eq",
-        [midgard_alu_op_ibany_neq]  = "ibany_neq",
-        [midgard_alu_op_ubany_lt]   = "ubany_lt",
-        [midgard_alu_op_ubany_lte]  = "ubany_lte",
-        [midgard_alu_op_ibany_lt]   = "ibany_lt",
-        [midgard_alu_op_ibany_lte]  = "ibany_lte",
-        [midgard_alu_op_i2f]        = "i2f",
-        [midgard_alu_op_u2f]        = "u2f",
-        [midgard_alu_op_icsel]      = "icsel",
-        [midgard_alu_op_fcsel_i]    = "fcsel_i",
-        [midgard_alu_op_fcsel]      = "fcsel",
-        [midgard_alu_op_fround]     = "fround",
-        [midgard_alu_op_fatan_pt2]  = "fatan_pt2",
-        [midgard_alu_op_frcp]       = "frcp",
-        [midgard_alu_op_frsqrt]     = "frsqrt",
-        [midgard_alu_op_fsqrt]      = "fsqrt",
-        [midgard_alu_op_fpow_pt1]   = "fpow_pt1",
-        [midgard_alu_op_fexp2]      = "fexp2",
-        [midgard_alu_op_flog2]      = "flog2",
-        [midgard_alu_op_fsin]       = "fsin",
-        [midgard_alu_op_fcos]       = "fcos",
-        [midgard_alu_op_fatan2_pt1] = "fatan2_pt1"
-};
 
 static char *load_store_opcode_names[256] = {
         [midgard_op_store_cubemap_coords] = "st_cubemap_coords",

@@ -32,6 +32,7 @@
 #include "midgard.h"
 #include "midgard-parse.h"
 #include "disassemble.h"
+#include "helpers.h"
 #include "util/half_float.h"
 
 #define DEFINE_CASE(define, str) case define: { printf(str); break; }
@@ -43,10 +44,10 @@ print_alu_opcode(midgard_alu_op op)
 {
         bool int_op = false;
 
-        if (alu_opcode_names[op]) {
-                printf("%s", alu_opcode_names[op]);
+        if (alu_opcode_props[op].name) {
+                printf("%s", alu_opcode_props[op].name);
 
-                int_op = alu_opcode_names[op][0] == 'i';
+                int_op = midgard_is_integer_op(op);
         } else
                 printf("alu_op_%02X", op);
 
@@ -110,15 +111,37 @@ print_quad_word(uint32_t *words, unsigned tabs)
 
 static void
 print_vector_src(unsigned src_binary, bool out_high,
-                 bool out_half, unsigned reg)
+                 bool out_half, unsigned reg,
+                 bool is_int)
 {
         midgard_vector_alu_src *src = (midgard_vector_alu_src *)&src_binary;
 
-        if (src->negate)
-                printf("-");
+        /* Modifiers change meaning depending on the op's context */
 
-        if (src->abs)
-                printf("abs(");
+        midgard_int_mod int_mod = src->mod;
+
+        if (is_int) {
+                switch (int_mod) {
+                        case midgard_int_sign_extend:
+                                printf("sext(");
+                                break;
+                        case midgard_int_zero_extend:
+                                printf("zext(");
+                                break;
+                        case midgard_int_reserved:
+                                printf("unk(");
+                                break;
+                        case midgard_int_normal:
+                                /* Implicit */
+                                break;
+                }
+        } else {
+                if (src->mod & MIDGARD_FLOAT_MOD_NEG)
+                        printf("-");
+
+                if (src->mod & MIDGARD_FLOAT_MOD_ABS)
+                        printf("abs(");
+        }
 
         //register
 
@@ -173,7 +196,10 @@ print_vector_src(unsigned src_binary, bool out_high,
                         printf("%c", c[(src->swizzle >> (i * 2)) & 3]);
         }
 
-        if (src->abs)
+        /* Since we wrapped with a function-looking thing */
+
+        if ((is_int && (int_mod != midgard_int_normal))
+                        || (!is_int && src->mod & MIDGARD_FLOAT_MOD_ABS))
                 printf(")");
 }
 
@@ -277,7 +303,8 @@ print_vector_field(const char *name, uint16_t *words, uint16_t reg_word,
 
         printf(", ");
 
-        print_vector_src(alu_field->src1, out_high, half, reg_info->src1_reg);
+        bool is_int = midgard_is_integer_op(alu_field->op);
+        print_vector_src(alu_field->src1, out_high, half, reg_info->src1_reg, is_int);
 
         printf(", ");
 
@@ -286,7 +313,7 @@ print_vector_field(const char *name, uint16_t *words, uint16_t reg_word,
                 print_immediate(imm);
         } else {
                 print_vector_src(alu_field->src2, out_high, half,
-                                 reg_info->src2_reg);
+                                 reg_info->src2_reg, is_int);
         }
 
         printf("\n");
@@ -759,7 +786,7 @@ print_load_store_instr(uint64_t data,
 
         print_swizzle(word->swizzle);
 
-        printf(", 0x%X\n", word->unknown);
+        printf(", 0x%X /* %X */\n", word->unknown, word->varying_parameters);
 }
 
 static void

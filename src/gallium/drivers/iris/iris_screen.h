@@ -60,6 +60,12 @@ struct iris_screen {
    /** Precompile shaders at link time?  (Can be disabled for debugging.) */
    bool precompile;
 
+   /** driconf options and application workarounds */
+   struct {
+      /** Dual color blend by location instead of index (for broken apps) */
+      bool dual_color_blend_by_location;
+   } driconf;
+
    unsigned subslice_total;
 
    struct gen_device_info devinfo;
@@ -74,7 +80,8 @@ struct iris_screen {
    struct iris_bo *workaround_bo;
 };
 
-struct pipe_screen *iris_screen_create(int fd);
+struct pipe_screen *
+iris_screen_create(int fd, const struct pipe_screen_config *config);
 
 boolean
 iris_is_format_supported(struct pipe_screen *pscreen,

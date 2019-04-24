@@ -384,12 +384,12 @@ static bool amdgpu_cs_has_user_fence(struct amdgpu_cs_context *cs)
 static bool amdgpu_cs_has_chaining(struct amdgpu_cs *cs)
 {
    return cs->ctx->ws->info.chip_class >= CIK &&
-          cs->ring_type == RING_GFX;
+          (cs->ring_type == RING_GFX || cs->ring_type == RING_COMPUTE);
 }
 
-static unsigned amdgpu_cs_epilog_dws(enum ring_type ring_type)
+static unsigned amdgpu_cs_epilog_dws(struct amdgpu_cs *cs)
 {
-   if (ring_type == RING_GFX)
+   if (amdgpu_cs_has_chaining(cs))
       return 4; /* for chaining */
 
    return 0;
@@ -695,7 +695,7 @@ static bool amdgpu_ib_new_buffer(struct amdgpu_winsys *ws, struct amdgpu_ib *ib,
                                (ring_type == RING_GFX ||
                                 ring_type == RING_COMPUTE ||
                                 ring_type == RING_DMA ?
-                                   RADEON_FLAG_READ_ONLY | RADEON_FLAG_GTT_WC : 0));
+                                   RADEON_FLAG_32BIT | RADEON_FLAG_GTT_WC : 0));
    if (!pb)
       return false;
 
@@ -787,8 +787,9 @@ static bool amdgpu_get_new_ib(struct radeon_winsys *ws, struct amdgpu_cs *cs,
    ib->base.current.buf = (uint32_t*)(ib->ib_mapped + ib->used_ib_space);
 
    ib_size = ib->big_ib_buffer->size - ib->used_ib_space;
-   ib->base.current.max_dw = ib_size / 4 - amdgpu_cs_epilog_dws(cs->ring_type);
+   ib->base.current.max_dw = ib_size / 4 - amdgpu_cs_epilog_dws(cs);
    assert(ib->base.current.max_dw >= ib->max_check_space_size / 4);
+   ib->base.gpu_address = info->va_start;
    return true;
 }
 
@@ -984,7 +985,7 @@ static bool amdgpu_cs_check_space(struct radeon_cmdbuf *rcs, unsigned dw)
    struct amdgpu_ib *ib = amdgpu_ib(rcs);
    struct amdgpu_cs *cs = amdgpu_cs_from_ib(ib);
    unsigned requested_size = rcs->prev_dw + rcs->current.cdw + dw;
-   unsigned cs_epilog_dw = amdgpu_cs_epilog_dws(cs->ring_type);
+   unsigned cs_epilog_dw = amdgpu_cs_epilog_dws(cs);
    unsigned need_byte_size = (dw + cs_epilog_dw) * 4;
    uint64_t va;
    uint32_t *new_ptr_ib_size;
@@ -1029,8 +1030,7 @@ static bool amdgpu_cs_check_space(struct radeon_cmdbuf *rcs, unsigned dw)
    va = amdgpu_winsys_bo(ib->big_ib_buffer)->va;
 
    /* This space was originally reserved. */
-   rcs->current.max_dw += 4;
-   assert(ib->used_ib_space + 4 * rcs->current.max_dw <= ib->big_ib_buffer->size);
+   rcs->current.max_dw += cs_epilog_dw;
 
    /* Pad with NOPs and add INDIRECT_BUFFER packet */
    while ((rcs->current.cdw & 7) != 4)
@@ -1060,6 +1060,7 @@ static bool amdgpu_cs_check_space(struct radeon_cmdbuf *rcs, unsigned dw)
    ib->base.current.buf = (uint32_t*)(ib->ib_mapped + ib->used_ib_space);
    ib->base.current.max_dw = ib->big_ib_buffer->size / 4 - cs_epilog_dw;
    assert(ib->base.current.max_dw >= ib->max_check_space_size / 4);
+   ib->base.gpu_address = va;
 
    amdgpu_cs_add_buffer(&cs->main.base, ib->big_ib_buffer,
                         RADEON_USAGE_READ, 0, RADEON_PRIO_IB1);
@@ -1364,20 +1365,11 @@ void amdgpu_cs_submit_ib(void *job, int thread_index)
       struct drm_amdgpu_cs_chunk chunks[6];
       unsigned num_chunks = 0;
 
-      /* Convert from dwords to bytes. */
-      cs->ib[IB_MAIN].ib_bytes *= 4;
-
-      /* IB */
-      chunks[num_chunks].chunk_id = AMDGPU_CHUNK_ID_IB;
-      chunks[num_chunks].length_dw = sizeof(struct drm_amdgpu_cs_chunk_ib) / 4;
-      chunks[num_chunks].chunk_data = (uintptr_t)&cs->ib[IB_MAIN];
-      num_chunks++;
-
-      /* Fence */
-      if (has_user_fence) {
-         chunks[num_chunks].chunk_id = AMDGPU_CHUNK_ID_FENCE;
-         chunks[num_chunks].length_dw = sizeof(struct drm_amdgpu_cs_chunk_fence) / 4;
-         chunks[num_chunks].chunk_data = (uintptr_t)&acs->fence_chunk;
+      /* BO list */
+      if (!use_bo_list_create) {
+         chunks[num_chunks].chunk_id = AMDGPU_CHUNK_ID_BO_HANDLES;
+         chunks[num_chunks].length_dw = sizeof(struct drm_amdgpu_bo_list_in) / 4;
+         chunks[num_chunks].chunk_data = (uintptr_t)&bo_list_in;
          num_chunks++;
       }
 
@@ -1445,13 +1437,20 @@ void amdgpu_cs_submit_ib(void *job, int thread_index)
          num_chunks++;
       }
 
-      /* BO list */
-      if (!use_bo_list_create) {
-         chunks[num_chunks].chunk_id = AMDGPU_CHUNK_ID_BO_HANDLES;
-         chunks[num_chunks].length_dw = sizeof(struct drm_amdgpu_bo_list_in) / 4;
-         chunks[num_chunks].chunk_data = (uintptr_t)&bo_list_in;
+      /* Fence */
+      if (has_user_fence) {
+         chunks[num_chunks].chunk_id = AMDGPU_CHUNK_ID_FENCE;
+         chunks[num_chunks].length_dw = sizeof(struct drm_amdgpu_cs_chunk_fence) / 4;
+         chunks[num_chunks].chunk_data = (uintptr_t)&acs->fence_chunk;
          num_chunks++;
       }
+
+      /* IB */
+      cs->ib[IB_MAIN].ib_bytes *= 4; /* Convert from dwords to bytes. */
+      chunks[num_chunks].chunk_id = AMDGPU_CHUNK_ID_IB;
+      chunks[num_chunks].length_dw = sizeof(struct drm_amdgpu_cs_chunk_ib) / 4;
+      chunks[num_chunks].chunk_data = (uintptr_t)&cs->ib[IB_MAIN];
+      num_chunks++;
 
       assert(num_chunks <= ARRAY_SIZE(chunks));
 
@@ -1518,7 +1517,7 @@ static int amdgpu_cs_flush(struct radeon_cmdbuf *rcs,
    struct amdgpu_winsys *ws = cs->ctx->ws;
    int error_code = 0;
 
-   rcs->current.max_dw += amdgpu_cs_epilog_dws(cs->ring_type);
+   rcs->current.max_dw += amdgpu_cs_epilog_dws(cs);
 
    switch (cs->ring_type) {
    case RING_DMA:

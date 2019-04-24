@@ -193,6 +193,7 @@ struct radeon_cmdbuf {
     /* Memory usage of the buffer list. These are always 0 for preamble IBs. */
     uint64_t                      used_vram;
     uint64_t                      used_gart;
+    uint64_t                      gpu_address;
 };
 
 /* Tiling info for display code, DRI sharing, and other data. */
@@ -683,8 +684,6 @@ struct radeon_winsys {
 
     bool (*read_registers)(struct radeon_winsys *ws, unsigned reg_offset,
                            unsigned num_registers, uint32_t *out);
-
-    const char* (*get_chip_name)(struct radeon_winsys *ws);
 };
 
 static inline bool radeon_emitted(struct radeon_cmdbuf *cs, unsigned num_dw)

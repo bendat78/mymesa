@@ -922,6 +922,9 @@ struct si_context {
 	struct si_buffer_resources	const_and_shader_buffers[SI_NUM_SHADERS];
 	struct si_samplers		samplers[SI_NUM_SHADERS];
 	struct si_images		images[SI_NUM_SHADERS];
+	bool				bo_list_add_all_resident_resources;
+	bool				bo_list_add_all_gfx_resources;
+	bool				bo_list_add_all_compute_resources;
 
 	/* other shader resources */
 	struct pipe_constant_buffer	null_const_buf; /* used for set_constant_buffer(NULL) on CIK */
@@ -1190,7 +1193,8 @@ unsigned si_get_flush_flags(struct si_context *sctx, enum si_coherency coher,
 			    enum si_cache_policy cache_policy);
 void si_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
 		     uint64_t offset, uint64_t size, uint32_t *clear_value,
-		     uint32_t clear_value_size, enum si_coherency coher);
+		     uint32_t clear_value_size, enum si_coherency coher,
+		     bool force_cpdma);
 void si_copy_buffer(struct si_context *sctx,
 		    struct pipe_resource *dst, struct pipe_resource *src,
 		    uint64_t dst_offset, uint64_t src_offset, unsigned size);
@@ -1239,6 +1243,9 @@ void si_test_gds(struct si_context *sctx);
 void si_cp_write_data(struct si_context *sctx, struct si_resource *buf,
 		      unsigned offset, unsigned size, unsigned dst_sel,
 		      unsigned engine, const void *data);
+void si_cp_copy_data(struct si_context *sctx,
+		     unsigned dst_sel, struct si_resource *dst, unsigned dst_offset,
+		     unsigned src_sel, struct si_resource *src, unsigned src_offset);
 
 /* si_debug.c */
 void si_save_cs(struct radeon_winsys *ws, struct radeon_cmdbuf *cs,
@@ -1429,6 +1436,17 @@ si_tile_mode_index(struct si_texture *tex, unsigned level, bool stencil)
 		return tex->surface.u.legacy.stencil_tiling_index[level];
 	else
 		return tex->surface.u.legacy.tiling_index[level];
+}
+
+static inline unsigned
+si_get_minimum_num_gfx_cs_dwords(struct si_context *sctx)
+{
+	/* Don't count the needed CS space exactly and just use an upper bound.
+	 *
+	 * Also reserve space for stopping queries at the end of IB, because
+	 * the number of active queries is unlimited in theory.
+	 */
+	return 2048 + sctx->num_cs_dw_queries_suspend;
 }
 
 static inline void

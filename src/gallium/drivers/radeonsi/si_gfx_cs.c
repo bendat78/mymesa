@@ -54,13 +54,7 @@ void si_need_gfx_cs_space(struct si_context *ctx)
 	ctx->gtt = 0;
 	ctx->vram = 0;
 
-	/* If the IB is sufficiently large, don't count the space needed
-	 * and just flush if there is not enough space left.
-	 *
-	 * Also reserve space for stopping queries at the end of IB, because
-	 * the number of active queries is mostly unlimited.
-	 */
-	unsigned need_dwords = 2048 + ctx->num_cs_dw_queries_suspend;
+	unsigned need_dwords = si_get_minimum_num_gfx_cs_dwords(ctx);
 	if (!ctx->ws->cs_check_space(cs, need_dwords))
 		si_flush_gfx_cs(ctx, RADEON_FLUSH_ASYNC_START_NEXT_GFX_IB_NOW, NULL);
 }
@@ -250,7 +244,6 @@ void si_begin_new_gfx_cs(struct si_context *ctx)
 
 	ctx->cs_shader_state.initialized = false;
 	si_all_descriptors_begin_new_cs(ctx);
-	si_all_resident_buffers_begin_new_cs(ctx);
 
 	if (!ctx->has_graphics) {
 		ctx->initial_gfx_cs_size = ctx->gfx_cs->current.cdw;

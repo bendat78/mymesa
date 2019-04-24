@@ -195,8 +195,10 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
 	case PIPE_CAP_TEXTURE_BARRIER:
 	case PIPE_CAP_INVALIDATE_BUFFER:
-	case PIPE_CAP_PACKED_UNIFORMS:
 		return 1;
+
+	case PIPE_CAP_PACKED_UNIFORMS:
+		return !is_a2xx(screen);
 
 	case PIPE_CAP_VERTEXID_NOBASE:
 		return is_a3xx(screen) || is_a4xx(screen);
@@ -883,12 +885,11 @@ fd_screen_create(struct fd_device *dev, struct renderonly *ro)
 		screen->num_vsc_pipes = 8;
 	}
 
-	/* NOTE: don't enable reordering on a2xx, since completely untested.
-	 * Also, don't enable if we have too old of a kernel to support
+	/* NOTE: don't enable if we have too old of a kernel to support
 	 * growable cmdstream buffers, since memory requirement for cmdstream
 	 * buffers would be too much otherwise.
 	 */
-	if ((screen->gpu_id >= 300) && (fd_device_version(dev) >= FD_VERSION_UNLIMITED_CMDS))
+	if (fd_device_version(dev) >= FD_VERSION_UNLIMITED_CMDS)
 		screen->reorder = !(fd_mesa_debug & FD_DBG_INORDER);
 
 	fd_bc_init(&screen->batch_cache);
