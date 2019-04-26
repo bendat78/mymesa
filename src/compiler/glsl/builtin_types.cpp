@@ -331,32 +331,6 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
       add_type(symbols, glsl_type::uvec3_type);
       add_type(symbols, glsl_type::uvec4_type);
 
-<<<<<<< HEAD
-      add_type(symbols, glsl_type::sampler1DArray_type);
-      add_type(symbols, glsl_type::sampler2DArray_type);
-      add_type(symbols, glsl_type::sampler1DArrayShadow_type);
-      add_type(symbols, glsl_type::sampler2DArrayShadow_type);
-      add_type(symbols, glsl_type::samplerCubeShadow_type);
-      add_type(symbols, glsl_type::samplerBuffer_type);
-
-      add_type(symbols, glsl_type::isampler1D_type);
-      add_type(symbols, glsl_type::isampler2D_type);
-      add_type(symbols, glsl_type::isampler3D_type);
-      add_type(symbols, glsl_type::isamplerCube_type);
-      add_type(symbols, glsl_type::isampler2DRect_type);
-      add_type(symbols, glsl_type::isampler1DArray_type);
-      add_type(symbols, glsl_type::isampler2DArray_type);
-      add_type(symbols, glsl_type::isamplerBuffer_type);
-
-      add_type(symbols, glsl_type::usampler1D_type);
-      add_type(symbols, glsl_type::usampler2D_type);
-      add_type(symbols, glsl_type::usampler3D_type);
-      add_type(symbols, glsl_type::usamplerCube_type);
-      add_type(symbols, glsl_type::usampler2DRect_type);
-      add_type(symbols, glsl_type::usampler1DArray_type);
-      add_type(symbols, glsl_type::usampler2DArray_type);
-      add_type(symbols, glsl_type::usamplerBuffer_type);
-=======
       add_type(symbols, glsl_type::samplerCubeShadow_type);
 
       if (state->ctx->Extensions.EXT_texture_array) {
@@ -395,7 +369,6 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
             add_type(symbols, glsl_type::usamplerBuffer_type);
          }
       }
->>>>>>> 934f178341f7ec3bb10e3fa1499198e7988b086f
    }
 
    if (state->EXT_texture_array_enable) {

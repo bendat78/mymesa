@@ -25,9 +25,12 @@ project(
     [find_program('python', 'python2', 'python3'), 'bin/meson_get_version.py']
   ).stdout(),
   license : 'MIT',
-  meson_version : '>= 0.45',
+  meson_version : '>= 0.50',
   default_options : ['buildtype=debugoptimized', 'b_ndebug=if-release', 'c_std=c99', 'cpp_std=c++11']
 )
+
+#meson_proj = subproject('meson')
+#meson_dep = meson_proj.get_variable('meson_dep')
 
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
@@ -736,7 +739,7 @@ if with_platform_haiku
   pre_args += '-DHAVE_HAIKU_PLATFORM'
 endif
 
-prog_python = import('python3').find_python()
+prog_python = import('python').find_installation('python3')
 has_mako = run_command(
   prog_python, '-c',
   '''

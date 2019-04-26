@@ -25,7 +25,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mesa 10.1.0-devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-24 22:04+0200\n"
+"POT-Creation-Date: 2019-04-26 14:50+0200\n"
 "PO-Revision-Date: 2015-02-23 14:28-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan <ca@li.org>\n"
@@ -300,8 +300,4 @@ msgstr ""
 #: src/util/xmlpool/t_options.h:343
 msgid ""
 "Commutative additive blending optimizations (may cause rendering errors)"
-msgstr ""
-
-#: src/util/xmlpool/t_options.h:358
-msgid "Enable NIR"
 msgstr ""

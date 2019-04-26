@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mesa DRI\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-24 22:04+0200\n"
+"POT-Creation-Date: 2019-04-26 14:50+0200\n"
 "PO-Revision-Date: 2006-09-18 10:56+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -268,10 +268,6 @@ msgstr ""
 #: src/util/xmlpool/t_options.h:343
 msgid ""
 "Commutative additive blending optimizations (may cause rendering errors)"
-msgstr ""
-
-#: src/util/xmlpool/t_options.h:358
-msgid "Enable NIR"
 msgstr ""
 
 #~ msgid "Color dithering method"
