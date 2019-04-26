@@ -81,6 +81,7 @@ EXTENSIONS = [
     Extension('VK_KHR_push_descriptor',                   1, True),
     Extension('VK_KHR_relaxed_block_layout',              1, True),
     Extension('VK_KHR_sampler_mirror_clamp_to_edge',      1, True),
+    Extension('VK_KHR_sampler_ycbcr_conversion',          1, True),
     Extension('VK_KHR_shader_atomic_int64',               1, False),
     Extension('VK_KHR_shader_draw_parameters',            1, True),
     Extension('VK_KHR_shader_float16_int8',               1, True),
@@ -123,6 +124,7 @@ EXTENSIONS = [
     Extension('VK_EXT_shader_stencil_export',             1, True),
     Extension('VK_EXT_transform_feedback',                1, True),
     Extension('VK_EXT_vertex_attribute_divisor',          3, True),
+    Extension('VK_EXT_ycbcr_image_arrays',                1, True),
     Extension('VK_AMD_draw_indirect_count',               1, True),
     Extension('VK_AMD_gcn_shader',                        1, True),
     Extension('VK_AMD_gpu_shader_half_float',             1, 'device->rad_info.chip_class >= VI && HAVE_LLVM >= 0x0800'),
@@ -333,7 +335,7 @@ VkResult radv_EnumerateInstanceVersion(
 uint32_t
 radv_physical_device_api_version(struct radv_physical_device *dev)
 {
-    if (!ANDROID && dev->rad_info.has_syncobj_wait_for_submit)
+    if (dev->rad_info.has_syncobj_wait_for_submit)
         return ${MAX_API_VERSION.c_vk_version()};
     return VK_MAKE_VERSION(1, 0, 68);
 }

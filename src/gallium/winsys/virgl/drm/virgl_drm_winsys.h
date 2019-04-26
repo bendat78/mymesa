@@ -37,7 +37,6 @@ struct virgl_hw_res {
    struct pipe_reference reference;
    uint32_t res_handle;
    uint32_t bo_handle;
-   uint32_t name;
    int num_cs_references;
    uint32_t size;
    void *ptr;
@@ -48,8 +47,7 @@ struct virgl_hw_res {
    uint32_t bind;
    boolean cacheable;
    int64_t start, end;
-   boolean flinked;
-   uint32_t flink;
+   uint32_t flink_name;
 };
 
 struct virgl_drm_winsys

@@ -62,7 +62,6 @@ static const struct debug_named_value debug_options[] = {
 
 	/* Shader compiler options (with no effect on the shader cache): */
 	{ "checkir", DBG(CHECK_IR), "Enable additional sanity checks on shader IR" },
-	{ "nir", DBG(NIR), "Enable experimental NIR shaders" },
 	{ "mono", DBG(MONOLITHIC_SHADERS), "Use old-style monolithic shaders compiled on demand" },
 	{ "nooptvariant", DBG(NO_OPT_VARIANT), "Disable compiling optimized shader variants." },
 	{ "merge", DBG(MERGE), "Enable register merging with lifetime optimizations:" },
@@ -707,6 +706,14 @@ static void si_destroy_screen(struct pipe_screen* pscreen)
 		return;
 
 	mtx_destroy(&sscreen->aux_context_lock);
+
+	struct u_log_context *aux_log = ((struct si_context *)sscreen->aux_context)->log;
+	if (aux_log) {
+		sscreen->aux_context->set_log_context(sscreen->aux_context, NULL);
+		u_log_context_destroy(aux_log);
+		FREE(aux_log);
+	}
+
 	sscreen->aux_context->destroy(sscreen->aux_context);
 
 	util_queue_destroy(&sscreen->shader_compiler_queue);
@@ -840,8 +847,7 @@ static void si_disk_cache_create(struct si_screen *sscreen)
 	#define ALL_FLAGS (DBG(FS_CORRECT_DERIVS_AFTER_KILL) |	\
 			   DBG(SI_SCHED) |			\
 			   DBG(GISEL) |				\
-			   DBG(UNSAFE_MATH) |			\
-			   DBG(NIR))
+			   DBG(UNSAFE_MATH))
 	uint64_t shader_debug_flags = sscreen->debug_flags &
 		ALL_FLAGS;
 
@@ -849,7 +855,11 @@ static void si_disk_cache_create(struct si_screen *sscreen)
 	 * how 32-bit addresses are expanded to 64 bits.
 	 */
 	STATIC_ASSERT(ALL_FLAGS <= UINT_MAX);
-	shader_debug_flags |= (uint64_t)sscreen->info.address32_hi << 32;
+	assert((int16_t)sscreen->info.address32_hi == (int32_t)sscreen->info.address32_hi);
+	shader_debug_flags |= (uint64_t)(sscreen->info.address32_hi & 0xffff) << 32;
+
+	if (sscreen->options.enable_nir)
+		shader_debug_flags |= 1ull << 48;
 
 	sscreen->disk_shader_cache =
 		disk_cache_create(sscreen->info.name,
@@ -933,8 +943,6 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 		sscreen->debug_flags |= DBG(FS_CORRECT_DERIVS_AFTER_KILL);
 	if (driQueryOptionb(config->options, "radeonsi_enable_sisched"))
 		sscreen->debug_flags |= DBG(SI_SCHED);
-	if (driQueryOptionb(config->options, "radeonsi_enable_nir"))
-		sscreen->debug_flags |= DBG(NIR);
 
 	if (sscreen->debug_flags & DBG(INFO))
 		ac_print_gpu_info(&sscreen->info);
@@ -1082,8 +1090,16 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 		driQueryOptionb(config->options, "radeonsi_assume_no_z_fights");
 	sscreen->commutative_blend_add =
 		driQueryOptionb(config->options, "radeonsi_commutative_blend_add");
-	sscreen->clear_db_cache_before_clear =
-		driQueryOptionb(config->options, "radeonsi_clear_db_cache_before_clear");
+
+	{
+#define OPT_BOOL(name, dflt, description) \
+		sscreen->options.name = \
+			driQueryOptionb(config->options, "radeonsi_"#name);
+#include "si_debug_options.h"
+	}
+
+	sscreen->has_gfx9_scissor_bug = sscreen->info.family == CHIP_VEGA10 ||
+					sscreen->info.family == CHIP_RAVEN;
 	sscreen->has_msaa_sample_loc_bug = (sscreen->info.family >= CHIP_POLARIS10 &&
 					    sscreen->info.family <= CHIP_POLARIS12) ||
 					   sscreen->info.family == CHIP_VEGA10 ||
@@ -1185,7 +1201,13 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws,
 		si_init_compiler(sscreen, &sscreen->compiler_lowp[i]);
 
 	/* Create the auxiliary context. This must be done last. */
-	sscreen->aux_context = si_create_context(&sscreen->b, 0);
+	sscreen->aux_context = si_create_context(
+		&sscreen->b, sscreen->options.aux_debug ? PIPE_CONTEXT_DEBUG : 0);
+	if (sscreen->options.aux_debug) {
+		struct u_log_context *log = CALLOC_STRUCT(u_log_context);
+		u_log_context_init(log);
+		sscreen->aux_context->set_log_context(sscreen->aux_context, log);
+	}
 
 	if (sscreen->debug_flags & DBG(TEST_DMA))
 		si_test_dma(sscreen);

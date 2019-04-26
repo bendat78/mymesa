@@ -240,7 +240,9 @@ EXT(EXT_framebuffer_sRGB                    , EXT_framebuffer_sRGB              
 EXT(EXT_geometry_point_size                 , OES_geometry_shader                    ,  x ,  x ,  x ,  31, 2015)
 EXT(EXT_geometry_shader                     , OES_geometry_shader                    ,  x ,  x ,  x ,  31, 2015)
 EXT(EXT_gpu_program_parameters              , EXT_gpu_program_parameters             , GLL,  x ,  x ,  x , 2006)
-EXT(EXT_gpu_shader4                         , EXT_gpu_shader4                        , GLL, GLC,  x ,  x , 2006)
+/* Since all of EXT_gpu_shader4 features were rolled into GLSL 1.40, it shouldn't be exposed in a core context.
+ * Additionally, EXT_gpu_shader4 would reintroduce functions that were removed in GLSL 1.40. */
+EXT(EXT_gpu_shader4                         , EXT_gpu_shader4                        , GLL,  x ,  x ,  x , 2006)
 EXT(EXT_gpu_shader5                         , ARB_gpu_shader5                        ,  x ,  x ,  x ,  31, 2014)
 EXT(EXT_map_buffer_range                    , ARB_map_buffer_range                   ,  x ,  x , ES1, ES2, 2012)
 EXT(EXT_memory_object                       , EXT_memory_object                      , GLL, GLC,  x , ES2, 2017)
@@ -285,7 +287,11 @@ EXT(EXT_texture3D                           , dummy_true                        
 EXT(EXT_texture_array                       , EXT_texture_array                      , GLL, GLC,  x ,  x , 2006)
 EXT(EXT_texture_border_clamp                , ARB_texture_border_clamp               ,  x ,  x ,  x , ES2, 2014)
 EXT(EXT_texture_buffer                      , OES_texture_buffer                     ,  x ,  x ,  x ,  31, 2014)
+<<<<<<< HEAD
 EXT(EXT_texture_buffer_object               , ARB_texture_buffer_object              , GLL, GLC,  x ,  x , 2007)
+=======
+EXT(EXT_texture_buffer_object               , EXT_texture_buffer_object              , GLL,  x ,  x ,  x , 2007)
+>>>>>>> 934f178341f7ec3bb10e3fa1499198e7988b086f
 EXT(EXT_texture_compression_bptc            , ARB_texture_compression_bptc           ,  x ,  x ,  x ,  30, 2017)
 EXT(EXT_texture_compression_dxt1            , ANGLE_texture_compression_dxt          , GLL, GLC, ES1, ES2, 2004)
 EXT(EXT_texture_compression_latc            , EXT_texture_compression_latc           , GLL,  x ,  x ,  x , 2006)

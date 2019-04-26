@@ -60,20 +60,13 @@ static void virgl_hw_res_destroy(struct virgl_drm_winsys *qdws,
 {
       struct drm_gem_close args;
 
-      if (res->flinked) {
-         mtx_lock(&qdws->bo_handles_mutex);
+      mtx_lock(&qdws->bo_handles_mutex);
+      util_hash_table_remove(qdws->bo_handles,
+                             (void *)(uintptr_t)res->bo_handle);
+      if (res->flink_name)
          util_hash_table_remove(qdws->bo_names,
-                                (void *)(uintptr_t)res->flink);
-         mtx_unlock(&qdws->bo_handles_mutex);
-      }
-
-      if (res->bo_handle) {
-         mtx_lock(&qdws->bo_handles_mutex);
-         util_hash_table_remove(qdws->bo_handles,
-                                (void *)(uintptr_t)res->bo_handle);
-         mtx_unlock(&qdws->bo_handles_mutex);
-      }
-
+                                (void *)(uintptr_t)res->flink_name);
+      mtx_unlock(&qdws->bo_handles_mutex);
       if (res->ptr)
          os_munmap(res->ptr, res->size);
 
@@ -394,7 +387,7 @@ virgl_drm_winsys_resource_create_handle(struct virgl_winsys *qws,
    struct virgl_drm_winsys *qdws = virgl_drm_winsys(qws);
    struct drm_gem_open open_arg = {};
    struct drm_virtgpu_resource_info info_arg = {};
-   struct virgl_hw_res *res;
+   struct virgl_hw_res *res = NULL;
    uint32_t handle = whandle->handle;
 
    if (whandle->offset != 0) {
@@ -405,25 +398,25 @@ virgl_drm_winsys_resource_create_handle(struct virgl_winsys *qws,
 
    mtx_lock(&qdws->bo_handles_mutex);
 
+   /* We must maintain a list of pairs <handle, bo>, so that we always return
+    * the same BO for one particular handle. If we didn't do that and created
+    * more than one BO for the same handle and then relocated them in a CS,
+    * we would hit a deadlock in the kernel.
+    *
+    * The list of pairs is guarded by a mutex, of course. */
    if (whandle->type == WINSYS_HANDLE_TYPE_SHARED) {
       res = util_hash_table_get(qdws->bo_names, (void*)(uintptr_t)handle);
-      if (res) {
-         struct virgl_hw_res *r = NULL;
-         virgl_drm_resource_reference(qdws, &r, res);
-         goto done;
-      }
-   }
-
-   if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
+   } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
       int r;
       r = drmPrimeFDToHandle(qdws->fd, whandle->handle, &handle);
-      if (r) {
-         res = NULL;
+      if (r)
          goto done;
-      }
+      res = util_hash_table_get(qdws->bo_handles, (void*)(uintptr_t)handle);
+   } else {
+      /* Unknown handle type */
+      goto done;
    }
 
-   res = util_hash_table_get(qdws->bo_handles, (void*)(uintptr_t)handle);
    if (res) {
       struct virgl_hw_res *r = NULL;
       virgl_drm_resource_reference(qdws, &r, res);
@@ -445,8 +438,8 @@ virgl_drm_winsys_resource_create_handle(struct virgl_winsys *qws,
          goto done;
       }
       res->bo_handle = open_arg.handle;
+      res->flink_name = whandle->handle;
    }
-   res->name = handle;
 
    memset(&info_arg, 0, sizeof(info_arg));
    info_arg.bo_handle = res->bo_handle;
@@ -465,7 +458,9 @@ virgl_drm_winsys_resource_create_handle(struct virgl_winsys *qws,
    pipe_reference_init(&res->reference, 1);
    res->num_cs_references = 0;
 
-   util_hash_table_set(qdws->bo_handles, (void *)(uintptr_t)handle, res);
+   if (res->flink_name)
+      util_hash_table_set(qdws->bo_names, (void *)(uintptr_t)res->flink_name, res);
+   util_hash_table_set(qdws->bo_handles, (void *)(uintptr_t)res->bo_handle, res);
 
 done:
    mtx_unlock(&qdws->bo_handles_mutex);
@@ -484,21 +479,20 @@ static boolean virgl_drm_winsys_resource_get_handle(struct virgl_winsys *qws,
        return FALSE;
 
    if (whandle->type == WINSYS_HANDLE_TYPE_SHARED) {
-      if (!res->flinked) {
+      if (!res->flink_name) {
          memset(&flink, 0, sizeof(flink));
          flink.handle = res->bo_handle;
 
          if (drmIoctl(qdws->fd, DRM_IOCTL_GEM_FLINK, &flink)) {
             return FALSE;
          }
-         res->flinked = TRUE;
-         res->flink = flink.name;
+         res->flink_name = flink.name;
 
          mtx_lock(&qdws->bo_handles_mutex);
-         util_hash_table_set(qdws->bo_names, (void *)(uintptr_t)res->flink, res);
+         util_hash_table_set(qdws->bo_names, (void *)(uintptr_t)res->flink_name, res);
          mtx_unlock(&qdws->bo_handles_mutex);
       }
-      whandle->handle = res->flink;
+      whandle->handle = res->flink_name;
    } else if (whandle->type == WINSYS_HANDLE_TYPE_KMS) {
       whandle->handle = res->bo_handle;
    } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {

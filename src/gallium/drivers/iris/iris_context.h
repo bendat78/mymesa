@@ -816,4 +816,8 @@ void iris_render_cache_add_bo(struct iris_batch *batch,
 void iris_cache_flush_for_depth(struct iris_batch *batch, struct iris_bo *bo);
 void iris_depth_cache_add_bo(struct iris_batch *batch, struct iris_bo *bo);
 
+/* iris_state.c */
+void gen9_toggle_preemption(struct iris_context *ice,
+                            struct iris_batch *batch,
+                            const struct pipe_draw_info *draw);
 #endif

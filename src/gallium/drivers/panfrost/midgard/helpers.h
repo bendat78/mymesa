@@ -216,13 +216,17 @@ static struct {
         [midgard_alu_op_fcos]		 = {"fcos", UNIT_VLUT},
 
         /* XXX: Test case where it's right on smul but not sadd */
-        [midgard_alu_op_iand]		 = {"iand", UNITS_ADD | OP_COMMUTES}, 
+        [midgard_alu_op_iand]		 = {"iand", UNITS_MOST | OP_COMMUTES}, 
+        [midgard_alu_op_iandnot]         = {"iandnot", UNITS_MOST},
 
-        [midgard_alu_op_ior]		 = {"ior", UNITS_ADD | OP_COMMUTES},
-        [midgard_alu_op_ixor]		 = {"ixor", UNITS_ADD | OP_COMMUTES},
+        [midgard_alu_op_ior]		 = {"ior", UNITS_MOST | OP_COMMUTES},
+        [midgard_alu_op_iornot]		 = {"iornot", UNITS_MOST | OP_COMMUTES},
+        [midgard_alu_op_inor]		 = {"inor", UNITS_MOST | OP_COMMUTES},
+        [midgard_alu_op_ixor]		 = {"ixor", UNITS_MOST | OP_COMMUTES},
+        [midgard_alu_op_inxor]		 = {"inxor", UNITS_MOST | OP_COMMUTES},
         [midgard_alu_op_ilzcnt]		 = {"ilzcnt", UNITS_ADD},
         [midgard_alu_op_ibitcount8]	 = {"ibitcount8", UNITS_ADD},
-        [midgard_alu_op_inot]		 = {"inot", UNITS_MOST},
+        [midgard_alu_op_inand]		 = {"inand", UNITS_MOST},
         [midgard_alu_op_ishl]		 = {"ishl", UNITS_ADD},
         [midgard_alu_op_iasr]		 = {"iasr", UNITS_ADD},
         [midgard_alu_op_ilsr]		 = {"ilsr", UNITS_ADD},
@@ -237,7 +241,6 @@ static struct {
         /* These instructions are not yet emitted by the compiler, so
          * don't speculate about units yet */ 
         [midgard_alu_op_ishladd]        = {"ishladd", 0},
-        [midgard_alu_op_iandnot]        = {"iandnot", 0},
 
         [midgard_alu_op_uball_lt]       = {"uball_lt", 0},
         [midgard_alu_op_uball_lte]      = {"uball_lte", 0},

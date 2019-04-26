@@ -116,6 +116,8 @@ void
 iris_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
    struct iris_context *ice = (struct iris_context *) ctx;
+   struct iris_screen *screen = (struct iris_screen*)ice->ctx.screen;
+   const struct gen_device_info *devinfo = &screen->devinfo;
    struct iris_batch *batch = &ice->batches[IRIS_BATCH_RENDER];
 
    if (ice->state.predicate == IRIS_PREDICATE_STATE_DONT_RENDER)
@@ -130,6 +132,9 @@ iris_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
    iris_batch_maybe_flush(batch, 1500);
 
    iris_update_draw_info(ice, info);
+
+   if (devinfo->gen == 9)
+      gen9_toggle_preemption(ice, batch, info);
 
    iris_update_compiled_shaders(ice);
 

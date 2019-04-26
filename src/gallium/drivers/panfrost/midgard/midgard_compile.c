@@ -1082,6 +1082,20 @@ emit_indirect_offset(compiler_context *ctx, nir_src *src)
 		op = midgard_alu_op_##_op; \
 		break;
 
+static bool
+nir_is_fzero_constant(nir_src src)
+{
+        if (!nir_src_is_const(src))
+                return false;
+
+        for (unsigned c = 0; c < nir_src_num_components(src); ++c) {
+                if (nir_src_comp_as_float(src, c) != 0.0)
+                        return false;
+        }
+
+        return true;
+}
+
 static void
 emit_alu(compiler_context *ctx, nir_alu_instr *instr)
 {
@@ -1170,7 +1184,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(iand, iand);
                 ALU_CASE(ior, ior);
                 ALU_CASE(ixor, ixor);
-                ALU_CASE(inot, inot);
+                ALU_CASE(inot, inand);
                 ALU_CASE(ishl, ishl);
                 ALU_CASE(ishr, iasr);
                 ALU_CASE(ushr, ilsr);
@@ -1213,29 +1227,44 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 break;
         }
 
+        /* For a few special csel cases not handled by NIR, we can opt to
+         * bitwise. Otherwise, we emit the condition and do a real csel */
+
         case nir_op_b32csel: {
-                op = midgard_alu_op_fcsel;
+                if (nir_is_fzero_constant(instr->src[2].src)) {
+                        /* (b ? v : 0) = (b & v) */
+                        op = midgard_alu_op_iand;
+                        nr_inputs = 2;
+                } else if (nir_is_fzero_constant(instr->src[1].src)) {
+                        /* (b ? 0 : v) = (!b ? v : 0) = (~b & v) = (v & ~b) */
+                        op = midgard_alu_op_iandnot;
+                        nr_inputs = 2;
+                        instr->src[1] = instr->src[0];
+                        instr->src[0] = instr->src[2];
+                } else {
+                        op = midgard_alu_op_fcsel;
 
-                /* csel works as a two-arg in Midgard, since the condition is hardcoded in r31.w */
-                nr_inputs = 2;
+                        /* csel works as a two-arg in Midgard, since the condition is hardcoded in r31.w */
+                        nr_inputs = 2;
 
-                /* Figure out which component the condition is in */
+                        /* Figure out which component the condition is in */
 
-                unsigned comp = instr->src[0].swizzle[0];
+                        unsigned comp = instr->src[0].swizzle[0];
 
-                /* Make sure NIR isn't throwing a mixed condition at us */
+                        /* Make sure NIR isn't throwing a mixed condition at us */
 
-                for (unsigned c = 1; c < nr_components; ++c)
-                        assert(instr->src[0].swizzle[c] == comp);
+                        for (unsigned c = 1; c < nr_components; ++c)
+                                assert(instr->src[0].swizzle[c] == comp);
 
-                /* Emit the condition into r31.w */
-                emit_condition(ctx, &instr->src[0].src, false, comp);
+                        /* Emit the condition into r31.w */
+                        emit_condition(ctx, &instr->src[0].src, false, comp);
 
-                /* The condition is the first argument; move the other
-                 * arguments up one to be a binary instruction for
-                 * Midgard */
+                        /* The condition is the first argument; move the other
+                         * arguments up one to be a binary instruction for
+                         * Midgard */
 
-                memmove(instr->src, instr->src + 1, 2 * sizeof(nir_alu_src));
+                        memmove(instr->src, instr->src + 1, 2 * sizeof(nir_alu_src));
+                }
                 break;
         }
 
@@ -1245,12 +1274,28 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 return;
         }
 
+        /* Midgard can perform certain modifiers on output ofa n ALU op */
+        midgard_outmod outmod =
+                instr->dest.saturate ? midgard_outmod_sat : midgard_outmod_none;
+
+        /* fmax(a, 0.0) can turn into a .pos modifier as an optimization */
+
+        if (instr->op == nir_op_fmax) {
+                if (nir_is_fzero_constant(instr->src[0].src)) {
+                        op = midgard_alu_op_fmov;
+                        nr_inputs = 1;
+                        outmod = midgard_outmod_pos;
+                        instr->src[0] = instr->src[1];
+                } else if (nir_is_fzero_constant(instr->src[1].src)) {
+                        op = midgard_alu_op_fmov;
+                        nr_inputs = 1;
+                        outmod = midgard_outmod_pos;
+                }
+        }
+
         /* Fetch unit, quirks, etc information */
         unsigned opcode_props = alu_opcode_props[op].props;
         bool quirk_flipped_r24 = opcode_props & QUIRK_FLIPPED_R24;
-
-        /* Initialise fields common between scalar/vector instructions */
-        midgard_outmod outmod = instr->dest.saturate ? midgard_outmod_sat : midgard_outmod_none;
 
         /* src0 will always exist afaik, but src1 will not for 1-argument
          * instructions. The latter can only be fetched if the instruction
@@ -1331,6 +1376,10 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ins.has_constants = true;
                 ins.constants[0] = 0.0f;
                 ins.alu.src2 = vector_alu_srco_unsigned(blank_alu_src_xxxx);
+        } else if (instr->op == nir_op_inot) {
+                /* ~b = ~(b & b), so duplicate the source */
+                ins.ssa_args.src1 = ins.ssa_args.src0;
+                ins.alu.src2 = ins.alu.src1;
         }
 
         if ((opcode_props & UNITS_ALL) == UNIT_VLUT) {
@@ -1742,8 +1791,6 @@ emit_tex(compiler_context *ctx, nir_tex_instr *instr)
                                 midgard_instruction ins = v_fmov(index, alu_src, reg);
                                 emit_mir_instruction(ctx, ins);
                         }
-
-                        //midgard_pin_output(ctx, index, REGISTER_TEXTURE_BASE + in_reg);
 
                         break;
                 }
@@ -3093,6 +3140,36 @@ midgard_opt_dead_code_eliminate(compiler_context *ctx, midgard_block *block)
         return progress;
 }
 
+/* Combines the two outmods if possible. Returns whether the combination was
+ * successful */
+
+static bool
+midgard_combine_outmod(midgard_outmod *main, midgard_outmod overlay)
+{
+        if (overlay == midgard_outmod_none)
+                return true;
+
+        if (*main == overlay)
+                return true;
+
+        if (*main == midgard_outmod_none) {
+                *main = overlay;
+                return true;
+        }
+
+        if (*main == midgard_outmod_pos && overlay == midgard_outmod_sat) {
+                *main = midgard_outmod_sat;
+                return true;
+        }
+
+        if (overlay == midgard_outmod_pos && *main == midgard_outmod_sat) {
+                *main = midgard_outmod_sat;
+                return true;
+        }
+
+        return false;
+}
+
 static bool
 midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
 {
@@ -3109,8 +3186,12 @@ midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
 
                 if (to >= SSA_FIXED_MINIMUM) continue;
                 if (from >= SSA_FIXED_MINIMUM) continue;
+                if (to >= ctx->func->impl->ssa_alloc) continue;
+                if (from >= ctx->func->impl->ssa_alloc) continue;
 
-                /* Also, if the move has side effects, we're helpless */
+                /* Also, if the move has source side effects, we're not sure
+                 * what to do. Destination side effects we can handle, though.
+                 */
 
                 midgard_vector_alu_src src =
                         vector_alu_from_unsigned(ins->alu.src2);
@@ -3119,17 +3200,57 @@ midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
 
                 if (mir_nontrivial_mod(src, is_int, mask)) continue;
 
-                mir_foreach_instr_in_block_from(block, v, mir_next_op(ins)) {
-                        if (v->ssa_args.src0 == to) {
-                                v->ssa_args.src0 = from;
-                                progress = true;
-                        }
+                mir_foreach_instr_in_block_from_rev(block, v, mir_prev_op(ins)) {
+                        if (v->ssa_args.dest == from) {
+                                if (v->type == TAG_ALU_4) {
+                                        midgard_outmod final = v->alu.outmod;
 
-                        if (v->ssa_args.src1 == to && !v->ssa_args.inline_constant) {
-                                v->ssa_args.src1 = from;
+                                        if (!midgard_combine_outmod(&final, ins->alu.outmod))
+                                                continue;
+
+                                        v->alu.outmod = final;
+                                }
+
+                                v->ssa_args.dest = to;
                                 progress = true;
                         }
                 }
+
+                mir_remove_instruction(ins);
+        }
+
+        return progress;
+}
+
+static bool
+midgard_opt_copy_prop_tex(compiler_context *ctx, midgard_block *block)
+{
+        bool progress = false;
+
+        mir_foreach_instr_in_block_safe(block, ins) {
+                if (ins->type != TAG_ALU_4) continue;
+                if (!OP_IS_MOVE(ins->alu.op)) continue;
+
+                unsigned from = ins->ssa_args.src1;
+                unsigned to = ins->ssa_args.dest;
+
+                /* Make sure it's a familiar type of special move. Basically we
+                 * just handle the special dummy moves emitted by the texture
+                 * pipeline. TODO: verify. TODO: why does this break varyings?
+                 */
+
+                if (from >= SSA_FIXED_MINIMUM) continue;
+                if (to < SSA_FIXED_REGISTER(REGISTER_TEXTURE_BASE)) continue;
+                if (to > SSA_FIXED_REGISTER(REGISTER_TEXTURE_BASE + 1)) continue;
+
+                mir_foreach_instr_in_block_from_rev(block, v, mir_prev_op(ins)) {
+                        if (v->ssa_args.dest == from) {
+                                v->ssa_args.dest = to;
+                                progress = true;
+                        }
+                }
+
+                mir_remove_instruction(ins);
         }
 
         return progress;
@@ -3684,6 +3805,7 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
 
                 mir_foreach_block(ctx, block) {
                         progress |= midgard_opt_copy_prop(ctx, block);
+                        progress |= midgard_opt_copy_prop_tex(ctx, block);
                         progress |= midgard_opt_dead_code_eliminate(ctx, block);
                 }
         } while (progress);

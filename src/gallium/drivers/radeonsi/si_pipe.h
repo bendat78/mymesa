@@ -147,7 +147,6 @@ enum {
 
 	/* Shader compiler options (with no effect on the shader cache): */
 	DBG_CHECK_IR,
-	DBG_NIR,
 	DBG_MONOLITHIC_SHADERS,
 	DBG_NO_OPT_VARIANT,
 	DBG_MERGE,
@@ -470,13 +469,18 @@ struct si_screen {
 	bool				has_out_of_order_rast;
 	bool				assume_no_z_fights;
 	bool				commutative_blend_add;
-	bool				clear_db_cache_before_clear;
+	bool				has_gfx9_scissor_bug;
 	bool				has_msaa_sample_loc_bug;
 	bool				has_ls_vgpr_init_bug;
 	bool				has_dcc_constant_encode;
 	bool				dpbb_allowed;
 	bool				dfsm_allowed;
 	bool				llvm_has_working_vgpr_indexing;
+
+	struct {
+#define OPT_BOOL(name, dflt, description) bool name:1;
+#include "si_debug_options.h"
+	} options;
 
 	/* Whether shaders are monolithic (1-part) or separate (3-part). */
 	bool				use_monolithic_shaders;
@@ -669,14 +673,7 @@ struct si_signed_scissor {
 	enum si_quant_mode quant_mode;
 };
 
-struct si_scissors {
-	unsigned			dirty_mask;
-	struct pipe_scissor_state	states[SI_MAX_VIEWPORTS];
-};
-
 struct si_viewports {
-	unsigned			dirty_mask;
-	unsigned			depth_range_dirty_mask;
 	struct pipe_viewport_state	states[SI_MAX_VIEWPORTS];
 	struct si_signed_scissor	as_scissor[SI_MAX_VIEWPORTS];
 };
@@ -880,7 +877,7 @@ struct si_context {
 	struct si_clip_state		clip_state;
 	struct si_shader_data		shader_pointers;
 	struct si_stencil_ref		stencil_ref;
-	struct si_scissors		scissors;
+	struct pipe_scissor_state	scissors[SI_MAX_VIEWPORTS];
 	struct si_streamout		streamout;
 	struct si_viewports		viewports;
 	unsigned			num_window_rectangles;
@@ -1073,7 +1070,7 @@ struct si_context {
 	unsigned			num_resident_handles;
 	uint64_t			num_alloc_tex_transfer_bytes;
 	unsigned			last_tex_ps_draw_ratio; /* for query */
-	unsigned			context_roll_counter;
+	unsigned			context_roll;
 
 	/* Queries. */
 	/* Maintain the list of active queries for pausing between IBs. */

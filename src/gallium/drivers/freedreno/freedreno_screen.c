@@ -200,6 +200,10 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_PACKED_UNIFORMS:
 		return !is_a2xx(screen);
 
+	case PIPE_CAP_ROBUST_BUFFER_ACCESS_BEHAVIOR:
+	case PIPE_CAP_DEVICE_RESET_STATUS_QUERY:
+		return screen->has_robustness;
+
 	case PIPE_CAP_VERTEXID_NOBASE:
 		return is_a3xx(screen) || is_a4xx(screen);
 
@@ -305,6 +309,10 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 
 	/* TODO if we need this, do it in nir/ir3 backend to avoid breaking precompile: */
 	case PIPE_CAP_FORCE_PERSAMPLE_INTERP:
+		return 0;
+
+	case PIPE_CAP_SAMPLE_SHADING:
+		if (is_a6xx(screen)) return 1;
 		return 0;
 
 	case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
@@ -821,6 +829,11 @@ fd_screen_create(struct fd_device *dev, struct renderonly *ro)
 	} else {
 		/* # of rings equates to number of unique priority values: */
 		screen->priority_mask = (1 << val) - 1;
+	}
+
+	if ((fd_device_version(dev) >= FD_VERSION_ROBUSTNESS) &&
+			(fd_pipe_get_param(screen->pipe, FD_PP_PGTABLE, &val) == 0)) {
+		screen->has_robustness = val;
 	}
 
 	struct sysinfo si;
