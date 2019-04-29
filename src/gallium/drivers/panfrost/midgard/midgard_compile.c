@@ -1134,9 +1134,6 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(isub, isub);
                 ALU_CASE(imul, imul);
                 ALU_CASE(iabs, iabs);
-
-                /* XXX: Use fmov, not imov, since imov was causing major
-                 * issues with texture precision? XXX research */
                 ALU_CASE(imov, imov);
 
                 ALU_CASE(feq32, feq);
@@ -3050,7 +3047,20 @@ embedded_to_inline_constant(compiler_context *ctx)
                                 if (scaled_constant != iconstants[component])
                                         continue;
                         } else {
-                                scaled_constant = _mesa_float_to_half((float) ins->constants[component]);
+                                float original = (float) ins->constants[component];
+                                scaled_constant = _mesa_float_to_half(original);
+
+                                /* Check for loss of precision. If this is
+                                 * mediump, we don't care, but for a highp
+                                 * shader, we need to pay attention. NIR
+                                 * doesn't yet tell us which mode we're in!
+                                 * Practically this prevents most constants
+                                 * from being inlined, sadly. */
+
+                                float fp32 = _mesa_half_to_float(scaled_constant);
+
+                                if (fp32 != original)
+                                        continue;
                         }
 
                         /* We don't know how to handle these with a constant */
@@ -3140,36 +3150,6 @@ midgard_opt_dead_code_eliminate(compiler_context *ctx, midgard_block *block)
         return progress;
 }
 
-/* Combines the two outmods if possible. Returns whether the combination was
- * successful */
-
-static bool
-midgard_combine_outmod(midgard_outmod *main, midgard_outmod overlay)
-{
-        if (overlay == midgard_outmod_none)
-                return true;
-
-        if (*main == overlay)
-                return true;
-
-        if (*main == midgard_outmod_none) {
-                *main = overlay;
-                return true;
-        }
-
-        if (*main == midgard_outmod_pos && overlay == midgard_outmod_sat) {
-                *main = midgard_outmod_sat;
-                return true;
-        }
-
-        if (overlay == midgard_outmod_pos && *main == midgard_outmod_sat) {
-                *main = midgard_outmod_sat;
-                return true;
-        }
-
-        return false;
-}
-
 static bool
 midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
 {
@@ -3189,9 +3169,7 @@ midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
                 if (to >= ctx->func->impl->ssa_alloc) continue;
                 if (from >= ctx->func->impl->ssa_alloc) continue;
 
-                /* Also, if the move has source side effects, we're not sure
-                 * what to do. Destination side effects we can handle, though.
-                 */
+                /* Also, if the move has side effects, we're helpless */
 
                 midgard_vector_alu_src src =
                         vector_alu_from_unsigned(ins->alu.src2);
@@ -3199,24 +3177,19 @@ midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
                 bool is_int = midgard_is_integer_op(ins->alu.op);
 
                 if (mir_nontrivial_mod(src, is_int, mask)) continue;
+                if (ins->alu.outmod != midgard_outmod_none) continue;
 
-                mir_foreach_instr_in_block_from_rev(block, v, mir_prev_op(ins)) {
-                        if (v->ssa_args.dest == from) {
-                                if (v->type == TAG_ALU_4) {
-                                        midgard_outmod final = v->alu.outmod;
+                mir_foreach_instr_in_block_from(block, v, mir_next_op(ins)) {
+                        if (v->ssa_args.src0 == to) {
+                                v->ssa_args.src0 = from;
+                                progress = true;
+                        }
 
-                                        if (!midgard_combine_outmod(&final, ins->alu.outmod))
-                                                continue;
-
-                                        v->alu.outmod = final;
-                                }
-
-                                v->ssa_args.dest = to;
+                        if (v->ssa_args.src1 == to && !v->ssa_args.inline_constant) {
+                                v->ssa_args.src1 = from;
                                 progress = true;
                         }
                 }
-
-                mir_remove_instruction(ins);
         }
 
         return progress;
@@ -3234,26 +3207,66 @@ midgard_opt_copy_prop_tex(compiler_context *ctx, midgard_block *block)
                 unsigned from = ins->ssa_args.src1;
                 unsigned to = ins->ssa_args.dest;
 
-                /* Make sure it's a familiar type of special move. Basically we
-                 * just handle the special dummy moves emitted by the texture
-                 * pipeline. TODO: verify. TODO: why does this break varyings?
-                 */
+                /* Make sure it's simple enough for us to handle */
 
                 if (from >= SSA_FIXED_MINIMUM) continue;
+                if (from >= ctx->func->impl->ssa_alloc) continue;
                 if (to < SSA_FIXED_REGISTER(REGISTER_TEXTURE_BASE)) continue;
                 if (to > SSA_FIXED_REGISTER(REGISTER_TEXTURE_BASE + 1)) continue;
 
+                bool eliminated = false;
+
                 mir_foreach_instr_in_block_from_rev(block, v, mir_prev_op(ins)) {
+                        /* The texture registers are not SSA so be careful.
+                         * Conservatively, just stop if we hit a texture op
+                         * (even if it may not write) to where we are */
+
+                        if (v->type != TAG_ALU_4)
+                                break;
+
                         if (v->ssa_args.dest == from) {
-                                v->ssa_args.dest = to;
-                                progress = true;
+                                /* We don't want to track partial writes ... */
+                                if (v->alu.mask == 0xF) {
+                                        v->ssa_args.dest = to;
+                                        eliminated = true;
+                                }
+
+                                break;
                         }
                 }
 
-                mir_remove_instruction(ins);
+                if (eliminated)
+                        mir_remove_instruction(ins);
+
+                progress |= eliminated;
         }
 
         return progress;
+}
+
+/* We don't really understand the imov/fmov split, so always use fmov (but let
+ * it be imov in the IR so we don't do unsafe floating point "optimizations"
+ * and break things */
+
+static void
+midgard_imov_workaround(compiler_context *ctx, midgard_block *block)
+{
+        mir_foreach_instr_in_block_safe(block, ins) {
+                if (ins->type != TAG_ALU_4) continue;
+                if (ins->alu.op != midgard_alu_op_imov) continue;
+
+                ins->alu.op = midgard_alu_op_fmov;
+                ins->alu.outmod = midgard_outmod_none;
+
+                /* Remove flags that don't make sense */
+
+                midgard_vector_alu_src s =
+                        vector_alu_from_unsigned(ins->alu.src2);
+
+                s.mod = 0;
+
+                ins->alu.src2 = vector_alu_srco_unsigned(s);
+        }
 }
 
 /* The following passes reorder MIR instructions to enable better scheduling */
@@ -3507,6 +3520,7 @@ emit_block(compiler_context *ctx, nir_block *block)
 
         midgard_emit_store(ctx, this_block);
         midgard_pair_load_store(ctx, this_block);
+        midgard_imov_workaround(ctx, this_block);
 
         /* Append fragment shader epilogue (value writeout) */
         if (ctx->stage == MESA_SHADER_FRAGMENT) {
