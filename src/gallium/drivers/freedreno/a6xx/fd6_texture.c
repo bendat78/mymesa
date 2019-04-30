@@ -314,6 +314,10 @@ fd6_sampler_view_create(struct pipe_context *pctx, struct pipe_resource *prsc,
 		break;
 	}
 
+	if (so->ubwc_enabled) {
+		so->texconst3 |= A6XX_TEX_CONST_3_FLAG | A6XX_TEX_CONST_3_UNK27;
+	}
+
 	return &so->base;
 }
 
@@ -360,7 +364,7 @@ key_equals(const void *_a, const void *_b)
 }
 
 struct fd6_texture_state *
-fd6_texture_state(struct fd_context *ctx, enum a6xx_state_block sb,
+fd6_texture_state(struct fd_context *ctx, enum pipe_shader_type type,
 		struct fd_texture_stateobj *tex)
 {
 	struct fd6_context *fd6_ctx = fd6_context(ctx);
@@ -392,7 +396,7 @@ fd6_texture_state(struct fd_context *ctx, enum a6xx_state_block sb,
 		needs_border |= sampler->needs_border;
 	}
 
-	key.bcolor_offset = fd6_border_color_offset(ctx, sb, tex);
+	key.bcolor_offset = fd6_border_color_offset(ctx, type, tex);
 
 	uint32_t hash = key_hash(&key);
 	struct hash_entry *entry =
@@ -408,8 +412,8 @@ fd6_texture_state(struct fd_context *ctx, enum a6xx_state_block sb,
 	state->stateobj = fd_ringbuffer_new_object(ctx->pipe, 0x1000);
 	state->needs_border = needs_border;
 
-	fd6_emit_textures(ctx->pipe, state->stateobj, sb, tex, key.bcolor_offset,
-			NULL, NULL, NULL);
+	fd6_emit_textures(ctx->pipe, state->stateobj, type, tex, key.bcolor_offset,
+			NULL, NULL);
 
 	/* NOTE: uses copy of key in state obj, because pointer passed by caller
 	 * is probably on the stack

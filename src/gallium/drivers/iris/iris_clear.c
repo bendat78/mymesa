@@ -78,9 +78,6 @@ can_fast_clear_color(struct iris_context *ice,
    struct iris_batch *batch = &ice->batches[IRIS_BATCH_RENDER];
    const struct gen_device_info *devinfo = &batch->screen->devinfo;
 
-   if (devinfo->gen > 9)
-      return false;
-
    if (res->aux.usage == ISL_AUX_USAGE_NONE)
       return false;
 
@@ -104,8 +101,10 @@ can_fast_clear_color(struct iris_context *ice,
     * during resolves because the resolve operations only know about the
     * resource and not the renderbuffer.
     */
-   if (render_format != format)
+   if (isl_format_srgb_to_linear(render_format) !=
+       isl_format_srgb_to_linear(format)) {
       return false;
+   }
 
    /* XXX: if (irb->mt->supports_fast_clear)
     * see intel_miptree_create_for_dri_image()
@@ -120,6 +119,7 @@ can_fast_clear_color(struct iris_context *ice,
 static union isl_color_value
 convert_fast_clear_color(struct iris_context *ice,
                          struct iris_resource *res,
+                         enum isl_format render_format,
                          const union isl_color_value color)
 {
    union isl_color_value override_color = color;
@@ -184,7 +184,7 @@ convert_fast_clear_color(struct iris_context *ice,
    }
 
    /* Handle linear to SRGB conversion */
-   if (util_format_is_srgb(format)) {
+   if (isl_format_is_srgb(render_format)) {
       for (int i = 0; i < 3; i++) {
          override_color.f32[i] =
             util_format_linear_to_srgb_float(override_color.f32[i]);
@@ -208,7 +208,7 @@ fast_clear_color(struct iris_context *ice,
    const enum isl_aux_state aux_state =
       iris_resource_get_aux_state(res, level, box->z);
 
-   color = convert_fast_clear_color(ice, res, color);
+   color = convert_fast_clear_color(ice, res, format, color);
 
    bool color_changed = !!memcmp(&res->aux.clear_color, &color,
                                  sizeof(color));
@@ -266,7 +266,13 @@ fast_clear_color(struct iris_context *ice,
    iris_blorp_surf_for_resource(&ice->vtbl, &surf, p_res, res->aux.usage,
                                 level, true);
 
-   blorp_fast_clear(&blorp_batch, &surf, format,
+   /* In newer gens (> 9), the hardware will do a linear -> sRGB conversion of
+    * the clear color during the fast clear, if the surface format is of sRGB
+    * type. We use the linear version of the surface format here to prevent
+    * that from happening, since we already do our own linear -> sRGB
+    * conversion in convert_fast_clear_color().
+    */
+   blorp_fast_clear(&blorp_batch, &surf, isl_format_srgb_to_linear(format),
                     level, box->z, box->depth,
                     box->x, box->y, box->x + box->width,
                     box->y + box->height);

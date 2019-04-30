@@ -291,6 +291,8 @@ NineDevice9_ctor( struct NineDevice9 *This,
     if (This->csmt_active)
         DBG("\033[1;32mCSMT is active\033[0m\n");
 
+    This->workarounds.dynamic_texture_workaround = pCTX->dynamic_texture_workaround;
+
     This->buffer_upload = nine_upload_create(This->pipe_secondary, 4 * 1024 * 1024, 4);
 
     /* Initialize a dummy VBO to be used when a vertex declaration does not
@@ -489,6 +491,11 @@ NineDevice9_ctor( struct NineDevice9 *This,
     This->driver_caps.ps_integer = pScreen->get_shader_param(pScreen, PIPE_SHADER_FRAGMENT, PIPE_SHADER_CAP_INTEGERS);
     This->driver_caps.offset_units_unscaled = GET_PCAP(POLYGON_OFFSET_UNITS_UNSCALED);
 
+    This->context.inline_constants = pCTX->shader_inline_constants;
+    /* Code would be needed when integers are not available to correctly
+     * handle the conversion of integer constants */
+    This->context.inline_constants &= This->driver_caps.vs_integer && This->driver_caps.ps_integer;
+
     nine_ff_init(This); /* initialize fixed function code */
 
     NineDevice9_SetDefaultState(This, FALSE);
@@ -531,7 +538,7 @@ NineDevice9_dtor( struct NineDevice9 *This )
 
     nine_ff_fini(This);
     nine_state_destroy_sw(This);
-    nine_state_clear(&This->state, TRUE);
+    nine_device_state_clear(This);
     nine_context_clear(This);
 
     nine_bind(&This->record, NULL);
@@ -907,7 +914,7 @@ NineDevice9_Reset( struct NineDevice9 *This,
     }
 
     nine_csmt_process(This);
-    nine_state_clear(&This->state, TRUE);
+    nine_device_state_clear(This);
     nine_context_clear(This);
 
     NineDevice9_SetDefaultState(This, TRUE);
@@ -2716,7 +2723,7 @@ NineDevice9_SetSoftwareVertexProcessing( struct NineDevice9 *This,
         nine_context_set_swvp(This, bSoftware);
         return D3D_OK;
     } else
-        return D3DERR_INVALIDCALL; /* msdn. TODO: check in practice */
+        return D3D_OK; /* msdn seems to indicate INVALIDCALL, but at least Halo expects OK */
 }
 
 BOOL NINE_WINAPI

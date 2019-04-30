@@ -59,6 +59,8 @@ DRI_CONF_BEGIN
         DRI_CONF_NINE_ALLOWDISCARDDELAYEDRELEASE("true")
         DRI_CONF_NINE_TEARFREEDISCARD("false")
         DRI_CONF_NINE_CSMT(-1)
+        DRI_CONF_NINE_DYNAMICTEXTUREWORKAROUND("false")
+        DRI_CONF_NINE_SHADERINLINECONSTANTS("false")
     DRI_CONF_SECTION_END
 DRI_CONF_END;
 
@@ -267,13 +269,6 @@ drm_create_adapter( int fd,
     else
         ctx->base.thread_submit = different_device;
 
-    if (ctx->base.thread_submit && (throttling_value_user == -2 || throttling_value_user == 0)) {
-        ctx->base.throttling_value = 0;
-    } else if (ctx->base.thread_submit) {
-        DBG("You have set a non standard throttling value in combination with thread_submit."
-            "We advise to use a throttling value of -2/0");
-    }
-
     if (driCheckOption(&userInitOptions, "override_vendorid", DRI_INT)) {
         override_vendorid = driQueryOptioni(&userInitOptions, "override_vendorid");
     }
@@ -297,6 +292,16 @@ drm_create_adapter( int fd,
         ctx->base.csmt_force = driQueryOptioni(&userInitOptions, "csmt_force");
     else
         ctx->base.csmt_force = -1;
+
+    if (driCheckOption(&userInitOptions, "dynamic_texture_workaround", DRI_BOOL))
+        ctx->base.dynamic_texture_workaround = driQueryOptionb(&userInitOptions, "dynamic_texture_workaround");
+    else
+        ctx->base.dynamic_texture_workaround = FALSE;
+
+    if (driCheckOption(&userInitOptions, "shader_inline_constants", DRI_BOOL))
+        ctx->base.shader_inline_constants = driQueryOptionb(&userInitOptions, "shader_inline_constants");
+    else
+        ctx->base.shader_inline_constants = FALSE;
 
     driDestroyOptionCache(&userInitOptions);
     driDestroyOptionInfo(&defaultInitOptions);
