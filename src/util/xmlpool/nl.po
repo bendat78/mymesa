@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-29 20:50+0200\n"
+"POT-Creation-Date: 2019-04-30 21:46+0200\n"
 "PO-Revision-Date: 2005-04-12 20:09+0200\n"
 "Last-Translator:  Manfred Stienstra <manfred.stienstra@dwerg.net>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"
@@ -257,17 +257,30 @@ msgid ""
 "(-1) CSMT is enabled on known thread-safe drivers."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:333
+#: src/util/xmlpool/t_options.h:329
+msgid ""
+"If set to true, use a ram intermediate buffer for dynamic textures. "
+"Increases ram usage, which can cause out of memory issues, but can fix "
+"glitches for some games."
+msgstr ""
+
+#: src/util/xmlpool/t_options.h:334
+msgid ""
+"If set to true, recompile shaders with integer or boolean constants when the "
+"values are known. Can cause stutter, but can increase slightly performance."
+msgstr ""
+
+#: src/util/xmlpool/t_options.h:343
 msgid "Use the LLVM sisched option for shader compiles"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:338
+#: src/util/xmlpool/t_options.h:348
 msgid ""
 "Assume no Z fights (enables aggressive out-of-order rasterization to improve "
 "performance; may cause rendering errors)"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:343
+#: src/util/xmlpool/t_options.h:353
 msgid ""
 "Commutative additive blending optimizations (may cause rendering errors)"
 msgstr ""
