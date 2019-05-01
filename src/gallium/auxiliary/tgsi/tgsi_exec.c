@@ -1324,6 +1324,12 @@ tgsi_exec_machine_create(enum pipe_shader_type shader_type)
          goto fail;
    }
 
+   if (shader_type == PIPE_SHADER_FRAGMENT) {
+      mach->InputSampleOffsetApply = align_malloc(sizeof(apply_sample_offset_func) * PIPE_MAX_SHADER_INPUTS, 16);
+      if (!mach->InputSampleOffsetApply)
+         goto fail;
+   }
+
    /* Setup constants needed by the SSE2 executor. */
    for( i = 0; i < 4; i++ ) {
       mach->Temps[TGSI_EXEC_TEMP_00000000_I].xyzw[TGSI_EXEC_TEMP_00000000_C].u[i] = 0x00000000;
@@ -1348,6 +1354,7 @@ tgsi_exec_machine_create(enum pipe_shader_type shader_type)
 
 fail:
    if (mach) {
+      align_free(mach->InputSampleOffsetApply);
       align_free(mach->Inputs);
       align_free(mach->Outputs);
       align_free(mach);
@@ -1364,6 +1371,7 @@ tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach)
       FREE(mach->Declarations);
       FREE(mach->Imms);
 
+      align_free(mach->InputSampleOffsetApply);
       align_free(mach->Inputs);
       align_free(mach->Outputs);
 
@@ -1613,13 +1621,11 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
 }
 
 static void
-fetch_source_d(const struct tgsi_exec_machine *mach,
-               union tgsi_exec_channel *chan,
-               const struct tgsi_full_src_register *reg,
-	       const uint chan_index)
+get_index_registers(const struct tgsi_exec_machine *mach,
+                    const struct tgsi_full_src_register *reg,
+                    union tgsi_exec_channel *index,
+                    union tgsi_exec_channel *index2D)
 {
-   union tgsi_exec_channel index;
-   union tgsi_exec_channel index2D;
    uint swizzle;
 
    /* We start with a direct index into a register file.
@@ -1629,10 +1635,10 @@ fetch_source_d(const struct tgsi_exec_machine *mach,
     *       file = Register.File
     *       [1] = Register.Index
     */
-   index.i[0] =
-   index.i[1] =
-   index.i[2] =
-   index.i[3] = reg->Register.Index;
+   index->i[0] =
+   index->i[1] =
+   index->i[2] =
+   index->i[3] = reg->Register.Index;
 
    /* There is an extra source register that indirectly subscripts
     * a register file. The direct index now becomes an offset
@@ -1665,17 +1671,17 @@ fetch_source_d(const struct tgsi_exec_machine *mach,
                              &indir_index);
 
       /* add value of address register to the offset */
-      index.i[0] += indir_index.i[0];
-      index.i[1] += indir_index.i[1];
-      index.i[2] += indir_index.i[2];
-      index.i[3] += indir_index.i[3];
+      index->i[0] += indir_index.i[0];
+      index->i[1] += indir_index.i[1];
+      index->i[2] += indir_index.i[2];
+      index->i[3] += indir_index.i[3];
 
       /* for disabled execution channels, zero-out the index to
        * avoid using a potential garbage value.
        */
       for (i = 0; i < TGSI_QUAD_SIZE; i++) {
          if ((execmask & (1 << i)) == 0)
-            index.i[i] = 0;
+            index->i[i] = 0;
       }
    }
 
@@ -1688,10 +1694,10 @@ fetch_source_d(const struct tgsi_exec_machine *mach,
     *       [3] = Dimension.Index
     */
    if (reg->Register.Dimension) {
-      index2D.i[0] =
-      index2D.i[1] =
-      index2D.i[2] =
-      index2D.i[3] = reg->Dimension.Index;
+      index2D->i[0] =
+      index2D->i[1] =
+      index2D->i[2] =
+      index2D->i[3] = reg->Dimension.Index;
 
       /* Again, the second subscript index can be addressed indirectly
        * identically to the first one.
@@ -1723,17 +1729,17 @@ fetch_source_d(const struct tgsi_exec_machine *mach,
                                 &ZeroVec,
                                 &indir_index);
 
-         index2D.i[0] += indir_index.i[0];
-         index2D.i[1] += indir_index.i[1];
-         index2D.i[2] += indir_index.i[2];
-         index2D.i[3] += indir_index.i[3];
+         index2D->i[0] += indir_index.i[0];
+         index2D->i[1] += indir_index.i[1];
+         index2D->i[2] += indir_index.i[2];
+         index2D->i[3] += indir_index.i[3];
 
          /* for disabled execution channels, zero-out the index to
           * avoid using a potential garbage value.
           */
          for (i = 0; i < TGSI_QUAD_SIZE; i++) {
             if ((execmask & (1 << i)) == 0) {
-               index2D.i[i] = 0;
+               index2D->i[i] = 0;
             }
          }
       }
@@ -1743,11 +1749,26 @@ fetch_source_d(const struct tgsi_exec_machine *mach,
        * by a dimension register and continue the saga.
        */
    } else {
-      index2D.i[0] =
-      index2D.i[1] =
-      index2D.i[2] =
-      index2D.i[3] = 0;
+      index2D->i[0] =
+      index2D->i[1] =
+      index2D->i[2] =
+      index2D->i[3] = 0;
    }
+}
+
+
+static void
+fetch_source_d(const struct tgsi_exec_machine *mach,
+               union tgsi_exec_channel *chan,
+               const struct tgsi_full_src_register *reg,
+	       const uint chan_index)
+{
+   union tgsi_exec_channel index;
+   union tgsi_exec_channel index2D;
+   uint swizzle;
+
+   get_index_registers(mach, reg, &index, &index2D);
+
 
    swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    fetch_src_file_channel(mach,
@@ -2911,21 +2932,50 @@ eval_constant_coef(
    }
 }
 
+static void
+interp_constant_offset(
+      UNUSED const struct tgsi_exec_machine *mach,
+      UNUSED unsigned attrib,
+      UNUSED unsigned chan,
+      UNUSED float ofs_x,
+      UNUSED float ofs_y,
+      UNUSED union tgsi_exec_channel *out_chan)
+{
+}
+
 /**
  * Evaluate a linear-valued coefficient at the position of the
  * current quad.
  */
 static void
-eval_linear_coef(
-   struct tgsi_exec_machine *mach,
-   unsigned attrib,
-   unsigned chan )
+interp_linear_offset(
+      const struct tgsi_exec_machine *mach,
+      unsigned attrib,
+      unsigned chan,
+      float ofs_x,
+      float ofs_y,
+      union tgsi_exec_channel *out_chan)
+{
+   const float dadx = mach->InterpCoefs[attrib].dadx[chan];
+   const float dady = mach->InterpCoefs[attrib].dady[chan];
+   const float delta = ofs_x * dadx + ofs_y * dady;
+   out_chan->f[0] += delta;
+   out_chan->f[1] += delta;
+   out_chan->f[2] += delta;
+   out_chan->f[3] += delta;
+}
+
+static void
+eval_linear_coef(struct tgsi_exec_machine *mach,
+                 unsigned attrib,
+                 unsigned chan)
 {
    const float x = mach->QuadPos.xyzw[0].f[0];
    const float y = mach->QuadPos.xyzw[1].f[0];
    const float dadx = mach->InterpCoefs[attrib].dadx[chan];
    const float dady = mach->InterpCoefs[attrib].dady[chan];
    const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
+
    mach->Inputs[attrib].xyzw[chan].f[0] = a0;
    mach->Inputs[attrib].xyzw[chan].f[1] = a0 + dadx;
    mach->Inputs[attrib].xyzw[chan].f[2] = a0 + dady;
@@ -2936,6 +2986,26 @@ eval_linear_coef(
  * Evaluate a perspective-valued coefficient at the position of the
  * current quad.
  */
+
+static void
+interp_perspective_offset(
+   const struct tgsi_exec_machine *mach,
+   unsigned attrib,
+   unsigned chan,
+   float ofs_x,
+   float ofs_y,
+   union tgsi_exec_channel *out_chan)
+{
+   const float dadx = mach->InterpCoefs[attrib].dadx[chan];
+   const float dady = mach->InterpCoefs[attrib].dady[chan];
+   const float *w = mach->QuadPos.xyzw[3].f;
+   const float delta = ofs_x * dadx + ofs_y * dady;
+   out_chan->f[0] += delta / w[0];
+   out_chan->f[1] += delta / w[1];
+   out_chan->f[2] += delta / w[2];
+   out_chan->f[3] += delta / w[3];
+}
+
 static void
 eval_perspective_coef(
    struct tgsi_exec_machine *mach,
@@ -2996,19 +3066,23 @@ exec_declaration(struct tgsi_exec_machine *mach,
             }
          } else {
             eval_coef_func eval;
+            apply_sample_offset_func interp;
             uint i, j;
 
             switch (decl->Interp.Interpolate) {
             case TGSI_INTERPOLATE_CONSTANT:
                eval = eval_constant_coef;
+               interp = interp_constant_offset;
                break;
 
             case TGSI_INTERPOLATE_LINEAR:
                eval = eval_linear_coef;
+               interp = interp_linear_offset;
                break;
 
             case TGSI_INTERPOLATE_PERSPECTIVE:
                eval = eval_perspective_coef;
+               interp = interp_perspective_offset;
                break;
 
             case TGSI_INTERPOLATE_COLOR:
@@ -3019,6 +3093,9 @@ exec_declaration(struct tgsi_exec_machine *mach,
                assert(0);
                return;
             }
+
+            for (i = first; i <= last; i++)
+               mach->InputSampleOffsetApply[i] = interp;
 
             for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
                if (mask & (1 << j)) {
@@ -5091,6 +5168,111 @@ micro_umsb(union tgsi_exec_channel *dst,
    dst->i[3] = util_last_bit(src->u[3]) - 1;
 }
 
+
+static void
+exec_interp_at_sample(struct tgsi_exec_machine *mach,
+                      const struct tgsi_full_instruction *inst)
+{
+   union tgsi_exec_channel index;
+   union tgsi_exec_channel index2D;
+   union tgsi_exec_channel result[TGSI_NUM_CHANNELS];
+   const struct tgsi_full_src_register *reg = &inst->Src[0];
+
+   assert(reg->Register.File == TGSI_FILE_INPUT);
+   assert(inst->Src[1].Register.File == TGSI_FILE_IMMEDIATE);
+
+   get_index_registers(mach, reg, &index, &index2D);
+   float sample = mach->Imms[inst->Src[1].Register.Index][inst->Src[1].Register.SwizzleX];
+
+   /* Short cut: sample 0 is like a normal fetch */
+   for (unsigned chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+      if (!(inst->Dst[0].Register.WriteMask & (1 << chan)))
+         continue;
+
+      fetch_src_file_channel(mach, TGSI_FILE_INPUT, chan, &index, &index2D,
+                             &result[chan]);
+      if (sample != 0.0f) {
+
+      /* TODO: define the samples > 0, but so far we only do fake MSAA */
+         float x = 0;
+         float y = 0;
+
+         unsigned pos = index2D.i[chan] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index.i[chan];
+         assert(pos >= 0);
+         assert(pos < TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS);
+         mach->InputSampleOffsetApply[pos](mach, pos, chan, x, y, &result[chan]);
+      }
+      store_dest(mach, &result[chan], &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
+   }
+}
+
+
+static void
+exec_interp_at_offset(struct tgsi_exec_machine *mach,
+                      const struct tgsi_full_instruction *inst)
+{
+   union tgsi_exec_channel index;
+   union tgsi_exec_channel index2D;
+   union tgsi_exec_channel ofsx;
+   union tgsi_exec_channel ofsy;
+   const struct tgsi_full_src_register *reg = &inst->Src[0];
+
+   assert(reg->Register.File == TGSI_FILE_INPUT);
+
+   get_index_registers(mach, reg, &index, &index2D);
+   unsigned pos = index2D.i[0] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index.i[0];
+
+   fetch_source(mach, &ofsx, &inst->Src[1], TGSI_CHAN_X, TGSI_EXEC_DATA_FLOAT);
+   fetch_source(mach, &ofsy, &inst->Src[1], TGSI_CHAN_Y, TGSI_EXEC_DATA_FLOAT);
+
+   for (int chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+      if (!(inst->Dst[0].Register.WriteMask & (1 << chan)))
+         continue;
+      union tgsi_exec_channel result;
+      fetch_src_file_channel(mach, TGSI_FILE_INPUT, chan, &index, &index2D, &result);
+      mach->InputSampleOffsetApply[pos](mach, pos, chan, ofsx.f[chan], ofsy.f[chan], &result);
+      store_dest(mach, &result, &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
+   }
+}
+
+
+static void
+exec_interp_at_centroid(struct tgsi_exec_machine *mach,
+                        const struct tgsi_full_instruction *inst)
+{
+   union tgsi_exec_channel index;
+   union tgsi_exec_channel index2D;
+   union tgsi_exec_channel result[TGSI_NUM_CHANNELS];
+   const struct tgsi_full_src_register *reg = &inst->Src[0];
+
+   assert(reg->Register.File == TGSI_FILE_INPUT);
+   get_index_registers(mach, reg, &index, &index2D);
+
+   for (unsigned chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+      if (!(inst->Dst[0].Register.WriteMask & (1 << chan)))
+         continue;
+
+      /* Here we should add the change to use a sample that lies within the
+       * primitive (Section 15.2):
+       *
+       * "When interpolating variables declared using centroid in ,
+       * the variable is sampled at a location within the pixel covered
+       * by the primitive generating the fragment.
+       * ...
+       * The built-in functions interpolateAtCentroid ... will sample
+       * variables as though they were declared with the centroid ...
+       * qualifier[s]."
+       *
+       * Since we only support 1 sample currently, this is just a pass-through.
+       */
+      fetch_src_file_channel(mach, TGSI_FILE_INPUT, chan, &index, &index2D,
+                             &result[chan]);
+      store_dest(mach, &result[chan], &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
+   }
+
+}
+
+
 /**
  * Execute a TGSI instruction.
  * Returns TRUE if a barrier instruction is hit,
@@ -6135,7 +6317,15 @@ exec_instruction(
    case TGSI_OPCODE_I642D:
       exec_double_unary(mach, inst, micro_i642d);
       break;
-
+   case TGSI_OPCODE_INTERP_SAMPLE:
+      exec_interp_at_sample(mach, inst);
+      break;
+   case TGSI_OPCODE_INTERP_OFFSET:
+      exec_interp_at_offset(mach, inst);
+      break;
+   case TGSI_OPCODE_INTERP_CENTROID:
+      exec_interp_at_centroid(mach, inst);
+      break;
    default:
       assert( 0 );
    }
