@@ -1032,10 +1032,22 @@ bool radv_format_pack_clear_color(VkFormat format,
 				assert(channel->size == 8);
 
 				v = util_format_linear_float_to_srgb_8unorm(value->float32[c]);
-			} else if (channel->type == VK_FORMAT_TYPE_UNSIGNED) {
-				v = MAX2(MIN2(value->float32[c], 1.0f), 0.0f) * ((1ULL << channel->size) - 1);
-			} else  {
-				v = MAX2(MIN2(value->float32[c], 1.0f), -1.0f) * ((1ULL << (channel->size - 1)) - 1);
+			} else {
+				float f = MIN2(value->float32[c], 1.0f);
+
+				if (channel->type == VK_FORMAT_TYPE_UNSIGNED) {
+					f = MAX2(f, 0.0f) * ((1ULL << channel->size) - 1);
+				} else {
+					f = MAX2(f, -1.0f) * ((1ULL << (channel->size - 1)) - 1);
+				}
+
+				/* The hardware rounds before conversion. */
+				if (f > 0)
+					f += 0.5f;
+				else
+					f -= 0.5f;
+
+				v = (uint64_t)f;
 			}
 		} else if (channel->type == VK_FORMAT_TYPE_FLOAT) {
 			if (channel->size == 32) {
@@ -1094,6 +1106,7 @@ static VkResult radv_get_image_format_properties(struct radv_physical_device *ph
 	uint32_t maxMipLevels;
 	uint32_t maxArraySize;
 	VkSampleCountFlags sampleCounts = VK_SAMPLE_COUNT_1_BIT;
+	const struct vk_format_description *desc = vk_format_description(info->format);
 
 	radv_physical_device_get_format_properties(physical_device, info->format,
 						   &format_props);
@@ -1135,6 +1148,12 @@ static VkResult radv_get_image_format_properties(struct radv_physical_device *ph
 		maxMipLevels = 12; /* log2(maxWidth) + 1 */
 		maxArraySize = 1;
 		break;
+	}
+
+	if (desc->layout == VK_FORMAT_LAYOUT_SUBSAMPLED) {
+		/* Might be able to support but the entire format support is
+		 * messy, so taking the lazy way out. */
+		maxArraySize = 1;
 	}
 
 	if (info->tiling == VK_IMAGE_TILING_OPTIMAL &&
