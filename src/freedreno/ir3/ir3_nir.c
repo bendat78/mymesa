@@ -216,6 +216,12 @@ ir3_optimize_nir(struct ir3_shader *shader, nir_shader *s,
 		 * and not again on any potential 2nd variant lowering pass:
 		 */
 		OPT_V(s, ir3_nir_apply_trig_workarounds);
+
+		/* This wouldn't hurt to run multiple times, but there is
+		 * no need to:
+		 */
+		if (shader->type == MESA_SHADER_FRAGMENT)
+			OPT_V(s, nir_lower_fb_read);
 	}
 
 	OPT_V(s, nir_lower_tex, &tex_options);
@@ -228,8 +234,10 @@ ir3_optimize_nir(struct ir3_shader *shader, nir_shader *s,
 	/* do ubo load and idiv lowering after first opt loop to get a chance to
 	 * propagate constants for divide by immed power-of-two and constant ubo
 	 * block/offsets:
+	 *
+	 * NOTE that UBO analysis pass should only be done once, before variants
 	 */
-	const bool ubo_progress = OPT(s, ir3_nir_analyze_ubo_ranges, shader);
+	const bool ubo_progress = !key && OPT(s, ir3_nir_analyze_ubo_ranges, shader);
 	const bool idiv_progress = OPT(s, nir_lower_idiv);
 	if (ubo_progress || idiv_progress)
 		ir3_optimize_loop(s);
