@@ -635,7 +635,8 @@ radv_physical_device_get_format_properties(struct radv_physical_device *physical
 	const struct vk_format_description *desc = vk_format_description(format);
 	bool blendable;
 	bool scaled = false;
-	if (!desc) {
+	/* TODO: implement some software emulation of SUBSAMPLED formats. */
+	if (!desc || desc->layout == VK_FORMAT_LAYOUT_SUBSAMPLED) {
 		out_properties->linearTilingFeatures = linear;
 		out_properties->optimalTilingFeatures = tiled;
 		out_properties->bufferFeatures = buffer;
@@ -655,6 +656,7 @@ radv_physical_device_get_format_properties(struct radv_physical_device *physical
 		uint32_t tiling = VK_FORMAT_FEATURE_TRANSFER_SRC_BIT |
 		                  VK_FORMAT_FEATURE_TRANSFER_DST_BIT |
 		                  VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
+		                  VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT |
 		                  VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT;
 
 		/* The subsampled formats have no support for linear filters. */
