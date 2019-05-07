@@ -71,6 +71,14 @@ enum ir3_driver_param {
 
 
 /**
+ * Describes the layout of shader consts.  This includes:
+ *   + Driver lowered UBO ranges
+ *   + SSBO sizes
+ *   + Image sizes/dimensions
+ *   + Driver params (ie. IR3_DP_*)
+ *   + TFBO addresses (for generations that do not have hardware streamout)
+ *   + Lowered immediates
+ *
  * For consts needed to pass internal values to shader which may or may not
  * be required, rather than allocating worst-case const space, we scan the
  * shader and allocate consts as-needed:
@@ -80,8 +88,46 @@ enum ir3_driver_param {
  *
  *   + Image dimensions: needed to calculate pixel offset, but only for
  *     images that have a image_store intrinsic
+ *
+ * Layout of constant registers, each section aligned to vec4.  Note
+ * that pointer size (ubo, etc) changes depending on generation.
+ *
+ *    user consts
+ *    UBO addresses
+ *    SSBO sizes
+ *    if (vertex shader) {
+ *        driver params (IR3_DP_*)
+ *        if (stream_output.num_outputs > 0)
+ *           stream-out addresses
+ *    } else if (compute_shader) {
+ *        driver params (IR3_DP_*)
+ *    }
+ *    immediates
+ *
+ * Immediates go last mostly because they are inserted in the CP pass
+ * after the nir -> ir3 frontend.
+ *
+ * Note UBO size in bytes should be aligned to vec4
  */
-struct ir3_driver_const_layout {
+struct ir3_const_state {
+	/* number of uniforms (in vec4), not including built-in compiler
+	 * constants, etc.
+	 */
+	unsigned num_uniforms;
+
+	unsigned num_ubos;
+
+	struct {
+		/* user const start at zero */
+		unsigned ubo;
+		/* NOTE that a3xx might need a section for SSBO addresses too */
+		unsigned ssbo_sizes;
+		unsigned image_dims;
+		unsigned driver_param;
+		unsigned tfbo;
+		unsigned immediate;
+	} offsets;
+
 	struct {
 		uint32_t mask;  /* bitmask of SSBOs that have get_buffer_size */
 		uint32_t count; /* number of consts allocated */
@@ -102,6 +148,13 @@ struct ir3_driver_const_layout {
 		 */
 		uint32_t off[IR3_MAX_SHADER_IMAGES];
 	} image_dims;
+
+	unsigned immediate_idx;
+	unsigned immediates_count;
+	unsigned immediates_size;
+	struct {
+		uint32_t val[4];
+	} *immediates;
 };
 
 /**
@@ -340,7 +393,6 @@ struct ir3_shader_variant {
 	bool binning_pass;
 	struct ir3_shader_variant *binning;
 
-	struct ir3_driver_const_layout const_layout;
 	struct ir3_info info;
 	struct ir3 *ir;
 
@@ -360,13 +412,6 @@ struct ir3_shader_variant {
 	 * the uniforms and the built-in compiler constants
 	 */
 	unsigned constlen;
-
-	/* number of uniforms (in vec4), not including built-in compiler
-	 * constants, etc.
-	 */
-	unsigned num_uniforms;
-
-	unsigned num_ubos;
 
 	/* About Linkage:
 	 *   + Let the frag shader determine the position/compmask for the
@@ -451,27 +496,6 @@ struct ir3_shader_variant {
 
 	bool per_samp;
 
-	/* Layout of constant registers, each section (in vec4). Pointer size
-	 * is 32b (a3xx, a4xx), or 64b (a5xx+), which effects the size of the
-	 * UBO and stream-out consts.
-	 */
-	struct {
-		/* user const start at zero */
-		unsigned ubo;
-		/* NOTE that a3xx might need a section for SSBO addresses too */
-		unsigned ssbo_sizes;
-		unsigned image_dims;
-		unsigned driver_param;
-		unsigned tfbo;
-		unsigned immediate;
-	} constbase;
-
-	unsigned immediates_count;
-	unsigned immediates_size;
-	struct {
-		uint32_t val[4];
-	} *immediates;
-
 	/* for astc srgb workaround, the number/base of additional
 	 * alpha tex states we need, and index of original tex states
 	 */
@@ -514,6 +538,7 @@ struct ir3_shader {
 	struct ir3_compiler *compiler;
 
 	struct ir3_ubo_analysis_state ubo_state;
+	struct ir3_const_state const_state;
 
 	struct nir_shader *nir;
 	struct ir3_stream_output_info stream_output;
