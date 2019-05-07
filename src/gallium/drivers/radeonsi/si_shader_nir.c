@@ -825,6 +825,7 @@ si_nir_opts(struct nir_shader *nir)
 
 		NIR_PASS_V(nir, nir_lower_alu_to_scalar);
 		NIR_PASS_V(nir, nir_lower_phis_to_scalar);
+		NIR_PASS_V(nir, nir_lower_sincos);
 
 		/* (Constant) copy propagation is needed for txf with offsets. */
 		NIR_PASS(progress, nir, nir_copy_prop);
@@ -889,6 +890,7 @@ si_lower_nir(struct si_shader_selector* sel)
 		.lower_txp = ~0u,
 	};
 	NIR_PASS_V(sel->nir, nir_lower_tex, &lower_tex_options);
+	NIR_PASS_V(sel->nir, nir_lower_sincos);
 
 	const nir_lower_subgroups_options subgroups_options = {
 		.subgroup_size = 64,
