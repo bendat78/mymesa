@@ -27,19 +27,51 @@
 #include "virgl_resource.h"
 #include "virgl_screen.h"
 
-bool virgl_res_needs_flush(struct virgl_context *vctx,
-                           struct virgl_transfer *trans)
+/* We need to flush to properly sync the transfer with the current cmdbuf.
+ * But there are cases where the flushing can be skipped:
+ *
+ *  - synchronization is disabled
+ *  - the resource is not referenced by the current cmdbuf
+ *  - the current cmdbuf has no draw/compute command that accesses the
+ *    resource (XXX there are also clear or blit commands)
+ *  - the transfer is to an undefined region and we can assume the current
+ *    cmdbuf has no command that accesses the region (XXX we cannot just check
+ *    for overlapping transfers)
+ */
+static bool virgl_res_needs_flush(struct virgl_context *vctx,
+                                  struct virgl_transfer *trans)
 {
-   struct virgl_screen *vs = virgl_screen(vctx->base.screen);
+   struct virgl_winsys *vws = virgl_screen(vctx->base.screen)->vws;
    struct virgl_resource *res = virgl_resource(trans->base.resource);
 
    if (trans->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)
       return false;
-   if (!vs->vws->res_is_referenced(vs->vws, vctx->cbuf, res->hw_res))
+
+   if (!vws->res_is_referenced(vws, vctx->cbuf, res->hw_res))
       return false;
+
    if (res->clean_mask & (1 << trans->base.level)) {
+      /* XXX Consider
+       *
+       *   glCopyBufferSubData(src, dst, ...);
+       *   glBufferSubData(src, ...);
+       *
+       * at the beginning of a cmdbuf.  glBufferSubData will be incorrectly
+       * reordered before glCopyBufferSubData.
+       */
       if (vctx->num_draws == 0 && vctx->num_compute == 0)
          return false;
+
+      /* XXX Consider
+       *
+       *   glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * 3, data1);
+       *   glFlush();
+       *   glDrawArrays(GL_TRIANGLES, 0, 3);
+       *   glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * 3, data2);
+       *   glDrawArrays(GL_TRIANGLES, 0, 3);
+       *
+       * Both draws will see data2.
+       */
       if (!virgl_transfer_queue_is_queued(&vctx->queue, trans))
          return false;
    }
@@ -47,19 +79,82 @@ bool virgl_res_needs_flush(struct virgl_context *vctx,
    return true;
 }
 
-bool virgl_res_needs_readback(struct virgl_context *vctx,
-                              struct virgl_resource *res,
-                              unsigned usage, unsigned level)
+/* We need to read back from the host storage to make sure the guest storage
+ * is up-to-date.  But there are cases where the readback can be skipped:
+ *
+ *  - the content can be discarded
+ *  - the host storage is read-only
+ *
+ * Note that PIPE_TRANSFER_WRITE without discard bits requires readback.
+ * PIPE_TRANSFER_READ becomes irrelevant.  PIPE_TRANSFER_UNSYNCHRONIZED and
+ * PIPE_TRANSFER_FLUSH_EXPLICIT are also irrelevant.
+ */
+static bool virgl_res_needs_readback(struct virgl_context *vctx,
+                                     struct virgl_resource *res,
+                                     unsigned usage, unsigned level)
 {
-   bool readback = true;
+   if (usage & (PIPE_TRANSFER_DISCARD_RANGE |
+                PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE))
+      return false;
+
    if (res->clean_mask & (1 << level))
-      readback = false;
-   else if (usage & PIPE_TRANSFER_DISCARD_RANGE)
-      readback = false;
-   else if ((usage & (PIPE_TRANSFER_WRITE | PIPE_TRANSFER_FLUSH_EXPLICIT)) ==
-            (PIPE_TRANSFER_WRITE | PIPE_TRANSFER_FLUSH_EXPLICIT))
-      readback = false;
-   return readback;
+      return false;
+
+   return true;
+}
+
+enum virgl_transfer_map_type
+virgl_resource_transfer_prepare(struct virgl_context *vctx,
+                                struct virgl_transfer *xfer)
+{
+   struct virgl_winsys *vws = virgl_screen(vctx->base.screen)->vws;
+   struct virgl_resource *res = virgl_resource(xfer->base.resource);
+   enum virgl_transfer_map_type map_type = VIRGL_TRANSFER_MAP_HW_RES;
+   bool flush;
+   bool readback;
+   bool wait;
+
+   /* there is no way to map the host storage currently */
+   if (xfer->base.usage & PIPE_TRANSFER_MAP_DIRECTLY)
+      return VIRGL_TRANSFER_MAP_ERROR;
+
+   flush = virgl_res_needs_flush(vctx, xfer);
+   readback = virgl_res_needs_readback(vctx, res, xfer->base.usage,
+                                       xfer->base.level);
+
+   /* XXX This is incorrect.  Consider
+    *
+    *   glTexImage2D(..., data1);
+    *   glDrawArrays();
+    *   glFlush();
+    *   glTexImage2D(..., data2);
+    *
+    * readback and flush are both false in the second glTexImage2D call.  The
+    * draw call might end up seeing data2.  Same applies to buffers with
+    * glBufferSubData.
+    */
+   wait = flush || readback;
+
+   if (flush)
+      vctx->base.flush(&vctx->base, NULL, 0);
+
+   if (readback) {
+      vws->transfer_get(vws, res->hw_res, &xfer->base.box, xfer->base.stride,
+                        xfer->l_stride, xfer->offset, xfer->base.level);
+   }
+
+   if (wait) {
+      /* fail the mapping after flush and readback so that it will succeed in
+       * the future
+       */
+      if ((xfer->base.usage & PIPE_TRANSFER_DONTBLOCK) &&
+          vws->resource_is_busy(vws, res->hw_res))
+         return VIRGL_TRANSFER_MAP_ERROR;
+
+      vws->resource_wait(vws, res->hw_res);
+   }
+
+   return map_type;
 }
 
 static struct pipe_resource *virgl_resource_create(struct pipe_screen *screen,

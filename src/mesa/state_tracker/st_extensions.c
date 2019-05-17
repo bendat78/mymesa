@@ -84,9 +84,8 @@ void st_init_limits(struct pipe_screen *screen,
    bool can_ubo = true;
    int temp;
 
-   c->MaxTextureLevels
-      = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
-            MAX_TEXTURE_LEVELS);
+   c->MaxTextureSize = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_SIZE);
+   c->MaxTextureSize = MIN2(c->MaxTextureSize, 1 << (MAX_TEXTURE_LEVELS - 1));
 
    c->Max3DTextureLevels
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_3D_LEVELS),
@@ -96,8 +95,7 @@ void st_init_limits(struct pipe_screen *screen,
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS),
             MAX_CUBE_TEXTURE_LEVELS);
 
-   c->MaxTextureRectSize
-      = _min(1 << (c->MaxTextureLevels - 1), MAX_TEXTURE_RECT_SIZE);
+   c->MaxTextureRectSize = _min(c->MaxTextureSize, MAX_TEXTURE_RECT_SIZE);
 
    c->MaxArrayTextureLayers
       = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS);
@@ -747,6 +745,7 @@ void st_init_extensions(struct pipe_screen *screen,
       { o(ARB_transform_feedback2),          PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME       },
       { o(ARB_transform_feedback3),          PIPE_CAP_STREAM_OUTPUT_INTERLEAVE_BUFFERS },
       { o(ARB_transform_feedback_overflow_query), PIPE_CAP_QUERY_SO_OVERFLOW           },
+      { o(ARB_fragment_shader_interlock),    PIPE_CAP_FRAGMENT_SHADER_INTERLOCK        },
 
       { o(KHR_blend_equation_advanced),      PIPE_CAP_TGSI_FS_FBFETCH                  },
 

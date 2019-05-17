@@ -315,7 +315,7 @@ st_nir_opts(nir_shader *nir, bool scalar)
       NIR_PASS_V(nir, nir_lower_vars_to_ssa);
 
       if (scalar) {
-         NIR_PASS_V(nir, nir_lower_alu_to_scalar);
+         NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL);
          NIR_PASS_V(nir, nir_lower_phis_to_scalar);
       }
 
@@ -338,7 +338,7 @@ st_nir_opts(nir_shader *nir, bool scalar)
       NIR_PASS(progress, nir, nir_opt_constant_folding);
 
       if (lower_flrp != 0) {
-         bool lower_flrp_progress;
+         bool lower_flrp_progress = false;
 
          NIR_PASS(lower_flrp_progress, nir, nir_lower_flrp,
                   lower_flrp,
@@ -431,7 +431,7 @@ st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
    NIR_PASS_V(nir, nir_lower_var_copies);
 
    if (is_scalar) {
-     NIR_PASS_V(nir, nir_lower_alu_to_scalar);
+     NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL);
    }
 
    /* before buffers and vars_to_ssa */

@@ -280,6 +280,9 @@ void *radv_lookup_entrypoint_checked(const char *name,
                                     uint32_t core_version,
                                     const struct radv_instance_extension_table *instance,
                                     const struct radv_device_extension_table *device);
+void *radv_lookup_physical_device_entrypoint_checked(const char *name,
+                                                     uint32_t core_version,
+                                                     const struct radv_instance_extension_table *instance);
 
 struct radv_physical_device {
 	VK_LOADER_DATA                              _loader_data;
@@ -700,7 +703,7 @@ struct radv_device {
 	float sample_locations_8x[8][2];
 	float sample_locations_16x[16][2];
 
-	/* CIK and later */
+	/* GFX7 and later */
 	uint32_t gfx_init_size_dw;
 	struct radeon_winsys_bo                      *gfx_init;
 
@@ -1971,8 +1974,6 @@ void radv_initialize_fmask(struct radv_cmd_buffer *cmd_buffer,
 struct radv_fence {
 	struct radeon_winsys_fence *fence;
 	struct wsi_fence *fence_wsi;
-	bool submitted;
-	bool signalled;
 
 	uint32_t syncobj;
 	uint32_t temp_syncobj;

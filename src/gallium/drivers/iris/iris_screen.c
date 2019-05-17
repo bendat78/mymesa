@@ -93,6 +93,14 @@ iris_get_name(struct pipe_screen *pscreen)
    return buf;
 }
 
+static uint64_t
+get_aperture_size(int fd)
+{
+   struct drm_i915_gem_get_aperture aperture = {};
+   drm_ioctl(fd, DRM_IOCTL_I915_GEM_GET_APERTURE, &aperture);
+   return aperture.aper_size;
+}
+
 static int
 iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
@@ -137,6 +145,8 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SAMPLE_SHADING:
    case PIPE_CAP_FORCE_PERSAMPLE_INTERP:
    case PIPE_CAP_DRAW_INDIRECT:
+   case PIPE_CAP_MULTI_DRAW_INDIRECT:
+   case PIPE_CAP_MULTI_DRAW_INDIRECT_PARAMS:
    case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
    case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
    case PIPE_CAP_TGSI_TES_LAYER_VIEWPORT:
@@ -152,6 +162,7 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_INT64_DIVMOD:
    case PIPE_CAP_SAMPLER_VIEW_TARGET:
    case PIPE_CAP_ROBUST_BUFFER_ACCESS_BEHAVIOR:
+   case PIPE_CAP_DEVICE_RESET_STATUS_QUERY:
    case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
    case PIPE_CAP_FRAMEBUFFER_NO_ATTACHMENT:
    case PIPE_CAP_CULL_DISTANCE:
@@ -186,12 +197,14 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_POST_DEPTH_COVERAGE:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE:
+   case PIPE_CAP_FRAGMENT_SHADER_INTERLOCK:
       return devinfo->gen >= 9;
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
       return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return BRW_MAX_DRAW_BUFFERS;
-   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
+   case PIPE_CAP_MAX_TEXTURE_2D_SIZE:
+      return 16384;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return IRIS_MAX_MIPLEVELS; /* 16384x16384 */
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
@@ -250,8 +263,28 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 0x8086;
    case PIPE_CAP_DEVICE_ID:
       return screen->pci_id;
-   case PIPE_CAP_VIDEO_MEMORY:
-      return INT_MAX; // XXX: bogus
+   case PIPE_CAP_VIDEO_MEMORY: {
+      /* Once a batch uses more than 75% of the maximum mappable size, we
+       * assume that there's some fragmentation, and we start doing extra
+       * flushing, etc.  That's the big cliff apps will care about.
+       */
+      const unsigned gpu_mappable_megabytes =
+         (screen->aperture_bytes * 3 / 4) / (1024 * 1024);
+
+      const long system_memory_pages = sysconf(_SC_PHYS_PAGES);
+      const long system_page_size = sysconf(_SC_PAGE_SIZE);
+
+      if (system_memory_pages <= 0 || system_page_size <= 0)
+         return -1;
+
+      const uint64_t system_memory_bytes =
+         (uint64_t) system_memory_pages * (uint64_t) system_page_size;
+
+      const unsigned system_memory_megabytes =
+         (unsigned) (system_memory_bytes / (1024 * 1024));
+
+      return MIN2(system_memory_megabytes, gpu_mappable_megabytes);
+   }
    case PIPE_CAP_MAX_SHADER_PATCH_VARYINGS:
    case PIPE_CAP_MAX_VARYINGS:
       return 32;
@@ -374,11 +407,12 @@ iris_get_shader_param(struct pipe_screen *pscreen,
       return 1 << PIPE_SHADER_IR_NIR;
    case PIPE_SHADER_CAP_MAX_UNROLL_ITERATIONS_HINT:
       return 32;
+   case PIPE_SHADER_CAP_TGSI_DROUND_SUPPORTED:
+   case PIPE_SHADER_CAP_TGSI_LDEXP_SUPPORTED:
+      return 1;
    case PIPE_SHADER_CAP_LOWER_IF_THRESHOLD:
    case PIPE_SHADER_CAP_TGSI_SKIP_MERGE_REGISTERS:
-   case PIPE_SHADER_CAP_TGSI_DROUND_SUPPORTED:
    case PIPE_SHADER_CAP_TGSI_DFRACEXP_DLDEXP_SUPPORTED:
-   case PIPE_SHADER_CAP_TGSI_LDEXP_SUPPORTED:
    case PIPE_SHADER_CAP_TGSI_FMA_SUPPORTED:
    case PIPE_SHADER_CAP_TGSI_ANY_INOUT_DECL_RANGE:
    case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
@@ -574,6 +608,8 @@ iris_screen_create(int fd, const struct pipe_screen_config *config)
 
    screen->devinfo.timestamp_frequency =
       iris_getparam_integer(screen, I915_PARAM_CS_TIMESTAMP_FREQUENCY);
+
+   screen->aperture_bytes = get_aperture_size(fd);
 
    if (getenv("INTEL_NO_HW") != NULL)
       screen->no_hw = true;

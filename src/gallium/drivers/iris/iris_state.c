@@ -631,6 +631,7 @@ iris_emit_l3_config(struct iris_batch *batch, const struct gen_l3_config *cfg,
        * desirable behavior.
        */
       reg.ErrorDetectionBehaviorControl = true;
+      reg.UseFullWays = true;
 #endif
       reg.URBAllocation = cfg->n[GEN_L3P_URB];
       reg.ROAllocation = cfg->n[GEN_L3P_RO];
@@ -1648,7 +1649,7 @@ fmt_swizzle(const struct iris_format_info *fmt, enum pipe_swizzle swz)
 
 static void
 fill_buffer_surface_state(struct isl_device *isl_dev,
-                          struct iris_bo *bo,
+                          struct iris_resource *res,
                           void *map,
                           enum isl_format format,
                           struct isl_swizzle swizzle,
@@ -1675,15 +1676,16 @@ fill_buffer_surface_state(struct isl_device *isl_dev,
     * texel count is clamped to MAX_TEXTURE_BUFFER_SIZE.
     */
    unsigned final_size =
-      MIN3(size, bo->size - offset, IRIS_MAX_TEXTURE_BUFFER_SIZE * cpp);
+      MIN3(size, res->bo->size - res->offset - offset,
+           IRIS_MAX_TEXTURE_BUFFER_SIZE * cpp);
 
    isl_buffer_fill_state(isl_dev, map,
-                         .address = bo->gtt_offset + offset,
+                         .address = res->bo->gtt_offset + res->offset + offset,
                          .size_B = final_size,
                          .format = format,
                          .swizzle = swizzle,
                          .stride_B = cpp,
-                         .mocs = mocs(bo));
+                         .mocs = mocs(res->bo));
 }
 
 #define SURFACE_STATE_ALIGNMENT 64
@@ -1724,7 +1726,7 @@ fill_surface_state(struct isl_device *isl_dev,
       .surf = &res->surf,
       .view = view,
       .mocs = mocs(res->bo),
-      .address = res->bo->gtt_offset,
+      .address = res->bo->gtt_offset + res->offset,
    };
 
    if (aux_usage != ISL_AUX_USAGE_NONE) {
@@ -1830,7 +1832,7 @@ iris_create_sampler_view(struct pipe_context *ctx,
          map += SURFACE_STATE_ALIGNMENT;
       }
    } else {
-      fill_buffer_surface_state(&screen->isl_dev, isv->res->bo, map,
+      fill_buffer_surface_state(&screen->isl_dev, isv->res, map,
                                 isv->view.format, isv->view.swizzle,
                                 tmpl->u.buf.offset, tmpl->u.buf.size);
    }
@@ -2130,7 +2132,7 @@ iris_set_shader_images(struct pipe_context *ctx,
             };
 
             if (untyped_fallback) {
-               fill_buffer_surface_state(&screen->isl_dev, res->bo, map,
+               fill_buffer_surface_state(&screen->isl_dev, res, map,
                                          isl_fmt, ISL_SWIZZLE_IDENTITY,
                                          0, res->bo->size);
             } else {
@@ -2152,7 +2154,7 @@ iris_set_shader_images(struct pipe_context *ctx,
             util_range_add(&res->valid_buffer_range, img->u.buf.offset,
                            img->u.buf.offset + img->u.buf.size);
 
-            fill_buffer_surface_state(&screen->isl_dev, res->bo, map,
+            fill_buffer_surface_state(&screen->isl_dev, res, map,
                                       isl_fmt, ISL_SWIZZLE_IDENTITY,
                                       img->u.buf.offset, img->u.buf.size);
             fill_buffer_image_param(&image_params[start_slot + i],
@@ -2505,7 +2507,7 @@ iris_set_framebuffer_state(struct pipe_context *ctx,
          view.usage |= ISL_SURF_USAGE_DEPTH_BIT;
 
          info.depth_surf = &zres->surf;
-         info.depth_address = zres->bo->gtt_offset;
+         info.depth_address = zres->bo->gtt_offset + zres->offset;
          info.mocs = mocs(zres->bo);
 
          view.format = zres->surf.format;
@@ -2520,7 +2522,7 @@ iris_set_framebuffer_state(struct pipe_context *ctx,
       if (stencil_res) {
          view.usage |= ISL_SURF_USAGE_STENCIL_BIT;
          info.stencil_surf = &stencil_res->surf;
-         info.stencil_address = stencil_res->bo->gtt_offset;
+         info.stencil_address = stencil_res->bo->gtt_offset + stencil_res->offset;
          if (!zres) {
             view.format = stencil_res->surf.format;
             info.mocs = mocs(stencil_res->bo);
@@ -2592,8 +2594,9 @@ upload_ubo_ssbo_surf_state(struct iris_context *ice,
    surf_state->offset += iris_bo_offset_from_base_address(surf_bo);
 
    isl_buffer_fill_state(&screen->isl_dev, map,
-                         .address = res->bo->gtt_offset + buf->buffer_offset,
-                         .size_B = buf->buffer_size,
+                         .address = res->bo->gtt_offset + res->offset +
+                                    buf->buffer_offset,
+                         .size_B = buf->buffer_size - res->offset,
                          .format = ssbo ? ISL_FORMAT_RAW
                                         : ISL_FORMAT_R32G32B32A32_FLOAT,
                          .swizzle = ISL_SWIZZLE_IDENTITY,
@@ -3648,6 +3651,11 @@ iris_store_tcs_state(struct iris_context *ice,
       hs.InstanceCount = tcs_prog_data->instances - 1;
       hs.MaximumNumberofThreads = devinfo->max_tcs_threads - 1;
       hs.IncludeVertexHandles = true;
+
+#if GEN_GEN >= 9
+      hs.DispatchMode = vue_prog_data->dispatch_mode;
+      hs.IncludePrimitiveID = tcs_prog_data->include_primitive_id;
+#endif
    }
 }
 
@@ -5285,6 +5293,8 @@ iris_upload_render_state(struct iris_context *ice,
                          struct iris_batch *batch,
                          const struct pipe_draw_info *draw)
 {
+   bool use_predicate = ice->state.predicate == IRIS_PREDICATE_STATE_USE_BIT;
+
    /* Always pin the binder.  If we're emitting new binding table pointers,
     * we need it.  If not, we're probably inheriting old tables via the
     * context, and need it anyway.  Since true zero-bindings cases are
@@ -5341,9 +5351,81 @@ iris_upload_render_state(struct iris_context *ice,
 #define _3DPRIM_BASE_VERTEX         0x2440
 
    if (draw->indirect) {
-      /* We don't support this MultidrawIndirect. */
-      assert(!draw->indirect->indirect_draw_count);
+      if (draw->indirect->indirect_draw_count) {
+         use_predicate = true;
 
+         struct iris_bo *draw_count_bo =
+            iris_resource_bo(draw->indirect->indirect_draw_count);
+         unsigned draw_count_offset =
+            draw->indirect->indirect_draw_count_offset;
+
+         iris_emit_pipe_control_flush(batch, PIPE_CONTROL_FLUSH_ENABLE);
+
+         if (ice->state.predicate == IRIS_PREDICATE_STATE_USE_BIT) {
+            static const uint32_t math[] = {
+               MI_MATH | (9 - 2),
+               /* Compute (draw index < draw count).
+                * We do this by subtracting and storing the carry bit.
+                */
+               MI_ALU2(LOAD, SRCA, R0),
+               MI_ALU2(LOAD, SRCB, R1),
+               MI_ALU0(SUB),
+               MI_ALU2(STORE, R3, CF),
+               /* Compute (subtracting result & MI_PREDICATE). */
+               MI_ALU2(LOAD, SRCA, R3),
+               MI_ALU2(LOAD, SRCB, R2),
+               MI_ALU0(AND),
+               MI_ALU2(STORE, R3, ACCU),
+            };
+
+            /* Upload the current draw count from the draw parameters
+             * buffer to GPR1.
+             */
+            ice->vtbl.load_register_mem32(batch, CS_GPR(1), draw_count_bo,
+                                          draw_count_offset);
+            /* Zero the top 32-bits of GPR1. */
+            ice->vtbl.load_register_imm32(batch, CS_GPR(1) + 4, 0);
+            /* Upload the id of the current primitive to GPR0. */
+            ice->vtbl.load_register_imm64(batch, CS_GPR(0), draw->drawid);
+
+            iris_batch_emit(batch, math, sizeof(math));
+
+            /* Store result of MI_MATH computations to MI_PREDICATE_RESULT. */
+            ice->vtbl.load_register_reg64(batch,
+                                          MI_PREDICATE_RESULT, CS_GPR(3));
+         } else {
+            uint32_t mi_predicate;
+
+            /* Upload the id of the current primitive to MI_PREDICATE_SRC1. */
+            ice->vtbl.load_register_imm64(batch, MI_PREDICATE_SRC1,
+                                          draw->drawid);
+            /* Upload the current draw count from the draw parameters buffer
+             * to MI_PREDICATE_SRC0.
+             */
+            ice->vtbl.load_register_mem32(batch, MI_PREDICATE_SRC0,
+                                          draw_count_bo, draw_count_offset);
+            /* Zero the top 32-bits of MI_PREDICATE_SRC0 */
+            ice->vtbl.load_register_imm32(batch, MI_PREDICATE_SRC0 + 4, 0);
+
+            if (draw->drawid == 0) {
+               mi_predicate = MI_PREDICATE | MI_PREDICATE_LOADOP_LOADINV |
+                              MI_PREDICATE_COMBINEOP_SET |
+                              MI_PREDICATE_COMPAREOP_SRCS_EQUAL;
+            } else {
+               /* While draw_index < draw_count the predicate's result will be
+                *  (draw_index == draw_count) ^ TRUE = TRUE
+                * When draw_index == draw_count the result is
+                *  (TRUE) ^ TRUE = FALSE
+                * After this all results will be:
+                *  (FALSE) ^ FALSE = FALSE
+                */
+               mi_predicate = MI_PREDICATE | MI_PREDICATE_LOADOP_LOAD |
+                              MI_PREDICATE_COMBINEOP_XOR |
+                              MI_PREDICATE_COMPAREOP_SRCS_EQUAL;
+            }
+            iris_batch_emit(batch, &mi_predicate, sizeof(uint32_t));
+         }
+      }
       struct iris_bo *bo = iris_resource_bo(draw->indirect->buffer);
       assert(bo);
 
@@ -5403,8 +5485,7 @@ iris_upload_render_state(struct iris_context *ice,
 
    iris_emit_cmd(batch, GENX(3DPRIMITIVE), prim) {
       prim.VertexAccessType = draw->index_size > 0 ? RANDOM : SEQUENTIAL;
-      prim.PredicateEnable =
-         ice->state.predicate == IRIS_PREDICATE_STATE_USE_BIT;
+      prim.PredicateEnable = use_predicate;
 
       if (draw->indirect || draw->count_from_stream_output) {
          prim.IndirectParameterEnable = true;
@@ -5757,7 +5838,7 @@ iris_rebind_buffer(struct iris_context *ice,
                                                 &isv->surface_state,
                                                 isv->res->aux.sampler_usages);
                assert(map);
-               fill_buffer_surface_state(&screen->isl_dev, isv->res->bo, map,
+               fill_buffer_surface_state(&screen->isl_dev, isv->res, map,
                                          isv->view.format, isv->view.swizzle,
                                          isv->base.u.buf.offset,
                                          isv->base.u.buf.size);

@@ -875,7 +875,14 @@ nir_op_vec(unsigned components)
 }
 
 typedef enum {
-   NIR_OP_IS_COMMUTATIVE = (1 << 0),
+   /**
+    * Operation where the first two sources are commutative.
+    *
+    * For 2-source operations, this just mathematical commutativity.  Some
+    * 3-source operations, like ffma, are only commutative in the first two
+    * sources.
+    */
+   NIR_OP_IS_2SRC_COMMUTATIVE = (1 << 0),
    NIR_OP_IS_ASSOCIATIVE = (1 << 1),
 } nir_op_algebraic_property;
 
@@ -3178,7 +3185,7 @@ bool nir_lower_alu(nir_shader *shader);
 bool nir_lower_flrp(nir_shader *shader, unsigned lowering_mask,
                     bool always_precise, bool have_ffma);
 
-bool nir_lower_alu_to_scalar(nir_shader *shader);
+bool nir_lower_alu_to_scalar(nir_shader *shader, BITSET_WORD *lower_set);
 bool nir_lower_bool_to_float(nir_shader *shader);
 bool nir_lower_bool_to_int32(nir_shader *shader);
 bool nir_lower_int_to_float(nir_shader *shader);

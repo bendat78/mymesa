@@ -142,8 +142,8 @@ lower_rcp(nir_builder *b, nir_ssa_def *src)
     * See https://en.wikipedia.org/wiki/Division_algorithm for more details.
     */
 
-   ra = nir_ffma(b, ra, nir_ffma(b, ra, src, nir_imm_double(b, -1)), ra);
-   ra = nir_ffma(b, ra, nir_ffma(b, ra, src, nir_imm_double(b, -1)), ra);
+   ra = nir_ffma(b, nir_fneg(b, ra), nir_ffma(b, ra, src, nir_imm_double(b, -1)), ra);
+   ra = nir_ffma(b, nir_fneg(b, ra), nir_ffma(b, ra, src, nir_imm_double(b, -1)), ra);
 
    return fix_inv_result(b, ra, src, new_exp);
 }
@@ -549,6 +549,9 @@ lower_doubles_instr_to_soft(nir_builder *b, nir_alu_instr *instr,
       break;
    case nir_op_ffma:
       name = "__ffma64";
+      break;
+   case nir_op_fsat:
+      name = "__fsat64";
       break;
    default:
       return false;

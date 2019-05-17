@@ -1330,15 +1330,15 @@ bool Converter::assignSlots() {
          else
             info->out[vary].mask |= ((1 << comp) - 1) << frac;
 
-         if (nir->info.outputs_read & 1ll << slot)
+         if (nir->info.outputs_read & 1ull << slot)
             info->out[vary].oread = 1;
       }
       info->numOutputs = std::max<uint8_t>(info->numOutputs, vary);
    }
 
    info->numSysVals = 0;
-   for (uint8_t i = 0; i < 64; ++i) {
-      if (!(nir->info.system_values_read & 1ll << i))
+   for (uint8_t i = 0; i < SYSTEM_VALUE_MAX; ++i) {
+      if (!(nir->info.system_values_read & 1ull << i))
          continue;
 
       system_val_to_tgsi_semantic(i, &name, &index);
@@ -3437,7 +3437,7 @@ Converter::run()
    NIR_PASS_V(nir, nir_lower_regs_to_ssa);
    NIR_PASS_V(nir, nir_lower_load_const_to_scalar);
    NIR_PASS_V(nir, nir_lower_vars_to_ssa);
-   NIR_PASS_V(nir, nir_lower_alu_to_scalar);
+   NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL);
    NIR_PASS_V(nir, nir_lower_phis_to_scalar);
 
    do {

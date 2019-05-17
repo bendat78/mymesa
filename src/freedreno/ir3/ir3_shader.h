@@ -401,6 +401,7 @@ struct ir3_shader_variant {
 	unsigned branchstack;
 
 	unsigned max_sun;
+	unsigned loops;
 
 	/* the instructions length is in units of instruction groups
 	 * (4 instructions for a3xx, 16 instructions for a4xx.. each
@@ -459,6 +460,7 @@ struct ir3_shader_variant {
 		/* fragment shader specific: */
 		bool    bary       : 1;   /* fetched varying (vs one loaded into reg) */
 		bool    rasterflat : 1;   /* special handling for emit->rasterflat */
+		bool    use_ldlv   : 1;   /* internal to ir3_compiler_nir */
 		bool    half       : 1;
 		enum glsl_interp_mode interpolate;
 	} inputs[16 + 2];  /* +POSITION +FACE */

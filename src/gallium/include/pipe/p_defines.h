@@ -691,7 +691,7 @@ enum pipe_cap
    PIPE_CAP_OCCLUSION_QUERY,
    PIPE_CAP_QUERY_TIME_ELAPSED,
    PIPE_CAP_TEXTURE_SWIZZLE,
-   PIPE_CAP_MAX_TEXTURE_2D_LEVELS,
+   PIPE_CAP_MAX_TEXTURE_2D_SIZE,
    PIPE_CAP_MAX_TEXTURE_3D_LEVELS,
    PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS,
    PIPE_CAP_TEXTURE_MIRROR_CLAMP,
@@ -883,6 +883,7 @@ enum pipe_cap
    PIPE_CAP_MAX_FRAMES_IN_FLIGHT,
    PIPE_CAP_DMABUF,
    PIPE_CAP_PREFER_COMPUTE_BLIT_FOR_MULTIMEDIA,
+   PIPE_CAP_FRAGMENT_SHADER_INTERLOCK,
 };
 
 /**
@@ -890,7 +891,7 @@ enum pipe_cap
  * return a bitmask of the supported priorities.  If the driver does not
  * support prioritized contexts, it can return 0.
  *
- * Note that these match __DRI2_RENDER_HAS_CONTEXT_PRIORITY_*
+ * Note that these match __DRI2_RENDERER_HAS_CONTEXT_PRIORITY_*
  */
 #define PIPE_CONTEXT_PRIORITY_LOW     (1 << 0)
 #define PIPE_CONTEXT_PRIORITY_MEDIUM  (1 << 1)

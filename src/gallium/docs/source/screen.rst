@@ -34,8 +34,7 @@ The integer capabilities:
 * ``PIPE_CAP_QUERY_TIME_ELAPSED``: Whether PIPE_QUERY_TIME_ELAPSED queries are available.
 * ``PIPE_CAP_TEXTURE_SWIZZLE``: Whether swizzling through sampler views is
   supported.
-* ``PIPE_CAP_MAX_TEXTURE_2D_LEVELS``: The maximum number of mipmap levels available
-  for a 2D texture.
+* ``PIPE_CAP_MAX_TEXTURE_2D_SIZE``: The maximum size of 2D (and 1D) textures.
 * ``PIPE_CAP_MAX_TEXTURE_3D_LEVELS``: The maximum number of mipmap levels available
   for a 3D texture.
 * ``PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS``: The maximum number of mipmap levels available
@@ -526,6 +525,8 @@ The integer capabilities:
   resource_from_handle and resource_get_handle.
 * ``PIPE_CAP_PREFER_COMPUTE_BLIT_FOR_MULTIMEDIA``: Whether VDPAU, VAAPI, and
   OpenMAX should use a compute-based blit instead of pipe_context::blit.
+* ``PIPE_CAP_FRAGMENT_SHADER_INTERLOCK``: True if fragment shader interlock
+  functionality is supported.
 
 .. _pipe_capf:
 

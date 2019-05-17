@@ -828,7 +828,7 @@ si_nir_opts(struct nir_shader *nir)
 		NIR_PASS(progress, nir, nir_opt_copy_prop_vars);
 		NIR_PASS(progress, nir, nir_opt_dead_write_vars);
 
-		NIR_PASS_V(nir, nir_lower_alu_to_scalar);
+		NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL);
 		NIR_PASS_V(nir, nir_lower_phis_to_scalar);
 		NIR_PASS_V(nir, nir_lower_sincos);
 
@@ -851,7 +851,7 @@ si_nir_opts(struct nir_shader *nir)
 		NIR_PASS(progress, nir, nir_opt_constant_folding);
 
 		if (lower_flrp != 0) {
-			bool lower_flrp_progress;
+			bool lower_flrp_progress = false;
 
 			NIR_PASS(lower_flrp_progress, nir, nir_lower_flrp,
 				 lower_flrp,

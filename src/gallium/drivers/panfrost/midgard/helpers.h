@@ -23,13 +23,13 @@
  */
 
 #define OP_IS_STORE_VARY(op) (\
-		op == midgard_op_store_vary_16 || \
-		op == midgard_op_store_vary_32 \
+		op == midgard_op_st_vary_16 || \
+		op == midgard_op_st_vary_32 \
 	)
 
 #define OP_IS_STORE(op) (\
                 OP_IS_STORE_VARY(op) || \
-                op == midgard_op_store_cubemap_coords \
+                op == midgard_op_st_cubemap_coords \
 	)
 
 #define OP_IS_MOVE(op) ( \
@@ -70,6 +70,9 @@
 
 /* Is the op commutative? */
 #define OP_COMMUTES (1 << 3)
+
+/* Does the op convert types between int- and float- space (i2f/f2u/etc) */
+#define OP_TYPE_CONVERT (1 << 4)
 
 /* Vector-independant shorthands for the above; these numbers are arbitrary and
  * not from the ISA. Convert to the above with unit_enum_to_midgard */
@@ -196,7 +199,8 @@ static struct {
         [midgard_alu_op_ule]		 = {"ule", UNITS_MOST},
 
         [midgard_alu_op_icsel]		 = {"icsel", UNITS_ADD},
-        [midgard_alu_op_fcsel_i]	 = {"fcsel_i", UNITS_ADD},
+        [midgard_alu_op_icsel_v]         = {"icsel_v", UNITS_ADD},
+        [midgard_alu_op_fcsel_v]	 = {"fcsel_v", UNITS_ADD},
         [midgard_alu_op_fcsel]		 = {"fcsel", UNITS_ADD | UNIT_SMUL},
 
         [midgard_alu_op_frcp]		 = {"frcp", UNIT_VLUT},
@@ -206,11 +210,11 @@ static struct {
         [midgard_alu_op_fexp2]		 = {"fexp2", UNIT_VLUT},
         [midgard_alu_op_flog2]		 = {"flog2", UNIT_VLUT},
 
-        [midgard_alu_op_f2i]		 = {"f2i", UNITS_ADD},
-        [midgard_alu_op_f2u]		 = {"f2u", UNITS_ADD},
-        [midgard_alu_op_f2u8]		 = {"f2u8", UNITS_ADD},
-        [midgard_alu_op_i2f]		 = {"i2f", UNITS_ADD},
-        [midgard_alu_op_u2f]		 = {"u2f", UNITS_ADD},
+        [midgard_alu_op_f2i]		 = {"f2i", UNITS_ADD | OP_TYPE_CONVERT},
+        [midgard_alu_op_f2u]		 = {"f2u", UNITS_ADD | OP_TYPE_CONVERT},
+        [midgard_alu_op_f2u8]		 = {"f2u8", UNITS_ADD | OP_TYPE_CONVERT},
+        [midgard_alu_op_i2f]		 = {"i2f", UNITS_ADD | OP_TYPE_CONVERT},
+        [midgard_alu_op_u2f]		 = {"u2f", UNITS_ADD | OP_TYPE_CONVERT},
 
         [midgard_alu_op_fsin]		 = {"fsin", UNIT_VLUT},
         [midgard_alu_op_fcos]		 = {"fcos", UNIT_VLUT},
@@ -261,7 +265,7 @@ static struct {
 /* Is this opcode that of an integer (regardless of signedness)? Instruction
  * names authoritatively determine types */
 
-static bool
+static inline bool
 midgard_is_integer_op(int op)
 {
         const char *name = alu_opcode_props[op].name;
@@ -270,4 +274,16 @@ midgard_is_integer_op(int op)
                 return false;
 
         return (name[0] == 'i') || (name[0] == 'u');
+}
+
+/* Does this opcode *write* an integer? Same as is_integer_op, unless it's a
+ * conversion between int<->float in which case we do the opposite */
+
+static inline bool
+midgard_is_integer_out_op(int op)
+{
+        bool is_int = midgard_is_integer_op(op);
+        bool is_conversion = alu_opcode_props[op].props & OP_TYPE_CONVERT;
+
+        return is_int ^ is_conversion;
 }

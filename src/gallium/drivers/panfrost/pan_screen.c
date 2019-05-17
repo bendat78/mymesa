@@ -117,7 +117,8 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
         case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
                 return 1;
 
-        case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
+        case PIPE_CAP_MAX_TEXTURE_2D_SIZE:
+                return 4096;
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
                 return 13;
@@ -397,6 +398,11 @@ panfrost_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
 
         case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
                 return 16.0; /* arbitrary */
+
+        case PIPE_CAPF_MIN_CONSERVATIVE_RASTER_DILATE:
+        case PIPE_CAPF_MAX_CONSERVATIVE_RASTER_DILATE:
+        case PIPE_CAPF_CONSERVATIVE_RASTER_DILATE_GRANULARITY:
+                return 0.0f;
 
         default:
                 debug_printf("Unexpected PIPE_CAPF %d query\n", param);

@@ -150,7 +150,7 @@ radv_optimize_nir(struct nir_shader *shader, bool optimize_conservatively,
 		NIR_PASS(progress, shader, nir_opt_copy_prop_vars);
 		NIR_PASS(progress, shader, nir_opt_dead_write_vars);
 
-                NIR_PASS_V(shader, nir_lower_alu_to_scalar);
+                NIR_PASS_V(shader, nir_lower_alu_to_scalar, NULL);
                 NIR_PASS_V(shader, nir_lower_phis_to_scalar);
 
                 NIR_PASS(progress, shader, nir_copy_prop);
@@ -166,11 +166,11 @@ radv_optimize_nir(struct nir_shader *shader, bool optimize_conservatively,
                 NIR_PASS(progress, shader, nir_opt_dead_cf);
                 NIR_PASS(progress, shader, nir_opt_cse);
                 NIR_PASS(progress, shader, nir_opt_peephole_select, 8, true, true);
-                NIR_PASS(progress, shader, nir_opt_algebraic);
                 NIR_PASS(progress, shader, nir_opt_constant_folding);
+                NIR_PASS(progress, shader, nir_opt_algebraic);
 
                 if (lower_flrp != 0) {
-                        bool lower_flrp_progress;
+                        bool lower_flrp_progress = false;
                         NIR_PASS(lower_flrp_progress,
                                  shader,
                                  nir_lower_flrp,
@@ -773,7 +773,7 @@ generate_shader_stats(struct radv_device *device,
 		      struct _mesa_string_buffer *buf)
 {
 	enum chip_class chip_class = device->physical_device->rad_info.chip_class;
-	unsigned lds_increment = chip_class >= CIK ? 512 : 256;
+	unsigned lds_increment = chip_class >= GFX7 ? 512 : 256;
 	struct ac_shader_config *conf;
 	unsigned max_simd_waves;
 	unsigned lds_per_wave = 0;
@@ -875,7 +875,7 @@ radv_GetShaderInfoAMD(VkDevice _device,
 		if (!pInfo) {
 			*pInfoSize = sizeof(VkShaderStatisticsInfoAMD);
 		} else {
-			unsigned lds_multiplier = device->physical_device->rad_info.chip_class >= CIK ? 512 : 256;
+			unsigned lds_multiplier = device->physical_device->rad_info.chip_class >= GFX7 ? 512 : 256;
 			struct ac_shader_config *conf = &variant->config;
 
 			VkShaderStatisticsInfoAMD statistics = {};

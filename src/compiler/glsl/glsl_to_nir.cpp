@@ -270,6 +270,7 @@ nir_visitor::nir_visitor(gl_context *ctx, nir_shader *shader)
    this->result = NULL;
    this->impl = NULL;
    this->deref = NULL;
+   this->sig = NULL;
    memset(&this->b, 0, sizeof(this->b));
 }
 
@@ -1726,15 +1727,6 @@ type_is_signed(glsl_base_type type)
 {
    return type == GLSL_TYPE_INT || type == GLSL_TYPE_INT64 ||
       type == GLSL_TYPE_INT16;
-}
-
-static bool
-type_is_int(glsl_base_type type)
-{
-   return type == GLSL_TYPE_UINT || type == GLSL_TYPE_INT ||
-      type == GLSL_TYPE_UINT8 || type == GLSL_TYPE_INT8 ||
-      type == GLSL_TYPE_UINT16 || type == GLSL_TYPE_INT16 ||
-      type == GLSL_TYPE_UINT64 || type == GLSL_TYPE_INT64;
 }
 
 void

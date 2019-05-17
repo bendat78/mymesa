@@ -744,7 +744,7 @@ struct anv_state_table {
    struct anv_free_entry *map;
    uint32_t size;
    struct anv_block_state state;
-   struct u_vector mmap_cleanups;
+   struct u_vector cleanups;
 };
 
 struct anv_state_pool {
@@ -2157,12 +2157,6 @@ struct anv_xfb_binding {
 #define ANV_PARAM_DYN_OFFSET_IDX(param)   ((param) & 0xffff)
 
 struct anv_push_constants {
-   /* Current allocated size of this push constants data structure.
-    * Because a decent chunk of it may not be used (images on SKL, for
-    * instance), we won't actually allocate the entire structure up-front.
-    */
-   uint32_t size;
-
    /* Push constant data provided by the client through vkPushConstants */
    uint8_t client_data[MAX_PUSH_CONSTANTS_SIZE];
 
@@ -2345,7 +2339,7 @@ struct anv_cmd_state {
    bool                                         xfb_enabled;
    struct anv_xfb_binding                       xfb_bindings[MAX_XFB_BUFFERS];
    VkShaderStageFlags                           push_constant_stages;
-   struct anv_push_constants *                  push_constants[MESA_SHADER_STAGES];
+   struct anv_push_constants                    push_constants[MESA_SHADER_STAGES];
    struct anv_state                             binding_tables[MESA_SHADER_STAGES];
    struct anv_state                             samplers[MESA_SHADER_STAGES];
 
@@ -2464,14 +2458,6 @@ VkResult anv_cmd_buffer_execbuf(struct anv_device *device,
                                 VkFence fence);
 
 VkResult anv_cmd_buffer_reset(struct anv_cmd_buffer *cmd_buffer);
-
-VkResult
-anv_cmd_buffer_ensure_push_constants_size(struct anv_cmd_buffer *cmd_buffer,
-                                          gl_shader_stage stage, uint32_t size);
-#define anv_cmd_buffer_ensure_push_constant_field(cmd_buffer, stage, field) \
-   anv_cmd_buffer_ensure_push_constants_size(cmd_buffer, stage, \
-      (offsetof(struct anv_push_constants, field) + \
-       sizeof(cmd_buffer->state.push_constants[0]->field)))
 
 struct anv_state anv_cmd_buffer_emit_dynamic(struct anv_cmd_buffer *cmd_buffer,
                                              const void *data, uint32_t size, uint32_t alignment);
@@ -3201,7 +3187,13 @@ anv_can_sample_with_hiz(const struct gen_device_info * const devinfo,
    if (!(image->aspects & VK_IMAGE_ASPECT_DEPTH_BIT))
       return false;
 
-   if (devinfo->gen < 8)
+   /* Allow this feature on BDW even though it is disabled in the BDW devinfo
+    * struct. There's documentation which suggests that this feature actually
+    * reduces performance on BDW, but it has only been observed to help so
+    * far. Sampling fast-cleared blocks on BDW must also be handled with care
+    * (see depth_stencil_attachment_compute_aux_usage() for more info).
+    */
+   if (devinfo->gen != 8 && !devinfo->has_sample_with_hiz)
       return false;
 
    return image->samples == 1;
