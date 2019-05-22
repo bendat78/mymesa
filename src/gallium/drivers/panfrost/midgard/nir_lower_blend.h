@@ -1,5 +1,5 @@
 /*
- * Copyright Â© 2016 Intel Corporation
+ * Copyright Â 2019 Alyssa Rosenzweig
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -19,26 +19,38 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
+ *
  */
 
-#ifndef BUILD_ID_H
-#define BUILD_ID_H
+#ifndef NIR_BLEND_H
+#define NIR_BLEND_H
 
-#ifdef HAVE_DL_ITERATE_PHDR
+#include "compiler/nir/nir.h"
 
-#include <stdint.h>
+/* These structs encapsulates the blend state such that it can be lowered
+ * cleanly
+ */
 
-struct build_id_note;
+typedef struct {
+      enum blend_func func;
 
-const struct build_id_note *
-build_id_find_nhdr_for_addr(const void *addr);
+      enum blend_factor src_factor;
+      bool invert_src_factor;
 
-unsigned
-build_id_length(const struct build_id_note *note);
+      enum blend_factor dst_factor;
+      bool invert_dst_factor;
+} nir_lower_blend_channel;
 
-const uint8_t *
-build_id_data(const struct build_id_note *note);
+typedef struct {
+   struct {
+      nir_lower_blend_channel rgb;
+      nir_lower_blend_channel alpha;
+
+      /* 4-bit colormask. 0x0 for none, 0xF for RGBA, 0x1 for R */
+      unsigned colormask;
+   } rt[8];
+} nir_lower_blend_options;
+
+void nir_lower_blend(nir_shader *shader, nir_lower_blend_options options);
 
 #endif
-
-#endif /* BUILD_ID_H */

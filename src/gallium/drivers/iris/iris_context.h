@@ -247,6 +247,36 @@ enum iris_predicate_state {
 /** @} */
 
 /**
+ * An uncompiled, API-facing shader.  This is the Gallium CSO for shaders.
+ * It primarily contains the NIR for the shader.
+ *
+ * Each API-facing shader can be compiled into multiple shader variants,
+ * based on non-orthogonal state dependencies, recorded in the shader key.
+ *
+ * See iris_compiled_shader, which represents a compiled shader variant.
+ */
+struct iris_uncompiled_shader {
+   struct nir_shader *nir;
+
+   struct pipe_stream_output_info stream_output;
+
+   /* The serialized NIR (for the disk cache) and size in bytes. */
+   void *ir_cache_binary;
+   uint32_t ir_cache_binary_size;
+
+   unsigned program_id;
+
+   /** Bitfield of (1 << IRIS_NOS_*) flags. */
+   unsigned nos;
+
+   /** Have any shader variants been compiled yet? */
+   bool compiled_once;
+
+   /** Should we use ALT mode for math?  Useful for ARB programs. */
+   bool use_alt_mode;
+};
+
+/**
  * A compiled shader variant, containing a pointer to the GPU assembly,
  * as well as program data and other packets needed by state upload.
  *
@@ -753,6 +783,19 @@ const struct shader_info *iris_get_shader_info(const struct iris_context *ice,
 struct iris_bo *iris_get_scratch_space(struct iris_context *ice,
                                        unsigned per_thread_scratch,
                                        gl_shader_stage stage);
+
+/* iris_disk_cache.c */
+
+void iris_disk_cache_store(struct disk_cache *cache,
+                           const struct iris_uncompiled_shader *ish,
+                           const struct iris_compiled_shader *shader,
+                           const void *prog_key,
+                           uint32_t prog_key_size);
+struct iris_compiled_shader *
+iris_disk_cache_retrieve(struct iris_context *ice,
+                         const struct iris_uncompiled_shader *ish,
+                         const void *prog_key,
+                         uint32_t prog_key_size);
 
 /* iris_program_cache.c */
 

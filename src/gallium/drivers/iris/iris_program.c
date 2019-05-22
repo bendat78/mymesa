@@ -38,6 +38,7 @@
 #include "util/u_atomic.h"
 #include "compiler/nir/nir.h"
 #include "compiler/nir/nir_builder.h"
+#include "compiler/nir/nir_serialize.h"
 #include "intel/compiler/brw_compiler.h"
 #include "intel/compiler/brw_nir.h"
 #include "iris_context.h"
@@ -54,29 +55,6 @@ get_new_program_id(struct iris_screen *screen)
 {
    return p_atomic_inc_return(&screen->program_id);
 }
-
-/**
- * An uncompiled, API-facing shader.  This is the Gallium CSO for shaders.
- * It primarily contains the NIR for the shader.
- *
- * Each API-facing shader can be compiled into multiple shader variants,
- * based on non-orthogonal state dependencies, recorded in the shader key.
- *
- * See iris_compiled_shader, which represents a compiled shader variant.
- */
-struct iris_uncompiled_shader {
-   nir_shader *nir;
-
-   struct pipe_stream_output_info stream_output;
-
-   unsigned program_id;
-
-   /** Bitfield of (1 << IRIS_NOS_*) flags. */
-   unsigned nos;
-
-   /** Have any shader variants been compiled yet? */
-   bool compiled_once;
-};
 
 static nir_ssa_def *
 get_aoa_deref_offset(nir_builder *b,
@@ -565,8 +543,7 @@ iris_compile_vs(struct iris_context *ice,
       nir_shader_gather_info(nir, impl);
    }
 
-   if (nir->info.name && strncmp(nir->info.name, "ARB", 3) == 0)
-      prog_data->use_alt_mode = true;
+   prog_data->use_alt_mode = ish->use_alt_mode;
 
    iris_setup_uniforms(compiler, mem_ctx, nir, prog_data, &system_values,
                        &num_system_values, &num_cbufs);
@@ -609,6 +586,8 @@ iris_compile_vs(struct iris_context *ice,
                          prog_data, so_decls, system_values, num_system_values,
                          num_cbufs);
 
+   iris_disk_cache_store(screen->disk_cache, ish, shader, key, sizeof(*key));
+
    ralloc_free(mem_ctx);
    return shader;
 }
@@ -632,6 +611,9 @@ iris_update_compiled_vs(struct iris_context *ice)
    struct iris_compiled_shader *old = ice->shaders.prog[IRIS_CACHE_VS];
    struct iris_compiled_shader *shader =
       iris_find_cached_shader(ice, IRIS_CACHE_VS, sizeof(key), &key);
+
+   if (!shader)
+      shader = iris_disk_cache_retrieve(ice, ish, &key, sizeof(key));
 
    if (!shader)
       shader = iris_compile_vs(ice, ish, &key);
@@ -800,6 +782,9 @@ iris_compile_tcs(struct iris_context *ice,
                          prog_data, NULL, system_values, num_system_values,
                          num_cbufs);
 
+   if (ish)
+      iris_disk_cache_store(screen->disk_cache, ish, shader, key, sizeof(*key));
+
    ralloc_free(mem_ctx);
    return shader;
 }
@@ -832,6 +817,9 @@ iris_update_compiled_tcs(struct iris_context *ice)
    struct iris_compiled_shader *old = ice->shaders.prog[IRIS_CACHE_TCS];
    struct iris_compiled_shader *shader =
       iris_find_cached_shader(ice, IRIS_CACHE_TCS, sizeof(key), &key);
+
+   if (tcs && !shader)
+      shader = iris_disk_cache_retrieve(ice, tcs, &key, sizeof(key));
 
    if (!shader)
       shader = iris_compile_tcs(ice, tcs, &key);
@@ -902,6 +890,8 @@ iris_compile_tes(struct iris_context *ice,
                          prog_data, so_decls, system_values, num_system_values,
                          num_cbufs);
 
+   iris_disk_cache_store(screen->disk_cache, ish, shader, key, sizeof(*key));
+
    ralloc_free(mem_ctx);
    return shader;
 }
@@ -926,6 +916,9 @@ iris_update_compiled_tes(struct iris_context *ice)
    struct iris_compiled_shader *old = ice->shaders.prog[IRIS_CACHE_TES];
    struct iris_compiled_shader *shader =
       iris_find_cached_shader(ice, IRIS_CACHE_TES, sizeof(key), &key);
+
+   if (!shader)
+      shader = iris_disk_cache_retrieve(ice, ish, &key, sizeof(key));
 
    if (!shader)
       shader = iris_compile_tes(ice, ish, &key);
@@ -1002,6 +995,8 @@ iris_compile_gs(struct iris_context *ice,
                          prog_data, so_decls, system_values, num_system_values,
                          num_cbufs);
 
+   iris_disk_cache_store(screen->disk_cache, ish, shader, key, sizeof(*key));
+
    ralloc_free(mem_ctx);
    return shader;
 }
@@ -1027,6 +1022,9 @@ iris_update_compiled_gs(struct iris_context *ice)
 
       shader =
          iris_find_cached_shader(ice, IRIS_CACHE_GS, sizeof(key), &key);
+
+      if (!shader)
+         shader = iris_disk_cache_retrieve(ice, ish, &key, sizeof(key));
 
       if (!shader)
          shader = iris_compile_gs(ice, ish, &key);
@@ -1062,8 +1060,7 @@ iris_compile_fs(struct iris_context *ice,
 
    nir_shader *nir = nir_shader_clone(mem_ctx, ish->nir);
 
-   if (nir->info.name && strncmp(nir->info.name, "ARB", 3) == 0)
-      prog_data->use_alt_mode = true;
+   prog_data->use_alt_mode = ish->use_alt_mode;
 
    iris_setup_uniforms(compiler, mem_ctx, nir, prog_data, &system_values,
                        &num_system_values, &num_cbufs);
@@ -1092,6 +1089,8 @@ iris_compile_fs(struct iris_context *ice,
                          prog_data, NULL, system_values, num_system_values,
                          num_cbufs);
 
+   iris_disk_cache_store(screen->disk_cache, ish, shader, key, sizeof(*key));
+
    ralloc_free(mem_ctx);
    return shader;
 }
@@ -1117,6 +1116,9 @@ iris_update_compiled_fs(struct iris_context *ice)
    struct iris_compiled_shader *old = ice->shaders.prog[IRIS_CACHE_FS];
    struct iris_compiled_shader *shader =
       iris_find_cached_shader(ice, IRIS_CACHE_FS, sizeof(key), &key);
+
+   if (!shader)
+      shader = iris_disk_cache_retrieve(ice, ish, &key, sizeof(key));
 
    if (!shader)
       shader = iris_compile_fs(ice, ish, &key, ice->shaders.last_vue_map);
@@ -1352,6 +1354,8 @@ iris_compile_cs(struct iris_context *ice,
                          prog_data, NULL, system_values, num_system_values,
                          num_cbufs);
 
+   iris_disk_cache_store(screen->disk_cache, ish, shader, key, sizeof(*key));
+
    ralloc_free(mem_ctx);
    return shader;
 }
@@ -1370,6 +1374,9 @@ iris_update_compiled_compute_shader(struct iris_context *ice)
    struct iris_compiled_shader *old = ice->shaders.prog[IRIS_CACHE_CS];
    struct iris_compiled_shader *shader =
       iris_find_cached_shader(ice, IRIS_CACHE_CS, sizeof(key), &key);
+
+   if (!shader)
+      shader = iris_disk_cache_retrieve(ice, ish, &key, sizeof(key));
 
    if (!shader)
       shader = iris_compile_cs(ice, ish, &key);
@@ -1481,6 +1488,30 @@ iris_create_uncompiled_shader(struct pipe_context *ctx,
       update_so_info(&ish->stream_output, nir->info.outputs_written);
    }
 
+   /* Save this now before potentially dropping nir->info.name */
+   if (nir->info.name && strncmp(nir->info.name, "ARB", 3) == 0)
+      ish->use_alt_mode = true;
+
+   if (screen->disk_cache) {
+      /* Serialize the NIR to a binary blob that we can hash for the disk
+       * cache.  First, drop unnecessary information (like variable names)
+       * so the serialized NIR is smaller, and also to let us detect more
+       * isomorphic shaders when hashing, increasing cache hits.
+       *
+       * We skip this step when not using the disk cache, as variable names
+       * are useful for inspecting and debugging shaders.
+       */
+      nir_strip(nir);
+
+      struct blob blob;
+      blob_init(&blob);
+      nir_serialize(&blob, ish->nir);
+      ish->ir_cache_binary = malloc(blob.size);
+      ish->ir_cache_binary_size = blob.size;
+      memcpy(ish->ir_cache_binary, blob.data, blob.size);
+      blob_finish(&blob);
+   }
+
    return ish;
 }
 
@@ -1514,7 +1545,8 @@ iris_create_vs_state(struct pipe_context *ctx,
       const struct gen_device_info *devinfo = &screen->devinfo;
       struct brw_vs_prog_key key = { KEY_INIT(devinfo->gen) };
 
-      iris_compile_vs(ice, ish, &key);
+      if (!iris_disk_cache_retrieve(ice, ish, &key, sizeof(key)))
+         iris_compile_vs(ice, ish, &key);
    }
 
    return ish;
@@ -1553,7 +1585,8 @@ iris_create_tcs_state(struct pipe_context *ctx,
       if (compiler->use_tcs_8_patch)
          key.input_vertices = info->tess.tcs_vertices_out;
 
-      iris_compile_tcs(ice, ish, &key);
+      if (!iris_disk_cache_retrieve(ice, ish, &key, sizeof(key)))
+         iris_compile_tcs(ice, ish, &key);
    }
 
    return ish;
@@ -1579,7 +1612,8 @@ iris_create_tes_state(struct pipe_context *ctx,
          .patch_inputs_read = info->patch_inputs_read,
       };
 
-      iris_compile_tes(ice, ish, &key);
+      if (!iris_disk_cache_retrieve(ice, ish, &key, sizeof(key)))
+         iris_compile_tes(ice, ish, &key);
    }
 
    return ish;
@@ -1599,7 +1633,8 @@ iris_create_gs_state(struct pipe_context *ctx,
       const struct gen_device_info *devinfo = &screen->devinfo;
       struct brw_gs_prog_key key = { KEY_INIT(devinfo->gen) };
 
-      iris_compile_gs(ice, ish, &key);
+      if (!iris_disk_cache_retrieve(ice, ish, &key, sizeof(key)))
+         iris_compile_gs(ice, ish, &key);
    }
 
    return ish;
@@ -1643,7 +1678,8 @@ iris_create_fs_state(struct pipe_context *ctx,
             can_rearrange_varyings ? 0 : info->inputs_read | VARYING_BIT_POS,
       };
 
-      iris_compile_fs(ice, ish, &key, NULL);
+      if (!iris_disk_cache_retrieve(ice, ish, &key, sizeof(key)))
+         iris_compile_fs(ice, ish, &key, NULL);
    }
 
    return ish;
@@ -1666,7 +1702,8 @@ iris_create_compute_state(struct pipe_context *ctx,
       const struct gen_device_info *devinfo = &screen->devinfo;
       struct brw_cs_prog_key key = { KEY_INIT(devinfo->gen) };
 
-      iris_compile_cs(ice, ish, &key);
+      if (!iris_disk_cache_retrieve(ice, ish, &key, sizeof(key)))
+         iris_compile_cs(ice, ish, &key);
    }
 
    return ish;

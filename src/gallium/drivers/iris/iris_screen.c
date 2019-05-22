@@ -510,6 +510,7 @@ iris_destroy_screen(struct pipe_screen *pscreen)
    iris_bo_unreference(screen->workaround_bo);
    u_transfer_helper_destroy(pscreen->transfer_helper);
    iris_bufmgr_destroy(screen->bufmgr);
+   disk_cache_destroy(screen->disk_cache);
    ralloc_free(screen);
 }
 
@@ -529,6 +530,13 @@ iris_get_compiler_options(struct pipe_screen *pscreen,
    assert(ir == PIPE_SHADER_IR_NIR);
 
    return screen->compiler->glsl_compiler_options[stage].NirOptions;
+}
+
+static struct disk_cache *
+iris_get_disk_shader_cache(struct pipe_screen *pscreen)
+{
+   struct iris_screen *screen = (struct iris_screen *) pscreen;
+   return screen->disk_cache;
 }
 
 static int
@@ -637,6 +645,8 @@ iris_screen_create(int fd, const struct pipe_screen_config *config)
    screen->compiler->shader_perf_log = iris_shader_perf_log;
    screen->compiler->supports_pull_constants = false;
 
+   iris_disk_cache_init(screen);
+
    slab_create_parent(&screen->transfer_pool,
                       sizeof(struct iris_transfer), 64);
 
@@ -658,6 +668,7 @@ iris_screen_create(int fd, const struct pipe_screen_config *config)
    pscreen->get_compute_param = iris_get_compute_param;
    pscreen->get_paramf = iris_get_paramf;
    pscreen->get_compiler_options = iris_get_compiler_options;
+   pscreen->get_disk_shader_cache = iris_get_disk_shader_cache;
    pscreen->is_format_supported = iris_is_format_supported;
    pscreen->context_create = iris_create_context;
    pscreen->flush_frontbuffer = iris_flush_frontbuffer;
