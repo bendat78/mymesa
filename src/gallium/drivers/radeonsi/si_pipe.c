@@ -499,6 +499,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	si_init_compute_blit_functions(sctx);
 	si_init_debug_functions(sctx);
 	si_init_fence_functions(sctx);
+	si_init_query_functions(sctx);
 	si_init_state_compute_functions(sctx);
 
 	if (sscreen->debug_flags & DBG(FORCE_DMA))
@@ -507,7 +508,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	/* Initialize graphics-only context functions. */
 	if (sctx->has_graphics) {
 		si_init_context_texture_functions(sctx);
-		si_init_query_functions(sctx);
 		si_init_msaa_functions(sctx);
 		si_init_shader_functions(sctx);
 		si_init_state_functions(sctx);
