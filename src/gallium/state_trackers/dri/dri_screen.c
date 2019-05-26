@@ -170,7 +170,7 @@ dri_fill_in_modes(struct dri_screen *screen)
 
    static const GLenum back_buffer_modes[] = {
       __DRI_ATTRIB_SWAP_NONE, __DRI_ATTRIB_SWAP_UNDEFINED,
-      __DRI_ATTRIB_SWAP_COPY
+      __DRI_ATTRIB_SWAP_COPY, __DRI_ATTRIB_SWAP_EXCHANGE
    };
 
    if (driQueryOptionb(&screen->dev->option_cache, "always_have_depth_buffer")) {
