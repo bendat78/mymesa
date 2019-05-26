@@ -786,7 +786,6 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(imax, imax);
                 ALU_CASE(umin, umin);
                 ALU_CASE(umax, umax);
-                ALU_CASE(fmov, fmov);
                 ALU_CASE(ffloor, ffloor);
                 ALU_CASE(fround_even, froundeven);
                 ALU_CASE(ftrunc, ftrunc);
@@ -797,7 +796,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(isub, isub);
                 ALU_CASE(imul, imul);
                 ALU_CASE(iabs, iabs);
-                ALU_CASE(imov, imov);
+                ALU_CASE(mov, imov);
 
                 ALU_CASE(feq32, feq);
                 ALU_CASE(fne32, fne);
@@ -865,6 +864,11 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(b32any_inequal3, ibany_neq);
                 ALU_CASE(b32any_inequal4, ibany_neq);
 
+                /* Source mods will be shoved in later */
+                ALU_CASE(fabs, fmov);
+                ALU_CASE(fneg, fmov);
+                ALU_CASE(fsat, fmov);
+
         /* For greater-or-equal, we lower to less-or-equal and flip the
          * arguments */
 
@@ -929,6 +933,9 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 midgard_is_integer_out_op(op) ? midgard_outmod_int :
                 instr->dest.saturate ? midgard_outmod_sat : midgard_outmod_none;
 
+        if (instr->op == nir_op_fsat)
+                outmod = midgard_outmod_sat;
+
         /* fmax(a, 0.0) can turn into a .pos modifier as an optimization */
 
         if (instr->op == nir_op_fmax) {
@@ -976,6 +983,18 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 nirmods[quirk_flipped_r24] = &instr->src[0];
         } else {
                 assert(0);
+        }
+
+        /* These were lowered to a move, so apply the corresponding mod */
+
+        if (instr->op == nir_op_fneg || instr->op == nir_op_fabs) {
+                nir_alu_src *s = nirmods[quirk_flipped_r24];
+
+                if (instr->op == nir_op_fneg)
+                        s->negate = !s->negate;
+
+                if (instr->op == nir_op_fabs)
+                        s->abs = !s->abs;
         }
 
         bool is_int = midgard_is_integer_op(op);

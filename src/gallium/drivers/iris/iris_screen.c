@@ -192,8 +192,11 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_INVALIDATE_BUFFER:
    case PIPE_CAP_SURFACE_REINTERPRET_BLOCKS:
       return true;
+   case PIPE_CAP_FBFETCH:
+      /* TODO: Support non-coherent FB fetch on Broadwell */
+      return devinfo->gen >= 9 ? BRW_MAX_DRAW_BUFFERS : 0;
+   case PIPE_CAP_FBFETCH_COHERENT:
    case PIPE_CAP_CONSERVATIVE_RASTER_INNER_COVERAGE:
-   case PIPE_CAP_TGSI_FS_FBFETCH:
    case PIPE_CAP_POST_DEPTH_COVERAGE:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE:

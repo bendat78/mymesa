@@ -711,8 +711,7 @@ fs_visitor::prepare_alu_destination_and_sources(const fs_builder &bld,
     * instructions.
     */
    switch (instr->op) {
-   case nir_op_imov:
-   case nir_op_fmov:
+   case nir_op_mov:
    case nir_op_vec2:
    case nir_op_vec3:
    case nir_op_vec4:
@@ -991,8 +990,7 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
    fs_reg result = prepare_alu_destination_and_sources(bld, instr, op, true);
 
    switch (instr->op) {
-   case nir_op_imov:
-   case nir_op_fmov:
+   case nir_op_mov:
    case nir_op_vec2:
    case nir_op_vec3:
    case nir_op_vec4: {
@@ -1011,7 +1009,7 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
          if (!(instr->dest.write_mask & (1 << i)))
             continue;
 
-         if (instr->op == nir_op_imov || instr->op == nir_op_fmov) {
+         if (instr->op == nir_op_mov) {
             inst = bld.MOV(offset(temp, bld, i),
                            offset(op[0], bld, instr->src[0].swizzle[i]));
          } else {
@@ -1110,6 +1108,28 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr)
 
       inst = bld.MOV(result, op[0]);
       inst->saturate = instr->dest.saturate;
+      break;
+
+   case nir_op_fsat:
+      inst = bld.MOV(result, op[0]);
+      inst->saturate = true;
+      break;
+
+   case nir_op_fneg:
+   case nir_op_ineg:
+      op[0].negate = true;
+      inst = bld.MOV(result, op[0]);
+      if (instr->op == nir_op_fneg)
+         inst->saturate = instr->dest.saturate;
+      break;
+
+   case nir_op_fabs:
+   case nir_op_iabs:
+      op[0].negate = false;
+      op[0].abs = true;
+      inst = bld.MOV(result, op[0]);
+      if (instr->op == nir_op_fabs)
+         inst->saturate = instr->dest.saturate;
       break;
 
    case nir_op_fsign:
