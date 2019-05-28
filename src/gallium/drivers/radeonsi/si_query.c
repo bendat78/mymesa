@@ -1920,6 +1920,7 @@ void si_init_query_functions(struct si_context *sctx)
 	sctx->b.end_query = si_end_query;
 	sctx->b.get_query_result = si_get_query_result;
 	sctx->b.get_query_result_resource = si_get_query_result_resource;
+
 	if (sctx->has_graphics) {
 		sctx->atoms.s.render_cond.emit = si_emit_query_predication;
 		sctx->b.render_condition = si_render_condition;
