@@ -699,6 +699,13 @@ emit_intrinsic_load_ubo(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 	} else {
 		base_lo = create_uniform_indirect(b, ubo, ir3_get_addr(ctx, src0, ptrsz));
 		base_hi = create_uniform_indirect(b, ubo + 1, ir3_get_addr(ctx, src0, ptrsz));
+
+		/* NOTE: since relative addressing is used, make sure constlen is
+		 * at least big enough to cover all the UBO addresses, since the
+		 * assembler won't know what the max address reg is.
+		 */
+		ctx->so->constlen = MAX2(ctx->so->constlen,
+			const_state->offsets.ubo + (ctx->s->info.num_ubos * ptrsz));
 	}
 
 	/* note: on 32bit gpu's base_hi is ignored and DCE'd */
@@ -1048,6 +1055,7 @@ emit_intrinsic_barrier(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		barrier->cat7.g = true;
 		barrier->cat7.r = true;
 		barrier->cat7.w = true;
+		barrier->cat7.l = true;
 		barrier->barrier_class = IR3_BARRIER_IMAGE_W |
 				IR3_BARRIER_BUFFER_W;
 		barrier->barrier_conflict =
@@ -1255,7 +1263,7 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 			 * since we don't know in the assembler what the max
 			 * addr reg value can be:
 			 */
-			ctx->so->constlen = ctx->s->num_uniforms;
+			ctx->so->constlen = MAX2(ctx->so->constlen, ctx->s->num_uniforms);
 		}
 		break;
 	case nir_intrinsic_load_ubo:
@@ -2381,6 +2389,7 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 	so->inputs[n].compmask = (1 << (ncomp + frac)) - 1;
 	so->inputs_count = MAX2(so->inputs_count, n + 1);
 	so->inputs[n].interpolate = in->data.interpolation;
+	so->inputs[n].ncomp = ncomp;
 
 	if (ctx->so->type == MESA_SHADER_FRAGMENT) {
 

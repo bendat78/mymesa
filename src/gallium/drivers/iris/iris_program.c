@@ -36,6 +36,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
 #include "util/u_atomic.h"
+#include "util/u_upload_mgr.h"
 #include "compiler/nir/nir.h"
 #include "compiler/nir/nir_builder.h"
 #include "compiler/nir/nir_serialize.h"
@@ -54,6 +55,50 @@ static unsigned
 get_new_program_id(struct iris_screen *screen)
 {
    return p_atomic_inc_return(&screen->program_id);
+}
+
+static void *
+upload_state(struct u_upload_mgr *uploader,
+             struct iris_state_ref *ref,
+             unsigned size,
+             unsigned alignment)
+{
+   void *p = NULL;
+   u_upload_alloc(uploader, 0, size, alignment, &ref->offset, &ref->res, &p);
+   return p;
+}
+
+void
+iris_upload_ubo_ssbo_surf_state(struct iris_context *ice,
+                                struct pipe_shader_buffer *buf,
+                                struct iris_state_ref *surf_state,
+                                bool ssbo)
+{
+   struct pipe_context *ctx = &ice->ctx;
+   struct iris_screen *screen = (struct iris_screen *) ctx->screen;
+
+   // XXX: these are not retained forever, use a separate uploader?
+   void *map =
+      upload_state(ice->state.surface_uploader, surf_state,
+                   screen->isl_dev.ss.size, 64);
+   if (!unlikely(map)) {
+      surf_state->res = NULL;
+      return;
+   }
+
+   struct iris_resource *res = (void *) buf->buffer;
+   struct iris_bo *surf_bo = iris_resource_bo(surf_state->res);
+   surf_state->offset += iris_bo_offset_from_base_address(surf_bo);
+
+   isl_buffer_fill_state(&screen->isl_dev, map,
+                         .address = res->bo->gtt_offset + res->offset +
+                                    buf->buffer_offset,
+                         .size_B = buf->buffer_size - res->offset,
+                         .format = ssbo ? ISL_FORMAT_RAW
+                                        : ISL_FORMAT_R32G32B32A32_FLOAT,
+                         .swizzle = ISL_SWIZZLE_IDENTITY,
+                         .stride_B = 1,
+                         .mocs = ice->vtbl.mocs(res->bo));
 }
 
 static nir_ssa_def *
@@ -228,6 +273,14 @@ assign_common_binding_table_offsets(const struct gen_device_info *devinfo,
       prog_data->binding_table.image_start = 0xd0d0d0d0;
    }
 
+   /* Allocate a slot in the UBO section for NIR constants if present.
+    * We don't include them in iris_compiled_shader::num_cbufs because
+    * they are uploaded separately from shs->constbuf[], but from a shader
+    * point of view, they're another UBO (at the end of the section).
+    */
+   if (nir->constant_data_size > 0)
+      num_cbufs++;
+
    if (num_cbufs) {
       //assert(info->num_ubos <= BRW_MAX_UBO);
       prog_data->binding_table.ubo_start = next_binding_table_offset;
@@ -316,6 +369,7 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
 
    b.cursor = nir_before_block(nir_start_block(impl));
    nir_ssa_def *temp_ubo_name = nir_ssa_undef(&b, 1, 32);
+   nir_ssa_def *temp_const_ubo_name = NULL;
 
    /* Turn system value intrinsics into uniforms */
    nir_foreach_block(block, impl) {
@@ -327,6 +381,34 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
          nir_ssa_def *offset;
 
          switch (intrin->intrinsic) {
+         case nir_intrinsic_load_constant: {
+            /* This one is special because it reads from the shader constant
+             * data and not cbuf0 which gallium uploads for us.
+             */
+            b.cursor = nir_before_instr(instr);
+            nir_ssa_def *offset =
+               nir_iadd_imm(&b, nir_ssa_for_src(&b, intrin->src[0], 1),
+                                nir_intrinsic_base(intrin));
+
+            if (temp_const_ubo_name == NULL)
+               temp_const_ubo_name = nir_imm_int(&b, 0);
+
+            nir_intrinsic_instr *load_ubo =
+               nir_intrinsic_instr_create(b.shader, nir_intrinsic_load_ubo);
+            load_ubo->num_components = intrin->num_components;
+            load_ubo->src[0] = nir_src_for_ssa(temp_const_ubo_name);
+            load_ubo->src[1] = nir_src_for_ssa(offset);
+            nir_ssa_dest_init(&load_ubo->instr, &load_ubo->dest,
+                              intrin->dest.ssa.num_components,
+                              intrin->dest.ssa.bit_size,
+                              intrin->dest.ssa.name);
+            nir_builder_instr_insert(&b, &load_ubo->instr);
+
+            nir_ssa_def_rewrite_uses(&intrin->dest.ssa,
+                                     nir_src_for_ssa(&load_ubo->dest.ssa));
+            nir_instr_remove(&intrin->instr);
+            continue;
+         }
          case nir_intrinsic_load_user_clip_plane: {
             unsigned ucp = nir_intrinsic_ucp_id(intrin);
 
@@ -446,7 +528,8 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
             if (load->src[0].ssa == temp_ubo_name) {
                nir_instr_rewrite_src(instr, &load->src[0],
                                      nir_src_for_ssa(nir_imm_int(&b, 0)));
-            } else if (nir_src_as_uint(load->src[0]) == 0) {
+            } else if (nir_src_is_const(load->src[0]) &&
+                       nir_src_as_uint(load->src[0]) == 0) {
                nir_ssa_def *offset =
                   nir_iadd(&b, load->src[1].ssa,
                            nir_imm_int(&b, 4 * num_system_values));
@@ -482,6 +565,16 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
    unsigned num_cbufs = nir->info.num_ubos;
    if (num_cbufs || num_system_values || nir->num_uniforms)
       num_cbufs++;
+
+   /* Constant loads (if any) need to go at the end of the constant buffers so
+    * we need to know num_cbufs before we can lower to them.
+    */
+   if (temp_const_ubo_name != NULL) {
+      nir_load_const_instr *const_ubo_index =
+         nir_instr_as_load_const(temp_const_ubo_name->parent_instr);
+      assert(const_ubo_index->def.bit_size == 32);
+      const_ubo_index->value[0].u32 = num_cbufs;
+   }
 
    *out_system_values = system_values;
    *out_num_system_values = num_system_values;
@@ -1468,6 +1561,7 @@ iris_create_uncompiled_shader(struct pipe_context *ctx,
                               nir_shader *nir,
                               const struct pipe_stream_output_info *so_info)
 {
+   struct iris_context *ice = (void *)ctx;
    struct iris_screen *screen = (struct iris_screen *)ctx->screen;
    const struct gen_device_info *devinfo = &screen->devinfo;
 
@@ -1480,6 +1574,19 @@ iris_create_uncompiled_shader(struct pipe_context *ctx,
 
    NIR_PASS_V(nir, brw_nir_lower_image_load_store, devinfo);
    NIR_PASS_V(nir, iris_lower_storage_image_derefs);
+
+   if (nir->constant_data_size > 0) {
+      unsigned data_offset;
+      u_upload_data(ice->shaders.uploader, 0, nir->constant_data_size,
+                    32, nir->constant_data, &data_offset, &ish->const_data);
+
+      struct pipe_shader_buffer psb = {
+         .buffer = ish->const_data,
+         .buffer_offset = data_offset,
+         .buffer_size = nir->constant_data_size,
+      };
+      iris_upload_ubo_ssbo_surf_state(ice, &psb, &ish->const_data_state, false);
+   }
 
    ish->program_id = get_new_program_id(screen);
    ish->nir = nir;
@@ -1496,20 +1603,20 @@ iris_create_uncompiled_shader(struct pipe_context *ctx,
       /* Serialize the NIR to a binary blob that we can hash for the disk
        * cache.  First, drop unnecessary information (like variable names)
        * so the serialized NIR is smaller, and also to let us detect more
-       * isomorphic shaders when hashing, increasing cache hits.
-       *
-       * We skip this step when not using the disk cache, as variable names
-       * are useful for inspecting and debugging shaders.
+       * isomorphic shaders when hashing, increasing cache hits.  We clone
+       * the NIR before stripping away this info because it can be useful
+       * when inspecting and debugging shaders.
        */
-      nir_strip(nir);
+      nir_shader *clone = nir_shader_clone(NULL, nir);
+      nir_strip(clone);
 
       struct blob blob;
       blob_init(&blob);
-      nir_serialize(&blob, ish->nir);
-      ish->ir_cache_binary = malloc(blob.size);
-      ish->ir_cache_binary_size = blob.size;
-      memcpy(ish->ir_cache_binary, blob.data, blob.size);
+      nir_serialize(&blob, clone);
+      _mesa_sha1_compute(blob.data, blob.size, ish->nir_sha1);
       blob_finish(&blob);
+
+      ralloc_free(clone);
    }
 
    return ish;
@@ -1723,6 +1830,11 @@ iris_delete_shader_state(struct pipe_context *ctx, void *state, gl_shader_stage 
    if (ice->shaders.uncompiled[stage] == ish) {
       ice->shaders.uncompiled[stage] = NULL;
       ice->state.dirty |= IRIS_DIRTY_UNCOMPILED_VS << stage;
+   }
+
+   if (ish->const_data) {
+      pipe_resource_reference(&ish->const_data, NULL);
+      pipe_resource_reference(&ish->const_data_state.res, NULL);
    }
 
    ralloc_free(ish->nir);

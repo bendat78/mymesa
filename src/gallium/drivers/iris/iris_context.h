@@ -260,9 +260,8 @@ struct iris_uncompiled_shader {
 
    struct pipe_stream_output_info stream_output;
 
-   /* The serialized NIR (for the disk cache) and size in bytes. */
-   void *ir_cache_binary;
-   uint32_t ir_cache_binary_size;
+   /* A SHA1 of the serialized NIR for the disk cache. */
+   unsigned char nir_sha1[20];
 
    unsigned program_id;
 
@@ -274,6 +273,12 @@ struct iris_uncompiled_shader {
 
    /** Should we use ALT mode for math?  Useful for ARB programs. */
    bool use_alt_mode;
+
+   /** Constant data scraped from the shader by nir_opt_large_constants */
+   struct pipe_resource *const_data;
+
+   /** Surface state for const_data */
+   struct iris_state_ref const_data_state;
 };
 
 /**
@@ -781,6 +786,10 @@ void gen11_emit_urb_setup(struct iris_context *ice,
                           bool tess_present, bool gs_present);
 
 /* iris_program.c */
+void iris_upload_ubo_ssbo_surf_state(struct iris_context *ice,
+                                     struct pipe_shader_buffer *buf,
+                                     struct iris_state_ref *surf_state,
+                                     bool ssbo);
 const struct shader_info *iris_get_shader_info(const struct iris_context *ice,
                                                gl_shader_stage stage);
 struct iris_bo *iris_get_scratch_space(struct iris_context *ice,

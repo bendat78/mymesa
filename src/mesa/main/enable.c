@@ -107,7 +107,7 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_NV_primitive_restart */
       case GL_PRIMITIVE_RESTART_NV:
-         if (!ctx->Extensions.NV_primitive_restart)
+         if (!_mesa_has_NV_primitive_restart(ctx))
             goto invalid_enum_error;
          if (ctx->Array.PrimitiveRestart == state)
             return;
@@ -882,9 +882,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_ARB_sample_shading */
       case GL_SAMPLE_SHADING:
-         if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
+         if (!_mesa_has_ARB_sample_shading(ctx) && !_mesa_is_gles3(ctx))
             goto invalid_enum_error;
-         CHECK_EXTENSION(ARB_sample_shading);
          if (ctx->Multisample.SampleShading == state)
             return;
          FLUSH_VERTICES(ctx, ctx->DriverFlags.NewSampleShading ? 0 :
@@ -1064,7 +1063,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 
       case GL_TILE_RASTER_ORDER_FIXED_MESA:
-         CHECK_EXTENSION(MESA_tile_raster_order);
+         if (!_mesa_has_MESA_tile_raster_order(ctx))
+            goto invalid_enum_error;
          if (ctx->TileRasterOrderFixed != state) {
             FLUSH_VERTICES(ctx, 0);
             ctx->NewDriverState |= ctx->DriverFlags.NewTileRasterOrder;
@@ -1073,7 +1073,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 
       case GL_TILE_RASTER_ORDER_INCREASING_X_MESA:
-         CHECK_EXTENSION(MESA_tile_raster_order);
+         if (!_mesa_has_MESA_tile_raster_order(ctx))
+            goto invalid_enum_error;
          if (ctx->TileRasterOrderIncreasingX != state) {
             FLUSH_VERTICES(ctx, 0);
             ctx->NewDriverState |= ctx->DriverFlags.NewTileRasterOrder;
@@ -1082,7 +1083,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 
       case GL_TILE_RASTER_ORDER_INCREASING_Y_MESA:
-         CHECK_EXTENSION(MESA_tile_raster_order);
+         if (!_mesa_has_MESA_tile_raster_order(ctx))
+            goto invalid_enum_error;
          if (ctx->TileRasterOrderIncreasingY != state) {
             FLUSH_VERTICES(ctx, 0);
             ctx->NewDriverState |= ctx->DriverFlags.NewTileRasterOrder;
@@ -1105,7 +1107,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 
       case GL_PRIMITIVE_RESTART_FIXED_INDEX:
-         if (!_mesa_is_gles3(ctx) && !ctx->Extensions.ARB_ES3_compatibility)
+         if (!_mesa_is_gles3(ctx) && !_mesa_has_ARB_ES3_compatibility(ctx))
             goto invalid_enum_error;
          if (ctx->Array.PrimitiveRestartFixedIndex != state) {
             FLUSH_VERTICES(ctx, 0);
@@ -1116,7 +1118,9 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL3.0 - GL_framebuffer_sRGB */
       case GL_FRAMEBUFFER_SRGB_EXT:
-         CHECK_EXTENSION(EXT_framebuffer_sRGB);
+         if (!_mesa_has_EXT_framebuffer_sRGB(ctx) &&
+             !_mesa_has_EXT_sRGB_write_control(ctx))
+            goto invalid_enum_error;
          _mesa_set_framebuffer_srgb(ctx, state);
          return;
 
@@ -1132,9 +1136,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* ARB_texture_multisample */
       case GL_SAMPLE_MASK:
-         if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles31(ctx))
+         if (!_mesa_has_ARB_texture_multisample(ctx) && !_mesa_is_gles31(ctx))
             goto invalid_enum_error;
-         CHECK_EXTENSION(ARB_texture_multisample);
          if (ctx->Multisample.SampleMask == state)
             return;
          FLUSH_VERTICES(ctx, ctx->DriverFlags.NewSampleMask ? 0 :
@@ -1144,7 +1147,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 
       case GL_BLEND_ADVANCED_COHERENT_KHR:
-         CHECK_EXTENSION(KHR_blend_equation_advanced_coherent);
+         if (!_mesa_has_KHR_blend_equation_advanced_coherent(ctx))
+            goto invalid_enum_error;
          if (ctx->Color.BlendCoherent == state)
             return;
          FLUSH_VERTICES(ctx, ctx->DriverFlags.NewBlend ? 0 : _NEW_COLOR);
@@ -1721,9 +1725,8 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL_NV_primitive_restart */
       case GL_PRIMITIVE_RESTART_NV:
-         if (ctx->API != API_OPENGL_COMPAT || !ctx->Extensions.NV_primitive_restart) {
+         if (!_mesa_has_NV_primitive_restart(ctx))
             goto invalid_enum_error;
-         }
          return ctx->Array.PrimitiveRestart;
 
       /* GL 3.1 primitive restart */
@@ -1734,14 +1737,15 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Array.PrimitiveRestart;
 
       case GL_PRIMITIVE_RESTART_FIXED_INDEX:
-         if (!_mesa_is_gles3(ctx) && !ctx->Extensions.ARB_ES3_compatibility) {
+         if (!_mesa_is_gles3(ctx) && !_mesa_has_ARB_ES3_compatibility(ctx))
             goto invalid_enum_error;
-         }
          return ctx->Array.PrimitiveRestartFixedIndex;
 
       /* GL3.0 - GL_framebuffer_sRGB */
       case GL_FRAMEBUFFER_SRGB_EXT:
-         CHECK_EXTENSION(EXT_framebuffer_sRGB);
+         if (!_mesa_has_EXT_framebuffer_sRGB(ctx) &&
+             !_mesa_has_EXT_sRGB_write_control(ctx))
+            goto invalid_enum_error;
          return ctx->Color.sRGBEnabled;
 
       /* GL_OES_EGL_image_external */
@@ -1753,20 +1757,19 @@ _mesa_IsEnabled( GLenum cap )
 
       /* ARB_texture_multisample */
       case GL_SAMPLE_MASK:
-         if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles31(ctx))
+         if (!_mesa_has_ARB_texture_multisample(ctx) && !_mesa_is_gles31(ctx))
             goto invalid_enum_error;
-         CHECK_EXTENSION(ARB_texture_multisample);
          return ctx->Multisample.SampleMask;
 
       /* ARB_sample_shading */
       case GL_SAMPLE_SHADING:
-         if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
+         if (!_mesa_has_ARB_sample_shading(ctx) && !_mesa_is_gles3(ctx))
             goto invalid_enum_error;
-         CHECK_EXTENSION(ARB_sample_shading);
          return ctx->Multisample.SampleShading;
 
       case GL_BLEND_ADVANCED_COHERENT_KHR:
-         CHECK_EXTENSION(KHR_blend_equation_advanced_coherent);
+         if (!_mesa_has_KHR_blend_equation_advanced_coherent(ctx))
+            goto invalid_enum_error;
          return ctx->Color.BlendCoherent;
 
       case GL_CONSERVATIVE_RASTERIZATION_INTEL:
@@ -1775,19 +1778,23 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->IntelConservativeRasterization;
 
       case GL_CONSERVATIVE_RASTERIZATION_NV:
-         CHECK_EXTENSION(NV_conservative_raster);
+         if (!_mesa_has_NV_conservative_raster(ctx))
+            goto invalid_enum_error;
          return ctx->ConservativeRasterization;
 
       case GL_TILE_RASTER_ORDER_FIXED_MESA:
-         CHECK_EXTENSION(MESA_tile_raster_order);
+         if (!_mesa_has_MESA_tile_raster_order(ctx))
+            goto invalid_enum_error;
          return ctx->TileRasterOrderFixed;
 
       case GL_TILE_RASTER_ORDER_INCREASING_X_MESA:
-         CHECK_EXTENSION(MESA_tile_raster_order);
+         if (!_mesa_has_MESA_tile_raster_order(ctx))
+            goto invalid_enum_error;
          return ctx->TileRasterOrderIncreasingX;
 
       case GL_TILE_RASTER_ORDER_INCREASING_Y_MESA:
-         CHECK_EXTENSION(MESA_tile_raster_order);
+         if (!_mesa_has_MESA_tile_raster_order(ctx))
+            goto invalid_enum_error;
          return ctx->TileRasterOrderIncreasingY;
 
       default:
