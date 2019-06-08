@@ -1024,6 +1024,7 @@ struct radv_attachment_state {
 	uint32_t                                     cleared_views;
 	VkClearValue                                 clear_value;
 	VkImageLayout                                current_layout;
+	struct radv_sample_locations_state	     sample_location;
 };
 
 struct radv_descriptor_state {
@@ -1033,6 +1034,11 @@ struct radv_descriptor_state {
 	struct radv_push_descriptor_set push_set;
 	bool push_dirty;
 	uint32_t dynamic_buffers[4 * MAX_DYNAMIC_BUFFERS];
+};
+
+struct radv_subpass_sample_locs_state {
+	uint32_t subpass_idx;
+	struct radv_sample_locations_state sample_location;
 };
 
 struct radv_cmd_state {
@@ -1056,6 +1062,9 @@ struct radv_cmd_state {
 	struct radv_attachment_state *                attachments;
 	struct radv_streamout_state                  streamout;
 	VkRect2D                                     render_area;
+
+	uint32_t                                     num_subpass_sample_locs;
+	struct radv_subpass_sample_locs_state *      subpass_sample_locs;
 
 	/* Index buffer */
 	struct radv_buffer                           *index_buffer;
@@ -1733,6 +1742,7 @@ struct radv_image_create_info {
 	const VkImageCreateInfo *vk_info;
 	bool scanout;
 	bool no_metadata_planes;
+	const struct radeon_bo_metadata *bo_metadata;
 };
 
 VkResult radv_image_create(VkDevice _device,
@@ -1920,7 +1930,8 @@ struct radv_render_pass_attachment {
 	VkImageLayout                                initial_layout;
 	VkImageLayout                                final_layout;
 
-	/* The subpass id in which the attachment will be used last. */
+	/* The subpass id in which the attachment will be used first/last. */
+	uint32_t				     first_subpass_idx;
 	uint32_t                                     last_subpass_idx;
 };
 

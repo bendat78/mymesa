@@ -27,8 +27,12 @@ files_panfrost = files(
   'pan_resource.h',
 
   'midgard/midgard_compile.c',
+  'midgard/mir.c',
   'midgard/midgard_print.c',
+  'midgard/midgard_schedule.c',
+  'midgard/midgard_emit.c',
   'midgard/midgard_ra.c',
+  'midgard/midgard_ra_pipeline.c',
   'midgard/midgard_liveness.c',
   'midgard/midgard_ops.c',
 
@@ -48,7 +52,6 @@ files_panfrost = files(
   'pan_swizzle.c',
   'pan_blending.c',
   'pan_blend_shaders.c',
-  'pan_wallpaper.c',
   'pan_pretty_print.c',
   'pan_fragment.c',
   'pan_sfbd.c',

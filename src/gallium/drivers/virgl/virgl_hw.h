@@ -242,6 +242,8 @@ enum virgl_formats {
 #define VIRGL_CAP_INDIRECT_PARAMS      (1 << 22)
 #define VIRGL_CAP_TRANSFORM_FEEDBACK3  (1 << 23)
 #define VIRGL_CAP_INDIRECT_INPUT_ADDR  (1 << 25)
+#define VIRGL_CAP_COPY_TRANSFER        (1 << 26)
+#define VIRGL_CAP_CLIP_HALFZ           (1 << 27)
 
 
 /* virgl bind flags - these are compatible with mesa 10.5 gallium.
@@ -261,6 +263,7 @@ enum virgl_formats {
 #define VIRGL_BIND_CURSOR        (1 << 16)
 #define VIRGL_BIND_CUSTOM        (1 << 17)
 #define VIRGL_BIND_SCANOUT       (1 << 18)
+#define VIRGL_BIND_STAGING       (1 << 19)
 
 struct virgl_caps_bool_set1 {
         unsigned indep_blend_enable:1;

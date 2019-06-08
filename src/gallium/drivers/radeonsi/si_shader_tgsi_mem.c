@@ -218,15 +218,8 @@ image_fetch_rsrc(
 	bool dcc_off = is_store;
 
 	if (!image->Register.Indirect) {
-		const struct tgsi_shader_info *info = bld_base->info;
-		unsigned images_writemask = info->images_store |
-					    info->images_atomic;
-
 		index = LLVMConstInt(ctx->i32,
 				     si_get_image_slot(image->Register.Index), 0);
-
-		if (images_writemask & (1 << image->Register.Index))
-			dcc_off = true;
 	} else {
 		/* From the GL_ARB_shader_image_load_store extension spec:
 		 *
@@ -1243,10 +1236,10 @@ si_lower_gather4_integer(struct si_shader_context *ctx,
 
 		uint32_t wa_num_format =
 			return_type == TGSI_RETURN_TYPE_UINT ?
-			S_008F14_NUM_FORMAT_GFX6(V_008F14_IMG_NUM_FORMAT_USCALED) :
-			S_008F14_NUM_FORMAT_GFX6(V_008F14_IMG_NUM_FORMAT_SSCALED);
+			S_008F14_NUM_FORMAT(V_008F14_IMG_NUM_FORMAT_USCALED) :
+			S_008F14_NUM_FORMAT(V_008F14_IMG_NUM_FORMAT_SSCALED);
 		wa_formats = LLVMBuildAnd(builder, formats,
-					  LLVMConstInt(ctx->i32, C_008F14_NUM_FORMAT_GFX6, false),
+					  LLVMConstInt(ctx->i32, C_008F14_NUM_FORMAT, false),
 					  "");
 		wa_formats = LLVMBuildOr(builder, wa_formats,
 					LLVMConstInt(ctx->i32, wa_num_format, false), "");

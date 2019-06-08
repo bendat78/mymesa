@@ -46,7 +46,6 @@
 #include "pan_blending.h"
 #include "pan_blend_shaders.h"
 #include "pan_util.h"
-#include "pan_wallpaper.h"
 
 static int performance_counter_number = 0;
 extern const char *pan_counters_base;
@@ -1174,15 +1173,6 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
 
         const struct pipe_viewport_state *vp = &ctx->pipe_viewport;
 
-        /* For flipped-Y buffers (signaled by negative scale), the translate is
-         * flipped as well */
-
-        bool invert_y = vp->scale[1] < 0.0;
-        float translate_y = vp->translate[1];
-
-        if (invert_y)
-                translate_y = ctx->pipe_framebuffer.height - translate_y;
-
         for (int i = 0; i <= PIPE_SHADER_FRAGMENT; ++i) {
                 struct panfrost_constant_buffer *buf = &ctx->constant_buffer[i];
 
@@ -1202,11 +1192,11 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
 
                         if (sysval == PAN_SYSVAL_VIEWPORT_SCALE) {
                                 uniforms[4*i + 0] = vp->scale[0];
-                                uniforms[4*i + 1] = fabsf(vp->scale[1]);
+                                uniforms[4*i + 1] = vp->scale[1];
                                 uniforms[4*i + 2] = vp->scale[2];
                         } else if (sysval == PAN_SYSVAL_VIEWPORT_OFFSET) {
                                 uniforms[4*i + 0] = vp->translate[0];
-                                uniforms[4*i + 1] = translate_y;
+                                uniforms[4*i + 1] = vp->translate[1];
                                 uniforms[4*i + 2] = vp->translate[2];
                         } else {
                                 assert(0);
@@ -1276,23 +1266,27 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
         view.viewport0[0] = (int) (vp->translate[0] - vp->scale[0]);
         view.viewport1[0] = MALI_POSITIVE((int) (vp->translate[0] + vp->scale[0]));
 
-        view.viewport0[1] = (int) (translate_y - fabs(vp->scale[1]));
-        view.viewport1[1] = MALI_POSITIVE((int) (translate_y + fabs(vp->scale[1])));
+        int miny = (int) (vp->translate[1] - vp->scale[1]);
+        int maxy = (int) (vp->translate[1] + vp->scale[1]);
 
         if (ss && ctx->rasterizer && ctx->rasterizer->base.scissor) {
-                /* Invert scissor if needed */
-                unsigned miny = invert_y ?
-                        ctx->pipe_framebuffer.height - ss->maxy : ss->miny;
-
-                unsigned maxy = invert_y ?
-                        ctx->pipe_framebuffer.height - ss->miny : ss->maxy;
-
-                /* Set the actual scissor */
                 view.viewport0[0] = ss->minx;
-                view.viewport0[1] = miny;
                 view.viewport1[0] = MALI_POSITIVE(ss->maxx);
-                view.viewport1[1] = MALI_POSITIVE(maxy);
+
+                miny = ss->miny;
+                maxy = ss->maxy;
         } 
+
+        /* Hardware needs the min/max to be strictly ordered, so flip if we
+         * need to */
+        if (miny > maxy) {
+                int temp = miny;
+                miny = maxy;
+                maxy = temp;
+        }
+
+        view.viewport0[1] = miny;
+        view.viewport1[1] = MALI_POSITIVE(maxy);
 
         ctx->payload_tiler.postfix.viewport =
                 panfrost_upload_transient(ctx,
@@ -1378,6 +1372,87 @@ panfrost_submit_frame(struct panfrost_context *ctx, bool flush_immediate,
 #endif
 }
 
+static void
+panfrost_draw_wallpaper(struct pipe_context *pipe)
+{
+	struct panfrost_context *ctx = pan_context(pipe);
+	struct pipe_blit_info binfo = { };
+
+	/* Nothing to reload? */
+	if (ctx->pipe_framebuffer.cbufs[0] == NULL)
+		return;
+
+        util_blitter_save_vertex_buffer_slot(ctx->blitter, ctx->vertex_buffers);
+        util_blitter_save_vertex_elements(ctx->blitter, ctx->vertex);
+        util_blitter_save_vertex_shader(ctx->blitter, ctx->vs);
+        util_blitter_save_rasterizer(ctx->blitter, ctx->rasterizer);
+        util_blitter_save_viewport(ctx->blitter, &ctx->pipe_viewport);
+        util_blitter_save_scissor(ctx->blitter, &ctx->scissor);
+        util_blitter_save_fragment_shader(ctx->blitter, ctx->fs);
+        util_blitter_save_blend(ctx->blitter, ctx->blend);
+        util_blitter_save_depth_stencil_alpha(ctx->blitter, ctx->depth_stencil);
+        util_blitter_save_stencil_ref(ctx->blitter, &ctx->stencil_ref);
+	util_blitter_save_so_targets(ctx->blitter, 0, NULL);
+
+	/* For later */
+//        util_blitter_save_sample_mask(ctx->blitter, vc4->sample_mask);
+
+        util_blitter_save_framebuffer(ctx->blitter, &ctx->pipe_framebuffer);
+        util_blitter_save_fragment_sampler_states(ctx->blitter,
+						  ctx->sampler_count[PIPE_SHADER_FRAGMENT],
+						  (void **)(&ctx->samplers[PIPE_SHADER_FRAGMENT]));
+        util_blitter_save_fragment_sampler_views(ctx->blitter,
+						 ctx->sampler_view_count[PIPE_SHADER_FRAGMENT],
+						 (struct pipe_sampler_view **)&ctx->sampler_views[PIPE_SHADER_FRAGMENT]);
+
+
+	binfo.src.resource = binfo.dst.resource = ctx->pipe_framebuffer.cbufs[0]->texture;
+	binfo.src.level = binfo.dst.level = 0;
+	binfo.src.box.x = binfo.dst.box.x = 0;
+	binfo.src.box.y = binfo.dst.box.y = 0;
+	binfo.src.box.width = binfo.dst.box.width = ctx->pipe_framebuffer.width;
+	binfo.src.box.height = binfo.dst.box.height = ctx->pipe_framebuffer.height;
+
+	/* This avoids an assert due to missing nir_texop_txb support */
+	//binfo.src.box.depth = binfo.dst.box.depth = 1;
+
+	binfo.src.format = binfo.dst.format = ctx->pipe_framebuffer.cbufs[0]->texture->format;
+
+	assert(ctx->pipe_framebuffer.nr_cbufs == 1);
+	binfo.mask = PIPE_MASK_RGBA;
+	binfo.filter = PIPE_TEX_FILTER_LINEAR;
+	binfo.scissor_enable = FALSE;
+
+	util_blitter_blit(ctx->blitter, &binfo);
+
+        /* We are flushing all queued draws and we know that no more jobs will
+         * be added until the next frame.
+         * We also know that the last jobs are the wallpaper jobs, and they
+         * need to be linked so they execute right after the set_value job.
+         */
+
+        /* set_value job to wallpaper vertex job */
+        panfrost_link_job_pair(ctx->u_set_value_job, ctx->vertex_jobs[ctx->vertex_job_count - 1]);
+        ctx->u_vertex_jobs[ctx->vertex_job_count - 1]->job_dependency_index_1 = ctx->u_set_value_job->job_index;
+
+        /* wallpaper vertex job to first vertex job */
+        panfrost_link_job_pair(ctx->u_vertex_jobs[ctx->vertex_job_count - 1], ctx->vertex_jobs[0]);
+        ctx->u_vertex_jobs[0]->job_dependency_index_1 = ctx->u_set_value_job->job_index;
+
+        /* last vertex job to wallpaper tiler job */
+        panfrost_link_job_pair(ctx->u_vertex_jobs[ctx->vertex_job_count - 2], ctx->tiler_jobs[ctx->tiler_job_count - 1]);
+        ctx->u_tiler_jobs[ctx->tiler_job_count - 1]->job_dependency_index_1 = ctx->u_vertex_jobs[ctx->vertex_job_count - 1]->job_index;
+        ctx->u_tiler_jobs[ctx->tiler_job_count - 1]->job_dependency_index_2 = 0;
+
+        /* wallpaper tiler job to first tiler job */
+        panfrost_link_job_pair(ctx->u_tiler_jobs[ctx->tiler_job_count - 1], ctx->tiler_jobs[0]);
+        ctx->u_tiler_jobs[0]->job_dependency_index_1 = ctx->u_vertex_jobs[0]->job_index;
+        ctx->u_tiler_jobs[0]->job_dependency_index_2 = ctx->u_tiler_jobs[ctx->tiler_job_count - 1]->job_index;
+
+        /* last tiler job to NULL */
+        panfrost_link_job_pair(ctx->u_tiler_jobs[ctx->tiler_job_count - 2], 0);
+}
+
 void
 panfrost_flush(
         struct pipe_context *pipe,
@@ -1389,6 +1464,9 @@ panfrost_flush(
 
         /* Nothing to do! */
         if (!ctx->draw_count && !job->clear) return;
+
+	if (!job->clear)
+	        panfrost_draw_wallpaper(&ctx->base);
 
         /* Whether to stall the pipeline for immediately correct results */
         bool flush_immediate = flags & PIPE_FLUSH_END_OF_FRAME;
@@ -1583,8 +1661,8 @@ panfrost_create_rasterizer_state(
         /* Bitmask, unknown meaning of the start value */
         so->tiler_gl_enables = ctx->is_t6xx ? 0x105 : 0x7;
 
-        so->tiler_gl_enables |= MALI_FRONT_FACE(
-                                        cso->front_ccw ? MALI_CCW : MALI_CW);
+        if (cso->front_ccw)
+                so->tiler_gl_enables |= MALI_FRONT_CCW_TOP;
 
         if (cso->cull_face & PIPE_FACE_FRONT)
                 so->tiler_gl_enables |= MALI_CULL_FACE_FRONT;
@@ -2055,9 +2133,11 @@ panfrost_set_framebuffer_state(struct pipe_context *pctx,
 {
         struct panfrost_context *ctx = pan_context(pctx);
 
-        /* Flush when switching away from an FBO */
+        /* Flush when switching away from an FBO, but not if the framebuffer
+         * state is being restored by u_blitter
+         */
 
-        if (!panfrost_is_scanout(ctx)) {
+        if (!panfrost_is_scanout(ctx) && !ctx->blitter->running) {
                 panfrost_flush(pctx, NULL, 0);
         }
 
@@ -2288,15 +2368,6 @@ panfrost_set_viewport_states(struct pipe_context *pipe,
         assert(num_viewports == 1);
 
         ctx->pipe_viewport = *viewports;
-
-#if 0
-        /* TODO: What if not centered? */
-        float w = abs(viewports->scale[0]) * 2.0;
-        float h = abs(viewports->scale[1]) * 2.0;
-
-        ctx->viewport.viewport1[0] = MALI_POSITIVE((int) w);
-        ctx->viewport.viewport1[1] = MALI_POSITIVE((int) h);
-#endif
 }
 
 static void

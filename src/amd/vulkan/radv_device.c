@@ -44,7 +44,6 @@
 #include "vk_format.h"
 #include "sid.h"
 #include "git_sha1.h"
-#include "gfx9d.h"
 #include "util/build_id.h"
 #include "util/debug.h"
 #include "util/mesa-sha1.h"
@@ -1370,17 +1369,9 @@ void radv_GetPhysicalDeviceProperties2(
 		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT: {
 			VkPhysicalDeviceSampleLocationsPropertiesEXT *properties =
 				(VkPhysicalDeviceSampleLocationsPropertiesEXT *)ext;
-			/* TODO: The ext is currently disabled because the
-			 * driver needs to handle sample locations during
-			 * layout transitions for depth/stencil surfaces and
-			 * HTILE.
-			 */
-			properties->sampleLocationSampleCounts = VK_SAMPLE_COUNT_1_BIT;
-			/*
 			properties->sampleLocationSampleCounts = VK_SAMPLE_COUNT_2_BIT |
 								 VK_SAMPLE_COUNT_4_BIT |
 								 VK_SAMPLE_COUNT_8_BIT;
-			*/
 			properties->maxSampleLocationGridSize = (VkExtent2D){ 2 , 2 };
 			properties->sampleLocationCoordinateRange[0] = 0.0f;
 			properties->sampleLocationCoordinateRange[1] = 0.9375f;

@@ -107,39 +107,6 @@ midgard_block_add_successor(midgard_block *block, midgard_block *successor)
 #define M_LOAD(name) M_LOAD_STORE(name, dest, src0)
 #define M_STORE(name) M_LOAD_STORE(name, src0, dest)
 
-const midgard_vector_alu_src blank_alu_src = {
-        .swizzle = SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_W),
-};
-
-const midgard_vector_alu_src blank_alu_src_xxxx = {
-        .swizzle = SWIZZLE(COMPONENT_X, COMPONENT_X, COMPONENT_X, COMPONENT_X),
-};
-
-const midgard_scalar_alu_src blank_scalar_alu_src = {
-        .full = true
-};
-
-/* Used for encoding the unused source of 1-op instructions */
-const midgard_vector_alu_src zero_alu_src = { 0 };
-
-/* Coerce structs to integer */
-
-static unsigned
-vector_alu_srco_unsigned(midgard_vector_alu_src src)
-{
-        unsigned u;
-        memcpy(&u, &src, sizeof(src));
-        return u;
-}
-
-static midgard_vector_alu_src
-vector_alu_from_unsigned(unsigned u)
-{
-        midgard_vector_alu_src s;
-        memcpy(&s, &u, sizeof(s));
-        return s;
-}
-
 /* Inputs a NIR ALU source, with modifiers attached if necessary, and outputs
  * the corresponding Midgard source */
 
@@ -166,31 +133,6 @@ vector_alu_modifiers(nir_alu_src *src, bool is_int)
         }
 
         return alu_src;
-}
-
-/* 'Intrinsic' move for misc aliasing uses independent of actual NIR ALU code */
-
-static midgard_instruction
-v_fmov(unsigned src, midgard_vector_alu_src mod, unsigned dest)
-{
-        midgard_instruction ins = {
-                .type = TAG_ALU_4,
-                .ssa_args = {
-                        .src0 = SSA_UNUSED_1,
-                        .src1 = src,
-                        .dest = dest,
-                },
-                .alu = {
-                        .op = midgard_alu_op_fmov,
-                        .reg_mode = midgard_reg_mode_32,
-                        .dest_override = midgard_dest_override_none,
-                        .mask = 0xFF,
-                        .src1 = vector_alu_srco_unsigned(zero_alu_src),
-                        .src2 = vector_alu_srco_unsigned(mod)
-                },
-        };
-
-        return ins;
 }
 
 /* load/store instructions have both 32-bit and 16-bit variants, depending on
@@ -409,6 +351,7 @@ optimise_nir(nir_shader *nir)
 
         NIR_PASS(progress, nir, nir_lower_regs_to_ssa);
         NIR_PASS(progress, nir, midgard_nir_lower_fdot2);
+        NIR_PASS(progress, nir, nir_lower_idiv);
 
         nir_lower_tex_options lower_tex_options = {
                 .lower_rect = true
@@ -519,18 +462,6 @@ unalias_ssa(compiler_context *ctx, int dest)
         /* TODO: Remove from leftover or no? */
 }
 
-static void
-midgard_pin_output(compiler_context *ctx, int index, int reg)
-{
-        _mesa_hash_table_u64_insert(ctx->ssa_to_register, index + 1, (void *) ((uintptr_t) reg + 1));
-}
-
-static bool
-midgard_is_pinned(compiler_context *ctx, int index)
-{
-        return _mesa_hash_table_u64_search(ctx->ssa_to_register, index + 1) != NULL;
-}
-
 /* Do not actually emit a load; instead, cache the constant for inlining */
 
 static void
@@ -541,52 +472,6 @@ emit_load_const(compiler_context *ctx, nir_load_const_instr *instr)
         float *v = rzalloc_array(NULL, float, 4);
         nir_const_load_to_arr(v, instr, f32);
         _mesa_hash_table_u64_insert(ctx->ssa_constants, def.index + 1, v);
-}
-
-/* Duplicate bits to convert sane 4-bit writemask to obscure 8-bit format (or
- * do the inverse) */
-
-static unsigned
-expand_writemask(unsigned mask)
-{
-        unsigned o = 0;
-
-        for (int i = 0; i < 4; ++i)
-                if (mask & (1 << i))
-                        o |= (3 << (2 * i));
-
-        return o;
-}
-
-static unsigned
-squeeze_writemask(unsigned mask)
-{
-        unsigned o = 0;
-
-        for (int i = 0; i < 4; ++i)
-                if (mask & (3 << (2 * i)))
-                        o |= (1 << i);
-
-        return o;
-
-}
-
-/* Determines effective writemask, taking quirks and expansion into account */
-static unsigned
-effective_writemask(midgard_vector_alu *alu)
-{
-        /* Channel count is off-by-one to fit in two-bits (0 channel makes no
-         * sense) */
-
-        unsigned channel_count = GET_CHANNEL_COUNT(alu_opcode_props[alu->op].props);
-
-        /* If there is a fixed channel count, construct the appropriate mask */
-
-        if (channel_count)
-                return (1 << channel_count) - 1;
-
-        /* Otherwise, just squeeze the existing mask */
-        return squeeze_writemask(alu->mask);
 }
 
 static unsigned
@@ -662,6 +547,7 @@ emit_condition(compiler_context *ctx, nir_src *src, bool for_branch, unsigned co
                 },
                 .alu = {
                         .op = midgard_alu_op_iand,
+                        .outmod = midgard_outmod_int,
                         .reg_mode = midgard_reg_mode_32,
                         .dest_override = midgard_dest_override_none,
                         .mask = (0x3 << 6), /* w */
@@ -700,6 +586,7 @@ emit_condition_mixed(compiler_context *ctx, nir_alu_src *src, unsigned nr_comp)
                 },
                 .alu = {
                         .op = midgard_alu_op_iand,
+                        .outmod = midgard_outmod_int,
                         .reg_mode = midgard_reg_mode_32,
                         .dest_override = midgard_dest_override_none,
                         .mask = expand_writemask((1 << nr_comp) - 1),
@@ -730,6 +617,7 @@ emit_indirect_offset(compiler_context *ctx, nir_src *src)
                 },
                 .alu = {
                         .op = midgard_alu_op_imov,
+                        .outmod = midgard_outmod_int,
                         .reg_mode = midgard_reg_mode_32,
                         .dest_override = midgard_dest_override_none,
                         .mask = (0x3 << 6), /* w */
@@ -795,7 +683,10 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(iadd, iadd);
                 ALU_CASE(isub, isub);
                 ALU_CASE(imul, imul);
-                ALU_CASE(iabs, iabs);
+
+                /* Zero shoved as second-arg */
+                ALU_CASE(iabs, iabsdiff);
+
                 ALU_CASE(mov, imov);
 
                 ALU_CASE(feq32, feq);
@@ -840,10 +731,11 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 ALU_CASE(fsin, fsin);
                 ALU_CASE(fcos, fcos);
 
+                /* Second op implicit #0 */
+                ALU_CASE(inot, inor);
                 ALU_CASE(iand, iand);
                 ALU_CASE(ior, ior);
                 ALU_CASE(ixor, ixor);
-                ALU_CASE(inot, inand);
                 ALU_CASE(ishl, ishl);
                 ALU_CASE(ishr, iasr);
                 ALU_CASE(ushr, ilsr);
@@ -1040,7 +932,8 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 }
 
                 ins.alu.src2 = vector_alu_srco_unsigned(blank_alu_src_xxxx);
-        } else if (instr->op == nir_op_f2b32 || instr->op == nir_op_i2b32) {
+        } else if (nr_inputs == 1 && !quirk_flipped_r24) {
+                /* Lots of instructions need a 0 plonked in */
                 ins.ssa_args.inline_constant = false;
                 ins.ssa_args.src1 = SSA_FIXED_REGISTER(REGISTER_CONSTANT);
                 ins.has_constants = true;
@@ -1226,12 +1119,16 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
         case nir_intrinsic_load_input:
                 offset = nir_intrinsic_base(instr);
 
+                unsigned nr_comp = nir_intrinsic_dest_components(instr);
                 bool direct = nir_src_is_const(instr->src[0]);
 
                 if (direct) {
                         offset += nir_src_as_uint(instr->src[0]);
                 }
 
+                /* We may need to apply a fractional offset */
+                int component = instr->intrinsic == nir_intrinsic_load_input ?
+                        nir_intrinsic_component(instr) : 0;
                 reg = nir_dest_index(ctx, &instr->dest);
 
                 if (instr->intrinsic == nir_intrinsic_load_uniform && !ctx->is_blend) {
@@ -1241,6 +1138,8 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                         /* TODO: swizzle, mask */
 
                         midgard_instruction ins = m_ld_vary_32(reg, offset);
+                        ins.load_store.mask = (1 << nr_comp) - 1;
+                        ins.load_store.swizzle = SWIZZLE_XYZW >> (2 * component);
 
                         midgard_varying_parameter p = {
                                 .is_varying = 1,
@@ -1267,11 +1166,12 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                         /* For blend shaders, load the input color, which is
                          * preloaded to r0 */
 
-                        midgard_pin_output(ctx, reg, 0);
+                        midgard_instruction move = v_fmov(reg, blank_alu_src, SSA_FIXED_REGISTER(0));
+                        emit_mir_instruction(ctx, move);
                 }  else if (ctx->stage == MESA_SHADER_VERTEX) {
                         midgard_instruction ins = m_ld_attr_32(reg, offset);
                         ins.load_store.unknown = 0x1E1E; /* XXX: What is this? */
-                        ins.load_store.mask = (1 << instr->num_components) - 1;
+                        ins.load_store.mask = (1 << nr_comp) - 1;
                         emit_mir_instruction(ctx, ins);
                 } else {
                         DBG("Unknown load\n");
@@ -1325,52 +1225,29 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                         midgard_instruction move = v_fmov(reg, blank_alu_src, SSA_FIXED_REGISTER(0));
                         emit_mir_instruction(ctx, move);
 
-                        //midgard_pin_output(ctx, reg, 0);
-
                         /* Save the index we're writing to for later reference
                          * in the epilogue */
 
                         ctx->fragment_output = reg;
                 } else if (ctx->stage == MESA_SHADER_VERTEX) {
                         /* Varyings are written into one of two special
-                         * varying register, r26 or r27. The register itself is selected as the register
-                         * in the st_vary instruction, minus the base of 26. E.g. write into r27 and then call st_vary(1)
-                         *
-                         * Normally emitting fmov's is frowned upon,
-                         * but due to unique constraints of
-                         * REGISTER_VARYING, fmov emission + a
-                         * dedicated cleanup pass is the only way to
-                         * guarantee correctness when considering some
-                         * (common) edge cases XXX: FIXME */
+                         * varying register, r26 or r27. The register itself is
+                         * selected as the register in the st_vary instruction,
+                         * minus the base of 26. E.g. write into r27 and then
+                         * call st_vary(1) */
 
-                        /* If this varying corresponds to a constant (why?!),
-                         * emit that now since it won't get picked up by
-                         * hoisting (since there is no corresponding move
-                         * emitted otherwise) */
+                        midgard_instruction ins = v_fmov(reg, blank_alu_src, SSA_FIXED_REGISTER(26));
+                        emit_mir_instruction(ctx, ins);
 
-                        void *constant_value = _mesa_hash_table_u64_search(ctx->ssa_constants, reg + 1);
+                        /* We should have been vectorized. That also lets us
+                         * ignore the mask. because the mask component on
+                         * st_vary is (as far as I can tell) ignored [the blob
+                         * sets it to zero] */
+                        assert(nir_intrinsic_component(instr) == 0);
 
-                        if (constant_value) {
-                                /* Special case: emit the varying write
-                                 * directly to r26 (looks funny in asm but it's
-                                 * fine) and emit the store _now_. Possibly
-                                 * slightly slower, but this is a really stupid
-                                 * special case anyway (why on earth would you
-                                 * have a constant varying? Your own fault for
-                                 * slightly worse perf :P) */
-
-                                midgard_instruction ins = v_fmov(SSA_FIXED_REGISTER(REGISTER_CONSTANT), blank_alu_src, SSA_FIXED_REGISTER(26));
-                                attach_constants(ctx, &ins, constant_value, reg + 1);
-                                emit_mir_instruction(ctx, ins);
-
-                                midgard_instruction st = m_st_vary_32(SSA_FIXED_REGISTER(0), offset);
-                                st.load_store.unknown = 0x1E9E; /* XXX: What is this? */
-                                emit_mir_instruction(ctx, st);
-                        } else {
-                                /* Do not emit the varying yet -- instead, just mark down that we need to later */
-
-                                _mesa_hash_table_u64_insert(ctx->ssa_varyings, reg + 1, (void *) ((uintptr_t) (offset + 1)));
-                        }
+                        midgard_instruction st = m_st_vary_32(SSA_FIXED_REGISTER(0), offset);
+                        st.load_store.unknown = 0x1E9E; /* XXX: What is this? */
+                        emit_mir_instruction(ctx, st);
                 } else {
                         DBG("Unknown store\n");
                         assert(0);
@@ -1596,709 +1473,6 @@ emit_instr(compiler_context *ctx, struct nir_instr *instr)
         }
 }
 
-/* Midgard IR only knows vector ALU types, but we sometimes need to actually
- * use scalar ALU instructions, for functional or performance reasons. To do
- * this, we just demote vector ALU payloads to scalar. */
-
-static int
-component_from_mask(unsigned mask)
-{
-        for (int c = 0; c < 4; ++c) {
-                if (mask & (3 << (2 * c)))
-                        return c;
-        }
-
-        assert(0);
-        return 0;
-}
-
-static bool
-is_single_component_mask(unsigned mask)
-{
-        int components = 0;
-
-        for (int c = 0; c < 4; ++c)
-                if (mask & (3 << (2 * c)))
-                        components++;
-
-        return components == 1;
-}
-
-/* Create a mask of accessed components from a swizzle to figure out vector
- * dependencies */
-
-static unsigned
-swizzle_to_access_mask(unsigned swizzle)
-{
-        unsigned component_mask = 0;
-
-        for (int i = 0; i < 4; ++i) {
-                unsigned c = (swizzle >> (2 * i)) & 3;
-                component_mask |= (1 << c);
-        }
-
-        return component_mask;
-}
-
-static unsigned
-vector_to_scalar_source(unsigned u, bool is_int)
-{
-        midgard_vector_alu_src v;
-        memcpy(&v, &u, sizeof(v));
-
-        /* TODO: Integers */
-
-        midgard_scalar_alu_src s = {
-                .full = !v.half,
-                .component = (v.swizzle & 3) << 1
-        };
-
-        if (is_int) {
-                /* TODO */
-        } else {
-                s.abs = v.mod & MIDGARD_FLOAT_MOD_ABS;
-                s.negate = v.mod & MIDGARD_FLOAT_MOD_NEG;
-        }
-
-        unsigned o;
-        memcpy(&o, &s, sizeof(s));
-
-        return o & ((1 << 6) - 1);
-}
-
-static midgard_scalar_alu
-vector_to_scalar_alu(midgard_vector_alu v, midgard_instruction *ins)
-{
-        bool is_int = midgard_is_integer_op(v.op);
-
-        /* The output component is from the mask */
-        midgard_scalar_alu s = {
-                .op = v.op,
-                .src1 = vector_to_scalar_source(v.src1, is_int),
-                .src2 = vector_to_scalar_source(v.src2, is_int),
-                .unknown = 0,
-                .outmod = v.outmod,
-                .output_full = 1, /* TODO: Half */
-                .output_component = component_from_mask(v.mask) << 1,
-        };
-
-        /* Inline constant is passed along rather than trying to extract it
-         * from v */
-
-        if (ins->ssa_args.inline_constant) {
-                uint16_t imm = 0;
-                int lower_11 = ins->inline_constant & ((1 << 12) - 1);
-                imm |= (lower_11 >> 9) & 3;
-                imm |= (lower_11 >> 6) & 4;
-                imm |= (lower_11 >> 2) & 0x38;
-                imm |= (lower_11 & 63) << 6;
-
-                s.src2 = imm;
-        }
-
-        return s;
-}
-
-/* Midgard prefetches instruction types, so during emission we need to
- * lookahead too. Unless this is the last instruction, in which we return 1. Or
- * if this is the second to last and the last is an ALU, then it's also 1... */
-
-#define IS_ALU(tag) (tag == TAG_ALU_4 || tag == TAG_ALU_8 ||  \
-		     tag == TAG_ALU_12 || tag == TAG_ALU_16)
-
-#define EMIT_AND_COUNT(type, val) util_dynarray_append(emission, type, val); \
-				  bytes_emitted += sizeof(type)
-
-static void
-emit_binary_vector_instruction(midgard_instruction *ains,
-                               uint16_t *register_words, int *register_words_count,
-                               uint64_t *body_words, size_t *body_size, int *body_words_count,
-                               size_t *bytes_emitted)
-{
-        memcpy(&register_words[(*register_words_count)++], &ains->registers, sizeof(ains->registers));
-        *bytes_emitted += sizeof(midgard_reg_info);
-
-        body_size[*body_words_count] = sizeof(midgard_vector_alu);
-        memcpy(&body_words[(*body_words_count)++], &ains->alu, sizeof(ains->alu));
-        *bytes_emitted += sizeof(midgard_vector_alu);
-}
-
-/* Checks for an SSA data hazard between two adjacent instructions, keeping in
- * mind that we are a vector architecture and we can write to different
- * components simultaneously */
-
-static bool
-can_run_concurrent_ssa(midgard_instruction *first, midgard_instruction *second)
-{
-        /* Each instruction reads some registers and writes to a register. See
-         * where the first writes */
-
-        /* Figure out where exactly we wrote to */
-        int source = first->ssa_args.dest;
-        int source_mask = first->type == TAG_ALU_4 ? squeeze_writemask(first->alu.mask) : 0xF;
-
-        /* As long as the second doesn't read from the first, we're okay */
-        if (second->ssa_args.src0 == source) {
-                if (first->type == TAG_ALU_4) {
-                        /* Figure out which components we just read from */
-
-                        int q = second->alu.src1;
-                        midgard_vector_alu_src *m = (midgard_vector_alu_src *) &q;
-
-                        /* Check if there are components in common, and fail if so */
-                        if (swizzle_to_access_mask(m->swizzle) & source_mask)
-                                return false;
-                } else
-                        return false;
-
-        }
-
-        if (second->ssa_args.src1 == source)
-                return false;
-
-        /* Otherwise, it's safe in that regard. Another data hazard is both
-         * writing to the same place, of course */
-
-        if (second->ssa_args.dest == source) {
-                /* ...but only if the components overlap */
-                int dest_mask = second->type == TAG_ALU_4 ? squeeze_writemask(second->alu.mask) : 0xF;
-
-                if (dest_mask & source_mask)
-                        return false;
-        }
-
-        /* ...That's it */
-        return true;
-}
-
-static bool
-midgard_has_hazard(
-                midgard_instruction **segment, unsigned segment_size,
-                midgard_instruction *ains)
-{
-        for (int s = 0; s < segment_size; ++s)
-                if (!can_run_concurrent_ssa(segment[s], ains))
-                        return true;
-
-        return false;
-
-
-}
-
-/* Schedules, but does not emit, a single basic block. After scheduling, the
- * final tag and size of the block are known, which are necessary for branching
- * */
-
-static midgard_bundle
-schedule_bundle(compiler_context *ctx, midgard_block *block, midgard_instruction *ins, int *skip)
-{
-        int instructions_emitted = 0, instructions_consumed = -1;
-        midgard_bundle bundle = { 0 };
-
-        uint8_t tag = ins->type;
-
-        /* Default to the instruction's tag */
-        bundle.tag = tag;
-
-        switch (ins->type) {
-        case TAG_ALU_4: {
-                uint32_t control = 0;
-                size_t bytes_emitted = sizeof(control);
-
-                /* TODO: Constant combining */
-                int index = 0, last_unit = 0;
-
-                /* Previous instructions, for the purpose of parallelism */
-                midgard_instruction *segment[4] = {0};
-                int segment_size = 0;
-
-                instructions_emitted = -1;
-                midgard_instruction *pins = ins;
-
-                for (;;) {
-                        midgard_instruction *ains = pins;
-
-                        /* Advance instruction pointer */
-                        if (index) {
-                                ains = mir_next_op(pins);
-                                pins = ains;
-                        }
-
-                        /* Out-of-work condition */
-                        if ((struct list_head *) ains == &block->instructions)
-                                break;
-
-                        /* Ensure that the chain can continue */
-                        if (ains->type != TAG_ALU_4) break;
-
-                        /* If there's already something in the bundle and we
-                         * have weird scheduler constraints, break now */
-                        if (ains->precede_break && index) break;
-
-                        /* According to the presentation "The ARM
-                         * Mali-T880 Mobile GPU" from HotChips 27,
-                         * there are two pipeline stages. Branching
-                         * position determined experimentally. Lines
-                         * are executed in parallel:
-                         *
-                         * [ VMUL ] [ SADD ]
-                         * [ VADD ] [ SMUL ] [ LUT ] [ BRANCH ]
-                         *
-                         * Verify that there are no ordering dependencies here.
-                         *
-                         * TODO: Allow for parallelism!!!
-                         */
-
-                        /* Pick a unit for it if it doesn't force a particular unit */
-
-                        int unit = ains->unit;
-
-                        if (!unit) {
-                                int op = ains->alu.op;
-                                int units = alu_opcode_props[op].props;
-
-                                /* TODO: Promotion of scalars to vectors */
-                                int vector = ((!is_single_component_mask(ains->alu.mask)) || ((units & UNITS_SCALAR) == 0)) && (units & UNITS_ANY_VECTOR);
-
-                                if (!vector)
-                                        assert(units & UNITS_SCALAR);
-
-                                if (vector) {
-                                        if (last_unit >= UNIT_VADD) {
-                                                if (units & UNIT_VLUT)
-                                                        unit = UNIT_VLUT;
-                                                else
-                                                        break;
-                                        } else {
-                                                if ((units & UNIT_VMUL) && !(control & UNIT_VMUL))
-                                                        unit = UNIT_VMUL;
-                                                else if ((units & UNIT_VADD) && !(control & UNIT_VADD))
-                                                        unit = UNIT_VADD;
-                                                else if (units & UNIT_VLUT)
-                                                        unit = UNIT_VLUT;
-                                                else
-                                                        break;
-                                        }
-                                } else {
-                                        if (last_unit >= UNIT_VADD) {
-                                                if ((units & UNIT_SMUL) && !(control & UNIT_SMUL))
-                                                        unit = UNIT_SMUL;
-                                                else if (units & UNIT_VLUT)
-                                                        unit = UNIT_VLUT;
-                                                else
-                                                        break;
-                                        } else {
-                                                if ((units & UNIT_SADD) && !(control & UNIT_SADD) && !midgard_has_hazard(segment, segment_size, ains))
-                                                        unit = UNIT_SADD;
-                                                else if (units & UNIT_SMUL)
-                                                        unit = ((units & UNIT_VMUL) && !(control & UNIT_VMUL)) ? UNIT_VMUL : UNIT_SMUL;
-                                                else if ((units & UNIT_VADD) && !(control & UNIT_VADD))
-                                                        unit = UNIT_VADD;
-                                                else
-                                                        break;
-                                        }
-                                }
-
-                                assert(unit & units);
-                        }
-
-                        /* Late unit check, this time for encoding (not parallelism) */
-                        if (unit <= last_unit) break;
-
-                        /* Clear the segment */
-                        if (last_unit < UNIT_VADD && unit >= UNIT_VADD)
-                                segment_size = 0;
-
-                        if (midgard_has_hazard(segment, segment_size, ains))
-                                break;
-
-                        /* We're good to go -- emit the instruction */
-                        ains->unit = unit;
-
-                        segment[segment_size++] = ains;
-
-                        /* Only one set of embedded constants per
-                         * bundle possible; if we have more, we must
-                         * break the chain early, unfortunately */
-
-                        if (ains->has_constants) {
-                                if (bundle.has_embedded_constants) {
-                                        /* The blend constant needs to be
-                                         * alone, since it conflicts with
-                                         * everything by definition*/
-
-                                        if (ains->has_blend_constant || bundle.has_blend_constant)
-                                                break;
-
-                                        /* ...but if there are already
-                                         * constants but these are the
-                                         * *same* constants, we let it
-                                         * through */
-
-                                        if (memcmp(bundle.constants, ains->constants, sizeof(bundle.constants)))
-                                                break;
-                                } else {
-                                        bundle.has_embedded_constants = true;
-                                        memcpy(bundle.constants, ains->constants, sizeof(bundle.constants));
-
-                                        /* If this is a blend shader special constant, track it for patching */
-                                        bundle.has_blend_constant |= ains->has_blend_constant;
-                                }
-                        }
-
-                        if (ains->unit & UNITS_ANY_VECTOR) {
-                                emit_binary_vector_instruction(ains, bundle.register_words,
-                                                               &bundle.register_words_count, bundle.body_words,
-                                                               bundle.body_size, &bundle.body_words_count, &bytes_emitted);
-                        } else if (ains->compact_branch) {
-                                /* All of r0 has to be written out
-                                 * along with the branch writeout.
-                                 * (slow!) */
-
-                                if (ains->writeout) {
-                                        if (index == 0) {
-                                                midgard_instruction ins = v_fmov(0, blank_alu_src, SSA_FIXED_REGISTER(0));
-                                                ins.unit = UNIT_VMUL;
-
-                                                control |= ins.unit;
-
-                                                emit_binary_vector_instruction(&ins, bundle.register_words,
-                                                                               &bundle.register_words_count, bundle.body_words,
-                                                                               bundle.body_size, &bundle.body_words_count, &bytes_emitted);
-                                        } else {
-                                                /* Analyse the group to see if r0 is written in full, on-time, without hanging dependencies*/
-                                                bool written_late = false;
-                                                bool components[4] = { 0 };
-                                                uint16_t register_dep_mask = 0;
-                                                uint16_t written_mask = 0;
-
-                                                midgard_instruction *qins = ins;
-                                                for (int t = 0; t < index; ++t) {
-                                                        if (qins->registers.out_reg != 0) {
-                                                                /* Mark down writes */
-
-                                                                written_mask |= (1 << qins->registers.out_reg);
-                                                        } else {
-                                                                /* Mark down the register dependencies for errata check */
-
-                                                                if (qins->registers.src1_reg < 16)
-                                                                        register_dep_mask |= (1 << qins->registers.src1_reg);
-
-                                                                if (qins->registers.src2_reg < 16)
-                                                                        register_dep_mask |= (1 << qins->registers.src2_reg);
-
-                                                                int mask = qins->alu.mask;
-
-                                                                for (int c = 0; c < 4; ++c)
-                                                                        if (mask & (0x3 << (2 * c)))
-                                                                                components[c] = true;
-
-                                                                /* ..but if the writeout is too late, we have to break up anyway... for some reason */
-
-                                                                if (qins->unit == UNIT_VLUT)
-                                                                        written_late = true;
-                                                        }
-
-                                                        /* Advance instruction pointer */
-                                                        qins = mir_next_op(qins);
-                                                }
-
-
-                                                /* ERRATA (?): In a bundle ending in a fragment writeout, the register dependencies of r0 cannot be written within this bundle (discovered in -bshading:shading=phong) */
-                                                if (register_dep_mask & written_mask) {
-                                                        DBG("ERRATA WORKAROUND: Breakup for writeout dependency masks %X vs %X (common %X)\n", register_dep_mask, written_mask, register_dep_mask & written_mask);
-                                                        break;
-                                                }
-
-                                                if (written_late)
-                                                        break;
-
-                                                /* If even a single component is not written, break it up (conservative check). */
-                                                bool breakup = false;
-
-                                                for (int c = 0; c < 4; ++c)
-                                                        if (!components[c])
-                                                                breakup = true;
-
-                                                if (breakup)
-                                                        break;
-
-                                                /* Otherwise, we're free to proceed */
-                                        }
-                                }
-
-                                if (ains->unit == ALU_ENAB_BRANCH) {
-                                        bundle.body_size[bundle.body_words_count] = sizeof(midgard_branch_extended);
-                                        memcpy(&bundle.body_words[bundle.body_words_count++], &ains->branch_extended, sizeof(midgard_branch_extended));
-                                        bytes_emitted += sizeof(midgard_branch_extended);
-                                } else {
-                                        bundle.body_size[bundle.body_words_count] = sizeof(ains->br_compact);
-                                        memcpy(&bundle.body_words[bundle.body_words_count++], &ains->br_compact, sizeof(ains->br_compact));
-                                        bytes_emitted += sizeof(ains->br_compact);
-                                }
-                        } else {
-                                memcpy(&bundle.register_words[bundle.register_words_count++], &ains->registers, sizeof(ains->registers));
-                                bytes_emitted += sizeof(midgard_reg_info);
-
-                                bundle.body_size[bundle.body_words_count] = sizeof(midgard_scalar_alu);
-                                bundle.body_words_count++;
-                                bytes_emitted += sizeof(midgard_scalar_alu);
-                        }
-
-                        /* Defer marking until after writing to allow for break */
-                        control |= ains->unit;
-                        last_unit = ains->unit;
-                        ++instructions_emitted;
-                        ++index;
-                }
-
-                /* Bubble up the number of instructions for skipping */
-                instructions_consumed = index - 1;
-
-                int padding = 0;
-
-                /* Pad ALU op to nearest word */
-
-                if (bytes_emitted & 15) {
-                        padding = 16 - (bytes_emitted & 15);
-                        bytes_emitted += padding;
-                }
-
-                /* Constants must always be quadwords */
-                if (bundle.has_embedded_constants)
-                        bytes_emitted += 16;
-
-                /* Size ALU instruction for tag */
-                bundle.tag = (TAG_ALU_4) + (bytes_emitted / 16) - 1;
-                bundle.padding = padding;
-                bundle.control = bundle.tag | control;
-
-                break;
-        }
-
-        case TAG_LOAD_STORE_4: {
-                /* Load store instructions have two words at once. If
-                 * we only have one queued up, we need to NOP pad.
-                 * Otherwise, we store both in succession to save space
-                 * and cycles -- letting them go in parallel -- skip
-                 * the next. The usefulness of this optimisation is
-                 * greatly dependent on the quality of the instruction
-                 * scheduler.
-                 */
-
-                midgard_instruction *next_op = mir_next_op(ins);
-
-                if ((struct list_head *) next_op != &block->instructions && next_op->type == TAG_LOAD_STORE_4) {
-                        /* As the two operate concurrently, make sure
-                         * they are not dependent */
-
-                        if (can_run_concurrent_ssa(ins, next_op) || true) {
-                                /* Skip ahead, since it's redundant with the pair */
-                                instructions_consumed = 1 + (instructions_emitted++);
-                        }
-                }
-
-                break;
-        }
-
-        default:
-                /* Texture ops default to single-op-per-bundle scheduling */
-                break;
-        }
-
-        /* Copy the instructions into the bundle */
-        bundle.instruction_count = instructions_emitted + 1;
-
-        int used_idx = 0;
-
-        midgard_instruction *uins = ins;
-        for (int i = 0; used_idx < bundle.instruction_count; ++i) {
-                bundle.instructions[used_idx++] = *uins;
-                uins = mir_next_op(uins);
-        }
-
-        *skip = (instructions_consumed == -1) ? instructions_emitted : instructions_consumed;
-
-        return bundle;
-}
-
-static int
-quadword_size(int tag)
-{
-        switch (tag) {
-        case TAG_ALU_4:
-                return 1;
-
-        case TAG_ALU_8:
-                return 2;
-
-        case TAG_ALU_12:
-                return 3;
-
-        case TAG_ALU_16:
-                return 4;
-
-        case TAG_LOAD_STORE_4:
-                return 1;
-
-        case TAG_TEXTURE_4:
-                return 1;
-
-        default:
-                assert(0);
-                return 0;
-        }
-}
-
-/* Schedule a single block by iterating its instruction to create bundles.
- * While we go, tally about the bundle sizes to compute the block size. */
-
-static void
-schedule_block(compiler_context *ctx, midgard_block *block)
-{
-        util_dynarray_init(&block->bundles, NULL);
-
-        block->quadword_count = 0;
-
-        mir_foreach_instr_in_block(block, ins) {
-                int skip;
-                midgard_bundle bundle = schedule_bundle(ctx, block, ins, &skip);
-                util_dynarray_append(&block->bundles, midgard_bundle, bundle);
-
-                if (bundle.has_blend_constant) {
-                        /* TODO: Multiblock? */
-                        int quadwords_within_block = block->quadword_count + quadword_size(bundle.tag) - 1;
-                        ctx->blend_constant_offset = quadwords_within_block * 0x10;
-                }
-
-                while(skip--)
-                        ins = mir_next_op(ins);
-
-                block->quadword_count += quadword_size(bundle.tag);
-        }
-
-        block->is_scheduled = true;
-}
-
-static void
-schedule_program(compiler_context *ctx)
-{
-        /* We run RA prior to scheduling */
-        struct ra_graph *g = allocate_registers(ctx);
-        install_registers(ctx, g);
-
-        mir_foreach_block(ctx, block) {
-                schedule_block(ctx, block);
-        }
-}
-
-/* After everything is scheduled, emit whole bundles at a time */
-
-static void
-emit_binary_bundle(compiler_context *ctx, midgard_bundle *bundle, struct util_dynarray *emission, int next_tag)
-{
-        int lookahead = next_tag << 4;
-
-        switch (bundle->tag) {
-        case TAG_ALU_4:
-        case TAG_ALU_8:
-        case TAG_ALU_12:
-        case TAG_ALU_16: {
-                /* Actually emit each component */
-                util_dynarray_append(emission, uint32_t, bundle->control | lookahead);
-
-                for (int i = 0; i < bundle->register_words_count; ++i)
-                        util_dynarray_append(emission, uint16_t, bundle->register_words[i]);
-
-                /* Emit body words based on the instructions bundled */
-                for (int i = 0; i < bundle->instruction_count; ++i) {
-                        midgard_instruction *ins = &bundle->instructions[i];
-
-                        if (ins->unit & UNITS_ANY_VECTOR) {
-                                memcpy(util_dynarray_grow(emission, sizeof(midgard_vector_alu)), &ins->alu, sizeof(midgard_vector_alu));
-                        } else if (ins->compact_branch) {
-                                /* Dummy move, XXX DRY */
-                                if ((i == 0) && ins->writeout) {
-                                        midgard_instruction ins = v_fmov(0, blank_alu_src, SSA_FIXED_REGISTER(0));
-                                        memcpy(util_dynarray_grow(emission, sizeof(midgard_vector_alu)), &ins.alu, sizeof(midgard_vector_alu));
-                                }
-
-                                if (ins->unit == ALU_ENAB_BR_COMPACT) {
-                                        memcpy(util_dynarray_grow(emission, sizeof(ins->br_compact)), &ins->br_compact, sizeof(ins->br_compact));
-                                } else {
-                                        memcpy(util_dynarray_grow(emission, sizeof(ins->branch_extended)), &ins->branch_extended, sizeof(ins->branch_extended));
-                                }
-                        } else {
-                                /* Scalar */
-                                midgard_scalar_alu scalarised = vector_to_scalar_alu(ins->alu, ins);
-                                memcpy(util_dynarray_grow(emission, sizeof(scalarised)), &scalarised, sizeof(scalarised));
-                        }
-                }
-
-                /* Emit padding (all zero) */
-                memset(util_dynarray_grow(emission, bundle->padding), 0, bundle->padding);
-
-                /* Tack on constants */
-
-                if (bundle->has_embedded_constants) {
-                        util_dynarray_append(emission, float, bundle->constants[0]);
-                        util_dynarray_append(emission, float, bundle->constants[1]);
-                        util_dynarray_append(emission, float, bundle->constants[2]);
-                        util_dynarray_append(emission, float, bundle->constants[3]);
-                }
-
-                break;
-        }
-
-        case TAG_LOAD_STORE_4: {
-                /* One or two composing instructions */
-
-                uint64_t current64, next64 = LDST_NOP;
-
-                memcpy(&current64, &bundle->instructions[0].load_store, sizeof(current64));
-
-                if (bundle->instruction_count == 2)
-                        memcpy(&next64, &bundle->instructions[1].load_store, sizeof(next64));
-
-                midgard_load_store instruction = {
-                        .type = bundle->tag,
-                        .next_type = next_tag,
-                        .word1 = current64,
-                        .word2 = next64
-                };
-
-                util_dynarray_append(emission, midgard_load_store, instruction);
-
-                break;
-        }
-
-        case TAG_TEXTURE_4: {
-                /* Texture instructions are easy, since there is no
-                 * pipelining nor VLIW to worry about. We may need to set the .last flag */
-
-                midgard_instruction *ins = &bundle->instructions[0];
-
-                ins->texture.type = TAG_TEXTURE_4;
-                ins->texture.next_type = next_tag;
-
-                ctx->texture_op_count--;
-
-                if (!ctx->texture_op_count) {
-                        ins->texture.cont = 0;
-                        ins->texture.last = 1;
-                }
-
-                util_dynarray_append(emission, midgard_texture_word, ins->texture);
-                break;
-        }
-
-        default:
-                DBG("Unknown midgard instruction type\n");
-                assert(0);
-                break;
-        }
-}
-
 
 /* ALU instructions can inline or embed constants, which decreases register
  * pressure and saves space. */
@@ -2498,6 +1672,10 @@ embedded_to_inline_constant(compiler_context *ctx)
 static void
 map_ssa_to_alias(compiler_context *ctx, int *ref)
 {
+        /* Sign is used quite deliberately for unused */
+        if (*ref < 0)
+                return;
+
         unsigned int alias = (uintptr_t) _mesa_hash_table_u64_search(ctx->ssa_to_alias, *ref + 1);
 
         if (alias) {
@@ -2527,7 +1705,6 @@ midgard_opt_dead_code_eliminate(compiler_context *ctx, midgard_block *block)
                 if (ins->compact_branch) continue;
 
                 if (ins->ssa_args.dest >= SSA_FIXED_MINIMUM) continue;
-                if (midgard_is_pinned(ctx, ins->ssa_args.dest)) continue;
                 if (mir_is_live_after(ctx, block, ins, ins->ssa_args.dest)) continue;
 
                 mir_remove_instruction(ins);
@@ -2535,6 +1712,30 @@ midgard_opt_dead_code_eliminate(compiler_context *ctx, midgard_block *block)
         }
 
         return progress;
+}
+
+/* Dead code elimination for branches at the end of a block - only one branch
+ * per block is legal semantically */
+
+static void
+midgard_opt_cull_dead_branch(compiler_context *ctx, midgard_block *block)
+{
+        bool branched = false;
+
+        mir_foreach_instr_in_block_safe(block, ins) {
+                if (!midgard_is_branch_unit(ins->unit)) continue;
+
+                /* We ignore prepacked branches since the fragment epilogue is
+                 * just generally special */
+                if (ins->prepacked_branch) continue;
+
+                if (branched) {
+                        /* We already branched, so this is dead */
+                        mir_remove_instruction(ins);
+                }
+
+                branched = true;
+        }
 }
 
 static bool
@@ -2550,6 +1751,18 @@ mir_nontrivial_mod(midgard_vector_alu_src src, bool is_int, unsigned mask)
         }
 
         return false;
+}
+
+static bool
+mir_nontrivial_source2_mod(midgard_instruction *ins)
+{
+        unsigned mask = squeeze_writemask(ins->alu.mask);
+        bool is_int = midgard_is_integer_op(ins->alu.op);
+
+        midgard_vector_alu_src src2 =
+                vector_alu_from_unsigned(ins->alu.src2);
+
+        return mir_nontrivial_mod(src2, is_int, mask);
 }
 
 static bool
@@ -2575,26 +1788,70 @@ midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
                 if (ins->ssa_args.inline_constant) continue;
                 if (ins->has_constants) continue;
 
-                /* Also, if the move has side effects, we're helpless */
-
-                midgard_vector_alu_src src =
-                        vector_alu_from_unsigned(ins->alu.src2);
-                unsigned mask = squeeze_writemask(ins->alu.mask);
-                bool is_int = midgard_is_integer_op(ins->alu.op);
-
-                if (mir_nontrivial_mod(src, is_int, mask)) continue;
+                if (mir_nontrivial_source2_mod(ins)) continue;
                 if (ins->alu.outmod != midgard_outmod_none) continue;
 
-                mir_foreach_instr_in_block_from(block, v, mir_next_op(ins)) {
-                        if (v->ssa_args.src0 == to) {
-                                v->ssa_args.src0 = from;
-                                progress = true;
-                        }
+                /* We're clear -- rewrite */
+                mir_rewrite_index_src(ctx, to, from);
+                mir_remove_instruction(ins);
+                progress |= true;
+        }
 
-                        if (v->ssa_args.src1 == to && !v->ssa_args.inline_constant) {
-                                v->ssa_args.src1 = from;
-                                progress = true;
-                        }
+        return progress;
+}
+
+/* fmov.pos is an idiom for fpos. Propoagate the .pos up to the source, so then
+ * the move can be propagated away entirely */
+
+static bool
+mir_compose_outmod(midgard_outmod *outmod, midgard_outmod comp)
+{
+        /* Nothing to do */
+        if (comp == midgard_outmod_none)
+                return true;
+
+        if (*outmod == midgard_outmod_none) {
+                *outmod = comp;
+                return true;
+        }
+
+        /* TODO: Compose rules */
+        return false;
+}
+
+static bool
+midgard_opt_pos_propagate(compiler_context *ctx, midgard_block *block)
+{
+        bool progress = false;
+
+        mir_foreach_instr_in_block_safe(block, ins) {
+                if (ins->type != TAG_ALU_4) continue;
+                if (ins->alu.op != midgard_alu_op_fmov) continue;
+                if (ins->alu.outmod != midgard_outmod_pos) continue;
+
+                /* TODO: Registers? */
+                unsigned src = ins->ssa_args.src1;
+                if (src >= ctx->func->impl->ssa_alloc) continue;
+
+                /* There might be a source modifier, too */
+                if (mir_nontrivial_source2_mod(ins)) continue;
+
+                /* Backpropagate the modifier */
+                mir_foreach_instr_in_block_from_rev(block, v, mir_prev_op(ins)) {
+                        if (v->type != TAG_ALU_4) continue;
+                        if (v->ssa_args.dest != src) continue;
+
+                        midgard_outmod temp = v->alu.outmod;
+                        progress |= mir_compose_outmod(&temp, ins->alu.outmod);
+
+                        /* Throw in the towel.. */
+                        if (!progress) break;
+
+                        /* Otherwise, transfer the modifier */
+                        v->alu.outmod = temp;
+                        ins->alu.outmod = midgard_outmod_none;
+
+                        break;
                 }
         }
 
@@ -2698,40 +1955,6 @@ midgard_pair_load_store(compiler_context *ctx, midgard_block *block)
                                 break;
                         }
                 }
-        }
-}
-
-/* Emit varying stores late */
-
-static void
-midgard_emit_store(compiler_context *ctx, midgard_block *block) {
-        /* Iterate in reverse to get the final write, rather than the first */
-
-        mir_foreach_instr_in_block_safe_rev(block, ins) {
-                /* Check if what we just wrote needs a store */
-                int idx = ins->ssa_args.dest;
-                uintptr_t varying = ((uintptr_t) _mesa_hash_table_u64_search(ctx->ssa_varyings, idx + 1));
-
-                if (!varying) continue;
-
-                varying -= 1;
-
-                /* We need to store to the appropriate varying, so emit the
-                 * move/store */
-
-                /* TODO: Integrate with special purpose RA (and scheduler?) */
-                bool high_varying_register = false;
-
-                midgard_instruction mov = v_fmov(idx, blank_alu_src, SSA_FIXED_REGISTER(REGISTER_VARYING_BASE + high_varying_register));
-
-                midgard_instruction st = m_st_vary_32(SSA_FIXED_REGISTER(high_varying_register), varying);
-                st.load_store.unknown = 0x1E9E; /* XXX: What is this? */
-
-                mir_insert_instruction_before(mir_next_op(ins), st);
-                mir_insert_instruction_before(mir_next_op(ins), mov);
-
-                /* We no longer need to store this varying */
-                _mesa_hash_table_u64_remove(ctx->ssa_varyings, idx + 1);
         }
 }
 
@@ -2853,6 +2076,7 @@ emit_blend_epilogue(compiler_context *ctx)
                         .op = midgard_alu_op_imov,
                         .reg_mode = midgard_reg_mode_8,
                         .dest_override = midgard_dest_override_none,
+                        .outmod = midgard_outmod_int,
                         .mask = 0xFF,
                         .src1 = vector_alu_srco_unsigned(blank_alu_src),
                         .src2 = vector_alu_srco_unsigned(blank_alu_src),
@@ -2899,7 +2123,6 @@ emit_block(compiler_context *ctx, nir_block *block)
         /* Perform heavylifting for aliasing */
         actualise_ssa_to_alias(ctx);
 
-        midgard_emit_store(ctx, this_block);
         midgard_pair_load_store(ctx, this_block);
 
         /* Append fragment shader epilogue (value writeout) */
@@ -3109,18 +2332,10 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
         /* TODO: Decide this at runtime */
         ctx->uniform_cutoff = 8;
 
-        /* Assign var locations early, so the epilogue can use them if necessary */
-
-        nir_assign_var_locations(&nir->outputs, &nir->num_outputs, glsl_type_size);
-        nir_assign_var_locations(&nir->inputs, &nir->num_inputs, glsl_type_size);
-        nir_assign_var_locations(&nir->uniforms, &nir->num_uniforms, glsl_type_size);
-
         /* Initialize at a global (not block) level hash tables */
 
         ctx->ssa_constants = _mesa_hash_table_u64_create(NULL);
-        ctx->ssa_varyings = _mesa_hash_table_u64_create(NULL);
         ctx->ssa_to_alias = _mesa_hash_table_u64_create(NULL);
-        ctx->ssa_to_register = _mesa_hash_table_u64_create(NULL);
         ctx->hash_to_temp = _mesa_hash_table_u64_create(NULL);
         ctx->sysval_to_id = _mesa_hash_table_u64_create(NULL);
         ctx->leftover_ssa_to_alias = _mesa_set_create(NULL, _mesa_hash_pointer, _mesa_key_pointer_equal);
@@ -3130,16 +2345,22 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
         struct exec_list *varyings =
                 ctx->stage == MESA_SHADER_VERTEX ? &nir->outputs : &nir->inputs;
 
+        unsigned max_varying = 0;
         nir_foreach_variable(var, varyings) {
                 unsigned loc = var->data.driver_location;
                 unsigned sz = glsl_type_size(var->type, FALSE);
 
-                for (int c = 0; c < sz; ++c) {
-                        program->varyings[loc + c] = var->data.location;
+                for (int c = loc; c < (loc + sz); ++c) {
+                        program->varyings[c] = var->data.location;
+                        max_varying = MAX2(max_varying, c);
                 }
         }
 
-        /* Lower gl_Position pre-optimisation */
+        /* Lower gl_Position pre-optimisation, but after lowering vars to ssa
+         * (so we don't accidentally duplicate the epilogue since mesa/st has
+         * messed with our I/O quite a bit already) */
+
+        NIR_PASS_V(nir, nir_lower_vars_to_ssa);
 
         if (ctx->stage == MESA_SHADER_VERTEX)
                 NIR_PASS_V(nir, nir_lower_viewport_transform);
@@ -3172,7 +2393,7 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
         memcpy(program->sysvals, ctx->sysvals, sizeof(ctx->sysvals[0]) * ctx->sysval_count);
 
         program->attribute_count = (ctx->stage == MESA_SHADER_VERTEX) ? nir->num_inputs : 0;
-        program->varying_count = (ctx->stage == MESA_SHADER_VERTEX) ? nir->num_outputs : ((ctx->stage == MESA_SHADER_FRAGMENT) ? nir->num_inputs : 0);
+        program->varying_count = max_varying + 1; /* Fencepost off-by-one */
 
         nir_foreach_function(func, nir) {
                 if (!func->impl)
@@ -3198,11 +2419,19 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
                 progress = false;
 
                 mir_foreach_block(ctx, block) {
+                        progress |= midgard_opt_pos_propagate(ctx, block);
                         progress |= midgard_opt_copy_prop(ctx, block);
                         progress |= midgard_opt_copy_prop_tex(ctx, block);
                         progress |= midgard_opt_dead_code_eliminate(ctx, block);
                 }
         } while (progress);
+
+        /* Nested control-flow can result in dead branches at the end of the
+         * block. This messes with our analysis and is just dead code, so cull
+         * them */
+        mir_foreach_block(ctx, block) {
+                midgard_opt_cull_dead_branch(ctx, block);
+        }
 
         /* Schedule! */
         schedule_program(ctx);
@@ -3215,7 +2444,7 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
         mir_foreach_block(ctx, block) {
                 util_dynarray_foreach(&block->bundles, midgard_bundle, bundle) {
                         for (int c = 0; c < bundle->instruction_count; ++c) {
-                                midgard_instruction *ins = &bundle->instructions[c];
+                                midgard_instruction *ins = bundle->instructions[c];
 
                                 if (!midgard_is_branch_unit(ins->unit)) continue;
 
@@ -3230,10 +2459,13 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
                                 /* Determine the block we're jumping to */
                                 int target_number = ins->branch.target_block;
 
-                                /* Report the destination tag. Discards don't need this */
+                                /* Report the destination tag */
                                 int dest_tag = is_discard ? 0 : midgard_get_first_tag_from_block(ctx, target_number);
 
-                                /* Count up the number of quadwords we're jumping over. That is, the number of quadwords in each of the blocks between (br_block_idx, target_number) */
+                                /* Count up the number of quadwords we're
+                                 * jumping over = number of quadwords until
+                                 * (br_block_idx, target_number) */
+
                                 int quadword_offset = 0;
 
                                 if (is_discard) {
@@ -3350,8 +2582,13 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
 
         int current_bundle = 0;
 
+        /* Midgard prefetches instruction types, so during emission we
+         * need to lookahead. Unless this is the last instruction, in
+         * which we return 1. Or if this is the second to last and the
+         * last is an ALU, then it's also 1... */
+
         mir_foreach_block(ctx, block) {
-                util_dynarray_foreach(&block->bundles, midgard_bundle, bundle) {
+                mir_foreach_bundle_in_block(block, bundle) {
                         int lookahead = 1;
 
                         if (current_bundle + 1 < bundle_count) {

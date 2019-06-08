@@ -2248,9 +2248,7 @@ typedef struct nir_shader_compiler_options {
    bool lower_fpow;
    bool lower_fsat;
    bool lower_fsqrt;
-   bool lower_fmod16;
-   bool lower_fmod32;
-   bool lower_fmod64;
+   bool lower_fmod;
    /** Lowers ibitfield_extract/ubitfield_extract to ibfe/ubfe. */
    bool lower_bitfield_extract;
    /** Lowers ibitfield_extract/ubitfield_extract to bfm, compares, shifts. */
@@ -2918,7 +2916,9 @@ nir_function_impl *nir_function_impl_clone(nir_shader *shader,
 nir_constant *nir_constant_clone(const nir_constant *c, nir_variable *var);
 nir_variable *nir_variable_clone(const nir_variable *c, nir_shader *shader);
 
-nir_shader *nir_shader_serialize_deserialize(void *mem_ctx, nir_shader *s);
+void nir_shader_replace(nir_shader *dest, nir_shader *src);
+
+void nir_shader_serialize_deserialize(nir_shader *s);
 
 #ifndef NDEBUG
 void nir_validate_shader(nir_shader *shader, const char *when);
@@ -2990,12 +2990,10 @@ static inline bool should_print_nir(void) { return false; }
    nir_validate_shader(nir, "after " #pass);                         \
    if (should_clone_nir()) {                                         \
       nir_shader *clone = nir_shader_clone(ralloc_parent(nir), nir); \
-      ralloc_free(nir);                                              \
-      nir = clone;                                                   \
+      nir_shader_replace(nir, clone);                                \
    }                                                                 \
    if (should_serialize_deserialize_nir()) {                         \
-      void *mem_ctx = ralloc_parent(nir);                            \
-      nir = nir_shader_serialize_deserialize(mem_ctx, nir);          \
+      nir_shader_serialize_deserialize(nir);                         \
    }                                                                 \
 } while (0)
 
@@ -3197,6 +3195,12 @@ nir_address_format_to_glsl_type(nir_address_format addr_format)
 }
 
 const nir_const_value *nir_address_format_null_value(nir_address_format addr_format);
+
+nir_ssa_def *nir_build_addr_ieq(struct nir_builder *b, nir_ssa_def *addr0, nir_ssa_def *addr1,
+                                nir_address_format addr_format);
+
+nir_ssa_def *nir_build_addr_isub(struct nir_builder *b, nir_ssa_def *addr0, nir_ssa_def *addr1,
+                                 nir_address_format addr_format);
 
 nir_ssa_def * nir_explicit_io_address_from_deref(struct nir_builder *b,
                                                  nir_deref_instr *deref,

@@ -999,15 +999,9 @@ si_nir_load_sampler_desc(struct ac_shader_abi *abi,
 			 bool write, bool bindless)
 {
 	struct si_shader_context *ctx = si_shader_context_from_abi(abi);
-	const struct tgsi_shader_info *info = &ctx->shader->selector->info;
 	LLVMBuilderRef builder = ctx->ac.builder;
 	unsigned const_index = base_index + constant_index;
 	bool dcc_off = write;
-
-	/* TODO: images_store and images_atomic are not set */
-	if (!dynamic_index && image &&
-	    (info->images_store | info->images_atomic) & (1 << const_index))
-		dcc_off = true;
 
 	assert(!descriptor_set);
 	assert(!image || desc_type == AC_DESC_IMAGE || desc_type == AC_DESC_BUFFER);
@@ -1022,7 +1016,7 @@ si_nir_load_sampler_desc(struct ac_shader_abi *abi,
 			 * 16-dword slots for now.
 			 */
 			dynamic_index = LLVMBuildMul(ctx->ac.builder, dynamic_index,
-					     LLVMConstInt(ctx->i32, 2, 0), "");
+					     LLVMConstInt(ctx->i64, 2, 0), "");
 
 			return si_load_image_desc(ctx, list, dynamic_index, desc_type,
 						  dcc_off, true);
@@ -1034,7 +1028,7 @@ si_nir_load_sampler_desc(struct ac_shader_abi *abi,
 		 * to prevent incorrect code generation and hangs.
 		 */
 		dynamic_index = LLVMBuildMul(ctx->ac.builder, dynamic_index,
-					     LLVMConstInt(ctx->i32, 2, 0), "");
+					     LLVMConstInt(ctx->i64, 2, 0), "");
 		list = ac_build_pointer_add(&ctx->ac, list, dynamic_index);
 		return si_load_sampler_desc(ctx, list, ctx->i32_0, desc_type);
 	}

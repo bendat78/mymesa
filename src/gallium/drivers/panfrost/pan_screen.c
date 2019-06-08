@@ -132,8 +132,12 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
         case PIPE_CAP_INDEP_BLEND_FUNC:
                 return 1;
 
-        case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+                /* Hardware is natively upper left */
+                return 0;
+
+        case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+                return 1;
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
                 return 1;
@@ -442,6 +446,10 @@ panfrost_is_format_supported( struct pipe_screen *screen,
 
         if (sample_count > 1)
                 return FALSE;
+
+	/* sRGB colorspace is not supported (yet?) */
+	if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
+		return FALSE;
 
         /* Format wishlist */
         if (format == PIPE_FORMAT_Z24X8_UNORM || format == PIPE_FORMAT_X8Z24_UNORM)
