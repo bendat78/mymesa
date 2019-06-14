@@ -83,6 +83,9 @@ midgard_block_add_successor(midgard_block *block, midgard_block *successor)
 
 #define EMIT(op, ...) emit_mir_instruction(ctx, v_##op(__VA_ARGS__));
 #define SWIZZLE_XYZW SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_W)
+#define SWIZZLE_XYXX SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_X, COMPONENT_X)
+#define SWIZZLE_XXXX SWIZZLE(COMPONENT_X, COMPONENT_X, COMPONENT_X, COMPONENT_X)
+#define SWIZZLE_WWWW SWIZZLE(COMPONENT_W, COMPONENT_W, COMPONENT_W, COMPONENT_W)
 
 #define M_LOAD_STORE(name, rname, uname) \
 	static midgard_instruction m_##name(unsigned ssa, unsigned address) { \
@@ -354,7 +357,8 @@ optimise_nir(nir_shader *nir)
         NIR_PASS(progress, nir, nir_lower_idiv);
 
         nir_lower_tex_options lower_tex_options = {
-                .lower_rect = true
+                .lower_rect = true,
+                .lower_txp = ~0
         };
 
         NIR_PASS(progress, nir, nir_lower_tex, &lower_tex_options);
@@ -540,14 +544,14 @@ emit_condition(compiler_context *ctx, nir_src *src, bool for_branch, unsigned co
                 .unit = for_branch ? UNIT_SMUL : UNIT_SADD,
 
                 .ssa_args = {
-
                         .src0 = condition,
                         .src1 = condition,
                         .dest = SSA_FIXED_REGISTER(31),
                 },
+
                 .alu = {
                         .op = midgard_alu_op_iand,
-                        .outmod = midgard_outmod_int,
+                        .outmod = midgard_outmod_int_wrap,
                         .reg_mode = midgard_reg_mode_32,
                         .dest_override = midgard_dest_override_none,
                         .mask = (0x3 << 6), /* w */
@@ -586,7 +590,7 @@ emit_condition_mixed(compiler_context *ctx, nir_alu_src *src, unsigned nr_comp)
                 },
                 .alu = {
                         .op = midgard_alu_op_iand,
-                        .outmod = midgard_outmod_int,
+                        .outmod = midgard_outmod_int_wrap,
                         .reg_mode = midgard_reg_mode_32,
                         .dest_override = midgard_dest_override_none,
                         .mask = expand_writemask((1 << nr_comp) - 1),
@@ -617,7 +621,7 @@ emit_indirect_offset(compiler_context *ctx, nir_src *src)
                 },
                 .alu = {
                         .op = midgard_alu_op_imov,
-                        .outmod = midgard_outmod_int,
+                        .outmod = midgard_outmod_int_wrap,
                         .reg_mode = midgard_reg_mode_32,
                         .dest_override = midgard_dest_override_none,
                         .mask = (0x3 << 6), /* w */
@@ -821,12 +825,14 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
         }
 
         /* Midgard can perform certain modifiers on output of an ALU op */
-        midgard_outmod outmod =
-                midgard_is_integer_out_op(op) ? midgard_outmod_int :
-                instr->dest.saturate ? midgard_outmod_sat : midgard_outmod_none;
+        unsigned outmod;
 
-        if (instr->op == nir_op_fsat)
-                outmod = midgard_outmod_sat;
+        if (midgard_is_integer_out_op(op)) {
+                outmod = midgard_outmod_int_wrap;
+        } else {
+                bool sat = instr->dest.saturate || instr->op == nir_op_fsat;
+                outmod = sat ? midgard_outmod_sat : midgard_outmod_none;
+        }
 
         /* fmax(a, 0.0) can turn into a .pos modifier as an optimization */
 
@@ -1005,6 +1011,42 @@ emit_uniform_read(compiler_context *ctx, unsigned dest, unsigned offset, nir_src
 }
 
 static void
+emit_varying_read(
+                compiler_context *ctx,
+                unsigned dest, unsigned offset,
+                unsigned nr_comp, unsigned component,
+                nir_src *indirect_offset)
+{
+        /* XXX: Half-floats? */
+        /* TODO: swizzle, mask */
+
+        midgard_instruction ins = m_ld_vary_32(dest, offset);
+        ins.load_store.mask = (1 << nr_comp) - 1;
+        ins.load_store.swizzle = SWIZZLE_XYZW >> (2 * component);
+
+        midgard_varying_parameter p = {
+                .is_varying = 1,
+                .interpolation = midgard_interp_default,
+                .flat = /*var->data.interpolation == INTERP_MODE_FLAT*/ 0
+        };
+
+        unsigned u;
+        memcpy(&u, &p, sizeof(p));
+        ins.load_store.varying_parameters = u;
+
+        if (indirect_offset) {
+                /* We need to add in the dynamic index, moved to r27.w */
+                emit_indirect_offset(ctx, indirect_offset);
+                ins.load_store.unknown = 0x79e; /* xxx: what is this? */
+        } else {
+                /* Just a direct load */
+                ins.load_store.unknown = 0x1e9e; /* xxx: what is this? */
+        }
+
+        emit_mir_instruction(ctx, ins);
+}
+
+static void
 emit_sysval_read(compiler_context *ctx, nir_intrinsic_instr *instr)
 {
         /* First, pull out the destination */
@@ -1134,34 +1176,7 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                 if (instr->intrinsic == nir_intrinsic_load_uniform && !ctx->is_blend) {
                         emit_uniform_read(ctx, reg, ctx->sysval_count + offset, !direct ? &instr->src[0] : NULL);
                 } else if (ctx->stage == MESA_SHADER_FRAGMENT && !ctx->is_blend) {
-                        /* XXX: Half-floats? */
-                        /* TODO: swizzle, mask */
-
-                        midgard_instruction ins = m_ld_vary_32(reg, offset);
-                        ins.load_store.mask = (1 << nr_comp) - 1;
-                        ins.load_store.swizzle = SWIZZLE_XYZW >> (2 * component);
-
-                        midgard_varying_parameter p = {
-                                .is_varying = 1,
-                                .interpolation = midgard_interp_default,
-                                .flat = /*var->data.interpolation == INTERP_MODE_FLAT*/ 0
-                        };
-
-                        unsigned u;
-                        memcpy(&u, &p, sizeof(p));
-                        ins.load_store.varying_parameters = u;
-
-                        if (direct) {
-                                /* We have the offset totally ready */
-                                ins.load_store.unknown = 0x1e9e; /* xxx: what is this? */
-                        } else {
-                                /* We have it partially ready, but we need to
-                                 * add in the dynamic index, moved to r27.w */
-                                emit_indirect_offset(ctx, &instr->src[0]);
-                                ins.load_store.unknown = 0x79e; /* xxx: what is this? */
-                        }
-
-                        emit_mir_instruction(ctx, ins);
+                        emit_varying_read(ctx, reg, offset, nr_comp, component, !direct ? &instr->src[0] : NULL);
                 } else if (ctx->is_blend) {
                         /* For blend shaders, load the input color, which is
                          * preloaded to r0 */
@@ -1298,13 +1313,26 @@ midgard_tex_format(enum glsl_sampler_dim dim)
         }
 }
 
+static unsigned
+midgard_tex_op(nir_texop op)
+{
+        switch (op) {
+                case nir_texop_tex:
+                case nir_texop_txb:
+                        return TEXTURE_OP_NORMAL;
+                case nir_texop_txl:
+                        return TEXTURE_OP_LOD;
+                default:
+                        unreachable("Unhanlded texture op");
+        }
+}
+
 static void
 emit_tex(compiler_context *ctx, nir_tex_instr *instr)
 {
         /* TODO */
         //assert (!instr->sampler);
         //assert (!instr->texture_array_size);
-        assert (instr->op == nir_texop_tex);
 
         /* Allocate registers via a round robin scheme to alternate between the two registers */
         int reg = ctx->texture_op_count & 1;
@@ -1319,18 +1347,17 @@ emit_tex(compiler_context *ctx, nir_tex_instr *instr)
         int sampler_index = texture_index;
 
         for (unsigned i = 0; i < instr->num_srcs; ++i) {
+                int reg = SSA_FIXED_REGISTER(REGISTER_TEXTURE_BASE + in_reg);
+                int index = nir_src_index(ctx, &instr->src[i].src);
+                midgard_vector_alu_src alu_src = blank_alu_src;
+
                 switch (instr->src[i].src_type) {
                 case nir_tex_src_coord: {
-                        int index = nir_src_index(ctx, &instr->src[i].src);
-
-                        midgard_vector_alu_src alu_src = blank_alu_src;
-
-                        int reg = SSA_FIXED_REGISTER(REGISTER_TEXTURE_BASE + in_reg);
-
                         if (instr->sampler_dim == GLSL_SAMPLER_DIM_CUBE) {
                                 /* For cubemaps, we need to load coords into
                                  * special r27, and then use a special ld/st op
-                                 * to copy into the texture register */
+                                 * to select the face and copy the xy into the
+                                 * texture register */
 
                                 alu_src.swizzle = SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_X);
 
@@ -1339,7 +1366,7 @@ emit_tex(compiler_context *ctx, nir_tex_instr *instr)
 
                                 midgard_instruction st = m_st_cubemap_coords(reg, 0);
                                 st.load_store.unknown = 0x24; /* XXX: What is this? */
-                                st.load_store.mask = 0x3; /* xy? */
+                                st.load_store.mask = 0x3; /* xy */
                                 st.load_store.swizzle = alu_src.swizzle;
                                 emit_mir_instruction(ctx, st);
 
@@ -1347,17 +1374,28 @@ emit_tex(compiler_context *ctx, nir_tex_instr *instr)
                                 alu_src.swizzle = SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_X, COMPONENT_X);
 
                                 midgard_instruction ins = v_fmov(index, alu_src, reg);
+                                ins.alu.mask = expand_writemask(0x3); /* xy */
                                 emit_mir_instruction(ctx, ins);
                         }
 
                         break;
                 }
 
-                default: {
-                        DBG("Unknown source type\n");
-                        //assert(0);
+                case nir_tex_src_bias:
+                case nir_tex_src_lod: {
+                        /* To keep RA simple, we put the bias/LOD into the w
+                         * component of the input source, which is otherwise in xy */
+
+                        alu_src.swizzle = SWIZZLE_XXXX;
+
+                        midgard_instruction ins = v_fmov(index, alu_src, reg);
+                        ins.alu.mask = expand_writemask(1 << COMPONENT_W);
+                        emit_mir_instruction(ctx, ins);
                         break;
-                }
+               };
+
+                default:
+                        unreachable("Unknown texture source type\n");
                 }
         }
 
@@ -1365,26 +1403,22 @@ emit_tex(compiler_context *ctx, nir_tex_instr *instr)
         midgard_instruction ins = {
                 .type = TAG_TEXTURE_4,
                 .texture = {
-                        .op = TEXTURE_OP_NORMAL,
+                        .op = midgard_tex_op(instr->op),
                         .format = midgard_tex_format(instr->sampler_dim),
                         .texture_handle = texture_index,
                         .sampler_handle = sampler_index,
 
-                        /* TODO: Don't force xyzw */
-                        .swizzle = SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_W),
+                        /* TODO: Regalloc it in */
+                        .swizzle = SWIZZLE_XYZW,
                         .mask = 0xF,
 
                         /* TODO: half */
-                        //.in_reg_full = 1,
+                        .in_reg_full = 1,
+                        .in_reg_swizzle = SWIZZLE_XYXX,
                         .out_full = 1,
-
-                        .filter = 1,
 
                         /* Always 1 */
                         .unknown7 = 1,
-
-                        /* Assume we can continue; hint it out later */
-                        .cont = 1,
                 }
         };
 
@@ -1392,15 +1426,24 @@ emit_tex(compiler_context *ctx, nir_tex_instr *instr)
         ins.texture.in_reg_select = in_reg;
         ins.texture.out_reg_select = out_reg;
 
-        /* TODO: Dynamic swizzle input selection, half-swizzles? */
-        if (instr->sampler_dim == GLSL_SAMPLER_DIM_3D) {
-                ins.texture.in_reg_swizzle_right = COMPONENT_X;
-                ins.texture.in_reg_swizzle_left = COMPONENT_Y;
-                //ins.texture.in_reg_swizzle_third = COMPONENT_Z;
-        } else {
-                ins.texture.in_reg_swizzle_left = COMPONENT_X;
-                ins.texture.in_reg_swizzle_right = COMPONENT_Y;
-                //ins.texture.in_reg_swizzle_third = COMPONENT_X;
+        /* Setup bias/LOD if necessary. Only register mode support right now.
+         * TODO: Immediate mode for performance gains */
+
+        if (instr->op == nir_texop_txb || instr->op == nir_texop_txl) {
+                ins.texture.lod_register = true;
+
+                midgard_tex_register_select sel = {
+                        .select = in_reg,
+                        .full = 1,
+
+                        /* w */
+                        .component_lo = 1,
+                        .component_hi = 1
+                };
+
+                uint8_t packed;
+                memcpy(&packed, &sel, sizeof(packed));
+                ins.texture.bias = packed;
         }
 
         emit_mir_instruction(ctx, ins);
@@ -1729,6 +1772,11 @@ midgard_opt_cull_dead_branch(compiler_context *ctx, midgard_block *block)
                  * just generally special */
                 if (ins->prepacked_branch) continue;
 
+                /* Discards are similarly special and may not correspond to the
+                 * end of a block */
+
+                if (ins->branch.target_type == TARGET_DISCARD) continue;
+
                 if (branched) {
                         /* We already branched, so this is dead */
                         mir_remove_instruction(ins);
@@ -1766,6 +1814,18 @@ mir_nontrivial_source2_mod(midgard_instruction *ins)
 }
 
 static bool
+mir_nontrivial_outmod(midgard_instruction *ins)
+{
+        bool is_int = midgard_is_integer_op(ins->alu.op);
+        unsigned mod = ins->alu.outmod;
+
+        if (is_int)
+                return mod != midgard_outmod_int_wrap;
+        else
+                return mod != midgard_outmod_none;
+}
+
+static bool
 midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
 {
         bool progress = false;
@@ -1789,7 +1849,7 @@ midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
                 if (ins->has_constants) continue;
 
                 if (mir_nontrivial_source2_mod(ins)) continue;
-                if (ins->alu.outmod != midgard_outmod_none) continue;
+                if (mir_nontrivial_outmod(ins)) continue;
 
                 /* We're clear -- rewrite */
                 mir_rewrite_index_src(ctx, to, from);
@@ -1804,7 +1864,7 @@ midgard_opt_copy_prop(compiler_context *ctx, midgard_block *block)
  * the move can be propagated away entirely */
 
 static bool
-mir_compose_outmod(midgard_outmod *outmod, midgard_outmod comp)
+mir_compose_float_outmod(midgard_outmod_float *outmod, midgard_outmod_float comp)
 {
         /* Nothing to do */
         if (comp == midgard_outmod_none)
@@ -1832,6 +1892,7 @@ midgard_opt_pos_propagate(compiler_context *ctx, midgard_block *block)
                 /* TODO: Registers? */
                 unsigned src = ins->ssa_args.src1;
                 if (src >= ctx->func->impl->ssa_alloc) continue;
+                assert(!mir_has_multiple_writes(ctx, src));
 
                 /* There might be a source modifier, too */
                 if (mir_nontrivial_source2_mod(ins)) continue;
@@ -1841,8 +1902,11 @@ midgard_opt_pos_propagate(compiler_context *ctx, midgard_block *block)
                         if (v->type != TAG_ALU_4) continue;
                         if (v->ssa_args.dest != src) continue;
 
-                        midgard_outmod temp = v->alu.outmod;
-                        progress |= mir_compose_outmod(&temp, ins->alu.outmod);
+                        /* Can we even take a float outmod? */
+                        if (midgard_is_integer_out_op(v->alu.op)) continue;
+
+                        midgard_outmod_float temp = v->alu.outmod;
+                        progress |= mir_compose_float_outmod(&temp, ins->alu.outmod);
 
                         /* Throw in the towel.. */
                         if (!progress) break;
@@ -2076,7 +2140,7 @@ emit_blend_epilogue(compiler_context *ctx)
                         .op = midgard_alu_op_imov,
                         .reg_mode = midgard_reg_mode_8,
                         .dest_override = midgard_dest_override_none,
-                        .outmod = midgard_outmod_int,
+                        .outmod = midgard_outmod_int_wrap,
                         .mask = 0xFF,
                         .src1 = vector_alu_srco_unsigned(blank_alu_src),
                         .src2 = vector_alu_srco_unsigned(blank_alu_src),
@@ -2350,9 +2414,9 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
                 unsigned loc = var->data.driver_location;
                 unsigned sz = glsl_type_size(var->type, FALSE);
 
-                for (int c = loc; c < (loc + sz); ++c) {
-                        program->varyings[c] = var->data.location;
-                        max_varying = MAX2(max_varying, c);
+                for (int c = 0; c < sz; ++c) {
+                        program->varyings[loc + c] = var->data.location + c;
+                        max_varying = MAX2(max_varying, loc + c);
                 }
         }
 

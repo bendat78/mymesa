@@ -147,11 +147,11 @@ emit_alu_bundle(compiler_context *ctx,
                         source = &scalarized;
                 }
 
-                memcpy(util_dynarray_grow(emission, size), source, size);
+                memcpy(util_dynarray_grow_bytes(emission, 1, size), source, size);
         }
 
         /* Emit padding (all zero) */
-        memset(util_dynarray_grow(emission, bundle->padding), 0, bundle->padding);
+        memset(util_dynarray_grow_bytes(emission, 1, bundle->padding), 0, bundle->padding);
 
         /* Tack on constants */
 
@@ -203,20 +203,25 @@ emit_binary_bundle(compiler_context *ctx,
                 break;
         }
 
-        case TAG_TEXTURE_4: {
+        case TAG_TEXTURE_4:
+        case TAG_TEXTURE_4_VTX: {
                 /* Texture instructions are easy, since there is no pipelining
-                 * nor VLIW to worry about. We may need to set .last flag */
+                 * nor VLIW to worry about. We may need to set .cont/.last
+                 * flags. */
 
                 midgard_instruction *ins = bundle->instructions[0];
 
-                ins->texture.type = TAG_TEXTURE_4;
+                ins->texture.type = bundle->tag;
                 ins->texture.next_type = next_tag;
 
                 ctx->texture_op_count--;
 
-                if (!ctx->texture_op_count) {
-                        ins->texture.cont = 0;
-                        ins->texture.last = 1;
+                if (ins->texture.op == TEXTURE_OP_NORMAL) {
+                        bool continues = ctx->texture_op_count > 0;
+                        ins->texture.cont = continues;
+                        ins->texture.last = !continues;
+                } else {
+                        ins->texture.cont = ins->texture.last = 1;
                 }
 
                 util_dynarray_append(emission, midgard_texture_word, ins->texture);

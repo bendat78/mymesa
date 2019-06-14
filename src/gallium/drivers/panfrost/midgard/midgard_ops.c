@@ -73,10 +73,10 @@ struct mir_op_props alu_opcode_props[256] = {
         [midgard_alu_op_imov]		 = {"imov", UNITS_MOST | QUIRK_FLIPPED_R24},
 
         /* For vector comparisons, use ball etc */
-        [midgard_alu_op_feq]		 = {"feq", UNITS_MOST | OP_COMMUTES},
-        [midgard_alu_op_fne]		 = {"fne", UNITS_MOST | OP_COMMUTES},
-        [midgard_alu_op_fle]		 = {"fle", UNITS_MOST},
-        [midgard_alu_op_flt]		 = {"flt", UNITS_MOST},
+        [midgard_alu_op_feq]		 = {"feq", UNITS_MOST | OP_TYPE_CONVERT | OP_COMMUTES},
+        [midgard_alu_op_fne]		 = {"fne", UNITS_MOST | OP_TYPE_CONVERT | OP_COMMUTES},
+        [midgard_alu_op_fle]		 = {"fle", UNITS_MOST | OP_TYPE_CONVERT},
+        [midgard_alu_op_flt]		 = {"flt", UNITS_MOST | OP_TYPE_CONVERT},
         [midgard_alu_op_ieq]		 = {"ieq", UNITS_MOST | OP_COMMUTES},
         [midgard_alu_op_ine]		 = {"ine", UNITS_MOST | OP_COMMUTES},
         [midgard_alu_op_ilt]		 = {"ilt", UNITS_MOST},
@@ -153,6 +153,8 @@ struct mir_op_props alu_opcode_props[256] = {
 const char *load_store_opcode_names[256] = {
         [midgard_op_st_cubemap_coords] = "st_cubemap_coords",
         [midgard_op_ld_global_id] = "ld_global_id",
+        [midgard_op_ldst_perspective_division_z] = "ldst_perspective_division_z",
+        [midgard_op_ldst_perspective_division_w] = "ldst_perspective_division_w",
 
         [midgard_op_atomic_add] = "atomic_add",
         [midgard_op_atomic_and] = "atomic_and",

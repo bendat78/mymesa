@@ -25,8 +25,10 @@
 #include "util/u_inlines.h"
 
 #include "virgl_protocol.h"
+#include "virgl_context.h"
 #include "virgl_screen.h"
 #include "virgl_encode.h"
+#include "virgl_resource.h"
 #include "virgl_transfer_queue.h"
 
 struct list_action_args
@@ -118,10 +120,8 @@ static void remove_transfer(struct virgl_transfer_queue *queue,
                             struct list_action_args *args)
 {
    struct virgl_transfer *queued = args->queued;
-   struct pipe_resource *pres = queued->base.resource;
    list_del(&queued->queue_link);
-   pipe_resource_reference(&pres, NULL);
-   virgl_resource_destroy_transfer(queue->pool, queued);
+   virgl_resource_destroy_transfer(queue->vctx, queued);
 }
 
 static void replace_unmapped_transfer(struct virgl_transfer_queue *queue,
@@ -245,11 +245,12 @@ static void add_internal(struct virgl_transfer_queue *queue,
 
 
 void virgl_transfer_queue_init(struct virgl_transfer_queue *queue,
-                               struct virgl_screen *vs,
-                               struct slab_child_pool *pool)
+                               struct virgl_context *vctx)
 {
+   struct virgl_screen *vs = virgl_screen(vctx->base.screen);
+
    queue->vs = vs;
-   queue->pool = pool;
+   queue->vctx = vctx;
    queue->num_dwords = 0;
 
    for (uint32_t i = 0; i < MAX_LISTS; i++)
@@ -281,7 +282,7 @@ void virgl_transfer_queue_fini(struct virgl_transfer_queue *queue)
       vws->cmd_buf_destroy(queue->tbuf);
 
    queue->vs = NULL;
-   queue->pool = NULL;
+   queue->vctx = NULL;
    queue->tbuf = NULL;
    queue->num_dwords = 0;
 }
@@ -289,12 +290,8 @@ void virgl_transfer_queue_fini(struct virgl_transfer_queue *queue)
 int virgl_transfer_queue_unmap(struct virgl_transfer_queue *queue,
                                struct virgl_transfer *transfer)
 {
-   struct pipe_resource *res, *pres;
+   struct pipe_resource *res = transfer->base.resource;
    struct list_iteration_args iter;
-
-   pres = NULL;
-   res = transfer->base.resource;
-   pipe_resource_reference(&pres, res);
 
    /* We don't support copy transfers in the transfer queue. */
    assert(!transfer->copy_src_res);

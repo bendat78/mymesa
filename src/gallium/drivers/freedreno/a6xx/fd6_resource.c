@@ -186,8 +186,6 @@ ok_ubwc_format(enum a6xx_color_fmt fmt)
 	case RB6_R32G32B32A32_UINT:
 	case RB6_R32G32_SINT:
 	case RB6_R32G32_UINT:
-	case RB6_R32_SINT:
-	case RB6_R32_UINT:
 	case RB6_R5G6B5_UNORM:
 	case RB6_R8G8B8A8_SINT:
 	case RB6_R8G8B8A8_UINT:
@@ -196,7 +194,6 @@ ok_ubwc_format(enum a6xx_color_fmt fmt)
 	case RB6_R8G8_SINT:
 	case RB6_R8G8_UINT:
 	case RB6_R8G8_UNORM:
-	case RB6_X8Z24_UNORM:
 		return true;
 	default:
 		return false;
@@ -258,6 +255,24 @@ fd6_fill_ubwc_buffer_sizes(struct fd_resource *rsc)
 	rsc->tile_mode = TILE6_3;
 
 	return meta_size;
+}
+
+/**
+ * Ensure the rsc is in an ok state to be used with the specified format.
+ * This handles the case of UBWC buffers used with non-UBWC compatible
+ * formats, by triggering an uncompress.
+ */
+void
+fd6_validate_format(struct fd_context *ctx, struct fd_resource *rsc,
+		enum pipe_format format)
+{
+	if (!rsc->ubwc_size)
+		return;
+
+	if (ok_ubwc_format(fd6_pipe2color(format)))
+		return;
+
+	fd_resource_uncompress(ctx, rsc);
 }
 
 uint32_t

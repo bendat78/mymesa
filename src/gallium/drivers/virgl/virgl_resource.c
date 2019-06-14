@@ -381,7 +381,7 @@ void virgl_resource_layout(struct pipe_resource *pt,
 }
 
 struct virgl_transfer *
-virgl_resource_create_transfer(struct slab_child_pool *pool,
+virgl_resource_create_transfer(struct virgl_context *vctx,
                                struct pipe_resource *pres,
                                const struct virgl_resource_metadata *metadata,
                                unsigned level, unsigned usage,
@@ -411,11 +411,13 @@ virgl_resource_create_transfer(struct slab_child_pool *pool,
    offset += blocksy * metadata->stride[level];
    offset += blocksx * util_format_get_blocksize(format);
 
-   trans = slab_alloc(pool);
+   trans = slab_alloc(&vctx->transfer_pool);
    if (!trans)
       return NULL;
 
-   trans->base.resource = pres;
+   /* note that trans is not zero-initialized */
+   trans->base.resource = NULL;
+   pipe_resource_reference(&trans->base.resource, pres);
    trans->base.level = level;
    trans->base.usage = usage;
    trans->base.box = *box;
@@ -438,12 +440,14 @@ virgl_resource_create_transfer(struct slab_child_pool *pool,
    return trans;
 }
 
-void virgl_resource_destroy_transfer(struct slab_child_pool *pool,
+void virgl_resource_destroy_transfer(struct virgl_context *vctx,
                                      struct virgl_transfer *trans)
 {
    pipe_resource_reference(&trans->copy_src_res, NULL);
+
    util_range_destroy(&trans->range);
-   slab_free(pool, trans);
+   pipe_resource_reference(&trans->base.resource, NULL);
+   slab_free(&vctx->transfer_pool, trans);
 }
 
 void virgl_resource_destroy(struct pipe_screen *screen,

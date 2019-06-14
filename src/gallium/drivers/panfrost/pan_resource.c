@@ -1,31 +1,33 @@
-/**************************************************************************
- *
- * Copyright 2008 VMware, Inc.
- * Copyright 2014 Broadcom
- * Copyright 2018 Alyssa Rosenzweig
- * All Rights Reserved.
+/*
+ * Copyright (C) 2008 VMware, Inc.
+ * Copyright (C) 2014 Broadcom
+ * Copyright (C) 2018-2019 Alyssa Rosenzweig
+ * Copyright (C) 2019 Collabora
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portions
- * of the Software.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
- * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
- **************************************************************************/
+ * Authors (Collabora):
+ *   Tomeu Vizoso <tomeu.vizoso@collabora.com>
+ *   Alyssa Rosenzweig <alyssa.rosenzweig@collabora.com>
+ *
+ */
 
 #include <xf86drm.h>
 #include <fcntl.h>
@@ -129,19 +131,6 @@ panfrost_flush_resource(struct pipe_context *pctx, struct pipe_resource *prsc)
         //DBG("TODO %s\n", __func__);
 }
 
-static void
-panfrost_blit(struct pipe_context *pipe,
-              const struct pipe_blit_info *info)
-{
-        if (util_try_blit_via_copy_region(pipe, info))
-                return;
-
-        /* TODO */
-        DBG("Unhandled blit.\n");
-
-        return;
-}
-
 static struct pipe_surface *
 panfrost_create_surface(struct pipe_context *pipe,
                         struct pipe_resource *pt,
@@ -194,6 +183,16 @@ panfrost_setup_slices(const struct pipe_resource *tmpl, struct panfrost_bo *bo)
         unsigned height = tmpl->height0;
         unsigned bytes_per_pixel = util_format_get_blocksize(tmpl->format);
 
+        /* Tiled operates blockwise; linear is packed. Also, anything
+         * we render to has to be tile-aligned. Maybe not strictly
+         * necessary, but we're not *that* pressed for memory and it
+         * makes code a lot simpler */
+
+        bool renderable = tmpl->bind &
+                (PIPE_BIND_RENDER_TARGET | PIPE_BIND_DEPTH_STENCIL);
+        bool tiled = bo->layout == PAN_TILED;
+        bool should_align = renderable || tiled;
+
         unsigned offset = 0;
 
         for (unsigned l = 0; l <= tmpl->last_level; ++l) {
@@ -202,15 +201,19 @@ panfrost_setup_slices(const struct pipe_resource *tmpl, struct panfrost_bo *bo)
                 unsigned effective_width = width;
                 unsigned effective_height = height;
 
-                /* Tiled operates blockwise; linear is packed */
-
-                if (bo->layout == PAN_TILED) {
+                if (should_align) {
                         effective_width = ALIGN(effective_width, 16);
                         effective_height = ALIGN(effective_height, 16);
                 }
 
                 slice->offset = offset;
-                slice->stride = bytes_per_pixel * effective_width;
+
+                /* Compute the would-be stride */
+                unsigned stride = bytes_per_pixel * effective_width;
+
+                /* ..but cache-line align it for performance */
+                stride = ALIGN(stride, 64);
+                slice->stride = stride;
 
                 offset += slice->stride * effective_height;
 
@@ -247,12 +250,6 @@ panfrost_create_bo(struct panfrost_screen *screen, const struct pipe_resource *t
 
         /* Tiling textures is almost always faster, unless we only use it once */
         bool should_tile = (template->usage != PIPE_USAGE_STREAM) && (template->bind & PIPE_BIND_SAMPLER_VIEW);
-
-        /* For unclear reasons, depth/stencil is faster linear than AFBC, so
-         * make sure it's linear */
-
-        if (template->bind & PIPE_BIND_DEPTH_STENCIL)
-                should_tile = false;
 
         /* Set the layout appropriately */
         bo->layout = should_tile ? PAN_TILED : PAN_LINEAR;

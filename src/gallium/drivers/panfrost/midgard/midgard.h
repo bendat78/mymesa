@@ -172,15 +172,22 @@ typedef enum {
 typedef enum {
         midgard_outmod_none = 0,
         midgard_outmod_pos  = 1,
-        midgard_outmod_int  = 2,
+        /* 0x2 unknown */
         midgard_outmod_sat  = 3
-} midgard_outmod;
+} midgard_outmod_float;
+
+typedef enum {
+        midgard_outmod_int_saturate = 0,
+        midgard_outmod_uint_saturate = 1,
+        midgard_outmod_int_wrap = 2,
+        midgard_outmod_int_high = 3, /* Overflowed portion */
+} midgard_outmod_int;
 
 typedef enum {
         midgard_reg_mode_8 = 0,
         midgard_reg_mode_16 = 1,
         midgard_reg_mode_32 = 2,
-        midgard_reg_mode_64 = 3 /* TODO: verify */
+        midgard_reg_mode_64 = 3
 } midgard_reg_mode;
 
 typedef enum {
@@ -193,7 +200,7 @@ typedef enum {
         midgard_int_sign_extend = 0,
         midgard_int_zero_extend = 1,
         midgard_int_normal = 2,
-        midgard_int_reserved = 3
+        midgard_int_shift = 3
 } midgard_int_mod;
 
 #define MIDGARD_FLOAT_MOD_ABS (1 << 0)
@@ -224,7 +231,7 @@ __attribute__((__packed__))
         unsigned src1 : 13;
         unsigned src2 : 13;
         midgard_dest_override dest_override : 2;
-        midgard_outmod outmod               : 2;
+        midgard_outmod_float outmod               : 2;
         unsigned mask                           : 8;
 }
 midgard_vector_alu;
@@ -246,7 +253,7 @@ __attribute__((__packed__))
         unsigned src1             :  6;
         unsigned src2             : 11;
         unsigned unknown          :  1;
-        midgard_outmod outmod :  2;
+        unsigned outmod :  2;
         bool output_full          :  1;
         unsigned output_component :  3;
 }
@@ -364,6 +371,13 @@ typedef enum {
         /* Used in OpenCL. Probably can ld other things as well */
         midgard_op_ld_global_id = 0x10,
 
+        /* The L/S unit can do perspective division a clock faster than the ALU
+         * if you're lucky. Put the vec4 in r27, and call with 0x24 as the
+         * unknown state; the output will be <x/w, y/w, z/w, 1>. Replace w with
+         * z for the z version */
+        midgard_op_ldst_perspective_division_z = 0x12,
+        midgard_op_ldst_perspective_division_w = 0x13,
+
         /* val in r27.y, address embedded, outputs result to argument. Invert val for sub. Let val = +-1 for inc/dec. */
         midgard_op_atomic_add = 0x40,
         midgard_op_atomic_and = 0x44,
@@ -421,10 +435,25 @@ typedef enum {
         midgard_interp_default = 2
 } midgard_interpolation;
 
+typedef enum {
+        midgard_varying_mod_none = 0,
+
+        /* Other values unknown */
+
+        /* Take the would-be result and divide all components by its z/w
+         * (perspective division baked in with the load)  */
+        midgard_varying_mod_perspective_z = 2,
+        midgard_varying_mod_perspective_w = 3,
+} midgard_varying_modifier;
+
 typedef struct
 __attribute__((__packed__))
 {
-        unsigned zero1 : 4; /* Always zero */
+        unsigned zero0 : 1; /* Always zero */
+
+        midgard_varying_modifier modifier : 2;
+
+        unsigned zero1: 1; /* Always zero */
 
         /* Varying qualifiers, zero if not a varying */
         unsigned flat    : 1;
@@ -460,12 +489,44 @@ __attribute__((__packed__))
 }
 midgard_load_store;
 
+/* 8-bit register selector used in texture ops to select a bias/LOD/gradient
+ * register, shoved into the `bias` field */
+
+typedef struct
+__attribute__((__packed__))
+{
+        /* Combines with component_hi to form 2-bit component select out of
+         * xyzw, as the component for bias/LOD and the starting component of a
+         * gradient vector */
+
+        unsigned component_lo : 1;
+
+        /* Register select between r28/r29 */
+        unsigned select : 1;
+
+        /* For a half-register, selects the upper half */
+        unsigned upper : 1;
+
+        /* Specifies a full-register, clear for a half-register. Mutually
+         * exclusive with upper. */
+        unsigned full : 1;
+
+        /* Higher half of component_lo. Always seen to be set for LOD/bias
+         * and clear for processed gradients, but I'm not sure if that's a
+         * hardware requirement. */
+        unsigned component_hi : 1;
+
+        /* Padding to make this 8-bit */
+        unsigned zero : 3;
+} midgard_tex_register_select;
+
 /* Texture pipeline results are in r28-r29 */
 #define REG_TEX_BASE 28
 
 /* Texture opcodes... maybe? */
-#define TEXTURE_OP_NORMAL 0x11
-#define TEXTURE_OP_TEXEL_FETCH 0x14
+#define TEXTURE_OP_NORMAL 0x11          /* texture */
+#define TEXTURE_OP_LOD 0x12             /* textureLod */
+#define TEXTURE_OP_TEXEL_FETCH 0x14     /* texelFetch */
 
 /* Texture format types, found in format */
 #define TEXTURE_CUBE 0x00
@@ -480,7 +541,7 @@ __attribute__((__packed__))
 
         unsigned op  : 6;
         unsigned shadow    : 1;
-        unsigned unknown3  : 1;
+        unsigned is_gather  : 1;
 
         /* A little obscure, but last is set for the last texture operation in
          * a shader. cont appears to just be last's opposite (?). Yeah, I know,
@@ -490,21 +551,26 @@ __attribute__((__packed__))
         unsigned cont  : 1;
         unsigned last  : 1;
 
-        unsigned format    : 5;
-        unsigned has_offset : 1;
+        unsigned format    : 4;
 
-        /* Like in Bifrost */
-        unsigned filter  : 1;
+        /* Is a register used to specify the
+         * LOD/bias/offset? If set, use the `bias` field as
+         * a register index. If clear, use the `bias` field
+         * as an immediate. */
+        unsigned lod_register : 1;
 
+        /* Is a register used to specify an offset? If set, use the
+         * offset_reg_* fields to encode this, duplicated for each of the
+         * components. If clear, there is implcitly always an immediate offst
+         * specificed in offset_imm_* */
+        unsigned offset_register : 1;
+
+        unsigned in_reg_full  : 1;
         unsigned in_reg_select : 1;
         unsigned in_reg_upper  : 1;
+        unsigned in_reg_swizzle : 8;
 
-        unsigned in_reg_swizzle_left : 2;
-        unsigned in_reg_swizzle_right : 2;
-
-        unsigned unknown1 : 2;
-
-        unsigned unknown8  : 4;
+        unsigned unknown8  : 2;
 
         unsigned out_full  : 1;
 
@@ -523,25 +589,30 @@ __attribute__((__packed__))
 
         unsigned unknownA  : 4;
 
-        unsigned offset_unknown1  : 1;
-        unsigned offset_reg_select : 1;
-        unsigned offset_reg_upper : 1;
-        unsigned offset_unknown4  : 1;
-        unsigned offset_unknown5  : 1;
-        unsigned offset_unknown6  : 1;
-        unsigned offset_unknown7  : 1;
-        unsigned offset_unknown8  : 1;
-        unsigned offset_unknown9  : 1;
-
-        unsigned unknownB  : 3;
-
-        /* Texture bias or LOD, depending on whether it is executed in a
-         * fragment/vertex shader respectively. Compute as int(2^8 * biasf).
+        /* In immediate mode, each offset field is an immediate range [0, 7].
          *
-         * For texel fetch, this is the LOD as is. */
-        unsigned bias  : 8;
+         * In register mode, offset_x becomes a register full / select / upper
+         * triplet and a vec3 swizzle is splattered across offset_y/offset_z in
+         * a genuinely bizarre way.
+         *
+         * For texel fetches in immediate mode, the range is the full [-8, 7],
+         * but for normal texturing the top bit must be zero and a register
+         * used instead. It's not clear where this limitation is from. */
 
-        unsigned unknown9  : 8;
+        signed offset_x : 4;
+        signed offset_y : 4;
+        signed offset_z : 4;
+
+        /* In immediate bias mode, for a normal texture op, this is
+         * texture bias, computed as int(2^8 * frac(biasf)), with
+         * bias_int = floor(bias). For a textureLod, it's that, but
+         * s/bias/lod. For a texel fetch, this is the LOD as-is.
+         *
+         * In register mode, this is a midgard_tex_register_select
+         * structure and bias_int is zero */
+
+        unsigned bias : 8;
+        unsigned bias_int  : 8;
 
         unsigned texture_handle : 16;
         unsigned sampler_handle : 16;

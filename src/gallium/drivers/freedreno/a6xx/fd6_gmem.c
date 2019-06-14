@@ -189,12 +189,12 @@ emit_zs(struct fd_ringbuffer *ring, struct pipe_surface *zsbuf,
 		OUT_PKT4(ring, REG_A6XX_RB_DEPTH_FLAG_BUFFER_BASE_LO, 3);
 		if (ubwc_enabled) {
 			OUT_RELOCW(ring, rsc->bo, ubwc_offset, 0, 0);	/* BASE_LO/HI */
-			OUT_RING(ring, A6XX_RB_MRT_FLAG_BUFFER_PITCH_PITCH(rsc->ubwc_pitch) |
-				A6XX_RB_MRT_FLAG_BUFFER_PITCH_ARRAY_PITCH(rsc->ubwc_size));
+			OUT_RING(ring, A6XX_RB_DEPTH_FLAG_BUFFER_PITCH_PITCH(rsc->ubwc_pitch) |
+				A6XX_RB_DEPTH_FLAG_BUFFER_PITCH_ARRAY_PITCH(rsc->ubwc_size));
 		} else {
-			OUT_RING(ring, 0x00000000);    /* RB_MRT_FLAG_BUFFER[i].ADDR_LO */
-			OUT_RING(ring, 0x00000000);    /* RB_MRT_FLAG_BUFFER[i].ADDR_HI */
-			OUT_RING(ring, 0x00000000);
+			OUT_RING(ring, 0x00000000);    /* RB_DEPTH_FLAG_BUFFER_BASE_LO */
+			OUT_RING(ring, 0x00000000);    /* RB_DEPTH_FLAG_BUFFER_BASE_HI */
+			OUT_RING(ring, 0x00000000);    /* RB_DEPTH_FLAG_BUFFER_PITCH */
 		}
 
 		if (rsc->lrz) {
@@ -280,7 +280,7 @@ patch_fb_read(struct fd_batch *batch)
 		struct fd_cs_patch *patch = fd_patch_element(&batch->fb_read_patches, i);
 		*patch->cs = patch->val | A6XX_TEX_CONST_2_PITCH(gmem->bin_w * gmem->cbuf_cpp[0]);
 	}
-	util_dynarray_resize(&batch->fb_read_patches, 0);
+	util_dynarray_clear(&batch->fb_read_patches);
 }
 
 static void
@@ -291,7 +291,7 @@ patch_draws(struct fd_batch *batch, enum pc_di_vis_cull_mode vismode)
 		struct fd_cs_patch *patch = fd_patch_element(&batch->draw_patches, i);
 		*patch->cs = patch->val | DRAW4(0, 0, 0, vismode);
 	}
-	util_dynarray_resize(&batch->draw_patches, 0);
+	util_dynarray_clear(&batch->draw_patches);
 }
 
 static void
@@ -759,8 +759,8 @@ emit_blit(struct fd_batch *batch,
 	if (ubwc_enabled) {
 		OUT_PKT4(ring, REG_A6XX_RB_BLIT_FLAG_DST_LO, 3);
 		OUT_RELOCW(ring, rsc->bo, ubwc_offset, 0, 0);
-		OUT_RING(ring, A6XX_RB_MRT_FLAG_BUFFER_PITCH_PITCH(rsc->ubwc_pitch) |
-				 A6XX_RB_MRT_FLAG_BUFFER_PITCH_ARRAY_PITCH(rsc->ubwc_size));
+		OUT_RING(ring, A6XX_RB_BLIT_FLAG_DST_PITCH_PITCH(rsc->ubwc_pitch) |
+				 A6XX_RB_BLIT_FLAG_DST_PITCH_ARRAY_PITCH(rsc->ubwc_size));
 	}
 
 	fd6_emit_blit(batch, ring);

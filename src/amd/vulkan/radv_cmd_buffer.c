@@ -584,8 +584,8 @@ radv_save_descriptors(struct radv_cmd_buffer *cmd_buffer,
 
 	for_each_bit(i, descriptors_state->valid) {
 		struct radv_descriptor_set *set = descriptors_state->sets[i];
-		data[i * 2] = (uintptr_t)set;
-		data[i * 2 + 1] = (uintptr_t)set >> 32;
+		data[i * 2] = (uint64_t)(uintptr_t)set;
+		data[i * 2 + 1] = (uint64_t)(uintptr_t)set >> 32;
 	}
 
 	radv_emit_write_data_packet(cmd_buffer, va, MAX_SETS * 2, data);
@@ -3245,6 +3245,14 @@ void radv_CmdPushDescriptorSetKHR(
 					   pipelineBindPoint))
 		return;
 
+	/* Check that there are no inline uniform block updates when calling vkCmdPushDescriptorSetKHR()
+	 * because it is invalid, according to Vulkan spec.
+	 */
+	for (int i = 0; i < descriptorWriteCount; i++) {
+		const VkWriteDescriptorSet *writeset = &pDescriptorWrites[i];
+		assert(writeset->descriptorType != VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT);
+	}
+
 	radv_update_descriptor_sets(cmd_buffer->device, cmd_buffer,
 	                            radv_descriptor_set_to_handle(push_set),
 	                            descriptorWriteCount, pDescriptorWrites, 0, NULL);
@@ -4995,6 +5003,9 @@ static void radv_handle_image_transition(struct radv_cmd_buffer *cmd_buffer,
 
 		assert(src_family == cmd_buffer->queue_family_index ||
 		       dst_family == cmd_buffer->queue_family_index);
+
+		if (src_family == VK_QUEUE_FAMILY_EXTERNAL)
+			return;
 
 		if (cmd_buffer->queue_family_index == RADV_QUEUE_TRANSFER)
 			return;
