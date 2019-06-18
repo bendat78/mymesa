@@ -59,15 +59,28 @@ struct virgl_resource {
 
    /* For PIPE_BUFFER only.  Data outside of this range are uninitialized. */
    struct util_range valid_buffer_range;
+
+   /* This mask indicates where the resource has been bound to, excluding
+    * pipe_surface binds.
+    *
+    * This is more accurate than pipe_resource::bind.  Besides,
+    * pipe_resource::bind can be 0 with direct state access, and is not
+    * usable.
+    */
+   unsigned bind_history;
 };
 
 enum virgl_transfer_map_type {
    VIRGL_TRANSFER_MAP_ERROR = -1,
    VIRGL_TRANSFER_MAP_HW_RES,
+
    /* Map a range of a staging buffer. The updated contents should be transferred
     * with a copy transfer.
     */
    VIRGL_TRANSFER_MAP_STAGING,
+
+   /* Reallocate the underlying virgl_hw_res. */
+   VIRGL_TRANSFER_MAP_REALLOC,
 };
 
 struct virgl_transfer {
@@ -76,6 +89,8 @@ struct virgl_transfer {
    struct util_range range;
    struct list_head queue_link;
    struct pipe_transfer *resolve_transfer;
+
+   struct virgl_hw_res *hw_res;
    void *hw_res_map;
    /* If not NULL, denotes that this is a copy transfer, i.e.,
     * that the transfer source data should be taken from this
@@ -175,5 +190,9 @@ void virgl_resource_dirty(struct virgl_resource *res, uint32_t level);
 
 void *virgl_transfer_uploader_map(struct virgl_context *vctx,
                                   struct virgl_transfer *vtransfer);
+
+bool
+virgl_resource_realloc(struct virgl_context *vctx,
+                       struct virgl_resource *res);
 
 #endif

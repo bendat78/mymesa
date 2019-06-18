@@ -2,6 +2,7 @@
  * © Copyright 2017-2018 Alyssa Rosenzweig
  * © Copyright 2017-2018 Connor Abbott
  * © Copyright 2017-2018 Lyude Paul
+ * © Copyright2019 Collabora
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -402,7 +403,19 @@ enum mali_format {
 #define MALI_GET_ALPHA_COVERAGE(nibble) ((float) nibble / 15.0f)
 
 /* Applies to unknown1 */
-#define MALI_NO_ALPHA_TO_COVERAGE (1 << 10)
+
+/* Should the hardware perform early-Z testing? Normally should be set
+ * for performance reasons. Clear if you use: discard,
+ * alpha-to-coverage... * It's also possible this disables
+ * forward-pixel kill; we're not quite sure which bit is which yet.
+ * TODO: How does this interact with blending?*/
+
+#define MALI_EARLY_Z (1 << 10)
+
+/* Should the hardware calculate derivatives (via helper invocations)? Set in a
+ * fragment shader that uses texturing or derivative functions */
+
+#define MALI_HELPER_INVOCATIONS (1 << 11)
 
 /* Flags denoting the fragment shader's use of tilebuffer readback. If the
  * shader might read any part of the tilebuffer, set MALI_READS_TILEBUFFER. If
@@ -962,7 +975,8 @@ struct bifrost_tiler_heap_meta {
 
 struct bifrost_tiler_meta {
         u64 zero0;
-        u32 unk; // = 0xf0
+        u16 hierarchy_mask;
+        u16 flags;
         u16 width;
         u16 height;
         u64 zero1;
@@ -1117,6 +1131,9 @@ enum mali_wrap_mode {
 
 /* Corresponds to the type passed to glTexImage2D and so forth */
 
+/* For usage1 */
+#define MALI_TEX_3D (0x04)
+
 /* Flags for usage2 */
 #define MALI_TEX_MANUAL_STRIDE (0x20)
 
@@ -1133,8 +1150,7 @@ struct mali_texture_descriptor {
         uint16_t width;
         uint16_t height;
         uint16_t depth;
-
-        uint16_t unknown1;
+        uint16_t array_size;
 
         struct mali_texture_format format;
 
@@ -1361,17 +1377,22 @@ struct mali_single_framebuffer {
 
         u32 zero6[7];
 
-        /* Very weird format, see generation code in trans_builder.c */
-        u32 resolution_check;
+        /* Logically, by symmetry to the MFBD, this ought to be the size of the
+         * polygon list. But this doesn't quite compute up. More investigation
+         * is needed. */
 
-        u32 tiler_flags;
+        u32 tiler_resolution_check;
 
-        u64 unknown_address_1; /* Pointing towards... a zero buffer? */
-        u64 unknown_address_2;
+        u16 tiler_hierarchy_mask;
+        u16 tiler_flags;
+
+        /* See pan_tiler.c */
+        mali_ptr tiler_polygon_list; 
+        mali_ptr tiler_polygon_list_body;
 
         /* See mali_kbase_replay.c */
-        u64 tiler_heap_free;
-        u64 tiler_heap_end;
+        mali_ptr tiler_heap_free;
+        mali_ptr tiler_heap_end;
 
         /* More below this, maybe */
 } __attribute__((packed));
@@ -1486,7 +1507,7 @@ struct bifrost_fb_extra {
         u64 zero3, zero4;
 } __attribute__((packed));
 
-/* flags for unk3 */
+/* Flags for mfbd_flags */
 
 /* Enables writing depth results back to main memory (rather than keeping them
  * on-chip in the tile buffer and then discarding) */
@@ -1517,20 +1538,33 @@ struct bifrost_framebuffer {
         u32 zero4 : 5;
         /* 0x30 */
         u32 clear_stencil : 8;
-        u32 unk3 : 24; // = 0x100
+        u32 mfbd_flags : 24; // = 0x100
         float clear_depth;
-        mali_ptr tiler_meta;
-        /* 0x40 */
 
-        /* Note: these are guesses! */
-        mali_ptr tiler_scratch_start;
-        mali_ptr tiler_scratch_middle;
 
-        /* These are not, since we see symmetry with replay jobs which name these explicitly */
-        mali_ptr tiler_heap_start;
+        /* Tiler section begins here */
+        u32 tiler_polygon_list_size;
+
+        /* Name known from the replay workaround in the kernel. What exactly is
+         * flagged here is less known. We do that (tiler_hierarchy_mask & 0x1ff)
+         * specifies a mask of hierarchy weights, which explains some of the
+         * performance mysteries around setting it. We also see the bottom bit
+         * of tiler_flags set in the kernel, but no comment why. */
+
+        u16 tiler_hierarchy_mask;
+        u16 tiler_flags;
+
+        /* See mali_tiler.c for an explanation */
+        mali_ptr tiler_polygon_list;
+        mali_ptr tiler_polygon_list_body;
+
+        /* Names based on we see symmetry with replay jobs which name these
+         * explicitly */
+
+        mali_ptr tiler_heap_start; /* tiler heap_free_address */
         mali_ptr tiler_heap_end;
         
-        u64 zero9, zero10, zero11, zero12;
+        u32 tiler_weights[8];
 
         /* optional: struct bifrost_fb_extra extra */
         /* struct bifrost_render_target rts[] */

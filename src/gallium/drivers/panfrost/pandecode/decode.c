@@ -223,12 +223,22 @@ static const struct pandecode_flag_info mfbd_extra_flag_info[] = {
 
 #define FLAG_INFO(flag) { MALI_##flag, "MALI_" #flag }
 static const struct pandecode_flag_info shader_unknown1_flag_info [] = {
-        FLAG_INFO(NO_ALPHA_TO_COVERAGE),
+        FLAG_INFO(EARLY_Z),
+        FLAG_INFO(HELPER_INVOCATIONS),
         FLAG_INFO(READS_TILEBUFFER),
         FLAG_INFO(READS_ZS),
         {}
 };
 #undef FLAG_INFO
+
+#define FLAG_INFO(flag) { MALI_MFBD_##flag, "MALI_MFBD_" #flag }
+static const struct pandecode_flag_info mfbd_flag_info [] = {
+        FLAG_INFO(DEPTH_WRITE),
+        FLAG_INFO(EXTRA),
+        {}
+};
+#undef FLAG_INFO
+
 
 extern char *replace_fragment;
 extern char *replace_vertex;
@@ -463,11 +473,12 @@ pandecode_replay_sfbd(uint64_t gpu_va, int job_no)
         }
 
         MEMORY_PROP(s, unknown_address_0);
-        MEMORY_PROP(s, unknown_address_1);
-        MEMORY_PROP(s, unknown_address_2);
+        MEMORY_PROP(s, tiler_polygon_list);
+        MEMORY_PROP(s, tiler_polygon_list_body);
 
-        pandecode_prop("resolution_check = 0x%" PRIx32, s->resolution_check);
-        pandecode_prop("tiler_flags = 0x%" PRIx32, s->tiler_flags);
+        pandecode_prop("tiler_resolution_check = 0x%" PRIx32, s->tiler_resolution_check);
+        pandecode_prop("tiler_hierarchy_mask = 0x%" PRIx16, s->tiler_hierarchy_mask);
+        pandecode_prop("tiler_flags = 0x%" PRIx16, s->tiler_flags);
 
         MEMORY_PROP(s, tiler_heap_free);
         MEMORY_PROP(s, tiler_heap_end);
@@ -640,12 +651,13 @@ pandecode_replay_mfbd_bfr(uint64_t gpu_va, int job_no, bool with_render_targets)
         if (fb->sample_locations)
                 pandecode_prop("sample_locations = sample_locations_%d", job_no);
 
-        /* Assume that unknown1 and tiler_meta were emitted in the last job for
+        /* Assume that unknown1 was emitted in the last job for
          * now */
-        /*pandecode_prop("unknown1 = unknown1_%d_p", job_no - 1);
-        pandecode_prop("tiler_meta = tiler_meta_%d_p", job_no - 1);*/
         MEMORY_PROP(fb, unknown1);
-        MEMORY_PROP(fb, tiler_meta);
+
+        pandecode_prop("tiler_polygon_list_size = 0x%x", fb->tiler_polygon_list_size);
+        pandecode_prop("tiler_hierarchy_mask = 0x%" PRIx16, fb->tiler_hierarchy_mask);
+        pandecode_prop("tiler_flags = 0x%" PRIx16, fb->tiler_flags);
 
         pandecode_prop("width1 = MALI_POSITIVE(%d)", fb->width1 + 1);
         pandecode_prop("height1 = MALI_POSITIVE(%d)", fb->height1 + 1);
@@ -657,25 +669,40 @@ pandecode_replay_mfbd_bfr(uint64_t gpu_va, int job_no, bool with_render_targets)
         pandecode_prop("rt_count_1 = MALI_POSITIVE(%d)", fb->rt_count_1 + 1);
         pandecode_prop("rt_count_2 = %d", fb->rt_count_2);
 
-        pandecode_prop("unk3 = 0x%x", fb->unk3);
+        pandecode_log(".mfbd_flags = ");
+        pandecode_log_decoded_flags(mfbd_flag_info, fb->mfbd_flags);
+        pandecode_log_cont(",\n");
+
         pandecode_prop("clear_stencil = 0x%x", fb->clear_stencil);
         pandecode_prop("clear_depth = %f", fb->clear_depth);
 
         pandecode_prop("unknown2 = 0x%x", fb->unknown2);
         MEMORY_PROP(fb, scratchpad);
-        MEMORY_PROP(fb, tiler_scratch_start);
-        MEMORY_PROP(fb, tiler_scratch_middle);
+        MEMORY_PROP(fb, tiler_polygon_list);
+        MEMORY_PROP(fb, tiler_polygon_list_body);
         MEMORY_PROP(fb, tiler_heap_start);
         MEMORY_PROP(fb, tiler_heap_end);
 
-        if (fb->zero3 || fb->zero4 || fb->zero9 || fb->zero10 || fb->zero11 || fb->zero12) {
+        if (fb->zero3 || fb->zero4) {
                 pandecode_msg("framebuffer zeros tripped\n");
                 pandecode_prop("zero3 = 0x%" PRIx32, fb->zero3);
                 pandecode_prop("zero4 = 0x%" PRIx32, fb->zero4);
-                pandecode_prop("zero9 = 0x%" PRIx64, fb->zero9);
-                pandecode_prop("zero10 = 0x%" PRIx64, fb->zero10);
-                pandecode_prop("zero11 = 0x%" PRIx64, fb->zero11);
-                pandecode_prop("zero12 = 0x%" PRIx64, fb->zero12);
+        }
+
+        bool nonzero_weights = false;
+
+        for (unsigned w = 0; w < ARRAY_SIZE(fb->tiler_weights); ++w) {
+                nonzero_weights |= fb->tiler_weights[w] != 0x0;
+        }
+
+        if (nonzero_weights) {
+                pandecode_log(".tiler_weights = {");
+
+                for (unsigned w = 0; w < ARRAY_SIZE(fb->tiler_weights); ++w) {
+                        pandecode_log("%d, ", fb->tiler_weights[w]);
+                }
+
+                pandecode_log("},");
         }
 
         pandecode_indent--;
@@ -683,7 +710,7 @@ pandecode_replay_mfbd_bfr(uint64_t gpu_va, int job_no, bool with_render_targets)
 
         gpu_va += sizeof(struct bifrost_framebuffer);
 
-        if ((fb->unk3 & MALI_MFBD_EXTRA) && with_render_targets) {
+        if ((fb->mfbd_flags & MALI_MFBD_EXTRA) && with_render_targets) {
                 mem = pandecode_find_mapped_gpu_mem_containing(gpu_va);
                 const struct bifrost_fb_extra *PANDECODE_PTR_VAR(fbx, mem, (mali_ptr) gpu_va);
 
@@ -1481,8 +1508,7 @@ pandecode_replay_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix
                                         pandecode_prop("width = MALI_POSITIVE(%" PRId16 ")", t->width + 1);
                                         pandecode_prop("height = MALI_POSITIVE(%" PRId16 ")", t->height + 1);
                                         pandecode_prop("depth = MALI_POSITIVE(%" PRId16 ")", t->depth + 1);
-
-                                        pandecode_prop("unknown1 = %" PRId16, t->unknown1);
+                                        pandecode_prop("array_size = MALI_POSITIVE(%" PRId16 ")", t->array_size + 1);
                                         pandecode_prop("unknown3 = %" PRId16, t->unknown3);
                                         pandecode_prop("unknown3A = %" PRId8, t->unknown3A);
                                         pandecode_prop("nr_mipmap_levels = %" PRId8, t->nr_mipmap_levels);
@@ -1531,6 +1557,9 @@ pandecode_replay_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix
                                         /* Miptree for each face */
                                         if (!f.is_not_cubemap)
                                                 bitmap_count *= 6;
+
+                                        /* Array of textures */
+                                        bitmap_count *= MALI_NEGATIVE(t->array_size);
 
                                         /* Stride for each element */
                                         if (manual_stride)
@@ -1729,7 +1758,7 @@ pandecode_replay_tiler_meta(mali_ptr gpu_va, int job_no)
 
         pandecode_replay_tiler_heap_meta(t->tiler_heap_meta, job_no);
 
-        pandecode_log("struct mali_tiler_meta tiler_meta_%d = {\n", job_no);
+        pandecode_log("struct bifrost_tiler_meta tiler_meta_%d = {\n", job_no);
         pandecode_indent++;
 
         if (t->zero0 || t->zero1) {
@@ -1738,7 +1767,9 @@ pandecode_replay_tiler_meta(mali_ptr gpu_va, int job_no)
                 pandecode_prop("zero1 = 0x%" PRIx64, t->zero1);
         }
 
-        pandecode_prop("unk = 0x%x", t->unk);
+        pandecode_prop("hierarchy_mask = 0x%" PRIx16, t->hierarchy_mask);
+        pandecode_prop("flags = 0x%" PRIx16, t->flags);
+
         pandecode_prop("width = MALI_POSITIVE(%d)", t->width + 1);
         pandecode_prop("height = MALI_POSITIVE(%d)", t->height + 1);
         DYN_MEMORY_PROP(t, job_no, tiler_heap_meta);

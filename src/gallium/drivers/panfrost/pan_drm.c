@@ -236,7 +236,7 @@ panfrost_drm_submit_job(struct panfrost_context *ctx, u64 job_desc, int reqs, st
 	bo_handles[submit.bo_handle_count++] = ctx->scratchpad.gem_handle;
 	bo_handles[submit.bo_handle_count++] = ctx->tiler_heap.gem_handle;
 	bo_handles[submit.bo_handle_count++] = ctx->varying_mem.gem_handle;
-	bo_handles[submit.bo_handle_count++] = ctx->misc_0.gem_handle;
+	bo_handles[submit.bo_handle_count++] = ctx->tiler_polygon_list.gem_handle;
 	submit.bo_handles = (u64) (uintptr_t) bo_handles;
 
 	if (drmIoctl(drm->fd, DRM_IOCTL_PANFROST_SUBMIT, &submit)) {
@@ -263,7 +263,7 @@ panfrost_drm_submit_vs_fs_job(struct panfrost_context *ctx, bool has_draws, bool
 		assert(!ret);
 	}
 
-	ret = panfrost_drm_submit_job(ctx, panfrost_fragment_job(ctx), PANFROST_JD_REQ_FS, surf);
+	ret = panfrost_drm_submit_job(ctx, panfrost_fragment_job(ctx, has_draws), PANFROST_JD_REQ_FS, surf);
 
         return ret;
 }
@@ -337,7 +337,7 @@ panfrost_drm_query_gpu_version(struct panfrost_screen *screen)
         struct drm_panfrost_get_param get_param = {0,};
         int ret;
 
-	get_param.param = DRM_PANFROST_PARAM_GPU_ID;
+	get_param.param = DRM_PANFROST_PARAM_GPU_PROD_ID;
         ret = drmIoctl(drm->fd, DRM_IOCTL_PANFROST_GET_PARAM, &get_param);
         assert(!ret);
 

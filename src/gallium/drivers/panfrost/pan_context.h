@@ -133,8 +133,8 @@ struct panfrost_context {
         struct panfrost_memory scratchpad;
         struct panfrost_memory tiler_heap;
         struct panfrost_memory varying_mem;
-        struct panfrost_memory misc_0;
-        struct panfrost_memory misc_1;
+        struct panfrost_memory tiler_polygon_list;
+        struct panfrost_memory tiler_dummy;
         struct panfrost_memory depth_stencil_buffer;
 
         struct panfrost_query *occlusion_query;
@@ -334,17 +334,17 @@ panfrost_flush(
 bool
 panfrost_is_scanout(struct panfrost_context *ctx);
 
-mali_ptr panfrost_sfbd_fragment(struct panfrost_context *ctx);
-mali_ptr panfrost_mfbd_fragment(struct panfrost_context *ctx);
+mali_ptr panfrost_sfbd_fragment(struct panfrost_context *ctx, bool has_draws);
+mali_ptr panfrost_mfbd_fragment(struct panfrost_context *ctx, bool has_draws);
 
 struct bifrost_framebuffer
-panfrost_emit_mfbd(struct panfrost_context *ctx);
+panfrost_emit_mfbd(struct panfrost_context *ctx, unsigned vertex_count);
 
 struct mali_single_framebuffer
-panfrost_emit_sfbd(struct panfrost_context *ctx);
+panfrost_emit_sfbd(struct panfrost_context *ctx, unsigned vertex_count);
 
 mali_ptr
-panfrost_fragment_job(struct panfrost_context *ctx);
+panfrost_fragment_job(struct panfrost_context *ctx, bool has_draws);
 
 void
 panfrost_shader_compile(struct panfrost_context *ctx, struct mali_shader_meta *meta, const char *src, int type, struct panfrost_shader_state *state);

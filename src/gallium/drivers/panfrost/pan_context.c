@@ -46,6 +46,7 @@
 #include "pan_blending.h"
 #include "pan_blend_shaders.h"
 #include "pan_util.h"
+#include "pan_tiler.h"
 
 static int performance_counter_number = 0;
 extern const char *pan_counters_base;
@@ -107,20 +108,21 @@ panfrost_set_framebuffer_resolution(struct mali_single_framebuffer *fb, int w, i
          * The formula itself was discovered mostly by manual bruteforce and
          * aggressive algebraic simplification. */
 
-        fb->resolution_check = ((w + h) / 3) << 4;
+        fb->tiler_resolution_check = ((w + h) / 3) << 4;
 }
 
 struct mali_single_framebuffer
-panfrost_emit_sfbd(struct panfrost_context *ctx)
+panfrost_emit_sfbd(struct panfrost_context *ctx, unsigned vertex_count)
 {
         struct mali_single_framebuffer framebuffer = {
                 .unknown2 = 0x1f,
                 .format = 0x30000000,
                 .clear_flags = 0x1000,
                 .unknown_address_0 = ctx->scratchpad.gpu,
-                .unknown_address_1 = ctx->misc_0.gpu,
-                .unknown_address_2 = ctx->misc_0.gpu + 40960,
-                .tiler_flags = 0xf0,
+                .tiler_polygon_list = ctx->tiler_polygon_list.gpu,
+                .tiler_polygon_list_body = ctx->tiler_polygon_list.gpu + 40960,
+                .tiler_hierarchy_mask = 0xF0,
+                .tiler_flags = 0x0,
                 .tiler_heap_free = ctx->tiler_heap.gpu,
                 .tiler_heap_end = ctx->tiler_heap.gpu + ctx->tiler_heap.size,
         };
@@ -131,36 +133,16 @@ panfrost_emit_sfbd(struct panfrost_context *ctx)
 }
 
 struct bifrost_framebuffer
-panfrost_emit_mfbd(struct panfrost_context *ctx)
+panfrost_emit_mfbd(struct panfrost_context *ctx, unsigned vertex_count)
 {
+        unsigned width = ctx->pipe_framebuffer.width;
+        unsigned height = ctx->pipe_framebuffer.height;
+
         struct bifrost_framebuffer framebuffer = {
-                /* It is not yet clear what tiler_meta means or how it's
-                 * calculated, but we can tell the lower 32-bits are a
-                 * (monotonically increasing?) function of tile count and
-                 * geometry complexity; I suspect it defines a memory size of
-                 * some kind? for the tiler. It's really unclear at the
-                 * moment... but to add to the confusion, the hardware is happy
-                 * enough to accept a zero in this field, so we don't even have
-                 * to worry about it right now.
-                 *
-                 * The byte (just after the 32-bit mark) is much more
-                 * interesting. The higher nibble I've only ever seen as 0xF,
-                 * but the lower one I've seen as 0x0 or 0xF, and it's not
-                 * obvious what the difference is. But what -is- obvious is
-                 * that when the lower nibble is zero, performance is severely
-                 * degraded compared to when the lower nibble is set.
-                 * Evidently, that nibble enables some sort of fast path,
-                 * perhaps relating to caching or tile flush? Regardless, at
-                 * this point there's no clear reason not to set it, aside from
-                 * substantially increased memory requirements (of the misc_0
-                 * buffer) */
-
-                .tiler_meta = ((uint64_t) 0xff << 32) | 0x0,
-
-                .width1 = MALI_POSITIVE(ctx->pipe_framebuffer.width),
-                .height1 = MALI_POSITIVE(ctx->pipe_framebuffer.height),
-                .width2 = MALI_POSITIVE(ctx->pipe_framebuffer.width),
-                .height2 = MALI_POSITIVE(ctx->pipe_framebuffer.height),
+                .width1 = MALI_POSITIVE(width),
+                .height1 = MALI_POSITIVE(height),
+                .width2 = MALI_POSITIVE(width),
+                .height2 = MALI_POSITIVE(height),
 
                 .unk1 = 0x1080,
 
@@ -170,27 +152,53 @@ panfrost_emit_mfbd(struct panfrost_context *ctx)
 
                 .unknown2 = 0x1f,
 
-                /* Corresponds to unknown_address_X of SFBD */
                 .scratchpad = ctx->scratchpad.gpu,
-                .tiler_scratch_start  = ctx->misc_0.gpu,
-
-                /* The constant added here is, like the lower word of
-                 * tiler_meta, (loosely) another product of framebuffer size
-                 * and geometry complexity. It must be sufficiently large for
-                 * the tiler_meta fast path to work; if it's too small, there
-                 * will be DATA_INVALID_FAULTs. Conversely, it must be less
-                 * than the total size of misc_0, or else there's no room. It's
-                 * possible this constant configures a partition between two
-                 * parts of misc_0? We haven't investigated the functionality,
-                 * as these buffers are internally used by the hardware
-                 * (presumably by the tiler) but not seemingly touched by the driver
-                 */
-
-                .tiler_scratch_middle = ctx->misc_0.gpu + 0xf0000,
-
-                .tiler_heap_start = ctx->tiler_heap.gpu,
-                .tiler_heap_end = ctx->tiler_heap.gpu + ctx->tiler_heap.size,
         };
+
+        framebuffer.tiler_hierarchy_mask =
+                panfrost_choose_hierarchy_mask(width, height, vertex_count);
+
+        /* Compute the polygon header size and use that to offset the body */
+
+        unsigned header_size = panfrost_tiler_header_size(
+                        width, height, framebuffer.tiler_hierarchy_mask);
+
+        unsigned body_size = panfrost_tiler_body_size(
+                        width, height, framebuffer.tiler_hierarchy_mask);
+
+        /* Sanity check */
+
+        unsigned total_size = header_size + body_size;
+
+        if (framebuffer.tiler_hierarchy_mask) {
+               assert(ctx->tiler_polygon_list.size >= total_size);
+
+                /* Specify allocated tiler structures */
+                framebuffer.tiler_polygon_list = ctx->tiler_polygon_list.gpu;
+
+                /* Allow the entire tiler heap */
+                framebuffer.tiler_heap_start = ctx->tiler_heap.gpu;
+                framebuffer.tiler_heap_end =
+                        ctx->tiler_heap.gpu + ctx->tiler_heap.size;
+        } else {
+                /* The tiler is disabled, so don't allow the tiler heap */
+                framebuffer.tiler_heap_start = ctx->tiler_heap.gpu;
+                framebuffer.tiler_heap_end = framebuffer.tiler_heap_start;
+
+                /* Use a dummy polygon list */
+                framebuffer.tiler_polygon_list = ctx->tiler_dummy.gpu;
+
+                /* Also, set a "tiler disabled?" flag? */
+                framebuffer.tiler_hierarchy_mask |= 0x1000;
+        }
+
+        framebuffer.tiler_polygon_list_body =
+                framebuffer.tiler_polygon_list + header_size;
+
+        framebuffer.tiler_polygon_list_size =
+                header_size + body_size;
+
+
 
         return framebuffer;
 }
@@ -310,9 +318,9 @@ panfrost_invalidate_frame(struct panfrost_context *ctx)
                 ctx->cmdstream_i = 0;
 
         if (ctx->require_sfbd)
-                ctx->vt_framebuffer_sfbd = panfrost_emit_sfbd(ctx);
+                ctx->vt_framebuffer_sfbd = panfrost_emit_sfbd(ctx, ~0);
         else
-                ctx->vt_framebuffer_mfbd = panfrost_emit_mfbd(ctx);
+                ctx->vt_framebuffer_mfbd = panfrost_emit_mfbd(ctx, ~0);
 
         /* Reset varyings allocated */
         ctx->varying_height = 0;
@@ -649,7 +657,7 @@ panfrost_set_value_job(struct panfrost_context *ctx)
         };
 
         struct mali_payload_set_value payload = {
-                .out = ctx->misc_0.gpu,
+                .out = ctx->tiler_polygon_list.gpu,
                 .unknown = 0x3,
         };
 
@@ -892,23 +900,27 @@ panfrost_upload_sampler_descriptors(struct panfrost_context *ctx)
         size_t desc_size = sizeof(struct mali_sampler_descriptor);
 
         for (int t = 0; t <= PIPE_SHADER_FRAGMENT; ++t) {
-                if (!ctx->sampler_count[t]) continue;
+                mali_ptr upload = 0;
 
-                size_t transfer_size = desc_size * ctx->sampler_count[t];
+                if (ctx->sampler_count[t] && ctx->sampler_view_count[t]) {
+                        size_t transfer_size = desc_size * ctx->sampler_count[t];
 
-                struct panfrost_transfer transfer =
-                        panfrost_allocate_transient(ctx, transfer_size);
+                        struct panfrost_transfer transfer =
+                                panfrost_allocate_transient(ctx, transfer_size);
 
-                struct mali_sampler_descriptor *desc =
-                        (struct mali_sampler_descriptor *) transfer.cpu;
+                        struct mali_sampler_descriptor *desc =
+                                (struct mali_sampler_descriptor *) transfer.cpu;
 
-                for (int i = 0; i < ctx->sampler_count[t]; ++i)
-                        desc[i] = ctx->samplers[t][i]->hw;
+                        for (int i = 0; i < ctx->sampler_count[t]; ++i)
+                                desc[i] = ctx->samplers[t][i]->hw;
+
+                        upload = transfer.gpu;
+                }
 
                 if (t == PIPE_SHADER_FRAGMENT)
-                        ctx->payload_tiler.postfix.sampler_descriptor = transfer.gpu;
+                        ctx->payload_tiler.postfix.sampler_descriptor = upload;
                 else if (t == PIPE_SHADER_VERTEX)
-                        ctx->payload_vertex.postfix.sampler_descriptor = transfer.gpu;
+                        ctx->payload_vertex.postfix.sampler_descriptor = upload;
                 else
                         assert(0);
         }
@@ -936,21 +948,27 @@ panfrost_upload_tex(
         if (!view)
                 return (mali_ptr) NULL;
 
-        struct pipe_resource *tex_rsrc = view->base.texture;
-        struct panfrost_resource *rsrc = (struct panfrost_resource *) tex_rsrc;
+        struct pipe_sampler_view *pview = &view->base;
+        struct panfrost_resource *rsrc = pan_resource(pview->texture);
 
         /* Do we interleave an explicit stride with every element? */
 
         bool has_manual_stride =
                 view->hw.format.usage2 & MALI_TEX_MANUAL_STRIDE;
 
+        /* For easy access */
+
+        assert(pview->target != PIPE_BUFFER);
+        unsigned first_level = pview->u.tex.first_level;
+        unsigned last_level = pview->u.tex.last_level;
+
         /* Inject the addresses in, interleaving mip levels, cube faces, and
          * strides in that order */
 
         unsigned idx = 0;
 
-        for (unsigned l = 0; l <= tex_rsrc->last_level; ++l) {
-                for (unsigned f = 0; f < tex_rsrc->array_size; ++f) {
+        for (unsigned l = first_level; l <= last_level; ++l) {
+                for (unsigned f = 0; f < pview->texture->array_size; ++f) {
                         view->hw.payload[idx++] =
                                 panfrost_get_texture_address(rsrc, l, f);
 
@@ -969,16 +987,17 @@ static void
 panfrost_upload_texture_descriptors(struct panfrost_context *ctx)
 {
         for (int t = 0; t <= PIPE_SHADER_FRAGMENT; ++t) {
-                /* Shortcircuit */
-                if (!ctx->sampler_view_count[t]) continue;
+                mali_ptr trampoline = 0;
 
-                uint64_t trampolines[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+                if (ctx->sampler_view_count[t]) {
+                        uint64_t trampolines[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
-                for (int i = 0; i < ctx->sampler_view_count[t]; ++i)
-                        trampolines[i] =
-                                panfrost_upload_tex(ctx, ctx->sampler_views[t][i]);
+                        for (int i = 0; i < ctx->sampler_view_count[t]; ++i)
+                                trampolines[i] =
+                                        panfrost_upload_tex(ctx, ctx->sampler_views[t][i]);
 
-                mali_ptr trampoline = panfrost_upload_transient(ctx, trampolines, sizeof(uint64_t) * ctx->sampler_view_count[t]);
+                        trampoline = panfrost_upload_transient(ctx, trampolines, sizeof(uint64_t) * ctx->sampler_view_count[t]);
+                }
 
                 if (t == PIPE_SHADER_FRAGMENT)
                         ctx->payload_tiler.postfix.texture_trampoline = trampoline;
@@ -986,6 +1005,85 @@ panfrost_upload_texture_descriptors(struct panfrost_context *ctx)
                         ctx->payload_vertex.postfix.texture_trampoline = trampoline;
                 else
                         assert(0);
+        }
+}
+
+struct sysval_uniform {
+        union {
+                float f[4];
+                int32_t i[4];
+                uint32_t u[4];
+        };
+};
+
+static void panfrost_upload_viewport_scale_sysval(struct panfrost_context *ctx,
+                                                  struct sysval_uniform *uniform)
+{
+        const struct pipe_viewport_state *vp = &ctx->pipe_viewport;
+
+        uniform->f[0] = vp->scale[0];
+        uniform->f[1] = vp->scale[1];
+        uniform->f[2] = vp->scale[2];
+}
+
+static void panfrost_upload_viewport_offset_sysval(struct panfrost_context *ctx,
+                                                   struct sysval_uniform *uniform)
+{
+        const struct pipe_viewport_state *vp = &ctx->pipe_viewport;
+
+        uniform->f[0] = vp->translate[0];
+        uniform->f[1] = vp->translate[1];
+        uniform->f[2] = vp->translate[2];
+}
+
+static void panfrost_upload_txs_sysval(struct panfrost_context *ctx,
+                                       enum pipe_shader_type st,
+                                       unsigned int sysvalid,
+                                       struct sysval_uniform *uniform)
+{
+        unsigned texidx = PAN_SYSVAL_ID_TO_TXS_TEX_IDX(sysvalid);
+        unsigned dim = PAN_SYSVAL_ID_TO_TXS_DIM(sysvalid);
+        bool is_array = PAN_SYSVAL_ID_TO_TXS_IS_ARRAY(sysvalid);
+        struct pipe_sampler_view *tex = &ctx->sampler_views[st][texidx]->base;
+
+        assert(dim);
+        uniform->i[0] = u_minify(tex->texture->width0, tex->u.tex.first_level);
+
+        if (dim > 1)
+                uniform->i[1] = u_minify(tex->texture->height0,
+                                         tex->u.tex.first_level);
+
+        if (dim > 2)
+                uniform->i[2] = u_minify(tex->texture->depth0,
+                                         tex->u.tex.first_level);
+
+        if (is_array)
+                uniform->i[dim] = tex->texture->array_size;
+}
+
+static void panfrost_upload_sysvals(struct panfrost_context *ctx, void *buf,
+                                    struct panfrost_shader_state *ss,
+                                    enum pipe_shader_type st)
+{
+        struct sysval_uniform *uniforms = (void *)buf;
+
+        for (unsigned i = 0; i < ss->sysval_count; ++i) {
+                int sysval = ss->sysval[i];
+
+                switch (PAN_SYSVAL_TYPE(sysval)) {
+                case PAN_SYSVAL_VIEWPORT_SCALE:
+                        panfrost_upload_viewport_scale_sysval(ctx, &uniforms[i]);
+                        break;
+                case PAN_SYSVAL_VIEWPORT_OFFSET:
+                        panfrost_upload_viewport_offset_sysval(ctx, &uniforms[i]);
+                        break;
+                case PAN_SYSVAL_TEXTURE_SIZE:
+                        panfrost_upload_txs_sysval(ctx, st, PAN_SYSVAL_ID(sysval),
+                                                   &uniforms[i]);
+                        break;
+                default:
+                        assert(0);
+                }
         }
 }
 
@@ -1075,7 +1173,15 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
 
                 /* Set late due to depending on render state */
                 /* The one at the end seems to mean "1 UBO" */
-                ctx->fragment_shader_core.midgard1.unknown1 = MALI_NO_ALPHA_TO_COVERAGE | 0x200 | 0x2201;
+                unsigned flags = MALI_EARLY_Z | 0x200 | 0x2000 | 0x1;
+
+                /* Any time texturing is used, derivatives are implicitly
+                 * calculated, so we need to enable helper invocations */
+
+                if (ctx->sampler_view_count[PIPE_SHADER_FRAGMENT])
+                        flags |= MALI_HELPER_INVOCATIONS;
+
+                ctx->fragment_shader_core.midgard1.unknown1 = flags;
 
                 /* Assign texture/sample count right before upload */
                 ctx->fragment_shader_core.texture_count = ctx->sampler_view_count[PIPE_SHADER_FRAGMENT];
@@ -1094,7 +1200,7 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
 
                 if (variant->can_discard) {
                         ctx->fragment_shader_core.unknown2_3 |= MALI_CAN_DISCARD;
-                        ctx->fragment_shader_core.midgard1.unknown1 &= ~MALI_NO_ALPHA_TO_COVERAGE;
+                        ctx->fragment_shader_core.midgard1.unknown1 &= ~MALI_EARLY_Z;
                         ctx->fragment_shader_core.midgard1.unknown1 |= 0x4000;
                         ctx->fragment_shader_core.midgard1.unknown1 = 0x4200;
                 }
@@ -1114,6 +1220,8 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
 
                 if (ctx->blend->has_blend_shader) {
                         ctx->fragment_shader_core.blend.shader = ctx->blend->blend_shader;
+                } else {
+                        ctx->fragment_shader_core.blend.shader = 0;
                 }
 
                 if (ctx->require_sfbd) {
@@ -1202,22 +1310,7 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 struct panfrost_transfer transfer = panfrost_allocate_transient(ctx, size);
 
                 /* Upload sysvals requested by the shader */
-                float *uniforms = (float *) transfer.cpu;
-                for (unsigned i = 0; i < ss->sysval_count; ++i) {
-                        int sysval = ss->sysval[i];
-
-                        if (sysval == PAN_SYSVAL_VIEWPORT_SCALE) {
-                                uniforms[4*i + 0] = vp->scale[0];
-                                uniforms[4*i + 1] = vp->scale[1];
-                                uniforms[4*i + 2] = vp->scale[2];
-                        } else if (sysval == PAN_SYSVAL_VIEWPORT_OFFSET) {
-                                uniforms[4*i + 0] = vp->translate[0];
-                                uniforms[4*i + 1] = vp->translate[1];
-                                uniforms[4*i + 2] = vp->translate[2];
-                        } else {
-                                assert(0);
-                        }
-                }
+                panfrost_upload_sysvals(ctx, transfer.cpu, ss, i);
 
                 /* Upload uniforms */
                 memcpy(transfer.cpu + sys_size, buf->buffer, buf->size);
@@ -1279,27 +1372,56 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
         };
 
         /* Always scissor to the viewport by default. */
-        view.viewport0[0] = (int) (vp->translate[0] - vp->scale[0]);
-        view.viewport1[0] = MALI_POSITIVE((int) (vp->translate[0] + vp->scale[0]));
+        int minx = (int) (vp->translate[0] - vp->scale[0]);
+        int maxx = (int) (vp->translate[0] + vp->scale[0]);
 
         int miny = (int) (vp->translate[1] - vp->scale[1]);
         int maxy = (int) (vp->translate[1] + vp->scale[1]);
 
-        if (ss && ctx->rasterizer && ctx->rasterizer->base.scissor) {
-                view.viewport0[0] = ss->minx;
-                view.viewport1[0] = MALI_POSITIVE(ss->maxx);
+        /* Apply the scissor test */
 
+        if (ss && ctx->rasterizer && ctx->rasterizer->base.scissor) {
+                minx = ss->minx;
+                maxx = ss->maxx;
                 miny = ss->miny;
                 maxy = ss->maxy;
         } 
 
         /* Hardware needs the min/max to be strictly ordered, so flip if we
-         * need to */
+         * need to. The viewport transformation in the vertex shader will
+         * handle the negatives if we don't */
+
         if (miny > maxy) {
                 int temp = miny;
                 miny = maxy;
                 maxy = temp;
         }
+
+        if (minx > maxx) {
+                int temp = minx;
+                minx = maxx;
+                maxx = temp;
+        }
+
+        /* Clamp everything positive, just in case */
+
+        maxx = MAX2(0, maxx);
+        maxy = MAX2(0, maxy);
+        minx = MAX2(0, minx);
+        miny = MAX2(0, miny);
+
+        /* Clamp to the framebuffer size as a last check */
+
+        minx = MIN2(ctx->pipe_framebuffer.width, minx);
+        maxx = MIN2(ctx->pipe_framebuffer.width, maxx);
+
+        miny = MIN2(ctx->pipe_framebuffer.height, miny);
+        maxy = MIN2(ctx->pipe_framebuffer.height, maxy);
+
+        /* Upload */
+
+        view.viewport0[0] = minx;
+        view.viewport1[0] = MALI_POSITIVE(maxx);
 
         view.viewport0[1] = miny;
         view.viewport1[1] = MALI_POSITIVE(maxy);
@@ -1353,10 +1475,6 @@ panfrost_submit_frame(struct panfrost_context *ctx, bool flush_immediate,
 
         /* Edge case if screen is cleared and nothing else */
         bool has_draws = ctx->draw_count > 0;
-
-        /* Workaround a bizarre lockup (a hardware errata?) */
-        if (!has_draws)
-                flush_immediate = true;
 
 #ifndef DRY_RUN
         
@@ -1443,8 +1561,10 @@ panfrost_flush(
 	if (!job->clear)
 	        panfrost_draw_wallpaper(&ctx->base);
 
-        /* Whether to stall the pipeline for immediately correct results */
-        bool flush_immediate = flags & PIPE_FLUSH_END_OF_FRAME;
+        /* Whether to stall the pipeline for immediately correct results. Since
+         * pipelined rendering is quite broken right now (to be fixed by the
+         * panfrost_job refactor, just take the perf hit for correctness) */
+        bool flush_immediate = /*flags & PIPE_FLUSH_END_OF_FRAME*/true;
 
         /* Submit the frame itself */
         panfrost_submit_frame(ctx, flush_immediate, fence, job);
@@ -1515,12 +1635,32 @@ panfrost_get_index_buffer_mapped(struct panfrost_context *ctx, const struct pipe
         }
 }
 
+static bool
+panfrost_scissor_culls_everything(struct panfrost_context *ctx)
+{
+        const struct pipe_scissor_state *ss = &ctx->scissor;
+
+        /* Check if we're scissoring at all */
+
+        if (!(ss && ctx->rasterizer && ctx->rasterizer->base.scissor))
+                return false;
+
+        return (ss->minx == ss->maxx) && (ss->miny == ss->maxy);
+}
+
 static void
 panfrost_draw_vbo(
         struct pipe_context *pipe,
         const struct pipe_draw_info *info)
 {
         struct panfrost_context *ctx = pan_context(pipe);
+
+        /* First of all, check the scissor to see if anything is drawn at all.
+         * If it's not, we drop the draw (mostly a conformance issue;
+         * well-behaved apps shouldn't hit this) */
+
+        if (panfrost_scissor_culls_everything(ctx))
+                return;
 
         ctx->payload_vertex.draw_start = info->start;
         ctx->payload_tiler.draw_start = info->start;
@@ -1796,11 +1936,16 @@ panfrost_bind_sampler_states(
 }
 
 static bool
-panfrost_variant_matches(struct panfrost_context *ctx, struct panfrost_shader_state *variant)
+panfrost_variant_matches(
+                struct panfrost_context *ctx,
+                struct panfrost_shader_state *variant,
+                enum pipe_shader_type type)
 {
         struct pipe_alpha_state *alpha = &ctx->depth_stencil->alpha;
 
-        if (alpha->enabled || variant->alpha_state.enabled) {
+        bool is_fragment = (type == PIPE_SHADER_FRAGMENT);
+
+        if (is_fragment && (alpha->enabled || variant->alpha_state.enabled)) {
                 /* Make sure enable state is at least the same */
                 if (alpha->enabled != variant->alpha_state.enabled) {
                         return false;
@@ -1830,6 +1975,7 @@ panfrost_bind_shader_state(
                 ctx->fs = hwcso;
                 ctx->dirty |= PAN_DIRTY_FS;
         } else {
+                assert(type == PIPE_SHADER_VERTEX);
                 ctx->vs = hwcso;
                 ctx->dirty |= PAN_DIRTY_VS;
         }
@@ -1842,7 +1988,7 @@ panfrost_bind_shader_state(
         struct panfrost_shader_variants *variants = (struct panfrost_shader_variants *) hwcso;
 
         for (unsigned i = 0; i < variants->variant_count; ++i) {
-                if (panfrost_variant_matches(ctx, &variants->variants[i])) {
+                if (panfrost_variant_matches(ctx, &variants->variants[i], type)) {
                         variant = i;
                         break;
                 }
@@ -1871,7 +2017,7 @@ panfrost_bind_shader_state(
         variants->active_variant = variant;
 
         struct panfrost_shader_state *shader_state = &variants->variants[variant];
-        assert(panfrost_variant_matches(ctx, shader_state));
+        assert(panfrost_variant_matches(ctx, shader_state, type));
 
         /* We finally have a variant, so compile it */
 
@@ -2045,17 +2191,28 @@ panfrost_create_sampler_view(
                 }
         }
 
+        /* In the hardware, array_size refers specifically to array textures,
+         * whereas in Gallium, it also covers cubemaps */
+
+        unsigned array_size = texture->array_size;
+
+        if (texture->target == PIPE_TEXTURE_CUBE) {
+                /* TODO: Cubemap arrays */
+                assert(array_size == 6);
+        }
+
         struct mali_texture_descriptor texture_descriptor = {
-                .width = MALI_POSITIVE(texture->width0),
-                .height = MALI_POSITIVE(texture->height0),
-                .depth = MALI_POSITIVE(texture->depth0),
+                .width = MALI_POSITIVE(u_minify(texture->width0, first_level)),
+                .height = MALI_POSITIVE(u_minify(texture->height0, first_level)),
+                .depth = MALI_POSITIVE(u_minify(texture->depth0, first_level)),
+                .array_size = MALI_POSITIVE(array_size),
 
                 /* TODO: Decode */
                 .format = {
                         .swizzle = panfrost_translate_swizzle_4(desc->swizzle),
                         .format = format,
 
-                        .usage1 = 0x0,
+                        .usage1 = (texture->target == PIPE_TEXTURE_3D) ? MALI_TEX_3D : 0,
                         .is_not_cubemap = texture->target != PIPE_TEXTURE_CUBE,
 
                         .usage2 = usage2_layout
@@ -2064,14 +2221,7 @@ panfrost_create_sampler_view(
                 .swizzle = panfrost_translate_swizzle_4(user_swizzle)
         };
 
-        /* TODO: Other base levels require adjusting dimensions / level numbers / etc */
-        assert (template->u.tex.first_level == 0);
-
-        /* Disable mipmapping for now to avoid regressions while automipmapping
-         * is being implemented. TODO: Remove me once automipmaps work */
-
-        //texture_descriptor.nr_mipmap_levels = template->u.tex.last_level - template->u.tex.first_level;
-        texture_descriptor.nr_mipmap_levels = 0;
+        //texture_descriptor.nr_mipmap_levels = last_level - first_level;
 
         so->hw = texture_descriptor;
 
@@ -2089,7 +2239,13 @@ panfrost_set_sampler_views(
 
         assert(start_slot == 0);
 
-        ctx->sampler_view_count[shader] = num_views;
+        unsigned new_nr = 0;
+        for (unsigned i = 0; i < num_views; ++i) {
+                if (views[i])
+                        new_nr = i + 1;
+        }
+
+        ctx->sampler_view_count[shader] = new_nr;
         memcpy(ctx->sampler_views[shader], views, num_views * sizeof (void *));
 
         ctx->dirty |= PAN_DIRTY_TEXTURES;
@@ -2110,12 +2266,15 @@ panfrost_set_framebuffer_state(struct pipe_context *pctx,
 {
         struct panfrost_context *ctx = pan_context(pctx);
 
-        /* Flush when switching away from an FBO, but not if the framebuffer
+        /* Flush when switching framebuffers, but not if the framebuffer
          * state is being restored by u_blitter
          */
 
-        if (!panfrost_is_scanout(ctx) && !ctx->blitter->running) {
-                panfrost_flush(pctx, NULL, 0);
+        bool is_scanout = panfrost_is_scanout(ctx);
+        bool has_draws = ctx->draw_count > 0;
+
+        if (!ctx->blitter->running && (!is_scanout || has_draws)) {
+                panfrost_flush(pctx, NULL, PIPE_FLUSH_END_OF_FRAME);
         }
 
         ctx->pipe_framebuffer.nr_cbufs = fb->nr_cbufs;
@@ -2142,9 +2301,9 @@ panfrost_set_framebuffer_state(struct pipe_context *pctx,
                         continue;
 
                 if (ctx->require_sfbd)
-                        ctx->vt_framebuffer_sfbd = panfrost_emit_sfbd(ctx);
+                        ctx->vt_framebuffer_sfbd = panfrost_emit_sfbd(ctx, ~0);
                 else
-                        ctx->vt_framebuffer_mfbd = panfrost_emit_mfbd(ctx);
+                        ctx->vt_framebuffer_mfbd = panfrost_emit_mfbd(ctx, ~0);
 
                 panfrost_attach_vt_framebuffer(ctx);
 
@@ -2169,9 +2328,9 @@ panfrost_set_framebuffer_state(struct pipe_context *pctx,
 
                         if (zb) {
                                 if (ctx->require_sfbd)
-                                        ctx->vt_framebuffer_sfbd = panfrost_emit_sfbd(ctx);
+                                        ctx->vt_framebuffer_sfbd = panfrost_emit_sfbd(ctx, ~0);
                                 else
-                                        ctx->vt_framebuffer_mfbd = panfrost_emit_mfbd(ctx);
+                                        ctx->vt_framebuffer_mfbd = panfrost_emit_mfbd(ctx, ~0);
 
                                 panfrost_attach_vt_framebuffer(ctx);
 
@@ -2386,7 +2545,7 @@ panfrost_destroy(struct pipe_context *pipe)
         screen->driver->free_slab(screen, &panfrost->varying_mem);
         screen->driver->free_slab(screen, &panfrost->shaders);
         screen->driver->free_slab(screen, &panfrost->tiler_heap);
-        screen->driver->free_slab(screen, &panfrost->misc_0);
+        screen->driver->free_slab(screen, &panfrost->tiler_polygon_list);
 }
 
 static struct pipe_query *
@@ -2541,7 +2700,8 @@ panfrost_setup_hardware(struct panfrost_context *ctx)
         screen->driver->allocate_slab(screen, &ctx->varying_mem, 16384, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_COHERENT_LOCAL, 0, 0);
         screen->driver->allocate_slab(screen, &ctx->shaders, 4096, true, PAN_ALLOCATE_EXECUTE, 0, 0);
         screen->driver->allocate_slab(screen, &ctx->tiler_heap, 32768, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
-        screen->driver->allocate_slab(screen, &ctx->misc_0, 128*128, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
+        screen->driver->allocate_slab(screen, &ctx->tiler_polygon_list, 128*128, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
+        screen->driver->allocate_slab(screen, &ctx->tiler_dummy, 1, false, PAN_ALLOCATE_INVISIBLE, 0, 0);
 
 }
 

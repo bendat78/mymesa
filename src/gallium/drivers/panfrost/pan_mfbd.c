@@ -88,16 +88,22 @@ panfrost_mfbd_set_cbuf(
                 struct pipe_surface *surf)
 {
         struct panfrost_resource *rsrc = pan_resource(surf->texture);
-        int stride = rsrc->bo->slices[0].stride;
+
+        unsigned level = surf->u.tex.level;
+        assert(surf->u.tex.first_layer == 0);
+
+        int stride = rsrc->bo->slices[level].stride;
+        unsigned offset = rsrc->bo->slices[level].offset;
 
         rt->format = panfrost_mfbd_format(surf);
 
         /* Now, we set the layout specific pieces */
 
         if (rsrc->bo->layout == PAN_LINEAR) {
-                rt->framebuffer = rsrc->bo->gpu;
+                rt->framebuffer = rsrc->bo->gpu + offset;
                 rt->framebuffer_stride = stride / 16;
         } else if (rsrc->bo->layout == PAN_AFBC) {
+                assert(level == 0);
                 rt->afbc.metadata = rsrc->bo->afbc_slab.gpu;
                 rt->afbc.stride = 0;
                 rt->afbc.unk = 0x30009;
@@ -123,8 +129,14 @@ panfrost_mfbd_set_zsbuf(
 {
         struct panfrost_resource *rsrc = pan_resource(surf->texture);
 
+        unsigned level = surf->u.tex.level;
+        assert(surf->u.tex.first_layer == 0);
+
+        unsigned offset = rsrc->bo->slices[level].offset;
+
         if (rsrc->bo->layout == PAN_AFBC) {
-                fb->unk3 |= MALI_MFBD_EXTRA;
+                assert(level == 0);
+                fb->mfbd_flags |= MALI_MFBD_EXTRA;
 
                 fbx->flags =
                         MALI_EXTRA_PRESENT |
@@ -141,11 +153,13 @@ panfrost_mfbd_set_zsbuf(
                 fbx->ds_afbc.zero1 = 0x10009;
                 fbx->ds_afbc.padding = 0x1000;
         } else if (rsrc->bo->layout == PAN_LINEAR) {
-                fb->unk3 |= MALI_MFBD_EXTRA;
+                int stride = rsrc->bo->slices[level].stride;
+                fb->mfbd_flags |= MALI_MFBD_EXTRA;
+
                 fbx->flags |= MALI_EXTRA_PRESENT | MALI_EXTRA_ZS | 0x1;
 
-                fbx->ds_linear.depth = rsrc->bo->gpu;
-                fbx->ds_linear.depth_stride = rsrc->bo->slices[0].stride;
+                fbx->ds_linear.depth = rsrc->bo->gpu + offset;
+                fbx->ds_linear.depth_stride = stride;
         } else {
                 assert(0);
         }
@@ -171,7 +185,7 @@ panfrost_mfbd_upload(
         off_t offset = 0;
 
         /* There may be extra data stuck in the middle */
-        bool has_extra = fb->unk3 & MALI_MFBD_EXTRA;
+        bool has_extra = fb->mfbd_flags & MALI_MFBD_EXTRA;
 
         /* Compute total size for transfer */
 
@@ -203,17 +217,17 @@ panfrost_mfbd_upload(
 /* Creates an MFBD for the FRAGMENT section of the bound framebuffer */
 
 mali_ptr
-panfrost_mfbd_fragment(struct panfrost_context *ctx)
+panfrost_mfbd_fragment(struct panfrost_context *ctx, bool has_draws)
 {
         struct panfrost_job *job = panfrost_get_job_for_fbo(ctx);
 
-        struct bifrost_framebuffer fb = panfrost_emit_mfbd(ctx);
+        struct bifrost_framebuffer fb = panfrost_emit_mfbd(ctx, has_draws);
         struct bifrost_fb_extra fbx = {};
         struct bifrost_render_target rts[4] = {};
 
         /* XXX: MRT case */
         fb.rt_count_2 = 1;
-        fb.unk3 = 0x100;
+        fb.mfbd_flags = 0x100;
 
         /* TODO: MRT clear */
         panfrost_mfbd_clear(job, &fb, &fbx, &rts[0]);
@@ -263,13 +277,13 @@ panfrost_mfbd_fragment(struct panfrost_context *ctx)
         }
 
         if (job->requirements & PAN_REQ_DEPTH_WRITE)
-                fb.unk3 |= MALI_MFBD_DEPTH_WRITE;
+                fb.mfbd_flags |= MALI_MFBD_DEPTH_WRITE;
 
         if (ctx->pipe_framebuffer.nr_cbufs == 1) {
                 struct panfrost_resource *rsrc = (struct panfrost_resource *) ctx->pipe_framebuffer.cbufs[0]->texture;
 
                 if (rsrc->bo->has_checksum) {
-                        fb.unk3 |= MALI_MFBD_EXTRA;
+                        fb.mfbd_flags |= MALI_MFBD_EXTRA;
                         fbx.flags |= MALI_EXTRA_PRESENT;
                         fbx.checksum_stride = rsrc->bo->checksum_stride;
                         fbx.checksum = rsrc->bo->gpu + rsrc->bo->slices[0].stride * rsrc->base.height0;
