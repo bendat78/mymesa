@@ -53,22 +53,23 @@ files_panfrost = files(
   'pan_allocate.c',
   'pan_assemble.c',
   'pan_format.c',
-  'pan_swizzle.c',
   'pan_blending.c',
   'pan_blend_shaders.c',
   'pan_pretty_print.c',
   'pan_fragment.c',
+  'pan_scoreboard.c',
   'pan_sfbd.c',
   'pan_mfbd.c',
   'pan_tiler.c',
 )
 
-inc_panfrost = [
+panfrost_includes = [
   inc_common,
   inc_gallium,
   inc_gallium_aux,
   inc_include,
   inc_src,
+  inc_panfrost,
   include_directories('include'),
   include_directories('midgard'),
   include_directories('bifrost'),
@@ -99,13 +100,13 @@ libpanfrost = static_library(
     dep_libdrm,
     idep_nir
   ],
-  include_directories : inc_panfrost,
+  include_directories : panfrost_includes,
   c_args : [c_vis_args, c_msvc_compat_args, compile_args_panfrost],
 )
 
 driver_panfrost = declare_dependency(
   compile_args : compile_args_panfrost,
-  link_with : [libpanfrost, libpanfrostwinsys],
+  link_with : [libpanfrost, libpanfrostwinsys, libpanfrost_shared],
 )
 
 files_bifrost = files(
@@ -151,7 +152,7 @@ files_pandecode = files(
 pandecode = executable(
   'pandecode',
   files_pandecode,
-  include_directories : inc_panfrost,
+  include_directories : panfrost_includes,
   dependencies : [
     dep_thread,
   ],

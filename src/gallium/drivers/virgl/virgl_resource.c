@@ -129,11 +129,21 @@ virgl_resource_transfer_prepare(struct virgl_context *vctx,
     */
    if (wait && (xfer->base.usage & (PIPE_TRANSFER_DISCARD_RANGE |
                                     PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE))) {
-      const bool can_realloc =
-         (xfer->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) &&
-         virgl_can_rebind_resource(vctx, &res->u.b);
-      const bool can_staging = vctx->transfer_uploader &&
-                               !vctx->transfer_uploader_in_use;
+      bool can_realloc = false;
+      bool can_staging = false;
+
+      /* A PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE transfer may be followed by
+       * PIPE_TRANSFER_UNSYNCHRONIZED transfers to non-overlapping regions.
+       * It cannot be treated as a PIPE_TRANSFER_DISCARD_RANGE transfer,
+       * otherwise those following unsynchronized transfers may overwrite
+       * valid data.
+       */
+      if (xfer->base.usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+         can_realloc = virgl_can_rebind_resource(vctx, &res->u.b);
+      } else {
+         can_staging = vctx->transfer_uploader &&
+                       !vctx->transfer_uploader_in_use;
+      }
 
       /* discard implies no readback */
       assert(!readback);
@@ -212,6 +222,16 @@ static struct pipe_resource *virgl_resource_create(struct pipe_screen *screen,
    pipe_reference_init(&res->u.b.reference, 1);
    vbind = pipe_to_virgl_bind(vs, templ->bind, templ->flags);
    virgl_resource_layout(&res->u.b, &res->metadata);
+
+   if ((vs->caps.caps.v2.capability_bits & VIRGL_CAP_APP_TWEAK_SUPPORT) &&
+       vs->tweak_gles_emulate_bgra &&
+      (templ->format == PIPE_FORMAT_B8G8R8A8_SRGB ||
+        templ->format == PIPE_FORMAT_B8G8R8A8_UNORM ||
+        templ->format == PIPE_FORMAT_B8G8R8X8_SRGB ||
+        templ->format == PIPE_FORMAT_B8G8R8X8_UNORM)) {
+      vbind |= VIRGL_BIND_PREFER_EMULATED_BGRA;
+   }
+
    res->hw_res = vs->vws->resource_create(vs->vws, templ->target,
                                           templ->format, vbind,
                                           templ->width0,

@@ -43,6 +43,9 @@ enum panfrost_memory_layout {
 struct panfrost_slice {
         unsigned offset;
         unsigned stride;
+
+        /* Has anything been written to this slice? */
+        bool initialized;
 };
 
 struct panfrost_bo {
@@ -122,6 +125,7 @@ pan_transfer(struct pipe_transfer *p)
 }
 
 void panfrost_resource_screen_init(struct panfrost_screen *screen);
+void panfrost_resource_screen_deinit(struct panfrost_screen *screen);
 
 void panfrost_resource_context_init(struct pipe_context *pctx);
 

@@ -28,6 +28,17 @@
 
 #include "util/u_format.h"
 
+/* Mark a surface as written */
+
+static void
+panfrost_initialize_surface(struct pipe_surface *surf)
+{
+        unsigned level = surf->u.tex.level;
+        struct panfrost_resource *rsrc = pan_resource(surf->texture);
+
+        rsrc->bo->slices[level].initialized = true;
+}
+
 /* Generate a fragment job. This should be called once per frame. (According to
  * presentations, this is supposed to correspond to eglSwapBuffers) */
 
@@ -38,6 +49,16 @@ panfrost_fragment_job(struct panfrost_context *ctx, bool has_draws)
                 panfrost_sfbd_fragment(ctx, has_draws) :
                 panfrost_mfbd_fragment(ctx, has_draws);
 
+        /* Mark the affected buffers as initialized, since we're writing to it */
+        struct pipe_framebuffer_state *fb = &ctx->pipe_framebuffer;
+
+        for (unsigned i = 0; i < fb->nr_cbufs; ++i) {
+                panfrost_initialize_surface(fb->cbufs[i]);
+        }
+
+        if (fb->zsbuf)
+                panfrost_initialize_surface(fb->zsbuf);
+
         struct mali_job_descriptor_header header = {
                 .job_type = JOB_TYPE_FRAGMENT,
                 .job_index = 1,
@@ -46,9 +67,11 @@ panfrost_fragment_job(struct panfrost_context *ctx, bool has_draws)
 #endif
         };
 
+        struct panfrost_job *job = panfrost_get_job_for_fbo(ctx);
+
         struct mali_payload_fragment payload = {
-                .min_tile_coord = MALI_COORDINATE_TO_TILE_MIN(0, 0),
-                .max_tile_coord = MALI_COORDINATE_TO_TILE_MAX(ctx->pipe_framebuffer.width, ctx->pipe_framebuffer.height),
+                .min_tile_coord = MALI_COORDINATE_TO_TILE_MIN(job->minx, job->miny),
+                .max_tile_coord = MALI_COORDINATE_TO_TILE_MAX(job->maxx, job->maxy),
                 .framebuffer = framebuffer,
         };
 

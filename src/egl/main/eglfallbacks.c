@@ -35,13 +35,6 @@
 #include "eglsync.h"
 
 
-static EGLBoolean
-_eglReturnFalse(void)
-{
-   return EGL_FALSE;
-}
-
-
 /**
  * Plug all the available fallback routines into the given driver's
  * dispatch table.
@@ -49,55 +42,16 @@ _eglReturnFalse(void)
 void
 _eglInitDriverFallbacks(_EGLDriver *drv)
 {
-   /* the driver has to implement these */
-   drv->API.Initialize = NULL;
-   drv->API.Terminate = NULL;
-
    drv->API.GetConfigs = _eglGetConfigs;
    drv->API.ChooseConfig = _eglChooseConfig;
    drv->API.GetConfigAttrib = _eglGetConfigAttrib;
 
-   drv->API.CreateContext = (void*) _eglReturnFalse;
-   drv->API.DestroyContext = (void*) _eglReturnFalse;
-   drv->API.MakeCurrent = (void*) _eglReturnFalse;
    drv->API.QueryContext = _eglQueryContext;
 
-   drv->API.CreateWindowSurface = (void*) _eglReturnFalse;
-   drv->API.CreatePixmapSurface = (void*) _eglReturnFalse;
-   drv->API.CreatePbufferSurface = (void*) _eglReturnFalse;
-   drv->API.CreatePbufferFromClientBuffer =
-      (void*) _eglReturnFalse;
-   drv->API.DestroySurface = (void*) _eglReturnFalse;
    drv->API.QuerySurface = _eglQuerySurface;
    drv->API.SurfaceAttrib = _eglSurfaceAttrib;
 
-   drv->API.BindTexImage = (void*) _eglReturnFalse;
-   drv->API.ReleaseTexImage = (void*) _eglReturnFalse;
-   drv->API.CopyBuffers = (void*) _eglReturnFalse;
-   drv->API.SwapBuffers = (void*) _eglReturnFalse;
-   drv->API.SetDamageRegion = (void*) _eglReturnFalse;
    drv->API.SwapInterval = _eglSwapInterval;
 
-   drv->API.WaitClient = (void*) _eglReturnFalse;
-   drv->API.WaitNative = (void*) _eglReturnFalse;
-   drv->API.GetProcAddress = (void*) _eglReturnFalse;
-
-   drv->API.CreateImageKHR = NULL;
-   drv->API.DestroyImageKHR = NULL;
-
-   drv->API.CreateSyncKHR = NULL;
-   drv->API.DestroySyncKHR = NULL;
-   drv->API.ClientWaitSyncKHR = NULL;
-   drv->API.WaitSyncKHR = NULL;
-   drv->API.SignalSyncKHR = NULL;
    drv->API.GetSyncAttrib = _eglGetSyncAttrib;
-   drv->API.DupNativeFenceFDANDROID = NULL;
-
-   drv->API.CreateDRMImageMESA = NULL;
-   drv->API.ExportDRMImageMESA = NULL;
-
-   drv->API.SwapBuffersRegionNOK = NULL;
-
-   drv->API.ExportDMABUFImageQueryMESA = NULL;
-   drv->API.ExportDMABUFImageMESA = NULL;
 }

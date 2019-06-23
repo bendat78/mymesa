@@ -27,6 +27,7 @@
 #include "util/u_video.h"
 #include "util/u_math.h"
 #include "util/os_time.h"
+#include "util/xmlconfig.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
@@ -36,11 +37,14 @@
 #include "virgl_resource.h"
 #include "virgl_public.h"
 #include "virgl_context.h"
+#include "virgl_protocol.h"
 
 int virgl_debug = 0;
 static const struct debug_named_value debug_options[] = {
    { "verbose", VIRGL_DEBUG_VERBOSE, NULL },
    { "tgsi", VIRGL_DEBUG_TGSI, NULL },
+   { "emubgra", VIRGL_DEBUG_EMULATE_BGRA, "Enable tweak to emulate BGRA as RGBA on GLES hosts"},
+   { "bgraswz", VIRGL_DEBUG_BGRA_DEST_SWIZZLE, "Enable tweak to swizzle emulated BGRA on GLES hosts" },
    DEBUG_NAMED_VALUE_END
 };
 DEBUG_GET_ONCE_FLAGS_OPTION(virgl_debug, "VIRGL_DEBUG", debug_options, 0)
@@ -593,6 +597,35 @@ virgl_is_vertex_format_supported(struct pipe_screen *screen,
    return TRUE;
 }
 
+static boolean
+virgl_format_check_bitmask(enum pipe_format format,
+                           uint32_t bitmask[16],
+                           boolean may_emulate_bgra)
+{
+   int big = format / 32;
+   int small = format % 32;
+   if ((bitmask[big] & (1 << small)))
+      return TRUE;
+
+   /* On GLES hosts we don't advertise BGRx_SRGB, but we may be able
+    * emulate it by using a swizzled RGBx */
+   if (may_emulate_bgra) {
+      if (format == PIPE_FORMAT_B8G8R8A8_SRGB)
+         format = PIPE_FORMAT_R8G8B8A8_SRGB;
+      else if (format == PIPE_FORMAT_B8G8R8X8_SRGB)
+         format = PIPE_FORMAT_R8G8B8X8_SRGB;
+      else {
+         return FALSE;
+      }
+
+      big = format / 32;
+      small = format % 32;
+      if (bitmask[big] & (1 << small))
+         return TRUE;
+   }
+   return FALSE;
+}
+
 /**
  * Query format support for creating a texture, drawing surface, etc.
  * \param format  the format to test
@@ -609,6 +642,8 @@ virgl_is_format_supported( struct pipe_screen *screen,
    struct virgl_screen *vscreen = virgl_screen(screen);
    const struct util_format_description *format_desc;
    int i;
+
+   boolean may_emulate_bgra = false;
 
    if (MAX2(1, sample_count) != MAX2(1, storage_sample_count))
       return false;
@@ -663,6 +698,10 @@ virgl_is_format_supported( struct pipe_screen *screen,
        target == PIPE_TEXTURE_3D)
       return FALSE;
 
+   may_emulate_bgra = (vscreen->caps.caps.v2.capability_bits &
+                       VIRGL_CAP_APP_TWEAK_SUPPORT) &&
+                      vscreen->tweak_gles_emulate_bgra;
+
    if (bind & PIPE_BIND_RENDER_TARGET) {
       /* For ARB_framebuffer_no_attachments. */
       if (format == PIPE_FORMAT_NONE)
@@ -680,12 +719,10 @@ virgl_is_format_supported( struct pipe_screen *screen,
           format_desc->block.height != 1)
          return FALSE;
 
-      {
-         int big = format / 32;
-         int small = format % 32;
-         if (!(vscreen->caps.caps.v1.render.bitmask[big] & (1 << small)))
-            return FALSE;
-      }
+      if (!virgl_format_check_bitmask(format,
+                                      vscreen->caps.caps.v1.render.bitmask,
+                                      may_emulate_bgra))
+         return FALSE;
    }
 
    if (bind & PIPE_BIND_DEPTH_STENCIL) {
@@ -728,16 +765,9 @@ virgl_is_format_supported( struct pipe_screen *screen,
       return FALSE;
 
  out_lookup:
-   {
-      int big = format / 32;
-      int small = format % 32;
-      if (!(vscreen->caps.caps.v1.sampler.bitmask[big] & (1 << small)))
-         return FALSE;
-   }
-   /*
-    * Everything else should be supported by u_format.
-    */
-   return TRUE;
+   return virgl_format_check_bitmask(format,
+                                     vscreen->caps.caps.v1.sampler.bitmask,
+                                     may_emulate_bgra);
 }
 
 static void virgl_flush_frontbuffer(struct pipe_screen *screen,
@@ -822,14 +852,30 @@ fixup_readback_format(union virgl_caps *caps)
 }
 
 struct pipe_screen *
-virgl_create_screen(struct virgl_winsys *vws)
+virgl_create_screen(struct virgl_winsys *vws, const struct pipe_screen_config *config)
 {
    struct virgl_screen *screen = CALLOC_STRUCT(virgl_screen);
+
+   const char *VIRGL_GLES_EMULATE_BGRA = "gles_emulate_bgra";
+   const char *VIRGL_GLES_APPLY_BGRA_DEST_SWIZZLE = "gles_apply_bgra_dest_swizzle";
+   const char *VIRGL_GLES_SAMPLES_PASSED_VALUE = "gles_samples_passed_value";
 
    if (!screen)
       return NULL;
 
    virgl_debug = debug_get_option_virgl_debug();
+
+   if (config && config->options) {
+      screen->tweak_gles_emulate_bgra =
+            driQueryOptionb(config->options, VIRGL_GLES_EMULATE_BGRA);
+      screen->tweak_gles_apply_bgra_dest_swizzle =
+            driQueryOptionb(config->options, VIRGL_GLES_APPLY_BGRA_DEST_SWIZZLE);
+      screen->tweak_gles_tf3_value =
+            driQueryOptioni(config->options, VIRGL_GLES_SAMPLES_PASSED_VALUE);
+   }
+
+   screen->tweak_gles_emulate_bgra |= !!(virgl_debug & VIRGL_DEBUG_EMULATE_BGRA);
+   screen->tweak_gles_apply_bgra_dest_swizzle |= !!(virgl_debug & VIRGL_DEBUG_BGRA_DEST_SWIZZLE);
 
    screen->vws = vws;
    screen->base.get_name = virgl_get_name;

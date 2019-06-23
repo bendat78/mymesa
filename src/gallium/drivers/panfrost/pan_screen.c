@@ -66,8 +66,6 @@ int pan_debug = 0;
 
 struct panfrost_driver *panfrost_create_drm_driver(int fd);
 
-const char *pan_counters_base = NULL;
-
 static const char *
 panfrost_get_name(struct pipe_screen *screen)
 {
@@ -450,10 +448,6 @@ panfrost_is_format_supported( struct pipe_screen *screen,
         if (sample_count > 1)
                 return FALSE;
 
-	/* sRGB colorspace is not supported (yet?) */
-	if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
-		return FALSE;
-
         /* Format wishlist */
         if (format == PIPE_FORMAT_Z24X8_UNORM || format == PIPE_FORMAT_X8Z24_UNORM)
                 return FALSE;
@@ -518,9 +512,11 @@ panfrost_is_format_supported( struct pipe_screen *screen,
 
 
 static void
-panfrost_destroy_screen( struct pipe_screen *screen )
+panfrost_destroy_screen(struct pipe_screen *pscreen)
 {
-        FREE(screen);
+        struct panfrost_screen *screen = pan_screen(pscreen);
+        panfrost_resource_screen_deinit(screen);
+        ralloc_free(screen);
 }
 
 static void
@@ -544,8 +540,7 @@ panfrost_fence_reference(struct pipe_screen *pscreen,
                          struct pipe_fence_handle **ptr,
                          struct pipe_fence_handle *fence)
 {
-        struct panfrost_screen *screen = pan_screen(pscreen);
-        screen->driver->fence_reference(pscreen, ptr, fence);
+        panfrost_drm_fence_reference(pscreen, ptr, fence);
 }
 
 static boolean
@@ -554,8 +549,7 @@ panfrost_fence_finish(struct pipe_screen *pscreen,
                       struct pipe_fence_handle *fence,
                       uint64_t timeout)
 {
-        struct panfrost_screen *screen = pan_screen(pscreen);
-        return screen->driver->fence_finish(pscreen, ctx, fence, timeout);
+        return panfrost_drm_fence_finish(pscreen, ctx, fence, timeout);
 }
 
 static const void *
@@ -569,7 +563,7 @@ panfrost_screen_get_compiler_options(struct pipe_screen *pscreen,
 struct pipe_screen *
 panfrost_create_screen(int fd, struct renderonly *ro)
 {
-        struct panfrost_screen *screen = CALLOC_STRUCT(panfrost_screen);
+        struct panfrost_screen *screen = rzalloc(NULL, struct panfrost_screen);
 
 	pan_debug = debug_get_option_pan_debug();
 
@@ -585,15 +579,7 @@ panfrost_create_screen(int fd, struct renderonly *ro)
                 }
         }
 
-        screen->driver = panfrost_create_drm_driver(fd);
-
-        /* Dump performance counters iff asked for in the environment */
-        pan_counters_base = getenv("PANCOUNTERS_BASE");
-
-        if (pan_counters_base) {
-                screen->driver->allocate_slab(screen, &screen->perf_counters, 64, true, 0, 0, 0);
-                screen->driver->enable_counters(screen);
-        }
+        screen->fd = fd;
 
         if (pan_debug & PAN_DBG_TRACE)
                 pandecode_initialize();

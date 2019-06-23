@@ -28,6 +28,7 @@
 #include "tgsi/tgsi_strings.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_from_mesa.h"
 
 #include "ac_binary.h"
 #include "ac_exp_param.h"
@@ -1351,7 +1352,7 @@ static void store_output_tcs(struct lp_build_tgsi_context *bld_base,
 		if (reg->Register.WriteMask != 0xF && !is_tess_factor) {
 			ac_build_buffer_store_dword(&ctx->ac, buffer, value, 1,
 						    buf_addr, base,
-						    4 * chan_index, 1, 0, true, false);
+						    4 * chan_index, 1, 0, false);
 		}
 
 		/* Write tess factors into VGPRs for the epilog. */
@@ -1371,7 +1372,7 @@ static void store_output_tcs(struct lp_build_tgsi_context *bld_base,
 		LLVMValueRef value = ac_build_gather_values(&ctx->ac,
 		                                            values, 4);
 		ac_build_buffer_store_dword(&ctx->ac, buffer, value, 4, buf_addr,
-					    base, 0, 1, 0, true, false);
+					    base, 0, 1, 0, false);
 	}
 }
 
@@ -1479,7 +1480,7 @@ static void si_nir_store_output_tcs(struct ac_shader_abi *abi,
 			ac_build_buffer_store_dword(&ctx->ac, buffer, value, 1,
 						    addr, base,
 						    4 * buffer_store_offset,
-                                                    1, 0, true, false);
+                                                    1, 0, false);
 		}
 
 		/* Write tess factors into VGPRs for the epilog. */
@@ -1499,7 +1500,7 @@ static void si_nir_store_output_tcs(struct ac_shader_abi *abi,
 		LLVMValueRef value = ac_build_gather_values(&ctx->ac,
 		                                            values, 4);
 		ac_build_buffer_store_dword(&ctx->ac, buffer, value, 4, addr,
-					    base, 0, 1, 0, true, false);
+					    base, 0, 1, 0, false);
 	}
 }
 
@@ -2660,7 +2661,7 @@ static void emit_streamout_output(struct si_shader_context *ctx,
 				    vdata, num_comps,
 				    so_write_offsets[buf_idx],
 				    ctx->i32_0,
-				    stream_out->dst_offset * 4, 1, 1, true, false);
+				    stream_out->dst_offset * 4, 1, 1, false);
 }
 
 /**
@@ -3054,7 +3055,7 @@ static void si_copy_tcs_inputs(struct lp_build_tgsi_context *bld_base)
 		LLVMValueRef value = lshs_lds_load(bld_base, ctx->ac.i32, ~0, lds_ptr);
 
 		ac_build_buffer_store_dword(&ctx->ac, buffer, value, 4, buffer_addr,
-					    buffer_offset, 0, 1, 0, true, false);
+					    buffer_offset, 0, 1, 0, false);
 	}
 }
 
@@ -3180,7 +3181,7 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 		ac_build_buffer_store_dword(&ctx->ac, buffer,
 					    LLVMConstInt(ctx->i32, 0x80000000, 0),
 					    1, ctx->i32_0, tf_base,
-					    offset, 1, 0, true, false);
+					    offset, 1, 0, false);
 		offset += 4;
 	}
 
@@ -3189,12 +3190,12 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 	/* Store the tessellation factors. */
 	ac_build_buffer_store_dword(&ctx->ac, buffer, vec0,
 				    MIN2(stride, 4), byteoffset, tf_base,
-				    offset, 1, 0, true, false);
+				    offset, 1, 0, false);
 	offset += 16;
 	if (vec1)
 		ac_build_buffer_store_dword(&ctx->ac, buffer, vec1,
 					    stride - 4, byteoffset, tf_base,
-					    offset, 1, 0, true, false);
+					    offset, 1, 0, false);
 
 	/* Store the tess factors into the offchip buffer if TES reads them. */
 	if (shader->key.part.tcs.epilog.tes_reads_tess_factors) {
@@ -3217,7 +3218,7 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 
 		ac_build_buffer_store_dword(&ctx->ac, buf, outer_vec,
 					    outer_comps, tf_outer_offset,
-					    base, 0, 1, 0, true, false);
+					    base, 0, 1, 0, false);
 		if (inner_comps) {
 			param_inner = si_shader_io_get_unique_index_patch(
 					      TGSI_SEMANTIC_TESSINNER, 0);
@@ -3228,7 +3229,7 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 				    ac_build_gather_values(&ctx->ac, inner, inner_comps);
 			ac_build_buffer_store_dword(&ctx->ac, buf, inner_vec,
 						    inner_comps, tf_inner_offset,
-						    base, 0, 1, 0, true, false);
+						    base, 0, 1, 0, false);
 		}
 	}
 
@@ -3535,7 +3536,7 @@ static void si_llvm_emit_es_epilogue(struct ac_shader_abi *abi,
 						    ctx->esgs_ring,
 						    out_val, 1, NULL, soffset,
 						    (4 * param + chan) * 4,
-						    1, 1, true, true);
+						    1, 1, true);
 		}
 	}
 
@@ -4247,7 +4248,7 @@ static void si_llvm_emit_vertex(struct ac_shader_abi *abi,
 						    ctx->gsvs_ring[stream],
 						    out_val, 1,
 						    voffset, soffset, 0,
-						    1, 1, true, true);
+						    1, 1, true);
 		}
 	}
 
@@ -5098,6 +5099,7 @@ static bool si_shader_binary_open(struct si_screen *screen,
 				  struct ac_rtld_binary *rtld)
 {
 	const struct si_shader_selector *sel = shader->selector;
+	enum pipe_shader_type shader_type = sel ? sel->type : PIPE_SHADER_COMPUTE;
 	const char *part_elfs[5];
 	size_t part_sizes[5];
 	unsigned num_parts = 0;
@@ -5133,6 +5135,10 @@ static bool si_shader_binary_open(struct si_screen *screen,
 
 	bool ok = ac_rtld_open(rtld, (struct ac_rtld_open_info){
 			.info = &screen->info,
+			.options = {
+				.halt_at_entry = screen->options.halt_shaders,
+			},
+			.shader_type = tgsi_processor_to_shader_stage(shader_type),
 			.num_parts = num_parts,
 			.elf_ptrs = part_elfs,
 			.elf_sizes = part_sizes,
