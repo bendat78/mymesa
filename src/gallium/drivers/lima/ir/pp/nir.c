@@ -119,6 +119,8 @@ static int nir_to_ppir_opcodes[nir_num_opcodes] = {
 
    [nir_op_mov] = ppir_op_mov,
    [nir_op_fmul] = ppir_op_mul,
+   [nir_op_fabs] = ppir_op_abs,
+   [nir_op_fneg] = ppir_op_neg,
    [nir_op_fadd] = ppir_op_add,
    [nir_op_fdot2] = ppir_op_dot2,
    [nir_op_fdot3] = ppir_op_dot3,
@@ -150,6 +152,7 @@ static int nir_to_ppir_opcodes[nir_num_opcodes] = {
    [nir_op_fcsel] = ppir_op_select,
    [nir_op_inot] = ppir_op_not,
    [nir_op_ftrunc] = ppir_op_trunc,
+   [nir_op_fsat] = ppir_op_sat,
 };
 
 static ppir_node *ppir_emit_alu(ppir_block *block, nir_instr *ni)

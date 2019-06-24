@@ -428,9 +428,18 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
 
    nir_validate_shader(nir, "before remapping");
 
-   /* Place the new params at the front of constant buffer 0. */
+   /* Uniforms are stored in constant buffer 0, the
+    * user-facing UBOs are indexed by one.  So if any constant buffer is
+    * needed, the constant buffer 0 will be needed, so account for it.
+    */
+   unsigned num_cbufs = nir->info.num_ubos;
+   if (num_cbufs || nir->num_uniforms)
+      num_cbufs++;
+
+   /* Place the new params in a new cbuf. */
    if (num_system_values > 0) {
-      nir->num_uniforms += num_system_values * sizeof(uint32_t);
+      unsigned sysval_cbuf_index = num_cbufs;
+      num_cbufs++;
 
       system_values = reralloc(mem_ctx, system_values, enum brw_param_builtin,
                                num_system_values);
@@ -450,15 +459,9 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
             assert(load->src[0].is_ssa);
 
             if (load->src[0].ssa == temp_ubo_name) {
+               nir_ssa_def *imm = nir_imm_int(&b, sysval_cbuf_index);
                nir_instr_rewrite_src(instr, &load->src[0],
-                                     nir_src_for_ssa(nir_imm_int(&b, 0)));
-            } else if (nir_src_is_const(load->src[0]) &&
-                       nir_src_as_uint(load->src[0]) == 0) {
-               nir_ssa_def *offset =
-                  nir_iadd(&b, load->src[1].ssa,
-                           nir_imm_int(&b, 4 * num_system_values));
-               nir_instr_rewrite_src(instr, &load->src[1],
-                                     nir_src_for_ssa(offset));
+                                     nir_src_for_ssa(imm));
             }
          }
       }
@@ -470,6 +473,7 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
       system_values = NULL;
    }
 
+   assert(num_cbufs < PIPE_MAX_CONSTANT_BUFFERS);
    nir_validate_shader(nir, "after remap");
 
    /* We don't use params[], but fs_visitor::nir_setup_uniforms() asserts
@@ -478,14 +482,6 @@ iris_setup_uniforms(const struct brw_compiler *compiler,
     */
    prog_data->nr_params = nir->num_uniforms / 4;
    prog_data->param = rzalloc_array(mem_ctx, uint32_t, prog_data->nr_params);
-
-   /* System values and uniforms are stored in constant buffer 0, the
-    * user-facing UBOs are indexed by one.  So if any constant buffer is
-    * needed, the constant buffer 0 will be needed, so account for it.
-    */
-   unsigned num_cbufs = nir->info.num_ubos;
-   if (num_cbufs || num_system_values || nir->num_uniforms)
-      num_cbufs++;
 
    /* Constant loads (if any) need to go at the end of the constant buffers so
     * we need to know num_cbufs before we can lower to them.
@@ -970,6 +966,7 @@ iris_compile_vs(struct iris_context *ice,
 static void
 iris_update_compiled_vs(struct iris_context *ice)
 {
+   struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_VERTEX];
    struct iris_uncompiled_shader *ish =
       ice->shaders.uncompiled[MESA_SHADER_VERTEX];
    struct iris_screen *screen = (struct iris_screen *)ice->ctx.screen;
@@ -994,6 +991,8 @@ iris_update_compiled_vs(struct iris_context *ice)
                           IRIS_DIRTY_BINDINGS_VS |
                           IRIS_DIRTY_CONSTANTS_VS |
                           IRIS_DIRTY_VF_SGVS;
+      shs->sysvals_need_upload = true;
+
       const struct brw_vs_prog_data *vs_prog_data =
             (void *) shader->prog_data;
       const bool uses_draw_params = vs_prog_data->uses_firstvertex ||
@@ -1105,6 +1104,7 @@ iris_compile_tcs(struct iris_context *ice,
       nir = brw_nir_create_passthrough_tcs(mem_ctx, compiler, options, key);
 
       /* Reserve space for passing the default tess levels as constants. */
+      num_cbufs = 1;
       num_system_values = 8;
       system_values =
          rzalloc_array(mem_ctx, enum brw_param_builtin, num_system_values);
@@ -1175,6 +1175,7 @@ iris_compile_tcs(struct iris_context *ice,
 static void
 iris_update_compiled_tcs(struct iris_context *ice)
 {
+   struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_TESS_CTRL];
    struct iris_uncompiled_shader *tcs =
       ice->shaders.uncompiled[MESA_SHADER_TESS_CTRL];
    struct iris_screen *screen = (struct iris_screen *)ice->ctx.screen;
@@ -1207,22 +1208,7 @@ iris_update_compiled_tcs(struct iris_context *ice)
       ice->state.dirty |= IRIS_DIRTY_TCS |
                           IRIS_DIRTY_BINDINGS_TCS |
                           IRIS_DIRTY_CONSTANTS_TCS;
-
-      if (!tcs) {
-         /* We're binding a passthrough TCS, which doesn't have uniforms.
-          * Since there's no actual TCS, the state tracker doesn't bother
-          * to call set_constant_buffers to clear stale constant buffers.
-          *
-          * We do upload TCS constants for the default tesslevel system
-          * values, however.  In this case, we would see stale constant
-          * data and try and read a dangling cbuf0->user_buffer pointer.
-          * Just zero out the stale constants to avoid the upload.
-          */
-         struct iris_shader_state *shs =
-            &ice->state.shaders[MESA_SHADER_TESS_CTRL];
-
-         memset(&shs->cbuf0, 0, sizeof(shs->cbuf0));
-      }
+      shs->sysvals_need_upload = true;
    }
 }
 
@@ -1300,6 +1286,7 @@ iris_compile_tes(struct iris_context *ice,
 static void
 iris_update_compiled_tes(struct iris_context *ice)
 {
+   struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_TESS_EVAL];
    struct iris_uncompiled_shader *ish =
       ice->shaders.uncompiled[MESA_SHADER_TESS_EVAL];
    struct iris_screen *screen = (struct iris_screen *)ice->ctx.screen;
@@ -1324,13 +1311,14 @@ iris_update_compiled_tes(struct iris_context *ice)
       ice->state.dirty |= IRIS_DIRTY_TES |
                           IRIS_DIRTY_BINDINGS_TES |
                           IRIS_DIRTY_CONSTANTS_TES;
+      shs->sysvals_need_upload = true;
    }
 
    /* TODO: Could compare and avoid flagging this. */
    const struct shader_info *tes_info = &ish->nir->info;
    if (tes_info->system_values_read & (1ull << SYSTEM_VALUE_VERTICES_IN)) {
       ice->state.dirty |= IRIS_DIRTY_CONSTANTS_TES;
-      ice->state.shaders[MESA_SHADER_TESS_EVAL].cbuf0_needs_upload = true;
+      ice->state.shaders[MESA_SHADER_TESS_EVAL].sysvals_need_upload = true;
    }
 }
 
@@ -1408,6 +1396,7 @@ iris_compile_gs(struct iris_context *ice,
 static void
 iris_update_compiled_gs(struct iris_context *ice)
 {
+   struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_GEOMETRY];
    struct iris_uncompiled_shader *ish =
       ice->shaders.uncompiled[MESA_SHADER_GEOMETRY];
    struct iris_compiled_shader *old = ice->shaders.prog[IRIS_CACHE_GS];
@@ -1434,6 +1423,7 @@ iris_update_compiled_gs(struct iris_context *ice)
       ice->state.dirty |= IRIS_DIRTY_GS |
                           IRIS_DIRTY_BINDINGS_GS |
                           IRIS_DIRTY_CONSTANTS_GS;
+      shs->sysvals_need_upload = true;
    }
 }
 
@@ -1504,6 +1494,7 @@ iris_compile_fs(struct iris_context *ice,
 static void
 iris_update_compiled_fs(struct iris_context *ice)
 {
+   struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_FRAGMENT];
    struct iris_uncompiled_shader *ish =
       ice->shaders.uncompiled[MESA_SHADER_FRAGMENT];
       struct iris_screen *screen = (struct iris_screen *)ice->ctx.screen;
@@ -1534,6 +1525,7 @@ iris_update_compiled_fs(struct iris_context *ice)
                           IRIS_DIRTY_WM |
                           IRIS_DIRTY_CLIP |
                           IRIS_DIRTY_SBE;
+      shs->sysvals_need_upload = true;
    }
 }
 
@@ -1762,6 +1754,7 @@ iris_compile_cs(struct iris_context *ice,
 void
 iris_update_compiled_compute_shader(struct iris_context *ice)
 {
+   struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_COMPUTE];
    struct iris_uncompiled_shader *ish =
       ice->shaders.uncompiled[MESA_SHADER_COMPUTE];
 
@@ -1785,6 +1778,7 @@ iris_update_compiled_compute_shader(struct iris_context *ice)
       ice->state.dirty |= IRIS_DIRTY_CS |
                           IRIS_DIRTY_BINDINGS_CS |
                           IRIS_DIRTY_CONSTANTS_CS;
+      shs->sysvals_need_upload = true;
    }
 }
 

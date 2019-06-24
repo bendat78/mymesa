@@ -37,6 +37,15 @@ const ppir_op_info ppir_op_infos[] = {
          PPIR_INSTR_SLOT_END
       },
    },
+   [ppir_op_abs] = {
+      .name = "abs",
+   },
+   [ppir_op_neg] = {
+      .name = "neg",
+   },
+   [ppir_op_sat] = {
+      .name = "sat",
+   },
    [ppir_op_mul] = {
       .name = "mul",
       .slots = (int []) {
