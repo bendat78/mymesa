@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-06-18 17:56+0200\n"
+"POT-Creation-Date: 2019-06-23 23:03+0200\n"
 "PO-Revision-Date: 2015-02-23 14:54-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -299,4 +299,18 @@ msgstr ""
 #: src/util/xmlpool/t_options.h:353
 msgid ""
 "Commutative additive blending optimizations (may cause rendering errors)"
+msgstr ""
+
+#: src/util/xmlpool/t_options.h:372
+msgid "On GLES emulate BGRA formats by using a swizzled RGBA format"
+msgstr ""
+
+#: src/util/xmlpool/t_options.h:377
+msgid ""
+"When the BGRA formats are emulated by using swizzled RGBA formats on GLES "
+"apply the swizzle when writing"
+msgstr ""
+
+#: src/util/xmlpool/t_options.h:382
+msgid "GL_SAMPLES_PASSED value when emulated by GL_ANY_SAMPLES_PASSED"
 msgstr ""
