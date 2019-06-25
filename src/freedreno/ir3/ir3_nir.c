@@ -54,7 +54,6 @@ static const nir_shader_compiler_options options = {
 		.lower_helper_invocation = true,
 		.lower_bitfield_insert_to_shifts = true,
 		.lower_bitfield_extract_to_shifts = true,
-		.lower_bfm = true,
 		.use_interpolated_input_intrinsics = true,
 };
 
@@ -79,7 +78,6 @@ static const nir_shader_compiler_options options_a6xx = {
 		.lower_helper_invocation = true,
 		.lower_bitfield_insert_to_shifts = true,
 		.lower_bitfield_extract_to_shifts = true,
-		.lower_bfm = true,
 		.use_interpolated_input_intrinsics = true,
 };
 
@@ -352,8 +350,6 @@ ir3_setup_const_state(struct ir3_shader *shader, nir_shader *nir)
 	memset(&const_state->offsets, ~0, sizeof(const_state->offsets));
 
 	ir3_nir_scan_driver_consts(nir, const_state);
-
-	const_state->num_uniforms = nir->num_uniforms;
 
 	debug_assert((shader->ubo_state.size % 16) == 0);
 	unsigned constoff = align(shader->ubo_state.size / 16, 4);

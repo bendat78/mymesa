@@ -65,16 +65,18 @@
 #define SI_CONTEXT_FLUSH_FOR_RENDER_COND (1 << 2)
 /* Instruction cache. */
 #define SI_CONTEXT_INV_ICACHE		(1 << 3)
-/* SMEM L1, other names: KCACHE, constant cache, DCACHE, data cache */
-#define SI_CONTEXT_INV_SMEM_L1		(1 << 4)
-/* VMEM L1 can optionally be bypassed (GLC=1). Other names: TC L1 */
-#define SI_CONTEXT_INV_VMEM_L1		(1 << 5)
-/* Used by everything except CB/DB, can be bypassed (SLC=1). Other names: TC L2 */
-#define SI_CONTEXT_INV_GLOBAL_L2	(1 << 6)
-/* Write dirty L2 lines back to memory (shader and CP DMA stores), but don't
- * invalidate L2. GFX6-GFX7 can't do it, so they will do complete invalidation. */
-#define SI_CONTEXT_WRITEBACK_GLOBAL_L2	(1 << 7)
-/* Writeback & invalidate the L2 metadata cache. It can only be coupled with
+/* Scalar L1 cache. */
+#define SI_CONTEXT_INV_SCACHE		(1 << 4)
+/* Vector L1 cache. */
+#define SI_CONTEXT_INV_VCACHE		(1 << 5)
+/* L2 cache + L2 metadata cache writeback & invalidate.
+ * GFX6-8: Used by shaders only. GFX9-10: Used by everything. */
+#define SI_CONTEXT_INV_L2		(1 << 6)
+/* L2 writeback (write dirty L2 lines to memory for non-L2 clients).
+ * Only used for coherency with non-L2 clients like CB, DB, CP on GFX6-8.
+ * GFX6-7 will do complete invalidation, because the writeback is unsupported. */
+#define SI_CONTEXT_WB_L2		(1 << 7)
+/* Writeback & invalidate the L2 metadata cache only. It can only be coupled with
  * a CB or DB flush. */
 #define SI_CONTEXT_INV_L2_METADATA	(1 << 8)
 /* Framebuffer caches. */
@@ -768,6 +770,27 @@ union si_vgt_param_key {
 	uint32_t index;
 };
 
+#define SI_NUM_VGT_STAGES_KEY_BITS 2
+#define SI_NUM_VGT_STAGES_STATES (1 << SI_NUM_VGT_STAGES_KEY_BITS)
+
+/* The VGT_SHADER_STAGES key used to index the table of precomputed values.
+ * Some fields are set by state-change calls, most are set by draw_vbo.
+ */
+union si_vgt_stages_key {
+	struct {
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+		unsigned tess:1;
+		unsigned gs:1;
+		unsigned _pad:32 - SI_NUM_VGT_STAGES_KEY_BITS;
+#else /* PIPE_ARCH_BIG_ENDIAN */
+		unsigned _pad:32 - SI_NUM_VGT_STAGES_KEY_BITS;
+		unsigned gs:1;
+		unsigned tess:1;
+#endif
+	} u;
+	uint32_t index;
+};
+
 struct si_texture_handle
 {
 	unsigned			desc_slot;
@@ -922,7 +945,7 @@ struct si_context {
 	struct si_pm4_state		*init_config;
 	struct si_pm4_state		*init_config_gs_rings;
 	bool				init_config_has_vgt_flush;
-	struct si_pm4_state		*vgt_shader_config[4];
+	struct si_pm4_state		*vgt_shader_config[SI_NUM_VGT_STAGES_STATES];
 
 	/* shaders */
 	struct si_shader_ctx_state	ps_shader;
@@ -1626,7 +1649,7 @@ si_make_CB_shader_coherent(struct si_context *sctx, unsigned num_samples,
 			   bool shaders_read_metadata, bool dcc_pipe_aligned)
 {
 	sctx->flags |= SI_CONTEXT_FLUSH_AND_INV_CB |
-		       SI_CONTEXT_INV_VMEM_L1;
+		       SI_CONTEXT_INV_VCACHE;
 
 	if (sctx->chip_class >= GFX9) {
 		/* Single-sample color is coherent with shaders on GFX9, but
@@ -1635,12 +1658,12 @@ si_make_CB_shader_coherent(struct si_context *sctx, unsigned num_samples,
 		 */
 		if (num_samples >= 2 ||
 		    (shaders_read_metadata && !dcc_pipe_aligned))
-			sctx->flags |= SI_CONTEXT_INV_GLOBAL_L2;
+			sctx->flags |= SI_CONTEXT_INV_L2;
 		else if (shaders_read_metadata)
 			sctx->flags |= SI_CONTEXT_INV_L2_METADATA;
 	} else {
 		/* GFX6-GFX8 */
-		sctx->flags |= SI_CONTEXT_INV_GLOBAL_L2;
+		sctx->flags |= SI_CONTEXT_INV_L2;
 	}
 }
 
@@ -1649,7 +1672,7 @@ si_make_DB_shader_coherent(struct si_context *sctx, unsigned num_samples,
 			   bool include_stencil, bool shaders_read_metadata)
 {
 	sctx->flags |= SI_CONTEXT_FLUSH_AND_INV_DB |
-		       SI_CONTEXT_INV_VMEM_L1;
+		       SI_CONTEXT_INV_VCACHE;
 
 	if (sctx->chip_class >= GFX9) {
 		/* Single-sample depth (not stencil) is coherent with shaders
@@ -1657,12 +1680,12 @@ si_make_DB_shader_coherent(struct si_context *sctx, unsigned num_samples,
 		 * metadata.
 		 */
 		if (num_samples >= 2 || include_stencil)
-			sctx->flags |= SI_CONTEXT_INV_GLOBAL_L2;
+			sctx->flags |= SI_CONTEXT_INV_L2;
 		else if (shaders_read_metadata)
 			sctx->flags |= SI_CONTEXT_INV_L2_METADATA;
 	} else {
 		/* GFX6-GFX8 */
-		sctx->flags |= SI_CONTEXT_INV_GLOBAL_L2;
+		sctx->flags |= SI_CONTEXT_INV_L2;
 	}
 }
 

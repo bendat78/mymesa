@@ -2466,7 +2466,7 @@ static void si_initialize_color_surface(struct si_context *sctx,
 		color_attrib |= S_028C74_NUM_SAMPLES(log_samples) |
 				S_028C74_NUM_FRAGMENTS(log_fragments);
 
-		if (tex->surface.fmask_size) {
+		if (tex->fmask_offset) {
 			color_info |= S_028C70_COMPRESSION(1);
 			unsigned fmask_bankh = util_logbase2(tex->surface.u.legacy.fmask.bankh);
 
@@ -2717,7 +2717,7 @@ void si_update_fb_dirtiness_after_rendering(struct si_context *sctx)
 		struct pipe_surface *surf = sctx->framebuffer.state.cbufs[i];
 		struct si_texture *tex = (struct si_texture*)surf->texture;
 
-		if (tex->surface.fmask_size)
+		if (tex->fmask_offset)
 			tex->dirty_level_mask |= 1 << surf->u.tex.level;
 		if (tex->dcc_gather_statistics)
 			tex->separate_dcc_dirty = true;
@@ -2902,7 +2902,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		if (surf->color_is_int10)
 			sctx->framebuffer.color_is_int10 |= 1 << i;
 
-		if (tex->surface.fmask_size)
+		if (tex->fmask_offset)
 			sctx->framebuffer.compressed_cb_mask |= 1 << i;
 		else
 			sctx->framebuffer.uncompressed_cb_mask |= 1 << i;
@@ -3088,7 +3088,7 @@ static void si_emit_framebuffer_state(struct si_context *sctx)
 		if (cb->base.u.tex.level > 0)
 			cb_color_info &= C_028C70_FAST_CLEAR;
 
-		if (tex->surface.fmask_size) {
+		if (tex->fmask_offset) {
 			cb_color_fmask = (tex->buffer.gpu_address + tex->fmask_offset) >> 8;
 			cb_color_fmask |= tex->surface.fmask_tile_swizzle;
 		}
@@ -3119,7 +3119,7 @@ static void si_emit_framebuffer_state(struct si_context *sctx)
 			/* Set mutable surface parameters. */
 			cb_color_base += tex->surface.u.gfx9.surf_offset >> 8;
 			cb_color_base |= tex->surface.tile_swizzle;
-			if (!tex->surface.fmask_size)
+			if (!tex->fmask_offset)
 				cb_color_fmask = cb_color_base;
 			if (cb->base.u.tex.level > 0)
 				cb_color_cmask = cb_color_base;
@@ -3159,7 +3159,7 @@ static void si_emit_framebuffer_state(struct si_context *sctx)
 			if (level_info->mode == RADEON_SURF_MODE_2D)
 				cb_color_base |= tex->surface.tile_swizzle;
 
-			if (!tex->surface.fmask_size)
+			if (!tex->fmask_offset)
 				cb_color_fmask = cb_color_base;
 			if (cb->base.u.tex.level > 0)
 				cb_color_cmask = cb_color_base;
@@ -3175,7 +3175,7 @@ static void si_emit_framebuffer_state(struct si_context *sctx)
 			cb_color_pitch = S_028C64_TILE_MAX(pitch_tile_max);
 			cb_color_slice = S_028C68_TILE_MAX(slice_tile_max);
 
-			if (tex->surface.fmask_size) {
+			if (tex->fmask_offset) {
 				if (sctx->chip_class >= GFX7)
 					cb_color_pitch |= S_028C64_FMASK_TILE_MAX(tex->surface.u.legacy.fmask.pitch_in_pixels / 8 - 1);
 				cb_color_attrib |= S_028C74_FMASK_TILE_MODE_INDEX(tex->surface.u.legacy.fmask.tiling_index);
@@ -3905,7 +3905,7 @@ si_make_texture_descriptor(struct si_screen *screen,
 	}
 
 	/* Initialize the sampler view for FMASK. */
-	if (tex->surface.fmask_size) {
+	if (tex->fmask_offset) {
 		uint32_t data_format, num_format;
 
 		va = tex->buffer.gpu_address + tex->fmask_offset;
@@ -4792,11 +4792,11 @@ static void si_memory_barrier(struct pipe_context *ctx, unsigned flags)
 	/* Subsequent commands must wait for all shader invocations to
 	 * complete. */
 	sctx->flags |= SI_CONTEXT_PS_PARTIAL_FLUSH |
-	                 SI_CONTEXT_CS_PARTIAL_FLUSH;
+		       SI_CONTEXT_CS_PARTIAL_FLUSH;
 
 	if (flags & PIPE_BARRIER_CONSTANT_BUFFER)
-		sctx->flags |= SI_CONTEXT_INV_SMEM_L1 |
-				 SI_CONTEXT_INV_VMEM_L1;
+		sctx->flags |= SI_CONTEXT_INV_SCACHE |
+			       SI_CONTEXT_INV_VCACHE;
 
 	if (flags & (PIPE_BARRIER_VERTEX_BUFFER |
 		     PIPE_BARRIER_SHADER_BUFFER |
@@ -4807,7 +4807,7 @@ static void si_memory_barrier(struct pipe_context *ctx, unsigned flags)
 		/* As far as I can tell, L1 contents are written back to L2
 		 * automatically at end of shader, but the contents of other
 		 * L1 caches might still be stale. */
-		sctx->flags |= SI_CONTEXT_INV_VMEM_L1;
+		sctx->flags |= SI_CONTEXT_INV_VCACHE;
 	}
 
 	if (flags & PIPE_BARRIER_INDEX_BUFFER) {
@@ -4815,7 +4815,7 @@ static void si_memory_barrier(struct pipe_context *ctx, unsigned flags)
 		 * L1 isn't used.
 		 */
 		if (sctx->screen->info.chip_class <= GFX7)
-			sctx->flags |= SI_CONTEXT_WRITEBACK_GLOBAL_L2;
+			sctx->flags |= SI_CONTEXT_WB_L2;
 	}
 
 	/* MSAA color, any depth and any stencil are flushed in
@@ -4826,13 +4826,13 @@ static void si_memory_barrier(struct pipe_context *ctx, unsigned flags)
 		sctx->flags |= SI_CONTEXT_FLUSH_AND_INV_CB;
 
 		if (sctx->chip_class <= GFX8)
-			sctx->flags |= SI_CONTEXT_WRITEBACK_GLOBAL_L2;
+			sctx->flags |= SI_CONTEXT_WB_L2;
 	}
 
 	/* Indirect buffers use TC L2 on GFX9, but not older hw. */
 	if (sctx->screen->info.chip_class <= GFX8 &&
 	    flags & PIPE_BARRIER_INDIRECT_BUFFER)
-		sctx->flags |= SI_CONTEXT_WRITEBACK_GLOBAL_L2;
+		sctx->flags |= SI_CONTEXT_WB_L2;
 }
 
 static void *si_create_blend_custom(struct si_context *sctx, unsigned mode)

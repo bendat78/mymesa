@@ -610,6 +610,29 @@ panfrost_emit_varying_descriptor(
         for (unsigned i = 0; i < fs->tripipe->varying_count; i++) {
                 unsigned j;
 
+                /* If we have a point sprite replacement, handle that here. We
+                 * have to translate location first.  TODO: Flip y in shader.
+                 * We're already keying ... just time crunch .. */
+
+                unsigned loc = fs->varyings_loc[i];
+                unsigned pnt_loc =
+                        (loc >= VARYING_SLOT_VAR0) ? (loc - VARYING_SLOT_VAR0) :
+                        (loc == VARYING_SLOT_PNTC) ? 8 :
+                        ~0;
+
+                if (~pnt_loc && fs->point_sprite_mask & (1 << pnt_loc)) {
+                        /* gl_PointCoord index by convention */
+                        fs->varyings[i].index = 3;
+                        fs->reads_point_coord = true;
+
+                        /* Swizzle out the z/w to 0/1 */
+                        fs->varyings[i].format = MALI_RG16F;
+                        fs->varyings[i].swizzle =
+                                panfrost_get_default_swizzle(2);
+
+                        continue;
+                }
+
                 if (fs->varyings[i].index)
                         continue;
 
@@ -964,6 +987,69 @@ static void panfrost_upload_sysvals(struct panfrost_context *ctx, void *buf,
         }
 }
 
+static const void *
+panfrost_map_constant_buffer_cpu(struct panfrost_constant_buffer *buf, unsigned index)
+{
+        struct pipe_constant_buffer *cb = &buf->cb[index];
+        struct panfrost_resource *rsrc = pan_resource(cb->buffer);
+
+        if (rsrc)
+                return rsrc->bo->cpu;
+        else if (cb->user_buffer)
+                return cb->user_buffer;
+        else
+                unreachable("No constant buffer");
+}
+
+static mali_ptr
+panfrost_map_constant_buffer_gpu(
+                struct panfrost_context *ctx,
+                struct panfrost_constant_buffer *buf,
+                unsigned index)
+{
+        struct pipe_constant_buffer *cb = &buf->cb[index];
+        struct panfrost_resource *rsrc = pan_resource(cb->buffer);
+
+        if (rsrc)
+                return rsrc->bo->gpu;
+        else if (cb->user_buffer)
+                return panfrost_upload_transient(ctx, cb->user_buffer, cb->buffer_size);
+        else
+                unreachable("No constant buffer");
+}
+
+/* Compute number of UBOs active (more specifically, compute the highest UBO
+ * number addressable -- if there are gaps, include them in the count anyway).
+ * We always include UBO #0 in the count, since we *need* uniforms enabled for
+ * sysvals. */
+
+static unsigned
+panfrost_ubo_count(struct panfrost_context *ctx, enum pipe_shader_type stage)
+{
+        unsigned mask = ctx->constant_buffer[stage].enabled_mask | 1;
+        return 32 - __builtin_clz(mask);
+}
+
+/* Fixes up a shader state with current state, returning a GPU address to the
+ * patched shader */
+
+static mali_ptr
+panfrost_patch_shader_state(
+                struct panfrost_context *ctx,
+                struct panfrost_shader_state *ss,
+                enum pipe_shader_type stage)
+{
+        ss->tripipe->texture_count = ctx->sampler_view_count[stage];
+        ss->tripipe->sampler_count = ctx->sampler_count[stage];
+
+        ss->tripipe->midgard1.flags = 0x220;
+
+        unsigned ubo_count = panfrost_ubo_count(ctx, stage);
+        ss->tripipe->midgard1.uniform_buffer_count = ubo_count;
+
+        return ss->tripipe_gpu;
+}
+
 /* Go through dirty flags and actualise them in the cmdstream. */
 
 void
@@ -997,15 +1083,8 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
 
                 struct panfrost_shader_state *vs = &ctx->vs->variants[ctx->vs->active_variant];
 
-                /* Late shader descriptor assignments */
-
-                vs->tripipe->texture_count = ctx->sampler_view_count[PIPE_SHADER_VERTEX];
-                vs->tripipe->sampler_count = ctx->sampler_count[PIPE_SHADER_VERTEX];
-
-                /* Who knows */
-                vs->tripipe->midgard1.unknown1 = 0x2201;
-
-                ctx->payload_vertex.postfix._shader_upper = vs->tripipe_gpu >> 4;
+                ctx->payload_vertex.postfix._shader_upper =
+                        panfrost_patch_shader_state(ctx, vs, PIPE_SHADER_VERTEX) >> 4;
         }
 
         if (ctx->dirty & (PAN_DIRTY_RASTERIZER | PAN_DIRTY_VS)) {
@@ -1027,13 +1106,20 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 assert(ctx->fs);
                 struct panfrost_shader_state *variant = &ctx->fs->variants[ctx->fs->active_variant];
 
+                panfrost_patch_shader_state(ctx, variant, PIPE_SHADER_FRAGMENT);
+
 #define COPY(name) ctx->fragment_shader_core.name = variant->tripipe->name
 
                 COPY(shader);
                 COPY(attribute_count);
                 COPY(varying_count);
+                COPY(texture_count);
+                COPY(sampler_count);
+                COPY(sampler_count);
                 COPY(midgard1.uniform_count);
+                COPY(midgard1.uniform_buffer_count);
                 COPY(midgard1.work_count);
+                COPY(midgard1.flags);
                 COPY(midgard1.unknown2);
 
 #undef COPY
@@ -1043,8 +1129,13 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                         ctx->fragment_shader_core.midgard1.work_count = /*MAX2(ctx->fragment_shader_core.midgard1.work_count, ctx->blend->blend_work_count)*/16;
 
                 /* Set late due to depending on render state */
-                /* The one at the end seems to mean "1 UBO" */
-                unsigned flags = MALI_EARLY_Z | 0x200 | 0x2000 | 0x1;
+                unsigned flags = ctx->fragment_shader_core.midgard1.flags;
+
+                /* Depending on whether it's legal to in the given shader, we
+                 * try to enable early-z testing (or forward-pixel kill?) */
+
+                if (!variant->can_discard)
+                        flags |= MALI_EARLY_Z;
 
                 /* Any time texturing is used, derivatives are implicitly
                  * calculated, so we need to enable helper invocations */
@@ -1052,11 +1143,7 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 if (ctx->sampler_view_count[PIPE_SHADER_FRAGMENT])
                         flags |= MALI_HELPER_INVOCATIONS;
 
-                ctx->fragment_shader_core.midgard1.unknown1 = flags;
-
-                /* Assign texture/sample count right before upload */
-                ctx->fragment_shader_core.texture_count = ctx->sampler_view_count[PIPE_SHADER_FRAGMENT];
-                ctx->fragment_shader_core.sampler_count = ctx->sampler_count[PIPE_SHADER_FRAGMENT];
+                ctx->fragment_shader_core.midgard1.flags = flags;
 
                 /* Assign the stencil refs late */
                 ctx->fragment_shader_core.stencil_front.ref = ctx->stencil_ref.ref_value[0];
@@ -1071,9 +1158,7 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
 
                 if (variant->can_discard) {
                         ctx->fragment_shader_core.unknown2_3 |= MALI_CAN_DISCARD;
-                        ctx->fragment_shader_core.midgard1.unknown1 &= ~MALI_EARLY_Z;
-                        ctx->fragment_shader_core.midgard1.unknown1 |= 0x4000;
-                        ctx->fragment_shader_core.midgard1.unknown1 = 0x4200;
+                        ctx->fragment_shader_core.midgard1.flags |= 0x400;
                 }
 
 		/* Check if we're using the default blend descriptor (fast path) */
@@ -1190,16 +1275,23 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 struct panfrost_shader_state *fs = &ctx->fs->variants[ctx->fs->active_variant];
                 struct panfrost_shader_state *ss = (i == PIPE_SHADER_FRAGMENT) ? fs : vs;
 
+                /* Uniforms are implicitly UBO #0 */
+                bool has_uniforms = buf->enabled_mask & (1 << 0);
+
                 /* Allocate room for the sysval and the uniforms */
                 size_t sys_size = sizeof(float) * 4 * ss->sysval_count;
-                size_t size = sys_size + buf->size;
+                size_t uniform_size = has_uniforms ? (buf->cb[0].buffer_size) : 0;
+                size_t size = sys_size + uniform_size;
                 struct panfrost_transfer transfer = panfrost_allocate_transient(ctx, size);
 
                 /* Upload sysvals requested by the shader */
                 panfrost_upload_sysvals(ctx, transfer.cpu, ss, i);
 
                 /* Upload uniforms */
-                memcpy(transfer.cpu + sys_size, buf->buffer, buf->size);
+                if (has_uniforms) {
+                        const void *cpu = panfrost_map_constant_buffer_cpu(buf, 0);
+                        memcpy(transfer.cpu + sys_size, cpu, uniform_size);
+                }
 
                 int uniform_count = 0;
 
@@ -1220,20 +1312,50 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                         unreachable("Invalid shader stage\n");
                 }
 
-                /* Also attach the same buffer as a UBO for extended access */
+                /* Next up, attach UBOs. UBO #0 is the uniforms we just
+                 * uploaded */
 
-                struct mali_uniform_buffer_meta uniform_buffers[] = {
-                        {
-                                .size = MALI_POSITIVE((2 + uniform_count)),
-                                .ptr = transfer.gpu >> 2,
-                        },
-                };
+                unsigned ubo_count = panfrost_ubo_count(ctx, i);
+                assert(ubo_count >= 1);
 
-                mali_ptr ubufs = panfrost_upload_transient(ctx, uniform_buffers, sizeof(uniform_buffers));
+                size_t sz = sizeof(struct mali_uniform_buffer_meta) * ubo_count;
+                struct mali_uniform_buffer_meta *ubos = calloc(sz, 1);
+
+                /* Upload uniforms as a UBO */
+                ubos[0].size = MALI_POSITIVE((2 + uniform_count));
+                ubos[0].ptr = transfer.gpu >> 2;
+
+                /* The rest are honest-to-goodness UBOs */
+
+                for (unsigned ubo = 1; ubo < ubo_count; ++ubo) {
+                        size_t sz = buf->cb[ubo].buffer_size;
+
+                        bool enabled = buf->enabled_mask & (1 << ubo);
+                        bool empty = sz == 0;
+
+                        if (!enabled || empty) {
+                                /* Stub out disabled UBOs to catch accesses */
+
+                                ubos[ubo].size = 0;
+                                ubos[ubo].ptr = 0xDEAD0000;
+                                continue;
+                        }
+
+                        mali_ptr gpu = panfrost_map_constant_buffer_gpu(ctx, buf, ubo);
+
+                        unsigned bytes_per_field = 16;
+                        unsigned aligned = ALIGN(sz, bytes_per_field);
+                        unsigned fields = aligned / bytes_per_field;
+
+                        ubos[ubo].size = MALI_POSITIVE(fields);
+                        ubos[ubo].ptr = gpu >> 2;
+                }
+
+                mali_ptr ubufs = panfrost_upload_transient(ctx, ubos, sz);
                 postfix->uniforms = transfer.gpu;
                 postfix->uniform_buffers = ubufs;
 
-                buf->dirty = 0;
+                buf->dirty_mask = 0;
         }
 
         /* TODO: Upload the viewport somewhere more appropriate */
@@ -1665,6 +1787,14 @@ panfrost_bind_rasterizer_state(
 
         ctx->rasterizer = hwcso;
         ctx->dirty |= PAN_DIRTY_RASTERIZER;
+
+        /* Point sprites are emulated */
+
+        struct panfrost_shader_state *variant =
+                ctx->fs ? &ctx->fs->variants[ctx->fs->active_variant] : NULL;
+
+        if (ctx->rasterizer->base.sprite_coord_enable || (variant && variant->point_sprite_mask))
+                ctx->base.bind_fs_state(&ctx->base, ctx->fs);
 }
 
 static void *
@@ -1805,6 +1935,7 @@ panfrost_variant_matches(
                 struct panfrost_shader_state *variant,
                 enum pipe_shader_type type)
 {
+        struct pipe_rasterizer_state *rasterizer = &ctx->rasterizer->base;
         struct pipe_alpha_state *alpha = &ctx->depth_stencil->alpha;
 
         bool is_fragment = (type == PIPE_SHADER_FRAGMENT);
@@ -1823,6 +1954,22 @@ panfrost_variant_matches(
                         return false;
                 }
         }
+
+        if (is_fragment && rasterizer && (rasterizer->sprite_coord_enable |
+                                variant->point_sprite_mask)) {
+                /* Ensure the same varyings are turned to point sprites */
+                if (rasterizer->sprite_coord_enable != variant->point_sprite_mask)
+                        return false;
+
+                /* Ensure the orientation is correct */
+                bool upper_left =
+                        rasterizer->sprite_coord_mode ==
+                        PIPE_SPRITE_COORD_UPPER_LEFT;
+
+                if (variant->point_sprite_upper_left != upper_left)
+                        return false;
+        }
+
         /* Otherwise, we're good to go */
         return true;
 }
@@ -1863,10 +2010,21 @@ panfrost_bind_shader_state(
                 variant = variants->variant_count++;
                 assert(variants->variant_count < MAX_SHADER_VARIANTS);
 
-                variants->variants[variant].base = hwcso;
+                struct panfrost_shader_state *v =
+                        &variants->variants[variant];
 
-                if (type == PIPE_SHADER_FRAGMENT)
-                        variants->variants[variant].alpha_state = ctx->depth_stencil->alpha;
+                v->base = hwcso;
+
+                if (type == PIPE_SHADER_FRAGMENT) {
+                        v->alpha_state = ctx->depth_stencil->alpha;
+
+                        if (ctx->rasterizer) {
+                                v->point_sprite_mask = ctx->rasterizer->base.sprite_coord_enable;
+                                v->point_sprite_upper_left =
+                                        ctx->rasterizer->base.sprite_coord_mode ==
+                                        PIPE_SPRITE_COORD_UPPER_LEFT;
+                        }
+                }
 
                 /* Allocate the mapped descriptor ahead-of-time. */
                 struct panfrost_context *ctx = pan_context(pctx);
@@ -1926,43 +2084,18 @@ panfrost_set_constant_buffer(
         struct panfrost_context *ctx = pan_context(pctx);
         struct panfrost_constant_buffer *pbuf = &ctx->constant_buffer[shader];
 
-        size_t sz = buf ? buf->buffer_size : 0;
+        util_copy_constant_buffer(&pbuf->cb[index], buf);
 
-        /* Free previous buffer */
+        unsigned mask = (1 << index);
 
-        pbuf->dirty = true;
-        pbuf->size = sz;
-
-        if (pbuf->buffer) {
-                ralloc_free(pbuf->buffer);
-                pbuf->buffer = NULL;
-        }
-
-        /* If unbinding, we're done */
-
-        if (!buf)
-                return;
-
-        /* Multiple constant buffers not yet supported */
-        assert(index == 0);
-
-        const uint8_t *cpu;
-
-        struct panfrost_resource *rsrc = (struct panfrost_resource *) (buf->buffer);
-
-        if (rsrc) {
-                cpu = rsrc->bo->cpu;
-        } else if (buf->user_buffer) {
-                cpu = buf->user_buffer;
-        } else {
-                DBG("No constant buffer?\n");
+        if (unlikely(!buf)) {
+                pbuf->enabled_mask &= ~mask;
+                pbuf->dirty_mask &= ~mask;
                 return;
         }
 
-        /* Copy the constant buffer into the driver context for later upload */
-
-        pbuf->buffer = rzalloc_size(ctx, sz);
-        memcpy(pbuf->buffer, cpu + buf->buffer_offset, sz);
+        pbuf->enabled_mask |= mask;
+        pbuf->dirty_mask |= mask;
 }
 
 static void
