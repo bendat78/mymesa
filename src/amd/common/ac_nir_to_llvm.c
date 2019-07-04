@@ -1303,14 +1303,14 @@ static LLVMValueRef build_tex_intrinsic(struct ac_nir_context *ctx,
 			                                             args->coords[0],
 			                                             ctx->ac.i32_0,
 			                                             util_last_bit(mask),
-			                                             false, true);
+			                                             0, true);
 		} else {
 			return ac_build_buffer_load_format(&ctx->ac,
 			                                   args->resource,
 			                                   args->coords[0],
 			                                   ctx->ac.i32_0,
 			                                   util_last_bit(mask),
-			                                   false, true);
+			                                   0, true);
 		}
 	}
 
@@ -1595,11 +1595,11 @@ static void visit_store_ssbo(struct ac_nir_context *ctx,
 		if (num_bytes == 1) {
 			ac_build_tbuffer_store_byte(&ctx->ac, rsrc, data,
 						    offset, ctx->ac.i32_0,
-						    cache_policy & ac_glc);
+						    cache_policy);
 		} else if (num_bytes == 2) {
 			ac_build_tbuffer_store_short(&ctx->ac, rsrc, data,
 						     offset, ctx->ac.i32_0,
-						     cache_policy & ac_glc);
+						     cache_policy);
 		} else {
 			int num_channels = num_bytes / 4;
 
@@ -1624,8 +1624,7 @@ static void visit_store_ssbo(struct ac_nir_context *ctx,
 			ac_build_buffer_store_dword(&ctx->ac, rsrc, data,
 						    num_channels, offset,
 						    ctx->ac.i32_0, 0,
-						    cache_policy & ac_glc,
-						    false, false);
+						    cache_policy, false);
 		}
 	}
 }
@@ -1742,22 +1741,21 @@ static LLVMValueRef visit_load_buffer(struct ac_nir_context *ctx,
 							  offset,
 							  ctx->ac.i32_0,
 							  immoffset,
-							  cache_policy & ac_glc);
+							  cache_policy);
 		} else if (load_bytes == 2) {
 			ret = ac_build_tbuffer_load_short(&ctx->ac,
 							 rsrc,
 							 offset,
 							 ctx->ac.i32_0,
 							 immoffset,
-							 cache_policy & ac_glc);
+							 cache_policy);
 		} else {
 			int num_channels = util_next_power_of_two(load_bytes) / 4;
 			bool can_speculate = access & ACCESS_CAN_REORDER;
 
 			ret = ac_build_buffer_load(&ctx->ac, rsrc, num_channels,
 						   vindex, offset, immoffset, 0,
-						   cache_policy & ac_glc, 0,
-						   can_speculate, false);
+						   cache_policy, can_speculate, false);
 		}
 
 		LLVMTypeRef byte_vec = LLVMVectorType(ctx->ac.i8, ac_get_type_size(LLVMTypeOf(ret)));
@@ -1803,7 +1801,7 @@ static LLVMValueRef visit_load_ubo_buffer(struct ac_nir_context *ctx,
 									offset,
 									ctx->ac.i32_0,
 									immoffset,
-									false);
+									0);
 			} else {
 				assert(load_bytes == 2);
 				results[i] = ac_build_tbuffer_load_short(&ctx->ac,
@@ -1811,13 +1809,13 @@ static LLVMValueRef visit_load_ubo_buffer(struct ac_nir_context *ctx,
 									 offset,
 									 ctx->ac.i32_0,
 									 immoffset,
-									 false);
+									 0);
 			}
 		}
 		ret = ac_build_gather_values(&ctx->ac, results, num_components);
 	} else {
 		ret = ac_build_buffer_load(&ctx->ac, rsrc, num_components, NULL, offset,
-					   NULL, 0, false, false, true, true);
+					   NULL, 0, 0, true, true);
 
 		ret = ac_trim_vector(&ctx->ac, ret, num_components);
 	}
@@ -2466,7 +2464,7 @@ static LLVMValueRef visit_image_load(struct ac_nir_context *ctx,
 		bool can_speculate = access & ACCESS_CAN_REORDER;
 		res = ac_build_buffer_load_format(&ctx->ac, rsrc, vindex,
 						  ctx->ac.i32_0, num_channels,
-						  !!(args.cache_policy & ac_glc),
+						  args.cache_policy,
 						  can_speculate);
 		res = ac_build_expand_to_vec4(&ctx->ac, res, num_channels);
 
@@ -2527,7 +2525,7 @@ static void visit_image_store(struct ac_nir_context *ctx,
 
 		ac_build_buffer_store_format(&ctx->ac, rsrc, src, vindex,
 					     ctx->ac.i32_0, src_channels,
-					     args.cache_policy & ac_glc, false);
+					     args.cache_policy);
 	} else {
 		args.opcode = ac_image_store;
 		args.data[0] = ac_to_float(&ctx->ac, get_src(ctx, instr->src[3]));
@@ -2739,26 +2737,26 @@ static LLVMValueRef visit_image_size(struct ac_nir_context *ctx,
 static void emit_membar(struct ac_llvm_context *ac,
 			const nir_intrinsic_instr *instr)
 {
-	unsigned waitcnt = NOOP_WAITCNT;
+	unsigned wait_flags = 0;
 
 	switch (instr->intrinsic) {
 	case nir_intrinsic_memory_barrier:
 	case nir_intrinsic_group_memory_barrier:
-		waitcnt &= VM_CNT & LGKM_CNT;
+		wait_flags = AC_WAIT_LGKM | AC_WAIT_VLOAD | AC_WAIT_VSTORE;
 		break;
 	case nir_intrinsic_memory_barrier_atomic_counter:
 	case nir_intrinsic_memory_barrier_buffer:
 	case nir_intrinsic_memory_barrier_image:
-		waitcnt &= VM_CNT;
+		wait_flags = AC_WAIT_VLOAD | AC_WAIT_VSTORE;
 		break;
 	case nir_intrinsic_memory_barrier_shared:
-		waitcnt &= LGKM_CNT;
+		wait_flags = AC_WAIT_LGKM;
 		break;
 	default:
 		break;
 	}
-	if (waitcnt != NOOP_WAITCNT)
-		ac_build_waitcnt(ac, waitcnt);
+
+	ac_build_waitcnt(ac, wait_flags);
 }
 
 void ac_emit_barrier(struct ac_llvm_context *ac, gl_shader_stage stage)
@@ -2768,7 +2766,7 @@ void ac_emit_barrier(struct ac_llvm_context *ac, gl_shader_stage stage)
 	 * always fits into a single wave.
 	 */
 	if (ac->chip_class == GFX6 && stage == MESA_SHADER_TESS_CTRL) {
-		ac_build_waitcnt(ac, LGKM_CNT & VM_CNT);
+		ac_build_waitcnt(ac, AC_WAIT_LGKM | AC_WAIT_VLOAD | AC_WAIT_VSTORE);
 		return;
 	}
 	ac_build_s_barrier(ac);
@@ -3475,7 +3473,7 @@ static LLVMValueRef get_bindless_index_from_uniform(struct ac_nir_context *ctx,
 	LLVMValueRef ubo_index = ctx->abi->load_ubo(ctx->abi, ctx->ac.i32_0);
 
 	LLVMValueRef ret = ac_build_buffer_load(&ctx->ac, ubo_index, 1, NULL, offset,
-						NULL, 0, false, false, true, true);
+						NULL, 0, 0, true, true);
 
 	return LLVMBuildBitCast(ctx->ac.builder, ret, ctx->ac.i32, "");
 }

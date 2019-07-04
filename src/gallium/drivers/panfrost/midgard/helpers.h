@@ -151,6 +151,38 @@ quadword_size(int tag)
 #define COMPONENT_Z 0x2
 #define COMPONENT_W 0x3
 
+#define SWIZZLE_XXXX SWIZZLE(COMPONENT_X, COMPONENT_X, COMPONENT_X, COMPONENT_X)
+#define SWIZZLE_XYXX SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_X, COMPONENT_X)
+#define SWIZZLE_XYZX SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_X)
+#define SWIZZLE_XYZW SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_W)
+#define SWIZZLE_XYXZ SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_X, COMPONENT_Z)
+#define SWIZZLE_XYZZ SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_Z)
+#define SWIZZLE_WWWW SWIZZLE(COMPONENT_W, COMPONENT_W, COMPONENT_W, COMPONENT_W)
+
+static inline unsigned
+swizzle_of(unsigned comp)
+{
+        switch (comp) {
+                case 1:
+                        return SWIZZLE_XXXX;
+                case 2:
+                        return SWIZZLE_XYXX;
+                case 3:
+                        return SWIZZLE_XYZX;
+                case 4:
+                        return SWIZZLE_XYZW;
+                default:
+                        unreachable("Invalid component count");
+        }
+}
+
+static inline unsigned
+mask_of(unsigned nr_comp)
+{
+        return (1 << nr_comp) - 1;
+}
+
+
 /* See ISA notes */
 
 #define LDST_NOP (3)
@@ -231,6 +263,35 @@ vector_alu_from_unsigned(unsigned u)
         midgard_vector_alu_src s;
         memcpy(&s, &u, sizeof(s));
         return s;
+}
+
+/* Composes two swizzles */
+static inline unsigned
+pan_compose_swizzle(unsigned left, unsigned right)
+{
+        unsigned out = 0;
+
+        for (unsigned c = 0; c < 4; ++c) {
+                unsigned s = (left >> (2*c)) & 0x3;
+                unsigned q = (right >> (2*s)) & 0x3;
+
+                out |= (q << (2*c));
+        }
+
+        return out;
+}
+
+/* Applies a swizzle to an ALU source */
+
+static inline unsigned
+vector_alu_apply_swizzle(unsigned src, unsigned swizzle)
+{
+        midgard_vector_alu_src s =
+                vector_alu_from_unsigned(src);
+
+        s.swizzle = pan_compose_swizzle(s.swizzle, swizzle);
+
+        return vector_alu_srco_unsigned(s);
 }
 
 #endif

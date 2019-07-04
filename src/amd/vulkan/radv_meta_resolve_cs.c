@@ -917,11 +917,12 @@ radv_cmd_buffer_resolve_subpass_cs(struct radv_cmd_buffer *cmd_buffer)
 	for (uint32_t i = 0; i < subpass->color_count; ++i) {
 		struct radv_subpass_attachment src_att = subpass->color_attachments[i];
 		struct radv_subpass_attachment dst_att = subpass->resolve_attachments[i];
-		struct radv_image_view *src_iview = fb->attachments[src_att.attachment].attachment;
-		struct radv_image_view *dst_iview = fb->attachments[dst_att.attachment].attachment;
 
 		if (dst_att.attachment == VK_ATTACHMENT_UNUSED)
 			continue;
+
+		struct radv_image_view *src_iview = fb->attachments[src_att.attachment].attachment;
+		struct radv_image_view *dst_iview = fb->attachments[dst_att.attachment].attachment;
 
 		VkImageResolve region = {
 			.extent = (VkExtent3D){ fb->width, fb->height, 0 },
@@ -952,7 +953,7 @@ radv_cmd_buffer_resolve_subpass_cs(struct radv_cmd_buffer *cmd_buffer)
 	}
 
 	cmd_buffer->state.flush_bits |= RADV_CMD_FLAG_CS_PARTIAL_FLUSH |
-	                                RADV_CMD_FLAG_INV_VMEM_L1;
+	                                RADV_CMD_FLAG_INV_VCACHE;
 }
 
 void
@@ -1037,7 +1038,7 @@ radv_depth_stencil_resolve_subpass_cs(struct radv_cmd_buffer *cmd_buffer,
 	}
 
 	cmd_buffer->state.flush_bits |= RADV_CMD_FLAG_CS_PARTIAL_FLUSH |
-	                                RADV_CMD_FLAG_INV_VMEM_L1;
+	                                RADV_CMD_FLAG_INV_VCACHE;
 
 	if (radv_image_has_htile(dst_image)) {
 		if (aspects == VK_IMAGE_ASPECT_DEPTH_BIT) {

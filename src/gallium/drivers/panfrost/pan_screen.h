@@ -1,7 +1,7 @@
 /**************************************************************************
  *
  * Copyright 2018-2019 Alyssa Rosenzweig
- * Copyright 2018-2019 Collabora
+ * Copyright 2018-2019 Collabora, Ltd.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -83,22 +83,17 @@ void
 panfrost_drm_free_slab(struct panfrost_screen *screen,
                        struct panfrost_memory *mem);
 struct panfrost_bo *
-panfrost_drm_import_bo(struct panfrost_screen *screen,
-                       struct winsys_handle *whandle);
-int
-panfrost_drm_export_bo(struct panfrost_screen *screen, int gem_handle,
-                       unsigned int stride, struct winsys_handle *whandle);
+panfrost_drm_create_bo(struct panfrost_screen *screen, size_t size,
+                       uint32_t flags);
 void
-panfrost_drm_free_imported_bo(struct panfrost_screen *screen,
-                              struct panfrost_bo *bo);
+panfrost_drm_release_bo(struct panfrost_screen *screen, struct panfrost_bo *bo);
+struct panfrost_bo *
+panfrost_drm_import_bo(struct panfrost_screen *screen, int fd);
 int
-panfrost_drm_submit_job(struct panfrost_context *ctx, u64 job_desc, int reqs,
-                        struct pipe_surface *surf);
+panfrost_drm_export_bo(struct panfrost_screen *screen, const struct panfrost_bo *bo);
 int
 panfrost_drm_submit_vs_fs_job(struct panfrost_context *ctx, bool has_draws,
                               bool is_scanout);
-struct panfrost_fence *
-panfrost_fence_create(struct panfrost_context *ctx);
 void
 panfrost_drm_force_flush_fragment(struct panfrost_context *ctx,
                                   struct pipe_fence_handle **fence);

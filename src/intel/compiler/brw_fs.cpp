@@ -3858,47 +3858,6 @@ fs_visitor::lower_load_payload()
 }
 
 bool
-fs_visitor::lower_linterp()
-{
-   bool progress = false;
-
-   if (devinfo->gen < 11)
-      return false;
-
-   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
-      const fs_builder ibld(this, block, inst);
-
-      if (inst->opcode != FS_OPCODE_LINTERP)
-         continue;
-
-      fs_reg dwP = component(inst->src[1], 0);
-      fs_reg dwQ = component(inst->src[1], 1);
-      fs_reg dwR = component(inst->src[1], 3);
-      for (unsigned i = 0; i < DIV_ROUND_UP(dispatch_width, 8); i++) {
-         const fs_builder hbld(ibld.half(i));
-         fs_reg dst = half(inst->dst, i);
-         fs_reg delta_xy = offset(inst->src[0], ibld, i);
-         hbld.MAD(dst, dwR, half(delta_xy, 0), dwP);
-         fs_inst *mad = hbld.MAD(dst, dst, half(delta_xy, 1), dwQ);
-
-         /* Propagate conditional mod and saturate from the original
-          * instruction to the second MAD instruction.
-          */
-         set_saturate(inst->saturate, mad);
-         set_condmod(inst->conditional_mod, mad);
-      }
-
-      inst->remove(block);
-      progress = true;
-   }
-
-   if (progress)
-      invalidate_live_intervals();
-
-   return progress;
-}
-
-bool
 fs_visitor::lower_integer_multiplication()
 {
    bool progress = false;
@@ -7095,11 +7054,6 @@ fs_visitor::optimize()
       OPT(compact_virtual_grfs);
    } while (progress);
 
-   if (OPT(lower_linterp)) {
-      OPT(opt_copy_propagation);
-      OPT(dead_code_eliminate);
-   }
-
    /* Do this after cmod propagation has had every possible opportunity to
     * propagate results into SEL instructions.
     */
@@ -7743,6 +7697,27 @@ fs_visitor::run_cs(unsigned min_dispatch_width)
    return !failed;
 }
 
+static bool
+is_used_in_not_interp_frag_coord(nir_ssa_def *def)
+{
+   nir_foreach_use(src, def) {
+      if (src->parent_instr->type != nir_instr_type_intrinsic)
+         return true;
+
+      nir_intrinsic_instr *intrin = nir_instr_as_intrinsic(src->parent_instr);
+      if (intrin->intrinsic != nir_intrinsic_load_interpolated_input)
+         return true;
+
+      if (nir_intrinsic_base(intrin) != VARYING_SLOT_POS)
+         return true;
+   }
+
+   nir_foreach_if_use(src, def)
+      return true;
+
+   return false;
+}
+
 /**
  * Return a bitfield where bit n is set if barycentric interpolation mode n
  * (see enum brw_barycentric_mode) is needed by the fragment shader.
@@ -7767,14 +7742,20 @@ brw_compute_barycentric_interp_modes(const struct gen_device_info *devinfo,
                continue;
 
             nir_intrinsic_instr *intrin = nir_instr_as_intrinsic(instr);
-            if (intrin->intrinsic != nir_intrinsic_load_interpolated_input)
+            switch (intrin->intrinsic) {
+            case nir_intrinsic_load_barycentric_pixel:
+            case nir_intrinsic_load_barycentric_centroid:
+            case nir_intrinsic_load_barycentric_sample:
+               break;
+            default:
                continue;
+            }
 
             /* Ignore WPOS; it doesn't require interpolation. */
-            if (nir_intrinsic_base(intrin) == VARYING_SLOT_POS)
+            assert(intrin->dest.is_ssa);
+            if (!is_used_in_not_interp_frag_coord(&intrin->dest.ssa))
                continue;
 
-            intrin = nir_instr_as_intrinsic(intrin->src[0].ssa->parent_instr);
             enum glsl_interp_mode interp = (enum glsl_interp_mode)
                nir_intrinsic_interp_mode(intrin);
             nir_intrinsic_op bary_op = intrin->intrinsic;

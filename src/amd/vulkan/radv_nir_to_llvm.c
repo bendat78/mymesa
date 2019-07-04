@@ -1585,13 +1585,13 @@ store_tcs_output(struct ac_shader_abi *abi,
 		if (!is_tess_factor && writemask != 0xF)
 			ac_build_buffer_store_dword(&ctx->ac, ctx->hs_ring_tess_offchip, value, 1,
 						    buf_addr, ctx->oc_lds,
-						    4 * (base + chan), 1, 0, false);
+						    4 * (base + chan), ac_glc, false);
 	}
 
 	if (writemask == 0xF) {
 		ac_build_buffer_store_dword(&ctx->ac, ctx->hs_ring_tess_offchip, src, 4,
 					    buf_addr, ctx->oc_lds,
-					    (base * 4), 1, 0, false);
+					    (base * 4), ac_glc, false);
 	}
 }
 
@@ -1630,7 +1630,7 @@ load_tes_input(struct ac_shader_abi *abi,
 	buf_addr = LLVMBuildAdd(ctx->ac.builder, buf_addr, comp_offset, "");
 
 	result = ac_build_buffer_load(&ctx->ac, ctx->hs_ring_tess_offchip, num_components, NULL,
-				      buf_addr, ctx->oc_lds, is_compact ? (4 * const_index) : 0, 1, 0, true, false);
+				      buf_addr, ctx->oc_lds, is_compact ? (4 * const_index) : 0, ac_glc, true, false);
 	result = ac_trim_vector(&ctx->ac, result, num_components);
 	return result;
 }
@@ -1673,7 +1673,7 @@ load_gs_input(struct ac_shader_abi *abi,
 							ctx->esgs_ring, 1,
 							ctx->ac.i32_0,
 							vtx_offset, soffset,
-							0, 1, 0, true, false);
+							0, ac_glc, true, false);
 		}
 
 		if (ac_get_type_size(type) == 2) {
@@ -1858,7 +1858,7 @@ visit_emit_vertex(struct ac_shader_abi *abi, unsigned stream, LLVMValueRef *addr
 						    ctx->gsvs_ring[stream],
 						    out_val, 1,
 						    voffset, ctx->gs2vs_offset, 0,
-						    1, 1, true);
+						    ac_glc | ac_slc, true);
 		}
 	}
 
@@ -2191,14 +2191,6 @@ handle_vs_input_decl(struct radv_shader_context *ctx,
 					buffer_index = LLVMBuildUDiv(ctx->ac.builder, buffer_index,
 					                             LLVMConstInt(ctx->ac.i32, divisor, 0), "");
 				}
-
-				if (ctx->options->key.vs.as_ls) {
-					ctx->shader_info->vs.vgpr_comp_cnt =
-						MAX2(2, ctx->shader_info->vs.vgpr_comp_cnt);
-				} else {
-					ctx->shader_info->vs.vgpr_comp_cnt =
-						MAX2(1, ctx->shader_info->vs.vgpr_comp_cnt);
-				}
 			} else {
 				buffer_index = ctx->ac.i32_0;
 			}
@@ -2244,8 +2236,7 @@ handle_vs_input_decl(struct radv_shader_context *ctx,
 						     LLVMConstInt(ctx->ac.i32, attrib_offset, false),
 						     ctx->ac.i32_0, ctx->ac.i32_0,
 						     num_channels,
-						     data_format, num_format,
-						     false, false, true);
+						     data_format, num_format, 0, true);
 
 		if (ctx->options->key.vs.post_shuffle & (1 << attrib_index)) {
 			LLVMValueRef c[4];
@@ -2773,7 +2764,7 @@ radv_emit_stream_output(struct radv_shader_context *ctx,
 	ac_build_buffer_store_dword(&ctx->ac, so_buffers[buf],
 				    vdata, num_comps, so_write_offsets[buf],
 				    ctx->ac.i32_0, offset,
-				    1, 1, false);
+				    ac_glc | ac_slc, false);
 }
 
 static void
@@ -2861,6 +2852,7 @@ radv_emit_streamout(struct radv_shader_context *ctx, unsigned stream)
 static void
 handle_vs_outputs_post(struct radv_shader_context *ctx,
 		       bool export_prim_id, bool export_layer_id,
+		       bool export_clip_dists,
 		       struct radv_vs_output_info *outinfo)
 {
 	uint32_t param_count = 0;
@@ -2917,9 +2909,11 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 			memcpy(&pos_args[target - V_008DFC_SQ_EXP_POS],
 			&args, sizeof(args));
 
-			/* Export the clip/cull distances values to the next stage. */
-			radv_export_param(ctx, param_count, &slots[0], 0xf);
-			outinfo->vs_output_param_offset[location] = param_count++;
+			if (export_clip_dists) {
+				/* Export the clip/cull distances values to the next stage. */
+				radv_export_param(ctx, param_count, &slots[0], 0xf);
+				outinfo->vs_output_param_offset[location] = param_count++;
+			}
 		}
 	}
 
@@ -3044,8 +3038,6 @@ handle_vs_outputs_post(struct radv_shader_context *ctx,
 		LLVMValueRef values[4];
 
 		values[0] = ctx->vs_prim_id;
-		ctx->shader_info->vs.vgpr_comp_cnt = MAX2(2,
-							  ctx->shader_info->vs.vgpr_comp_cnt);
 		for (unsigned j = 1; j < 4; j++)
 			values[j] = ctx->ac.f32_0;
 
@@ -3150,7 +3142,7 @@ handle_es_outputs_post(struct radv_shader_context *ctx,
 				                            out_val, 1,
 				                            NULL, ctx->es2gs_offset,
 				                            (4 * param_index + j) * 4,
-				                            1, 1, true);
+				                            ac_glc | ac_slc, true);
 			}
 		}
 	}
@@ -3283,7 +3275,7 @@ write_tess_factors(struct radv_shader_context *ctx)
 		ac_build_buffer_store_dword(&ctx->ac, buffer,
 					    LLVMConstInt(ctx->ac.i32, 0x80000000, false),
 					    1, ctx->ac.i32_0, tf_base,
-					    0, 1, 0, false);
+					    0, ac_glc, false);
 		tf_offset += 4;
 
 		ac_nir_build_endif(&inner_if_ctx);
@@ -3292,11 +3284,11 @@ write_tess_factors(struct radv_shader_context *ctx)
 	/* Store the tessellation factors. */
 	ac_build_buffer_store_dword(&ctx->ac, buffer, vec0,
 				    MIN2(stride, 4), byteoffset, tf_base,
-				    tf_offset, 1, 0, false);
+				    tf_offset, ac_glc, false);
 	if (vec1)
 		ac_build_buffer_store_dword(&ctx->ac, buffer, vec1,
 					    stride - 4, byteoffset, tf_base,
-					    16 + tf_offset, 1, 0, false);
+					    16 + tf_offset, ac_glc, false);
 
 	//store to offchip for TES to read - only if TES reads them
 	if (ctx->options->key.tcs.tes_reads_tess_factors) {
@@ -3313,7 +3305,7 @@ write_tess_factors(struct radv_shader_context *ctx)
 
 		ac_build_buffer_store_dword(&ctx->ac, ctx->hs_ring_tess_offchip, outer_vec,
 					    outer_comps, tf_outer_offset,
-					    ctx->oc_lds, 0, 1, 0, false);
+					    ctx->oc_lds, 0, ac_glc, false);
 		if (inner_comps) {
 			param_inner = shader_io_get_unique_index(VARYING_SLOT_TESS_LEVEL_INNER);
 			tf_inner_offset = get_tcs_tes_buffer_address(ctx, NULL,
@@ -3323,7 +3315,7 @@ write_tess_factors(struct radv_shader_context *ctx)
 				ac_build_gather_values(&ctx->ac, inner, inner_comps);
 			ac_build_buffer_store_dword(&ctx->ac, ctx->hs_ring_tess_offchip, inner_vec,
 						    inner_comps, tf_inner_offset,
-						    ctx->oc_lds, 0, 1, 0, false);
+						    ctx->oc_lds, 0, ac_glc, false);
 		}
 	}
 	ac_nir_build_endif(&if_ctx);
@@ -3446,6 +3438,7 @@ handle_shader_outputs_post(struct ac_shader_abi *abi, unsigned max_outputs,
 		else
 			handle_vs_outputs_post(ctx, ctx->options->key.vs.export_prim_id,
 					       ctx->options->key.vs.export_layer_id,
+					       ctx->options->key.vs.export_clip_dists,
 					       &ctx->shader_info->vs.outinfo);
 		break;
 	case MESA_SHADER_FRAGMENT:
@@ -3463,6 +3456,7 @@ handle_shader_outputs_post(struct ac_shader_abi *abi, unsigned max_outputs,
 		else
 			handle_vs_outputs_post(ctx, ctx->options->key.tes.export_prim_id,
 					       ctx->options->key.tes.export_layer_id,
+					       ctx->options->key.tes.export_clip_dists,
 					       &ctx->shader_info->tes.outinfo);
 		break;
 	default:
@@ -3751,15 +3745,6 @@ LLVMModuleRef ac_translate_nir_to_llvm(struct ac_llvm_compiler *ac_llvm,
 			ctx.tcs_vertices_per_patch = shaders[i]->info.tess.tcs_vertices_out;
 			ctx.tcs_num_patches = ctx.options->key.tes.num_patches;
 		} else if (shaders[i]->info.stage == MESA_SHADER_VERTEX) {
-			if (shader_info->info.vs.needs_instance_id) {
-				if (ctx.options->key.vs.as_ls) {
-					ctx.shader_info->vs.vgpr_comp_cnt =
-						MAX2(2, ctx.shader_info->vs.vgpr_comp_cnt);
-				} else {
-					ctx.shader_info->vs.vgpr_comp_cnt =
-						MAX2(1, ctx.shader_info->vs.vgpr_comp_cnt);
-				}
-			}
 			ctx.abi.load_base_vertex = radv_load_base_vertex;
 		} else if (shaders[i]->info.stage == MESA_SHADER_FRAGMENT) {
 			shader_info->fs.can_discard = shaders[i]->info.fs.uses_discard;
@@ -3856,9 +3841,9 @@ static void ac_diagnostic_handler(LLVMDiagnosticInfoRef di, void *context)
 	LLVMDisposeMessage(description);
 }
 
-static unsigned ac_llvm_compile(LLVMModuleRef M,
-                                struct ac_shader_binary *binary,
-                                struct ac_llvm_compiler *ac_llvm)
+static unsigned radv_llvm_compile(LLVMModuleRef M,
+                                  char **pelf_buffer, size_t *pelf_size,
+                                  struct ac_llvm_compiler *ac_llvm)
 {
 	unsigned retval = 0;
 	LLVMContextRef llvm_ctx;
@@ -3870,98 +3855,55 @@ static unsigned ac_llvm_compile(LLVMModuleRef M,
 	                                &retval);
 
 	/* Compile IR*/
-	if (!radv_compile_to_binary(ac_llvm, M, binary))
+	if (!radv_compile_to_elf(ac_llvm, M, pelf_buffer, pelf_size))
 		retval = 1;
 	return retval;
 }
 
 static void ac_compile_llvm_module(struct ac_llvm_compiler *ac_llvm,
 				   LLVMModuleRef llvm_module,
-				   struct ac_shader_binary *binary,
-				   struct ac_shader_config *config,
+				   struct radv_shader_binary **rbinary,
 				   struct radv_shader_variant_info *shader_info,
 				   gl_shader_stage stage,
 				   const struct radv_nir_compiler_options *options)
 {
+	char *elf_buffer = NULL;
+	size_t elf_size = 0;
+	char *llvm_ir_string = NULL;
 	if (options->dump_shader)
 		ac_dump_module(llvm_module);
 
-	memset(binary, 0, sizeof(*binary));
-
 	if (options->record_llvm_ir) {
 		char *llvm_ir = LLVMPrintModuleToString(llvm_module);
-		binary->llvm_ir_string = strdup(llvm_ir);
+		llvm_ir_string = strdup(llvm_ir);
 		LLVMDisposeMessage(llvm_ir);
 	}
 
-	int v = ac_llvm_compile(llvm_module, binary, ac_llvm);
+	int v = radv_llvm_compile(llvm_module, &elf_buffer, &elf_size, ac_llvm);
 	if (v) {
 		fprintf(stderr, "compile failed\n");
 	}
-
-	if (options->dump_shader)
-		fprintf(stderr, "disasm:\n%s\n", binary->disasm_string);
-
-	ac_shader_binary_read_config(binary, config, 0, options->supports_spill);
 
 	LLVMContextRef ctx = LLVMGetModuleContext(llvm_module);
 	LLVMDisposeModule(llvm_module);
 	LLVMContextDispose(ctx);
 
-	if (stage == MESA_SHADER_FRAGMENT) {
-		shader_info->num_input_vgprs = 0;
-		if (G_0286CC_PERSP_SAMPLE_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 2;
-		if (G_0286CC_PERSP_CENTER_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 2;
-		if (G_0286CC_PERSP_CENTROID_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 2;
-		if (G_0286CC_PERSP_PULL_MODEL_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 3;
-		if (G_0286CC_LINEAR_SAMPLE_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 2;
-		if (G_0286CC_LINEAR_CENTER_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 2;
-		if (G_0286CC_LINEAR_CENTROID_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 2;
-		if (G_0286CC_LINE_STIPPLE_TEX_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-		if (G_0286CC_POS_X_FLOAT_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-		if (G_0286CC_POS_Y_FLOAT_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-		if (G_0286CC_POS_Z_FLOAT_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-		if (G_0286CC_POS_W_FLOAT_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-		if (G_0286CC_FRONT_FACE_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-		if (G_0286CC_ANCILLARY_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-		if (G_0286CC_SAMPLE_COVERAGE_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-		if (G_0286CC_POS_FIXED_PT_ENA(config->spi_ps_input_addr))
-			shader_info->num_input_vgprs += 1;
-	}
-	config->num_vgprs = MAX2(config->num_vgprs, shader_info->num_input_vgprs);
+	size_t llvm_ir_size = llvm_ir_string ? strlen(llvm_ir_string) : 0;
+	size_t alloc_size = sizeof(struct radv_shader_binary_rtld) + elf_size + llvm_ir_size + 1;
+	struct radv_shader_binary_rtld *rbin = calloc(1, alloc_size);
+	memcpy(rbin->data,  elf_buffer, elf_size);
+	if (llvm_ir_string)
+		memcpy(rbin->data + elf_size, llvm_ir_string, llvm_ir_size + 1);
 
-	/* +3 for scratch wave offset and VCC */
-	config->num_sgprs = MAX2(config->num_sgprs,
-	                         shader_info->num_input_sgprs + 3);
+	rbin->base.type = RADV_BINARY_TYPE_RTLD;
+	rbin->base.stage = stage;
+	rbin->base.total_size = alloc_size;
+	rbin->elf_size = elf_size;
+	rbin->llvm_ir_size = llvm_ir_size;
+	*rbinary = &rbin->base;
 
-	/* Enable 64-bit and 16-bit denormals, because there is no performance
-	 * cost.
-	 *
-	 * If denormals are enabled, all floating-point output modifiers are
-	 * ignored.
-	 *
-	 * Don't enable denormals for 32-bit floats, because:
-	 * - Floating-point output modifiers would be ignored by the hw.
-	 * - Some opcodes don't support denormals, such as v_mad_f32. We would
-	 *   have to stop using those.
-	 * - GFX6 & GFX7 would be very slow.
-	 */
-	config->float_mode |= V_00B028_FP_64_DENORMS;
+	free(llvm_ir_string);
+	free(elf_buffer);
 }
 
 static void
@@ -3987,6 +3929,7 @@ ac_fill_shader_info(struct radv_shader_variant_info *shader_info, struct nir_sha
                 shader_info->tes.ccw = nir->info.tess.ccw;
                 shader_info->tes.point_mode = nir->info.tess.point_mode;
                 shader_info->tes.as_es = options->key.tes.as_es;
+                shader_info->tes.export_prim_id = options->key.tes.export_prim_id;
                 break;
         case MESA_SHADER_TESS_CTRL:
                 shader_info->tcs.tcs_vertices_out = nir->info.tess.tcs_vertices_out;
@@ -3994,9 +3937,7 @@ ac_fill_shader_info(struct radv_shader_variant_info *shader_info, struct nir_sha
         case MESA_SHADER_VERTEX:
                 shader_info->vs.as_es = options->key.vs.as_es;
                 shader_info->vs.as_ls = options->key.vs.as_ls;
-                /* in LS mode we need at least 1, invocation id needs 2, handled elsewhere */
-                if (options->key.vs.as_ls)
-                        shader_info->vs.vgpr_comp_cnt = MAX2(1, shader_info->vs.vgpr_comp_cnt);
+                shader_info->vs.export_prim_id = options->key.vs.export_prim_id;
                 break;
         default:
                 break;
@@ -4005,8 +3946,7 @@ ac_fill_shader_info(struct radv_shader_variant_info *shader_info, struct nir_sha
 
 void
 radv_compile_nir_shader(struct ac_llvm_compiler *ac_llvm,
-			struct ac_shader_binary *binary,
-			struct ac_shader_config *config,
+			struct radv_shader_binary **rbinary,
 			struct radv_shader_variant_info *shader_info,
 			struct nir_shader *const *nir,
 			int nir_count,
@@ -4018,8 +3958,8 @@ radv_compile_nir_shader(struct ac_llvm_compiler *ac_llvm,
 	llvm_module = ac_translate_nir_to_llvm(ac_llvm, nir, nir_count, shader_info,
 	                                       options);
 
-	ac_compile_llvm_module(ac_llvm, llvm_module, binary, config, shader_info,
-			       nir[0]->info.stage, options);
+	ac_compile_llvm_module(ac_llvm, llvm_module, rbinary, shader_info,
+			       nir[nir_count - 1]->info.stage, options);
 
 	for (int i = 0; i < nir_count; ++i)
 		ac_fill_shader_info(shader_info, nir[i], options);
@@ -4100,7 +4040,7 @@ ac_gs_copy_shader_emit(struct radv_shader_context *ctx)
 							     ctx->gsvs_ring[0],
 							     1, ctx->ac.i32_0,
 							     vtx_offset, soffset,
-							     0, 1, 1, true, false);
+							     0, ac_glc | ac_slc, true, false);
 
 				LLVMTypeRef type = LLVMGetAllocatedType(ctx->abi.outputs[ac_llvm_reg_index_soa(i, j)]);
 				if (ac_get_type_size(type) == 2) {
@@ -4117,7 +4057,7 @@ ac_gs_copy_shader_emit(struct radv_shader_context *ctx)
 			radv_emit_streamout(ctx, stream);
 
 		if (stream == 0) {
-			handle_vs_outputs_post(ctx, false, false,
+			handle_vs_outputs_post(ctx, false, false, true,
 					       &ctx->shader_info->vs.outinfo);
 		}
 
@@ -4130,8 +4070,7 @@ ac_gs_copy_shader_emit(struct radv_shader_context *ctx)
 void
 radv_compile_gs_copy_shader(struct ac_llvm_compiler *ac_llvm,
 			    struct nir_shader *geom_shader,
-			    struct ac_shader_binary *binary,
-			    struct ac_shader_config *config,
+			    struct radv_shader_binary **rbinary,
 			    struct radv_shader_variant_info *shader_info,
 			    const struct radv_nir_compiler_options *options)
 {
@@ -4171,6 +4110,8 @@ radv_compile_gs_copy_shader(struct ac_llvm_compiler *ac_llvm,
 
 	ac_llvm_finalize_module(&ctx, ac_llvm->passmgr, options);
 
-	ac_compile_llvm_module(ac_llvm, ctx.ac.module, binary, config, shader_info,
+	ac_compile_llvm_module(ac_llvm, ctx.ac.module, rbinary, shader_info,
 			       MESA_SHADER_VERTEX, options);
+	(*rbinary)->is_gs_copy_shader = true;
+	
 }

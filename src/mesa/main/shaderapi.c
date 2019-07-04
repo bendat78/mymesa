@@ -37,6 +37,7 @@
  */
 
 
+#include <errno.h>
 #include <stdbool.h>
 #include <c99_alloca.h>
 #include "main/glheader.h"

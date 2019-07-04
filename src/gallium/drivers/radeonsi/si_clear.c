@@ -99,18 +99,23 @@ enum pipe_format si_simplify_cb_format(enum pipe_format format)
 	return util_format_intensity_to_red(format);
 }
 
-bool vi_alpha_is_on_msb(enum pipe_format format)
+bool vi_alpha_is_on_msb(struct si_screen *sscreen, enum pipe_format format)
 {
 	format = si_simplify_cb_format(format);
+	const struct util_format_description *desc = util_format_description(format);
 
 	/* Formats with 3 channels can't have alpha. */
-	if (util_format_description(format)->nr_channels == 3)
+	if (desc->nr_channels == 3)
 		return true; /* same as xxxA; is any value OK here? */
+
+	if (sscreen->info.chip_class >= GFX10 && desc->nr_channels == 1)
+		return desc->swizzle[3] == PIPE_SWIZZLE_X;
 
 	return si_translate_colorswap(format, false) <= 1;
 }
 
-static bool vi_get_fast_clear_parameters(enum pipe_format base_format,
+static bool vi_get_fast_clear_parameters(struct si_screen *sscreen,
+					 enum pipe_format base_format,
 					 enum pipe_format surface_format,
 					 const union pipe_color_union *color,
 					 uint32_t* clear_value,
@@ -142,8 +147,8 @@ static bool vi_get_fast_clear_parameters(enum pipe_format base_format,
 	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
 		return true; /* need ELIMINATE_FAST_CLEAR */
 
-	bool base_alpha_is_on_msb = vi_alpha_is_on_msb(base_format);
-	bool surf_alpha_is_on_msb = vi_alpha_is_on_msb(surface_format);
+	bool base_alpha_is_on_msb = vi_alpha_is_on_msb(sscreen, base_format);
+	bool surf_alpha_is_on_msb = vi_alpha_is_on_msb(sscreen, surface_format);
 
 	/* Formats with 3 channels can't have alpha. */
 	if (desc->nr_channels == 3)
@@ -277,7 +282,8 @@ void vi_dcc_clear_level(struct si_context *sctx,
 static void si_set_optimal_micro_tile_mode(struct si_screen *sscreen,
 					   struct si_texture *tex)
 {
-	if (tex->buffer.b.is_shared ||
+	if (sscreen->info.chip_class >= GFX10 ||
+	    tex->buffer.b.is_shared ||
 	    tex->buffer.b.b.nr_samples <= 1 ||
 	    tex->surface.micro_tile_mode == tex->last_msaa_resolve_target_micro_mode)
 		return;
@@ -482,7 +488,8 @@ static void si_do_fast_color_clear(struct si_context *sctx,
 			    !tex->surface.u.legacy.level[level].dcc_fast_clear_size)
 				continue;
 
-			if (!vi_get_fast_clear_parameters(tex->buffer.b.b.format,
+			if (!vi_get_fast_clear_parameters(sctx->screen,
+							  tex->buffer.b.b.format,
 							  fb->cbufs[i]->format,
 							  color, &reset_value,
 							  &eliminate_needed))
@@ -586,11 +593,11 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 	}
 
 	if (zstex &&
-	    si_htile_enabled(zstex, zsbuf->u.tex.level) &&
 	    zsbuf->u.tex.first_layer == 0 &&
 	    zsbuf->u.tex.last_layer == util_max_layer(&zstex->buffer.b.b, 0)) {
 		/* TC-compatible HTILE only supports depth clears to 0 or 1. */
 		if (buffers & PIPE_CLEAR_DEPTH &&
+		    si_htile_enabled(zstex, zsbuf->u.tex.level, PIPE_MASK_Z) &&
 		    (!zstex->tc_compatible_htile ||
 		     depth == 0 || depth == 1)) {
 			/* Need to disable EXPCLEAR temporarily if clearing
@@ -611,6 +618,7 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 
 		/* TC-compatible HTILE only supports stencil clears to 0. */
 		if (buffers & PIPE_CLEAR_STENCIL &&
+		    si_htile_enabled(zstex, zsbuf->u.tex.level, PIPE_MASK_S) &&
 		    (!zstex->tc_compatible_htile || stencil == 0)) {
 			stencil &= 0xff;
 

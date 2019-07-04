@@ -91,7 +91,7 @@ static bool has_syncobj(int fd)
 	return value ? true : false;
 }
 
-bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
+bool ac_query_gpu_info(int fd, void *dev_p,
 		       struct radeon_info *info,
 		       struct amdgpu_gpu_info *amdinfo)
 {
@@ -103,6 +103,7 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 	struct amdgpu_gds_resource_info gds = {};
 	uint32_t vce_version = 0, vce_feature = 0, uvd_version = 0, uvd_feature = 0;
 	int r, i, j;
+	amdgpu_device_handle dev = dev_p;
 	drmDevicePtr devinfo;
 
 	/* Get PCI info. */
@@ -322,7 +323,9 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 		info->name = "RAVEN2";
 	}
 
-	if (info->family >= CHIP_VEGA10)
+	if (info->family >= CHIP_NAVI10)
+		info->chip_class = GFX10;
+	else if (info->family >= CHIP_VEGA10)
 		info->chip_class = GFX9;
 	else if (info->family >= CHIP_TONGA)
 		info->chip_class = GFX8;
@@ -402,6 +405,7 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 	info->has_read_registers_query = true;
 	info->has_scheduled_fence_dependency = info->drm_minor >= 28;
 
+	info->pa_sc_tile_steering_override = device_info.pa_sc_tile_steering_override;
 	info->num_render_backends = amdinfo->rb_pipes;
 	/* The value returned by the kernel driver was wrong. */
 	if (info->family == CHIP_KAVERI)
@@ -412,7 +416,11 @@ bool ac_query_gpu_info(int fd, amdgpu_device_handle dev,
 		fprintf(stderr, "amdgpu: clock crystal frequency is 0, timestamps will be wrong\n");
 		info->clock_crystal_freq = 1;
 	}
-	info->tcc_cache_line_size = 64; /* TC L2 line size on GCN */
+	if (info->chip_class >= GFX10) {
+		info->tcc_cache_line_size = 128;
+	} else {
+		info->tcc_cache_line_size = 64;
+	}
 	info->gb_addr_config = amdinfo->gb_addr_cfg;
 	if (info->chip_class == GFX9) {
 		info->num_tile_pipes = 1 << G_0098F8_NUM_PIPES(amdinfo->gb_addr_cfg);
@@ -518,6 +526,7 @@ void ac_print_gpu_info(struct radeon_info *info)
 	printf("    pci_id = 0x%x\n", info->pci_id);
 	printf("    family = %i\n", info->family);
 	printf("    chip_class = %i\n", info->chip_class);
+	printf("    chip_external_rev = %i\n", info->chip_external_rev);
 	printf("    num_compute_rings = %u\n", info->num_compute_rings);
 	printf("    num_sdma_rings = %i\n", info->num_sdma_rings);
 	printf("    clock_crystal_freq = %i\n", info->clock_crystal_freq);
@@ -591,6 +600,7 @@ void ac_print_gpu_info(struct radeon_info *info)
 	printf("    max_sh_per_se = %i\n", info->max_sh_per_se);
 
 	printf("Render backend info:\n");
+	printf("    pa_sc_tile_steering_override = 0x%x\n", info->pa_sc_tile_steering_override);
 	printf("    num_render_backends = %i\n", info->num_render_backends);
 	printf("    num_tile_pipes = %i\n", info->num_tile_pipes);
 	printf("    pipe_interleave_bytes = %i\n", info->pipe_interleave_bytes);

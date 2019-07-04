@@ -426,7 +426,7 @@ iris_resource_alloc_aux(struct iris_screen *screen, struct iris_resource *res)
     * of bytes instead of trying to recalculate based on different format
     * block sizes.
     */
-   res->aux.bo = iris_bo_alloc_tiled(screen->bufmgr, "aux buffer", size,
+   res->aux.bo = iris_bo_alloc_tiled(screen->bufmgr, "aux buffer", size, 4096,
                                      IRIS_MEMZONE_OTHER, I915_TILING_Y,
                                      res->aux.surf.row_pitch_B, alloc_flags);
    if (!res->aux.bo) {
@@ -666,7 +666,7 @@ iris_resource_create_with_modifiers(struct pipe_screen *pscreen,
                             IRIS_RESOURCE_FLAG_SURFACE_MEMZONE |
                             IRIS_RESOURCE_FLAG_DYNAMIC_MEMZONE)));
 
-   res->bo = iris_bo_alloc_tiled(screen->bufmgr, name, res->surf.size_B,
+   res->bo = iris_bo_alloc_tiled(screen->bufmgr, name, res->surf.size_B, 4096,
                                  memzone,
                                  isl_tiling_to_i915_tiling(res->surf.tiling),
                                  res->surf.row_pitch_B, flags);
@@ -782,20 +782,21 @@ iris_resource_from_handle(struct pipe_screen *pscreen,
    if (templ->target == PIPE_BUFFER) {
       res->surf.tiling = ISL_TILING_LINEAR;
    } else {
-      isl_surf_init(&screen->isl_dev, &res->surf,
-                    .dim = target_to_isl_surf_dim(templ->target),
-                    .format = fmt.fmt,
-                    .width = templ->width0,
-                    .height = templ->height0,
-                    .depth = templ->depth0,
-                    .levels = templ->last_level + 1,
-                    .array_len = templ->array_size,
-                    .samples = MAX2(templ->nr_samples, 1),
-                    .min_alignment_B = 0,
-                    .row_pitch_B = whandle->stride,
-                    .usage = isl_usage,
-                    .tiling_flags = 1 << res->mod_info->tiling);
-
+      UNUSED const bool isl_surf_created_successfully =
+         isl_surf_init(&screen->isl_dev, &res->surf,
+                       .dim = target_to_isl_surf_dim(templ->target),
+                       .format = fmt.fmt,
+                       .width = templ->width0,
+                       .height = templ->height0,
+                       .depth = templ->depth0,
+                       .levels = templ->last_level + 1,
+                       .array_len = templ->array_size,
+                       .samples = MAX2(templ->nr_samples, 1),
+                       .min_alignment_B = 0,
+                       .row_pitch_B = whandle->stride,
+                       .usage = isl_usage,
+                       .tiling_flags = 1 << res->mod_info->tiling);
+      assert(isl_surf_created_successfully);
       assert(res->bo->tiling_mode ==
              isl_tiling_to_i915_tiling(res->surf.tiling));
 
@@ -1275,7 +1276,6 @@ iris_map_tiled_memcpy(struct iris_transfer *map)
 
    const bool has_swizzling = false;
 
-   // XXX: PIPE_TRANSFER_READ?
    if (!(xfer->usage & PIPE_TRANSFER_DISCARD_RANGE)) {
       char *src =
          iris_bo_map(map->dbg, res->bo, (xfer->usage | MAP_RAW) & MAP_FLAGS);

@@ -66,7 +66,7 @@ static int amdgpu_surface_init(struct radeon_winsys *rws,
                                enum radeon_surf_mode mode,
                                struct radeon_surf *surf)
 {
-   struct amdgpu_winsys *ws = (struct amdgpu_winsys*)rws;
+   struct amdgpu_winsys *ws = amdgpu_winsys(rws);
    int r;
 
    r = amdgpu_surface_sanity(tex);
@@ -104,7 +104,7 @@ static int amdgpu_surface_init(struct radeon_winsys *rws,
    return ac_compute_surface(ws->addrlib, &ws->info, &config, mode, surf);
 }
 
-void amdgpu_surface_init_functions(struct amdgpu_winsys *ws)
+void amdgpu_surface_init_functions(struct amdgpu_screen_winsys *ws)
 {
    ws->base.surface_init = amdgpu_surface_init;
 }

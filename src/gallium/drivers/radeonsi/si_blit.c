@@ -180,31 +180,6 @@ si_blit_dbcb_copy(struct si_context *sctx,
 	return fully_copied_levels;
 }
 
-void si_blit_decompress_depth(struct pipe_context *ctx,
-			      struct si_texture *texture,
-			      struct si_texture *staging,
-			      unsigned first_level, unsigned last_level,
-			      unsigned first_layer, unsigned last_layer,
-			      unsigned first_sample, unsigned last_sample)
-{
-	const struct util_format_description *desc;
-	unsigned planes = 0;
-
-	assert(staging != NULL && "use si_blit_decompress_zs_in_place instead");
-
-	desc = util_format_description(staging->buffer.b.b.format);
-
-	if (util_format_has_depth(desc))
-		planes |= PIPE_MASK_Z;
-	if (util_format_has_stencil(desc))
-		planes |= PIPE_MASK_S;
-
-	si_blit_dbcb_copy(
-		(struct si_context *)ctx, texture, staging, planes,
-		u_bit_consecutive(first_level, last_level - first_level + 1),
-		first_layer, last_layer, first_sample, last_sample);
-}
-
 /* Helper function for si_blit_decompress_zs_in_place.
  */
 static void
@@ -355,7 +330,7 @@ si_decompress_depth(struct si_context *sctx,
 	 */
 	if (copy_planes &&
 	    (tex->flushed_depth_texture ||
-	     si_init_flushed_depth_texture(&sctx->b, &tex->buffer.b.b, NULL))) {
+	     si_init_flushed_depth_texture(&sctx->b, &tex->buffer.b.b))) {
 		struct si_texture *dst = tex->flushed_depth_texture;
 		unsigned fully_copied_levels;
 		unsigned levels = 0;
@@ -386,8 +361,9 @@ si_decompress_depth(struct si_context *sctx,
 	}
 
 	if (inplace_planes) {
-		bool has_htile = si_htile_enabled(tex, first_level);
-		bool tc_compat_htile = vi_tc_compat_htile_enabled(tex, first_level);
+		bool has_htile = si_htile_enabled(tex, first_level, inplace_planes);
+		bool tc_compat_htile = vi_tc_compat_htile_enabled(tex, first_level,
+								  inplace_planes);
 
 		/* Don't decompress if there is no HTILE or when HTILE is
 		 * TC-compatible. */
@@ -1134,6 +1110,12 @@ static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
 			/* The next fast clear will switch to this mode to
 			 * get direct hw resolve next time if the mode is
 			 * different now.
+			 *
+			 * TODO-GFX10: This does not work in GFX10 because MSAA
+			 * is restricted to 64KB_R_X and 64KB_Z_X swizzle modes.
+			 * In some cases we could change the swizzle of the
+			 * destination texture instead, but the more general
+			 * solution is to implement compute shader resolve.
 			 */
 			src->last_msaa_resolve_target_micro_mode =
 				dst->surface.micro_tile_mode;
@@ -1249,7 +1231,7 @@ static void si_blit(struct pipe_context *ctx,
 	vi_disable_dcc_if_incompatible_format(sctx, info->dst.resource,
 					      info->dst.level,
 					      info->dst.format);
-	si_decompress_subresource(ctx, info->src.resource, info->mask,
+	si_decompress_subresource(ctx, info->src.resource, PIPE_MASK_RGBAZS,
 				  info->src.level,
 				  info->src.box.z,
 				  info->src.box.z + info->src.box.depth - 1);

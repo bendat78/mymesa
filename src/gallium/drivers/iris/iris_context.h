@@ -681,9 +681,6 @@ struct iris_context {
       /** 3DSTATE_STREAMOUT and 3DSTATE_SO_DECL_LIST packets */
       uint32_t *streamout;
 
-      /** Current strides for each streamout buffer */
-      uint16_t *streamout_strides;
-
       /** The SURFACE_STATE for a 1x1x1 null surface. */
       struct iris_state_ref unbound_tex;
 
@@ -691,8 +688,6 @@ struct iris_context {
       struct iris_state_ref null_fb;
 
       struct u_upload_mgr *surface_uploader;
-      // XXX: may want a separate uploader for "hey I made a CSO!" vs
-      // "I'm streaming this out at draw time and never want it again!"
       struct u_upload_mgr *dynamic_uploader;
 
       struct iris_binder binder;
@@ -715,6 +710,8 @@ struct iris_context {
          struct pipe_resource *scissor;
          struct pipe_resource *blend;
          struct pipe_resource *index_buffer;
+         struct pipe_resource *cs_thread_ids;
+         struct pipe_resource *cs_desc;
       } last_res;
 
       /** Records the size of variable-length state for INTEL_DEBUG=bat */

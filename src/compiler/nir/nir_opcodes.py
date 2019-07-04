@@ -190,8 +190,6 @@ unop("mov", tuint, "src0")
 unop("ineg", tint, "-src0")
 unop("fneg", tfloat, "-src0")
 unop("inot", tint, "~src0") # invert every bit of the integer
-unop("fnot", tfloat, ("bit_size == 64 ? ((src0 == 0.0) ? 1.0 : 0.0f) : " +
-                      "((src0 == 0.0f) ? 1.0f : 0.0f)"))
 unop("fsign", tfloat, ("bit_size == 64 ? " +
                        "((src0 == 0.0) ? 0.0 : ((src0 > 0.0) ? 1.0 : -1.0)) : " +
                        "((src0 == 0.0f) ? 0.0f : ((src0 > 0.0f) ? 1.0f : -1.0f))"))
@@ -689,6 +687,17 @@ opcode("ishr", 0, tint, [0, 0], [tint, tuint32], False, "",
 opcode("ushr", 0, tuint, [0, 0], [tuint, tuint32], False, "",
        "src0 >> (src1 & (sizeof(src0) * 8 - 1))")
 
+opcode("urol", 0, tuint, [0, 0], [tuint, tuint32], False, "", """
+   uint32_t rotate_mask = sizeof(src0) * 8 - 1;
+   dst = (src0 << (src1 & rotate_mask)) |
+         (src0 >> (-src1 & rotate_mask));
+""")
+opcode("uror", 0, tuint, [0, 0], [tuint, tuint32], False, "", """
+   uint32_t rotate_mask = sizeof(src0) * 8 - 1;
+   dst = (src0 >> (src1 & rotate_mask)) |
+         (src0 << (-src1 & rotate_mask));
+""")
+
 # bitwise logic operators
 #
 # These are also used as boolean and, or, xor for hardware supporting
@@ -699,18 +708,6 @@ binop("iand", tuint, _2src_commutative + associative, "src0 & src1")
 binop("ior", tuint, _2src_commutative + associative, "src0 | src1")
 binop("ixor", tuint, _2src_commutative + associative, "src0 ^ src1")
 
-
-# floating point logic operators
-#
-# These use (src != 0.0) for testing the truth of the input, and output 1.0
-# for true and 0.0 for false
-
-binop("fand", tfloat32, _2src_commutative,
-      "((src0 != 0.0f) && (src1 != 0.0f)) ? 1.0f : 0.0f")
-binop("for", tfloat32, _2src_commutative,
-      "((src0 != 0.0f) || (src1 != 0.0f)) ? 1.0f : 0.0f")
-binop("fxor", tfloat32, _2src_commutative,
-      "(src0 != 0.0f && src1 == 0.0f) || (src0 == 0.0f && src1 != 0.0f) ? 1.0f : 0.0f")
 
 binop_reduce("fdot", 1, tfloat, tfloat, "{src0} * {src1}", "{src0} + {src1}",
              "{src}")

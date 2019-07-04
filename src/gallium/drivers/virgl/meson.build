@@ -25,6 +25,7 @@ files_libvirgl = files(
   'virgl_query.c',
   'virgl_resource.c',
   'virgl_screen.c',
+  'virgl_staging_mgr.c',
   'virgl_streamout.c',
   'virgl_transfer_queue.c',
   'virgl_texture.c',
@@ -55,3 +56,7 @@ driver_virgl = declare_dependency(
   compile_args : '-DGALLIUM_VIRGL',
   link_with : [libvirgl, libvirgldrm, libvirglvtest],
 )
+
+if with_tests
+  subdir('tests')
+endif

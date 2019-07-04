@@ -144,8 +144,6 @@ static void si_init_compiler(struct si_screen *sscreen,
 
 static void si_destroy_compiler(struct ac_llvm_compiler *compiler)
 {
-	ac_destroy_llvm_passes(compiler->passes);
-	ac_destroy_llvm_passes(compiler->low_opt_passes);
 	ac_destroy_llvm_compiler(compiler);
 }
 
@@ -168,6 +166,9 @@ static void si_destroy_context(struct pipe_context *context)
 		context->set_framebuffer_state(context, &fb);
 
 	si_release_all_descriptors(sctx);
+
+	if (sctx->chip_class >= GFX10)
+		gfx10_destroy_query(sctx);
 
 	pipe_resource_reference(&sctx->esgs_ring, NULL);
 	pipe_resource_reference(&sctx->gsvs_ring, NULL);
@@ -240,6 +241,8 @@ static void si_destroy_context(struct pipe_context *context)
 
 	if (sctx->query_result_shader)
 		sctx->b.delete_compute_state(&sctx->b, sctx->query_result_shader);
+	if (sctx->sh_query_result_shader)
+		sctx->b.delete_compute_state(&sctx->b, sctx->sh_query_result_shader);
 
 	if (sctx->gfx_cs)
 		sctx->ws->cs_destroy(sctx->gfx_cs);
@@ -444,6 +447,8 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	if (!sctx->ctx)
 		goto fail;
 
+	if (sscreen->info.chip_class == GFX10)
+		sscreen->debug_flags |= DBG(NO_ASYNC_DMA); /* TODO-GFX10: implement this */
 	if (sscreen->info.num_sdma_rings && !(sscreen->debug_flags & DBG(NO_ASYNC_DMA))) {
 		sctx->dma_cs = sctx->ws->cs_create(sctx->ctx, RING_DMA,
 						   (void*)si_flush_dma_cs,
@@ -487,7 +492,15 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	if (!sctx->border_color_map)
 		goto fail;
 
+	if (sctx->chip_class >= GFX10)
+		sctx->ngg = !sscreen->options.disable_ngg;
+
 	/* Initialize context functions used by graphics and compute. */
+	if (sctx->chip_class >= GFX10)
+		sctx->emit_cache_flush = gfx10_emit_cache_flush;
+	else
+		sctx->emit_cache_flush = si_emit_cache_flush;
+
 	sctx->b.emit_string_marker = si_emit_string_marker;
 	sctx->b.set_debug_callback = si_set_debug_callback;
 	sctx->b.set_log_context = si_set_log_context;
@@ -509,6 +522,8 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	/* Initialize graphics-only context functions. */
 	if (sctx->has_graphics) {
 		si_init_context_texture_functions(sctx);
+		if (sctx->chip_class >= GFX10)
+			gfx10_init_query(sctx);
 		si_init_msaa_functions(sctx);
 		si_init_shader_functions(sctx);
 		si_init_state_functions(sctx);
@@ -898,6 +913,12 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 	sscreen->ws = ws;
 	ws->query_info(ws, &sscreen->info);
 
+	if (sscreen->info.chip_class == GFX10 && HAVE_LLVM < 0x0900) {
+		fprintf(stderr, "radeonsi: Navi family support requires LLVM 9 or higher\n");
+		FREE(sscreen);
+		return NULL;
+	}
+
 	if (sscreen->info.chip_class >= GFX9) {
 		sscreen->se_tile_repeat = 32 * sscreen->info.max_se;
 	} else {
@@ -1018,9 +1039,11 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 	 */
 	unsigned max_offchip_buffers_per_se;
 
+	if (sscreen->info.chip_class >= GFX10)
+		max_offchip_buffers_per_se = 256;
 	/* Only certain chips can use the maximum value. */
-	if (sscreen->info.family == CHIP_VEGA12 ||
-	    sscreen->info.family == CHIP_VEGA20)
+	else if (sscreen->info.family == CHIP_VEGA12 ||
+	         sscreen->info.family == CHIP_VEGA20)
 		max_offchip_buffers_per_se = double_offchip_buffers ? 128 : 64;
 	else
 		max_offchip_buffers_per_se = double_offchip_buffers ? 127 : 63;
@@ -1058,10 +1081,11 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 	}
 
 	/* The mere presense of CLEAR_STATE in the IB causes random GPU hangs
-        * on GFX6. Some CLEAR_STATE cause asic hang on radeon kernel, etc.
-        * SPI_VS_OUT_CONFIG. So only enable GFX7 CLEAR_STATE on amdgpu kernel.*/
-       sscreen->has_clear_state = sscreen->info.chip_class >= GFX7 &&
-                                  sscreen->info.is_amdgpu;
+	 * on GFX6. Some CLEAR_STATE cause asic hang on radeon kernel, etc.
+	 * SPI_VS_OUT_CONFIG. So only enable GFX7 CLEAR_STATE on amdgpu kernel. */
+	sscreen->has_clear_state = sscreen->info.chip_class >= GFX7 &&
+				   sscreen->info.chip_class <= GFX9 &&
+				   sscreen->info.is_amdgpu;
 
 	sscreen->has_distributed_tess =
 		sscreen->info.chip_class >= GFX8 &&
@@ -1102,7 +1126,8 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 					   sscreen->info.family == CHIP_RAVEN;
 	sscreen->has_ls_vgpr_init_bug = sscreen->info.family == CHIP_VEGA10 ||
 					sscreen->info.family == CHIP_RAVEN;
-	sscreen->has_dcc_constant_encode = sscreen->info.family == CHIP_RAVEN2;
+	sscreen->has_dcc_constant_encode = sscreen->info.family == CHIP_RAVEN2 ||
+					   sscreen->info.chip_class >= GFX10;
 
 	/* Only enable primitive binning on APUs by default. */
 	sscreen->dpbb_allowed = sscreen->info.family == CHIP_RAVEN ||
@@ -1126,11 +1151,15 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 		sscreen->dfsm_allowed = false;
 	}
 
+	if (sscreen->info.chip_class == GFX10) {
+		sscreen->dpbb_allowed = false; /* TODO-GFX10: implement this */
+		sscreen->dfsm_allowed = false;
+	}
+
 	/* While it would be nice not to have this flag, we are constrained
-	 * by the reality that LLVM 5.0 doesn't have working VGPR indexing
-	 * on GFX9.
+	 * by the reality that LLVM 9.0 has buggy VGPR indexing on GFX9.
 	 */
-	sscreen->llvm_has_working_vgpr_indexing = sscreen->info.chip_class <= GFX8;
+	sscreen->llvm_has_working_vgpr_indexing = sscreen->info.chip_class != GFX9;
 
 	/* Some chips have RB+ registers, but don't support RB+. Those must
 	 * always disable it.

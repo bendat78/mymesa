@@ -36,6 +36,7 @@
 #include "main/imports.h"
 #include "compiler/nir/nir_builder.h"
 #include "util/half_float.h"
+#include "util/u_math.h"
 #include "util/u_debug.h"
 #include "util/u_dynarray.h"
 #include "util/list.h"
@@ -82,35 +83,6 @@ midgard_block_add_successor(midgard_block *block, midgard_block *successor)
  * driver seems to do it that way */
 
 #define EMIT(op, ...) emit_mir_instruction(ctx, v_##op(__VA_ARGS__));
-#define SWIZZLE_XXXX SWIZZLE(COMPONENT_X, COMPONENT_X, COMPONENT_X, COMPONENT_X)
-#define SWIZZLE_XYXX SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_X, COMPONENT_X)
-#define SWIZZLE_XYZX SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_X)
-#define SWIZZLE_XYZW SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_W)
-#define SWIZZLE_XYXZ SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_X, COMPONENT_Z)
-#define SWIZZLE_WWWW SWIZZLE(COMPONENT_W, COMPONENT_W, COMPONENT_W, COMPONENT_W)
-
-static inline unsigned
-swizzle_of(unsigned comp)
-{
-        switch (comp) {
-                case 1:
-                        return SWIZZLE_XXXX;
-                case 2:
-                        return SWIZZLE_XYXX;
-                case 3:
-                        return SWIZZLE_XYZX;
-                case 4:
-                        return SWIZZLE_XYZW;
-                default:
-                        unreachable("Invalid component count");
-        }
-}
-
-static inline unsigned
-mask_of(unsigned nr_comp)
-{
-        return (1 << nr_comp) - 1;
-}
 
 #define M_LOAD_STORE(name, rname, uname) \
 	static midgard_instruction m_##name(unsigned ssa, unsigned address) { \
@@ -1119,7 +1091,7 @@ emit_varying_read(
                 compiler_context *ctx,
                 unsigned dest, unsigned offset,
                 unsigned nr_comp, unsigned component,
-                nir_src *indirect_offset)
+                nir_src *indirect_offset, nir_alu_type type)
 {
         /* XXX: Half-floats? */
         /* TODO: swizzle, mask */
@@ -1145,6 +1117,23 @@ emit_varying_read(
         } else {
                 /* Just a direct load */
                 ins.load_store.unknown = 0x1e9e; /* xxx: what is this? */
+        }
+
+        /* Use the type appropriate load */
+        switch (type) {
+                case nir_type_uint:
+                case nir_type_bool:
+                        ins.load_store.op = midgard_op_ld_vary_32u;
+                        break;
+                case nir_type_int:
+                        ins.load_store.op = midgard_op_ld_vary_32i;
+                        break;
+                case nir_type_float:
+                        ins.load_store.op = midgard_op_ld_vary_32;
+                        break;
+                default:
+                        unreachable("Attempted to load unknown type");
+                        break;
         }
 
         emit_mir_instruction(ctx, ins);
@@ -1265,6 +1254,12 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                 bool is_uniform = instr->intrinsic == nir_intrinsic_load_uniform;
                 bool is_ubo = instr->intrinsic == nir_intrinsic_load_ubo;
 
+                /* Get the base type of the intrinsic */
+                /* TODO: Infer type? Does it matter? */
+                nir_alu_type t =
+                        is_ubo ? nir_type_uint : nir_intrinsic_type(instr);
+                t = nir_alu_type_get_base_type(t);
+
                 if (!is_ubo) {
                         offset = nir_intrinsic_base(instr);
                 }
@@ -1304,7 +1299,7 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                         uint32_t uindex = nir_src_as_uint(index) + 1;
                         emit_ubo_read(ctx, reg, offset / 16, NULL, uindex);
                 } else if (ctx->stage == MESA_SHADER_FRAGMENT && !ctx->is_blend) {
-                        emit_varying_read(ctx, reg, offset, nr_comp, component, !direct ? &instr->src[0] : NULL);
+                        emit_varying_read(ctx, reg, offset, nr_comp, component, !direct ? &instr->src[0] : NULL, t);
                 } else if (ctx->is_blend) {
                         /* For blend shaders, load the input color, which is
                          * preloaded to r0 */
@@ -1315,6 +1310,24 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                         midgard_instruction ins = m_ld_attr_32(reg, offset);
                         ins.load_store.unknown = 0x1E1E; /* XXX: What is this? */
                         ins.load_store.mask = mask_of(nr_comp);
+
+                        /* Use the type appropriate load */
+                        switch (t) {
+                                case nir_type_uint:
+                                case nir_type_bool:
+                                        ins.load_store.op = midgard_op_ld_attr_32u;
+                                        break;
+                                case nir_type_int:
+                                        ins.load_store.op = midgard_op_ld_attr_32i;
+                                        break;
+                                case nir_type_float:
+                                        ins.load_store.op = midgard_op_ld_attr_32;
+                                        break;
+                                default:
+                                        unreachable("Attempted to load unknown type");
+                                        break;
+                        }
+
                         emit_mir_instruction(ctx, ins);
                 } else {
                         DBG("Unknown load\n");
@@ -1450,6 +1463,54 @@ midgard_tex_format(enum glsl_sampler_dim dim)
         }
 }
 
+/* Tries to attach an explicit LOD / bias as a constant. Returns whether this
+ * was successful */
+
+static bool
+pan_attach_constant_bias(
+                compiler_context *ctx,
+                nir_src lod,
+                midgard_texture_word *word)
+{
+        /* To attach as constant, it has to *be* constant */
+
+        if (!nir_src_is_const(lod))
+                return false;
+
+        float f = nir_src_as_float(lod);
+
+        /* Break into fixed-point */
+        signed lod_int = f;
+        float lod_frac = f - lod_int;
+
+        /* Carry over negative fractions */
+        if (lod_frac < 0.0) {
+                lod_int--;
+                lod_frac += 1.0;
+        }
+
+        /* Encode */
+        word->bias = float_to_ubyte(lod_frac);
+        word->bias_int = lod_int;
+
+        return true;
+}
+
+static enum mali_sampler_type
+midgard_sampler_type(nir_alu_type t)
+{
+        switch (nir_alu_type_get_base_type(t)) {
+                case nir_type_float:
+                        return MALI_SAMPLER_FLOAT;
+                case nir_type_int:
+                        return MALI_SAMPLER_SIGNED;
+                case nir_type_uint:
+                        return MALI_SAMPLER_UNSIGNED;
+                default:
+                        unreachable("Unknown sampler type");
+        }
+}
+
 static void
 emit_texop_native(compiler_context *ctx, nir_tex_instr *instr,
 		  unsigned midgard_texop)
@@ -1470,7 +1531,26 @@ emit_texop_native(compiler_context *ctx, nir_tex_instr *instr,
         int texture_index = instr->texture_index;
         int sampler_index = texture_index;
 
-        unsigned position_swizzle = 0;
+        /* No helper to build texture words -- we do it all here */
+        midgard_instruction ins = {
+                .type = TAG_TEXTURE_4,
+                .texture = {
+                        .op = midgard_texop,
+                        .format = midgard_tex_format(instr->sampler_dim),
+                        .texture_handle = texture_index,
+                        .sampler_handle = sampler_index,
+
+                        /* TODO: Regalloc it in */
+                        .swizzle = SWIZZLE_XYZW,
+                        .mask = 0xF,
+
+                        /* TODO: half */
+                        .in_reg_full = 1,
+                        .out_full = 1,
+
+                        .sampler_type = midgard_sampler_type(instr->dest_type),
+                }
+        };
 
         for (unsigned i = 0; i < instr->num_srcs; ++i) {
                 int reg = SSA_FIXED_REGISTER(REGISTER_TEXTURE_BASE + in_reg);
@@ -1481,6 +1561,9 @@ emit_texop_native(compiler_context *ctx, nir_tex_instr *instr,
                 switch (instr->src[i].src_type) {
                 case nir_tex_src_coord: {
                         if (instr->sampler_dim == GLSL_SAMPLER_DIM_CUBE) {
+                                /* texelFetch is undefined on samplerCube */
+                                assert(midgard_texop != TEXTURE_OP_TEXEL_FETCH);
+
                                 /* For cubemaps, we need to load coords into
                                  * special r27, and then use a special ld/st op
                                  * to select the face and copy the xy into the
@@ -1497,20 +1580,39 @@ emit_texop_native(compiler_context *ctx, nir_tex_instr *instr,
                                 st.load_store.swizzle = alu_src.swizzle;
                                 emit_mir_instruction(ctx, st);
 
-                                position_swizzle = swizzle_of(2);
+                                ins.texture.in_reg_swizzle = swizzle_of(2);
                         } else {
-                                position_swizzle = alu_src.swizzle = swizzle_of(nr_comp);
+                                ins.texture.in_reg_swizzle = alu_src.swizzle = swizzle_of(nr_comp);
 
-                                midgard_instruction ins = v_mov(index, alu_src, reg);
-                                ins.alu.mask = expand_writemask(mask_of(nr_comp));
-                                emit_mir_instruction(ctx, ins);
+                                midgard_instruction mov = v_mov(index, alu_src, reg);
+                                mov.alu.mask = expand_writemask(mask_of(nr_comp));
+                                emit_mir_instruction(ctx, mov);
 
-                                /* To the hardware, z is depth, w is array
-                                 * layer. To NIR, z is array layer for a 2D
-                                 * array */
+                                if (midgard_texop == TEXTURE_OP_TEXEL_FETCH) {
+                                        /* Texel fetch opcodes care about the
+                                         * values of z and w, so we actually
+                                         * need to spill into a second register
+                                         * for a texel fetch with register bias
+                                         * (for non-2D). TODO: Implement that
+                                         */
 
-                                if (instr->sampler_dim == GLSL_SAMPLER_DIM_2D)
-                                        position_swizzle = SWIZZLE_XYXZ;
+                                        assert(instr->sampler_dim == GLSL_SAMPLER_DIM_2D);
+
+                                        midgard_instruction zero = v_mov(index, alu_src, reg);
+                                        zero.ssa_args.inline_constant = true;
+                                        zero.ssa_args.src1 = SSA_FIXED_REGISTER(REGISTER_CONSTANT);
+                                        zero.has_constants = true;
+                                        zero.alu.mask = ~mov.alu.mask;
+                                        emit_mir_instruction(ctx, zero);
+
+                                        ins.texture.in_reg_swizzle = SWIZZLE_XYZZ;
+                                } else {
+                                        /* Non-texel fetch doesn't need that
+                                         * nonsense. However we do use the Z
+                                         * for array indexing */
+                                        bool is_3d = instr->sampler_dim == GLSL_SAMPLER_DIM_3D;
+                                        ins.texture.in_reg_swizzle = is_3d ? SWIZZLE_XYZZ : SWIZZLE_XYXZ;
+                                }
                         }
 
                         break;
@@ -1518,14 +1620,37 @@ emit_texop_native(compiler_context *ctx, nir_tex_instr *instr,
 
                 case nir_tex_src_bias:
                 case nir_tex_src_lod: {
-                        /* To keep RA simple, we put the bias/LOD into the w
-                         * component of the input source, which is otherwise in xy */
+                        /* Try as a constant if we can */
+
+                        bool is_txf = midgard_texop == TEXTURE_OP_TEXEL_FETCH;
+                        if (!is_txf && pan_attach_constant_bias(ctx, instr->src[i].src, &ins.texture))
+                                break;
+
+                        /* Otherwise we use a register. To keep RA simple, we
+                         * put the bias/LOD into the w component of the input
+                         * source, which is otherwise in xy */
 
                         alu_src.swizzle = SWIZZLE_XXXX;
 
-                        midgard_instruction ins = v_mov(index, alu_src, reg);
-                        ins.alu.mask = expand_writemask(1 << COMPONENT_W);
-                        emit_mir_instruction(ctx, ins);
+                        midgard_instruction mov = v_mov(index, alu_src, reg);
+                        mov.alu.mask = expand_writemask(1 << COMPONENT_W);
+                        emit_mir_instruction(ctx, mov);
+
+                        ins.texture.lod_register = true;
+
+                        midgard_tex_register_select sel = {
+                                .select = in_reg,
+                                .full = 1,
+
+                                /* w */
+                                .component_lo = 1,
+                                .component_hi = 1
+                        };
+
+                        uint8_t packed;
+                        memcpy(&packed, &sel, sizeof(packed));
+                        ins.texture.bias = packed;
+
                         break;
                };
 
@@ -1534,52 +1659,9 @@ emit_texop_native(compiler_context *ctx, nir_tex_instr *instr,
                 }
         }
 
-        /* No helper to build texture words -- we do it all here */
-        midgard_instruction ins = {
-                .type = TAG_TEXTURE_4,
-                .texture = {
-                        .op = midgard_texop,
-                        .format = midgard_tex_format(instr->sampler_dim),
-                        .texture_handle = texture_index,
-                        .sampler_handle = sampler_index,
-
-                        /* TODO: Regalloc it in */
-                        .swizzle = SWIZZLE_XYZW,
-                        .mask = 0xF,
-
-                        /* TODO: half */
-                        .in_reg_full = 1,
-                        .in_reg_swizzle = position_swizzle,
-                        .out_full = 1,
-
-                        /* Always 1 */
-                        .unknown7 = 1,
-                }
-        };
-
         /* Set registers to read and write from the same place */
         ins.texture.in_reg_select = in_reg;
         ins.texture.out_reg_select = out_reg;
-
-        /* Setup bias/LOD if necessary. Only register mode support right now.
-         * TODO: Immediate mode for performance gains */
-
-        if (instr->op == nir_texop_txb || instr->op == nir_texop_txl) {
-                ins.texture.lod_register = true;
-
-                midgard_tex_register_select sel = {
-                        .select = in_reg,
-                        .full = 1,
-
-                        /* w */
-                        .component_lo = 1,
-                        .component_hi = 1
-                };
-
-                uint8_t packed;
-                memcpy(&packed, &sel, sizeof(packed));
-                ins.texture.bias = packed;
-        }
 
         emit_mir_instruction(ctx, ins);
 
@@ -1599,6 +1681,14 @@ emit_texop_native(compiler_context *ctx, nir_tex_instr *instr,
 static void
 emit_tex(compiler_context *ctx, nir_tex_instr *instr)
 {
+        /* Fixup op, since only textureLod is permitted in VS but NIR can give
+         * generic tex in some cases (which confuses the hardware) */
+
+        bool is_vertex = ctx->stage == MESA_SHADER_VERTEX;
+
+        if (is_vertex && instr->op == nir_texop_tex)
+                instr->op = nir_texop_txl;
+
         switch (instr->op) {
         case nir_texop_tex:
         case nir_texop_txb:
@@ -1606,6 +1696,9 @@ emit_tex(compiler_context *ctx, nir_tex_instr *instr)
                 break;
         case nir_texop_txl:
                 emit_texop_native(ctx, instr, TEXTURE_OP_LOD);
+                break;
+        case nir_texop_txf:
+                emit_texop_native(ctx, instr, TEXTURE_OP_TEXEL_FETCH);
                 break;
         case nir_texop_txs:
                 emit_sysval_read(ctx, &instr->instr);

@@ -870,8 +870,8 @@ clear_htile_mask(struct radv_cmd_buffer *cmd_buffer,
 	radv_meta_restore(&saved_state, cmd_buffer);
 
 	return RADV_CMD_FLAG_CS_PARTIAL_FLUSH |
-	       RADV_CMD_FLAG_INV_VMEM_L1 |
-	       RADV_CMD_FLAG_WRITEBACK_GLOBAL_L2;
+	       RADV_CMD_FLAG_INV_VCACHE |
+	       RADV_CMD_FLAG_WB_L2;
 }
 
 static uint32_t
@@ -1326,44 +1326,42 @@ radv_get_cmask_fast_clear_value(const struct radv_image *image)
 
 uint32_t
 radv_clear_cmask(struct radv_cmd_buffer *cmd_buffer,
-		 struct radv_image *image, uint32_t value)
+		 struct radv_image *image,
+		 const VkImageSubresourceRange *range, uint32_t value)
 {
-	return radv_fill_buffer(cmd_buffer, image->bo,
-				image->offset + image->cmask.offset,
-				image->cmask.size, value);
+	uint64_t offset = image->offset + image->cmask.offset;
+	uint64_t size;
+
+	if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9) {
+		/* TODO: clear layers. */
+		size = image->cmask.size;
+	} else {
+		offset += image->cmask.slice_size * range->baseArrayLayer;
+		size = image->cmask.slice_size * radv_get_layerCount(image, range);
+	}
+
+	return radv_fill_buffer(cmd_buffer, image->bo, offset, size, value);
 }
 
 
 uint32_t
 radv_clear_fmask(struct radv_cmd_buffer *cmd_buffer,
-		 struct radv_image *image, uint32_t value)
+		 struct radv_image *image,
+		 const VkImageSubresourceRange *range, uint32_t value)
 {
-	return radv_fill_buffer(cmd_buffer, image->bo,
-				image->offset + image->fmask.offset,
-				image->fmask.size, value);
-}
+	uint64_t offset = image->offset + image->fmask.offset;
+	uint64_t size;
 
-uint32_t
-radv_dcc_clear_level(struct radv_cmd_buffer *cmd_buffer,
-		     const struct radv_image *image,
-		     uint32_t level, uint32_t value)
-{
-	uint64_t offset = image->offset + image->dcc_offset;
-	uint32_t size;
+	/* MSAA images do not support mipmap levels. */
+	assert(range->baseMipLevel == 0 &&
+	       radv_get_levelCount(image, range) == 1);
 
 	if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9) {
-		/* Mipmap levels aren't implemented. */
-		assert(level == 0);
-		size = image->planes[0].surface.dcc_size;
+		/* TODO: clear layers. */
+		size = image->fmask.size;
 	} else {
-		const struct legacy_surf_level *surf_level =
-			&image->planes[0].surface.u.legacy.level[level];
-
-		/* If this is 0, fast clear isn't possible. */
-		assert(surf_level->dcc_fast_clear_size);
-
-		offset += surf_level->dcc_offset;
-		size = surf_level->dcc_fast_clear_size;
+		offset += image->fmask.slice_size * range->baseArrayLayer;
+		size = image->fmask.slice_size * radv_get_layerCount(image, range);
 	}
 
 	return radv_fill_buffer(cmd_buffer, image->bo, offset, size, value);
@@ -1381,10 +1379,31 @@ radv_clear_dcc(struct radv_cmd_buffer *cmd_buffer,
 	radv_update_dcc_metadata(cmd_buffer, image, range, true);
 
 	for (uint32_t l = 0; l < level_count; l++) {
+		uint64_t offset = image->offset + image->dcc_offset;
 		uint32_t level = range->baseMipLevel + l;
+		uint64_t size;
 
-		flush_bits |= radv_dcc_clear_level(cmd_buffer, image,
-						   level, value);
+		if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9) {
+			/* Mipmap levels aren't implemented. */
+			assert(level == 0);
+			size = image->planes[0].surface.dcc_size;
+		} else {
+			const struct legacy_surf_level *surf_level =
+				&image->planes[0].surface.u.legacy.level[level];
+
+			/* If dcc_fast_clear_size is 0 (which might happens for
+			 * mipmaps) the fill buffer operation below is a no-op.
+			 * This can only happen during initialization as the
+			 * fast clear path fallbacks to slow clears if one
+			 * level can't be fast cleared.
+			 */
+			offset += surf_level->dcc_offset +
+				  surf_level->dcc_slice_fast_clear_size * range->baseArrayLayer;
+			size = surf_level->dcc_slice_fast_clear_size * radv_get_layerCount(image, range);
+		}
+
+		flush_bits |= radv_fill_buffer(cmd_buffer, image->bo, offset,
+					       size, value);
 	}
 
 	return flush_bits;
@@ -1564,6 +1583,13 @@ radv_fast_clear_color(struct radv_cmd_buffer *cmd_buffer,
 	VkClearColorValue clear_value = clear_att->clearValue.color;
 	uint32_t clear_color[2], flush_bits = 0;
 	uint32_t cmask_clear_value;
+	VkImageSubresourceRange range = {
+		.aspectMask = iview->aspect_mask,
+		.baseMipLevel = iview->base_mip,
+		.levelCount = iview->level_count,
+		.baseArrayLayer = iview->base_layer,
+		.layerCount = iview->layer_count,
+	};
 
 	if (pre_flush) {
 		cmd_buffer->state.flush_bits |= (RADV_CMD_FLAG_FLUSH_AND_INV_CB |
@@ -1581,13 +1607,6 @@ radv_fast_clear_color(struct radv_cmd_buffer *cmd_buffer,
 		uint32_t reset_value;
 		bool can_avoid_fast_clear_elim;
 		bool need_decompress_pass = false;
-		VkImageSubresourceRange range = {
-			.aspectMask = iview->aspect_mask,
-			.baseMipLevel = iview->base_mip,
-			.levelCount = iview->level_count,
-			.baseArrayLayer = iview->base_layer,
-			.layerCount = iview->layer_count,
-		};
 
 		vi_get_fast_clear_parameters(iview->vk_format,
 					     &clear_value, &reset_value,
@@ -1595,7 +1614,7 @@ radv_fast_clear_color(struct radv_cmd_buffer *cmd_buffer,
 
 		if (radv_image_has_cmask(iview->image)) {
 			flush_bits = radv_clear_cmask(cmd_buffer, iview->image,
-						      cmask_clear_value);
+						      &range, cmask_clear_value);
 
 			need_decompress_pass = true;
 		}
@@ -1610,7 +1629,7 @@ radv_fast_clear_color(struct radv_cmd_buffer *cmd_buffer,
 					 need_decompress_pass);
 	} else {
 		flush_bits = radv_clear_cmask(cmd_buffer, iview->image,
-					      cmask_clear_value);
+					      &range, cmask_clear_value);
 	}
 
 	if (post_flush) {

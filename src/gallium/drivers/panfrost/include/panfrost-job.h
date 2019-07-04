@@ -2,7 +2,7 @@
  * © Copyright 2017-2018 Alyssa Rosenzweig
  * © Copyright 2017-2018 Connor Abbott
  * © Copyright 2017-2018 Lyude Paul
- * © Copyright2019 Collabora
+ * © Copyright2019 Collabora, Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -318,6 +318,7 @@ enum mali_format {
 	MALI_RGB32_FIXED    = MALI_FORMAT_SPECIAL | 0x13,
 	MALI_RGBA32_FIXED   = MALI_FORMAT_SPECIAL | 0x14,
 	MALI_R11F_G11F_B10F = MALI_FORMAT_SPECIAL | 0x19,
+        MALI_R9F_G9F_B9F_E5F = MALI_FORMAT_SPECIAL | 0x1b,
 	/* Only used for varyings, to indicate the transformed gl_Position */
 	MALI_VARYING_POS    = MALI_FORMAT_SPECIAL | 0x1e,
 	/* Only used for varyings, to indicate that the write should be
@@ -833,8 +834,9 @@ struct mali_attr_meta {
         /* Always observed to be zero at the moment */
         unsigned unknown3 : 2;
 
-        /* When packing multiple attributes in a buffer, offset addresses by this value */
-        uint32_t src_offset;
+        /* When packing multiple attributes in a buffer, offset addresses by
+         * this value. Obscurely, this is signed. */
+        int32_t src_offset;
 } __attribute__((packed));
 
 enum mali_fbd_type {
@@ -1060,7 +1062,16 @@ struct midgard_payload_vertex_tiler {
         u32 zero3;
 #endif
 
-        u32 gl_enables; // 0x5
+        u16 gl_enables; // 0x5
+
+        /* Both zero for non-instanced draws. For instanced draws, a
+         * decomposition of padded_num_vertices. See the comments about the
+         * corresponding fields in mali_attr for context. */
+
+        unsigned instance_shift : 5;
+        unsigned instance_odd : 3;
+
+        u8 zero4;
 
         /* Offset for first vertex in buffer */
         u32 draw_start;
@@ -1094,9 +1105,6 @@ struct bifrost_payload_fused {
         struct bifrost_vertex_only vertex;
         struct mali_vertex_tiler_postfix vertex_postfix;
 } __attribute__((packed));
-
-/* Pointed to from texture_trampoline, mostly unknown still, haven't
- * managed to replay successfully */
 
 /* Purposeful off-by-one in width, height fields. For example, a (64, 64)
  * texture is stored as (63, 63) in these fields. This adjusts for that.
@@ -1234,8 +1242,9 @@ struct mali_sampler_descriptor {
         enum mali_wrap_mode wrap_r : 4;
         enum mali_alt_func compare_func : 3;
 
-        /* A single set bit of unknown, ha! */
-        unsigned unknown2 : 1;
+        /* No effect on 2D textures. For cubemaps, set for ES3 and clear for
+         * ES2, controlling seamless cubemapping */
+        unsigned seamless_cube_map : 1;
 
         unsigned zero : 16;
 

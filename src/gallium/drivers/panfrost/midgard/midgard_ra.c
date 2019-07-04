@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2018-2019 Alyssa Rosenzweig <alyssa@rosenzweig.io>
- * Copyright (C) 2019 Collabora
+ * Copyright (C) 2019 Collabora, Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,14 +92,7 @@ static unsigned
 compose_swizzle(unsigned swizzle, unsigned mask,
                 struct phys_reg reg, struct phys_reg dst)
 {
-        unsigned out = 0;
-
-        for (unsigned c = 0; c < 4; ++c) {
-                unsigned s = (swizzle >> (2*c)) & 0x3;
-                unsigned q = (reg.swizzle >> (2*s)) & 0x3;
-
-                out |= (q << (2*c));
-        }
+        unsigned out = pan_compose_swizzle(swizzle, reg.swizzle);
 
         /* Based on the register mask, we need to adjust over. E.g if we're
          * writing to yz, a base swizzle of xy__ becomes _xy_. Save the

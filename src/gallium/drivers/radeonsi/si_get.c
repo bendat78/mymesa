@@ -156,6 +156,7 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_COMPUTE_GRID_INFO_LAST_BLOCK:
 	case PIPE_CAP_IMAGE_LOAD_FORMATTED:
 	case PIPE_CAP_PREFER_COMPUTE_BLIT_FOR_MULTIMEDIA:
+        case PIPE_CAP_TGSI_DIV:
 		return 1;
 
 	case PIPE_CAP_RESOURCE_FROM_USER_MEMORY:
@@ -283,9 +284,13 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 		return 15; /* 16384 */
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
+		if (sscreen->info.chip_class >= GFX10)
+			return 14;
 		/* textures support 8192, but layered rendering supports 2048 */
 		return 12;
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
+		if (sscreen->info.chip_class >= GFX10)
+			return 8192;
 		/* textures support 8192, but layered rendering supports 2048 */
 		return 2048;
 
@@ -506,6 +511,7 @@ static const struct nir_shader_compiler_options nir_options = {
 	.lower_unpack_unorm_4x8 = true,
 	.lower_extract_byte = true,
 	.lower_extract_word = true,
+	.lower_rotate = true,
 	.optimize_sample_mask_in = true,
 	.max_unroll_iterations = 32,
 };
@@ -579,12 +585,10 @@ static int si_get_video_param(struct pipe_screen *screen,
 		case PIPE_VIDEO_CAP_SUPPORTED:
 			return (codec == PIPE_VIDEO_FORMAT_MPEG4_AVC &&
 				(si_vce_is_fw_version_supported(sscreen) ||
-				 sscreen->info.family == CHIP_RAVEN ||
-				 sscreen->info.family == CHIP_RAVEN2)) ||
+				sscreen->info.family >= CHIP_RAVEN)) ||
 				(profile == PIPE_VIDEO_PROFILE_HEVC_MAIN &&
-				(sscreen->info.family == CHIP_RAVEN ||
-				 sscreen->info.family == CHIP_RAVEN2 ||
-				 si_radeon_uvd_enc_supported(sscreen)));
+				(sscreen->info.family >= CHIP_RAVEN ||
+				si_radeon_uvd_enc_supported(sscreen)));
 		case PIPE_VIDEO_CAP_NPOT_TEXTURES:
 			return 1;
 		case PIPE_VIDEO_CAP_MAX_WIDTH:
@@ -633,7 +637,8 @@ static int si_get_video_param(struct pipe_screen *screen,
 			return false;
 		case PIPE_VIDEO_FORMAT_JPEG:
 			if (sscreen->info.family == CHIP_RAVEN ||
-			    sscreen->info.family == CHIP_RAVEN2)
+			    sscreen->info.family == CHIP_RAVEN2 ||
+			    sscreen->info.family == CHIP_NAVI10)
 				return true;
 			if (sscreen->info.family < CHIP_CARRIZO || sscreen->info.family >= CHIP_VEGA10)
 				return false;

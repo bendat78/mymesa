@@ -33,7 +33,8 @@ is_input(nir_intrinsic_instr *intrin)
 {
    return intrin->intrinsic == nir_intrinsic_load_input ||
           intrin->intrinsic == nir_intrinsic_load_per_vertex_input ||
-          intrin->intrinsic == nir_intrinsic_load_interpolated_input;
+          intrin->intrinsic == nir_intrinsic_load_interpolated_input ||
+          intrin->intrinsic == nir_intrinsic_load_fs_input_interp_deltas;
 }
 
 static bool
@@ -451,6 +452,8 @@ brw_nir_lower_fs_inputs(nir_shader *nir,
       lower_io_options |= nir_lower_io_force_sample_interpolation;
 
    nir_lower_io(nir, nir_var_shader_in, type_size_vec4, lower_io_options);
+   if (devinfo->gen >= 11)
+      nir_lower_interpolation(nir, ~0);
 
    /* This pass needs actual constants */
    nir_opt_constant_folding(nir);

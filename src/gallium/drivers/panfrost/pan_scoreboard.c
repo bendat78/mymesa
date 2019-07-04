@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Collabora
+ * Copyright (C) 2019 Collabora, Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -306,7 +306,7 @@ panfrost_scoreboard_set_value(struct panfrost_job *batch)
         /* Okay, we do. Let's generate it */
 
         struct panfrost_context *ctx = batch->ctx;
-        mali_ptr polygon_list = ctx->tiler_polygon_list.gpu;
+        mali_ptr polygon_list = ctx->tiler_polygon_list.bo->gpu;
 
         struct panfrost_transfer job =
                 panfrost_set_value_job(ctx, polygon_list);

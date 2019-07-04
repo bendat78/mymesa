@@ -84,13 +84,36 @@ etna_screen_resource_alloc_ts(struct pipe_screen *pscreen,
                               struct etna_resource *rsc)
 {
    struct etna_screen *screen = etna_screen(pscreen);
-   size_t rt_ts_size, ts_layer_stride, pixels;
+   size_t rt_ts_size, ts_layer_stride;
+   size_t ts_bits_per_tile, bytes_per_tile;
+   uint8_t ts_mode = TS_MODE_128B; /* only used by halti5 */
+   int8_t ts_compress_fmt;
 
    assert(!rsc->ts_bo);
 
-   /* TS only for level 0 -- XXX is this formula correct? */
-   pixels = rsc->levels[0].layer_stride / util_format_get_blocksize(rsc->base.format);
-   ts_layer_stride = align(pixels * screen->specs.bits_per_tile / 0x80,
+   /* pre-v4 compression is largely useless, so disable it when not wanted for MSAA
+    * v4 compression can be enabled everywhere without any known drawback,
+    * except that in-place resolve must go through a slower path
+    */
+   ts_compress_fmt = (screen->specs.v4_compression || rsc->base.nr_samples > 1) ?
+                      translate_ts_format(rsc->base.format) : -1;
+
+   if (screen->specs.halti >= 5) {
+      /* enable 256B ts mode with compression, as it improves performance
+       * the size of the resource might also determine if we want to use it or not
+       */
+      if (ts_compress_fmt >= 0)
+         ts_mode = TS_MODE_256B;
+
+      ts_bits_per_tile = 4;
+      bytes_per_tile = ts_mode == TS_MODE_256B ? 256 : 128;
+   } else {
+      ts_bits_per_tile = screen->specs.bits_per_tile;
+      bytes_per_tile = 64;
+   }
+
+   ts_layer_stride = align(DIV_ROUND_UP(rsc->levels[0].layer_stride,
+                                        bytes_per_tile * 8 / ts_bits_per_tile),
                            0x100 * screen->specs.pixel_pipes);
    rt_ts_size = ts_layer_stride * rsc->base.array_size;
    if (rt_ts_size == 0)
@@ -111,13 +134,8 @@ etna_screen_resource_alloc_ts(struct pipe_screen *pscreen,
    rsc->levels[0].ts_offset = 0;
    rsc->levels[0].ts_layer_stride = ts_layer_stride;
    rsc->levels[0].ts_size = rt_ts_size;
-
-   /* It is important to initialize the TS, as random pattern
-    * can result in crashes. Do this on the CPU as this only happens once
-    * per surface anyway and it's a small area, so it may not be worth
-    * queuing this to the GPU. */
-   void *ts_map = etna_bo_map(rt_ts);
-   memset(ts_map, screen->specs.ts_clear_value, rt_ts_size);
+   rsc->levels[0].ts_mode = ts_mode;
+   rsc->levels[0].ts_compress_fmt = ts_compress_fmt;
 
    return true;
 }

@@ -277,6 +277,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_ALLOW_MAPPED_BUFFERS_DURING_EXECUTION:
    case PIPE_CAP_QUERY_SO_OVERFLOW:
    case PIPE_CAP_DEST_SURFACE_SRGB_CONTROL:
+   case PIPE_CAP_TGSI_DIV:
       return 1;
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
       return nouveau_screen(pscreen)->vram_domain & NOUVEAU_BO_VRAM ? 1 : 0;
@@ -354,6 +355,13 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS:
    case PIPE_CAP_NIR_COMPACT_ARRAYS:
    case PIPE_CAP_IMAGE_LOAD_FORMATTED:
+   case PIPE_CAP_COMPUTE_SHADER_DERIVATIVES:
+   case PIPE_CAP_ATOMIC_FLOAT_MINMAX:
+   case PIPE_CAP_CONSERVATIVE_RASTER_INNER_COVERAGE:
+   case PIPE_CAP_FRAGMENT_SHADER_INTERLOCK:
+   case PIPE_CAP_CS_DERIVED_SYSTEM_VALUES_SUPPORTED:
+   case PIPE_CAP_FBFETCH_COHERENT:
+   case PIPE_CAP_TGSI_SKIP_SHRINK_IO_ARRAYS:
       return 0;
 
    case PIPE_CAP_VENDOR_ID:
@@ -372,8 +380,14 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return dev->vram_size >> 20;
    case PIPE_CAP_UMA:
       return 0;
+
    default:
       debug_printf("%s: unhandled cap %d\n", __func__, param);
+      /* fallthrough */
+   /* caps where we want the default value */
+   case PIPE_CAP_DMABUF:
+   case PIPE_CAP_ESSL_FEATURE_LEVEL:
+   case PIPE_CAP_MAX_FRAMES_IN_FLIGHT:
       return u_pipe_screen_get_param_defaults(pscreen, param);
    }
 }

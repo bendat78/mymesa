@@ -60,6 +60,13 @@ struct si_function_info {
 	unsigned num_params;
 };
 
+struct si_shader_output_values {
+	LLVMValueRef values[4];
+	unsigned semantic_name;
+	unsigned semantic_index;
+	ubyte vertex_stream[4];
+};
+
 struct si_shader_context {
 	struct lp_build_tgsi_context bld_base;
 	struct gallivm_state gallivm;
@@ -179,6 +186,13 @@ struct si_shader_context {
 	int param_tes_rel_patch_id;
 	/* HW ES */
 	int param_es2gs_offset;
+	/* HW GS */
+	/* On gfx10:
+	 *  - bits 0..10: ordered_wave_id
+	 *  - bits 12..20: number of vertices in group
+	 *  - bits 22..30: number of primitives in group
+	 */
+	LLVMValueRef gs_tg_info;
 	/* API GS */
 	int param_gs2vs_offset;
 	int param_gs_wave_id; /* GFX6 */
@@ -199,6 +213,10 @@ struct si_shader_context {
 
 	LLVMValueRef invoc0_tess_factors[6]; /* outer[4], inner[2] */
 	LLVMValueRef gs_next_vertex[4];
+	LLVMValueRef gs_curprim_verts[4];
+	LLVMValueRef gs_generated_prims[4];
+	LLVMValueRef gs_ngg_emit;
+	LLVMValueRef gs_ngg_scratch;
 	LLVMValueRef postponed_kill;
 	LLVMValueRef return_value;
 
@@ -339,6 +357,17 @@ void si_declare_compute_memory(struct si_shader_context *ctx);
 void si_tgsi_declare_compute_memory(struct si_shader_context *ctx,
 				    const struct tgsi_full_declaration *decl);
 
+LLVMValueRef si_get_primitive_id(struct si_shader_context *ctx,
+				 unsigned swizzle);
+void si_llvm_export_vs(struct si_shader_context *ctx,
+		       struct si_shader_output_values *outputs,
+		       unsigned noutput);
+void si_emit_streamout_output(struct si_shader_context *ctx,
+			      LLVMValueRef const *so_buffers,
+			      LLVMValueRef const *so_write_offsets,
+			      struct pipe_stream_output *stream_out,
+			      struct si_shader_output_values *shader_out);
+
 void si_llvm_load_input_vs(
 	struct si_shader_context *ctx,
 	unsigned input_index,
@@ -353,5 +382,15 @@ bool si_nir_build_llvm(struct si_shader_context *ctx, struct nir_shader *nir);
 LLVMValueRef si_unpack_param(struct si_shader_context *ctx,
 			     unsigned param, unsigned rshift,
 			     unsigned bitwidth);
+
+void gfx10_emit_ngg_epilogue(struct ac_shader_abi *abi,
+			     unsigned max_outputs,
+			     LLVMValueRef *addrs);
+void gfx10_ngg_gs_emit_vertex(struct si_shader_context *ctx,
+			      unsigned stream,
+			      LLVMValueRef *addrs);
+void gfx10_ngg_gs_emit_prologue(struct si_shader_context *ctx);
+void gfx10_ngg_gs_emit_epilogue(struct si_shader_context *ctx);
+void gfx10_ngg_calculate_subgroup_info(struct si_shader *shader);
 
 #endif

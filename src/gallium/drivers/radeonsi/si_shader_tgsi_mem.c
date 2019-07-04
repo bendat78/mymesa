@@ -134,7 +134,7 @@ ac_image_dim_from_tgsi_target(struct si_screen *screen, enum tgsi_texture_type t
 	if (dim == ac_image_cube ||
 	    (screen->info.chip_class <= GFX8 && dim == ac_image_3d))
 		dim = ac_image_2darray;
-	else if (target == TGSI_TEXTURE_2D && screen->info.chip_class >= GFX9) {
+	else if (target == TGSI_TEXTURE_2D && screen->info.chip_class == GFX9) {
 		/* When a single layer of a 3D texture is bound, the shader
 		 * will refer to a 2D target, but the descriptor has a 3D type.
 		 * Since the HW ignores BASE_ARRAY in this case, we need to
@@ -294,7 +294,8 @@ static void image_fetch_coords(
 		} else if (target == TGSI_TEXTURE_1D_ARRAY) {
 			coords[2] = coords[1];
 			coords[1] = ctx->i32_0;
-		} else if (target == TGSI_TEXTURE_2D) {
+		} else if (ctx->screen->info.chip_class == GFX9 &&
+			   target == TGSI_TEXTURE_2D) {
 			/* The hw can't bind a slice of a 3D image as a 2D
 			 * image, because it ignores BASE_ARRAY if the target
 			 * is 3D. The workaround is to read BASE_ARRAY and set
@@ -329,8 +330,9 @@ static unsigned get_cache_policy(struct si_shader_context *ctx,
 	      * evicting L1 cache lines that may be needed by other
 	      * instructions. */
 	     writeonly_memory ||
-	     inst->Memory.Qualifier & (TGSI_MEMORY_COHERENT | TGSI_MEMORY_VOLATILE)))
+	     inst->Memory.Qualifier & (TGSI_MEMORY_COHERENT | TGSI_MEMORY_VOLATILE))) {
 		cache_policy |= ac_glc;
+	}
 
 	if (inst->Memory.Qualifier & TGSI_MEMORY_STREAM_CACHE_POLICY)
 		cache_policy |= ac_slc;
@@ -512,12 +514,12 @@ static void load_emit(
 		emit_data->output[emit_data->chan] =
 			ac_build_buffer_load(&ctx->ac, args.resource,
 					     util_last_bit(inst->Dst[0].Register.WriteMask),
-					     NULL, voffset, NULL, 0, 0, 0, true, true);
+					     NULL, voffset, NULL, 0, 0, true, true);
 		return;
 	}
 
 	if (inst->Memory.Qualifier & TGSI_MEMORY_VOLATILE)
-		ac_build_waitcnt(&ctx->ac, VM_CNT);
+		ac_build_waitcnt(&ctx->ac, AC_WAIT_VLOAD | AC_WAIT_VSTORE);
 
 	can_speculate = !(inst->Memory.Qualifier & TGSI_MEMORY_VOLATILE) &&
 			  is_oneway_access_only(inst, info,
@@ -549,9 +551,7 @@ static void load_emit(
 			ac_build_buffer_load(&ctx->ac, args.resource,
 					     util_last_bit(inst->Dst[0].Register.WriteMask),
 					     NULL, voffset, NULL, 0,
-					     !!(args.cache_policy & ac_glc),
-					     !!(args.cache_policy & ac_slc),
-					     can_speculate, false);
+					     args.cache_policy, can_speculate, false);
 		return;
 	}
 
@@ -563,7 +563,7 @@ static void load_emit(
 						    vindex,
 						    ctx->i32_0,
 						    num_channels,
-						    !!(args.cache_policy & ac_glc),
+						    args.cache_policy,
 						    can_speculate);
 		emit_data->output[emit_data->chan] =
 			ac_build_expand_to_vec4(&ctx->ac, result, num_channels);
@@ -632,9 +632,7 @@ static void store_emit_buffer(struct si_shader_context *ctx,
 		}
 
 		ac_build_buffer_store_dword(&ctx->ac, resource, data, count,
-					    voff, ctx->i32_0, 0,
-					    !!(cache_policy & ac_glc),
-					    !!(cache_policy & ac_slc),
+					    voff, ctx->i32_0, 0, cache_policy,
 					    false);
 	}
 }
@@ -706,7 +704,7 @@ static void store_emit(
 	}
 
 	if (inst->Memory.Qualifier & TGSI_MEMORY_VOLATILE)
-		ac_build_waitcnt(&ctx->ac, VM_CNT);
+		ac_build_waitcnt(&ctx->ac, AC_WAIT_VLOAD | AC_WAIT_VSTORE);
 
 	bool is_image = inst->Dst[0].Register.File != TGSI_FILE_BUFFER;
 	args.cache_policy = get_cache_policy(ctx, inst,
@@ -728,8 +726,7 @@ static void store_emit(
 					     ac_build_gather_values(&ctx->ac, chans, num_channels),
 					     vindex, ctx->i32_0 /* voffset */,
 					     num_channels,
-					     !!(args.cache_policy & ac_glc),
-					     false);
+					     args.cache_policy);
 	} else {
 		args.opcode = ac_image_store;
 		args.data[0] = ac_build_gather_values(&ctx->ac, chans, 4);
@@ -1339,7 +1336,7 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action *action,
 						    args.resource,
 						    vindex,
 						    ctx->i32_0,
-						    num_channels, false, true);
+						    num_channels, 0, true);
 		emit_data->output[emit_data->chan] =
 			ac_build_expand_to_vec4(&ctx->ac, result, num_channels);
 		return;
@@ -1408,9 +1405,11 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action *action,
 		 *
 		 * TC-compatible HTILE promotes Z16 and Z24 to Z32_FLOAT,
 		 * so the depth comparison value isn't clamped for Z16 and
-		 * Z24 anymore. Do it manually here.
+		 * Z24 anymore. Do it manually here for GFX8-9; GFX10 has
+		 * an explicitly clamped 32-bit float format.
 		 */
-		if (ctx->screen->info.chip_class >= GFX8) {
+		if (ctx->screen->info.chip_class >= GFX8 &&
+		    ctx->screen->info.chip_class <= GFX9) {
 			LLVMValueRef upgraded;
 			LLVMValueRef clamped;
 			upgraded = LLVMBuildExtractElement(ctx->ac.builder, args.sampler,

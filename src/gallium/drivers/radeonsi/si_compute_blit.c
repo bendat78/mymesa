@@ -192,7 +192,7 @@ void si_clear_buffer(struct si_context *sctx, struct pipe_resource *dst,
 	if (!size)
 		return;
 
-	unsigned clear_alignment = MIN2(clear_value_size, 4);
+	MAYBE_UNUSED unsigned clear_alignment = MIN2(clear_value_size, 4);
 
 	assert(clear_value_size != 3 && clear_value_size != 6); /* 12 is allowed. */
 	assert(offset % clear_alignment == 0);
@@ -434,7 +434,7 @@ void si_retile_dcc(struct si_context *sctx, struct si_texture *tex)
 		       SI_CONTEXT_CS_PARTIAL_FLUSH |
 		       si_get_flush_flags(sctx, SI_COHERENCY_CB_META, L2_LRU) |
 		       si_get_flush_flags(sctx, SI_COHERENCY_SHADER, L2_LRU);
-	si_emit_cache_flush(sctx);
+	sctx->emit_cache_flush(sctx);
 
 	/* Save states. */
 	void *saved_cs = sctx->cs_shader_state.program;

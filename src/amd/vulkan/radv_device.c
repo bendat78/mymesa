@@ -371,6 +371,8 @@ radv_physical_device_init(struct radv_physical_device *device,
 				       (device->rad_info.chip_class >= GFX8 &&
 				        device->rad_info.me_fw_feature >= 41);
 
+	device->has_dcc_constant_encode = device->rad_info.family == CHIP_RAVEN2;
+
 	device->use_shader_ballot = device->instance->perftest_flags & RADV_PERFTEST_SHADER_BALLOT;
 
 	radv_physical_device_init_mem_types(device);
@@ -2702,9 +2704,9 @@ radv_get_preamble_cs(struct radv_queue *queue,
 			                         queue->device->physical_device->rad_info.chip_class >= GFX7,
 			                       (queue->queue_family_index == RADV_QUEUE_COMPUTE ? RADV_CMD_FLAG_CS_PARTIAL_FLUSH : (RADV_CMD_FLAG_CS_PARTIAL_FLUSH | RADV_CMD_FLAG_PS_PARTIAL_FLUSH)) |
 			                       RADV_CMD_FLAG_INV_ICACHE |
-			                       RADV_CMD_FLAG_INV_SMEM_L1 |
-			                       RADV_CMD_FLAG_INV_VMEM_L1 |
-			                       RADV_CMD_FLAG_INV_GLOBAL_L2 |
+			                       RADV_CMD_FLAG_INV_SCACHE |
+			                       RADV_CMD_FLAG_INV_VCACHE |
+			                       RADV_CMD_FLAG_INV_L2 |
 					       RADV_CMD_FLAG_START_PIPELINE_STATS, 0);
 		} else if (i == 1) {
 			si_cs_emit_cache_flush(cs,
@@ -2713,9 +2715,9 @@ radv_get_preamble_cs(struct radv_queue *queue,
 			                       queue->queue_family_index == RING_COMPUTE &&
 			                         queue->device->physical_device->rad_info.chip_class >= GFX7,
 			                       RADV_CMD_FLAG_INV_ICACHE |
-			                       RADV_CMD_FLAG_INV_SMEM_L1 |
-			                       RADV_CMD_FLAG_INV_VMEM_L1 |
-			                       RADV_CMD_FLAG_INV_GLOBAL_L2 |
+			                       RADV_CMD_FLAG_INV_SCACHE |
+			                       RADV_CMD_FLAG_INV_VCACHE |
+			                       RADV_CMD_FLAG_INV_L2 |
 					       RADV_CMD_FLAG_START_PIPELINE_STATS, 0);
 		}
 
@@ -4354,7 +4356,7 @@ radv_initialise_color_surface(struct radv_device *device,
 
 	uint32_t max_slice = radv_surface_max_layer_count(iview) - 1;
 	cb->cb_color_view = S_028C6C_SLICE_START(iview->base_layer) |
-		S_028C6C_SLICE_MAX(max_slice);
+		S_028C6C_SLICE_MAX_GFX6(max_slice);
 
 	if (iview->image->info.samples > 1) {
 		unsigned log_samples = util_logbase2(iview->image->info.samples);
@@ -4459,7 +4461,7 @@ radv_initialise_color_surface(struct radv_device *device,
 		unsigned width = iview->extent.width / (iview->plane_id ? format_desc->width_divisor : 1);
 		unsigned height = iview->extent.height / (iview->plane_id ? format_desc->height_divisor : 1);
 
-		cb->cb_color_view |= S_028C6C_MIP_LEVEL(iview->base_mip);
+		cb->cb_color_view |= S_028C6C_MIP_LEVEL_GFX9(iview->base_mip);
 		cb->cb_color_attrib |= S_028C74_MIP0_DEPTH(mip0_depth) |
 			S_028C74_RESOURCE_TYPE(surf->u.gfx9.resource_type);
 		cb->cb_color_attrib2 = S_028C68_MIP0_WIDTH(width - 1) |
@@ -4906,7 +4908,7 @@ radv_init_sampler(struct radv_device *device,
 			     S_008F38_MIP_POINT_PRECLAMP(0) |
 			     S_008F38_DISABLE_LSB_CEIL(device->physical_device->rad_info.chip_class <= GFX8) |
 			     S_008F38_FILTER_PREC_FIX(1) |
-			     S_008F38_ANISO_OVERRIDE(is_vi));
+			     S_008F38_ANISO_OVERRIDE_GFX6(is_vi));
 	sampler->state[3] = (S_008F3C_BORDER_COLOR_PTR(0) |
 			     S_008F3C_BORDER_COLOR_TYPE(radv_tex_bordercolor(pCreateInfo->borderColor)));
 }

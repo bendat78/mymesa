@@ -961,7 +961,14 @@ typedef struct nir_alu_instr {
     * it must ensure that the resulting value is bit-for-bit identical to the
     * original.
     */
-   bool exact;
+   bool exact:1;
+
+   /**
+    * Indicates that this instruction do not cause wrapping to occur, in the
+    * form of overflow or underflow.
+    */
+   bool no_signed_wrap:1;
+   bool no_unsigned_wrap:1;
 
    nir_alu_dest dest;
    nir_alu_src src[];
@@ -1674,7 +1681,6 @@ nir_alu_instr_is_comparison(const nir_alu_instr *instr)
    case nir_op_i2b1:
    case nir_op_f2b1:
    case nir_op_inot:
-   case nir_op_fnot:
       return true;
    default:
       return false;
@@ -2416,6 +2422,9 @@ typedef struct nir_shader_compiler_options {
 
    /* Lowers when 32x32->64 bit multiplication is not supported */
    bool lower_mul_2x32_64;
+
+   /* Lowers when rotate instruction is not supported */
+   bool lower_rotate;
 
    unsigned max_unroll_iterations;
 
@@ -3561,6 +3570,17 @@ bool nir_lower_doubles(nir_shader *shader, const nir_shader *softfp64,
                        nir_lower_doubles_options options);
 bool nir_lower_pack(nir_shader *shader);
 
+typedef enum {
+   nir_lower_interpolation_at_sample = (1 << 1),
+   nir_lower_interpolation_at_offset = (1 << 2),
+   nir_lower_interpolation_centroid  = (1 << 3),
+   nir_lower_interpolation_pixel     = (1 << 4),
+   nir_lower_interpolation_sample    = (1 << 5),
+} nir_lower_interpolation_options;
+
+bool nir_lower_interpolation(nir_shader *shader,
+                             nir_lower_interpolation_options options);
+
 bool nir_normalize_cubemap_coords(nir_shader *shader);
 
 void nir_live_ssa_defs_impl(nir_function_impl *impl);
@@ -3658,6 +3678,26 @@ nir_intrinsic_op nir_intrinsic_from_system_value(gl_system_value val);
 gl_system_value nir_system_value_from_intrinsic(nir_intrinsic_op intrin);
 
 bool nir_lower_sincos(nir_shader *shader);
+
+static inline bool
+nir_variable_is_in_ubo(const nir_variable *var)
+{
+   return (var->data.mode == nir_var_mem_ubo &&
+           var->interface_type != NULL);
+}
+
+static inline bool
+nir_variable_is_in_ssbo(const nir_variable *var)
+{
+   return (var->data.mode == nir_var_mem_ssbo &&
+           var->interface_type != NULL);
+}
+
+static inline bool
+nir_variable_is_in_block(const nir_variable *var)
+{
+   return nir_variable_is_in_ubo(var) || nir_variable_is_in_ssbo(var);
+}
 
 #ifdef __cplusplus
 } /* extern "C" */

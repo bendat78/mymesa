@@ -152,6 +152,11 @@ struct panfrost_context {
         int dirty;
 
         unsigned vertex_count;
+        unsigned instance_count;
+
+        /* If instancing is enabled, vertex count padded for instance; if
+         * it is disabled, just equal to plain vertex count */
+        unsigned padded_count;
 
         union mali_attr attributes[PIPE_MAX_ATTRIBS];
 
@@ -183,6 +188,14 @@ struct panfrost_context {
 
         struct primconvert_context *primconvert;
         struct blitter_context *blitter;
+
+        /* Blitting the wallpaper (the old contents of the framebuffer back to
+         * itself) uses a dedicated u_blitter instance versus general blit()
+         * callbacks from Gallium, as the blit() callback can trigger
+         * wallpapering without Gallium realising, which in turns u_blitter
+         * errors due to unsupported reucrsion */
+
+        struct blitter_context *blitter_wallpaper;
         struct panfrost_job *wallpaper_batch;
 
         struct panfrost_blend_state *blend;
@@ -334,5 +347,49 @@ panfrost_fragment_job(struct panfrost_context *ctx, bool has_draws);
 
 void
 panfrost_shader_compile(struct panfrost_context *ctx, struct mali_shader_meta *meta, const char *src, int type, struct panfrost_shader_state *state);
+
+void
+panfrost_pack_work_groups_compute(
+                struct mali_vertex_tiler_prefix *out,
+                unsigned num_x,
+                unsigned num_y,
+                unsigned num_z,
+                unsigned size_x,
+                unsigned size_y,
+                unsigned size_z);
+
+void
+panfrost_pack_work_groups_fused(
+                struct mali_vertex_tiler_prefix *vertex,
+                struct mali_vertex_tiler_prefix *tiler,
+                unsigned num_x,
+                unsigned num_y,
+                unsigned num_z,
+                unsigned size_x,
+                unsigned size_y,
+                unsigned size_z);
+
+/* Instancing */
+
+mali_ptr
+panfrost_vertex_buffer_address(struct panfrost_context *ctx, unsigned i);
+
+void
+panfrost_emit_vertex_data(struct panfrost_job *batch);
+
+struct pan_shift_odd {
+        unsigned shift;
+        unsigned odd;
+};
+
+struct pan_shift_odd
+panfrost_padded_vertex_count(
+                unsigned vertex_count,
+                bool primitive_pot);
+
+
+unsigned
+pan_expand_shift_odd(struct pan_shift_odd o);
+
 
 #endif
