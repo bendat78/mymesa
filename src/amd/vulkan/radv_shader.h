@@ -62,7 +62,18 @@ enum {
 	RADV_ALPHA_ADJUST_SSCALED = 3,
 };
 
+struct radv_vs_out_key {
+	uint32_t as_es:1;
+	uint32_t as_ls:1;
+	uint32_t as_ngg:1;
+	uint32_t export_prim_id:1;
+	uint32_t export_layer_id:1;
+	uint32_t export_clip_dists:1;
+};
+
 struct radv_vs_variant_key {
+	struct radv_vs_out_key out;
+
 	uint32_t instance_rate_inputs;
 	uint32_t instance_rate_divisors[MAX_VERTEX_ATTRIBS];
 	uint8_t vertex_attribute_formats[MAX_VERTEX_ATTRIBS];
@@ -76,19 +87,11 @@ struct radv_vs_variant_key {
 
 	/* For some formats the channels have to be shuffled. */
 	uint32_t post_shuffle;
-
-	uint32_t as_es:1;
-	uint32_t as_ls:1;
-	uint32_t export_prim_id:1;
-	uint32_t export_layer_id:1;
-	uint32_t export_clip_dists:1;
 };
 
 struct radv_tes_variant_key {
-	uint32_t as_es:1;
-	uint32_t export_prim_id:1;
-	uint32_t export_layer_id:1;
-	uint32_t export_clip_dists:1;
+	struct radv_vs_out_key out;
+
 	uint8_t num_patches;
 	uint8_t tcs_num_outputs;
 };
@@ -203,7 +206,6 @@ struct radv_shader_info {
 	struct {
 		bool force_persample;
 		bool needs_sample_positions;
-		bool uses_input_attachments;
 		bool writes_memory;
 		bool writes_z;
 		bool writes_stencil;
@@ -262,6 +264,7 @@ struct radv_shader_variant_info {
 	unsigned num_input_vgprs;
 	unsigned private_mem_vgprs;
 	bool need_indirect_descriptor_sets;
+	bool is_ngg;
 	struct {
 		struct {
 			struct radv_vs_output_info outinfo;

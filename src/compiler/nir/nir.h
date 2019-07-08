@@ -228,6 +228,17 @@ typedef struct nir_variable {
       unsigned invariant:1;
 
       /**
+       * Can this variable be coalesced with another?
+       *
+       * This is set by nir_lower_io_to_temporaries to say that any
+       * copies involving this variable should stay put. Propagating it can
+       * duplicate the resulting load/store, which is not wanted, and may
+       * result in a load/store of the variable with an indirect offset which
+       * the backend may not be able to handle.
+       */
+      unsigned cannot_coalesce:1;
+
+      /**
        * When separate shader programs are enabled, only input/outputs between
        * the stages of a multi-stage separate program can be safely removed
        * from the shader interface. Other input/outputs must remains active.
@@ -3143,6 +3154,11 @@ void nir_compact_varyings(nir_shader *producer, nir_shader *consumer,
 void nir_link_xfb_varyings(nir_shader *producer, nir_shader *consumer);
 bool nir_link_opt_varyings(nir_shader *producer, nir_shader *consumer);
 
+
+void nir_assign_io_var_locations(struct exec_list *var_list,
+                                 unsigned *size,
+                                 gl_shader_stage stage);
+
 typedef enum {
    /* If set, this forces all non-flat fragment shader inputs to be
     * interpolated as if with the "sample" qualifier.  This requires
@@ -3154,6 +3170,8 @@ bool nir_lower_io(nir_shader *shader,
                   nir_variable_mode modes,
                   int (*type_size)(const struct glsl_type *, bool),
                   nir_lower_io_options);
+
+bool nir_io_add_const_offset_to_base(nir_shader *nir, nir_variable_mode mode);
 
 typedef enum {
    /**
@@ -3493,6 +3511,8 @@ bool nir_lower_non_uniform_access(nir_shader *shader,
                                   enum nir_lower_non_uniform_access_type);
 
 bool nir_lower_idiv(nir_shader *shader);
+
+bool nir_lower_input_attachments(nir_shader *shader, bool use_fragcoord_sysval);
 
 bool nir_lower_clip_vs(nir_shader *shader, unsigned ucp_enables, bool use_vars);
 bool nir_lower_clip_fs(nir_shader *shader, unsigned ucp_enables);

@@ -62,7 +62,7 @@
 #include "ac_llvm_util.h"
 #include "radv_descriptor_set.h"
 #include "radv_extensions.h"
-#include "radv_cs.h"
+#include "sid.h"
 
 #include <llvm-c/TargetMachine.h>
 
@@ -82,6 +82,17 @@ typedef uint32_t xcb_window_t;
 
 #include "wsi_common.h"
 #include "wsi_common_display.h"
+
+struct gfx10_format {
+    unsigned img_format:9;
+
+    /* Various formats are only supported with workarounds for vertex fetch,
+     * and some 32_32_32 formats are supported natively, but only for buffers
+     * (possibly with some image support, actually, but no filtering). */
+    bool buffers_only:1;
+};
+
+#include "gfx10_format_table.h"
 
 #define ATI_VENDOR_ID 0x1002
 
@@ -1499,6 +1510,8 @@ static inline bool radv_pipeline_has_tess(const struct radv_pipeline *pipeline)
 	return pipeline->shaders[MESA_SHADER_TESS_CTRL] ? true : false;
 }
 
+bool radv_pipeline_has_ngg(const struct radv_pipeline *pipeline);
+
 struct radv_userdata_info *radv_lookup_user_sgpr(struct radv_pipeline *pipeline,
 						 gl_shader_stage stage,
 						 int idx);
@@ -1926,7 +1939,8 @@ struct radv_color_buffer_info {
 	uint32_t cb_color_view;
 	uint32_t cb_color_info;
 	uint32_t cb_color_attrib;
-	uint32_t cb_color_attrib2;
+	uint32_t cb_color_attrib2; /* GFX9 and later */
+	uint32_t cb_color_attrib3; /* GFX10 and later */
 	uint32_t cb_dcc_control;
 	uint32_t cb_color_cmask_slice;
 	uint32_t cb_color_fmask_slice;
@@ -1950,8 +1964,8 @@ struct radv_ds_buffer_info {
 	uint32_t db_depth_slice;
 	uint32_t db_htile_surface;
 	uint32_t pa_su_poly_offset_db_fmt_cntl;
-	uint32_t db_z_info2;
-	uint32_t db_stencil_info2;
+	uint32_t db_z_info2; /* GFX9 only */
+	uint32_t db_stencil_info2; /* GFX9 only */
 	float offset_scale;
 };
 

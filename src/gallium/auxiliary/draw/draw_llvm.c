@@ -234,6 +234,10 @@ create_jit_context_type(struct gallivm_state *gallivm,
                                  PIPE_MAX_SHADER_SAMPLER_VIEWS); /* textures */
    elem_types[5] = LLVMArrayType(sampler_type,
                                  PIPE_MAX_SAMPLERS); /* samplers */
+   elem_types[6] = LLVMArrayType(LLVMPointerType(int_type, 0), /* vs_ssbo */
+                                 LP_MAX_TGSI_SHADER_BUFFERS);
+   elem_types[7] = LLVMArrayType(int_type, /* num_vs_ssbos */
+                                 LP_MAX_TGSI_SHADER_BUFFERS);
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           ARRAY_SIZE(elem_types), 0);
 
@@ -252,6 +256,10 @@ create_jit_context_type(struct gallivm_state *gallivm,
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, samplers,
                           target, context_type,
                           DRAW_JIT_CTX_SAMPLERS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, vs_ssbos,
+                          target, context_type, DRAW_JIT_CTX_SSBOS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, num_vs_ssbos,
+                          target, context_type, DRAW_JIT_CTX_NUM_SSBOS);
    LP_CHECK_STRUCT_SIZE(struct draw_jit_context,
                         target, context_type);
 
@@ -293,6 +301,10 @@ create_gs_jit_context_type(struct gallivm_state *gallivm,
    elem_types[8] = LLVMPointerType(LLVMVectorType(int_type,
                                                   vector_length), 0);
 
+   elem_types[9] = LLVMArrayType(LLVMPointerType(int_type, 0), /* ssbos */
+                                 LP_MAX_TGSI_SHADER_BUFFERS);
+   elem_types[10] = LLVMArrayType(int_type, /* num_ssbos */
+                                 LP_MAX_TGSI_SHADER_BUFFERS);
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           ARRAY_SIZE(elem_types), 0);
 
@@ -320,6 +332,10 @@ create_gs_jit_context_type(struct gallivm_state *gallivm,
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, emitted_prims,
                           target, context_type,
                           DRAW_GS_JIT_CTX_EMITTED_PRIMS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, ssbos,
+                          target, context_type, DRAW_GS_JIT_CTX_SSBOS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, num_ssbos,
+                          target, context_type, DRAW_GS_JIT_CTX_NUM_SSBOS);
    LP_CHECK_STRUCT_SIZE(struct draw_gs_jit_context,
                         target, context_type);
 
@@ -607,7 +623,8 @@ generate_vs(struct draw_llvm_variant *variant,
             const struct lp_bld_tgsi_system_values *system_values,
             LLVMValueRef context_ptr,
             const struct lp_build_sampler_soa *draw_sampler,
-            boolean clamp_vertex_color)
+            boolean clamp_vertex_color,
+            struct lp_build_mask_context *bld_mask)
 {
    struct draw_llvm *llvm = variant->llvm;
    const struct tgsi_token *tokens = llvm->draw->vs.vertex_shader->state.tokens;
@@ -615,11 +632,15 @@ generate_vs(struct draw_llvm_variant *variant,
       draw_jit_context_vs_constants(variant->gallivm, context_ptr);
    LLVMValueRef num_consts_ptr =
       draw_jit_context_num_vs_constants(variant->gallivm, context_ptr);
+   LLVMValueRef ssbos_ptr =
+      draw_jit_context_vs_ssbos(variant->gallivm, context_ptr);
+   LLVMValueRef num_ssbos_ptr =
+      draw_jit_context_num_vs_ssbos(variant->gallivm, context_ptr);
 
    lp_build_tgsi_soa(variant->gallivm,
                      tokens,
                      vs_type,
-                     NULL /*struct lp_build_mask_context *mask*/,
+                     bld_mask, /*struct lp_build_mask_context *mask*/
                      consts_ptr,
                      num_consts_ptr,
                      system_values,
@@ -629,7 +650,7 @@ generate_vs(struct draw_llvm_variant *variant,
                      NULL,
                      draw_sampler,
                      &llvm->draw->vs.vertex_shader->info,
-                     NULL);
+                     NULL, ssbos_ptr, num_ssbos_ptr);
 
    {
       LLVMValueRef out;
@@ -1801,6 +1822,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
       true_index_array = lp_build_broadcast_scalar(&blduivec, lp_loop.counter);
       true_index_array = LLVMBuildAdd(builder, true_index_array, ind_vec, "");
 
+      LLVMValueRef exec_mask = lp_build_cmp(&blduivec, PIPE_FUNC_LEQUAL, true_index_array, fetch_max);
       /*
        * Limit indices to fetch_max, otherwise might try to access indices
        * beyond index buffer (or rather vsplit elt buffer) size.
@@ -1880,6 +1902,9 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
          }
       }
 
+      struct lp_build_mask_context mask;
+
+      lp_build_mask_begin(&mask, gallivm, vs_type, exec_mask);
       /* In the paths with elts vertex id has to be unaffected by the
        * index bias and because indices inside our elements array have
        * already had index bias applied we need to subtract it here to
@@ -1906,8 +1931,10 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
                   &system_values,
                   context_ptr,
                   sampler,
-                  key->clamp_vertex_color);
+                  key->clamp_vertex_color,
+                  &mask);
 
+      lp_build_mask_end(&mask);
       if (pos != -1 && cv != -1) {
          /* store original positions in clip before further manipulation */
          store_clip(gallivm, vs_type, io, outputs, pos);
@@ -2247,6 +2274,7 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    struct draw_gs_llvm_iface gs_iface;
    const struct tgsi_token *tokens = variant->shader->base.state.tokens;
    LLVMValueRef consts_ptr, num_consts_ptr;
+   LLVMValueRef ssbos_ptr, num_ssbos_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][TGSI_NUM_CHANNELS];
    struct lp_build_mask_context mask;
    const struct tgsi_shader_info *gs_info = &variant->shader->base.info;
@@ -2328,6 +2356,10 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    num_consts_ptr =
       draw_gs_jit_context_num_constants(variant->gallivm, context_ptr);
 
+   ssbos_ptr = draw_gs_jit_context_ssbos(variant->gallivm, context_ptr);
+   num_ssbos_ptr =
+      draw_gs_jit_context_num_ssbos(variant->gallivm, context_ptr);
+
    /* code generated texture sampling */
    sampler = draw_llvm_sampler_soa_create(variant->key.samplers);
 
@@ -2356,7 +2388,7 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
                      NULL,
                      sampler,
                      &llvm->draw->gs.geometry_shader->info,
-                     (const struct lp_build_tgsi_gs_iface *)&gs_iface);
+                     (const struct lp_build_tgsi_gs_iface *)&gs_iface, ssbos_ptr, num_ssbos_ptr);
 
    sampler->destroy(sampler);
 

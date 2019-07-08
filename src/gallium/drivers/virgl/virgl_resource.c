@@ -35,6 +35,19 @@
  */
 #define VIRGL_QUEUED_STAGING_RES_SIZE_LIMIT (128 * 1024 * 1024)
 
+enum virgl_transfer_map_type {
+   VIRGL_TRANSFER_MAP_ERROR = -1,
+   VIRGL_TRANSFER_MAP_HW_RES,
+
+   /* Map a range of a staging buffer. The updated contents should be transferred
+    * with a copy transfer.
+    */
+   VIRGL_TRANSFER_MAP_STAGING,
+
+   /* Reallocate the underlying virgl_hw_res. */
+   VIRGL_TRANSFER_MAP_REALLOC,
+};
+
 /* We need to flush to properly sync the transfer with the current cmdbuf.
  * But there are cases where the flushing can be skipped:
  *
@@ -80,7 +93,7 @@ static bool virgl_res_needs_readback(struct virgl_context *vctx,
    return true;
 }
 
-enum virgl_transfer_map_type
+static enum virgl_transfer_map_type
 virgl_resource_transfer_prepare(struct virgl_context *vctx,
                                 struct virgl_transfer *xfer)
 {
@@ -211,6 +224,233 @@ virgl_resource_transfer_prepare(struct virgl_context *vctx,
       vws->resource_wait(vws, res->hw_res);
 
    return map_type;
+}
+
+/* Calculate the minimum size of the memory required to service a resource
+ * transfer map. Also return the stride and layer_stride for the corresponding
+ * layout.
+ */
+static unsigned
+virgl_transfer_map_size(struct virgl_transfer *vtransfer,
+                        unsigned *out_stride,
+                        unsigned *out_layer_stride)
+{
+   struct pipe_resource *pres = vtransfer->base.resource;
+   struct pipe_box *box = &vtransfer->base.box;
+   unsigned stride;
+   unsigned layer_stride;
+   unsigned size;
+
+   assert(out_stride);
+   assert(out_layer_stride);
+
+   stride = util_format_get_stride(pres->format, box->width);
+   layer_stride = util_format_get_2d_size(pres->format, stride, box->height);
+
+   if (pres->target == PIPE_TEXTURE_CUBE ||
+       pres->target == PIPE_TEXTURE_CUBE_ARRAY ||
+       pres->target == PIPE_TEXTURE_3D ||
+       pres->target == PIPE_TEXTURE_2D_ARRAY) {
+      size = box->depth * layer_stride;
+   } else if (pres->target == PIPE_TEXTURE_1D_ARRAY) {
+      size = box->depth * stride;
+   } else {
+      size = layer_stride;
+   }
+
+   *out_stride = stride;
+   *out_layer_stride = layer_stride;
+
+   return size;
+}
+
+/* Maps a region from staging to service the transfer. */
+static void *
+virgl_staging_map(struct virgl_context *vctx,
+                  struct virgl_transfer *vtransfer)
+{
+   struct virgl_resource *vres = virgl_resource(vtransfer->base.resource);
+   unsigned size;
+   unsigned align_offset;
+   unsigned stride;
+   unsigned layer_stride;
+   void *map_addr;
+   bool alloc_succeeded;
+
+   assert(vctx->supports_staging);
+
+   size = virgl_transfer_map_size(vtransfer, &stride, &layer_stride);
+
+   /* For buffers we need to ensure that the start of the buffer would be
+    * aligned to VIRGL_MAP_BUFFER_ALIGNMENT, even if our transfer doesn't
+    * actually include it. To achieve this we may need to allocate a slightly
+    * larger range from the upload buffer, and later update the uploader
+    * resource offset and map address to point to the requested x coordinate
+    * within that range.
+    *
+    * 0       A       2A      3A
+    * |-------|---bbbb|bbbbb--|
+    *             |--------|    ==> size
+    *         |---|             ==> align_offset
+    *         |------------|    ==> allocation of size + align_offset
+    */
+   align_offset = vres->u.b.target == PIPE_BUFFER ?
+                  vtransfer->base.box.x % VIRGL_MAP_BUFFER_ALIGNMENT :
+                  0;
+
+   alloc_succeeded =
+      virgl_staging_alloc(&vctx->staging, size + align_offset,
+                          VIRGL_MAP_BUFFER_ALIGNMENT,
+                          &vtransfer->copy_src_offset,
+                          &vtransfer->copy_src_hw_res,
+                          &map_addr);
+   if (alloc_succeeded) {
+      /* Update source offset and address to point to the requested x coordinate
+       * if we have an align_offset (see above for more information). */
+      vtransfer->copy_src_offset += align_offset;
+      map_addr += align_offset;
+
+      /* Mark as dirty, since we are updating the host side resource
+       * without going through the corresponding guest side resource, and
+       * hence the two will diverge.
+       */
+      virgl_resource_dirty(vres, vtransfer->base.level);
+
+      /* We are using the minimum required size to hold the contents,
+       * possibly using a layout different from the layout of the resource,
+       * so update the transfer strides accordingly.
+       */
+      vtransfer->base.stride = stride;
+      vtransfer->base.layer_stride = layer_stride;
+
+      /* Track the total size of active staging resources. */
+      vctx->queued_staging_res_size += size + align_offset;
+   }
+
+   return map_addr;
+}
+
+static bool
+virgl_resource_realloc(struct virgl_context *vctx, struct virgl_resource *res)
+{
+   struct virgl_screen *vs = virgl_screen(vctx->base.screen);
+   const struct pipe_resource *templ = &res->u.b;
+   unsigned vbind;
+   struct virgl_hw_res *hw_res;
+
+   vbind = pipe_to_virgl_bind(vs, templ->bind, templ->flags);
+   hw_res = vs->vws->resource_create(vs->vws,
+                                     templ->target,
+                                     templ->format,
+                                     vbind,
+                                     templ->width0,
+                                     templ->height0,
+                                     templ->depth0,
+                                     templ->array_size,
+                                     templ->last_level,
+                                     templ->nr_samples,
+                                     res->metadata.total_size);
+   if (!hw_res)
+      return false;
+
+   vs->vws->resource_reference(vs->vws, &res->hw_res, NULL);
+   res->hw_res = hw_res;
+
+   /* We can safely clear the range here, since it will be repopulated in the
+    * following rebind operation, according to the active buffer binds.
+    */
+   util_range_set_empty(&res->valid_buffer_range);
+
+   /* count toward the staging resource size limit */
+   vctx->queued_staging_res_size += res->metadata.total_size;
+
+   virgl_rebind_resource(vctx, &res->u.b);
+
+   return true;
+}
+
+void *
+virgl_resource_transfer_map(struct pipe_context *ctx,
+                            struct pipe_resource *resource,
+                            unsigned level,
+                            unsigned usage,
+                            const struct pipe_box *box,
+                            struct pipe_transfer **transfer)
+{
+   struct virgl_context *vctx = virgl_context(ctx);
+   struct virgl_winsys *vws = virgl_screen(ctx->screen)->vws;
+   struct virgl_resource *vres = virgl_resource(resource);
+   struct virgl_transfer *trans;
+   enum virgl_transfer_map_type map_type;
+   void *map_addr;
+
+   /* Multisampled resources require resolve before mapping. */
+   assert(resource->nr_samples <= 1);
+
+   trans = virgl_resource_create_transfer(vctx, resource,
+                                          &vres->metadata, level, usage, box);
+
+   map_type = virgl_resource_transfer_prepare(vctx, trans);
+   switch (map_type) {
+   case VIRGL_TRANSFER_MAP_REALLOC:
+      if (!virgl_resource_realloc(vctx, vres)) {
+         map_addr = NULL;
+         break;
+      }
+      vws->resource_reference(vws, &trans->hw_res, vres->hw_res);
+      /* fall through */
+   case VIRGL_TRANSFER_MAP_HW_RES:
+      trans->hw_res_map = vws->resource_map(vws, vres->hw_res);
+      if (trans->hw_res_map)
+         map_addr = trans->hw_res_map + trans->offset;
+      else
+         map_addr = NULL;
+      break;
+   case VIRGL_TRANSFER_MAP_STAGING:
+      map_addr = virgl_staging_map(vctx, trans);
+      /* Copy transfers don't make use of hw_res_map at the moment. */
+      trans->hw_res_map = NULL;
+      break;
+   case VIRGL_TRANSFER_MAP_ERROR:
+   default:
+      trans->hw_res_map = NULL;
+      map_addr = NULL;
+      break;
+   }
+
+   if (!map_addr) {
+      virgl_resource_destroy_transfer(vctx, trans);
+      return NULL;
+   }
+
+   if (vres->u.b.target == PIPE_BUFFER) {
+      /* For the checks below to be able to use 'usage', we assume that
+       * transfer preparation doesn't affect the usage.
+       */
+      assert(usage == trans->base.usage);
+
+      /* If we are doing a whole resource discard with a hw_res map, the buffer
+       * storage can now be considered unused and we don't care about previous
+       * contents.  We can thus mark the storage as uninitialized, but only if
+       * the buffer is not host writable (in which case we can't clear the
+       * valid range, since that would result in missed readbacks in future
+       * transfers).  We only do this for VIRGL_TRANSFER_MAP_HW_RES, since for
+       * VIRGL_TRANSFER_MAP_REALLOC we already take care of the buffer range
+       * when reallocating and rebinding, and VIRGL_TRANSFER_MAP_STAGING is not
+       * currently used for whole resource discards.
+       */
+      if (map_type == VIRGL_TRANSFER_MAP_HW_RES &&
+          (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) &&
+          (vres->clean_mask & 1)) {
+         util_range_set_empty(&vres->valid_buffer_range);
+      }
+
+      if (usage & PIPE_TRANSFER_WRITE)
+          util_range_add(&vres->valid_buffer_range, box->x, box->x + box->width);
+   }
+
+   *transfer = &trans->base;
+   return map_addr;
 }
 
 static struct pipe_resource *virgl_resource_create(struct pipe_screen *screen,
@@ -463,6 +703,7 @@ virgl_resource_create_transfer(struct virgl_context *vctx,
    util_range_init(&trans->range);
    trans->copy_src_hw_res = NULL;
    trans->copy_src_offset = 0;
+   trans->resolve_transfer = NULL;
 
    if (trans->base.resource->target != PIPE_TEXTURE_3D &&
        trans->base.resource->target != PIPE_TEXTURE_CUBE &&
@@ -525,145 +766,4 @@ void virgl_resource_dirty(struct virgl_resource *res, uint32_t level)
       else
          res->clean_mask &= ~(1 << level);
    }
-}
-
-/* Calculate the minimum size of the memory required to service a resource
- * transfer map. Also return the stride and layer_stride for the corresponding
- * layout.
- */
-static unsigned virgl_transfer_map_size(struct virgl_transfer *vtransfer,
-                                        unsigned *out_stride,
-                                        unsigned *out_layer_stride)
-{
-   struct pipe_resource *pres = vtransfer->base.resource;
-   struct pipe_box *box = &vtransfer->base.box;
-   unsigned stride;
-   unsigned layer_stride;
-   unsigned size;
-
-   assert(out_stride);
-   assert(out_layer_stride);
-
-   stride = util_format_get_stride(pres->format, box->width);
-   layer_stride = util_format_get_2d_size(pres->format, stride, box->height);
-
-   if (pres->target == PIPE_TEXTURE_CUBE ||
-       pres->target == PIPE_TEXTURE_CUBE_ARRAY ||
-       pres->target == PIPE_TEXTURE_3D ||
-       pres->target == PIPE_TEXTURE_2D_ARRAY) {
-      size = box->depth * layer_stride;
-   } else if (pres->target == PIPE_TEXTURE_1D_ARRAY) {
-      size = box->depth * stride;
-   } else {
-      size = layer_stride;
-   }
-
-   *out_stride = stride;
-   *out_layer_stride = layer_stride;
-
-   return size;
-}
-
-/* Maps a region from staging to service the transfer. */
-void *virgl_staging_map(struct virgl_context *vctx,
-                        struct virgl_transfer *vtransfer)
-{
-   struct virgl_resource *vres = virgl_resource(vtransfer->base.resource);
-   unsigned size;
-   unsigned align_offset;
-   unsigned stride;
-   unsigned layer_stride;
-   void *map_addr;
-   bool alloc_succeeded;
-
-   assert(vctx->supports_staging);
-
-   size = virgl_transfer_map_size(vtransfer, &stride, &layer_stride);
-
-   /* For buffers we need to ensure that the start of the buffer would be
-    * aligned to VIRGL_MAP_BUFFER_ALIGNMENT, even if our transfer doesn't
-    * actually include it. To achieve this we may need to allocate a slightly
-    * larger range from the upload buffer, and later update the uploader
-    * resource offset and map address to point to the requested x coordinate
-    * within that range.
-    *
-    * 0       A       2A      3A
-    * |-------|---bbbb|bbbbb--|
-    *             |--------|    ==> size
-    *         |---|             ==> align_offset
-    *         |------------|    ==> allocation of size + align_offset
-    */
-   align_offset = vres->u.b.target == PIPE_BUFFER ?
-                  vtransfer->base.box.x % VIRGL_MAP_BUFFER_ALIGNMENT :
-                  0;
-
-   alloc_succeeded =
-      virgl_staging_alloc(&vctx->staging, size + align_offset,
-                          VIRGL_MAP_BUFFER_ALIGNMENT,
-                          &vtransfer->copy_src_offset,
-                          &vtransfer->copy_src_hw_res,
-                          &map_addr);
-   if (alloc_succeeded) {
-      /* Update source offset and address to point to the requested x coordinate
-       * if we have an align_offset (see above for more information). */
-      vtransfer->copy_src_offset += align_offset;
-      map_addr += align_offset;
-
-      /* Mark as dirty, since we are updating the host side resource
-       * without going through the corresponding guest side resource, and
-       * hence the two will diverge.
-       */
-      virgl_resource_dirty(vres, vtransfer->base.level);
-
-      /* We are using the minimum required size to hold the contents,
-       * possibly using a layout different from the layout of the resource,
-       * so update the transfer strides accordingly.
-       */
-      vtransfer->base.stride = stride;
-      vtransfer->base.layer_stride = layer_stride;
-
-      /* Track the total size of active staging resources. */
-      vctx->queued_staging_res_size += size + align_offset;
-   }
-
-   return map_addr;
-}
-
-bool
-virgl_resource_realloc(struct virgl_context *vctx, struct virgl_resource *res)
-{
-   struct virgl_screen *vs = virgl_screen(vctx->base.screen);
-   const struct pipe_resource *templ = &res->u.b;
-   unsigned vbind;
-   struct virgl_hw_res *hw_res;
-
-   vbind = pipe_to_virgl_bind(vs, templ->bind, templ->flags);
-   hw_res = vs->vws->resource_create(vs->vws,
-                                     templ->target,
-                                     templ->format,
-                                     vbind,
-                                     templ->width0,
-                                     templ->height0,
-                                     templ->depth0,
-                                     templ->array_size,
-                                     templ->last_level,
-                                     templ->nr_samples,
-                                     res->metadata.total_size);
-   if (!hw_res)
-      return false;
-
-   vs->vws->resource_reference(vs->vws, &res->hw_res, NULL);
-   res->hw_res = hw_res;
-
-   /* We can safely clear the range here, since it will be repopulated in the
-    * following rebind operation, according to the active buffer binds.
-    */
-   util_range_set_empty(&res->valid_buffer_range);
-
-   /* count toward the staging resource size limit */
-   vctx->queued_staging_res_size += res->metadata.total_size;
-
-   virgl_rebind_resource(vctx, &res->u.b);
-
-   return true;
 }
