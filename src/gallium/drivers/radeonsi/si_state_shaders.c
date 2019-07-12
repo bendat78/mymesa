@@ -558,6 +558,7 @@ static void si_shader_hs(struct si_screen *sscreen, struct si_shader *shader)
 				S_00B428_SGPRS((shader->config.num_sgprs - 1) / 8) : 0) |
 		       S_00B428_DX10_CLAMP(1) |
 		       S_00B428_MEM_ORDERED(sscreen->info.chip_class >= GFX10) |
+		       S_00B428_WGP_MODE(sscreen->info.chip_class >= GFX10) |
 		       S_00B428_FLOAT_MODE(shader->config.float_mode) |
 		       S_00B428_LS_VGPR_COMP_CNT(ls_vgpr_comp_cnt));
 
@@ -898,6 +899,7 @@ static void si_shader_gs(struct si_screen *sscreen, struct si_shader *shader)
 			S_00B228_VGPRS((shader->config.num_vgprs - 1) / 4) |
 			S_00B228_DX10_CLAMP(1) |
 			S_00B228_MEM_ORDERED(sscreen->info.chip_class >= GFX10) |
+			S_00B228_WGP_MODE(sscreen->info.chip_class >= GFX10) |
 			S_00B228_FLOAT_MODE(shader->config.float_mode) |
 			S_00B228_GS_VGPR_COMP_CNT(gs_vgpr_comp_cnt);
 		uint32_t rsrc2 =
@@ -1054,6 +1056,14 @@ static void gfx10_emit_shader_ngg_tess_gs(struct si_context *sctx)
 	gfx10_emit_shader_ngg_tail(sctx, shader, initial_cdw);
 }
 
+static void si_set_ge_pc_alloc(struct si_screen *sscreen,
+			       struct si_pm4_state *pm4, bool culling)
+{
+	si_pm4_set_reg(pm4, R_030980_GE_PC_ALLOC,
+		       S_030980_OVERSUB_EN(1) |
+		       S_030980_NUM_PC_LINES((culling ? 256 : 128) * sscreen->info.max_se - 1));
+}
+
 unsigned si_get_input_prim(const struct si_shader_selector *gs)
 {
 	if (gs->type == PIPE_SHADER_GEOMETRY)
@@ -1150,6 +1160,7 @@ static void gfx10_shader_ngg(struct si_screen *sscreen, struct si_shader *shader
 		       S_00B228_FLOAT_MODE(shader->config.float_mode) |
 		       S_00B228_DX10_CLAMP(1) |
 		       S_00B228_MEM_ORDERED(1) |
+		       S_00B228_WGP_MODE(1) |
 		       S_00B228_GS_VGPR_COMP_CNT(gs_vgpr_comp_cnt));
 	si_pm4_set_reg(pm4, R_00B22C_SPI_SHADER_PGM_RSRC2_GS,
 		       S_00B22C_SCRATCH_EN(shader->config.scratch_bytes_per_wave > 0) |
@@ -1158,11 +1169,12 @@ static void gfx10_shader_ngg(struct si_screen *sscreen, struct si_shader *shader
 		       S_00B22C_USER_SGPR_MSB_GFX10(num_user_sgprs >> 5) |
 		       S_00B22C_OC_LDS_EN(es_type == PIPE_SHADER_TESS_EVAL) |
 		       S_00B22C_LDS_SIZE(shader->config.lds_size));
+	si_set_ge_pc_alloc(sscreen, pm4, false);
 
-	/* TODO: Use NO_PC_EXPORT when applicable. */
 	nparams = MAX2(shader->info.nr_param_exports, 1);
 	shader->ctx_reg.ngg.spi_vs_out_config =
-		S_0286C4_VS_EXPORT_COUNT(nparams - 1);
+		S_0286C4_VS_EXPORT_COUNT(nparams - 1) |
+		S_0286C4_NO_PC_EXPORT(shader->info.nr_param_exports == 0);
 
 	shader->ctx_reg.ngg.spi_shader_idx_format =
 		S_028708_IDX0_EXPORT_FORMAT(V_028708_SPI_SHADER_1COMP);
@@ -1370,6 +1382,11 @@ static void si_shader_vs(struct si_screen *sscreen, struct si_shader *shader,
 	nparams = MAX2(shader->info.nr_param_exports, 1);
 	shader->ctx_reg.vs.spi_vs_out_config = S_0286C4_VS_EXPORT_COUNT(nparams - 1);
 
+	if (sscreen->info.chip_class >= GFX10) {
+		shader->ctx_reg.vs.spi_vs_out_config |=
+			S_0286C4_NO_PC_EXPORT(shader->info.nr_param_exports == 0);
+	}
+
 	shader->ctx_reg.vs.spi_shader_pos_format =
 			S_02870C_POS0_EXPORT_FORMAT(V_02870C_SPI_SHADER_4COMP) |
 			S_02870C_POS1_EXPORT_FORMAT(shader->info.nr_pos_exports > 1 ?
@@ -1386,6 +1403,8 @@ static void si_shader_vs(struct si_screen *sscreen, struct si_shader *shader,
 
 	si_pm4_set_reg(pm4, R_00B120_SPI_SHADER_PGM_LO_VS, va >> 8);
 	si_pm4_set_reg(pm4, R_00B124_SPI_SHADER_PGM_HI_VS, S_00B124_MEM_BASE(va >> 40));
+	if (sscreen->info.chip_class >= GFX10)
+		si_set_ge_pc_alloc(sscreen, pm4, false);
 
 	uint32_t rsrc1 = S_00B128_VGPRS((shader->config.num_vgprs - 1) / 4) |
 			 S_00B128_VGPR_COMP_CNT(vgpr_comp_cnt) |
@@ -1582,8 +1601,15 @@ static void si_shader_ps(struct si_screen *sscreen, struct si_shader *shader)
 	 *    stalls without this setting.
 	 *
 	 * Don't add this to CB_SHADER_MASK.
+	 *
+	 * GFX10 supports pixel shaders without exports by setting both
+	 * the color and Z formats to SPI_SHADER_ZERO. The hw will skip export
+	 * instructions if any are present.
 	 */
-	if (!spi_shader_col_format &&
+	if ((sscreen->info.chip_class <= GFX9 ||
+	     info->uses_kill ||
+	     shader->key.part.ps.epilog.alpha_func != PIPE_FUNC_ALWAYS) &&
+	    !spi_shader_col_format &&
 	    !info->writes_z && !info->writes_stencil && !info->writes_samplemask)
 		spi_shader_col_format = V_028714_SPI_SHADER_32_R;
 
@@ -2049,7 +2075,7 @@ static void si_build_shader_variant(struct si_shader *shader,
 		FILE *f = open_memstream(&shader->shader_log,
 					 &shader->shader_log_size);
 		if (f) {
-			si_shader_dump(sscreen, shader, NULL, sel->type, f, false);
+			si_shader_dump(sscreen, shader, NULL, f, false);
 			fclose(f);
 		}
 	}
@@ -2785,6 +2811,7 @@ static void *si_create_shader_selector(struct pipe_context *ctx,
 			}
 		}
 		break;
+	default:;
 	}
 
 	/* PA_CL_VS_OUT_CNTL */
@@ -3135,6 +3162,7 @@ static void si_delete_shader(struct si_context *sctx, struct si_shader *shader)
 		case PIPE_SHADER_FRAGMENT:
 			si_pm4_delete_state(sctx, ps, shader->pm4);
 			break;
+		default:;
 		}
 	}
 

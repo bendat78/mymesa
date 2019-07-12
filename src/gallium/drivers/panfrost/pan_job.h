@@ -51,8 +51,12 @@ struct panfrost_job {
         /* Buffers cleared (PIPE_CLEAR_* bitmask) */
         unsigned clear;
 
-        /* Packed clear values */
-        uint32_t clear_color;
+        /* Packed clear values, indexed by both render target as well as word.
+         * Essentially, a single pixel is packed, with some padding to bring it
+         * up to a 32-bit interval; that pixel is then duplicated over to fill
+         * all 16-bytes */
+
+        uint32_t clear_color[PIPE_MAX_COLOR_BUFS][4];
         float clear_depth;
         unsigned clear_stencil;
 
@@ -114,7 +118,7 @@ panfrost_free_job(struct panfrost_context *ctx, struct panfrost_job *job);
 
 struct panfrost_job *
 panfrost_get_job(struct panfrost_context *ctx,
-                struct pipe_surface **cbufs, struct pipe_surface *zsbuf);
+                 struct pipe_surface **cbufs, struct pipe_surface *zsbuf);
 
 struct panfrost_job *
 panfrost_get_job_for_fbo(struct panfrost_context *ctx);
@@ -127,59 +131,59 @@ panfrost_job_add_bo(struct panfrost_job *job, struct panfrost_bo *bo);
 
 void
 panfrost_flush_jobs_writing_resource(struct panfrost_context *panfrost,
-                                struct pipe_resource *prsc);
+                                     struct pipe_resource *prsc);
 
 void
 panfrost_flush_jobs_reading_resource(struct panfrost_context *panfrost,
-                                struct pipe_resource *prsc);
+                                     struct pipe_resource *prsc);
 
 void
 panfrost_job_submit(struct panfrost_context *ctx, struct panfrost_job *job);
 
 void
 panfrost_job_set_requirements(struct panfrost_context *ctx,
-                         struct panfrost_job *job);
+                              struct panfrost_job *job);
 
 void
 panfrost_job_clear(struct panfrost_context *ctx,
-                struct panfrost_job *job,
-                unsigned buffers,
-                const union pipe_color_union *color,
-                double depth, unsigned stencil);
+                   struct panfrost_job *job,
+                   unsigned buffers,
+                   const union pipe_color_union *color,
+                   double depth, unsigned stencil);
 
 void
 panfrost_job_union_scissor(struct panfrost_job *job,
-                unsigned minx, unsigned miny,
-                unsigned maxx, unsigned maxy);
+                           unsigned minx, unsigned miny,
+                           unsigned maxx, unsigned maxy);
 
 /* Scoreboarding */
 
 void
 panfrost_scoreboard_queue_compute_job(
-                struct panfrost_job *batch,
-                struct panfrost_transfer job);
+        struct panfrost_job *batch,
+        struct panfrost_transfer job);
 
 void
 panfrost_scoreboard_queue_vertex_job(
-                struct panfrost_job *batch,
-                struct panfrost_transfer vertex,
-                bool requires_tiling);
+        struct panfrost_job *batch,
+        struct panfrost_transfer vertex,
+        bool requires_tiling);
 
 void
 panfrost_scoreboard_queue_tiler_job(
-                struct panfrost_job *batch,
-                struct panfrost_transfer tiler);
+        struct panfrost_job *batch,
+        struct panfrost_transfer tiler);
 
 void
 panfrost_scoreboard_queue_fused_job(
-                struct panfrost_job *batch,
-                struct panfrost_transfer vertex,
-                struct panfrost_transfer tiler);
+        struct panfrost_job *batch,
+        struct panfrost_transfer vertex,
+        struct panfrost_transfer tiler);
 void
 panfrost_scoreboard_queue_fused_job_prepend(
-                struct panfrost_job *batch,
-                struct panfrost_transfer vertex,
-                struct panfrost_transfer tiler);
+        struct panfrost_job *batch,
+        struct panfrost_transfer vertex,
+        struct panfrost_transfer tiler);
 
 void
 panfrost_scoreboard_link_batch(struct panfrost_job *batch);

@@ -186,6 +186,16 @@ optimizations = [
    # If x > 1: 1 - fsat(x) => 1 - 1 => 0 and fsat(1 - x) => fsat(< 0) => 0
    (('~fadd', ('fneg(is_used_once)', ('fsat(is_used_once)', 'a(is_not_fmul)')), 1.0), ('fsat', ('fadd', 1.0, ('fneg', a)))),
 
+   # 1 - ((1 - a) * (1 - b))
+   # 1 - (1 - a - b + a*b)
+   # 1 - 1 + a + b - a*b
+   # a + b - a*b
+   # a + b*(1 - a)
+   # b*(1 - a) + 1*a
+   # flrp(b, 1, a)
+   (('~fadd@32', 1.0, ('fneg', ('fmul', ('fadd', 1.0, ('fneg', a)), ('fadd', 1.0, ('fneg', b))))),
+    ('flrp', b, 1.0, a), '!options->lower_flrp32'),
+
    # (a * #b + #c) << #d
    # ((a * #b) << #d) + (#c << #d)
    # (a * (#b << #d)) + (#c << #d)
@@ -1233,11 +1243,59 @@ late_optimizations = [
    (('~fadd@32', 1.0, ('fmul(is_used_once)', c , ('fadd', b, -1.0 ))), ('fadd', ('fadd', 1.0, ('fneg', c)), ('fmul', b, c)), 'options->lower_flrp32'),
    (('~fadd@64', 1.0, ('fmul(is_used_once)', c , ('fadd', b, -1.0 ))), ('fadd', ('fadd', 1.0, ('fneg', c)), ('fmul', b, c)), 'options->lower_flrp64'),
 
+   # A similar operation could apply to any ffma(#a, b, #(-a/2)), but this
+   # particular operation is common for expanding values stored in a texture
+   # from [0,1] to [-1,1].
+   (('~ffma@32', a,  2.0, -1.0), ('flrp', -1.0,  1.0,          a ), '!options->lower_flrp32'),
+   (('~ffma@32', a, -2.0, -1.0), ('flrp', -1.0,  1.0, ('fneg', a)), '!options->lower_flrp32'),
+   (('~ffma@32', a, -2.0,  1.0), ('flrp',  1.0, -1.0,          a ), '!options->lower_flrp32'),
+   (('~ffma@32', a,  2.0,  1.0), ('flrp',  1.0, -1.0, ('fneg', a)), '!options->lower_flrp32'),
+   (('~fadd@32', ('fmul(is_used_once)',  2.0, a), -1.0), ('flrp', -1.0,  1.0,          a ), '!options->lower_flrp32'),
+   (('~fadd@32', ('fmul(is_used_once)', -2.0, a), -1.0), ('flrp', -1.0,  1.0, ('fneg', a)), '!options->lower_flrp32'),
+   (('~fadd@32', ('fmul(is_used_once)', -2.0, a),  1.0), ('flrp',  1.0, -1.0,          a ), '!options->lower_flrp32'),
+   (('~fadd@32', ('fmul(is_used_once)',  2.0, a),  1.0), ('flrp',  1.0, -1.0, ('fneg', a)), '!options->lower_flrp32'),
+
+    # flrp(a, b, a)
+    # a*(1-a) + b*a
+    # a + -a*a + a*b    (1)
+    # a + a*(b - a)
+    # Option 1: ffma(a, (b-a), a)
+    #
+    # Alternately, after (1):
+    # a*(1+b) + -a*a
+    # a*((1+b) + -a)
+    #
+    # Let b=1
+    #
+    # Option 2: ffma(a, 2, -(a*a))
+    # Option 3: ffma(a, 2, (-a)*a)
+    # Option 4: ffma(a, -a, (2*a)
+    # Option 5: a * (2 - a)
+    #
+    # There are a lot of other possible combinations.
+   (('~ffma@32', ('fadd', b, ('fneg', a)), a, a), ('flrp', a, b, a), '!options->lower_flrp32'),
+   (('~ffma@32', a, 2.0, ('fneg', ('fmul', a, a))), ('flrp', a, 1.0, a), '!options->lower_flrp32'),
+   (('~ffma@32', a, 2.0, ('fmul', ('fneg', a), a)), ('flrp', a, 1.0, a), '!options->lower_flrp32'),
+   (('~ffma@32', a, ('fneg', a), ('fmul', 2.0, a)), ('flrp', a, 1.0, a), '!options->lower_flrp32'),
+   (('~fmul@32', a, ('fadd', 2.0, ('fneg', a))),    ('flrp', a, 1.0, a), '!options->lower_flrp32'),
+
    # we do these late so that we don't get in the way of creating ffmas
    (('fmin', ('fadd(is_used_once)', '#c', a), ('fadd(is_used_once)', '#c', b)), ('fadd', c, ('fmin', a, b))),
    (('fmax', ('fadd(is_used_once)', '#c', a), ('fadd(is_used_once)', '#c', b)), ('fadd', c, ('fmax', a, b))),
 
    (('bcsel', a, 0, ('b2f32', ('inot', 'b@bool'))), ('b2f32', ('inot', ('ior', a, b)))),
+
+   # Things that look like DPH in the source shader may get expanded to
+   # something that looks like dot(v1.xyz, v2.xyz) + v1.w by the time it gets
+   # to NIR.  After FFMA is generated, this can look like:
+   #
+   #    fadd(ffma(v1.z, v2.z, ffma(v1.y, v2.y, fmul(v1.x, v2.x))), v1.w)
+   #
+   # Reassociate the last addition into the first multiplication.
+   (('~fadd', ('ffma(is_used_once)', a, b, ('ffma', c, d, ('fmul', 'e(is_not_const_and_not_fsign)', 'f(is_not_const_and_not_fsign)'))), 'g(is_not_const)'),
+    ('ffma', a, b, ('ffma', c, d, ('ffma', e, 'f', 'g'))), '!options->intel_vec4'),
+   (('~fadd', ('ffma(is_used_once)', a, b,                ('fmul', 'e(is_not_const_and_not_fsign)', 'f(is_not_const_and_not_fsign)') ), 'g(is_not_const)'),
+    ('ffma', a, b,                ('ffma', e, 'f', 'g') ), '!options->intel_vec4'),
 ]
 
 print(nir_algebraic.AlgebraicPass("nir_opt_algebraic", optimizations).render())

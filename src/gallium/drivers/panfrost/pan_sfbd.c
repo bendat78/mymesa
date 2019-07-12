@@ -37,16 +37,16 @@ panfrost_sfbd_format(struct pipe_surface *surf)
 
 static void
 panfrost_sfbd_clear(
-                struct panfrost_job *job,
-                struct mali_single_framebuffer *sfbd)
+        struct panfrost_job *job,
+        struct mali_single_framebuffer *sfbd)
 {
         struct panfrost_context *ctx = job->ctx;
 
         if (job->clear & PIPE_CLEAR_COLOR) {
-                sfbd->clear_color_1 = job->clear_color;
-                sfbd->clear_color_2 = job->clear_color;
-                sfbd->clear_color_3 = job->clear_color;
-                sfbd->clear_color_4 = job->clear_color;
+                sfbd->clear_color_1 = job->clear_color[0][0];
+                sfbd->clear_color_2 = job->clear_color[0][1];
+                sfbd->clear_color_3 = job->clear_color[0][2];
+                sfbd->clear_color_4 = job->clear_color[0][3];
         }
 
         if (job->clear & PIPE_CLEAR_DEPTH) {
@@ -86,8 +86,8 @@ panfrost_sfbd_clear(
 
 static void
 panfrost_sfbd_set_cbuf(
-                struct mali_single_framebuffer *fb,
-                struct pipe_surface *surf)
+        struct mali_single_framebuffer *fb,
+        struct pipe_surface *surf)
 {
         struct panfrost_resource *rsrc = pan_resource(surf->texture);
 

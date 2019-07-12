@@ -3502,6 +3502,23 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
       bld.MOV(dest, fetch_render_target_array_index(bld));
       break;
 
+   case nir_intrinsic_is_helper_invocation: {
+      /* Unlike the regular gl_HelperInvocation, that is defined at dispatch,
+       * the helperInvocationEXT() (aka SpvOpIsHelperInvocationEXT) takes into
+       * consideration demoted invocations.  That information is stored in
+       * f0.1.
+       */
+      dest.type = BRW_REGISTER_TYPE_UD;
+
+      bld.MOV(dest, brw_imm_ud(0));
+
+      fs_inst *mov = bld.MOV(dest, brw_imm_ud(~0));
+      mov->predicate = BRW_PREDICATE_NORMAL;
+      mov->predicate_inverse = true;
+      mov->flag_subreg = 1;
+      break;
+   }
+
    case nir_intrinsic_load_helper_invocation:
    case nir_intrinsic_load_sample_mask_in:
    case nir_intrinsic_load_sample_id: {
@@ -3549,6 +3566,7 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
       break;
    }
 
+   case nir_intrinsic_demote:
    case nir_intrinsic_discard:
    case nir_intrinsic_discard_if: {
       /* We track our discarded pixels in f0.1.  By predicating on it, we can
@@ -3608,10 +3626,14 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
       cmp->flag_subreg = 1;
 
       if (devinfo->gen >= 6) {
+         /* Due to the way we implement discard, the jump will only happen
+          * when the whole quad is discarded.  So we can do this even for
+          * demote as it won't break its uniformity promises.
+          */
          emit_discard_jump();
       }
 
-      limit_dispatch_width(16, "Fragment discard not implemented in SIMD32 mode.");
+      limit_dispatch_width(16, "Fragment discard/demote not implemented in SIMD32 mode.");
       break;
    }
 
@@ -4394,11 +4416,47 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
    case nir_intrinsic_memory_barrier_buffer:
    case nir_intrinsic_memory_barrier_image:
    case nir_intrinsic_memory_barrier: {
+      bool l3_fence, slm_fence;
+      if (devinfo->gen >= 11) {
+         l3_fence = instr->intrinsic != nir_intrinsic_memory_barrier_shared;
+         slm_fence = instr->intrinsic == nir_intrinsic_group_memory_barrier ||
+                     instr->intrinsic == nir_intrinsic_memory_barrier ||
+                     instr->intrinsic == nir_intrinsic_memory_barrier_shared;
+      } else {
+         /* Prior to gen11, we only have one kind of fence. */
+         l3_fence = true;
+         slm_fence = false;
+      }
+
+      /* Be conservative in Gen11+ and always stall in a fence.  Since there
+       * are two different fences, and shader might want to synchronize
+       * between them.
+       *
+       * TODO: Improve NIR so that scope and visibility information for the
+       * barriers is available here to make a better decision.
+       *
+       * TODO: When emitting more than one fence, it might help emit all
+       * the fences first and then generate the stall moves.
+       */
+      const bool stall = devinfo->gen >= 11;
+
       const fs_builder ubld = bld.group(8, 0);
       const fs_reg tmp = ubld.vgrf(BRW_REGISTER_TYPE_UD, 2);
-      ubld.emit(SHADER_OPCODE_MEMORY_FENCE, tmp,
-                brw_vec8_grf(0, 0), brw_imm_ud(0))
-         ->size_written = 2 * REG_SIZE;
+
+      if (l3_fence) {
+         ubld.emit(SHADER_OPCODE_MEMORY_FENCE, tmp,
+                   brw_vec8_grf(0, 0), brw_imm_ud(stall),
+                   /* bti */ brw_imm_ud(0))
+            ->size_written = 2 * REG_SIZE;
+      }
+
+      if (slm_fence) {
+         ubld.emit(SHADER_OPCODE_MEMORY_FENCE, tmp,
+                   brw_vec8_grf(0, 0), brw_imm_ud(stall),
+                   brw_imm_ud(GEN7_BTI_SLM))
+            ->size_written = 2 * REG_SIZE;
+      }
+
       break;
    }
 
@@ -5216,7 +5274,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       const fs_builder ubld = bld.group(8, 0);
       const fs_reg tmp = ubld.vgrf(BRW_REGISTER_TYPE_UD, 2);
       ubld.emit(SHADER_OPCODE_MEMORY_FENCE, tmp,
-                brw_vec8_grf(0, 0), brw_imm_ud(1))
+                brw_vec8_grf(0, 0), brw_imm_ud(1), brw_imm_ud(0))
          ->size_written = 2 * REG_SIZE;
       break;
    }

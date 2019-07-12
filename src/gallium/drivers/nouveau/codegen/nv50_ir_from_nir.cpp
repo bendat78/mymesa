@@ -96,7 +96,10 @@ private:
    // If the found value has not a constant part, the Value gets returned
    // through the Value parameter.
    uint32_t getIndirect(nir_src *, uint8_t, Value *&);
-   uint32_t getIndirect(nir_intrinsic_instr *, uint8_t s, uint8_t c, Value *&);
+   // isScalar indicates that the addressing is scalar, vec4 addressing is
+   // assumed otherwise
+   uint32_t getIndirect(nir_intrinsic_instr *, uint8_t s, uint8_t c, Value *&,
+                        bool isScalar = false);
 
    uint32_t getSlotAddress(nir_intrinsic_instr *, uint8_t idx, uint8_t slot);
 
@@ -785,10 +788,10 @@ Converter::getIndirect(nir_src *src, uint8_t idx, Value *&indirect)
 }
 
 uint32_t
-Converter::getIndirect(nir_intrinsic_instr *insn, uint8_t s, uint8_t c, Value *&indirect)
+Converter::getIndirect(nir_intrinsic_instr *insn, uint8_t s, uint8_t c, Value *&indirect, bool isScalar)
 {
    int32_t idx = nir_intrinsic_base(insn) + getIndirect(&insn->src[s], c, indirect);
-   if (indirect)
+   if (indirect && !isScalar)
       indirect = mkOp2v(OP_SHL, TYPE_U32, getSSA(4, FILE_ADDRESS), indirect, loadImm(NULL, 4));
    return idx;
 }
@@ -1165,6 +1168,7 @@ bool Converter::assignSlots() {
 
    info->io.viewportId = -1;
    info->numInputs = 0;
+   info->numOutputs = 0;
 
    // we have to fixup the uniform locations for arrays
    unsigned numImages = 0;
@@ -1175,6 +1179,37 @@ bool Converter::assignSlots() {
       var->data.driver_location = numImages;
       numImages += type->is_array() ? type->arrays_of_arrays_size() : 1;
    }
+
+   info->numSysVals = 0;
+   for (uint8_t i = 0; i < SYSTEM_VALUE_MAX; ++i) {
+      if (!(nir->info.system_values_read & 1ull << i))
+         continue;
+
+      system_val_to_tgsi_semantic(i, &name, &index);
+      info->sv[info->numSysVals].sn = name;
+      info->sv[info->numSysVals].si = index;
+      info->sv[info->numSysVals].input = 0; // TODO inferSysValDirection(sn);
+
+      switch (i) {
+      case SYSTEM_VALUE_INSTANCE_ID:
+         info->io.instanceId = info->numSysVals;
+         break;
+      case SYSTEM_VALUE_TESS_LEVEL_INNER:
+      case SYSTEM_VALUE_TESS_LEVEL_OUTER:
+         info->sv[info->numSysVals].patch = 1;
+         break;
+      case SYSTEM_VALUE_VERTEX_ID:
+         info->io.vertexId = info->numSysVals;
+         break;
+      default:
+         break;
+      }
+
+      info->numSysVals += 1;
+   }
+
+   if (prog->getType() == Program::TYPE_COMPUTE)
+      return true;
 
    nir_foreach_variable(var, &nir->inputs) {
       const glsl_type *type = var->type;
@@ -1240,7 +1275,6 @@ bool Converter::assignSlots() {
       info->numInputs = std::max<uint8_t>(info->numInputs, vary);
    }
 
-   info->numOutputs = 0;
    nir_foreach_variable(var, &nir->outputs) {
       const glsl_type *type = var->type;
       int slot = var->data.location;
@@ -1330,34 +1364,6 @@ bool Converter::assignSlots() {
             info->out[vary].oread = 1;
       }
       info->numOutputs = std::max<uint8_t>(info->numOutputs, vary);
-   }
-
-   info->numSysVals = 0;
-   for (uint8_t i = 0; i < SYSTEM_VALUE_MAX; ++i) {
-      if (!(nir->info.system_values_read & 1ull << i))
-         continue;
-
-      system_val_to_tgsi_semantic(i, &name, &index);
-      info->sv[info->numSysVals].sn = name;
-      info->sv[info->numSysVals].si = index;
-      info->sv[info->numSysVals].input = 0; // TODO inferSysValDirection(sn);
-
-      switch (i) {
-      case SYSTEM_VALUE_INSTANCE_ID:
-         info->io.instanceId = info->numSysVals;
-         break;
-      case SYSTEM_VALUE_TESS_LEVEL_INNER:
-      case SYSTEM_VALUE_TESS_LEVEL_OUTER:
-         info->sv[info->numSysVals].patch = 1;
-         break;
-      case SYSTEM_VALUE_VERTEX_ID:
-         info->io.vertexId = info->numSysVals;
-         break;
-      default:
-         break;
-      }
-
-      info->numSysVals += 1;
    }
 
    if (info->io.genUserClip > 0) {
@@ -1553,8 +1559,6 @@ Converter::parseNIR()
 bool
 Converter::visit(nir_function *function)
 {
-   // we only support emiting the main function for now
-   assert(!strcmp(function->name, "main"));
    assert(function->impl);
 
    // usually the blocks will set everything up, but main is special
@@ -2052,6 +2056,18 @@ Converter::visit(nir_intrinsic_instr *insn)
             mkLoad(dType, newDefs[i], sym, indirect)->perPatch = vary.patch;
          }
       }
+      break;
+   }
+   case nir_intrinsic_load_kernel_input: {
+      assert(prog->getType() == Program::TYPE_COMPUTE);
+      assert(insn->num_components == 1);
+
+      LValues &newDefs = convert(&insn->dest);
+      const DataType dType = getDType(insn);
+      Value *indirect;
+      uint32_t idx = getIndirect(insn, 0, 0, indirect, true);
+
+      mkLoad(dType, newDefs[0], mkSymbol(FILE_SHADER_INPUT, 0, dType, idx), indirect);
       break;
    }
    case nir_intrinsic_load_barycentric_at_offset:
@@ -2602,6 +2618,42 @@ Converter::visit(nir_intrinsic_instr *insn)
 
       loadImm(newDefs[0], 0u);
       mkOp1(OP_RDSV, dType, newDefs[1], mkSysVal(SV_CLOCK, 0))->fixed = 1;
+      break;
+   }
+   case nir_intrinsic_load_global: {
+      const DataType dType = getDType(insn);
+      LValues &newDefs = convert(&insn->dest);
+      Value *indirectOffset;
+      uint32_t offset = getIndirect(&insn->src[0], 0, indirectOffset);
+
+      for (auto i = 0u; i < insn->num_components; ++i)
+         loadFrom(FILE_MEMORY_GLOBAL, 0, dType, newDefs[i], offset, i, indirectOffset);
+
+      info->io.globalAccess |= 0x1;
+      break;
+   }
+   case nir_intrinsic_store_global: {
+      DataType sType = getSType(insn->src[0], false, false);
+
+      for (auto i = 0u; i < insn->num_components; ++i) {
+         if (!((1u << i) & nir_intrinsic_write_mask(insn)))
+            continue;
+         if (typeSizeof(sType) == 8) {
+            Value *split[2];
+            mkSplit(split, 4, getSrc(&insn->src[0], i));
+
+            Symbol *sym = mkSymbol(FILE_MEMORY_GLOBAL, 0, TYPE_U32, i * typeSizeof(sType));
+            mkStore(OP_STORE, TYPE_U32, sym, getSrc(&insn->src[1], 0), split[0]);
+
+            sym = mkSymbol(FILE_MEMORY_GLOBAL, 0, TYPE_U32, i * typeSizeof(sType) + 4);
+            mkStore(OP_STORE, TYPE_U32, sym, getSrc(&insn->src[1], 0), split[1]);
+         } else {
+            Symbol *sym = mkSymbol(FILE_MEMORY_GLOBAL, 0, sType, i * typeSizeof(sType));
+            mkStore(OP_STORE, sType, sym, getSrc(&insn->src[1], 0), getSrc(&insn->src[0], i));
+         }
+      }
+
+      info->io.globalAccess |= 0x2;
       break;
    }
    default:

@@ -71,7 +71,9 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
-	case PIPE_CAP_SM3:
+	case PIPE_CAP_FRAGMENT_SHADER_TEXTURE_LOD:
+	case PIPE_CAP_FRAGMENT_SHADER_DERIVATIVES:
+	case PIPE_CAP_VERTEX_SHADER_SATURATE:
 	case PIPE_CAP_SEAMLESS_CUBE_MAP:
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_CONDITIONAL_RENDER:
@@ -140,7 +142,6 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_QUERY_TIMESTAMP:
 	case PIPE_CAP_QUERY_TIME_ELAPSED:
 	case PIPE_CAP_NIR_SAMPLERS_AS_DEREF:
-	case PIPE_CAP_QUERY_SO_OVERFLOW:
 	case PIPE_CAP_MEMOBJ:
 	case PIPE_CAP_LOAD_CONSTBUF:
 	case PIPE_CAP_INT64:
@@ -158,6 +159,9 @@ static int si_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_PREFER_COMPUTE_BLIT_FOR_MULTIMEDIA:
         case PIPE_CAP_TGSI_DIV:
 		return 1;
+
+	case PIPE_CAP_QUERY_SO_OVERFLOW:
+		return sscreen->info.chip_class <= GFX9;
 
 	case PIPE_CAP_RESOURCE_FROM_USER_MEMORY:
 		return !SI_BIG_ENDIAN && sscreen->info.has_userptr;
@@ -723,6 +727,11 @@ static boolean si_vid_is_format_supported(struct pipe_screen *screen,
 	if (profile == PIPE_VIDEO_PROFILE_HEVC_MAIN_10)
 		return (format == PIPE_FORMAT_NV12) ||
 			(format == PIPE_FORMAT_P016);
+
+	/* Vp9 profile 2 supports 10 bit decoding using P016 */
+	if (profile == PIPE_VIDEO_PROFILE_VP9_PROFILE2)
+		return format == PIPE_FORMAT_P016;
+
 
 	/* we can only handle this one with UVD */
 	if (profile != PIPE_VIDEO_PROFILE_UNKNOWN)

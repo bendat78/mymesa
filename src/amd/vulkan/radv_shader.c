@@ -548,7 +548,6 @@ lower_fs_io(nir_shader *nir, struct radv_shader_variant_info *shader_info)
 	nir_opt_constant_folding(nir);
 
 	NIR_PASS_V(nir, nir_io_add_const_offset_to_base, nir_var_shader_in);
-	radv_optimize_nir(nir, false, false);
 }
 
 
@@ -710,16 +709,21 @@ static void radv_postprocess_config(const struct radv_physical_device *pdevice,
 
 	switch (stage) {
 	case MESA_SHADER_TESS_EVAL:
-		if (info->tes.as_es) {
+		if (info->is_ngg) {
+			config_out->rsrc1 |= S_00B228_MEM_ORDERED(pdevice->rad_info.chip_class >= GFX10);
+			config_out->rsrc2 |= S_00B22C_OC_LDS_EN(1);
+		} else if (info->tes.as_es) {
 			assert(pdevice->rad_info.chip_class <= GFX8);
 			vgpr_comp_cnt = info->info.uses_prim_id ? 3 : 2;
+
+			config_out->rsrc2 |= S_00B12C_OC_LDS_EN(1);
 		} else {
 			bool enable_prim_id = info->tes.export_prim_id || info->info.uses_prim_id;
 			vgpr_comp_cnt = enable_prim_id ? 3 : 2;
 
 			config_out->rsrc1 |= S_00B128_MEM_ORDERED(pdevice->rad_info.chip_class >= GFX10);
+			config_out->rsrc2 |= S_00B12C_OC_LDS_EN(1);
 		}
-		config_out->rsrc2 |= S_00B12C_OC_LDS_EN(1);
 		break;
 	case MESA_SHADER_TESS_CTRL:
 		if (pdevice->rad_info.chip_class >= GFX9) {
@@ -727,7 +731,11 @@ static void radv_postprocess_config(const struct radv_physical_device *pdevice,
 			 * VGPR0-3: (VertexID, RelAutoindex, InstanceID / StepRate0, InstanceID).
 			 * StepRate0 is set to 1. so that VGPR3 doesn't have to be loaded.
 			 */
-			vgpr_comp_cnt = info->info.vs.needs_instance_id ? 2 : 1;
+			if (pdevice->rad_info.chip_class >= GFX10) {
+				vgpr_comp_cnt = info->info.vs.needs_instance_id ? 3 : 1;
+			} else {
+				vgpr_comp_cnt = info->info.vs.needs_instance_id ? 2 : 1;
+			}
 		} else {
 			config_out->rsrc2 |= S_00B12C_OC_LDS_EN(1);
 		}
@@ -786,12 +794,31 @@ static void radv_postprocess_config(const struct radv_physical_device *pdevice,
 	}
 
 	if (pdevice->rad_info.chip_class >= GFX10 &&
-	    stage == MESA_SHADER_VERTEX) {
+	    (stage == MESA_SHADER_VERTEX || stage == MESA_SHADER_TESS_EVAL || stage == MESA_SHADER_GEOMETRY)) {
 		unsigned gs_vgpr_comp_cnt, es_vgpr_comp_cnt;
+		gl_shader_stage es_stage = stage;
+		if (stage == MESA_SHADER_GEOMETRY)
+			es_stage = info->gs.es_type;
 
 		/* VGPR5-8: (VertexID, UserVGPR0, UserVGPR1, UserVGPR2 / InstanceID) */
-		es_vgpr_comp_cnt = info->info.vs.needs_instance_id ? 3 : 0;
-		gs_vgpr_comp_cnt = 3;
+		if (es_stage == MESA_SHADER_VERTEX) {
+			es_vgpr_comp_cnt = info->info.vs.needs_instance_id ? 3 : 0;
+		} else if (es_stage == MESA_SHADER_TESS_EVAL) {
+			bool enable_prim_id = info->tes.export_prim_id || info->info.uses_prim_id;
+			es_vgpr_comp_cnt = enable_prim_id ? 3 : 2;
+		}
+
+		bool tes_triangles = stage == MESA_SHADER_TESS_EVAL &&
+			info->tes.primitive_mode >= 4; /* GL_TRIANGLES */
+		if (info->info.uses_invocation_id || stage == MESA_SHADER_VERTEX) {
+			gs_vgpr_comp_cnt = 3; /* VGPR3 contains InvocationID. */
+		} else if (info->info.uses_prim_id) {
+			gs_vgpr_comp_cnt = 2; /* VGPR2 contains PrimitiveID. */
+		} else if (info->gs.vertices_in >= 3 || tes_triangles) {
+			gs_vgpr_comp_cnt = 1; /* VGPR1 contains offsets 2, 3 */
+		} else {
+			gs_vgpr_comp_cnt = 0; /* VGPR0 contains offsets 0, 1 */
+		}
 
 		config_out->rsrc1 |= S_00B228_GS_VGPR_COMP_CNT(gs_vgpr_comp_cnt);
 		config_out->rsrc2 |= S_00B22C_ES_VGPR_COMP_CNT(es_vgpr_comp_cnt) |
@@ -900,6 +927,11 @@ radv_shader_variant_create(struct radv_device *device,
 			sym->name = "esgs_ring";
 			sym->size = 32 * 1024;
 			sym->align = 64 * 1024;
+
+			/* Make sure to have LDS space for NGG scratch. */
+			/* TODO: Compute this correctly somehow? */
+			if (binary->variant_info.is_ngg)
+				sym->size -= 32;
 		}
 		struct ac_rtld_open_info open_info = {
 			.info = &device->physical_device->rad_info,
@@ -1120,15 +1152,34 @@ radv_shader_variant_destroy(struct radv_device *device,
 }
 
 const char *
-radv_get_shader_name(struct radv_shader_variant *var, gl_shader_stage stage)
+radv_get_shader_name(struct radv_shader_variant_info *info,
+		     gl_shader_stage stage)
 {
 	switch (stage) {
-	case MESA_SHADER_VERTEX: return var->info.vs.as_ls ? "Vertex Shader as LS" : var->info.vs.as_es ? "Vertex Shader as ES" : "Vertex Shader as VS";
-	case MESA_SHADER_GEOMETRY: return "Geometry Shader";
-	case MESA_SHADER_FRAGMENT: return "Pixel Shader";
-	case MESA_SHADER_COMPUTE: return "Compute Shader";
-	case MESA_SHADER_TESS_CTRL: return "Tessellation Control Shader";
-	case MESA_SHADER_TESS_EVAL: return var->info.tes.as_es ? "Tessellation Evaluation Shader as ES" : "Tessellation Evaluation Shader as VS";
+	case MESA_SHADER_VERTEX:
+		if (info->vs.as_ls)
+			return "Vertex Shader as LS";
+		else if (info->vs.as_es)
+			return "Vertex Shader as ES";
+		else if (info->is_ngg)
+			return "Vertex Shader as ESGS";
+		else
+			return "Vertex Shader as VS";
+	case MESA_SHADER_TESS_CTRL:
+		return "Tessellation Control Shader";
+	case MESA_SHADER_TESS_EVAL:
+		if (info->tes.as_es)
+			return "Tessellation Evaluation Shader as ES";
+		else if (info->is_ngg)
+			return "Tessellation Evaluation Shader as ESGS";
+		else
+			return "Tessellation Evaluation Shader as VS";
+	case MESA_SHADER_GEOMETRY:
+		return "Geometry Shader";
+	case MESA_SHADER_FRAGMENT:
+		return "Pixel Shader";
+	case MESA_SHADER_COMPUTE:
+		return "Compute Shader";
 	default:
 		return "Unknown shader";
 	};
@@ -1212,7 +1263,7 @@ radv_shader_dump_stats(struct radv_device *device,
 
 	generate_shader_stats(device, variant, stage, buf);
 
-	fprintf(file, "\n%s:\n", radv_get_shader_name(variant, stage));
+	fprintf(file, "\n%s:\n", radv_get_shader_name(&variant->info, stage));
 	fprintf(file, "%s", buf->buf);
 
 	_mesa_string_buffer_destroy(buf);
@@ -1285,7 +1336,7 @@ radv_GetShaderInfoAMD(VkDevice _device,
 	case VK_SHADER_INFO_TYPE_DISASSEMBLY_AMD:
 		buf = _mesa_string_buffer_create(NULL, 1024);
 
-		_mesa_string_buffer_printf(buf, "%s:\n", radv_get_shader_name(variant, stage));
+		_mesa_string_buffer_printf(buf, "%s:\n", radv_get_shader_name(&variant->info, stage));
 		_mesa_string_buffer_printf(buf, "%s\n\n", variant->llvm_ir_string);
 		_mesa_string_buffer_printf(buf, "%s\n\n", variant->disasm_string);
 		generate_shader_stats(device, variant, stage, buf);

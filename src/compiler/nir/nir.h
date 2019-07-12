@@ -140,6 +140,106 @@ typedef union {
       arr[i] = c[i].m; \
 } while (false)
 
+static inline nir_const_value
+nir_const_value_for_raw_uint(uint64_t x, unsigned bit_size)
+{
+   nir_const_value v;
+   memset(&v, 0, sizeof(v));
+
+   switch (bit_size) {
+   case 1:  v.b   = x;  break;
+   case 8:  v.u8  = x;  break;
+   case 16: v.u16 = x;  break;
+   case 32: v.u32 = x;  break;
+   case 64: v.u64 = x;  break;
+   default:
+      unreachable("Invalid bit size");
+   }
+
+   return v;
+}
+
+static inline nir_const_value
+nir_const_value_for_int(int64_t i, unsigned bit_size)
+{
+   nir_const_value v;
+   memset(&v, 0, sizeof(v));
+
+   assert(bit_size <= 64);
+   if (bit_size < 64) {
+      assert(i >= (-(1ll << (bit_size - 1))));
+      assert(i < (1ll << (bit_size - 1)));
+   }
+
+   return nir_const_value_for_raw_uint(i, bit_size);
+}
+
+static inline nir_const_value
+nir_const_value_for_uint(uint64_t u, unsigned bit_size)
+{
+   nir_const_value v;
+   memset(&v, 0, sizeof(v));
+
+   assert(bit_size <= 64);
+   if (bit_size < 64)
+      assert(u < (1ull << bit_size));
+
+   return nir_const_value_for_raw_uint(u, bit_size);
+}
+
+static inline nir_const_value
+nir_const_value_for_bool(bool b, unsigned bit_size)
+{
+   /* Booleans use a 0/-1 convention */
+   return nir_const_value_for_int(-(int)b, bit_size);
+}
+
+/* This one isn't inline because it requires half-float conversion */
+nir_const_value nir_const_value_for_float(double b, unsigned bit_size);
+
+static inline int64_t
+nir_const_value_as_int(nir_const_value value, unsigned bit_size)
+{
+   switch (bit_size) {
+   /* int1_t uses 0/-1 convention */
+   case 1:  return -(int)value.b;
+   case 8:  return value.i8;
+   case 16: return value.i16;
+   case 32: return value.i32;
+   case 64: return value.i64;
+   default:
+      unreachable("Invalid bit size");
+   }
+}
+
+static inline int64_t
+nir_const_value_as_uint(nir_const_value value, unsigned bit_size)
+{
+   switch (bit_size) {
+   case 1:  return value.b;
+   case 8:  return value.u8;
+   case 16: return value.u16;
+   case 32: return value.u32;
+   case 64: return value.u64;
+   default:
+      unreachable("Invalid bit size");
+   }
+}
+
+static inline bool
+nir_const_value_as_bool(nir_const_value value, unsigned bit_size)
+{
+   int64_t i = nir_const_value_as_int(value, bit_size);
+
+   /* Booleans of any size use 0/-1 convention */
+   assert(i == 0 || i == -1);
+
+   return i;
+}
+
+/* This one isn't inline because it requires half-float conversion */
+double nir_const_value_as_float(nir_const_value value, unsigned bit_size);
+
 typedef struct nir_constant {
    /**
     * Value of the constant.
@@ -707,15 +807,6 @@ nir_src_is_const(nir_src src)
           src.ssa->parent_instr->type == nir_instr_type_load_const;
 }
 
-int64_t nir_src_as_int(nir_src src);
-uint64_t nir_src_as_uint(nir_src src);
-bool nir_src_as_bool(nir_src src);
-double nir_src_as_float(nir_src src);
-int64_t nir_src_comp_as_int(nir_src src, unsigned component);
-uint64_t nir_src_comp_as_uint(nir_src src, unsigned component);
-bool nir_src_comp_as_bool(nir_src src, unsigned component);
-double nir_src_comp_as_float(nir_src src, unsigned component);
-
 static inline unsigned
 nir_dest_bit_size(nir_dest dest)
 {
@@ -1014,26 +1105,20 @@ nir_alu_instr_src_read_mask(const nir_alu_instr *instr, unsigned src)
    return read_mask;
 }
 
-/*
- * For instructions whose destinations are SSA, get the number of channels
- * used for a source
+/**
+ * Get the number of channels used for a source
  */
 static inline unsigned
 nir_ssa_alu_instr_src_components(const nir_alu_instr *instr, unsigned src)
 {
-   assert(instr->dest.dest.is_ssa);
-
    if (nir_op_infos[instr->op].input_sizes[src] > 0)
       return nir_op_infos[instr->op].input_sizes[src];
 
-   return instr->dest.dest.ssa.num_components;
+   return nir_dest_num_components(instr->dest.dest);
 }
 
-bool nir_const_value_negative_equal(const nir_const_value *c1,
-                                    const nir_const_value *c2,
-                                    unsigned components,
-                                    nir_alu_type base_type,
-                                    unsigned bits);
+bool nir_const_value_negative_equal(nir_const_value c1, nir_const_value c2,
+                                    nir_alu_type full_type);
 
 bool nir_alu_srcs_equal(const nir_alu_instr *alu1, const nir_alu_instr *alu2,
                         unsigned src1, unsigned src2);
@@ -1889,6 +1974,114 @@ NIR_DEFINE_CAST(nir_instr_as_parallel_copy, nir_instr,
                 nir_parallel_copy_instr, instr,
                 type, nir_instr_type_parallel_copy)
 
+
+#define NIR_DEFINE_SRC_AS_CONST(type, suffix)               \
+static inline type                                          \
+nir_src_comp_as_##suffix(nir_src src, unsigned comp)        \
+{                                                           \
+   assert(nir_src_is_const(src));                           \
+   nir_load_const_instr *load =                             \
+      nir_instr_as_load_const(src.ssa->parent_instr);       \
+   assert(comp < load->def.num_components);                 \
+   return nir_const_value_as_##suffix(load->value[comp],    \
+                                      load->def.bit_size);  \
+}                                                           \
+                                                            \
+static inline type                                          \
+nir_src_as_##suffix(nir_src src)                            \
+{                                                           \
+   assert(nir_src_num_components(src) == 1);                \
+   return nir_src_comp_as_##suffix(src, 0);                 \
+}
+
+NIR_DEFINE_SRC_AS_CONST(int64_t,    int)
+NIR_DEFINE_SRC_AS_CONST(uint64_t,   uint)
+NIR_DEFINE_SRC_AS_CONST(bool,       bool)
+NIR_DEFINE_SRC_AS_CONST(double,     float)
+
+#undef NIR_DEFINE_SRC_AS_CONST
+
+
+typedef struct {
+   nir_ssa_def *def;
+   unsigned comp;
+} nir_ssa_scalar;
+
+static inline bool
+nir_ssa_scalar_is_const(nir_ssa_scalar s)
+{
+   return s.def->parent_instr->type == nir_instr_type_load_const;
+}
+
+static inline nir_const_value
+nir_ssa_scalar_as_const_value(nir_ssa_scalar s)
+{
+   assert(s.comp < s.def->num_components);
+   nir_load_const_instr *load = nir_instr_as_load_const(s.def->parent_instr);
+   return load->value[s.comp];
+}
+
+#define NIR_DEFINE_SCALAR_AS_CONST(type, suffix)                     \
+static inline type                                                   \
+nir_ssa_scalar_as_##suffix(nir_ssa_scalar s)                         \
+{                                                                    \
+   return nir_const_value_as_##suffix(                               \
+      nir_ssa_scalar_as_const_value(s), s.def->bit_size);            \
+}
+
+NIR_DEFINE_SCALAR_AS_CONST(int64_t,    int)
+NIR_DEFINE_SCALAR_AS_CONST(uint64_t,   uint)
+NIR_DEFINE_SCALAR_AS_CONST(bool,       bool)
+NIR_DEFINE_SCALAR_AS_CONST(double,     float)
+
+#undef NIR_DEFINE_SCALAR_AS_CONST
+
+static inline bool
+nir_ssa_scalar_is_alu(nir_ssa_scalar s)
+{
+   return s.def->parent_instr->type == nir_instr_type_alu;
+}
+
+static inline nir_op
+nir_ssa_scalar_alu_op(nir_ssa_scalar s)
+{
+   return nir_instr_as_alu(s.def->parent_instr)->op;
+}
+
+static inline nir_ssa_scalar
+nir_ssa_scalar_chase_alu_src(nir_ssa_scalar s, unsigned alu_src_idx)
+{
+   nir_ssa_scalar out = { NULL, 0 };
+
+   nir_alu_instr *alu = nir_instr_as_alu(s.def->parent_instr);
+   assert(alu_src_idx < nir_op_infos[alu->op].num_inputs);
+
+   /* Our component must be written */
+   assert(s.comp < s.def->num_components);
+   assert(alu->dest.write_mask & (1u << s.comp));
+
+   assert(alu->src[alu_src_idx].src.is_ssa);
+   out.def = alu->src[alu_src_idx].src.ssa;
+
+   if (nir_op_infos[alu->op].input_sizes[alu_src_idx] == 0) {
+      /* The ALU src is unsized so the source component follows the
+       * destination component.
+       */
+      out.comp = alu->src[alu_src_idx].swizzle[s.comp];
+   } else {
+      /* This is a sized source so all source components work together to
+       * produce all the destination components.  Since we need to return a
+       * scalar, this only works if the source is a scalar.
+       */
+      assert(nir_op_infos[alu->op].input_sizes[alu_src_idx] == 1);
+      out.comp = alu->src[alu_src_idx].swizzle[0];
+   }
+   assert(out.comp < out.def->num_components);
+
+   return out;
+}
+
+
 /*
  * Control flow
  *
@@ -2437,6 +2630,16 @@ typedef struct nir_shader_compiler_options {
    /* Lowers when rotate instruction is not supported */
    bool lower_rotate;
 
+   /**
+    * Is this the Intel vec4 backend?
+    *
+    * Used to inhibit algebraic optimizations that are known to be harmful on
+    * the Intel vec4 backend.  This is generally applicable to any
+    * optimization that might cause more immediate values to be used in
+    * 3-source (e.g., ffma and flrp) instructions.
+    */
+   bool intel_vec4;
+
    unsigned max_unroll_iterations;
 
    nir_lower_int64_options lower_int64_options;
@@ -2863,6 +3066,7 @@ NIR_SRC_AS_(deref, nir_deref_instr, nir_instr_type_deref, nir_instr_as_deref)
 
 bool nir_src_is_dynamically_uniform(nir_src src);
 bool nir_srcs_equal(nir_src src1, nir_src src2);
+bool nir_instrs_equal(const nir_instr *instr1, const nir_instr *instr2);
 void nir_instr_rewrite_src(nir_instr *instr, nir_src *src, nir_src new_src);
 void nir_instr_move_src(nir_instr *dest_instr, nir_src *dest, nir_src *src);
 void nir_if_rewrite_condition(nir_if *if_stmt, nir_src new_src);
@@ -3624,6 +3828,9 @@ bool nir_convert_from_ssa(nir_shader *shader, bool phi_webs_only);
 bool nir_lower_phis_to_regs_block(nir_block *block);
 bool nir_lower_ssa_defs_to_regs_block(nir_block *block);
 bool nir_rematerialize_derefs_in_use_blocks_impl(nir_function_impl *impl);
+
+/* This is here for unit tests. */
+bool nir_opt_comparison_pre_impl(nir_function_impl *impl);
 
 bool nir_opt_comparison_pre(nir_shader *shader);
 

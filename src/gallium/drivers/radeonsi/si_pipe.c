@@ -460,9 +460,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 						 0, PIPE_USAGE_DEFAULT,
 						 SI_RESOURCE_FLAG_32BIT |
 						 (use_sdma_upload ?
-							  SI_RESOURCE_FLAG_UPLOAD_FLUSH_EXPLICIT_VIA_SDMA :
-							  (sscreen->cpdma_prefetch_writes_memory ?
-								   0 : SI_RESOURCE_FLAG_READ_ONLY)));
+							  SI_RESOURCE_FLAG_UPLOAD_FLUSH_EXPLICIT_VIA_SDMA : 0));
 	if (!sctx->b.const_uploader)
 		goto fail;
 
@@ -887,7 +885,7 @@ static void si_set_max_shader_compiler_threads(struct pipe_screen *screen,
 
 static bool si_is_parallel_shader_compilation_finished(struct pipe_screen *screen,
 						       void *shader,
-						       unsigned shader_type)
+						       enum pipe_shader_type shader_type)
 {
 	if (shader_type == PIPE_SHADER_COMPUTE) {
 		struct si_compute *cs = (struct si_compute*)shader;
@@ -1130,11 +1128,13 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 					   sscreen->info.chip_class >= GFX10;
 
 	/* Only enable primitive binning on APUs by default. */
-	sscreen->dpbb_allowed = sscreen->info.family == CHIP_RAVEN ||
-				sscreen->info.family == CHIP_RAVEN2;
-
-	sscreen->dfsm_allowed = sscreen->info.family == CHIP_RAVEN ||
-				sscreen->info.family == CHIP_RAVEN2;
+	if (sscreen->info.chip_class >= GFX10) {
+		sscreen->dpbb_allowed = true;
+		sscreen->dfsm_allowed = !sscreen->info.has_dedicated_vram;
+	} else if (sscreen->info.chip_class == GFX9) {
+		sscreen->dpbb_allowed = !sscreen->info.has_dedicated_vram;
+		sscreen->dfsm_allowed = !sscreen->info.has_dedicated_vram;
+	}
 
 	/* Process DPBB enable flags. */
 	if (sscreen->debug_flags & DBG(DPBB)) {
@@ -1148,11 +1148,6 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 		sscreen->dpbb_allowed = false;
 		sscreen->dfsm_allowed = false;
 	} else if (sscreen->debug_flags & DBG(NO_DFSM)) {
-		sscreen->dfsm_allowed = false;
-	}
-
-	if (sscreen->info.chip_class == GFX10) {
-		sscreen->dpbb_allowed = false; /* TODO-GFX10: implement this */
 		sscreen->dfsm_allowed = false;
 	}
 

@@ -50,7 +50,7 @@
  * The tiler itself works by reading varyings in and writing a polygon list
  * out. Unfortunately (for us), both of these buffers are managed in main
  * memory; although they ideally will be cached, it is the drivers'
- * responsibility to allocate these buffers. Varying buffe allocation is
+ * responsibility to allocate these buffers. Varying buffer allocation is
  * handled elsewhere, as it is not tiler specific; the real issue is allocating
  * the polygon list.
  *
@@ -277,8 +277,8 @@ panfrost_tiler_body_size(unsigned width, unsigned height, uint8_t mask)
 
 unsigned
 panfrost_choose_hierarchy_mask(
-                unsigned width, unsigned height,
-                unsigned vertex_count)
+        unsigned width, unsigned height,
+        unsigned vertex_count)
 {
         /* If there is no geometry, we don't bother enabling anything */
 

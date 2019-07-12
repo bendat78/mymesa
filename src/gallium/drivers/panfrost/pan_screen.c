@@ -1,33 +1,29 @@
-/**************************************************************************
- *
- * Copyright 2008 VMware, Inc.
- * Copyright 2014 Broadcom
- * Copyright 2018 Alyssa Rosenzweig
- * Copyright 2019 Collabora, Ltd.
- * All Rights Reserved.
+/*
+ * Copyright (C) 2008 VMware, Inc.
+ * Copyright (C) 2014 Broadcom
+ * Copyright (C) 2018 Alyssa Rosenzweig
+ * Copyright (C) 2019 Collabora, Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portions
- * of the Software.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
- * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
- **************************************************************************/
-
+ */
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
@@ -55,9 +51,11 @@
 #include "midgard/midgard_compile.h"
 
 static const struct debug_named_value debug_options[] = {
-	{"msgs",      PAN_DBG_MSGS,	"Print debug messages"},
-	{"trace",     PAN_DBG_TRACE,    "Trace the command stream"},
-	DEBUG_NAMED_VALUE_END
+        {"msgs",      PAN_DBG_MSGS,	"Print debug messages"},
+        {"trace",     PAN_DBG_TRACE,    "Trace the command stream"},
+        {"deqp",      PAN_DBG_DEQP,     "Hacks for dEQP"},
+        /* ^^ If Rob can do it, so can I */
+        DEBUG_NAMED_VALUE_END
 };
 
 DEBUG_GET_ONCE_FLAGS_OPTION(pan_debug, "PAN_MESA_DEBUG", debug_options, 0)
@@ -85,36 +83,57 @@ panfrost_get_device_vendor(struct pipe_screen *screen)
 static int
 panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
+        /* We expose in-dev stuff for dEQP that we don't want apps to use yet */
+        bool is_deqp = pan_debug & PAN_DBG_DEQP;
+
         switch (param) {
         case PIPE_CAP_NPOT_TEXTURES:
         case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
         case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
-                return 1;
-
-        case PIPE_CAP_SM3:
+        case PIPE_CAP_FRAGMENT_SHADER_TEXTURE_LOD:
+        case PIPE_CAP_VERTEX_SHADER_SATURATE:
         case PIPE_CAP_POINT_SPRITE:
                 return 1;
 
         case PIPE_CAP_MAX_RENDER_TARGETS:
-        case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
                 return 1;
 
         case PIPE_CAP_OCCLUSION_QUERY:
+                return 1;
         case PIPE_CAP_QUERY_TIME_ELAPSED:
         case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
-                return 1; /* TODO: Queries */
+        case PIPE_CAP_QUERY_TIMESTAMP:
+        case PIPE_CAP_QUERY_SO_OVERFLOW:
+                return 0;
 
         case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
         case PIPE_CAP_TEXTURE_SWIZZLE:
                 return 1;
 
-        /* TODO: ES3. We expose these caps so we can access higher dEQP
-         * tests; in actuality they are nonfunctional */
-        case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-                return 4;
         case PIPE_CAP_TGSI_INSTANCEID:
         case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
-                return 1;
+                return is_deqp ? 1 : 0;
+
+        case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
+                return is_deqp ? 4 : 0;
+        case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
+        case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
+                return is_deqp ? 64 : 0;
+
+        case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
+                return is_deqp ? 256 : 0; /* for GL3 */
+
+        case PIPE_CAP_GLSL_FEATURE_LEVEL:
+        case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
+                return is_deqp ? 140 : 120;
+        case PIPE_CAP_ESSL_FEATURE_LEVEL:
+                return is_deqp ? 300 : 120;
+
+        case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
+                return is_deqp ? 16 : 0;
+
+        case PIPE_CAP_CUBE_MAP_ARRAY:
+                return is_deqp;
 
         /* TODO: Where does this req come from in practice? */
         case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
@@ -127,11 +146,7 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
                 return 13;
 
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-                return 1;
-
         case PIPE_CAP_INDEP_BLEND_ENABLE:
-                return 1;
-
         case PIPE_CAP_INDEP_BLEND_FUNC:
                 return 1;
 
@@ -140,68 +155,17 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
                 return 0;
 
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
-                return 1;
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
-                return 1;
-
         case PIPE_CAP_GENERATE_MIPMAP:
-                return 1;
-
-        case PIPE_CAP_DEPTH_CLIP_DISABLE:
-                return 1;
-
-        case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
-        case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
-                return 16 * 4;
-
-        case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
-        case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
-                return 1024;
-
-        case PIPE_CAP_MAX_VERTEX_STREAMS:
-                return 1;
-
-        case PIPE_CAP_SHADER_STENCIL_EXPORT:
                 return 1;
 
         case PIPE_CAP_SEAMLESS_CUBE_MAP:
         case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
                 return 1;
 
-        case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-                return 256; /* for GL3 */
-
-        case PIPE_CAP_CONDITIONAL_RENDER:
-                return 1;
-
-        case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
-        case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
-        case PIPE_CAP_VERTEX_COLOR_CLAMPED:
-                return 1;
-
-        case PIPE_CAP_GLSL_FEATURE_LEVEL:
-                return 330;
-
-        case PIPE_CAP_USER_VERTEX_BUFFERS: /* TODO */
-        case PIPE_CAP_RESOURCE_FROM_USER_MEMORY:
-                return 0;
-
-        case PIPE_CAP_TGSI_VS_LAYER_VIEWPORT:
-        case PIPE_CAP_DOUBLES:
-        case PIPE_CAP_INT64:
-        case PIPE_CAP_INT64_DIVMOD:
-                return 1;
-
-        case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
-                return 16;
-
         case PIPE_CAP_MAX_VERTEX_ELEMENT_SRC_OFFSET:
                 return 0xffff;
-
-        case PIPE_CAP_QUERY_TIMESTAMP:
-        case PIPE_CAP_CUBE_MAP_ARRAY:
-                return 1;
 
         case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
                 return 1;
@@ -209,47 +173,31 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
         case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
                 return 65536;
 
-        case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
-                return 0;
-
         case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
                 return 0;
-
-        case PIPE_CAP_MAX_VIEWPORTS:
-                return PIPE_MAX_VIEWPORTS;
 
         case PIPE_CAP_ENDIANNESS:
                 return PIPE_ENDIAN_NATIVE;
 
-        case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
-                return 4;
-
-        case PIPE_CAP_TEXTURE_GATHER_SM5:
-        case PIPE_CAP_TEXTURE_QUERY_LOD:
-        case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
         case PIPE_CAP_SAMPLER_VIEW_TARGET:
-        case PIPE_CAP_FAKE_SW_MSAA:
                 return 1;
 
         case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
-                return -32;
+                return -8;
 
         case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
-                return 31;
-
-        case PIPE_CAP_DRAW_INDIRECT:
-                return 1;
-
-        case PIPE_CAP_QUERY_SO_OVERFLOW:
-                return 1;
+                return 7;
 
         case PIPE_CAP_VENDOR_ID:
-                return 0xFFFFFFFF;
-
         case PIPE_CAP_DEVICE_ID:
                 return 0xFFFFFFFF;
 
         case PIPE_CAP_ACCELERATED:
+        case PIPE_CAP_UMA:
+        case PIPE_CAP_TEXTURE_FLOAT_LINEAR:
+        case PIPE_CAP_TEXTURE_HALF_FLOAT_LINEAR:
+        case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
+        case PIPE_CAP_TGSI_ARRAY_COMPONENTS:
                 return 1;
 
         case PIPE_CAP_VIDEO_MEMORY: {
@@ -260,20 +208,6 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
 
                 return (int)(system_memory >> 20);
         }
-
-        case PIPE_CAP_UMA:
-                return 1;
-
-        case PIPE_CAP_CONDITIONAL_RENDER_INVERTED:
-        case PIPE_CAP_CLIP_HALFZ:
-        case PIPE_CAP_TEXTURE_FLOAT_LINEAR:
-        case PIPE_CAP_TEXTURE_HALF_FLOAT_LINEAR:
-        case PIPE_CAP_FRAMEBUFFER_NO_ATTACHMENT:
-        case PIPE_CAP_CULL_DISTANCE:
-        case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
-        case PIPE_CAP_TGSI_ARRAY_COMPONENTS:
-        case PIPE_CAP_CLEAR_TEXTURE:
-                return 1;
 
         case PIPE_CAP_SHADER_BUFFER_OFFSET_ALIGNMENT:
                 return 4;
@@ -292,7 +226,7 @@ panfrost_get_shader_param(struct pipe_screen *screen,
                           enum pipe_shader_cap param)
 {
         if (shader != PIPE_SHADER_VERTEX &&
-                        shader != PIPE_SHADER_FRAGMENT) {
+            shader != PIPE_SHADER_FRAGMENT) {
                 return 0;
         }
 
@@ -401,7 +335,7 @@ panfrost_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
 
         /* fall-through */
         case PIPE_CAPF_MAX_POINT_WIDTH_AA:
-                return 255.0; /* arbitrary */
+                return 1024.0;
 
         case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
                 return 16.0;
@@ -460,50 +394,40 @@ panfrost_is_format_supported( struct pipe_screen *screen,
         if (format == PIPE_FORMAT_A1B5G5R5_UNORM || format == PIPE_FORMAT_X1B5G5R5_UNORM)
                 return FALSE;
 
-        /* Allow through special formats */
+        /* TODO */
+        if (format == PIPE_FORMAT_B5G5R5A1_UNORM)
+                return FALSE;
 
-        switch (format) {
-                case PIPE_FORMAT_R11G11B10_FLOAT:
-                case PIPE_FORMAT_B5G6R5_UNORM:
-                        return TRUE;
-                default:
-                        break;
-        }
+        /* Don't confuse poorly written apps (workaround dEQP bug) that expect
+         * more alpha than they ask for */
+        bool scanout = bind & (PIPE_BIND_SCANOUT | PIPE_BIND_SHARED | PIPE_BIND_DISPLAY_TARGET);
+        if (scanout && !util_format_is_rgba8_variant(format_desc))
+                return FALSE;
 
-        if (bind & PIPE_BIND_RENDER_TARGET) {
-                if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS)
-                        return FALSE;
-
-                /* Check for vaguely 8UNORM formats. Looser than
-                 * util_format_is_rgba8_variant, since it permits R8 (for
-                 * instance) */
-
-                for (unsigned chan = 0; chan < 4; ++chan) {
-                        enum util_format_type t = format_desc->channel[chan].type;
-                        if (t == UTIL_FORMAT_TYPE_VOID) continue;
-                        if (t != UTIL_FORMAT_TYPE_UNSIGNED) return FALSE;
-                        if (!format_desc->channel[chan].normalized) return FALSE;
-                        if (format_desc->channel[chan].size != 8) return FALSE;
-                }
-
-                /*
-                 * Although possible, it is unnatural to render into compressed or YUV
-                 * surfaces. So disable these here to avoid going into weird paths
-                 * inside the state trackers.
-                 */
-                if (format_desc->block.width != 1 ||
-                                format_desc->block.height != 1)
-                        return FALSE;
-        }
-
-        if (bind & PIPE_BIND_DEPTH_STENCIL) {
-                if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
-                        return FALSE;
-        }
-
-        if (format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
+        if (format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN &&
+            format_desc->layout != UTIL_FORMAT_LAYOUT_OTHER) {
                 /* Compressed formats not yet hooked up. */
                 return FALSE;
+        }
+
+        /* Internally, formats that are depth/stencil renderable are limited.
+         *
+         * In particular: Z16, Z24, Z24S8, S8 are all identical from the GPU
+         * rendering perspective. That is, we render to Z24S8 (which we can
+         * AFBC compress), ignore the different when texturing (who cares?),
+         * and then in the off-chance there's a CPU read we blit back to
+         * staging.
+         *
+         * ...alternatively, we can make the state tracker deal with that. */
+
+        if (bind & PIPE_BIND_DEPTH_STENCIL) {
+                switch (format) {
+                        case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+                                return true;
+
+                        default:
+                                return false;
+                }
         }
 
         return TRUE;
@@ -564,7 +488,7 @@ panfrost_create_screen(int fd, struct renderonly *ro)
 {
         struct panfrost_screen *screen = rzalloc(NULL, struct panfrost_screen);
 
-	pan_debug = debug_get_option_pan_debug();
+        pan_debug = debug_get_option_pan_debug();
 
         if (!screen)
                 return NULL;
@@ -579,6 +503,31 @@ panfrost_create_screen(int fd, struct renderonly *ro)
         }
 
         screen->fd = fd;
+
+        screen->gpu_id = panfrost_drm_query_gpu_version(screen);
+
+        /* Check if we're loading against a supported GPU model
+         * paired with a supported CPU (differences from
+         * armhf/aarch64 break models on incompatible CPUs at the
+         * moment -- this is a TODO). In other words, we whitelist
+         * RK3288, RK3399, and S912, which are verified to work. */
+
+        switch (screen->gpu_id) {
+#ifdef __LP64__
+        case 0x820: /* T820 */
+        case 0x860: /* T860 */
+                break;
+#else
+        case 0x750: /* T760 */
+                break;
+#endif
+
+        default:
+                /* Fail to load against untested models */
+                debug_printf("panfrost: Unsupported model %X",
+                             screen->gpu_id);
+                return NULL;
+        }
 
         if (pan_debug & PAN_DBG_TRACE)
                 pandecode_initialize();
@@ -599,7 +548,7 @@ panfrost_create_screen(int fd, struct renderonly *ro)
         screen->base.fence_reference = panfrost_fence_reference;
         screen->base.fence_finish = panfrost_fence_finish;
 
-	screen->last_fragment_flushed = true;
+        screen->last_fragment_flushed = true;
         screen->last_job = NULL;
 
         panfrost_resource_screen_init(screen);

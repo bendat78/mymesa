@@ -93,7 +93,7 @@ ac_texture_dim_from_tgsi_target(struct si_screen *screen, enum tgsi_texture_type
 	switch (target) {
 	case TGSI_TEXTURE_1D:
 	case TGSI_TEXTURE_SHADOW1D:
-		if (screen->info.chip_class >= GFX9)
+		if (screen->info.chip_class == GFX9)
 			return ac_image_2d;
 		return ac_image_1d;
 	case TGSI_TEXTURE_2D:
@@ -110,7 +110,7 @@ ac_texture_dim_from_tgsi_target(struct si_screen *screen, enum tgsi_texture_type
 		return ac_image_cube;
 	case TGSI_TEXTURE_1D_ARRAY:
 	case TGSI_TEXTURE_SHADOW1D_ARRAY:
-		if (screen->info.chip_class >= GFX9)
+		if (screen->info.chip_class == GFX9)
 			return ac_image_2darray;
 		return ac_image_1darray;
 	case TGSI_TEXTURE_2D_ARRAY:
@@ -176,8 +176,8 @@ static LLVMValueRef force_dcc_off(struct si_shader_context *ctx,
 
 LLVMValueRef si_load_image_desc(struct si_shader_context *ctx,
 				LLVMValueRef list, LLVMValueRef index,
-				enum ac_descriptor_type desc_type, bool dcc_off,
-				bool bindless)
+				enum ac_descriptor_type desc_type,
+				bool uses_store, bool bindless)
 {
 	LLVMBuilderRef builder = ctx->ac.builder;
 	LLVMValueRef rsrc;
@@ -196,7 +196,8 @@ LLVMValueRef si_load_image_desc(struct si_shader_context *ctx,
 	else
 		rsrc = ac_build_load_to_sgpr(&ctx->ac, list, index);
 
-	if (desc_type == AC_DESC_IMAGE && dcc_off)
+	if (ctx->ac.chip_class <= GFX9 &&
+	    desc_type == AC_DESC_IMAGE && uses_store)
 		rsrc = force_dcc_off(ctx, rsrc);
 	return rsrc;
 }
@@ -215,7 +216,6 @@ image_fetch_rsrc(
 	LLVMValueRef rsrc_ptr = LLVMGetParam(ctx->main_fn,
 					     ctx->param_samplers_and_images);
 	LLVMValueRef index;
-	bool dcc_off = is_store;
 
 	if (!image->Register.Indirect) {
 		index = LLVMConstInt(ctx->i32,
@@ -259,7 +259,7 @@ image_fetch_rsrc(
 
 	*rsrc = si_load_image_desc(ctx, rsrc_ptr, index,
 				   target == TGSI_TEXTURE_BUFFER ? AC_DESC_BUFFER : AC_DESC_IMAGE,
-				   dcc_off, bindless);
+				   is_store, bindless);
 }
 
 static void image_fetch_coords(
@@ -287,15 +287,14 @@ static void image_fetch_coords(
 		coords[chan] = tmp;
 	}
 
-	if (ctx->screen->info.chip_class >= GFX9) {
+	if (ctx->screen->info.chip_class == GFX9) {
 		/* 1D textures are allocated and used as 2D on GFX9. */
 		if (target == TGSI_TEXTURE_1D) {
 			coords[1] = ctx->i32_0;
 		} else if (target == TGSI_TEXTURE_1D_ARRAY) {
 			coords[2] = coords[1];
 			coords[1] = ctx->i32_0;
-		} else if (ctx->screen->info.chip_class == GFX9 &&
-			   target == TGSI_TEXTURE_2D) {
+		} else if (target == TGSI_TEXTURE_2D) {
 			/* The hw can't bind a slice of a 3D image as a 2D
 			 * image, because it ignores BASE_ARRAY if the target
 			 * is 3D. The workaround is to read BASE_ARRAY and set
@@ -920,7 +919,7 @@ static LLVMValueRef fix_resinfo(struct si_shader_context *ctx,
 	LLVMBuilderRef builder = ctx->ac.builder;
 
 	/* 1D textures are allocated and used as 2D on GFX9. */
-        if (ctx->screen->info.chip_class >= GFX9 &&
+        if (ctx->screen->info.chip_class == GFX9 &&
 	    (target == TGSI_TEXTURE_1D_ARRAY ||
 	     target == TGSI_TEXTURE_SHADOW1D_ARRAY)) {
 		LLVMValueRef layers =
@@ -1457,7 +1456,7 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action *action,
 			num_src_deriv_channels = 1;
 
 			/* 1D textures are allocated and used as 2D on GFX9. */
-			if (ctx->screen->info.chip_class >= GFX9) {
+			if (ctx->screen->info.chip_class == GFX9) {
 				num_dst_deriv_channels = 2;
 			} else {
 				num_dst_deriv_channels = 1;
@@ -1499,7 +1498,7 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action *action,
 	}
 
 	/* 1D textures are allocated and used as 2D on GFX9. */
-	if (ctx->screen->info.chip_class >= GFX9) {
+	if (ctx->screen->info.chip_class == GFX9) {
 		LLVMValueRef filler;
 
 		/* Use 0.5, so that we don't sample the border color. */

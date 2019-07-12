@@ -1204,96 +1204,39 @@ nir_foreach_src(nir_instr *instr, nir_foreach_src_cb cb, void *state)
    return nir_foreach_dest(instr, visit_dest_indirect, &dest_state);
 }
 
-int64_t
-nir_src_comp_as_int(nir_src src, unsigned comp)
+nir_const_value
+nir_const_value_for_float(double f, unsigned bit_size)
 {
-   assert(nir_src_is_const(src));
-   nir_load_const_instr *load = nir_instr_as_load_const(src.ssa->parent_instr);
+   nir_const_value v;
+   memset(&v, 0, sizeof(v));
 
-   assert(comp < load->def.num_components);
-   switch (load->def.bit_size) {
-   /* int1_t uses 0/-1 convention */
-   case 1:  return -(int)load->value[comp].b;
-   case 8:  return load->value[comp].i8;
-   case 16: return load->value[comp].i16;
-   case 32: return load->value[comp].i32;
-   case 64: return load->value[comp].i64;
+   switch (bit_size) {
+   case 16:
+      v.u16 = _mesa_float_to_half(f);
+      break;
+   case 32:
+      v.f32 = f;
+      break;
+   case 64:
+      v.f64 = f;
+      break;
    default:
       unreachable("Invalid bit size");
    }
-}
 
-uint64_t
-nir_src_comp_as_uint(nir_src src, unsigned comp)
-{
-   assert(nir_src_is_const(src));
-   nir_load_const_instr *load = nir_instr_as_load_const(src.ssa->parent_instr);
-
-   assert(comp < load->def.num_components);
-   switch (load->def.bit_size) {
-   case 1:  return load->value[comp].b;
-   case 8:  return load->value[comp].u8;
-   case 16: return load->value[comp].u16;
-   case 32: return load->value[comp].u32;
-   case 64: return load->value[comp].u64;
-   default:
-      unreachable("Invalid bit size");
-   }
-}
-
-bool
-nir_src_comp_as_bool(nir_src src, unsigned comp)
-{
-   int64_t i = nir_src_comp_as_int(src, comp);
-
-   /* Booleans of any size use 0/-1 convention */
-   assert(i == 0 || i == -1);
-
-   return i;
+   return v;
 }
 
 double
-nir_src_comp_as_float(nir_src src, unsigned comp)
+nir_const_value_as_float(nir_const_value value, unsigned bit_size)
 {
-   assert(nir_src_is_const(src));
-   nir_load_const_instr *load = nir_instr_as_load_const(src.ssa->parent_instr);
-
-   assert(comp < load->def.num_components);
-   switch (load->def.bit_size) {
-   case 16: return _mesa_half_to_float(load->value[comp].u16);
-   case 32: return load->value[comp].f32;
-   case 64: return load->value[comp].f64;
+   switch (bit_size) {
+   case 16: return _mesa_half_to_float(value.u16);
+   case 32: return value.f32;
+   case 64: return value.f64;
    default:
       unreachable("Invalid bit size");
    }
-}
-
-int64_t
-nir_src_as_int(nir_src src)
-{
-   assert(nir_src_num_components(src) == 1);
-   return nir_src_comp_as_int(src, 0);
-}
-
-uint64_t
-nir_src_as_uint(nir_src src)
-{
-   assert(nir_src_num_components(src) == 1);
-   return nir_src_comp_as_uint(src, 0);
-}
-
-bool
-nir_src_as_bool(nir_src src)
-{
-   assert(nir_src_num_components(src) == 1);
-   return nir_src_comp_as_bool(src, 0);
-}
-
-double
-nir_src_as_float(nir_src src)
-{
-   assert(nir_src_num_components(src) == 1);
-   return nir_src_comp_as_float(src, 0);
 }
 
 nir_const_value *

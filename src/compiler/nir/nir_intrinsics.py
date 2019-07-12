@@ -190,6 +190,16 @@ def barrier(name):
 barrier("barrier")
 barrier("discard")
 
+# Demote fragment shader invocation to a helper invocation.  Any stores to
+# memory after this instruction are suppressed and the fragment does not write
+# outputs to the framebuffer.  Unlike discard, demote needs to ensure that
+# derivatives will still work for invocations that were not demoted.
+#
+# As specified by SPV_EXT_demote_to_helper_invocation.
+barrier("demote")
+intrinsic("is_helper_invocation", dest_comp=1, flags=[CAN_ELIMINATE])
+
+
 # Memory barrier with semantics analogous to the memoryBarrier() GLSL
 # intrinsic.
 barrier("memory_barrier")
@@ -750,3 +760,19 @@ intrinsic("ssbo_atomic_or_ir3",         src_comp=[1, 1, 1, 1],    dest_comp=1)
 intrinsic("ssbo_atomic_xor_ir3",        src_comp=[1, 1, 1, 1],    dest_comp=1)
 intrinsic("ssbo_atomic_exchange_ir3",   src_comp=[1, 1, 1, 1],    dest_comp=1)
 intrinsic("ssbo_atomic_comp_swap_ir3",  src_comp=[1, 1, 1, 1, 1], dest_comp=1)
+
+# Intrinsics used by the Midgard/Bifrost blend pipeline. These are defined
+# within a blend shader to read/write the raw value from the tile buffer,
+# without applying any format conversion in the process. If the shader needs
+# usable pixel values, it must apply format conversions itself.
+#
+# These definitions are generic, but they are explicitly vendored to prevent
+# other drivers from using them, as their semantics is defined in terms of the
+# Midgard/Bifrost hardware tile buffer and may not line up with anything sane.
+# One notable divergence is sRGB, which is asymmetric: raw_input_pan requires
+# an sRGB->linear conversion, but linear values should be written to
+# raw_output_pan and the hardware handles linear->sRGB.
+
+# src[] = { value }
+store("raw_output_pan", 1, [])
+load("raw_output_pan", 0, [], [CAN_ELIMINATE, CAN_REORDER])

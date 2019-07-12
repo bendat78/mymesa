@@ -675,6 +675,7 @@ struct si_framebuffer {
 	ubyte				color_is_int10;
 	ubyte				dirty_cbufs;
 	ubyte				dcc_overwrite_combiner_watermark;
+	ubyte				min_bytes_per_pixel;
 	bool				dirty_zsbuf;
 	bool				any_dst_linear;
 	bool				CB_has_shader_readable_metadata;
@@ -1061,6 +1062,7 @@ struct si_context {
 	int			last_multi_vgt_param;
 	int			last_rast_prim;
 	int			last_flatshade_first;
+	int			last_binning_enabled;
 	unsigned		last_sc_line_stipple;
 	unsigned		current_vs_state;
 	unsigned		last_vs_state;
@@ -1682,7 +1684,10 @@ si_make_CB_shader_coherent(struct si_context *sctx, unsigned num_samples,
 	sctx->flags |= SI_CONTEXT_FLUSH_AND_INV_CB |
 		       SI_CONTEXT_INV_VCACHE;
 
-	if (sctx->chip_class >= GFX9) {
+	if (sctx->chip_class >= GFX10) {
+		if (shaders_read_metadata)
+			sctx->flags |= SI_CONTEXT_INV_L2_METADATA;
+	} else if (sctx->chip_class == GFX9) {
 		/* Single-sample color is coherent with shaders on GFX9, but
 		 * L2 metadata must be flushed if shaders read metadata.
 		 * (DCC, CMASK).
@@ -1705,7 +1710,10 @@ si_make_DB_shader_coherent(struct si_context *sctx, unsigned num_samples,
 	sctx->flags |= SI_CONTEXT_FLUSH_AND_INV_DB |
 		       SI_CONTEXT_INV_VCACHE;
 
-	if (sctx->chip_class >= GFX9) {
+	if (sctx->chip_class >= GFX10) {
+		if (shaders_read_metadata)
+			sctx->flags |= SI_CONTEXT_INV_L2_METADATA;
+	} else if (sctx->chip_class == GFX9) {
 		/* Single-sample depth (not stencil) is coherent with shaders
 		 * on GFX9, but L2 metadata must be flushed if shaders read
 		 * metadata.

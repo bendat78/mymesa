@@ -55,8 +55,7 @@ static void si_llvm_emit_barrier(const struct lp_build_tgsi_action *action,
 				 struct lp_build_tgsi_context *bld_base,
 				 struct lp_build_emit_data *emit_data);
 
-static void si_dump_shader_key(unsigned processor, const struct si_shader *shader,
-			       FILE *f);
+static void si_dump_shader_key(const struct si_shader *shader, FILE *f);
 
 static void si_build_vs_prolog_function(struct si_shader_context *ctx,
 					union si_shader_part_key *key);
@@ -189,35 +188,39 @@ unsigned si_shader_io_get_unique_index(unsigned semantic_name, unsigned index,
 
 		assert(!"invalid generic index");
 		return 0;
-	case TGSI_SEMANTIC_PSIZE:
-		return SI_MAX_IO_GENERIC + 1;
-	case TGSI_SEMANTIC_CLIPDIST:
-		assert(index <= 1);
-		return SI_MAX_IO_GENERIC + 2 + index;
 	case TGSI_SEMANTIC_FOG:
-		return SI_MAX_IO_GENERIC + 4;
-	case TGSI_SEMANTIC_LAYER:
-		return SI_MAX_IO_GENERIC + 5;
-	case TGSI_SEMANTIC_VIEWPORT_INDEX:
-		return SI_MAX_IO_GENERIC + 6;
-	case TGSI_SEMANTIC_PRIMID:
-		return SI_MAX_IO_GENERIC + 7;
+		return SI_MAX_IO_GENERIC + 1;
 	case TGSI_SEMANTIC_COLOR:
 		assert(index < 2);
-		return SI_MAX_IO_GENERIC + 8 + index;
+		return SI_MAX_IO_GENERIC + 2 + index;
 	case TGSI_SEMANTIC_BCOLOR:
 		assert(index < 2);
 		/* If it's a varying, COLOR and BCOLOR alias. */
 		if (is_varying)
-			return SI_MAX_IO_GENERIC + 8 + index;
+			return SI_MAX_IO_GENERIC + 2 + index;
 		else
-			return SI_MAX_IO_GENERIC + 10 + index;
+			return SI_MAX_IO_GENERIC + 4 + index;
 	case TGSI_SEMANTIC_TEXCOORD:
 		assert(index < 8);
-		STATIC_ASSERT(SI_MAX_IO_GENERIC + 12 + 8 <= 63);
-		return SI_MAX_IO_GENERIC + 12 + index;
+		return SI_MAX_IO_GENERIC + 6 + index;
+
+	/* These are rarely used between LS and HS or ES and GS. */
+	case TGSI_SEMANTIC_CLIPDIST:
+		assert(index < 2);
+		return SI_MAX_IO_GENERIC + 6 + 8 + index;
 	case TGSI_SEMANTIC_CLIPVERTEX:
-		return 63;
+		return SI_MAX_IO_GENERIC + 6 + 8 + 2;
+	case TGSI_SEMANTIC_PSIZE:
+		return SI_MAX_IO_GENERIC + 6 + 8 + 3;
+
+	/* These can't be written by LS, HS, and ES. */
+	case TGSI_SEMANTIC_LAYER:
+		return SI_MAX_IO_GENERIC + 6 + 8 + 4;
+	case TGSI_SEMANTIC_VIEWPORT_INDEX:
+		return SI_MAX_IO_GENERIC + 6 + 8 + 5;
+	case TGSI_SEMANTIC_PRIMID:
+		STATIC_ASSERT(SI_MAX_IO_GENERIC + 6 + 8 + 6 <= 63);
+		return SI_MAX_IO_GENERIC + 6 + 8 + 6;
 	default:
 		fprintf(stderr, "invalid semantic name = %u\n", semantic_name);
 		assert(!"invalid semantic name");
@@ -5362,6 +5365,7 @@ bool si_shader_binary_upload(struct si_screen *sscreen, struct si_shader *shader
 
 static void si_shader_dump_disassembly(struct si_screen *screen,
 				       const struct si_shader_binary *binary,
+				       enum pipe_shader_type shader_type,
 				       struct pipe_debug_callback *debug,
 				       const char *name, FILE *file)
 {
@@ -5369,6 +5373,7 @@ static void si_shader_dump_disassembly(struct si_screen *screen,
 
 	if (!ac_rtld_open(&rtld_binary, (struct ac_rtld_open_info){
 			.info = &screen->info,
+			.shader_type = tgsi_processor_to_shader_stage(shader_type),
 			.num_parts = 1,
 			.elf_ptrs = &binary->elf_buffer,
 			.elf_sizes = &binary->elf_size }))
@@ -5455,6 +5460,7 @@ static void si_calculate_max_simd_waves(struct si_shader *shader)
 				       DIV_ROUND_UP(max_workgroup_size, 64);
 		}
 		break;
+	default:;
 	}
 
 	/* Compute the per-SIMD wave counts. */
@@ -5482,7 +5488,9 @@ void si_shader_dump_stats_for_shader_db(struct si_screen *screen,
 	const struct ac_shader_config *conf = &shader->config;
 
 	if (screen->options.debug_disassembly)
-		si_shader_dump_disassembly(screen, &shader->binary, debug, "main", NULL);
+		si_shader_dump_disassembly(screen, &shader->binary,
+					   shader->selector->type,
+					   debug, "main", NULL);
 
 	pipe_debug_message(debug, SHADER_INFO,
 			   "Shader Stats: SGPRS: %d VGPRS: %d Code Size: %d "
@@ -5497,15 +5505,16 @@ void si_shader_dump_stats_for_shader_db(struct si_screen *screen,
 
 static void si_shader_dump_stats(struct si_screen *sscreen,
 				 struct si_shader *shader,
-			         unsigned processor,
 				 FILE *file,
 				 bool check_debug_option)
 {
 	const struct ac_shader_config *conf = &shader->config;
+	enum pipe_shader_type shader_type =
+		shader->selector ? shader->selector->type : PIPE_SHADER_COMPUTE;
 
 	if (!check_debug_option ||
-	    si_can_dump_shader(sscreen, processor)) {
-		if (processor == PIPE_SHADER_FRAGMENT) {
+	    si_can_dump_shader(sscreen, shader_type)) {
+		if (shader_type == PIPE_SHADER_FRAGMENT) {
 			fprintf(file, "*** SHADER CONFIG ***\n"
 				"SPI_PS_INPUT_ADDR = 0x%04x\n"
 				"SPI_PS_INPUT_ENA  = 0x%04x\n",
@@ -5532,9 +5541,12 @@ static void si_shader_dump_stats(struct si_screen *sscreen,
 	}
 }
 
-const char *si_get_shader_name(const struct si_shader *shader, unsigned processor)
+const char *si_get_shader_name(const struct si_shader *shader)
 {
-	switch (processor) {
+	enum pipe_shader_type shader_type =
+		shader->selector ? shader->selector->type : PIPE_SHADER_COMPUTE;
+
+	switch (shader_type) {
 	case PIPE_SHADER_VERTEX:
 		if (shader->key.as_es)
 			return "Vertex Shader as ES";
@@ -5570,51 +5582,53 @@ const char *si_get_shader_name(const struct si_shader *shader, unsigned processo
 }
 
 void si_shader_dump(struct si_screen *sscreen, struct si_shader *shader,
-		    struct pipe_debug_callback *debug, unsigned processor,
+		    struct pipe_debug_callback *debug,
 		    FILE *file, bool check_debug_option)
 {
+	enum pipe_shader_type shader_type =
+		shader->selector ? shader->selector->type : PIPE_SHADER_COMPUTE;
+
 	if (!check_debug_option ||
-	    si_can_dump_shader(sscreen, processor))
-		si_dump_shader_key(processor, shader, file);
+	    si_can_dump_shader(sscreen, shader_type))
+		si_dump_shader_key(shader, file);
 
 	if (!check_debug_option && shader->binary.llvm_ir_string) {
 		if (shader->previous_stage &&
 		    shader->previous_stage->binary.llvm_ir_string) {
 			fprintf(file, "\n%s - previous stage - LLVM IR:\n\n",
-				si_get_shader_name(shader, processor));
+				si_get_shader_name(shader));
 			fprintf(file, "%s\n", shader->previous_stage->binary.llvm_ir_string);
 		}
 
 		fprintf(file, "\n%s - main shader part - LLVM IR:\n\n",
-			si_get_shader_name(shader, processor));
+			si_get_shader_name(shader));
 		fprintf(file, "%s\n", shader->binary.llvm_ir_string);
 	}
 
 	if (!check_debug_option ||
-	    (si_can_dump_shader(sscreen, processor) &&
+	    (si_can_dump_shader(sscreen, shader_type) &&
 	     !(sscreen->debug_flags & DBG(NO_ASM)))) {
-		fprintf(file, "\n%s:\n", si_get_shader_name(shader, processor));
+		fprintf(file, "\n%s:\n", si_get_shader_name(shader));
 
 		if (shader->prolog)
 			si_shader_dump_disassembly(sscreen, &shader->prolog->binary,
-						   debug, "prolog", file);
+						   shader_type, debug, "prolog", file);
 		if (shader->previous_stage)
 			si_shader_dump_disassembly(sscreen, &shader->previous_stage->binary,
-						   debug, "previous stage", file);
+						   shader_type, debug, "previous stage", file);
 		if (shader->prolog2)
 			si_shader_dump_disassembly(sscreen, &shader->prolog2->binary,
-						   debug, "prolog2", file);
+						   shader_type, debug, "prolog2", file);
 
-		si_shader_dump_disassembly(sscreen, &shader->binary, debug, "main", file);
+		si_shader_dump_disassembly(sscreen, &shader->binary, shader_type, debug, "main", file);
 
 		if (shader->epilog)
 			si_shader_dump_disassembly(sscreen, &shader->epilog->binary,
-						   debug, "epilog", file);
+						   shader_type, debug, "epilog", file);
 		fprintf(file, "\n");
 	}
 
-	si_shader_dump_stats(sscreen, shader, processor, file,
-			     check_debug_option);
+	si_shader_dump_stats(sscreen, shader, file, check_debug_option);
 }
 
 static int si_compile_llvm(struct si_screen *sscreen,
@@ -5623,13 +5637,13 @@ static int si_compile_llvm(struct si_screen *sscreen,
 			   struct ac_llvm_compiler *compiler,
 			   LLVMModuleRef mod,
 			   struct pipe_debug_callback *debug,
-			   unsigned processor,
+			   enum pipe_shader_type shader_type,
 			   const char *name,
 			   bool less_optimized)
 {
 	unsigned count = p_atomic_inc_return(&sscreen->num_compilations);
 
-	if (si_can_dump_shader(sscreen, processor)) {
+	if (si_can_dump_shader(sscreen, shader_type)) {
 		fprintf(stderr, "radeonsi: Compiling shader %d\n", count);
 
 		if (!(sscreen->debug_flags & (DBG(NO_IR) | DBG(PREOPT_IR)))) {
@@ -5655,6 +5669,7 @@ static int si_compile_llvm(struct si_screen *sscreen,
 	struct ac_rtld_binary rtld;
 	if (!ac_rtld_open(&rtld, (struct ac_rtld_open_info){
 			.info = &sscreen->info,
+			.shader_type = tgsi_processor_to_shader_stage(shader_type),
 			.num_parts = 1,
 			.elf_ptrs = &binary->elf_buffer,
 			.elf_sizes = &binary->elf_size }))
@@ -5819,8 +5834,7 @@ si_generate_gs_copy_shader(struct si_screen *sscreen,
 			    "GS Copy Shader", false) == 0) {
 		if (si_can_dump_shader(sscreen, PIPE_SHADER_GEOMETRY))
 			fprintf(stderr, "GS Copy Shader:\n");
-		si_shader_dump(sscreen, ctx.shader, debug,
-			       PIPE_SHADER_GEOMETRY, stderr, true);
+		si_shader_dump(sscreen, ctx.shader, debug, stderr, true);
 
 		if (!ctx.shader->config.scratch_bytes_per_wave)
 			ok = si_shader_binary_upload(sscreen, ctx.shader, 0);
@@ -5867,14 +5881,15 @@ static void si_dump_shader_key_vs(const struct si_shader_key *key,
 	fprintf(f, "}\n");
 }
 
-static void si_dump_shader_key(unsigned processor, const struct si_shader *shader,
-			       FILE *f)
+static void si_dump_shader_key(const struct si_shader *shader, FILE *f)
 {
 	const struct si_shader_key *key = &shader->key;
+	enum pipe_shader_type shader_type =
+		shader->selector ? shader->selector->type : PIPE_SHADER_COMPUTE;
 
 	fprintf(f, "SHADER KEY\n");
 
-	switch (processor) {
+	switch (shader_type) {
 	case PIPE_SHADER_VERTEX:
 		si_dump_shader_key_vs(key, &key->part.vs.prolog,
 				      "part.vs.prolog", f);
@@ -5960,9 +5975,9 @@ static void si_dump_shader_key(unsigned processor, const struct si_shader *shade
 		assert(0);
 	}
 
-	if ((processor == PIPE_SHADER_GEOMETRY ||
-	     processor == PIPE_SHADER_TESS_EVAL ||
-	     processor == PIPE_SHADER_VERTEX) &&
+	if ((shader_type == PIPE_SHADER_GEOMETRY ||
+	     shader_type == PIPE_SHADER_TESS_EVAL ||
+	     shader_type == PIPE_SHADER_VERTEX) &&
 	    !key->as_es && !key->as_ls) {
 		fprintf(f, "  opt.kill_outputs = 0x%"PRIx64"\n", key->opt.kill_outputs);
 		fprintf(f, "  opt.clip_disable = %u\n", key->opt.clip_disable);
@@ -6907,7 +6922,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 
 	/* Dump TGSI code before doing TGSI->LLVM conversion in case the
 	 * conversion fails. */
-	if (si_can_dump_shader(sscreen, sel->info.processor) &&
+	if (si_can_dump_shader(sscreen, sel->type) &&
 	    !(sscreen->debug_flags & DBG(NO_TGSI))) {
 		if (sel->tokens)
 			tgsi_dump(sel->tokens, 0);
@@ -7132,7 +7147,7 @@ int si_compile_tgsi_shader(struct si_screen *sscreen,
 	/* Compile to bytecode. */
 	r = si_compile_llvm(sscreen, &shader->binary, &shader->config, compiler,
 			    ctx.ac.module, debug, ctx.type,
-			    si_get_shader_name(shader, ctx.type),
+			    si_get_shader_name(shader),
 			    si_should_optimize_less(compiler, shader->selector));
 	si_llvm_dispose(&ctx);
 	if (r) {
@@ -8310,6 +8325,7 @@ bool si_shader_create(struct si_screen *sscreen, struct ac_llvm_compiler *compil
 			shader->config.num_vgprs = MAX2(shader->config.num_vgprs,
 							shader->info.num_input_vgprs);
 			break;
+		default:;
 		}
 
 		/* Update SGPR and VGPR counts. */
@@ -8362,8 +8378,7 @@ bool si_shader_create(struct si_screen *sscreen, struct ac_llvm_compiler *compil
 	}
 
 	si_fix_resource_usage(sscreen, shader);
-	si_shader_dump(sscreen, shader, debug, sel->info.processor,
-		       stderr, true);
+	si_shader_dump(sscreen, shader, debug, stderr, true);
 
 	/* Upload. */
 	if (!si_shader_binary_upload(sscreen, shader, 0)) {

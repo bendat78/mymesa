@@ -762,8 +762,8 @@ void radv_GetPhysicalDeviceFeatures(
 		.fullDrawIndexUint32                      = true,
 		.imageCubeArray                           = true,
 		.independentBlend                         = true,
-		.geometryShader                           = pdevice->rad_info.chip_class < GFX10,
-		.tessellationShader                       = pdevice->rad_info.chip_class < GFX10,
+		.geometryShader                           = true,
+		.tessellationShader                       = true,
 		.sampleRateShading                        = true,
 		.dualSrcBlend                             = true,
 		.logicOp                                  = true,
@@ -2368,8 +2368,11 @@ radv_get_hs_offchip_param(struct radv_device *device, uint32_t *max_offchip_buff
 	case GFX7:
 	case GFX8:
 	case GFX9:
-	default:
 		max_offchip_buffers = MIN2(max_offchip_buffers, 508);
+		break;
+	case GFX10:
+		break;
+	default:
 		break;
 	}
 
@@ -2489,8 +2492,8 @@ radv_emit_global_shader_pointers(struct radv_queue *queue,
 	if (queue->device->physical_device->rad_info.chip_class >= GFX10) {
 		uint32_t regs[] = {R_00B030_SPI_SHADER_USER_DATA_PS_0,
 				   R_00B130_SPI_SHADER_USER_DATA_VS_0,
-				   R_00B230_SPI_SHADER_USER_DATA_GS_0,
-				   R_00B430_SPI_SHADER_USER_DATA_HS_0};
+				   R_00B208_SPI_SHADER_USER_DATA_ADDR_LO_GS,
+				   R_00B408_SPI_SHADER_USER_DATA_ADDR_LO_HS};
 
 		for (int i = 0; i < ARRAY_SIZE(regs); ++i) {
 			radv_emit_shader_pointer(queue->device, cs, regs[i],
@@ -2746,8 +2749,11 @@ radv_get_preamble_cs(struct radv_queue *queue,
 		if (esgs_ring_bo || gsvs_ring_bo || tess_rings_bo)  {
 			radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 			radeon_emit(cs, EVENT_TYPE(V_028A90_VS_PARTIAL_FLUSH) | EVENT_INDEX(4));
-			radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
-			radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
+
+			if (queue->device->physical_device->rad_info.chip_class < GFX10) {
+				radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+				radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
+			}
 		}
 
 		radv_emit_gs_ring_sizes(queue, cs, esgs_ring_bo, esgs_ring_size,

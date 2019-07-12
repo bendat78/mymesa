@@ -1036,7 +1036,15 @@ try_immediate_source(const nir_alu_instr *instr, src_reg *op,
 {
    unsigned idx;
 
-   if (nir_src_bit_size(instr->src[1].src) == 32 &&
+   /* MOV should be the only single-source instruction passed to this
+    * function.  Any other unary instruction with a constant source should
+    * have been constant-folded away!
+    */
+   assert(nir_op_infos[instr->op].num_inputs > 1 ||
+          instr->op == nir_op_mov);
+
+   if (instr->op != nir_op_mov &&
+       nir_src_bit_size(instr->src[1].src) == 32 &&
        nir_src_is_const(instr->src[1].src)) {
       idx = 1;
    } else if (try_src0_also &&
@@ -1088,29 +1096,50 @@ try_immediate_source(const nir_alu_instr *instr, src_reg *op,
 
    case BRW_REGISTER_TYPE_F: {
       int first_comp = -1;
-      float f;
+      float f[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+      bool is_scalar = true;
 
       for (unsigned i = 0; i < NIR_MAX_VEC_COMPONENTS; i++) {
          if (nir_alu_instr_channel_used(instr, idx, i)) {
+            f[i] = nir_src_comp_as_float(instr->src[idx].src,
+                                         instr->src[idx].swizzle[i]);
             if (first_comp < 0) {
                first_comp = i;
-               f = nir_src_comp_as_float(instr->src[idx].src,
-                                         instr->src[idx].swizzle[i]);
-            } else if (f != nir_src_comp_as_float(instr->src[idx].src,
-                                                  instr->src[idx].swizzle[i])) {
-               return -1;
+            } else if (f[first_comp] != f[i]) {
+               is_scalar = false;
             }
          }
       }
 
-      if (op[idx].abs)
-         f = fabs(f);
+      if (is_scalar) {
+         if (op[idx].abs)
+            f[first_comp] = fabs(f[first_comp]);
 
-      if (op[idx].negate)
-         f = -f;
+         if (op[idx].negate)
+            f[first_comp] = -f[first_comp];
 
-      op[idx] = src_reg(brw_imm_f(f));
-      assert(op[idx].type == old_type);
+         op[idx] = src_reg(brw_imm_f(f[first_comp]));
+         assert(op[idx].type == old_type);
+      } else {
+         uint8_t vf_values[4] = { 0, 0, 0, 0 };
+
+         for (unsigned i = 0; i < NIR_MAX_VEC_COMPONENTS; i++) {
+            if (op[idx].abs)
+               f[i] = fabs(f[i]);
+
+            if (op[idx].negate)
+               f[i] = -f[i];
+
+            const int vf = brw_float_to_vf(f[i]);
+            if (vf == -1)
+               return -1;
+
+            vf_values[i] = vf;
+         }
+
+         op[idx] = src_reg(brw_imm_vf4(vf_values[0], vf_values[1],
+                                       vf_values[2], vf_values[3]));
+      }
       break;
    }
 
@@ -1118,16 +1147,60 @@ try_immediate_source(const nir_alu_instr *instr, src_reg *op,
       unreachable("Non-32bit type.");
    }
 
-   /* The instruction format only allows source 1 to be an immediate value.
-    * If the immediate value was source 0, then the sources must be exchanged.
+   /* If the instruction has more than one source, the instruction format only
+    * allows source 1 to be an immediate value.  If the immediate value was
+    * source 0, then the sources must be exchanged.
     */
-   if (idx == 0) {
+   if (idx == 0 && instr->op != nir_op_mov) {
       src_reg tmp = op[0];
       op[0] = op[1];
       op[1] = tmp;
    }
 
    return idx;
+}
+
+void
+vec4_visitor::fix_float_operands(src_reg op[3], nir_alu_instr *instr)
+{
+   bool fixed[3] = { false, false, false };
+
+   for (unsigned i = 0; i < 2; i++) {
+      if (!nir_src_is_const(instr->src[i].src))
+         continue;
+
+      for (unsigned j = i + 1; j < 3; j++) {
+         if (fixed[j])
+            continue;
+
+         if (!nir_src_is_const(instr->src[j].src))
+            continue;
+
+         if (nir_alu_srcs_equal(instr, instr, i, j)) {
+            if (!fixed[i])
+               op[i] = fix_3src_operand(op[i]);
+
+            op[j] = op[i];
+
+            fixed[i] = true;
+            fixed[j] = true;
+         } else if (nir_alu_srcs_negative_equal(instr, instr, i, j)) {
+            if (!fixed[i])
+               op[i] = fix_3src_operand(op[i]);
+
+            op[j] = op[i];
+            op[j].negate = !op[j].negate;
+
+            fixed[i] = true;
+            fixed[j] = true;
+         }
+      }
+   }
+
+   for (unsigned i = 0; i < 3; i++) {
+      if (!fixed[i])
+         op[i] = fix_3src_operand(op[i]);
+   }
 }
 
 void
@@ -1153,6 +1226,7 @@ vec4_visitor::nir_emit_alu(nir_alu_instr *instr)
 
    switch (instr->op) {
    case nir_op_mov:
+      try_immediate_source(instr, &op[0], true, devinfo);
       inst = emit(MOV(dst, op[0]));
       inst->saturate = instr->dest.saturate;
       break;
@@ -1916,17 +1990,15 @@ vec4_visitor::nir_emit_alu(nir_alu_instr *instr)
          inst = emit(ADD(dst, src_reg(mul_dst), op[2]));
          inst->saturate = instr->dest.saturate;
       } else {
-         op[0] = fix_3src_operand(op[0]);
-         op[1] = fix_3src_operand(op[1]);
-         op[2] = fix_3src_operand(op[2]);
-
+         fix_float_operands(op, instr);
          inst = emit(MAD(dst, op[2], op[1], op[0]));
          inst->saturate = instr->dest.saturate;
       }
       break;
 
    case nir_op_flrp:
-      inst = emit_lrp(dst, op[0], op[1], op[2]);
+      fix_float_operands(op, instr);
+      inst = emit(LRP(dst, op[2], op[1], op[0]));
       inst->saturate = instr->dest.saturate;
       break;
 

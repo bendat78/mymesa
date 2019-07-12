@@ -118,6 +118,9 @@ struct radv_shader_variant_key {
 		struct radv_fs_variant_key fs;
 		struct radv_tes_variant_key tes;
 		struct radv_tcs_variant_key tcs;
+
+		/* A common prefix of the vs and tes keys. */
+		struct radv_vs_out_key vs_common_out;
 	};
 	bool has_multiview_view_index;
 };
@@ -418,7 +421,8 @@ radv_shader_variant_destroy(struct radv_device *device,
 			    struct radv_shader_variant *variant);
 
 const char *
-radv_get_shader_name(struct radv_shader_variant *var, gl_shader_stage stage);
+radv_get_shader_name(struct radv_shader_variant_info *info,
+		     gl_shader_stage stage);
 
 void
 radv_shader_dump_stats(struct radv_device *device,

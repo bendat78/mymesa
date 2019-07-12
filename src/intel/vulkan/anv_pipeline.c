@@ -168,6 +168,7 @@ anv_shader_compile_to_nir(struct anv_device *device,
    struct spirv_to_nir_options spirv_options = {
       .lower_workgroup_access_to_offsets = true,
       .caps = {
+         .demote_to_helper_invocation = true,
          .derivative_group = true,
          .descriptor_array_dynamic_indexing = true,
          .descriptor_array_non_uniform_indexing = true,
@@ -351,12 +352,19 @@ populate_sampler_prog_key(const struct gen_device_info *devinfo,
 }
 
 static void
+populate_base_prog_key(const struct gen_device_info *devinfo,
+                       struct brw_base_prog_key *key)
+{
+   populate_sampler_prog_key(devinfo, &key->tex);
+}
+
+static void
 populate_vs_prog_key(const struct gen_device_info *devinfo,
                      struct brw_vs_prog_key *key)
 {
    memset(key, 0, sizeof(*key));
 
-   populate_sampler_prog_key(devinfo, &key->tex);
+   populate_base_prog_key(devinfo, &key->base);
 
    /* XXX: Handle vertex input work-arounds */
 
@@ -370,7 +378,7 @@ populate_tcs_prog_key(const struct gen_device_info *devinfo,
 {
    memset(key, 0, sizeof(*key));
 
-   populate_sampler_prog_key(devinfo, &key->tex);
+   populate_base_prog_key(devinfo, &key->base);
 
    key->input_vertices = input_vertices;
 }
@@ -381,7 +389,7 @@ populate_tes_prog_key(const struct gen_device_info *devinfo,
 {
    memset(key, 0, sizeof(*key));
 
-   populate_sampler_prog_key(devinfo, &key->tex);
+   populate_base_prog_key(devinfo, &key->base);
 }
 
 static void
@@ -390,7 +398,7 @@ populate_gs_prog_key(const struct gen_device_info *devinfo,
 {
    memset(key, 0, sizeof(*key));
 
-   populate_sampler_prog_key(devinfo, &key->tex);
+   populate_base_prog_key(devinfo, &key->base);
 }
 
 static void
@@ -401,7 +409,7 @@ populate_wm_prog_key(const struct gen_device_info *devinfo,
 {
    memset(key, 0, sizeof(*key));
 
-   populate_sampler_prog_key(devinfo, &key->tex);
+   populate_base_prog_key(devinfo, &key->base);
 
    /* We set this to 0 here and set to the actual value before we call
     * brw_compile_fs.
@@ -452,7 +460,7 @@ populate_cs_prog_key(const struct gen_device_info *devinfo,
 {
    memset(key, 0, sizeof(*key));
 
-   populate_sampler_prog_key(devinfo, &key->tex);
+   populate_base_prog_key(devinfo, &key->base);
 }
 
 struct anv_pipeline_stage {

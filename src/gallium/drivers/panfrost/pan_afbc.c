@@ -93,7 +93,12 @@ panfrost_format_supports_afbc(enum pipe_format format)
         if (util_format_is_rgba8_variant(desc))
                 return true;
 
-        if (format == PIPE_FORMAT_Z32_UNORM)
+        /* Z32/Z16/S8 are all compressible as well, but they are implemented as
+         * Z24S8 with wasted bits. So Z24S8 is the only format we actually need
+         * to handle compressed, and we can make the state tracker deal with
+         * the rest. */
+
+        if (format == PIPE_FORMAT_Z24_UNORM_S8_UINT)
                 return true;
 
         /* TODO: AFBC of other formats */
@@ -105,8 +110,8 @@ unsigned
 panfrost_afbc_header_size(unsigned width, unsigned height)
 {
         /* Align to tile */
-        unsigned aligned_width  = ALIGN(width,  AFBC_TILE_WIDTH);
-        unsigned aligned_height = ALIGN(height, AFBC_TILE_HEIGHT);
+        unsigned aligned_width  = ALIGN_POT(width,  AFBC_TILE_WIDTH);
+        unsigned aligned_height = ALIGN_POT(height, AFBC_TILE_HEIGHT);
 
         /* Compute size in tiles, rather than pixels */
         unsigned tile_count_x = aligned_width  / AFBC_TILE_WIDTH;
@@ -117,6 +122,6 @@ panfrost_afbc_header_size(unsigned width, unsigned height)
         unsigned header_bytes = tile_count * AFBC_HEADER_BYTES_PER_TILE;
 
         /* Align and go */
-        return ALIGN(header_bytes, AFBC_CACHE_ALIGN);
+        return ALIGN_POT(header_bytes, AFBC_CACHE_ALIGN);
 
 }

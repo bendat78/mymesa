@@ -194,18 +194,22 @@ pkg.generate(
 
 if with_tests and prog_nm.found()
   if with_glvnd
-    # TODO: add glvnd symbol check
+    egl_symbols = files('egl-glvnd-symbols.txt')
   else
-    test('egl-symbols-check',
-      find_program('egl-symbols-check'),
-      env : env_test,
-      args : libegl,
-      suite : ['egl'],
-    )
+    egl_symbols = files('egl-symbols.txt')
   endif
+  test('egl-symbols-check',
+    symbols_check,
+    args : [
+      '--lib', libegl,
+      '--symbols-file', egl_symbols,
+      '--nm', prog_nm.path(),
+    ],
+    suite : ['egl'],
+  )
   test('egl-entrypoint-check',
-    find_program('egl-entrypoint-check'),
-    env : ['srcdir=' + meson.current_source_dir()],
+    prog_python,
+    args : files('egl-entrypoint-check.py', 'main/eglentrypoint.h'),
     suite : ['egl'],
   )
 endif

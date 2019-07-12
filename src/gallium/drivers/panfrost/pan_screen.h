@@ -49,26 +49,24 @@ struct panfrost_screen;
 struct panfrost_screen {
         struct pipe_screen base;
         int fd;
+        unsigned gpu_id;
 
         struct renderonly *ro;
 
         /* Memory management is based on subdividing slabs with AMD's allocator */
         struct pb_slabs slabs;
-        
-        /* TODO: Where? */
-        struct panfrost_resource *display_target;
 
         /* While we're busy building up the job for frame N, the GPU is
          * still busy executing frame N-1. So hold a reference to
          * yesterjob */
-	int last_fragment_flushed;
+        int last_fragment_flushed;
         struct panfrost_job *last_job;
 };
 
 static inline struct panfrost_screen *
 pan_screen(struct pipe_screen *p)
 {
-   return (struct panfrost_screen *)p;
+        return (struct panfrost_screen *)p;
 }
 
 void

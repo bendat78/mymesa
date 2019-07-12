@@ -38,7 +38,7 @@
 struct panfrost_transfer
 panfrost_allocate_chunk(struct panfrost_context *ctx, size_t size, unsigned heap_id)
 {
-        size = ALIGN(size, ALIGNMENT);
+        size = ALIGN_POT(size, ALIGNMENT);
 
         struct pipe_context *gallium = (struct pipe_context *) ctx;
         struct panfrost_screen *screen = pan_screen(gallium->screen);
@@ -63,7 +63,7 @@ struct panfrost_transfer
 panfrost_allocate_transient(struct panfrost_context *ctx, size_t sz)
 {
         /* Pad the size */
-        sz = ALIGN(sz, ALIGNMENT);
+        sz = ALIGN_POT(sz, ALIGNMENT);
 
         /* Check if there is room in the current entry */
         struct panfrost_transient_pool *pool = &ctx->transient_pools[ctx->cmdstream_i];
@@ -77,7 +77,7 @@ panfrost_allocate_transient(struct panfrost_context *ctx, size_t sz)
                 assert(pool->entry_index < PANFROST_MAX_TRANSIENT_ENTRIES);
 
                 /* Check if this entry exists */
-                
+
                 if (pool->entry_index >= pool->entry_count) {
                         /* Don't overflow the pool -- allocate a new one */
                         struct pipe_context *gallium = (struct pipe_context *) ctx;

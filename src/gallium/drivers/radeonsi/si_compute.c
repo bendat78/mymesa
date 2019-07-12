@@ -66,6 +66,7 @@ static const amd_kernel_code_t *si_compute_get_code_object(
 	struct ac_rtld_binary rtld;
 	if (!ac_rtld_open(&rtld, (struct ac_rtld_open_info){
 			.info = &program->screen->info,
+			.shader_type = MESA_SHADER_COMPUTE,
 			.num_parts = 1,
 			.elf_ptrs = &program->shader.binary.elf_buffer,
 			.elf_sizes = &program->shader.binary.elf_size }))
@@ -164,8 +165,7 @@ static void si_create_compute_state_async(void *job, int thread_index)
 		mtx_unlock(&sscreen->shader_cache_mutex);
 
 		si_shader_dump_stats_for_shader_db(sscreen, shader, debug);
-		si_shader_dump(sscreen, shader, debug, PIPE_SHADER_COMPUTE,
-			       stderr, true);
+		si_shader_dump(sscreen, shader, debug, stderr, true);
 
 		if (!si_shader_binary_upload(sscreen, shader, 0))
 			program->shader.compilation_failed = true;
@@ -191,6 +191,7 @@ static void si_create_compute_state_async(void *job, int thread_index)
 			S_00B848_VGPRS((shader->config.num_vgprs - 1) / 4) |
 			S_00B848_DX10_CLAMP(1) |
 			S_00B848_MEM_ORDERED(sscreen->info.chip_class >= GFX10) |
+			S_00B848_WGP_MODE(sscreen->info.chip_class >= GFX10) |
 			S_00B848_FLOAT_MODE(shader->config.float_mode);
 
 		if (program->screen->info.chip_class < GFX10) {
@@ -276,8 +277,7 @@ static void *si_create_compute_state(
 			si_compute_get_code_object(program, 0);
 		code_object_to_config(code_object, &program->shader.config);
 
-		si_shader_dump(sctx->screen, &program->shader, &sctx->debug,
-			       PIPE_SHADER_COMPUTE, stderr, true);
+		si_shader_dump(sctx->screen, &program->shader, &sctx->debug, stderr, true);
 		if (!si_shader_binary_upload(sctx->screen, &program->shader, 0)) {
 			fprintf(stderr, "LLVM failed to upload shader\n");
 			free((void *)program->shader.binary.elf_buffer);
@@ -810,12 +810,19 @@ static void si_emit_dispatch_packets(struct si_context *sctx,
 	struct si_screen *sscreen = sctx->screen;
 	struct radeon_cmdbuf *cs = sctx->gfx_cs;
 	bool render_cond_bit = sctx->render_cond && !sctx->render_cond_force_off;
+	unsigned threads_per_threadgroup =
+		info->block[0] * info->block[1] * info->block[2];
 	unsigned waves_per_threadgroup =
-		DIV_ROUND_UP(info->block[0] * info->block[1] * info->block[2], 64);
+		DIV_ROUND_UP(threads_per_threadgroup, 64);
+	unsigned threadgroups_per_cu = 1;
+
+	if (sctx->chip_class >= GFX10 && waves_per_threadgroup == 1)
+		threadgroups_per_cu = 2;
 
 	radeon_set_sh_reg(cs, R_00B854_COMPUTE_RESOURCE_LIMITS,
 			  si_get_compute_resource_limits(sscreen, waves_per_threadgroup,
-							 sctx->cs_max_waves_per_sh, 1));
+							 sctx->cs_max_waves_per_sh,
+							 threadgroups_per_cu));
 
 	unsigned dispatch_initiator =
 		S_00B800_COMPUTE_SHADER_EN(1) |

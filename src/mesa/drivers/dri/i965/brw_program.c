@@ -110,14 +110,12 @@ brw_create_nir(struct brw_context *brw,
 
    nir_shader_gather_info(nir, nir_shader_get_entrypoint(nir));
 
-   nir_shader *softfp64 = NULL;
-   if ((options->lower_doubles_options & nir_lower_fp64_full_software) &&
-       nir->info.uses_64bit) {
-      softfp64 = glsl_float64_funcs_to_nir(ctx, options);
-      ralloc_steal(ralloc_parent(nir), softfp64);
+   if (!ctx->SoftFP64 && nir->info.uses_64bit &&
+       (options->lower_doubles_options & nir_lower_fp64_full_software)) {
+      ctx->SoftFP64 = glsl_float64_funcs_to_nir(ctx, options);
    }
 
-   brw_preprocess_nir(brw->screen->compiler, nir, softfp64);
+   brw_preprocess_nir(brw->screen->compiler, nir, ctx->SoftFP64);
 
    if (stage == MESA_SHADER_TESS_CTRL) {
       /* Lower gl_PatchVerticesIn from a sys. value to a uniform on Gen8+. */
@@ -778,7 +776,7 @@ brw_dump_arb_asm(const char *stage, struct gl_program *prog)
 void
 brw_setup_tex_for_precompile(const struct gen_device_info *devinfo,
                              struct brw_sampler_prog_key_data *tex,
-                             struct gl_program *prog)
+                             const struct gl_program *prog)
 {
    const bool has_shader_channel_select = devinfo->is_haswell || devinfo->gen >= 8;
    unsigned sampler_count = util_last_bit(prog->SamplersUsed);
@@ -912,8 +910,7 @@ void
 brw_debug_recompile(struct brw_context *brw,
                     gl_shader_stage stage,
                     unsigned api_id,
-                    unsigned key_program_string_id,
-                    void *key)
+                    struct brw_base_prog_key *key)
 {
    const struct brw_compiler *compiler = brw->screen->compiler;
    enum brw_cache_id cache_id = brw_stage_cache_id(stage);
@@ -922,7 +919,7 @@ brw_debug_recompile(struct brw_context *brw,
                              _mesa_shader_stage_to_string(stage), api_id);
 
    const void *old_key =
-      brw_find_previous_compile(&brw->cache, cache_id, key_program_string_id);
+      brw_find_previous_compile(&brw->cache, cache_id, key->program_string_id);
 
    brw_debug_key_recompile(compiler, brw, stage, old_key, key);
 }
