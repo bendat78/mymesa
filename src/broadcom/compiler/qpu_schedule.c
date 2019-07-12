@@ -128,6 +128,9 @@ add_write_dep(struct schedule_state *state,
 static bool
 qpu_inst_is_tlb(const struct v3d_qpu_instr *inst)
 {
+        if (inst->sig.ldtlb || inst->sig.ldtlbu)
+                return true;
+
         if (inst->type != V3D_QPU_INSTR_TYPE_ALU)
                 return false;
 
@@ -379,7 +382,7 @@ calculate_deps(struct schedule_state *state, struct schedule_node *n)
                 add_write_dep(state, &state->last_tmu_config, n);
 
         if (inst->sig.ldtlb | inst->sig.ldtlbu)
-                add_read_dep(state, state->last_tlb, n);
+                add_write_dep(state, &state->last_tlb, n);
 
         if (inst->sig.ldvpm) {
                 add_write_dep(state, &state->last_vpm_read, n);

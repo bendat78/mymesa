@@ -32,18 +32,15 @@
 #include "common/v3d_device_info.h"
 #include "v3d_compiler.h"
 
+/* We don't do any address packing. */
+#define __gen_user_data void
+#define __gen_address_type uint32_t
+#define __gen_address_offset(reloc) (*reloc)
+#define __gen_emit_reloc(cl, reloc)
+#include "cle/v3d_packet_v41_pack.h"
+
 #define GENERAL_TMU_LOOKUP_PER_QUAD                 (0 << 7)
 #define GENERAL_TMU_LOOKUP_PER_PIXEL                (1 << 7)
-#define GENERAL_TMU_READ_OP_PREFETCH                (0 << 3)
-#define GENERAL_TMU_READ_OP_CACHE_CLEAR             (1 << 3)
-#define GENERAL_TMU_READ_OP_CACHE_FLUSH             (3 << 3)
-#define GENERAL_TMU_READ_OP_CACHE_CLEAN             (3 << 3)
-#define GENERAL_TMU_READ_OP_CACHE_L1T_CLEAR         (4 << 3)
-#define GENERAL_TMU_READ_OP_CACHE_L1T_FLUSH_AGGREGATION (5 << 3)
-#define GENERAL_TMU_READ_OP_ATOMIC_INC              (8 << 3)
-#define GENERAL_TMU_READ_OP_ATOMIC_DEC              (9 << 3)
-#define GENERAL_TMU_READ_OP_ATOMIC_NOT              (10 << 3)
-#define GENERAL_TMU_READ_OP_READ                    (15 << 3)
 #define GENERAL_TMU_LOOKUP_TYPE_8BIT_I              (0 << 0)
 #define GENERAL_TMU_LOOKUP_TYPE_16BIT_I             (1 << 0)
 #define GENERAL_TMU_LOOKUP_TYPE_VEC2                (2 << 0)
@@ -52,19 +49,6 @@
 #define GENERAL_TMU_LOOKUP_TYPE_8BIT_UI             (5 << 0)
 #define GENERAL_TMU_LOOKUP_TYPE_16BIT_UI            (6 << 0)
 #define GENERAL_TMU_LOOKUP_TYPE_32BIT_UI            (7 << 0)
-
-#define GENERAL_TMU_WRITE_OP_ATOMIC_ADD_WRAP         (0 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_SUB_WRAP         (1 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_XCHG             (2 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_CMPXCHG          (3 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_UMIN             (4 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_UMAX             (5 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_SMIN             (6 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_SMAX             (7 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_AND              (8 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_OR               (9 << 3)
-#define GENERAL_TMU_WRITE_OP_ATOMIC_XOR              (10 << 3)
-#define GENERAL_TMU_WRITE_OP_WRITE                   (15 << 3)
 
 #define V3D_TSY_SET_QUORUM          0
 #define V3D_TSY_INC_WAITERS         1
@@ -122,6 +106,27 @@ vir_emit_thrsw(struct v3d_compile *c)
         c->last_thrsw = vir_NOP(c);
         c->last_thrsw->qpu.sig.thrsw = true;
         c->last_thrsw_at_top_level = !c->in_control_flow;
+
+        /* We need to lock the scoreboard before any tlb acess happens. If this
+         * thread switch comes after we have emitted a tlb load, then it means
+         * that we can't lock on the last thread switch any more.
+         */
+        if (c->emitted_tlb_load)
+                c->lock_scoreboard_on_first_thrsw = true;
+}
+
+uint32_t
+v3d_get_op_for_atomic_add(nir_intrinsic_instr *instr, unsigned src)
+{
+        if (nir_src_is_const(instr->src[src])) {
+                int64_t add_val = nir_src_as_int(instr->src[src]);
+                if (add_val == 1)
+                        return V3D_TMU_OP_WRITE_AND_READ_INC;
+                else if (add_val == -1)
+                        return V3D_TMU_OP_WRITE_OR_READ_DEC;
+        }
+
+        return V3D_TMU_OP_WRITE_ADD_READ_PREFETCH;
 }
 
 static uint32_t
@@ -133,41 +138,41 @@ v3d_general_tmu_op(nir_intrinsic_instr *instr)
         case nir_intrinsic_load_uniform:
         case nir_intrinsic_load_shared:
         case nir_intrinsic_load_scratch:
-                return GENERAL_TMU_READ_OP_READ;
         case nir_intrinsic_store_ssbo:
         case nir_intrinsic_store_shared:
         case nir_intrinsic_store_scratch:
-                return GENERAL_TMU_WRITE_OP_WRITE;
+                return V3D_TMU_OP_REGULAR;
         case nir_intrinsic_ssbo_atomic_add:
+                return v3d_get_op_for_atomic_add(instr, 2);
         case nir_intrinsic_shared_atomic_add:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_ADD_WRAP;
+                return v3d_get_op_for_atomic_add(instr, 1);
         case nir_intrinsic_ssbo_atomic_imin:
         case nir_intrinsic_shared_atomic_imin:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_SMIN;
+                return V3D_TMU_OP_WRITE_SMIN;
         case nir_intrinsic_ssbo_atomic_umin:
         case nir_intrinsic_shared_atomic_umin:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_UMIN;
+                return V3D_TMU_OP_WRITE_UMIN_FULL_L1_CLEAR;
         case nir_intrinsic_ssbo_atomic_imax:
         case nir_intrinsic_shared_atomic_imax:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_SMAX;
+                return V3D_TMU_OP_WRITE_SMAX;
         case nir_intrinsic_ssbo_atomic_umax:
         case nir_intrinsic_shared_atomic_umax:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_UMAX;
+                return V3D_TMU_OP_WRITE_UMAX;
         case nir_intrinsic_ssbo_atomic_and:
         case nir_intrinsic_shared_atomic_and:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_AND;
+                return V3D_TMU_OP_WRITE_AND_READ_INC;
         case nir_intrinsic_ssbo_atomic_or:
         case nir_intrinsic_shared_atomic_or:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_OR;
+                return V3D_TMU_OP_WRITE_OR_READ_DEC;
         case nir_intrinsic_ssbo_atomic_xor:
         case nir_intrinsic_shared_atomic_xor:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_XOR;
+                return V3D_TMU_OP_WRITE_XOR_READ_NOT;
         case nir_intrinsic_ssbo_atomic_exchange:
         case nir_intrinsic_shared_atomic_exchange:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_XCHG;
+                return V3D_TMU_OP_WRITE_XCHG_READ_FLUSH;
         case nir_intrinsic_ssbo_atomic_comp_swap:
         case nir_intrinsic_shared_atomic_comp_swap:
-                return GENERAL_TMU_WRITE_OP_ATOMIC_CMPXCHG;
+                return V3D_TMU_OP_WRITE_CMPXCHG_READ_FLUSH;
         default:
                 unreachable("unknown intrinsic op");
         }
@@ -181,11 +186,16 @@ static void
 ntq_emit_tmu_general(struct v3d_compile *c, nir_intrinsic_instr *instr,
                      bool is_shared_or_scratch)
 {
-        /* XXX perf: We should turn add/sub of 1 to inc/dec.  Perhaps NIR
-         * wants to have support for inc/dec?
-         */
-
         uint32_t tmu_op = v3d_general_tmu_op(instr);
+
+        /* If we were able to replace atomic_add for an inc/dec, then we
+         * need/can to do things slightly different, like not loading the
+         * amount to add/sub, as that is implicit.
+         */
+        bool atomic_add_replaced = ((instr->intrinsic == nir_intrinsic_ssbo_atomic_add ||
+                                     instr->intrinsic == nir_intrinsic_shared_atomic_add) &&
+                                    (tmu_op == V3D_TMU_OP_WRITE_AND_READ_INC ||
+                                     tmu_op == V3D_TMU_OP_WRITE_OR_READ_DEC));
         bool is_store = (instr->intrinsic == nir_intrinsic_store_ssbo ||
                          instr->intrinsic == nir_intrinsic_store_scratch ||
                          instr->intrinsic == nir_intrinsic_store_shared);
@@ -198,7 +208,8 @@ ntq_emit_tmu_general(struct v3d_compile *c, nir_intrinsic_instr *instr,
         } else if (instr->intrinsic == nir_intrinsic_load_ssbo ||
                    instr->intrinsic == nir_intrinsic_load_ubo ||
                    instr->intrinsic == nir_intrinsic_load_scratch ||
-                   instr->intrinsic == nir_intrinsic_load_shared) {
+                   instr->intrinsic == nir_intrinsic_load_shared ||
+                   atomic_add_replaced) {
                 offset_src = 0 + has_index;
         } else if (is_store) {
                 offset_src = 1 + has_index;
@@ -214,7 +225,7 @@ ntq_emit_tmu_general(struct v3d_compile *c, nir_intrinsic_instr *instr,
                              vir_reg(QFILE_MAGIC, V3D_QPU_WADDR_TMUD),
                              ntq_get_src(c, instr->src[1 + has_index], 0));
                 tmu_writes++;
-                if (tmu_op == GENERAL_TMU_WRITE_OP_ATOMIC_CMPXCHG) {
+                if (tmu_op == V3D_TMU_OP_WRITE_CMPXCHG_READ_FLUSH) {
                         vir_MOV_dest(c,
                                      vir_reg(QFILE_MAGIC, V3D_QPU_WADDR_TMUD),
                                      ntq_get_src(c, instr->src[2 + has_index],
@@ -272,13 +283,13 @@ ntq_emit_tmu_general(struct v3d_compile *c, nir_intrinsic_instr *instr,
          * reads, which has been fine).
          */
         int num_components;
-        if (tmu_op == GENERAL_TMU_WRITE_OP_ATOMIC_CMPXCHG)
+        if (tmu_op == V3D_TMU_OP_WRITE_CMPXCHG_READ_FLUSH)
                 num_components = 2;
         else
                 num_components = instr->num_components;
 
         uint32_t config = (0xffffff00 |
-                           tmu_op |
+                           tmu_op << 3|
                            GENERAL_TMU_LOOKUP_PER_PIXEL);
         if (num_components == 1) {
                 config |= GENERAL_TMU_LOOKUP_TYPE_32BIT_UI;
@@ -1633,26 +1644,218 @@ ntq_emit_image_size(struct v3d_compile *c, nir_intrinsic_instr *instr)
 }
 
 static void
+vir_emit_tlb_color_read(struct v3d_compile *c, nir_intrinsic_instr *instr)
+{
+        assert(c->s->info.stage == MESA_SHADER_FRAGMENT);
+
+        int rt = nir_src_as_uint(instr->src[0]);
+        assert(rt < V3D_MAX_DRAW_BUFFERS);
+
+        int sample_index = nir_intrinsic_base(instr) ;
+        assert(sample_index == 0); /* XXX: multisample */
+
+        int component = nir_intrinsic_component(instr);
+        assert(component < 4);
+
+        /* We need to emit our TLB reads after we have acquired the scoreboard
+         * lock, or the GPU will hang. Usually, we do our scoreboard locking on
+         * the last thread switch to improve parallelism, however, that is only
+         * guaranteed to happen before the tlb color writes.
+         *
+         * To fix that, we make sure we always emit a thread switch before the
+         * first tlb color read. If that happens to be the last thread switch
+         * we emit, then everything is fine, but otherwsie, if any code after
+         * this point needs to emit additional thread switches, then we will
+         * switch the strategy to locking the scoreboard on the first thread
+         * switch instead -- see vir_emit_thrsw().
+         */
+        if (!c->emitted_tlb_load) {
+                if (!c->last_thrsw_at_top_level) {
+                        assert(c->devinfo->ver >= 41);
+                        vir_emit_thrsw(c);
+                }
+
+                c->emitted_tlb_load = true;
+        }
+
+        struct qreg *color_reads =
+                &c->color_reads[(rt * V3D_MAX_SAMPLES + sample_index) * 4];
+
+        if (color_reads[component].file == QFILE_NULL) {
+                enum pipe_format rt_format = c->fs_key->color_fmt[rt].format;
+                int num_components =
+                        util_format_get_nr_components(rt_format);
+
+                const bool swap_rb = c->fs_key->swap_color_rb & (1 << rt);
+                if (swap_rb)
+                        num_components = MAX2(num_components, 3);
+
+                nir_variable *var = c->output_color_var[rt];
+                enum glsl_base_type type = glsl_get_base_type(var->type);
+
+                bool is_int_format = type == GLSL_TYPE_INT ||
+                                     type == GLSL_TYPE_UINT;
+
+                bool is_32b_tlb_format = is_int_format ||
+                                         (c->fs_key->f32_color_rb & (1 << rt));
+
+                uint32_t conf = 0xffffff00;
+                conf |= TLB_SAMPLE_MODE_PER_PIXEL; /* XXX: multisample */
+                conf |= (7 - rt) << TLB_RENDER_TARGET_SHIFT;
+
+                if (is_32b_tlb_format) {
+                        /* The F32 vs I32 distinction was dropped in 4.2. */
+                        conf |= (c->devinfo->ver < 42 && is_int_format) ?
+                                TLB_TYPE_I32_COLOR : TLB_TYPE_F32_COLOR;
+
+                        conf |= ((num_components - 1) <<
+                                 TLB_VEC_SIZE_MINUS_1_SHIFT);
+                } else {
+                        conf |= TLB_TYPE_F16_COLOR;
+                        conf |= TLB_F16_SWAP_HI_LO;
+
+                        if (num_components >= 3)
+                                conf |= TLB_VEC_SIZE_4_F16;
+                        else
+                                conf |= TLB_VEC_SIZE_2_F16;
+                }
+
+                struct qreg r, g, b, a;
+                if (is_32b_tlb_format) {
+                        r = conf != 0xffffffff ? vir_TLBU_COLOR_READ(c, conf) :
+                                                 vir_TLB_COLOR_READ(c);
+                        if (num_components >= 2)
+                                g = vir_TLB_COLOR_READ(c);
+                        if (num_components >= 3)
+                                b = vir_TLB_COLOR_READ(c);
+                        if (num_components >= 4)
+                                a = vir_TLB_COLOR_READ(c);
+                } else {
+                        struct qreg rg = conf != 0xffffffff ?
+                                vir_TLBU_COLOR_READ(c, conf) :
+                                vir_TLB_COLOR_READ(c);
+                        r = vir_FMOV(c, rg);
+                        vir_set_unpack(c->defs[r.index], 0, V3D_QPU_UNPACK_L);
+                        g = vir_FMOV(c, rg);
+                        vir_set_unpack(c->defs[g.index], 0, V3D_QPU_UNPACK_H);
+
+                        if (num_components > 2) {
+                            struct qreg ba = vir_TLB_COLOR_READ(c);
+                            b = vir_FMOV(c, ba);
+                            vir_set_unpack(c->defs[b.index], 0,
+                                           V3D_QPU_UNPACK_L);
+                            a = vir_FMOV(c, ba);
+                            vir_set_unpack(c->defs[a.index], 0,
+                                           V3D_QPU_UNPACK_H);
+                        }
+                }
+
+                color_reads[0] = swap_rb ? b : r;
+                if (num_components >= 2)
+                        color_reads[1] = g;
+                if (num_components >= 3)
+                        color_reads[2] = swap_rb ? r : b;
+                if (num_components >= 4)
+                        color_reads[3] = a;
+        }
+
+        assert(color_reads[component].file != QFILE_NULL);
+        ntq_store_dest(c, &instr->dest, 0, vir_MOV(c, color_reads[component]));
+}
+
+static void
+ntq_emit_load_uniform(struct v3d_compile *c, nir_intrinsic_instr *instr)
+{
+        if (nir_src_is_const(instr->src[0])) {
+                int offset = (nir_intrinsic_base(instr) +
+                             nir_src_as_uint(instr->src[0]));
+                assert(offset % 4 == 0);
+                /* We need dwords */
+                offset = offset / 4;
+                for (int i = 0; i < instr->num_components; i++) {
+                        ntq_store_dest(c, &instr->dest, i,
+                                       vir_uniform(c, QUNIFORM_UNIFORM,
+                                                   offset + i));
+                }
+        } else {
+               ntq_emit_tmu_general(c, instr, false);
+        }
+}
+
+static void
+ntq_emit_load_input(struct v3d_compile *c, nir_intrinsic_instr *instr)
+{
+        /* XXX: Use ldvpmv (uniform offset) or ldvpmd (non-uniform offset)
+         * and enable PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR.
+         */
+        unsigned offset =
+                nir_intrinsic_base(instr) + nir_src_as_uint(instr->src[0]);
+
+        if (c->s->info.stage != MESA_SHADER_FRAGMENT && c->devinfo->ver >= 40) {
+               /* Emit the LDVPM directly now, rather than at the top
+                * of the shader like we did for V3D 3.x (which needs
+                * vpmsetup when not just taking the next offset).
+                *
+                * Note that delaying like this may introduce stalls,
+                * as LDVPMV takes a minimum of 1 instruction but may
+                * be slower if the VPM unit is busy with another QPU.
+                */
+               int index = 0;
+               if (c->s->info.system_values_read &
+                   (1ull << SYSTEM_VALUE_INSTANCE_ID)) {
+                      index++;
+               }
+               if (c->s->info.system_values_read &
+                   (1ull << SYSTEM_VALUE_VERTEX_ID)) {
+                      index++;
+               }
+               for (int i = 0; i < offset; i++)
+                      index += c->vattr_sizes[i];
+               index += nir_intrinsic_component(instr);
+               for (int i = 0; i < instr->num_components; i++) {
+                      struct qreg vpm_offset = vir_uniform_ui(c, index++);
+                      ntq_store_dest(c, &instr->dest, i,
+                                     vir_LDVPMV_IN(c, vpm_offset));
+                }
+        } else {
+                for (int i = 0; i < instr->num_components; i++) {
+                        int comp = nir_intrinsic_component(instr) + i;
+                        ntq_store_dest(c, &instr->dest, i,
+                                       vir_MOV(c, c->inputs[offset * 4 + comp]));
+                }
+        }
+}
+
+static void
+ntq_emit_store_output(struct v3d_compile *c, nir_intrinsic_instr *instr)
+{
+        /* XXX perf: Use stvpmv with uniform non-constant offsets and
+         * stvpmd with non-uniform offsets and enable
+         * PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR.
+         */
+        if (c->s->info.stage == MESA_SHADER_FRAGMENT) {
+            unsigned offset = ((nir_intrinsic_base(instr) +
+                    nir_src_as_uint(instr->src[1])) * 4 +
+                    nir_intrinsic_component(instr));
+            for (int i = 0; i < instr->num_components; i++) {
+                    c->outputs[offset + i] =
+                            vir_MOV(c, ntq_get_src(c, instr->src[0], i));
+            }
+        } else {
+                assert(instr->num_components == 1);
+
+                vir_VPM_WRITE(c,
+                              ntq_get_src(c, instr->src[0], 0),
+                              nir_intrinsic_base(instr));
+        }
+}
+
+static void
 ntq_emit_intrinsic(struct v3d_compile *c, nir_intrinsic_instr *instr)
 {
-        unsigned offset;
-
         switch (instr->intrinsic) {
         case nir_intrinsic_load_uniform:
-                if (nir_src_is_const(instr->src[0])) {
-                        int offset = (nir_intrinsic_base(instr) +
-                                      nir_src_as_uint(instr->src[0]));
-                        assert(offset % 4 == 0);
-                        /* We need dwords */
-                        offset = offset / 4;
-                        for (int i = 0; i < instr->num_components; i++) {
-                                ntq_store_dest(c, &instr->dest, i,
-                                               vir_uniform(c, QUNIFORM_UNIFORM,
-                                                           offset + i));
-                        }
-                } else {
-                        ntq_emit_tmu_general(c, instr, false);
-                }
+                ntq_emit_load_uniform(c, instr);
                 break;
 
         case nir_intrinsic_load_ubo:
@@ -1774,72 +1977,16 @@ ntq_emit_intrinsic(struct v3d_compile *c, nir_intrinsic_instr *instr)
                 ntq_store_dest(c, &instr->dest, 0, vir_MOV(c, c->vid));
                 break;
 
+        case nir_intrinsic_load_tlb_color_v3d:
+                vir_emit_tlb_color_read(c, instr);
+                break;
+
         case nir_intrinsic_load_input:
-                /* Use ldvpmv (uniform offset) or ldvpmd (non-uniform offset)
-                 * and enable PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR.
-                 */
-                offset = (nir_intrinsic_base(instr) +
-                          nir_src_as_uint(instr->src[0]));
-                if (c->s->info.stage != MESA_SHADER_FRAGMENT &&
-                    c->devinfo->ver >= 40) {
-                        /* Emit the LDVPM directly now, rather than at the top
-                         * of the shader like we did for V3D 3.x (which needs
-                         * vpmsetup when not just taking the next offset).
-                         *
-                         * Note that delaying like this may introduce stalls,
-                         * as LDVPMV takes a minimum of 1 instruction but may
-                         * be slower if the VPM unit is busy with another QPU.
-                         */
-                        int index = 0;
-                        if (c->s->info.system_values_read &
-                            (1ull << SYSTEM_VALUE_INSTANCE_ID)) {
-                                index++;
-                        }
-                        if (c->s->info.system_values_read &
-                            (1ull << SYSTEM_VALUE_VERTEX_ID)) {
-                                index++;
-                        }
-                        for (int i = 0; i < offset; i++)
-                                index += c->vattr_sizes[i];
-                        index += nir_intrinsic_component(instr);
-                        for (int i = 0; i < instr->num_components; i++) {
-                                struct qreg vpm_offset =
-                                        vir_uniform_ui(c, index++);
-                                ntq_store_dest(c, &instr->dest, i,
-                                               vir_LDVPMV_IN(c, vpm_offset));
-                        }
-                } else {
-                        for (int i = 0; i < instr->num_components; i++) {
-                                int comp = nir_intrinsic_component(instr) + i;
-                                ntq_store_dest(c, &instr->dest, i,
-                                               vir_MOV(c, c->inputs[offset * 4 +
-                                                                    comp]));
-                        }
-                }
+                ntq_emit_load_input(c, instr);
                 break;
 
         case nir_intrinsic_store_output:
-                /* XXX perf: Use stvpmv with uniform non-constant offsets and
-                 * stvpmd with non-uniform offsets and enable
-                 * PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR.
-                 */
-                if (c->s->info.stage == MESA_SHADER_FRAGMENT) {
-                        offset = ((nir_intrinsic_base(instr) +
-                                   nir_src_as_uint(instr->src[1])) * 4 +
-                                  nir_intrinsic_component(instr));
-                        for (int i = 0; i < instr->num_components; i++) {
-                                c->outputs[offset + i] =
-                                        vir_MOV(c,
-                                                ntq_get_src(c,
-                                                            instr->src[0], i));
-                        }
-                } else {
-                        assert(instr->num_components == 1);
-
-                        vir_VPM_WRITE(c,
-                                      ntq_get_src(c, instr->src[0], 0),
-                                      nir_intrinsic_base(instr));
-                }
+                ntq_emit_store_output(c, instr);
                 break;
 
         case nir_intrinsic_image_deref_size:

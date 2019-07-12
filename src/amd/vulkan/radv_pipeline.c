@@ -3266,6 +3266,18 @@ radv_pipeline_generate_vgt_gs_mode(struct radeon_cmdbuf *ctx_cs,
 }
 
 static void
+gfx10_set_ge_pc_alloc(struct radeon_cmdbuf *ctx_cs,
+		      struct radv_pipeline *pipeline,
+		      bool culling)
+{
+	struct radeon_info *info = &pipeline->device->physical_device->rad_info;
+
+	radeon_set_uconfig_reg(ctx_cs, R_030980_GE_PC_ALLOC,
+			       S_030980_OVERSUB_EN(1) |
+			       S_030980_NUM_PC_LINES((culling ? 256 : 128) * info->max_se - 1));
+}
+
+static void
 radv_pipeline_generate_hw_vs(struct radeon_cmdbuf *ctx_cs,
 			     struct radeon_cmdbuf *cs,
 			     struct radv_pipeline *pipeline,
@@ -3287,9 +3299,17 @@ radv_pipeline_generate_hw_vs(struct radeon_cmdbuf *ctx_cs,
 	bool misc_vec_ena = outinfo->writes_pointsize ||
 		outinfo->writes_layer ||
 		outinfo->writes_viewport_index;
+	unsigned spi_vs_out_config, nparams;
 
-	radeon_set_context_reg(ctx_cs, R_0286C4_SPI_VS_OUT_CONFIG,
-	                       S_0286C4_VS_EXPORT_COUNT(MAX2(1, outinfo->param_exports) - 1));
+	/* VS is required to export at least one param. */
+	nparams = MAX2(outinfo->param_exports, 1);
+	spi_vs_out_config = S_0286C4_VS_EXPORT_COUNT(nparams - 1);
+
+	if (pipeline->device->physical_device->rad_info.chip_class >= GFX10) {
+		spi_vs_out_config |= S_0286C4_NO_PC_EXPORT(outinfo->param_exports == 0);
+	}
+
+	radeon_set_context_reg(ctx_cs, R_0286C4_SPI_VS_OUT_CONFIG, spi_vs_out_config);
 
 	radeon_set_context_reg(ctx_cs, R_02870C_SPI_SHADER_POS_FORMAT,
 	                       S_02870C_POS0_EXPORT_FORMAT(V_02870C_SPI_SHADER_4COMP) |
@@ -3323,6 +3343,9 @@ radv_pipeline_generate_hw_vs(struct radeon_cmdbuf *ctx_cs,
 	if (pipeline->device->physical_device->rad_info.chip_class <= GFX8)
 		radeon_set_context_reg(ctx_cs, R_028AB4_VGT_REUSE_OFF,
 		                       outinfo->writes_viewport_index);
+
+	if (pipeline->device->physical_device->rad_info.chip_class >= GFX10)
+		gfx10_set_ge_pc_alloc(ctx_cs, pipeline, false);
 }
 
 static void
@@ -3389,9 +3412,13 @@ radv_pipeline_generate_hw_ngg(struct radeon_cmdbuf *ctx_cs,
 		outinfo->writes_layer ||
 		outinfo->writes_viewport_index;
 	bool break_wave_at_eoi = false;
+	unsigned nparams;
 
+	nparams = MAX2(outinfo->param_exports, 1);
 	radeon_set_context_reg(ctx_cs, R_0286C4_SPI_VS_OUT_CONFIG,
-	                       S_0286C4_VS_EXPORT_COUNT(MAX2(1, outinfo->param_exports) - 1));
+	                       S_0286C4_VS_EXPORT_COUNT(nparams - 1) |
+			       S_0286C4_NO_PC_EXPORT(outinfo->param_exports == 0));
+
 	radeon_set_context_reg(ctx_cs, R_028708_SPI_SHADER_IDX_FORMAT,
 			       S_028708_IDX0_EXPORT_FORMAT(V_028708_SPI_SHADER_1COMP));
 	radeon_set_context_reg(ctx_cs, R_02870C_SPI_SHADER_POS_FORMAT,
@@ -3461,10 +3488,12 @@ radv_pipeline_generate_hw_ngg(struct radeon_cmdbuf *ctx_cs,
 			       S_028838_INDEX_BUF_EDGE_FLAG_ENA(!radv_pipeline_has_tess(pipeline) &&
 			                                        !radv_pipeline_has_gs(pipeline)));
 
-	radeon_set_context_reg(ctx_cs, R_03096C_GE_CNTL,
+	radeon_set_uconfig_reg(ctx_cs, R_03096C_GE_CNTL,
 			       S_03096C_PRIM_GRP_SIZE(ngg_state->max_gsprims) |
 			       S_03096C_VERT_GRP_SIZE(ngg_state->hw_max_esverts) |
 			       S_03096C_BREAK_WAVE_AT_EOI(break_wave_at_eoi));
+
+	gfx10_set_ge_pc_alloc(ctx_cs, pipeline, false);
 }
 
 static void
@@ -4378,8 +4407,10 @@ radv_compute_generate_pm4(struct radv_pipeline *pipeline)
 {
 	struct radv_shader_variant *compute_shader;
 	struct radv_device *device = pipeline->device;
-	unsigned compute_resource_limits;
+	unsigned threads_per_threadgroup;
+	unsigned threadgroups_per_cu = 1;
 	unsigned waves_per_threadgroup;
+	unsigned max_waves_per_sh = 0;
 	uint64_t va;
 
 	pipeline->cs.buf = malloc(20 * 4);
@@ -4401,28 +4432,20 @@ radv_compute_generate_pm4(struct radv_pipeline *pipeline)
 			  S_00B860_WAVESIZE(pipeline->scratch_bytes_per_wave >> 10));
 
 	/* Calculate best compute resource limits. */
-	waves_per_threadgroup =
-		DIV_ROUND_UP(compute_shader->info.cs.block_size[0] *
-			     compute_shader->info.cs.block_size[1] *
-			     compute_shader->info.cs.block_size[2], 64);
-	compute_resource_limits =
-		S_00B854_SIMD_DEST_CNTL(waves_per_threadgroup % 4 == 0);
+	threads_per_threadgroup = compute_shader->info.cs.block_size[0] *
+				  compute_shader->info.cs.block_size[1] *
+				  compute_shader->info.cs.block_size[2];
+	waves_per_threadgroup = DIV_ROUND_UP(threads_per_threadgroup, 64);
 
-	if (device->physical_device->rad_info.chip_class >= GFX7) {
-		unsigned num_cu_per_se =
-			device->physical_device->rad_info.num_good_compute_units /
-			device->physical_device->rad_info.max_se;
-
-		/* Force even distribution on all SIMDs in CU if the workgroup
-		 * size is 64. This has shown some good improvements if # of
-		 * CUs per SE is not a multiple of 4.
-		 */
-		if (num_cu_per_se % 4 && waves_per_threadgroup == 1)
-			compute_resource_limits |= S_00B854_FORCE_SIMD_DIST(1);
-	}
+	if (device->physical_device->rad_info.chip_class >= GFX10 &&
+	    waves_per_threadgroup == 1)
+		threadgroups_per_cu = 2;
 
 	radeon_set_sh_reg(&pipeline->cs, R_00B854_COMPUTE_RESOURCE_LIMITS,
-			  compute_resource_limits);
+			  ac_get_compute_resource_limits(&device->physical_device->rad_info,
+							 waves_per_threadgroup,
+							 max_waves_per_sh,
+							 threadgroups_per_cu));
 
 	radeon_set_sh_reg_seq(&pipeline->cs, R_00B81C_COMPUTE_NUM_THREAD_X, 3);
 	radeon_emit(&pipeline->cs,

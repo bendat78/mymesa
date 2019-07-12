@@ -100,10 +100,8 @@ panfrost_emit_midg_tiler(
 
         /* Sanity check */
 
-        unsigned total_size = header_size + body_size;
-
         if (t.hierarchy_mask) {
-                assert(ctx->tiler_polygon_list.bo->size >= total_size);
+                assert(ctx->tiler_polygon_list.bo->size >= (header_size + body_size));
 
                 /* Specify allocated tiler structures */
                 t.polygon_list = ctx->tiler_polygon_list.bo->gpu;
@@ -532,6 +530,7 @@ panfrost_emit_varyings(
         slot->elements = varying_address | MALI_ATTR_LINEAR;
         slot->stride = stride;
         slot->size = stride * count;
+        slot->shift = slot->extra_flags = 0;
 
         ctx->varying_height += ALIGN_POT(slot->size, 64);
         assert(ctx->varying_height < ctx->varying_mem.bo->size);
@@ -543,7 +542,7 @@ static void
 panfrost_emit_point_coord(union mali_attr *slot)
 {
         slot->elements = MALI_VARYING_POINT_COORD | MALI_ATTR_LINEAR;
-        slot->stride = slot->size = 0;
+        slot->stride = slot->size = slot->shift = slot->extra_flags = 0;
 }
 
 static void
@@ -775,7 +774,7 @@ panfrost_upload_tex(
         struct panfrost_sampler_view *view)
 {
         if (!view)
-                return (mali_ptr) NULL;
+                return (mali_ptr) 0;
 
         struct pipe_sampler_view *pview = &view->base;
         struct panfrost_resource *rsrc = pan_resource(pview->texture);
