@@ -84,6 +84,10 @@ panfrost_drm_create_bo(struct panfrost_screen *screen, size_t size,
                        uint32_t flags)
 {
         struct panfrost_bo *bo = rzalloc(screen, struct panfrost_bo);
+
+        /* Kernel will fail (confusingly) with EPERM otherwise */
+        assert(size > 0);
+
         struct drm_panfrost_create_bo create_bo = {
                 .size = size,
                 .flags = flags,
@@ -229,7 +233,7 @@ panfrost_drm_submit_job(struct panfrost_context *ctx, u64 job_desc, int reqs)
         if (pan_debug & PAN_DBG_TRACE) {
                 /* Wait so we can get errors reported back */
                 drmSyncobjWait(screen->fd, &ctx->out_sync, 1, INT64_MAX, 0, NULL);
-                pandecode_replay_jc(submit.jc, FALSE);
+                pandecode_jc(submit.jc, FALSE);
         }
 
         return 0;

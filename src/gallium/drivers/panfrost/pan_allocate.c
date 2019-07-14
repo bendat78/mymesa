@@ -1,5 +1,6 @@
 /*
  * © Copyright 2018 Alyssa Rosenzweig
+ * Copyright (C) 2019 Collabora, Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,6 +56,27 @@ panfrost_allocate_chunk(struct panfrost_context *ctx, size_t size, unsigned heap
         return transfer;
 }
 
+/* Allocate a new transient slab */
+
+static struct panfrost_bo *
+panfrost_create_slab(struct panfrost_screen *screen, unsigned *index)
+{
+        /* Allocate a new slab on the screen */
+
+        struct panfrost_bo **new =
+                util_dynarray_grow(&screen->transient_bo,
+                                struct panfrost_bo *, 1);
+
+        struct panfrost_bo *alloc = panfrost_drm_create_bo(screen, TRANSIENT_SLAB_SIZE, 0);
+
+        *new = alloc;
+
+        /* Return the BO as well as the index we just added */
+
+        *index = util_dynarray_num_elements(&screen->transient_bo, void *) - 1;
+        return alloc;
+}
+
 /* Transient command stream pooling: command stream uploads try to simply copy
  * into whereever we left off. If there isn't space, we allocate a new entry
  * into the pool and copy there */
@@ -62,47 +84,71 @@ panfrost_allocate_chunk(struct panfrost_context *ctx, size_t size, unsigned heap
 struct panfrost_transfer
 panfrost_allocate_transient(struct panfrost_context *ctx, size_t sz)
 {
+        struct panfrost_screen *screen = pan_screen(ctx->base.screen);
+        struct panfrost_job *batch = panfrost_get_job_for_fbo(ctx);
+
         /* Pad the size */
         sz = ALIGN_POT(sz, ALIGNMENT);
 
-        /* Check if there is room in the current entry */
-        struct panfrost_transient_pool *pool = &ctx->transient_pools[ctx->cmdstream_i];
+        /* Find or create a suitable BO */
+        struct panfrost_bo *bo = NULL;
 
-        if ((pool->entry_offset + sz) > pool->entry_size) {
-                /* Don't overflow this entry -- advance to the next */
+        unsigned offset = 0;
+        bool update_offset = false;
 
-                pool->entry_offset = 0;
+        bool has_current = batch->transient_indices.size;
+        bool fits_in_current = (batch->transient_offset + sz) < TRANSIENT_SLAB_SIZE;
 
-                pool->entry_index++;
-                assert(pool->entry_index < PANFROST_MAX_TRANSIENT_ENTRIES);
+        if (likely(has_current && fits_in_current)) {
+                /* We can reuse the topmost BO, so get it */
+                unsigned idx = util_dynarray_top(&batch->transient_indices, unsigned);
+                bo = pan_bo_for_index(screen, idx);
 
-                /* Check if this entry exists */
+                /* Use the specified offset */
+                offset = batch->transient_offset;
+                update_offset = true;
+        } else if (sz < TRANSIENT_SLAB_SIZE) {
+                /* We can't reuse the topmost BO, but we can get a new one.
+                 * First, look for a free slot */
 
-                if (pool->entry_index >= pool->entry_count) {
-                        /* Don't overflow the pool -- allocate a new one */
-                        struct pipe_context *gallium = (struct pipe_context *) ctx;
-                        struct panfrost_screen *screen = pan_screen(gallium->screen);
-                        struct pb_slab_entry *entry = pb_slab_alloc(&screen->slabs, pool->entry_size, HEAP_TRANSIENT);
+                unsigned count = util_dynarray_num_elements(&screen->transient_bo, void *);
+                unsigned index = 0;
 
-                        pool->entry_count++;
-                        pool->entries[pool->entry_index] = (struct panfrost_memory_entry *) entry;
+                unsigned free = __bitset_ffs(
+                                screen->free_transient,
+                                count / BITSET_WORDBITS);
+
+                if (likely(free)) {
+                        /* Use this one */
+                        index = free - 1;
+
+                        /* It's ours, so no longer free */
+                        BITSET_CLEAR(screen->free_transient, index);
+
+                        /* Grab the BO */
+                        bo = pan_bo_for_index(screen, index);
+                } else {
+                        /* Otherwise, create a new BO */
+                        bo = panfrost_create_slab(screen, &index);
                 }
 
-                /* Make sure we -still- won't overflow */
-                assert(sz < pool->entry_size);
+                /* Remember we created this */
+                util_dynarray_append(&batch->transient_indices, unsigned, index);
+
+                update_offset = true;
+        } else {
+                /* Create a new BO and reference it */
+                bo = panfrost_drm_create_bo(screen, ALIGN_POT(sz, 4096), 0);
+                panfrost_job_add_bo(batch, bo);
         }
 
-        /* We have an entry we can write to, so do the upload! */
-        struct panfrost_memory_entry *p_entry = pool->entries[pool->entry_index];
-        struct panfrost_memory *backing = (struct panfrost_memory *) p_entry->base.slab;
-
         struct panfrost_transfer ret = {
-                .cpu = backing->bo->cpu + p_entry->offset + pool->entry_offset,
-                .gpu = backing->bo->gpu + p_entry->offset + pool->entry_offset
+                .cpu = bo->cpu + offset,
+                .gpu = bo->gpu + offset,
         };
 
-        /* Advance the pointer */
-        pool->entry_offset += sz;
+        if (update_offset)
+                batch->transient_offset = offset + sz;
 
         return ret;
 
