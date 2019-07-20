@@ -239,11 +239,26 @@ panfrost_mfbd_set_cbuf(
                 rt->afbc.stride = 0;
                 rt->afbc.unk = 0x30009;
 
-                /* TODO: Investigate shift */
-                rt->framebuffer_stride = stride << 1;
+                /* TODO: The blob sets this to something nonzero, but it's not
+                 * clear what/how to calculate/if it matters */
+                rt->framebuffer_stride = 0;
         } else {
                 fprintf(stderr, "Invalid render layout (cbuf)");
                 assert(0);
+        }
+}
+
+/* Is a format encoded like Z24S8 and therefore compatible for render? */
+
+static bool
+panfrost_is_z24s8_variant(enum pipe_format fmt)
+{
+        switch (fmt) {
+                case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+                case PIPE_FORMAT_Z24X8_UNORM:
+                        return true;
+                default:
+                        return false;
         }
 }
 
@@ -263,7 +278,7 @@ panfrost_mfbd_set_zsbuf(
         if (rsrc->layout == PAN_AFBC) {
                 /* The only Z/S format we can compress is Z24S8 or variants
                  * thereof (handled by the state tracker) */
-                assert(surf->format == PIPE_FORMAT_Z24_UNORM_S8_UINT);
+                assert(panfrost_is_z24s8_variant(surf->format));
 
                 mali_ptr base = rsrc->bo->gpu + offset;
                 unsigned header_size = rsrc->slices[level].header_size;
@@ -286,14 +301,34 @@ panfrost_mfbd_set_zsbuf(
         } else if (rsrc->layout == PAN_LINEAR) {
                 /* TODO: Z32F(S8) support, which is always linear */
 
-                assert(surf->format == PIPE_FORMAT_Z24_UNORM_S8_UINT);
                 int stride = rsrc->slices[level].stride;
-                fb->mfbd_flags |= MALI_MFBD_EXTRA;
 
-                fbx->flags |= MALI_EXTRA_PRESENT | MALI_EXTRA_ZS | 0x1;
+                fb->mfbd_flags |= MALI_MFBD_EXTRA;
+                fbx->flags |= MALI_EXTRA_PRESENT | MALI_EXTRA_ZS;
 
                 fbx->ds_linear.depth = rsrc->bo->gpu + offset;
                 fbx->ds_linear.depth_stride = stride;
+
+                if (panfrost_is_z24s8_variant(surf->format)) {
+                        fbx->flags |= 0x1;
+                } else if (surf->format == PIPE_FORMAT_Z32_UNORM) {
+                        /* default flags (0 in bottom place) */
+                } else if (surf->format == PIPE_FORMAT_Z32_FLOAT) {
+                        fbx->flags |= 0xA;
+                        fb->mfbd_flags ^= 0x100;
+                        fb->mfbd_flags |= 0x200;
+                } else if (surf->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT) {
+                        fbx->flags |= 0x1000A;
+                        fb->mfbd_flags ^= 0x100;
+                        fb->mfbd_flags |= 0x201;
+
+                        struct panfrost_resource *stencil = rsrc->separate_stencil;
+                        struct panfrost_slice stencil_slice = stencil->slices[level];
+
+                        fbx->ds_linear.stencil = stencil->bo->gpu + stencil_slice.offset;
+                        fbx->ds_linear.stencil_stride = stencil_slice.stride;
+                }
+
         } else {
                 assert(0);
         }
@@ -359,40 +394,50 @@ panfrost_mfbd_fragment(struct panfrost_context *ctx, bool has_draws)
         struct bifrost_fb_extra fbx = {};
         struct bifrost_render_target rts[4] = {};
 
-        /* XXX: MRT case */
-        fb.rt_count_2 = 1;
+        /* We always upload at least one dummy GL_NONE render target */
+
+        unsigned rt_descriptors =
+                MAX2(ctx->pipe_framebuffer.nr_cbufs, 1);
+
+        fb.rt_count_1 = MALI_POSITIVE(rt_descriptors);
+        fb.rt_count_2 = rt_descriptors;
         fb.mfbd_flags = 0x100;
 
         /* TODO: MRT clear */
         panfrost_mfbd_clear(job, &fb, &fbx, rts, fb.rt_count_2);
 
-        for (int cb = 0; cb < ctx->pipe_framebuffer.nr_cbufs; ++cb) {
+
+        /* Upload either the render target or a dummy GL_NONE target */
+
+        for (int cb = 0; cb < rt_descriptors; ++cb) {
                 struct pipe_surface *surf = ctx->pipe_framebuffer.cbufs[cb];
-                unsigned bpp = util_format_get_blocksize(surf->format);
 
-                panfrost_mfbd_set_cbuf(&rts[cb], surf);
+                if (surf) {
+                        panfrost_mfbd_set_cbuf(&rts[cb], surf);
 
-                /* What is this? Looks like some extension of the bpp field.
-                 * Maybe it establishes how much internal tilebuffer space is
-                 * reserved? */
-                fb.rt_count_2 = MAX2(fb.rt_count_2, ALIGN_POT(bpp, 4) / 4);
+                        /* What is this? Looks like some extension of the bpp
+                         * field. Maybe it establishes how much internal
+                         * tilebuffer space is reserved? */
+
+                        unsigned bpp = util_format_get_blocksize(surf->format);
+                        fb.rt_count_2 = MAX2(fb.rt_count_2, ALIGN_POT(bpp, 4) / 4);
+                } else {
+                        struct mali_rt_format null_rt = {
+                                .unk1 = 0x4000000,
+                                .unk4 = 0x8
+                        };
+
+                        rts[cb].format = null_rt;
+                        rts[cb].framebuffer = 0;
+                        rts[cb].framebuffer_stride = 0;
+                }
+
+                /* TODO: Break out the field */
+                rts[cb].format.unk1 |= (cb * 0x400);
         }
 
         if (ctx->pipe_framebuffer.zsbuf) {
                 panfrost_mfbd_set_zsbuf(&fb, &fbx, ctx->pipe_framebuffer.zsbuf);
-        }
-
-        /* For the special case of a depth-only FBO, we need to attach a dummy render target */
-
-        if (ctx->pipe_framebuffer.nr_cbufs == 0) {
-                struct mali_rt_format null_rt = {
-                        .unk1 = 0x4000000,
-                        .unk4 = 0x8
-                };
-
-                rts[0].format = null_rt;
-                rts[0].framebuffer = 0;
-                rts[0].framebuffer_stride = 0;
         }
 
         /* When scanning out, the depth buffer is immediately invalidated, so

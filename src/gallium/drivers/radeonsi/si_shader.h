@@ -337,6 +337,7 @@ struct si_shader_selector {
 	struct si_shader	*main_shader_part_ls; /* as_ls is set in the key */
 	struct si_shader	*main_shader_part_es; /* as_es is set in the key */
 	struct si_shader	*main_shader_part_ngg; /* as_ngg is set in the key */
+	struct si_shader	*main_shader_part_ngg_es; /* for Wave32 TES before legacy GS */
 
 	struct si_shader	*gs_copy_shader;
 
@@ -351,6 +352,8 @@ struct si_shader_selector {
 	bool		vs_needs_prolog;
 	bool		force_correct_derivs_after_kill;
 	bool		prim_discard_cs_allowed;
+	bool		ngg_writes_edgeflag;
+	bool		pos_writes_edgeflag;
 	unsigned	pa_cl_vs_out_cntl;
 	ubyte		clipdist_mask;
 	ubyte		culldist_mask;
@@ -369,6 +372,7 @@ struct si_shader_selector {
 	unsigned	gsvs_vertex_size;
 	unsigned	max_gsvs_emit_size;
 	unsigned	enabled_streamout_buffer_mask;
+	bool		tess_turns_off_ngg;
 
 	/* PS parameters. */
 	unsigned	color_attr_index[2];
@@ -487,6 +491,7 @@ union si_shader_part_key {
 		struct si_gs_prolog_bits states;
 		/* Prologs of monolithic shaders shouldn't set EXEC. */
 		unsigned	is_monolithic:1;
+		unsigned	as_ngg:1;
 	} gs_prolog;
 	struct {
 		struct si_ps_prolog_bits states;
@@ -768,7 +773,7 @@ void si_nir_scan_shader(const struct nir_shader *nir,
 			struct tgsi_shader_info *info);
 void si_nir_scan_tess_ctrl(const struct nir_shader *nir,
 			   struct tgsi_tessctrl_info *out);
-void si_lower_nir(struct si_shader_selector *sel);
+void si_lower_nir(struct si_shader_selector *sel, unsigned wave_size);
 void si_nir_opts(struct nir_shader *nir);
 
 /* si_state_shaders.c */
@@ -785,6 +790,8 @@ si_get_main_shader_part(struct si_shader_selector *sel,
 {
 	if (key->as_ls)
 		return &sel->main_shader_part_ls;
+	if (key->as_es && key->as_ngg)
+		return &sel->main_shader_part_ngg_es;
 	if (key->as_es)
 		return &sel->main_shader_part_es;
 	if (key->as_ngg)

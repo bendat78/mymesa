@@ -42,11 +42,28 @@ struct panfrost_context;
 struct panfrost_resource;
 struct panfrost_screen;
 
+/* Driver limits */
+#define PAN_MAX_CONST_BUFFERS 16
+
 /* Flags for allocated memory */
-#define PAN_ALLOCATE_EXECUTE (1 << 0)
-#define PAN_ALLOCATE_GROWABLE (1 << 1)
-#define PAN_ALLOCATE_INVISIBLE (1 << 2)
-#define PAN_ALLOCATE_COHERENT_LOCAL (1 << 3)
+
+/* This memory region is executable */
+#define PAN_ALLOCATE_EXECUTE            (1 << 0)
+
+/* This memory region should be lazily allocated and grow-on-page-fault. Must
+ * be used in conjunction with INVISIBLE */
+#define PAN_ALLOCATE_GROWABLE           (1 << 1)
+
+/* This memory region should not be mapped to the CPU */
+#define PAN_ALLOCATE_INVISIBLE          (1 << 2)
+
+/* This memory region will be used for varyings and needs to have the cache
+ * bits twiddled accordingly */
+#define PAN_ALLOCATE_COHERENT_LOCAL     (1 << 3)
+
+/* This region may not be used immediately and will not mmap on allocate
+ * (semantically distinct from INVISIBLE, which cannot never be mmaped) */
+#define PAN_ALLOCATE_DELAY_MMAP         (1 << 4)
 
 /* Transient slab size. This is a balance between fragmentation against cache
  * locality and ease of bookkeeping */
@@ -64,15 +81,22 @@ struct panfrost_screen;
 
 #define MAX_TRANSIENT_SLABS (1024*1024 / TRANSIENT_SLAB_PAGES)
 
+/* How many power-of-two levels in the BO cache do we want? 2^12
+ * minimum chosen as it is the page size that all allocations are
+ * rounded to */
+
+#define MIN_BO_CACHE_BUCKET (12) /* 2^12 = 4KB */
+#define MAX_BO_CACHE_BUCKET (22) /* 2^22 = 4MB */
+
+/* Fencepost problem, hence the off-by-one */
+#define NR_BO_CACHE_BUCKETS (MAX_BO_CACHE_BUCKET - MIN_BO_CACHE_BUCKET + 1)
+
 struct panfrost_screen {
         struct pipe_screen base;
         int fd;
         unsigned gpu_id;
 
         struct renderonly *ro;
-
-        /* Memory management is based on subdividing slabs with AMD's allocator */
-        struct pb_slabs slabs;
 
         /* Transient memory management is based on borrowing fixed-size slabs
          * off the screen (loaning them out to the batch). Dynamic array
@@ -82,6 +106,12 @@ struct panfrost_screen {
 
         /* Set of free transient BOs */
         BITSET_DECLARE(free_transient, MAX_TRANSIENT_SLABS);
+
+        /* The BO cache is a set of buckets with power-of-two sizes ranging
+         * from 2^12 (4096, the page size) to 2^(12 + MAX_BO_CACHE_BUCKETS).
+         * Each bucket is a linked list of free panfrost_bo objects. */
+
+        struct list_head bo_cache[NR_BO_CACHE_BUCKETS];
 
         /* While we're busy building up the job for frame N, the GPU is
          * still busy executing frame N-1. So hold a reference to
@@ -121,7 +151,9 @@ struct panfrost_bo *
 panfrost_drm_create_bo(struct panfrost_screen *screen, size_t size,
                        uint32_t flags);
 void
-panfrost_drm_release_bo(struct panfrost_screen *screen, struct panfrost_bo *bo);
+panfrost_drm_mmap_bo(struct panfrost_screen *screen, struct panfrost_bo *bo);
+void
+panfrost_drm_release_bo(struct panfrost_screen *screen, struct panfrost_bo *bo, bool cacheable);
 struct panfrost_bo *
 panfrost_drm_import_bo(struct panfrost_screen *screen, int fd);
 int
@@ -145,5 +177,18 @@ panfrost_drm_fence_finish(struct pipe_screen *pscreen,
                           struct pipe_context *ctx,
                           struct pipe_fence_handle *fence,
                           uint64_t timeout);
+struct panfrost_bo *
+panfrost_bo_cache_fetch(
+                struct panfrost_screen *screen,
+                size_t size, uint32_t flags);
+
+bool
+panfrost_bo_cache_put(
+                struct panfrost_screen *screen,
+                struct panfrost_bo *bo);
+
+void
+panfrost_bo_cache_evict_all(
+                struct panfrost_screen *screen);
 
 #endif /* PAN_SCREEN_H */

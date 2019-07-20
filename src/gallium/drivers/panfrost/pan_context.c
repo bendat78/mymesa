@@ -165,8 +165,7 @@ panfrost_emit_mfbd(struct panfrost_context *ctx, unsigned vertex_count)
 
                 .unk1 = 0x1080,
 
-                /* TODO: MRT */
-                .rt_count_1 = MALI_POSITIVE(1),
+                .rt_count_1 = MALI_POSITIVE(ctx->pipe_framebuffer.nr_cbufs),
                 .rt_count_2 = 4,
 
                 .unknown2 = 0x1f,
@@ -255,9 +254,6 @@ panfrost_invalidate_frame(struct panfrost_context *ctx)
         ctx->payload_vertex.postfix.framebuffer = 0;
         ctx->payload_tiler.postfix.framebuffer = 0;
 
-        /* Reset varyings allocated */
-        ctx->varying_height = 0;
-
         if (ctx->rasterizer)
                 ctx->dirty |= PAN_DIRTY_RASTERIZER;
 
@@ -272,8 +268,10 @@ panfrost_invalidate_frame(struct panfrost_context *ctx)
 static void
 panfrost_emit_vertex_payload(struct panfrost_context *ctx)
 {
+        /* 0x2 bit clear on 32-bit T6XX */
+
         struct midgard_payload_vertex_tiler payload = {
-                .gl_enables = 0x4 | (ctx->is_t6xx ? 0 : 0x2),
+                .gl_enables = 0x4 | 0x2,
         };
 
         memcpy(&ctx->payload_vertex, &payload, sizeof(payload));
@@ -454,9 +452,7 @@ panfrost_default_shader_backend(struct panfrost_context *ctx)
                 .unknown2_4 = MALI_NO_MSAA | 0x4e0,
         };
 
-        if (ctx->is_t6xx) {
-                shader.unknown2_4 |= 0x10;
-        }
+        /* unknown2_4 has 0x10 bit set on 32-bit T6XX */
 
         struct pipe_stencil_state default_stencil = {
                 .enabled = 0,
@@ -491,24 +487,14 @@ panfrost_vertex_tiler_job(struct panfrost_context *ctx, bool is_tiler)
 {
         struct mali_job_descriptor_header job = {
                 .job_type = is_tiler ? JOB_TYPE_TILER : JOB_TYPE_VERTEX,
-#ifdef __LP64__
                 .job_descriptor_size = 1,
-#endif
         };
 
         struct midgard_payload_vertex_tiler *payload = is_tiler ? &ctx->payload_tiler : &ctx->payload_vertex;
 
-        /* There's some padding hacks on 32-bit */
-
-#ifdef __LP64__
-        int offset = 0;
-#else
-        int offset = 4;
-#endif
         struct panfrost_transfer transfer = panfrost_allocate_transient(ctx, sizeof(job) + sizeof(*payload));
-
         memcpy(transfer.cpu, &job, sizeof(job));
-        memcpy(transfer.cpu + sizeof(job) - offset, payload, sizeof(*payload));
+        memcpy(transfer.cpu + sizeof(job), payload, sizeof(*payload));
         return transfer;
 }
 
@@ -519,18 +505,17 @@ panfrost_emit_varyings(
         unsigned stride,
         unsigned count)
 {
-        mali_ptr varying_address = ctx->varying_mem.bo->gpu + ctx->varying_height;
-
         /* Fill out the descriptor */
-        slot->elements = varying_address | MALI_ATTR_LINEAR;
         slot->stride = stride;
         slot->size = stride * count;
         slot->shift = slot->extra_flags = 0;
 
-        ctx->varying_height += ALIGN_POT(slot->size, 64);
-        assert(ctx->varying_height < ctx->varying_mem.bo->size);
+        struct panfrost_transfer transfer =
+                panfrost_allocate_transient(ctx, slot->size);
 
-        return varying_address;
+        slot->elements = transfer.gpu | MALI_ATTR_LINEAR;
+
+        return transfer.gpu;
 }
 
 static void
@@ -763,6 +748,35 @@ panfrost_upload_sampler_descriptors(struct panfrost_context *ctx)
         }
 }
 
+static unsigned
+panfrost_layout_for_texture(struct panfrost_resource *rsrc, bool manual_stride)
+{
+        /* TODO: other linear depth textures */
+        bool is_depth = rsrc->base.format == PIPE_FORMAT_Z32_UNORM;
+
+        unsigned usage2_layout = 0x10;
+
+        switch (rsrc->layout) {
+        case PAN_AFBC:
+                usage2_layout |= 0x8 | 0x4;
+                break;
+        case PAN_TILED:
+                usage2_layout |= 0x1;
+                break;
+        case PAN_LINEAR:
+                usage2_layout |= is_depth ? 0x1 : 0x2;
+                break;
+        default:
+                assert(0);
+                break;
+        }
+
+        if (manual_stride)
+                usage2_layout |= MALI_TEX_MANUAL_STRIDE;
+
+        return usage2_layout;
+}
+
 static mali_ptr
 panfrost_upload_tex(
         struct panfrost_context *ctx,
@@ -776,8 +790,7 @@ panfrost_upload_tex(
 
         /* Do we interleave an explicit stride with every element? */
 
-        bool has_manual_stride =
-                view->hw.format.usage2 & MALI_TEX_MANUAL_STRIDE;
+        bool has_manual_stride = view->manual_stride;
 
         /* For easy access */
 
@@ -795,6 +808,11 @@ panfrost_upload_tex(
         /* Add the BO to the job so it's retained until the job is done. */
         struct panfrost_job *job = panfrost_get_job_for_fbo(ctx);
         panfrost_job_add_bo(job, rsrc->bo);
+
+        /* Add the usage flags in, since they can change across the CSO
+         * lifetime due to layout switches */
+
+        view->hw.format.usage2 = panfrost_layout_for_texture(rsrc, has_manual_stride);
 
         /* Inject the addresses in, interleaving mip levels, cube faces, and
          * strides in that order */
@@ -972,7 +990,8 @@ static mali_ptr
 panfrost_patch_shader_state(
         struct panfrost_context *ctx,
         struct panfrost_shader_state *ss,
-        enum pipe_shader_type stage)
+        enum pipe_shader_type stage,
+        bool should_upload)
 {
         ss->tripipe->texture_count = ctx->sampler_view_count[stage];
         ss->tripipe->sampler_count = ctx->sampler_count[stage];
@@ -982,7 +1001,18 @@ panfrost_patch_shader_state(
         unsigned ubo_count = panfrost_ubo_count(ctx, stage);
         ss->tripipe->midgard1.uniform_buffer_count = ubo_count;
 
-        return ss->tripipe_gpu;
+        /* We can't reuse over frames; that's not safe. The descriptor must be
+         * transient uploaded */
+
+        if (should_upload) {
+                return panfrost_upload_transient(ctx,
+                                ss->tripipe,
+                                sizeof(struct mali_shader_meta));
+        }
+
+        /* If we don't need an upload, don't bother */
+        return 0;
+
 }
 
 /* Go through dirty flags and actualise them in the cmdstream. */
@@ -1019,13 +1049,16 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 ctx->payload_tiler.postfix.occlusion_counter = ctx->occlusion_query->transfer.gpu;
         }
 
+        /* TODO: Does it make sense to dirty track VS? We need the transient
+         * uploads */
+        ctx->dirty |= PAN_DIRTY_VS;
         if (ctx->dirty & PAN_DIRTY_VS) {
                 assert(ctx->vs);
 
                 struct panfrost_shader_state *vs = &ctx->vs->variants[ctx->vs->active_variant];
 
                 ctx->payload_vertex.postfix._shader_upper =
-                        panfrost_patch_shader_state(ctx, vs, PIPE_SHADER_VERTEX) >> 4;
+                        panfrost_patch_shader_state(ctx, vs, PIPE_SHADER_VERTEX, true) >> 4;
         }
 
         if (ctx->dirty & (PAN_DIRTY_RASTERIZER | PAN_DIRTY_VS)) {
@@ -1047,7 +1080,7 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 assert(ctx->fs);
                 struct panfrost_shader_state *variant = &ctx->fs->variants[ctx->fs->active_variant];
 
-                panfrost_patch_shader_state(ctx, variant, PIPE_SHADER_FRAGMENT);
+                panfrost_patch_shader_state(ctx, variant, PIPE_SHADER_FRAGMENT, false);
 
 #define COPY(name) ctx->fragment_shader_core.name = variant->tripipe->name
 
@@ -1092,8 +1125,13 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 ctx->fragment_shader_core.midgard1.flags = flags;
 
                 /* Assign the stencil refs late */
-                ctx->fragment_shader_core.stencil_front.ref = ctx->stencil_ref.ref_value[0];
-                ctx->fragment_shader_core.stencil_back.ref = ctx->stencil_ref.ref_value[1];
+
+                unsigned front_ref = ctx->stencil_ref.ref_value[0];
+                unsigned back_ref = ctx->stencil_ref.ref_value[1];
+                bool back_enab = ctx->depth_stencil->stencil[1].enabled;
+
+                ctx->fragment_shader_core.stencil_front.ref = front_ref;
+                ctx->fragment_shader_core.stencil_back.ref = back_enab ? back_ref : front_ref;
 
                 /* CAN_DISCARD should be set if the fragment shader possibly
                  * contains a 'discard' instruction. It is likely this is
@@ -1174,17 +1212,19 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
 
                         struct midgard_blend_rt rts[4];
 
-                        /* TODO: MRT */
-
-                        for (unsigned i = 0; i < 1; ++i) {
+                        for (unsigned i = 0; i < ctx->pipe_framebuffer.nr_cbufs; ++i) {
                                 bool is_srgb =
                                         (ctx->pipe_framebuffer.nr_cbufs > i) &&
+                                        (ctx->pipe_framebuffer.cbufs[i]) &&
                                         util_format_is_srgb(ctx->pipe_framebuffer.cbufs[i]->format);
 
                                 rts[i].flags = blend_count;
 
                                 if (is_srgb)
                                         rts[i].flags |= MALI_BLEND_SRGB;
+
+                                if (!ctx->blend->base.dither)
+                                        rts[i].flags |= MALI_BLEND_NO_DITHER;
 
                                 /* TODO: sRGB in blend shaders is currently
                                  * unimplemented. Contact me (Alyssa) if you're
@@ -1268,7 +1308,7 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
                 assert(ubo_count >= 1);
 
                 size_t sz = sizeof(struct mali_uniform_buffer_meta) * ubo_count;
-                struct mali_uniform_buffer_meta *ubos = calloc(sz, 1);
+                struct mali_uniform_buffer_meta ubos[PAN_MAX_CONST_BUFFERS];
 
                 /* Upload uniforms as a UBO */
                 ubos[0].size = MALI_POSITIVE((2 + uniform_count));
@@ -1329,19 +1369,26 @@ panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data)
         };
 
         /* Always scissor to the viewport by default. */
-        int minx = (int) (vp->translate[0] - vp->scale[0]);
-        int maxx = (int) (vp->translate[0] + vp->scale[0]);
+        float vp_minx = (int) (vp->translate[0] - fabsf(vp->scale[0]));
+        float vp_maxx = (int) (vp->translate[0] + fabsf(vp->scale[0]));
 
-        int miny = (int) (vp->translate[1] - vp->scale[1]);
-        int maxy = (int) (vp->translate[1] + vp->scale[1]);
+        float vp_miny = (int) (vp->translate[1] - fabsf(vp->scale[1]));
+        float vp_maxy = (int) (vp->translate[1] + fabsf(vp->scale[1]));
 
         /* Apply the scissor test */
 
+        unsigned minx, miny, maxx, maxy;
+
         if (ss && ctx->rasterizer && ctx->rasterizer->base.scissor) {
-                minx = ss->minx;
-                maxx = ss->maxx;
-                miny = ss->miny;
-                maxy = ss->maxy;
+                minx = MAX2(ss->minx, vp_minx);
+                miny = MAX2(ss->miny, vp_miny);
+                maxx = MIN2(ss->maxx, vp_maxx);
+                maxy = MIN2(ss->maxy, vp_maxy);
+        } else {
+                minx = vp_minx;
+                miny = vp_miny;
+                maxx = vp_maxx;
+                maxy = vp_maxy;
         }
 
         /* Hardware needs the min/max to be strictly ordered, so flip if we
@@ -1705,7 +1752,7 @@ panfrost_draw_vbo(
                 ctx->payload_tiler.prefix.index_count = MALI_POSITIVE(ctx->vertex_count);
 
                 /* Reverse index state */
-                ctx->payload_tiler.prefix.indices = (uintptr_t) NULL;
+                ctx->payload_tiler.prefix.indices = (u64) NULL;
         }
 
         /* Dispatch "compute jobs" for the vertex/tiler pair as (1,
@@ -1767,13 +1814,12 @@ panfrost_create_rasterizer_state(
         struct pipe_context *pctx,
         const struct pipe_rasterizer_state *cso)
 {
-        struct panfrost_context *ctx = pan_context(pctx);
         struct panfrost_rasterizer *so = CALLOC_STRUCT(panfrost_rasterizer);
 
         so->base = *cso;
 
-        /* Bitmask, unknown meaning of the start value */
-        so->tiler_gl_enables = ctx->is_t6xx ? 0x105 : 0x7;
+        /* Bitmask, unknown meaning of the start value. 0x105 on 32-bit T6XX */
+        so->tiler_gl_enables = 0x7;
 
         if (cso->front_ccw)
                 so->tiler_gl_enables |= MALI_FRONT_CCW_TOP;
@@ -1831,15 +1877,6 @@ panfrost_create_vertex_elements_state(
 
         so->num_elements = num_elements;
         memcpy(so->pipe, elements, sizeof(*elements) * num_elements);
-
-        /* XXX: What the cornball? This is totally, 100%, unapologetically
-         * nonsense. And yet it somehow fixes a regression in -bshadow
-         * (previously, we allocated the descriptor here... a newer commit
-         * removed that allocation, and then memory corruption led to
-         * shader_meta getting overwritten in bad ways and then the whole test
-         * case falling apart . TODO: LOOK INTO PLEASE XXX XXX BAD XXX XXX XXX
-         */
-        panfrost_allocate_chunk(pan_context(pctx), 0, HEAP_DESCRIPTOR);
 
         for (int i = 0; i < num_elements; ++i) {
                 so->hw[i].index = i;
@@ -2066,12 +2103,7 @@ panfrost_bind_shader_state(
                         }
                 }
 
-                /* Allocate the mapped descriptor ahead-of-time. */
-                struct panfrost_context *ctx = pan_context(pctx);
-                struct panfrost_transfer transfer = panfrost_allocate_chunk(ctx, sizeof(struct mali_shader_meta), HEAP_DESCRIPTOR);
-
-                variants->variants[variant].tripipe = (struct mali_shader_meta *) transfer.cpu;
-                variants->variants[variant].tripipe_gpu = transfer.gpu;
+                variants->variants[variant].tripipe = malloc(sizeof(struct mali_shader_meta));
 
         }
 
@@ -2211,25 +2243,6 @@ panfrost_create_sampler_view(
 
         enum mali_format format = panfrost_find_format(desc);
 
-        bool is_depth = desc->format == PIPE_FORMAT_Z32_UNORM;
-
-        unsigned usage2_layout = 0x10;
-
-        switch (prsrc->layout) {
-        case PAN_AFBC:
-                usage2_layout |= 0x8 | 0x4;
-                break;
-        case PAN_TILED:
-                usage2_layout |= 0x1;
-                break;
-        case PAN_LINEAR:
-                usage2_layout |= is_depth ? 0x1 : 0x2;
-                break;
-        default:
-                assert(0);
-                break;
-        }
-
         /* Check if we need to set a custom stride by computing the "expected"
          * stride and comparing it to what the BO actually wants. Only applies
          * to linear textures, since tiled/compressed textures have strict
@@ -2245,7 +2258,7 @@ panfrost_create_sampler_view(
                         unsigned comp_stride = width * bytes_per_pixel;
 
                         if (comp_stride != actual_stride) {
-                                usage2_layout |= MALI_TEX_MANUAL_STRIDE;
+                                so->manual_stride = true;
                                 break;
                         }
                 }
@@ -2275,8 +2288,6 @@ panfrost_create_sampler_view(
 
                         .srgb = desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB,
                         .type = panfrost_translate_texture_type(template->target),
-
-                        .usage2 = usage2_layout
                 },
 
                 .swizzle = panfrost_translate_swizzle_4(user_swizzle)
@@ -2321,6 +2332,32 @@ panfrost_sampler_view_destroy(
         ralloc_free(view);
 }
 
+/* Hints that a framebuffer should use AFBC where possible */
+
+static void
+panfrost_hint_afbc(
+                struct panfrost_screen *screen,
+                const struct pipe_framebuffer_state *fb)
+{
+        /* AFBC implemenation incomplete; hide it */
+        if (!(pan_debug & PAN_DBG_AFBC)) return;
+
+        /* Hint AFBC to the resources bound to each color buffer */
+
+        for (unsigned i = 0; i < fb->nr_cbufs; ++i) {
+                struct pipe_surface *surf = fb->cbufs[i];
+                struct panfrost_resource *rsrc = pan_resource(surf->texture);
+                panfrost_resource_hint_layout(screen, rsrc, PAN_AFBC, 1);
+        }
+
+        /* Also hint it to the depth buffer */
+
+        if (fb->zsbuf) {
+                struct panfrost_resource *rsrc = pan_resource(fb->zsbuf->texture);
+                panfrost_resource_hint_layout(screen, rsrc, PAN_AFBC, 1);
+        }
+}
+
 static void
 panfrost_set_framebuffer_state(struct pipe_context *pctx,
                                const struct pipe_framebuffer_state *fb)
@@ -2339,40 +2376,19 @@ panfrost_set_framebuffer_state(struct pipe_context *pctx,
                 panfrost_flush(pctx, NULL, PIPE_FLUSH_END_OF_FRAME);
         }
 
-        ctx->pipe_framebuffer.nr_cbufs = fb->nr_cbufs;
-        ctx->pipe_framebuffer.samples = fb->samples;
-        ctx->pipe_framebuffer.layers = fb->layers;
-        ctx->pipe_framebuffer.width = fb->width;
-        ctx->pipe_framebuffer.height = fb->height;
+        util_copy_framebuffer_state(&ctx->pipe_framebuffer, fb);
 
-        struct pipe_surface *zb = fb->zsbuf;
-        bool needs_reattach = false;
+        /* Given that we're rendering, we'd love to have compression */
+        struct panfrost_screen *screen = pan_screen(ctx->base.screen);
 
-        for (int i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-                struct pipe_surface *cb = i < fb->nr_cbufs ? fb->cbufs[i] : NULL;
+        panfrost_hint_afbc(screen, &ctx->pipe_framebuffer);
 
-                /* check if changing cbuf */
-                if (ctx->pipe_framebuffer.cbufs[i] == cb) continue;
+        if (ctx->require_sfbd)
+                ctx->vt_framebuffer_sfbd = panfrost_emit_sfbd(ctx, ~0);
+        else
+                ctx->vt_framebuffer_mfbd = panfrost_emit_mfbd(ctx, ~0);
 
-                /* assign new */
-                pipe_surface_reference(&ctx->pipe_framebuffer.cbufs[i], cb);
-
-                needs_reattach |= (cb != NULL);
-        }
-
-        if (ctx->pipe_framebuffer.zsbuf != zb) {
-                pipe_surface_reference(&ctx->pipe_framebuffer.zsbuf, zb);
-                needs_reattach |= (zb != NULL);
-        }
-
-        if (needs_reattach) {
-                if (ctx->require_sfbd)
-                        ctx->vt_framebuffer_sfbd = panfrost_emit_sfbd(ctx, ~0);
-                else
-                        ctx->vt_framebuffer_mfbd = panfrost_emit_mfbd(ctx, ~0);
-
-                panfrost_attach_vt_framebuffer(ctx, false);
-        }
+        panfrost_attach_vt_framebuffer(ctx, false);
 }
 
 static void *
@@ -2402,13 +2418,17 @@ panfrost_bind_depth_stencil_state(struct pipe_context *pipe,
         }
 
         /* Stencil state */
-        SET_BIT(ctx->fragment_shader_core.unknown2_4, MALI_STENCIL_TEST, depth_stencil->stencil[0].enabled); /* XXX: which one? */
+        SET_BIT(ctx->fragment_shader_core.unknown2_4, MALI_STENCIL_TEST, depth_stencil->stencil[0].enabled);
 
         panfrost_make_stencil_state(&depth_stencil->stencil[0], &ctx->fragment_shader_core.stencil_front);
         ctx->fragment_shader_core.stencil_mask_front = depth_stencil->stencil[0].writemask;
 
-        panfrost_make_stencil_state(&depth_stencil->stencil[1], &ctx->fragment_shader_core.stencil_back);
-        ctx->fragment_shader_core.stencil_mask_back = depth_stencil->stencil[1].writemask;
+        /* If back-stencil is not enabled, use the front values */
+        bool back_enab = ctx->depth_stencil->stencil[1].enabled;
+        unsigned back_index = back_enab ? 1 : 0;
+
+        panfrost_make_stencil_state(&depth_stencil->stencil[back_index], &ctx->fragment_shader_core.stencil_back);
+        ctx->fragment_shader_core.stencil_mask_back = depth_stencil->stencil[back_index].writemask;
 
         /* Depth state (TODO: Refactor) */
         SET_BIT(ctx->fragment_shader_core.unknown2_3, MALI_DEPTH_TEST, depth_stencil->depth.enabled);
@@ -2498,7 +2518,6 @@ panfrost_destroy(struct pipe_context *pipe)
                 util_blitter_destroy(panfrost->blitter_wallpaper);
 
         panfrost_drm_free_slab(screen, &panfrost->scratchpad);
-        panfrost_drm_free_slab(screen, &panfrost->varying_mem);
         panfrost_drm_free_slab(screen, &panfrost->shaders);
         panfrost_drm_free_slab(screen, &panfrost->tiler_heap);
         panfrost_drm_free_slab(screen, &panfrost->tiler_polygon_list);
@@ -2537,7 +2556,7 @@ panfrost_begin_query(struct pipe_context *pipe, struct pipe_query *q)
         case PIPE_QUERY_OCCLUSION_PREDICATE:
         case PIPE_QUERY_OCCLUSION_PREDICATE_CONSERVATIVE: {
                 /* Allocate a word for the query results to be stored */
-                query->transfer = panfrost_allocate_chunk(ctx, sizeof(unsigned), HEAP_DESCRIPTOR);
+                query->transfer = panfrost_allocate_transient(ctx, sizeof(unsigned));
 
                 ctx->occlusion_query = query;
 
@@ -2645,9 +2664,8 @@ panfrost_setup_hardware(struct panfrost_context *ctx)
         struct panfrost_screen *screen = pan_screen(gallium->screen);
 
         panfrost_drm_allocate_slab(screen, &ctx->scratchpad, 64, false, 0, 0, 0);
-        panfrost_drm_allocate_slab(screen, &ctx->varying_mem, 16384, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_COHERENT_LOCAL, 0, 0);
         panfrost_drm_allocate_slab(screen, &ctx->shaders, 4096, true, PAN_ALLOCATE_EXECUTE, 0, 0);
-        panfrost_drm_allocate_slab(screen, &ctx->tiler_heap, 32768, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
+        panfrost_drm_allocate_slab(screen, &ctx->tiler_heap, 4096, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
         panfrost_drm_allocate_slab(screen, &ctx->tiler_polygon_list, 128*128, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
         panfrost_drm_allocate_slab(screen, &ctx->tiler_dummy, 1, false, PAN_ALLOCATE_INVISIBLE, 0, 0);
 }

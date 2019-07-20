@@ -2463,6 +2463,7 @@ typedef enum {
    nir_lower_minmax64 = (1 << 10),
    nir_lower_shift64 = (1 << 11),
    nir_lower_imul_2x32_64 = (1 << 12),
+   nir_lower_extract64 = (1 << 13),
 } nir_lower_int64_options;
 
 typedef enum {
@@ -2475,7 +2476,9 @@ typedef enum {
    nir_lower_dfract = (1 << 6),
    nir_lower_dround_even = (1 << 7),
    nir_lower_dmod = (1 << 8),
-   nir_lower_fp64_full_software = (1 << 9),
+   nir_lower_dsub = (1 << 9),
+   nir_lower_ddiv = (1 << 10),
+   nir_lower_fp64_full_software = (1 << 11),
 } nir_lower_doubles_options;
 
 typedef struct nir_shader_compiler_options {
@@ -3041,6 +3044,8 @@ nir_instr_remove(nir_instr *instr)
 
 /** @} */
 
+nir_ssa_def *nir_instr_ssa_def(nir_instr *instr);
+
 typedef bool (*nir_foreach_ssa_def_cb)(nir_ssa_def *def, void *state);
 typedef bool (*nir_foreach_dest_cb)(nir_dest *dest, void *state);
 typedef bool (*nir_foreach_src_cb)(nir_src *src, void *state);
@@ -3273,6 +3278,58 @@ static inline bool should_print_nir(void) { return false; }
 )
 
 #define NIR_SKIP(name) should_skip_nir(#name)
+
+/** An instruction filtering callback
+ *
+ * Returns true if the instruction should be processed and false otherwise.
+ */
+typedef bool (*nir_instr_filter_cb)(const nir_instr *, const void *);
+
+/** A simple instruction lowering callback
+ *
+ * Many instruction lowering passes can be written as a simple function which
+ * takes an instruction as its input and returns a sequence of instructions
+ * that implement the consumed instruction.  This function type represents
+ * such a lowering function.  When called, a function with this prototype
+ * should either return NULL indicating that no lowering needs to be done or
+ * emit a sequence of instructions using the provided builder (whose cursor
+ * will already be placed after the instruction to be lowered) and return the
+ * resulting nir_ssa_def.
+ */
+typedef nir_ssa_def *(*nir_lower_instr_cb)(struct nir_builder *,
+                                           nir_instr *, void *);
+
+/**
+ * Special return value for nir_lower_instr_cb when some progress occurred
+ * (like changing an input to the instr) that didn't result in a replacement
+ * SSA def being generated.
+ */
+#define NIR_LOWER_INSTR_PROGRESS ((nir_ssa_def *)(uintptr_t)1)
+
+/** Iterate over all the instructions in a nir_function_impl and lower them
+ *  using the provided callbacks
+ *
+ * This function implements the guts of a standard lowering pass for you.  It
+ * iterates over all of the instructions in a nir_function_impl and calls the
+ * filter callback on each one.  If the filter callback returns true, it then
+ * calls the lowering call back on the instruction.  (Splitting it this way
+ * allows us to avoid some save/restore work for instructions we know won't be
+ * lowered.)  If the instruction is dead after the lowering is complete, it
+ * will be removed.  If new instructions are added, the lowering callback will
+ * also be called on them in case multiple lowerings are required.
+ *
+ * The metadata for the nir_function_impl will also be updated.  If any blocks
+ * are added (they cannot be removed), dominance and block indices will be
+ * invalidated.
+ */
+bool nir_function_impl_lower_instructions(nir_function_impl *impl,
+                                          nir_instr_filter_cb filter,
+                                          nir_lower_instr_cb lower,
+                                          void *cb_data);
+bool nir_shader_lower_instructions(nir_shader *shader,
+                                   nir_instr_filter_cb filter,
+                                   nir_lower_instr_cb lower,
+                                   void *cb_data);
 
 void nir_calc_dominance_impl(nir_function_impl *impl);
 void nir_calc_dominance(nir_shader *shader);
@@ -3719,6 +3776,7 @@ bool nir_lower_idiv(nir_shader *shader);
 bool nir_lower_input_attachments(nir_shader *shader, bool use_fragcoord_sysval);
 
 bool nir_lower_clip_vs(nir_shader *shader, unsigned ucp_enables, bool use_vars);
+bool nir_lower_clip_gs(nir_shader *shader, unsigned ucp_enables);
 bool nir_lower_clip_fs(nir_shader *shader, unsigned ucp_enables);
 bool nir_lower_clip_cull_distance_arrays(nir_shader *nir);
 
@@ -3882,6 +3940,7 @@ bool nir_opt_peephole_select(nir_shader *shader, unsigned limit,
 bool nir_opt_rematerialize_compares(nir_shader *shader);
 
 bool nir_opt_remove_phis(nir_shader *shader);
+bool nir_opt_remove_phis_block(nir_block *block);
 
 bool nir_opt_shrink_load(nir_shader *shader);
 

@@ -929,7 +929,7 @@ radv_emit_prefetch_L2(struct radv_cmd_buffer *cmd_buffer,
 	if (mask & RADV_PREFETCH_GS) {
 		radv_emit_shader_prefetch(cmd_buffer,
 					  pipeline->shaders[MESA_SHADER_GEOMETRY]);
-		if (pipeline->gs_copy_shader)
+		if (radv_pipeline_has_gs_copy_shader(pipeline))
 			radv_emit_shader_prefetch(cmd_buffer, pipeline->gs_copy_shader);
 	}
 
@@ -1124,7 +1124,7 @@ radv_emit_graphics_pipeline(struct radv_cmd_buffer *cmd_buffer)
 				   pipeline->shaders[i]->bo);
 	}
 
-	if (radv_pipeline_has_gs(pipeline) && pipeline->gs_copy_shader)
+	if (radv_pipeline_has_gs_copy_shader(pipeline))
 		radv_cs_add_buffer(cmd_buffer->device->ws, cmd_buffer->cs,
 				   pipeline->gs_copy_shader->bo);
 
@@ -1356,7 +1356,8 @@ radv_update_zrange_precision(struct radv_cmd_buffer *cmd_buffer,
 	uint32_t db_z_info = ds->db_z_info;
 	uint32_t db_z_info_reg;
 
-	if (!radv_image_is_tc_compat_htile(image))
+	if (!cmd_buffer->device->physical_device->has_tc_compat_zrange_bug ||
+	    !radv_image_is_tc_compat_htile(image))
 		return;
 
 	if (!radv_layout_has_htile(image, layout,
@@ -1566,6 +1567,10 @@ radv_set_tc_compat_zrange_metadata(struct radv_cmd_buffer *cmd_buffer,
 {
 	struct radeon_cmdbuf *cs = cmd_buffer->cs;
 	uint64_t va = radv_buffer_get_va(image->bo);
+
+	if (!cmd_buffer->device->physical_device->has_tc_compat_zrange_bug)
+		return;
+
 	va += image->offset + image->tc_compat_zrange_offset;
 
 	radeon_emit(cs, PKT3(PKT3_WRITE_DATA, 3, cmd_buffer->state.predicating));
@@ -2362,7 +2367,7 @@ radv_emit_streamout_buffers(struct radv_cmd_buffer *cmd_buffer, uint64_t va)
 					 base_reg + loc->sgpr_idx * 4, va, false);
 	}
 
-	if (pipeline->gs_copy_shader) {
+	if (radv_pipeline_has_gs_copy_shader(pipeline)) {
 		loc = &pipeline->gs_copy_shader->info.user_sgprs_locs.shader_data[AC_UD_STREAMOUT_BUFFERS];
 		if (loc->sgpr_idx != -1) {
 			base_reg = R_00B130_SPI_SHADER_USER_DATA_VS_0;
@@ -4071,7 +4076,7 @@ static void radv_emit_view_index(struct radv_cmd_buffer *cmd_buffer, unsigned in
 		radeon_set_sh_reg(cmd_buffer->cs, base_reg + loc->sgpr_idx * 4, index);
 
 	}
-	if (pipeline->gs_copy_shader) {
+	if (radv_pipeline_has_gs_copy_shader(pipeline)) {
 		struct radv_userdata_info *loc = &pipeline->gs_copy_shader->info.user_sgprs_locs.shader_data[AC_UD_VIEW_INDEX];
 		if (loc->sgpr_idx != -1) {
 			uint32_t base_reg = R_00B130_SPI_SHADER_USER_DATA_VS_0;
@@ -5397,6 +5402,7 @@ static void write_event(struct radv_cmd_buffer *cmd_buffer,
 					   cmd_buffer->device->physical_device->rad_info.chip_class,
 					   radv_cmd_buffer_uses_mec(cmd_buffer),
 					   V_028A90_BOTTOM_OF_PIPE_TS, 0,
+					   EOP_DST_SEL_MEM,
 					   EOP_DATA_SEL_VALUE_32BIT, va, value,
 					   cmd_buffer->gfx9_eop_bug_va);
 	}
@@ -5639,14 +5645,14 @@ static void radv_flush_vgt_streamout(struct radv_cmd_buffer *cmd_buffer)
 	radeon_emit(cs, 4); /* poll interval */
 }
 
-void radv_CmdBeginTransformFeedbackEXT(
-    VkCommandBuffer                             commandBuffer,
-    uint32_t                                    firstCounterBuffer,
-    uint32_t                                    counterBufferCount,
-    const VkBuffer*                             pCounterBuffers,
-    const VkDeviceSize*                         pCounterBufferOffsets)
+static void
+radv_emit_streamout_begin(struct radv_cmd_buffer *cmd_buffer,
+			  uint32_t firstCounterBuffer,
+			  uint32_t counterBufferCount,
+			  const VkBuffer *pCounterBuffers,
+			  const VkDeviceSize *pCounterBufferOffsets)
+
 {
-	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
 	struct radv_streamout_binding *sb = cmd_buffer->streamout_bindings;
 	struct radv_streamout_state *so = &cmd_buffer->state.streamout;
 	struct radeon_cmdbuf *cs = cmd_buffer->cs;
@@ -5704,7 +5710,7 @@ void radv_CmdBeginTransformFeedbackEXT(
 	radv_set_streamout_enable(cmd_buffer, true);
 }
 
-void radv_CmdEndTransformFeedbackEXT(
+void radv_CmdBeginTransformFeedbackEXT(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    firstCounterBuffer,
     uint32_t                                    counterBufferCount,
@@ -5712,6 +5718,19 @@ void radv_CmdEndTransformFeedbackEXT(
     const VkDeviceSize*                         pCounterBufferOffsets)
 {
 	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
+
+	radv_emit_streamout_begin(cmd_buffer,
+				  firstCounterBuffer, counterBufferCount,
+				  pCounterBuffers, pCounterBufferOffsets);
+}
+
+static void
+radv_emit_streamout_end(struct radv_cmd_buffer *cmd_buffer,
+			uint32_t firstCounterBuffer,
+			uint32_t counterBufferCount,
+			const VkBuffer *pCounterBuffers,
+			const VkDeviceSize *pCounterBufferOffsets)
+{
 	struct radv_streamout_state *so = &cmd_buffer->state.streamout;
 	struct radeon_cmdbuf *cs = cmd_buffer->cs;
 	uint32_t i;
@@ -5755,6 +5774,20 @@ void radv_CmdEndTransformFeedbackEXT(
 	}
 
 	radv_set_streamout_enable(cmd_buffer, false);
+}
+
+void radv_CmdEndTransformFeedbackEXT(
+    VkCommandBuffer                             commandBuffer,
+    uint32_t                                    firstCounterBuffer,
+    uint32_t                                    counterBufferCount,
+    const VkBuffer*                             pCounterBuffers,
+    const VkDeviceSize*                         pCounterBufferOffsets)
+{
+	RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
+
+	radv_emit_streamout_end(cmd_buffer,
+				firstCounterBuffer, counterBufferCount,
+				pCounterBuffers, pCounterBufferOffsets);
 }
 
 void radv_CmdDrawIndirectByteCountEXT(
@@ -5808,6 +5841,7 @@ void radv_CmdWriteBufferMarkerAMD(
 					   cmd_buffer->device->physical_device->rad_info.chip_class,
 					   radv_cmd_buffer_uses_mec(cmd_buffer),
 					   V_028A90_BOTTOM_OF_PIPE_TS, 0,
+					   EOP_DST_SEL_MEM,
 					   EOP_DATA_SEL_VALUE_32BIT,
 					   va, marker,
 					   cmd_buffer->gfx9_eop_bug_va);

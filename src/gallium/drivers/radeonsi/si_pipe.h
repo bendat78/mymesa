@@ -148,6 +148,12 @@ enum {
 	DBG_UNSAFE_MATH,
 	DBG_SI_SCHED,
 	DBG_GISEL,
+	DBG_W32_GE,
+	DBG_W32_PS,
+	DBG_W32_CS,
+	DBG_W64_GE,
+	DBG_W64_PS,
+	DBG_W64_CS,
 
 	/* Shader compiler options (with no effect on the shader cache): */
 	DBG_CHECK_IR,
@@ -603,6 +609,10 @@ struct si_screen {
 	/* Use at most 2 low priority threads on quadcore and better.
 	 * We want to minimize the impact on multithreaded Mesa. */
 	struct ac_llvm_compiler		compiler_lowp[10];
+
+	unsigned			compute_wave_size;
+	unsigned			ps_wave_size;
+	unsigned			ge_wave_size;
 };
 
 struct si_blend_color {
@@ -1271,7 +1281,7 @@ void si_init_buffer_functions(struct si_context *sctx);
 /* si_clear.c */
 enum pipe_format si_simplify_cb_format(enum pipe_format format);
 bool vi_alpha_is_on_msb(struct si_screen *sscreen, enum pipe_format format);
-void vi_dcc_clear_level(struct si_context *sctx,
+bool vi_dcc_clear_level(struct si_context *sctx,
 			struct si_texture *tex,
 			unsigned level, unsigned clear_value);
 void si_init_clear_functions(struct si_context *sctx);
@@ -1630,7 +1640,9 @@ static inline struct tgsi_shader_info *si_get_vs_info(struct si_context *sctx)
 
 static inline struct si_shader* si_get_vs_state(struct si_context *sctx)
 {
-	if (sctx->gs_shader.cso)
+	if (sctx->gs_shader.cso &&
+	    sctx->gs_shader.current &&
+	    !sctx->gs_shader.current->key.as_ngg)
 		return sctx->gs_shader.cso->gs_copy_shader;
 
 	struct si_shader_ctx_state *vs = si_get_vs(sctx);
@@ -1886,6 +1898,27 @@ radeon_add_to_gfx_buffer_list_check_mem(struct si_context *sctx,
 static inline bool si_compute_prim_discard_enabled(struct si_context *sctx)
 {
 	return sctx->prim_discard_vertex_count_threshold != UINT_MAX;
+}
+
+static inline unsigned si_get_wave_size(struct si_screen *sscreen,
+					enum pipe_shader_type shader_type,
+					bool ngg, bool es)
+{
+	if (shader_type == PIPE_SHADER_COMPUTE)
+		return sscreen->compute_wave_size;
+	else if (shader_type == PIPE_SHADER_FRAGMENT)
+		return sscreen->ps_wave_size;
+	else if ((shader_type == PIPE_SHADER_TESS_EVAL && es && !ngg) ||
+		 (shader_type == PIPE_SHADER_GEOMETRY && !ngg)) /* legacy GS only supports Wave64 */
+		return 64;
+	else
+		return sscreen->ge_wave_size;
+}
+
+static inline unsigned si_get_shader_wave_size(struct si_shader *shader)
+{
+	return si_get_wave_size(shader->selector->screen, shader->selector->type,
+				shader->key.as_ngg, shader->key.as_es);
 }
 
 #define PRINT_ERR(fmt, args...) \

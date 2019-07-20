@@ -54,7 +54,7 @@ static const struct debug_named_value debug_options[] = {
         {"msgs",      PAN_DBG_MSGS,	"Print debug messages"},
         {"trace",     PAN_DBG_TRACE,    "Trace the command stream"},
         {"deqp",      PAN_DBG_DEQP,     "Hacks for dEQP"},
-        /* ^^ If Rob can do it, so can I */
+        {"afbc",      PAN_DBG_AFBC,     "Enable non-conformant AFBC impl"},
         DEBUG_NAMED_VALUE_END
 };
 
@@ -96,7 +96,7 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
                 return 1;
 
         case PIPE_CAP_MAX_RENDER_TARGETS:
-                return 1;
+                return is_deqp ? 4 : 1;
 
         case PIPE_CAP_OCCLUSION_QUERY:
                 return 1;
@@ -249,7 +249,7 @@ panfrost_get_shader_param(struct pipe_screen *screen,
                 return 16;
 
         case PIPE_SHADER_CAP_MAX_OUTPUTS:
-                return shader == PIPE_SHADER_FRAGMENT ? 1 : 8;
+                return shader == PIPE_SHADER_FRAGMENT ? 4 : 8;
 
         case PIPE_SHADER_CAP_MAX_TEMPS:
                 return 256; /* GL_MAX_PROGRAM_TEMPORARIES_ARB */
@@ -258,7 +258,7 @@ panfrost_get_shader_param(struct pipe_screen *screen,
                 return 16 * 1024 * sizeof(float);
 
         case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-                return 16;
+                return PAN_MAX_CONST_BUFFERS;
 
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
                 return 0;
@@ -388,7 +388,7 @@ panfrost_is_format_supported( struct pipe_screen *screen,
                 return FALSE;
 
         /* Format wishlist */
-        if (format == PIPE_FORMAT_Z24X8_UNORM || format == PIPE_FORMAT_X8Z24_UNORM)
+        if (format == PIPE_FORMAT_X8Z24_UNORM)
                 return FALSE;
 
         if (format == PIPE_FORMAT_A1B5G5R5_UNORM || format == PIPE_FORMAT_X1B5G5R5_UNORM)
@@ -400,8 +400,11 @@ panfrost_is_format_supported( struct pipe_screen *screen,
 
         /* Don't confuse poorly written apps (workaround dEQP bug) that expect
          * more alpha than they ask for */
+
         bool scanout = bind & (PIPE_BIND_SCANOUT | PIPE_BIND_SHARED | PIPE_BIND_DISPLAY_TARGET);
-        if (scanout && !util_format_is_rgba8_variant(format_desc))
+        bool renderable = bind & PIPE_BIND_RENDER_TARGET;
+
+        if (scanout && renderable && !util_format_is_rgba8_variant(format_desc))
                 return FALSE;
 
         if (format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN &&
@@ -423,6 +426,10 @@ panfrost_is_format_supported( struct pipe_screen *screen,
         if (bind & PIPE_BIND_DEPTH_STENCIL) {
                 switch (format) {
                         case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+                        case PIPE_FORMAT_Z24X8_UNORM:
+                        case PIPE_FORMAT_Z32_UNORM:
+                        case PIPE_FORMAT_Z32_FLOAT:
+                        case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
                                 return true;
 
                         default:
@@ -438,7 +445,7 @@ static void
 panfrost_destroy_screen(struct pipe_screen *pscreen)
 {
         struct panfrost_screen *screen = pan_screen(pscreen);
-        panfrost_resource_screen_deinit(screen);
+        panfrost_bo_cache_evict_all(screen);
         ralloc_free(screen);
 }
 
@@ -506,22 +513,13 @@ panfrost_create_screen(int fd, struct renderonly *ro)
 
         screen->gpu_id = panfrost_drm_query_gpu_version(screen);
 
-        /* Check if we're loading against a supported GPU model
-         * paired with a supported CPU (differences from
-         * armhf/aarch64 break models on incompatible CPUs at the
-         * moment -- this is a TODO). In other words, we whitelist
-         * RK3288, RK3399, and S912, which are verified to work. */
+        /* Check if we're loading against a supported GPU model. */
 
         switch (screen->gpu_id) {
-#ifdef __LP64__
+        case 0x750: /* T760 */
         case 0x820: /* T820 */
         case 0x860: /* T860 */
                 break;
-#else
-        case 0x750: /* T760 */
-                break;
-#endif
-
         default:
                 /* Fail to load against untested models */
                 debug_printf("panfrost: Unsupported model %X",
@@ -530,6 +528,9 @@ panfrost_create_screen(int fd, struct renderonly *ro)
         }
 
         util_dynarray_init(&screen->transient_bo, screen);
+
+        for (unsigned i = 0; i < ARRAY_SIZE(screen->bo_cache); ++i)
+                list_inithead(&screen->bo_cache[i]);
 
         if (pan_debug & PAN_DBG_TRACE)
                 pandecode_initialize();

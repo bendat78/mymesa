@@ -535,6 +535,7 @@ def system_value(name, dest_comp, indices=[], bit_sizes=[32]):
               bit_sizes=bit_sizes)
 
 system_value("frag_coord", 4)
+system_value("point_coord", 2)
 system_value("front_face", 1, bit_sizes=[1, 32])
 system_value("vertex_id", 1)
 system_value("vertex_id_zero_base", 1)
@@ -785,3 +786,12 @@ load("raw_output_pan", 0, [], [CAN_ELIMINATE, CAN_REORDER])
 # src[] = { render_target }
 # BASE = sample index
 load("tlb_color_v3d", 1, [BASE, COMPONENT], [])
+
+# V3D-specific instrinc for per-sample tile buffer color writes.
+#
+# The driver backend needs to identify per-sample color writes and emit
+# specific code for them.
+#
+# src[] = { value, render_target }
+# BASE = sample index
+store("tlb_sample_color_v3d", 2, [BASE, COMPONENT, TYPE], [])

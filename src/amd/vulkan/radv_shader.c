@@ -270,6 +270,7 @@ radv_shader_compile_to_nir(struct radv_device *device,
 				.int64_atomics = true,
 				.multiview = true,
 				.physical_storage_buffer_address = true,
+				.post_depth_coverage = true,
 				.runtime_descriptor_array = true,
 				.shader_viewport_index_layer = true,
 				.stencil_export = true,
@@ -796,7 +797,7 @@ static void radv_postprocess_config(const struct radv_physical_device *pdevice,
 		break;
 	}
 
-	if (pdevice->rad_info.chip_class >= GFX10 &&
+	if (pdevice->rad_info.chip_class >= GFX10 && info->is_ngg &&
 	    (stage == MESA_SHADER_VERTEX || stage == MESA_SHADER_TESS_EVAL || stage == MESA_SHADER_GEOMETRY)) {
 		unsigned gs_vgpr_comp_cnt, es_vgpr_comp_cnt;
 		gl_shader_stage es_stage = stage;
@@ -826,7 +827,8 @@ static void radv_postprocess_config(const struct radv_physical_device *pdevice,
 		config_out->rsrc1 |= S_00B228_GS_VGPR_COMP_CNT(gs_vgpr_comp_cnt) |
 				     S_00B228_WGP_MODE(1);
 		config_out->rsrc2 |= S_00B22C_ES_VGPR_COMP_CNT(es_vgpr_comp_cnt) |
-				     S_00B22C_LDS_SIZE(config_in->lds_size);
+				     S_00B22C_LDS_SIZE(config_in->lds_size) |
+				     S_00B22C_OC_LDS_EN(es_stage == MESA_SHADER_TESS_EVAL);
 	} else if (pdevice->rad_info.chip_class >= GFX9 &&
 		   stage == MESA_SHADER_GEOMETRY) {
 		unsigned es_type = info->gs.es_type;
@@ -921,15 +923,34 @@ radv_shader_variant_create(struct radv_device *device,
 		unsigned num_lds_symbols = 0;
 		const char *elf_data = (const char *)((struct radv_shader_binary_rtld *)binary)->data;
 		size_t elf_size = ((struct radv_shader_binary_rtld *)binary)->elf_size;
+		unsigned esgs_ring_size = 0;
 
 		if (device->physical_device->rad_info.chip_class >= GFX9 &&
 		    binary->stage == MESA_SHADER_GEOMETRY && !binary->is_gs_copy_shader) {
+			/* TODO: Do not hardcode this value */
+			esgs_ring_size = 32 * 1024;
+		}
+
+		if (binary->variant_info.is_ngg) {
+			/* GS stores Primitive IDs into LDS at the address
+			 * corresponding to the ES thread of the provoking
+			 * vertex. All ES threads load and export PrimitiveID
+			 * for their thread.
+			 */
+			if (binary->stage == MESA_SHADER_VERTEX &&
+			    binary->variant_info.vs.export_prim_id) {
+				/* TODO: Do not harcode this value */
+				esgs_ring_size = 256 /* max_out_verts */ * 4;
+			}
+		}
+
+		if (esgs_ring_size) {
 			/* We add this symbol even on LLVM <= 8 to ensure that
 			 * shader->config.lds_size is set correctly below.
 			 */
 			struct ac_rtld_symbol *sym = &lds_symbols[num_lds_symbols++];
 			sym->name = "esgs_ring";
-			sym->size = 32 * 1024;
+			sym->size = esgs_ring_size;
 			sym->align = 64 * 1024;
 
 			/* Make sure to have LDS space for NGG scratch. */
@@ -940,6 +961,7 @@ radv_shader_variant_create(struct radv_device *device,
 		struct ac_rtld_open_info open_info = {
 			.info = &device->physical_device->rad_info,
 			.shader_type = binary->stage,
+			.wave_size = 64,
 			.num_parts = 1,
 			.elf_ptrs = &elf_data,
 			.elf_sizes = &elf_size,
@@ -990,18 +1012,20 @@ radv_shader_variant_create(struct radv_device *device,
 			return NULL;
 		}
 
-		const char *disasm_data;
-		size_t disasm_size;
-		if (!ac_rtld_get_section_by_name(&rtld_binary, ".AMDGPU.disasm", &disasm_data, &disasm_size)) {
-			radv_shader_variant_destroy(device, variant);
-			ac_rtld_close(&rtld_binary);
-			return NULL;
-		}
+		if (device->keep_shader_info) {
+			const char *disasm_data;
+			size_t disasm_size;
+			if (!ac_rtld_get_section_by_name(&rtld_binary, ".AMDGPU.disasm", &disasm_data, &disasm_size)) {
+				radv_shader_variant_destroy(device, variant);
+				ac_rtld_close(&rtld_binary);
+				return NULL;
+			}
 
-		variant->llvm_ir_string = bin->llvm_ir_size ? strdup((const char*)(bin->data + bin->elf_size)) : NULL;
-		variant->disasm_string = malloc(disasm_size + 1);
-		memcpy(variant->disasm_string, disasm_data, disasm_size);
-		variant->disasm_string[disasm_size] = 0;
+			variant->llvm_ir_string = bin->llvm_ir_size ? strdup((const char*)(bin->data + bin->elf_size)) : NULL;
+			variant->disasm_string = malloc(disasm_size + 1);
+			memcpy(variant->disasm_string, disasm_data, disasm_size);
+			variant->disasm_string[disasm_size] = 0;
+		}
 
 		ac_rtld_close(&rtld_binary);
 	} else {
@@ -1211,7 +1235,7 @@ generate_shader_stats(struct radv_device *device,
 				     lds_increment);
 	} else if (stage == MESA_SHADER_COMPUTE) {
 		unsigned max_workgroup_size =
-				radv_nir_get_max_workgroup_size(chip_class, variant->nir);
+			radv_nir_get_max_workgroup_size(chip_class, stage, variant->nir);
 		lds_per_wave = (conf->lds_size * lds_increment) /
 			       DIV_ROUND_UP(max_workgroup_size, 64);
 	}

@@ -103,6 +103,7 @@ typedef enum {
    ppir_op_load_varying,
    ppir_op_load_coords,
    ppir_op_load_fragcoord,
+   ppir_op_load_pointcoord,
    ppir_op_load_texture,
    ppir_op_load_temp,
 
@@ -301,6 +302,7 @@ typedef struct ppir_instr {
    int parent_index;
    bool scheduled;
    int offset;
+   int encode_size;
 } ppir_instr;
 
 typedef struct ppir_block {

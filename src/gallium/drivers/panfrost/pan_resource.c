@@ -287,6 +287,11 @@ panfrost_setup_slices(struct panfrost_resource *pres, size_t *bo_size)
                         /* We don't need to align depth */
                 }
 
+                /* Align levels to cache-line as a performance improvement for
+                 * linear/tiled and as a requirement for AFBC */
+
+                offset = ALIGN_POT(offset, 64);
+
                 slice->offset = offset;
 
                 /* Compute the would-be stride */
@@ -390,7 +395,10 @@ panfrost_resource_create_bo(struct panfrost_screen *screen, struct panfrost_reso
         size_t bo_size;
 
         panfrost_setup_slices(pres, &bo_size);
-        pres->bo = panfrost_drm_create_bo(screen, bo_size, 0);
+
+        /* We create a BO immediately but don't bother mapping, since we don't
+         * care to map e.g. FBOs which the CPU probably won't touch */
+        pres->bo = panfrost_drm_create_bo(screen, bo_size, PAN_ALLOCATE_DELAY_MMAP);
 }
 
 static struct pipe_resource *
@@ -442,7 +450,7 @@ panfrost_bo_unreference(struct pipe_screen *screen, struct panfrost_bo *bo)
         /* When the reference count goes to zero, we need to cleanup */
 
         if (pipe_reference(&bo->reference, NULL))
-                panfrost_drm_release_bo(pan_screen(screen), bo);
+                panfrost_drm_release_bo(pan_screen(screen), bo, true);
 }
 
 static void
@@ -483,6 +491,13 @@ panfrost_transfer_map(struct pipe_context *pctx,
 
         *out_transfer = &transfer->base;
 
+        /* If we haven't already mmaped, now's the time */
+
+        if (!bo->cpu) {
+                struct panfrost_screen *screen = pan_screen(pctx->screen);
+                panfrost_drm_mmap_bo(screen, bo);
+        }
+
         /* Check if we're bound for rendering and this is a read pixels. If so,
          * we need to flush */
 
@@ -492,7 +507,10 @@ panfrost_transfer_map(struct pipe_context *pctx,
         bool is_bound = false;
 
         for (unsigned c = 0; c < fb->nr_cbufs; ++c) {
-                is_bound |= fb->cbufs[c]->texture == resource;
+                /* If cbufs is NULL, we're definitely not bound here */
+
+                if (fb->cbufs[c])
+                        is_bound |= fb->cbufs[c]->texture == resource;
         }
 
         if (is_bound && (usage & PIPE_TRANSFER_READ)) {
@@ -623,54 +641,6 @@ panfrost_transfer_flush_region(struct pipe_context *pctx,
         }
 }
 
-static struct pb_slab *
-panfrost_slab_alloc(void *priv, unsigned heap, unsigned entry_size, unsigned group_index)
-{
-        struct panfrost_screen *screen = (struct panfrost_screen *) priv;
-        struct panfrost_memory *mem = rzalloc(screen, struct panfrost_memory);
-
-        size_t slab_size = (1 << (MAX_SLAB_ENTRY_SIZE + 1));
-
-        mem->slab.num_entries = slab_size / entry_size;
-        mem->slab.num_free = mem->slab.num_entries;
-
-        LIST_INITHEAD(&mem->slab.free);
-        for (unsigned i = 0; i < mem->slab.num_entries; ++i) {
-                /* Create a slab entry */
-                struct panfrost_memory_entry *entry = rzalloc(mem, struct panfrost_memory_entry);
-                entry->offset = entry_size * i;
-
-                entry->base.slab = &mem->slab;
-                entry->base.group_index = group_index;
-
-                LIST_ADDTAIL(&entry->base.head, &mem->slab.free);
-        }
-
-        /* Actually allocate the memory from kernel-space. Mapped, same_va, no
-         * special flags */
-
-        panfrost_drm_allocate_slab(screen, mem, slab_size / 4096, true, 0, 0, 0);
-
-        return &mem->slab;
-}
-
-static bool
-panfrost_slab_can_reclaim(void *priv, struct pb_slab_entry *entry)
-{
-        struct panfrost_memory_entry *p_entry = (struct panfrost_memory_entry *) entry;
-        return p_entry->freed;
-}
-
-static void
-panfrost_slab_free(void *priv, struct pb_slab *slab)
-{
-        struct panfrost_memory *mem = (struct panfrost_memory *) slab;
-        struct panfrost_screen *screen = (struct panfrost_screen *) priv;
-
-        panfrost_drm_free_slab(screen, mem);
-        ralloc_free(mem);
-}
-
 static void
 panfrost_invalidate_resource(struct pipe_context *pctx, struct pipe_resource *prsc)
 {
@@ -745,6 +715,66 @@ panfrost_get_texture_address(
         return rsrc->bo->gpu + level_offset + face_offset;
 }
 
+/* Given a resource that has already been allocated, hint that it should use a
+ * given layout. These are suggestions, not commands; it is perfectly legal to
+ * stub out this function, but there will be performance implications. */
+
+void
+panfrost_resource_hint_layout(
+                struct panfrost_screen *screen,
+                struct panfrost_resource *rsrc,
+                enum panfrost_memory_layout layout,
+                signed weight)
+{
+        /* Nothing to do, although a sophisticated implementation might store
+         * the hint */
+
+        if (rsrc->layout == layout)
+                return;
+
+        /* We don't use the weight yet, but we should check that it's positive
+         * (semantically meaning that we should choose the given `layout`) */
+
+        if (weight <= 0)
+                return;
+
+        /* Check if the preferred layout is legal for this buffer */
+
+        if (layout == PAN_AFBC) {
+                bool can_afbc = panfrost_format_supports_afbc(rsrc->base.format);
+                bool is_scanout = rsrc->base.bind &
+                        (PIPE_BIND_DISPLAY_TARGET | PIPE_BIND_SCANOUT | PIPE_BIND_SHARED);
+
+                if (!can_afbc || is_scanout)
+                        return;
+        }
+
+        /* Simple heuristic so far: if the resource is uninitialized, switch to
+         * the hinted layout. If it is initialized, keep the original layout.
+         * This misses some cases where it would be beneficial to switch and
+         * blit. */
+
+        bool is_initialized = false;
+
+        for (unsigned i = 0; i < MAX_MIP_LEVELS; ++i)
+                is_initialized |= rsrc->slices[i].initialized;
+
+        if (is_initialized)
+                return;
+
+        /* We're uninitialized, so do a layout switch. Reinitialize slices. */
+
+        size_t new_size;
+        rsrc->layout = layout;
+        panfrost_setup_slices(rsrc, &new_size);
+
+        /* If we grew in size, reallocate the BO */
+        if (new_size > rsrc->bo->size) {
+                panfrost_drm_release_bo(screen, rsrc->bo, true);
+                rsrc->bo = panfrost_drm_create_bo(screen, new_size, PAN_ALLOCATE_DELAY_MMAP);
+        }
+}
+
 static void
 panfrost_resource_set_stencil(struct pipe_resource *prsrc,
                               struct pipe_resource *stencil)
@@ -781,24 +811,6 @@ panfrost_resource_screen_init(struct panfrost_screen *pscreen)
         pscreen->base.transfer_helper = u_transfer_helper_create(&transfer_vtbl,
                                         true, false,
                                         true, true);
-
-        pb_slabs_init(&pscreen->slabs,
-                      MIN_SLAB_ENTRY_SIZE,
-                      MAX_SLAB_ENTRY_SIZE,
-
-                      3, /* Number of heaps */
-
-                      pscreen,
-
-                      panfrost_slab_can_reclaim,
-                      panfrost_slab_alloc,
-                      panfrost_slab_free);
-}
-
-void
-panfrost_resource_screen_deinit(struct panfrost_screen *pscreen)
-{
-        pb_slabs_deinit(&pscreen->slabs);
 }
 
 void

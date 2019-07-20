@@ -183,14 +183,16 @@ static void si_emit_derived_tess_state(struct si_context *sctx,
 	 * occupy significantly more CUs.
 	 */
 	unsigned temp_verts_per_tg = *num_patches * max_verts_per_patch;
-	if (temp_verts_per_tg > 64 && temp_verts_per_tg % 64 < 48)
-		*num_patches = (temp_verts_per_tg & ~63) / max_verts_per_patch;
+	unsigned wave_size = sctx->screen->ge_wave_size;
+
+	if (temp_verts_per_tg > wave_size && temp_verts_per_tg % wave_size < wave_size*3/4)
+		*num_patches = (temp_verts_per_tg & ~(wave_size - 1)) / max_verts_per_patch;
 
 	if (sctx->chip_class == GFX6) {
 		/* GFX6 bug workaround, related to power management. Limit LS-HS
 		 * threadgroups to only one wave.
 		 */
-		unsigned one_wave = 64 / max_verts_per_patch;
+		unsigned one_wave = wave_size / max_verts_per_patch;
 		*num_patches = MIN2(*num_patches, one_wave);
 	}
 
@@ -715,30 +717,33 @@ static void si_emit_ia_multi_vgt_param(struct si_context *sctx,
  */
 static void gfx10_emit_ge_cntl(struct si_context *sctx, unsigned num_patches)
 {
-	if (sctx->ngg)
-		return; /* set during PM4 emit */
+	unsigned ge_cntl;
 
-	union si_vgt_param_key key = sctx->ia_multi_vgt_param_key;
-	unsigned primgroup_size;
-	unsigned vertgroup_size;
-
-	if (sctx->tes_shader.cso) {
-		primgroup_size = num_patches; /* must be a multiple of NUM_PATCHES */
-		vertgroup_size = 0;
-	} else if (sctx->gs_shader.cso) {
-		unsigned vgt_gs_onchip_cntl = sctx->gs_shader.current->ctx_reg.gs.vgt_gs_onchip_cntl;
-		primgroup_size = G_028A44_GS_PRIMS_PER_SUBGRP(vgt_gs_onchip_cntl);
-		vertgroup_size = G_028A44_ES_VERTS_PER_SUBGRP(vgt_gs_onchip_cntl);
+	if (sctx->ngg) {
+		ge_cntl = si_get_vs_state(sctx)->ge_cntl |
+			  S_03096C_PACKET_TO_ONE_PA(sctx->ia_multi_vgt_param_key.u.line_stipple_enabled);
 	} else {
-		primgroup_size = 128; /* recommended without a GS and tess */
-		vertgroup_size = 0;
-	}
+		union si_vgt_param_key key = sctx->ia_multi_vgt_param_key;
+		unsigned primgroup_size;
+		unsigned vertgroup_size;
 
-	unsigned ge_cntl =
-		S_03096C_PRIM_GRP_SIZE(primgroup_size) |
-		S_03096C_VERT_GRP_SIZE(vertgroup_size) |
-		S_03096C_PACKET_TO_ONE_PA(key.u.line_stipple_enabled) |
-		S_03096C_BREAK_WAVE_AT_EOI(key.u.uses_tess && key.u.tess_uses_prim_id);
+		if (sctx->tes_shader.cso) {
+			primgroup_size = num_patches; /* must be a multiple of NUM_PATCHES */
+			vertgroup_size = 0;
+		} else if (sctx->gs_shader.cso) {
+			unsigned vgt_gs_onchip_cntl = sctx->gs_shader.current->ctx_reg.gs.vgt_gs_onchip_cntl;
+			primgroup_size = G_028A44_GS_PRIMS_PER_SUBGRP(vgt_gs_onchip_cntl);
+			vertgroup_size = G_028A44_ES_VERTS_PER_SUBGRP(vgt_gs_onchip_cntl);
+		} else {
+			primgroup_size = 128; /* recommended without a GS and tess */
+			vertgroup_size = 0;
+		}
+
+		ge_cntl = S_03096C_PRIM_GRP_SIZE(primgroup_size) |
+			  S_03096C_VERT_GRP_SIZE(vertgroup_size) |
+			  S_03096C_BREAK_WAVE_AT_EOI(key.u.uses_tess && key.u.tess_uses_prim_id) |
+			  S_03096C_PACKET_TO_ONE_PA(key.u.line_stipple_enabled);
+	}
 
 	if (ge_cntl != sctx->last_multi_vgt_param) {
 		radeon_set_uconfig_reg(sctx->gfx_cs, R_03096C_GE_CNTL, ge_cntl);
@@ -754,7 +759,7 @@ static void si_emit_draw_registers(struct si_context *sctx,
 				   bool primitive_restart)
 {
 	struct radeon_cmdbuf *cs = sctx->gfx_cs;
-	unsigned vgt_prim = si_conv_pipe_prim(info->mode);
+	unsigned vgt_prim = si_conv_pipe_prim(prim);
 
 	if (sctx->chip_class >= GFX10)
 		gfx10_emit_ge_cntl(sctx, num_patches);
@@ -763,7 +768,9 @@ static void si_emit_draw_registers(struct si_context *sctx,
 					   instance_count, primitive_restart);
 
 	if (vgt_prim != sctx->last_prim) {
-		if (sctx->chip_class >= GFX7)
+		if (sctx->chip_class >= GFX10)
+			radeon_set_uconfig_reg(cs, R_030908_VGT_PRIMITIVE_TYPE, vgt_prim);
+		else if (sctx->chip_class >= GFX7)
 			radeon_set_uconfig_reg_idx(cs, sctx->screen,
 						   R_030908_VGT_PRIMITIVE_TYPE, 1, vgt_prim);
 		else

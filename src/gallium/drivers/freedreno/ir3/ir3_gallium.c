@@ -201,6 +201,18 @@ ring_wfi(struct fd_batch *batch, struct fd_ringbuffer *ring)
 }
 
 static void
+emit_const(struct fd_context *ctx, struct fd_ringbuffer *ring,
+		const struct ir3_shader_variant *v, uint32_t dst_offset,
+		uint32_t offset, uint32_t size,
+		const void *user_buffer, struct pipe_resource *buffer)
+{
+	assert(dst_offset + size <= v->constlen * 4);
+
+	ctx->emit_const(ring, v->type, dst_offset,
+			offset, size, user_buffer, buffer);
+}
+
+static void
 emit_user_consts(struct fd_context *ctx, const struct ir3_shader_variant *v,
 		struct fd_ringbuffer *ring, struct fd_constbuf_stateobj *constbuf)
 {
@@ -229,7 +241,7 @@ emit_user_consts(struct fd_context *ctx, const struct ir3_shader_variant *v,
 			debug_assert((size % 16) == 0);
 			debug_assert((offset % 16) == 0);
 
-			ctx->emit_const(ring, v->type, state->range[i].offset / 4,
+			emit_const(ctx, ring, v, state->range[i].offset / 4,
 							offset, size / 4, cb->user_buffer, cb->buffer);
 		}
 	}
@@ -260,6 +272,8 @@ emit_ubos(struct fd_context *ctx, const struct ir3_shader_variant *v,
 			}
 		}
 
+		assert(offset * 4 + params < v->constlen * 4);
+
 		ring_wfi(ctx->batch, ring);
 		ctx->emit_const_bo(ring, v->type, false, offset * 4, params, prscs, offsets);
 	}
@@ -282,7 +296,7 @@ emit_ssbo_sizes(struct fd_context *ctx, const struct ir3_shader_variant *v,
 		}
 
 		ring_wfi(ctx->batch, ring);
-		ctx->emit_const(ring, v->type, offset * 4,
+		emit_const(ctx, ring, v, offset * 4,
 			0, ARRAY_SIZE(sizes), sizes, NULL);
 	}
 }
@@ -333,10 +347,10 @@ emit_image_dims(struct fd_context *ctx, const struct ir3_shader_variant *v,
 				dims[off + 1] = ffs(dims[off + 0]) - 1;
 			}
 		}
+		uint32_t size = MIN2(ARRAY_SIZE(dims), v->constlen * 4 - offset * 4);
 
 		ring_wfi(ctx->batch, ring);
-		ctx->emit_const(ring, v->type, offset * 4,
-			0, ARRAY_SIZE(dims), dims, NULL);
+		emit_const(ctx, ring, v, offset * 4, 0, size, dims, NULL);
 	}
 }
 
@@ -359,7 +373,7 @@ emit_immediates(struct fd_context *ctx, const struct ir3_shader_variant *v,
 
 	if (size > 0) {
 		ring_wfi(ctx->batch, ring);
-		ctx->emit_const(ring, v->type, base,
+		emit_const(ctx, ring, v, base,
 			0, size, const_state->immediates[0].val, NULL);
 	}
 }
@@ -391,6 +405,8 @@ emit_tfbos(struct fd_context *ctx, const struct ir3_shader_variant *v,
 				prscs[i] = NULL;
 			}
 		}
+
+		assert(offset * 4 + params < v->constlen * 4);
 
 		ring_wfi(ctx->batch, ring);
 		ctx->emit_const_bo(ring, v->type, true, offset * 4, params, prscs, offsets);
@@ -496,7 +512,6 @@ ir3_emit_vs_consts(const struct ir3_shader_variant *v, struct fd_ringbuffer *rin
 	emit_common_consts(v, ring, ctx, PIPE_SHADER_VERTEX);
 
 	/* emit driver params every time: */
-	/* TODO skip emit if shader doesn't use driver params to avoid WFI.. */
 	if (info) {
 		const struct ir3_const_state *const_state = &v->shader->const_state;
 		uint32_t offset = const_state->offsets.driver_param;
@@ -557,12 +572,12 @@ ir3_emit_vs_consts(const struct ir3_shader_variant *v, struct fd_ringbuffer *rin
 				ctx->mem_to_mem(ring, vertex_params_rsc, 0,
 						indirect->buffer, src_off, 1);
 
-				ctx->emit_const(ring, MESA_SHADER_VERTEX, offset * 4, 0,
+				emit_const(ctx, ring, v, offset * 4, 0,
 						vertex_params_size, NULL, vertex_params_rsc);
 
 				pipe_resource_reference(&vertex_params_rsc, NULL);
 			} else {
-				ctx->emit_const(ring, MESA_SHADER_VERTEX, offset * 4, 0,
+				emit_const(ctx, ring, v, offset * 4, 0,
 						vertex_params_size, vertex_params, NULL);
 			}
 
@@ -623,7 +638,7 @@ ir3_emit_cs_consts(const struct ir3_shader_variant *v, struct fd_ringbuffer *rin
 				indirect_offset = info->indirect_offset;
 			}
 
-			ctx->emit_const(ring, MESA_SHADER_COMPUTE, offset * 4,
+			emit_const(ctx, ring, v, offset * 4,
 					indirect_offset, 4, NULL, indirect);
 
 			pipe_resource_reference(&indirect, NULL);
@@ -636,9 +651,10 @@ ir3_emit_cs_consts(const struct ir3_shader_variant *v, struct fd_ringbuffer *rin
 				[IR3_DP_LOCAL_GROUP_SIZE_Y] = info->block[1],
 				[IR3_DP_LOCAL_GROUP_SIZE_Z] = info->block[2],
 			};
+			uint32_t size = MIN2(ARRAY_SIZE(compute_params),
+					v->constlen * 4 - offset * 4);
 
-			ctx->emit_const(ring, MESA_SHADER_COMPUTE, offset * 4, 0,
-					ARRAY_SIZE(compute_params), compute_params, NULL);
+			emit_const(ctx, ring, v, offset * 4, 0, size, compute_params, NULL);
 		}
 	}
 }

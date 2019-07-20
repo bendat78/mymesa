@@ -202,7 +202,7 @@ si_emit_graphics(struct radv_physical_device *physical_device,
 	/* CLEAR_STATE doesn't clear these correctly on certain generations.
 	 * I don't know why. Deduced by trial and error.
 	 */
-	if (physical_device->rad_info.chip_class <= GFX7) {
+	if (physical_device->rad_info.chip_class <= GFX7 || !physical_device->has_clear_state) {
 		radeon_set_context_reg(cs, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
 		radeon_set_context_reg(cs, R_028204_PA_SC_WINDOW_SCISSOR_TL,
 				       S_028204_WINDOW_OFFSET_DISABLE(1));
@@ -262,20 +262,17 @@ si_emit_graphics(struct radv_physical_device *physical_device,
 	if (physical_device->rad_info.chip_class >= GFX7) {
 		if (physical_device->rad_info.chip_class >= GFX10) {
 			/* Logical CUs 16 - 31 */
-			radeon_set_sh_reg(cs, R_00B404_SPI_SHADER_PGM_RSRC4_HS,
-					  S_00B404_CU_EN(0xffff));
-			radeon_set_sh_reg(cs, R_00B204_SPI_SHADER_PGM_RSRC4_GS,
-					  S_00B204_CU_EN(0xffff) |
-					  S_00B204_SPI_SHADER_LATE_ALLOC_GS_GFX10(0));
-			radeon_set_sh_reg(cs, R_00B104_SPI_SHADER_PGM_RSRC4_VS,
-					  S_00B104_CU_EN(0xffff));
-			radeon_set_sh_reg(cs, R_00B004_SPI_SHADER_PGM_RSRC4_PS,
-					  S_00B004_CU_EN(0xffff));
+			radeon_set_sh_reg_idx(physical_device, cs, R_00B404_SPI_SHADER_PGM_RSRC4_HS,
+					      3, S_00B404_CU_EN(0xffff));
+			radeon_set_sh_reg_idx(physical_device, cs, R_00B104_SPI_SHADER_PGM_RSRC4_VS,
+					      3, S_00B104_CU_EN(0xffff));
+			radeon_set_sh_reg_idx(physical_device, cs, R_00B004_SPI_SHADER_PGM_RSRC4_PS,
+					      3, S_00B004_CU_EN(0xffff));
 		}
 
 		if (physical_device->rad_info.chip_class >= GFX9) {
-			radeon_set_sh_reg(cs, R_00B41C_SPI_SHADER_PGM_RSRC3_HS,
-					  S_00B41C_CU_EN(0xffff) | S_00B41C_WAVE_LIMIT(0x3F));
+			radeon_set_sh_reg_idx(physical_device, cs, R_00B41C_SPI_SHADER_PGM_RSRC3_HS,
+					      3, S_00B41C_CU_EN(0xffff) | S_00B41C_WAVE_LIMIT(0x3F));
 		} else {
 			radeon_set_sh_reg(cs, R_00B51C_SPI_SHADER_PGM_RSRC3_LS,
 					  S_00B51C_CU_EN(0xffff) | S_00B51C_WAVE_LIMIT(0x3F));
@@ -291,32 +288,59 @@ si_emit_graphics(struct radv_physical_device *physical_device,
 					       S_028A44_ES_VERTS_PER_SUBGRP(64) |
 					       S_028A44_GS_PRIMS_PER_SUBGRP(4));
 		}
-		radeon_set_sh_reg(cs, R_00B21C_SPI_SHADER_PGM_RSRC3_GS,
-				  S_00B21C_CU_EN(0xffff) | S_00B21C_WAVE_LIMIT(0x3F));
 
-		if (physical_device->rad_info.num_good_cu_per_sh <= 4) {
+		/* Compute LATE_ALLOC_VS.LIMIT. */
+		unsigned num_cu_per_sh = physical_device->rad_info.num_good_cu_per_sh;
+		unsigned late_alloc_limit; /* The limit is per SH. */
+
+		if (physical_device->rad_info.family == CHIP_KABINI) {
+			late_alloc_limit = 0; /* Potential hang on Kabini. */
+		} else if (num_cu_per_sh <= 4) {
 			/* Too few available compute units per SH. Disallowing
-			 * VS to run on CU0 could hurt us more than late VS
+			 * VS to run on one CU could hurt us more than late VS
 			 * allocation would help.
 			 *
-			 * LATE_ALLOC_VS = 2 is the highest safe number.
+			 * 2 is the highest safe number that allows us to keep
+			 * all CUs enabled.
 			 */
-			radeon_set_sh_reg(cs, R_00B118_SPI_SHADER_PGM_RSRC3_VS,
-					  S_00B118_CU_EN(0xffff) | S_00B118_WAVE_LIMIT(0x3F) );
-			radeon_set_sh_reg(cs, R_00B11C_SPI_SHADER_LATE_ALLOC_VS, S_00B11C_LIMIT(2));
+			late_alloc_limit = 2;
 		} else {
-			/* Set LATE_ALLOC_VS == 31. It should be less than
-			 * the number of scratch waves. Limitations:
-			 * - VS can't execute on CU0.
-			 * - If HS writes outputs to LDS, LS can't execute on CU0.
+			/* This is a good initial value, allowing 1 late_alloc
+			 * wave per SIMD on num_cu - 2.
 			 */
-			radeon_set_sh_reg(cs, R_00B118_SPI_SHADER_PGM_RSRC3_VS,
-					  S_00B118_CU_EN(0xfffe) | S_00B118_WAVE_LIMIT(0x3F));
-			radeon_set_sh_reg(cs, R_00B11C_SPI_SHADER_LATE_ALLOC_VS, S_00B11C_LIMIT(31));
+			late_alloc_limit = (num_cu_per_sh - 2) * 4;
 		}
 
-		radeon_set_sh_reg(cs, R_00B01C_SPI_SHADER_PGM_RSRC3_PS,
-				  S_00B01C_CU_EN(0xffff) | S_00B01C_WAVE_LIMIT(0x3F));
+		unsigned cu_mask_vs = 0xffff;
+		unsigned cu_mask_gs = 0xffff;
+
+		if (late_alloc_limit > 2) {
+			if (physical_device->rad_info.chip_class >= GFX10) {
+				/* CU2 & CU3 disabled because of the dual CU design */
+				cu_mask_vs = 0xfff3;
+				cu_mask_gs = 0xfff3; /* NGG only */
+			} else {
+				cu_mask_vs = 0xfffe; /* 1 CU disabled */
+			}
+		}
+
+		radeon_set_sh_reg_idx(physical_device, cs, R_00B118_SPI_SHADER_PGM_RSRC3_VS,
+				      3, S_00B118_CU_EN(cu_mask_vs) |
+				      S_00B118_WAVE_LIMIT(0x3F));
+		radeon_set_sh_reg(cs, R_00B11C_SPI_SHADER_LATE_ALLOC_VS,
+				  S_00B11C_LIMIT(late_alloc_limit));
+
+		radeon_set_sh_reg_idx(physical_device, cs, R_00B21C_SPI_SHADER_PGM_RSRC3_GS,
+				      3, S_00B21C_CU_EN(cu_mask_gs) | S_00B21C_WAVE_LIMIT(0x3F));
+
+		if (physical_device->rad_info.chip_class >= GFX10) {
+			radeon_set_sh_reg_idx(physical_device, cs, R_00B204_SPI_SHADER_PGM_RSRC4_GS,
+					      3, S_00B204_CU_EN(0xffff) |
+					      S_00B204_SPI_SHADER_LATE_ALLOC_GS_GFX10(late_alloc_limit));
+		}
+
+		radeon_set_sh_reg_idx(physical_device, cs, R_00B01C_SPI_SHADER_PGM_RSRC3_PS,
+				      3, S_00B01C_CU_EN(0xffff) | S_00B01C_WAVE_LIMIT(0x3F));
 	}
 
 	if (physical_device->rad_info.chip_class >= GFX10) {
@@ -735,16 +759,18 @@ void si_cs_emit_write_event_eop(struct radeon_cmdbuf *cs,
 				enum chip_class chip_class,
 				bool is_mec,
 				unsigned event, unsigned event_flags,
-				unsigned data_sel,
+				unsigned dst_sel, unsigned data_sel,
 				uint64_t va,
 				uint32_t new_fence,
 				uint64_t gfx9_eop_bug_va)
 {
 	unsigned op = EVENT_TYPE(event) |
-		EVENT_INDEX(5) |
+		EVENT_INDEX(event == V_028A90_CS_DONE ||
+			    event == V_028A90_PS_DONE ? 6 : 5) |
 		event_flags;
 	unsigned is_gfx8_mec = is_mec && chip_class < GFX9;
-	unsigned sel = EOP_DATA_SEL(data_sel);
+	unsigned sel = EOP_DST_SEL(dst_sel) |
+		       EOP_DATA_SEL(data_sel);
 
 	/* Wait for write confirmation before writing data, but don't send
 	 * an interrupt. */
@@ -963,6 +989,7 @@ gfx10_cs_emit_cache_flush(struct radeon_cmdbuf *cs,
 					   S_490_GL2_INV(gl2_inv) |
 					   S_490_GL2_WB(gl2_wb) |
 					   S_490_SEQ(gcr_seq),
+					   EOP_DST_SEL_MEM,
 					   EOP_DATA_SEL_VALUE_32BIT,
 					   flush_va, *flush_cnt,
 					   gfx9_eop_bug_va);
@@ -1050,6 +1077,7 @@ si_cs_emit_cache_flush(struct radeon_cmdbuf *cs,
 							   is_mec,
 							   V_028A90_FLUSH_AND_INV_CB_DATA_TS,
 							   0,
+							   EOP_DST_SEL_MEM,
 							   EOP_DATA_SEL_DISCARD,
 							   0, 0,
 							   gfx9_eop_bug_va);
@@ -1121,6 +1149,7 @@ si_cs_emit_cache_flush(struct radeon_cmdbuf *cs,
 		(*flush_cnt)++;
 
 		si_cs_emit_write_event_eop(cs, chip_class, false, cb_db_event, tc_flags,
+					   EOP_DST_SEL_MEM,
 					   EOP_DATA_SEL_VALUE_32BIT,
 					   flush_va, *flush_cnt,
 					   gfx9_eop_bug_va);

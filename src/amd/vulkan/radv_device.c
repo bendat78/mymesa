@@ -363,6 +363,8 @@ radv_physical_device_init(struct radv_physical_device *device,
 	device->has_scissor_bug = device->rad_info.family == CHIP_VEGA10 ||
 				  device->rad_info.family == CHIP_RAVEN;
 
+	device->has_tc_compat_zrange_bug = device->rad_info.chip_class < GFX10;
+
 	/* Out-of-order primitive rasterization. */
 	device->has_out_of_order_rast = device->rad_info.chip_class >= GFX8 &&
 					device->rad_info.max_se >= 2;
@@ -474,6 +476,7 @@ static const struct debug_control radv_debug_options[] = {
 	{"nothreadllvm", RADV_DEBUG_NOTHREADLLVM},
 	{"nobinning", RADV_DEBUG_NOBINNING},
 	{"noloadstoreopt", RADV_DEBUG_NO_LOAD_STORE_OPT},
+	{"nongg", RADV_DEBUG_NO_NGG},
 	{NULL, 0}
 };
 
@@ -2750,10 +2753,8 @@ radv_get_preamble_cs(struct radv_queue *queue,
 			radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 			radeon_emit(cs, EVENT_TYPE(V_028A90_VS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 
-			if (queue->device->physical_device->rad_info.chip_class < GFX10) {
-				radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
-				radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
-			}
+			radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+			radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
 		}
 
 		radv_emit_gs_ring_sizes(queue, cs, esgs_ring_bo, esgs_ring_size,

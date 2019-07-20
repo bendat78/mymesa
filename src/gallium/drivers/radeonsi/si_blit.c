@@ -803,9 +803,9 @@ void si_decompress_textures(struct si_context *sctx, unsigned shader_mask)
 
 		si_check_render_feedback(sctx);
 	} else if (shader_mask & (1 << PIPE_SHADER_COMPUTE)) {
-		if (sctx->cs_shader_state.program->uses_bindless_samplers)
+		if (sctx->cs_shader_state.program->sel.info.uses_bindless_samplers)
 			si_decompress_resident_textures(sctx);
-		if (sctx->cs_shader_state.program->uses_bindless_images)
+		if (sctx->cs_shader_state.program->sel.info.uses_bindless_images)
 			si_decompress_resident_images(sctx);
 	}
 }
@@ -1127,18 +1127,10 @@ static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
 		 * This is still the fastest codepath even with this clear.
 		 */
 		if (vi_dcc_enabled(dst, info->dst.level)) {
-			/* TODO: Implement per-level DCC clears for GFX9. */
-			if (sctx->chip_class >= GFX9 &&
-			    info->dst.resource->last_level != 0)
+			if (!vi_dcc_clear_level(sctx, dst, info->dst.level,
+						DCC_UNCOMPRESSED))
 				goto resolve_to_temp;
 
-			/* This can happen with mipmapping. */
-			if (sctx->chip_class == GFX8 &&
-			    !dst->surface.u.legacy.level[info->dst.level].dcc_fast_clear_size)
-				goto resolve_to_temp;
-
-			vi_dcc_clear_level(sctx, dst, info->dst.level,
-					   0xFFFFFFFF);
 			dst->dirty_level_mask &= ~(1 << info->dst.level);
 		}
 

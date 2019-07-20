@@ -261,6 +261,8 @@ enum pipe_transfer_usage
     * E.g. the state tracker could have a simpler path which maps textures and
     * does read/modify/write cycles on them directly, and a more complicated
     * path which uses minimal read and write transfers.
+    *
+    * This flag supresses implicit "DISCARD" for buffer_subdata.
     */
    PIPE_TRANSFER_MAP_DIRECTLY = (1 << 2),
 
@@ -796,6 +798,7 @@ enum pipe_cap
    PIPE_CAP_MULTI_DRAW_INDIRECT,
    PIPE_CAP_MULTI_DRAW_INDIRECT_PARAMS,
    PIPE_CAP_TGSI_FS_POSITION_IS_SYSVAL,
+   PIPE_CAP_TGSI_FS_POINT_IS_SYSVAL,
    PIPE_CAP_TGSI_FS_FACE_IS_INTEGER_SYSVAL,
    PIPE_CAP_SHADER_BUFFER_OFFSET_ALIGNMENT,
    PIPE_CAP_INVALIDATE_BUFFER,

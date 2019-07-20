@@ -553,7 +553,8 @@ static void si_shader_hs(struct si_screen *sscreen, struct si_shader *shader)
 	}
 
 	si_pm4_set_reg(pm4, R_00B428_SPI_SHADER_PGM_RSRC1_HS,
-		       S_00B428_VGPRS((shader->config.num_vgprs - 1) / 4) |
+		       S_00B428_VGPRS((shader->config.num_vgprs - 1) /
+				      (sscreen->ge_wave_size == 32 ? 8 : 4)) |
 		       (sscreen->info.chip_class <= GFX9 ?
 				S_00B428_SGPRS((shader->config.num_sgprs - 1) / 8) : 0) |
 		       S_00B428_DX10_CLAMP(1) |
@@ -990,11 +991,6 @@ static void gfx10_emit_shader_ngg_tail(struct si_context *sctx,
 
 	if (initial_cdw != sctx->gfx_cs->current.cdw)
 		sctx->context_roll = true;
-
-	if (shader->ge_cntl != sctx->last_multi_vgt_param) {
-		radeon_set_uconfig_reg(sctx->gfx_cs, R_03096C_GE_CNTL, shader->ge_cntl);
-		sctx->last_multi_vgt_param = shader->ge_cntl;
-	}
 }
 
 static void gfx10_emit_shader_ngg_notess_nogs(struct si_context *sctx)
@@ -1064,7 +1060,8 @@ static void si_set_ge_pc_alloc(struct si_screen *sscreen,
 		       S_030980_NUM_PC_LINES((culling ? 256 : 128) * sscreen->info.max_se - 1));
 }
 
-unsigned si_get_input_prim(const struct si_shader_selector *gs)
+unsigned si_get_input_prim(const struct si_shader_selector *gs,
+			   unsigned default_worst_case)
 {
 	if (gs->type == PIPE_SHADER_GEOMETRY)
 		return gs->info.properties[TGSI_PROPERTY_GS_INPUT_PRIM];
@@ -1078,7 +1075,7 @@ unsigned si_get_input_prim(const struct si_shader_selector *gs)
 	}
 
 	/* TODO: Set this correctly if the primitive type is set in the shader key. */
-	return PIPE_PRIM_TRIANGLES;
+	return default_worst_case;
 }
 
 /**
@@ -1101,7 +1098,8 @@ static void gfx10_shader_ngg(struct si_screen *sscreen, struct si_shader *shader
 		gs_info->properties[TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION];
 	bool es_enable_prim_id = shader->key.mono.u.vs_export_prim_id || es_info->uses_primid;
 	unsigned gs_num_invocations = MAX2(gs_sel->gs_num_invocations, 1);
-	unsigned input_prim = si_get_input_prim(gs_sel);
+	/* Anything above TRIANGLES has the same effect as TRIANGLES here. */
+	unsigned input_prim = si_get_input_prim(gs_sel, PIPE_PRIM_TRIANGLES);
 	bool break_wave_at_eoi = false;
 	struct si_pm4_state *pm4 = si_get_shader_pm4_state(shader);
 	if (!pm4)
@@ -1156,7 +1154,8 @@ static void gfx10_shader_ngg(struct si_screen *sscreen, struct si_shader *shader
 	si_pm4_set_reg(pm4, R_00B320_SPI_SHADER_PGM_LO_ES, va >> 8);
 	si_pm4_set_reg(pm4, R_00B324_SPI_SHADER_PGM_HI_ES, va >> 40);
 	si_pm4_set_reg(pm4, R_00B228_SPI_SHADER_PGM_RSRC1_GS,
-		       S_00B228_VGPRS((shader->config.num_vgprs - 1) / 4) |
+		       S_00B228_VGPRS((shader->config.num_vgprs - 1) /
+				      (sscreen->ge_wave_size == 32 ? 8 : 4)) |
 		       S_00B228_FLOAT_MODE(shader->config.float_mode) |
 		       S_00B228_DX10_CLAMP(1) |
 		       S_00B228_MEM_ORDERED(1) |
@@ -1219,17 +1218,13 @@ static void gfx10_shader_ngg(struct si_screen *sscreen, struct si_shader *shader
 		S_028B90_EN_MAX_VERT_OUT_PER_GS_INSTANCE(
 			shader->ngg.max_vert_out_per_gs_instance);
 
-	/* User edge flags are set by the pos exports. If user edge flags are
-	 * not used, we must use hw-generated edge flags and pass them via
-	 * the prim export to prevent drawing lines on internal edges of
-	 * decomposed primitives (such as quads) with polygon mode = lines.
-	 *
-	 * TODO: We should combine hw-generated edge flags with user edge
-	 *       flags in the shader.
+	/* Always output hw-generated edge flags and pass them via the prim
+	 * export to prevent drawing lines on internal edges of decomposed
+	 * primitives (such as quads) with polygon mode = lines. Only VS needs
+	 * this.
 	 */
 	shader->ctx_reg.ngg.pa_cl_ngg_cntl =
-		S_028838_INDEX_BUF_EDGE_FLAG_ENA(gs_type == PIPE_SHADER_VERTEX &&
-						 !gs_info->writes_edgeflag);
+		S_028838_INDEX_BUF_EDGE_FLAG_ENA(gs_type == PIPE_SHADER_VERTEX);
 
 	shader->ge_cntl =
 		S_03096C_PRIM_GRP_SIZE(shader->ngg.max_gsprims) |
@@ -1406,7 +1401,8 @@ static void si_shader_vs(struct si_screen *sscreen, struct si_shader *shader,
 	if (sscreen->info.chip_class >= GFX10)
 		si_set_ge_pc_alloc(sscreen, pm4, false);
 
-	uint32_t rsrc1 = S_00B128_VGPRS((shader->config.num_vgprs - 1) / 4) |
+	uint32_t rsrc1 = S_00B128_VGPRS((shader->config.num_vgprs - 1) /
+					(sscreen->ge_wave_size == 32 ? 8 : 4)) |
 			 S_00B128_VGPR_COMP_CNT(vgpr_comp_cnt) |
 			 S_00B128_DX10_CLAMP(1) |
 			 S_00B128_MEM_ORDERED(sscreen->info.chip_class >= GFX10) |
@@ -1617,7 +1613,8 @@ static void si_shader_ps(struct si_screen *sscreen, struct si_shader *shader)
 	shader->ctx_reg.ps.spi_ps_input_addr = shader->config.spi_ps_input_addr;
 
 	/* Set interpolation controls. */
-	spi_ps_in_control = S_0286D8_NUM_INTERP(si_get_ps_num_interp(shader));
+	spi_ps_in_control = S_0286D8_NUM_INTERP(si_get_ps_num_interp(shader)) |
+			    S_0286D8_PS_W32_EN(sscreen->ps_wave_size == 32);
 
 	shader->ctx_reg.ps.spi_baryc_cntl = spi_baryc_cntl;
 	shader->ctx_reg.ps.spi_ps_in_control = spi_ps_in_control;
@@ -1634,7 +1631,8 @@ static void si_shader_ps(struct si_screen *sscreen, struct si_shader *shader)
 	si_pm4_set_reg(pm4, R_00B024_SPI_SHADER_PGM_HI_PS, S_00B024_MEM_BASE(va >> 40));
 
 	uint32_t rsrc1 =
-		S_00B028_VGPRS((shader->config.num_vgprs - 1) / 4) |
+		S_00B028_VGPRS((shader->config.num_vgprs - 1) /
+			       (sscreen->ps_wave_size == 32 ? 8 : 4)) |
 		S_00B028_DX10_CLAMP(1) |
 		S_00B028_MEM_ORDERED(sscreen->info.chip_class >= GFX10) |
 		S_00B028_FLOAT_MODE(shader->config.float_mode);
@@ -1854,10 +1852,11 @@ static inline void si_shader_selector_key(struct pipe_context *ctx,
 			key->mono.u.ff_tcs_inputs_to_copy = sctx->vs_shader.cso->outputs_written;
 		break;
 	case PIPE_SHADER_TESS_EVAL:
+		key->as_ngg = stages_key.u.ngg;
+
 		if (sctx->gs_shader.cso)
 			key->as_es = 1;
 		else {
-			key->as_ngg = stages_key.u.ngg;
 			si_shader_selector_key_hw_vs(sctx, sel, key);
 
 			if (sctx->ps_shader.cso && sctx->ps_shader.cso->info.uses_primid)
@@ -2271,6 +2270,10 @@ current_not_ready:
 			else
 				assert(0);
 
+			if (sel->type == PIPE_SHADER_GEOMETRY &&
+			    previous_stage_sel->type == PIPE_SHADER_TESS_EVAL)
+				shader1_key.as_ngg = key->as_ngg;
+
 			mtx_lock(&previous_stage_sel->mutex);
 			ok = si_check_missing_main_part(sscreen,
 							previous_stage_sel,
@@ -2428,8 +2431,11 @@ static void si_init_shader_selector_async(void *job, int thread_index)
 	assert(thread_index < ARRAY_SIZE(sscreen->compiler));
 	compiler = &sscreen->compiler[thread_index];
 
-	if (sel->nir)
-		si_lower_nir(sel);
+	if (sel->nir) {
+		/* TODO: GS always sets wave size = default. Legacy GS will have
+		 * incorrect subgroup_size and ballot_bit_size. */
+		si_lower_nir(sel, si_get_wave_size(sscreen, sel->type, true, false));
+	}
 
 	/* Compile the main shader part for use with a prolog and/or epilog.
 	 * If this fails, the driver will try to compile a monolithic shader
@@ -2454,10 +2460,9 @@ static void si_init_shader_selector_async(void *job, int thread_index)
 					      sel->so.num_outputs != 0,
 					      &shader->key);
 		if (sscreen->info.chip_class >= GFX10 &&
-		    !sscreen->options.disable_ngg &&
-		    (((sel->type == PIPE_SHADER_VERTEX ||
-		       sel->type == PIPE_SHADER_TESS_EVAL) &&
+		    ((sel->type == PIPE_SHADER_VERTEX &&
 		      !shader->key.as_ls && !shader->key.as_es) ||
+		     sel->type == PIPE_SHADER_TESS_EVAL ||
 		     sel->type == PIPE_SHADER_GEOMETRY))
 			shader->key.as_ngg = 1;
 
@@ -2536,12 +2541,9 @@ static void si_init_shader_selector_async(void *job, int thread_index)
 		}
 	}
 
-	/* The GS copy shader is always pre-compiled.
-	 *
-	 * TODO-GFX10: We could compile the GS copy shader on demand, since it
-	 * is only used in the (rare) non-NGG case.
-	 */
-	if (sel->type == PIPE_SHADER_GEOMETRY) {
+	/* The GS copy shader is always pre-compiled. */
+	if (sel->type == PIPE_SHADER_GEOMETRY &&
+	    (sscreen->info.chip_class <= GFX9 || sel->tess_turns_off_ngg)) {
 		sel->gs_copy_shader = si_generate_gs_copy_shader(sscreen, compiler, sel, debug);
 		if (!sel->gs_copy_shader) {
 			fprintf(stderr, "radeonsi: can't create GS copy shader\n");
@@ -2677,6 +2679,14 @@ static void *si_create_shader_selector(struct pipe_context *ctx,
 		!sel->info.properties[TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION] &&
 		!sel->so.num_outputs;
 
+	if (sel->type == PIPE_SHADER_VERTEX &&
+	    sel->info.writes_edgeflag) {
+		if (sscreen->info.chip_class >= GFX10)
+			sel->ngg_writes_edgeflag = true;
+		else
+			sel->pos_writes_edgeflag = true;
+	}
+
 	/* Set which opcode uses which (i,j) pair. */
 	if (sel->info.uses_persp_opcode_interp_centroid)
 		sel->info.uses_persp_centroid = true;
@@ -2717,6 +2727,13 @@ static void *si_create_shader_selector(struct pipe_context *ctx,
 
 		sel->gs_input_verts_per_prim =
 			u_vertices_per_prim(sel->info.properties[TGSI_PROPERTY_GS_INPUT_PRIM]);
+
+		/* EN_MAX_VERT_OUT_PER_GS_INSTANCE does not work with tesselation. */
+		sel->tess_turns_off_ngg =
+			(sscreen->info.family == CHIP_NAVI10 ||
+			 sscreen->info.family == CHIP_NAVI12 ||
+			 sscreen->info.family == CHIP_NAVI14) &&
+			sel->gs_num_invocations * sel->gs_max_out_vertices > 256;
 		break;
 
 	case PIPE_SHADER_TESS_CTRL:
@@ -2816,11 +2833,11 @@ static void *si_create_shader_selector(struct pipe_context *ctx,
 
 	/* PA_CL_VS_OUT_CNTL */
 	bool misc_vec_ena =
-		sel->info.writes_psize || sel->info.writes_edgeflag ||
+		sel->info.writes_psize || sel->pos_writes_edgeflag ||
 		sel->info.writes_layer || sel->info.writes_viewport_index;
 	sel->pa_cl_vs_out_cntl =
 		S_02881C_USE_VTX_POINT_SIZE(sel->info.writes_psize) |
-		S_02881C_USE_VTX_EDGE_FLAG(sel->info.writes_edgeflag) |
+		S_02881C_USE_VTX_EDGE_FLAG(sel->pos_writes_edgeflag) |
 		S_02881C_USE_VTX_RENDER_TARGET_INDX(sel->info.writes_layer) |
 		S_02881C_USE_VTX_VIEWPORT_INDX(sel->info.writes_viewport_index) |
 		S_02881C_VS_OUT_MISC_VEC_ENA(misc_vec_ena) |
@@ -2879,6 +2896,9 @@ static void *si_create_shader_selector(struct pipe_context *ctx,
 		/* Case 1. */
 		sel->db_shader_control |= S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	}
+
+	if (sel->info.properties[TGSI_PROPERTY_FS_POST_DEPTH_COVERAGE])
+		sel->db_shader_control |= S_02880C_PRE_SHADER_DEPTH_COVERAGE_ENABLE(1);
 
 	(void) mtx_init(&sel->mutex, mtx_plain);
 
@@ -2974,15 +2994,13 @@ static void si_update_tess_uses_prim_id(struct si_context *sctx)
 
 static bool si_update_ngg(struct si_context *sctx)
 {
-	if (sctx->chip_class <= GFX9 ||
-	    sctx->screen->options.disable_ngg)
+	if (sctx->chip_class <= GFX9)
 		return false;
 
 	bool new_ngg = true;
 
-	/* EN_MAX_VERT_OUT_PER_GS_INSTANCE does not work with tesselation. */
 	if (sctx->gs_shader.cso && sctx->tes_shader.cso &&
-	    sctx->gs_shader.cso->gs_num_invocations * sctx->gs_shader.cso->gs_max_out_vertices > 256)
+	    sctx->gs_shader.cso->tess_turns_off_ngg)
 		new_ngg = false;
 
 	if (new_ngg != sctx->ngg) {
@@ -3779,6 +3797,12 @@ static struct si_pm4_state *si_build_vgt_shader_config(struct si_screen *screen,
 
 	if (screen->info.chip_class >= GFX9)
 		stages |= S_028B54_MAX_PRIMGRP_IN_WAVE(2);
+
+	if (screen->info.chip_class >= GFX10 && screen->ge_wave_size == 32) {
+		stages |= S_028B54_HS_W32_EN(1) |
+			  S_028B54_GS_W32_EN(key.u.ngg) | /* legacy GS only supports Wave64 */
+			  S_028B54_VS_W32_EN(1);
+	}
 
 	si_pm4_set_reg(pm4, R_028B54_VGT_SHADER_STAGES_EN, stages);
 	return pm4;

@@ -722,10 +722,10 @@ miptree_layer_range_length(const struct iris_resource *res, uint32_t level,
    return num_layers;
 }
 
-static bool
-has_color_unresolved(const struct iris_resource *res,
-                     unsigned start_level, unsigned num_levels,
-                     unsigned start_layer, unsigned num_layers)
+bool
+iris_has_color_unresolved(const struct iris_resource *res,
+                          unsigned start_level, unsigned num_levels,
+                          unsigned start_layer, unsigned num_layers)
 {
    if (!res->aux.bo)
       return false;
@@ -756,9 +756,8 @@ get_ccs_d_resolve_op(enum isl_aux_state aux_state,
 {
    assert(aux_usage == ISL_AUX_USAGE_NONE || aux_usage == ISL_AUX_USAGE_CCS_D);
 
-   const bool ccs_supported = aux_usage == ISL_AUX_USAGE_CCS_D;
-
-   assert(ccs_supported == fast_clear_supported);
+   const bool ccs_supported =
+      (aux_usage == ISL_AUX_USAGE_CCS_D) && fast_clear_supported;
 
    switch (aux_state) {
    case ISL_AUX_STATE_CLEAR:
@@ -790,9 +789,6 @@ get_ccs_e_resolve_op(enum isl_aux_state aux_state,
    assert(aux_usage == ISL_AUX_USAGE_NONE ||
           aux_usage == ISL_AUX_USAGE_CCS_D ||
           aux_usage == ISL_AUX_USAGE_CCS_E);
-
-   if (aux_usage == ISL_AUX_USAGE_CCS_D)
-      assert(fast_clear_supported);
 
    switch (aux_state) {
    case ISL_AUX_STATE_CLEAR:
@@ -1323,8 +1319,8 @@ iris_resource_texture_aux_usage(struct iris_context *ice,
        * ISL_AUX_USAGE_NONE.  This way, texturing won't even look at the
        * aux surface and we can save some bandwidth.
        */
-      if (!has_color_unresolved(res, 0, INTEL_REMAINING_LEVELS,
-                                0, INTEL_REMAINING_LAYERS))
+      if (!iris_has_color_unresolved(res, 0, INTEL_REMAINING_LEVELS,
+                                     0, INTEL_REMAINING_LAYERS))
          return ISL_AUX_USAGE_NONE;
 
       if (can_texture_with_ccs(devinfo, &ice->dbg, res, view_format))

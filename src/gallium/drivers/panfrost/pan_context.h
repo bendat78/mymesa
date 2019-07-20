@@ -107,7 +107,6 @@ struct panfrost_context {
         struct panfrost_memory shaders;
         struct panfrost_memory scratchpad;
         struct panfrost_memory tiler_heap;
-        struct panfrost_memory varying_mem;
         struct panfrost_memory tiler_polygon_list;
         struct panfrost_memory tiler_dummy;
         struct panfrost_memory depth_stencil_buffer;
@@ -135,8 +134,6 @@ struct panfrost_context {
         unsigned padded_count;
 
         union mali_attr attributes[PIPE_MAX_ATTRIBS];
-
-        unsigned varying_height;
 
         struct mali_single_framebuffer vt_framebuffer_sfbd;
         struct bifrost_framebuffer vt_framebuffer_mfbd;
@@ -216,7 +213,6 @@ struct panfrost_shader_state {
         /* Compiled, mapped descriptor, ready for the hardware */
         bool compiled;
         struct mali_shader_meta *tripipe;
-        mali_ptr tripipe_gpu;
 
         /* Non-descript information */
         int uniform_count;
@@ -265,6 +261,7 @@ struct panfrost_sampler_state {
 struct panfrost_sampler_view {
         struct pipe_sampler_view base;
         struct mali_texture_descriptor hw;
+        bool manual_stride;
 };
 
 static inline struct panfrost_context *

@@ -38,7 +38,7 @@
 #include "pan_util.h"
 #include "pandecode/decode.h"
 
-static void
+void
 panfrost_drm_mmap_bo(struct panfrost_screen *screen, struct panfrost_bo *bo)
 {
         struct drm_panfrost_mmap_bo mmap_bo = { .handle = bo->gem_handle };
@@ -83,42 +83,80 @@ struct panfrost_bo *
 panfrost_drm_create_bo(struct panfrost_screen *screen, size_t size,
                        uint32_t flags)
 {
-        struct panfrost_bo *bo = rzalloc(screen, struct panfrost_bo);
+        struct panfrost_bo *bo;
 
         /* Kernel will fail (confusingly) with EPERM otherwise */
         assert(size > 0);
 
+        unsigned translated_flags = 0;
+
+        /* TODO: translate flags to kernel flags, if the kernel supports */
+
         struct drm_panfrost_create_bo create_bo = {
                 .size = size,
-                .flags = flags,
+                .flags = translated_flags,
         };
-        int ret;
 
-        ret = drmIoctl(screen->fd, DRM_IOCTL_PANFROST_CREATE_BO, &create_bo);
-        if (ret) {
-                fprintf(stderr, "DRM_IOCTL_PANFROST_CREATE_BO failed: %d\n", ret);
-                assert(0);
+        /* Before creating a BO, we first want to check the cache */
+
+        bo = panfrost_bo_cache_fetch(screen, size, flags);
+
+        if (bo == NULL) {
+                /* Otherwise, the cache misses and we need to allocate a BO fresh from
+                 * the kernel */
+
+                int ret;
+
+                ret = drmIoctl(screen->fd, DRM_IOCTL_PANFROST_CREATE_BO, &create_bo);
+                if (ret) {
+                        fprintf(stderr, "DRM_IOCTL_PANFROST_CREATE_BO failed: %d\n", ret);
+                        assert(0);
+                }
+
+                /* We have a BO allocated from the kernel; fill in the userspace
+                 * version */
+
+                bo = rzalloc(screen, struct panfrost_bo);
+                bo->size = create_bo.size;
+                bo->gpu = create_bo.offset;
+                bo->gem_handle = create_bo.handle;
         }
 
-        bo->size = create_bo.size;
-        bo->gpu = create_bo.offset;
-        bo->gem_handle = create_bo.handle;
+        /* Only mmap now if we know we need to. For CPU-invisible buffers, we
+         * never map since we don't care about their contents; they're purely
+         * for GPU-internal use. But we do trace them anyway. */
 
-        // TODO map and unmap on demand?
-        panfrost_drm_mmap_bo(screen, bo);
+        if (!(flags & (PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_DELAY_MMAP)))
+                panfrost_drm_mmap_bo(screen, bo);
+        else if (flags & PAN_ALLOCATE_INVISIBLE) {
+                if (pan_debug & PAN_DBG_TRACE)
+                        pandecode_inject_mmap(bo->gpu, NULL, bo->size, NULL);
+        }
 
         pipe_reference_init(&bo->reference, 1);
         return bo;
 }
 
 void
-panfrost_drm_release_bo(struct panfrost_screen *screen, struct panfrost_bo *bo)
+panfrost_drm_release_bo(struct panfrost_screen *screen, struct panfrost_bo *bo, bool cacheable)
 {
         struct drm_gem_close gem_close = { .handle = bo->gem_handle };
         int ret;
 
         if (!bo)
                 return;
+
+        /* Rather than freeing the BO now, we'll cache the BO for later
+         * allocations if we're allowed to */
+
+        if (cacheable) {
+                bool cached = panfrost_bo_cache_put(screen, bo);
+
+                if (cached)
+                        return;
+        }
+
+        /* Otherwise, if the BO wasn't cached, we'll legitimately free the BO */
 
         panfrost_drm_munmap_bo(screen, bo);
 
@@ -143,7 +181,7 @@ panfrost_drm_allocate_slab(struct panfrost_screen *screen,
         // TODO cache allocations
         // TODO properly handle errors
         // TODO take into account extra_flags
-        mem->bo = panfrost_drm_create_bo(screen, pages * 4096, 0);
+        mem->bo = panfrost_drm_create_bo(screen, pages * 4096, extra_flags);
         mem->stack_bottom = 0;
 }
 
@@ -250,7 +288,6 @@ panfrost_drm_submit_vs_fs_job(struct panfrost_context *ctx, bool has_draws, bool
         panfrost_job_add_bo(job, ctx->shaders.bo);
         panfrost_job_add_bo(job, ctx->scratchpad.bo);
         panfrost_job_add_bo(job, ctx->tiler_heap.bo);
-        panfrost_job_add_bo(job, ctx->varying_mem.bo);
         panfrost_job_add_bo(job, ctx->tiler_polygon_list.bo);
 
         if (job->first_job.gpu) {
@@ -259,12 +296,6 @@ panfrost_drm_submit_vs_fs_job(struct panfrost_context *ctx, bool has_draws, bool
         }
 
         if (job->first_tiler.gpu || job->clear) {
-                struct pipe_surface *surf = ctx->pipe_framebuffer.cbufs[0];
-                if (surf) {
-                        struct panfrost_resource *res = pan_resource(surf->texture);
-                        assert(res->bo);
-                        panfrost_job_add_bo(job, res->bo);
-                }
                 ret = panfrost_drm_submit_job(ctx, panfrost_fragment_job(ctx, has_draws), PANFROST_JD_REQ_FS);
                 assert(!ret);
         }

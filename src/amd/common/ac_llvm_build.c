@@ -58,7 +58,9 @@ struct ac_llvm_flow {
  */
 void
 ac_llvm_context_init(struct ac_llvm_context *ctx,
-		     enum chip_class chip_class, enum radeon_family family)
+		     struct ac_llvm_compiler *compiler,
+		     enum chip_class chip_class, enum radeon_family family,
+		     enum ac_float_mode float_mode, unsigned wave_size)
 {
 	LLVMValueRef args[1];
 
@@ -66,8 +68,11 @@ ac_llvm_context_init(struct ac_llvm_context *ctx,
 
 	ctx->chip_class = chip_class;
 	ctx->family = family;
-	ctx->module = NULL;
-	ctx->builder = NULL;
+	ctx->wave_size = wave_size;
+	ctx->module = ac_create_module(wave_size == 32 ? compiler->tm_wave32
+						       : compiler->tm,
+				       ctx->context);
+	ctx->builder = ac_create_builder(ctx->context, float_mode);
 
 	ctx->voidt = LLVMVoidTypeInContext(ctx->context);
 	ctx->i1 = LLVMInt1TypeInContext(ctx->context);
@@ -87,6 +92,7 @@ ac_llvm_context_init(struct ac_llvm_context *ctx,
 	ctx->v3f32 = LLVMVectorType(ctx->f32, 3);
 	ctx->v4f32 = LLVMVectorType(ctx->f32, 4);
 	ctx->v8i32 = LLVMVectorType(ctx->i32, 8);
+	ctx->iN_wavemask = LLVMIntTypeInContext(ctx->context, ctx->wave_size);
 
 	ctx->i8_0 = LLVMConstInt(ctx->i8, 0, false);
 	ctx->i8_1 = LLVMConstInt(ctx->i8, 1, false);
@@ -432,8 +438,9 @@ ac_build_optimization_barrier(struct ac_llvm_context *ctx,
 LLVMValueRef
 ac_build_shader_clock(struct ac_llvm_context *ctx)
 {
-	LLVMValueRef tmp = ac_build_intrinsic(ctx, "llvm.readcyclecounter",
-					      ctx->i64, NULL, 0, 0);
+	const char *intr = HAVE_LLVM >= 0x0900 && ctx->chip_class >= GFX8 ?
+				"llvm.amdgcn.s.memrealtime" : "llvm.readcyclecounter";
+	LLVMValueRef tmp = ac_build_intrinsic(ctx, intr, ctx->i64, NULL, 0, 0);
 	return LLVMBuildBitCast(ctx->builder, tmp, ctx->v2i32, "");
 }
 
@@ -441,7 +448,16 @@ LLVMValueRef
 ac_build_ballot(struct ac_llvm_context *ctx,
 		LLVMValueRef value)
 {
-	const char *name = HAVE_LLVM >= 0x900 ? "llvm.amdgcn.icmp.i64.i32" : "llvm.amdgcn.icmp.i32";
+	const char *name;
+
+	if (HAVE_LLVM >= 0x900) {
+		if (ctx->wave_size == 64)
+			name = "llvm.amdgcn.icmp.i64.i32";
+		else
+			name = "llvm.amdgcn.icmp.i32.i32";
+	} else {
+		name = "llvm.amdgcn.icmp.i32";
+	}
 	LLVMValueRef args[3] = {
 		value,
 		ctx->i32_0,
@@ -455,8 +471,7 @@ ac_build_ballot(struct ac_llvm_context *ctx,
 
 	args[0] = ac_to_integer(ctx, args[0]);
 
-	return ac_build_intrinsic(ctx, name,
-				  ctx->i64, args, 3,
+	return ac_build_intrinsic(ctx, name, ctx->iN_wavemask, args, 3,
 				  AC_FUNC_ATTR_NOUNWIND |
 				  AC_FUNC_ATTR_READNONE |
 				  AC_FUNC_ATTR_CONVERGENT);
@@ -492,7 +507,7 @@ ac_build_vote_any(struct ac_llvm_context *ctx, LLVMValueRef value)
 {
 	LLVMValueRef vote_set = ac_build_ballot(ctx, value);
 	return LLVMBuildICmp(ctx->builder, LLVMIntNE, vote_set,
-			     LLVMConstInt(ctx->i64, 0, 0), "");
+			     LLVMConstInt(ctx->iN_wavemask, 0, 0), "");
 }
 
 LLVMValueRef
@@ -505,7 +520,7 @@ ac_build_vote_eq(struct ac_llvm_context *ctx, LLVMValueRef value)
 					 vote_set, active_set, "");
 	LLVMValueRef none = LLVMBuildICmp(ctx->builder, LLVMIntEQ,
 					  vote_set,
-					  LLVMConstInt(ctx->i64, 0, 0), "");
+					  LLVMConstInt(ctx->iN_wavemask, 0, 0), "");
 	return LLVMBuildOr(ctx->builder, all, none, "");
 }
 
@@ -2224,10 +2239,14 @@ ac_get_thread_id(struct ac_llvm_context *ctx)
 					 "llvm.amdgcn.mbcnt.lo", ctx->i32,
 					 tid_args, 2, AC_FUNC_ATTR_READNONE);
 
-	tid = ac_build_intrinsic(ctx, "llvm.amdgcn.mbcnt.hi",
-				 ctx->i32, tid_args,
-				 2, AC_FUNC_ATTR_READNONE);
-	set_range_metadata(ctx, tid, 0, 64);
+	if (ctx->wave_size == 32) {
+		tid = tid_args[1];
+	} else {
+		tid = ac_build_intrinsic(ctx, "llvm.amdgcn.mbcnt.hi",
+					 ctx->i32, tid_args,
+					 2, AC_FUNC_ATTR_READNONE);
+	}
+	set_range_metadata(ctx, tid, 0, ctx->wave_size);
 	return tid;
 }
 
@@ -3824,8 +3843,12 @@ ac_build_readlane(struct ac_llvm_context *ctx, LLVMValueRef src, LLVMValueRef la
 LLVMValueRef
 ac_build_writelane(struct ac_llvm_context *ctx, LLVMValueRef src, LLVMValueRef value, LLVMValueRef lane)
 {
-	/* TODO: Use the actual instruction when LLVM adds an intrinsic for it.
-	 */
+	if (HAVE_LLVM >= 0x0800) {
+		return ac_build_intrinsic(ctx, "llvm.amdgcn.writelane", ctx->i32,
+					  (LLVMValueRef []) {value, lane, src}, 3,
+					  AC_FUNC_ATTR_READNONE | AC_FUNC_ATTR_CONVERGENT);
+	}
+
 	LLVMValueRef pred = LLVMBuildICmp(ctx->builder, LLVMIntEQ, lane,
 					  ac_get_thread_id(ctx), "");
 	return LLVMBuildSelect(ctx->builder, pred, value, src, "");
@@ -3834,6 +3857,11 @@ ac_build_writelane(struct ac_llvm_context *ctx, LLVMValueRef src, LLVMValueRef v
 LLVMValueRef
 ac_build_mbcnt(struct ac_llvm_context *ctx, LLVMValueRef mask)
 {
+	if (ctx->wave_size == 32) {
+		return ac_build_intrinsic(ctx, "llvm.amdgcn.mbcnt.lo", ctx->i32,
+					  (LLVMValueRef []) { mask, ctx->i32_0 },
+					  2, AC_FUNC_ATTR_READNONE);
+	}
 	LLVMValueRef mask_vec = LLVMBuildBitCast(ctx->builder, mask,
 						 LLVMVectorType(ctx->i32, 2),
 						 "");
@@ -4255,7 +4283,7 @@ ac_build_inclusive_scan(struct ac_llvm_context *ctx, LLVMValueRef src, nir_op op
 		get_reduction_identity(ctx, op, ac_get_type_size(LLVMTypeOf(src)));
 	result = LLVMBuildBitCast(ctx->builder, ac_build_set_inactive(ctx, src, identity),
 				  LLVMTypeOf(identity), "");
-	result = ac_build_scan(ctx, op, result, identity, 64, true);
+	result = ac_build_scan(ctx, op, result, identity, ctx->wave_size, true);
 
 	return ac_build_wwm(ctx, result);
 }
@@ -4279,7 +4307,7 @@ ac_build_exclusive_scan(struct ac_llvm_context *ctx, LLVMValueRef src, nir_op op
 		get_reduction_identity(ctx, op, ac_get_type_size(LLVMTypeOf(src)));
 	result = LLVMBuildBitCast(ctx->builder, ac_build_set_inactive(ctx, src, identity),
 				  LLVMTypeOf(identity), "");
-	result = ac_build_scan(ctx, op, result, identity, 64, false);
+	result = ac_build_scan(ctx, op, result, identity, ctx->wave_size, false);
 
 	return ac_build_wwm(ctx, result);
 }
@@ -4355,12 +4383,12 @@ ac_build_wg_wavescan_top(struct ac_llvm_context *ctx, struct ac_wg_scan *ws)
 	if (ws->maxwaves <= 1)
 		return;
 
-	const LLVMValueRef i32_63 = LLVMConstInt(ctx->i32, 63, false);
+	const LLVMValueRef last_lane = LLVMConstInt(ctx->i32, ctx->wave_size - 1, false);
 	LLVMBuilderRef builder = ctx->builder;
 	LLVMValueRef tid = ac_get_thread_id(ctx);
 	LLVMValueRef tmp;
 
-	tmp = LLVMBuildICmp(builder, LLVMIntEQ, tid, i32_63, "");
+	tmp = LLVMBuildICmp(builder, LLVMIntEQ, tid, last_lane, "");
 	ac_build_ifcc(ctx, tmp, 1000);
 	LLVMBuildStore(builder, ws->src, LLVMBuildGEP(builder, ws->scratch, &ws->waveidx, 1, ""));
 	ac_build_endif(ctx, 1000);

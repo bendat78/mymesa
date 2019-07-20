@@ -317,6 +317,7 @@ struct radv_physical_device {
 	bool has_clear_state;
 	bool cpdma_prefetch_writes_memory;
 	bool has_scissor_bug;
+	bool has_tc_compat_zrange_bug;
 
 	bool has_out_of_order_rast;
 	bool out_of_order_rast_allowed;
@@ -1244,7 +1245,7 @@ void si_cs_emit_write_event_eop(struct radeon_cmdbuf *cs,
 				enum chip_class chip_class,
 				bool is_mec,
 				unsigned event, unsigned event_flags,
-				unsigned data_sel,
+				unsigned dst_sel, unsigned data_sel,
 				uint64_t va,
 				uint32_t new_fence,
 				uint64_t gfx9_eop_bug_va);
@@ -1390,6 +1391,8 @@ struct radv_shader_module;
 #define RADV_HASH_SHADER_IS_GEOM_COPY_SHADER (1 << 0)
 #define RADV_HASH_SHADER_SISCHED             (1 << 1)
 #define RADV_HASH_SHADER_UNSAFE_MATH         (1 << 2)
+#define RADV_HASH_SHADER_NO_NGG              (1 << 3)
+
 void
 radv_hash_shaders(unsigned char *hash,
 		  const VkPipelineShaderStageCreateInfo **stages,
@@ -1511,6 +1514,8 @@ static inline bool radv_pipeline_has_tess(const struct radv_pipeline *pipeline)
 }
 
 bool radv_pipeline_has_ngg(const struct radv_pipeline *pipeline);
+
+bool radv_pipeline_has_gs_copy_shader(const struct radv_pipeline *pipeline);
 
 struct radv_userdata_info *radv_lookup_user_sgpr(struct radv_pipeline *pipeline,
 						 gl_shader_stage stage,
@@ -2133,6 +2138,7 @@ void radv_compile_nir_shader(struct ac_llvm_compiler *ac_llvm,
 			     const struct radv_nir_compiler_options *options);
 
 unsigned radv_nir_get_max_workgroup_size(enum chip_class chip_class,
+					 gl_shader_stage stage,
 					 const struct nir_shader *nir);
 
 /* radv_shader_info.h */

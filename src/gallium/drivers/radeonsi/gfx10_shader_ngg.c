@@ -44,7 +44,7 @@ static LLVMValueRef get_thread_id_in_tg(struct si_shader_context *ctx)
 	LLVMBuilderRef builder = ctx->ac.builder;
 	LLVMValueRef tmp;
 	tmp = LLVMBuildMul(builder, get_wave_id_in_tg(ctx),
-			   LLVMConstInt(ctx->ac.i32, 64, false), "");
+			   LLVMConstInt(ctx->ac.i32, ctx->ac.wave_size, false), "");
 	return LLVMBuildAdd(builder, tmp, ac_get_thread_id(&ctx->ac), "");
 }
 
@@ -496,6 +496,20 @@ static void build_streamout(struct si_shader_context *ctx,
 	}
 }
 
+static unsigned ngg_nogs_vertex_size(struct si_shader *shader)
+{
+	unsigned lds_vertex_size = 0;
+
+	/* The edgeflag is always stored in the last element that's also
+	 * used for padding to reduce LDS bank conflicts. */
+	if (shader->selector->so.num_outputs)
+		lds_vertex_size = 4 * shader->selector->info.num_outputs + 1;
+	if (shader->selector->ngg_writes_edgeflag)
+		lds_vertex_size = MAX2(lds_vertex_size, 1);
+
+	return lds_vertex_size;
+}
+
 /**
  * Returns an `[N x i32] addrspace(LDS)*` pointing at contiguous LDS storage
  * for the vertex outputs.
@@ -504,7 +518,7 @@ static LLVMValueRef ngg_nogs_vertex_ptr(struct si_shader_context *ctx,
 					LLVMValueRef vtxid)
 {
 	/* The extra dword is used to avoid LDS bank conflicts. */
-	unsigned vertex_size = 4 * ctx->shader->selector->info.num_outputs + 1;
+	unsigned vertex_size = ngg_nogs_vertex_size(ctx->shader);
 	LLVMTypeRef ai32 = LLVMArrayType(ctx->i32, vertex_size);
 	LLVMTypeRef pai32 = LLVMPointerType(ai32, AC_ADDR_SPACE_LDS);
 	LLVMValueRef tmp = LLVMBuildBitCast(ctx->ac.builder, ctx->esgs_ring, pai32, "");
@@ -521,7 +535,7 @@ void gfx10_emit_ngg_epilogue(struct ac_shader_abi *abi,
 	struct si_shader_context *ctx = si_shader_context_from_abi(abi);
 	struct si_shader_selector *sel = ctx->shader->selector;
 	struct tgsi_shader_info *info = &sel->info;
-	struct si_shader_output_values *outputs = NULL;
+	struct si_shader_output_values outputs[PIPE_MAX_SHADER_OUTPUTS];
 	LLVMBuilderRef builder = ctx->ac.builder;
 	struct lp_build_if_state if_state;
 	LLVMValueRef tmp, tmp2;
@@ -529,32 +543,42 @@ void gfx10_emit_ngg_epilogue(struct ac_shader_abi *abi,
 	assert(!ctx->shader->is_gs_copy_shader);
 	assert(info->num_outputs <= max_outputs);
 
-	outputs = MALLOC((info->num_outputs + 1) * sizeof(outputs[0]));
-
 	LLVMValueRef vertex_ptr = NULL;
 
-	if (sel->so.num_outputs)
+	if (sel->so.num_outputs || sel->ngg_writes_edgeflag)
 		vertex_ptr = ngg_nogs_vertex_ptr(ctx, get_thread_id_in_tg(ctx));
 
 	for (unsigned i = 0; i < info->num_outputs; i++) {
 		outputs[i].semantic_name = info->output_semantic_name[i];
 		outputs[i].semantic_index = info->output_semantic_index[i];
 
-		/* This is used only by streamout. */
 		for (unsigned j = 0; j < 4; j++) {
-			outputs[i].values[j] =
-				LLVMBuildLoad(builder,
-					      addrs[4 * i + j],
-					      "");
 			outputs[i].vertex_stream[j] =
 				(info->output_streams[i] >> (2 * j)) & 3;
 
-			if (vertex_ptr) {
+			/* TODO: we may store more outputs than streamout needs,
+			 * but streamout performance isn't that important.
+			 */
+			if (sel->so.num_outputs) {
 				tmp = ac_build_gep0(&ctx->ac, vertex_ptr,
 					LLVMConstInt(ctx->i32, 4 * i + j, false));
-				tmp2 = ac_to_integer(&ctx->ac, outputs[i].values[j]);
+				tmp2 = LLVMBuildLoad(builder, addrs[4 * i + j], "");
+				tmp2 = ac_to_integer(&ctx->ac, tmp2);
 				LLVMBuildStore(builder, tmp2, tmp);
 			}
+		}
+
+		/* Store the edgeflag at the end (if streamout is enabled) */
+		if (info->output_semantic_name[i] == TGSI_SEMANTIC_EDGEFLAG &&
+		    sel->ngg_writes_edgeflag) {
+			LLVMValueRef edgeflag = LLVMBuildLoad(builder, addrs[4 * i], "");
+			/* The output is a float, but the hw expects a 1-bit integer. */
+			edgeflag = LLVMBuildFPToUI(ctx->ac.builder, edgeflag, ctx->i32, "");
+			edgeflag = ac_build_umin(&ctx->ac, edgeflag, ctx->i32_1);
+
+			tmp = LLVMConstInt(ctx->i32, ngg_nogs_vertex_size(ctx->shader) - 1, 0);
+			tmp = ac_build_gep0(&ctx->ac, vertex_ptr, tmp);
+			LLVMBuildStore(builder, edgeflag, tmp);
 		}
 	}
 
@@ -616,13 +640,35 @@ void gfx10_emit_ngg_epilogue(struct ac_shader_abi *abi,
 		emitted_prims = nggso.emit[0];
 	}
 
+	LLVMValueRef user_edgeflags[3] = {};
+
+	if (sel->ngg_writes_edgeflag) {
+		/* Streamout already inserted the barrier, so don't insert it again. */
+		if (!sel->so.num_outputs)
+			ac_build_s_barrier(&ctx->ac);
+
+		ac_build_ifcc(&ctx->ac, is_gs_thread, 5400);
+		/* Load edge flags from ES threads and store them into VGPRs in GS threads. */
+		for (unsigned i = 0; i < num_vertices; i++) {
+			tmp = ngg_nogs_vertex_ptr(ctx, vtxindex[i]);
+			tmp2 = LLVMConstInt(ctx->i32, ngg_nogs_vertex_size(ctx->shader) - 1, 0);
+			tmp = ac_build_gep0(&ctx->ac, tmp, tmp2);
+			tmp = LLVMBuildLoad(builder, tmp, "");
+			tmp = LLVMBuildTrunc(builder, tmp, ctx->i1, "");
+
+			user_edgeflags[i] = ac_build_alloca_undef(&ctx->ac, ctx->i1, "");
+			LLVMBuildStore(builder, tmp, user_edgeflags[i]);
+		}
+		ac_build_endif(&ctx->ac, 5400);
+	}
+
 	/* Copy Primitive IDs from GS threads to the LDS address corresponding
 	 * to the ES thread of the provoking vertex.
 	 */
 	if (ctx->type == PIPE_SHADER_VERTEX &&
 	    ctx->shader->key.mono.u.vs_export_prim_id) {
-		/* Streamout uses LDS. We need to wait for it before we can reuse it. */
-		if (sel->so.num_outputs)
+		/* Streamout and edge flags use LDS. Make it idle, so that we can reuse it. */
+		if (sel->so.num_outputs || sel->ngg_writes_edgeflag)
 			ac_build_s_barrier(&ctx->ac);
 
 		ac_build_ifcc(&ctx->ac, is_gs_thread, 5400);
@@ -639,8 +685,6 @@ void gfx10_emit_ngg_epilogue(struct ac_shader_abi *abi,
 			       ac_build_gep0(&ctx->ac, ctx->esgs_ring, provoking_vtx_index));
 		ac_build_endif(&ctx->ac, 5400);
 	}
-
-	/* TODO: primitive culling */
 
 	build_sendmsg_gs_alloc_req(ctx, ngg_get_vtx_cnt(ctx), ngg_get_prim_cnt(ctx));
 
@@ -704,9 +748,20 @@ void gfx10_emit_ngg_epilogue(struct ac_shader_abi *abi,
 		memcpy(prim.index, vtxindex, sizeof(vtxindex[0]) * 3);
 
 		for (unsigned i = 0; i < num_vertices; ++i) {
+			if (ctx->type != PIPE_SHADER_VERTEX) {
+				prim.edgeflag[i] = ctx->i1false;
+				continue;
+			}
+
 			tmp = LLVMBuildLShr(builder, ctx->abi.gs_invocation_id,
 					    LLVMConstInt(ctx->ac.i32, 8 + i, false), "");
 			prim.edgeflag[i] = LLVMBuildTrunc(builder, tmp, ctx->ac.i1, "");
+
+			if (sel->ngg_writes_edgeflag) {
+				tmp2 = LLVMBuildLoad(builder, user_edgeflags[i], "");
+				prim.edgeflag[i] = LLVMBuildAnd(builder, prim.edgeflag[i],
+								tmp2, "");
+			}
 		}
 
 		build_export_prim(ctx, &prim);
@@ -756,8 +811,6 @@ void gfx10_emit_ngg_epilogue(struct ac_shader_abi *abi,
 		si_llvm_export_vs(ctx, outputs, i);
 	}
 	lp_build_endif(&if_state);
-
-	FREE(outputs);
 }
 
 static LLVMValueRef
@@ -994,7 +1047,7 @@ void gfx10_ngg_gs_emit_epilogue(struct si_shader_context *ctx)
 
 		LLVMValueRef numprims =
 			LLVMBuildLoad(builder, ctx->gs_generated_prims[stream], "");
-		numprims = ac_build_reduce(&ctx->ac, numprims, nir_op_iadd, 64);
+		numprims = ac_build_reduce(&ctx->ac, numprims, nir_op_iadd, ctx->ac.wave_size);
 
 		tmp = LLVMBuildICmp(builder, LLVMIntEQ, ac_get_thread_id(&ctx->ac), ctx->i32_0, "");
 		ac_build_ifcc(&ctx->ac, tmp, 5105);
@@ -1206,8 +1259,7 @@ void gfx10_ngg_gs_emit_epilogue(struct si_shader_context *ctx)
 	tmp = LLVMBuildICmp(builder, LLVMIntULT, tid, vertlive_scan.result_reduce, "");
 	ac_build_ifcc(&ctx->ac, tmp, 5145);
 	{
-		struct si_shader_output_values *outputs = NULL;
-		outputs = MALLOC(info->num_outputs * sizeof(outputs[0]));
+		struct si_shader_output_values outputs[PIPE_MAX_SHADER_OUTPUTS];
 
 		tmp = ngg_gs_vertex_ptr(ctx, tid);
 		LLVMValueRef gep_idx[3] = {
@@ -1237,8 +1289,6 @@ void gfx10_ngg_gs_emit_epilogue(struct si_shader_context *ctx)
 		}
 
 		si_llvm_export_vs(ctx, outputs, info->num_outputs);
-
-		FREE(outputs);
 	}
 	ac_build_endif(&ctx->ac, 5145);
 }
@@ -1265,8 +1315,10 @@ void gfx10_ngg_calculate_subgroup_info(struct si_shader *shader)
 		shader->previous_stage_sel ? shader->previous_stage_sel : gs_sel;
 	const enum pipe_shader_type gs_type = gs_sel->type;
 	const unsigned gs_num_invocations = MAX2(gs_sel->gs_num_invocations, 1);
-
-	const unsigned input_prim = si_get_input_prim(gs_sel);
+	/* TODO: Use QUADS as the worst case because of reuse, but triangles
+	 * will always have 1 additional unoccupied vector lane. We could use
+	 * that lane if the worst case was TRIANGLES. */
+	const unsigned input_prim = si_get_input_prim(gs_sel, PIPE_PRIM_QUADS);
 	const bool use_adjacency = input_prim >= PIPE_PRIM_LINES_ADJACENCY &&
 				   input_prim <= PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY;
 	const unsigned max_verts_per_prim = u_vertices_per_prim(input_prim);
@@ -1277,24 +1329,18 @@ void gfx10_ngg_calculate_subgroup_info(struct si_shader *shader)
 	/* We can't allow using the whole LDS, because GS waves compete with
 	 * other shader stages for LDS space.
 	 *
-	 * Streamout can increase the ESGS buffer size later on, so be more
-	 * conservative with streamout and use 4K dwords. This may be suboptimal.
-	 *
-	 * Otherwise, use the limit of 7K dwords. The reason is that we need
-	 * to leave some headroom for the max_esverts increase at the end.
-	 *
 	 * TODO: We should really take the shader's internal LDS use into
 	 *       account. The linker will fail if the size is greater than
 	 *       8K dwords.
 	 */
-	const unsigned max_lds_size = (gs_sel->so.num_outputs ? 4 : 7) * 1024 - 128;
+	const unsigned max_lds_size = 8 * 1024 - 768;
 	const unsigned target_lds_size = max_lds_size;
 	unsigned esvert_lds_size = 0;
 	unsigned gsprim_lds_size = 0;
 
 	/* All these are per subgroup: */
 	bool max_vert_out_per_gs_instance = false;
-	unsigned max_esverts_base = 256;
+	unsigned max_esverts_base = 128;
 	unsigned max_gsprims_base = 128; /* default prim group size clamp */
 
 	/* Hardware has the following non-natural restrictions on the value
@@ -1328,10 +1374,18 @@ void gfx10_ngg_calculate_subgroup_info(struct si_shader *shader)
 		esvert_lds_size = es_sel->esgs_itemsize / 4;
 		gsprim_lds_size = (gs_sel->gsvs_vertex_size / 4 + 1) * max_out_verts_per_gsprim;
 	} else {
-		/* TODO: This needs to be adjusted once LDS use for compaction
-		 * after culling is implemented. */
-		if (es_sel->so.num_outputs)
-			esvert_lds_size = 4 * es_sel->info.num_outputs + 1;
+		/* VS and TES. */
+		/* LDS size for passing data from ES to GS. */
+		esvert_lds_size = ngg_nogs_vertex_size(shader);
+
+		/* LDS size for passing data from GS to ES.
+		 * GS stores Primitive IDs into LDS at the address corresponding
+		 * to the ES thread of the provoking vertex. All ES threads
+		 * load and export PrimitiveID for their thread.
+		 */
+		if (gs_sel->type == PIPE_SHADER_VERTEX &&
+		    shader->key.mono.u.vs_export_prim_id)
+			esvert_lds_size = MAX2(esvert_lds_size, 1);
 	}
 
 	unsigned max_gsprims = max_gsprims_base;
@@ -1369,7 +1423,7 @@ void gfx10_ngg_calculate_subgroup_info(struct si_shader *shader)
 
 	/* Round up towards full wave sizes for better ALU utilization. */
 	if (!max_vert_out_per_gs_instance) {
-		const unsigned wavesize = 64;
+		const unsigned wavesize = gs_sel->screen->ge_wave_size;
 		unsigned orig_max_esverts;
 		unsigned orig_max_gsprims;
 		do {

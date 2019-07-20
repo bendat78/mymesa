@@ -464,7 +464,10 @@ pandecode_midgard_tiler_descriptor(const struct midgard_tiler_descriptor *t)
 
         MEMORY_PROP(t, heap_start);
 
-        {
+        if (t->heap_start == t->heap_end) {
+              /* Print identically to show symmetry for empty tiler heaps */  
+                MEMORY_PROP(t, heap_start);
+        } else {
                 /* Points to the end of a buffer */
                 char *a = pointer_as_memory_reference(t->heap_end - 1);
                 pandecode_prop("heap_end = %s + 1", a);
@@ -1367,8 +1370,8 @@ pandecode_uniform_buffers(mali_ptr pubufs, int ubufs_count, int job_no)
                 pandecode_log("};\n");
         }
 
-        pandecode_log("struct mali_uniform_buffer_meta uniform_buffers_%d[] = {\n",
-                      job_no);
+        pandecode_log("struct mali_uniform_buffer_meta uniform_buffers_%"PRIx64"_%d[] = {\n",
+                      pubufs, job_no);
         pandecode_indent++;
 
         for (int i = 0; i < ubufs_count; i++) {
@@ -1603,12 +1606,13 @@ pandecode_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix *p,
                                 else
                                         shader = pandecode_midgard_blend_mrt(blend_base, job_no, i);
 
-                                if (shader)
+                                if (shader & ~0xF)
                                         pandecode_shader_disassemble(shader, job_no, job_type, false);
                         }
                 }
 
-                pandecode_shader_disassemble(shader_ptr, job_no, job_type, is_bifrost);
+                if (shader_ptr & ~0xF)
+                   pandecode_shader_disassemble(shader_ptr, job_no, job_type, is_bifrost);
         } else
                 pandecode_msg("<no shader>\n");
 
@@ -1616,7 +1620,7 @@ pandecode_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix *p,
                 struct pandecode_mapped_memory *fmem = pandecode_find_mapped_gpu_mem_containing(p->viewport);
                 struct mali_viewport *PANDECODE_PTR_VAR(f, fmem, p->viewport);
 
-                pandecode_log("struct mali_viewport viewport_%d%s = {\n", job_no, suffix);
+                pandecode_log("struct mali_viewport viewport_%"PRIx64"_%d%s = {\n", p->viewport, job_no, suffix);
                 pandecode_indent++;
 
                 pandecode_prop("clip_minx = %f", f->clip_minx);
@@ -1724,7 +1728,7 @@ pandecode_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix *p,
                 if (mmem) {
                         mali_ptr *PANDECODE_PTR_VAR(u, mmem, p->texture_trampoline);
 
-                        pandecode_log("uint64_t texture_trampoline_%d[] = {\n", job_no);
+                        pandecode_log("uint64_t texture_trampoline_%"PRIx64"_%d[] = {\n", p->texture_trampoline, job_no);
                         pandecode_indent++;
 
                         for (int tex = 0; tex < texture_count; ++tex) {
@@ -1855,7 +1859,7 @@ pandecode_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix *p,
                         for (int i = 0; i < sampler_count; ++i) {
                                 s = pandecode_fetch_gpu_mem(smem, d + sizeof(*s) * i, sizeof(*s));
 
-                                pandecode_log("struct mali_sampler_descriptor sampler_descriptor_%d_%d = {\n", job_no, i);
+                                pandecode_log("struct mali_sampler_descriptor sampler_descriptor_%"PRIx64"_%d_%d = {\n", d + sizeof(*s) * i, job_no, i);
                                 pandecode_indent++;
 
                                 /* Only the lower two bits are understood right now; the rest we display as hex */
@@ -1969,11 +1973,16 @@ pandecode_tiler_heap_meta(mali_ptr gpu_va, int job_no)
 
         /* this might point to the beginning of another buffer, when it's
          * really the end of the tiler heap buffer, so we have to be careful
-         * here.
+         * here. but for zero length, we need the same pointer.
          */
-        char *a = pointer_as_memory_reference(h->tiler_heap_end - 1);
-        pandecode_prop("tiler_heap_end = %s + 1", a);
-        free(a);
+
+        if (h->tiler_heap_end == h->tiler_heap_start) {
+                MEMORY_PROP(h, tiler_heap_start);
+        } else {
+                char *a = pointer_as_memory_reference(h->tiler_heap_end - 1);
+                pandecode_prop("tiler_heap_end = %s + 1", a);
+                free(a);
+        }
 
         pandecode_indent--;
         pandecode_log("};\n");
@@ -2162,15 +2171,6 @@ pandecode_vertex_or_tiler_job_mdg(const struct mali_job_descriptor_header *h,
 
         if (v->draw_start)
                 pandecode_prop("draw_start = %d", v->draw_start);
-
-#ifndef __LP64__
-
-        if (v->zero3) {
-                pandecode_msg("Zero tripped\n");
-                pandecode_prop("zero3 = 0x%" PRIx32, v->zero3);
-        }
-
-#endif
 
         if (v->zero5) {
                 pandecode_msg("Zero tripped\n");

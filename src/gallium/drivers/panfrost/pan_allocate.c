@@ -34,28 +34,6 @@
 /* TODO: What does this actually have to be? */
 #define ALIGNMENT 128
 
-/* Allocate a mapped chunk directly from a heap */
-
-struct panfrost_transfer
-panfrost_allocate_chunk(struct panfrost_context *ctx, size_t size, unsigned heap_id)
-{
-        size = ALIGN_POT(size, ALIGNMENT);
-
-        struct pipe_context *gallium = (struct pipe_context *) ctx;
-        struct panfrost_screen *screen = pan_screen(gallium->screen);
-
-        struct pb_slab_entry *entry = pb_slab_alloc(&screen->slabs, size, heap_id);
-        struct panfrost_memory_entry *p_entry = (struct panfrost_memory_entry *) entry;
-        struct panfrost_memory *backing = (struct panfrost_memory *) entry->slab;
-
-        struct panfrost_transfer transfer = {
-                .cpu = backing->bo->cpu + p_entry->offset,
-                .gpu = backing->bo->gpu + p_entry->offset
-        };
-
-        return transfer;
-}
-
 /* Allocate a new transient slab */
 
 static struct panfrost_bo *
@@ -140,6 +118,10 @@ panfrost_allocate_transient(struct panfrost_context *ctx, size_t sz)
                 /* Create a new BO and reference it */
                 bo = panfrost_drm_create_bo(screen, ALIGN_POT(sz, 4096), 0);
                 panfrost_job_add_bo(batch, bo);
+
+                /* Creating a BO adds a reference, and then the job adds a
+                 * second one. So we need to pop back one reference */
+                panfrost_bo_unreference(&screen->base, bo);
         }
 
         struct panfrost_transfer ret = {
@@ -162,81 +144,15 @@ panfrost_upload_transient(struct panfrost_context *ctx, const void *data, size_t
         return transfer.gpu;
 }
 
-// TODO: An actual allocator, perhaps
-// TODO: Multiple stacks for multiple bases?
-
-int hack_stack_bottom = 4096; /* Don't interfere with constant offsets */
-int last_offset = 0;
-
-static inline int
-pandev_allocate_offset(int *stack, size_t sz)
-{
-        /* First, align the stack bottom to something nice; it's not critical
-         * at this point if we waste a little space to do so. */
-
-        int excess = *stack & (ALIGNMENT - 1);
-
-        /* Add the secret of my */
-        if (excess)
-                *stack += ALIGNMENT - excess;
-
-        /* Finally, use the new bottom for the allocation and move down the
-         * stack */
-
-        int ret = *stack;
-        *stack += sz;
-        return ret;
-}
-
-inline mali_ptr
-pandev_upload(int cheating_offset, int *stack_bottom, mali_ptr base, void *base_map, const void *data, size_t sz, bool no_pad)
-{
-        int offset;
-
-        /* We're not positive about the sizes of all objects, but we don't want
-         * them to crash against each other either. Let the caller disable
-         * padding if they so choose, though. */
-
-        size_t padded_size = no_pad ? sz : sz * 2;
-
-        /* If no specific bottom is specified, use a global one... don't do
-         * this in production, kids */
-
-        if (!stack_bottom)
-                stack_bottom = &hack_stack_bottom;
-
-        /* Allocate space for the new GPU object, if required */
-
-        if (cheating_offset == -1) {
-                offset = pandev_allocate_offset(stack_bottom, padded_size);
-        } else {
-                offset = cheating_offset;
-                *stack_bottom = offset + sz;
-        }
-
-        /* Save last offset for sequential uploads (job descriptors) */
-        last_offset = offset + padded_size;
-
-        /* Upload it */
-        memcpy((uint8_t *) base_map + offset, data, sz);
-
-        /* Return the GPU address */
-        return base + offset;
-}
-
-/* Upload immediately after the last allocation */
+/* The code below is exclusively for the use of shader memory and is subject to
+ * be rewritten soon enough since it never frees the memory it allocates. Here
+ * be dragons, etc. */
 
 mali_ptr
-pandev_upload_sequential(mali_ptr base, void *base_map, const void *data, size_t sz)
+panfrost_upload(struct panfrost_memory *mem, const void *data, size_t sz)
 {
-        return pandev_upload(last_offset, NULL, base, base_map, data, sz, /* false */ true);
-}
+        sz = ALIGN_POT(sz, ALIGNMENT);
 
-/* Simplified APIs for the real driver, rather than replays */
-
-mali_ptr
-panfrost_upload(struct panfrost_memory *mem, const void *data, size_t sz, bool no_pad)
-{
         /* Bounds check */
         if ((mem->stack_bottom + sz) >= mem->bo->size) {
                 printf("Out of memory, tried to upload %zd but only %zd available\n",
@@ -244,24 +160,9 @@ panfrost_upload(struct panfrost_memory *mem, const void *data, size_t sz, bool n
                 assert(0);
         }
 
-        return pandev_upload(-1, &mem->stack_bottom, mem->bo->gpu, mem->bo->cpu, data, sz, no_pad);
-}
+        memcpy((uint8_t *) mem->bo->cpu + mem->stack_bottom, data, sz);
+        mali_ptr gpu = mem->bo->gpu + mem->stack_bottom;
 
-mali_ptr
-panfrost_upload_sequential(struct panfrost_memory *mem, const void *data, size_t sz)
-{
-        return pandev_upload(last_offset, &mem->stack_bottom, mem->bo->gpu, mem->bo->cpu, data, sz, true);
-}
-
-/* Simplified interface to allocate a chunk without any upload, to allow
- * zero-copy uploads. This is particularly useful when the copy would happen
- * anyway, for instance with texture swizzling. */
-
-void *
-panfrost_allocate_transfer(struct panfrost_memory *mem, size_t sz, mali_ptr *gpu)
-{
-        int offset = pandev_allocate_offset(&mem->stack_bottom, sz);
-
-        *gpu = mem->bo->gpu + offset;
-        return mem->bo->cpu + offset;
+        mem->stack_bottom += sz;
+        return gpu;
 }

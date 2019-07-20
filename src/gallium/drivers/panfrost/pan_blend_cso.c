@@ -124,7 +124,7 @@ panfrost_create_blend_state(struct pipe_context *pipe,
                 /* Regardless if that works, we also need to initialize
                  * the blend shaders */
 
-                rt->shaders = _mesa_hash_table_u64_create(NULL);
+                rt->shaders = _mesa_hash_table_u64_create(so);
         }
 
         return so;
@@ -142,7 +142,9 @@ panfrost_bind_blend_state(struct pipe_context *pipe,
         if (!blend)
                 return;
 
-        SET_BIT(ctx->fragment_shader_core.unknown2_4, MALI_NO_DITHER, !blend->dither);
+        if (ctx->require_sfbd) {
+                SET_BIT(ctx->fragment_shader_core.unknown2_4, MALI_NO_DITHER, !blend->dither);
+        }
 
         /* Shader itself is not dirty, but the shader core is */
         ctx->dirty |= PAN_DIRTY_FS;
@@ -152,8 +154,7 @@ static void
 panfrost_delete_blend_state(struct pipe_context *pipe,
                             void *blend)
 {
-        /* TODO: leaks internally? */
-
+        /* TODO: Free shader binary? */
         ralloc_free(blend);
 }
 
@@ -206,10 +207,13 @@ panfrost_blend_constant(float *out, float *in, unsigned mask)
 struct panfrost_blend_final
 panfrost_get_blend_for_context(struct panfrost_context *ctx, unsigned rti)
 {
-        /* Grab the format */
+        /* Grab the format, falling back gracefully if called invalidly (which
+         * has to happen for no-color-attachment FBOs, for instance)  */
         struct pipe_framebuffer_state *fb = &ctx->pipe_framebuffer;
-        assert(fb->nr_cbufs > rti);
-        enum pipe_format fmt = fb->cbufs[rti]->format;
+        enum pipe_format fmt = PIPE_FORMAT_R8G8B8A8_UNORM;
+
+        if ((fb->nr_cbufs > rti) && fb->cbufs[rti])
+                fmt = fb->cbufs[rti]->format;
 
         /* Grab the blend state */
         struct panfrost_blend_state *blend = ctx->blend;
