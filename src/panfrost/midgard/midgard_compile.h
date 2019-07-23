@@ -26,6 +26,24 @@
 
 #include "compiler/nir/nir.h"
 #include "util/u_dynarray.h"
+#include "util/register_allocate.h"
+
+/* To be shoved inside panfrost_screen for the Gallium driver, or somewhere
+ * else for Vulkan/standalone. The single compiler "screen" to be shared across
+ * all shader compiles, used to store complex initialization (for instance,
+ * related to register allocation) */
+
+struct midgard_screen {
+        /* Precomputed register allocation sets for varying numbers of work
+         * registers.  The zeroeth entry corresponds to 8 work registers. The
+         * eighth entry corresponds to 16 work registers. NULL if this set has
+         * not been allocated yet. */
+
+        struct ra_regs *regs[9];
+
+        /* Work register classes corresponds to the above register sets */
+        unsigned reg_classes[9][4];
+};
 
 /* Define the general compiler entry point */
 
@@ -83,12 +101,16 @@ typedef struct {
 
         int blend_patch_offset;
 
+        /* The number of bytes to allocate per-thread for Thread Local Storage
+         * (register spilling), or zero if no spilling is used */
+        unsigned tls_size;
+
         /* IN: For a fragment shader with a lowered alpha test, the ref value */
         float alpha_ref;
 } midgard_program;
 
 int
-midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_blend);
+midgard_compile_shader_nir(struct midgard_screen *screen, nir_shader *nir, midgard_program *program, bool is_blend);
 
 /* NIR options are shared between the standalone compiler and the online
  * compiler. Defining it here is the simplest, though maybe not the Right

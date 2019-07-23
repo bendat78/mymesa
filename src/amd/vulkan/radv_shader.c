@@ -194,12 +194,12 @@ radv_optimize_nir(struct nir_shader *shader, bool optimize_conservatively,
                 }
 
                 NIR_PASS(progress, shader, nir_opt_undef);
-                NIR_PASS(progress, shader, nir_opt_conditional_discard);
                 if (shader->options->max_unroll_iterations) {
                         NIR_PASS(progress, shader, nir_opt_loop_unroll, 0);
                 }
         } while (progress && !optimize_conservatively);
 
+	NIR_PASS(progress, shader, nir_opt_conditional_discard);
         NIR_PASS(progress, shader, nir_opt_shrink_load);
         NIR_PASS(progress, shader, nir_opt_move_load_ubo);
 }
@@ -810,7 +810,8 @@ static void radv_postprocess_config(const struct radv_physical_device *pdevice,
 		} else if (es_stage == MESA_SHADER_TESS_EVAL) {
 			bool enable_prim_id = info->tes.export_prim_id || info->info.uses_prim_id;
 			es_vgpr_comp_cnt = enable_prim_id ? 3 : 2;
-		}
+		} else
+			unreachable("Unexpected ES shader stage");
 
 		bool tes_triangles = stage == MESA_SHADER_TESS_EVAL &&
 			info->tes.primitive_mode >= 4; /* GL_TRIANGLES */
@@ -1012,7 +1013,8 @@ radv_shader_variant_create(struct radv_device *device,
 			return NULL;
 		}
 
-		if (device->keep_shader_info) {
+		if (device->keep_shader_info ||
+		    (device->instance->debug_flags & RADV_DEBUG_DUMP_SHADERS)) {
 			const char *disasm_data;
 			size_t disasm_size;
 			if (!ac_rtld_get_section_by_name(&rtld_binary, ".AMDGPU.disasm", &disasm_data, &disasm_size)) {

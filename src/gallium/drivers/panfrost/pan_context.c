@@ -158,6 +158,7 @@ panfrost_emit_mfbd(struct panfrost_context *ctx, unsigned vertex_count)
         unsigned height = ctx->pipe_framebuffer.height;
 
         struct bifrost_framebuffer framebuffer = {
+                .unk0 = 0x1e5, /* 1e4 if no spill */
                 .width1 = MALI_POSITIVE(width),
                 .height1 = MALI_POSITIVE(height),
                 .width2 = MALI_POSITIVE(width),
@@ -452,7 +453,15 @@ panfrost_default_shader_backend(struct panfrost_context *ctx)
                 .unknown2_4 = MALI_NO_MSAA | 0x4e0,
         };
 
-        /* unknown2_4 has 0x10 bit set on 32-bit T6XX */
+        /* unknown2_4 has 0x10 bit set on T6XX. We don't know why this is
+         * required (independent of 32-bit/64-bit descriptors), or why it's not
+         * used on later GPU revisions. Otherwise, all shader jobs fault on
+         * these earlier chips (perhaps this is a chicken bit of some kind).
+         * More investigation is needed. */
+
+	if (ctx->is_t6xx) {
+		shader.unknown2_4 |= 0x10;
+	}
 
         struct pipe_stencil_state default_stencil = {
                 .enabled = 0,
@@ -2500,7 +2509,7 @@ panfrost_set_polygon_stipple(struct pipe_context *pipe,
 
 static void
 panfrost_set_active_query_state(struct pipe_context *pipe,
-                                boolean enable)
+                                bool enable)
 {
         //struct panfrost_context *panfrost = pan_context(pipe);
 }
@@ -2545,7 +2554,7 @@ panfrost_destroy_query(struct pipe_context *pipe, struct pipe_query *q)
         ralloc_free(q);
 }
 
-static boolean
+static bool
 panfrost_begin_query(struct pipe_context *pipe, struct pipe_query *q)
 {
         struct panfrost_context *ctx = pan_context(pipe);
@@ -2579,10 +2588,10 @@ panfrost_end_query(struct pipe_context *pipe, struct pipe_query *q)
         return true;
 }
 
-static boolean
+static bool
 panfrost_get_query_result(struct pipe_context *pipe,
                           struct pipe_query *q,
-                          boolean wait,
+                          bool wait,
                           union pipe_query_result *vresult)
 {
         /* STUB */
@@ -2663,7 +2672,7 @@ panfrost_setup_hardware(struct panfrost_context *ctx)
         struct pipe_context *gallium = (struct pipe_context *) ctx;
         struct panfrost_screen *screen = pan_screen(gallium->screen);
 
-        panfrost_drm_allocate_slab(screen, &ctx->scratchpad, 64, false, 0, 0, 0);
+        panfrost_drm_allocate_slab(screen, &ctx->scratchpad, 64*4, false, 0, 0, 0);
         panfrost_drm_allocate_slab(screen, &ctx->shaders, 4096, true, PAN_ALLOCATE_EXECUTE, 0, 0);
         panfrost_drm_allocate_slab(screen, &ctx->tiler_heap, 4096, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
         panfrost_drm_allocate_slab(screen, &ctx->tiler_polygon_list, 128*128, false, PAN_ALLOCATE_INVISIBLE | PAN_ALLOCATE_GROWABLE, 1, 128);
@@ -2681,7 +2690,7 @@ panfrost_create_context(struct pipe_screen *screen, void *priv, unsigned flags)
         memset(ctx, 0, sizeof(*ctx));
         struct pipe_context *gallium = (struct pipe_context *) ctx;
 
-        ctx->is_t6xx = pscreen->gpu_id <= 0x0750; /* For now, this flag means T760 or less */
+        ctx->is_t6xx = pscreen->gpu_id < 0x0700; /* Literally, "earlier than T700" */
         ctx->require_sfbd = pscreen->gpu_id < 0x0750; /* T760 is the first to support MFBD */
 
         gallium->screen = screen;

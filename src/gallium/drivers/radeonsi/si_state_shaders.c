@@ -1060,8 +1060,7 @@ static void si_set_ge_pc_alloc(struct si_screen *sscreen,
 		       S_030980_NUM_PC_LINES((culling ? 256 : 128) * sscreen->info.max_se - 1));
 }
 
-unsigned si_get_input_prim(const struct si_shader_selector *gs,
-			   unsigned default_worst_case)
+unsigned si_get_input_prim(const struct si_shader_selector *gs)
 {
 	if (gs->type == PIPE_SHADER_GEOMETRY)
 		return gs->info.properties[TGSI_PROPERTY_GS_INPUT_PRIM];
@@ -1075,7 +1074,7 @@ unsigned si_get_input_prim(const struct si_shader_selector *gs,
 	}
 
 	/* TODO: Set this correctly if the primitive type is set in the shader key. */
-	return default_worst_case;
+	return PIPE_PRIM_TRIANGLES; /* worst case for all callers */
 }
 
 /**
@@ -1098,8 +1097,7 @@ static void gfx10_shader_ngg(struct si_screen *sscreen, struct si_shader *shader
 		gs_info->properties[TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION];
 	bool es_enable_prim_id = shader->key.mono.u.vs_export_prim_id || es_info->uses_primid;
 	unsigned gs_num_invocations = MAX2(gs_sel->gs_num_invocations, 1);
-	/* Anything above TRIANGLES has the same effect as TRIANGLES here. */
-	unsigned input_prim = si_get_input_prim(gs_sel, PIPE_PRIM_TRIANGLES);
+	unsigned input_prim = si_get_input_prim(gs_sel);
 	bool break_wave_at_eoi = false;
 	struct si_pm4_state *pm4 = si_get_shader_pm4_state(shader);
 	if (!pm4)
@@ -2007,7 +2005,8 @@ static inline void si_shader_selector_key(struct pipe_context *ctx,
 				sel->info.uses_linear_centroid +
 				sel->info.uses_linear_sample > 1;
 
-			if (sel->info.opcode_count[TGSI_OPCODE_INTERP_SAMPLE])
+			if (sel->info.uses_persp_opcode_interp_sample ||
+			    sel->info.uses_linear_opcode_interp_sample)
 				key->mono.u.ps.interpolate_at_sample_force_center = 1;
 		}
 

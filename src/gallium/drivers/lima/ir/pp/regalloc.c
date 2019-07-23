@@ -410,7 +410,7 @@ static ppir_alu_node* ppir_update_spilled_src(ppir_compiler *comp,
    ppir_load_node *load = ppir_node_to_load(load_node);
 
    load->index = -comp->prog->stack_size; /* index sizes are negative */
-   load->num_components = src->reg->num_components;
+   load->num_components = 4;
 
    ppir_dest *ld_dest = &load->dest;
    ld_dest->type = ppir_target_pipeline;
@@ -743,11 +743,11 @@ static bool ppir_regalloc_prog_try(ppir_compiler *comp, bool *spilled)
          /* Ask the outer loop to call back in. */
          *spilled = true;
 
-         ppir_debug("ppir: spilled register\n");
+         ppir_debug("spilled register\n");
          goto err_out;
       }
 
-      ppir_error("ppir: regalloc fail\n");
+      ppir_error("regalloc fail\n");
       goto err_out;
    }
 

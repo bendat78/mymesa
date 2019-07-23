@@ -27,8 +27,19 @@
 
 #define OP_IS_STORE_VARY(op) (\
 		op == midgard_op_st_vary_16 || \
-		op == midgard_op_st_vary_32 \
+		op == midgard_op_st_vary_32 || \
+                op == midgard_op_st_vary_32u || \
+		op == midgard_op_st_vary_32i \
 	)
+
+#define OP_IS_STORE_R26(op) (\
+                OP_IS_STORE_VARY(op) || \
+                op == midgard_op_st_char || \
+                op == midgard_op_st_char2 || \
+                op == midgard_op_st_char4 || \
+                op == midgard_op_st_short4 || \
+                op == midgard_op_st_int4 \
+        )
 
 #define OP_IS_STORE(op) (\
                 OP_IS_STORE_VARY(op) || \
@@ -38,6 +49,19 @@
 #define OP_IS_MOVE(op) ( \
                 op == midgard_alu_op_fmov || \
                 op == midgard_alu_op_imov \
+        )
+
+#define OP_IS_UBO_READ(op) ( \
+                op == midgard_op_ld_uniform_32  || \
+                op == midgard_op_ld_uniform_16  || \
+                op == midgard_op_ld_uniform_32i \
+        )
+
+#define OP_IS_CSEL(op) ( \
+                op == midgard_alu_op_icsel || \
+                op == midgard_alu_op_icsel_v || \
+                op == midgard_alu_op_fcsel_v || \
+                op == midgard_alu_op_fcsel \
         )
 
 /* ALU control words are single bit fields with a lot of space */

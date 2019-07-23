@@ -113,48 +113,6 @@ compose_swizzle(unsigned swizzle, unsigned mask,
         return shifted;
 }
 
-/* When we're 'squeezing down' the values in the IR, we maintain a hash
- * as such */
-
-static unsigned
-find_or_allocate_temp(compiler_context *ctx, unsigned hash)
-{
-        if ((hash < 0) || (hash >= SSA_FIXED_MINIMUM))
-                return hash;
-
-        unsigned temp = (uintptr_t) _mesa_hash_table_u64_search(
-                                ctx->hash_to_temp, hash + 1);
-
-        if (temp)
-                return temp - 1;
-
-        /* If no temp is find, allocate one */
-        temp = ctx->temp_count++;
-        ctx->max_hash = MAX2(ctx->max_hash, hash);
-
-        _mesa_hash_table_u64_insert(ctx->hash_to_temp,
-                                    hash + 1, (void *) ((uintptr_t) temp + 1));
-
-        return temp;
-}
-
-/* Callback for register allocation selection, trivial default for now */
-
-static unsigned int
-midgard_ra_select_callback(struct ra_graph *g, BITSET_WORD *regs, void *data)
-{
-        /* Choose the first available register to minimise register pressure */
-
-        for (int i = 0; i < (16 * WORK_STRIDE); ++i) {
-                if (BITSET_TEST(regs, i)) {
-                        return i;
-                }
-        }
-
-        assert(0);
-        return 0;
-}
-
 /* Helper to return the default phys_reg for a given register */
 
 static struct phys_reg
@@ -199,17 +157,12 @@ index_to_reg(compiler_context *ctx, struct ra_graph *g, int reg)
         return r;
 }
 
-/* This routine performs the actual register allocation. It should be succeeded
- * by install_registers */
+/* This routine creates a register set. Should be called infrequently since
+ * it's slow and can be cached */
 
-struct ra_graph *
-allocate_registers(compiler_context *ctx)
+static struct ra_regs *
+create_register_set(unsigned work_count, unsigned *classes)
 {
-        /* The number of vec4 work registers available depends on when the
-         * uniforms start, so compute that first */
-
-        int work_count = 16 - MAX2((ctx->uniform_cutoff - 8), 0);
-
         int virtual_count = work_count * WORK_STRIDE;
 
         /* First, initialize the RA */
@@ -220,12 +173,10 @@ allocate_registers(compiler_context *ctx)
         int work_vec2 = ra_alloc_reg_class(regs);
         int work_vec1 = ra_alloc_reg_class(regs);
 
-        unsigned classes[4] = {
-                work_vec1,
-                work_vec2,
-                work_vec3,
-                work_vec4
-        };
+        classes[0] = work_vec1;
+        classes[1] = work_vec2;
+        classes[2] = work_vec3;
+        classes[3] = work_vec4;
 
         /* Add the full set of work registers */
         for (unsigned i = 0; i < work_count; ++i) {
@@ -259,21 +210,56 @@ allocate_registers(compiler_context *ctx)
         /* We're done setting up */
         ra_set_finalize(regs, NULL);
 
-        /* Transform the MIR into squeezed index form */
-        mir_foreach_block(ctx, block) {
-                mir_foreach_instr_in_block(block, ins) {
-                        if (ins->compact_branch) continue;
+        return regs;
+}
 
-                        ins->ssa_args.dest = find_or_allocate_temp(ctx, ins->ssa_args.dest);
-                        ins->ssa_args.src0 = find_or_allocate_temp(ctx, ins->ssa_args.src0);
+/* This routine gets a precomputed register set off the screen if it's able, or otherwise it computes one on the fly */
 
-                        if (!ins->ssa_args.inline_constant)
-                                ins->ssa_args.src1 = find_or_allocate_temp(ctx, ins->ssa_args.src1);
+static struct ra_regs *
+get_register_set(struct midgard_screen *screen, unsigned work_count, unsigned **classes)
+{
+        /* Bounds check */
+        assert(work_count >= 8);
+        assert(work_count <= 16);
 
-                }
+        /* Compute index */
+        unsigned index = work_count - 8;
+
+        /* Find the reg set */
+        struct ra_regs *cached = screen->regs[index];
+
+        if (cached) {
+                assert(screen->reg_classes[index]);
+                *classes = screen->reg_classes[index];
+                return cached;
         }
 
-        /* No register allocation to do with no SSA */
+        /* Otherwise, create one */
+        struct ra_regs *created = create_register_set(work_count, screen->reg_classes[index]);
+
+        /* Cache it and use it */
+        screen->regs[index] = created;
+
+        *classes = screen->reg_classes[index];
+        return created;
+}
+
+/* This routine performs the actual register allocation. It should be succeeded
+ * by install_registers */
+
+struct ra_graph *
+allocate_registers(compiler_context *ctx, bool *spilled)
+{
+        /* The number of vec4 work registers available depends on when the
+         * uniforms start, so compute that first */
+        int work_count = 16 - MAX2((ctx->uniform_cutoff - 8), 0);
+        unsigned *classes = NULL;
+        struct ra_regs *regs = get_register_set(ctx->screen, work_count, &classes);
+
+        assert(regs != NULL);
+        assert(classes != NULL);
+
+       /* No register allocation to do with no SSA */
 
         if (!ctx->temp_count)
                 return NULL;
@@ -355,6 +341,9 @@ allocate_registers(compiler_context *ctx)
                         for (int src = 0; src < 2; ++src) {
                                 int s = sources[src];
 
+                                if (ins->ssa_args.inline_constant && src == 1)
+                                        continue;
+
                                 if (s < 0) continue;
 
                                 if (s >= SSA_FIXED_MINIMUM) continue;
@@ -389,15 +378,18 @@ allocate_registers(compiler_context *ctx)
                 }
         }
 
-        ra_set_select_reg_callback(g, midgard_ra_select_callback, NULL);
-
-        if (!ra_allocate(g)) {
-                unreachable("Error allocating registers\n");
-        }
-
         /* Cleanup */
         free(live_start);
         free(live_end);
+
+        if (!ra_allocate(g)) {
+                *spilled = true;
+        } else {
+                *spilled = false;
+        }
+
+        /* Whether we were successful or not, report the graph so we can
+         * compute spill nodes */
 
         return g;
 }
@@ -463,7 +455,7 @@ install_registers_instr(
         }
 
         case TAG_LOAD_STORE_4: {
-                if (OP_IS_STORE_VARY(ins->load_store.op)) {
+                if (OP_IS_STORE_R26(ins->load_store.op)) {
                         /* TODO: use ssa_args for st_vary */
                         ins->load_store.reg = 0;
                 } else {

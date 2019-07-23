@@ -953,8 +953,12 @@ is_op_varying(unsigned op)
         switch (op) {
         case midgard_op_st_vary_16:
         case midgard_op_st_vary_32:
+        case midgard_op_st_vary_32i:
+        case midgard_op_st_vary_32u:
         case midgard_op_ld_vary_16:
         case midgard_op_ld_vary_32:
+        case midgard_op_ld_vary_32i:
+        case midgard_op_ld_vary_32u:
                 return true;
         }
 
@@ -1262,11 +1266,29 @@ disassemble_midgard(uint8_t *code, size_t size)
 
         bool prefetch_flag = false;
 
+        int last_next_tag = -1;
+
         unsigned i = 0;
 
         while (i < num_words) {
                 unsigned tag = words[i] & 0xF;
+                unsigned next_tag = (words[i] >> 4) & 0xF;
                 unsigned num_quad_words = midgard_word_size[tag];
+
+                /* Check the tag */
+                if (last_next_tag > 1) {
+                        if (last_next_tag != tag) {
+                                printf("/* TAG ERROR got ");
+                                print_tag_short(tag);
+                                printf(" expected ");
+                                print_tag_short(last_next_tag);
+                                printf(" */ ");
+                        }
+                } else {
+                        /* TODO: Check ALU case */
+                }
+
+                last_next_tag = next_tag;
 
                 switch (midgard_word_types[tag]) {
                 case midgard_word_type_texture:

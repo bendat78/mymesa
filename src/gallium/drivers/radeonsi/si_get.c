@@ -507,9 +507,7 @@ static const struct nir_shader_compiler_options nir_options = {
 	.lower_sub = true,
 	.lower_ffma = true,
 	.lower_fmod = true,
-	.lower_pack_snorm_2x16 = true,
 	.lower_pack_snorm_4x8 = true,
-	.lower_pack_unorm_2x16 = true,
 	.lower_pack_unorm_4x8 = true,
 	.lower_unpack_snorm_2x16 = true,
 	.lower_unpack_snorm_4x8 = true,
@@ -720,10 +718,10 @@ static int si_get_video_param(struct pipe_screen *screen,
 	}
 }
 
-static boolean si_vid_is_format_supported(struct pipe_screen *screen,
-					  enum pipe_format format,
-					  enum pipe_video_profile profile,
-					  enum pipe_video_entrypoint entrypoint)
+static bool si_vid_is_format_supported(struct pipe_screen *screen,
+				       enum pipe_format format,
+				       enum pipe_video_profile profile,
+				       enum pipe_video_entrypoint entrypoint)
 {
 	/* HEVC 10 bit decoding should use P016 instead of NV12 if possible */
 	if (profile == PIPE_VIDEO_PROFILE_HEVC_MAIN_10)

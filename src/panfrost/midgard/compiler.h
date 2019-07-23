@@ -188,11 +188,21 @@ typedef struct compiler_context {
         nir_shader *nir;
         gl_shader_stage stage;
 
+        /* The screen we correspond to */
+        struct midgard_screen *screen;
+
         /* Is internally a blend shader? Depends on stage == FRAGMENT */
         bool is_blend;
 
         /* Tracking for blend constant patching */
         int blend_constant_offset;
+
+        /* Number of bytes used for Thread Local Storage */
+        unsigned tls_size;
+
+        /* Count of spills and fills for shaderdb */
+        unsigned spills;
+        unsigned fills;
 
         /* Current NIR function */
         nir_function *func;
@@ -217,20 +227,6 @@ typedef struct compiler_context {
 
         /* Constants which have been loaded, for later inlining */
         struct hash_table_u64 *ssa_constants;
-
-        /* SSA values / registers which have been aliased. Naively, these
-         * demand a fmov output; instead, we alias them in a later pass to
-         * avoid the wasted op.
-         *
-         * A note on encoding: to avoid dynamic memory management here, rather
-         * than ampping to a pointer, we map to the source index; the key
-         * itself is just the destination index. */
-
-        struct hash_table_u64 *ssa_to_alias;
-        struct set *leftover_ssa_to_alias;
-
-        /* Actual SSA-to-register for RA */
-        struct hash_table_u64 *ssa_to_register;
 
         /* Mapping of hashes computed from NIR indices to the sequential temp indices ultimately used in MIR */
         struct hash_table_u64 *hash_to_temp;
@@ -345,6 +341,11 @@ mir_next_op(struct midgard_instruction *ins)
         mir_foreach_block(ctx, v_block) \
                 mir_foreach_instr_in_block(v_block, v)
 
+#define mir_foreach_instr_global_safe(ctx, v) \
+        mir_foreach_block(ctx, v_block) \
+                mir_foreach_instr_in_block_safe(v_block, v)
+
+
 
 static inline midgard_instruction *
 mir_last_in_block(struct midgard_block *block)
@@ -374,6 +375,7 @@ mir_is_alu_bundle(midgard_bundle *bundle)
 void mir_rewrite_index(compiler_context *ctx, unsigned old, unsigned new);
 void mir_rewrite_index_src(compiler_context *ctx, unsigned old, unsigned new);
 void mir_rewrite_index_dst(compiler_context *ctx, unsigned old, unsigned new);
+void mir_rewrite_index_src_single(midgard_instruction *ins, unsigned old, unsigned new);
 
 /* MIR printing */
 
@@ -425,6 +427,18 @@ v_mov(unsigned src, midgard_vector_alu_src mod, unsigned dest)
         return ins;
 }
 
+static inline bool
+mir_has_arg(midgard_instruction *ins, unsigned arg)
+{
+        if (ins->ssa_args.src0 == arg)
+                return true;
+
+        if (ins->ssa_args.src1 == arg && !ins->ssa_args.inline_constant)
+                return true;
+
+        return false;
+}
+
 /* Scheduling */
 
 void schedule_program(compiler_context *ctx);
@@ -433,12 +447,24 @@ void schedule_program(compiler_context *ctx);
 
 struct ra_graph;
 
-struct ra_graph* allocate_registers(compiler_context *ctx);
+struct ra_graph* allocate_registers(compiler_context *ctx, bool *spilled);
 void install_registers(compiler_context *ctx, struct ra_graph *g);
 bool mir_is_live_after(compiler_context *ctx, midgard_block *block, midgard_instruction *start, int src);
 bool mir_has_multiple_writes(compiler_context *ctx, int src);
 
 void mir_create_pipeline_registers(compiler_context *ctx);
+
+void
+midgard_promote_uniforms(compiler_context *ctx, unsigned pressure);
+
+void
+emit_ubo_read(
+        compiler_context *ctx,
+        unsigned dest,
+        unsigned offset,
+        nir_src *indirect_offset,
+        unsigned index);
+
 
 /* Final emission */
 

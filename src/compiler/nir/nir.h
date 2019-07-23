@@ -1117,6 +1117,29 @@ nir_ssa_alu_instr_src_components(const nir_alu_instr *instr, unsigned src)
    return nir_dest_num_components(instr->dest.dest);
 }
 
+static inline bool
+nir_alu_instr_is_comparison(const nir_alu_instr *instr)
+{
+   switch (instr->op) {
+   case nir_op_flt:
+   case nir_op_fge:
+   case nir_op_feq:
+   case nir_op_fne:
+   case nir_op_ilt:
+   case nir_op_ult:
+   case nir_op_ige:
+   case nir_op_uge:
+   case nir_op_ieq:
+   case nir_op_ine:
+   case nir_op_i2b1:
+   case nir_op_f2b1:
+   case nir_op_inot:
+      return true;
+   default:
+      return false;
+   }
+}
+
 bool nir_const_value_negative_equal(nir_const_value c1, nir_const_value c2,
                                     nir_alu_type full_type);
 
@@ -1761,22 +1784,12 @@ nir_tex_instr_is_query(const nir_tex_instr *instr)
 }
 
 static inline bool
-nir_alu_instr_is_comparison(const nir_alu_instr *instr)
+nir_tex_instr_has_implicit_derivative(const nir_tex_instr *instr)
 {
    switch (instr->op) {
-   case nir_op_flt:
-   case nir_op_fge:
-   case nir_op_feq:
-   case nir_op_fne:
-   case nir_op_ilt:
-   case nir_op_ult:
-   case nir_op_ige:
-   case nir_op_uge:
-   case nir_op_ieq:
-   case nir_op_ine:
-   case nir_op_i2b1:
-   case nir_op_f2b1:
-   case nir_op_inot:
+   case nir_texop_tex:
+   case nir_texop_txb:
+   case nir_texop_lod:
       return true;
    default:
       return false;

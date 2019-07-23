@@ -518,26 +518,6 @@ optimise_nir(nir_shader *nir)
         NIR_PASS(progress, nir, nir_opt_dce);
 }
 
-/* Front-half of aliasing the SSA slots, merely by inserting the flag in the
- * appropriate hash table. Intentional off-by-one to avoid confusing NULL with
- * r0. See the comments in compiler_context */
-
-static void
-alias_ssa(compiler_context *ctx, int dest, int src)
-{
-        _mesa_hash_table_u64_insert(ctx->ssa_to_alias, dest + 1, (void *) ((uintptr_t) src + 1));
-        _mesa_set_add(ctx->leftover_ssa_to_alias, (void *) (uintptr_t) (dest + 1));
-}
-
-/* ...or undo it, after which the original index will be used (dummy move should be emitted alongside this) */
-
-static void
-unalias_ssa(compiler_context *ctx, int dest)
-{
-        _mesa_hash_table_u64_remove(ctx->ssa_to_alias, dest + 1);
-        /* TODO: Remove from leftover or no? */
-}
-
 /* Do not actually emit a load; instead, cache the constant for inlining */
 
 static void
@@ -1157,7 +1137,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
 /* Uniforms and UBOs use a shared code path, as uniforms are just (slightly
  * optimized) versions of UBO #0 */
 
-static void
+void
 emit_ubo_read(
         compiler_context *ctx,
         unsigned dest,
@@ -1167,36 +1147,20 @@ emit_ubo_read(
 {
         /* TODO: half-floats */
 
-        if (!indirect_offset && offset < ctx->uniform_cutoff && index == 0) {
-                /* Fast path: For the first 16 uniforms, direct accesses are
-                 * 0-cycle, since they're just a register fetch in the usual
-                 * case.  So, we alias the registers while we're still in
-                 * SSA-space */
+        midgard_instruction ins = m_ld_uniform_32(dest, offset);
 
-                int reg_slot = 23 - offset;
-                alias_ssa(ctx, dest, SSA_FIXED_REGISTER(reg_slot));
+        /* TODO: Don't split */
+        ins.load_store.varying_parameters = (offset & 7) << 7;
+        ins.load_store.address = offset >> 3;
+
+        if (indirect_offset) {
+                emit_indirect_offset(ctx, indirect_offset);
+                ins.load_store.unknown = 0x8700 | index; /* xxx: what is this? */
         } else {
-                /* Otherwise, read from the 'special' UBO to access
-                 * higher-indexed uniforms, at a performance cost. More
-                 * generally, we're emitting a UBO read instruction. */
-
-                midgard_instruction ins = m_ld_uniform_32(dest, offset);
-
-                /* TODO: Don't split */
-                ins.load_store.varying_parameters = (offset & 7) << 7;
-                ins.load_store.address = offset >> 3;
-
-                if (indirect_offset) {
-                        emit_indirect_offset(ctx, indirect_offset);
-                        ins.load_store.unknown = 0x8700 | index; /* xxx: what is this? */
-                } else {
-                        ins.load_store.unknown = 0x1E00 | index; /* xxx: what is this? */
-                }
-
-                /* TODO respect index */
-
-                emit_mir_instruction(ctx, ins);
+                ins.load_store.unknown = 0x1E00 | index; /* xxx: what is this? */
         }
+
+        emit_mir_instruction(ctx, ins);
 }
 
 static void
@@ -1571,11 +1535,6 @@ emit_texop_native(compiler_context *ctx, nir_tex_instr *instr,
         int reg = ctx->texture_op_count & 1;
         int in_reg = reg, out_reg = reg;
 
-        /* Make room for the reg */
-
-        if (ctx->texture_index[reg] > -1)
-                unalias_ssa(ctx, ctx->texture_index[reg]);
-
         int texture_index = instr->texture_index;
         int sampler_index = texture_index;
 
@@ -1761,8 +1720,6 @@ emit_jump(compiler_context *ctx, nir_jump_instr *instr)
                 br.branch.target_type = TARGET_BREAK;
                 br.branch.target_break = ctx->current_loop_depth;
                 emit_mir_instruction(ctx, br);
-
-                DBG("break..\n");
                 break;
         }
 
@@ -2006,32 +1963,6 @@ embedded_to_inline_constant(compiler_context *ctx)
         }
 }
 
-/* Map normal SSA sources to other SSA sources / fixed registers (like
- * uniforms) */
-
-static void
-map_ssa_to_alias(compiler_context *ctx, int *ref)
-{
-        /* Sign is used quite deliberately for unused */
-        if (*ref < 0)
-                return;
-
-        unsigned int alias = (uintptr_t) _mesa_hash_table_u64_search(ctx->ssa_to_alias, *ref + 1);
-
-        if (alias) {
-                /* Remove entry in leftovers to avoid a redunant fmov */
-
-                struct set_entry *leftover = _mesa_set_search(ctx->leftover_ssa_to_alias, ((void *) (uintptr_t) (*ref + 1)));
-
-                if (leftover)
-                        _mesa_set_remove(ctx->leftover_ssa_to_alias, leftover);
-
-                /* Assign the alias map */
-                *ref = alias - 1;
-                return;
-        }
-}
-
 /* Basic dead code elimination on the MIR itself, which cleans up e.g. the
  * texture pipeline */
 
@@ -2228,83 +2159,6 @@ midgard_opt_pos_propagate(compiler_context *ctx, midgard_block *block)
         return progress;
 }
 
-/* The following passes reorder MIR instructions to enable better scheduling */
-
-static void
-midgard_pair_load_store(compiler_context *ctx, midgard_block *block)
-{
-        mir_foreach_instr_in_block_safe(block, ins) {
-                if (ins->type != TAG_LOAD_STORE_4) continue;
-
-                /* We've found a load/store op. Check if next is also load/store. */
-                midgard_instruction *next_op = mir_next_op(ins);
-                if (&next_op->link != &block->instructions) {
-                        if (next_op->type == TAG_LOAD_STORE_4) {
-                                /* If so, we're done since we're a pair */
-                                ins = mir_next_op(ins);
-                                continue;
-                        }
-
-                        /* Maximum search distance to pair, to avoid register pressure disasters */
-                        int search_distance = 8;
-
-                        /* Otherwise, we have an orphaned load/store -- search for another load */
-                        mir_foreach_instr_in_block_from(block, c, mir_next_op(ins)) {
-                                /* Terminate search if necessary */
-                                if (!(search_distance--)) break;
-
-                                if (c->type != TAG_LOAD_STORE_4) continue;
-
-                                /* Stores cannot be reordered, since they have
-                                 * dependencies. For the same reason, indirect
-                                 * loads cannot be reordered as their index is
-                                 * loaded in r27.w */
-
-                                if (OP_IS_STORE(c->load_store.op)) continue;
-
-                                /* It appears the 0x800 bit is set whenever a
-                                 * load is direct, unset when it is indirect.
-                                 * Skip indirect loads. */
-
-                                if (!(c->load_store.unknown & 0x800)) continue;
-
-                                /* We found one! Move it up to pair and remove it from the old location */
-
-                                mir_insert_instruction_before(ins, *c);
-                                mir_remove_instruction(c);
-
-                                break;
-                        }
-                }
-        }
-}
-
-/* If there are leftovers after the below pass, emit actual fmov
- * instructions for the slow-but-correct path */
-
-static void
-emit_leftover_move(compiler_context *ctx)
-{
-        set_foreach(ctx->leftover_ssa_to_alias, leftover) {
-                int base = ((uintptr_t) leftover->key) - 1;
-                int mapped = base;
-
-                map_ssa_to_alias(ctx, &mapped);
-                EMIT(mov, mapped, blank_alu_src, base);
-        }
-}
-
-static void
-actualise_ssa_to_alias(compiler_context *ctx)
-{
-        mir_foreach_instr(ctx, ins) {
-                map_ssa_to_alias(ctx, &ins->ssa_args.src0);
-                map_ssa_to_alias(ctx, &ins->ssa_args.src1);
-        }
-
-        emit_leftover_move(ctx);
-}
-
 static void
 emit_fragment_epilogue(compiler_context *ctx)
 {
@@ -2354,11 +2208,6 @@ emit_block(compiler_context *ctx, nir_block *block)
 
         inline_alu_constants(ctx);
         embedded_to_inline_constant(ctx);
-
-        /* Perform heavylifting for aliasing */
-        actualise_ssa_to_alias(ctx);
-
-        midgard_pair_load_store(ctx, this_block);
 
         /* Append fragment shader epilogue (value writeout) */
         if (ctx->stage == MESA_SHADER_FRAGMENT) {
@@ -2546,7 +2395,7 @@ midgard_get_first_tag_from_block(compiler_context *ctx, unsigned block_idx)
 }
 
 int
-midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_blend)
+midgard_compile_shader_nir(struct midgard_screen *screen, nir_shader *nir, midgard_program *program, bool is_blend)
 {
         struct util_dynarray *compiled = &program->compiled;
 
@@ -2554,6 +2403,7 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
 
         compiler_context ictx = {
                 .nir = nir,
+                .screen = screen,
                 .stage = nir->info.stage,
 
                 .is_blend = is_blend,
@@ -2564,16 +2414,16 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
 
         compiler_context *ctx = &ictx;
 
-        /* TODO: Decide this at runtime */
+        /* Start off with a safe cutoff, allowing usage of all 16 work
+         * registers. Later, we'll promote uniform reads to uniform registers
+         * if we determine it is beneficial to do so */
         ctx->uniform_cutoff = 8;
 
         /* Initialize at a global (not block) level hash tables */
 
         ctx->ssa_constants = _mesa_hash_table_u64_create(NULL);
-        ctx->ssa_to_alias = _mesa_hash_table_u64_create(NULL);
         ctx->hash_to_temp = _mesa_hash_table_u64_create(NULL);
         ctx->sysval_to_id = _mesa_hash_table_u64_create(NULL);
-        ctx->leftover_ssa_to_alias = _mesa_set_create(NULL, _mesa_hash_pointer, _mesa_key_pointer_equal);
 
         /* Record the varying mapping for the command stream's bookkeeping */
 
@@ -2857,6 +2707,7 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
         program->uniform_cutoff = ctx->uniform_cutoff;
 
         program->blend_patch_offset = ctx->blend_constant_offset;
+        program->tls_size = ctx->tls_size;
 
         if (midgard_debug & MIDGARD_DBG_SHADERS)
                 disassemble_midgard(program->compiled.data, program->compiled.size);
@@ -2891,12 +2742,14 @@ midgard_compile_shader_nir(nir_shader *nir, midgard_program *program, bool is_bl
 
                 fprintf(stderr, "shader%d - %s shader: "
                         "%u inst, %u bundles, %u quadwords, "
-                        "%u registers, %u threads, %u loops\n",
+                        "%u registers, %u threads, %u loops, "
+                        "%d:%d spills:fills\n",
                         SHADER_DB_COUNT++,
                         gl_shader_stage_name(ctx->stage),
                         nr_ins, nr_bundles, nr_quadwords,
                         nr_registers, nr_threads,
-                        ctx->loop_count);
+                        ctx->loop_count,
+                        ctx->spills, ctx->fills);
         }
 
 

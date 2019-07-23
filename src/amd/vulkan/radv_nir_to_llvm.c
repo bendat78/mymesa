@@ -1373,9 +1373,16 @@ radv_load_resource(struct ac_shader_abi *abi, LLVMValueRef index,
 		uint32_t desc_type = S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
 			S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
 			S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) |
-			S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W) |
-			S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |
-			S_008F0C_DATA_FORMAT(V_008F0C_BUF_DATA_FORMAT_32);
+			S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W);
+
+		if (ctx->ac.chip_class >= GFX10) {
+			desc_type |= S_008F0C_FORMAT(V_008F0C_IMG_FORMAT_32_FLOAT) |
+				     S_008F0C_OOB_SELECT(3) |
+				     S_008F0C_RESOURCE_LEVEL(1);
+		} else {
+			desc_type |= S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |
+				     S_008F0C_DATA_FORMAT(V_008F0C_BUF_DATA_FORMAT_32);
+		}
 
 		LLVMValueRef desc_components[4] = {
 			LLVMBuildPtrToInt(ctx->ac.builder, desc_ptr, ctx->ac.intptr, ""),
@@ -4455,6 +4462,7 @@ LLVMModuleRef ac_translate_nir_to_llvm(struct ac_llvm_compiler *ac_llvm,
 		if (i) {
 			if (shaders[i]->info.stage == MESA_SHADER_GEOMETRY &&
 			    ctx.options->key.vs_common_out.as_ngg) {
+				gfx10_ngg_gs_emit_prologue(&ctx);
 				nested_barrier = false;
 			} else {
 				nested_barrier = true;
@@ -4497,12 +4505,6 @@ LLVMModuleRef ac_translate_nir_to_llvm(struct ac_llvm_compiler *ac_llvm,
 
 		LLVMBasicBlockRef merge_block;
 		if (shader_count >= 2 || is_ngg) {
-
-			if (shaders[i]->info.stage == MESA_SHADER_GEOMETRY &&
-			    ctx.options->key.vs_common_out.as_ngg) {
-				gfx10_ngg_gs_emit_prologue(&ctx);
-			}
-
 			LLVMValueRef fn = LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx.ac.builder));
 			LLVMBasicBlockRef then_block = LLVMAppendBasicBlockInContext(ctx.ac.context, fn, "");
 			merge_block = LLVMAppendBasicBlockInContext(ctx.ac.context, fn, "");

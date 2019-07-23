@@ -725,30 +725,62 @@ static void si_set_tex_bo_metadata(struct si_screen *sscreen,
 	sscreen->ws->buffer_set_metadata(tex->buffer.buf, &md);
 }
 
-static void si_get_opaque_metadata(struct si_screen *sscreen,
-				   struct si_texture *tex,
-				   struct radeon_bo_metadata *md)
+static bool si_read_tex_bo_metadata(struct si_screen *sscreen,
+				    struct si_texture *tex,
+				    struct radeon_bo_metadata *md)
 {
 	uint32_t *desc = &md->metadata[2];
 
-	if (sscreen->info.chip_class < GFX8)
-		return;
+	if (md->size_metadata < 10 * 4 || /* at least 2(header) + 8(desc) dwords */
+	    md->metadata[0] == 0 || /* invalid version number */
+	    md->metadata[1] != si_get_bo_metadata_word1(sscreen)) /* invalid PCI ID */ {
+		/* Don't report an error if the texture comes from an incompatible driver,
+		 * but this might not work.
+		 */
+		return true;
+	}
 
-	/* Return if DCC is enabled. The texture should be set up with it
-	 * already.
-	 */
-	if (md->size_metadata >= 10 * 4 && /* at least 2(header) + 8(desc) dwords */
-	    md->metadata[0] != 0 &&
-	    md->metadata[1] == si_get_bo_metadata_word1(sscreen) &&
+	/* Validate that sample counts and the number of mipmap levels match. */
+	unsigned last_level = G_008F1C_LAST_LEVEL(desc[3]);
+	unsigned type = G_008F1C_TYPE(desc[3]);
+
+	if (type == V_008F1C_SQ_RSRC_IMG_2D_MSAA ||
+	    type == V_008F1C_SQ_RSRC_IMG_2D_MSAA_ARRAY) {
+		unsigned log_samples =
+			util_logbase2(MAX2(1, tex->buffer.b.b.nr_storage_samples));
+
+		if (last_level != log_samples) {
+			fprintf(stderr, "radeonsi: invalid MSAA texture import, "
+					"metadata has log2(samples) = %u, the caller set %u\n",
+				last_level, log_samples);
+			return false;
+		}
+	} else {
+		if (last_level != tex->buffer.b.b.last_level) {
+			fprintf(stderr, "radeonsi: invalid mipmapped texture import, "
+					"metadata has last_level = %u, the caller set %u\n",
+				last_level, tex->buffer.b.b.last_level);
+			return false;
+		}
+	}
+
+	if (sscreen->info.chip_class >= GFX8 &&
 	    G_008F28_COMPRESSION_EN(desc[6])) {
-		tex->dcc_offset = (uint64_t)desc[7] << 8;
+		/* Read DCC information.
+		 *
+		 * Some state trackers don't set the SCANOUT flag when
+		 * importing displayable images, which affects PIPE_ALIGNED
+		 * and RB_ALIGNED, so we need to recover them here.
+		 */
+		switch (sscreen->info.chip_class) {
+		case GFX8:
+			tex->dcc_offset = (uint64_t)desc[7] << 8;
+			break;
 
-		if (sscreen->info.chip_class >= GFX9) {
-			/* Fix up parameters for displayable DCC. Some state
-			 * trackers don't set the SCANOUT flag when importing
-			 * displayable images, so we have to recover the correct
-			 * parameters here.
-			 */
+		case GFX9:
+			tex->dcc_offset =
+				((uint64_t)desc[7] << 8) |
+				((uint64_t)G_008F24_META_DATA_ADDRESS(desc[5]) << 40);
 			tex->surface.u.gfx9.dcc.pipe_aligned =
 				G_008F24_META_PIPE_ALIGNED(desc[5]);
 			tex->surface.u.gfx9.dcc.rb_aligned =
@@ -758,14 +790,28 @@ static void si_get_opaque_metadata(struct si_screen *sscreen,
 			if (!tex->surface.u.gfx9.dcc.pipe_aligned &&
 			    !tex->surface.u.gfx9.dcc.rb_aligned)
 				tex->surface.is_displayable = true;
+			break;
+
+		case GFX10:
+			tex->dcc_offset =
+				((uint64_t)G_00A018_META_DATA_ADDRESS_LO(desc[6]) << 8) |
+				((uint64_t)desc[7] << 16);
+			tex->surface.u.gfx9.dcc.pipe_aligned =
+				G_00A018_META_PIPE_ALIGNED(desc[6]);
+			break;
+
+		default:
+			assert(0);
+			return false;
 		}
-		return;
+	} else {
+		/* Disable DCC. dcc_offset is always set by texture_from_handle
+		 * and must be cleared here.
+		 */
+		tex->dcc_offset = 0;
 	}
 
-	/* Disable DCC. These are always set by texture_from_handle and must
-	 * be cleared here.
-	 */
-	tex->dcc_offset = 0;
+	return true;
 }
 
 static bool si_has_displayable_dcc(struct si_texture *tex)
@@ -824,11 +870,11 @@ static void si_texture_get_info(struct pipe_screen* screen,
 		*poffset = offset;
 }
 
-static boolean si_texture_get_handle(struct pipe_screen* screen,
-				     struct pipe_context *ctx,
-				     struct pipe_resource *resource,
-				     struct winsys_handle *whandle,
-				     unsigned usage)
+static bool si_texture_get_handle(struct pipe_screen* screen,
+				  struct pipe_context *ctx,
+				  struct pipe_resource *resource,
+				  struct winsys_handle *whandle,
+				  unsigned usage)
 {
 	struct si_screen *sscreen = (struct si_screen*)screen;
 	struct si_context *sctx;
@@ -1691,7 +1737,10 @@ static struct pipe_resource *si_texture_from_winsys_buffer(struct si_screen *ssc
 	tex->buffer.b.is_shared = true;
 	tex->buffer.external_usage = usage;
 
-	si_get_opaque_metadata(sscreen, tex, &metadata);
+	if (!si_read_tex_bo_metadata(sscreen, tex, &metadata)) {
+		si_texture_reference(&tex, NULL);
+		return NULL;
+	}
 
 	/* Displayable DCC requires an explicit flush. */
 	if (dedicated &&
@@ -1718,8 +1767,9 @@ static struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 	unsigned stride = 0, offset = 0;
 
 	/* Support only 2D textures without mipmaps */
-	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT) ||
-	      templ->depth0 != 1 || templ->last_level != 0)
+	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT &&
+	     templ->target != PIPE_TEXTURE_2D_ARRAY) ||
+	      templ->last_level != 0)
 		return NULL;
 
 	buf = sscreen->ws->buffer_from_handle(sscreen->ws, whandle,

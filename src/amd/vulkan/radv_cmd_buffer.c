@@ -364,12 +364,14 @@ radv_reset_cmd_buffer(struct radv_cmd_buffer *cmd_buffer)
 			radv_buffer_get_va(cmd_buffer->upload.upload_bo);
 		cmd_buffer->gfx9_fence_va += fence_offset;
 
-		/* Allocate a buffer for the EOP bug on GFX9. */
-		radv_cmd_buffer_upload_alloc(cmd_buffer, 16 * num_db, 8,
-					     &eop_bug_offset, &fence_ptr);
-		cmd_buffer->gfx9_eop_bug_va =
-			radv_buffer_get_va(cmd_buffer->upload.upload_bo);
-		cmd_buffer->gfx9_eop_bug_va += eop_bug_offset;
+		if (cmd_buffer->device->physical_device->rad_info.chip_class == GFX9) {
+			/* Allocate a buffer for the EOP bug on GFX9. */
+			radv_cmd_buffer_upload_alloc(cmd_buffer, 16 * num_db, 8,
+						     &eop_bug_offset, &fence_ptr);
+			cmd_buffer->gfx9_eop_bug_va =
+				radv_buffer_get_va(cmd_buffer->upload.upload_bo);
+			cmd_buffer->gfx9_eop_bug_va += eop_bug_offset;
+		}
 	}
 
 	cmd_buffer->status = RADV_CMD_BUFFER_STATUS_INITIAL;
@@ -883,6 +885,47 @@ radv_update_multisample_state(struct radv_cmd_buffer *cmd_buffer,
 }
 
 static void
+radv_update_binning_state(struct radv_cmd_buffer *cmd_buffer,
+			  struct radv_pipeline *pipeline)
+{
+	const struct radv_pipeline *old_pipeline = cmd_buffer->state.emitted_pipeline;
+
+
+	if (pipeline->device->physical_device->rad_info.chip_class < GFX9)
+		return;
+
+	if (old_pipeline &&
+	    old_pipeline->graphics.binning.pa_sc_binner_cntl_0 == pipeline->graphics.binning.pa_sc_binner_cntl_0 &&
+	    old_pipeline->graphics.binning.db_dfsm_control == pipeline->graphics.binning.db_dfsm_control)
+		return;
+
+	bool binning_flush = false;
+	if (cmd_buffer->device->physical_device->rad_info.family == CHIP_VEGA12 ||
+	    cmd_buffer->device->physical_device->rad_info.family == CHIP_VEGA20 ||
+	    cmd_buffer->device->physical_device->rad_info.family == CHIP_RAVEN2 ||
+	    cmd_buffer->device->physical_device->rad_info.chip_class >= GFX10) {
+		binning_flush = !old_pipeline ||
+			G_028C44_BINNING_MODE(old_pipeline->graphics.binning.pa_sc_binner_cntl_0) !=
+			G_028C44_BINNING_MODE(pipeline->graphics.binning.pa_sc_binner_cntl_0);
+	}
+
+	radeon_set_context_reg(cmd_buffer->cs, R_028C44_PA_SC_BINNER_CNTL_0,
+			       pipeline->graphics.binning.pa_sc_binner_cntl_0 |
+			       S_028C44_FLUSH_ON_BINNING_TRANSITION(!!binning_flush));
+
+	if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX10) {
+		radeon_set_context_reg(cmd_buffer->cs, R_028038_DB_DFSM_CONTROL,
+				       pipeline->graphics.binning.db_dfsm_control);
+	} else {
+		radeon_set_context_reg(cmd_buffer->cs, R_028060_DB_DFSM_CONTROL,
+				       pipeline->graphics.binning.db_dfsm_control);
+	}
+
+	cmd_buffer->state.context_roll_without_scissor_emitted = true;
+}
+
+
+static void
 radv_emit_shader_prefetch(struct radv_cmd_buffer *cmd_buffer,
 			  struct radv_shader_variant *shader)
 {
@@ -1095,6 +1138,7 @@ radv_emit_graphics_pipeline(struct radv_cmd_buffer *cmd_buffer)
 		return;
 
 	radv_update_multisample_state(cmd_buffer, pipeline);
+	radv_update_binning_state(cmd_buffer, pipeline);
 
 	cmd_buffer->scratch_size_needed =
 	                          MAX2(cmd_buffer->scratch_size_needed,
@@ -1294,7 +1338,7 @@ radv_emit_fb_color_state(struct radv_cmd_buffer *cmd_buffer,
 					       cb->cb_color_attrib2);
 			radeon_set_context_reg(cmd_buffer->cs, R_028EE0_CB_COLOR0_ATTRIB3 + index * 4,
 					       cb->cb_color_attrib3);
-	} else if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9) {
+	} else if (cmd_buffer->device->physical_device->rad_info.chip_class == GFX9) {
 		radeon_set_context_reg_seq(cmd_buffer->cs, R_028C60_CB_COLOR0_BASE + index * 0x3c, 11);
 		radeon_emit(cmd_buffer->cs, cb->cb_color_base);
 		radeon_emit(cmd_buffer->cs, S_028C64_BASE_256B(cb->cb_color_base >> 32));
@@ -1432,7 +1476,7 @@ radv_emit_fb_ds_state(struct radv_cmd_buffer *cmd_buffer,
 		radeon_emit(cmd_buffer->cs, ds->db_z_read_base >> 32);
 		radeon_emit(cmd_buffer->cs, ds->db_stencil_read_base >> 32);
 		radeon_emit(cmd_buffer->cs, ds->db_htile_data_base >> 32);
-	} else if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9) {
+	} else if (cmd_buffer->device->physical_device->rad_info.chip_class == GFX9) {
 		radeon_set_context_reg_seq(cmd_buffer->cs, R_028014_DB_HTILE_DATA_BASE, 3);
 		radeon_emit(cmd_buffer->cs, ds->db_htile_data_base);
 		radeon_emit(cmd_buffer->cs, S_028018_BASE_HI(ds->db_htile_data_base >> 32));
@@ -1934,7 +1978,7 @@ radv_emit_framebuffer_state(struct radv_cmd_buffer *cmd_buffer)
 				       S_028424_DISABLE_CONSTANT_ENCODE_REG(disable_constant_encode));
 	}
 
-	if (cmd_buffer->device->dfsm_allowed) {
+	if (cmd_buffer->device->pbb_allowed) {
 		radeon_emit(cmd_buffer->cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cmd_buffer->cs, EVENT_TYPE(V_028A90_BREAK_BATCH) | EVENT_INDEX(0));
 	}
@@ -2508,7 +2552,7 @@ si_emit_ia_multi_vgt_param(struct radv_cmd_buffer *cmd_buffer,
 					  draw_vertex_count);
 
 	if (state->last_ia_multi_vgt_param != ia_multi_vgt_param) {
-		if (info->chip_class >= GFX9) {
+		if (info->chip_class == GFX9) {
 			radeon_set_uconfig_reg_idx(cmd_buffer->device->physical_device,
 						   cs,
 						   R_030960_IA_MULTI_VGT_PARAM,
