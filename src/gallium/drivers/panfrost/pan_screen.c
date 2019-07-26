@@ -317,9 +317,10 @@ panfrost_get_shader_param(struct pipe_screen *screen,
 
         case PIPE_SHADER_CAP_MAX_SHADER_BUFFERS:
         case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
+                return is_deqp;
         case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
         case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
-                return is_deqp;
+                return 0;
 
         case PIPE_SHADER_CAP_TGSI_SKIP_MERGE_REGISTERS:
         case PIPE_SHADER_CAP_LOWER_IF_THRESHOLD:
@@ -524,6 +525,7 @@ panfrost_create_screen(int fd, struct renderonly *ro)
         screen->fd = fd;
 
         screen->gpu_id = panfrost_drm_query_gpu_version(screen);
+        screen->require_sfbd = screen->gpu_id < 0x0750; /* T760 is the first to support MFBD */
 
         /* Check if we're loading against a supported GPU model. */
 

@@ -106,61 +106,7 @@
 #include "iris_pipe.h"
 #include "iris_resource.h"
 
-#define __gen_address_type struct iris_address
-#define __gen_user_data struct iris_batch
-
-#define ARRAY_BYTES(x) (sizeof(uint32_t) * ARRAY_SIZE(x))
-
-static uint64_t
-__gen_combine_address(struct iris_batch *batch, void *location,
-                      struct iris_address addr, uint32_t delta)
-{
-   uint64_t result = addr.offset + delta;
-
-   if (addr.bo) {
-      iris_use_pinned_bo(batch, addr.bo, addr.write);
-      /* Assume this is a general address, not relative to a base. */
-      result += addr.bo->gtt_offset;
-   }
-
-   return result;
-}
-
-#define __genxml_cmd_length(cmd) cmd ## _length
-#define __genxml_cmd_length_bias(cmd) cmd ## _length_bias
-#define __genxml_cmd_header(cmd) cmd ## _header
-#define __genxml_cmd_pack(cmd) cmd ## _pack
-
-#define _iris_pack_command(batch, cmd, dst, name)                 \
-   for (struct cmd name = { __genxml_cmd_header(cmd) },           \
-        *_dst = (void *)(dst); __builtin_expect(_dst != NULL, 1); \
-        ({ __genxml_cmd_pack(cmd)(batch, (void *)_dst, &name);    \
-           _dst = NULL;                                           \
-           }))
-
-#define iris_pack_command(cmd, dst, name) \
-   _iris_pack_command(NULL, cmd, dst, name)
-
-#define iris_pack_state(cmd, dst, name)                           \
-   for (struct cmd name = {},                                     \
-        *_dst = (void *)(dst); __builtin_expect(_dst != NULL, 1); \
-        __genxml_cmd_pack(cmd)(NULL, (void *)_dst, &name),        \
-        _dst = NULL)
-
-#define iris_emit_cmd(batch, cmd, name) \
-   _iris_pack_command(batch, cmd, iris_get_command_space(batch, 4 * __genxml_cmd_length(cmd)), name)
-
-#define iris_emit_merge(batch, dwords0, dwords1, num_dwords)   \
-   do {                                                        \
-      uint32_t *dw = iris_get_command_space(batch, 4 * num_dwords); \
-      for (uint32_t i = 0; i < num_dwords; i++)                \
-         dw[i] = (dwords0)[i] | (dwords1)[i];                  \
-      VG(VALGRIND_CHECK_MEM_IS_DEFINED(dw, num_dwords));       \
-   } while (0)
-
-#include "genxml/genX_pack.h"
-#include "genxml/gen_macros.h"
-#include "genxml/genX_bits.h"
+#include "iris_genx_macros.h"
 #include "intel/common/gen_guardband.h"
 
 #if GEN_GEN == 8
@@ -366,24 +312,6 @@ translate_wrap(unsigned pipe_wrap)
       [PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER] = -1,
    };
    return map[pipe_wrap];
-}
-
-static struct iris_address
-ro_bo(struct iris_bo *bo, uint64_t offset)
-{
-   /* CSOs must pass NULL for bo!  Otherwise it will add the BO to the
-    * validation list at CSO creation time, instead of draw time.
-    */
-   return (struct iris_address) { .bo = bo, .offset = offset };
-}
-
-static struct iris_address
-rw_bo(struct iris_bo *bo, uint64_t offset)
-{
-   /* CSOs must pass NULL for bo!  Otherwise it will add the BO to the
-    * validation list at CSO creation time, instead of draw time.
-    */
-   return (struct iris_address) { .bo = bo, .offset = offset, .write = true };
 }
 
 /**
@@ -5296,37 +5224,19 @@ iris_upload_render_state(struct iris_context *ice,
                                       PIPE_CONTROL_FLUSH_ENABLE);
 
          if (ice->state.predicate == IRIS_PREDICATE_STATE_USE_BIT) {
-            static const uint32_t math[] = {
-               MI_MATH | (9 - 2),
-               /* Compute (draw index < draw count).
-                * We do this by subtracting and storing the carry bit.
-                */
-               MI_ALU2(LOAD, SRCA, R0),
-               MI_ALU2(LOAD, SRCB, R1),
-               MI_ALU0(SUB),
-               MI_ALU2(STORE, R3, CF),
-               /* Compute (subtracting result & MI_PREDICATE). */
-               MI_ALU2(LOAD, SRCA, R3),
-               MI_ALU2(LOAD, SRCB, R2),
-               MI_ALU0(AND),
-               MI_ALU2(STORE, R3, ACCU),
-            };
+            struct gen_mi_builder b;
+            gen_mi_builder_init(&b, batch);
 
-            /* Upload the current draw count from the draw parameters
-             * buffer to GPR1.
-             */
-            ice->vtbl.load_register_mem32(batch, CS_GPR(1), draw_count_bo,
-                                          draw_count_offset);
-            /* Zero the top 32-bits of GPR1. */
-            ice->vtbl.load_register_imm32(batch, CS_GPR(1) + 4, 0);
-            /* Upload the id of the current primitive to GPR0. */
-            ice->vtbl.load_register_imm64(batch, CS_GPR(0), draw->drawid);
+            /* comparison = draw id < draw count */
+            struct gen_mi_value comparison =
+               gen_mi_ult(&b, gen_mi_imm(draw->drawid),
+                              gen_mi_mem32(ro_bo(draw_count_bo,
+                                                 draw_count_offset)));
 
-            iris_batch_emit(batch, math, sizeof(math));
-
-            /* Store result of MI_MATH computations to MI_PREDICATE_RESULT. */
-            ice->vtbl.load_register_reg64(batch,
-                                          MI_PREDICATE_RESULT, CS_GPR(3));
+            /* predicate = comparison & conditional rendering predicate */
+            gen_mi_store(&b, gen_mi_reg32(MI_PREDICATE_RESULT),
+                             gen_mi_iand(&b, comparison,
+                                             gen_mi_reg32(CS_GPR(15))));
          } else {
             uint32_t mi_predicate;
 
@@ -5403,15 +5313,16 @@ iris_upload_render_state(struct iris_context *ice,
                                    "draw count from stream output stall",
                                    PIPE_CONTROL_CS_STALL);
 
-      iris_emit_cmd(batch, GENX(MI_LOAD_REGISTER_MEM), lrm) {
-         lrm.RegisterAddress = CS_GPR(0);
-         lrm.MemoryAddress =
-            ro_bo(iris_resource_bo(so->offset.res), so->offset.offset);
-      }
-      if (so->base.buffer_offset)
-         iris_math_add32_gpr0(ice, batch, -so->base.buffer_offset);
-      iris_math_div32_gpr0(ice, batch, so->stride);
-      _iris_emit_lrr(batch, _3DPRIM_VERTEX_COUNT, CS_GPR(0));
+      struct gen_mi_builder b;
+      gen_mi_builder_init(&b, batch);
+
+      struct iris_address addr =
+         ro_bo(iris_resource_bo(so->offset.res), so->offset.offset);
+      struct gen_mi_value offset =
+         gen_mi_iadd_imm(&b, gen_mi_mem64(addr), -so->base.buffer_offset);
+
+      gen_mi_store(&b, gen_mi_reg32(_3DPRIM_VERTEX_COUNT),
+                       gen_mi_udiv32_imm(&b, offset, so->stride));
 
       _iris_emit_lri(batch, _3DPRIM_START_VERTEX, 0);
       _iris_emit_lri(batch, _3DPRIM_BASE_VERTEX, 0);

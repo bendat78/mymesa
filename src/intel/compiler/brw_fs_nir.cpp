@@ -3568,6 +3568,7 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
 
    case nir_intrinsic_demote:
    case nir_intrinsic_discard:
+   case nir_intrinsic_demote_if:
    case nir_intrinsic_discard_if: {
       /* We track our discarded pixels in f0.1.  By predicating on it, we can
        * update just the flag bits that aren't yet discarded.  If there's no
@@ -3575,7 +3576,8 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
        * channels will get turned off.
        */
       fs_inst *cmp = NULL;
-      if (instr->intrinsic == nir_intrinsic_discard_if) {
+      if (instr->intrinsic == nir_intrinsic_demote_if ||
+          instr->intrinsic == nir_intrinsic_discard_if) {
          nir_alu_instr *alu = nir_src_as_alu_instr(instr->src[0]);
 
          if (alu != NULL &&
@@ -4915,6 +4917,14 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       bld.MOV(retype(dest, ret_payload.type), component(buffer_size, 0));
       break;
    }
+
+   case nir_intrinsic_load_subgroup_size:
+      /* This should only happen for fragment shaders because every other case
+       * is lowered in NIR so we can optimize on it.
+       */
+      assert(stage == MESA_SHADER_FRAGMENT);
+      bld.MOV(retype(dest, BRW_REGISTER_TYPE_D), brw_imm_d(dispatch_width));
+      break;
 
    case nir_intrinsic_load_subgroup_invocation:
       bld.MOV(retype(dest, BRW_REGISTER_TYPE_D),

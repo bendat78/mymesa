@@ -704,10 +704,8 @@ brw_preprocess_nir(const struct brw_compiler *compiler, nir_shader *nir,
    OPT(nir_lower_system_values);
 
    const nir_lower_subgroups_options subgroups_options = {
-      .subgroup_size = BRW_SUBGROUP_SIZE,
       .ballot_bit_size = 32,
       .lower_to_scalar = true,
-      .lower_subgroup_masks = true,
       .lower_vote_trivial = !is_scalar,
       .lower_shuffle = true,
    };
@@ -919,11 +917,10 @@ brw_postprocess_nir(nir_shader *nir, const struct brw_compiler *compiler,
    }
 }
 
-void
+static bool
 brw_nir_apply_sampler_key(nir_shader *nir,
                           const struct brw_compiler *compiler,
-                          const struct brw_sampler_prog_key_data *key_tex,
-                          bool is_scalar)
+                          const struct brw_sampler_prog_key_data *key_tex)
 {
    const struct gen_device_info *devinfo = compiler->devinfo;
    nir_lower_tex_options tex_options = {
@@ -966,10 +963,77 @@ brw_nir_apply_sampler_key(nir_shader *nir,
    memcpy(&tex_options.scale_factors, &key_tex->scale_factors,
           sizeof(tex_options.scale_factors));
 
-   if (nir_lower_tex(nir, &tex_options)) {
-      nir_validate_shader(nir, "after nir_lower_tex");
-      brw_nir_optimize(nir, compiler, is_scalar, false);
+   return nir_lower_tex(nir, &tex_options);
+}
+
+static unsigned
+get_subgroup_size(gl_shader_stage stage,
+                  const struct brw_base_prog_key *key,
+                  unsigned max_subgroup_size)
+{
+   switch (key->subgroup_size_type) {
+   case BRW_SUBGROUP_SIZE_API_CONSTANT:
+      /* We have to use the global constant size. */
+      return BRW_SUBGROUP_SIZE;
+
+   case BRW_SUBGROUP_SIZE_UNIFORM:
+      /* It has to be uniform across all invocations but can vary per stage
+       * if we want.  This gives us a bit more freedom.
+       *
+       * For compute, brw_nir_apply_key is called per-dispatch-width so this
+       * is the actual subgroup size and not a maximum.  However, we only
+       * invoke one size of any given compute shader so it's still guaranteed
+       * to be uniform across invocations.
+       */
+      return max_subgroup_size;
+
+   case BRW_SUBGROUP_SIZE_VARYING:
+      /* The subgroup size is allowed to be fully varying.  For geometry
+       * stages, we know it's always 8 which is max_subgroup_size so we can
+       * return that.  For compute, brw_nir_apply_key is called once per
+       * dispatch-width so max_subgroup_size is the real subgroup size.
+       *
+       * For fragment, we return 0 and let it fall through to the back-end
+       * compiler.  This means we can't optimize based on subgroup size but
+       * that's a risk the client took when it asked for a varying subgroup
+       * size.
+       */
+      return stage == MESA_SHADER_FRAGMENT ? 0 : max_subgroup_size;
+
+   case BRW_SUBGROUP_SIZE_REQUIRE_8:
+   case BRW_SUBGROUP_SIZE_REQUIRE_16:
+   case BRW_SUBGROUP_SIZE_REQUIRE_32:
+      assert(stage == MESA_SHADER_COMPUTE);
+      /* These enum values are expressly chosen to be equal to the subgroup
+       * size that they require.
+       */
+      return key->subgroup_size_type;
    }
+
+   unreachable("Invalid subgroup size type");
+}
+
+void
+brw_nir_apply_key(nir_shader *nir,
+                  const struct brw_compiler *compiler,
+                  const struct brw_base_prog_key *key,
+                  unsigned max_subgroup_size,
+                  bool is_scalar)
+{
+   bool progress = false;
+
+   OPT(brw_nir_apply_sampler_key, compiler, &key->tex);
+
+   const nir_lower_subgroups_options subgroups_options = {
+      .subgroup_size = get_subgroup_size(nir->info.stage, key,
+                                         max_subgroup_size),
+      .ballot_bit_size = 32,
+      .lower_subgroup_masks = true,
+   };
+   OPT(nir_lower_subgroups, &subgroups_options);
+
+   if (progress)
+      brw_nir_optimize(nir, compiler, is_scalar, false);
 }
 
 enum brw_reg_type

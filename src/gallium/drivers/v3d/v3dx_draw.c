@@ -550,8 +550,7 @@ v3d_emit_gl_shader_state(struct v3d_context *v3d,
  */
 static void
 v3d_tf_statistics_record(struct v3d_context *v3d,
-                         const struct pipe_draw_info *info,
-                         bool prim_tf)
+                         const struct pipe_draw_info *info)
 {
         if (!v3d->active_queries)
                 return;
@@ -559,9 +558,15 @@ v3d_tf_statistics_record(struct v3d_context *v3d,
         uint32_t prims = u_prims_for_vertices(info->mode, info->count);
         v3d->prims_generated += prims;
 
-        if (prim_tf) {
-                /* XXX: Only count if we didn't overflow. */
-                v3d->tf_prims_generated += prims;
+        if (v3d->streamout.num_targets <= 0)
+                return;
+
+        /* XXX: Only count if we didn't overflow. */
+        v3d->tf_prims_generated += prims;
+        for (int i = 0; i < v3d->streamout.num_targets; i++) {
+                struct v3d_stream_output_target *target =
+                        v3d_stream_output_target(v3d->streamout.targets[i]);
+                target->recorded_vertex_count += info->count;
         }
 }
 
@@ -757,7 +762,7 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                 prim_tf_enable = (V3D_PRIM_POINTS_TF - V3D_PRIM_POINTS);
 #endif
 
-        v3d_tf_statistics_record(v3d, info, v3d->streamout.num_targets);
+        v3d_tf_statistics_record(v3d, info);
 
         /* Note that the primitive type fields match with OpenGL/gallium
          * definitions, up to but not including QUADS.
@@ -847,16 +852,26 @@ v3d_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
                                                           info->indirect->offset);
                         }
                 } else if (info->instance_count > 1) {
+                        struct pipe_stream_output_target *so =
+                                info->count_from_stream_output;
+                        uint32_t vert_count = so ?
+                                v3d_stream_output_target_get_vertex_count(so) :
+                                info->count;
                         cl_emit(&job->bcl, VERTEX_ARRAY_INSTANCED_PRIMS, prim) {
                                 prim.mode = info->mode | prim_tf_enable;
                                 prim.index_of_first_vertex = info->start;
                                 prim.number_of_instances = info->instance_count;
-                                prim.instance_length = info->count;
+                                prim.instance_length = vert_count;
                         }
                 } else {
+                        struct pipe_stream_output_target *so =
+                                info->count_from_stream_output;
+                        uint32_t vert_count = so ?
+                                v3d_stream_output_target_get_vertex_count(so) :
+                                info->count;
                         cl_emit(&job->bcl, VERTEX_ARRAY_PRIMS, prim) {
                                 prim.mode = info->mode | prim_tf_enable;
-                                prim.length = info->count;
+                                prim.length = vert_count;
                                 prim.index_of_first_vertex = info->start;
                         }
                 }

@@ -7332,8 +7332,6 @@ fs_visitor::run_vs()
    if (failed)
       return false;
 
-   compute_clip_distance();
-
    emit_urb_writes();
 
    if (shader_time_index >= 0)
@@ -7967,7 +7965,9 @@ brw_compile_fs(const struct brw_compiler *compiler, void *log_data,
 {
    const struct gen_device_info *devinfo = compiler->devinfo;
 
-   brw_nir_apply_sampler_key(shader, compiler, &key->base.tex, true);
+   unsigned max_subgroup_size = unlikely(INTEL_DEBUG & DEBUG_DO32) ? 32 : 16;
+
+   brw_nir_apply_key(shader, compiler, &key->base, max_subgroup_size, true);
    brw_nir_lower_fs_inputs(shader, devinfo, key);
    brw_nir_lower_fs_outputs(shader);
 
@@ -8228,7 +8228,7 @@ compile_cs_to_nir(const struct brw_compiler *compiler,
                   unsigned dispatch_width)
 {
    nir_shader *shader = nir_shader_clone(mem_ctx, src_shader);
-   brw_nir_apply_sampler_key(shader, compiler, &key->base.tex, true);
+   brw_nir_apply_key(shader, compiler, &key->base, dispatch_width, true);
 
    NIR_PASS_V(shader, brw_nir_lower_cs_intrinsics, dispatch_width);
 
@@ -8262,15 +8262,33 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
    min_dispatch_width = MAX2(8, min_dispatch_width);
    min_dispatch_width = util_next_power_of_two(min_dispatch_width);
    assert(min_dispatch_width <= 32);
+   unsigned max_dispatch_width = 32;
 
    fs_visitor *v8 = NULL, *v16 = NULL, *v32 = NULL;
    cfg_t *cfg = NULL;
    const char *fail_msg = NULL;
    unsigned promoted_constants = 0;
 
+   if ((int)key->base.subgroup_size_type >= (int)BRW_SUBGROUP_SIZE_REQUIRE_8) {
+      /* These enum values are expressly chosen to be equal to the subgroup
+       * size that they require.
+       */
+      const unsigned required_dispatch_width =
+         (unsigned)key->base.subgroup_size_type;
+      assert(required_dispatch_width == 8 ||
+             required_dispatch_width == 16 ||
+             required_dispatch_width == 32);
+      if (required_dispatch_width < min_dispatch_width ||
+          required_dispatch_width > max_dispatch_width) {
+         fail_msg = "Cannot satisfy explicit subgroup size";
+      } else {
+         min_dispatch_width = max_dispatch_width = required_dispatch_width;
+      }
+   }
+
    /* Now the main event: Visit the shader IR and generate our CS IR for it.
     */
-   if (min_dispatch_width <= 8) {
+   if (!fail_msg && min_dispatch_width <= 8 && max_dispatch_width >= 8) {
       nir_shader *nir8 = compile_cs_to_nir(compiler, mem_ctx, key,
                                            src_shader, 8);
       v8 = new fs_visitor(compiler, log_data, mem_ctx, &key->base,
@@ -8291,7 +8309,7 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
    }
 
    if (likely(!(INTEL_DEBUG & DEBUG_NO16)) &&
-       !fail_msg && min_dispatch_width <= 16) {
+       !fail_msg && min_dispatch_width <= 16 && max_dispatch_width >= 16) {
       /* Try a SIMD16 compile */
       nir_shader *nir16 = compile_cs_to_nir(compiler, mem_ctx, key,
                                             src_shader, 16);
@@ -8325,7 +8343,8 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
    /* We should always be able to do SIMD32 for compute shaders */
    assert(!v16 || v16->max_dispatch_width >= 32);
 
-   if (!fail_msg && (min_dispatch_width > 16 || (INTEL_DEBUG & DEBUG_DO32))) {
+   if (!fail_msg && (min_dispatch_width > 16 || (INTEL_DEBUG & DEBUG_DO32)) &&
+       max_dispatch_width >= 32) {
       /* Try a SIMD32 compile */
       nir_shader *nir32 = compile_cs_to_nir(compiler, mem_ctx, key,
                                             src_shader, 32);
