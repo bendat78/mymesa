@@ -198,6 +198,8 @@ struct ac_shader_abi {
 
 	LLVMValueRef (*load_base_vertex)(struct ac_shader_abi *abi);
 
+	LLVMValueRef (*emit_fbfetch)(struct ac_shader_abi *abi);
+
 	/* Whether to clamp the shadow reference value to [0,1]on GFX8. Radeonsi currently
 	 * uses it due to promoting D16 to D32, but radv needs it off. */
 	bool clamp_shadow_reference;
@@ -206,6 +208,9 @@ struct ac_shader_abi {
 	* and LLVM optimizes an indexed load with constant index to IDXEN=0. */
 	bool gfx9_stride_size_workaround;
 	bool gfx9_stride_size_workaround_for_atomic;
+
+	/* Whether bounds checks are required */
+	bool robust_buffer_access;
 };
 
 #endif /* AC_SHADER_ABI_H */

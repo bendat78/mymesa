@@ -1223,6 +1223,7 @@ nir_deref_instr_get_variable(const nir_deref_instr *instr)
 }
 
 bool nir_deref_instr_has_indirect(nir_deref_instr *instr);
+bool nir_deref_instr_is_known_out_of_bounds(nir_deref_instr *instr);
 bool nir_deref_instr_has_complex_use(nir_deref_instr *instr);
 
 bool nir_deref_instr_remove_if_unused(nir_deref_instr *instr);
@@ -1439,8 +1440,8 @@ typedef enum {
    NIR_INTRINSIC_SWIZZLE_MASK,
 
    /* Separate source/dest access flags for copies */
-   NIR_INTRINSIC_SRC_ACCESS = 21,
-   NIR_INTRINSIC_DST_ACCESS = 22,
+   NIR_INTRINSIC_SRC_ACCESS,
+   NIR_INTRINSIC_DST_ACCESS,
 
    NIR_INTRINSIC_NUM_INDEX_FLAGS,
 
@@ -2543,8 +2544,8 @@ typedef struct nir_shader_compiler_options {
    /** enables rules to lower idiv by power-of-two: */
    bool lower_idiv;
 
-   /** enable rules to avoid bit shifts */
-   bool lower_bitshift;
+   /** enable rules to avoid bit ops */
+   bool lower_bitops;
 
    /** enables rules to lower isign to imin+imax */
    bool lower_isign;
@@ -2554,6 +2555,9 @@ typedef struct nir_shader_compiler_options {
 
    /* lower fdph to fdot4 */
    bool lower_fdph;
+
+   /** lower fdot to fmul and fsum/fadd. */
+   bool lower_fdot;
 
    /* Does the native fdot instruction replicate its result for four
     * components?  If so, then opt_algebraic_late will turn all fdotN
@@ -3441,6 +3445,12 @@ void nir_assign_io_var_locations(struct exec_list *var_list,
                                  gl_shader_stage stage);
 
 typedef enum {
+   /* If set, this causes all 64-bit IO operations to be lowered on-the-fly
+    * to 32-bit operations.  This is only valid for nir_var_shader_in/out
+    * modes.
+    */
+   nir_lower_io_lower_64bit_to_32 = (1 << 0),
+
    /* If set, this forces all non-flat fragment shader inputs to be
     * interpolated as if with the "sample" qualifier.  This requires
     * nir_shader_compiler_options::use_interpolated_input_intrinsics.

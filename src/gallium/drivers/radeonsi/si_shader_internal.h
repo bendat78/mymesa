@@ -112,7 +112,8 @@ struct si_shader_context {
 	LLVMValueRef *imms;
 	unsigned imms_num;
 
-	struct lp_build_if_state merged_wrap_if_state;
+	LLVMBasicBlockRef merged_wrap_if_entry_block;
+	int merged_wrap_if_label;
 
 	struct tgsi_array_info *temp_arrays;
 	LLVMValueRef *temp_array_allocas;
@@ -350,6 +351,7 @@ LLVMValueRef si_load_image_desc(struct si_shader_context *ctx,
 				LLVMValueRef list, LLVMValueRef index,
 				enum ac_descriptor_type desc_type,
 				bool uses_store, bool bindless);
+LLVMValueRef si_nir_emit_fbfetch(struct ac_shader_abi *abi);
 
 void si_load_system_value(struct si_shader_context *ctx,
 			  unsigned index,

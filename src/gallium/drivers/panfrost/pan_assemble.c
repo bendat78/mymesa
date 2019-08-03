@@ -35,25 +35,28 @@
 #include "tgsi/tgsi_dump.h"
 
 void
-panfrost_shader_compile(struct panfrost_context *ctx, struct mali_shader_meta *meta, const char *src, int type, struct panfrost_shader_state *state)
+panfrost_shader_compile(
+                struct panfrost_context *ctx,
+                struct mali_shader_meta *meta,
+                enum pipe_shader_ir ir_type,
+                const void *ir,
+                gl_shader_stage stage,
+                struct panfrost_shader_state *state)
 {
         uint8_t *dst;
 
         nir_shader *s;
 
-        struct pipe_shader_state *cso = state->base;
-
-        if (cso->type == PIPE_SHADER_IR_NIR) {
-                s = nir_shader_clone(NULL, cso->ir.nir);
+        if (ir_type == PIPE_SHADER_IR_NIR) {
+                s = nir_shader_clone(NULL, ir);
         } else {
-                assert (cso->type == PIPE_SHADER_IR_TGSI);
-                //tgsi_dump(cso->tokens, 0);
-                s = tgsi_to_nir(cso->tokens, ctx->base.screen);
+                assert (ir_type == PIPE_SHADER_IR_TGSI);
+                s = tgsi_to_nir(ir, ctx->base.screen);
         }
 
-        s->info.stage = type == JOB_TYPE_VERTEX ? MESA_SHADER_VERTEX : MESA_SHADER_FRAGMENT;
+        s->info.stage = stage;
 
-        if (s->info.stage == MESA_SHADER_FRAGMENT) {
+        if (stage == MESA_SHADER_FRAGMENT) {
                 /* Inject the alpha test now if we need to */
 
                 if (state->alpha_state.enabled) {
@@ -89,7 +92,7 @@ panfrost_shader_compile(struct panfrost_context *ctx, struct mali_shader_meta *m
         meta->midgard1.uniform_count = MIN2(program.uniform_count, program.uniform_cutoff);
         meta->midgard1.work_count = program.work_register_count;
 
-        switch (s->info.stage) {
+        switch (stage) {
         case MESA_SHADER_VERTEX:
                 meta->attribute_count = util_bitcount64(s->info.inputs_read);
                 meta->varying_count = util_bitcount64(s->info.outputs_written);
@@ -97,6 +100,11 @@ panfrost_shader_compile(struct panfrost_context *ctx, struct mali_shader_meta *m
         case MESA_SHADER_FRAGMENT:
                 meta->attribute_count = 0;
                 meta->varying_count = util_bitcount64(s->info.inputs_read);
+                break;
+        case MESA_SHADER_COMPUTE:
+                /* TODO: images */
+                meta->attribute_count = 0;
+                meta->varying_count = 0;
                 break;
         default:
                 unreachable("Unknown shader state");
@@ -144,6 +152,12 @@ panfrost_shader_compile(struct panfrost_context *ctx, struct mali_shader_meta *m
                         v.swizzle = default_vec2_swizzle;
 
                         state->reads_point_coord = true;
+                } else if (location == VARYING_SLOT_FACE) {
+                        v.index = 4;
+                        v.format = MALI_R32I;
+                        v.swizzle = default_vec1_swizzle;
+
+                        state->reads_face = true;
                 } else {
                         v.index = 0;
                 }

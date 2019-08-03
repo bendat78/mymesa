@@ -78,7 +78,7 @@ typedef enum {
         midgard_alu_op_freduce    = 0x3F,
 
         midgard_alu_op_iadd       = 0x40,
-        midgard_alu_op_ishladd    = 0x41,
+        midgard_alu_op_ishladd    = 0x41, /* a + (b<<1) */
         midgard_alu_op_isub       = 0x46,
         midgard_alu_op_iaddsat    = 0x48,
         midgard_alu_op_uaddsat    = 0x49,
@@ -119,12 +119,12 @@ typedef enum {
         midgard_alu_op_flt        = 0x82,
         midgard_alu_op_fle        = 0x83,
         midgard_alu_op_fball_eq   = 0x88,
-        midgard_alu_op_bball_eq   = 0x89,
+        midgard_alu_op_fball_neq  = 0x89,
         midgard_alu_op_fball_lt   = 0x8A, /* all(lessThan(.., ..)) */
         midgard_alu_op_fball_lte  = 0x8B, /* all(lessThanEqual(.., ..)) */
 
-        midgard_alu_op_bbany_neq  = 0x90, /* used for bvec4(1) */
-        midgard_alu_op_fbany_neq  = 0x91, /* bvec4(0) also */
+        midgard_alu_op_fbany_eq   = 0x90,
+        midgard_alu_op_fbany_neq  = 0x91,
         midgard_alu_op_fbany_lt   = 0x92, /* any(lessThan(.., ..)) */
         midgard_alu_op_fbany_lte  = 0x93, /* any(lessThanEqual(.., ..)) */
 
@@ -359,6 +359,19 @@ __attribute__((__packed__))
         unsigned dest_tag : 4; /* tag of branch destination */
         unsigned unknown : 2;
         signed offset : 23;
+
+        /* Extended branches permit inputting up to 4 conditions loaded into
+         * r31 (two in r31.w and two in r31.x). In the most general case, we
+         * specify a function f(A, B, C, D) mapping 4 1-bit conditions to a
+         * single 1-bit branch criteria. Note that the domain of f has 2^(2^4)
+         * elements, each mapping to 1-bit of output, so we can trivially
+         * construct a Godel numbering of f as a (2^4)=16-bit integer. This
+         * 16-bit integer serves as a lookup table to compute f, subject to
+         * some swaps for ordering.
+         *
+         * Interesting, the standard 2-bit condition codes are also a LUT with
+         * the same format (2^1-bit), but it's usually easier to use enums. */
+
         unsigned cond : 16;
 }
 midgard_branch_extended;
@@ -485,6 +498,20 @@ __attribute__((__packed__))
 }
 midgard_varying_parameter;
 
+/* 8-bit register/etc selector for load/store ops */
+typedef struct
+__attribute__((__packed__))
+{
+        /* Indexes into the register */
+        unsigned component : 2;
+
+        /* Register select between r26/r27 */
+        unsigned select : 1;
+
+        unsigned unknown : 5;
+}
+midgard_ldst_register_select;
+
 typedef struct
 __attribute__((__packed__))
 {
@@ -492,7 +519,15 @@ __attribute__((__packed__))
         unsigned reg     : 5;
         unsigned mask    : 4;
         unsigned swizzle : 8;
-        unsigned unknown : 16;
+
+        /* Load/store ops can take two additional registers as arguments, but
+         * these are limited to load/store registers with only a few supported
+         * mask/swizzle combinations. The tradeoff is these are much more
+         * compact, requiring 8-bits each rather than 17-bits for a full
+         * reg/mask/swizzle. Usually (?) encoded as
+         * midgard_ldst_register_select. */
+        unsigned arg_1   : 8;
+        unsigned arg_2   : 8;
 
         unsigned varying_parameters : 10;
 
@@ -540,6 +575,16 @@ midgard_tex_register_select;
 #define TEXTURE_OP_NORMAL 0x11          /* texture */
 #define TEXTURE_OP_LOD 0x12             /* textureLod */
 #define TEXTURE_OP_TEXEL_FETCH 0x14     /* texelFetch */
+
+/* Computes horizontal and vertical derivatives respectively. Use with a float
+ * sampler and a "2D" texture.  Leave texture/sampler IDs as zero; they ought
+ * to be ignored. Only works for fp32 on 64-bit at a time, so derivatives of a
+ * vec4 require 2 texture ops.  For some reason, the blob computes both X and Y
+ * derivatives at the same time and just throws out whichever is unused; it's
+ * not known if this is a quirk of the hardware or just of the blob. */
+
+#define TEXTURE_OP_DFDX 0x0D
+#define TEXTURE_OP_DFDY 0x1D
 
 enum mali_sampler_type {
         MALI_SAMPLER_UNK        = 0x0,
@@ -597,7 +642,10 @@ __attribute__((__packed__))
 
         unsigned mask : 4;
 
-        unsigned unknown2  : 2;
+        /* Intriguingly, textures can take an outmod just like textures. Int
+         * outmods are not supported as far as I can tell, so this is only
+         * meaningful for float samplers */
+        midgard_outmod_float outmod  : 2;
 
         unsigned swizzle  : 8;
         unsigned unknown4  : 8;
@@ -629,8 +677,8 @@ __attribute__((__packed__))
         unsigned bias : 8;
         signed bias_int  : 8;
 
-        unsigned texture_handle : 16;
         unsigned sampler_handle : 16;
+        unsigned texture_handle : 16;
 }
 midgard_texture_word;
 

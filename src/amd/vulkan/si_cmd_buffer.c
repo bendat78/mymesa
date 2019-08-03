@@ -311,6 +311,7 @@ si_emit_graphics(struct radv_physical_device *physical_device,
 			late_alloc_limit = (num_cu_per_sh - 2) * 4;
 		}
 
+		unsigned late_alloc_limit_gs = late_alloc_limit;
 		unsigned cu_mask_vs = 0xffff;
 		unsigned cu_mask_gs = 0xffff;
 
@@ -322,6 +323,12 @@ si_emit_graphics(struct radv_physical_device *physical_device,
 			} else {
 				cu_mask_vs = 0xfffe; /* 1 CU disabled */
 			}
+		}
+
+		/* Don't use late alloc for NGG on Navi14 due to a hw bug. */
+		if (physical_device->rad_info.family == CHIP_NAVI14) {
+			late_alloc_limit_gs = 0;
+			cu_mask_gs = 0xffff;
 		}
 
 		radeon_set_sh_reg_idx(physical_device, cs, R_00B118_SPI_SHADER_PGM_RSRC3_VS,
@@ -336,7 +343,7 @@ si_emit_graphics(struct radv_physical_device *physical_device,
 		if (physical_device->rad_info.chip_class >= GFX10) {
 			radeon_set_sh_reg_idx(physical_device, cs, R_00B204_SPI_SHADER_PGM_RSRC4_GS,
 					      3, S_00B204_CU_EN(0xffff) |
-					      S_00B204_SPI_SHADER_LATE_ALLOC_GS_GFX10(late_alloc_limit));
+					      S_00B204_SPI_SHADER_LATE_ALLOC_GS_GFX10(late_alloc_limit_gs));
 		}
 
 		radeon_set_sh_reg_idx(physical_device, cs, R_00B01C_SPI_SHADER_PGM_RSRC3_PS,
@@ -382,6 +389,19 @@ si_emit_graphics(struct radv_physical_device *physical_device,
 				  S_00B0C0_SOFT_GROUPING_EN(1) |
 				  S_00B0C0_NUMBER_OF_REQUESTS_PER_CU(4 - 1));
 		radeon_set_sh_reg(cs, R_00B1C0_SPI_SHADER_REQ_CTRL_VS, 0);
+
+		if (physical_device->rad_info.family == CHIP_NAVI10 ||
+		    physical_device->rad_info.family == CHIP_NAVI12 ||
+		    physical_device->rad_info.family == CHIP_NAVI14) {
+			/* SQ_NON_EVENT must be emitted before GE_PC_ALLOC is written. */
+			radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+			radeon_emit(cs, EVENT_TYPE(V_028A90_SQ_NON_EVENT) | EVENT_INDEX(0));
+		}
+
+		/* TODO: For culling, replace 128 with 256. */
+		radeon_set_uconfig_reg(cs, R_030980_GE_PC_ALLOC,
+				       S_030980_OVERSUB_EN(1) |
+				       S_030980_NUM_PC_LINES(128 * physical_device->rad_info.max_se - 1));
 	}
 
 	if (physical_device->rad_info.chip_class >= GFX8) {
@@ -878,8 +898,7 @@ gfx10_cs_emit_cache_flush(struct radeon_cmdbuf *cs,
 	unsigned cb_db_event = 0;
 
 	/* We don't need these. */
-	assert(!(flush_bits & (RADV_CMD_FLAG_VGT_FLUSH |
-			       RADV_CMD_FLAG_VGT_STREAMOUT_SYNC)));
+	assert(!(flush_bits & (RADV_CMD_FLAG_VGT_STREAMOUT_SYNC)));
 
 	if (flush_bits & RADV_CMD_FLAG_INV_ICACHE)
 		gcr_cntl |= S_586_GLI_INV(V_586_GLI_ALL);
@@ -996,6 +1015,12 @@ gfx10_cs_emit_cache_flush(struct radeon_cmdbuf *cs,
 
 		radv_cp_wait_mem(cs, WAIT_REG_MEM_EQUAL, flush_va,
 				 *flush_cnt, 0xffffffff);
+	}
+
+	/* VGT state sync */
+	if (flush_bits & RADV_CMD_FLAG_VGT_FLUSH) {
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
 	}
 
 	/* Ignore fields that only modify the behavior of other fields. */

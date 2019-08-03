@@ -367,10 +367,10 @@ emit_color_clear(struct radv_cmd_buffer *cmd_buffer,
 {
 	struct radv_device *device = cmd_buffer->device;
 	const struct radv_subpass *subpass = cmd_buffer->state.subpass;
-	const struct radv_framebuffer *fb = cmd_buffer->state.framebuffer;
 	const uint32_t subpass_att = clear_att->colorAttachment;
 	const uint32_t pass_att = subpass->color_attachments[subpass_att].attachment;
-	const struct radv_image_view *iview = fb ? fb->attachments[pass_att].attachment : NULL;
+	const struct radv_image_view *iview = cmd_buffer->state.attachments ?
+		cmd_buffer->state.attachments[pass_att].iview : NULL;
 	uint32_t samples, samples_log2;
 	VkFormat format;
 	unsigned fs_key;
@@ -721,11 +721,11 @@ emit_depthstencil_clear(struct radv_cmd_buffer *cmd_buffer,
 	struct radv_device *device = cmd_buffer->device;
 	struct radv_meta_state *meta_state = &device->meta_state;
 	const struct radv_subpass *subpass = cmd_buffer->state.subpass;
-	const struct radv_framebuffer *fb = cmd_buffer->state.framebuffer;
 	const uint32_t pass_att = ds_att->attachment;
 	VkClearDepthStencilValue clear_value = clear_att->clearValue.depthStencil;
 	VkImageAspectFlags aspects = clear_att->aspectMask;
-	const struct radv_image_view *iview = fb ? fb->attachments[pass_att].attachment : NULL;
+	const struct radv_image_view *iview = cmd_buffer->state.attachments ?
+		cmd_buffer->state.attachments[pass_att].iview : NULL;
 	uint32_t samples, samples_log2;
 	VkCommandBuffer cmd_buffer_h = radv_cmd_buffer_to_handle(cmd_buffer);
 
@@ -1005,7 +1005,7 @@ radv_can_fast_clear_depth(struct radv_cmd_buffer *cmd_buffer,
 	if (!view_mask && clear_rect->layerCount != iview->image->info.array_size)
 		return false;
 
-	if (cmd_buffer->device->physical_device->rad_info.chip_class < GFX9 &&
+	if (cmd_buffer->device->physical_device->rad_info.chip_class != GFX9 &&
 	    (!(aspects & VK_IMAGE_ASPECT_DEPTH_BIT) ||
 	    ((vk_format_aspects(iview->image->vk_format) & VK_IMAGE_ASPECT_STENCIL_BIT) &&
 	     !(aspects & VK_IMAGE_ASPECT_STENCIL_BIT))))
@@ -1048,7 +1048,8 @@ radv_fast_clear_depth(struct radv_cmd_buffer *cmd_buffer,
 					      iview->image->planes[0].surface.htile_size, clear_word);
 	} else {
 		/* Only clear depth or stencil bytes in the HTILE buffer. */
-		assert(cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9);
+		/* TODO: Implement that path for GFX10. */
+		assert(cmd_buffer->device->physical_device->rad_info.chip_class == GFX9);
 		flush_bits = clear_htile_mask(cmd_buffer, iview->image->bo,
 					      iview->image->offset + iview->image->htile_offset,
 					      iview->image->planes[0].surface.htile_size, clear_word,
@@ -1329,15 +1330,18 @@ radv_clear_cmask(struct radv_cmd_buffer *cmd_buffer,
 		 struct radv_image *image,
 		 const VkImageSubresourceRange *range, uint32_t value)
 {
-	uint64_t offset = image->offset + image->cmask.offset;
+	uint64_t offset = image->offset + image->cmask_offset;
 	uint64_t size;
 
 	if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9) {
 		/* TODO: clear layers. */
-		size = image->cmask.size;
+		size = image->planes[0].surface.cmask_size;
 	} else {
-		offset += image->cmask.slice_size * range->baseArrayLayer;
-		size = image->cmask.slice_size * radv_get_layerCount(image, range);
+		unsigned cmask_slice_size =
+			image->planes[0].surface.cmask_slice_size;
+
+		offset += cmask_slice_size * range->baseArrayLayer;
+		size = cmask_slice_size * radv_get_layerCount(image, range);
 	}
 
 	return radv_fill_buffer(cmd_buffer, image->bo, offset, size, value);
@@ -1349,7 +1353,7 @@ radv_clear_fmask(struct radv_cmd_buffer *cmd_buffer,
 		 struct radv_image *image,
 		 const VkImageSubresourceRange *range, uint32_t value)
 {
-	uint64_t offset = image->offset + image->fmask.offset;
+	uint64_t offset = image->offset + image->fmask_offset;
 	uint64_t size;
 
 	/* MSAA images do not support mipmap levels. */
@@ -1358,10 +1362,14 @@ radv_clear_fmask(struct radv_cmd_buffer *cmd_buffer,
 
 	if (cmd_buffer->device->physical_device->rad_info.chip_class >= GFX9) {
 		/* TODO: clear layers. */
-		size = image->fmask.size;
+		size = image->planes[0].surface.fmask_size;
 	} else {
-		offset += image->fmask.slice_size * range->baseArrayLayer;
-		size = image->fmask.slice_size * radv_get_layerCount(image, range);
+		unsigned fmask_slice_size =
+			image->planes[0].surface.u.legacy.fmask.slice_size;
+
+
+		offset += fmask_slice_size * range->baseArrayLayer;
+		size = fmask_slice_size * radv_get_layerCount(image, range);
 	}
 
 	return radv_fill_buffer(cmd_buffer, image->bo, offset, size, value);
@@ -1671,7 +1679,7 @@ emit_clear(struct radv_cmd_buffer *cmd_buffer,
 			return;
 
 		VkImageLayout image_layout = subpass->color_attachments[subpass_att].layout;
-		const struct radv_image_view *iview = fb ? fb->attachments[pass_att].attachment : NULL;
+		const struct radv_image_view *iview = fb ? cmd_buffer->state.attachments[pass_att].iview : NULL;
 		VkClearColorValue clear_value = clear_att->clearValue.color;
 
 		if (radv_can_fast_clear_color(cmd_buffer, iview, image_layout,
@@ -1692,7 +1700,7 @@ emit_clear(struct radv_cmd_buffer *cmd_buffer,
 			return;
 
 		VkImageLayout image_layout = ds_att->layout;
-		const struct radv_image_view *iview = fb ? fb->attachments[ds_att->attachment].attachment : NULL;
+		const struct radv_image_view *iview = fb ? cmd_buffer->state.attachments[ds_att->attachment].iview : NULL;
 		VkClearDepthStencilValue clear_value = clear_att->clearValue.depthStencil;
 
 		assert(aspects & (VK_IMAGE_ASPECT_DEPTH_BIT |

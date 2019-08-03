@@ -197,7 +197,7 @@ panfrost_drm_import_bo(struct panfrost_screen *screen, int fd)
 {
         struct panfrost_bo *bo = rzalloc(screen, struct panfrost_bo);
         struct drm_panfrost_get_bo_offset get_bo_offset = {0,};
-        MAYBE_UNUSED int ret;
+        ASSERTED int ret;
         unsigned gem_handle;
 
         ret = drmPrimeFDToHandle(screen->fd, fd, &gem_handle);
@@ -288,7 +288,7 @@ panfrost_drm_submit_vs_fs_job(struct panfrost_context *ctx, bool has_draws, bool
         panfrost_job_add_bo(job, ctx->shaders.bo);
         panfrost_job_add_bo(job, ctx->scratchpad.bo);
         panfrost_job_add_bo(job, ctx->tiler_heap.bo);
-        panfrost_job_add_bo(job, ctx->tiler_polygon_list.bo);
+        panfrost_job_add_bo(job, job->polygon_list);
 
         if (job->first_job.gpu) {
                 ret = panfrost_drm_submit_job(ctx, job->first_job.gpu, 0);
@@ -355,7 +355,7 @@ unsigned
 panfrost_drm_query_gpu_version(struct panfrost_screen *screen)
 {
         struct drm_panfrost_get_param get_param = {0,};
-        MAYBE_UNUSED int ret;
+        ASSERTED int ret;
 
         get_param.param = DRM_PANFROST_PARAM_GPU_PROD_ID;
         ret = drmIoctl(screen->fd, DRM_IOCTL_PANFROST_GET_PARAM, &get_param);

@@ -255,6 +255,7 @@ endif
 
 if host_machine.system() == 'darwin'
   with_dri_platform = 'apple'
+  pre_args += '-DBUILDING_MESA'
 elif ['windows', 'cygwin'].contains(host_machine.system())
   with_dri_platform = 'windows'
 elif system_has_kms_drm
@@ -1033,11 +1034,18 @@ foreach h : ['xlocale.h', 'sys/sysctl.h', 'linux/futex.h', 'endian.h', 'dlfcn.h'
   endif
 endforeach
 
-foreach f : ['strtof', 'mkostemp', 'posix_memalign', 'timespec_get', 'memfd_create']
+foreach f : ['strtof', 'mkostemp', 'posix_memalign', 'timespec_get', 'memfd_create', 'random_r']
   if cc.has_function(f)
     pre_args += '-DHAVE_@0@'.format(f.to_upper())
   endif
 endforeach
+
+if cc.has_header_symbol('errno.h', 'program_invocation_name',
+                        args : '-D_GNU_SOURCE')
+   pre_args += '-DHAVE_PROGRAM_INVOCATION_NAME'
+elif with_tools.contains('intel')
+  error('Intel tools require the program_invocation_name variable')
+endif
 
 # strtod locale support
 if cc.links('''

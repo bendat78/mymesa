@@ -740,15 +740,18 @@ print_extended_branch_writeout_field(uint8_t *words)
 
         print_branch_op(br.op);
 
-        /* Condition repeated 8 times in all known cases. Check this. */
+        /* Condition codes are a LUT in the general case, but simply repeated 8 times for single-channel conditions.. Check this. */
 
-        unsigned cond = br.cond & 0x3;
+        bool single_channel = true;
 
         for (unsigned i = 0; i < 16; i += 2) {
-                assert(((br.cond >> i) & 0x3) == cond);
+                single_channel &= (((br.cond >> i) & 0x3) == (br.cond & 0x3));
         }
 
-        print_branch_cond(cond);
+        if (single_channel)
+                print_branch_cond(br.cond & 0x3);
+        else
+                printf("lut%X", br.cond);
 
         if (br.unknown)
                 printf(".unknown%d", br.unknown);
@@ -966,6 +969,19 @@ is_op_varying(unsigned op)
 }
 
 static void
+print_load_store_arg(uint8_t arg)
+{
+        /* Try to interpret as a register */
+        midgard_ldst_register_select sel;
+        memcpy(&sel, &arg, sizeof(arg));
+
+        unsigned reg = REGISTER_LDST_BASE + sel.select;
+        char comp = components[sel.component];
+
+        printf("r%d.%c /* 0x%X */", reg, comp, arg);
+}
+
+static void
 print_load_store_instr(uint64_t data,
                        unsigned tabs)
 {
@@ -995,7 +1011,11 @@ print_load_store_instr(uint64_t data,
 
         print_swizzle_vec4(word->swizzle, false, false);
 
-        printf(", 0x%X /* %X */\n", word->unknown, word->varying_parameters);
+        printf(", ");
+        print_load_store_arg(word->arg_1);
+        printf(", ");
+        print_load_store_arg(word->arg_2);
+        printf(" /* %X */\n", word->varying_parameters);
 }
 
 static void
@@ -1074,9 +1094,11 @@ print_texture_op(unsigned op, bool gather)
                 DEFINE_CASE(TEXTURE_OP_NORMAL, "texture");
                 DEFINE_CASE(TEXTURE_OP_LOD, "textureLod");
                 DEFINE_CASE(TEXTURE_OP_TEXEL_FETCH, "texelFetch");
+                DEFINE_CASE(TEXTURE_OP_DFDX, "dFdx");
+                DEFINE_CASE(TEXTURE_OP_DFDY, "dFdy");
 
         default:
-                printf("tex_%d", op);
+                printf("tex_%X", op);
                 break;
         }
 }
@@ -1128,6 +1150,9 @@ print_texture_word(uint32_t *word, unsigned tabs)
 
         if (texture->last)
                 printf(".last");
+
+        /* Output modifiers are always interpreted floatly */
+        print_outmod(texture->outmod, false);
 
         printf(" ");
 
@@ -1241,11 +1266,9 @@ print_texture_word(uint32_t *word, unsigned tabs)
         /* While not zero in general, for these simple instructions the
          * following unknowns are zero, so we don't include them */
 
-        if (texture->unknown2 ||
-            texture->unknown4 ||
+        if (texture->unknown4 ||
             texture->unknownA ||
             texture->unknown8) {
-                printf("// unknown2 = 0x%x\n", texture->unknown2);
                 printf("// unknown4 = 0x%x\n", texture->unknown4);
                 printf("// unknownA = 0x%x\n", texture->unknownA);
                 printf("// unknown8 = 0x%x\n", texture->unknown8);

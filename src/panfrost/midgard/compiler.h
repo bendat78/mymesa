@@ -71,12 +71,9 @@ typedef struct midgard_branch {
  * registers. Negative values mean unused. */
 
 typedef struct {
-        int src0;
-        int src1;
+        int src[3];
         int dest;
 
-        /* src1 is -not- SSA but instead a 16-bit inline constant to be smudged
-         * in. Only valid for ALU ops. */
         bool inline_constant;
 } ssa_args;
 
@@ -160,11 +157,9 @@ typedef struct midgard_block {
         /* Number of quadwords _actually_ emitted, as determined after scheduling */
         unsigned quadword_count;
 
-        /* Successors: always one forward (the block after us), maybe
-         * one backwards (for a backward branch). No need for a second
-         * forward, since graph traversal would get there eventually
-         * anyway */
-        struct midgard_block *successors[2];
+        /* Succeeding blocks. The compiler should not necessarily rely on
+         * source-order traversal */
+        struct midgard_block *successors[4];
         unsigned nr_successors;
 
         /* The successors pointer form a graph, and in the case of
@@ -221,12 +216,11 @@ typedef struct compiler_context {
         int block_count;
         struct list_head blocks;
 
-        midgard_block *initial_block;
-        midgard_block *previous_source_block;
-        midgard_block *final_block;
-
         /* List of midgard_instructions emitted for the current block */
         midgard_block *current_block;
+
+        /* If there is a preset after block, use this, otherwise emit_block will create one if NULL */
+        midgard_block *after_block;
 
         /* The current "depth" of the loop, for disambiguating breaks/continues
          * when using nested loops */
@@ -387,6 +381,42 @@ make_compiler_temp(compiler_context *ctx)
         return (ctx->func->impl->ssa_alloc + ctx->temp_alloc++) << 1;
 }
 
+static inline unsigned
+make_compiler_temp_reg(compiler_context *ctx)
+{
+        return ((ctx->func->impl->reg_alloc + ctx->temp_alloc++) << 1) | IS_REG;
+}
+
+static inline unsigned
+nir_src_index(compiler_context *ctx, nir_src *src)
+{
+        if (src->is_ssa)
+                return (src->ssa->index << 1) | 0;
+        else {
+                assert(!src->reg.indirect);
+                return (src->reg.reg->index << 1) | IS_REG;
+        }
+}
+
+static inline unsigned
+nir_alu_src_index(compiler_context *ctx, nir_alu_src *src)
+{
+        return nir_src_index(ctx, &src->src);
+}
+
+static inline unsigned
+nir_dest_index(compiler_context *ctx, nir_dest *dst)
+{
+        if (dst->is_ssa)
+                return (dst->ssa.index << 1) | 0;
+        else {
+                assert(!dst->reg.indirect);
+                return (dst->reg.reg->index << 1) | IS_REG;
+        }
+}
+
+
+
 /* MIR manipulation */
 
 void mir_rewrite_index(compiler_context *ctx, unsigned old, unsigned new);
@@ -395,6 +425,7 @@ void mir_rewrite_index_dst(compiler_context *ctx, unsigned old, unsigned new);
 void mir_rewrite_index_dst_tag(compiler_context *ctx, unsigned old, unsigned new, unsigned tag);
 void mir_rewrite_index_src_single(midgard_instruction *ins, unsigned old, unsigned new);
 void mir_rewrite_index_src_tag(compiler_context *ctx, unsigned old, unsigned new, unsigned tag);
+void mir_rewrite_index_src_swizzle(compiler_context *ctx, unsigned old, unsigned new, unsigned swizzle);
 bool mir_single_use(compiler_context *ctx, unsigned value);
 bool mir_special_index(compiler_context *ctx, unsigned idx);
 unsigned mir_use_count(compiler_context *ctx, unsigned value);
@@ -407,8 +438,8 @@ void mir_print_instruction(midgard_instruction *ins);
 void mir_print_bundle(midgard_bundle *ctx);
 void mir_print_block(midgard_block *block);
 void mir_print_shader(compiler_context *ctx);
-bool mir_nontrivial_raw_mod(midgard_vector_alu_src src, bool is_int);
 bool mir_nontrivial_source2_mod(midgard_instruction *ins);
+bool mir_nontrivial_source2_mod_simple(midgard_instruction *ins);
 bool mir_nontrivial_mod(midgard_vector_alu_src src, bool is_int, unsigned mask);
 bool mir_nontrivial_outmod(midgard_instruction *ins);
 
@@ -438,8 +469,7 @@ v_mov(unsigned src, midgard_vector_alu_src mod, unsigned dest)
                 .type = TAG_ALU_4,
                 .mask = 0xF,
                 .ssa_args = {
-                        .src0 = SSA_UNUSED_1,
-                        .src1 = src,
+                        .src = { SSA_UNUSED_1, src, -1 },
                         .dest = dest,
                 },
                 .alu = {
@@ -458,11 +488,10 @@ v_mov(unsigned src, midgard_vector_alu_src mod, unsigned dest)
 static inline bool
 mir_has_arg(midgard_instruction *ins, unsigned arg)
 {
-        if (ins->ssa_args.src0 == arg)
-                return true;
-
-        if (ins->ssa_args.src1 == arg && !ins->ssa_args.inline_constant)
-                return true;
+        for (unsigned i = 0; i < ARRAY_SIZE(ins->ssa_args.src); ++i) {
+                if (ins->ssa_args.src[i] == arg)
+                        return true;
+        }
 
         return false;
 }
@@ -495,7 +524,7 @@ bool mir_has_multiple_writes(compiler_context *ctx, int src);
 void mir_create_pipeline_registers(compiler_context *ctx);
 
 void
-midgard_promote_uniforms(compiler_context *ctx, unsigned pressure);
+midgard_promote_uniforms(compiler_context *ctx, unsigned promoted_count);
 
 void
 emit_ubo_read(
@@ -505,6 +534,13 @@ emit_ubo_read(
         nir_src *indirect_offset,
         unsigned index);
 
+void
+midgard_emit_derivatives(compiler_context *ctx, nir_alu_instr *instr);
+
+void
+midgard_lower_derivatives(compiler_context *ctx, midgard_block *block);
+
+bool mir_op_computes_derivatives(unsigned op);
 
 /* Final emission */
 
@@ -532,5 +568,8 @@ bool midgard_opt_dead_move_eliminate(compiler_context *ctx, midgard_block *block
 void midgard_opt_post_move_eliminate(compiler_context *ctx, midgard_block *block, struct ra_graph *g);
 
 void midgard_lower_invert(compiler_context *ctx, midgard_block *block);
+bool midgard_opt_not_propagate(compiler_context *ctx, midgard_block *block);
+bool midgard_opt_fuse_src_invert(compiler_context *ctx, midgard_block *block);
+bool midgard_opt_fuse_dest_invert(compiler_context *ctx, midgard_block *block);
 
 #endif

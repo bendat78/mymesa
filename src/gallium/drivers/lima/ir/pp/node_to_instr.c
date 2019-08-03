@@ -42,14 +42,6 @@ static bool insert_to_load_tex(ppir_block *block, ppir_node *load_coords, ppir_n
    ppir_dest *dest = ppir_node_get_dest(ldtex);
    ppir_node *move = NULL;
 
-   ppir_load_node *load = ppir_node_to_load(load_coords);
-   load->dest.type = ppir_target_pipeline;
-   load->dest.pipeline = ppir_pipeline_reg_discard;
-
-   ppir_load_texture_node *load_texture = ppir_node_to_load_texture(ldtex);
-   load_texture->src_coords.type = ppir_target_pipeline;
-   load_texture->src_coords.pipeline = ppir_pipeline_reg_discard;
-
    /* Insert load_coords to ldtex instruction */
    if (!ppir_instr_insert_node(ldtex->instr, load_coords))
       return false;
@@ -123,7 +115,7 @@ static bool insert_to_each_succ_instr(ppir_block *block, ppir_node *node)
       if (!create_new_instr(block, move))
          return false;
 
-      MAYBE_UNUSED bool insert_result =
+      ASSERTED bool insert_result =
          ppir_instr_insert_node(move->instr, node);
       assert(insert_result);
 
@@ -241,7 +233,8 @@ static bool ppir_do_node_to_instr(ppir_block *block, ppir_node *node)
       }
       else if (node->op == ppir_op_load_varying ||
                node->op == ppir_op_load_fragcoord ||
-               node->op == ppir_op_load_pointcoord) {
+               node->op == ppir_op_load_pointcoord ||
+               node->op == ppir_op_load_frontface) {
          /* delay the load varying dup to scheduler */
          if (!create_new_instr(block, node))
             return false;

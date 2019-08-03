@@ -115,7 +115,11 @@ virgl_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
       return vscreen->caps.caps.v1.bset.fragment_coord_conventions;
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
-      return vscreen->caps.caps.v1.bset.depth_clip_disable;
+      if (vscreen->caps.caps.v1.bset.depth_clip_disable)
+         return 1;
+      if (vscreen->caps.caps.v2.host_feature_check_version >= 3)
+         return 2;
+      return 0;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
       return vscreen->caps.caps.v1.max_streamout_buffers;
    case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
@@ -550,7 +554,7 @@ has_format_bit(struct virgl_supported_format_mask *mask,
    unsigned idx = val / 32;
    unsigned bit = val % 32;
    assert(idx < ARRAY_SIZE(mask->bitmask));
-   return (mask->bitmask[val / 32] & (1u << bit)) != 0;
+   return (mask->bitmask[idx] & (1u << bit)) != 0;
 }
 
 bool

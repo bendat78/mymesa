@@ -313,6 +313,34 @@
       <param name="texture" type="GLuint" />
    </function>
 
+  <function name="EnableClientStateIndexedEXT" alias="EnableClientStateiEXT">
+      <param name="array" type="GLenum" />
+      <param name="index" type="GLuint" />
+   </function>
+
+  <function name="DisableClientStateIndexedEXT" alias="DisableClientStateiEXT">
+      <param name="array" type="GLenum" />
+      <param name="index" type="GLuint" />
+   </function>
+
+   <function name="GetFloatIndexedvEXT" alias="GetFloati_v">
+      <param name="target" type="GLenum" />
+      <param name="index" type="GLuint" />
+      <param name="params" type="GLfloat*" />
+   </function>
+
+   <function name="GetDoubleIndexedvEXT" alias="GetDoublei_v">
+      <param name="target" type="GLenum" />
+      <param name="index" type="GLuint" />
+      <param name="params" type="GLdouble*" />
+   </function>
+
+   <function name="GetPointerIndexedvEXT">
+      <param name="target" type="GLenum" />
+      <param name="index" type="GLuint" />
+      <param name="params" type="GLvoid**" />
+   </function>
+
    <!-- OpenGL 1.3 -->
 
    <function name="MatrixLoadTransposefEXT" offset="assign">
@@ -375,6 +403,31 @@
       <param name="buffer" type="GLuint" />
    </function>
 
+   <function name="GetNamedBufferSubDataEXT">
+      <param name="buffer" type="GLuint" />
+      <param name="offset" type="GLintptr" />
+      <param name="size" type="GLsizeiptr" />
+      <param name="data" type="GLvoid *" />
+   </function>
+
+   <function name="GetNamedBufferPointervEXT">
+      <param name="buffer" type="GLuint" />
+      <param name="pname" type="GLenum" />
+      <param name="params" type="GLvoid **" />
+   </function>
+
+   <function name="GetNamedBufferParameterivEXT">
+      <param name="buffer" type="GLuint" />
+      <param name="pname" type="GLenum" />
+      <param name="params" type="GLint *" />
+   </function>
+
+   <function name="FlushMappedNamedBufferRangeEXT">
+      <param name="buffer" type="GLuint" />
+      <param name="offset" type="GLintptr" />
+      <param name="length" type="GLsizeiptr" />
+   </function>
+
    <!-- OpenGL 3.0 -->
 
    <function name="MapNamedBufferRangeEXT">
@@ -385,5 +438,87 @@
       <param name="access" type="GLbitfield" />
    </function>
 
+   <function name="FramebufferDrawBufferEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="mode" type="GLenum" />
+   </function>
+
+   <function name="FramebufferDrawBuffersEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="n" type="GLsizei" />
+      <param name="bufs" type="const GLenum *" />
+   </function>
+
+   <function name="FramebufferReadBufferEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="mode" type="GLenum" />
+   </function>
+
+   <function name="GetFramebufferParameterivEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="pname" type="GLenum" />
+      <param name="param" type="GLint *" />
+   </function>
+
+   <function name="CheckNamedFramebufferStatusEXT">
+      <return type="GLenum" />
+      <param name="framebuffer" type="GLuint" />
+      <param name="target" type="GLenum" />
+   </function>
+
+   <function name="NamedFramebufferTexture1DEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="attachment" type="GLenum" />
+      <param name="textarget" type="GLenum" />
+      <param name="texture" type="GLuint" />
+      <param name="level" type="GLint" />
+   </function>
+
+   <function name="NamedFramebufferTexture2DEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="attachment" type="GLenum" />
+      <param name="textarget" type="GLenum" />
+      <param name="texture" type="GLuint" />
+      <param name="level" type="GLint" />
+   </function>
+
+   <function name="NamedFramebufferTexture3DEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="attachment" type="GLenum" />
+      <param name="textarget" type="GLenum" />
+      <param name="texture" type="GLuint" />
+      <param name="level" type="GLint" />
+      <param name="zoffset" type="GLint" />
+   </function>
+
+   <function name="NamedFramebufferRenderbufferEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="attachment" type="GLenum" />
+      <param name="renderbuffertarget" type="GLenum" />
+      <param name="renderbuffer" type="GLuint" />
+   </function>
+
+   <function name="GetNamedFramebufferAttachmentParameterivEXT">
+      <param name="framebuffer" type="GLuint" />
+      <param name="attachment" type="GLenum" />
+      <param name="pname" type="GLenum" />
+      <param name="params" type="GLint *" />
+   </function>
+
+   <function name="EnableClientStateiEXT">
+      <param name="array" type="GLenum" />
+      <param name="index" type="GLuint" />
+   </function>
+
+   <function name="DisableClientStateiEXT">
+      <param name="array" type="GLenum" />
+      <param name="index" type="GLuint" />
+   </function>
+
+   <function name="GetPointeri_vEXT" alias="GetPointerIndexedvEXT">
+      <param name="target" type="GLenum" />
+      <param name="index" type="GLuint" />
+      <param name="params" type="GLvoid**" />
+   </function>
 </category>
 </OpenGLAPI>

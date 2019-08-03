@@ -1782,7 +1782,7 @@ calculate_ngg_info(const VkGraphicsPipelineCreateInfo *pCreateInfo,
 
 	/* Round up towards full wave sizes for better ALU utilization. */
 	if (!max_vert_out_per_gs_instance) {
-		const unsigned wavesize = 64;
+		const unsigned wavesize = pipeline->device->physical_device->ge_wave_size;
 		unsigned orig_max_esverts;
 		unsigned orig_max_gsprims;
 		do {
@@ -2626,7 +2626,8 @@ void radv_create_shaders(struct radv_pipeline *pipeline,
 
 	if(modules[MESA_SHADER_GEOMETRY]) {
 		struct radv_shader_binary *gs_copy_binary = NULL;
-		if (!pipeline->gs_copy_shader) {
+		if (!pipeline->gs_copy_shader &&
+		    !radv_pipeline_has_ngg(pipeline)) {
 			pipeline->gs_copy_shader = radv_create_gs_copy_shader(
 					device, nir[MESA_SHADER_GEOMETRY], &gs_copy_binary,
 					keys[MESA_SHADER_GEOMETRY].has_multiview_view_index);
@@ -3456,18 +3457,6 @@ radv_pipeline_generate_vgt_gs_mode(struct radeon_cmdbuf *ctx_cs,
 }
 
 static void
-gfx10_set_ge_pc_alloc(struct radeon_cmdbuf *ctx_cs,
-		      struct radv_pipeline *pipeline,
-		      bool culling)
-{
-	struct radeon_info *info = &pipeline->device->physical_device->rad_info;
-
-	radeon_set_uconfig_reg(ctx_cs, R_030980_GE_PC_ALLOC,
-			       S_030980_OVERSUB_EN(1) |
-			       S_030980_NUM_PC_LINES((culling ? 256 : 128) * info->max_se - 1));
-}
-
-static void
 radv_pipeline_generate_hw_vs(struct radeon_cmdbuf *ctx_cs,
 			     struct radeon_cmdbuf *cs,
 			     struct radv_pipeline *pipeline,
@@ -3533,9 +3522,6 @@ radv_pipeline_generate_hw_vs(struct radeon_cmdbuf *ctx_cs,
 	if (pipeline->device->physical_device->rad_info.chip_class <= GFX8)
 		radeon_set_context_reg(ctx_cs, R_028AB4_VGT_REUSE_OFF,
 		                       outinfo->writes_viewport_index);
-
-	if (pipeline->device->physical_device->rad_info.chip_class >= GFX10)
-		gfx10_set_ge_pc_alloc(ctx_cs, pipeline, false);
 }
 
 static void
@@ -3606,6 +3592,7 @@ radv_pipeline_generate_hw_ngg(struct radeon_cmdbuf *ctx_cs,
 	bool es_enable_prim_id = outinfo->export_prim_id ||
 				 (es && es->info.info.uses_prim_id);
 	bool break_wave_at_eoi = false;
+	unsigned ge_cntl;
 	unsigned nparams;
 
 	if (es_type == MESA_SHADER_TESS_EVAL) {
@@ -3655,12 +3642,6 @@ radv_pipeline_generate_hw_ngg(struct radeon_cmdbuf *ctx_cs,
 			       S_028A84_PRIMITIVEID_EN(es_enable_prim_id) |
 			       S_028A84_NGG_DISABLE_PROVOK_REUSE(es_enable_prim_id));
 
-	bool vgt_reuse_off = pipeline->device->physical_device->rad_info.family == CHIP_NAVI10 &&
-			     pipeline->device->physical_device->rad_info.chip_external_rev == 0x1 &&
-			     es_type == MESA_SHADER_TESS_EVAL;
-
-	radeon_set_context_reg(ctx_cs, R_028AB4_VGT_REUSE_OFF,
-			       S_028AB4_REUSE_OFF(vgt_reuse_off));
 	radeon_set_context_reg(ctx_cs, R_028AAC_VGT_ESGS_RING_ITEMSIZE,
 			       ngg_state->vgt_esgs_ring_itemsize);
 
@@ -3694,12 +3675,28 @@ radv_pipeline_generate_hw_ngg(struct radeon_cmdbuf *ctx_cs,
 			       S_028838_INDEX_BUF_EDGE_FLAG_ENA(!radv_pipeline_has_tess(pipeline) &&
 			                                        !radv_pipeline_has_gs(pipeline)));
 
-	radeon_set_uconfig_reg(ctx_cs, R_03096C_GE_CNTL,
-			       S_03096C_PRIM_GRP_SIZE(ngg_state->max_gsprims) |
-			       S_03096C_VERT_GRP_SIZE(ngg_state->hw_max_esverts) |
-			       S_03096C_BREAK_WAVE_AT_EOI(break_wave_at_eoi));
+	ge_cntl = S_03096C_PRIM_GRP_SIZE(ngg_state->max_gsprims) |
+		  S_03096C_VERT_GRP_SIZE(ngg_state->hw_max_esverts) |
+		  S_03096C_BREAK_WAVE_AT_EOI(break_wave_at_eoi);
 
-	gfx10_set_ge_pc_alloc(ctx_cs, pipeline, false);
+	/* Bug workaround for a possible hang with non-tessellation cases.
+	 * Tessellation always sets GE_CNTL.VERT_GRP_SIZE = 0
+	 *
+	 * Requirement: GE_CNTL.VERT_GRP_SIZE = VGT_GS_ONCHIP_CNTL.ES_VERTS_PER_SUBGRP - 5
+	 */
+	if ((pipeline->device->physical_device->rad_info.family == CHIP_NAVI10 ||
+	     pipeline->device->physical_device->rad_info.family == CHIP_NAVI12 ||
+	     pipeline->device->physical_device->rad_info.family == CHIP_NAVI14) &&
+	    !radv_pipeline_has_tess(pipeline) &&
+	    ngg_state->hw_max_esverts != 256) {
+		ge_cntl &= C_03096C_VERT_GRP_SIZE;
+
+		if (ngg_state->hw_max_esverts > 5) {
+			ge_cntl |= S_03096C_VERT_GRP_SIZE(ngg_state->hw_max_esverts - 5);
+		}
+	}
+
+	radeon_set_uconfig_reg(ctx_cs, R_03096C_GE_CNTL, ge_cntl);
 }
 
 static void
@@ -4063,7 +4060,8 @@ radv_pipeline_generate_fragment_shader(struct radeon_cmdbuf *ctx_cs,
 			       ps->config.spi_ps_input_addr);
 
 	radeon_set_context_reg(ctx_cs, R_0286D8_SPI_PS_IN_CONTROL,
-			       S_0286D8_NUM_INTERP(ps->info.fs.num_interp));
+			       S_0286D8_NUM_INTERP(ps->info.fs.num_interp) |
+			       S_0286D8_PS_W32_EN(pipeline->device->physical_device->ps_wave_size == 32));
 
 	radeon_set_context_reg(ctx_cs, R_0286E0_SPI_BARYC_CNTL, pipeline->graphics.spi_baryc_cntl);
 
@@ -4126,6 +4124,14 @@ radv_compute_vgt_shader_stages_en(const struct radv_pipeline *pipeline)
 
 	if (pipeline->device->physical_device->rad_info.chip_class >= GFX9)
 		stages |= S_028B54_MAX_PRIMGRP_IN_WAVE(2);
+
+	if (pipeline->device->physical_device->rad_info.chip_class >= GFX10 &&
+	    pipeline->device->physical_device->ge_wave_size == 32) {
+		/* legacy GS only supports Wave64 */
+		stages |= S_028B54_HS_W32_EN(1) |
+			  S_028B54_GS_W32_EN(radv_pipeline_has_ngg(pipeline)) |
+			  S_028B54_VS_W32_EN(1);
+	}
 
 	return stages;
 }
@@ -4648,7 +4654,8 @@ radv_compute_generate_pm4(struct radv_pipeline *pipeline)
 	threads_per_threadgroup = compute_shader->info.cs.block_size[0] *
 				  compute_shader->info.cs.block_size[1] *
 				  compute_shader->info.cs.block_size[2];
-	waves_per_threadgroup = DIV_ROUND_UP(threads_per_threadgroup, 64);
+	waves_per_threadgroup = DIV_ROUND_UP(threads_per_threadgroup,
+					     device->physical_device->cs_wave_size);
 
 	if (device->physical_device->rad_info.chip_class >= GFX10 &&
 	    waves_per_threadgroup == 1)

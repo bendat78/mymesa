@@ -468,12 +468,17 @@ struct iris_vtable {
                                     const struct brw_vue_map *vue_map);
    void (*populate_vs_key)(const struct iris_context *ice,
                            const struct shader_info *info,
+                           gl_shader_stage last_stage,
                            struct brw_vs_prog_key *key);
    void (*populate_tcs_key)(const struct iris_context *ice,
                             struct brw_tcs_prog_key *key);
    void (*populate_tes_key)(const struct iris_context *ice,
+                            const struct shader_info *info,
+                            gl_shader_stage last_stage,
                             struct brw_tes_prog_key *key);
    void (*populate_gs_key)(const struct iris_context *ice,
+                           const struct shader_info *info,
+                           gl_shader_stage last_stage,
                            struct brw_gs_prog_key *key);
    void (*populate_fs_key)(const struct iris_context *ice,
                            const struct shader_info *info,
@@ -481,6 +486,7 @@ struct iris_vtable {
    void (*populate_cs_key)(const struct iris_context *ice,
                            struct brw_cs_prog_key *key);
    uint32_t (*mocs)(const struct iris_bo *bo);
+   void (*lost_genx_state)(struct iris_context *ice, struct iris_batch *batch);
 };
 
 /**

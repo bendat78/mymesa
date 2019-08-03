@@ -383,6 +383,23 @@ radv_physical_device_init(struct radv_physical_device *device,
 
 	device->use_shader_ballot = device->instance->perftest_flags & RADV_PERFTEST_SHADER_BALLOT;
 
+	/* Determine the number of threads per wave for all stages. */
+	device->cs_wave_size = 64;
+	device->ps_wave_size = 64;
+	device->ge_wave_size = 64;
+
+	if (device->rad_info.chip_class >= GFX10) {
+		if (device->instance->perftest_flags & RADV_PERFTEST_CS_WAVE_32)
+			device->cs_wave_size = 32;
+
+		/* For pixel shaders, wave64 is recommanded. */
+		if (device->instance->perftest_flags & RADV_PERFTEST_PS_WAVE_32)
+			device->ps_wave_size = 32;
+
+		if (device->instance->perftest_flags & RADV_PERFTEST_GE_WAVE_32)
+			device->ge_wave_size = 32;
+	}
+
 	radv_physical_device_init_mem_types(device);
 	radv_fill_device_extension_table(device, &device->supported_extensions);
 
@@ -494,6 +511,9 @@ static const struct debug_control radv_perftest_options[] = {
 	{"bolist", RADV_PERFTEST_BO_LIST},
 	{"shader_ballot", RADV_PERFTEST_SHADER_BALLOT},
 	{"tccompatcmask", RADV_PERFTEST_TC_COMPAT_CMASK},
+	{"cswave32", RADV_PERFTEST_CS_WAVE_32},
+	{"pswave32", RADV_PERFTEST_PS_WAVE_32},
+	{"gewave32", RADV_PERFTEST_GE_WAVE_32},
 	{NULL, 0}
 };
 
@@ -953,11 +973,8 @@ void radv_GetPhysicalDeviceFeatures2(
 		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR: {
 			VkPhysicalDeviceShaderAtomicInt64FeaturesKHR *features =
 				(VkPhysicalDeviceShaderAtomicInt64FeaturesKHR *)ext;
-			/* TODO: Enable this once the driver supports 64-bit
-			 * compare&swap atomic operations.
-			 */
-			features->shaderBufferInt64Atomics = false;
-			features->shaderSharedInt64Atomics = false;
+			features->shaderBufferInt64Atomics = HAVE_LLVM >= 0x0900;
+			features->shaderSharedInt64Atomics = HAVE_LLVM >= 0x0900;
 			break;
 		}
 		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES_EXT: {
@@ -985,6 +1002,18 @@ void radv_GetPhysicalDeviceFeatures2(
 			VkPhysicalDeviceUniformBufferStandardLayoutFeaturesKHR *features =
 				(VkPhysicalDeviceUniformBufferStandardLayoutFeaturesKHR *)ext;
 			features->uniformBufferStandardLayout = true;
+			break;
+		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT: {
+			VkPhysicalDeviceIndexTypeUint8FeaturesEXT *features =
+				(VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)ext;
+			features->indexTypeUint8 = pdevice->rad_info.chip_class >= GFX8;
+			break;
+		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES_KHR: {
+			VkPhysicalDeviceImagelessFramebufferFeaturesKHR *features =
+				(VkPhysicalDeviceImagelessFramebufferFeaturesKHR *)ext;
+			features->imagelessFramebuffer = true;
 			break;
 		}
 		default:
@@ -1863,6 +1892,9 @@ VkResult radv_CreateDevice(
 		device->enabled_extensions.EXT_descriptor_indexing ||
 		device->enabled_extensions.EXT_buffer_device_address;
 
+	device->robust_buffer_access = pCreateInfo->pEnabledFeatures &&
+	                               pCreateInfo->pEnabledFeatures->robustBufferAccess;
+
 	mtx_init(&device->shader_slab_mutex, mtx_plain);
 	list_inithead(&device->shader_slabs);
 
@@ -1924,7 +1956,8 @@ VkResult radv_CreateDevice(
 	device->scratch_waves = MAX2(32 * physical_device->rad_info.num_good_compute_units,
 				     max_threads_per_block / 64);
 
-	device->dispatch_initiator = S_00B800_COMPUTE_SHADER_EN(1);
+	device->dispatch_initiator = S_00B800_COMPUTE_SHADER_EN(1) |
+				     S_00B800_CS_W32_EN(device->physical_device->cs_wave_size == 32);
 
 	if (device->physical_device->rad_info.chip_class >= GFX7) {
 		/* If the KMD allows it (there is a KMD hw register for it),
@@ -4325,7 +4358,7 @@ radv_init_dcc_control_reg(struct radv_device *device,
 	       S_028C78_INDEPENDENT_128B_BLOCKS(independent_128b_blocks);
 }
 
-static void
+void
 radv_initialise_color_surface(struct radv_device *device,
 			      struct radv_color_buffer_info *cb,
 			      struct radv_image_view *iview)
@@ -4384,15 +4417,15 @@ radv_initialise_color_surface(struct radv_device *device,
 
 		cb->cb_color_pitch = S_028C64_TILE_MAX(pitch_tile_max);
 		cb->cb_color_slice = S_028C68_TILE_MAX(slice_tile_max);
-		cb->cb_color_cmask_slice = iview->image->cmask.slice_tile_max;
+		cb->cb_color_cmask_slice = surf->u.legacy.cmask_slice_tile_max;
 
 		cb->cb_color_attrib |= S_028C74_TILE_MODE_INDEX(tile_mode_index);
 
 		if (radv_image_has_fmask(iview->image)) {
 			if (device->physical_device->rad_info.chip_class >= GFX7)
-				cb->cb_color_pitch |= S_028C64_FMASK_TILE_MAX(iview->image->fmask.pitch_in_pixels / 8 - 1);
-			cb->cb_color_attrib |= S_028C74_FMASK_TILE_MODE_INDEX(iview->image->fmask.tile_mode_index);
-			cb->cb_color_fmask_slice = S_028C88_TILE_MAX(iview->image->fmask.slice_tile_max);
+				cb->cb_color_pitch |= S_028C64_FMASK_TILE_MAX(surf->u.legacy.fmask.pitch_in_pixels / 8 - 1);
+			cb->cb_color_attrib |= S_028C74_FMASK_TILE_MODE_INDEX(surf->u.legacy.fmask.tiling_index);
+			cb->cb_color_fmask_slice = S_028C88_TILE_MAX(surf->u.legacy.fmask.slice_tile_max);
 		} else {
 			/* This must be set for fast clear to work without FMASK. */
 			if (device->physical_device->rad_info.chip_class >= GFX7)
@@ -4404,7 +4437,7 @@ radv_initialise_color_surface(struct radv_device *device,
 
 	/* CMASK variables */
 	va = radv_buffer_get_va(iview->bo) + iview->image->offset;
-	va += iview->image->cmask.offset;
+	va += iview->image->cmask_offset;
 	cb->cb_color_cmask = va >> 8;
 
 	va = radv_buffer_get_va(iview->bo) + iview->image->offset;
@@ -4433,9 +4466,9 @@ radv_initialise_color_surface(struct radv_device *device,
 	}
 
 	if (radv_image_has_fmask(iview->image)) {
-		va = radv_buffer_get_va(iview->bo) + iview->image->offset + iview->image->fmask.offset;
+		va = radv_buffer_get_va(iview->bo) + iview->image->offset + iview->image->fmask_offset;
 		cb->cb_color_fmask = va >> 8;
-		cb->cb_color_fmask |= iview->image->fmask.tile_swizzle;
+		cb->cb_color_fmask |= surf->fmask_tile_swizzle;
 	} else {
 		cb->cb_color_fmask = cb->cb_color_base;
 	}
@@ -4485,7 +4518,7 @@ radv_initialise_color_surface(struct radv_device *device,
 	if (radv_image_has_fmask(iview->image)) {
 		cb->cb_color_info |= S_028C70_COMPRESSION(1);
 		if (device->physical_device->rad_info.chip_class == GFX6) {
-			unsigned fmask_bankh = util_logbase2(iview->image->fmask.bank_height);
+			unsigned fmask_bankh = util_logbase2(surf->u.legacy.fmask.bankh);
 			cb->cb_color_attrib |= S_028C74_FMASK_BANK_HEIGHT(fmask_bankh);
 		}
 
@@ -4585,7 +4618,7 @@ radv_calc_decompress_on_z_planes(struct radv_device *device,
 	return max_zplanes;
 }
 
-static void
+void
 radv_initialise_ds_surface(struct radv_device *device,
 			   struct radv_ds_buffer_info *ds,
 			   struct radv_image_view *iview)
@@ -4779,11 +4812,15 @@ VkResult radv_CreateFramebuffer(
 {
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	struct radv_framebuffer *framebuffer;
+	const VkFramebufferAttachmentsCreateInfoKHR *imageless_create_info =
+		vk_find_struct_const(pCreateInfo->pNext,
+			FRAMEBUFFER_ATTACHMENTS_CREATE_INFO_KHR);
 
 	assert(pCreateInfo->sType == VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
 
-	size_t size = sizeof(*framebuffer) +
-		sizeof(struct radv_attachment_info) * pCreateInfo->attachmentCount;
+	size_t size = sizeof(*framebuffer);
+	if (!imageless_create_info)
+		size += sizeof(struct radv_image_view*) * pCreateInfo->attachmentCount;
 	framebuffer = vk_alloc2(&device->alloc, pAllocator, size, 8,
 				  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
 	if (framebuffer == NULL)
@@ -4793,18 +4830,23 @@ VkResult radv_CreateFramebuffer(
 	framebuffer->width = pCreateInfo->width;
 	framebuffer->height = pCreateInfo->height;
 	framebuffer->layers = pCreateInfo->layers;
-	for (uint32_t i = 0; i < pCreateInfo->attachmentCount; i++) {
-		VkImageView _iview = pCreateInfo->pAttachments[i];
-		struct radv_image_view *iview = radv_image_view_from_handle(_iview);
-		framebuffer->attachments[i].attachment = iview;
-		if (iview->aspect_mask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)) {
-			radv_initialise_ds_surface(device, &framebuffer->attachments[i].ds, iview);
-		} else {
-			radv_initialise_color_surface(device, &framebuffer->attachments[i].cb, iview);
+	if (imageless_create_info) {
+		for (unsigned i = 0; i < imageless_create_info->attachmentImageInfoCount; ++i) {
+			const VkFramebufferAttachmentImageInfoKHR *attachment =
+				imageless_create_info->pAttachmentImageInfos + i;
+			framebuffer->width = MIN2(framebuffer->width, attachment->width);
+			framebuffer->height = MIN2(framebuffer->height, attachment->height);
+			framebuffer->layers = MIN2(framebuffer->layers, attachment->layerCount);
 		}
-		framebuffer->width = MIN2(framebuffer->width, iview->extent.width);
-		framebuffer->height = MIN2(framebuffer->height, iview->extent.height);
-		framebuffer->layers = MIN2(framebuffer->layers, radv_surface_max_layer_count(iview));
+	} else {
+		for (uint32_t i = 0; i < pCreateInfo->attachmentCount; i++) {
+			VkImageView _iview = pCreateInfo->pAttachments[i];
+			struct radv_image_view *iview = radv_image_view_from_handle(_iview);
+			framebuffer->attachments[i] = iview;
+			framebuffer->width = MIN2(framebuffer->width, iview->extent.width);
+			framebuffer->height = MIN2(framebuffer->height, iview->extent.height);
+			framebuffer->layers = MIN2(framebuffer->layers, radv_surface_max_layer_count(iview));
+		}
 	}
 
 	*pFramebuffer = radv_framebuffer_to_handle(framebuffer);

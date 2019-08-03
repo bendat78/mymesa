@@ -48,10 +48,7 @@ pandecode = executable(
   files_pandecode,
   include_directories : [inc_common, inc_include, inc_src, inc_panfrost],
   dependencies : [
-    dep_thread,
-  ],
-  link_with : [
-    libmesa_util
+    idep_mesautil,
   ],
   build_by_default : true
 )
@@ -70,12 +67,11 @@ bifrost_compiler = executable(
     inc_panfrost,
  ],
   dependencies : [
-    dep_thread,
-    idep_nir
+    idep_nir,
+    idep_mesautil,
   ],
   link_with : [
     libglsl_standalone,
-    libmesa_util,
     libpanfrost_bifrost
   ],
   build_by_default : true

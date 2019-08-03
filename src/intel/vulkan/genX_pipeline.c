@@ -955,7 +955,7 @@ emit_ds_state(struct anv_pipeline *pipeline,
 #endif
 }
 
-MAYBE_UNUSED static bool
+static bool
 is_dual_src_blend_factor(VkBlendFactor factor)
 {
    return factor == VK_BLEND_FACTOR_SRC1_COLOR ||
@@ -1695,9 +1695,6 @@ emit_3dstate_wm(struct anv_pipeline *pipeline, struct anv_subpass *subpass,
 {
    const struct brw_wm_prog_data *wm_prog_data = get_wm_prog_data(pipeline);
 
-   MAYBE_UNUSED uint32_t samples =
-      multisample ? multisample->rasterizationSamples : 1;
-
    anv_batch_emit(&pipeline->batch, GENX(3DSTATE_WM), wm) {
       wm.StatisticsEnable                    = true;
       wm.LineEndCapAntialiasingRegionWidth   = _05pixels;
@@ -1760,7 +1757,7 @@ emit_3dstate_wm(struct anv_pipeline *pipeline, struct anv_subpass *subpass,
              has_color_buffer_write_enabled(pipeline, blend))
             wm.ThreadDispatchEnable = true;
 
-         if (samples > 1) {
+         if (multisample && multisample->rasterizationSamples > 1) {
             wm.MultisampleRasterizationMode = MSRASTMODE_ON_PATTERN;
             if (wm_prog_data->persample_dispatch) {
                wm.MultisampleDispatchMode = MSDISPMODE_PERSAMPLE;
@@ -1781,7 +1778,7 @@ emit_3dstate_ps(struct anv_pipeline *pipeline,
                 const VkPipelineColorBlendStateCreateInfo *blend,
                 const VkPipelineMultisampleStateCreateInfo *multisample)
 {
-   MAYBE_UNUSED const struct gen_device_info *devinfo = &pipeline->device->info;
+   UNUSED const struct gen_device_info *devinfo = &pipeline->device->info;
    const struct anv_shader_bin *fs_bin =
       pipeline->shaders[MESA_SHADER_FRAGMENT];
 

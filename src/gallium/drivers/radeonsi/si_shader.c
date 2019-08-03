@@ -134,7 +134,7 @@ static void add_arg_assign_checked(struct si_function_info *fninfo,
 				   enum si_arg_regfile regfile, LLVMTypeRef type,
 				   LLVMValueRef *assign, unsigned idx)
 {
-	MAYBE_UNUSED unsigned actual = add_arg_assign(fninfo, regfile, type, assign);
+	ASSERTED unsigned actual = add_arg_assign(fninfo, regfile, type, assign);
 	assert(actual == idx);
 }
 
@@ -2712,7 +2712,6 @@ static void si_llvm_emit_streamout(struct si_shader_context *ctx,
 	struct pipe_stream_output_info *so = &sel->so;
 	LLVMBuilderRef builder = ctx->ac.builder;
 	int i;
-	struct lp_build_if_state if_ctx;
 
 	/* Get bits [22:16], i.e. (so_param >> 16) & 127; */
 	LLVMValueRef so_vtx_count =
@@ -2727,7 +2726,7 @@ static void si_llvm_emit_streamout(struct si_shader_context *ctx,
 	/* Emit the streamout code conditionally. This actually avoids
 	 * out-of-bounds buffer access. The hw tells us via the SGPR
 	 * (so_vtx_count) which threads are allowed to emit streamout data. */
-	lp_build_if(&if_ctx, &ctx->gallivm, can_emit);
+	ac_build_ifcc(&ctx->ac, can_emit, 6501);
 	{
 		/* The buffer offset is computed as follows:
 		 *   ByteOffset = streamout_offset[buffer_id]*4 +
@@ -2781,7 +2780,7 @@ static void si_llvm_emit_streamout(struct si_shader_context *ctx,
 						 &so->output[i], &outputs[reg]);
 		}
 	}
-	lp_build_endif(&if_ctx);
+	ac_build_endif(&ctx->ac, 6501);
 }
 
 static void si_export_param(struct si_shader_context *ctx, unsigned index,
@@ -2876,8 +2875,7 @@ static void si_vertex_color_clamping(struct si_shader_context *ctx,
 	LLVMValueRef cond = LLVMGetParam(ctx->main_fn, ctx->param_vs_state_bits);
 	cond = LLVMBuildTrunc(ctx->ac.builder, cond, ctx->i1, "");
 
-	struct lp_build_if_state if_ctx;
-	lp_build_if(&if_ctx, &ctx->gallivm, cond);
+	ac_build_ifcc(&ctx->ac, cond, 6502);
 
 	/* Store clamped colors to alloca variables within the conditional block. */
 	for (unsigned i = 0; i < noutput; i++) {
@@ -2891,7 +2889,7 @@ static void si_vertex_color_clamping(struct si_shader_context *ctx,
 				       addr[i][j]);
 		}
 	}
-	lp_build_endif(&if_ctx);
+	ac_build_endif(&ctx->ac, 6502);
 
 	/* Load clamped colors */
 	for (unsigned i = 0; i < noutput; i++) {
@@ -3118,7 +3116,6 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 	LLVMValueRef lds_base, lds_inner, lds_outer, byteoffset, buffer;
 	LLVMValueRef out[6], vec0, vec1, tf_base, inner[4], outer[4];
 	unsigned stride, outer_comps, inner_comps, i, offset;
-	struct lp_build_if_state if_ctx, inner_if_ctx;
 
 	/* Add a barrier before loading tess factors from LDS. */
 	if (!shader->key.part.tcs.epilog.invoc0_tess_factors_are_def)
@@ -3130,9 +3127,9 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 	 * This can't jump, because invocation 0 executes this. It should
 	 * at least mask out the loads and stores for other invocations.
 	 */
-	lp_build_if(&if_ctx, &ctx->gallivm,
-		    LLVMBuildICmp(ctx->ac.builder, LLVMIntEQ,
-				  invocation_id, ctx->i32_0, ""));
+	ac_build_ifcc(&ctx->ac,
+		      LLVMBuildICmp(ctx->ac.builder, LLVMIntEQ,
+				    invocation_id, ctx->i32_0, ""), 6503);
 
 	/* Determine the layout of one tess factor element in the buffer. */
 	switch (shader->key.part.tcs.epilog.prim_mode) {
@@ -3217,9 +3214,9 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 	byteoffset = LLVMBuildMul(ctx->ac.builder, rel_patch_id,
 				  LLVMConstInt(ctx->i32, 4 * stride, 0), "");
 
-	lp_build_if(&inner_if_ctx, &ctx->gallivm,
-		    LLVMBuildICmp(ctx->ac.builder, LLVMIntEQ,
-				  rel_patch_id, ctx->i32_0, ""));
+	ac_build_ifcc(&ctx->ac,
+		      LLVMBuildICmp(ctx->ac.builder, LLVMIntEQ,
+				    rel_patch_id, ctx->i32_0, ""), 6504);
 
 	/* Store the dynamic HS control word. */
 	offset = 0;
@@ -3231,7 +3228,7 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 		offset += 4;
 	}
 
-	lp_build_endif(&inner_if_ctx);
+	ac_build_endif(&ctx->ac, 6504);
 
 	/* Store the tessellation factors. */
 	ac_build_buffer_store_dword(&ctx->ac, buffer, vec0,
@@ -3279,7 +3276,7 @@ static void si_write_tess_factors(struct lp_build_tgsi_context *bld_base,
 		}
 	}
 
-	lp_build_endif(&if_ctx);
+	ac_build_endif(&ctx->ac, 6503);
 }
 
 static LLVMValueRef
@@ -3332,11 +3329,11 @@ static void si_llvm_emit_tcs_epilogue(struct ac_shader_abi *abi,
 	if (ctx->screen->info.chip_class >= GFX9) {
 		LLVMBasicBlockRef blocks[2] = {
 			LLVMGetInsertBlock(builder),
-			ctx->merged_wrap_if_state.entry_block
+			ctx->merged_wrap_if_entry_block
 		};
 		LLVMValueRef values[2];
 
-		lp_build_endif(&ctx->merged_wrap_if_state);
+		ac_build_endif(&ctx->ac, ctx->merged_wrap_if_label);
 
 		values[0] = rel_patch_id;
 		values[1] = LLVMGetUndef(ctx->i32);
@@ -3620,7 +3617,7 @@ static void emit_gs_epilogue(struct si_shader_context *ctx)
 			 si_get_gs_wave_id(ctx));
 
 	if (ctx->screen->info.chip_class >= GFX9)
-		lp_build_endif(&ctx->merged_wrap_if_state);
+		ac_build_endif(&ctx->ac, ctx->merged_wrap_if_label);
 }
 
 static void si_llvm_emit_gs_epilogue(struct ac_shader_abi *abi,
@@ -4266,7 +4263,6 @@ static void si_llvm_emit_vertex(struct ac_shader_abi *abi,
 
 	struct tgsi_shader_info *info = &ctx->shader->selector->info;
 	struct si_shader *shader = ctx->shader;
-	struct lp_build_if_state if_state;
 	LLVMValueRef soffset = LLVMGetParam(ctx->main_fn,
 					    ctx->param_gs2vs_offset);
 	LLVMValueRef gs_next_vertex;
@@ -4295,7 +4291,7 @@ static void si_llvm_emit_vertex(struct ac_shader_abi *abi,
 	if (use_kill) {
 		ac_build_kill_if_false(&ctx->ac, can_emit);
 	} else {
-		lp_build_if(&if_state, &ctx->gallivm, can_emit);
+		ac_build_ifcc(&ctx->ac, can_emit, 6505);
 	}
 
 	offset = 0;
@@ -4335,7 +4331,7 @@ static void si_llvm_emit_vertex(struct ac_shader_abi *abi,
 	}
 
 	if (!use_kill)
-		lp_build_endif(&if_state);
+		ac_build_endif(&ctx->ac, 6505);
 }
 
 /* Emit one vertex from the geometry shader */
@@ -6118,6 +6114,7 @@ static bool si_compile_tgsi_main(struct si_shader_context *ctx)
 		ctx->abi.lookup_interp_param = si_nir_lookup_interp_param;
 		ctx->abi.load_sample_position = load_sample_position;
 		ctx->abi.load_sample_mask_in = load_sample_mask_in;
+		ctx->abi.emit_fbfetch = si_nir_emit_fbfetch;
 		ctx->abi.emit_kill = si_llvm_emit_kill;
 		break;
 	case PIPE_SHADER_COMPUTE:
@@ -6150,9 +6147,9 @@ static bool si_compile_tgsi_main(struct si_shader_context *ctx)
 		if (shader->key.as_ngg) {
 			for (unsigned i = 0; i < 4; ++i) {
 				ctx->gs_curprim_verts[i] =
-					lp_build_alloca(&ctx->gallivm, ctx->ac.i32, "");
+					ac_build_alloca(&ctx->ac, ctx->ac.i32, "");
 				ctx->gs_generated_prims[i] =
-					lp_build_alloca(&ctx->gallivm, ctx->ac.i32, "");
+					ac_build_alloca(&ctx->ac, ctx->ac.i32, "");
 			}
 
 			unsigned scratch_size = 8;
@@ -6249,7 +6246,10 @@ static bool si_compile_tgsi_main(struct si_shader_context *ctx)
 			LLVMValueRef ena =
 				LLVMBuildICmp(ctx->ac.builder, LLVMIntULT,
 					    ac_get_thread_id(&ctx->ac), num_threads, "");
-			lp_build_if(&ctx->merged_wrap_if_state, &ctx->gallivm, ena);
+
+			ctx->merged_wrap_if_entry_block = LLVMGetInsertBlock(ctx->ac.builder);
+			ctx->merged_wrap_if_label = 11500;
+			ac_build_ifcc(&ctx->ac, ena, ctx->merged_wrap_if_label);
 
 			if (nested_barrier) {
 				/* Execute a barrier before the second shader in
@@ -6649,11 +6649,10 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 	LLVMTypeRef function_type;
 	unsigned num_first_params;
 	unsigned num_out, initial_num_out;
-	MAYBE_UNUSED unsigned num_out_sgpr; /* used in debug checks */
-	MAYBE_UNUSED unsigned initial_num_out_sgpr; /* used in debug checks */
+	ASSERTED unsigned num_out_sgpr; /* used in debug checks */
+	ASSERTED unsigned initial_num_out_sgpr; /* used in debug checks */
 	unsigned num_sgprs, num_vgprs;
 	unsigned gprs;
-	struct lp_build_if_state if_state;
 
 	si_init_function_info(&fninfo);
 
@@ -6787,7 +6786,7 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 					     LLVMConstInt(ctx->i32, 0x7f, 0), "");
 			ena = LLVMBuildICmp(builder, LLVMIntULT,
 					    ac_get_thread_id(&ctx->ac), count, "");
-			lp_build_if(&if_state, &ctx->gallivm, ena);
+			ac_build_ifcc(&ctx->ac, ena, 6506);
 		}
 
 		/* Derive arguments for the next part from outputs of the
@@ -6844,7 +6843,7 @@ static void si_build_wrapper_function(struct si_shader_context *ctx,
 
 		if (is_multi_part_shader(ctx) &&
 		    part + 1 == next_shader_first_part) {
-			lp_build_endif(&if_state);
+			ac_build_endif(&ctx->ac, 6506);
 
 			/* The second half of the merged shader should use
 			 * the inputs from the toplevel (wrapper) function,
@@ -7466,9 +7465,9 @@ static void si_build_vs_prolog_function(struct si_shader_context *ctx,
 					   key->vs_prolog.num_input_sgprs + i, "");
 	}
 
-	struct lp_build_if_state wrap_if_state;
 	LLVMValueRef original_ret = ret;
 	bool wrapped = false;
+	LLVMBasicBlockRef if_entry_block = NULL;
 
 	if (key->vs_prolog.is_monolithic && key->vs_prolog.as_ngg) {
 		LLVMValueRef num_threads;
@@ -7477,7 +7476,8 @@ static void si_build_vs_prolog_function(struct si_shader_context *ctx,
 		num_threads = si_unpack_param(ctx, 3, 0, 8);
 		ena = LLVMBuildICmp(ctx->ac.builder, LLVMIntULT,
 					ac_get_thread_id(&ctx->ac), num_threads, "");
-		lp_build_if(&wrap_if_state, &ctx->gallivm, ena);
+		if_entry_block = LLVMGetInsertBlock(ctx->ac.builder);
+		ac_build_ifcc(&ctx->ac, ena, 11501);
 		wrapped = true;
 	}
 
@@ -7537,15 +7537,15 @@ static void si_build_vs_prolog_function(struct si_shader_context *ctx,
 	}
 
 	if (wrapped) {
-		lp_build_endif(&wrap_if_state);
+		LLVMBasicBlockRef bbs[2] = {
+			LLVMGetInsertBlock(ctx->ac.builder),
+			if_entry_block,
+		};
+		ac_build_endif(&ctx->ac, 11501);
 
 		LLVMValueRef values[2] = {
 			ret,
 			original_ret
-		};
-		LLVMBasicBlockRef bbs[2] = {
-			wrap_if_state.true_block,
-			wrap_if_state.entry_block
 		};
 		ret = ac_build_phi(&ctx->ac, LLVMTypeOf(ret), 2, values, bbs);
 	}

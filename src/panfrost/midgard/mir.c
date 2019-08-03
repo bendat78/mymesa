@@ -26,20 +26,141 @@
 
 void mir_rewrite_index_src_single(midgard_instruction *ins, unsigned old, unsigned new)
 {
-        if (ins->ssa_args.src0 == old)
-                ins->ssa_args.src0 = new;
-
-        if (ins->ssa_args.src1 == old &&
-            !ins->ssa_args.inline_constant)
-                ins->ssa_args.src1 = new;
+        for (unsigned i = 0; i < ARRAY_SIZE(ins->ssa_args.src); ++i) {
+                if (ins->ssa_args.src[i] == old)
+                        ins->ssa_args.src[i] = new;
+        }
 }
 
+static unsigned
+mir_get_swizzle(midgard_instruction *ins, unsigned idx)
+{
+        if (ins->type == TAG_ALU_4) {
+                unsigned b = (idx == 0) ? ins->alu.src1 : ins->alu.src2;
+
+                midgard_vector_alu_src s =
+                        vector_alu_from_unsigned(b);
+
+                return s.swizzle;
+        } else if (ins->type == TAG_LOAD_STORE_4) {
+                /* Main swizzle of a load is on the destination */
+                if (!OP_IS_STORE(ins->load_store.op))
+                        idx++;
+
+                switch (idx) {
+                case 0:
+                        return ins->load_store.swizzle;
+                case 1:
+                case 2: {
+                        uint8_t raw =
+                                (idx == 2) ? ins->load_store.arg_2 : ins->load_store.arg_1;
+
+                        return component_to_swizzle(midgard_ldst_select(raw).component);
+                }
+                default:
+                        unreachable("Unknown load/store source");
+                }
+        } else if (ins->type == TAG_TEXTURE_4) {
+                switch (idx) {
+                case 0:
+                        return ins->texture.in_reg_swizzle;
+                case 1:
+                        /* Swizzle on bias doesn't make sense */
+                        return 0;
+                default:
+                        unreachable("Unknown texture source");
+                }
+        } else {
+                unreachable("Unknown type");
+        }
+}
+
+static void
+mir_set_swizzle(midgard_instruction *ins, unsigned idx, unsigned new)
+{
+        if (ins->type == TAG_ALU_4) {
+                unsigned b = (idx == 0) ? ins->alu.src1 : ins->alu.src2;
+
+                midgard_vector_alu_src s =
+                        vector_alu_from_unsigned(b);
+
+                s.swizzle = new;
+                unsigned pack = vector_alu_srco_unsigned(s);
+
+                if (idx == 0)
+                        ins->alu.src1 = pack;
+                else
+                        ins->alu.src2 = pack;
+        } else if (ins->type == TAG_LOAD_STORE_4) {
+                /* Main swizzle of a load is on the destination */
+                if (!OP_IS_STORE(ins->load_store.op))
+                        idx++;
+
+                switch (idx) {
+                case 0:
+                        ins->load_store.swizzle = new;
+                        break;
+                case 1:
+                case 2: {
+                        uint8_t raw =
+                                (idx == 2) ? ins->load_store.arg_2 : ins->load_store.arg_1;
+
+                        midgard_ldst_register_select sel
+                                = midgard_ldst_select(raw);
+                        sel.component = swizzle_to_component(new);
+                        uint8_t packed = midgard_ldst_pack(sel);
+
+                        if (idx == 2)
+                                ins->load_store.arg_2 = packed;
+                        else
+                                ins->load_store.arg_1 = packed;
+
+                        break;
+                }
+                default:
+                        assert(new == 0);
+                        break;
+                }
+        } else if (ins->type == TAG_TEXTURE_4) {
+                switch (idx) {
+                case 0:
+                        ins->texture.in_reg_swizzle = new;
+                        break;
+                default:
+                        assert(new == 0);
+                        break;
+                }
+        } else {
+                unreachable("Unknown type");
+        }
+}
+
+static void
+mir_rewrite_index_src_single_swizzle(midgard_instruction *ins, unsigned old, unsigned new, unsigned swizzle)
+{
+        for (unsigned i = 0; i < ARRAY_SIZE(ins->ssa_args.src); ++i) {
+                if (ins->ssa_args.src[i] != old) continue;
+
+                ins->ssa_args.src[i] = new;
+
+                mir_set_swizzle(ins, i,
+                        pan_compose_swizzle(mir_get_swizzle(ins, i), swizzle));
+        }
+}
 
 void
 mir_rewrite_index_src(compiler_context *ctx, unsigned old, unsigned new)
 {
         mir_foreach_instr_global(ctx, ins) {
                 mir_rewrite_index_src_single(ins, old, new);
+        }
+}
+
+void
+mir_rewrite_index_src_swizzle(compiler_context *ctx, unsigned old, unsigned new, unsigned swizzle)
+{
+        mir_foreach_instr_global(ctx, ins) {
+                mir_rewrite_index_src_single_swizzle(ins, old, new, swizzle);
         }
 }
 
@@ -108,7 +229,7 @@ mir_single_use(compiler_context *ctx, unsigned value)
         return mir_use_count(ctx, value) <= 1;
 }
 
-bool
+static bool
 mir_nontrivial_raw_mod(midgard_vector_alu_src src, bool is_int)
 {
         if (is_int)
@@ -133,6 +254,7 @@ mir_nontrivial_mod(midgard_vector_alu_src src, bool is_int, unsigned mask)
 
         return false;
 }
+
 bool
 mir_nontrivial_source2_mod(midgard_instruction *ins)
 {
@@ -142,6 +264,17 @@ mir_nontrivial_source2_mod(midgard_instruction *ins)
                 vector_alu_from_unsigned(ins->alu.src2);
 
         return mir_nontrivial_mod(src2, is_int, ins->mask);
+}
+
+bool
+mir_nontrivial_source2_mod_simple(midgard_instruction *ins)
+{
+        bool is_int = midgard_is_integer_op(ins->alu.op);
+
+        midgard_vector_alu_src src2 =
+                vector_alu_from_unsigned(ins->alu.src2);
+
+        return mir_nontrivial_raw_mod(src2, is_int) || src2.half;
 }
 
 bool
@@ -234,11 +367,13 @@ mir_mask_of_read_components(midgard_instruction *ins, unsigned node)
 
         unsigned mask = 0;
 
-        if (ins->ssa_args.src0 == node)
+        if (ins->ssa_args.src[0] == node)
                 mask |= mir_mask_of_read_components_single(ins->alu.src1, ins->mask);
 
-        if (ins->ssa_args.src1 == node && !ins->ssa_args.inline_constant)
+        if (ins->ssa_args.src[1] == node)
                 mask |= mir_mask_of_read_components_single(ins->alu.src2, ins->mask);
+
+        assert(ins->ssa_args.src[2] == -1);
 
         return mask;
 }

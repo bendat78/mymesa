@@ -1616,13 +1616,12 @@ fs_visitor::assign_curb_setup()
    this->first_non_payload_grf = payload.num_regs + prog_data->curb_read_length;
 }
 
-void
-fs_visitor::calculate_urb_setup()
+static void
+calculate_urb_setup(const struct gen_device_info *devinfo,
+                    const struct brw_wm_prog_key *key,
+                    struct brw_wm_prog_data *prog_data,
+                    const nir_shader *nir)
 {
-   assert(stage == MESA_SHADER_FRAGMENT);
-   struct brw_wm_prog_data *prog_data = brw_wm_prog_data(this->prog_data);
-   brw_wm_prog_key *key = (brw_wm_prog_key*) this->key;
-
    memset(prog_data->urb_setup, -1,
           sizeof(prog_data->urb_setup[0]) * VARYING_SLOT_MAX);
 
@@ -6092,9 +6091,6 @@ get_lowered_simd_width(const struct gen_device_info *devinfo,
 
    case FS_OPCODE_LINTERP:
    case SHADER_OPCODE_GET_BUFFER_SIZE:
-   case FS_OPCODE_DDX_COARSE:
-   case FS_OPCODE_DDX_FINE:
-   case FS_OPCODE_DDY_COARSE:
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
    case FS_OPCODE_PACK_HALF_2x16_SPLIT:
    case FS_OPCODE_INTERPOLATE_AT_SAMPLE:
@@ -6111,6 +6107,9 @@ get_lowered_simd_width(const struct gen_device_info *devinfo,
        */
       return (devinfo->gen == 4 ? 16 : MIN2(16, inst->exec_size));
 
+   case FS_OPCODE_DDX_COARSE:
+   case FS_OPCODE_DDX_FINE:
+   case FS_OPCODE_DDY_COARSE:
    case FS_OPCODE_DDY_FINE:
       /* The implementation of this virtual opcode may require emitting
        * compressed Align16 instructions, which are severely limited on some
@@ -6823,7 +6822,7 @@ fs_visitor::setup_fs_payload_gen6()
    assert(devinfo->gen >= 6);
 
    prog_data->uses_src_depth = prog_data->uses_src_w =
-      (nir->info.inputs_read & (1 << VARYING_SLOT_POS)) != 0;
+      (nir->info.system_values_read & (1ull << SYSTEM_VALUE_FRAG_COORD)) != 0;
 
    prog_data->uses_sample_mask =
       (nir->info.system_values_read & SYSTEM_BIT_SAMPLE_MASK_IN) != 0;
@@ -7214,6 +7213,12 @@ fs_visitor::allocate_registers(unsigned min_dispatch_width, bool allow_spilling)
       SCHEDULE_PRE_LIFO,
    };
 
+   static const char *scheduler_mode_name[] = {
+      "top-down",
+      "non-lifo",
+      "lifo"
+   };
+
    bool spill_all = allow_spilling && (INTEL_DEBUG & DEBUG_SPILL_FS);
 
    /* Try each scheduling heuristic to see if it can successfully register
@@ -7222,6 +7227,7 @@ fs_visitor::allocate_registers(unsigned min_dispatch_width, bool allow_spilling)
     */
    for (unsigned i = 0; i < ARRAY_SIZE(pre_modes); i++) {
       schedule_instructions(pre_modes[i]);
+      this->shader_stats.scheduler_mode = scheduler_mode_name[i];
 
       if (0) {
          assign_regs_trivial();
@@ -7281,7 +7287,7 @@ fs_visitor::allocate_registers(unsigned min_dispatch_width, bool allow_spilling)
    schedule_instructions(SCHEDULE_POST);
 
    if (last_scratch > 0) {
-      MAYBE_UNUSED unsigned max_scratch_size = 2 * 1024 * 1024;
+      ASSERTED unsigned max_scratch_size = 2 * 1024 * 1024;
 
       prog_data->total_scratch = brw_get_scratch_size(last_scratch);
 
@@ -7601,8 +7607,8 @@ fs_visitor::run_fs(bool allow_spilling, bool do_rep_send)
       if (shader_time_index >= 0)
          emit_shader_time_begin();
 
-      calculate_urb_setup();
       if (nir->info.inputs_read > 0 ||
+          (nir->info.system_values_read & (1ull << SYSTEM_VALUE_FRAG_COORD)) ||
           (nir->info.outputs_read > 0 && !wm_key->coherent_fb_fetch)) {
          if (devinfo->gen < 6)
             emit_interpolation_setup_gen4();
@@ -7709,10 +7715,7 @@ is_used_in_not_interp_frag_coord(nir_ssa_def *def)
          return true;
 
       nir_intrinsic_instr *intrin = nir_instr_as_intrinsic(src->parent_instr);
-      if (intrin->intrinsic != nir_intrinsic_load_interpolated_input)
-         return true;
-
-      if (nir_intrinsic_base(intrin) != VARYING_SLOT_POS)
+      if (intrin->intrinsic != nir_intrinsic_load_frag_coord)
          return true;
    }
 
@@ -8007,6 +8010,9 @@ brw_compile_fs(const struct brw_compiler *compiler, void *log_data,
    prog_data->barycentric_interp_modes =
       brw_compute_barycentric_interp_modes(compiler->devinfo, shader);
 
+   calculate_urb_setup(devinfo, key, prog_data, shader);
+   brw_compute_flat_inputs(prog_data, shader);
+
    cfg_t *simd8_cfg = NULL, *simd16_cfg = NULL, *simd32_cfg = NULL;
 
    fs_visitor v8(compiler, log_data, mem_ctx, &key->base,
@@ -8108,14 +8114,8 @@ brw_compile_fs(const struct brw_compiler *compiler, void *log_data,
          simd16_cfg = NULL;
    }
 
-   /* We have to compute the flat inputs after the visitor is finished running
-    * because it relies on prog_data->urb_setup which is computed in
-    * fs_visitor::calculate_urb_setup().
-    */
-   brw_compute_flat_inputs(prog_data, shader);
-
    fs_generator g(compiler, log_data, mem_ctx, &prog_data->base,
-                  v8.promoted_constants, v8.runtime_check_aads_emit,
+                  v8.shader_stats, v8.runtime_check_aads_emit,
                   MESA_SHADER_FRAGMENT);
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
@@ -8265,9 +8265,8 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
    unsigned max_dispatch_width = 32;
 
    fs_visitor *v8 = NULL, *v16 = NULL, *v32 = NULL;
-   cfg_t *cfg = NULL;
+   fs_visitor *v = NULL;
    const char *fail_msg = NULL;
-   unsigned promoted_constants = 0;
 
    if ((int)key->base.subgroup_size_type >= (int)BRW_SUBGROUP_SIZE_REQUIRE_8) {
       /* These enum values are expressly chosen to be equal to the subgroup
@@ -8301,10 +8300,9 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
          /* We should always be able to do SIMD32 for compute shaders */
          assert(v8->max_dispatch_width >= 32);
 
-         cfg = v8->cfg;
+         v = v8;
          cs_set_simd_size(prog_data, 8);
          cs_fill_push_const_info(compiler->devinfo, prog_data);
-         promoted_constants = v8->promoted_constants;
       }
    }
 
@@ -8324,7 +8322,7 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
          compiler->shader_perf_log(log_data,
                                    "SIMD16 shader failed to compile: %s",
                                    v16->fail_msg);
-         if (!cfg) {
+         if (!v) {
             fail_msg =
                "Couldn't generate SIMD16 program and not "
                "enough threads for SIMD8";
@@ -8333,10 +8331,9 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
          /* We should always be able to do SIMD32 for compute shaders */
          assert(v16->max_dispatch_width >= 32);
 
-         cfg = v16->cfg;
+         v = v16;
          cs_set_simd_size(prog_data, 16);
          cs_fill_push_const_info(compiler->devinfo, prog_data);
-         promoted_constants = v16->promoted_constants;
       }
    }
 
@@ -8361,27 +8358,27 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
          compiler->shader_perf_log(log_data,
                                    "SIMD32 shader failed to compile: %s",
                                    v16->fail_msg);
-         if (!cfg) {
+         if (!v) {
             fail_msg =
                "Couldn't generate SIMD32 program and not "
                "enough threads for SIMD16";
          }
       } else {
-         cfg = v32->cfg;
+         v = v32;
          cs_set_simd_size(prog_data, 32);
          cs_fill_push_const_info(compiler->devinfo, prog_data);
-         promoted_constants = v32->promoted_constants;
       }
    }
 
    const unsigned *ret = NULL;
-   if (unlikely(cfg == NULL)) {
+   if (unlikely(v == NULL)) {
       assert(fail_msg);
       if (error_str)
          *error_str = ralloc_strdup(mem_ctx, fail_msg);
    } else {
       fs_generator g(compiler, log_data, mem_ctx, &prog_data->base,
-                     promoted_constants, false, MESA_SHADER_COMPUTE);
+                     v->shader_stats, v->runtime_check_aads_emit,
+                     MESA_SHADER_COMPUTE);
       if (INTEL_DEBUG & DEBUG_CS) {
          char *name = ralloc_asprintf(mem_ctx, "%s compute shader %s",
                                       src_shader->info.label ?
@@ -8390,7 +8387,7 @@ brw_compile_cs(const struct brw_compiler *compiler, void *log_data,
          g.enable_debug(name);
       }
 
-      g.generate_code(cfg, prog_data->simd_size);
+      g.generate_code(v->cfg, prog_data->simd_size);
 
       ret = g.get_assembly();
    }

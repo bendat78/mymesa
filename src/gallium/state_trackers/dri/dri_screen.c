@@ -33,6 +33,7 @@
 
 #include "dri_screen.h"
 #include "dri_context.h"
+#include "dri_helpers.h"
 
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
@@ -423,6 +424,7 @@ dri_get_egl_image(struct st_manager *smapi,
 {
    struct dri_screen *screen = (struct dri_screen *)smapi;
    __DRIimage *img = NULL;
+   const struct dri2_format_mapping *map;
 
    if (screen->lookup_egl_image) {
       img = screen->lookup_egl_image(screen, egl_image);
@@ -433,17 +435,8 @@ dri_get_egl_image(struct st_manager *smapi,
 
    stimg->texture = NULL;
    pipe_resource_reference(&stimg->texture, img->texture);
-   switch (img->dri_components) {
-   case __DRI_IMAGE_COMPONENTS_Y_U_V:
-      stimg->format = PIPE_FORMAT_IYUV;
-      break;
-   case __DRI_IMAGE_COMPONENTS_Y_UV:
-      stimg->format = PIPE_FORMAT_NV12;
-      break;
-   default:
-      stimg->format = img->texture->format;
-      break;
-   }
+   map = dri2_get_mapping_by_fourcc(img->dri_fourcc);
+   stimg->format = map ? map->pipe_format : img->texture->format;
    stimg->level = img->level;
    stimg->layer = img->layer;
 

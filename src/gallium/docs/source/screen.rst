@@ -22,6 +22,8 @@ or integer values, use :ref:`get_param`.
 
 The integer capabilities:
 
+* ``PIPE_CAP_GRAPHICS``: Whether graphics is supported. If not, contexts can
+  only be created with PIPE_CONTEXT_COMPUTE_ONLY.
 * ``PIPE_CAP_NPOT_TEXTURES``: Whether :term:`NPOT` textures may have repeat modes,
   normalized coordinates, and mipmaps.
 * ``PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS``: How many dual-source blend RTs are support.
@@ -65,7 +67,9 @@ The integer capabilities:
 * ``PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER``: Whether the TGSI
   property FS_COORD_PIXEL_CENTER with value INTEGER is supported.
 * ``PIPE_CAP_DEPTH_CLIP_DISABLE``: Whether the driver is capable of disabling
-  depth clipping (through pipe_rasterizer_state)
+  depth clipping (=1) (through pipe_rasterizer_state) or supports lowering
+  depth_clamp in the client shader code (=2), for this the driver must
+  currently use TGSI.
 * ``PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE``: Whether the driver is capable of
   disabling depth clipping (through pipe_rasterizer_state) separately for
   the near and far plane. If not, depth_clip_near and depth_clip_far will be
@@ -543,6 +547,9 @@ The integer capabilities:
   derivatives in fragment shaders.
 * ``PIPE_CAP_VERTEX_SHADER_SATURATE``: True if the driver supports saturate
   modifiers in the vertex shader.
+* ``PIPE_CAP_TEXTURE_SHADOW_LOD``: True if the driver supports shadow sampler
+  types with texture functions having interaction with LOD of texture lookup.
+* ``PIPE_CAP_SHADER_SAMPLES_IDENTICAL``: True if the driver supports a shader query to tell whether all samples of a multisampled surface are definitely identical.
 
 .. _pipe_capf:
 

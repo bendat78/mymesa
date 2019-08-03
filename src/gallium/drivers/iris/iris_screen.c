@@ -52,6 +52,7 @@
 #include "iris_resource.h"
 #include "iris_screen.h"
 #include "intel/compiler/brw_compiler.h"
+#include "intel/common/gen_gem.h"
 
 static void
 iris_flush_frontbuffer(struct pipe_screen *_screen,
@@ -97,7 +98,7 @@ static uint64_t
 get_aperture_size(int fd)
 {
    struct drm_i915_gem_get_aperture aperture = {};
-   drm_ioctl(fd, DRM_IOCTL_I915_GEM_GET_APERTURE, &aperture);
+   gen_ioctl(fd, DRM_IOCTL_I915_GEM_GET_APERTURE, &aperture);
    return aperture.aper_size;
 }
 
@@ -190,11 +191,14 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_LOAD_CONSTBUF:
    case PIPE_CAP_NIR_COMPACT_ARRAYS:
    case PIPE_CAP_DRAW_PARAMETERS:
+   case PIPE_CAP_TGSI_FS_POSITION_IS_SYSVAL:
    case PIPE_CAP_TGSI_FS_FACE_IS_INTEGER_SYSVAL:
    case PIPE_CAP_COMPUTE_SHADER_DERIVATIVES:
    case PIPE_CAP_INVALIDATE_BUFFER:
    case PIPE_CAP_SURFACE_REINTERPRET_BLOCKS:
    case PIPE_CAP_CS_DERIVED_SYSTEM_VALUES_SUPPORTED:
+   case PIPE_CAP_TEXTURE_SHADOW_LOD:
+   case PIPE_CAP_SHADER_SAMPLES_IDENTICAL:
       return true;
    case PIPE_CAP_FBFETCH:
       /* TODO: Support non-coherent FB fetch on Broadwell */
@@ -226,9 +230,8 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
       return BRW_MAX_SOL_BINDINGS;
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
-      return 460;
    case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
-      return 140;
+      return 460;
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
       /* 3DSTATE_CONSTANT_XS requires the start of UBOs to be 32B aligned */
       return 32;
@@ -613,16 +616,14 @@ iris_screen_create(int fd, const struct pipe_screen_config *config)
       return NULL;
 
    screen->fd = fd;
-   screen->pci_id = iris_getparam_integer(screen, I915_PARAM_CHIPSET_ID);
 
-   if (!gen_get_device_info(screen->pci_id, &screen->devinfo))
+   if (!gen_get_device_info_from_fd(fd, &screen->devinfo))
       return NULL;
+   screen->pci_id = screen->devinfo.chipset_id;
+   screen->no_hw = screen->devinfo.no_hw;
 
    if (screen->devinfo.gen < 8 || screen->devinfo.is_cherryview)
       return NULL;
-
-   screen->devinfo.timestamp_frequency =
-      iris_getparam_integer(screen, I915_PARAM_CS_TIMESTAMP_FREQUENCY);
 
    screen->aperture_bytes = get_aperture_size(fd);
 

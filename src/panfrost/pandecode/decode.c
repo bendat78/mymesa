@@ -245,6 +245,16 @@ static const struct pandecode_flag_info mfbd_flag_info [] = {
 };
 #undef FLAG_INFO
 
+#define FLAG_INFO(flag) { MALI_SAMP_##flag, "MALI_SAMP_" #flag }
+static const struct pandecode_flag_info sampler_flag_info [] = {
+        FLAG_INFO(MAG_NEAREST),
+        FLAG_INFO(MIN_NEAREST),
+        FLAG_INFO(MIP_LINEAR_1),
+        FLAG_INFO(MIP_LINEAR_2),
+        FLAG_INFO(NORM_COORDS),
+        {}
+};
+#undef FLAG_INFO
 
 extern char *replace_fragment;
 extern char *replace_vertex;
@@ -371,6 +381,8 @@ static char *pandecode_attr_mode(enum mali_attr_mode mode)
                 DEFINE_CASE(POT_DIVIDE);
                 DEFINE_CASE(MODULO);
                 DEFINE_CASE(NPOT_DIVIDE);
+                DEFINE_CASE(IMAGE);
+                DEFINE_CASE(INTERNAL);
         default:
                 return "MALI_ATTR_UNUSED /* XXX: Unknown stencil op, check dump */";
         }
@@ -1242,7 +1254,7 @@ pandecode_attribute_meta(int job_no, int count, const struct mali_vertex_tiler_p
         pandecode_indent--;
         pandecode_log("};\n");
 
-        return max_index;
+        return count ? (max_index + 1) : 0;
 }
 
 static void
@@ -1655,17 +1667,17 @@ pandecode_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix *p,
          * pass a zero buffer with the right stride/size set, (or whatever)
          * since the GPU will write to it itself */
 
+        if (p->varying_meta) {
+                varying_count = pandecode_attribute_meta(job_no, varying_count, p, true, suffix);
+        }
+
         if (p->varyings) {
                 attr_mem = pandecode_find_mapped_gpu_mem_containing(p->varyings);
 
                 /* Number of descriptors depends on whether there are
                  * non-internal varyings */
 
-                pandecode_attributes(attr_mem, p->varyings, job_no, suffix, varying_count > 1 ? 4 : 1, true);
-        }
-
-        if (p->varying_meta) {
-                pandecode_attribute_meta(job_no, varying_count, p, true, suffix);
+                pandecode_attributes(attr_mem, p->varyings, job_no, suffix, varying_count, true);
         }
 
         bool is_compute = job_type == JOB_TYPE_COMPUTE;
@@ -1864,11 +1876,9 @@ pandecode_vertex_tiler_postfix_pre(const struct mali_vertex_tiler_postfix *p,
                                 pandecode_log("struct mali_sampler_descriptor sampler_descriptor_%"PRIx64"_%d_%d = {\n", d + sizeof(*s) * i, job_no, i);
                                 pandecode_indent++;
 
-                                /* Only the lower two bits are understood right now; the rest we display as hex */
-                                pandecode_log(".filter_mode = MALI_TEX_MIN(%s) | MALI_TEX_MAG(%s) | 0x%" PRIx32",\n",
-                                              MALI_FILTER_NAME(s->filter_mode & MALI_TEX_MIN_MASK),
-                                              MALI_FILTER_NAME(s->filter_mode & MALI_TEX_MAG_MASK),
-                                              s->filter_mode & ~3);
+                                pandecode_log(".filter_mode = ");
+                                pandecode_log_decoded_flags(sampler_flag_info, s->filter_mode);
+                                pandecode_log_cont(",\n");
 
                                 pandecode_prop("min_lod = FIXED_16(%f)", DECODE_FIXED_16(s->min_lod));
                                 pandecode_prop("max_lod = FIXED_16(%f)", DECODE_FIXED_16(s->max_lod));

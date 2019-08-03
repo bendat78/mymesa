@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Broadcom
  * Copyright (C) 2018 Alyssa Rosenzweig
  * Copyright (C) 2019 Collabora, Ltd.
+ * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -143,6 +144,10 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
         case PIPE_CAP_IMAGE_LOAD_FORMATTED:
                 return is_deqp;
 
+        /* For faking compute shaders */
+        case PIPE_CAP_COMPUTE:
+                return is_deqp;
+
         /* TODO: Where does this req come from in practice? */
         case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
                 return 1;
@@ -167,6 +172,11 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
         case PIPE_CAP_GENERATE_MIPMAP:
                 return 1;
+
+        /* We would prefer varyings */
+        case PIPE_CAP_TGSI_FS_FACE_IS_INTEGER_SYSVAL:
+        case PIPE_CAP_TGSI_FS_POSITION_IS_SYSVAL:
+                return 0;
 
         case PIPE_CAP_SEAMLESS_CUBE_MAP:
         case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
@@ -233,12 +243,12 @@ panfrost_get_shader_param(struct pipe_screen *screen,
                           enum pipe_shader_type shader,
                           enum pipe_shader_cap param)
 {
-        if (shader != PIPE_SHADER_VERTEX &&
-            shader != PIPE_SHADER_FRAGMENT) {
-                return 0;
-        }
-
         bool is_deqp = pan_debug & PAN_DBG_DEQP;
+
+        if (shader != PIPE_SHADER_VERTEX &&
+            shader != PIPE_SHADER_FRAGMENT &&
+            !(shader == PIPE_SHADER_COMPUTE && is_deqp))
+                return 0;
 
         /* this is probably not totally correct.. but it's a start: */
         switch (param) {
@@ -246,7 +256,6 @@ panfrost_get_shader_param(struct pipe_screen *screen,
                 return 0;
 
         case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
-                return 0;
         case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
         case PIPE_SHADER_CAP_MAX_TEX_INSTRUCTIONS:
         case PIPE_SHADER_CAP_MAX_TEX_INDIRECTIONS:
@@ -310,14 +319,14 @@ panfrost_get_shader_param(struct pipe_screen *screen,
                 return PIPE_SHADER_IR_NIR;
 
         case PIPE_SHADER_CAP_SUPPORTED_IRS:
-                return 0;
+                return (1 << PIPE_SHADER_IR_NIR);
 
         case PIPE_SHADER_CAP_MAX_UNROLL_ITERATIONS_HINT:
                 return 32;
 
         case PIPE_SHADER_CAP_MAX_SHADER_BUFFERS:
         case PIPE_SHADER_CAP_MAX_SHADER_IMAGES:
-                return is_deqp;
+                return is_deqp ? 4 : 0;
         case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
         case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
                 return 0;
@@ -453,6 +462,74 @@ panfrost_is_format_supported( struct pipe_screen *screen,
         return true;
 }
 
+static int
+panfrost_get_compute_param(struct pipe_screen *pscreen, enum pipe_shader_ir ir_type,
+                enum pipe_compute_cap param, void *ret)
+{
+	const char * const ir = "panfrost";
+
+	if (!(pan_debug & PAN_DBG_DEQP))
+		return 0;
+
+#define RET(x) do {                  \
+   if (ret)                          \
+      memcpy(ret, x, sizeof(x));     \
+   return sizeof(x);                 \
+} while (0)
+
+	switch (param) {
+	case PIPE_COMPUTE_CAP_ADDRESS_BITS:
+                /* TODO: We'll want 64-bit pointers soon */
+		RET((uint32_t []){ 32 });
+
+	case PIPE_COMPUTE_CAP_IR_TARGET:
+		if (ret)
+			sprintf(ret, "%s", ir);
+		return strlen(ir) * sizeof(char);
+
+	case PIPE_COMPUTE_CAP_GRID_DIMENSION:
+		RET((uint64_t []) { 3 });
+
+	case PIPE_COMPUTE_CAP_MAX_GRID_SIZE:
+		RET(((uint64_t []) { 65535, 65535, 65535 }));
+
+	case PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE:
+		RET(((uint64_t []) { 1024, 1024, 64 }));
+
+	case PIPE_COMPUTE_CAP_MAX_THREADS_PER_BLOCK:
+		RET((uint64_t []) { 1024 });
+
+	case PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE:
+		RET((uint64_t []) { 1024*1024*512 /* Maybe get memory */ });
+
+	case PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE:
+		RET((uint64_t []) { 32768 });
+
+	case PIPE_COMPUTE_CAP_MAX_PRIVATE_SIZE:
+	case PIPE_COMPUTE_CAP_MAX_INPUT_SIZE:
+		RET((uint64_t []) { 4096 });
+
+	case PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE:
+		RET((uint64_t []) { 1024*1024*512 /* Maybe get memory */ });
+
+	case PIPE_COMPUTE_CAP_MAX_CLOCK_FREQUENCY:
+		RET((uint32_t []) { 800 /* MHz -- TODO */ });
+
+	case PIPE_COMPUTE_CAP_MAX_COMPUTE_UNITS:
+		RET((uint32_t []) { 9999 });  // TODO
+
+	case PIPE_COMPUTE_CAP_IMAGES_SUPPORTED:
+		RET((uint32_t []) { 1 }); // TODO
+
+	case PIPE_COMPUTE_CAP_SUBGROUP_SIZE:
+		RET((uint32_t []) { 32 });  // TODO
+
+	case PIPE_COMPUTE_CAP_MAX_VARIABLE_THREADS_PER_BLOCK:
+		RET((uint64_t []) { 1024 }); // TODO
+	}
+
+	return 0;
+}
 
 static void
 panfrost_destroy_screen(struct pipe_screen *pscreen)
@@ -556,6 +633,7 @@ panfrost_create_screen(int fd, struct renderonly *ro)
         screen->base.get_device_vendor = panfrost_get_device_vendor;
         screen->base.get_param = panfrost_get_param;
         screen->base.get_shader_param = panfrost_get_shader_param;
+        screen->base.get_compute_param = panfrost_get_compute_param;
         screen->base.get_paramf = panfrost_get_paramf;
         screen->base.get_timestamp = panfrost_get_timestamp;
         screen->base.is_format_supported = panfrost_is_format_supported;

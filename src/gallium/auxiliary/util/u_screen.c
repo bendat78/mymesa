@@ -43,6 +43,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_POINT_SPRITE:
       return 0;
 
+   case PIPE_CAP_GRAPHICS:
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 1;
 
@@ -334,6 +335,7 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_FRAGMENT_SHADER_INTERLOCK:
    case PIPE_CAP_CS_DERIVED_SYSTEM_VALUES_SUPPORTED:
    case PIPE_CAP_ATOMIC_FLOAT_MINMAX:
+   case PIPE_CAP_SHADER_SAMPLES_IDENTICAL:
       return 0;
 
    case PIPE_CAP_MAX_GS_INVOCATIONS:
@@ -365,6 +367,9 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
 
    case PIPE_CAP_MAX_FRAMES_IN_FLIGHT:
       return 1;
+
+   case PIPE_CAP_TEXTURE_SHADOW_LOD:
+      return 0;
 
    case PIPE_CAP_DMABUF:
 #if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)

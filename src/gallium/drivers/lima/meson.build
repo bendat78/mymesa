@@ -97,14 +97,13 @@ lima_compiler = executable(
     inc_src, inc_include, inc_gallium, inc_gallium_aux, inc_gallium_drivers, inc_mesa, inc_mapi, inc_compiler,
   ],
   dependencies : [
-    dep_thread,
     idep_nir,
+    idep_mesautil,
   ],
   link_with : [
     liblima,
     libgallium,
     libglsl_standalone,
-    libmesa_util,
     libpanfrost_shared,
   ],
   build_by_default : with_tools.contains('lima'),

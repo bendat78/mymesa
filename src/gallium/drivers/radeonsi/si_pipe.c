@@ -31,7 +31,6 @@
 
 #include "ac_llvm_util.h"
 #include "radeon/radeon_uvd.h"
-#include "gallivm/lp_bld_misc.h"
 #include "util/disk_cache.h"
 #include "util/u_log.h"
 #include "util/u_memory.h"
@@ -91,6 +90,7 @@ static const struct debug_named_value debug_options[] = {
 	{ "zerovram", DBG(ZERO_VRAM), "Clear VRAM allocations." },
 
 	/* 3D engine options: */
+	{ "nogfx", DBG(NO_GFX), "Disable graphics. Only multimedia compute paths can be used." },
 	{ "alwayspd", DBG(ALWAYS_PD), "Always enable the primitive discard compute shader." },
 	{ "pd", DBG(PD), "Enable the primitive discard compute shader for large draw calls." },
 	{ "nopd", DBG(NO_PD), "Disable the primitive discard compute shader." },
@@ -393,8 +393,14 @@ static void si_set_context_param(struct pipe_context *ctx,
 static struct pipe_context *si_create_context(struct pipe_screen *screen,
                                               unsigned flags)
 {
-	struct si_context *sctx = CALLOC_STRUCT(si_context);
 	struct si_screen* sscreen = (struct si_screen *)screen;
+
+	/* Don't create a context if it's not compute-only and hw is compute-only. */
+	if (!sscreen->info.has_graphics &&
+	    !(flags & PIPE_CONTEXT_COMPUTE_ONLY))
+		return NULL;
+
+	struct si_context *sctx = CALLOC_STRUCT(si_context);
 	struct radeon_winsys *ws = sscreen->ws;
 	int shader, i;
 	bool stop_exec_on_failure = (flags & PIPE_CONTEXT_LOSE_CONTEXT_ON_RESET) != 0;
@@ -521,10 +527,10 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen,
 	si_init_fence_functions(sctx);
 	si_init_query_functions(sctx);
 	si_init_state_compute_functions(sctx);
+	si_init_context_texture_functions(sctx);
 
 	/* Initialize graphics-only context functions. */
 	if (sctx->has_graphics) {
-		si_init_context_texture_functions(sctx);
 		if (sctx->chip_class >= GFX10)
 			gfx10_init_query(sctx);
 		si_init_msaa_functions(sctx);
@@ -938,6 +944,9 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 	sscreen->debug_flags |= debug_get_flags_option("AMD_DEBUG",
 						       debug_options, 0);
 
+	if (sscreen->debug_flags & DBG(NO_GFX))
+		sscreen->info.has_graphics = false;
+
 	/* Set functions first. */
 	sscreen->b.context_create = si_pipe_create_context;
 	sscreen->b.destroy = si_destroy_screen;
@@ -1122,6 +1131,9 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 #include "si_debug_options.h"
 	}
 
+	if (sscreen->options.always_nir)
+		sscreen->options.enable_nir = true;
+
 	sscreen->has_gfx9_scissor_bug = sscreen->info.family == CHIP_VEGA10 ||
 					sscreen->info.family == CHIP_RAVEN;
 	sscreen->has_msaa_sample_loc_bug = (sscreen->info.family >= CHIP_POLARIS10 &&
@@ -1252,8 +1264,9 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 	}
 
 	/* Create the auxiliary context. This must be done last. */
-	sscreen->aux_context = si_create_context(
-		&sscreen->b, sscreen->options.aux_debug ? PIPE_CONTEXT_DEBUG : 0);
+	sscreen->aux_context = si_create_context(&sscreen->b,
+		(sscreen->options.aux_debug ? PIPE_CONTEXT_DEBUG : 0) |
+		(sscreen->info.has_graphics ? 0 : PIPE_CONTEXT_COMPUTE_ONLY));
 	if (sscreen->options.aux_debug) {
 		struct u_log_context *log = CALLOC_STRUCT(u_log_context);
 		u_log_context_init(log);

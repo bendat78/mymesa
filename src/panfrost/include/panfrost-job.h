@@ -531,8 +531,8 @@ struct bifrost_blend_rt {
 
 struct mali_shader_meta {
         mali_ptr shader;
-        u16 texture_count;
         u16 sampler_count;
+        u16 texture_count;
         u16 attribute_count;
         u16 varying_count;
 
@@ -783,6 +783,15 @@ struct mali_payload_set_value {
  * 3. If e <= 2^shift, then we need to use the round-down algorithm. Set
  * magic_divisor = m - 1 and extra_flags = 1.
  * 4. Otherwise, set magic_divisor = m and extra_flags = 0.
+ *
+ * Unrelated to instancing/actual attributes, images (the OpenCL kind) are
+ * implemented as special attributes, denoted by MALI_ATTR_IMAGE. For images,
+ * let shift=extra_flags=0. Stride is set to the image format's bytes-per-pixel
+ * (*NOT the row stride*). Size is set to the size of the image itself.
+ *
+ * Special internal varyings (including gl_FrontFacing) are handled vai
+ * MALI_ATTR_INTERNAL, which has all fields set to zero and uses a special
+ * elements pseudo-pointer.
  */
 
 enum mali_attr_mode {
@@ -791,7 +800,13 @@ enum mali_attr_mode {
 	MALI_ATTR_POT_DIVIDE = 2,
 	MALI_ATTR_MODULO = 3,
 	MALI_ATTR_NPOT_DIVIDE = 4,
+        MALI_ATTR_IMAGE = 5,
+        MALI_ATTR_INTERNAL = 6
 };
+
+/* Pseudo-address for gl_FrontFacing */
+
+#define MALI_VARYING_FRONT_FACING (0x20)
 
 /* This magic "pseudo-address" is used as `elements` to implement
  * gl_PointCoord. When read from a fragment shader, it generates a point
@@ -1182,21 +1197,20 @@ struct mali_texture_descriptor {
         mali_ptr payload[MAX_MIP_LEVELS * MAX_CUBE_FACES * MAX_ELEMENTS];
 } __attribute__((packed));
 
-/* Used as part of filter_mode */
+/* filter_mode */
 
-#define MALI_LINEAR 0
-#define MALI_NEAREST 1
-#define MALI_MIP_LINEAR (0x18)
+#define MALI_SAMP_MAG_NEAREST (1 << 0)
+#define MALI_SAMP_MIN_NEAREST (1 << 1)
 
-/* Used to construct low bits of filter_mode */
+/* TODO: What do these bits mean individually? Only seen set together */
 
-#define MALI_TEX_MAG(mode) (((mode) & 1) << 0)
-#define MALI_TEX_MIN(mode) (((mode) & 1) << 1)
+#define MALI_SAMP_MIP_LINEAR_1 (1 << 3)
+#define MALI_SAMP_MIP_LINEAR_2 (1 << 4)
 
-#define MALI_TEX_MAG_MASK (1)
-#define MALI_TEX_MIN_MASK (2)
+/* Flag in filter_mode, corresponding to OpenCL's NORMALIZED_COORDS_TRUE
+ * sampler_t flag. For typical OpenGL textures, this is always set. */
 
-#define MALI_FILTER_NAME(filter) (filter ? "MALI_NEAREST" : "MALI_LINEAR")
+#define MALI_SAMP_NORM_COORDS (1 << 5)
 
 /* Used for lod encoding. Thanks @urjaman for pointing out these routines can
  * be cleaned up a lot. */
@@ -1426,7 +1440,7 @@ struct mali_single_framebuffer {
  * of compute jobs. Superficially resembles a single framebuffer descriptor */
 
 struct mali_compute_fbd {
-        u32 unknown1[16];
+        u32 unknown1[8];
 } __attribute__((packed));
 
 /* Format bits for the render target flags */

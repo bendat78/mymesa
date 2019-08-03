@@ -317,12 +317,30 @@ struct brw_tes_prog_key
 
    /** A bitfield of per-vertex inputs read. */
    uint64_t inputs_read;
+
+   /**
+    * How many user clipping planes are being uploaded to the tessellation
+    * evaluation shader as push constants.
+    *
+    * These are used for lowering legacy gl_ClipVertex/gl_Position clipping to
+    * clip distances.
+    */
+   unsigned nr_userclip_plane_consts:4;
 };
 
 /** The program key for Geometry Shaders. */
 struct brw_gs_prog_key
 {
    struct brw_base_prog_key base;
+
+   /**
+    * How many user clipping planes are being uploaded to the geometry shader
+    * as push constants.
+    *
+    * These are used for lowering legacy gl_ClipVertex/gl_Position clipping to
+    * clip distances.
+    */
+   unsigned nr_userclip_plane_consts:4;
 };
 
 enum brw_sf_primitive {
@@ -1417,7 +1435,7 @@ encode_slm_size(unsigned gen, uint32_t bytes)
  * '2^n - 1' for some n.
  */
 static inline bool
-brw_stage_has_packed_dispatch(MAYBE_UNUSED const struct gen_device_info *devinfo,
+brw_stage_has_packed_dispatch(ASSERTED const struct gen_device_info *devinfo,
                               gl_shader_stage stage,
                               const struct brw_stage_prog_data *prog_data)
 {
