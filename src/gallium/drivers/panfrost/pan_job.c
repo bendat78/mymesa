@@ -67,10 +67,12 @@ panfrost_free_job(struct panfrost_context *ctx, struct panfrost_job *job)
         /* Free up the transient BOs we're sitting on */
         struct panfrost_screen *screen = pan_screen(ctx->base.screen);
 
+        pthread_mutex_lock(&screen->transient_lock);
         util_dynarray_foreach(&job->transient_indices, unsigned, index) {
                 /* Mark it free */
                 BITSET_SET(screen->free_transient, *index);
         }
+        pthread_mutex_unlock(&screen->transient_lock);
 
         /* Unreference the polygon list */
         panfrost_bo_unreference(ctx->base.screen, job->polygon_list);
@@ -204,15 +206,12 @@ panfrost_job_submit(struct panfrost_context *ctx, struct panfrost_job *job)
 {
         int ret;
 
+        assert(job);
         panfrost_scoreboard_link_batch(job);
 
         bool has_draws = job->last_job.gpu;
-        bool is_scanout = panfrost_is_scanout(ctx);
 
-        if (!job)
-                return;
-
-        ret = panfrost_drm_submit_vs_fs_job(ctx, has_draws, is_scanout);
+        ret = panfrost_drm_submit_vs_fs_job(ctx, has_draws);
 
         if (ret)
                 fprintf(stderr, "panfrost_job_submit failed: %d\n", ret);
@@ -417,6 +416,17 @@ panfrost_job_union_scissor(struct panfrost_job *job,
         job->miny = MIN2(job->miny, miny);
         job->maxx = MAX2(job->maxx, maxx);
         job->maxy = MAX2(job->maxy, maxy);
+}
+
+void
+panfrost_job_intersection_scissor(struct panfrost_job *job,
+                                  unsigned minx, unsigned miny,
+                                  unsigned maxx, unsigned maxy)
+{
+        job->minx = MAX2(job->minx, minx);
+        job->miny = MAX2(job->miny, miny);
+        job->maxx = MIN2(job->maxx, maxx);
+        job->maxy = MIN2(job->maxy, maxy);
 }
 
 void

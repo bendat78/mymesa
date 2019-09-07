@@ -1233,8 +1233,8 @@ brw_compile_tes(const struct brw_compiler *compiler,
                 const struct brw_vue_map *input_vue_map,
                 struct brw_tes_prog_data *prog_data,
                 nir_shader *nir,
-                struct gl_program *prog,
                 int shader_time_index,
+                struct brw_compile_stats *stats,
                 char **error_str)
 {
    const struct gen_device_info *devinfo = compiler->devinfo;
@@ -1323,7 +1323,7 @@ brw_compile_tes(const struct brw_compiler *compiler,
 
    if (is_scalar) {
       fs_visitor v(compiler, log_data, mem_ctx, &key->base,
-                   &prog_data->base.base, NULL, nir, 8,
+                   &prog_data->base.base, nir, 8,
                    shader_time_index, input_vue_map);
       if (!v.run_tes()) {
          if (error_str)
@@ -1345,7 +1345,7 @@ brw_compile_tes(const struct brw_compiler *compiler,
                                         nir->info.name));
       }
 
-      g.generate_code(v.cfg, 8);
+      g.generate_code(v.cfg, 8, stats);
 
       assembly = g.get_assembly();
    } else {
@@ -1361,7 +1361,7 @@ brw_compile_tes(const struct brw_compiler *compiler,
 	 v.dump_instructions();
 
       assembly = brw_vec4_generate_assembly(compiler, log_data, mem_ctx, nir,
-                                            &prog_data->base, v.cfg);
+                                            &prog_data->base, v.cfg, stats);
    }
 
    return assembly;

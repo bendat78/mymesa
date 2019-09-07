@@ -30,6 +30,7 @@
 #include "brw_eu.h"
 #include "brw_fs.h"
 #include "brw_cfg.h"
+#include "util/mesa-sha1.h"
 
 static enum brw_reg_file
 brw_file_from_reg(fs_reg *reg)
@@ -297,8 +298,6 @@ fs_generator::fire_fb_write(fs_inst *inst,
                             struct brw_reg implied_header,
                             GLuint nr)
 {
-   uint32_t msg_control;
-
    struct brw_wm_prog_data *prog_data = brw_wm_prog_data(this->prog_data);
 
    if (devinfo->gen < 6) {
@@ -312,30 +311,7 @@ fs_generator::fire_fb_write(fs_inst *inst,
       brw_pop_insn_state(p);
    }
 
-   if (inst->opcode == FS_OPCODE_REP_FB_WRITE) {
-      assert(inst->group == 0 && inst->exec_size == 16);
-      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE_REPLICATED;
-
-   } else if (prog_data->dual_src_blend) {
-      assert(inst->exec_size == 8);
-
-      if (inst->group % 16 == 0)
-         msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01;
-      else if (inst->group % 16 == 8)
-         msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN23;
-      else
-         unreachable("Invalid dual-source FB write instruction group");
-
-   } else {
-      assert(inst->group == 0 || (inst->group == 16 && inst->exec_size == 16));
-
-      if (inst->exec_size == 16)
-         msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
-      else if (inst->exec_size == 8)
-         msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
-      else
-         unreachable("Invalid FB write execution size");
-   }
+   uint32_t msg_control = brw_fb_write_msg_control(inst, prog_data);
 
    /* We assume render targets start at 0, because headerless FB write
     * messages set "Render Target Index" to 0.  Using a different binding
@@ -819,7 +795,7 @@ fs_generator::generate_linterp(fs_inst *inst,
     */
    struct brw_reg delta_x = src[0];
    struct brw_reg delta_y = offset(src[0], inst->exec_size / 8);
-   struct brw_reg interp = stride(src[1], 0, 1, 0);
+   struct brw_reg interp = src[1];
    brw_inst *i[2];
 
    /* nir_lower_interpolation() will do the lowering to MAD instructions for
@@ -1663,7 +1639,8 @@ fs_generator::enable_debug(const char *shader_name)
 }
 
 int
-fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
+fs_generator::generate_code(const cfg_t *cfg, int dispatch_width,
+                            struct brw_compile_stats *stats)
 {
    /* align to 64 byte boundary. */
    while (p->next_insn_offset % 64)
@@ -2290,13 +2267,21 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
    int after_size = p->next_insn_offset - start_offset;
 
    if (unlikely(debug_flag)) {
-      fprintf(stderr, "Native code for %s\n"
+      unsigned char sha1[21];
+      char sha1buf[41];
+
+      _mesa_sha1_compute(p->store + start_offset / sizeof(brw_inst),
+                         after_size, sha1);
+      _mesa_sha1_format(sha1buf, sha1);
+
+      fprintf(stderr, "Native code for %s (sha1 %s)\n"
               "SIMD%d shader: %d instructions. %d loops. %u cycles. "
               "%d:%d spills:fills. "
               "scheduled with mode %s. "
               "Promoted %u constants. "
               "Compacted %d to %d bytes (%.0f%%)\n",
-              shader_name, dispatch_width, before_size / 16,
+              shader_name, sha1buf,
+              dispatch_width, before_size / 16,
               loop_count, cfg->cycle_count,
               spill_count, fill_count,
               shader_stats.scheduler_mode,
@@ -2304,7 +2289,12 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
               before_size, after_size,
               100.0f * (before_size - after_size) / before_size);
 
-      dump_assembly(p->store, disasm_info);
+      /* overriding the shader makes disasm_info invalid */
+      if (!brw_try_override_assembly(p, start_offset, sha1buf)) {
+         dump_assembly(p->store, disasm_info);
+      } else {
+         fprintf(stderr, "Successfully overrode shader with sha1 %s\n\n", sha1buf);
+      }
    }
    ralloc_free(disasm_info);
    assert(validated);
@@ -2322,6 +2312,14 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width)
                               shader_stats.scheduler_mode,
                               shader_stats.promoted_constants,
                               before_size, after_size);
+   if (stats) {
+      stats->dispatch_width = dispatch_width;
+      stats->instructions = before_size / 16;
+      stats->loops = loop_count;
+      stats->cycles = cfg->cycle_count;
+      stats->spills = spill_count;
+      stats->fills = fill_count;
+   }
 
    return start_offset;
 }

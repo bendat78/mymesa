@@ -29,6 +29,7 @@
 #ifndef PAN_SCREEN_H
 #define PAN_SCREEN_H
 
+#include <xf86drm.h>
 #include "pipe/p_screen.h"
 #include "pipe/p_defines.h"
 #include "renderonly/renderonly.h"
@@ -99,7 +100,11 @@ struct panfrost_screen {
         unsigned gpu_id;
         bool require_sfbd;
 
+        drmVersionPtr kernel_version;
+
         struct renderonly *ro;
+
+        pthread_mutex_t transient_lock;
 
         /* Transient memory management is based on borrowing fixed-size slabs
          * off the screen (loaning them out to the batch). Dynamic array
@@ -110,17 +115,13 @@ struct panfrost_screen {
         /* Set of free transient BOs */
         BITSET_DECLARE(free_transient, MAX_TRANSIENT_SLABS);
 
+        pthread_mutex_t bo_cache_lock;
+
         /* The BO cache is a set of buckets with power-of-two sizes ranging
          * from 2^12 (4096, the page size) to 2^(12 + MAX_BO_CACHE_BUCKETS).
          * Each bucket is a linked list of free panfrost_bo objects. */
 
         struct list_head bo_cache[NR_BO_CACHE_BUCKETS];
-
-        /* While we're busy building up the job for frame N, the GPU is
-         * still busy executing frame N-1. So hold a reference to
-         * yesterjob */
-        int last_fragment_flushed;
-        struct panfrost_job *last_job;
 };
 
 static inline struct panfrost_screen *
@@ -162,8 +163,7 @@ panfrost_drm_import_bo(struct panfrost_screen *screen, int fd);
 int
 panfrost_drm_export_bo(struct panfrost_screen *screen, const struct panfrost_bo *bo);
 int
-panfrost_drm_submit_vs_fs_job(struct panfrost_context *ctx, bool has_draws,
-                              bool is_scanout);
+panfrost_drm_submit_vs_fs_job(struct panfrost_context *ctx, bool has_draws);
 void
 panfrost_drm_force_flush_fragment(struct panfrost_context *ctx,
                                   struct pipe_fence_handle **fence);

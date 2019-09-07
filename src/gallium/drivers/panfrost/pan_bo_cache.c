@@ -23,6 +23,9 @@
  * Authors (Collabora):
  *   Alyssa Rosenzweig <alyssa.rosenzweig@collabora.com>
  */
+#include <xf86drm.h>
+#include <pthread.h>
+#include "drm-uapi/panfrost_drm.h"
 
 #include "pan_screen.h"
 #include "util/u_math.h"
@@ -82,23 +85,37 @@ panfrost_bo_cache_fetch(
                 struct panfrost_screen *screen,
                 size_t size, uint32_t flags)
 {
+        pthread_mutex_lock(&screen->bo_cache_lock);
         struct list_head *bucket = pan_bucket(screen, size);
-
-        /* TODO: Honour flags? */
+        struct panfrost_bo *bo = NULL;
 
         /* Iterate the bucket looking for something suitable */
         list_for_each_entry_safe(struct panfrost_bo, entry, bucket, link) {
-                if (entry->size >= size) {
+                if (entry->size >= size &&
+                    entry->flags == flags) {
+                        int ret;
+                        struct drm_panfrost_madvise madv;
+
                         /* This one works, splice it out of the cache */
                         list_del(&entry->link);
 
+                        madv.handle = entry->gem_handle;
+                        madv.madv = PANFROST_MADV_WILLNEED;
+                        madv.retained = 0;
+
+                        ret = drmIoctl(screen->fd, DRM_IOCTL_PANFROST_MADVISE, &madv);
+                        if (!ret && !madv.retained) {
+                                panfrost_drm_release_bo(screen, entry, false);
+                                continue;
+                        }
                         /* Let's go! */
-                        return entry;
+                        bo = entry;
+                        break;
                 }
         }
+        pthread_mutex_unlock(&screen->bo_cache_lock);
 
-        /* We didn't find anything */
-        return NULL;
+        return bo;
 }
 
 /* Tries to add a BO to the cache. Returns if it was
@@ -109,10 +126,19 @@ panfrost_bo_cache_put(
                 struct panfrost_screen *screen,
                 struct panfrost_bo *bo)
 {
+        pthread_mutex_lock(&screen->bo_cache_lock);
         struct list_head *bucket = pan_bucket(screen, bo->size);
+        struct drm_panfrost_madvise madv;
+
+        madv.handle = bo->gem_handle;
+        madv.madv = PANFROST_MADV_DONTNEED;
+	madv.retained = 0;
+
+        drmIoctl(screen->fd, DRM_IOCTL_PANFROST_MADVISE, &madv);
 
         /* Add us to the bucket */
         list_addtail(&bo->link, bucket);
+        pthread_mutex_unlock(&screen->bo_cache_lock);
 
         return true;
 }
@@ -127,6 +153,7 @@ void
 panfrost_bo_cache_evict_all(
                 struct panfrost_screen *screen)
 {
+        pthread_mutex_lock(&screen->bo_cache_lock);
         for (unsigned i = 0; i < ARRAY_SIZE(screen->bo_cache); ++i) {
                 struct list_head *bucket = &screen->bo_cache[i];
 
@@ -135,7 +162,6 @@ panfrost_bo_cache_evict_all(
                         panfrost_drm_release_bo(screen, entry, false);
                 }
         }
-
-        return;
+        pthread_mutex_unlock(&screen->bo_cache_lock);
 }
 

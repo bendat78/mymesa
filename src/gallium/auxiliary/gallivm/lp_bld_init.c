@@ -38,16 +38,19 @@
 #include "lp_bld_misc.h"
 #include "lp_bld_init.h"
 
+#include <llvm/Config/llvm-config.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Transforms/Scalar.h>
-#if HAVE_LLVM >= 0x0700
+#if LLVM_VERSION_MAJOR >= 7
 #include <llvm-c/Transforms/Utils.h>
 #endif
 #include <llvm-c/BitWriter.h>
-
+#if GALLIVM_HAVE_CORO
+#include <llvm-c/Transforms/Coroutines.h>
+#endif
 
 /* Only MCJIT is available as of LLVM SVN r216982 */
-#if HAVE_LLVM >= 0x0306
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6)
 #  define USE_MCJIT 1
 #elif defined(PIPE_ARCH_PPC_64) || defined(PIPE_ARCH_S390) || defined(PIPE_ARCH_ARM) || defined(PIPE_ARCH_AARCH64)
 #  define USE_MCJIT 1
@@ -125,13 +128,17 @@ create_pass_manager(struct gallivm_state *gallivm)
    gallivm->passmgr = LLVMCreateFunctionPassManagerForModule(gallivm->module);
    if (!gallivm->passmgr)
       return FALSE;
+
+#if GALLIVM_HAVE_CORO
+   gallivm->cgpassmgr = LLVMCreatePassManager();
+#endif
    /*
     * TODO: some per module pass manager with IPO passes might be helpful -
     * the generated texture functions may benefit from inlining if they are
     * simple, or constant propagation into them, etc.
     */
 
-#if HAVE_LLVM < 0x0309
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9
    // Old versions of LLVM get the DataLayout from the pass manager.
    LLVMAddTargetData(gallivm->target, gallivm->passmgr);
 #endif
@@ -143,6 +150,12 @@ create_pass_manager(struct gallivm_state *gallivm)
       LLVMSetDataLayout(gallivm->module, td_str);
       free(td_str);
    }
+
+#if GALLIVM_HAVE_CORO
+   LLVMAddCoroEarlyPass(gallivm->cgpassmgr);
+   LLVMAddCoroSplitPass(gallivm->cgpassmgr);
+   LLVMAddCoroElidePass(gallivm->cgpassmgr);
+#endif
 
    if ((gallivm_perf & GALLIVM_PERF_NO_OPT) == 0) {
       /*
@@ -170,6 +183,9 @@ create_pass_manager(struct gallivm_state *gallivm)
       LLVMAddConstantPropagationPass(gallivm->passmgr);
       LLVMAddInstructionCombiningPass(gallivm->passmgr);
       LLVMAddGVNPass(gallivm->passmgr);
+#if GALLIVM_HAVE_CORO
+      LLVMAddCoroCleanupPass(gallivm->passmgr);
+#endif
    }
    else {
       /* We need at least this pass to prevent the backends to fail in
@@ -192,6 +208,12 @@ gallivm_free_ir(struct gallivm_state *gallivm)
    if (gallivm->passmgr) {
       LLVMDisposePassManager(gallivm->passmgr);
    }
+
+#if GALLIVM_HAVE_CORO
+   if (gallivm->cgpassmgr) {
+      LLVMDisposePassManager(gallivm->cgpassmgr);
+   }
+#endif
 
    if (gallivm->engine) {
       /* This will already destroy any associated module */
@@ -219,6 +241,7 @@ gallivm_free_ir(struct gallivm_state *gallivm)
    gallivm->target = NULL;
    gallivm->module = NULL;
    gallivm->module_name = NULL;
+   gallivm->cgpassmgr = NULL;
    gallivm->passmgr = NULL;
    gallivm->context = NULL;
    gallivm->builder = NULL;
@@ -482,7 +505,7 @@ lp_build_init(void)
       util_cpu_caps.has_f16c = 0;
       util_cpu_caps.has_fma = 0;
    }
-   if (HAVE_LLVM < 0x0304 || !use_mcjit) {
+   if ((LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 4) || !use_mcjit) {
       /* AVX2 support has only been tested with LLVM 3.4, and it requires
        * MCJIT. */
       util_cpu_caps.has_avx2 = 0;
@@ -603,13 +626,16 @@ gallivm_compile_module(struct gallivm_state *gallivm)
                    "-sroa -early-cse -simplifycfg -reassociate "
                    "-mem2reg -constprop -instcombine -gvn",
                    filename, gallivm_debug & GALLIVM_PERF_NO_OPT ? 0 : 2,
-                   (HAVE_LLVM >= 0x0305) ? "[-mcpu=<-mcpu option>] " : "",
+                   (LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5)) ? "[-mcpu=<-mcpu option>] " : "",
                    "[-mattr=<-mattr option(s)>]");
    }
 
    if (gallivm_debug & GALLIVM_DEBUG_PERF)
       time_begin = os_time_get();
 
+#if GALLIVM_HAVE_CORO
+   LLVMRunPassManager(gallivm->cgpassmgr, gallivm->module);
+#endif
    /* Run optimization passes */
    LLVMInitializeFunctionPassManager(gallivm->passmgr);
    func = LLVMGetFirstFunction(gallivm->module);
@@ -620,7 +646,7 @@ gallivm_compile_module(struct gallivm_state *gallivm)
 
    /* Disable frame pointer omission on debug/profile builds */
    /* XXX: And workaround http://llvm.org/PR21435 */
-#if HAVE_LLVM >= 0x0307 && \
+#if (LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7)) && \
     (defined(DEBUG) || defined(PROFILE) || \
      defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64))
       LLVMAddTargetDependentFunctionAttr(func, "no-frame-pointer-elim", "true");

@@ -157,6 +157,9 @@ st_NewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
    if (!obj)
       return NULL;
 
+   obj->level_override = -1;
+   obj->layer_override = -1;
+
    /* Pre-allocate a sampler views container to save a branch in the
     * fast path.
     */
@@ -523,6 +526,18 @@ allocate_full_mipmap(const struct st_texture_object *stObj,
       /* not a mipmap minification filter */
       return FALSE;
 
+   /* If the following sequence of GL calls is used:
+    *   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, ...
+    *   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    *
+    * we would needlessly allocate a mipmapped texture, because the initial
+    * MinFilter is GL_NEAREST_MIPMAP_LINEAR. Catch this case and don't
+    * allocate a mipmapped texture by default. This may cause texture
+    * reallocation later, but GL_NEAREST_MIPMAP_LINEAR is pretty rare.
+    */
+   if (stObj->base.Sampler.MinFilter == GL_NEAREST_MIPMAP_LINEAR)
+      return FALSE;
+
    if (stObj->base.Target == GL_TEXTURE_3D)
       /* 3D textures are seldom mipmapped */
       return FALSE;
@@ -742,8 +757,8 @@ prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
 
       assert(!st_texture_image(texImage)->pt);
       _mesa_clear_texture_object(ctx, texObj, texImage);
-      stObj->layer_override = 0;
-      stObj->level_override = 0;
+      stObj->layer_override = -1;
+      stObj->level_override = -1;
       pipe_resource_reference(&stObj->pt, NULL);
 
       /* oops, need to init this image again */

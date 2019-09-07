@@ -83,19 +83,18 @@ st_nir_fixup_varying_slots(struct st_context *st, struct exec_list *var_list)
 static void
 st_nir_assign_vs_in_locations(nir_shader *nir)
 {
-   nir->num_inputs = 0;
+   nir->num_inputs = util_bitcount64(nir->info.inputs_read);
    nir_foreach_variable_safe(var, &nir->inputs) {
       /* NIR already assigns dual-slot inputs to two locations so all we have
        * to do is compact everything down.
        */
       if (var->data.location == VERT_ATTRIB_EDGEFLAG) {
          /* bit of a hack, mirroring st_translate_vertex_program */
-         var->data.driver_location = util_bitcount64(nir->info.inputs_read);
+         var->data.driver_location = nir->num_inputs++;
       } else if (nir->info.inputs_read & BITFIELD64_BIT(var->data.location)) {
          var->data.driver_location =
             util_bitcount64(nir->info.inputs_read &
                               BITFIELD64_MASK(var->data.location));
-         nir->num_inputs++;
       } else {
          /* Move unused input variables to the globals list (with no
           * initialization), to avoid confusing drivers looking through the
@@ -233,12 +232,22 @@ st_nir_opts(nir_shader *nir, bool scalar)
       progress = false;
 
       NIR_PASS_V(nir, nir_lower_vars_to_ssa);
+      
+      /* Linking deals with unused inputs/outputs, but here we can remove
+       * things local to the shader in the hopes that we can cleanup other
+       * things. This pass will also remove variables with only stores, so we
+       * might be able to make progress after it.
+       */
+      NIR_PASS(progress, nir, nir_remove_dead_variables,
+               (nir_variable_mode)(nir_var_function_temp |
+                                   nir_var_shader_temp |
+                                   nir_var_mem_shared));
 
       NIR_PASS(progress, nir, nir_opt_copy_prop_vars);
       NIR_PASS(progress, nir, nir_opt_dead_write_vars);
 
       if (scalar) {
-         NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL);
+         NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL, NULL);
          NIR_PASS_V(nir, nir_lower_phis_to_scalar);
       }
 
@@ -354,7 +363,7 @@ st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
    NIR_PASS_V(nir, nir_lower_var_copies);
 
    if (is_scalar) {
-     NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL);
+     NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL, NULL);
    }
 
    /* before buffers and vars_to_ssa */
@@ -587,26 +596,10 @@ st_nir_link_shaders(nir_shader **producer, nir_shader **consumer, bool scalar)
       NIR_PASS_V(*producer, nir_lower_global_vars_to_local);
       NIR_PASS_V(*consumer, nir_lower_global_vars_to_local);
 
-      /* The backend might not be able to handle indirects on
-       * temporaries so we need to lower indirects on any of the
-       * varyings we have demoted here.
-       *
-       * TODO: radeonsi shouldn't need to do this, however LLVM isn't
-       * currently smart enough to handle indirects without causing excess
-       * spilling causing the gpu to hang.
-       *
-       * See the following thread for more details of the problem:
-       * https://lists.freedesktop.org/archives/mesa-dev/2017-July/162106.html
-       */
-      nir_variable_mode indirect_mask = nir_var_function_temp;
-
-      NIR_PASS_V(*producer, nir_lower_indirect_derefs, indirect_mask);
-      NIR_PASS_V(*consumer, nir_lower_indirect_derefs, indirect_mask);
-
       st_nir_opts(*producer, scalar);
       st_nir_opts(*consumer, scalar);
 
-      /* Lowering indirects can cause varying to become unused.
+      /* Optimizations can cause varyings to become unused.
        * nir_compact_varyings() depends on all dead varyings being removed so
        * we need to call nir_remove_dead_variables() again here.
        */

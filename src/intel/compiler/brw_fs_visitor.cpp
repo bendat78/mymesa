@@ -194,7 +194,7 @@ fs_visitor::emit_interpolation_setup_gen4()
     */
    this->wpos_w = vgrf(glsl_type::float_type);
    abld.emit(FS_OPCODE_LINTERP, wpos_w, delta_xy,
-             interp_reg(VARYING_SLOT_POS, 3));
+             component(interp_reg(VARYING_SLOT_POS, 3), 0));
    /* Compute the pixel 1/W value from wpos.w. */
    this->pixel_w = vgrf(glsl_type::float_type);
    abld.emit(SHADER_OPCODE_RCP, this->pixel_w, wpos_w);
@@ -890,13 +890,12 @@ fs_visitor::fs_visitor(const struct brw_compiler *compiler, void *log_data,
                        void *mem_ctx,
                        const brw_base_prog_key *key,
                        struct brw_stage_prog_data *prog_data,
-                       struct gl_program *prog,
                        const nir_shader *shader,
                        unsigned dispatch_width,
                        int shader_time_index,
                        const struct brw_vue_map *input_vue_map)
    : backend_shader(compiler, log_data, mem_ctx, shader, prog_data),
-     key(key), gs_compile(NULL), prog_data(prog_data), prog(prog),
+     key(key), gs_compile(NULL), prog_data(prog_data),
      input_vue_map(input_vue_map),
      dispatch_width(dispatch_width),
      shader_time_index(shader_time_index),
@@ -914,7 +913,7 @@ fs_visitor::fs_visitor(const struct brw_compiler *compiler, void *log_data,
    : backend_shader(compiler, log_data, mem_ctx, shader,
                     &prog_data->base.base),
      key(&c->key.base), gs_compile(c),
-     prog_data(&prog_data->base.base), prog(NULL),
+     prog_data(&prog_data->base.base),
      dispatch_width(8),
      shader_time_index(shader_time_index),
      bld(fs_builder(this, dispatch_width).at_end())

@@ -74,6 +74,7 @@ panfrost_allocate_transient(struct panfrost_context *ctx, size_t sz)
         unsigned offset = 0;
         bool update_offset = false;
 
+        pthread_mutex_lock(&screen->transient_lock);
         bool has_current = batch->transient_indices.size;
         bool fits_in_current = (batch->transient_offset + sz) < TRANSIENT_SLAB_SIZE;
 
@@ -110,6 +111,8 @@ panfrost_allocate_transient(struct panfrost_context *ctx, size_t sz)
                         bo = panfrost_create_slab(screen, &index);
                 }
 
+                panfrost_job_add_bo(batch, bo);
+
                 /* Remember we created this */
                 util_dynarray_append(&batch->transient_indices, unsigned, index);
 
@@ -131,6 +134,7 @@ panfrost_allocate_transient(struct panfrost_context *ctx, size_t sz)
 
         if (update_offset)
                 batch->transient_offset = offset + sz;
+        pthread_mutex_unlock(&screen->transient_lock);
 
         return ret;
 
@@ -142,27 +146,4 @@ panfrost_upload_transient(struct panfrost_context *ctx, const void *data, size_t
         struct panfrost_transfer transfer = panfrost_allocate_transient(ctx, sz);
         memcpy(transfer.cpu, data, sz);
         return transfer.gpu;
-}
-
-/* The code below is exclusively for the use of shader memory and is subject to
- * be rewritten soon enough since it never frees the memory it allocates. Here
- * be dragons, etc. */
-
-mali_ptr
-panfrost_upload(struct panfrost_memory *mem, const void *data, size_t sz)
-{
-        size_t aligned_sz = ALIGN_POT(sz, ALIGNMENT);
-
-        /* Bounds check */
-        if ((mem->stack_bottom + aligned_sz) >= mem->bo->size) {
-                printf("Out of memory, tried to upload %zd but only %zd available\n",
-                       sz, mem->bo->size - mem->stack_bottom);
-                assert(0);
-        }
-
-        memcpy((uint8_t *) mem->bo->cpu + mem->stack_bottom, data, sz);
-        mali_ptr gpu = mem->bo->gpu + mem->stack_bottom;
-
-        mem->stack_bottom += aligned_sz;
-        return gpu;
 }

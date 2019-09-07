@@ -47,6 +47,8 @@
 
 #include <float.h>
 
+#include <llvm/Config/llvm-config.h>
+
 #include "util/u_memory.h"
 #include "util/u_debug.h"
 #include "util/u_math.h"
@@ -142,7 +144,7 @@ lp_build_min_simple(struct lp_build_context *bld,
          intrinsic = "llvm.ppc.altivec.vminfp";
          intr_size = 128;
       }
-   } else if (HAVE_LLVM < 0x0309 &&
+   } else if (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9 &&
               util_cpu_caps.has_avx2 && type.length > 4) {
       intr_size = 256;
       switch (type.width) {
@@ -156,7 +158,7 @@ lp_build_min_simple(struct lp_build_context *bld,
          intrinsic = type.sign ? "llvm.x86.avx2.pmins.d" : "llvm.x86.avx2.pminu.d";
          break;
       }
-   } else if (HAVE_LLVM < 0x0309 &&
+   } else if (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9 &&
               util_cpu_caps.has_sse2 && type.length >= 2) {
       intr_size = 128;
       if ((type.width == 8 || type.width == 16) &&
@@ -285,7 +287,7 @@ lp_build_fmuladd(LLVMBuilderRef builder,
    LLVMTypeRef type = LLVMTypeOf(a);
    assert(type == LLVMTypeOf(b));
    assert(type == LLVMTypeOf(c));
-   if (HAVE_LLVM < 0x0304) {
+   if (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 4) {
       /* XXX: LLVM 3.3 does not breakdown llvm.fmuladd into mul+add when FMA is
        * not supported, and instead it falls-back to a C function.
        */
@@ -360,7 +362,7 @@ lp_build_max_simple(struct lp_build_context *bld,
          intrinsic = "llvm.ppc.altivec.vmaxfp";
          intr_size = 128;
       }
-   } else if (HAVE_LLVM < 0x0309 &&
+   } else if (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9 &&
               util_cpu_caps.has_avx2 && type.length > 4) {
       intr_size = 256;
       switch (type.width) {
@@ -374,7 +376,7 @@ lp_build_max_simple(struct lp_build_context *bld,
          intrinsic = type.sign ? "llvm.x86.avx2.pmaxs.d" : "llvm.x86.avx2.pmaxu.d";
          break;
       }
-   } else if (HAVE_LLVM < 0x0309 &&
+   } else if (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9 &&
               util_cpu_caps.has_sse2 && type.length >= 2) {
       intr_size = 128;
       if ((type.width == 8 || type.width == 16) &&
@@ -555,7 +557,7 @@ lp_build_add(struct lp_build_context *bld,
         return bld->one;
 
       if (!type.floating && !type.fixed) {
-         if (HAVE_LLVM >= 0x0900) {
+         if (LLVM_VERSION_MAJOR >= 9) {
             char intrin[32];
             intrinsic = type.sign ? "llvm.sadd.sat" : "llvm.uadd.sat";
             lp_format_intrinsic(intrin, sizeof intrin, intrinsic, bld->vec_type);
@@ -565,10 +567,10 @@ lp_build_add(struct lp_build_context *bld,
             if (util_cpu_caps.has_sse2) {
                if (type.width == 8)
                  intrinsic = type.sign ? "llvm.x86.sse2.padds.b" :
-                                         HAVE_LLVM < 0x0800 ? "llvm.x86.sse2.paddus.b" : NULL;
+                                         LLVM_VERSION_MAJOR < 8 ? "llvm.x86.sse2.paddus.b" : NULL;
                if (type.width == 16)
                  intrinsic = type.sign ? "llvm.x86.sse2.padds.w" :
-                                         HAVE_LLVM < 0x0800 ? "llvm.x86.sse2.paddus.w" : NULL;
+                                         LLVM_VERSION_MAJOR < 8 ? "llvm.x86.sse2.paddus.w" : NULL;
             } else if (util_cpu_caps.has_altivec) {
                if (type.width == 8)
                   intrinsic = type.sign ? "llvm.ppc.altivec.vaddsbs" : "llvm.ppc.altivec.vaddubs";
@@ -580,10 +582,10 @@ lp_build_add(struct lp_build_context *bld,
             if (util_cpu_caps.has_avx2) {
                if (type.width == 8)
                   intrinsic = type.sign ? "llvm.x86.avx2.padds.b" :
-                                          HAVE_LLVM < 0x0800 ? "llvm.x86.avx2.paddus.b" : NULL;
+                                          LLVM_VERSION_MAJOR < 8 ? "llvm.x86.avx2.paddus.b" : NULL;
                if (type.width == 16)
                   intrinsic = type.sign ? "llvm.x86.avx2.padds.w" :
-                                          HAVE_LLVM < 0x0800 ? "llvm.x86.avx2.paddus.w" : NULL;
+                                          LLVM_VERSION_MAJOR < 8 ? "llvm.x86.avx2.paddus.w" : NULL;
             }
          }
       }
@@ -883,7 +885,7 @@ lp_build_sub(struct lp_build_context *bld,
         return bld->zero;
 
       if (!type.floating && !type.fixed) {
-         if (HAVE_LLVM >= 0x0900) {
+         if (LLVM_VERSION_MAJOR >= 9) {
             char intrin[32];
             intrinsic = type.sign ? "llvm.ssub.sat" : "llvm.usub.sat";
             lp_format_intrinsic(intrin, sizeof intrin, intrinsic, bld->vec_type);
@@ -893,10 +895,10 @@ lp_build_sub(struct lp_build_context *bld,
             if (util_cpu_caps.has_sse2) {
                if (type.width == 8)
                   intrinsic = type.sign ? "llvm.x86.sse2.psubs.b" :
-                                          HAVE_LLVM < 0x0800 ? "llvm.x86.sse2.psubus.b" : NULL;
+                                          LLVM_VERSION_MAJOR < 8 ? "llvm.x86.sse2.psubus.b" : NULL;
                if (type.width == 16)
                   intrinsic = type.sign ? "llvm.x86.sse2.psubs.w" :
-                                          HAVE_LLVM < 0x0800 ? "llvm.x86.sse2.psubus.w" : NULL;
+                                          LLVM_VERSION_MAJOR < 8 ? "llvm.x86.sse2.psubus.w" : NULL;
             } else if (util_cpu_caps.has_altivec) {
                if (type.width == 8)
                   intrinsic = type.sign ? "llvm.ppc.altivec.vsubsbs" : "llvm.ppc.altivec.vsububs";
@@ -908,10 +910,10 @@ lp_build_sub(struct lp_build_context *bld,
             if (util_cpu_caps.has_avx2) {
                if (type.width == 8)
                   intrinsic = type.sign ? "llvm.x86.avx2.psubs.b" :
-                                          HAVE_LLVM < 0x0800 ? "llvm.x86.avx2.psubus.b" : NULL;
+                                          LLVM_VERSION_MAJOR < 8 ? "llvm.x86.avx2.psubus.b" : NULL;
                if (type.width == 16)
                   intrinsic = type.sign ? "llvm.x86.avx2.psubs.w" :
-                                          HAVE_LLVM < 0x0800 ? "llvm.x86.avx2.psubus.w" : NULL;
+                                          LLVM_VERSION_MAJOR < 8 ? "llvm.x86.avx2.psubus.w" : NULL;
             }
          }
       }
@@ -1169,8 +1171,13 @@ lp_build_mul_32_lohi_cpu(struct lp_build_context *bld,
     * https://llvm.org/bugs/show_bug.cgi?id=30845
     * So, whip up our own code, albeit only for length 4 and 8 (which
     * should be good enough)...
+    * FIXME: For llvm >= 7.0 we should match the autoupgrade pattern
+    * (bitcast/and/mul/shuffle for unsigned, bitcast/shl/ashr/mul/shuffle
+    * for signed), which the fallback code does not, without this llvm
+    * will likely still produce atrocious code.
     */
-   if ((bld->type.length == 4 || bld->type.length == 8) &&
+   if (LLVM_VERSION_MAJOR < 7 &&
+       (bld->type.length == 4 || bld->type.length == 8) &&
        ((util_cpu_caps.has_sse2 && (bld->type.sign == 0)) ||
         util_cpu_caps.has_sse4_1)) {
       const char *intrinsic = NULL;
@@ -1830,7 +1837,7 @@ lp_build_abs(struct lp_build_context *bld,
       return a;
 
    if(type.floating) {
-      if (0x0306 <= HAVE_LLVM && HAVE_LLVM < 0x0309) {
+      if ((LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 6)) && (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9)) {
          /* Workaround llvm.org/PR27332 */
          LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->gallivm, type);
          unsigned long long absMask = ~(1ULL << (type.width - 1));
@@ -1846,7 +1853,7 @@ lp_build_abs(struct lp_build_context *bld,
       }
    }
 
-   if(type.width*type.length == 128 && util_cpu_caps.has_ssse3 && HAVE_LLVM < 0x0600) {
+   if(type.width*type.length == 128 && util_cpu_caps.has_ssse3 && LLVM_VERSION_MAJOR < 6) {
       switch(type.width) {
       case 8:
          return lp_build_intrinsic_unary(builder, "llvm.x86.ssse3.pabs.b.128", vec_type, a);
@@ -1856,7 +1863,7 @@ lp_build_abs(struct lp_build_context *bld,
          return lp_build_intrinsic_unary(builder, "llvm.x86.ssse3.pabs.d.128", vec_type, a);
       }
    }
-   else if (type.width*type.length == 256 && util_cpu_caps.has_avx2 && HAVE_LLVM < 0x0600) {
+   else if (type.width*type.length == 256 && util_cpu_caps.has_avx2 && LLVM_VERSION_MAJOR < 6) {
       switch(type.width) {
       case 8:
          return lp_build_intrinsic_unary(builder, "llvm.x86.avx2.pabs.b", vec_type, a);

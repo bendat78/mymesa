@@ -37,6 +37,7 @@ files_libiris = files(
   'iris_formats.c',
   'iris_genx_macros.h',
   'iris_genx_protos.h',
+  'iris_monitor.c',
   'iris_pipe.h',
   'iris_pipe_control.c',
   'iris_program.c',
@@ -61,7 +62,7 @@ iris_driinfo_h = custom_target(
 )
 
 iris_gen_libs = []
-foreach v : ['80', '90', '100', '110']
+foreach v : ['80', '90', '100', '110', '120']
   iris_gen_libs += static_library(
     'libiris_gen@0@'.format(v),
     ['iris_blorp.c', 'iris_query.c', 'iris_state.c', gen_xml_pack],
@@ -86,10 +87,10 @@ libiris = static_library(
   ],
   c_args : [c_vis_args, c_sse2_args],
   cpp_args : [cpp_vis_args, c_sse2_args],
-  dependencies : [dep_libdrm, dep_valgrind, idep_genxml],
+  dependencies : [dep_libdrm, dep_valgrind, idep_genxml, idep_libintel_common],
   link_with : [
-    iris_gen_libs, libintel_common, libintel_compiler, libintel_dev, libisl,
-    libblorp
+    iris_gen_libs, libintel_compiler, libintel_dev, libisl,
+    libblorp, libintel_perf
   ],
 )
 

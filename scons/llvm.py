@@ -265,11 +265,14 @@ def generate(env):
             else:
                components = ['engine', 'mcjit', 'bitwriter', 'mcdisassembler', 'irreader']
 
+            if llvm_version >= distutils.version.LooseVersion('8.0'):
+                components.append('coroutines')
+
             env.ParseConfig('%s --libs ' % llvm_config + ' '.join(components))
             env.ParseConfig('%s --ldflags' % llvm_config)
             if llvm_version >= distutils.version.LooseVersion('3.5'):
                 env.ParseConfig('%s --system-libs' % llvm_config)
-                env.Append(CXXFLAGS = ['-std=c++11'])
+                env.Append(CXXFLAGS = ['-std=c++14'])
         except OSError:
             print('scons: llvm-config version %s failed' % llvm_version)
             return
@@ -280,11 +283,9 @@ def generate(env):
     print('scons: Found LLVM version %s' % llvm_version)
     env['LLVM_VERSION'] = llvm_version
 
-    # Define HAVE_LLVM macro with the major/minor version number (e.g., 0x0206 for 2.6)
-    llvm_version_major = int(llvm_version.version[0])
-    llvm_version_minor = int(llvm_version.version[1])
-    llvm_version_hex = '0x%02x%02x' % (llvm_version_major, llvm_version_minor)
-    env.Prepend(CPPDEFINES = [('HAVE_LLVM', llvm_version_hex)])
+    # Define LLVM_AVAILABLE macro to guard code blocks, and MESA_LLVM_VERSION_STRING
+    env.Prepend(CPPDEFINES = [('LLVM_AVAILABLE', 1)])
+    env.Prepend(CPPDEFINES = [('MESA_LLVM_VERSION_STRING=\\"%s\\"' % llvm_version)])
 
 def exists(env):
     return True
