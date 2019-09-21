@@ -100,7 +100,7 @@ optimizations = [
    (('idiv', a, '#b@32(is_neg_power_of_two)'), ('ineg', ('imul', ('isign', a), ('ushr', ('iabs', a), ('find_lsb', ('iabs', b))))), 'options->lower_idiv'),
    (('umod', a, '#b(is_pos_power_of_two)'),    ('iand', a, ('isub', b, 1))),
 
-   (('fneg', ('fneg', a)), a),
+   (('~fneg', ('fneg', a)), a),
    (('ineg', ('ineg', a)), a),
    (('fabs', ('fabs', a)), ('fabs', a)),
    (('fabs', ('fneg', a)), ('fabs', a)),
@@ -126,7 +126,7 @@ optimizations = [
    (('imul', a, 0), 0),
    (('umul_unorm_4x8', a, 0), 0),
    (('umul_unorm_4x8', a, ~0), a),
-   (('fmul', a, 1.0), a),
+   (('~fmul', a, 1.0), a),
    (('imul', a, 1), a),
    (('fmul', a, -1.0), ('fneg', a)),
    (('imul', a, -1), ('ineg', a)),
@@ -383,7 +383,7 @@ optimizations.extend([
    (('feq', ('fmin', ('fneg', ('b2f', 'a@1')), 'b@1'), 0.0), ('iand', ('inot', a), ('fge', b, 0.0))),
 
    (('feq', ('b2f', 'a@1'), 0.0), ('inot', a)),
-   (('fne', ('b2f', 'a@1'), 0.0), a),
+   (('~fne', ('b2f', 'a@1'), 0.0), a),
    (('ieq', ('b2i', 'a@1'), 0),   ('inot', a)),
    (('ine', ('b2i', 'a@1'), 0),   a),
 
@@ -462,8 +462,8 @@ optimizations.extend([
    (('bcsel', a, a, b), ('ior', a, b)),
    (('bcsel', a, b, False), ('iand', a, b)),
    (('bcsel', a, b, a), ('iand', a, b)),
-   (('fmin', a, a), a),
-   (('fmax', a, a), a),
+   (('~fmin', a, a), a),
+   (('~fmax', a, a), a),
    (('imin', a, a), a),
    (('imax', a, a), a),
    (('umin', a, a), a),
@@ -480,9 +480,9 @@ optimizations.extend([
    (('imin', a, ('ineg', a)), ('ineg', ('iabs', a))),
    (('fmin', a, ('fneg', ('fabs', a))), ('fneg', ('fabs', a))),
    (('imin', a, ('ineg', ('iabs', a))), ('ineg', ('iabs', a))),
-   (('fmin', a, ('fabs', a)), a),
+   (('~fmin', a, ('fabs', a)), a),
    (('imin', a, ('iabs', a)), a),
-   (('fmax', a, ('fneg', ('fabs', a))), a),
+   (('~fmax', a, ('fneg', ('fabs', a))), a),
    (('imax', a, ('ineg', ('iabs', a))), a),
    (('fmax', a, ('fabs', a)), ('fabs', a)),
    (('imax', a, ('iabs', a)), ('iabs', a)),
@@ -768,7 +768,7 @@ optimizations.extend([
    (('bcsel', a, ('b2f(is_used_once)', 'b@32'), ('b2f', 'c@32')), ('b2f', ('bcsel', a, b, c))),
 
    (('bcsel', a, b, b), b),
-   (('fcsel', a, b, b), b),
+   (('~fcsel', a, b, b), b),
 
    # D3D Boolean emulation
    (('bcsel', a, -1, 0), ('ineg', ('b2i', 'a@1'))),
@@ -782,6 +782,7 @@ optimizations.extend([
    (('ine', ('ineg', ('b2i', 'a@1')), 0), a),
    (('ine', ('ineg', ('b2i', 'a@1')), -1), ('inot', a)),
    (('iand', ('ineg', ('b2i', a)), 1.0), ('b2f', a)),
+   (('iand', ('ineg', ('b2i', a)), 1),   ('b2i', a)),
 
    # SM5 32-bit shifts are defined to use the 5 least significant bits
    (('ishl', 'a@32', ('iand', 31, b)), ('ishl', a, b)),
@@ -1537,10 +1538,19 @@ late_optimizations = [
    #    fadd(ffma(v1.z, v2.z, ffma(v1.y, v2.y, fmul(v1.x, v2.x))), v1.w)
    #
    # Reassociate the last addition into the first multiplication.
+   #
+   # Some shaders do not use 'invariant' in vertex and (possibly) geometry
+   # shader stages on some outputs that are intended to be invariant.  For
+   # various reasons, this optimization may not be fully applied in all
+   # shaders used for different rendering passes of the same geometry.  This
+   # can result in Z-fighting artifacts (at best).  For now, disable this
+   # optimization in these stages.  See bugzilla #111490.  In tessellation
+   # stages applications seem to use 'precise' when necessary, so allow the
+   # optimization in those stages.
    (('~fadd', ('ffma(is_used_once)', a, b, ('ffma', c, d, ('fmul', 'e(is_not_const_and_not_fsign)', 'f(is_not_const_and_not_fsign)'))), 'g(is_not_const)'),
-    ('ffma', a, b, ('ffma', c, d, ('ffma', e, 'f', 'g'))), '!options->intel_vec4'),
-   (('~fadd', ('ffma(is_used_once)', a, b,                ('fmul', 'e(is_not_const_and_not_fsign)', 'f(is_not_const_and_not_fsign)') ), 'g(is_not_const)'),
-    ('ffma', a, b,                ('ffma', e, 'f', 'g') ), '!options->intel_vec4'),
+    ('ffma', a, b, ('ffma', c, d, ('ffma', e, 'f', 'g'))), '(info->stage != MESA_SHADER_VERTEX && info->stage != MESA_SHADER_GEOMETRY) && !options->intel_vec4'),
+   (('~fadd', ('ffma(is_used_once)', a, b, ('fmul', 'c(is_not_const_and_not_fsign)', 'd(is_not_const_and_not_fsign)') ), 'e(is_not_const)'),
+    ('ffma', a, b, ('ffma', c, d, e)), '(info->stage != MESA_SHADER_VERTEX && info->stage != MESA_SHADER_GEOMETRY) && !options->intel_vec4'),
 ]
 
 print(nir_algebraic.AlgebraicPass("nir_opt_algebraic", optimizations).render())

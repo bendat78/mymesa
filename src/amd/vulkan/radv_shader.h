@@ -126,6 +126,7 @@ struct radv_nir_compiler_options {
 	bool record_llvm_ir;
 	bool check_ir;
 	bool has_ls_vgpr_init_bug;
+	bool use_ngg_streamout;
 	enum radeon_family family;
 	enum chip_class chip_class;
 	uint32_t tess_offchip_block_dw_size;
@@ -195,6 +196,24 @@ struct radv_es_output_info {
        uint32_t esgs_itemsize;
 };
 
+struct gfx9_gs_info {
+	uint32_t vgt_gs_onchip_cntl;
+	uint32_t vgt_gs_max_prims_per_subgroup;
+	uint32_t vgt_esgs_ring_itemsize;
+	uint32_t lds_size;
+};
+
+struct gfx10_ngg_info {
+	uint16_t ngg_emit_size; /* in dwords */
+	uint32_t hw_max_esverts;
+	uint32_t max_gsprims;
+	uint32_t max_out_verts;
+	uint32_t prim_amp_factor;
+	uint32_t vgt_esgs_ring_itemsize;
+	uint32_t esgs_ring_size;
+	bool max_vert_out_per_gs_instance;
+};
+
 struct radv_shader_info {
 	bool loads_push_constants;
 	bool loads_dynamic_offsets;
@@ -234,6 +253,7 @@ struct radv_shader_info {
 		uint8_t num_stream_output_components[4];
 		uint8_t output_streams[VARYING_SLOT_VAR31 + 1];
 		uint8_t max_stream;
+		bool writes_memory;
 		unsigned gsvs_vertex_size;
 		unsigned max_gsvs_emit_size;
 		unsigned vertices_in;
@@ -288,6 +308,9 @@ struct radv_shader_info {
 	} tcs;
 
 	struct radv_streamout_info so;
+
+	struct gfx9_gs_info gs_ring_info;
+	struct gfx10_ngg_info ngg_info;
 };
 
 enum radv_shader_binary_type {
@@ -310,6 +333,7 @@ struct radv_shader_binary_legacy {
 	struct radv_shader_binary base;
 	struct ac_shader_config config;
 	unsigned code_size;
+	unsigned exec_size;
 	unsigned llvm_ir_size;
 	unsigned disasm_size;
 	
@@ -367,7 +391,8 @@ radv_shader_compile_to_nir(struct radv_device *device,
 			   gl_shader_stage stage,
 			   const VkSpecializationInfo *spec_info,
 			   const VkPipelineCreateFlags flags,
-			   const struct radv_pipeline_layout *layout);
+			   const struct radv_pipeline_layout *layout,
+			   bool use_aco);
 
 void *
 radv_alloc_shader_memory(struct radv_device *device,
@@ -387,11 +412,14 @@ radv_shader_variant_compile(struct radv_device *device,
 			    int shader_count,
 			    struct radv_pipeline_layout *layout,
 			    const struct radv_shader_variant_key *key,
+			    struct radv_shader_info *info,
 			    bool keep_shader_info,
+			    bool use_aco,
 			    struct radv_shader_binary **binary_out);
 
 struct radv_shader_variant *
 radv_create_gs_copy_shader(struct radv_device *device, struct nir_shader *nir,
+			   struct radv_shader_info *info,
 			   struct radv_shader_binary **binary_out,
 			   bool multiview,  bool keep_shader_info);
 

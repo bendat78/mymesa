@@ -34,6 +34,8 @@ using namespace brw;
 void
 fs_visitor::emit_nir_code()
 {
+   emit_shader_float_controls_execution_mode();
+
    /* emit the arrays used for inputs and outputs - load/store intrinsics will
     * be converted to reads/writes of these arrays
     */
@@ -684,6 +686,16 @@ brw_rnd_mode_from_nir_op (const nir_op op) {
    }
 }
 
+static brw_rnd_mode
+brw_rnd_mode_from_execution_mode(unsigned execution_mode)
+{
+   if (nir_has_any_rounding_mode_rtne(execution_mode))
+      return BRW_RND_MODE_RTNE;
+   if (nir_has_any_rounding_mode_rtz(execution_mode))
+      return BRW_RND_MODE_RTZ;
+   return BRW_RND_MODE_UNSPECIFIED;
+}
+
 fs_reg
 fs_visitor::prepare_alu_destination_and_sources(const fs_builder &bld,
                                                 nir_alu_instr *instr,
@@ -987,6 +999,8 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
 {
    struct brw_wm_prog_key *fs_key = (struct brw_wm_prog_key *) this->key;
    fs_inst *inst;
+   unsigned execution_mode =
+      bld.shader->nir->info.float_controls_execution_mode;
 
    fs_reg op[4];
    fs_reg result = prepare_alu_destination_and_sources(bld, instr, op, need_dest);
@@ -1046,10 +1060,17 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
 
    case nir_op_f2f16_rtne:
    case nir_op_f2f16_rtz:
-      bld.emit(SHADER_OPCODE_RND_MODE, bld.null_reg_ud(),
-               brw_imm_d(brw_rnd_mode_from_nir_op(instr->op)));
-      /* fallthrough */
-   case nir_op_f2f16:
+   case nir_op_f2f16: {
+      brw_rnd_mode rnd = BRW_RND_MODE_UNSPECIFIED;
+
+      if (nir_op_f2f16 == instr->op)
+         rnd = brw_rnd_mode_from_execution_mode(execution_mode);
+      else
+         rnd = brw_rnd_mode_from_nir_op(instr->op);
+
+      if (BRW_RND_MODE_UNSPECIFIED != rnd)
+         bld.emit(SHADER_OPCODE_RND_MODE, bld.null_reg_ud(), brw_imm_d(rnd));
+
       /* In theory, it would be better to use BRW_OPCODE_F32TO16. Depending
        * on the HW gen, it is a special hw opcode or just a MOV, and
        * brw_F32TO16 (at brw_eu_emit) would do the work to chose.
@@ -1063,6 +1084,7 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
       inst = bld.MOV(result, op[0]);
       inst->saturate = instr->dest.saturate;
       break;
+   }
 
    case nir_op_b2i8:
    case nir_op_b2i16:
@@ -1085,7 +1107,6 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
    case nir_op_f2u64:
    case nir_op_i2i32:
    case nir_op_u2u32:
-   case nir_op_f2f32:
    case nir_op_f2i32:
    case nir_op_f2u32:
    case nir_op_i2f16:
@@ -1132,6 +1153,21 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
       inst = bld.MOV(result, op[0]);
       if (instr->op == nir_op_fabs)
          inst->saturate = instr->dest.saturate;
+      break;
+
+   case nir_op_f2f32:
+      if (nir_has_any_rounding_mode_enabled(execution_mode)) {
+         brw_rnd_mode rnd =
+            brw_rnd_mode_from_execution_mode(execution_mode);
+         bld.emit(SHADER_OPCODE_RND_MODE, bld.null_reg_ud(),
+                  brw_imm_d(rnd));
+      }
+
+      if (op[0].type == BRW_REGISTER_TYPE_HF)
+         assert(type_sz(result.type) < 8); /* brw_nir_lower_conversions */
+
+      inst = bld.MOV(result, op[0]);
+      inst->saturate = instr->dest.saturate;
       break;
 
    case nir_op_fsign:
@@ -1196,8 +1232,15 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
       inst->saturate = instr->dest.saturate;
       break;
 
-   case nir_op_iadd:
    case nir_op_fadd:
+      if (nir_has_any_rounding_mode_enabled(execution_mode)) {
+         brw_rnd_mode rnd =
+            brw_rnd_mode_from_execution_mode(execution_mode);
+         bld.emit(SHADER_OPCODE_RND_MODE, bld.null_reg_ud(),
+                  brw_imm_d(rnd));
+      }
+      /* fallthrough */
+   case nir_op_iadd:
       inst = bld.ADD(result, op[0], op[1]);
       inst->saturate = instr->dest.saturate;
       break;
@@ -1213,6 +1256,13 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
             emit_fsign(bld, instr, result, op, i);
             return;
          }
+      }
+
+      if (nir_has_any_rounding_mode_enabled(execution_mode)) {
+         brw_rnd_mode rnd =
+            brw_rnd_mode_from_execution_mode(execution_mode);
+         bld.emit(SHADER_OPCODE_RND_MODE, bld.null_reg_ud(),
+                  brw_imm_d(rnd));
       }
 
       inst = bld.MUL(result, op[0], op[1]);
@@ -1600,11 +1650,18 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
    case nir_op_pack_half_2x16:
       unreachable("not reached: should be handled by lower_packing_builtins");
 
+   case nir_op_unpack_half_2x16_split_x_flush_to_zero:
+      assert(FLOAT_CONTROLS_DENORM_FLUSH_TO_ZERO_FP16 & execution_mode);
+      /* Fall-through */
    case nir_op_unpack_half_2x16_split_x:
       inst = bld.emit(BRW_OPCODE_F16TO32, result,
                       subscript(op[0], BRW_REGISTER_TYPE_UW, 0));
       inst->saturate = instr->dest.saturate;
       break;
+
+   case nir_op_unpack_half_2x16_split_y_flush_to_zero:
+      assert(FLOAT_CONTROLS_DENORM_FLUSH_TO_ZERO_FP16 & execution_mode);
+      /* Fall-through */
    case nir_op_unpack_half_2x16_split_y:
       inst = bld.emit(BRW_OPCODE_F16TO32, result,
                       subscript(op[0], BRW_REGISTER_TYPE_UW, 1));
@@ -1744,6 +1801,13 @@ fs_visitor::nir_emit_alu(const fs_builder &bld, nir_alu_instr *instr,
       break;
 
    case nir_op_ffma:
+      if (nir_has_any_rounding_mode_enabled(execution_mode)) {
+         brw_rnd_mode rnd =
+            brw_rnd_mode_from_execution_mode(execution_mode);
+         bld.emit(SHADER_OPCODE_RND_MODE, bld.null_reg_ud(),
+                  brw_imm_d(rnd));
+      }
+
       inst = bld.MAD(result, op[2], op[1], op[0]);
       inst->saturate = instr->dest.saturate;
       break;
@@ -3806,8 +3870,14 @@ brw_nir_reduction_op_identity(const fs_builder &bld,
 {
    nir_const_value value = nir_alu_binop_identity(op, type_sz(type) * 8);
    switch (type_sz(type)) {
+   case 1:
+      if (type == BRW_REGISTER_TYPE_UB) {
+         return brw_imm_uw(value.u8);
+      } else {
+         assert(type == BRW_REGISTER_TYPE_B);
+         return brw_imm_w(value.i8);
+      }
    case 2:
-      assert(type != BRW_REGISTER_TYPE_HF);
       return retype(brw_imm_uw(value.u16), type);
    case 4:
       return retype(brw_imm_ud(value.u32), type);
@@ -4262,6 +4332,8 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
          for (int i = 0; i < instr->num_components; i++)
             VARYING_PULL_CONSTANT_LOAD(bld, offset(dest, bld, i), surf_index,
                                        base_offset, i * type_sz(dest.type));
+
+         prog_data->has_ubo_pull = true;
       } else {
          /* Even if we are loading doubles, a pull constant load will load
           * a 32-bit vec4, so should only reserve vgrf space for that. If we
@@ -4300,6 +4372,8 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
                break;
             }
          }
+
+         prog_data->has_ubo_pull = true;
 
          const unsigned block_sz = 64; /* Fetch one cacheline at a time. */
          const fs_builder ubld = bld.exec_all().group(block_sz / 4, 0);
@@ -4851,10 +4925,28 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       opcode brw_op = brw_op_for_nir_reduction_op(redop);
       brw_conditional_mod cond_mod = brw_cond_mod_for_nir_reduction_op(redop);
 
+      /* There are a couple of register region issues that make things
+       * complicated for 8-bit types:
+       *
+       *    1. Only raw moves are allowed to write to a packed 8-bit
+       *       destination.
+       *    2. If we use a strided destination, the efficient way to do scan
+       *       operations ends up using strides that are too big to encode in
+       *       an instruction.
+       *
+       * To get around these issues, we just do all 8-bit scan operations in
+       * 16 bits.  It's actually fewer instructions than what we'd have to do
+       * if we were trying to do it in native 8-bit types and the results are
+       * the same once we truncate to 8 bits at the end.
+       */
+      brw_reg_type scan_type = src.type;
+      if (type_sz(scan_type) == 1)
+         scan_type = brw_reg_type_from_bit_size(16, src.type);
+
       /* Set up a register for all of our scratching around and initialize it
        * to reduction operation's identity value.
        */
-      fs_reg scan = bld.vgrf(src.type);
+      fs_reg scan = bld.vgrf(scan_type);
       bld.exec_all().emit(SHADER_OPCODE_SEL_EXEC, scan, src, identity);
 
       bld.emit_scan(brw_op, scan, cluster_size, cond_mod);
@@ -4897,10 +4989,28 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
       opcode brw_op = brw_op_for_nir_reduction_op(redop);
       brw_conditional_mod cond_mod = brw_cond_mod_for_nir_reduction_op(redop);
 
+      /* There are a couple of register region issues that make things
+       * complicated for 8-bit types:
+       *
+       *    1. Only raw moves are allowed to write to a packed 8-bit
+       *       destination.
+       *    2. If we use a strided destination, the efficient way to do scan
+       *       operations ends up using strides that are too big to encode in
+       *       an instruction.
+       *
+       * To get around these issues, we just do all 8-bit scan operations in
+       * 16 bits.  It's actually fewer instructions than what we'd have to do
+       * if we were trying to do it in native 8-bit types and the results are
+       * the same once we truncate to 8 bits at the end.
+       */
+      brw_reg_type scan_type = src.type;
+      if (type_sz(scan_type) == 1)
+         scan_type = brw_reg_type_from_bit_size(16, src.type);
+
       /* Set up a register for all of our scratching around and initialize it
        * to reduction operation's identity value.
        */
-      fs_reg scan = bld.vgrf(src.type);
+      fs_reg scan = bld.vgrf(scan_type);
       const fs_builder allbld = bld.exec_all();
       allbld.emit(SHADER_OPCODE_SEL_EXEC, scan, src, identity);
 
@@ -4909,7 +5019,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
           * shift of the contents before we can begin.  To make things worse,
           * we can't do this with a normal stride; we have to use indirects.
           */
-         fs_reg shifted = bld.vgrf(src.type);
+         fs_reg shifted = bld.vgrf(scan_type);
          fs_reg idx = bld.vgrf(BRW_REGISTER_TYPE_W);
          allbld.ADD(idx, nir_system_values[SYSTEM_VALUE_SUBGROUP_INVOCATION],
                          brw_imm_w(-1));

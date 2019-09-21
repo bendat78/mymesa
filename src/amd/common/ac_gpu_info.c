@@ -538,6 +538,66 @@ bool ac_query_gpu_info(int fd, void *dev_p,
 
 	info->has_gds_ordered_append = info->chip_class >= GFX7 &&
 				       info->drm_minor >= 29;
+
+	if (info->chip_class >= GFX9) {
+		unsigned pc_lines = 0;
+
+		switch (info->family) {
+		case CHIP_VEGA10:
+		case CHIP_VEGA12:
+		case CHIP_VEGA20:
+			pc_lines = 2048;
+			break;
+		case CHIP_RAVEN:
+		case CHIP_RAVEN2:
+		case CHIP_RENOIR:
+		case CHIP_NAVI10:
+		case CHIP_NAVI12:
+			pc_lines = 1024;
+			break;
+		case CHIP_NAVI14:
+			pc_lines = 512;
+			break;
+		default:
+			assert(0);
+		}
+
+		if (info->chip_class >= GFX10) {
+			info->pbb_max_alloc_count = pc_lines / 3;
+		} else {
+			info->pbb_max_alloc_count =
+				MIN2(128, pc_lines / (4 * info->max_se));
+		}
+	}
+
+	if (info->chip_class >= GFX10) {
+		switch (info->family) {
+		case CHIP_NAVI10:
+		case CHIP_NAVI12:
+			info->num_sdp_interfaces = 16;
+			break;
+		case CHIP_NAVI14:
+			info->num_sdp_interfaces = 8;
+			break;
+		default:
+			assert(0);
+		}
+	}
+
+	info->max_wave64_per_simd = info->family >= CHIP_POLARIS10 &&
+				    info->family <= CHIP_VEGAM ? 8 : 10;
+
+	/* The number is per SIMD. There is enough SGPRs for the maximum number
+	 * of Wave32, which is double the number for Wave64.
+	 */
+	if (info->chip_class >= GFX10)
+		info->num_physical_sgprs_per_simd = 128 * info->max_wave64_per_simd * 2;
+	else if (info->chip_class >= GFX8)
+		info->num_physical_sgprs_per_simd = 800;
+	else
+		info->num_physical_sgprs_per_simd = 512;
+
+	info->num_physical_wave64_vgprs_per_simd = info->chip_class >= GFX10 ? 512 : 256;
 	return true;
 }
 

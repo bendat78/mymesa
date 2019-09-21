@@ -355,7 +355,6 @@ driCreateConfigs(mesa_format format,
 		    modes->transparentBlue = GLX_DONT_CARE;
 		    modes->transparentAlpha = GLX_DONT_CARE;
 		    modes->transparentIndex = GLX_DONT_CARE;
-		    modes->rgbMode = GL_TRUE;
 
 		    if (db_modes[i] == __DRI_ATTRIB_SWAP_NONE) {
 		    	modes->doubleBufferMode = GL_FALSE;
@@ -368,14 +367,6 @@ driCreateConfigs(mesa_format format,
 
 		    modes->samples = msaa_samples[h];
 		    modes->sampleBuffers = modes->samples ? 1 : 0;
-
-
-		    modes->haveAccumBuffer = ((modes->accumRedBits +
-					   modes->accumGreenBits +
-					   modes->accumBlueBits +
-					   modes->accumAlphaBits) > 0);
-		    modes->haveDepthBuffer = (modes->depthBits > 0);
-		    modes->haveStencilBuffer = (modes->stencilBits > 0);
 
 		    modes->bindToTextureRgb = GL_TRUE;
 		    modes->bindToTextureRgba = GL_TRUE;

@@ -59,6 +59,7 @@ struct spirv_supported_capabilities {
    bool physical_storage_buffer_address;
    bool post_depth_coverage;
    bool runtime_descriptor_array;
+   bool float_controls;
    bool shader_viewport_index_layer;
    bool stencil_export;
    bool storage_8bit;
@@ -152,6 +153,9 @@ typedef struct shader_info {
 
    /** Was this shader linked with any transform feedback varyings? */
    bool has_transform_feedback_varyings;
+
+   /* SPV_KHR_float_controls: execution mode for floating point ops */
+   unsigned float_controls_execution_mode;
 
    union {
       struct {

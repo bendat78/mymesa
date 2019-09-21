@@ -33,6 +33,7 @@
 #include "program/ir_to_mesa.h"
 #include "main/mtypes.h"
 #include "main/errors.h"
+#include "main/glspirv.h"
 #include "main/shaderapi.h"
 #include "main/uniforms.h"
 
@@ -45,6 +46,7 @@
 #include "compiler/glsl_types.h"
 #include "compiler/glsl/glsl_to_nir.h"
 #include "compiler/glsl/gl_nir.h"
+#include "compiler/glsl/gl_nir_linker.h"
 #include "compiler/glsl/ir.h"
 #include "compiler/glsl/ir_optimization.h"
 #include "compiler/glsl/string_to_uint_map.h"
@@ -109,10 +111,22 @@ st_nir_assign_vs_in_locations(nir_shader *nir)
 }
 
 static int
-st_nir_lookup_parameter_index(const struct gl_program_parameter_list *params,
-                              const char *name)
+st_nir_lookup_parameter_index(struct gl_program *prog, nir_variable *var)
 {
-   int loc = _mesa_lookup_parameter_index(params, name);
+   struct gl_program_parameter_list *params = prog->Parameters;
+
+   /* Lookup the first parameter that the uniform storage that match the
+    * variable location.
+    */
+   for (unsigned i = 0; i < params->NumParameters; i++) {
+      int index = params->Parameters[i].MainUniformStorageIndex;
+      if (index == var->data.location)
+         return i;
+   }
+
+   /* TODO: Handle this fallback for SPIR-V.  We need this for GLSL e.g. in
+    * dEQP-GLES2.functional.uniform_api.random.3
+    */
 
    /* is there a better way to do this?  If we have something like:
     *
@@ -141,19 +155,18 @@ st_nir_lookup_parameter_index(const struct gl_program_parameter_list *params,
     * needs to work backwards to get base var loc from the param-list
     * which already has them separated out.
     */
-   if (loc < 0) {
-      int namelen = strlen(name);
+   if (!prog->sh.data->spirv) {
+      int namelen = strlen(var->name);
       for (unsigned i = 0; i < params->NumParameters; i++) {
          struct gl_program_parameter *p = &params->Parameters[i];
-         if ((strncmp(p->Name, name, namelen) == 0) &&
+         if ((strncmp(p->Name, var->name, namelen) == 0) &&
              ((p->Name[namelen] == '.') || (p->Name[namelen] == '['))) {
-            loc = i;
-            break;
+            return i;
          }
       }
    }
 
-   return loc;
+   return -1;
 }
 
 static void
@@ -183,7 +196,7 @@ st_nir_assign_uniform_locations(struct gl_context *ctx,
             loc = imageidx;
             imageidx += type_size(uniform->type);
          }
-      } else if (strncmp(uniform->name, "gl_", 3) == 0) {
+      } else if (uniform->state_slots) {
          const gl_state_index16 *const stateTokens = uniform->state_slots[0].tokens;
          /* This state reference has already been setup by ir_to_mesa, but we'll
           * get the same index back here.
@@ -204,7 +217,7 @@ st_nir_assign_uniform_locations(struct gl_context *ctx,
             loc = _mesa_add_state_reference(prog->Parameters, stateTokens);
          }
       } else {
-         loc = st_nir_lookup_parameter_index(prog->Parameters, uniform->name);
+         loc = st_nir_lookup_parameter_index(prog, uniform);
 
          /* We need to check that loc is not -1 here before accessing the
           * array. It can be negative for example when we have a struct that
@@ -298,14 +311,26 @@ st_nir_opts(nir_shader *nir, bool scalar)
    } while (progress);
 }
 
+static void
+shared_type_info(const struct glsl_type *type, unsigned *size, unsigned *align)
+{
+   assert(glsl_type_is_vector_or_scalar(type));
+
+   uint32_t comp_size = glsl_type_is_boolean(type)
+      ? 4 : glsl_get_bit_size(type) / 8;
+   unsigned length = glsl_get_vector_elements(type);
+   *size = comp_size * length,
+   *align = comp_size * (length == 3 ? 4 : length);
+}
+
 /* First third of converting glsl_to_nir.. this leaves things in a pre-
  * nir_lower_io state, so that shader variants can more easily insert/
  * replace variables, etc.
  */
-static nir_shader *
-st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
-               struct gl_shader_program *shader_program,
-               gl_shader_stage stage)
+static void
+st_nir_preprocess(struct st_context *st, struct gl_program *prog,
+                  struct gl_shader_program *shader_program,
+                  gl_shader_stage stage)
 {
    const nir_shader_compiler_options *options =
       st->ctx->Const.ShaderCompilerOptions[prog->info.stage].NirOptions;
@@ -315,11 +340,7 @@ st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
    assert(options);
    bool lower_64bit =
       options->lower_int64_options || options->lower_doubles_options;
-
-   if (prog->nir)
-      return prog->nir;
-
-   nir_shader *nir = glsl_to_nir(st->ctx, shader_program, stage, options);
+   nir_shader *nir = prog->nir;
 
    /* Set the next shader stage hint for VS and TES. */
    if (!nir->info.separate_shader &&
@@ -370,6 +391,15 @@ st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
    NIR_PASS_V(nir, gl_nir_lower_bindless_images);
    st_nir_opts(nir, is_scalar);
 
+   /* TODO: Change GLSL to not lower shared memory. */
+   if (prog->nir->info.stage == MESA_SHADER_COMPUTE &&
+       shader_program->data->spirv) {
+      NIR_PASS_V(prog->nir, nir_lower_vars_to_explicit_types,
+                 nir_var_mem_shared, shared_type_info);
+      NIR_PASS_V(prog->nir, nir_lower_explicit_io,
+                 nir_var_mem_shared, nir_address_format_32bit_offset);
+   }
+
    NIR_PASS_V(nir, gl_nir_lower_buffers, shader_program);
    /* Do a round of constant folding to clean up address calculations */
    NIR_PASS_V(nir, nir_opt_constant_folding);
@@ -388,8 +418,6 @@ st_glsl_to_nir(struct st_context *st, struct gl_program *prog,
       if (lowered_64bit_ops)
          st_nir_opts(nir, is_scalar);
    }
-
-   return nir;
 }
 
 /* Second third of converting glsl_to_nir. This creates uniforms, gathers
@@ -409,10 +437,8 @@ st_glsl_to_nir_post_opts(struct st_context *st, struct gl_program *prog,
     * get sent to the shader.
     */
    nir_foreach_variable(var, &nir->uniforms) {
-      if (strncmp(var->name, "gl_", 3) == 0) {
-         const nir_state_slot *const slots = var->state_slots;
-         assert(var->state_slots != NULL);
-
+      const nir_state_slot *const slots = var->state_slots;
+      if (slots != NULL) {
          const struct glsl_type *type = glsl_without_array(var->type);
          for (unsigned int i = 0; i < var->num_state_slots; i++) {
             unsigned comps;
@@ -451,7 +477,12 @@ st_glsl_to_nir_post_opts(struct st_context *st, struct gl_program *prog,
 
    st_set_prog_affected_state_flags(prog);
 
-   NIR_PASS_V(nir, st_nir_lower_builtin);
+   /* None of the builtins being lowered here can be produced by SPIR-V.  See
+    * _mesa_builtin_uniform_desc.
+    */
+   if (!shader_program->data->spirv)
+      NIR_PASS_V(nir, st_nir_lower_builtin);
+
    NIR_PASS_V(nir, gl_nir_lower_atomics, shader_program, true);
    NIR_PASS_V(nir, nir_opt_intrinsics);
 
@@ -508,47 +539,6 @@ set_st_program(struct gl_program *prog,
    default:
       unreachable("unknown shader stage");
    }
-}
-
-static void
-st_nir_get_mesa_program(struct gl_context *ctx,
-                        struct gl_shader_program *shader_program,
-                        struct gl_linked_shader *shader)
-{
-   struct st_context *st = st_context(ctx);
-   struct pipe_screen *pscreen = ctx->st->pipe->screen;
-   struct gl_program *prog;
-
-   validate_ir_tree(shader->ir);
-
-   prog = shader->Program;
-
-   prog->Parameters = _mesa_new_parameter_list();
-
-   _mesa_copy_linked_program_data(shader_program, shader);
-   _mesa_generate_parameters_list_for_uniforms(ctx, shader_program, shader,
-                                               prog->Parameters);
-
-   /* Remove reads from output registers. */
-   if (!pscreen->get_param(pscreen, PIPE_CAP_TGSI_CAN_READ_OUTPUTS))
-      lower_output_reads(shader->Stage, shader->ir);
-
-   if (ctx->_Shader->Flags & GLSL_DUMP) {
-      _mesa_log("\n");
-      _mesa_log("GLSL IR for linked %s program %d:\n",
-             _mesa_shader_stage_to_string(shader->Stage),
-             shader_program->Name);
-      _mesa_print_ir(_mesa_get_log_file(), shader->ir, NULL);
-      _mesa_log("\n\n");
-   }
-
-   prog->ExternalSamplersUsed = gl_external_samplers(prog);
-   _mesa_update_shader_textures_used(shader_program, prog);
-
-   nir_shader *nir = st_glsl_to_nir(st, prog, shader_program, shader->Stage);
-
-   set_st_program(prog, shader_program, nir);
-   prog->nir = nir;
 }
 
 static void
@@ -684,11 +674,81 @@ st_link_nir(struct gl_context *ctx,
       is_scalar[i] = screen->get_shader_param(screen, type,
                                               PIPE_SHADER_CAP_SCALAR_ISA);
 
-      st_nir_get_mesa_program(ctx, shader_program, shader);
+      struct gl_program *prog = shader->Program;
+      _mesa_copy_linked_program_data(shader_program, shader);
+
+      assert(!prog->nir);
+
+      if (shader_program->data->spirv) {
+         const nir_shader_compiler_options *options =
+            st->ctx->Const.ShaderCompilerOptions[shader->Stage].NirOptions;
+
+         prog->Parameters = _mesa_new_parameter_list();
+         /* Parameters will be filled during NIR linking. */
+
+         prog->nir = _mesa_spirv_to_nir(ctx, shader_program, shader->Stage, options);
+         set_st_program(prog, shader_program, prog->nir);
+      } else {
+         validate_ir_tree(shader->ir);
+
+         prog->Parameters = _mesa_new_parameter_list();
+         _mesa_generate_parameters_list_for_uniforms(ctx, shader_program, shader,
+                                                     prog->Parameters);
+
+         /* Remove reads from output registers. */
+         if (!screen->get_param(screen, PIPE_CAP_TGSI_CAN_READ_OUTPUTS))
+            lower_output_reads(shader->Stage, shader->ir);
+
+         if (ctx->_Shader->Flags & GLSL_DUMP) {
+            _mesa_log("\n");
+            _mesa_log("GLSL IR for linked %s program %d:\n",
+                      _mesa_shader_stage_to_string(shader->Stage),
+                      shader_program->Name);
+            _mesa_print_ir(_mesa_get_log_file(), shader->ir, NULL);
+            _mesa_log("\n\n");
+         }
+
+         prog->ExternalSamplersUsed = gl_external_samplers(prog);
+         _mesa_update_shader_textures_used(shader_program, prog);
+
+         const nir_shader_compiler_options *options =
+            st->ctx->Const.ShaderCompilerOptions[prog->info.stage].NirOptions;
+         assert(options);
+
+         prog->nir = glsl_to_nir(st->ctx, shader_program, shader->Stage, options);
+         set_st_program(prog, shader_program, prog->nir);
+         st_nir_preprocess(st, prog, shader_program, shader->Stage);
+      }
+
       last_stage = i;
 
       if (is_scalar[i]) {
          NIR_PASS_V(shader->Program->nir, nir_lower_load_const_to_scalar);
+      }
+   }
+
+   /* For SPIR-V, we have to perform the NIR linking before applying
+    * st_nir_preprocess.
+    */
+   if (shader_program->data->spirv) {
+      static const gl_nir_linker_options opts = {
+         true /*fill_parameters */
+      };
+      if (!gl_nir_link(ctx, shader_program, &opts))
+         return GL_FALSE;
+
+      nir_build_program_resource_list(ctx, shader_program);
+
+      for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+         struct gl_linked_shader *shader = shader_program->_LinkedShaders[i];
+         if (shader == NULL)
+            continue;
+
+         struct gl_program *prog = shader->Program;
+         prog->ExternalSamplersUsed = gl_external_samplers(prog);
+         _mesa_update_shader_textures_used(shader_program, prog);
+
+         st_nir_preprocess(st, prog, shader_program, shader->Stage);
       }
    }
 

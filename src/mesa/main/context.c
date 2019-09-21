@@ -205,7 +205,6 @@ _mesa_notifySwapBuffers(struct gl_context *ctx)
  * \param stencilBits requested minimum bits per stencil buffer value
  * \param accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits number
  * of bits per color component in accum buffer.
- * \param indexBits number of bits per pixel if \p rgbFlag is GL_FALSE
  * \param redBits number of bits per color component in frame buffer for RGB(A)
  * mode.  We always use 8 in core Mesa though.
  * \param greenBits same as above.
@@ -288,7 +287,6 @@ _mesa_initialize_visual( struct gl_config *vis,
    assert(accumBlueBits >= 0);
    assert(accumAlphaBits >= 0);
 
-   vis->rgbMode          = GL_TRUE;
    vis->doubleBufferMode = dbFlag;
    vis->stereoMode       = stereoFlag;
 
@@ -298,7 +296,6 @@ _mesa_initialize_visual( struct gl_config *vis,
    vis->alphaBits        = alphaBits;
    vis->rgbBits          = redBits + greenBits + blueBits;
 
-   vis->indexBits      = 0;
    vis->depthBits      = depthBits;
    vis->stencilBits    = stencilBits;
 
@@ -306,10 +303,6 @@ _mesa_initialize_visual( struct gl_config *vis,
    vis->accumGreenBits = accumGreenBits;
    vis->accumBlueBits  = accumBlueBits;
    vis->accumAlphaBits = accumAlphaBits;
-
-   vis->haveAccumBuffer   = accumRedBits > 0;
-   vis->haveDepthBuffer   = depthBits > 0;
-   vis->haveStencilBuffer = stencilBits > 0;
 
    vis->numAuxBuffers = 0;
    vis->level = 0;

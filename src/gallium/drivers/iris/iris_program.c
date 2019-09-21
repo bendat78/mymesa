@@ -1522,8 +1522,15 @@ iris_compile_fs(struct iris_context *ice,
     */
    brw_nir_lower_fs_outputs(nir);
 
+   /* On Gen11+, shader RT write messages have a "Null Render Target" bit
+    * and do not need a binding table entry with a null surface.  Earlier
+    * generations need an entry for a null surface.
+    */
+   int null_rts = devinfo->gen < 11 ? 1 : 0;
+
    struct iris_binding_table bt;
-   iris_setup_binding_table(devinfo, nir, &bt, MAX2(key->nr_color_regions, 1),
+   iris_setup_binding_table(devinfo, nir, &bt,
+                            MAX2(key->nr_color_regions, null_rts),
                             num_system_values, num_cbufs);
 
    brw_nir_analyze_ubo_ranges(compiler, nir, NULL, prog_data->ubo_ranges);
@@ -1564,11 +1571,11 @@ iris_compile_fs(struct iris_context *ice,
 static void
 iris_update_compiled_fs(struct iris_context *ice)
 {
+   struct iris_screen *screen = (struct iris_screen *)ice->ctx.screen;
+   const struct gen_device_info *devinfo = &screen->devinfo;
    struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_FRAGMENT];
    struct iris_uncompiled_shader *ish =
       ice->shaders.uncompiled[MESA_SHADER_FRAGMENT];
-      struct iris_screen *screen = (struct iris_screen *)ice->ctx.screen;
-      const struct gen_device_info *devinfo = &screen->devinfo;
    struct brw_wm_prog_key key = { KEY_INIT(devinfo->gen) };
    ice->vtbl.populate_fs_key(ice, &ish->nir->info, &key);
 
@@ -1631,6 +1638,35 @@ update_last_vue_map(struct iris_context *ice,
    }
 
    ice->shaders.last_vue_map = &vue_prog_data->vue_map;
+}
+
+static void
+iris_update_pull_constant_descriptors(struct iris_context *ice,
+                                      gl_shader_stage stage)
+{
+   struct iris_compiled_shader *shader = ice->shaders.prog[stage];
+
+   if (!shader || !shader->prog_data->has_ubo_pull)
+      return;
+
+   struct iris_shader_state *shs = &ice->state.shaders[stage];
+   bool any_new_descriptors =
+      shader->num_system_values > 0 && shs->sysvals_need_upload;
+
+   unsigned bound_cbufs = shs->bound_cbufs;
+
+   while (bound_cbufs) {
+      const int i = u_bit_scan(&bound_cbufs);
+      struct pipe_shader_buffer *cbuf = &shs->constbuf[i];
+      struct iris_state_ref *surf_state = &shs->constbuf_surf_state[i];
+      if (!surf_state->res && cbuf->buffer) {
+         iris_upload_ubo_ssbo_surf_state(ice, cbuf, surf_state, false);
+         any_new_descriptors = true;
+      }
+   }
+
+   if (any_new_descriptors)
+      ice->state.dirty |= IRIS_DIRTY_BINDINGS_VS << stage;
 }
 
 /**
@@ -1747,6 +1783,11 @@ iris_update_compiled_shaders(struct iris_context *ice)
          }
       }
    }
+
+   for (int i = MESA_SHADER_VERTEX; i <= MESA_SHADER_FRAGMENT; i++) {
+      if (ice->state.dirty & (IRIS_DIRTY_CONSTANTS_VS << i))
+         iris_update_pull_constant_descriptors(ice, i);
+   }
 }
 
 static struct iris_compiled_shader *
@@ -1801,8 +1842,8 @@ iris_compile_cs(struct iris_context *ice,
    return shader;
 }
 
-void
-iris_update_compiled_compute_shader(struct iris_context *ice)
+static void
+iris_update_compiled_cs(struct iris_context *ice)
 {
    struct iris_shader_state *shs = &ice->state.shaders[MESA_SHADER_COMPUTE];
    struct iris_uncompiled_shader *ish =
@@ -1830,6 +1871,16 @@ iris_update_compiled_compute_shader(struct iris_context *ice)
                           IRIS_DIRTY_CONSTANTS_CS;
       shs->sysvals_need_upload = true;
    }
+}
+
+void
+iris_update_compiled_compute_shader(struct iris_context *ice)
+{
+   if (ice->state.dirty & IRIS_DIRTY_UNCOMPILED_CS)
+      iris_update_compiled_cs(ice);
+
+   if (ice->state.dirty & IRIS_DIRTY_CONSTANTS_CS)
+      iris_update_pull_constant_descriptors(ice, MESA_SHADER_COMPUTE);
 }
 
 void

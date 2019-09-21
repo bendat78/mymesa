@@ -54,6 +54,7 @@ static const nir_shader_compiler_options vs_nir_options = {
    .lower_bitops = true,
    .lower_rotate = true,
    .lower_sincos = true,
+   .lower_fceil = true,
 };
 
 static const nir_shader_compiler_options fs_nir_options = {
@@ -128,14 +129,15 @@ lima_program_optimize_vs_nir(struct nir_shader *s)
    } while (progress);
 
    NIR_PASS_V(s, nir_lower_int_to_float);
-   NIR_PASS_V(s, nir_lower_bool_to_float);
-
-   /* Some ops must be lowered after being converted from int ops,
-    * so re-run nir_opt_algebraic after int lowering. */
+   /* Run opt_algebraic between int_to_float and bool_to_float because
+    * int_to_float emits ftrunc, and ftrunc lowering generates bool ops
+    */
    do {
       progress = false;
       NIR_PASS(progress, s, nir_opt_algebraic);
    } while (progress);
+
+   NIR_PASS_V(s, nir_lower_bool_to_float);
 
    NIR_PASS_V(s, nir_copy_prop);
    NIR_PASS_V(s, nir_opt_dce);

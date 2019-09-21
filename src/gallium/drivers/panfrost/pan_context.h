@@ -110,12 +110,9 @@ struct panfrost_context {
         /* Compiler context */
         struct midgard_screen compiler;
 
-        /* Bound job and map of panfrost_job_key to jobs */
-        struct panfrost_job *job;
-        struct hash_table *jobs;
-
-        /* panfrost_resource -> panfrost_job */
-        struct hash_table *write_jobs;
+        /* Bound job batch and map of panfrost_batch_key to job batches */
+        struct panfrost_batch *batch;
+        struct hash_table *batches;
 
         /* Within a launch_grid call.. */
         const struct pipe_grid_info *compute_grid;
@@ -125,12 +122,6 @@ struct panfrost_context {
 
         struct pipe_framebuffer_state pipe_framebuffer;
         struct panfrost_streamout streamout;
-
-        struct panfrost_memory cmdstream_persistent;
-        struct panfrost_memory scratchpad;
-        struct panfrost_memory tiler_heap;
-        struct panfrost_memory tiler_dummy;
-        struct panfrost_memory depth_stencil_buffer;
 
         bool active_queries;
         uint64_t prims_generated;
@@ -156,8 +147,6 @@ struct panfrost_context {
         /* If instancing is enabled, vertex count padded for instance; if
          * it is disabled, just equal to plain vertex count */
         unsigned padded_count;
-
-        union mali_attr attributes[PIPE_MAX_ATTRIBS];
 
         /* TODO: Multiple uniform buffers (index =/= 0), finer updates? */
 
@@ -189,7 +178,7 @@ struct panfrost_context {
          * errors due to unsupported reucrsion */
 
         struct blitter_context *blitter_wallpaper;
-        struct panfrost_job *wallpaper_batch;
+        struct panfrost_batch *wallpaper_batch;
 
         struct panfrost_blend_state *blend;
 
@@ -203,12 +192,6 @@ struct panfrost_context {
         bool is_t6xx;
 
         uint32_t out_sync;
-
-        /* While we're busy building up the job for frame N, the GPU is
-         * still busy executing frame N-1. So hold a reference to
-         * yesterjob */
-        int last_fragment_flushed;
-        struct panfrost_job *last_job;
 };
 
 /* Corresponds to the CSO */
@@ -308,6 +291,9 @@ struct pipe_context *
 panfrost_create_context(struct pipe_screen *screen, void *priv, unsigned flags);
 
 void
+panfrost_invalidate_frame(struct panfrost_context *ctx);
+
+void
 panfrost_emit_for_draw(struct panfrost_context *ctx, bool with_vertex_data);
 
 struct panfrost_transfer
@@ -322,20 +308,17 @@ panfrost_flush(
         struct pipe_fence_handle **fence,
         unsigned flags);
 
-bool
-panfrost_is_scanout(struct panfrost_context *ctx);
-
-mali_ptr panfrost_sfbd_fragment(struct panfrost_context *ctx, bool has_draws);
-mali_ptr panfrost_mfbd_fragment(struct panfrost_context *ctx, bool has_draws);
+mali_ptr panfrost_sfbd_fragment(struct panfrost_batch *batch, bool has_draws);
+mali_ptr panfrost_mfbd_fragment(struct panfrost_batch *batch, bool has_draws);
 
 struct bifrost_framebuffer
-panfrost_emit_mfbd(struct panfrost_context *ctx, unsigned vertex_count);
+panfrost_emit_mfbd(struct panfrost_batch *batch, unsigned vertex_count);
 
 struct mali_single_framebuffer
-panfrost_emit_sfbd(struct panfrost_context *ctx, unsigned vertex_count);
+panfrost_emit_sfbd(struct panfrost_batch *batch, unsigned vertex_count);
 
 mali_ptr
-panfrost_fragment_job(struct panfrost_context *ctx, bool has_draws);
+panfrost_fragment_job(struct panfrost_batch *batch, bool has_draws);
 
 void
 panfrost_shader_compile(
@@ -353,7 +336,7 @@ mali_ptr
 panfrost_vertex_buffer_address(struct panfrost_context *ctx, unsigned i);
 
 void
-panfrost_emit_vertex_data(struct panfrost_job *batch);
+panfrost_emit_vertex_data(struct panfrost_batch *batch);
 
 struct pan_shift_odd {
         unsigned shift;

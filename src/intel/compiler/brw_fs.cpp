@@ -1910,6 +1910,17 @@ fs_visitor::split_virtual_grfs()
    }
 
    foreach_block_and_inst(block, fs_inst, inst, cfg) {
+      /* We fix up undef instructions later */
+      if (inst->opcode == SHADER_OPCODE_UNDEF) {
+         /* UNDEF instructions are currently only used to undef entire
+          * registers.  We need this invariant later when we split them.
+          */
+         assert(inst->dst.file == VGRF);
+         assert(inst->dst.offset == 0);
+         assert(inst->size_written == alloc.sizes[inst->dst.nr] * REG_SIZE);
+         continue;
+      }
+
       if (inst->dst.file == VGRF) {
          int reg = vgrf_to_reg[inst->dst.nr] + inst->dst.offset / REG_SIZE;
          for (unsigned j = 1; j < regs_written(inst); j++)
@@ -1962,7 +1973,20 @@ fs_visitor::split_virtual_grfs()
    }
    assert(reg == reg_count);
 
-   foreach_block_and_inst(block, fs_inst, inst, cfg) {
+   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
+      if (inst->opcode == SHADER_OPCODE_UNDEF) {
+         const fs_builder ibld(this, block, inst);
+         assert(inst->size_written % REG_SIZE == 0);
+         unsigned reg_offset = 0;
+         while (reg_offset < inst->size_written / REG_SIZE) {
+            reg = vgrf_to_reg[inst->dst.nr] + reg_offset;
+            ibld.UNDEF(fs_reg(VGRF, new_virtual_grf[reg], inst->dst.type));
+            reg_offset += alloc.sizes[new_virtual_grf[reg]];
+         }
+         inst->remove(block);
+         continue;
+      }
+
       if (inst->dst.file == VGRF) {
          reg = vgrf_to_reg[inst->dst.nr] + inst->dst.offset / REG_SIZE;
          inst->dst.nr = new_virtual_grf[reg];
@@ -2402,6 +2426,8 @@ fs_visitor::get_pull_locs(const fs_reg &src,
 
       *out_surf_index = prog_data->binding_table.ubo_start + range->block;
       *out_pull_index = (32 * range->start + src.offset) / 4;
+
+      prog_data->has_ubo_pull = true;
       return true;
    }
 
@@ -2411,6 +2437,8 @@ fs_visitor::get_pull_locs(const fs_reg &src,
       /* A regular uniform push constant */
       *out_surf_index = stage_prog_data->binding_table.pull_constants_start;
       *out_pull_index = pull_constant_loc[location];
+
+      prog_data->has_ubo_pull = true;
       return true;
    }
 
@@ -3507,9 +3535,22 @@ bool
 fs_visitor::remove_extra_rounding_modes()
 {
    bool progress = false;
+   unsigned execution_mode = this->nir->info.float_controls_execution_mode;
+
+   brw_rnd_mode base_mode = BRW_RND_MODE_UNSPECIFIED;
+   if ((FLOAT_CONTROLS_ROUNDING_MODE_RTE_FP16 |
+        FLOAT_CONTROLS_ROUNDING_MODE_RTE_FP32 |
+        FLOAT_CONTROLS_ROUNDING_MODE_RTE_FP64) &
+       execution_mode)
+      base_mode = BRW_RND_MODE_RTNE;
+   if ((FLOAT_CONTROLS_ROUNDING_MODE_RTZ_FP16 |
+        FLOAT_CONTROLS_ROUNDING_MODE_RTZ_FP32 |
+        FLOAT_CONTROLS_ROUNDING_MODE_RTZ_FP64) &
+       execution_mode)
+      base_mode = BRW_RND_MODE_RTZ;
 
    foreach_block (block, cfg) {
-      brw_rnd_mode prev_mode = BRW_RND_MODE_UNSPECIFIED;
+      brw_rnd_mode prev_mode = base_mode;
 
       foreach_inst_in_block_safe (fs_inst, inst, block) {
          if (inst->opcode == SHADER_OPCODE_RND_MODE) {
@@ -4457,6 +4498,9 @@ lower_fb_write_logical_send(const fs_builder &bld, fs_inst *inst,
           * in the extended message descriptor, in lieu of using a header.
           */
          ex_desc = inst->target << 12 | src0_alpha_present << 15;
+
+         if (key->nr_color_regions == 0)
+            ex_desc |= 1 << 20; /* Null Render Target */
       }
 
       inst->opcode = SHADER_OPCODE_SEND;

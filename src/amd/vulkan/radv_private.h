@@ -288,10 +288,16 @@ struct radv_physical_device {
 	/* Whether to enable the AMD_shader_ballot extension */
 	bool use_shader_ballot;
 
+	/* Whether to enable NGG streamout. */
+	bool use_ngg_streamout;
+
 	/* Number of threads per wave. */
 	uint8_t ps_wave_size;
 	uint8_t cs_wave_size;
 	uint8_t ge_wave_size;
+
+	/* Whether to use the experimental compiler backend */
+	bool use_aco;
 
 	/* This is the drivers on-disk cache used as a fallback as opposed to
 	 * the pipeline cache defined by apps.
@@ -314,6 +320,9 @@ struct radv_instance {
 	uint32_t                                    apiVersion;
 	int                                         physicalDeviceCount;
 	struct radv_physical_device                 physicalDevices[RADV_MAX_DRM_DEVICES];
+
+	char *                                      engineName;
+	uint32_t                                    engineVersion;
 
 	uint64_t debug_flags;
 	uint64_t perftest_flags;
@@ -657,6 +666,7 @@ struct radv_queue {
 	uint32_t esgs_ring_size;
 	uint32_t gsvs_ring_size;
 	bool has_tess_rings;
+	bool has_gds;
 	bool has_sample_positions;
 
 	struct radeon_winsys_bo *scratch_bo;
@@ -665,6 +675,8 @@ struct radv_queue {
 	struct radeon_winsys_bo *esgs_ring_bo;
 	struct radeon_winsys_bo *gsvs_ring_bo;
 	struct radeon_winsys_bo *tess_rings_bo;
+	struct radeon_winsys_bo *gds_bo;
+	struct radeon_winsys_bo *gds_oa_bo;
 	struct radeon_cmdbuf *initial_preamble_cs;
 	struct radeon_cmdbuf *initial_full_flush_preamble_cs;
 	struct radeon_cmdbuf *continue_preamble_cs;
@@ -1217,6 +1229,7 @@ struct radv_cmd_buffer {
 	uint32_t esgs_ring_size_needed;
 	uint32_t gsvs_ring_size_needed;
 	bool tess_rings_needed;
+	bool gds_needed; /* for GFX10 streamout */
 	bool sample_positions_needed;
 
 	VkResult record_result;
@@ -1411,6 +1424,7 @@ struct radv_shader_module;
 #define RADV_HASH_SHADER_CS_WAVE32           (1 << 4)
 #define RADV_HASH_SHADER_PS_WAVE32           (1 << 5)
 #define RADV_HASH_SHADER_GE_WAVE32           (1 << 6)
+#define RADV_HASH_SHADER_ACO                 (1 << 7)
 
 void
 radv_hash_shaders(unsigned char *hash,
@@ -2129,9 +2143,11 @@ unsigned radv_nir_get_max_workgroup_size(enum chip_class chip_class,
 
 /* radv_shader_info.h */
 struct radv_shader_info;
+struct radv_shader_variant_key;
 
 void radv_nir_shader_info_pass(const struct nir_shader *nir,
-			       const struct radv_nir_compiler_options *options,
+			       const struct radv_pipeline_layout *layout,
+			       const struct radv_shader_variant_key *key,
 			       struct radv_shader_info *info);
 
 void radv_nir_shader_info_init(struct radv_shader_info *info);

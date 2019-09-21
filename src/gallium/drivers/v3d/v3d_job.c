@@ -454,7 +454,7 @@ v3d_read_and_accumulate_primitive_counters(struct v3d_context *v3d)
 {
         assert(v3d->prim_counts);
 
-        perf_debug("stalling on TF counts readback");
+        perf_debug("stalling on TF counts readback\n");
         struct v3d_resource *rsc = v3d_resource(v3d->prim_counts);
         if (v3d_bo_wait(rsc->bo, PIPE_TIMEOUT_INFINITE, "prim-counts")) {
                 uint32_t *map = v3d_bo_map(rsc->bo);
@@ -526,8 +526,16 @@ v3d_job_submit(struct v3d_context *v3d, struct v3d_job *job)
                  * feedback we need to read the primitive counts and accumulate
                  * them, otherwise they will be reset at the start of the next
                  * draw when we emit the Tile Binning Mode Configuration packet.
+                 *
+                 * If the job doesn't have any TF draw calls, then we know
+                 * the primitive count must be zero and we can skip stalling
+                 * for this. This also fixes a problem because it seems that
+                 * in this scenario the counters are not reset with the Tile
+                 * Binning Mode Configuration packet, which would translate
+                 * to us reading an obsolete (possibly non-zero) value from
+                 * the GPU counters.
                  */
-                if (v3d->streamout.num_targets)
+                if (v3d->streamout.num_targets && job->tf_draw_calls_queued > 0)
                         v3d_read_and_accumulate_primitive_counters(v3d);
         }
 

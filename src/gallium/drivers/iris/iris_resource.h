@@ -78,6 +78,12 @@ struct iris_resource {
    unsigned bind_history;
 
    /**
+    * A bitfield of MESA_SHADER_* stages indicating where this resource
+    * was bound.
+    */
+   unsigned bind_stages;
+
+   /**
     * For PIPE_BUFFER resources, a range which may contain valid data.
     *
     * This is a conservative estimate of what part of the buffer contains
@@ -231,6 +237,8 @@ struct iris_transfer {
    struct pipe_resource *staging;
    struct blorp_context *blorp;
    struct iris_batch *batch;
+
+   bool dest_had_defined_contents;
 
    void (*unmap)(struct iris_transfer *);
 };

@@ -41,6 +41,7 @@
 #include "util/u_transfer_helper.h"
 #include "util/u_gen_mipmap.h"
 
+#include "pan_bo.h"
 #include "pan_context.h"
 #include "pan_screen.h"
 #include "pan_resource.h"
@@ -81,7 +82,7 @@ panfrost_resource_from_handle(struct pipe_screen *pscreen,
         pipe_reference_init(&prsc->reference, 1);
         prsc->screen = pscreen;
 
-        rsc->bo = panfrost_drm_import_bo(screen, whandle->handle);
+        rsc->bo = panfrost_bo_import(screen, whandle->handle);
         rsc->slices[0].stride = whandle->stride;
         rsc->slices[0].initialized = true;
         panfrost_resource_reset_damage(rsc);
@@ -133,7 +134,7 @@ panfrost_resource_get_handle(struct pipe_screen *pscreen,
 
                         return true;
                 } else {
-                        int fd = panfrost_drm_export_bo(screen, rsrc->bo);
+                        int fd = panfrost_bo_export(rsrc->bo);
 
                         if (fd < 0)
                                 return false;
@@ -412,7 +413,7 @@ panfrost_resource_create_bo(struct panfrost_screen *screen, struct panfrost_reso
 
         /* We create a BO immediately but don't bother mapping, since we don't
          * care to map e.g. FBOs which the CPU probably won't touch */
-        pres->bo = panfrost_drm_create_bo(screen, bo_size, PAN_ALLOCATE_DELAY_MMAP);
+        pres->bo = panfrost_bo_create(screen, bo_size, PAN_BO_DELAY_MMAP);
 }
 
 void
@@ -521,25 +522,6 @@ panfrost_resource_create(struct pipe_screen *screen,
         return (struct pipe_resource *)so;
 }
 
-void
-panfrost_bo_reference(struct panfrost_bo *bo)
-{
-        if (bo)
-                pipe_reference(NULL, &bo->reference);
-}
-
-void
-panfrost_bo_unreference(struct pipe_screen *screen, struct panfrost_bo *bo)
-{
-        if (!bo)
-                return;
-
-        /* When the reference count goes to zero, we need to cleanup */
-
-        if (pipe_reference(&bo->reference, NULL))
-                panfrost_drm_release_bo(pan_screen(screen), bo, true);
-}
-
 static void
 panfrost_resource_destroy(struct pipe_screen *screen,
                           struct pipe_resource *pt)
@@ -551,7 +533,7 @@ panfrost_resource_destroy(struct pipe_screen *screen,
                 renderonly_scanout_destroy(rsrc->scanout, pscreen->ro);
 
         if (rsrc->bo)
-                panfrost_bo_unreference(screen, rsrc->bo);
+                panfrost_bo_unreference(rsrc->bo);
 
         util_range_destroy(&rsrc->valid_buffer_range);
         ralloc_free(rsrc);
@@ -579,11 +561,7 @@ panfrost_transfer_map(struct pipe_context *pctx,
         *out_transfer = &transfer->base;
 
         /* If we haven't already mmaped, now's the time */
-
-        if (!bo->cpu) {
-                struct panfrost_screen *screen = pan_screen(pctx->screen);
-                panfrost_drm_mmap_bo(screen, bo);
-        }
+        panfrost_bo_mmap(bo);
 
         /* Check if we're bound for rendering and this is a read pixels. If so,
          * we need to flush */
@@ -770,8 +748,8 @@ panfrost_generate_mipmap(
          * reorder-type optimizations in place. But for now prioritize
          * correctness. */
 
-        struct panfrost_job *job = panfrost_get_job_for_fbo(ctx);
-        bool has_draws = job->last_job.gpu;
+        struct panfrost_batch *batch = panfrost_get_batch_for_fbo(ctx);
+        bool has_draws = batch->last_job.gpu;
 
         if (has_draws)
                 panfrost_flush(pctx, NULL, PIPE_FLUSH_END_OF_FRAME);
@@ -861,8 +839,8 @@ panfrost_resource_hint_layout(
 
         /* If we grew in size, reallocate the BO */
         if (new_size > rsrc->bo->size) {
-                panfrost_drm_release_bo(screen, rsrc->bo, true);
-                rsrc->bo = panfrost_drm_create_bo(screen, new_size, PAN_ALLOCATE_DELAY_MMAP);
+                panfrost_bo_unreference(rsrc->bo);
+                rsrc->bo = panfrost_bo_create(screen, new_size, PAN_BO_DELAY_MMAP);
         }
 }
 

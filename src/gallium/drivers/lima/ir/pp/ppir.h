@@ -113,7 +113,7 @@ typedef enum {
    ppir_op_discard,
    ppir_op_branch,
 
-   ppir_op_dummy,
+   ppir_op_undef,
 
    ppir_op_num,
 } ppir_op;
@@ -181,6 +181,7 @@ typedef struct ppir_reg {
    /* instr live range */
    int live_in, live_out;
    bool spilled;
+   bool undef;
 } ppir_reg;
 
 typedef enum {

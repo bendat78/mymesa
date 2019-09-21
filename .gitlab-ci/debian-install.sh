@@ -11,30 +11,25 @@ for arch in $CROSS_ARCHITECTURES; do
 done
 
 apt-get install -y \
-      apt-transport-https \
       ca-certificates \
-      curl \
       wget \
-      unzip \
-      gnupg
-
-curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-echo "deb [trusted=yes] https://apt.llvm.org/stretch/ llvm-toolchain-stretch-7 main" >/etc/apt/sources.list.d/llvm7.list
-echo "deb [trusted=yes] https://apt.llvm.org/stretch/ llvm-toolchain-stretch-8 main" >/etc/apt/sources.list.d/llvm8.list
+      unzip
 
 sed -i -e 's/http:\/\/deb/https:\/\/deb/g' /etc/apt/sources.list
-echo 'deb https://deb.debian.org/debian stretch-backports main' >/etc/apt/sources.list.d/backports.list
-echo 'deb https://deb.debian.org/debian jessie main' >/etc/apt/sources.list.d/jessie.list
+echo 'deb https://deb.debian.org/debian buster-backports main' >/etc/apt/sources.list.d/backports.list
 
 apt-get update
-apt-get install -y -t stretch-backports \
-      llvm-3.4-dev \
-      llvm-3.9-dev \
-      libclang-3.9-dev \
-      llvm-4.0-dev \
-      libclang-4.0-dev \
-      llvm-5.0-dev \
-      libclang-5.0-dev \
+
+# Use newer packages from backports by default
+cat >/etc/apt/preferences <<EOF
+Package: *
+Pin: release a=buster-backports
+Pin-Priority: 500
+EOF
+
+apt-get dist-upgrade -y
+
+apt-get install -y --no-remove \
       llvm-6.0-dev \
       libclang-6.0-dev \
       llvm-7-dev \
@@ -42,13 +37,7 @@ apt-get install -y -t stretch-backports \
       llvm-8-dev \
       libclang-8-dev \
       g++ \
-      clang-8
-
-# Install remaining packages from Debian buster to get newer versions
-echo "deb https://deb.debian.org/debian/ buster main" >/etc/apt/sources.list.d/buster.list
-echo "deb https://deb.debian.org/debian/ buster-updates main" >/etc/apt/sources.list.d/buster-updates.list
-apt-get update
-apt-get install -y \
+      clang-8 \
       git \
       bzip2 \
       zlib1g-dev \
@@ -85,22 +74,15 @@ apt-get install -y \
 
 # Cross-build Mesa deps
 for arch in $CROSS_ARCHITECTURES; do
-    apt-get install -y \
+    apt-get install -y --no-remove \
             libdrm-dev:${arch} \
             libexpat1-dev:${arch} \
-            libelf-dev:${arch}
+            libelf-dev:${arch} \
+            crossbuild-essential-${arch}
 done
-apt-get install -y \
-        dpkg-dev \
-        gcc-aarch64-linux-gnu \
-        g++-aarch64-linux-gnu \
-        gcc-arm-linux-gnueabihf \
-        g++-arm-linux-gnueabihf \
-        gcc-i686-linux-gnu \
-        g++-i686-linux-gnu
 
 # for 64bit windows cross-builds
-apt-get install -y mingw-w64
+apt-get install -y --no-remove mingw-w64
 
 # for the vulkan overlay layer
 wget https://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-linux-Release.zip
@@ -207,10 +189,10 @@ make
 popd
 
 # Use ccache to speed up builds
-apt-get install -y ccache
+apt-get install -y --no-remove ccache
 
 # We need xmllint to validate the XML files in Mesa
-apt-get install -y libxml2-utils
+apt-get install -y --no-remove libxml2-utils
 
 
 # Generate cross build files for Meson
@@ -273,10 +255,8 @@ rm -rf /VK-GL-CTS
 ############### Uninstall the build software
 
 apt-get purge -y \
-      git \
-      curl \
+      wget \
       unzip \
-      gnupg \
       cmake \
       git \
       libgles2-mesa-dev \

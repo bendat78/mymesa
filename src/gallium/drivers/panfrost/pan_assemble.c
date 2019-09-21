@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "pan_bo.h"
 #include "pan_context.h"
 
 #include "compiler/nir/nir.h"
@@ -82,7 +83,7 @@ panfrost_shader_compile(
          * I bet someone just thought that would be a cute pun. At least,
          * that's how I'd do it. */
 
-        state->bo = panfrost_drm_create_bo(screen, size, PAN_ALLOCATE_EXECUTE);
+        state->bo = panfrost_bo_create(screen, size, PAN_BO_EXECUTE);
         memcpy(state->bo->cpu, dst, size);
         meta->shader = state->bo->gpu | program.first_tag;
 

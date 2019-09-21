@@ -45,7 +45,7 @@ pre_args = [
   '-D__STDC_FORMAT_MACROS',
   '-D__STDC_LIMIT_MACROS',
   '-DPACKAGE_VERSION="@0@"'.format(meson.project_version()),
-  '-DPACKAGE_BUGREPORT="https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa"',
+  '-DPACKAGE_BUGREPORT="https://gitlab.freedesktop.org/mesa/mesa/issues"',
 ]
 
 with_vulkan_icd_dir = get_option('vulkan-icd-dir')
@@ -92,7 +92,14 @@ if host_machine.system() == 'windows'
   endif
 endif
 with_opengl = get_option('opengl')
-with_shared_glapi = get_option('shared-glapi')
+
+# Default shared glapi off for windows, on elsewhere.
+_sg = get_option('shared-glapi')
+if _sg == 'auto'
+  with_shared_glapi = host_machine.system() != 'windows'
+else
+  with_shared_glapi = _sg == 'true'
+endif
 
 # shared-glapi is required if at least two OpenGL APIs are being built
 if not with_shared_glapi
@@ -118,7 +125,7 @@ with_gles1 = with_gles1 != 'false'
 with_gles2 = with_gles2 != 'false'
 with_any_opengl = with_opengl or with_gles1 or with_gles2
 # Only build shared_glapi if at least one OpenGL API is enabled
-with_shared_glapi = get_option('shared-glapi') and with_any_opengl
+with_shared_glapi = with_shared_glapi and with_any_opengl
 
 system_has_kms_drm = ['openbsd', 'netbsd', 'freebsd', 'gnu/kfreebsd', 'dragonfly', 'linux'].contains(host_machine.system())
 
@@ -273,10 +280,12 @@ _platforms = get_option('platforms')
 if _platforms.contains('auto')
   if system_has_kms_drm
     _platforms = ['x11', 'wayland', 'drm', 'surfaceless']
-  elif ['darwin', 'windows', 'cygwin'].contains(host_machine.system())
+  elif ['darwin', 'cygwin'].contains(host_machine.system())
     _platforms = ['x11', 'surfaceless']
   elif ['haiku'].contains(host_machine.system())
     _platforms = ['haiku']
+  elif host_machine.system() == 'windows'
+    _platforms = ['windows']
   else
     error('Unknown OS @0@. Please pass -Dplatforms to set platforms. Patches gladly accepted to fix this.'.format(
           host_machine.system()))
@@ -289,6 +298,7 @@ with_platform_wayland = _platforms.contains('wayland')
 with_platform_drm = _platforms.contains('drm')
 with_platform_haiku = _platforms.contains('haiku')
 with_platform_surfaceless = _platforms.contains('surfaceless')
+with_platform_windows = _platforms.contains('windows')
 
 with_platforms = false
 if _platforms.length() != 0 and _platforms != ['']
@@ -312,6 +322,8 @@ if with_glx == 'auto'
   if with_dri
     with_glx = 'dri'
   elif with_platform_haiku
+    with_glx = 'disabled'
+  elif host_machine.system() == 'windows'
     with_glx = 'disabled'
   elif with_gallium
     # Even when building just gallium drivers the user probably wants dri
@@ -409,7 +421,9 @@ endif
 
 with_glvnd = get_option('glvnd')
 if with_glvnd
-  if with_glx == 'xlib' or with_glx == 'gallium-xlib'
+  if with_platform_windows
+    error('glvnd cannot be used on Windows')
+  elif with_glx == 'xlib' or with_glx == 'gallium-xlib'
     error('Cannot build glvnd support for GLX that is not DRI based.')
   elif with_glx == 'disabled' and not with_egl
     error('glvnd requires DRI based GLX and/or EGL')
@@ -1110,14 +1124,15 @@ if build_machine.system() != 'darwin'
 endif
 
 # check for dl support
-if cc.has_function('dlopen')
-  dep_dl = null_dep
-else
-  dep_dl = cc.find_library('dl')
-endif
-if cc.has_function('dladdr', dependencies : dep_dl)
-  # This is really only required for megadrivers
-  pre_args += '-DHAVE_DLADDR'
+dep_dl = null_dep
+if host_machine.system() != 'windows'
+  if not cc.has_function('dlopen')
+    dep_dl = cc.find_library('dl')
+  endif
+  if cc.has_function('dladdr', dependencies : dep_dl)
+    # This is really only required for megadrivers
+    pre_args += '-DHAVE_DLADDR'
+  endif
 endif
 
 if cc.has_function('dl_iterate_phdr')
@@ -1136,7 +1151,7 @@ else
 endif
 
 # TODO: some of these may be conditional
-dep_zlib = dependency('zlib', version : '>= 1.2.3')
+dep_zlib = dependency('zlib', version : '>= 1.2.3', fallback : ['zlib', 'zlib_dep'])
 pre_args += '-DHAVE_ZLIB'
 dep_thread = dependency('threads')
 if dep_thread.found() and host_machine.system() != 'windows'
@@ -1155,7 +1170,7 @@ if dep_thread.found() and host_machine.system() != 'windows'
     pre_args += '-DPTHREAD_SETAFFINITY_IN_NP_HEADER'
   endif
 endif
-dep_expat = dependency('expat')
+dep_expat = dependency('expat', fallback : ['expat', 'expat_dep'])
 # this only exists on linux so either this is linux and it will be found, or
 # it's not linux and wont
 dep_m = cc.find_library('m', required : false)
@@ -1243,6 +1258,8 @@ if with_gallium_opencl
     'all-targets', 'linker', 'coverage', 'instrumentation', 'ipo', 'irreader',
     'lto', 'option', 'objcarcopts', 'profiledata',
   ]
+endif
+if with_gallium_opencl or with_gallium_softpipe
   llvm_optional_modules += ['coroutines']
 endif
 
@@ -1250,10 +1267,8 @@ if with_amd_vk or with_gallium_radeonsi
   _llvm_version = '>= 8.0.0'
 elif with_gallium_swr
   _llvm_version = '>= 6.0.0'
-elif with_gallium_opencl or with_gallium_r600
-  _llvm_version = '>= 3.9.0'
 else
-  _llvm_version = '>= 3.3.0'
+  _llvm_version = '>= 3.9.0'
 endif
 
 _shared_llvm = get_option('shared-llvm')

@@ -376,12 +376,19 @@ u_pipe_screen_get_param_defaults(struct pipe_screen *pscreen,
    case PIPE_CAP_TEXTURE_SHADOW_LOD:
       return 0;
 
+   case PIPE_CAP_GL_SPIRV:
+   case PIPE_CAP_GL_SPIRV_VARIABLE_POINTERS:
+      return 0;
+
    case PIPE_CAP_DMABUF:
 #if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
       return 1;
 #else
       return 0;
 #endif
+
+   case PIPE_CAP_TEXTURE_SHADOW_MAP: /* Enables ARB_shadow */
+      return 1;
 
    default:
       unreachable("bad PIPE_CAP_*");

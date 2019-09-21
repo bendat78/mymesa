@@ -85,6 +85,8 @@ brw_reg_from_fs_reg(const struct gen_device_info *devinfo, fs_inst *inst,
          const unsigned phys_width = compressed ? inst->exec_size / 2 :
                                      inst->exec_size;
 
+         const unsigned max_hw_width = 16;
+
          /* XXX - The equation above is strictly speaking not correct on
           *       hardware that supports unbalanced GRF writes -- On Gen9+
           *       each decompressed chunk of the instruction may have a
@@ -97,7 +99,7 @@ brw_reg_from_fs_reg(const struct gen_device_info *devinfo, fs_inst *inst,
             brw_reg = brw_vecn_reg(1, brw_file_from_reg(reg), reg->nr, 0);
             brw_reg = stride(brw_reg, reg->stride, 1, 0);
          } else {
-            const unsigned width = MIN2(reg_width, phys_width);
+            const unsigned width = MIN3(reg_width, phys_width, max_hw_width);
             brw_reg = brw_vecn_reg(width, brw_file_from_reg(reg), reg->nr, 0);
             brw_reg = stride(brw_reg, width * reg->stride, width, reg->stride);
          }
@@ -585,12 +587,13 @@ fs_generator::generate_shuffle(fs_inst *inst,
             struct brw_reg gdst = suboffset(dst, group);
             struct brw_reg dst_d = retype(spread(gdst, 2),
                                           BRW_REGISTER_TYPE_D);
+            assert(dst.hstride == 1);
             brw_MOV(p, dst_d,
                     retype(brw_VxH_indirect(0, 0), BRW_REGISTER_TYPE_D));
             brw_MOV(p, byte_offset(dst_d, 4),
                     retype(brw_VxH_indirect(0, 4), BRW_REGISTER_TYPE_D));
          } else {
-            brw_MOV(p, suboffset(dst, group),
+            brw_MOV(p, suboffset(dst, group * dst.hstride),
                     retype(brw_VxH_indirect(0, 0), src.type));
          }
       }
@@ -2131,7 +2134,6 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width,
          break;
 
       case SHADER_OPCODE_CLUSTER_BROADCAST: {
-         assert(src[0].type == dst.type);
          assert(!src[0].negate && !src[0].abs);
          assert(src[1].file == BRW_IMMEDIATE_VALUE);
          assert(src[1].type == BRW_REGISTER_TYPE_UD);
@@ -2139,8 +2141,17 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width,
          assert(src[2].type == BRW_REGISTER_TYPE_UD);
          const unsigned component = src[1].ud;
          const unsigned cluster_size = src[2].ud;
+         unsigned vstride = cluster_size;
+         unsigned width = cluster_size;
+
+         /* The maximum exec_size is 32, but the maximum width is only 16. */
+         if (inst->exec_size == width) {
+            vstride = 0;
+            width = 1;
+         }
+
          struct brw_reg strided = stride(suboffset(src[0], component),
-                                         cluster_size, cluster_size, 0);
+                                         vstride, width, 0);
          if (type_sz(src[0].type) > 4 &&
              (devinfo->is_cherryview || gen_device_info_is_9lp(devinfo))) {
             /* IVB has an issue (which we found empirically) where it reads
@@ -2159,6 +2170,7 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width,
              * indirect here to handle adding 4 bytes to the offset and avoid
              * the extra ADD to the register file.
              */
+            assert(src[0].type == dst.type);
             brw_MOV(p, subscript(dst, BRW_REGISTER_TYPE_D, 0),
                        subscript(strided, BRW_REGISTER_TYPE_D, 0));
             brw_MOV(p, subscript(dst, BRW_REGISTER_TYPE_D, 1),
@@ -2218,9 +2230,22 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width,
          brw_DIM(p, dst, retype(src[0], BRW_REGISTER_TYPE_F));
          break;
 
-      case SHADER_OPCODE_RND_MODE:
+      case SHADER_OPCODE_RND_MODE: {
          assert(src[0].file == BRW_IMMEDIATE_VALUE);
-         brw_rounding_mode(p, (brw_rnd_mode) src[0].d);
+         /*
+          * Changes the floating point rounding mode updating the control
+          * register field defined at cr0.0[5-6] bits.
+          */
+         enum brw_rnd_mode mode =
+            (enum brw_rnd_mode) (src[0].d << BRW_CR0_RND_MODE_SHIFT);
+         brw_float_controls_mode(p, mode, BRW_CR0_RND_MODE_MASK);
+      }
+         break;
+
+      case SHADER_OPCODE_FLOAT_CONTROL_MODE:
+         assert(src[0].file == BRW_IMMEDIATE_VALUE);
+         assert(src[1].file == BRW_IMMEDIATE_VALUE);
+         brw_float_controls_mode(p, src[0].d, src[1].d);
          break;
 
       default:

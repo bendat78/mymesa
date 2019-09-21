@@ -23,6 +23,7 @@
  *
  */
 
+#include "pan_bo.h"
 #include "pan_context.h"
 
 /* See mali_job for notes on how this works. But basically, for small vertex
@@ -164,7 +165,7 @@ panfrost_padded_vertex_count(
 
 static unsigned
 panfrost_vertex_instanced(
-        struct panfrost_job *batch,
+        struct panfrost_batch *batch,
         struct panfrost_resource *rsrc,
         unsigned divisor,
         union mali_attr *attrs,
@@ -253,7 +254,7 @@ panfrost_vertex_instanced(
 }
 
 void
-panfrost_emit_vertex_data(struct panfrost_job *batch)
+panfrost_emit_vertex_data(struct panfrost_batch *batch)
 {
         struct panfrost_context *ctx = batch->ctx;
         struct panfrost_vertex_state *so = ctx->vertex;
@@ -297,7 +298,7 @@ panfrost_emit_vertex_data(struct panfrost_job *batch)
                 unsigned chopped_addr = raw_addr - addr;
 
                 /* Add a dependency of the batch on the vertex buffer */
-                panfrost_job_add_bo(batch, rsrc->bo);
+                panfrost_batch_add_bo(batch, rsrc->bo);
 
                 /* Set common fields */
                 attrs[k].elements = addr;
@@ -341,7 +342,7 @@ panfrost_emit_vertex_data(struct panfrost_job *batch)
         /* Upload whatever we emitted and go */
 
         ctx->payloads[PIPE_SHADER_VERTEX].postfix.attributes =
-                panfrost_upload_transient(ctx, attrs, k * sizeof(union mali_attr));
+                panfrost_upload_transient(batch, attrs, k * sizeof(union mali_attr));
 }
 
 

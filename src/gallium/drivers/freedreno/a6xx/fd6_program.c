@@ -39,47 +39,6 @@
 #include "fd6_texture.h"
 #include "fd6_format.h"
 
-static struct ir3_shader *
-create_shader_stateobj(struct pipe_context *pctx, const struct pipe_shader_state *cso,
-		gl_shader_stage type)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	struct ir3_compiler *compiler = ctx->screen->compiler;
-	return ir3_shader_create(compiler, cso, type, &ctx->debug, pctx->screen);
-}
-
-static void *
-fd6_fp_state_create(struct pipe_context *pctx,
-		const struct pipe_shader_state *cso)
-{
-	return create_shader_stateobj(pctx, cso, MESA_SHADER_FRAGMENT);
-}
-
-static void
-fd6_fp_state_delete(struct pipe_context *pctx, void *hwcso)
-{
-	struct ir3_shader *so = hwcso;
-	struct fd_context *ctx = fd_context(pctx);
-	ir3_cache_invalidate(fd6_context(ctx)->shader_cache, hwcso);
-	ir3_shader_destroy(so);
-}
-
-static void *
-fd6_vp_state_create(struct pipe_context *pctx,
-		const struct pipe_shader_state *cso)
-{
-	return create_shader_stateobj(pctx, cso, MESA_SHADER_VERTEX);
-}
-
-static void
-fd6_vp_state_delete(struct pipe_context *pctx, void *hwcso)
-{
-	struct ir3_shader *so = hwcso;
-	struct fd_context *ctx = fd_context(pctx);
-	ir3_cache_invalidate(fd6_context(ctx)->shader_cache, hwcso);
-	ir3_shader_destroy(so);
-}
-
 void
 fd6_emit_shader(struct fd_ringbuffer *ring, const struct ir3_shader_variant *so)
 {
@@ -261,7 +220,7 @@ setup_stateobj(struct fd_ringbuffer *ring, struct fd_screen *screen,
 	uint32_t vertex_regid, instance_regid;
 	uint32_t ij_pix_regid, ij_samp_regid, ij_cent_regid, ij_size_regid;
 	enum a3xx_threadsize fssz;
-	uint8_t psize_loc = ~0;
+	uint8_t psize_loc = ~0, pos_loc = ~0;
 	int i, j;
 
 	static const struct ir3_shader_variant dummy_fs = {0};
@@ -379,8 +338,10 @@ setup_stateobj(struct fd_ringbuffer *ring, struct fd_screen *screen,
 	OUT_RING(ring, ~varmask[3]);  /* VPC_VAR[3].DISABLE */
 
 	/* a6xx appends pos/psize to end of the linkage map: */
-	if (VALIDREG(pos_regid))
+	if (VALIDREG(pos_regid)) {
+		pos_loc = l.max_loc;
 		ir3_link_add(&l, pos_regid, 0xf, l.max_loc);
+	}
 
 	if (VALIDREG(psize_regid)) {
 		psize_loc = l.max_loc;
@@ -391,10 +352,10 @@ setup_stateobj(struct fd_ringbuffer *ring, struct fd_screen *screen,
 		setup_stream_out(state, vs, &l);
 	}
 
-	for (i = 0, j = 0; (i < 16) && (j < l.cnt); i++) {
+	debug_assert(l.cnt < 32);
+	OUT_PKT4(ring, REG_A6XX_SP_VS_OUT_REG(0), DIV_ROUND_UP(l.cnt, 2));
+	for (j = 0; j < l.cnt; ) {
 		uint32_t reg = 0;
-
-		OUT_PKT4(ring, REG_A6XX_SP_VS_OUT_REG(i), 1);
 
 		reg |= A6XX_SP_VS_OUT_REG_A_REGID(l.var[j].regid);
 		reg |= A6XX_SP_VS_OUT_REG_A_COMPMASK(l.var[j].compmask);
@@ -407,10 +368,9 @@ setup_stateobj(struct fd_ringbuffer *ring, struct fd_screen *screen,
 		OUT_RING(ring, reg);
 	}
 
-	for (i = 0, j = 0; (i < 8) && (j < l.cnt); i++) {
+	OUT_PKT4(ring, REG_A6XX_SP_VS_VPC_DST_REG(0), DIV_ROUND_UP(l.cnt, 4));
+	for (j = 0; j < l.cnt; ) {
 		uint32_t reg = 0;
-
-		OUT_PKT4(ring, REG_A6XX_SP_VS_VPC_DST_REG(i), 1);
 
 		reg |= A6XX_SP_VS_VPC_DST_REG_OUTLOC0(l.var[j++].loc);
 		reg |= A6XX_SP_VS_VPC_DST_REG_OUTLOC1(l.var[j++].loc);
@@ -537,7 +497,7 @@ setup_stateobj(struct fd_ringbuffer *ring, struct fd_screen *screen,
 	}
 
 	OUT_PKT4(ring, REG_A6XX_VPC_PACK, 1);
-	OUT_RING(ring, A6XX_VPC_PACK_NUMNONPOSVAR(fs->total_in) |
+	OUT_RING(ring, A6XX_VPC_PACK_POSITIONLOC(pos_loc) |
 			 A6XX_VPC_PACK_PSIZELOC(psize_loc) |
 			 A6XX_VPC_PACK_STRIDE_IN_VPC(l.max_loc));
 
@@ -733,6 +693,37 @@ static const struct ir3_cache_funcs cache_funcs = {
 	.destroy_state = fd6_program_destroy,
 };
 
+static void *
+fd6_shader_state_create(struct pipe_context *pctx, const struct pipe_shader_state *cso)
+{
+	struct fd_context *ctx = fd_context(pctx);
+	struct ir3_compiler *compiler = ctx->screen->compiler;
+	struct ir3_shader *shader =
+		ir3_shader_create(compiler, cso, &ctx->debug, pctx->screen);
+	unsigned packets, size;
+
+	/* pre-calculate size required for userconst stateobj: */
+	ir3_user_consts_size(&shader->ubo_state, &packets, &size);
+
+	/* also account for UBO addresses: */
+	packets += 1;
+	size += 2 * shader->const_state.num_ubos;
+
+	unsigned sizedwords = (4 * packets) + size;
+	shader->ubo_state.cmdstream_size = sizedwords * 4;
+
+	return shader;
+}
+
+static void
+fd6_shader_state_delete(struct pipe_context *pctx, void *hwcso)
+{
+	struct ir3_shader *so = hwcso;
+	struct fd_context *ctx = fd_context(pctx);
+	ir3_cache_invalidate(fd6_context(ctx)->shader_cache, hwcso);
+	ir3_shader_destroy(so);
+}
+
 void
 fd6_prog_init(struct pipe_context *pctx)
 {
@@ -740,11 +731,11 @@ fd6_prog_init(struct pipe_context *pctx)
 
 	fd6_context(ctx)->shader_cache = ir3_cache_create(&cache_funcs, ctx);
 
-	pctx->create_fs_state = fd6_fp_state_create;
-	pctx->delete_fs_state = fd6_fp_state_delete;
+	pctx->create_vs_state = fd6_shader_state_create;
+	pctx->delete_vs_state = fd6_shader_state_delete;
 
-	pctx->create_vs_state = fd6_vp_state_create;
-	pctx->delete_vs_state = fd6_vp_state_delete;
+	pctx->create_fs_state = fd6_shader_state_create;
+	pctx->delete_fs_state = fd6_shader_state_delete;
 
 	fd_prog_init(pctx);
 }

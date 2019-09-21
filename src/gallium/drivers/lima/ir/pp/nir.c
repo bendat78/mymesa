@@ -142,7 +142,8 @@ static void ppir_node_add_src(ppir_compiler *comp, ppir_node *node,
          break;
       }
 
-      ppir_node_add_dep(node, child);
+      if (child->op != ppir_op_undef)
+         ppir_node_add_dep(node, child);
    }
    else {
       nir_register *reg = ns->reg.reg;
@@ -151,12 +152,12 @@ static void ppir_node_add_src(ppir_compiler *comp, ppir_node *node,
          child = comp->var_nodes[(reg->index << 2) + comp->reg_base + swizzle];
          /* Reg is read before it was written, create a dummy node for it */
          if (!child) {
-            child = ppir_node_create_reg(node->block, ppir_op_dummy, reg,
+            child = ppir_node_create_reg(node->block, ppir_op_undef, reg,
                u_bit_consecutive(0, 4));
             comp->var_nodes[(reg->index << 2) + comp->reg_base + swizzle] = child;
          }
          /* Don't add dummies or recursive deps for ops like r1 = r1 + ssa1 */
-         if (child && node != child && child->op != ppir_op_dummy)
+         if (child && node != child && child->op != ppir_op_undef)
             ppir_node_add_dep(node, child);
       }
    }
@@ -188,13 +189,9 @@ static int nir_to_ppir_opcodes[nir_num_opcodes] = {
    [nir_op_fceil] = ppir_op_ceil,
    [nir_op_ffract] = ppir_op_fract,
    [nir_op_sge] = ppir_op_ge,
-   [nir_op_fge] = ppir_op_ge,
    [nir_op_slt] = ppir_op_lt,
-   [nir_op_flt] = ppir_op_lt,
    [nir_op_seq] = ppir_op_eq,
-   [nir_op_feq] = ppir_op_eq,
    [nir_op_sne] = ppir_op_ne,
-   [nir_op_fne] = ppir_op_ne,
    [nir_op_fcsel] = ppir_op_select,
    [nir_op_inot] = ppir_op_not,
    [nir_op_ftrunc] = ppir_op_trunc,
@@ -422,8 +419,19 @@ static ppir_node *ppir_emit_load_const(ppir_block *block, nir_instr *ni)
 
 static ppir_node *ppir_emit_ssa_undef(ppir_block *block, nir_instr *ni)
 {
-   ppir_error("nir_ssa_undef_instr not support\n");
-   return NULL;
+   nir_ssa_undef_instr *undef = nir_instr_as_ssa_undef(ni);
+   ppir_node *node = ppir_node_create_ssa(block, ppir_op_undef, &undef->def);
+   if (!node)
+      return NULL;
+   ppir_alu_node *alu = ppir_node_to_alu(node);
+
+   ppir_dest *dest = &alu->dest;
+   dest->ssa.undef = true;
+   ppir_reg *ssa = &dest->ssa;
+
+   list_add(&ssa->list, &block->comp->reg_list);
+
+   return node;
 }
 
 static ppir_node *ppir_emit_tex(ppir_block *block, nir_instr *ni)

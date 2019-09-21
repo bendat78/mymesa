@@ -218,7 +218,7 @@ ttn_translate_interp_mode(unsigned tgsi_interp)
    case TGSI_INTERPOLATE_PERSPECTIVE:
       return INTERP_MODE_SMOOTH;
    case TGSI_INTERPOLATE_COLOR:
-      return INTERP_MODE_SMOOTH;
+      return INTERP_MODE_NONE;
    default:
       unreachable("bad TGSI interpolation mode");
    }
@@ -437,6 +437,10 @@ ttn_emit_declaration(struct ttn_compile *c)
             } else {
                var->data.location =
                   tgsi_varying_semantic_to_slot(semantic_name, semantic_index);
+               if (var->data.location == VARYING_SLOT_FOGC ||
+                   var->data.location == VARYING_SLOT_PSIZ) {
+                  var->type = glsl_float_type();
+               }
             }
 
             if (is_array) {
@@ -1109,7 +1113,11 @@ ttn_kill(nir_builder *b, nir_op op, nir_alu_dest dest, nir_ssa_def **src)
 static void
 ttn_kill_if(nir_builder *b, nir_op op, nir_alu_dest dest, nir_ssa_def **src)
 {
+   /* flt must be exact, because NaN shouldn't discard. (apps rely on this) */
+   b->exact = true;
    nir_ssa_def *cmp = nir_bany(b, nir_flt(b, src[0], nir_imm_float(b, 0.0)));
+   b->exact = false;
+
    nir_intrinsic_instr *discard =
       nir_intrinsic_instr_create(b->shader, nir_intrinsic_discard_if);
    discard->src[0] = nir_src_for_ssa(cmp);
@@ -2369,6 +2377,12 @@ ttn_add_output_stores(struct ttn_compile *c)
             store_value = nir_channel(b, store_value, 2);
          else if (var->data.location == FRAG_RESULT_STENCIL)
             store_value = nir_channel(b, store_value, 1);
+      } else {
+         /* FOGC and PSIZ are scalar values */
+         if (var->data.location == VARYING_SLOT_FOGC ||
+             var->data.location == VARYING_SLOT_PSIZ) {
+            store_value = nir_channel(b, store_value, 0);
+         }
       }
 
       nir_store_deref(b, nir_build_deref_var(b, var), store_value,

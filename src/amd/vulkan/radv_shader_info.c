@@ -310,6 +310,8 @@ gather_intrinsic_info(const nir_shader *nir, const nir_intrinsic_instr *instr,
 		    instr->intrinsic == nir_intrinsic_image_deref_atomic_comp_swap) {
 			if (nir->info.stage == MESA_SHADER_FRAGMENT)
 				info->ps.writes_memory = true;
+			else if (nir->info.stage == MESA_SHADER_GEOMETRY)
+				info->gs.writes_memory = true;
 		}
 		break;
 	}
@@ -326,6 +328,8 @@ gather_intrinsic_info(const nir_shader *nir, const nir_intrinsic_instr *instr,
 	case nir_intrinsic_ssbo_atomic_comp_swap:
 		if (nir->info.stage == MESA_SHADER_FRAGMENT)
 			info->ps.writes_memory = true;
+		else if (nir->info.stage == MESA_SHADER_GEOMETRY)
+			info->gs.writes_memory = true;
 		break;
 	case nir_intrinsic_load_deref:
 		gather_intrinsic_load_deref_info(nir, instr, info);
@@ -377,7 +381,7 @@ gather_info_block(const nir_shader *nir, const nir_block *block,
 static void
 gather_info_input_decl_vs(const nir_shader *nir, const nir_variable *var,
 			  struct radv_shader_info *info,
-			  const struct radv_nir_compiler_options *options)
+			  const struct radv_shader_variant_key *key)
 {
 	unsigned attrib_count = glsl_count_attribute_slots(var->type, true);
 	int idx = var->data.location;
@@ -388,7 +392,7 @@ gather_info_input_decl_vs(const nir_shader *nir, const nir_variable *var,
 	for (unsigned i = 0; i < attrib_count; ++i) {
 		unsigned attrib_index = var->data.location + i - VERT_ATTRIB_GENERIC0;
 
-		if (options->key.vs.instance_rate_inputs & (1u << attrib_index))
+		if (key->vs.instance_rate_inputs & (1u << attrib_index))
 			info->vs.needs_instance_id = true;
 	}
 }
@@ -466,11 +470,11 @@ gather_info_input_decl_ps(const nir_shader *nir, const nir_variable *var,
 static void
 gather_info_input_decl(const nir_shader *nir, const nir_variable *var,
 		       struct radv_shader_info *info,
-		       const struct radv_nir_compiler_options *options)
+		       const struct radv_shader_variant_key *key)
 {
 	switch (nir->info.stage) {
 	case MESA_SHADER_VERTEX:
-		gather_info_input_decl_vs(nir, var, info, options);
+		gather_info_input_decl_vs(nir, var, info, key);
 		break;
 	case MESA_SHADER_FRAGMENT:
 		gather_info_input_decl_ps(nir, var, info);
@@ -531,7 +535,7 @@ gather_info_output_decl_gs(const nir_shader *nir, const nir_variable *var,
 static void
 gather_info_output_decl(const nir_shader *nir, const nir_variable *var,
 			struct radv_shader_info *info,
-			const struct radv_nir_compiler_options *options)
+			const struct radv_shader_variant_key *key)
 {
 	struct radv_vs_output_info *vs_info = NULL;
 
@@ -540,19 +544,21 @@ gather_info_output_decl(const nir_shader *nir, const nir_variable *var,
 		gather_info_output_decl_ps(nir, var, info);
 		break;
 	case MESA_SHADER_VERTEX:
-		if (!options->key.vs_common_out.as_ls &&
-		    !options->key.vs_common_out.as_es)
+		if (!key->vs_common_out.as_ls &&
+		    !key->vs_common_out.as_es)
 			vs_info = &info->vs.outinfo;
 
-		if (options->key.vs_common_out.as_ls)
+		if (key->vs_common_out.as_ls)
 			gather_info_output_decl_ls(nir, var, info);
+		else if (key->vs_common_out.as_ngg)
+			gather_info_output_decl_gs(nir, var, info);
 		break;
 	case MESA_SHADER_GEOMETRY:
 		vs_info = &info->vs.outinfo;
 		gather_info_output_decl_gs(nir, var, info);
 		break;
 	case MESA_SHADER_TESS_EVAL:
-		if (!options->key.vs_common_out.as_es)
+		if (!key->vs_common_out.as_es)
 			vs_info = &info->tes.outinfo;
 		break;
 	default:
@@ -626,27 +632,28 @@ radv_nir_shader_info_init(struct radv_shader_info *info)
 
 void
 radv_nir_shader_info_pass(const struct nir_shader *nir,
-			  const struct radv_nir_compiler_options *options,
+			  const struct radv_pipeline_layout *layout,
+			  const struct radv_shader_variant_key *key,
 			  struct radv_shader_info *info)
 {
 	struct nir_function *func =
 		(struct nir_function *)exec_list_get_head_const(&nir->functions);
 
-	if (options->layout && options->layout->dynamic_offset_count &&
-	    (options->layout->dynamic_shader_stages & mesa_to_vk_shader_stage(nir->info.stage))) {
+	if (layout && layout->dynamic_offset_count &&
+	    (layout->dynamic_shader_stages & mesa_to_vk_shader_stage(nir->info.stage))) {
 		info->loads_push_constants = true;
 		info->loads_dynamic_offsets = true;
 	}
 
 	nir_foreach_variable(variable, &nir->inputs)
-		gather_info_input_decl(nir, variable, info, options);
+		gather_info_input_decl(nir, variable, info, key);
 
 	nir_foreach_block(block, func->impl) {
 		gather_info_block(nir, block, info);
 	}
 
 	nir_foreach_variable(variable, &nir->outputs)
-		gather_info_output_decl(nir, variable, info, options);
+		gather_info_output_decl(nir, variable, info, key);
 
 	if (nir->info.stage == MESA_SHADER_VERTEX ||
 	    nir->info.stage == MESA_SHADER_TESS_EVAL ||
@@ -654,7 +661,7 @@ radv_nir_shader_info_pass(const struct nir_shader *nir,
 		gather_xfb_info(nir, info);
 
 	/* Make sure to export the LayerID if the fragment shader needs it. */
-	if (options->key.vs_common_out.export_layer_id) {
+	if (key->vs_common_out.export_layer_id) {
 		switch (nir->info.stage) {
 		case MESA_SHADER_VERTEX:
 			info->vs.output_usage_mask[VARYING_SLOT_LAYER] |= 0x1;
@@ -671,7 +678,7 @@ radv_nir_shader_info_pass(const struct nir_shader *nir,
 	}
 
 	/* Make sure to export the LayerID if the subpass has multiviews. */
-	if (options->key.has_multiview_view_index) {
+	if (key->has_multiview_view_index) {
 		switch (nir->info.stage) {
 		case MESA_SHADER_VERTEX:
 			info->vs.outinfo.writes_layer = true;
@@ -688,7 +695,7 @@ radv_nir_shader_info_pass(const struct nir_shader *nir,
 	}
 
 	/* Make sure to export the PrimitiveID if the fragment shader needs it. */
-	if (options->key.vs_common_out.export_prim_id) {
+	if (key->vs_common_out.export_prim_id) {
 		switch (nir->info.stage) {
 		case MESA_SHADER_VERTEX:
 			info->vs.outinfo.export_prim_id = true;
@@ -728,18 +735,18 @@ radv_nir_shader_info_pass(const struct nir_shader *nir,
                 info->tes.spacing = nir->info.tess.spacing;
                 info->tes.ccw = nir->info.tess.ccw;
                 info->tes.point_mode = nir->info.tess.point_mode;
-                info->tes.as_es = options->key.vs_common_out.as_es;
-                info->tes.export_prim_id = options->key.vs_common_out.export_prim_id;
-                info->is_ngg = options->key.vs_common_out.as_ngg;
+                info->tes.as_es = key->vs_common_out.as_es;
+                info->tes.export_prim_id = key->vs_common_out.export_prim_id;
+                info->is_ngg = key->vs_common_out.as_ngg;
                 break;
         case MESA_SHADER_TESS_CTRL:
                 info->tcs.tcs_vertices_out = nir->info.tess.tcs_vertices_out;
                 break;
         case MESA_SHADER_VERTEX:
-                info->vs.as_es = options->key.vs_common_out.as_es;
-                info->vs.as_ls = options->key.vs_common_out.as_ls;
-                info->vs.export_prim_id = options->key.vs_common_out.export_prim_id;
-                info->is_ngg = options->key.vs_common_out.as_ngg;
+                info->vs.as_es = key->vs_common_out.as_es;
+                info->vs.as_ls = key->vs_common_out.as_ls;
+                info->vs.export_prim_id = key->vs_common_out.export_prim_id;
+                info->is_ngg = key->vs_common_out.as_ngg;
                 break;
         default:
                 break;
@@ -757,7 +764,7 @@ radv_nir_shader_info_pass(const struct nir_shader *nir,
 	/* Compute the ESGS item size for VS or TES as ES. */
 	if ((nir->info.stage == MESA_SHADER_VERTEX ||
 	     nir->info.stage == MESA_SHADER_TESS_EVAL) &&
-	    options->key.vs_common_out.as_es) {
+	    key->vs_common_out.as_es) {
 		struct radv_es_output_info *es_info =
 			nir->info.stage == MESA_SHADER_VERTEX ? &info->vs.es_info : &info->tes.es_info;
 		uint32_t max_output_written = 0;

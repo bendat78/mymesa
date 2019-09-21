@@ -200,6 +200,8 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_CS_DERIVED_SYSTEM_VALUES_SUPPORTED:
    case PIPE_CAP_TEXTURE_SHADOW_LOD:
    case PIPE_CAP_SHADER_SAMPLES_IDENTICAL:
+   case PIPE_CAP_GL_SPIRV:
+   case PIPE_CAP_GL_SPIRV_VARIABLE_POINTERS:
       return true;
    case PIPE_CAP_FBFETCH:
       return BRW_MAX_DRAW_BUFFERS;
@@ -523,6 +525,7 @@ iris_destroy_screen(struct pipe_screen *pscreen)
    u_transfer_helper_destroy(pscreen->transfer_helper);
    iris_bufmgr_destroy(screen->bufmgr);
    disk_cache_destroy(screen->disk_cache);
+   close(screen->fd);
    ralloc_free(screen);
 }
 
@@ -657,6 +660,8 @@ iris_screen_create(int fd, const struct pipe_screen_config *config)
       driQueryOptionb(config->options, "dual_color_blend_by_location");
    screen->driconf.disable_throttling =
       driQueryOptionb(config->options, "disable_throttling");
+   screen->driconf.always_flush_cache =
+      driQueryOptionb(config->options, "always_flush_cache");
 
    screen->precompile = env_var_as_boolean("shader_precompile", true);
 

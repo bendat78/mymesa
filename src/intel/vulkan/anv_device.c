@@ -52,6 +52,7 @@ static const char anv_dri_options_xml[] =
 DRI_CONF_BEGIN
    DRI_CONF_SECTION_PERFORMANCE
       DRI_CONF_VK_X11_OVERRIDE_MIN_IMAGE_COUNT(0)
+      DRI_CONF_VK_X11_STRICT_IMAGE_COUNT("false")
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
@@ -749,6 +750,20 @@ VkResult anv_CreateInstance(
       }
    }
 
+   struct anv_physical_device *pdevice = &instance->physicalDevice;
+   for (unsigned i = 0; i < ARRAY_SIZE(pdevice->dispatch.entrypoints); i++) {
+      /* Vulkan requires that entrypoints for extensions which have not been
+       * enabled must not be advertised.
+       */
+      if (!anv_physical_device_entrypoint_is_enabled(i, instance->app_info.api_version,
+                                                     &instance->enabled_extensions)) {
+         pdevice->dispatch.entrypoints[i] = NULL;
+      } else {
+         pdevice->dispatch.entrypoints[i] =
+            anv_physical_device_dispatch_table.entrypoints[i];
+      }
+   }
+
    for (unsigned i = 0; i < ARRAY_SIZE(instance->device_dispatch.entrypoints); i++) {
       /* Vulkan requires that entrypoints for extensions which have not been
        * enabled must not be advertised.
@@ -780,7 +795,9 @@ VkResult anv_CreateInstance(
 
    driParseOptionInfo(&instance->available_dri_options, anv_dri_options_xml);
    driParseConfigFiles(&instance->dri_options, &instance->available_dri_options,
-                       0, "anv", NULL);
+                       0, "anv", NULL,
+                       instance->app_info.engine_name,
+                       instance->app_info.engine_version);
 
    *pInstance = anv_instance_to_handle(instance);
 
@@ -1190,6 +1207,13 @@ void anv_GetPhysicalDeviceFeatures2(
          break;
       }
 
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES_KHR: {
+         VkPhysicalDeviceShaderSubgroupExtendedTypesFeaturesKHR *features =
+            (VkPhysicalDeviceShaderSubgroupExtendedTypesFeaturesKHR *)ext;
+         features->shaderSubgroupExtendedTypes = true;
+         break;
+      }
+
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES_EXT: {
          VkPhysicalDeviceSubgroupSizeControlFeaturesEXT *features =
             (VkPhysicalDeviceSubgroupSizeControlFeaturesEXT *)ext;
@@ -1274,10 +1298,12 @@ void anv_GetPhysicalDeviceProperties(
    const uint32_t max_images =
       pdevice->has_bindless_images ? UINT16_MAX : MAX_IMAGES;
 
-   /* The moment we have anything bindless, claim a high per-stage limit */
+   /* If we can use bindless for everything, claim a high per-stage limit,
+    * otherwise use the binding table size, minus the slots reserved for
+    * render targets and one slot for the descriptor buffer. */
    const uint32_t max_per_stage =
-      pdevice->has_a64_buffer_access ? UINT32_MAX :
-                                       MAX_BINDING_TABLE_SIZE - MAX_RTS;
+      pdevice->has_bindless_images && pdevice->has_a64_buffer_access
+      ? UINT32_MAX : MAX_BINDING_TABLE_SIZE - MAX_RTS - 1;
 
    const uint32_t max_workgroup_size = 32 * devinfo->max_cs_threads;
 
@@ -1685,6 +1711,37 @@ void anv_GetPhysicalDeviceProperties2(
          props->requiredSubgroupSizeStages = VK_SHADER_STAGE_COMPUTE_BIT;
          break;
       }
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES_KHR : {
+         VkPhysicalDeviceFloatControlsPropertiesKHR *properties = (void *)ext;
+         properties->denormBehaviorIndependence = VK_SHADER_FLOAT_CONTROLS_INDEPENDENCE_ALL_KHR;
+         properties->roundingModeIndependence = VK_SHADER_FLOAT_CONTROLS_INDEPENDENCE_NONE_KHR;
+
+         /* Broadwell does not support HF denorms and there are restrictions
+          * other gens. According to Kabylake's PRM:
+          *
+          * "math - Extended Math Function
+          * [...]
+          * Restriction : Half-float denorms are always retained."
+          */
+         properties->shaderDenormFlushToZeroFloat16 = false;
+         properties->shaderDenormPreserveFloat16 = pdevice->info.gen > 8;
+         properties->shaderRoundingModeRTEFloat16 = true;
+         properties->shaderRoundingModeRTZFloat16 = true;
+         properties->shaderSignedZeroInfNanPreserveFloat16 = true;
+
+         properties->shaderDenormFlushToZeroFloat32 = true;
+         properties->shaderDenormPreserveFloat32 = true;
+         properties->shaderRoundingModeRTEFloat32 = true;
+         properties->shaderRoundingModeRTZFloat32 = true;
+         properties->shaderSignedZeroInfNanPreserveFloat32 = true;
+
+         properties->shaderDenormFlushToZeroFloat64 = true;
+         properties->shaderDenormPreserveFloat64 = true;
+         properties->shaderRoundingModeRTEFloat64 = true;
+         properties->shaderRoundingModeRTZFloat64 = true;
+         properties->shaderSignedZeroInfNanPreserveFloat64 = true;
+         break;
+      }
 
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES_EXT: {
          VkPhysicalDeviceTexelBufferAlignmentPropertiesEXT *props =
@@ -1928,6 +1985,10 @@ PFN_vkVoidFunction anv_GetInstanceProcAddr(
    if (idx >= 0)
       return instance->dispatch.entrypoints[idx];
 
+   idx = anv_get_physical_device_entrypoint_index(pName);
+   if (idx >= 0)
+      return instance->physicalDevice.dispatch.entrypoints[idx];
+
    idx = anv_get_device_entrypoint_index(pName);
    if (idx >= 0)
       return instance->device_dispatch.entrypoints[idx];
@@ -1966,6 +2027,31 @@ PFN_vkVoidFunction anv_GetDeviceProcAddr(
 
    return device->dispatch.entrypoints[idx];
 }
+
+/* With version 4+ of the loader interface the ICD should expose
+ * vk_icdGetPhysicalDeviceProcAddr()
+ */
+PUBLIC
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vk_icdGetPhysicalDeviceProcAddr(
+    VkInstance  _instance,
+    const char* pName);
+
+PFN_vkVoidFunction vk_icdGetPhysicalDeviceProcAddr(
+    VkInstance  _instance,
+    const char* pName)
+{
+   ANV_FROM_HANDLE(anv_instance, instance, _instance);
+
+   if (!pName || !instance)
+      return NULL;
+
+   int idx = anv_get_physical_device_entrypoint_index(pName);
+   if (idx < 0)
+      return NULL;
+
+   return instance->physicalDevice.dispatch.entrypoints[idx];
+}
+
 
 VkResult
 anv_CreateDebugReportCallbackEXT(VkInstance _instance,
@@ -4036,7 +4122,10 @@ vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t* pSupportedVersion)
     *        - The ICD must implement vkCreate{PLATFORM}SurfaceKHR(),
     *          vkDestroySurfaceKHR(), and other API which uses VKSurfaceKHR,
     *          because the loader no longer does so.
+    *
+    *    - Loader interface v4 differs from v3 in:
+    *        - The ICD must implement vk_icdGetPhysicalDeviceProcAddr().
     */
-   *pSupportedVersion = MIN2(*pSupportedVersion, 3u);
+   *pSupportedVersion = MIN2(*pSupportedVersion, 4u);
    return VK_SUCCESS;
 }
