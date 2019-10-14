@@ -214,7 +214,10 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    }
    ctx->dirty |= ETNA_DIRTY_INDEX_BUFFER;
 
-   struct etna_shader_key key = {};
+   struct etna_shader_key key = {
+      .front_ccw = ctx->rasterizer->front_ccw,
+   };
+
    if (pfb->cbufs[0])
       key.frag_rb_swap = !!translate_rs_format_rb_swap(pfb->cbufs[0]->format);
 
@@ -260,9 +263,17 @@ etna_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
    resource_read(ctx, indexbuf);
 
    /* Mark textures as being read */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      if (ctx->sampler_view[i])
-         resource_read(ctx, ctx->sampler_view[i]->texture);
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      if (ctx->sampler_view[i]) {
+          resource_read(ctx, ctx->sampler_view[i]->texture);
+
+         /* if texture was modified since the last update,
+          * we need to clear the texture cache and possibly
+          * resolve/update ts
+          */
+         etna_update_sampler_source(ctx->sampler_view[i], i);
+      }
+   }
 
    list_for_each_entry(struct etna_hw_query, hq, &ctx->active_hw_queries, node)
       resource_written(ctx, hq->prsc);
@@ -476,8 +487,14 @@ etna_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
                          1 << PIPE_PRIM_LINES |
                          1 << PIPE_PRIM_LINE_STRIP |
                          1 << PIPE_PRIM_TRIANGLES |
-                         1 << PIPE_PRIM_TRIANGLE_STRIP |
                          1 << PIPE_PRIM_TRIANGLE_FAN;
+
+   /* TODO: The bug relates only to indexed draws, but here we signal
+    * that there is no support for triangle strips at all. This should
+    * be refined.
+    */
+   if (VIV_FEATURE(ctx->screen, chipMinorFeatures2, BUG_FIXES8))
+      ctx->prim_hwsupport |= 1 << PIPE_PRIM_TRIANGLE_STRIP;
 
    if (VIV_FEATURE(ctx->screen, chipMinorFeatures2, LINE_LOOP))
       ctx->prim_hwsupport |= 1 << PIPE_PRIM_LINE_LOOP;

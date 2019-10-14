@@ -735,6 +735,17 @@ anv_CreateImage(VkDevice device,
       return anv_image_from_external(device, pCreateInfo, create_info,
                                      pAllocator, pImage);
 
+   bool use_external_format = false;
+   const struct VkExternalFormatANDROID *ext_format =
+      vk_find_struct_const(pCreateInfo->pNext, EXTERNAL_FORMAT_ANDROID);
+
+   /* "If externalFormat is zero, the effect is as if the
+    * VkExternalFormatANDROID structure was not present. Otherwise, the image
+    * will have the specified external format."
+    */
+   if (ext_format && ext_format->externalFormat != 0)
+      use_external_format = true;
+
    const VkNativeBufferANDROID *gralloc_info =
       vk_find_struct_const(pCreateInfo->pNext, NATIVE_BUFFER_ANDROID);
    if (gralloc_info)
@@ -750,6 +761,7 @@ anv_CreateImage(VkDevice device,
    return anv_image_create(device,
       &(struct anv_image_create_info) {
          .vk_info = pCreateInfo,
+         .external_format = use_external_format,
       },
       pAllocator,
       pImage);
@@ -1169,6 +1181,9 @@ anv_layout_to_fast_clear_type(const struct gen_device_info * const devinfo,
                               const VkImageAspectFlagBits aspect,
                               const VkImageLayout layout)
 {
+   if (INTEL_DEBUG & DEBUG_NO_FAST_CLEAR)
+      return ANV_FAST_CLEAR_NONE;
+
    /* The aspect must be exactly one of the image aspects. */
    assert(util_bitcount(aspect) == 1 && (aspect & image->aspects));
 

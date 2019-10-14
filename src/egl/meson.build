@@ -173,12 +173,21 @@ libegl = shared_library(
   version : egl_lib_version,
 )
 
-if not with_glvnd
+# If using glvnd the pkg-config header should not point to EGL_mesa, it should
+# point to EGL. glvnd is only available on unix like platforms so adding -l
+# should be safe here
+if not with_glvnd or not glvnd_has_headers_and_pc_files
+  if not glvnd_has_headers_and_pc_files
+    _egl = '-L${libdir} -lEGL'
+  else
+    _egl = libegl
+  endif
+
   pkg.generate(
     name : 'egl',
     description : 'Mesa EGL Library',
     version : meson.project_version(),
-    libraries : libegl,
+    libraries : _egl,
     libraries_private: gl_priv_libs,
     requires_private : gl_priv_reqs,
     extra_cflags : gl_pkgconfig_c_flags,

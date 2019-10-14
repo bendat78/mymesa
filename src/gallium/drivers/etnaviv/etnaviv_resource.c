@@ -204,8 +204,7 @@ static bool is_rs_align(struct etna_screen *screen,
 /* Create a new resource object, using the given template info */
 struct pipe_resource *
 etna_resource_alloc(struct pipe_screen *pscreen, unsigned layout,
-                    enum etna_resource_addressing_mode mode, uint64_t modifier,
-                    const struct pipe_resource *templat)
+                    uint64_t modifier, const struct pipe_resource *templat)
 {
    struct etna_screen *screen = etna_screen(pscreen);
    struct etna_resource *rsc;
@@ -299,7 +298,6 @@ etna_resource_alloc(struct pipe_screen *pscreen, unsigned layout,
    rsc->base.nr_samples = nr_samples;
    rsc->layout = layout;
    rsc->halign = halign;
-   rsc->addressing_mode = mode;
 
    pipe_reference_init(&rsc->base.reference, 1);
 
@@ -339,58 +337,42 @@ etna_resource_create(struct pipe_screen *pscreen,
                      const struct pipe_resource *templat)
 {
    struct etna_screen *screen = etna_screen(pscreen);
+   unsigned layout = ETNA_LAYOUT_TILED;
 
-   /* Figure out what tiling and address mode to use -- for now, assume that
-    * texture cannot be linear. there is a capability LINEAR_TEXTURE_SUPPORT
-    * (supported on gc880 and gc2000 at least), but not sure how it works.
-    * Buffers always have LINEAR layout.
+   /* At this point we don't know if the resource will be used as a texture,
+    * render target, or both, because gallium sets the bits whenever possible
+    * This matters because on some GPUs (GC2000) there is no tiling that is
+    * compatible with both TE and PE.
+    *
+    * We expect that depth/stencil buffers will always be used by PE (rendering),
+    * and any other non-scanout resource will be used as a texture at some point,
+    * So allocate a render-compatible base buffer for scanout/depthstencil buffers,
+    * and a texture-compatible base buffer in other cases
+    *
     */
-   unsigned layout = ETNA_LAYOUT_LINEAR;
-   enum etna_resource_addressing_mode mode = ETNA_ADDRESSING_MODE_TILED;
 
-   if (etna_resource_sampler_only(templat)) {
-      /* The buffer is only used for texturing, so create something
-       * directly compatible with the sampler.  Such a buffer can
-       * never be rendered to. */
-      layout = ETNA_LAYOUT_TILED;
-
-      if (util_format_is_compressed(templat->format))
-         layout = ETNA_LAYOUT_LINEAR;
-   } else if (templat->target != PIPE_BUFFER) {
-      bool want_multitiled = false;
-      bool want_supertiled = screen->specs.can_supertile;
-
-      /* When this GPU supports single-buffer rendering, don't ever enable
-       * multi-tiling. This replicates the blob behavior on GC3000.
-       */
-      if (!screen->specs.single_buffer)
-         want_multitiled = screen->specs.pixel_pipes > 1;
-
-      /* Keep single byte blocksized resources as tiled, since we
-       * are unable to use the RS blit to de-tile them. However,
-       * if they're used as a render target or depth/stencil, they
-       * must be multi-tiled for GPUs with multiple pixel pipes.
-       * Ignore depth/stencil here, but it is an error for a render
-       * target.
-       */
-      if (util_format_get_blocksize(templat->format) == 1 &&
-          !(templat->bind & PIPE_BIND_DEPTH_STENCIL)) {
-         assert(!(templat->bind & PIPE_BIND_RENDER_TARGET && want_multitiled));
-         want_multitiled = want_supertiled = false;
-      }
-
-      layout = ETNA_LAYOUT_BIT_TILE;
-      if (want_multitiled)
+   if (templat->bind & (PIPE_BIND_SCANOUT | PIPE_BIND_DEPTH_STENCIL)) {
+      if (screen->specs.pixel_pipes > 1 && !screen->specs.single_buffer)
          layout |= ETNA_LAYOUT_BIT_MULTI;
-      if (want_supertiled)
+      if (screen->specs.can_supertile)
          layout |= ETNA_LAYOUT_BIT_SUPER;
+   } else if (VIV_FEATURE(screen, chipMinorFeatures2, SUPERTILED_TEXTURE) &&
+              /* RS can't tile 1 byte per pixel formats, will have to CPU tile,
+               * which doesn't support super-tiling
+               */
+              util_format_get_blocksize(templat->format) > 1) {
+      layout |= ETNA_LAYOUT_BIT_SUPER;
    }
 
-   if (templat->target == PIPE_TEXTURE_3D)
+   if ((templat->bind & PIPE_BIND_LINEAR) || /* linear base requested */
+       templat->target == PIPE_BUFFER || /* buffer always linear */
+       /* compressed textures don't use tiling, they have their own "tiles" */
+       util_format_is_compressed(templat->format)) {
       layout = ETNA_LAYOUT_LINEAR;
+   }
 
    /* modifier is only used for scanout surfaces, so safe to use LINEAR here */
-   return etna_resource_alloc(pscreen, layout, mode, DRM_FORMAT_MOD_LINEAR, templat);
+   return etna_resource_alloc(pscreen, layout, DRM_FORMAT_MOD_LINEAR, templat);
 }
 
 enum modifier_priority {
@@ -470,19 +452,13 @@ etna_resource_create_modifiers(struct pipe_screen *pscreen,
     */
    tmpl.bind |= PIPE_BIND_SCANOUT;
 
-   return etna_resource_alloc(pscreen, modifier_to_layout(modifier),
-                              ETNA_ADDRESSING_MODE_TILED, modifier, &tmpl);
+   return etna_resource_alloc(pscreen, modifier_to_layout(modifier), modifier, &tmpl);
 }
 
 static void
 etna_resource_changed(struct pipe_screen *pscreen, struct pipe_resource *prsc)
 {
-   struct etna_resource *res = etna_resource(prsc);
-
-   if (res->external)
-      etna_resource(res->external)->seqno++;
-   else
-      res->seqno++;
+   etna_resource(prsc)->seqno++;
 }
 
 static void
@@ -506,7 +482,7 @@ etna_resource_destroy(struct pipe_screen *pscreen, struct pipe_resource *prsc)
       renderonly_scanout_destroy(rsc->scanout, etna_screen(pscreen)->ro);
 
    pipe_resource_reference(&rsc->texture, NULL);
-   pipe_resource_reference(&rsc->external, NULL);
+   pipe_resource_reference(&rsc->render, NULL);
 
    for (unsigned i = 0; i < ETNA_NUM_LOD; i++)
       FREE(rsc->levels[i].patch_offsets);
@@ -550,8 +526,6 @@ etna_resource_from_handle(struct pipe_screen *pscreen,
    rsc->seqno = 1;
    rsc->layout = modifier_to_layout(handle->modifier);
    rsc->halign = TEXTURE_HALIGN_FOUR;
-   rsc->addressing_mode = ETNA_ADDRESSING_MODE_TILED;
-
 
    level->width = tmpl->width0;
    level->height = tmpl->height0;
@@ -594,29 +568,6 @@ etna_resource_from_handle(struct pipe_screen *pscreen,
    if (!rsc->pending_ctx)
       goto fail;
 
-   if (rsc->layout == ETNA_LAYOUT_LINEAR) {
-      /*
-       * Both sampler and pixel pipes can't handle linear, create a compatible
-       * base resource, where we can attach the imported buffer as an external
-       * resource.
-       */
-      struct pipe_resource tiled_templat = *tmpl;
-
-      /*
-       * Remove BIND_SCANOUT to avoid recursion, as etna_resource_create uses
-       * this function to import the scanout buffer and get a tiled resource.
-       */
-      tiled_templat.bind &= ~PIPE_BIND_SCANOUT;
-
-      ptiled = etna_resource_create(pscreen, &tiled_templat);
-      if (!ptiled)
-         goto fail;
-
-      etna_resource(ptiled)->external = prsc;
-
-      return ptiled;
-   }
-
    return prsc;
 
 fail:
@@ -636,13 +587,6 @@ etna_resource_get_handle(struct pipe_screen *pscreen,
    struct etna_resource *rsc = etna_resource(prsc);
    /* Scanout is always attached to the base resource */
    struct renderonly_scanout *scanout = rsc->scanout;
-
-   /*
-    * External resources are preferred, so a import->export chain of
-    * render/sampler incompatible buffers yield the same handle.
-    */
-   if (rsc->external)
-      rsc = etna_resource(rsc->external);
 
    handle->stride = rsc->levels[0].stride;
    handle->offset = rsc->levels[0].offset;

@@ -418,6 +418,9 @@ st_release_cp_variants(struct st_context *st, struct st_compute_program *stcp)
          /* ??? */
          stcp->tgsi.prog = NULL;
          break;
+      case PIPE_SHADER_IR_NIR_SERIALIZED:
+         unreachable("serialized nirs aren't passed through st/mesa");
+         break;
       }
    }
 }
@@ -429,11 +432,6 @@ static nir_shader *
 st_translate_prog_to_nir(struct st_context *st, struct gl_program *prog,
                          gl_shader_stage stage)
 {
-   enum pipe_shader_type p_stage = pipe_shader_type_from_mesa(stage);
-   const bool is_scalar =
-      st->pipe->screen->get_shader_param(st->pipe->screen, p_stage,
-                                         PIPE_SHADER_CAP_SCALAR_ISA);
-
    const struct gl_shader_compiler_options *options =
       &st->ctx->Const.ShaderCompilerOptions[stage];
 
@@ -447,7 +445,7 @@ st_translate_prog_to_nir(struct st_context *st, struct gl_program *prog,
 
    /* Optimise NIR */
    NIR_PASS_V(nir, nir_opt_constant_folding);
-   st_nir_opts(nir, is_scalar);
+   st_nir_opts(nir);
    nir_validate_shader(nir, "after st/ptn NIR opts");
 
    return nir;
@@ -1180,7 +1178,7 @@ st_create_fp_variant(struct st_context *st,
 
          variant->bitmap_sampler = ffs(~stfp->Base.SamplersUsed) - 1;
          options.sampler = variant->bitmap_sampler;
-         options.swizzle_xxxx = (st->bitmap.tex_format == PIPE_FORMAT_L8_UNORM);
+         options.swizzle_xxxx = st->bitmap.tex_format == PIPE_FORMAT_R8_UNORM;
 
          NIR_PASS_V(tgsi.ir.nir, nir_lower_bitmap, &options);
       }
@@ -1295,7 +1293,7 @@ st_create_fp_variant(struct st_context *st,
                                     variant->bitmap_sampler,
                                     st->needs_texcoord_semantic,
                                     st->bitmap.tex_format ==
-                                    PIPE_FORMAT_L8_UNORM);
+                                    PIPE_FORMAT_R8_UNORM);
 
       if (tokens) {
          if (tgsi.tokens != stfp->tgsi.tokens)

@@ -189,7 +189,7 @@ quadword_size(int tag)
 
 /* Swizzle support */
 
-#define SWIZZLE(A, B, C, D) ((D << 6) | (C << 4) | (B << 2) | (A << 0))
+#define SWIZZLE(A, B, C, D) (((D) << 6) | ((C) << 4) | ((B) << 2) | ((A) << 0))
 #define SWIZZLE_FROM_ARRAY(r) SWIZZLE(r[0], r[1], r[2], r[3])
 #define COMPONENT_X 0x0
 #define COMPONENT_Y 0x1
@@ -392,9 +392,20 @@ swizzle_to_component(unsigned swizzle)
 
 
 static inline unsigned
-component_to_swizzle(unsigned c)
+component_to_swizzle(unsigned c, unsigned count)
 {
-        return SWIZZLE(c, c, c, c);
+        switch (count) {
+        case 1:
+                return SWIZZLE(c, c, c, c);
+        case 2:
+                return SWIZZLE(c, c + 1, c + 1, c + 1);
+        case 3:
+                return SWIZZLE(c, c + 1, c + 2, c + 2);
+        case 4:
+                return SWIZZLE(c, c + 1, c + 2, c + 3);
+        default:
+                unreachable("Invalid component count");
+        }
 }
 
 #endif

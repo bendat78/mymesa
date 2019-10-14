@@ -556,8 +556,9 @@ radv_save_pipeline(struct radv_cmd_buffer *cmd_buffer,
 		assert(!"invalid ring type");
 	}
 
-	data[0] = (uintptr_t)pipeline;
-	data[1] = (uintptr_t)pipeline >> 32;
+	uint64_t pipeline_address = (uintptr_t)pipeline;
+	data[0] = pipeline_address;
+	data[1] = pipeline_address >> 32;
 
 	radv_emit_write_data_packet(cmd_buffer, va, 2, data);
 }
@@ -6094,6 +6095,8 @@ gfx10_emit_streamout_end(struct radv_cmd_buffer *cmd_buffer,
 						   EOP_DST_SEL_TC_L2,
 						   EOP_DATA_SEL_GDS,
 						   va, EOP_DATA_GDS(i, 1), 0);
+
+			radv_cs_add_buffer(cmd_buffer->device->ws, cs, buffer->bo);
 		}
 	}
 

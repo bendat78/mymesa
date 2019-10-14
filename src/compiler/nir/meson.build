@@ -170,6 +170,7 @@ files_libnir = files(
   'nir_metadata.c',
   'nir_move_vec_src_uses_to_dest.c',
   'nir_normalize_cubemap_coords.c',
+  'nir_opt_access.c',
   'nir_opt_combine_stores.c',
   'nir_opt_comparison_pre.c',
   'nir_opt_conditional_discard.c',
@@ -238,7 +239,7 @@ files_libnir = files(
   '../spirv/vtn_variables.c',
 )
 
-libnir = static_library(
+_libnir = static_library(
   'nir',
   [files_libnir, spirv_info_c, nir_opt_algebraic_c, nir_opcodes_c,
    nir_opcodes_h, nir_constant_expressions_c, nir_builder_opcodes_h,
@@ -258,7 +259,7 @@ idep_nir_headers = declare_dependency(
 # Also link with nir
 idep_nir = declare_dependency(
   dependencies : idep_nir_headers,
-  link_with : libnir,
+  link_with : _libnir,
 )
 
 nir_algebraic_py = files('nir_algebraic.py')

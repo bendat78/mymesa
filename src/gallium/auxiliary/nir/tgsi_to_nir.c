@@ -100,7 +100,6 @@ struct ttn_compile {
    /* How many TGSI_FILE_IMMEDIATE vec4s have been parsed so far. */
    unsigned next_imm;
 
-   bool cap_scalar;
    bool cap_face_is_sysval;
    bool cap_position_is_sysval;
    bool cap_point_is_sysval;
@@ -659,7 +658,9 @@ ttn_src_for_file_and_index(struct ttn_compile *c, unsigned file, unsigned index,
          unreachable("bad system value");
       }
 
-      if (load->num_components == 3)
+      if (load->num_components == 2)
+         load = nir_swizzle(b, load, SWIZ(X, Y, Y, Y), 4);
+      else if (load->num_components == 3)
          load = nir_swizzle(b, load, SWIZ(X, Y, Z, Z), 4);
 
       src = nir_src_for_ssa(load);
@@ -1744,6 +1745,9 @@ static GLenum
 get_image_format(struct tgsi_full_instruction *tgsi_inst)
 {
    switch (tgsi_inst->Memory.Format) {
+   case PIPE_FORMAT_NONE:
+      return GL_NONE;
+
    case PIPE_FORMAT_R8_UNORM:
       return GL_R8;
    case PIPE_FORMAT_R8G8_UNORM:
@@ -1939,8 +1943,7 @@ ttn_mem(struct ttn_compile *c, nir_alu_dest dest, nir_ssa_def **src)
 
 
    if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_LOAD) {
-      nir_ssa_dest_init(&instr->instr, &instr->dest,
-                        util_last_bit(tgsi_inst->Dst[0].Register.WriteMask),
+      nir_ssa_dest_init(&instr->instr, &instr->dest, instr->num_components,
                         32, NULL);
       nir_builder_instr_insert(b, &instr->instr);
       ttn_move_dest(b, dest, &instr->dest.ssa);
@@ -2428,7 +2431,6 @@ static void
 ttn_read_pipe_caps(struct ttn_compile *c,
                    struct pipe_screen *screen)
 {
-   c->cap_scalar = screen->get_shader_param(screen, c->scan->processor, PIPE_SHADER_CAP_SCALAR_ISA);
    c->cap_packed_uniforms = screen->get_param(screen, PIPE_CAP_PACKED_UNIFORMS);
    c->cap_samplers_as_deref = screen->get_param(screen, PIPE_CAP_NIR_SAMPLERS_AS_DEREF);
    c->cap_face_is_sysval = screen->get_param(screen, PIPE_CAP_TGSI_FS_FACE_IS_INTEGER_SYSVAL);
@@ -2573,7 +2575,7 @@ ttn_compile_init(const void *tgsi_tokens,
 }
 
 static void
-ttn_optimize_nir(nir_shader *nir, bool scalar)
+ttn_optimize_nir(nir_shader *nir)
 {
    bool progress;
    do {
@@ -2581,7 +2583,7 @@ ttn_optimize_nir(nir_shader *nir, bool scalar)
 
       NIR_PASS_V(nir, nir_lower_vars_to_ssa);
 
-      if (scalar) {
+      if (nir->options->lower_to_scalar) {
          NIR_PASS_V(nir, nir_lower_alu_to_scalar, NULL, NULL);
          NIR_PASS_V(nir, nir_lower_phis_to_scalar);
       }
@@ -2642,7 +2644,7 @@ ttn_finalize_nir(struct ttn_compile *c)
    if (!c->cap_samplers_as_deref)
       NIR_PASS_V(nir, nir_lower_samplers);
 
-   ttn_optimize_nir(nir, c->cap_scalar);
+   ttn_optimize_nir(nir);
    nir_shader_gather_info(nir, c->build.impl);
    nir_validate_shader(nir, "TTN: after all optimizations");
 }

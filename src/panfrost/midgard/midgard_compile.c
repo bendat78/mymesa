@@ -617,82 +617,6 @@ nir_is_non_scalar_swizzle(nir_alu_src *src, unsigned nr_components)
         return false;
 }
 
-/* Midgard puts scalar conditionals in r31.w; move an arbitrary source (the
- * output of a conditional test) into that register */
-
-static void
-emit_condition(compiler_context *ctx, nir_src *src, bool for_branch, unsigned component)
-{
-        int condition = nir_src_index(ctx, src);
-
-        /* Source to swizzle the desired component into w */
-
-        const midgard_vector_alu_src alu_src = {
-                .swizzle = SWIZZLE(component, component, component, component),
-        };
-
-        /* There is no boolean move instruction. Instead, we simulate a move by
-         * ANDing the condition with itself to get it into r31.w */
-
-        midgard_instruction ins = {
-                .type = TAG_ALU_4,
-
-                /* We need to set the conditional as close as possible */
-                .precede_break = true,
-                .unit = for_branch ? UNIT_SMUL : UNIT_SADD,
-                .mask = 1 << COMPONENT_W,
-                .src = { condition, condition, ~0 },
-                .dest = SSA_FIXED_REGISTER(31),
-
-                .alu = {
-                        .op = midgard_alu_op_iand,
-                        .outmod = midgard_outmod_int_wrap,
-                        .reg_mode = midgard_reg_mode_32,
-                        .dest_override = midgard_dest_override_none,
-                        .src1 = vector_alu_srco_unsigned(alu_src),
-                        .src2 = vector_alu_srco_unsigned(alu_src)
-                },
-        };
-
-        emit_mir_instruction(ctx, ins);
-}
-
-/* Or, for mixed conditions (with csel_v), here's a vector version using all of
- * r31 instead */
-
-static void
-emit_condition_mixed(compiler_context *ctx, nir_alu_src *src, unsigned nr_comp)
-{
-        int condition = nir_src_index(ctx, &src->src);
-
-        /* Source to swizzle the desired component into w */
-
-        const midgard_vector_alu_src alu_src = {
-                .swizzle = SWIZZLE_FROM_ARRAY(src->swizzle),
-        };
-
-        /* There is no boolean move instruction. Instead, we simulate a move by
-         * ANDing the condition with itself to get it into r31.w */
-
-        midgard_instruction ins = {
-                .type = TAG_ALU_4,
-                .precede_break = true,
-                .mask = mask_of(nr_comp),
-                .src = { condition, condition, ~0 },
-                .dest = SSA_FIXED_REGISTER(31),
-                .alu = {
-                        .op = midgard_alu_op_iand,
-                        .outmod = midgard_outmod_int_wrap,
-                        .reg_mode = midgard_reg_mode_32,
-                        .dest_override = midgard_dest_override_none,
-                        .src1 = vector_alu_srco_unsigned(alu_src),
-                        .src2 = vector_alu_srco_unsigned(alu_src)
-                },
-        };
-
-        emit_mir_instruction(ctx, ins);
-}
-
 #define ALU_CASE(nir, _op) \
 	case nir_op_##nir: \
 		op = midgard_alu_op_##_op; \
@@ -980,21 +904,16 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
                 bool mixed = nir_is_non_scalar_swizzle(&instr->src[0], nr_components);
                 op = mixed ? midgard_alu_op_icsel_v : midgard_alu_op_icsel;
 
-                /* csel works as a two-arg in Midgard, since the condition is hardcoded in r31.w */
-                nr_inputs = 2;
-
-                /* Emit the condition into r31 */
-
-                if (mixed)
-                        emit_condition_mixed(ctx, &instr->src[0], nr_components);
-                else
-                        emit_condition(ctx, &instr->src[0].src, false, instr->src[0].swizzle[0]);
-
                 /* The condition is the first argument; move the other
                  * arguments up one to be a binary instruction for
-                 * Midgard */
+                 * Midgard with the condition last */
 
-                memmove(instr->src, instr->src + 1, 2 * sizeof(nir_alu_src));
+                nir_alu_src temp = instr->src[2];
+
+                instr->src[2] = instr->src[0];
+                instr->src[0] = instr->src[1];
+                instr->src[1] = temp;
+
                 break;
         }
 
@@ -1095,7 +1014,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
         };
 
         if (nr_inputs == 3) {
-                ins.csel_swizzle = SWIZZLE_FROM_ARRAY(nirmods[2]->swizzle);
+                ins.cond_swizzle = SWIZZLE_FROM_ARRAY(nirmods[2]->swizzle);
                 assert(!nirmods[2]->abs);
                 assert(!nirmods[2]->negate);
         }
@@ -1436,10 +1355,6 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
 
         switch (instr->intrinsic) {
         case nir_intrinsic_discard_if:
-                emit_condition(ctx, &instr->src[0], true, COMPONENT_X);
-
-        /* fallthrough */
-
         case nir_intrinsic_discard: {
                 bool conditional = instr->intrinsic == nir_intrinsic_discard_if;
                 struct midgard_instruction discard = v_branch(conditional, false);
@@ -1991,9 +1906,6 @@ inline_alu_constants(compiler_context *ctx, midgard_block *block)
                                 midgard_instruction ins = v_mov(SSA_FIXED_REGISTER(REGISTER_CONSTANT), blank_alu_src, scratch);
                                 attach_constants(ctx, &ins, entry, alu->src[1] + 1);
 
-                                /* Force a break XXX Defer r31 writes */
-                                ins.unit = UNIT_VLUT;
-
                                 /* Set the source */
                                 alu->src[1] = scratch;
 
@@ -2234,7 +2146,6 @@ midgard_opt_pos_propagate(compiler_context *ctx, midgard_block *block)
                 /* TODO: Registers? */
                 unsigned src = ins->src[1];
                 if (src & IS_REG) continue;
-                assert(!mir_has_multiple_writes(ctx, src));
 
                 /* There might be a source modifier, too */
                 if (mir_nontrivial_source2_mod(ins)) continue;
@@ -2303,10 +2214,6 @@ static void
 emit_if(struct compiler_context *ctx, nir_if *nif)
 {
         midgard_block *before_block = ctx->current_block;
-
-        /* Conditional branches expect the condition in r31.w; emit a move for
-         * that in the _previous_ block (which is the current block). */
-        emit_condition(ctx, &nif->condition, true, COMPONENT_X);
 
         /* Speculatively emit the branch, but we can't fill it in until later */
         EMIT(branch, true, true);
@@ -2604,6 +2511,7 @@ midgard_compile_shader_nir(struct midgard_screen *screen, nir_shader *nir, midga
                         progress |= midgard_opt_not_propagate(ctx, block);
                         progress |= midgard_opt_fuse_src_invert(ctx, block);
                         progress |= midgard_opt_fuse_dest_invert(ctx, block);
+                        progress |= midgard_opt_csel_invert(ctx, block);
                 }
         } while (progress);
 

@@ -224,6 +224,7 @@ lima_program_optimize_fs_nir(struct nir_shader *s)
                nir_var_shader_in |
                nir_var_shader_out |
                nir_var_function_temp);
+      NIR_PASS(progress, s, lima_nir_split_load_input);
    } while (progress);
 
    NIR_PASS_V(s, nir_lower_int_to_float);
@@ -302,7 +303,7 @@ lima_delete_fs_state(struct pipe_context *pctx, void *hwcso)
    struct lima_fs_shader_state *so = hwcso;
 
    if (so->bo)
-      lima_bo_free(so->bo);
+      lima_bo_unreference(so->bo);
 
    ralloc_free(so);
 }
@@ -396,7 +397,7 @@ lima_delete_vs_state(struct pipe_context *pctx, void *hwcso)
    struct lima_vs_shader_state *so = hwcso;
 
    if (so->bo)
-      lima_bo_free(so->bo);
+      lima_bo_unreference(so->bo);
 
    ralloc_free(so);
 }

@@ -34,6 +34,7 @@
 #include <stdio.h>
 
 #include "ac_llvm_util.h"
+#include "ac_shader_util.h"
 #include "ac_exp_param.h"
 #include "util/bitscan.h"
 #include "util/macros.h"
@@ -1382,52 +1383,6 @@ LLVMValueRef ac_build_buffer_load_format(struct ac_llvm_context *ctx,
 					   true, true);
 }
 
-/// Translate a (dfmt, nfmt) pair into a chip-appropriate combined format
-/// value for LLVM8+ tbuffer intrinsics.
-static unsigned
-ac_get_tbuffer_format(struct ac_llvm_context *ctx,
-		      unsigned dfmt, unsigned nfmt)
-{
-	if (ctx->chip_class >= GFX10) {
-		unsigned format;
-		switch (dfmt) {
-		default: unreachable("bad dfmt");
-		case V_008F0C_BUF_DATA_FORMAT_INVALID: format = V_008F0C_IMG_FORMAT_INVALID; break;
-		case V_008F0C_BUF_DATA_FORMAT_8: format = V_008F0C_IMG_FORMAT_8_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_8_8: format = V_008F0C_IMG_FORMAT_8_8_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_8_8_8_8: format = V_008F0C_IMG_FORMAT_8_8_8_8_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_16: format = V_008F0C_IMG_FORMAT_16_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_16_16: format = V_008F0C_IMG_FORMAT_16_16_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_16_16_16_16: format = V_008F0C_IMG_FORMAT_16_16_16_16_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_32: format = V_008F0C_IMG_FORMAT_32_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_32_32: format = V_008F0C_IMG_FORMAT_32_32_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_32_32_32: format = V_008F0C_IMG_FORMAT_32_32_32_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_32_32_32_32: format = V_008F0C_IMG_FORMAT_32_32_32_32_UINT; break;
-		case V_008F0C_BUF_DATA_FORMAT_2_10_10_10: format = V_008F0C_IMG_FORMAT_2_10_10_10_UINT; break;
-		}
-
-		// Use the regularity properties of the combined format enum.
-		//
-		// Note: float is incompatible with 8-bit data formats,
-		//       [us]{norm,scaled} are incomparible with 32-bit data formats.
-		//       [us]scaled are not writable.
-		switch (nfmt) {
-		case V_008F0C_BUF_NUM_FORMAT_UNORM: format -= 4; break;
-		case V_008F0C_BUF_NUM_FORMAT_SNORM: format -= 3; break;
-		case V_008F0C_BUF_NUM_FORMAT_USCALED: format -= 2; break;
-		case V_008F0C_BUF_NUM_FORMAT_SSCALED: format -= 1; break;
-		default: unreachable("bad nfmt");
-		case V_008F0C_BUF_NUM_FORMAT_UINT: break;
-		case V_008F0C_BUF_NUM_FORMAT_SINT: format += 1; break;
-		case V_008F0C_BUF_NUM_FORMAT_FLOAT: format += 2; break;
-		}
-
-		return format;
-	} else {
-		return dfmt | (nfmt << 4);
-	}
-}
-
 static LLVMValueRef
 ac_build_tbuffer_load(struct ac_llvm_context *ctx,
 			    LLVMValueRef rsrc,
@@ -1451,7 +1406,7 @@ ac_build_tbuffer_load(struct ac_llvm_context *ctx,
 		args[idx++] = vindex ? vindex : ctx->i32_0;
 	args[idx++] = voffset ? voffset : ctx->i32_0;
 	args[idx++] = soffset ? soffset : ctx->i32_0;
-	args[idx++] = LLVMConstInt(ctx->i32, ac_get_tbuffer_format(ctx, dfmt, nfmt), 0);
+	args[idx++] = LLVMConstInt(ctx->i32, ac_get_tbuffer_format(ctx->chip_class, dfmt, nfmt), 0);
 	args[idx++] = LLVMConstInt(ctx->i32, get_load_cache_policy(ctx, cache_policy), 0);
 	unsigned func = !ac_has_vec3_support(ctx->chip_class, true) && num_channels == 3 ? 4 : num_channels;
 	const char *indexing_kind = structurized ? "struct" : "raw";
@@ -1895,7 +1850,7 @@ ac_build_tbuffer_store(struct ac_llvm_context *ctx,
 		args[idx++] = vindex ? vindex : ctx->i32_0;
 	args[idx++] = voffset ? voffset : ctx->i32_0;
 	args[idx++] = soffset ? soffset : ctx->i32_0;
-	args[idx++] = LLVMConstInt(ctx->i32, ac_get_tbuffer_format(ctx, dfmt, nfmt), 0);
+	args[idx++] = LLVMConstInt(ctx->i32, ac_get_tbuffer_format(ctx->chip_class, dfmt, nfmt), 0);
 	args[idx++] = LLVMConstInt(ctx->i32, cache_policy, 0);
 	unsigned func = !ac_has_vec3_support(ctx->chip_class, true) && num_channels == 3 ? 4 : num_channels;
 	const char *indexing_kind = structurized ? "struct" : "raw";
@@ -2535,6 +2490,25 @@ LLVMValueRef ac_build_image_opcode(struct ac_llvm_context *ctx,
 					  ctx->v4i32, "");
 	}
 	return result;
+}
+
+LLVMValueRef ac_build_image_get_sample_count(struct ac_llvm_context *ctx,
+					     LLVMValueRef rsrc)
+{
+	LLVMValueRef samples;
+
+	/* Read the samples from the descriptor directly.
+	 * Hardware doesn't have any instruction for this.
+	 */
+	samples = LLVMBuildExtractElement(ctx->builder, rsrc,
+					  LLVMConstInt(ctx->i32, 3, 0), "");
+	samples = LLVMBuildLShr(ctx->builder, samples,
+				LLVMConstInt(ctx->i32, 16, 0), "");
+	samples = LLVMBuildAnd(ctx->builder, samples,
+			       LLVMConstInt(ctx->i32, 0xf, 0), "");
+	samples = LLVMBuildShl(ctx->builder, ctx->i32_1,
+			       samples, "");
+	return samples;
 }
 
 LLVMValueRef ac_build_cvt_pkrtz_f16(struct ac_llvm_context *ctx,
@@ -4432,3 +4406,73 @@ LLVMValueRef ac_build_call(struct ac_llvm_context *ctx, LLVMValueRef func,
 	LLVMSetInstructionCallConv(ret, LLVMGetFunctionCallConv(func));
 	return ret;
 }
+
+void
+ac_export_mrt_z(struct ac_llvm_context *ctx, LLVMValueRef depth,
+		LLVMValueRef stencil, LLVMValueRef samplemask,
+		struct ac_export_args *args)
+{
+	unsigned mask = 0;
+	unsigned format = ac_get_spi_shader_z_format(depth != NULL,
+						     stencil != NULL,
+						     samplemask != NULL);
+
+	assert(depth || stencil || samplemask);
+
+	memset(args, 0, sizeof(*args));
+
+	args->valid_mask = 1; /* whether the EXEC mask is valid */
+	args->done = 1; /* DONE bit */
+
+	/* Specify the target we are exporting */
+	args->target = V_008DFC_SQ_EXP_MRTZ;
+
+	args->compr = 0; /* COMP flag */
+	args->out[0] = LLVMGetUndef(ctx->f32); /* R, depth */
+	args->out[1] = LLVMGetUndef(ctx->f32); /* G, stencil test val[0:7], stencil op val[8:15] */
+	args->out[2] = LLVMGetUndef(ctx->f32); /* B, sample mask */
+	args->out[3] = LLVMGetUndef(ctx->f32); /* A, alpha to mask */
+
+	if (format == V_028710_SPI_SHADER_UINT16_ABGR) {
+		assert(!depth);
+		args->compr = 1; /* COMPR flag */
+
+		if (stencil) {
+			/* Stencil should be in X[23:16]. */
+			stencil = ac_to_integer(ctx, stencil);
+			stencil = LLVMBuildShl(ctx->builder, stencil,
+					       LLVMConstInt(ctx->i32, 16, 0), "");
+			args->out[0] = ac_to_float(ctx, stencil);
+			mask |= 0x3;
+		}
+		if (samplemask) {
+			/* SampleMask should be in Y[15:0]. */
+			args->out[1] = samplemask;
+			mask |= 0xc;
+		}
+	} else {
+		if (depth) {
+			args->out[0] = depth;
+			mask |= 0x1;
+		}
+		if (stencil) {
+			args->out[1] = stencil;
+			mask |= 0x2;
+		}
+		if (samplemask) {
+			args->out[2] = samplemask;
+			mask |= 0x4;
+		}
+	}
+
+	/* GFX6 (except OLAND and HAINAN) has a bug that it only looks
+	 * at the X writemask component. */
+	if (ctx->chip_class == GFX6 &&
+	    ctx->family != CHIP_OLAND &&
+	    ctx->family != CHIP_HAINAN)
+		mask |= 0x1;
+
+	/* Specify which components to enable */
+	args->enabled_channels = mask;
+}
+

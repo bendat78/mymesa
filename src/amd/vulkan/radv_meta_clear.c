@@ -486,15 +486,21 @@ build_depthstencil_shader(struct nir_shader **out_vs, struct nir_shader **out_fs
 				    "gl_Position");
 	vs_out_pos->data.location = VARYING_SLOT_POS;
 
-	nir_intrinsic_instr *in_color_load = nir_intrinsic_instr_create(vs_b.shader, nir_intrinsic_load_push_constant);
+	nir_intrinsic_instr *in_color_load = nir_intrinsic_instr_create(fs_b.shader, nir_intrinsic_load_push_constant);
 	nir_intrinsic_set_base(in_color_load, 0);
 	nir_intrinsic_set_range(in_color_load, 4);
-	in_color_load->src[0] = nir_src_for_ssa(nir_imm_int(&vs_b, 0));
+	in_color_load->src[0] = nir_src_for_ssa(nir_imm_int(&fs_b, 0));
 	in_color_load->num_components = 1;
 	nir_ssa_dest_init(&in_color_load->instr, &in_color_load->dest, 1, 32, "depth value");
-	nir_builder_instr_insert(&vs_b, &in_color_load->instr);
+	nir_builder_instr_insert(&fs_b, &in_color_load->instr);
 
-	nir_ssa_def *outvec = radv_meta_gen_rect_vertices_comp2(&vs_b, &in_color_load->dest.ssa);
+	nir_variable *fs_out_depth =
+		nir_variable_create(fs_b.shader, nir_var_shader_out,
+				    glsl_int_type(), "f_depth");
+	fs_out_depth->data.location = FRAG_RESULT_DEPTH;
+	nir_store_var(&fs_b, fs_out_depth, &in_color_load->dest.ssa, 0x1);
+
+	nir_ssa_def *outvec = radv_meta_gen_rect_vertices(&vs_b);
 	nir_store_var(&vs_b, vs_out_pos, outvec, 0xf);
 
 	const struct glsl_type *layer_type = glsl_int_type();
@@ -751,7 +757,7 @@ emit_depthstencil_clear(struct radv_cmd_buffer *cmd_buffer,
 
 	radv_CmdPushConstants(radv_cmd_buffer_to_handle(cmd_buffer),
 			      device->meta_state.clear_depth_p_layout,
-			      VK_SHADER_STAGE_VERTEX_BIT, 0, 4,
+			      VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4,
 			      &clear_value.depth);
 
 	uint32_t prev_reference = cmd_buffer->state.dynamic.stencil_reference.front;
@@ -1239,7 +1245,7 @@ radv_device_init_meta_clear_state(struct radv_device *device, bool on_demand)
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		.setLayoutCount = 0,
 		.pushConstantRangeCount = 1,
-		.pPushConstantRanges = &(VkPushConstantRange){VK_SHADER_STAGE_VERTEX_BIT, 0, 4},
+		.pPushConstantRanges = &(VkPushConstantRange){VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4},
 	};
 
 	res = radv_CreatePipelineLayout(radv_device_to_handle(device),
@@ -1444,7 +1450,9 @@ enum {
 	RADV_DCC_CLEAR_SECONDARY_1 = 0x40404040U
 };
 
-static void vi_get_fast_clear_parameters(VkFormat format,
+static void vi_get_fast_clear_parameters(struct radv_device *device,
+					 VkFormat image_format,
+					 VkFormat view_format,
 					 const VkClearColorValue *clear_value,
 					 uint32_t* reset_value,
 					 bool *can_avoid_fast_clear_elim)
@@ -1458,18 +1466,21 @@ static void vi_get_fast_clear_parameters(VkFormat format,
 
 	*reset_value = RADV_DCC_CLEAR_REG;
 
-	const struct vk_format_description *desc = vk_format_description(format);
-	if (format == VK_FORMAT_B10G11R11_UFLOAT_PACK32 ||
-	    format == VK_FORMAT_R5G6B5_UNORM_PACK16 ||
-	    format == VK_FORMAT_B5G6R5_UNORM_PACK16)
+	const struct vk_format_description *desc = vk_format_description(view_format);
+	if (view_format == VK_FORMAT_B10G11R11_UFLOAT_PACK32 ||
+	    view_format == VK_FORMAT_R5G6B5_UNORM_PACK16 ||
+	    view_format == VK_FORMAT_B5G6R5_UNORM_PACK16)
 		extra_channel = -1;
 	else if (desc->layout == VK_FORMAT_LAYOUT_PLAIN) {
-		if (radv_translate_colorswap(format, false) <= 1)
+		if (vi_alpha_is_on_msb(device, view_format))
 			extra_channel = desc->nr_channels - 1;
 		else
 			extra_channel = 0;
 	} else
 		return;
+
+	bool image_alpha_is_on_msb = vi_alpha_is_on_msb(device, image_format);
+	bool view_alpha_is_on_msb = vi_alpha_is_on_msb(device, view_format);
 
 	for (i = 0; i < 4; i++) {
 		int index = desc->swizzle[i] - VK_SWIZZLE_X;
@@ -1503,6 +1514,17 @@ static void vi_get_fast_clear_parameters(VkFormat format,
 			extra_value = values[i];
 		else
 			main_value = values[i];
+	}
+
+	/* If alpha isn't present, make it the same as color, and vice versa. */
+	if (!extra_value)
+		extra_value = main_value;
+	else if (!main_value)
+		main_value = extra_value;
+
+	if (main_value != extra_value) {
+		assert(image_alpha_is_on_msb == view_alpha_is_on_msb);
+		return; /* require ELIMINATE_FAST_CLEAR */
 	}
 
 	for (int i = 0; i < 4; ++i)
@@ -1564,7 +1586,9 @@ radv_can_fast_clear_color(struct radv_cmd_buffer *cmd_buffer,
 		bool can_avoid_fast_clear_elim;
 		uint32_t reset_value;
 
-		vi_get_fast_clear_parameters(iview->vk_format,
+		vi_get_fast_clear_parameters(cmd_buffer->device,
+					     iview->image->vk_format,
+					     iview->vk_format,
 					     &clear_value, &reset_value,
 					     &can_avoid_fast_clear_elim);
 
@@ -1636,7 +1660,9 @@ radv_fast_clear_color(struct radv_cmd_buffer *cmd_buffer,
 		bool can_avoid_fast_clear_elim;
 		bool need_decompress_pass = false;
 
-		vi_get_fast_clear_parameters(iview->vk_format,
+		vi_get_fast_clear_parameters(cmd_buffer->device,
+					     iview->image->vk_format,
+					     iview->vk_format,
 					     &clear_value, &reset_value,
 					     &can_avoid_fast_clear_elim);
 

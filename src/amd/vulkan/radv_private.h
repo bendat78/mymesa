@@ -76,6 +76,7 @@ typedef uint32_t xcb_window_t;
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_intel.h>
+#include <vulkan/vulkan_android.h>
 #include <vulkan/vk_icd.h>
 #include <vulkan/vk_android_native_buffer.h>
 
@@ -83,6 +84,19 @@ typedef uint32_t xcb_window_t;
 
 #include "wsi_common.h"
 #include "wsi_common_display.h"
+
+/* Helper to determine if we should compile
+ * any of the Android AHB support.
+ *
+ * To actually enable the ext we also need
+ * the necessary kernel support.
+ */
+#if defined(ANDROID) && ANDROID_API_LEVEL >= 26
+#define RADV_SUPPORT_ANDROID_HARDWARE_BUFFER 1
+#else
+#define RADV_SUPPORT_ANDROID_HARDWARE_BUFFER 0
+#endif
+
 
 struct gfx10_format {
     unsigned img_format:9;
@@ -288,6 +302,9 @@ struct radv_physical_device {
 	/* Whether to enable the AMD_shader_ballot extension */
 	bool use_shader_ballot;
 
+	/* Whether to enable NGG. */
+	bool use_ngg;
+
 	/* Whether to enable NGG streamout. */
 	bool use_ngg_streamout;
 
@@ -375,6 +392,7 @@ struct radv_pipeline_key {
 	uint8_t num_samples;
 	uint32_t has_multiview_view_index : 1;
 	uint32_t optimisations_disabled : 1;
+	uint8_t topology;
 };
 
 struct radv_shader_binary;
@@ -634,6 +652,7 @@ struct radv_meta_state {
 		VkPipeline occlusion_query_pipeline;
 		VkPipeline pipeline_statistics_query_pipeline;
 		VkPipeline tfb_query_pipeline;
+		VkPipeline timestamp_query_pipeline;
 	} query;
 
 	struct {
@@ -769,6 +788,10 @@ struct radv_device_memory {
 	VkDeviceSize                                 map_size;
 	void *                                       map;
 	void *                                       user_ptr;
+
+#if RADV_SUPPORT_ANDROID_HARDWARE_BUFFER
+	struct AHardwareBuffer *                    android_hardware_buffer;
+#endif
 };
 
 
@@ -1891,10 +1914,17 @@ struct radv_image_create_info {
 	const struct radeon_bo_metadata *bo_metadata;
 };
 
+VkResult
+radv_image_create_layout(struct radv_device *device,
+                         struct radv_image_create_info create_info,
+                         struct radv_image *image);
+
 VkResult radv_image_create(VkDevice _device,
 			   const struct radv_image_create_info *info,
 			   const VkAllocationCallbacks* alloc,
 			   VkImage *pImage);
+
+bool vi_alpha_is_on_msb(struct radv_device *device, VkFormat format);
 
 VkResult
 radv_image_from_gralloc(VkDevice device_h,
@@ -1902,6 +1932,24 @@ radv_image_from_gralloc(VkDevice device_h,
                        const VkNativeBufferANDROID *gralloc_info,
                        const VkAllocationCallbacks *alloc,
                        VkImage *out_image_h);
+uint64_t
+radv_ahb_usage_from_vk_usage(const VkImageCreateFlags vk_create,
+                             const VkImageUsageFlags vk_usage);
+VkResult
+radv_import_ahb_memory(struct radv_device *device,
+                       struct radv_device_memory *mem,
+                       unsigned priority,
+                       const VkImportAndroidHardwareBufferInfoANDROID *info);
+VkResult
+radv_create_ahb_memory(struct radv_device *device,
+                       struct radv_device_memory *mem,
+                       unsigned priority,
+                       const VkMemoryAllocateInfo *pAllocateInfo);
+
+VkFormat
+radv_select_android_external_format(const void *next, VkFormat default_format);
+
+bool radv_android_gralloc_supports_format(VkFormat format, VkImageUsageFlagBits usage);
 
 struct radv_image_view_extra_create_info {
 	bool disable_compression;

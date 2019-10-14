@@ -789,15 +789,33 @@ isl_genX(null_fill_state)(void *state, struct isl_extent3d size)
 {
    struct GENX(RENDER_SURFACE_STATE) s = {
       .SurfaceType = SURFTYPE_NULL,
-      .SurfaceFormat = ISL_FORMAT_B8G8R8A8_UNORM,
+      /* We previously had this format set to B8G8R8A8_UNORM but ran into
+       * hangs on IVB. R32_UINT seems to work for everybody.
+       *
+       * https://gitlab.freedesktop.org/mesa/mesa/issues/1872
+       */
+      .SurfaceFormat = ISL_FORMAT_R32_UINT,
 #if GEN_GEN >= 7
-      .SurfaceArray = size.depth > 0,
+      .SurfaceArray = size.depth > 1,
 #endif
 #if GEN_GEN >= 8
       .TileMode = YMAJOR,
 #else
       .TiledSurface = true,
       .TileWalk = TILEWALK_YMAJOR,
+#endif
+#if GEN_GEN == 7
+      /* According to PRMs: "Volume 4 Part 1: Subsystem and Cores – Shared
+       * Functions"
+       *
+       * RENDER_SURFACE_STATE::Surface Vertical Alignment
+       *
+       *    "This field must be set to VALIGN_4 for all tiled Y Render Target
+       *     surfaces."
+       *
+       * Affect IVB, HSW.
+       */
+      .SurfaceVerticalAlignment = VALIGN_4,
 #endif
       .Width = size.width - 1,
       .Height = size.height - 1,

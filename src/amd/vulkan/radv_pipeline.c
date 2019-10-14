@@ -2263,6 +2263,9 @@ radv_generate_graphics_pipeline_key(struct radv_pipeline *pipeline,
 	if (pipeline->device->physical_device->rad_info.chip_class < GFX8)
 		radv_pipeline_compute_get_int_clamp(pCreateInfo, &key.is_int8, &key.is_int10);
 
+	if (pipeline->device->physical_device->rad_info.chip_class >= GFX10)
+		key.topology = pCreateInfo->pInputAssemblyState->topology;
+
 	return key;
 }
 
@@ -2292,6 +2295,7 @@ radv_fill_shader_keys(struct radv_device *device,
 		keys[MESA_SHADER_VERTEX].vs.vertex_attribute_offsets[i] = key->vertex_attribute_offsets[i];
 		keys[MESA_SHADER_VERTEX].vs.vertex_attribute_strides[i] = key->vertex_attribute_strides[i];
 	}
+	keys[MESA_SHADER_VERTEX].vs.outprim = si_conv_prim_to_gs_out(key->topology);
 
 	if (nir[MESA_SHADER_TESS_CTRL]) {
 		keys[MESA_SHADER_VERTEX].vs_common_out.as_ls = true;
@@ -2309,9 +2313,7 @@ radv_fill_shader_keys(struct radv_device *device,
 			keys[MESA_SHADER_VERTEX].vs_common_out.as_es = true;
 	}
 
-	if (device->physical_device->rad_info.chip_class >= GFX10 &&
-	    device->physical_device->rad_info.family != CHIP_NAVI14 &&
-	    !(device->instance->debug_flags & RADV_DEBUG_NO_NGG)) {
+	if (device->physical_device->use_ngg) {
 		if (nir[MESA_SHADER_TESS_CTRL]) {
 			keys[MESA_SHADER_TESS_EVAL].vs_common_out.as_ngg = true;
 		} else {
@@ -3393,6 +3395,7 @@ radv_pipeline_generate_depth_stencil_state(struct radeon_cmdbuf *ctx_cs,
 	const VkPipelineDepthStencilStateCreateInfo *vkds = pCreateInfo->pDepthStencilState;
 	RADV_FROM_HANDLE(radv_render_pass, pass, pCreateInfo->renderPass);
 	struct radv_subpass *subpass = pass->subpasses + pCreateInfo->subpass;
+	struct radv_shader_variant *ps = pipeline->shaders[MESA_SHADER_FRAGMENT];
 	struct radv_render_pass_attachment *attachment = NULL;
 	uint32_t db_depth_control = 0, db_stencil_control = 0;
 	uint32_t db_render_control = 0, db_render_override2 = 0;
@@ -3441,7 +3444,8 @@ radv_pipeline_generate_depth_stencil_state(struct radeon_cmdbuf *ctx_cs,
 	db_render_override |= S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
 			      S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
 
-	if (!pCreateInfo->pRasterizationState->depthClampEnable) {
+	if (!pCreateInfo->pRasterizationState->depthClampEnable &&
+	    ps->info.ps.writes_z) {
 		/* From VK_EXT_depth_range_unrestricted spec:
 		 *
 		 * "The behavior described in Primitive Clipping still applies.
@@ -4831,8 +4835,8 @@ radv_compute_generate_pm4(struct radv_pipeline *pipeline)
 	unsigned max_waves_per_sh = 0;
 	uint64_t va;
 
-	pipeline->cs.buf = malloc(20 * 4);
-	pipeline->cs.max_dw = 20;
+	pipeline->cs.max_dw = device->physical_device->rad_info.chip_class >= GFX10 ? 22 : 20;
+	pipeline->cs.buf = malloc(pipeline->cs.max_dw * 4);
 
 	compute_shader = pipeline->shaders[MESA_SHADER_COMPUTE];
 	va = radv_buffer_get_va(compute_shader->bo) + compute_shader->bo_offset;
@@ -4844,6 +4848,9 @@ radv_compute_generate_pm4(struct radv_pipeline *pipeline)
 	radeon_set_sh_reg_seq(&pipeline->cs, R_00B848_COMPUTE_PGM_RSRC1, 2);
 	radeon_emit(&pipeline->cs, compute_shader->config.rsrc1);
 	radeon_emit(&pipeline->cs, compute_shader->config.rsrc2);
+	if (device->physical_device->rad_info.chip_class >= GFX10) {
+		radeon_set_sh_reg(&pipeline->cs, R_00B8A0_COMPUTE_PGM_RSRC3, compute_shader->config.rsrc3);
+	}
 
 	radeon_set_sh_reg(&pipeline->cs, R_00B860_COMPUTE_TMPRING_SIZE,
 			  S_00B860_WAVES(pipeline->max_waves) |
@@ -5241,12 +5248,17 @@ VkResult radv_GetPipelineExecutableInternalRepresentationsKHR(
 	}
 	++p;
 
-	/* LLVM IR */
+	/* backend IR */
 	if (p < end) {
 		p->isText = true;
-		desc_copy(p->name, "LLVM IR");
-		desc_copy(p->description, "The LLVM IR after some optimizations");
-		if (radv_copy_representation(p->pData, &p->dataSize, shader->llvm_ir_string) != VK_SUCCESS)
+		if (shader->aco_used) {
+			desc_copy(p->name, "ACO IR");
+			desc_copy(p->description, "The ACO IR after some optimizations");
+		} else {
+			desc_copy(p->name, "LLVM IR");
+			desc_copy(p->description, "The LLVM IR after some optimizations");
+		}
+		if (radv_copy_representation(p->pData, &p->dataSize, shader->ir_string) != VK_SUCCESS)
 			result = VK_INCOMPLETE;
 	}
 	++p;

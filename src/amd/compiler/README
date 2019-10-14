@@ -69,11 +69,57 @@ situations.
 The `image_atomic_{swap,cmpswap,add,sub}` opcodes in the GCN3 ISA reference
 guide are incorrect. The Vega ISA reference guide has the correct ones.
 
+## VINTRP encoding
+
+VEGA ISA doc says the encoding should be `110010` but `110101` works.
+
+## VOP1 instructions encoded as VOP3
+
+RDNA ISA doc says that `0x140` should be added to the opcode, but that doesn't
+work. What works is adding `0x180`, which LLVM also does.
+
+## FLAT, Scratch, Global instructions
+
+The NV bit was removed in RDNA, but some parts of the doc still mention it.
+
+RDNA ISA doc 13.8.1 says that SADDR should be set to 0x7f when ADDR is used, but
+9.3.1 says it should be set to NULL. We assume 9.3.1 is correct and set it to
+SGPR_NULL.
+
 ## Legacy instructions
 
 Some instructions have a `_LEGACY` variant which implements "DX9 rules", in which
 the zero "wins" in multiplications, ie. `0.0*x` is always `0.0`. The VEGA ISA
 mentions `V_MAC_LEGACY_F32` but this instruction is not really there on VEGA.
+
+## RDNA L0, L1 cache and DLC, GLC bits
+
+The old L1 cache was renamed to L0, and a new L1 cache was added to RDNA. The
+L1 cache is 1 cache per shader array. Some instruction encodings have DLC and
+GLC bits that interact with the cache.
+
+* DLC ("device level coherent") bit: controls the L1 cache
+* GLC ("globally coherent") bit: controls the L0 cache
+
+The recommendation from AMD devs is to always set these two bits at the same time,
+as it doesn't make too much sense to set them independently, aside from some
+circumstances (eg. we needn't set DLC when only one shader array is used).
+
+Stores and atomics always bypass the L1 cache, so they don't support the DLC bit,
+and it shouldn't be set in these cases. Setting the DLC for these cases can result
+in graphical glitches.
+
+## RDNA S_DCACHE_WB
+
+The S_DCACHE_WB is not mentioned in the RDNA ISA doc, but it is needed in order
+to achieve correct behavior in some SSBO CTS tests.
+
+## RDNA subvector mode
+
+The documentation of S_SUBVECTOR_LOOP_BEGIN and S_SUBVECTOR_LOOP_END is not clear
+on what sort of addressing should be used, but it says that it
+"is equivalent to an S_CBRANCH with extra math", so the subvector loop handling
+in ACO is done according to the S_CBRANCH doc.
 
 # Hardware Bugs
 

@@ -76,6 +76,9 @@ struct radv_vs_variant_key {
 
 	/* For some formats the channels have to be shuffled. */
 	uint32_t post_shuffle;
+
+	/* Output primitive type. */
+	uint8_t outprim;
 };
 
 struct radv_tes_variant_key {
@@ -123,7 +126,7 @@ struct radv_nir_compiler_options {
 	bool robust_buffer_access;
 	bool dump_shader;
 	bool dump_preoptir;
-	bool record_llvm_ir;
+	bool record_ir;
 	bool check_ir;
 	bool has_ls_vgpr_init_bug;
 	bool use_ngg_streamout;
@@ -334,10 +337,10 @@ struct radv_shader_binary_legacy {
 	struct ac_shader_config config;
 	unsigned code_size;
 	unsigned exec_size;
-	unsigned llvm_ir_size;
+	unsigned ir_size;
 	unsigned disasm_size;
 	
-	/* data has size of code_size + llvm_ir_size + disasm_size + 2, where
+	/* data has size of code_size + ir_size + disasm_size + 2, where
 	 * the +2 is for 0 of the ir strings. */
 	uint8_t data[0];
 };
@@ -360,11 +363,12 @@ struct radv_shader_variant {
 	struct radv_shader_info info;
 
 	/* debug only */
+	bool aco_used;
 	uint32_t *spirv;
 	uint32_t spirv_size;
 	char *nir_string;
 	char *disasm_string;
-	char *llvm_ir_string;
+	char *ir_string;
 
 	struct list_head slab_list;
 };

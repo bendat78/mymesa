@@ -60,6 +60,7 @@ struct spirv_supported_capabilities {
    bool post_depth_coverage;
    bool runtime_descriptor_array;
    bool float_controls;
+   bool shader_clock;
    bool shader_viewport_index_layer;
    bool stencil_export;
    bool storage_8bit;
@@ -104,6 +105,8 @@ typedef struct shader_info {
    unsigned num_ssbos;
    /* Number of images used by this shader */
    unsigned num_images;
+   /* Index of the last MSAA image. */
+   int last_msaa_image;
 
    /* Which inputs are actually read */
    uint64_t inputs_read;

@@ -502,8 +502,6 @@ static int si_get_shader_param(struct pipe_screen* pscreen,
 	case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTERS:
 	case PIPE_SHADER_CAP_MAX_HW_ATOMIC_COUNTER_BUFFERS:
 		return 0;
-	case PIPE_SHADER_CAP_SCALAR_ISA:
-		return 1;
 	}
 	return 0;
 }
@@ -528,6 +526,7 @@ static const struct nir_shader_compiler_options nir_options = {
 	.lower_extract_byte = true,
 	.lower_extract_word = true,
 	.lower_rotate = true,
+	.lower_to_scalar = true,
 	.optimize_sample_mask_in = true,
 	.max_unroll_iterations = 32,
 	.use_interpolated_input_intrinsics = true,

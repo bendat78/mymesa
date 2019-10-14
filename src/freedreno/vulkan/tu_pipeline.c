@@ -478,7 +478,7 @@ tu6_emit_vs_system_values(struct tu_cs *cs,
                           const struct ir3_shader_variant *vs)
 {
    const uint32_t vertexid_regid =
-      ir3_find_sysval_regid(vs, SYSTEM_VALUE_VERTEX_ID_ZERO_BASE);
+      ir3_find_sysval_regid(vs, SYSTEM_VALUE_VERTEX_ID);
    const uint32_t instanceid_regid =
       ir3_find_sysval_regid(vs, SYSTEM_VALUE_INSTANCE_ID);
 
@@ -888,6 +888,39 @@ tu6_emit_shader_object(struct tu_cs *cs,
 }
 
 static void
+tu6_emit_immediates(struct tu_cs *cs, const struct ir3_shader_variant *v,
+                    uint32_t opcode, enum a6xx_state_block block)
+{
+   const struct ir3_const_state *const_state = &v->shader->const_state;
+   uint32_t base = const_state->offsets.immediate;
+   int size = const_state->immediates_count;
+
+   /* truncate size to avoid writing constants that shader
+    * does not use:
+    */
+   size = MIN2(size + base, v->constlen) - base;
+
+   if (size <= 0)
+      return;
+
+   tu_cs_emit_pkt7(cs, opcode, 3 + size * 4);
+   tu_cs_emit(cs, CP_LOAD_STATE6_0_DST_OFF(base) |
+                  CP_LOAD_STATE6_0_STATE_TYPE(ST6_CONSTANTS) |
+                  CP_LOAD_STATE6_0_STATE_SRC(SS6_DIRECT) |
+                  CP_LOAD_STATE6_0_STATE_BLOCK(SB6_FS_SHADER) |
+                  CP_LOAD_STATE6_0_NUM_UNIT(size));
+   tu_cs_emit(cs, CP_LOAD_STATE6_1_EXT_SRC_ADDR(0));
+   tu_cs_emit(cs, CP_LOAD_STATE6_2_EXT_SRC_ADDR_HI(0));
+
+   for (unsigned i = 0; i < size; i++) {
+      tu_cs_emit(cs, const_state->immediates[i].val[0]);
+      tu_cs_emit(cs, const_state->immediates[i].val[1]);
+      tu_cs_emit(cs, const_state->immediates[i].val[2]);
+      tu_cs_emit(cs, const_state->immediates[i].val[3]);
+   }
+}
+
+static void
 tu6_emit_program(struct tu_cs *cs,
                  const struct tu_pipeline_builder *builder,
                  const struct tu_bo *binary_bo,
@@ -939,6 +972,10 @@ tu6_emit_program(struct tu_cs *cs,
 
    tu6_emit_shader_object(cs, MESA_SHADER_FRAGMENT, fs, binary_bo,
                           builder->shader_offsets[MESA_SHADER_FRAGMENT]);
+
+   tu6_emit_immediates(cs, vs, CP_LOAD_STATE6_GEOM, SB6_VS_SHADER);
+   if (!binning_pass)
+      tu6_emit_immediates(cs, fs, CP_LOAD_STATE6_FRAG, SB6_FS_SHADER);
 }
 
 static void
@@ -1509,6 +1546,22 @@ tu_pipeline_builder_parse_shader_stages(struct tu_pipeline_builder *builder,
    tu6_emit_program(&prog_cs, builder, &pipeline->program.binary_bo, true);
    pipeline->program.binning_state_ib =
       tu_cs_end_sub_stream(&pipeline->cs, &prog_cs);
+
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+      if (!builder->shaders[i])
+         continue;
+
+      struct tu_program_descriptor_linkage *link = &pipeline->program.link[i];
+      struct ir3_shader *shader = builder->shaders[i]->variants[0].shader;
+
+      link->ubo_state = shader->ubo_state;
+      link->constlen = builder->shaders[i]->variants[0].constlen;
+      link->offset_ubo = shader->const_state.offsets.ubo;
+      link->num_ubo = shader->const_state.num_ubos;
+      link->texture_map = builder->shaders[i]->texture_map;
+      link->sampler_map = builder->shaders[i]->sampler_map;
+      link->ubo_map = builder->shaders[i]->ubo_map;
+   }
 }
 
 static void
@@ -1823,29 +1876,26 @@ tu_CreateGraphicsPipelines(VkDevice device,
 {
    TU_FROM_HANDLE(tu_device, dev, device);
    TU_FROM_HANDLE(tu_pipeline_cache, cache, pipelineCache);
+   VkResult final_result = VK_SUCCESS;
 
    for (uint32_t i = 0; i < count; i++) {
       struct tu_pipeline_builder builder;
       tu_pipeline_builder_init_graphics(&builder, dev, cache,
                                         &pCreateInfos[i], pAllocator);
 
-      struct tu_pipeline *pipeline;
+      struct tu_pipeline *pipeline = NULL;
       VkResult result = tu_pipeline_builder_build(&builder, &pipeline);
       tu_pipeline_builder_finish(&builder);
 
-      if (result != VK_SUCCESS) {
-         for (uint32_t j = 0; j < i; j++) {
-            tu_DestroyPipeline(device, pPipelines[j], pAllocator);
-            pPipelines[j] = VK_NULL_HANDLE;
-         }
-
-         return result;
+      if (result == VK_SUCCESS) {
+         pPipelines[i] = tu_pipeline_to_handle(pipeline);
+      } else {
+         pPipelines[i] = NULL;
+         final_result = result;
       }
-
-      pPipelines[i] = tu_pipeline_to_handle(pipeline);
    }
 
-   return VK_SUCCESS;
+   return final_result;
 }
 
 static VkResult

@@ -82,7 +82,12 @@ for arch in $CROSS_ARCHITECTURES; do
 done
 
 # for 64bit windows cross-builds
-apt-get install -y --no-remove mingw-w64
+apt-get install -y --no-remove \
+    mingw-w64 \
+    libz-mingw-w64-dev \
+    wine \
+    wine32 \
+    wine64
 
 # for the vulkan overlay layer
 wget https://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-linux-Release.zip
@@ -199,6 +204,8 @@ apt-get install -y --no-remove libxml2-utils
 for arch in $CROSS_ARCHITECTURES; do
   cross_file="/cross_file-$arch.txt"
   /usr/share/meson/debcrossgen --arch "$arch" -o "$cross_file"
+  # Explicitly set ccache path for cross compilers
+  sed -i "s|/usr/bin/\([^-]*\)-linux-gnu\([^-]*\)-g|/usr/lib/ccache/\\1-linux-gnu\\2-g|g" "$cross_file"
   # Work around a bug in debcrossgen that should be fixed in the next release
   if [ "$arch" = "i386" ]; then
     sed -i "s|cpu_family = 'i686'|cpu_family = 'x86'|g" "$cross_file"

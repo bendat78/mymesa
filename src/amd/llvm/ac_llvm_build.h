@@ -29,6 +29,7 @@
 #include <llvm-c/Core.h>
 #include "compiler/nir/nir.h"
 #include "amd_family.h"
+#include "ac_shader_util.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -521,17 +522,6 @@ enum ac_atomic_op {
 	ac_atomic_dec_wrap,
 };
 
-enum ac_image_dim {
-	ac_image_1d,
-	ac_image_2d,
-	ac_image_3d,
-	ac_image_cube, // includes cube arrays
-	ac_image_1darray,
-	ac_image_2darray,
-	ac_image_2dmsaa,
-	ac_image_2darraymsaa,
-};
-
 /* These cache policy bits match the definitions used by the LLVM intrinsics. */
 enum ac_image_cache_policy {
 	ac_glc = 1 << 0, /* per-CU cache control */
@@ -562,6 +552,8 @@ struct ac_image_args {
 
 LLVMValueRef ac_build_image_opcode(struct ac_llvm_context *ctx,
 				   struct ac_image_args *a);
+LLVMValueRef ac_build_image_get_sample_count(struct ac_llvm_context *ctx,
+					     LLVMValueRef rsrc);
 LLVMValueRef ac_build_cvt_pkrtz_f16(struct ac_llvm_context *ctx,
 				    LLVMValueRef args[2]);
 LLVMValueRef ac_build_cvt_pknorm_i16(struct ac_llvm_context *ctx,
@@ -739,6 +731,11 @@ LLVMValueRef ac_build_atomic_rmw(struct ac_llvm_context *ctx, LLVMAtomicRMWBinOp
 LLVMValueRef ac_build_atomic_cmp_xchg(struct ac_llvm_context *ctx, LLVMValueRef ptr,
 				      LLVMValueRef cmp, LLVMValueRef val,
 				      const char *sync_scope);
+
+void
+ac_export_mrt_z(struct ac_llvm_context *ctx, LLVMValueRef depth,
+		LLVMValueRef stencil, LLVMValueRef samplemask,
+		struct ac_export_args *args);
 
 #ifdef __cplusplus
 }

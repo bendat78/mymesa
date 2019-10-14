@@ -83,57 +83,6 @@ build_store_values_extended(struct ac_llvm_context *ac,
 	}
 }
 
-static enum ac_image_dim
-get_ac_sampler_dim(const struct ac_llvm_context *ctx, enum glsl_sampler_dim dim,
-		   bool is_array)
-{
-	switch (dim) {
-	case GLSL_SAMPLER_DIM_1D:
-		if (ctx->chip_class == GFX9)
-			return is_array ? ac_image_2darray : ac_image_2d;
-		return is_array ? ac_image_1darray : ac_image_1d;
-	case GLSL_SAMPLER_DIM_2D:
-	case GLSL_SAMPLER_DIM_RECT:
-	case GLSL_SAMPLER_DIM_EXTERNAL:
-		return is_array ? ac_image_2darray : ac_image_2d;
-	case GLSL_SAMPLER_DIM_3D:
-		return ac_image_3d;
-	case GLSL_SAMPLER_DIM_CUBE:
-		return ac_image_cube;
-	case GLSL_SAMPLER_DIM_MS:
-		return is_array ? ac_image_2darraymsaa : ac_image_2dmsaa;
-	case GLSL_SAMPLER_DIM_SUBPASS:
-		return ac_image_2darray;
-	case GLSL_SAMPLER_DIM_SUBPASS_MS:
-		return ac_image_2darraymsaa;
-	default:
-		unreachable("bad sampler dim");
-	}
-}
-
-static enum ac_image_dim
-get_ac_image_dim(const struct ac_llvm_context *ctx, enum glsl_sampler_dim sdim,
-		 bool is_array)
-{
-	enum ac_image_dim dim = get_ac_sampler_dim(ctx, sdim, is_array);
-
-	/* Match the resource type set in the descriptor. */
-	if (dim == ac_image_cube ||
-	    (ctx->chip_class <= GFX8 && dim == ac_image_3d))
-		dim = ac_image_2darray;
-	else if (sdim == GLSL_SAMPLER_DIM_2D && !is_array && ctx->chip_class == GFX9) {
-		/* When a single layer of a 3D texture is bound, the shader
-		 * will refer to a 2D target, but the descriptor has a 3D type.
-		 * Since the HW ignores BASE_ARRAY in this case, we need to
-		 * send 3 coordinates. This doesn't hurt when the underlying
-		 * texture is non-3D.
-		 */
-		dim = ac_image_3d;
-	}
-
-	return dim;
-}
-
 static LLVMTypeRef get_def_type(struct ac_nir_context *ctx,
                                 const nir_ssa_def *def)
 {
@@ -600,6 +549,8 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		result = LLVMBuildURem(ctx->ac.builder, src[0], src[1], "");
 		break;
 	case nir_op_fmod:
+		/* lower_fmod only lower 16-bit and 32-bit fmod */
+		assert(instr->dest.dest.ssa.bit_size == 64);
 		src[0] = ac_to_float(&ctx->ac, src[0]);
 		src[1] = ac_to_float(&ctx->ac, src[1]);
 		result = ac_build_fdiv(&ctx->ac, src[0], src[1]);
@@ -607,11 +558,6 @@ static void visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
 		                              ac_to_float_type(&ctx->ac, def_type), result);
 		result = LLVMBuildFMul(ctx->ac.builder, src[1] , result, "");
 		result = LLVMBuildFSub(ctx->ac.builder, src[0], result, "");
-		break;
-	case nir_op_frem:
-		src[0] = ac_to_float(&ctx->ac, src[0]);
-		src[1] = ac_to_float(&ctx->ac, src[1]);
-		result = LLVMBuildFRem(ctx->ac.builder, src[0], src[1], "");
 		break;
 	case nir_op_irem:
 		result = LLVMBuildSRem(ctx->ac.builder, src[0], src[1], "");
@@ -1282,7 +1228,7 @@ static LLVMValueRef lower_gather4_integer(struct ac_llvm_context *ctx,
 		}
 
 		/* Query the texture size. */
-		resinfo.dim = get_ac_sampler_dim(ctx, instr->sampler_dim, instr->is_array);
+		resinfo.dim = ac_get_sampler_dim(ctx->chip_class, instr->sampler_dim, instr->is_array);
 		resinfo.opcode = ac_image_get_resinfo;
 		resinfo.dmask = 0xf;
 		resinfo.lod = ctx->i32_0;
@@ -2612,7 +2558,7 @@ static LLVMValueRef visit_image_load(struct ac_nir_context *ctx,
 		args.opcode = ac_image_load;
 		args.resource = get_image_descriptor(ctx, instr, AC_DESC_IMAGE, false);
 		get_image_coords(ctx, instr, &args, dim, is_array);
-		args.dim = get_ac_image_dim(&ctx->ac, dim, is_array);
+		args.dim = ac_get_image_dim(ctx->ac.chip_class, dim, is_array);
 		args.dmask = 15;
 		args.attributes = AC_FUNC_ATTR_READONLY;
 
@@ -2669,7 +2615,7 @@ static void visit_image_store(struct ac_nir_context *ctx,
 		args.data[0] = ac_to_float(&ctx->ac, get_src(ctx, instr->src[3]));
 		args.resource = get_image_descriptor(ctx, instr, AC_DESC_IMAGE, true);
 		get_image_coords(ctx, instr, &args, dim, is_array);
-		args.dim = get_ac_image_dim(&ctx->ac, dim, is_array);
+		args.dim = ac_get_image_dim(ctx->ac.chip_class, dim, is_array);
 		args.dmask = 15;
 
 		ac_build_image_opcode(&ctx->ac, &args);
@@ -2698,7 +2644,7 @@ static LLVMValueRef visit_image_atomic(struct ac_nir_context *ctx,
 		    instr->intrinsic == nir_intrinsic_bindless_image_atomic_umin ||
 		    instr->intrinsic == nir_intrinsic_bindless_image_atomic_imax ||
 		    instr->intrinsic == nir_intrinsic_bindless_image_atomic_umax) {
-			const GLenum format = nir_intrinsic_format(instr);
+			ASSERTED const GLenum format = nir_intrinsic_format(instr);
 			assert(format == GL_R32UI || format == GL_R32I);
 		}
 		dim = nir_intrinsic_image_dim(instr);
@@ -2822,36 +2768,18 @@ static LLVMValueRef visit_image_atomic(struct ac_nir_context *ctx,
 			args.data[1] = params[1];
 		args.resource = get_image_descriptor(ctx, instr, AC_DESC_IMAGE, true);
 		get_image_coords(ctx, instr, &args, dim, is_array);
-		args.dim = get_ac_image_dim(&ctx->ac, dim, is_array);
+		args.dim = ac_get_image_dim(ctx->ac.chip_class, dim, is_array);
 
 		return ac_build_image_opcode(&ctx->ac, &args);
 	}
 }
 
 static LLVMValueRef visit_image_samples(struct ac_nir_context *ctx,
-					const nir_intrinsic_instr *instr,
-					bool bindless)
+					const nir_intrinsic_instr *instr)
 {
-	enum glsl_sampler_dim dim;
-	bool is_array;
-	if (bindless) {
-		dim = nir_intrinsic_image_dim(instr);
-		is_array = nir_intrinsic_image_array(instr);
-	} else {
-		const struct glsl_type *type = get_image_deref(instr)->type;
-		dim = glsl_get_sampler_dim(type);
-		is_array = glsl_sampler_type_is_array(type);
-	}
+	LLVMValueRef rsrc = get_image_descriptor(ctx, instr, AC_DESC_IMAGE, false);
 
-	struct ac_image_args args = { 0 };
-	args.dim = get_ac_sampler_dim(&ctx->ac, dim, is_array);
-	args.dmask = 0xf;
-	args.resource = get_image_descriptor(ctx, instr, AC_DESC_IMAGE, false);
-	args.opcode = ac_image_get_resinfo;
-	args.lod = ctx->ac.i32_0;
-	args.attributes = AC_FUNC_ATTR_READNONE;
-
-	return ac_build_image_opcode(&ctx->ac, &args);
+	return ac_build_image_get_sample_count(&ctx->ac, rsrc);
 }
 
 static LLVMValueRef visit_image_size(struct ac_nir_context *ctx,
@@ -2876,7 +2804,7 @@ static LLVMValueRef visit_image_size(struct ac_nir_context *ctx,
 
 	struct ac_image_args args = { 0 };
 
-	args.dim = get_ac_image_dim(&ctx->ac, dim, is_array);
+	args.dim = ac_get_image_dim(ctx->ac.chip_class, dim, is_array);
 	args.dmask = 0xf;
 	args.resource = get_image_descriptor(ctx, instr, AC_DESC_IMAGE, false);
 	args.opcode = ac_image_get_resinfo;
@@ -3497,10 +3425,8 @@ static void visit_intrinsic(struct ac_nir_context *ctx,
 		visit_store_shared(ctx, instr);
 		break;
 	case nir_intrinsic_bindless_image_samples:
-		result = visit_image_samples(ctx, instr, true);
-		break;
 	case nir_intrinsic_image_deref_samples:
-		result = visit_image_samples(ctx, instr, false);
+		result = visit_image_samples(ctx, instr);
 		break;
 	case nir_intrinsic_bindless_image_load:
 		result = visit_image_load(ctx, instr, true);
@@ -4019,8 +3945,10 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 		case nir_tex_src_projector:
 			break;
 		case nir_tex_src_comparator:
-			if (instr->is_shadow)
+			if (instr->is_shadow) {
 				args.compare = get_src(ctx, instr->src[i].src);
+				args.compare = ac_to_float(&ctx->ac, args.compare);
+			}
 			break;
 		case nir_tex_src_offset:
 			args.offset = get_src(ctx, instr->src[i].src);
@@ -4104,19 +4032,33 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 		args.offset = pack;
 	}
 
-	/* TC-compatible HTILE on radeonsi promotes Z16 and Z24 to Z32_FLOAT,
-	 * so the depth comparison value isn't clamped for Z16 and
-	 * Z24 anymore. Do it manually here for GFX8-9; GFX10 has an explicitly
-	 * clamped 32-bit float format.
+	/* Section 8.23.1 (Depth Texture Comparison Mode) of the
+	 * OpenGL 4.5 spec says:
 	 *
-	 * It's unnecessary if the original texture format was
-	 * Z32_FLOAT, but we don't know that here.
+	 *    "If the texture’s internal format indicates a fixed-point
+	 *     depth texture, then D_t and D_ref are clamped to the
+	 *     range [0, 1]; otherwise no clamping is performed."
+	 *
+	 * TC-compatible HTILE promotes Z16 and Z24 to Z32_FLOAT,
+	 * so the depth comparison value isn't clamped for Z16 and
+	 * Z24 anymore. Do it manually here for GFX8-9; GFX10 has
+	 * an explicitly clamped 32-bit float format.
 	 */
 	if (args.compare &&
 	    ctx->ac.chip_class >= GFX8 &&
 	    ctx->ac.chip_class <= GFX9 &&
-	    ctx->abi->clamp_shadow_reference)
-		args.compare = ac_build_clamp(&ctx->ac, ac_to_float(&ctx->ac, args.compare));
+	    ctx->abi->clamp_shadow_reference) {
+		LLVMValueRef upgraded, clamped;
+
+		upgraded = LLVMBuildExtractElement(ctx->ac.builder, args.sampler,
+						   LLVMConstInt(ctx->ac.i32, 3, false), "");
+		upgraded = LLVMBuildLShr(ctx->ac.builder, upgraded,
+					 LLVMConstInt(ctx->ac.i32, 29, false), "");
+		upgraded = LLVMBuildTrunc(ctx->ac.builder, upgraded, ctx->ac.i1, "");
+		clamped = ac_build_clamp(&ctx->ac, args.compare);
+		args.compare = LLVMBuildSelect(ctx->ac.builder, upgraded, clamped,
+					       args.compare, "");
+	}
 
 	/* pack derivatives */
 	if (ddx || ddy) {
@@ -4250,8 +4192,10 @@ static void visit_tex(struct ac_nir_context *ctx, nir_tex_instr *instr)
 			args.dmask = 1 << instr->component;
 	}
 
-	if (instr->sampler_dim != GLSL_SAMPLER_DIM_BUF)
-		args.dim = get_ac_sampler_dim(&ctx->ac, instr->sampler_dim, instr->is_array);
+	if (instr->sampler_dim != GLSL_SAMPLER_DIM_BUF) {
+		args.dim = ac_get_sampler_dim(ctx->ac.chip_class, instr->sampler_dim, instr->is_array);
+		args.unorm = instr->sampler_dim == GLSL_SAMPLER_DIM_RECT;
+	}
 	result = build_tex_intrinsic(ctx, instr, &args);
 
 	if (instr->op == nir_texop_query_levels)

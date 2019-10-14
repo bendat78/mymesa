@@ -412,6 +412,13 @@ bool can_use_VOP3(aco_ptr<Instruction>& instr)
           instr->opcode != aco_opcode::v_madak_f16;
 }
 
+bool can_apply_sgprs(aco_ptr<Instruction>& instr)
+{
+   return instr->opcode != aco_opcode::v_readfirstlane_b32 &&
+          instr->opcode != aco_opcode::v_readlane_b32 &&
+          instr->opcode != aco_opcode::v_writelane_b32;
+}
+
 void to_VOP3(opt_ctx& ctx, aco_ptr<Instruction>& instr)
 {
    if (instr->isVOP3())
@@ -432,12 +439,6 @@ void to_VOP3(opt_ctx& ctx, aco_ptr<Instruction>& instr)
    }
 }
 
-bool valu_can_accept_literal(opt_ctx& ctx, aco_ptr<Instruction>& instr)
-{
-   // TODO: VOP3 can take a literal on GFX10
-   return !instr->isSDWA() && !instr->isDPP() && !instr->isVOP3();
-}
-
 /* only covers special cases */
 bool can_accept_constant(aco_ptr<Instruction>& instr, unsigned operand)
 {
@@ -452,6 +453,8 @@ bool can_accept_constant(aco_ptr<Instruction>& instr, unsigned operand)
    case aco_opcode::p_wqm:
    case aco_opcode::p_extract_vector:
    case aco_opcode::p_split_vector:
+   case aco_opcode::v_readlane_b32:
+   case aco_opcode::v_readfirstlane_b32:
       return operand != 0;
    default:
       if ((instr->format == Format::MUBUF ||
@@ -462,6 +465,13 @@ bool can_accept_constant(aco_ptr<Instruction>& instr, unsigned operand)
       }
       return true;
    }
+}
+
+bool valu_can_accept_literal(opt_ctx& ctx, aco_ptr<Instruction>& instr, unsigned operand)
+{
+   // TODO: VOP3 can take a literal on GFX10
+   return !instr->isSDWA() && !instr->isDPP() && !instr->isVOP3() &&
+          operand == 0 && can_accept_constant(instr, operand);
 }
 
 bool parse_base_offset(opt_ctx &ctx, Instruction* instr, unsigned op_index, Temp *base, uint32_t *offset)
@@ -1970,7 +1980,8 @@ void combine_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
       return;
 
    if (instr->isVALU()) {
-      apply_sgprs(ctx, instr);
+      if (can_apply_sgprs(instr))
+         apply_sgprs(ctx, instr);
       if (apply_omod_clamp(ctx, instr))
          return;
    }
@@ -2297,7 +2308,7 @@ void select_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
          if (ctx.uses[instr->operands[literal_idx].tempId()] == 0)
             instr->operands[literal_idx] = Operand(ctx.info[instr->operands[literal_idx].tempId()].val);
       }
-   } else if (instr->isVALU() && valu_can_accept_literal(ctx, instr) &&
+   } else if (instr->isVALU() && valu_can_accept_literal(ctx, instr, 0) &&
        instr->operands[0].isTemp() &&
        ctx.info[instr->operands[0].tempId()].is_literal() &&
        ctx.uses[instr->operands[0].tempId()] < threshold) {

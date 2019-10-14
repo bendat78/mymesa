@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mesa 6.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-08 13:20+0200\n"
+"POT-Creation-Date: 2019-09-21 10:08+0200\n"
 "PO-Revision-Date: 2005-04-11 01:34+0200\n"
 "Last-Translator: Felix Kuehling <fxkuehl@gmx.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -180,139 +180,145 @@ msgid "Override the VkSurfaceCapabilitiesKHR::minImageCount (0 = no override)"
 msgstr ""
 
 #: src/util/xmlpool/t_options.h:230
-msgid "Enable offloading GL driver work to a separate thread"
+msgid ""
+"Force the X11 WSI to create exactly the number of image specified by the "
+"application in VkSwapchainCreateInfoKHR::minImageCount"
 msgstr ""
 
 #: src/util/xmlpool/t_options.h:235
-msgid "Disable GL driver error checking"
+msgid "Enable offloading GL driver work to a separate thread"
 msgstr ""
 
 #: src/util/xmlpool/t_options.h:240
-msgid "Disable the GLX_EXT_buffer_age extension"
+msgid "Disable GL driver error checking"
 msgstr ""
 
 #: src/util/xmlpool/t_options.h:245
-msgid "Disable the GLX_OML_sync_control extension"
+msgid "Disable the GLX_EXT_buffer_age extension"
 msgstr ""
 
 #: src/util/xmlpool/t_options.h:250
+msgid "Disable the GLX_OML_sync_control extension"
+msgstr ""
+
+#: src/util/xmlpool/t_options.h:255
 msgid "Disable the GLX_SGI_video_sync extension"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:260
+#: src/util/xmlpool/t_options.h:265
 msgid "Miscellaneous"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:264
+#: src/util/xmlpool/t_options.h:269
 msgid "Create all visuals with a depth buffer"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:269
+#: src/util/xmlpool/t_options.h:274
 msgid "Force uninitialized variables to default to zero"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:274
+#: src/util/xmlpool/t_options.h:279
 msgid "Allow exposure of visuals and fbconfigs with rgb10a2 formats"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:279
+#: src/util/xmlpool/t_options.h:284
 msgid "Allow exposure of visuals and fbconfigs with rgb565 formats"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:284
+#: src/util/xmlpool/t_options.h:289
 msgid "Allow exposure of visuals and fbconfigs with fp16 formats"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:292
+#: src/util/xmlpool/t_options.h:297
 msgid "Initialization"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:296
+#: src/util/xmlpool/t_options.h:301
 msgid "Define the graphic device to use if possible"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:301
+#: src/util/xmlpool/t_options.h:306
 msgid "Override the DRI driver to load"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:310
+#: src/util/xmlpool/t_options.h:315
 msgid "Gallium Nine"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:314
+#: src/util/xmlpool/t_options.h:319
 msgid ""
 "Define the throttling value. -1 for no throttling, -2 for default (usually "
 "2), 0 for glfinish behaviour"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:319
+#: src/util/xmlpool/t_options.h:324
 msgid "Use an additional thread to submit buffers."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:324
+#: src/util/xmlpool/t_options.h:329
 msgid ""
 "Define the vendor_id to report. This allows faking another hardware vendor."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:329
+#: src/util/xmlpool/t_options.h:334
 msgid ""
 "Whether to allow the display server to release buffers with a delay when "
 "using d3d's presentation mode DISCARD. Default to true. Set to false if "
 "suffering from lag (thread_submit=true can also help in this situation)."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:334
+#: src/util/xmlpool/t_options.h:339
 msgid ""
 "Whether to make d3d's presentation mode DISCARD (games usually use that "
 "mode) Tear Free. If rendering above screen refresh, some frames will get "
 "skipped. false by default."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:339
+#: src/util/xmlpool/t_options.h:344
 msgid ""
 "If set to 1, force gallium nine CSMT. If set to 0, disable it. By default "
 "(-1) CSMT is enabled on known thread-safe drivers."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:344
+#: src/util/xmlpool/t_options.h:349
 msgid ""
 "If set to true, use a ram intermediate buffer for dynamic textures. "
 "Increases ram usage, which can cause out of memory issues, but can fix "
 "glitches for some games."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:349
+#: src/util/xmlpool/t_options.h:354
 msgid ""
 "If set to true, recompile shaders with integer or boolean constants when the "
 "values are known. Can cause stutter, but can increase slightly performance."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:358
+#: src/util/xmlpool/t_options.h:363
 msgid "Use the LLVM sisched option for shader compiles"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:363
+#: src/util/xmlpool/t_options.h:368
 msgid ""
 "Assume no Z fights (enables aggressive out-of-order rasterization to improve "
 "performance; may cause rendering errors)"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:368
+#: src/util/xmlpool/t_options.h:373
 msgid ""
 "Commutative additive blending optimizations (may cause rendering errors)"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:387
+#: src/util/xmlpool/t_options.h:392
 msgid "On GLES emulate BGRA formats by using a swizzled RGBA format"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:392
+#: src/util/xmlpool/t_options.h:397
 msgid ""
 "When the BGRA formats are emulated by using swizzled RGBA formats on GLES "
 "apply the swizzle when writing"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:397
+#: src/util/xmlpool/t_options.h:402
 msgid "GL_SAMPLES_PASSED value when emulated by GL_ANY_SAMPLES_PASSED"
 msgstr ""
 

@@ -134,6 +134,7 @@ enum {
 #define IRIS_DIRTY_RENDER_RESOLVES_AND_FLUSHES  (1ull << 55)
 #define IRIS_DIRTY_COMPUTE_RESOLVES_AND_FLUSHES (1ull << 56)
 #define IRIS_DIRTY_VF_STATISTICS            (1ull << 57)
+#define IRIS_DIRTY_PMA_FIX                  (1ull << 58)
 
 #define IRIS_ALL_DIRTY_FOR_COMPUTE (IRIS_DIRTY_CS | \
                                     IRIS_DIRTY_SAMPLER_STATES_CS | \
@@ -414,14 +415,8 @@ struct iris_stream_output_target {
  */
 struct iris_vtable {
    void (*destroy_state)(struct iris_context *ice);
-   void (*init_render_context)(struct iris_screen *screen,
-                               struct iris_batch *batch,
-                               struct iris_vtable *vtbl,
-                               struct pipe_debug_callback *dbg);
-   void (*init_compute_context)(struct iris_screen *screen,
-                                struct iris_batch *batch,
-                                struct iris_vtable *vtbl,
-                                struct pipe_debug_callback *dbg);
+   void (*init_render_context)(struct iris_batch *batch);
+   void (*init_compute_context)(struct iris_batch *batch);
    void (*upload_render_state)(struct iris_context *ice,
                                struct iris_batch *batch,
                                const struct pipe_draw_info *draw);

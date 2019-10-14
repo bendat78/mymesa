@@ -22,6 +22,7 @@
  *
  */
 
+#include <array>
 #include <unordered_map>
 #include "aco_ir.h"
 #include "nir.h"
@@ -29,6 +30,7 @@
 #include "vulkan/radv_descriptor_set.h"
 #include "sid.h"
 #include "ac_exp_param.h"
+#include "ac_shader_util.h"
 
 #include "util/u_math.h"
 
@@ -200,8 +202,6 @@ void init_context(isel_context *ctx, nir_shader *shader)
                   case nir_op_fmax3:
                   case nir_op_fmin3:
                   case nir_op_fmed3:
-                  case nir_op_fmod:
-                  case nir_op_frem:
                   case nir_op_fneg:
                   case nir_op_fabs:
                   case nir_op_fsat:
@@ -365,7 +365,6 @@ void init_context(isel_context *ctx, nir_shader *shader)
                   case nir_intrinsic_read_first_invocation:
                   case nir_intrinsic_read_invocation:
                   case nir_intrinsic_first_invocation:
-                  case nir_intrinsic_vulkan_resource_index:
                      type = RegType::sgpr;
                      break;
                   case nir_intrinsic_ballot:
@@ -467,6 +466,7 @@ void init_context(isel_context *ctx, nir_shader *shader)
                   case nir_intrinsic_load_ubo:
                   case nir_intrinsic_load_ssbo:
                   case nir_intrinsic_load_global:
+                  case nir_intrinsic_vulkan_resource_index:
                      type = ctx->divergent_vals[intrinsic->dest.ssa.index] ? RegType::vgpr : RegType::sgpr;
                      break;
                   /* due to copy propagation, the swizzled imov is removed if num dest components == 1 */
@@ -837,7 +837,11 @@ declare_vs_input_vgprs(isel_context *ctx, struct arg_info *args)
 {
    unsigned vgpr_idx = 0;
    add_arg(args, v1, &ctx->vertex_id, vgpr_idx++);
-/* if (!ctx->is_gs_copy_shader) */ {
+   if (ctx->options->chip_class >= GFX10) {
+      add_arg(args, v1, NULL, vgpr_idx++); /* unused */
+      add_arg(args, v1, &ctx->vs_prim_id, vgpr_idx++);
+      add_arg(args, v1, &ctx->instance_id, vgpr_idx++);
+   } else {
       if (ctx->options->key.vs.out.as_ls) {
          add_arg(args, v1, &ctx->rel_auto_id, vgpr_idx++);
          add_arg(args, v1, &ctx->instance_id, vgpr_idx++);
@@ -1050,6 +1054,12 @@ void add_startpgm(struct isel_context *ctx)
    ctx->program->info->num_user_sgprs = user_sgpr_info.num_sgpr;
    ctx->program->info->num_input_vgprs = args.num_vgprs_used;
 
+   if (ctx->stage == fragment_fs) {
+      /* Verify that we have a correct assumption about input VGPR count */
+      ASSERTED unsigned input_vgpr_cnt = ac_get_fs_input_vgpr_cnt(ctx->program->config, nullptr, nullptr);
+      assert(input_vgpr_cnt == ctx->program->info->num_input_vgprs);
+   }
+
    aco_ptr<Pseudo_instruction> startpgm{create_instruction<Pseudo_instruction>(aco_opcode::p_startpgm, Format::PSEUDO, 0, args.count + 1)};
    for (unsigned i = 0; i < args.count; i++) {
       if (args.assign[i]) {
@@ -1242,6 +1252,7 @@ setup_isel_context(Program* program,
    program->info = info;
    program->chip_class = options->chip_class;
    program->family = options->family;
+   program->wave_size = options->wave_size;
    program->sgpr_limit = options->chip_class >= GFX8 ? 102 : 104;
    if (options->family == CHIP_TONGA || options->family == CHIP_ICELAND)
       program->sgpr_limit = 94; /* workaround hardware bug */
@@ -1307,9 +1318,6 @@ setup_isel_context(Program* program,
          nir_lower_pack(nir);
 
       /* lower ALU operations */
-      nir_opt_idiv_const(nir, 32);
-      nir_lower_idiv(nir); // TODO: use the LLVM path once !1239 is merged
-
       // TODO: implement logic64 in aco, it's more effective for sgprs
       nir_lower_int64(nir, (nir_lower_int64_options) (nir_lower_imul64 |
                                                       nir_lower_imul_high64 |
@@ -1317,24 +1325,37 @@ setup_isel_context(Program* program,
                                                       nir_lower_divmod64 |
                                                       nir_lower_logic64 |
                                                       nir_lower_minmax64 |
-                                                      nir_lower_iabs64 |
-                                                      nir_lower_ineg64));
+                                                      nir_lower_iabs64));
+
+      nir_opt_idiv_const(nir, 32);
+      nir_lower_idiv(nir); // TODO: use the LLVM path once !1239 is merged
 
       /* optimize the lowered ALU operations */
       nir_copy_prop(nir);
       nir_opt_constant_folding(nir);
       nir_opt_algebraic(nir);
-      nir_opt_algebraic_late(nir);
-      nir_opt_constant_folding(nir);
+
+      /* Do late algebraic optimization to turn add(a, neg(b)) back into
+      * subs, then the mandatory cleanup after algebraic.  Note that it may
+      * produce fnegs, and if so then we need to keep running to squash
+      * fneg(fneg(a)).
+      */
+      bool more_late_algebraic = true;
+      while (more_late_algebraic) {
+         more_late_algebraic = false;
+         NIR_PASS(more_late_algebraic, nir, nir_opt_algebraic_late);
+         NIR_PASS_V(nir, nir_opt_constant_folding);
+         NIR_PASS_V(nir, nir_copy_prop);
+         NIR_PASS_V(nir, nir_opt_dce);
+         NIR_PASS_V(nir, nir_opt_cse);
+      }
 
       /* cleanup passes */
       nir_lower_load_const_to_scalar(nir);
-      nir_opt_cse(nir);
-      nir_opt_dce(nir);
       nir_opt_shrink_load(nir);
       nir_move_options move_opts = (nir_move_options)(
          nir_move_const_undef | nir_move_load_ubo | nir_move_load_input | nir_move_comparisons);
-      //nir_opt_sink(nir, move_opts); // TODO: enable this once !1664 is merged
+      nir_opt_sink(nir, move_opts);
       nir_opt_move(nir, move_opts);
       nir_convert_to_lcssa(nir, true, false);
       nir_lower_phis_to_scalar(nir);

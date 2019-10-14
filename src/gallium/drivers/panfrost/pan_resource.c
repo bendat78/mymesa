@@ -578,10 +578,8 @@ panfrost_transfer_map(struct pipe_context *pctx,
                         is_bound |= fb->cbufs[c]->texture == resource;
         }
 
-        if (is_bound && (usage & PIPE_TRANSFER_READ)) {
-                assert(level == 0);
-                panfrost_flush(pctx, NULL, PIPE_FLUSH_END_OF_FRAME);
-        }
+        if (is_bound && (usage & PIPE_TRANSFER_READ))
+                 assert(level == 0);
 
         /* TODO: Respect usage flags */
 
@@ -594,11 +592,11 @@ panfrost_transfer_map(struct pipe_context *pctx,
                 /* No flush for writes to uninitialized */
         } else if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
                 if (usage & PIPE_TRANSFER_WRITE) {
-                        /* STUB: flush reading */
-                        //printf("debug: missed reading flush %d\n", resource->target);
+                        panfrost_flush_batches_accessing_bo(ctx, bo, PAN_BO_ACCESS_RW);
+                        panfrost_bo_wait(bo, INT64_MAX, PAN_BO_ACCESS_RW);
                 } else if (usage & PIPE_TRANSFER_READ) {
-                        /* STUB: flush writing */
-                        //printf("debug: missed writing flush %d (%d-%d)\n", resource->target, box->x, box->x + box->width);
+                        panfrost_flush_batches_accessing_bo(ctx, bo, PAN_BO_ACCESS_WRITE);
+                        panfrost_bo_wait(bo, INT64_MAX, PAN_BO_ACCESS_WRITE);
                 } else {
                         /* Why are you even mapping?! */
                 }
@@ -682,7 +680,7 @@ panfrost_transfer_unmap(struct pipe_context *pctx,
         }
 
 
-        util_range_add(&prsrc->valid_buffer_range,
+        util_range_add(&prsrc->base, &prsrc->valid_buffer_range,
                        transfer->box.x,
                        transfer->box.x + transfer->box.width);
 
@@ -701,7 +699,7 @@ panfrost_transfer_flush_region(struct pipe_context *pctx,
         struct panfrost_resource *rsc = pan_resource(transfer->resource);
 
         if (transfer->resource->target == PIPE_BUFFER) {
-                util_range_add(&rsc->valid_buffer_range,
+                util_range_add(&rsc->base, &rsc->valid_buffer_range,
                                transfer->box.x + box->x,
                                transfer->box.x + box->x + box->width);
         } else {
@@ -748,11 +746,8 @@ panfrost_generate_mipmap(
          * reorder-type optimizations in place. But for now prioritize
          * correctness. */
 
-        struct panfrost_batch *batch = panfrost_get_batch_for_fbo(ctx);
-        bool has_draws = batch->last_job.gpu;
-
-        if (has_draws)
-                panfrost_flush(pctx, NULL, PIPE_FLUSH_END_OF_FRAME);
+        panfrost_flush_batches_accessing_bo(ctx, rsrc->bo, PAN_BO_ACCESS_RW);
+        panfrost_bo_wait(rsrc->bo, INT64_MAX, PAN_BO_ACCESS_RW);
 
         /* We've flushed the original buffer if needed, now trigger a blit */
 
@@ -765,8 +760,10 @@ panfrost_generate_mipmap(
         /* If the blit was successful, flush once more. If it wasn't, well, let
          * the state tracker deal with it. */
 
-        if (blit_res)
-                panfrost_flush(pctx, NULL, PIPE_FLUSH_END_OF_FRAME);
+        if (blit_res) {
+                panfrost_flush_batches_accessing_bo(ctx, rsrc->bo, PAN_BO_ACCESS_WRITE);
+                panfrost_bo_wait(rsrc->bo, INT64_MAX, PAN_BO_ACCESS_WRITE);
+        }
 
         return blit_res;
 }

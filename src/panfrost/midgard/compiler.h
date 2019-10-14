@@ -88,20 +88,14 @@ typedef struct midgard_instruction {
         unsigned src[3];
         unsigned dest;
 
-        /* Swizzle for the conditional for a csel */
-        unsigned csel_swizzle;
+        /* Swizzle for the conditional for a csel/branch */
+        unsigned cond_swizzle;
 
         /* Special fields for an ALU instruction */
         midgard_reg_info registers;
 
         /* I.e. (1 << alu_bit) */
         int unit;
-
-        /* When emitting bundle, should this instruction have a break forced
-         * before it? Used for r31 writes which are valid only within a single
-         * bundle and *need* to happen as early as possible... this is a hack,
-         * TODO remove when we have a scheduler */
-        bool precede_break;
 
         bool has_constants;
         uint32_t constants[4];
@@ -135,6 +129,16 @@ typedef struct midgard_instruction {
 
         /* Generic hint for intra-pass use */
         bool hint;
+
+        /* During scheduling, the backwards dependency graph
+         * (DAG). nr_dependencies is the number of unscheduled
+         * instructions that must still be scheduled after
+         * (before) this instruction. dependents are which
+         * instructions need to be scheduled before (after) this
+         * instruction. */
+
+        unsigned nr_dependencies;
+        BITSET_WORD *dependents;
 
         union {
                 midgard_load_store_word load_store;
@@ -194,9 +198,10 @@ typedef struct midgard_bundle {
         /* Tag for the overall bundle */
         int tag;
 
-        /* Instructions contained by the bundle */
+        /* Instructions contained by the bundle. instruction_count <= 6 (vmul,
+         * sadd, vadd, smul, vlut, branch) */
         int instruction_count;
-        midgard_instruction *instructions[5];
+        midgard_instruction *instructions[6];
 
         /* Bundle-wide ALU configuration */
         int padding;
@@ -283,7 +288,13 @@ typedef struct compiler_context {
         unsigned sysvals[MAX_SYSVAL_COUNT];
         unsigned sysval_count;
         struct hash_table_u64 *sysval_to_id;
+
+        /* Bitmask of valid metadata */
+        unsigned metadata;
 } compiler_context;
+
+/* Per-block live_in/live_out */
+#define MIDGARD_METADATA_LIVENESS (1 << 0)
 
 /* Helpers for manipulating the above structures (forming the driver IR) */
 
@@ -519,6 +530,8 @@ bool mir_nontrivial_outmod(midgard_instruction *ins);
 
 void mir_insert_instruction_before_scheduled(compiler_context *ctx, midgard_block *block, midgard_instruction *tag, midgard_instruction ins);
 void mir_insert_instruction_after_scheduled(compiler_context *ctx, midgard_block *block, midgard_instruction *tag, midgard_instruction ins);
+void mir_flip(midgard_instruction *ins);
+void mir_compute_temp_count(compiler_context *ctx);
 
 /* MIR goodies */
 
@@ -597,8 +610,10 @@ struct ra_graph;
 void mir_lower_special_reads(compiler_context *ctx);
 struct ra_graph* allocate_registers(compiler_context *ctx, bool *spilled);
 void install_registers(compiler_context *ctx, struct ra_graph *g);
+void mir_liveness_ins_update(uint8_t *live, midgard_instruction *ins, unsigned max);
+void mir_compute_liveness(compiler_context *ctx);
+void mir_invalidate_liveness(compiler_context *ctx);
 bool mir_is_live_after(compiler_context *ctx, midgard_block *block, midgard_instruction *start, int src);
-bool mir_has_multiple_writes(compiler_context *ctx, int src);
 
 void mir_create_pipeline_registers(compiler_context *ctx);
 
@@ -648,6 +663,7 @@ void midgard_lower_invert(compiler_context *ctx, midgard_block *block);
 bool midgard_opt_not_propagate(compiler_context *ctx, midgard_block *block);
 bool midgard_opt_fuse_src_invert(compiler_context *ctx, midgard_block *block);
 bool midgard_opt_fuse_dest_invert(compiler_context *ctx, midgard_block *block);
+bool midgard_opt_csel_invert(compiler_context *ctx, midgard_block *block);
 bool midgard_opt_promote_fmov(compiler_context *ctx, midgard_block *block);
 
 #endif

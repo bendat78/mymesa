@@ -85,44 +85,6 @@ radv_get_device_uuid(struct radeon_info *info, void *uuid)
 	ac_compute_device_uuid(info, uuid, VK_UUID_SIZE);
 }
 
-static void
-radv_get_device_name(enum radeon_family family, char *name, size_t name_len, bool aco)
-{
-	const char *chip_string;
-
-	switch (family) {
-	case CHIP_TAHITI: chip_string = "TAHITI"; break;
-	case CHIP_PITCAIRN: chip_string = "PITCAIRN"; break;
-	case CHIP_VERDE: chip_string = "CAPE VERDE"; break;
-	case CHIP_OLAND: chip_string = "OLAND"; break;
-	case CHIP_HAINAN: chip_string = "HAINAN"; break;
-	case CHIP_BONAIRE: chip_string = "BONAIRE"; break;
-	case CHIP_KAVERI: chip_string = "KAVERI"; break;
-	case CHIP_KABINI: chip_string = "KABINI"; break;
-	case CHIP_HAWAII: chip_string = "HAWAII"; break;
-	case CHIP_TONGA: chip_string = "TONGA"; break;
-	case CHIP_ICELAND: chip_string = "ICELAND"; break;
-	case CHIP_CARRIZO: chip_string = "CARRIZO"; break;
-	case CHIP_FIJI: chip_string = "FIJI"; break;
-	case CHIP_POLARIS10: chip_string = "POLARIS10"; break;
-	case CHIP_POLARIS11: chip_string = "POLARIS11"; break;
-	case CHIP_POLARIS12: chip_string = "POLARIS12"; break;
-	case CHIP_STONEY: chip_string = "STONEY"; break;
-	case CHIP_VEGAM: chip_string = "VEGA M"; break;
-	case CHIP_VEGA10: chip_string = "VEGA10"; break;
-	case CHIP_VEGA12: chip_string = "VEGA12"; break;
-	case CHIP_VEGA20: chip_string = "VEGA20"; break;
-	case CHIP_RAVEN: chip_string = "RAVEN"; break;
-	case CHIP_RAVEN2: chip_string = "RAVEN2"; break;
-	case CHIP_NAVI10: chip_string = "NAVI10"; break;
-	case CHIP_NAVI12: chip_string = "NAVI12"; break;
-	case CHIP_NAVI14: chip_string = "NAVI14"; break;
-	default: chip_string = "unknown"; break;
-	}
-
-	snprintf(name, name_len, "AMD RADV%s %s (LLVM " MESA_LLVM_VERSION_STRING ")", aco ? "/ACO" : "", chip_string);
-}
-
 static uint64_t
 radv_get_visible_vram_size(struct radv_physical_device *device)
 {
@@ -334,7 +296,9 @@ radv_physical_device_init(struct radv_physical_device *device,
 		device->use_aco = false;
 	}
 
-	radv_get_device_name(device->rad_info.family, device->name, sizeof(device->name), device->use_aco);
+	snprintf(device->name, sizeof(device->name),
+		 "AMD RADV%s %s (LLVM " MESA_LLVM_VERSION_STRING ")", device->use_aco ? "/ACO" : "",
+		 device->rad_info.name);
 
 	if (radv_device_get_cache_uuid(device->rad_info.family, device->cache_uuid)) {
 		device->ws->destroy(device->ws);
@@ -372,8 +336,15 @@ radv_physical_device_init(struct radv_physical_device *device,
 	device->use_shader_ballot = device->rad_info.chip_class >= GFX8 &&
 				    (device->use_aco || device->instance->perftest_flags & RADV_PERFTEST_SHADER_BALLOT);
 
+	device->use_ngg = device->rad_info.chip_class >= GFX10 &&
+			  device->rad_info.family != CHIP_NAVI14 &&
+			  !(device->instance->debug_flags & RADV_DEBUG_NO_NGG);
+	if (device->use_aco && device->use_ngg) {
+		fprintf(stderr, "WARNING: disabling NGG because ACO is used.\n");
+		device->use_ngg = false;
+	}
+
 	device->use_ngg_streamout = false;
-	device->use_aco = device->instance->perftest_flags & RADV_PERFTEST_ACO;
 
 	/* Determine the number of threads per wave for all stages. */
 	device->cs_wave_size = 64;
@@ -487,6 +458,7 @@ static const struct debug_control radv_debug_options[] = {
 	{"nongg", RADV_DEBUG_NO_NGG},
 	{"noshaderballot", RADV_DEBUG_NO_SHADER_BALLOT},
 	{"allentrypoints", RADV_DEBUG_ALL_ENTRYPOINTS},
+	{"metashaders", RADV_DEBUG_DUMP_META_SHADERS},
 	{NULL, 0}
 };
 
@@ -555,6 +527,14 @@ radv_handle_per_app_options(struct radv_instance *instance,
 			 */
 			instance->perftest_flags |= RADV_PERFTEST_SHADER_BALLOT;
 		}
+	} else if (!strcmp(name, "Fledge")) {
+		/*
+		 * Zero VRAM for "The Surge 2"
+		 *
+		 * This avoid a hang when when rendering any level. Likely
+		 * uninitialized data in an indirect draw.
+		 */
+		instance->debug_flags |= RADV_DEBUG_ZERO_VRAM;
 	}
 }
 
@@ -1051,6 +1031,19 @@ void radv_GetPhysicalDeviceFeatures2(
 			features->pipelineExecutableInfo = true;
 			break;
 		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR: {
+			VkPhysicalDeviceShaderClockFeaturesKHR *features =
+				(VkPhysicalDeviceShaderClockFeaturesKHR *)ext;
+			features->shaderSubgroupClock = true;
+			features->shaderDeviceClock = false;
+			break;
+		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT: {
+			VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *features =
+				(VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *)ext;
+			features->texelBufferAlignment = true;
+			break;
+		}
 		default:
 			break;
 		}
@@ -1150,7 +1143,7 @@ void radv_GetPhysicalDeviceProperties(
 		.viewportBoundsRange                      = { INT16_MIN, INT16_MAX },
 		.viewportSubPixelBits                     = 8,
 		.minMemoryMapAlignment                    = 4096, /* A page */
-		.minTexelBufferOffsetAlignment            = 1,
+		.minTexelBufferOffsetAlignment            = 4,
 		.minUniformBufferOffsetAlignment          = 4,
 		.minStorageBufferOffsetAlignment          = 4,
 		.minTexelOffset                           = -32,
@@ -1484,6 +1477,15 @@ void radv_GetPhysicalDeviceProperties2(
 
 			properties->independentResolveNone = VK_TRUE;
 			properties->independentResolve = VK_TRUE;
+			break;
+		}
+		case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES_EXT: {
+			VkPhysicalDeviceTexelBufferAlignmentPropertiesEXT *properties =
+				(VkPhysicalDeviceTexelBufferAlignmentPropertiesEXT *)ext;
+			properties->storageTexelBufferOffsetAlignmentBytes = 4;
+			properties->storageTexelBufferOffsetSingleTexelAlignment = true;
+			properties->uniformTexelBufferOffsetAlignmentBytes = 4;
+			properties->uniformTexelBufferOffsetSingleTexelAlignment = true;
 			break;
 		}
 		default:
@@ -2670,7 +2672,8 @@ radv_get_preamble_cs(struct radv_queue *queue,
 		*initial_full_flush_preamble_cs = queue->initial_full_flush_preamble_cs;
 		*initial_preamble_cs = queue->initial_preamble_cs;
 		*continue_preamble_cs = queue->continue_preamble_cs;
-		if (!scratch_size && !compute_scratch_size && !esgs_ring_size && !gsvs_ring_size)
+		if (!scratch_size && !compute_scratch_size && !esgs_ring_size && !gsvs_ring_size &&
+		    !needs_tess_rings && !needs_gds && !needs_sample_positions)
 			*continue_preamble_cs = NULL;
 		return VK_SUCCESS;
 	}
@@ -3420,6 +3423,28 @@ bool radv_get_memory_fd(struct radv_device *device,
 					 pFD);
 }
 
+
+static void radv_free_memory(struct radv_device *device,
+			     const VkAllocationCallbacks* pAllocator,
+			     struct radv_device_memory *mem)
+{
+	if (mem == NULL)
+		return;
+
+#if RADV_SUPPORT_ANDROID_HARDWARE_BUFFER
+	if (mem->android_hardware_buffer)
+		AHardwareBuffer_release(mem->android_hardware_buffer);
+#endif
+
+	if (mem->bo) {
+		radv_bo_list_remove(device, mem->bo);
+		device->ws->buffer_destroy(mem->bo);
+		mem->bo = NULL;
+	}
+
+	vk_free2(&device->alloc, pAllocator, mem);
+}
+
 static VkResult radv_alloc_memory(struct radv_device *device,
 				  const VkMemoryAllocateInfo*     pAllocateInfo,
 				  const VkAllocationCallbacks*    pAllocator,
@@ -3433,25 +3458,29 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 
 	assert(pAllocateInfo->sType == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
 
-	if (pAllocateInfo->allocationSize == 0) {
-		/* Apparently, this is allowed */
-		*pMem = VK_NULL_HANDLE;
-		return VK_SUCCESS;
-	}
-
 	const VkImportMemoryFdInfoKHR *import_info =
 		vk_find_struct_const(pAllocateInfo->pNext, IMPORT_MEMORY_FD_INFO_KHR);
 	const VkMemoryDedicatedAllocateInfo *dedicate_info =
 		vk_find_struct_const(pAllocateInfo->pNext, MEMORY_DEDICATED_ALLOCATE_INFO);
 	const VkExportMemoryAllocateInfo *export_info =
 		vk_find_struct_const(pAllocateInfo->pNext, EXPORT_MEMORY_ALLOCATE_INFO);
+	const struct VkImportAndroidHardwareBufferInfoANDROID *ahb_import_info =
+		vk_find_struct_const(pAllocateInfo->pNext,
+		                     IMPORT_ANDROID_HARDWARE_BUFFER_INFO_ANDROID);
 	const VkImportMemoryHostPointerInfoEXT *host_ptr_info =
 		vk_find_struct_const(pAllocateInfo->pNext, IMPORT_MEMORY_HOST_POINTER_INFO_EXT);
 
 	const struct wsi_memory_allocate_info *wsi_info =
 		vk_find_struct_const(pAllocateInfo->pNext, WSI_MEMORY_ALLOCATE_INFO_MESA);
 
-	mem = vk_alloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
+	if (pAllocateInfo->allocationSize == 0 && !ahb_import_info &&
+	    !(export_info && (export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID))) {
+		/* Apparently, this is allowed */
+		*pMem = VK_NULL_HANDLE;
+		return VK_SUCCESS;
+	}
+
+	mem = vk_zalloc2(&device->alloc, pAllocator, sizeof(*mem), 8,
 			  VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
 	if (mem == NULL)
 		return vk_error(device->instance, VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -3478,14 +3507,27 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 	                         (int)(priority_float * RADV_BO_PRIORITY_APPLICATION_MAX));
 
 	mem->user_ptr = NULL;
+	mem->bo = NULL;
 
-	if (import_info) {
+#if RADV_SUPPORT_ANDROID_HARDWARE_BUFFER
+	mem->android_hardware_buffer = NULL;
+#endif
+
+	if (ahb_import_info) {
+		result = radv_import_ahb_memory(device, mem, priority, ahb_import_info);
+		if (result != VK_SUCCESS)
+			goto fail;
+	} else if(export_info && (export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID)) {
+		result = radv_create_ahb_memory(device, mem, priority, pAllocateInfo);
+		if (result != VK_SUCCESS)
+			goto fail;
+	} else if (import_info) {
 		assert(import_info->handleType ==
 		       VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT ||
 		       import_info->handleType ==
 		       VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
 		mem->bo = device->ws->buffer_from_fd(device->ws, import_info->fd,
-						     priority, NULL, NULL);
+						     priority, NULL);
 		if (!mem->bo) {
 			result = VK_ERROR_INVALID_EXTERNAL_HANDLE;
 			goto fail;
@@ -3539,15 +3581,14 @@ static VkResult radv_alloc_memory(struct radv_device *device,
 
 	result = radv_bo_list_add(device, mem->bo);
 	if (result != VK_SUCCESS)
-		goto fail_bo;
+		goto fail;
 
 	*pMem = radv_device_memory_to_handle(mem);
 
 	return VK_SUCCESS;
 
-fail_bo:
-	device->ws->buffer_destroy(mem->bo);
 fail:
+	radv_free_memory(device, pAllocator,mem);
 	vk_free2(&device->alloc, pAllocator, mem);
 
 	return result;
@@ -3571,14 +3612,7 @@ void radv_FreeMemory(
 	RADV_FROM_HANDLE(radv_device, device, _device);
 	RADV_FROM_HANDLE(radv_device_memory, mem, _mem);
 
-	if (mem == NULL)
-		return;
-
-	radv_bo_list_remove(device, mem->bo);
-	device->ws->buffer_destroy(mem->bo);
-	mem->bo = NULL;
-
-	vk_free2(&device->alloc, pAllocator, mem);
+	radv_free_memory(device, pAllocator, mem);
 }
 
 VkResult radv_MapMemory(

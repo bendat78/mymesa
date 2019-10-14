@@ -202,6 +202,7 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SHADER_SAMPLES_IDENTICAL:
    case PIPE_CAP_GL_SPIRV:
    case PIPE_CAP_GL_SPIRV_VARIABLE_POINTERS:
+   case PIPE_CAP_DEMOTE_TO_HELPER_INVOCATION:
       return true;
    case PIPE_CAP_FBFETCH:
       return BRW_MAX_DRAW_BUFFERS;
@@ -310,7 +311,7 @@ iris_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
        * illegal snoop <-> snoop transfers.
        */
       return devinfo->has_llc;
-   case PIPE_CAP_MAX_FRAMES_IN_FLIGHT:
+   case PIPE_CAP_THROTTLE:
       return screen->driconf.disable_throttling ? 0 : 1;
 
    case PIPE_CAP_CONTEXT_PRIORITY_MASK:
@@ -402,7 +403,6 @@ iris_get_shader_param(struct pipe_screen *pscreen,
    case PIPE_SHADER_CAP_SUBROUTINES:
       return 0;
    case PIPE_SHADER_CAP_INTEGERS:
-   case PIPE_SHADER_CAP_SCALAR_ISA:
       return 1;
    case PIPE_SHADER_CAP_INT64_ATOMICS:
    case PIPE_SHADER_CAP_FP16:

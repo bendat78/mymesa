@@ -541,141 +541,20 @@ mir_lower_special_reads(compiler_context *ctx)
         free(texw);
 }
 
-/* Routines for liveness analysis */
-
 static void
-liveness_gen(uint8_t *live, unsigned node, unsigned max, unsigned mask)
-{
-        if (node >= max)
-                return;
-
-        live[node] |= mask;
-}
-
-static void
-liveness_kill(uint8_t *live, unsigned node, unsigned max, unsigned mask)
-{
-        if (node >= max)
-                return;
-
-        live[node] &= ~mask;
-}
-
-/* Updates live_in for a single instruction */
-
-static void
-liveness_ins_update(uint8_t *live, midgard_instruction *ins, unsigned max)
-{
-        /* live_in[s] = GEN[s] + (live_out[s] - KILL[s]) */
-
-        liveness_kill(live, ins->dest, max, ins->mask);
-
-        mir_foreach_src(ins, src) {
-                unsigned node = ins->src[src];
-                unsigned mask = mir_mask_of_read_components(ins, node);
-
-                liveness_gen(live, node, max, mask);
-        }
-}
-
-/* live_out[s] = sum { p in succ[s] } ( live_in[p] ) */
-
-static void
-liveness_block_live_out(compiler_context *ctx, midgard_block *blk)
-{
-        mir_foreach_successor(blk, succ) {
-                for (unsigned i = 0; i < ctx->temp_count; ++i)
-                        blk->live_out[i] |= succ->live_in[i];
-        }
-}
-
-/* Liveness analysis is a backwards-may dataflow analysis pass. Within a block,
- * we compute live_out from live_in. The intrablock pass is linear-time. It
- * returns whether progress was made. */
-
-static bool
-liveness_block_update(compiler_context *ctx, midgard_block *blk)
-{
-        bool progress = false;
-
-        liveness_block_live_out(ctx, blk);
-
-        uint8_t *live = mem_dup(blk->live_out, ctx->temp_count);
-
-        mir_foreach_instr_in_block_rev(blk, ins)
-                liveness_ins_update(live, ins, ctx->temp_count);
-
-        /* To figure out progress, diff live_in */
-
-        for (unsigned i = 0; (i < ctx->temp_count) && !progress; ++i)
-                progress |= (blk->live_in[i] != live[i]);
-
-        free(blk->live_in);
-        blk->live_in = live;
-
-        return progress;
-}
-
-/* Globally, liveness analysis uses a fixed-point algorithm based on a
- * worklist. We initialize a work list with the exit block. We iterate the work
- * list to compute live_in from live_out for each block on the work list,
- * adding the predecessors of the block to the work list if we made progress.
- */
-
-static void
-mir_compute_liveness(
+mir_compute_interference(
                 compiler_context *ctx,
                 struct ra_graph *g)
 {
-        /* List of midgard_block */
-        struct set *work_list;
-
-        work_list = _mesa_set_create(ctx,
-                        _mesa_hash_pointer,
-                        _mesa_key_pointer_equal);
-
-        /* Allocate */
-
-        mir_foreach_block(ctx, block) {
-                block->live_in = calloc(ctx->temp_count, 1);
-                block->live_out = calloc(ctx->temp_count, 1);
-        }
-
-        /* Initialize the work list with the exit block */
-        struct set_entry *cur;
-
-        midgard_block *exit = mir_exit_block(ctx);
-        cur = _mesa_set_add(work_list, exit);
-
-        /* Iterate the work list */
-
-        do {
-                /* Pop off a block */
-                midgard_block *blk = (struct midgard_block *) cur->key;
-                _mesa_set_remove(work_list, cur);
-
-                /* Update its liveness information */
-                bool progress = liveness_block_update(ctx, blk);
-
-                /* If we made progress, we need to process the predecessors */
-
-                if (progress || (blk == exit)) {
-                        mir_foreach_predecessor(blk, pred)
-                                _mesa_set_add(work_list, pred);
-                }
-        } while((cur = _mesa_set_next_entry(work_list, NULL)) != NULL);
+        /* First, we need liveness information to be computed per block */
+        mir_compute_liveness(ctx);
 
         /* Now that every block has live_in/live_out computed, we can determine
          * interference by walking each block linearly. Take live_out at the
          * end of each block and walk the block backwards. */
 
         mir_foreach_block(ctx, blk) {
-                uint8_t *live = calloc(ctx->temp_count, 1);
-
-                mir_foreach_successor(blk, succ) {
-                        for (unsigned i = 0; i < ctx->temp_count; ++i)
-                                live[i] |= succ->live_in[i];
-                }
+                uint8_t *live = mem_dup(blk->live_out, ctx->temp_count * sizeof(uint8_t));
 
                 mir_foreach_instr_in_block_rev(blk, ins) {
                         /* Mark all registers live after the instruction as
@@ -690,15 +569,10 @@ mir_compute_liveness(
                         }
 
                         /* Update live_in */
-                        liveness_ins_update(live, ins, ctx->temp_count);
+                        mir_liveness_ins_update(live, ins, ctx->temp_count);
                 }
 
                 free(live);
-        }
-
-        mir_foreach_block(ctx, blk) {
-                free(blk->live_in);
-                free(blk->live_out);
         }
 }
 
@@ -796,7 +670,7 @@ allocate_registers(compiler_context *ctx, bool *spilled)
                 ra_set_node_class(g, i, classes[class]);
         }
 
-        mir_compute_liveness(ctx, g);
+        mir_compute_interference(ctx, g);
 
         if (!ra_allocate(g)) {
                 *spilled = true;

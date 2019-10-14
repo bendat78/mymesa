@@ -221,6 +221,7 @@ struct PhysReg {
 /* helper expressions for special registers */
 static constexpr PhysReg m0{124};
 static constexpr PhysReg vcc{106};
+static constexpr PhysReg sgpr_null{125}; /* GFX10+ */
 static constexpr PhysReg exec{126};
 static constexpr PhysReg exec_lo{126};
 static constexpr PhysReg exec_hi{127};
@@ -561,6 +562,7 @@ class Block;
 struct Instruction {
    aco_opcode opcode;
    Format format;
+   uint32_t pass_flags;
 
    aco::span<Operand> operands;
    aco::span<Definition> definitions;
@@ -663,7 +665,7 @@ struct VOPC_instruction : public Instruction {
 
 struct VOP3A_instruction : public Instruction {
    bool abs[3];
-   bool opsel[3];
+   bool opsel[4];
    bool clamp;
    unsigned omod;
    bool neg[3];
@@ -735,13 +737,8 @@ struct MUBUF_instruction : public Instruction {
  *
  */
 struct MTBUF_instruction : public Instruction {
-   union {
-      struct {
-         uint8_t dfmt : 4; /* Data Format of data in memory buffer */
-         uint8_t nfmt : 3; /* Numeric format of data in memory */
-      };
-      uint8_t img_format; /* Buffer or image format as used by GFX10 */
-   };
+   uint8_t dfmt : 4; /* Data Format of data in memory buffer */
+   uint8_t nfmt : 3; /* Numeric format of data in memory */
    unsigned offset; /* Unsigned byte offset - 12 bit */
    bool offen; /* Supply an offset from VGPR (VADDR) */
    bool idxen; /* Supply an index from VGPR (VADDR) */
@@ -764,6 +761,7 @@ struct MTBUF_instruction : public Instruction {
  */
 struct MIMG_instruction : public Instruction {
    unsigned dmask; /* Data VGPR enable mask */
+   unsigned dim; /* NAVI: dimensionality */
    bool unrm; /* Force address to be un-normalized */
    bool dlc; /* NAVI: device level coherent */
    bool glc; /* globally coherent */
@@ -788,8 +786,9 @@ struct MIMG_instruction : public Instruction {
  */
 struct FLAT_instruction : public Instruction {
    uint16_t offset; /* Vega only */
-   bool slc;
-   bool glc;
+   bool slc; /* system level coherent */
+   bool glc; /* globally coherent */
+   bool dlc; /* NAVI: device level coherent */
    bool lds;
    bool nv;
 };
@@ -923,6 +922,7 @@ enum block_kind {
    block_kind_invert = 1 << 11,
    block_kind_uses_discard_if = 1 << 12,
    block_kind_needs_lowering = 1 << 13,
+   block_kind_uses_demote = 1 << 14,
 };
 
 
@@ -1067,6 +1067,7 @@ public:
    struct radv_shader_info *info;
    enum chip_class chip_class;
    enum radeon_family family;
+   unsigned wave_size;
    Stage stage; /* Stage */
    bool needs_exact = false; /* there exists an instruction with disable_wqm = true */
    bool needs_wqm = false; /* there exists a p_wqm instruction */
@@ -1139,8 +1140,8 @@ void spill(Program* program, live& live_vars, const struct radv_nir_compiler_opt
 void insert_wait_states(Program* program);
 void insert_NOPs(Program* program);
 unsigned emit_program(Program* program, std::vector<uint32_t>& code);
-void print_asm(Program *program, std::vector<uint32_t>& binary, unsigned exec_size,
-               enum radeon_family family, std::ostream& out);
+void print_asm(Program *program, std::vector<uint32_t>& binary,
+               unsigned exec_size, std::ostream& out);
 void validate(Program* program, FILE *output);
 bool validate_ra(Program* program, const struct radv_nir_compiler_options *options, FILE *output);
 #ifndef NDEBUG

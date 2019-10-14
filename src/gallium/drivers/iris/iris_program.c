@@ -1930,6 +1930,21 @@ iris_get_scratch_space(struct iris_context *ice,
 
    if (!*bop) {
       unsigned scratch_ids_per_subslice = devinfo->max_cs_threads;
+
+      if (devinfo->gen >= 11) {
+         /* The MEDIA_VFE_STATE docs say:
+          *
+          *    "Starting with this configuration, the Maximum Number of
+          *     Threads must be set to (#EU * 8) for GPGPU dispatches.
+          *
+          *     Although there are only 7 threads per EU in the configuration,
+          *     the FFTID is calculated as if there are 8 threads per EU,
+          *     which in turn requires a larger amount of Scratch Space to be
+          *     allocated by the driver."
+          */
+         scratch_ids_per_subslice = 8 * 8;
+      }
+
       uint32_t max_threads[] = {
          [MESA_SHADER_VERTEX]    = devinfo->max_vs_threads,
          [MESA_SHADER_TESS_CTRL] = devinfo->max_tcs_threads,
@@ -2004,22 +2019,15 @@ iris_create_uncompiled_shader(struct pipe_context *ctx,
 
    if (screen->disk_cache) {
       /* Serialize the NIR to a binary blob that we can hash for the disk
-       * cache.  First, drop unnecessary information (like variable names)
+       * cache.  Drop unnecessary information (like variable names)
        * so the serialized NIR is smaller, and also to let us detect more
-       * isomorphic shaders when hashing, increasing cache hits.  We clone
-       * the NIR before stripping away this info because it can be useful
-       * when inspecting and debugging shaders.
+       * isomorphic shaders when hashing, increasing cache hits.
        */
-      nir_shader *clone = nir_shader_clone(NULL, nir);
-      nir_strip(clone);
-
       struct blob blob;
       blob_init(&blob);
-      nir_serialize(&blob, clone);
+      nir_serialize(&blob, nir, true);
       _mesa_sha1_compute(blob.data, blob.size, ish->nir_sha1);
       blob_finish(&blob);
-
-      ralloc_free(clone);
    }
 
    return ish;
@@ -2372,6 +2380,8 @@ static void
 iris_bind_fs_state(struct pipe_context *ctx, void *state)
 {
    struct iris_context *ice = (struct iris_context *) ctx;
+   struct iris_screen *screen = (struct iris_screen *) ctx->screen;
+   const struct gen_device_info *devinfo = &screen->devinfo;
    struct iris_uncompiled_shader *old_ish =
       ice->shaders.uncompiled[MESA_SHADER_FRAGMENT];
    struct iris_uncompiled_shader *new_ish = state;
@@ -2385,6 +2395,9 @@ iris_bind_fs_state(struct pipe_context *ctx, void *state)
        (old_ish->nir->info.outputs_written & color_bits) !=
        (new_ish->nir->info.outputs_written & color_bits))
       ice->state.dirty |= IRIS_DIRTY_PS_BLEND;
+
+   if (devinfo->gen == 8)
+      ice->state.dirty |= IRIS_DIRTY_PMA_FIX;
 
    bind_shader_state((void *) ctx, state, MESA_SHADER_FRAGMENT);
 }
