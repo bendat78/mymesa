@@ -779,7 +779,7 @@ struct tu_descriptor_state
    uint32_t valid;
    struct tu_push_descriptor_set push_set;
    bool push_dirty;
-   uint32_t dynamic_buffers[4 * MAX_DYNAMIC_BUFFERS];
+   uint64_t dynamic_buffers[MAX_DYNAMIC_BUFFERS];
 };
 
 struct tu_tile
@@ -922,7 +922,7 @@ struct tu_cmd_buffer
    struct tu_vertex_binding vertex_bindings[MAX_VBS];
    uint32_t queue_family_index;
 
-   uint8_t push_constants[MAX_PUSH_CONSTANTS_SIZE];
+   uint32_t push_constants[MAX_PUSH_CONSTANTS_SIZE / 4];
    VkShaderStageFlags push_constant_stages;
    struct tu_descriptor_set meta_push_descriptors;
 
@@ -962,7 +962,6 @@ static inline struct tu_descriptor_state *
 tu_get_descriptors_state(struct tu_cmd_buffer *cmd_buffer,
                          VkPipelineBindPoint bind_point)
 {
-   assert(bind_point == VK_PIPELINE_BIND_POINT_GRAPHICS);
    return &cmd_buffer->descriptors[bind_point];
 }
 
@@ -981,7 +980,7 @@ tu_unaligned_dispatch(struct tu_cmd_buffer *cmd_buffer,
 
 struct tu_event
 {
-   uint64_t *map;
+   struct tu_bo bo;
 };
 
 struct tu_shader_module;
@@ -1034,9 +1033,10 @@ struct tu_shader_compile_options
 
 struct tu_descriptor_map
 {
+   /* TODO: avoid fixed size array/justify the size */
    unsigned num;
-   int set[32];
-   int binding[32];
+   int set[64];
+   int binding[64];
 };
 
 struct tu_shader
@@ -1046,6 +1046,7 @@ struct tu_shader
    struct tu_descriptor_map texture_map;
    struct tu_descriptor_map sampler_map;
    struct tu_descriptor_map ubo_map;
+   struct tu_descriptor_map ssbo_map;
 
    /* This may be true for vertex shaders.  When true, variants[1] is the
     * binning variant and binning_binary is non-NULL.
@@ -1084,15 +1085,15 @@ tu_shader_compile(struct tu_device *dev,
 struct tu_program_descriptor_linkage
 {
    struct ir3_ubo_analysis_state ubo_state;
+   struct ir3_const_state const_state;
 
    uint32_t constlen;
-
-   uint32_t offset_ubo; /* ubo pointers const offset */
-   uint32_t num_ubo; /* number of ubo pointers */
 
    struct tu_descriptor_map texture_map;
    struct tu_descriptor_map sampler_map;
    struct tu_descriptor_map ubo_map;
+   struct tu_descriptor_map ssbo_map;
+   struct ir3_ibo_mapping image_mapping;
 };
 
 struct tu_pipeline
@@ -1223,11 +1224,12 @@ struct tu_native_format
 const struct tu_native_format *
 tu6_get_native_format(VkFormat format);
 
-int
+void
 tu_pack_clear_value(const VkClearValue *val,
                     VkFormat format,
                     uint32_t buf[4]);
 enum a6xx_2d_ifmt tu6_rb_fmt_to_ifmt(enum a6xx_color_fmt fmt);
+enum a6xx_depth_format tu6_pipe2depth(VkFormat format);
 
 struct tu_image_level
 {
@@ -1250,6 +1252,8 @@ struct tu_image
    VkExtent3D extent;
    uint32_t level_count;
    uint32_t layer_count;
+   VkSampleCountFlagBits samples;
+
 
    VkDeviceSize size;
    uint32_t alignment;
@@ -1258,6 +1262,7 @@ struct tu_image
    VkDeviceSize layer_size;
    struct tu_image_level levels[15];
    unsigned tile_mode;
+   unsigned cpp;
 
    unsigned queue_family_mask;
    bool exclusive;
@@ -1293,6 +1298,11 @@ tu_get_levelCount(const struct tu_image *image,
              ? image->level_count - range->baseMipLevel
              : range->levelCount;
 }
+
+enum a6xx_tile_mode
+tu6_get_image_tile_mode(struct tu_image *image, int level);
+enum a3xx_msaa_samples
+tu_msaa_samples(uint32_t samples);
 
 struct tu_image_view
 {

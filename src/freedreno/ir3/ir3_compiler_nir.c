@@ -387,6 +387,11 @@ emit_alu(struct ir3_context *ctx, nir_alu_instr *alu)
 	case nir_op_u2u8:
 		dst[0] = create_cov(ctx, src[0], bs[0], alu->op);
 		break;
+	case nir_op_fquantize2f16:
+		dst[0] = create_cov(ctx,
+							create_cov(ctx, src[0], 32, nir_op_f2f16),
+							16, nir_op_f2f32);
+		break;
 	case nir_op_f2b32:
 		dst[0] = ir3_CMPS_F(b, src[0], 0, create_immed(b, fui(0.0)), 0);
 		dst[0]->cat2.condition = IR3_COND_NE;
@@ -455,10 +460,12 @@ emit_alu(struct ir3_context *ctx, nir_alu_instr *alu)
 		dst[0] = ir3_MAD_F32(b, src[0], 0, src[1], 0, src[2], 0);
 		break;
 	case nir_op_fddx:
+	case nir_op_fddx_coarse:
 		dst[0] = ir3_DSX(b, src[0], 0);
 		dst[0]->cat5.type = TYPE_F32;
 		break;
 	case nir_op_fddy:
+	case nir_op_fddy_coarse:
 		dst[0] = ir3_DSY(b, src[0], 0);
 		dst[0]->cat5.type = TYPE_F32;
 		break;
@@ -1916,7 +1923,7 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 	}
 
 	if (opc == OPC_GETLOD)
-		type = TYPE_U32;
+		type = TYPE_S32;
 
 	struct ir3_instruction *samp_tex;
 
@@ -1968,7 +1975,7 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 
 		compile_assert(ctx, tex->dest_type == nir_type_float);
 		for (i = 0; i < 2; i++) {
-			dst[i] = ir3_MUL_F(b, ir3_COV(b, dst[i], TYPE_U32, TYPE_F32), 0,
+			dst[i] = ir3_MUL_F(b, ir3_COV(b, dst[i], TYPE_S32, TYPE_F32), 0,
 							   factor, 0);
 		}
 	}
@@ -1977,20 +1984,21 @@ emit_tex(struct ir3_context *ctx, nir_tex_instr *tex)
 }
 
 static void
-emit_tex_query_levels(struct ir3_context *ctx, nir_tex_instr *tex)
+emit_tex_info(struct ir3_context *ctx, nir_tex_instr *tex, unsigned idx)
 {
 	struct ir3_block *b = ctx->block;
 	struct ir3_instruction **dst, *sam;
 
 	dst = ir3_get_dst(ctx, &tex->dest, 1);
 
-	sam = ir3_SAM(b, OPC_GETINFO, TYPE_U32, 0b0100, 0,
+	sam = ir3_SAM(b, OPC_GETINFO, TYPE_U32, 1 << idx, 0,
 			get_tex_samp_tex_src(ctx, tex), NULL, NULL);
 
 	/* even though there is only one component, since it ends
-	 * up in .z rather than .x, we need a split_dest()
+	 * up in .y/.z/.w rather than .x, we need a split_dest()
 	 */
-	ir3_split_dest(b, dst, sam, 0, 3);
+	if (idx)
+		ir3_split_dest(b, dst, sam, 0, idx + 1);
 
 	/* The # of levels comes from getinfo.z. We need to add 1 to it, since
 	 * the value in TEX_CONST_0 is zero-based.
@@ -2091,7 +2099,10 @@ emit_instr(struct ir3_context *ctx, nir_instr *instr)
 			emit_tex_txs(ctx, tex);
 			break;
 		case nir_texop_query_levels:
-			emit_tex_query_levels(ctx, tex);
+			emit_tex_info(ctx, tex, 2);
+			break;
+		case nir_texop_texture_samples:
+			emit_tex_info(ctx, tex, 3);
 			break;
 		default:
 			emit_tex(ctx, tex);
@@ -2396,7 +2407,6 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 	so->inputs[n].compmask = (1 << (ncomp + frac)) - 1;
 	so->inputs_count = MAX2(so->inputs_count, n + 1);
 	so->inputs[n].interpolate = in->data.interpolation;
-	so->inputs[n].ncomp = ncomp;
 
 	if (ctx->so->type == MESA_SHADER_FRAGMENT) {
 
@@ -2513,7 +2523,6 @@ pack_inlocs(struct ir3_context *ctx)
 	for (unsigned i = 0; i < so->inputs_count; i++) {
 		unsigned compmask = 0, maxcomp = 0;
 
-		so->inputs[i].ncomp = 0;
 		so->inputs[i].inloc = inloc;
 		so->inputs[i].bary = false;
 
@@ -2523,7 +2532,6 @@ pack_inlocs(struct ir3_context *ctx)
 
 			compmask |= (1 << j);
 			actual_in++;
-			so->inputs[i].ncomp++;
 			maxcomp = j + 1;
 
 			/* at this point, since used_components[i] mask is only

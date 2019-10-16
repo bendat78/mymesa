@@ -76,6 +76,12 @@ mir_get_swizzle(midgard_instruction *ins, unsigned idx)
                         case midgard_op_ld_cubemap_coords:
                                 components = 3;
                                 break;
+                        case midgard_op_ldst_perspective_division_z:
+                                components = 3;
+                                break;
+                        case midgard_op_ldst_perspective_division_w:
+                                components = 4;
+                                break;
                         default:
                                 components = 1;
                                 break;
@@ -396,13 +402,14 @@ mir_mask_of_read_components(midgard_instruction *ins, unsigned node)
                 if (ins->compact_branch && ins->writeout && (i == 0))
                         return 0xF;
 
+                /* Conditional branches read one component (TODO: multi branch??) */
+                if (ins->compact_branch && !ins->prepacked_branch && ins->branch.conditional && (i == 0))
+                        return 0x1;
+
                 /* ALU ops act componentwise so we need to pay attention to
                  * their mask. Texture/ldst does not so we don't clamp source
                  * readmasks based on the writemask */
                 unsigned qmask = (ins->type == TAG_ALU_4) ? ins->mask : 0xF;
-
-                unsigned swizzle = mir_get_swizzle(ins, i);
-                unsigned m = mir_mask_of_read_components_single(swizzle, qmask);
 
                 /* Handle dot products and things */
                 if (ins->type == TAG_ALU_4 && !ins->compact_branch) {
@@ -410,10 +417,13 @@ mir_mask_of_read_components(midgard_instruction *ins, unsigned node)
                                 GET_CHANNEL_COUNT(alu_opcode_props[ins->alu.op].props);
 
                         if (channel_override)
-                                m = mask_of(channel_override);
+                                qmask = mask_of(channel_override);
                 }
 
-                mask |= m;
+                unsigned swizzle = mir_get_swizzle(ins, i);
+                unsigned m = mir_mask_of_read_components_single(swizzle, qmask);
+
+               mask |= m;
         }
 
         return mask;
@@ -521,11 +531,11 @@ mir_insert_instruction_after_scheduled(
 
         midgard_bundle *bundles = (midgard_bundle *) block->bundles.data;
         memmove(bundles + after + 2, bundles + after + 1, (count - after - 1) * sizeof(midgard_bundle));
-        midgard_bundle *after_bundle_1 = bundles + after + 2;
+        midgard_bundle *after_bundle = bundles + after;
 
         midgard_bundle new = mir_bundle_for_op(ctx, ins);
         memcpy(bundles + after + 1, &new, sizeof(new));
-        list_addtail(&new.instructions[0]->link, &after_bundle_1->instructions[0]->link);
+        list_addtail(&new.instructions[0]->link, &after_bundle->instructions[after_bundle->instruction_count - 1]->link);
 }
 
 /* Flip the first-two arguments of a (binary) op. Currently ALU

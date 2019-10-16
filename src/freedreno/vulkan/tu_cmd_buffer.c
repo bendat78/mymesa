@@ -34,6 +34,7 @@
 #include "vk_format.h"
 
 #include "tu_cs.h"
+#include "tu_blit.h"
 
 void
 tu_bo_list_init(struct tu_bo_list *list)
@@ -314,8 +315,8 @@ tu_tiling_config_get_tile(const struct tu_tiling_config *tiling,
          : tile->begin.y + tiling->tile0.extent.height;
 }
 
-static enum a3xx_msaa_samples
-tu6_msaa_samples(uint32_t samples)
+enum a3xx_msaa_samples
+tu_msaa_samples(uint32_t samples)
 {
    switch (samples) {
    case 1:
@@ -390,7 +391,9 @@ tu6_emit_wfi(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 static void
 tu6_emit_zs(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 {
+   const struct tu_framebuffer *fb = cmd->state.framebuffer;
    const struct tu_subpass *subpass = cmd->state.subpass;
+   const struct tu_tiling_config *tiling = &cmd->state.tiling_config;
 
    const uint32_t a = subpass->depth_stencil_attachment.attachment;
    if (a == VK_ATTACHMENT_UNUSED) {
@@ -419,6 +422,40 @@ tu6_emit_zs(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
       return;
    }
 
+   uint32_t gmem_index = 0;
+   for (uint32_t i = 0; i < subpass->color_count; ++i) {
+      uint32_t a = subpass->color_attachments[i].attachment;
+      if (a != VK_ATTACHMENT_UNUSED)
+         gmem_index++;
+   }
+
+   const struct tu_image_view *iview = fb->attachments[a].attachment;
+   const struct tu_image_level *slice = &iview->image->levels[iview->base_mip];
+   enum a6xx_depth_format fmt = tu6_pipe2depth(iview->vk_format);
+
+   uint32_t offset = slice->offset + slice->size * iview->base_layer;
+   uint32_t stride = slice->pitch * iview->image->cpp;
+
+   tu_cs_emit_pkt4(cs, REG_A6XX_RB_DEPTH_BUFFER_INFO, 6);
+   tu_cs_emit(cs, A6XX_RB_DEPTH_BUFFER_INFO_DEPTH_FORMAT(fmt));
+   tu_cs_emit(cs, A6XX_RB_DEPTH_BUFFER_PITCH(stride));
+   tu_cs_emit(cs, A6XX_RB_DEPTH_BUFFER_ARRAY_PITCH(slice->size));
+   tu_cs_emit_qw(cs, iview->image->bo->iova + iview->image->bo_offset + offset);
+   tu_cs_emit(cs, tiling->gmem_offsets[gmem_index]);
+
+   tu_cs_emit_pkt4(cs, REG_A6XX_GRAS_SU_DEPTH_BUFFER_INFO, 1);
+   tu_cs_emit(cs, A6XX_GRAS_SU_DEPTH_BUFFER_INFO_DEPTH_FORMAT(fmt));
+
+   tu_cs_emit_pkt4(cs, REG_A6XX_GRAS_LRZ_BUFFER_BASE_LO, 5);
+   tu_cs_emit(cs, 0x00000000); /* RB_DEPTH_FLAG_BUFFER_BASE_LO */
+   tu_cs_emit(cs, 0x00000000); /* RB_DEPTH_FLAG_BUFFER_BASE_HI */
+   tu_cs_emit(cs, 0x00000000); /* GRAS_LRZ_BUFFER_PITCH */
+   tu_cs_emit(cs, 0x00000000); /* GRAS_LRZ_FAST_CLEAR_BUFFER_BASE_LO */
+   tu_cs_emit(cs, 0x00000000); /* GRAS_LRZ_FAST_CLEAR_BUFFER_BASE_HI */
+
+   tu_cs_emit_pkt4(cs, REG_A6XX_RB_STENCIL_INFO, 1);
+   tu_cs_emit(cs, 0x00000000); /* RB_STENCIL_INFO */
+
    /* enable zs? */
 }
 
@@ -440,7 +477,8 @@ tu6_emit_mrt(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
       const struct tu_image_view *iview = fb->attachments[a].attachment;
       const struct tu_image_level *slice =
          &iview->image->levels[iview->base_mip];
-      const enum a6xx_tile_mode tile_mode = iview->image->tile_mode;
+      const enum a6xx_tile_mode tile_mode =
+         tu6_get_image_tile_mode(iview->image, iview->base_mip);
       uint32_t stride = 0;
       uint32_t offset = 0;
 
@@ -454,7 +492,7 @@ tu6_emit_mrt(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
       assert(format && format->rb >= 0);
 
       offset = slice->offset + slice->size * iview->base_layer;
-      stride = slice->pitch * vk_format_get_blocksize(iview->vk_format);
+      stride = slice->pitch * iview->image->cpp;
 
       tu_cs_emit_pkt4(cs, REG_A6XX_RB_MRT_BUF_INFO(i), 6);
       tu_cs_emit(cs, A6XX_RB_MRT_BUF_INFO_COLOR_FORMAT(format->rb) |
@@ -514,28 +552,22 @@ tu6_emit_msaa(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 {
    const struct tu_subpass *subpass = cmd->state.subpass;
    const enum a3xx_msaa_samples samples =
-      tu6_msaa_samples(subpass->max_sample_count);
+      tu_msaa_samples(subpass->max_sample_count);
 
    tu_cs_emit_pkt4(cs, REG_A6XX_SP_TP_RAS_MSAA_CNTL, 2);
    tu_cs_emit(cs, A6XX_SP_TP_RAS_MSAA_CNTL_SAMPLES(samples));
-   tu_cs_emit(
-      cs, A6XX_SP_TP_DEST_MSAA_CNTL_SAMPLES(samples) |
-             ((samples == MSAA_ONE) ? A6XX_SP_TP_DEST_MSAA_CNTL_MSAA_DISABLE
-                                    : 0));
+   tu_cs_emit(cs, A6XX_SP_TP_DEST_MSAA_CNTL_SAMPLES(samples) |
+              COND(samples == MSAA_ONE, A6XX_SP_TP_DEST_MSAA_CNTL_MSAA_DISABLE));
 
    tu_cs_emit_pkt4(cs, REG_A6XX_GRAS_RAS_MSAA_CNTL, 2);
    tu_cs_emit(cs, A6XX_GRAS_RAS_MSAA_CNTL_SAMPLES(samples));
-   tu_cs_emit(
-      cs,
-      A6XX_GRAS_DEST_MSAA_CNTL_SAMPLES(samples) |
-         ((samples == MSAA_ONE) ? A6XX_GRAS_DEST_MSAA_CNTL_MSAA_DISABLE : 0));
+   tu_cs_emit(cs, A6XX_GRAS_DEST_MSAA_CNTL_SAMPLES(samples) |
+              COND(samples == MSAA_ONE, A6XX_GRAS_DEST_MSAA_CNTL_MSAA_DISABLE));
 
    tu_cs_emit_pkt4(cs, REG_A6XX_RB_RAS_MSAA_CNTL, 2);
    tu_cs_emit(cs, A6XX_RB_RAS_MSAA_CNTL_SAMPLES(samples));
-   tu_cs_emit(
-      cs,
-      A6XX_RB_DEST_MSAA_CNTL_SAMPLES(samples) |
-         ((samples == MSAA_ONE) ? A6XX_RB_DEST_MSAA_CNTL_MSAA_DISABLE : 0));
+   tu_cs_emit(cs, A6XX_RB_DEST_MSAA_CNTL_SAMPLES(samples) |
+              COND(samples == MSAA_ONE, A6XX_RB_DEST_MSAA_CNTL_MSAA_DISABLE));
 
    tu_cs_emit_pkt4(cs, REG_A6XX_RB_MSAA_CNTL, 1);
    tu_cs_emit(cs, A6XX_RB_MSAA_CNTL_SAMPLES(samples));
@@ -604,21 +636,20 @@ tu6_emit_blit_info(struct tu_cmd_buffer *cmd,
    const struct tu_image_level *slice =
       &iview->image->levels[iview->base_mip];
    const uint32_t offset = slice->offset + slice->size * iview->base_layer;
-   const uint32_t stride =
-      slice->pitch * vk_format_get_blocksize(iview->vk_format);
-   const enum a3xx_msaa_samples samples = tu6_msaa_samples(1);
+   const uint32_t stride = slice->pitch * iview->image->cpp;
 
    tu_cs_emit_pkt4(cs, REG_A6XX_RB_BLIT_INFO, 1);
    tu_cs_emit(cs, blit_info);
 
-   /* tile mode? */
    const struct tu_native_format *format =
       tu6_get_native_format(iview->vk_format);
    assert(format && format->rb >= 0);
 
+   enum a6xx_tile_mode tile_mode =
+      tu6_get_image_tile_mode(iview->image, iview->base_mip);
    tu_cs_emit_pkt4(cs, REG_A6XX_RB_BLIT_DST_INFO, 5);
-   tu_cs_emit(cs, A6XX_RB_BLIT_DST_INFO_TILE_MODE(iview->image->tile_mode) |
-                     A6XX_RB_BLIT_DST_INFO_SAMPLES(samples) |
+   tu_cs_emit(cs, A6XX_RB_BLIT_DST_INFO_TILE_MODE(tile_mode) |
+                     A6XX_RB_BLIT_DST_INFO_SAMPLES(tu_msaa_samples(iview->image->samples)) |
                      A6XX_RB_BLIT_DST_INFO_COLOR_FORMAT(format->rb) |
                      A6XX_RB_BLIT_DST_INFO_COLOR_SWAP(format->swap));
    tu_cs_emit_qw(cs,
@@ -637,8 +668,6 @@ tu6_emit_blit_clear(struct tu_cmd_buffer *cmd,
                     uint32_t gmem_offset,
                     const VkClearValue *clear_value)
 {
-   const enum a3xx_msaa_samples samples = tu6_msaa_samples(1);
-
    const struct tu_native_format *format =
       tu6_get_native_format(iview->vk_format);
    assert(format && format->rb >= 0);
@@ -646,8 +675,8 @@ tu6_emit_blit_clear(struct tu_cmd_buffer *cmd,
    const enum a3xx_color_swap swap = WZYX;
 
    tu_cs_emit_pkt4(cs, REG_A6XX_RB_BLIT_DST_INFO, 1);
-   tu_cs_emit(cs, A6XX_RB_BLIT_DST_INFO_TILE_MODE(iview->image->tile_mode) |
-                     A6XX_RB_BLIT_DST_INFO_SAMPLES(samples) |
+   tu_cs_emit(cs, A6XX_RB_BLIT_DST_INFO_TILE_MODE(TILE6_LINEAR) |
+                     A6XX_RB_BLIT_DST_INFO_SAMPLES(tu_msaa_samples(iview->image->samples)) |
                      A6XX_RB_BLIT_DST_INFO_COLOR_FORMAT(format->rb) |
                      A6XX_RB_BLIT_DST_INFO_COLOR_SWAP(swap));
 
@@ -756,38 +785,47 @@ tu6_emit_tile_select(struct tu_cmd_buffer *cmd,
 }
 
 static void
-tu6_emit_tile_load(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+tu6_emit_tile_load_attachment(struct tu_cmd_buffer *cmd,
+                              struct tu_cs *cs,
+                              uint32_t a,
+                              uint32_t gmem_index)
 {
    const struct tu_framebuffer *fb = cmd->state.framebuffer;
-   const struct tu_subpass *subpass = cmd->state.subpass;
    const struct tu_tiling_config *tiling = &cmd->state.tiling_config;
    const struct tu_attachment_state *attachments = cmd->state.attachments;
+
+   const struct tu_image_view *iview = fb->attachments[a].attachment;
+   const struct tu_attachment_state *att = attachments + a;
+   if (att->pending_clear_aspects) {
+      tu6_emit_blit_clear(cmd, cs, iview,
+                          tiling->gmem_offsets[gmem_index],
+                          &att->clear_value);
+   } else {
+      tu6_emit_blit_info(cmd, cs, iview,
+                         tiling->gmem_offsets[gmem_index],
+                         A6XX_RB_BLIT_INFO_UNK0 | A6XX_RB_BLIT_INFO_GMEM);
+   }
+
+   tu6_emit_blit(cmd, cs);
+}
+
+static void
+tu6_emit_tile_load(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+{
+   const struct tu_subpass *subpass = cmd->state.subpass;
 
    tu6_emit_blit_scissor(cmd, cs);
 
    uint32_t gmem_index = 0;
    for (uint32_t i = 0; i < subpass->color_count; ++i) {
       const uint32_t a = subpass->color_attachments[i].attachment;
-      if (a == VK_ATTACHMENT_UNUSED)
-         continue;
-
-      const struct tu_image_view *iview = fb->attachments[a].attachment;
-      const struct tu_attachment_state *att = attachments + a;
-      if (att->pending_clear_aspects) {
-         assert(att->pending_clear_aspects == VK_IMAGE_ASPECT_COLOR_BIT);
-         tu6_emit_blit_clear(cmd, cs, iview,
-                             tiling->gmem_offsets[gmem_index++],
-                             &att->clear_value);
-      } else {
-         tu6_emit_blit_info(cmd, cs, iview,
-                            tiling->gmem_offsets[gmem_index++],
-                            A6XX_RB_BLIT_INFO_UNK0 | A6XX_RB_BLIT_INFO_GMEM);
-      }
-
-      tu6_emit_blit(cmd, cs);
+      if (a != VK_ATTACHMENT_UNUSED)
+         tu6_emit_tile_load_attachment(cmd, cs, a, gmem_index++);
    }
 
-   /* load/clear zs? */
+   const uint32_t a = subpass->depth_stencil_attachment.attachment;
+   if (a != VK_ATTACHMENT_UNUSED)
+      tu6_emit_tile_load_attachment(cmd, cs, a, gmem_index);
 }
 
 static void
@@ -825,6 +863,14 @@ tu6_emit_tile_store(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 
       const struct tu_image_view *iview = fb->attachments[a].attachment;
       tu6_emit_blit_info(cmd, cs, iview, tiling->gmem_offsets[gmem_index++],
+                         0);
+      tu6_emit_blit(cmd, cs);
+   }
+
+   const uint32_t a = cmd->state.subpass->depth_stencil_attachment.attachment;
+   if (a != VK_ATTACHMENT_UNUSED) {
+      const struct tu_image_view *iview = fb->attachments[a].attachment;
+      tu6_emit_blit_info(cmd, cs, iview, tiling->gmem_offsets[gmem_index],
                          0);
       tu6_emit_blit(cmd, cs);
    }
@@ -1073,6 +1119,9 @@ tu6_render_tile(struct tu_cmd_buffer *cmd,
 static void
 tu6_render_end(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 {
+   const struct tu_subpass *subpass = cmd->state.subpass;
+   const struct tu_framebuffer *fb = cmd->state.framebuffer;
+
    VkResult result = tu_cs_reserve_space(cmd->device, cs, 16);
    if (result != VK_SUCCESS) {
       cmd->record_result = result;
@@ -1085,6 +1134,31 @@ tu6_render_end(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
    tu6_emit_lrz_flush(cmd, cs);
 
    tu6_emit_event_write(cmd, cs, CACHE_FLUSH_TS, true);
+
+   if (subpass->has_resolve) {
+      for (uint32_t i = 0; i < subpass->color_count; ++i) {
+         struct tu_subpass_attachment src_att = subpass->color_attachments[i];
+         struct tu_subpass_attachment dst_att = subpass->resolve_attachments[i];
+
+         if (dst_att.attachment == VK_ATTACHMENT_UNUSED)
+            continue;
+
+         struct tu_image *src_img = fb->attachments[src_att.attachment].attachment->image;
+         struct tu_image *dst_img = fb->attachments[dst_att.attachment].attachment->image;
+
+         assert(src_img->extent.width == dst_img->extent.width);
+         assert(src_img->extent.height == dst_img->extent.height);
+
+         tu_bo_list_add(&cmd->bo_list, src_img->bo, MSM_SUBMIT_BO_READ);
+         tu_bo_list_add(&cmd->bo_list, dst_img->bo, MSM_SUBMIT_BO_WRITE);
+
+         tu_blit(cmd, &(struct tu_blit) {
+            .dst = tu_blit_surf_whole(dst_img),
+            .src = tu_blit_surf_whole(src_img),
+            .layers = 1,
+         }, false);
+      }
+   }
 
    tu_cs_sanity_check(cs);
 }
@@ -1675,6 +1749,8 @@ tu_CmdBindDescriptorSets(VkCommandBuffer commandBuffer,
                          const uint32_t *pDynamicOffsets)
 {
    TU_FROM_HANDLE(tu_cmd_buffer, cmd_buffer, commandBuffer);
+   TU_FROM_HANDLE(tu_pipeline_layout, layout, _layout);
+   unsigned dyn_idx = 0;
 
    struct tu_descriptor_state *descriptors_state =
       tu_get_descriptors_state(cmd_buffer, pipelineBindPoint);
@@ -1685,6 +1761,14 @@ tu_CmdBindDescriptorSets(VkCommandBuffer commandBuffer,
 
       descriptors_state->sets[idx] = set;
       descriptors_state->valid |= (1u << idx);
+
+      for(unsigned j = 0; j < set->layout->dynamic_offset_count; ++j, ++dyn_idx) {
+         unsigned idx = j + layout->set[i + firstSet].dynamic_offset_start;
+         assert(dyn_idx < dynamicOffsetCount);
+
+         descriptors_state->dynamic_buffers[idx] =
+         set->dynamic_descriptors[j].va + pDynamicOffsets[dyn_idx];
+      }
    }
 
    cmd_buffer->state.dirty |= TU_CMD_DIRTY_DESCRIPTOR_SETS;
@@ -1698,6 +1782,8 @@ tu_CmdPushConstants(VkCommandBuffer commandBuffer,
                     uint32_t size,
                     const void *pValues)
 {
+   TU_FROM_HANDLE(tu_cmd_buffer, cmd_buffer, commandBuffer);
+   memcpy((void*) cmd_buffer->push_constants + offset, pValues, size);
 }
 
 VkResult
@@ -2130,17 +2216,79 @@ struct tu_draw_state_group
    struct tu_cs_entry ib;
 };
 
-static uint32_t*
-map_get(struct tu_descriptor_state *descriptors_state,
-        const struct tu_descriptor_map *map, unsigned i)
+static struct tu_sampler*
+sampler_ptr(struct tu_descriptor_state *descriptors_state,
+            const struct tu_descriptor_map *map, unsigned i)
 {
    assert(descriptors_state->valid & (1 << map->set[i]));
 
    struct tu_descriptor_set *set = descriptors_state->sets[map->set[i]];
-
    assert(map->binding[i] < set->layout->binding_count);
 
-   return &set->mapped_ptr[set->layout->binding[map->binding[i]].offset / 4];
+   const struct tu_descriptor_set_binding_layout *layout =
+      &set->layout->binding[map->binding[i]];
+
+   switch (layout->type) {
+   case VK_DESCRIPTOR_TYPE_SAMPLER:
+      return (struct tu_sampler*) &set->mapped_ptr[layout->offset / 4];
+   case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+      return (struct tu_sampler*) &set->mapped_ptr[layout->offset / 4 + A6XX_TEX_CONST_DWORDS];
+   default:
+      unreachable("unimplemented descriptor type");
+      break;
+   }
+}
+
+static uint32_t*
+texture_ptr(struct tu_descriptor_state *descriptors_state,
+            const struct tu_descriptor_map *map, unsigned i)
+{
+   assert(descriptors_state->valid & (1 << map->set[i]));
+
+   struct tu_descriptor_set *set = descriptors_state->sets[map->set[i]];
+   assert(map->binding[i] < set->layout->binding_count);
+
+   const struct tu_descriptor_set_binding_layout *layout =
+      &set->layout->binding[map->binding[i]];
+
+   switch (layout->type) {
+   case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+   case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+      return &set->mapped_ptr[layout->offset / 4];
+   case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+   case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+      return &set->mapped_ptr[layout->offset / 4];
+   default:
+      unreachable("unimplemented descriptor type");
+      break;
+   }
+}
+
+static uint64_t
+buffer_ptr(struct tu_descriptor_state *descriptors_state,
+           const struct tu_descriptor_map *map,
+           unsigned i)
+{
+   assert(descriptors_state->valid & (1 << map->set[i]));
+
+   struct tu_descriptor_set *set = descriptors_state->sets[map->set[i]];
+   assert(map->binding[i] < set->layout->binding_count);
+
+   const struct tu_descriptor_set_binding_layout *layout =
+      &set->layout->binding[map->binding[i]];
+
+   switch (layout->type) {
+   case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+   case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+      return descriptors_state->dynamic_buffers[layout->dynamic_offset_offset];
+   case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+   case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+      return (uint64_t) set->mapped_ptr[layout->offset / 4 + 1] << 32 |
+                        set->mapped_ptr[layout->offset / 4];
+   default:
+      unreachable("unimplemented descriptor type");
+      break;
+   }
 }
 
 static inline uint32_t
@@ -2181,7 +2329,8 @@ tu6_stage2shadersb(gl_shader_stage type)
 static void
 tu6_emit_user_consts(struct tu_cs *cs, const struct tu_pipeline *pipeline,
                      struct tu_descriptor_state *descriptors_state,
-                     gl_shader_stage type)
+                     gl_shader_stage type,
+                     uint32_t *push_constants)
 {
    const struct tu_program_descriptor_linkage *link =
       &pipeline->program.link[type];
@@ -2189,9 +2338,6 @@ tu6_emit_user_consts(struct tu_cs *cs, const struct tu_pipeline *pipeline,
 
    for (uint32_t i = 0; i < ARRAY_SIZE(state->range); i++) {
       if (state->range[i].start < state->range[i].end) {
-         assert(i && i - 1 < link->ubo_map.num);
-         uint32_t *ptr = map_get(descriptors_state, &link->ubo_map, i - 1);
-
          uint32_t size = state->range[i].end - state->range[i].start;
          uint32_t offset = state->range[i].start;
 
@@ -2208,8 +2354,22 @@ tu6_emit_user_consts(struct tu_cs *cs, const struct tu_pipeline *pipeline,
          debug_assert((size % 16) == 0);
          debug_assert((offset % 16) == 0);
 
-         uint64_t addr = (uint64_t) ptr[1] << 32 | ptr[0];
-         addr += state->range[i].offset;
+         if (i == 0) {
+            /* push constants */
+            tu_cs_emit_pkt7(cs, tu6_stage2opcode(type), 3 + (size / 4));
+            tu_cs_emit(cs, CP_LOAD_STATE6_0_DST_OFF(state->range[i].offset / 16) |
+                  CP_LOAD_STATE6_0_STATE_TYPE(ST6_CONSTANTS) |
+                  CP_LOAD_STATE6_0_STATE_SRC(SS6_DIRECT) |
+                  CP_LOAD_STATE6_0_STATE_BLOCK(tu6_stage2shadersb(type)) |
+                  CP_LOAD_STATE6_0_NUM_UNIT(size / 16));
+            tu_cs_emit(cs, 0);
+            tu_cs_emit(cs, 0);
+            for (unsigned i = 0; i < size / 4; i++)
+               tu_cs_emit(cs, push_constants[i + offset / 4]);
+            continue;
+         }
+
+         uint64_t va = buffer_ptr(descriptors_state, &link->ubo_map, i - 1);
 
          tu_cs_emit_pkt7(cs, tu6_stage2opcode(type), 3);
          tu_cs_emit(cs, CP_LOAD_STATE6_0_DST_OFF(state->range[i].offset / 16) |
@@ -2217,7 +2377,7 @@ tu6_emit_user_consts(struct tu_cs *cs, const struct tu_pipeline *pipeline,
                CP_LOAD_STATE6_0_STATE_SRC(SS6_INDIRECT) |
                CP_LOAD_STATE6_0_STATE_BLOCK(tu6_stage2shadersb(type)) |
                CP_LOAD_STATE6_0_NUM_UNIT(size / 16));
-         tu_cs_emit_qw(cs, addr);
+         tu_cs_emit_qw(cs, va + offset);
       }
    }
 }
@@ -2230,14 +2390,15 @@ tu6_emit_ubos(struct tu_cs *cs, const struct tu_pipeline *pipeline,
    const struct tu_program_descriptor_linkage *link =
       &pipeline->program.link[type];
 
-   uint32_t anum = align(link->ubo_map.num, 2);
+   uint32_t num = MIN2(link->ubo_map.num, link->const_state.num_ubos);
+   uint32_t anum = align(num, 2);
    uint32_t i;
 
-   if (!link->ubo_map.num)
+   if (!num)
       return;
 
    tu_cs_emit_pkt7(cs, tu6_stage2opcode(type), 3 + (2 * anum));
-   tu_cs_emit(cs, CP_LOAD_STATE6_0_DST_OFF(link->offset_ubo) |
+   tu_cs_emit(cs, CP_LOAD_STATE6_0_DST_OFF(link->const_state.offsets.ubo) |
          CP_LOAD_STATE6_0_STATE_TYPE(ST6_CONSTANTS) |
          CP_LOAD_STATE6_0_STATE_SRC(SS6_DIRECT) |
          CP_LOAD_STATE6_0_STATE_BLOCK(tu6_stage2shadersb(type)) |
@@ -2245,11 +2406,8 @@ tu6_emit_ubos(struct tu_cs *cs, const struct tu_pipeline *pipeline,
    tu_cs_emit(cs, CP_LOAD_STATE6_1_EXT_SRC_ADDR(0));
    tu_cs_emit(cs, CP_LOAD_STATE6_2_EXT_SRC_ADDR_HI(0));
 
-   for (i = 0; i < link->ubo_map.num; i++) {
-      uint32_t *ptr = map_get(descriptors_state, &link->ubo_map, i);
-      tu_cs_emit(cs, ptr[0]);
-      tu_cs_emit(cs, ptr[1]);
-   }
+   for (i = 0; i < num; i++)
+      tu_cs_emit_qw(cs, buffer_ptr(descriptors_state, &link->ubo_map, i));
 
    for (; i < anum; i++) {
       tu_cs_emit(cs, 0xffffffff);
@@ -2258,18 +2416,18 @@ tu6_emit_ubos(struct tu_cs *cs, const struct tu_pipeline *pipeline,
 }
 
 static struct tu_cs_entry
-tu6_emit_consts(struct tu_device *device, struct tu_cs *draw_state,
+tu6_emit_consts(struct tu_cmd_buffer *cmd,
                 const struct tu_pipeline *pipeline,
                 struct tu_descriptor_state *descriptors_state,
                 gl_shader_stage type)
 {
    struct tu_cs cs;
-   tu_cs_begin_sub_stream(device, draw_state, 512, &cs); /* TODO: maximum size? */
+   tu_cs_begin_sub_stream(cmd->device, &cmd->draw_state, 512, &cs); /* TODO: maximum size? */
 
-   tu6_emit_user_consts(&cs, pipeline, descriptors_state, type);
+   tu6_emit_user_consts(&cs, pipeline, descriptors_state, type, cmd->push_constants);
    tu6_emit_ubos(&cs, pipeline, descriptors_state, type);
 
-   return tu_cs_end_sub_stream(draw_state, &cs);
+   return tu_cs_end_sub_stream(&cmd->draw_state, &cs);
 }
 
 static struct tu_cs_entry
@@ -2319,15 +2477,14 @@ tu6_emit_textures(struct tu_device *device, struct tu_cs *draw_state,
    tu_cs_begin_sub_stream(device, draw_state, size, &cs);
 
    for (unsigned i = 0; i < link->texture_map.num; i++) {
-      uint32_t *ptr = map_get(descriptors_state, &link->texture_map, i);
+      uint32_t *ptr = texture_ptr(descriptors_state, &link->texture_map, i);
 
       for (unsigned j = 0; j < A6XX_TEX_CONST_DWORDS; j++)
          tu_cs_emit(&cs, ptr[j]);
    }
 
    for (unsigned i = 0; i < link->sampler_map.num; i++) {
-      uint32_t *ptr = map_get(descriptors_state, &link->sampler_map, i);
-      struct tu_sampler *sampler = (void*) &ptr[A6XX_TEX_CONST_DWORDS];
+      struct tu_sampler *sampler = sampler_ptr(descriptors_state, &link->sampler_map, i);
 
       for (unsigned j = 0; j < A6XX_TEX_SAMP_DWORDS; j++)
          tu_cs_emit(&cs, sampler->state[j]);
@@ -2373,6 +2530,31 @@ tu6_emit_textures(struct tu_device *device, struct tu_cs *draw_state,
 }
 
 static void
+tu6_emit_border_color(struct tu_cmd_buffer *cmd,
+                      struct tu_cs *cs)
+{
+   const struct tu_pipeline *pipeline = cmd->state.pipeline;
+
+#define A6XX_BORDER_COLOR_DWORDS (128/4)
+   uint32_t size = A6XX_BORDER_COLOR_DWORDS *
+      (pipeline->program.link[MESA_SHADER_VERTEX].sampler_map.num +
+       pipeline->program.link[MESA_SHADER_FRAGMENT].sampler_map.num) +
+      A6XX_BORDER_COLOR_DWORDS - 1; /* room for alignment */
+
+   struct tu_cs border_cs;
+   tu_cs_begin_sub_stream(cmd->device, &cmd->draw_state, size, &border_cs);
+
+   /* TODO: actually fill with border color */
+   for (unsigned i = 0; i < size; i++)
+      tu_cs_emit(&border_cs, 0);
+
+   struct tu_cs_entry entry = tu_cs_end_sub_stream(&cmd->draw_state, &border_cs);
+
+   tu_cs_emit_pkt4(cs, REG_A6XX_SP_TP_BORDER_COLOR_BASE_ADDR_LO, 2);
+	tu_cs_emit_qw(cs, align(entry.bo->iova + entry.offset, 128));
+}
+
+static void
 tu6_bind_draw_states(struct tu_cmd_buffer *cmd,
                      struct tu_cs *cs,
                      const struct tu_draw_info *draw)
@@ -2381,7 +2563,6 @@ tu6_bind_draw_states(struct tu_cmd_buffer *cmd,
    const struct tu_dynamic_state *dynamic = &cmd->state.dynamic;
    struct tu_draw_state_group draw_state_groups[TU_DRAW_STATE_COUNT];
    uint32_t draw_state_group_count = 0;
-   bool needs_border = false;
 
    struct tu_descriptor_state *descriptors_state =
       &cmd->descriptors[VK_PIPELINE_BIND_POINT_GRAPHICS];
@@ -2502,19 +2683,19 @@ tu6_bind_draw_states(struct tu_cmd_buffer *cmd,
 
    if (cmd->state.dirty &
          (TU_CMD_DIRTY_PIPELINE | TU_CMD_DIRTY_DESCRIPTOR_SETS)) {
+      bool needs_border = false;
+
       draw_state_groups[draw_state_group_count++] =
          (struct tu_draw_state_group) {
             .id = TU_DRAW_STATE_VS_CONST,
             .enable_mask = 0x7,
-            .ib = tu6_emit_consts(cmd->device, &cmd->draw_state, pipeline,
-                                  descriptors_state, MESA_SHADER_VERTEX)
+            .ib = tu6_emit_consts(cmd, pipeline, descriptors_state, MESA_SHADER_VERTEX)
          };
       draw_state_groups[draw_state_group_count++] =
          (struct tu_draw_state_group) {
             .id = TU_DRAW_STATE_FS_CONST,
             .enable_mask = 0x6,
-            .ib = tu6_emit_consts(cmd->device, &cmd->draw_state, pipeline,
-                                  descriptors_state, MESA_SHADER_FRAGMENT)
+            .ib = tu6_emit_consts(cmd, pipeline, descriptors_state, MESA_SHADER_FRAGMENT)
          };
       draw_state_groups[draw_state_group_count++] =
          (struct tu_draw_state_group) {
@@ -2532,6 +2713,9 @@ tu6_bind_draw_states(struct tu_cmd_buffer *cmd,
                                     descriptors_state, MESA_SHADER_FRAGMENT,
                                     &needs_border)
          };
+
+      if (needs_border)
+         tu6_emit_border_color(cmd, cs);
    }
 
    tu_cs_emit_pkt7(cs, CP_SET_DRAW_STATE, 3 * draw_state_group_count);

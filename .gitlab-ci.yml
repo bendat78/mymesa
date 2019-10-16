@@ -32,7 +32,7 @@ include:
   - local: '/.gitlab-ci/lava-gitlab-ci.yml'
 
 stages:
-  - containers
+  - container
   - build
   - test
 
@@ -59,17 +59,22 @@ stages:
 
 # Build the normal CI native and cross-build docker images.
 
+.container:
+  stage: container
+  extends:
+    - .ci-run-policy
+  variables:
+    # no need to pull the whole repo to build the container image
+    GIT_STRATEGY: none
+
 debian-10:
   extends:
     - .debian@container-ifnot-exists
-    - .ci-run-policy
-  stage: containers
+    - .container
   variables:
-    GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
     DEBIAN_EXEC: 'bash .gitlab-ci/debian-install.sh'
 
 .use-debian-10:
-  extends: .ci-run-policy
   image: $DEBIAN_IMAGE
   needs:
     - debian-10
@@ -91,17 +96,16 @@ debian-9:
 test-container:arm64:
   extends:
     - .debian@container-ifnot-exists@arm64v8
-    - .ci-run-policy
-  stage: containers
+    - .container
   variables:
     DEBIAN_TAG: "$DEBIAN_ARM64_TAG"
-    GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
     DEBIAN_EXEC: 'bash .gitlab-ci/debian-test-install.sh'
+
 
 # BUILD
 
 .build:
-  extends: .use-debian-10
+  extends: .ci-run-policy
   stage: build
   cache:
     key: ${CI_JOB_NAME}
@@ -135,12 +139,16 @@ test-container:arm64:
     - ccache --show-stats
 
 .meson-build:
-  extends: .build
+  extends:
+    - .build
+    - .use-debian-10
   script:
     - .gitlab-ci/meson-build.sh
 
 .scons-build:
-  extends: .build
+  extends:
+    - .build
+    - .use-debian-10
   variables:
     SCONSFLAGS: "-j4"
   script:
@@ -376,11 +384,17 @@ scons-old-llvm:
     - LLVM_VERSION=4.0 .gitlab-ci/scons-build.sh
     - LLVM_VERSION=5.0 .gitlab-ci/scons-build.sh
 
-.deqp-test:
-  extends: .use-debian-10
+.test:
+  extends: .ci-run-policy
   stage: test
   variables:
     GIT_STRATEGY: none # testing doesn't build anything from source
+
+.deqp-test:
+  extends:
+    - .test
+    - .use-debian-10
+  variables:
     DEQP_SKIPS: deqp-default-skips.txt
   script:
     # Note: Build dir (and thus install) may be dirty due to GIT_STRATEGY
