@@ -71,14 +71,10 @@ st_new_program(struct gl_context *ctx, GLenum target, GLuint id,
    }
    case GL_TESS_CONTROL_PROGRAM_NV:
    case GL_TESS_EVALUATION_PROGRAM_NV:
-   case GL_GEOMETRY_PROGRAM_NV: {
+   case GL_GEOMETRY_PROGRAM_NV:
+   case GL_COMPUTE_PROGRAM_NV: {
       struct st_common_program *prog = rzalloc(NULL,
                                                struct st_common_program);
-      return _mesa_init_gl_program(&prog->Base, target, id, is_arb_asm);
-   }
-   case GL_COMPUTE_PROGRAM_NV: {
-      struct st_compute_program *prog = rzalloc(NULL,
-                                                struct st_compute_program);
       return _mesa_init_gl_program(&prog->Base, target, id, is_arb_asm);
    }
    default:
@@ -109,11 +105,11 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
    case GL_TESS_CONTROL_PROGRAM_NV:
    case GL_TESS_EVALUATION_PROGRAM_NV:
    case GL_GEOMETRY_PROGRAM_NV:
+   case GL_COMPUTE_PROGRAM_NV:
       {
          struct st_common_program *p = st_common_program(prog);
 
-         st_release_basic_variants(st, p->Base.Target, &p->variants,
-                                   &p->tgsi);
+         st_release_basic_variants(st, p);
          
          if (p->glsl_to_tgsi)
             free_glsl_to_tgsi_visitor(p->glsl_to_tgsi);
@@ -128,17 +124,6 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
          
          if (stfp->glsl_to_tgsi)
             free_glsl_to_tgsi_visitor(stfp->glsl_to_tgsi);
-      }
-      break;
-   case GL_COMPUTE_PROGRAM_NV:
-      {
-         struct st_compute_program *stcp =
-            (struct st_compute_program *) prog;
-
-         st_release_cp_variants(st, stcp);
-
-         if (stcp->glsl_to_tgsi)
-            free_glsl_to_tgsi_visitor(stcp->glsl_to_tgsi);
       }
       break;
    default:
@@ -163,87 +148,47 @@ st_program_string_notify( struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    gl_shader_stage stage = _mesa_program_enum_to_shader_stage(target);
 
-   if (target == GL_FRAGMENT_PROGRAM_ARB) {
+   if (target == GL_FRAGMENT_PROGRAM_ARB ||
+       target == GL_FRAGMENT_SHADER_ATI) {
       struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
 
+      if (target == GL_FRAGMENT_SHADER_ATI) {
+         assert(stfp->ati_fs);
+         assert(stfp->ati_fs->Program == prog);
+
+         st_init_atifs_prog(ctx, prog);
+      }
+
       st_release_fp_variants(st, stfp);
-      if (!st_translate_fragment_program(st, stfp))
+      if (!stfp->shader_program && /* not GLSL->NIR */
+          !st_translate_fragment_program(st, stfp))
          return false;
 
       if (st->fp == stfp)
 	 st->dirty |= stfp->affected_states;
-   }
-   else if (target == GL_GEOMETRY_PROGRAM_NV) {
-      struct st_common_program *stgp = st_common_program(prog);
-
-      st_release_basic_variants(st, stgp->Base.Target, &stgp->variants,
-                                &stgp->tgsi);
-      if (!st_translate_geometry_program(st, stgp))
-         return false;
-
-      if (st->gp == stgp)
-	 st->dirty |= stgp->affected_states;
-   }
-   else if (target == GL_VERTEX_PROGRAM_ARB) {
+   } else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
 
       st_release_vp_variants(st, stvp);
-      if (!st_translate_vertex_program(st, stvp))
+      if (!stvp->shader_program && /* not GLSL->NIR */
+          !st_translate_vertex_program(st, stvp))
          return false;
 
       if (st->vp == stvp)
 	 st->dirty |= ST_NEW_VERTEX_PROGRAM(st, stvp);
-   }
-   else if (target == GL_TESS_CONTROL_PROGRAM_NV) {
-      struct st_common_program *sttcp =
-         st_common_program(prog);
+   } else {
+      struct st_common_program *stcp = st_common_program(prog);
 
-      st_release_basic_variants(st, sttcp->Base.Target, &sttcp->variants,
-                                &sttcp->tgsi);
-      if (!st_translate_tessctrl_program(st, sttcp))
+      st_release_basic_variants(st, stcp);
+      if (!stcp->shader_program && /* not GLSL->NIR */
+          !st_translate_common_program(st, stcp))
          return false;
 
-      if (st->tcp == sttcp)
-         st->dirty |= sttcp->affected_states;
-   }
-   else if (target == GL_TESS_EVALUATION_PROGRAM_NV) {
-      struct st_common_program *sttep =
-         st_common_program(prog);
-
-      st_release_basic_variants(st, sttep->Base.Target, &sttep->variants,
-                                &sttep->tgsi);
-      if (!st_translate_tesseval_program(st, sttep))
-         return false;
-
-      if (st->tep == sttep)
-         st->dirty |= sttep->affected_states;
-   }
-   else if (target == GL_COMPUTE_PROGRAM_NV) {
-      struct st_compute_program *stcp =
-         (struct st_compute_program *) prog;
-
-      st_release_cp_variants(st, stcp);
-      if (!st_translate_compute_program(st, stcp))
-         return false;
-
-      if (st->cp == stcp)
-         st->dirty |= stcp->affected_states;
-   }
-   else if (target == GL_FRAGMENT_SHADER_ATI) {
-      assert(prog);
-
-      struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
-      assert(stfp->ati_fs);
-      assert(stfp->ati_fs->Program == prog);
-
-      st_init_atifs_prog(ctx, prog);
-
-      st_release_fp_variants(st, stfp);
-      if (!st_translate_fragment_program(st, stfp))
-         return false;
-
-      if (st->fp == stfp)
-         st->dirty |= stfp->affected_states;
+      if ((prog->info.stage == MESA_SHADER_TESS_CTRL && st->tcp == stcp) ||
+          (prog->info.stage == MESA_SHADER_TESS_EVAL && st->tep == stcp) ||
+          (prog->info.stage == MESA_SHADER_GEOMETRY && st->gp == stcp) ||
+          (prog->info.stage == MESA_SHADER_COMPUTE && st->cp == stcp))
+	 st->dirty |= stcp->affected_states;
    }
 
    if (ST_DEBUG & DEBUG_PRECOMPILE ||
@@ -304,12 +249,9 @@ st_get_shader_program_completion_status(struct gl_context *ctx,
       case MESA_SHADER_TESS_CTRL:
       case MESA_SHADER_TESS_EVAL:
       case MESA_SHADER_GEOMETRY:
+      case MESA_SHADER_COMPUTE:
          if (st_common_program(linked->Program)->variants)
             sh = st_common_program(linked->Program)->variants->driver_shader;
-         break;
-      case MESA_SHADER_COMPUTE:
-         if (st_compute_program(linked->Program)->variants)
-            sh = st_compute_program(linked->Program)->variants->driver_shader;
          break;
       }
 

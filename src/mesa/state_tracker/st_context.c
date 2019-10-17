@@ -147,8 +147,8 @@ st_get_active_states(struct gl_context *ctx)
       st_common_program(ctx->GeometryProgram._Current);
    struct st_fragment_program *fp =
       st_fragment_program(ctx->FragmentProgram._Current);
-   struct st_compute_program *cp =
-      st_compute_program(ctx->ComputeProgram._Current);
+   struct st_common_program *cp =
+      st_common_program(ctx->ComputeProgram._Current);
    uint64_t active_shader_states = 0;
 
    if (vp)
@@ -226,6 +226,10 @@ st_invalidate_state(struct gl_context *ctx)
    if (new_state & (_NEW_LIGHT |
                     _NEW_POINT))
       st->dirty |= ST_NEW_RASTERIZER;
+
+   if ((new_state & _NEW_LIGHT) &&
+       (st->lower_flatshade || st->lower_two_sided_color))
+      st->dirty |= ST_NEW_FS_STATE;
 
    if (new_state & _NEW_PROJECTION &&
        st_user_clip_planes_enabled(ctx))
@@ -496,7 +500,12 @@ st_init_driver_flags(struct st_context *st)
    f->NewFramebufferSRGB = ST_NEW_FB_STATE;
    f->NewScissorRect = ST_NEW_SCISSOR;
    f->NewScissorTest = ST_NEW_SCISSOR | ST_NEW_RASTERIZER;
-   f->NewAlphaTest = ST_NEW_DSA;
+
+   if (st->lower_alpha_test)
+      f->NewAlphaTest = ST_NEW_FS_STATE;
+   else
+      f->NewAlphaTest = ST_NEW_DSA;
+
    f->NewBlend = ST_NEW_BLEND;
    f->NewBlendColor = ST_NEW_BLEND_COLOR;
    f->NewColorMask = ST_NEW_BLEND;
@@ -520,7 +529,6 @@ st_init_driver_flags(struct st_context *st)
 
    f->NewClipControl = ST_NEW_VIEWPORT | ST_NEW_RASTERIZER;
    f->NewClipPlane = ST_NEW_CLIP_STATE;
-   f->NewClipPlaneEnable = ST_NEW_RASTERIZER;
 
    if (st->clamp_frag_depth_in_shader) {
       f->NewClipControl |= ST_NEW_VS_STATE | ST_NEW_GS_STATE |
@@ -531,6 +539,11 @@ st_init_driver_flags(struct st_context *st)
    } else {
       f->NewDepthClamp = ST_NEW_RASTERIZER;
    }
+
+   if (st->lower_ucp)
+      f->NewClipPlaneEnable = ST_NEW_VS_STATE;
+   else
+      f->NewClipPlaneEnable = ST_NEW_RASTERIZER;
 
    f->NewLineState = ST_NEW_RASTERIZER;
    f->NewPolygonState = ST_NEW_RASTERIZER;
@@ -664,6 +677,16 @@ st_create_context_priv(struct gl_context *ctx, struct pipe_context *pipe,
       screen->get_param(screen, PIPE_CAP_RGB_OVERRIDE_DST_ALPHA_BLEND);
    st->has_signed_vertex_buffer_offset =
       screen->get_param(screen, PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET);
+   st->lower_flatshade =
+      !screen->get_param(screen, PIPE_CAP_FLATSHADE);
+   st->lower_alpha_test =
+      !screen->get_param(screen, PIPE_CAP_ALPHA_TEST);
+   st->lower_point_size =
+      !screen->get_param(screen, PIPE_CAP_POINT_SIZE_FIXED);
+   st->lower_two_sided_color =
+      !screen->get_param(screen, PIPE_CAP_TWO_SIDED_COLOR);
+   st->lower_ucp =
+      !screen->get_param(screen, PIPE_CAP_CLIP_PLANES);
 
    st->has_hw_atomics =
       screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
@@ -727,13 +750,18 @@ st_create_context_priv(struct gl_context *ctx, struct pipe_context *pipe,
    st->shader_has_one_variant[MESA_SHADER_VERTEX] =
          st->has_shareable_shaders &&
          !st->clamp_frag_depth_in_shader &&
-         !st->clamp_vert_color_in_shader;
+         !st->clamp_vert_color_in_shader &&
+         !st->lower_point_size &&
+         !st->lower_ucp;
 
    st->shader_has_one_variant[MESA_SHADER_FRAGMENT] =
          st->has_shareable_shaders &&
+         !st->lower_flatshade &&
+         !st->lower_alpha_test &&
          !st->clamp_frag_color_in_shader &&
          !st->clamp_frag_depth_in_shader &&
-         !st->force_persample_in_shader;
+         !st->force_persample_in_shader &&
+         !st->lower_two_sided_color;
 
    st->shader_has_one_variant[MESA_SHADER_TESS_CTRL] = st->has_shareable_shaders;
    st->shader_has_one_variant[MESA_SHADER_TESS_EVAL] =

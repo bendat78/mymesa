@@ -41,6 +41,7 @@
 #include "st_context.h"
 #include "st_glsl_types.h"
 #include "st_program.h"
+#include "st_shader_cache.h"
 
 #include "compiler/nir/nir.h"
 #include "compiler/glsl_types.h"
@@ -504,7 +505,6 @@ set_st_program(struct gl_program *prog,
    struct st_vertex_program *stvp;
    struct st_common_program *stp;
    struct st_fragment_program *stfp;
-   struct st_compute_program *stcp;
 
    switch (prog->info.stage) {
    case MESA_SHADER_VERTEX:
@@ -516,6 +516,7 @@ set_st_program(struct gl_program *prog,
    case MESA_SHADER_GEOMETRY:
    case MESA_SHADER_TESS_CTRL:
    case MESA_SHADER_TESS_EVAL:
+   case MESA_SHADER_COMPUTE:
       stp = (struct st_common_program *)prog;
       stp->shader_program = shader_program;
       stp->tgsi.type = PIPE_SHADER_IR_NIR;
@@ -526,12 +527,6 @@ set_st_program(struct gl_program *prog,
       stfp->shader_program = shader_program;
       stfp->tgsi.type = PIPE_SHADER_IR_NIR;
       stfp->tgsi.ir.nir = nir;
-      break;
-   case MESA_SHADER_COMPUTE:
-      stcp = (struct st_compute_program *)prog;
-      stcp->shader_program = shader_program;
-      stcp->tgsi.ir_type = PIPE_SHADER_IR_NIR;
-      stcp->tgsi.prog = nir;
       break;
    default:
       unreachable("unknown shader stage");
@@ -806,17 +801,29 @@ st_link_nir(struct gl_context *ctx,
       if (shader == NULL)
          continue;
 
-      st_glsl_to_nir_post_opts(st, shader->Program, shader_program);
+      struct gl_program *prog = shader->Program;
+      st_glsl_to_nir_post_opts(st, prog, shader_program);
 
-      assert(shader->Program);
+      /* Initialize st_vertex_program members. */
+      if (i == MESA_SHADER_VERTEX)
+         st_prepare_vertex_program(st_vertex_program(prog));
+
+      /* Get pipe_stream_output_info. */
+      if (i == MESA_SHADER_VERTEX ||
+          i == MESA_SHADER_TESS_EVAL ||
+          i == MESA_SHADER_GEOMETRY)
+         st_translate_stream_output_info(prog);
+
+      st_store_ir_in_disk_cache(st, prog, true);
+
       if (!ctx->Driver.ProgramStringNotify(ctx,
                                            _mesa_shader_stage_to_program(i),
-                                           shader->Program)) {
+                                           prog)) {
          _mesa_reference_program(ctx, &shader->Program, NULL);
          return false;
       }
 
-      nir_sweep(shader->Program->nir);
+      nir_sweep(prog->nir);
 
       /* The GLSL IR won't be needed anymore. */
       ralloc_free(shader->ir);

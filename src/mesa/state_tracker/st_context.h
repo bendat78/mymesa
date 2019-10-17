@@ -147,6 +147,11 @@ struct st_context
    boolean needs_rgb_dst_alpha_override;
    boolean can_bind_const_buffer_as_vertex;
    boolean has_signed_vertex_buffer_offset;
+   boolean lower_flatshade;
+   boolean lower_alpha_test;
+   boolean lower_point_size;
+   boolean lower_two_sided_color;
+   boolean lower_ucp;
 
    /**
     * If a shader can be created when we get its source.
@@ -233,7 +238,7 @@ struct st_context
    struct st_common_program *gp;  /**< Currently bound geometry program */
    struct st_common_program *tcp; /**< Currently bound tess control program */
    struct st_common_program *tep; /**< Currently bound tess eval program */
-   struct st_compute_program *cp;   /**< Currently bound compute program */
+   struct st_common_program *cp;   /**< Currently bound compute program */
 
    struct st_vp_variant *vp_variant;
 

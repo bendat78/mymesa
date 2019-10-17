@@ -126,10 +126,16 @@ struct st_fp_variant_key
    /** for ARB_depth_clamp */
    GLuint lower_depth_clamp:1;
 
+   /** for OpenGL 1.0 on modern hardware */
+   GLuint lower_two_sided_color:1;
+
    /** needed for ATI_fragment_shader */
    char texture_targets[MAX_NUM_FRAGMENT_REGISTERS_ATI];
 
    struct st_external_sampler_key external;
+
+   GLuint lower_flatshade:1;
+   enum compare_func lower_alpha_func:3;
 };
 
 
@@ -190,6 +196,12 @@ struct st_vp_variant_key
    /** both for ARB_depth_clamp */
    bool lower_depth_clamp;
    bool clip_negative_one_to_one;
+
+   /** lower glPointSize to gl_PointSize */
+   boolean lower_point_size;
+
+   /* for user-defined clip-planes */
+   uint8_t lower_ucp;
 };
 
 
@@ -314,29 +326,6 @@ struct st_common_program
 };
 
 
-/**
- * Derived from Mesa gl_program:
- */
-struct st_compute_program
-{
-   struct gl_program Base;  /**< The Mesa compute program */
-   struct pipe_compute_state tgsi;
-   struct glsl_to_tgsi_visitor* glsl_to_tgsi;
-   uint64_t affected_states; /**< ST_NEW_* flags to mark dirty when binding */
-
-   /* used when bypassing glsl_to_tgsi: */
-   struct gl_shader_program *shader_program;
-
-   struct st_basic_variant *variants;
-
-   /** SHA1 hash of linked tgsi shader program, used for on-disk cache */
-   unsigned char sha1[20];
-
-   /* Used by the shader cache and ARB_get_program_binary */
-   unsigned num_tgsi_tokens;
-};
-
-
 static inline struct st_fragment_program *
 st_fragment_program( struct gl_program *fp )
 {
@@ -351,15 +340,9 @@ st_vertex_program( struct gl_program *vp )
 }
 
 static inline struct st_common_program *
-st_common_program( struct gl_program *gp )
+st_common_program( struct gl_program *cp )
 {
-   return (struct st_common_program *)gp;
-}
-
-static inline struct st_compute_program *
-st_compute_program( struct gl_program *cp )
-{
-   return (struct st_compute_program *)cp;
+   return (struct st_common_program *)cp;
 }
 
 static inline void
@@ -394,8 +377,8 @@ st_reference_prog(struct st_context *st,
 
 static inline void
 st_reference_compprog(struct st_context *st,
-                      struct st_compute_program **ptr,
-                      struct st_compute_program *prog)
+                      struct st_common_program **ptr,
+                      struct st_common_program *prog)
 {
    _mesa_reference_program(st->ctx,
                            (struct gl_program **) ptr,
@@ -427,13 +410,7 @@ st_get_fp_variant(struct st_context *st,
                   const struct st_fp_variant_key *key);
 
 extern struct st_basic_variant *
-st_get_cp_variant(struct st_context *st,
-                  struct pipe_compute_state *tgsi,
-                  struct st_basic_variant **variants);
-
-extern struct st_basic_variant *
 st_get_basic_variant(struct st_context *st,
-                     unsigned pipe_shader,
                      struct st_common_program *p,
                      const struct st_basic_variant_key *key);
 
@@ -446,16 +423,16 @@ st_release_fp_variants( struct st_context *st,
                         struct st_fragment_program *stfp );
 
 extern void
-st_release_cp_variants(struct st_context *st,
-                        struct st_compute_program *stcp);
-
-extern void
-st_release_basic_variants(struct st_context *st, GLenum target,
-                          struct st_basic_variant **variants,
-                          struct pipe_shader_state *tgsi);
+st_release_basic_variants(struct st_context *st, struct st_common_program *p);
 
 extern void
 st_destroy_program_variants(struct st_context *st);
+
+extern void
+st_prepare_vertex_program(struct st_vertex_program *stvp);
+
+extern void
+st_translate_stream_output_info(struct gl_program *prog);
 
 extern bool
 st_translate_vertex_program(struct st_context *st,
@@ -466,20 +443,8 @@ st_translate_fragment_program(struct st_context *st,
                               struct st_fragment_program *stfp);
 
 extern bool
-st_translate_geometry_program(struct st_context *st,
-                              struct st_common_program *stgp);
-
-extern bool
-st_translate_tessctrl_program(struct st_context *st,
-                              struct st_common_program *sttcp);
-
-extern bool
-st_translate_tesseval_program(struct st_context *st,
-                              struct st_common_program *sttep);
-
-extern bool
-st_translate_compute_program(struct st_context *st,
-                             struct st_compute_program *stcp);
+st_translate_common_program(struct st_context *st,
+                            struct st_common_program *stcp);
 
 extern void
 st_print_current_vertex_program(void);

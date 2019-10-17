@@ -561,6 +561,12 @@ The integer capabilities:
 * ``PIPE_CAP_GL_SPIRV_VARIABLE_POINTERS``: True if the driver supports Variable Pointers in SPIR-V shaders.
 * ``PIPE_CAP_DEMOTE_TO_HELPER_INVOCATION``: True if driver supports demote keyword in GLSL programs.
 * ``PIPE_CAP_TGSI_TG4_COMPONENT_IN_SWIZZLE``: True if driver wants the TG4 component encoded in sampler swizzle rather than as a separate source.
+* ``PIPE_CAP_FLATSHADE``: Driver supports pipe_rasterizer_state::flatshade.
+* ``PIPE_CAP_ALPHA_TEST``: Driver supports alpha-testing.
+* ``PIPE_CAP_POINT_SIZE_FIXED``: Driver supports point-sizes that are fixed,
+  as opposed to writing gl_PointSize for every point.
+* ``PIPE_CAP_TWO_SIDED_COLOR``: Driver supports two-sided coloring.
+* ``PIPE_CAP_CLIP_PLANES``: Driver supports user-defined clip-planes.
 
 .. _pipe_capf:
 

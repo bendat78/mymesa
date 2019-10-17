@@ -7311,7 +7311,6 @@ get_mesa_program_tgsi(struct gl_context *ctx,
    struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;
    struct st_common_program *stp;
-   struct st_compute_program *stcp;
 
    switch (shader->Stage) {
    case MESA_SHADER_VERTEX:
@@ -7325,12 +7324,9 @@ get_mesa_program_tgsi(struct gl_context *ctx,
    case MESA_SHADER_TESS_CTRL:
    case MESA_SHADER_TESS_EVAL:
    case MESA_SHADER_GEOMETRY:
+   case MESA_SHADER_COMPUTE:
       stp = st_common_program(prog);
       stp->glsl_to_tgsi = v;
-      break;
-   case MESA_SHADER_COMPUTE:
-      stcp = (struct st_compute_program *)prog;
-      stcp->glsl_to_tgsi = v;
       break;
    default:
       assert(!"should not be reached");
@@ -7457,35 +7453,3 @@ st_link_tgsi(struct gl_context *ctx, struct gl_shader_program *prog)
 
    return GL_TRUE;
 }
-
-extern "C" {
-
-void
-st_translate_stream_output_info(struct gl_transform_feedback_info *info,
-                                const ubyte outputMapping[],
-                                struct pipe_stream_output_info *so)
-{
-   unsigned i;
-
-   if (!info) {
-      so->num_outputs = 0;
-      return;
-   }
-
-   for (i = 0; i < info->NumOutputs; i++) {
-      so->output[i].register_index =
-         outputMapping[info->Outputs[i].OutputRegister];
-      so->output[i].start_component = info->Outputs[i].ComponentOffset;
-      so->output[i].num_components = info->Outputs[i].NumComponents;
-      so->output[i].output_buffer = info->Outputs[i].OutputBuffer;
-      so->output[i].dst_offset = info->Outputs[i].DstOffset;
-      so->output[i].stream = info->Outputs[i].StreamId;
-   }
-
-   for (i = 0; i < PIPE_MAX_SO_BUFFERS; i++) {
-      so->stride[i] = info->Buffers[i].Stride;
-   }
-   so->num_outputs = info->NumOutputs;
-}
-
-} /* extern "C" */
