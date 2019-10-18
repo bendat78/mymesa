@@ -336,8 +336,6 @@ st_nir_preprocess(struct st_context *st, struct gl_program *prog,
    const nir_shader_compiler_options *options =
       st->ctx->Const.ShaderCompilerOptions[prog->info.stage].NirOptions;
    assert(options);
-   bool lower_64bit =
-      options->lower_int64_options || options->lower_doubles_options;
    nir_shader *nir = prog->nir;
 
    /* Set the next shader stage hint for VS and TES. */
@@ -387,7 +385,6 @@ st_nir_preprocess(struct st_context *st, struct gl_program *prog,
 
    /* before buffers and vars_to_ssa */
    NIR_PASS_V(nir, gl_nir_lower_bindless_images);
-   st_nir_opts(nir);
 
    /* TODO: Change GLSL to not lower shared memory. */
    if (prog->nir->info.stage == MESA_SHADER_COMPUTE &&
@@ -401,21 +398,6 @@ st_nir_preprocess(struct st_context *st, struct gl_program *prog,
    NIR_PASS_V(nir, gl_nir_lower_buffers, shader_program);
    /* Do a round of constant folding to clean up address calculations */
    NIR_PASS_V(nir, nir_opt_constant_folding);
-
-   if (lower_64bit) {
-      bool lowered_64bit_ops = false;
-      if (options->lower_doubles_options) {
-         NIR_PASS(lowered_64bit_ops, nir, nir_lower_doubles,
-                  st->ctx->SoftFP64, options->lower_doubles_options);
-      }
-      if (options->lower_int64_options) {
-         NIR_PASS(lowered_64bit_ops, nir, nir_lower_int64,
-                  options->lower_int64_options);
-      }
-
-      if (lowered_64bit_ops)
-         st_nir_opts(nir);
-   }
 }
 
 /* Second third of converting glsl_to_nir. This creates uniforms, gathers
@@ -484,6 +466,23 @@ st_glsl_to_nir_post_opts(struct st_context *st, struct gl_program *prog,
    NIR_PASS_V(nir, gl_nir_lower_atomics, shader_program, true);
    NIR_PASS_V(nir, nir_opt_intrinsics);
 
+   /* Lower 64-bit ops. */
+   if (nir->options->lower_int64_options ||
+       nir->options->lower_doubles_options) {
+      bool lowered_64bit_ops = false;
+      if (nir->options->lower_doubles_options) {
+         NIR_PASS(lowered_64bit_ops, nir, nir_lower_doubles,
+                  st->ctx->SoftFP64, nir->options->lower_doubles_options);
+      }
+      if (nir->options->lower_int64_options) {
+         NIR_PASS(lowered_64bit_ops, nir, nir_lower_int64,
+                  nir->options->lower_int64_options);
+      }
+
+      if (lowered_64bit_ops)
+         st_nir_opts(nir);
+   }
+
    nir_variable_mode mask = nir_var_function_temp;
    nir_remove_dead_variables(nir, mask);
 
@@ -504,29 +503,23 @@ set_st_program(struct gl_program *prog,
 {
    struct st_vertex_program *stvp;
    struct st_common_program *stp;
-   struct st_fragment_program *stfp;
 
    switch (prog->info.stage) {
    case MESA_SHADER_VERTEX:
       stvp = (struct st_vertex_program *)prog;
       stvp->shader_program = shader_program;
-      stvp->tgsi.type = PIPE_SHADER_IR_NIR;
-      stvp->tgsi.ir.nir = nir;
+      stvp->state.type = PIPE_SHADER_IR_NIR;
+      stvp->state.ir.nir = nir;
       break;
    case MESA_SHADER_GEOMETRY:
    case MESA_SHADER_TESS_CTRL:
    case MESA_SHADER_TESS_EVAL:
    case MESA_SHADER_COMPUTE:
+   case MESA_SHADER_FRAGMENT:
       stp = (struct st_common_program *)prog;
       stp->shader_program = shader_program;
-      stp->tgsi.type = PIPE_SHADER_IR_NIR;
-      stp->tgsi.ir.nir = nir;
-      break;
-   case MESA_SHADER_FRAGMENT:
-      stfp = (struct st_fragment_program *)prog;
-      stfp->shader_program = shader_program;
-      stfp->tgsi.type = PIPE_SHADER_IR_NIR;
-      stfp->tgsi.ir.nir = nir;
+      stp->state.type = PIPE_SHADER_IR_NIR;
+      stp->state.ir.nir = nir;
       break;
    default:
       unreachable("unknown shader stage");
@@ -653,12 +646,15 @@ st_link_nir(struct gl_context *ctx,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_screen *screen = st->pipe->screen;
+   unsigned num_linked_shaders = 0;
 
    unsigned last_stage = 0;
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_linked_shader *shader = shader_program->_LinkedShaders[i];
       if (shader == NULL)
          continue;
+
+      num_linked_shaders++;
 
       const nir_shader_compiler_options *options =
          st->ctx->Const.ShaderCompilerOptions[shader->Stage].NirOptions;
@@ -756,6 +752,12 @@ st_link_nir(struct gl_context *ctx,
          continue;
 
       nir_shader *nir = shader->Program->nir;
+
+      /* Linked shaders are optimized in st_nir_link_shaders. Separate shaders
+       * and shaders with a fixed-func VS or FS are optimized here.
+       */
+      if (num_linked_shaders == 1)
+         st_nir_opts(nir);
 
       NIR_PASS_V(nir, st_nir_lower_wpos_ytransform, shader->Program,
                  st->pipe->screen);

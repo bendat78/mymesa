@@ -719,21 +719,6 @@ iris_resource_create_with_modifiers(struct pipe_screen *pscreen,
          return NULL;
       }
 
-      /* No modifiers - we can select our own tiling. */
-
-      if (has_depth) {
-         /* Depth must be Y-tiled */
-         tiling_flags = ISL_TILING_Y0_BIT;
-      } else if (templ->format == PIPE_FORMAT_S8_UINT) {
-         /* Stencil must be W-tiled */
-         tiling_flags = ISL_TILING_W_BIT;
-      } else if (templ->target == PIPE_BUFFER ||
-                 templ->target == PIPE_TEXTURE_1D ||
-                 templ->target == PIPE_TEXTURE_1D_ARRAY) {
-         /* Use linear for buffers and 1D textures */
-         tiling_flags = ISL_TILING_LINEAR_BIT;
-      }
-
       /* Use linear for staging buffers */
       if (templ->usage == PIPE_USAGE_STAGING ||
           templ->bind & (PIPE_BIND_LINEAR | PIPE_BIND_CURSOR) )
@@ -838,7 +823,9 @@ iris_resource_create_with_modifiers(struct pipe_screen *pscreen,
       bo_size = res->surf.size_B;
    }
 
-   res->bo = iris_bo_alloc_tiled(screen->bufmgr, name, bo_size, 4096, memzone,
+   uint32_t alignment = MAX2(4096, res->surf.alignment_B);
+   res->bo = iris_bo_alloc_tiled(screen->bufmgr, name, bo_size, alignment,
+                                 memzone,
                                  isl_tiling_to_i915_tiling(res->surf.tiling),
                                  res->surf.row_pitch_B, flags);
 

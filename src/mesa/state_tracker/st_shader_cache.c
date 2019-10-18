@@ -31,6 +31,7 @@
 #include "compiler/nir/nir_serialize.h"
 #include "pipe/p_shader_tokens.h"
 #include "program/ir_to_mesa.h"
+#include "tgsi/tgsi_parse.h"
 #include "util/u_memory.h"
 
 void
@@ -41,10 +42,10 @@ st_get_program_binary_driver_sha1(struct gl_context *ctx, uint8_t *sha1)
 
 static void
 write_stream_out_to_cache(struct blob *blob,
-                          struct pipe_shader_state *tgsi)
+                          struct pipe_shader_state *state)
 {
-   blob_write_bytes(blob, &tgsi->stream_output,
-                    sizeof(tgsi->stream_output));
+   blob_write_bytes(blob, &state->stream_output,
+                    sizeof(state->stream_output));
 }
 
 static void
@@ -57,8 +58,10 @@ copy_blob_to_driver_cache_blob(struct blob *blob, struct gl_program *prog)
 
 static void
 write_tgsi_to_cache(struct blob *blob, const struct tgsi_token *tokens,
-                    struct gl_program *prog, unsigned num_tokens)
+                    struct gl_program *prog)
 {
+   unsigned num_tokens = tgsi_num_tokens(tokens);
+
    blob_write_uint32(blob, num_tokens);
    blob_write_bytes(blob, tokens, num_tokens * sizeof(struct tgsi_token));
    copy_blob_to_driver_cache_blob(blob, prog);
@@ -93,40 +96,29 @@ st_serialise_ir_program(struct gl_context *ctx, struct gl_program *prog,
       blob_write_bytes(&blob, stvp->result_to_output,
                        sizeof(stvp->result_to_output));
 
-      write_stream_out_to_cache(&blob, &stvp->tgsi);
+      write_stream_out_to_cache(&blob, &stvp->state);
 
       if (nir)
          write_nir_to_cache(&blob, prog);
       else
-         write_tgsi_to_cache(&blob, stvp->tgsi.tokens, prog,
-                             stvp->num_tgsi_tokens);
+         write_tgsi_to_cache(&blob, stvp->state.tokens, prog);
       break;
    }
    case MESA_SHADER_TESS_CTRL:
    case MESA_SHADER_TESS_EVAL:
    case MESA_SHADER_GEOMETRY:
+   case MESA_SHADER_FRAGMENT:
    case MESA_SHADER_COMPUTE: {
       struct st_common_program *stcp = (struct st_common_program *) prog;
 
       if (prog->info.stage == MESA_SHADER_TESS_EVAL ||
           prog->info.stage == MESA_SHADER_GEOMETRY)
-         write_stream_out_to_cache(&blob, &stcp->tgsi);
+         write_stream_out_to_cache(&blob, &stcp->state);
 
       if (nir)
          write_nir_to_cache(&blob, prog);
       else
-         write_tgsi_to_cache(&blob, stcp->tgsi.tokens, prog,
-                             stcp->num_tgsi_tokens);
-      break;
-   }
-   case MESA_SHADER_FRAGMENT: {
-      struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
-
-      if (nir)
-         write_nir_to_cache(&blob, prog);
-      else
-         write_tgsi_to_cache(&blob, stfp->tgsi.tokens, prog,
-                             stfp->num_tgsi_tokens);
+         write_tgsi_to_cache(&blob, stcp->state.tokens, prog);
       break;
    }
    default:
@@ -137,7 +129,7 @@ st_serialise_ir_program(struct gl_context *ctx, struct gl_program *prog,
 }
 
 /**
- * Store tgsi and any other required state in on-disk shader cache.
+ * Store TGSI or NIR and any other required state in on-disk shader cache.
  */
 void
 st_store_ir_in_disk_cache(struct st_context *st, struct gl_program *prog,
@@ -163,19 +155,18 @@ st_store_ir_in_disk_cache(struct st_context *st, struct gl_program *prog,
 
 static void
 read_stream_out_from_cache(struct blob_reader *blob_reader,
-                           struct pipe_shader_state *tgsi)
+                           struct pipe_shader_state *state)
 {
-   blob_copy_bytes(blob_reader, (uint8_t *) &tgsi->stream_output,
-                    sizeof(tgsi->stream_output));
+   blob_copy_bytes(blob_reader, (uint8_t *) &state->stream_output,
+                    sizeof(state->stream_output));
 }
 
 static void
 read_tgsi_from_cache(struct blob_reader *blob_reader,
-                     const struct tgsi_token **tokens,
-                     unsigned *num_tokens)
+                     const struct tgsi_token **tokens)
 {
-   *num_tokens  = blob_read_uint32(blob_reader);
-   unsigned tokens_size = *num_tokens * sizeof(struct tgsi_token);
+   unsigned num_tokens  = blob_read_uint32(blob_reader);
+   unsigned tokens_size = num_tokens * sizeof(struct tgsi_token);
    *tokens = (const struct tgsi_token*) MALLOC(tokens_size);
    blob_copy_bytes(blob_reader, (uint8_t *) *tokens, tokens_size);
 }
@@ -210,16 +201,15 @@ st_deserialise_ir_program(struct gl_context *ctx,
       blob_copy_bytes(&blob_reader, (uint8_t *) stvp->result_to_output,
                       sizeof(stvp->result_to_output));
 
-      read_stream_out_from_cache(&blob_reader, &stvp->tgsi);
+      read_stream_out_from_cache(&blob_reader, &stvp->state);
 
       if (nir) {
-         stvp->tgsi.type = PIPE_SHADER_IR_NIR;
+         stvp->state.type = PIPE_SHADER_IR_NIR;
          stvp->shader_program = shProg;
-         stvp->tgsi.ir.nir = nir_deserialize(NULL, options, &blob_reader);
-         prog->nir = stvp->tgsi.ir.nir;
+         stvp->state.ir.nir = nir_deserialize(NULL, options, &blob_reader);
+         prog->nir = stvp->state.ir.nir;
       } else {
-         read_tgsi_from_cache(&blob_reader, &stvp->tgsi.tokens,
-                              &stvp->num_tgsi_tokens);
+         read_tgsi_from_cache(&blob_reader, &stvp->state.tokens);
       }
 
       if (st->vp == stvp)
@@ -230,50 +220,34 @@ st_deserialise_ir_program(struct gl_context *ctx,
    case MESA_SHADER_TESS_CTRL:
    case MESA_SHADER_TESS_EVAL:
    case MESA_SHADER_GEOMETRY:
+   case MESA_SHADER_FRAGMENT:
    case MESA_SHADER_COMPUTE: {
       struct st_common_program *stcp = st_common_program(prog);
 
-      st_release_basic_variants(st, stcp);
+      if (prog->info.stage == MESA_SHADER_FRAGMENT)
+         st_release_fp_variants(st, stcp);
+      else
+         st_release_common_variants(st, stcp);
 
       if (prog->info.stage == MESA_SHADER_TESS_EVAL ||
           prog->info.stage == MESA_SHADER_GEOMETRY)
-         read_stream_out_from_cache(&blob_reader, &stcp->tgsi);
+         read_stream_out_from_cache(&blob_reader, &stcp->state);
 
       if (nir) {
-         stcp->tgsi.type = PIPE_SHADER_IR_NIR;
-         stcp->tgsi.ir.nir = nir_deserialize(NULL, options, &blob_reader);
+         stcp->state.type = PIPE_SHADER_IR_NIR;
+         stcp->state.ir.nir = nir_deserialize(NULL, options, &blob_reader);
          stcp->shader_program = shProg;
-         prog->nir = stcp->tgsi.ir.nir;
+         prog->nir = stcp->state.ir.nir;
       } else {
-         read_tgsi_from_cache(&blob_reader, &stcp->tgsi.tokens,
-                              &stcp->num_tgsi_tokens);
+         read_tgsi_from_cache(&blob_reader, &stcp->state.tokens);
       }
 
       if ((prog->info.stage == MESA_SHADER_TESS_CTRL && st->tcp == stcp) ||
           (prog->info.stage == MESA_SHADER_TESS_EVAL && st->tep == stcp) ||
           (prog->info.stage == MESA_SHADER_GEOMETRY && st->gp == stcp) ||
+          (prog->info.stage == MESA_SHADER_FRAGMENT && st->fp == stcp) ||
           (prog->info.stage == MESA_SHADER_COMPUTE && st->cp == stcp))
          st->dirty |= stcp->affected_states;
-      break;
-   }
-   case MESA_SHADER_FRAGMENT: {
-      struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
-
-      st_release_fp_variants(st, stfp);
-
-      if (nir) {
-         stfp->tgsi.type = PIPE_SHADER_IR_NIR;
-         stfp->shader_program = shProg;
-         stfp->tgsi.ir.nir = nir_deserialize(NULL, options, &blob_reader);
-         prog->nir = stfp->tgsi.ir.nir;
-      } else {
-         read_tgsi_from_cache(&blob_reader, &stfp->tgsi.tokens,
-                              &stfp->num_tgsi_tokens);
-      }
-
-      if (st->fp == stfp)
-         st->dirty |= stfp->affected_states;
-
       break;
    }
    default:
@@ -311,7 +285,7 @@ st_load_ir_from_disk_cache(struct gl_context *ctx,
       return false;
 
    /* If we didn't load the GLSL metadata from cache then we could not have
-    * loaded the tgsi either.
+    * loaded TGSI or NIR either.
     */
    if (prog->data->LinkStatus != LINKING_SKIPPED)
       return false;

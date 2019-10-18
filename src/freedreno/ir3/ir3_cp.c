@@ -210,10 +210,13 @@ static bool valid_flags(struct ir3_instruction *instr, unsigned n,
 			if (is_store(instr) && (n == 1))
 				return false;
 
-			if ((instr->opc == OPC_LDL) && (n != 1))
+			if ((instr->opc == OPC_LDL) && (n == 0))
 				return false;
 
 			if ((instr->opc == OPC_STL) && (n != 2))
+				return false;
+
+			if (instr->opc == OPC_STLW && n == 0)
 				return false;
 
 			/* disallow CP into anything but the SSBO slot argument for

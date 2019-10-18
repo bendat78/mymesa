@@ -752,9 +752,9 @@ emit_intrinsic_load_ubo(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 
 	for (int i = 0; i < intr->num_components; i++) {
 		struct ir3_instruction *load =
-				ir3_LDG(b, addr, 0, create_immed(b, 1), 0);
+			ir3_LDG(b, addr, 0, create_immed(b, 1), 0, /* num components */
+					create_immed(b, off + i * 4), 0);
 		load->cat6.type = TYPE_U32;
-		load->cat6.src_offset = off + i * 4;     /* byte offset */
 		dst[i] = load;
 	}
 }
@@ -787,8 +787,10 @@ emit_intrinsic_load_shared(struct ir3_context *ctx, nir_intrinsic_instr *intr,
 	offset = ir3_get_src(ctx, &intr->src[0])[0];
 	base   = nir_intrinsic_base(intr);
 
-	ldl = ir3_LDL(b, offset, 0, create_immed(b, intr->num_components), 0);
-	ldl->cat6.src_offset = base;
+	ldl = ir3_LDL(b, offset, 0,
+			create_immed(b, intr->num_components), 0,
+			create_immed(b, base), 0);
+
 	ldl->cat6.type = utype_dst(intr->dest);
 	ldl->regs[0]->wrmask = MASK(intr->num_components);
 
@@ -833,6 +835,75 @@ emit_intrinsic_store_shared(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		stl->barrier_conflict = IR3_BARRIER_SHARED_R | IR3_BARRIER_SHARED_W;
 
 		array_insert(b, b->keeps, stl);
+
+		/* Clear the bits in the writemask that we just wrote, then try
+		 * again to see if more channels are left.
+		 */
+		wrmask &= (15 << (first_component + length));
+	}
+}
+
+/* src[] = { offset }. const_index[] = { base } */
+static void
+emit_intrinsic_load_shared_ir3(struct ir3_context *ctx, nir_intrinsic_instr *intr,
+		struct ir3_instruction **dst)
+{
+	struct ir3_block *b = ctx->block;
+	struct ir3_instruction *load, *offset;
+	unsigned base;
+
+	offset = ir3_get_src(ctx, &intr->src[0])[0];
+	base   = nir_intrinsic_base(intr);
+
+	load = ir3_LDLW(b, offset, 0,
+			create_immed(b, intr->num_components), 0,
+			create_immed(b, base), 0);
+
+	load->cat6.type = utype_dst(intr->dest);
+	load->regs[0]->wrmask = MASK(intr->num_components);
+
+	load->barrier_class = IR3_BARRIER_SHARED_R;
+	load->barrier_conflict = IR3_BARRIER_SHARED_W;
+
+	ir3_split_dest(b, dst, load, 0, intr->num_components);
+}
+
+/* src[] = { value, offset }. const_index[] = { base, write_mask } */
+static void
+emit_intrinsic_store_shared_ir3(struct ir3_context *ctx, nir_intrinsic_instr *intr)
+{
+	struct ir3_block *b = ctx->block;
+	struct ir3_instruction *store, *offset;
+	struct ir3_instruction * const *value;
+	unsigned base, wrmask;
+
+	value  = ir3_get_src(ctx, &intr->src[0]);
+	offset = ir3_get_src(ctx, &intr->src[1])[0];
+
+	base   = nir_intrinsic_base(intr);
+	wrmask = nir_intrinsic_write_mask(intr);
+
+	/* Combine groups of consecutive enabled channels in one write
+	 * message. We use ffs to find the first enabled channel and then ffs on
+	 * the bit-inverse, down-shifted writemask to determine the length of
+	 * the block of enabled bits.
+	 *
+	 * (trick stolen from i965's fs_visitor::nir_emit_cs_intrinsic())
+	 */
+	while (wrmask) {
+		unsigned first_component = ffs(wrmask) - 1;
+		unsigned length = ffs(~(wrmask >> first_component)) - 1;
+
+		store = ir3_STLW(b, offset, 0,
+			ir3_create_collect(ctx, &value[first_component], length), 0,
+			create_immed(b, length), 0);
+
+		store->cat6.dst_offset = first_component + base;
+		store->cat6.type = utype_src(intr->src[0]);
+		store->barrier_class = IR3_BARRIER_SHARED_W;
+		store->barrier_conflict = IR3_BARRIER_SHARED_R | IR3_BARRIER_SHARED_W;
+
+		array_insert(b, b->keeps, store);
 
 		/* Clear the bits in the writemask that we just wrote, then try
 		 * again to see if more channels are left.
@@ -1249,6 +1320,9 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		dst = NULL;
 	}
 
+	const unsigned primitive_param = ctx->so->shader->const_state.offsets.primitive_param * 4;
+	const unsigned primitive_map = ctx->so->shader->const_state.offsets.primitive_map * 4;
+
 	switch (intr->intrinsic) {
 	case nir_intrinsic_load_uniform:
 		idx = nir_intrinsic_base(intr);
@@ -1273,6 +1347,26 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 					ctx->so->shader->ubo_state.size / 16);
 		}
 		break;
+
+	case nir_intrinsic_load_vs_primitive_stride_ir3:
+		dst[0] = create_uniform(b, primitive_param + 0);
+		break;
+	case nir_intrinsic_load_vs_vertex_stride_ir3:
+		dst[0] = create_uniform(b, primitive_param + 1);
+		break;
+	case nir_intrinsic_load_primitive_location_ir3:
+		idx = nir_intrinsic_driver_location(intr);
+		dst[0] = create_uniform(b, primitive_map + idx);
+		break;
+
+	case nir_intrinsic_load_gs_header_ir3:
+		dst[0] = ctx->gs_header;
+		break;
+
+	case nir_intrinsic_load_primitive_id:
+		dst[0] = ctx->primitive_id;
+		break;
+
 	case nir_intrinsic_load_ubo:
 		emit_intrinsic_load_ubo(ctx, intr, dst);
 		break;
@@ -1580,6 +1674,12 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 
 		break;
 	}
+	case nir_intrinsic_load_shared_ir3:
+		emit_intrinsic_load_shared_ir3(ctx, intr, dst);
+		break;
+	case nir_intrinsic_store_shared_ir3:
+		emit_intrinsic_store_shared_ir3(ctx, intr);
+		break;
 	default:
 		ir3_context_error(ctx, "Unhandled intrinsic type: %s\n",
 				nir_intrinsic_infos[intr->intrinsic].name);
@@ -2384,7 +2484,24 @@ emit_function(struct ir3_context *ctx, nir_function_impl *impl)
 		emit_stream_out(ctx);
 	}
 
-	ir3_END(ctx->block);
+	/* Vertex shaders in a tessellation or geometry pipeline treat END as a
+	 * NOP and has an epilogue that writes the VS outputs to local storage, to
+	 * be read by the HS.  Then it resets execution mask (chmask) and chains
+	 * to the next shader (chsh).
+	 */
+	if (ctx->so->type == MESA_SHADER_VERTEX && ctx->so->key.has_gs) {
+		struct ir3_instruction *chmask =
+			ir3_CHMASK(ctx->block);
+		chmask->barrier_class = IR3_BARRIER_EVERYTHING;
+		chmask->barrier_conflict = IR3_BARRIER_EVERYTHING;
+
+		struct ir3_instruction *chsh =
+			ir3_CHSH(ctx->block);
+		chsh->barrier_class = IR3_BARRIER_EVERYTHING;
+		chsh->barrier_conflict = IR3_BARRIER_EVERYTHING;
+	} else {
+		ir3_END(ctx->block);
+	}
 }
 
 static void
@@ -2395,6 +2512,12 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 	unsigned n = in->data.driver_location;
 	unsigned frac = in->data.location_frac;
 	unsigned slot = in->data.location;
+
+	/* Inputs are loaded using ldlw or ldg for these stages. */
+	if (ctx->so->type == MESA_SHADER_TESS_CTRL ||
+			ctx->so->type == MESA_SHADER_TESS_EVAL ||
+			ctx->so->type == MESA_SHADER_GEOMETRY)
+		return;
 
 	/* skip unread inputs, we could end up with (for example), unsplit
 	 * matrix/etc inputs in the case they are not read, so just silently
@@ -2593,7 +2716,8 @@ setup_output(struct ir3_context *ctx, nir_variable *out)
 			ir3_context_error(ctx, "unknown FS output name: %s\n",
 					gl_frag_result_name(slot));
 		}
-	} else if (ctx->so->type == MESA_SHADER_VERTEX) {
+	} else if (ctx->so->type == MESA_SHADER_VERTEX ||
+			ctx->so->type == MESA_SHADER_GEOMETRY) {
 		switch (slot) {
 		case VARYING_SLOT_POS:
 			so->writes_pos = true;
@@ -2601,6 +2725,11 @@ setup_output(struct ir3_context *ctx, nir_variable *out)
 		case VARYING_SLOT_PSIZ:
 			so->writes_psize = true;
 			break;
+		case VARYING_SLOT_PRIMITIVE_ID:
+		case VARYING_SLOT_LAYER:
+		case VARYING_SLOT_GS_VERTEX_FLAGS_IR3:
+			debug_assert(ctx->so->type == MESA_SHADER_GEOMETRY);
+			/* fall through */
 		case VARYING_SLOT_COL0:
 		case VARYING_SLOT_COL1:
 		case VARYING_SLOT_BFC0:
@@ -2615,7 +2744,8 @@ setup_output(struct ir3_context *ctx, nir_variable *out)
 				break;
 			if ((VARYING_SLOT_TEX0 <= slot) && (slot <= VARYING_SLOT_TEX7))
 				break;
-			ir3_context_error(ctx, "unknown VS output name: %s\n",
+			ir3_context_error(ctx, "unknown %s shader output name: %s\n",
+					_mesa_shader_stage_to_string(ctx->so->type),
 					gl_varying_slot_name(slot));
 		}
 	} else {
@@ -2661,8 +2791,9 @@ max_drvloc(struct exec_list *vars)
 }
 
 static const unsigned max_sysvals[] = {
-	[MESA_SHADER_FRAGMENT] = 24,  // TODO
 	[MESA_SHADER_VERTEX]  = 16,
+	[MESA_SHADER_GEOMETRY] = 16,
+	[MESA_SHADER_FRAGMENT] = 24,  // TODO
 	[MESA_SHADER_COMPUTE] = 16, // TODO how many do we actually need?
 	[MESA_SHADER_KERNEL]  = 16, // TODO how many do we actually need?
 };
@@ -2679,6 +2810,8 @@ emit_instructions(struct ir3_context *ctx)
 	/* we need to leave room for sysvals:
 	 */
 	ninputs += max_sysvals[ctx->so->type];
+	if (ctx->so->type == MESA_SHADER_VERTEX)
+		noutputs += 8; /* gs or tess header + primitive_id */
 
 	ctx->ir = ir3_create(ctx->compiler, ctx->so->type, ninputs, noutputs);
 
@@ -2688,6 +2821,14 @@ emit_instructions(struct ir3_context *ctx)
 	list_addtail(&ctx->block->node, &ctx->ir->block_list);
 
 	ninputs -= max_sysvals[ctx->so->type];
+
+	if (ctx->so->key.has_gs) {
+		if (ctx->so->type == MESA_SHADER_VERTEX ||
+			ctx->so->type == MESA_SHADER_GEOMETRY) {
+			ctx->gs_header = create_input(ctx, 0);
+			ctx->primitive_id = create_input(ctx, 0);
+		}
+	}
 
 	/* for fragment shader, the vcoord input register is used as the
 	 * base for bary.f varying fetch instrs:
@@ -2721,9 +2862,38 @@ emit_instructions(struct ir3_context *ctx)
 				0x3, vcoord);
 	}
 
+	if (ctx->primitive_id)
+		add_sysval_input(ctx, SYSTEM_VALUE_PRIMITIVE_ID, ctx->primitive_id);
+	if (ctx->gs_header)
+		add_sysval_input(ctx, SYSTEM_VALUE_GS_HEADER_IR3, ctx->gs_header);
+
 	/* Setup outputs: */
 	nir_foreach_variable(var, &ctx->s->outputs) {
 		setup_output(ctx, var);
+	}
+
+	/* Set up the gs header as an output for the vertex shader so it won't
+	 * clobber it for the tess ctrl shader. */
+	if (ctx->so->type == MESA_SHADER_VERTEX) {
+		struct ir3_shader_variant *so = ctx->so;
+		if (ctx->primitive_id) {
+			unsigned n = so->outputs_count++;
+			so->outputs[n].slot = VARYING_SLOT_PRIMITIVE_ID;
+			so->outputs[n].regid = regid(n, 0);
+			ctx->ir->outputs[n * 4] = ctx->primitive_id;
+
+			compile_assert(ctx, n * 4 < ctx->ir->noutputs);
+		}
+
+		if (ctx->gs_header) {
+			unsigned n = so->outputs_count++;
+			so->outputs[n].slot = VARYING_SLOT_GS_HEADER_IR3;
+			so->outputs[n].regid = regid(n, 0);
+			ctx->ir->outputs[n * 4] = ctx->gs_header;
+
+			compile_assert(ctx, n * 4 < ctx->ir->noutputs);
+		}
+
 	}
 
 	/* Find # of samplers: */
@@ -2994,7 +3164,44 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 		ir3_print(ir);
 	}
 
-	ret = ir3_ra(so);
+	/* Pre-assign VS inputs on a6xx+ binning pass shader, to align
+	 * with draw pass VS, so binning and draw pass can both use the
+	 * same VBO state.
+	 *
+	 * Note that VS inputs are expected to be full precision.
+	 */
+	bool pre_assign_inputs = (ir->compiler->gpu_id >= 600) &&
+			(ir->type == MESA_SHADER_VERTEX) &&
+			so->binning_pass;
+
+	if (pre_assign_inputs) {
+		for (unsigned i = 0; i < ir->ninputs; i++) {
+			struct ir3_instruction *instr = ir->inputs[i];
+
+			if (!instr)
+				continue;
+
+			unsigned n = i / 4;
+			unsigned c = i % 4;
+			unsigned regid = so->nonbinning->inputs[n].regid + c;
+
+			instr->regs[0]->num = regid;
+		}
+
+		ret = ir3_ra(so, ir->inputs, ir->ninputs);
+	} else if (ctx->gs_header) {
+		/* We need to have these values in the same registers between VS and GS
+		 * since the VS chains to GS and doesn't get the sysvals redelivered.
+		 */
+
+		ctx->gs_header->regs[0]->num = 0;
+		ctx->primitive_id->regs[0]->num = 1;
+		struct ir3_instruction *precolor[] = { ctx->gs_header, ctx->primitive_id };
+		ret = ir3_ra(so, precolor, ARRAY_SIZE(precolor));
+	} else {
+		ret = ir3_ra(so, NULL, 0);
+	}
+
 	if (ret) {
 		DBG("RA failed!");
 		goto out;
@@ -3063,6 +3270,19 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 	if (ir3_shader_debug & IR3_DBG_OPTMSGS) {
 		printf("AFTER LEGALIZE:\n");
 		ir3_print(ir);
+	}
+
+	/* Set (ss)(sy) on first TCS and GEOMETRY instructions, since we don't
+	 * know what we might have to wait on when coming in from VS chsh.
+	 */
+	if (so->type == MESA_SHADER_TESS_CTRL ||
+		so->type == MESA_SHADER_GEOMETRY ) {
+		list_for_each_entry (struct ir3_block, block, &ir->block_list, node) {
+			list_for_each_entry (struct ir3_instruction, instr, &block->instr_list, node) {
+				instr->flags |= IR3_INSTR_SS | IR3_INSTR_SY;
+				break;
+			}
+		}
 	}
 
 	so->branchstack = ctx->max_stack;

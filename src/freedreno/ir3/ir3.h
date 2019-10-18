@@ -1081,7 +1081,7 @@ void ir3_a6xx_fixup_atomic_dests(struct ir3 *ir, struct ir3_shader_variant *so);
 
 /* register assignment: */
 struct ir3_ra_reg_set * ir3_ra_alloc_reg_set(struct ir3_compiler *compiler);
-int ir3_ra(struct ir3_shader_variant *v);
+int ir3_ra(struct ir3_shader_variant *v, struct ir3_instruction **precolor, unsigned nprecolor);
 
 /* legalize: */
 void ir3_legalize(struct ir3 *ir, bool *has_ssbo, bool *need_pixlod, int *max_bary);
@@ -1293,6 +1293,8 @@ INSTR0(BR)
 INSTR0(JUMP)
 INSTR1(KILL)
 INSTR0(END)
+INSTR0(CHSH)
+INSTR0(CHMASK)
 
 /* cat2 instructions, most 2 src but some 1 src: */
 INSTR2(ADD_F)
@@ -1405,10 +1407,12 @@ ir3_SAM(struct ir3_block *block, opc_t opc, type_t type,
 
 /* cat6 instructions: */
 INSTR2(LDLV)
-INSTR2(LDG)
-INSTR2(LDL)
+INSTR3(LDG)
+INSTR3(LDL)
+INSTR3(LDLW)
 INSTR3(STG)
 INSTR3(STL)
+INSTR3(STLW)
 INSTR1(RESINFO)
 INSTR1(RESFMT)
 INSTR2(ATOMIC_ADD)

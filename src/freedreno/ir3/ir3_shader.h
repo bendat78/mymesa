@@ -122,6 +122,8 @@ struct ir3_const_state {
 		unsigned image_dims;
 		unsigned driver_param;
 		unsigned tfbo;
+		unsigned primitive_param;
+		unsigned primitive_map;
 		unsigned immediate;
 	} offsets;
 
@@ -213,6 +215,8 @@ struct ir3_shader_key {
 			 */
 			unsigned rasterflat : 1;
 			unsigned fclamp_color : 1;
+
+			unsigned has_gs : 1;
 		};
 		uint32_t global;
 	};
@@ -310,9 +314,11 @@ ir3_normalize_key(struct ir3_shader_key *key, gl_shader_stage type)
 			key->vsaturate_r = 0;
 			key->vastc_srgb = 0;
 			key->vsamples = 0;
+			key->has_gs = false; /* FS doesn't care */
 		}
 		break;
 	case MESA_SHADER_VERTEX:
+	case MESA_SHADER_GEOMETRY:
 		key->color_two_side = false;
 		key->half_precision = false;
 		key->rasterflat = false;
@@ -550,6 +556,11 @@ struct ir3_shader {
 
 	struct ir3_shader_variant *variants;
 	mtx_t variants_lock;
+
+	uint32_t output_size; /* Size in dwords of all outputs for VS, size of entire patch for HS. */
+
+	/* Map from driver_location to byte offset in per-primitive storage */
+	unsigned output_loc[32];
 };
 
 void * ir3_shader_assemble(struct ir3_shader_variant *v, uint32_t gpu_id);
@@ -688,6 +699,10 @@ ir3_find_output_regid(const struct ir3_shader_variant *so, unsigned slot)
 		}
 	return regid(63, 0);
 }
+
+#define VARYING_SLOT_GS_HEADER_IR3			(VARYING_SLOT_MAX + 0)
+#define VARYING_SLOT_GS_VERTEX_FLAGS_IR3	(VARYING_SLOT_MAX + 1)
+
 
 static inline uint32_t
 ir3_find_sysval_regid(const struct ir3_shader_variant *so, unsigned slot)

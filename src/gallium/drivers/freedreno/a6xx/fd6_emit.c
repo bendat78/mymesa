@@ -790,6 +790,28 @@ fd6_emit_streamout(struct fd_ringbuffer *ring, struct fd6_emit *emit, struct ir3
 	}
 }
 
+static void
+fd6_emit_tess_const(struct fd6_emit *emit)
+{
+	struct fd_context *ctx = emit->ctx;
+	const unsigned vs_regid = emit->vs->shader->const_state.offsets.primitive_param;
+	const unsigned gs_regid = emit->gs->shader->const_state.offsets.primitive_param;
+	uint32_t num_vertices = emit->gs->shader->nir->info.gs.vertices_in;
+
+	uint32_t params[4] = {
+		emit->vs->shader->output_size * num_vertices * 4,	/* vs primitive stride */
+		emit->vs->shader->output_size * 4,					/* vs vertex stride */
+		0, 0,
+	};
+
+	struct fd_ringbuffer *constobj = fd_submit_new_ringbuffer(
+		ctx->batch->submit, 0x1000, FD_RINGBUFFER_STREAMING);
+
+	fd6_emit_const(constobj, emit->vs->type, vs_regid * 4, 0, ARRAY_SIZE(params), params, NULL);
+	fd6_emit_const(constobj, emit->gs->type, gs_regid * 4, 0, ARRAY_SIZE(params), params, NULL);
+
+	fd6_emit_take_group(emit, constobj, FD6_GROUP_PRIMITIVE_PARAMS, 0x7);
+}
 
 static void
 fd6_emit_consts(struct fd6_emit *emit, const struct ir3_shader_variant *v,
@@ -968,6 +990,9 @@ fd6_emit_state(struct fd_ringbuffer *ring, struct fd6_emit *emit)
 	fd6_emit_consts(emit, gs, PIPE_SHADER_GEOMETRY, FD6_GROUP_GS_CONST, 0x7);
 	fd6_emit_consts(emit, fs, PIPE_SHADER_FRAGMENT, FD6_GROUP_FS_CONST, 0x6);
 
+	if (emit->key.key.has_gs)
+		fd6_emit_tess_const(emit);
+
 	/* if driver-params are needed, emit each time: */
 	if (ir3_needs_vs_driver_params(vs)) {
 		struct fd_ringbuffer *dpconstobj = fd_submit_new_ringbuffer(
@@ -978,7 +1003,7 @@ fd6_emit_state(struct fd_ringbuffer *ring, struct fd6_emit *emit)
 		fd6_emit_take_group(emit, NULL, FD6_GROUP_VS_DRIVER_PARAMS, 0x7);
 	}
 
-	struct ir3_stream_output_info *info = &vs->shader->stream_output;
+	struct ir3_stream_output_info *info = &fd6_last_shader(prog)->shader->stream_output;
 	if (info->num_outputs)
 		fd6_emit_streamout(ring, emit, info);
 
@@ -1191,16 +1216,6 @@ fd6_emit_restore(struct fd_batch *batch, struct fd_ringbuffer *ring)
 	OUT_PKT4(ring, REG_A6XX_HLSQ_UPDATE_CNTL, 1);
 	OUT_RING(ring, 0xfffff);
 
-/*
-t7              opcode: CP_PERFCOUNTER_ACTION (50) (4 dwords)
-0000000500024048:               70d08003 00000000 001c5000 00000005
-t7              opcode: CP_PERFCOUNTER_ACTION (50) (4 dwords)
-0000000500024058:               70d08003 00000010 001c7000 00000005
-
-t7              opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
-0000000500024068:               70268000
-*/
-
 	OUT_WFI5(ring);
 
 	WRITE(REG_A6XX_RB_CCU_CNTL, 0x7c400004);
@@ -1235,10 +1250,6 @@ t7              opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
 	WRITE(REG_A6XX_GRAS_SAMPLE_CNTL, 0);
 	WRITE(REG_A6XX_GRAS_UNKNOWN_8110, 0x2);
 
-	WRITE(REG_A6XX_RB_RENDER_CONTROL0, 0x401);
-	WRITE(REG_A6XX_RB_RENDER_CONTROL1, 0);
-	WRITE(REG_A6XX_RB_FS_OUTPUT_CNTL0, 0);
-	WRITE(REG_A6XX_RB_SAMPLE_CNTL, 0);
 	WRITE(REG_A6XX_RB_UNKNOWN_8818, 0);
 	WRITE(REG_A6XX_RB_UNKNOWN_8819, 0);
 	WRITE(REG_A6XX_RB_UNKNOWN_881A, 0);
@@ -1247,9 +1258,6 @@ t7              opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
 	WRITE(REG_A6XX_RB_UNKNOWN_881D, 0);
 	WRITE(REG_A6XX_RB_UNKNOWN_881E, 0);
 	WRITE(REG_A6XX_RB_UNKNOWN_88F0, 0);
-
-	WRITE(REG_A6XX_VPC_UNKNOWN_9101, 0xffff00);
-	WRITE(REG_A6XX_VPC_UNKNOWN_9107, 0);
 
 	WRITE(REG_A6XX_VPC_UNKNOWN_9236,
 		  A6XX_VPC_UNKNOWN_9236_POINT_COORD_INVERT(0));
@@ -1261,8 +1269,7 @@ t7              opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
 	WRITE(REG_A6XX_PC_UNKNOWN_9806, 0);
 	WRITE(REG_A6XX_PC_UNKNOWN_9980, 0);
 
-	WRITE(REG_A6XX_PC_UNKNOWN_9B06, 0);
-	WRITE(REG_A6XX_PC_UNKNOWN_9B06, 0);
+	WRITE(REG_A6XX_PC_UNKNOWN_9B07, 0);
 
 	WRITE(REG_A6XX_SP_UNKNOWN_A81B, 0);
 
@@ -1313,12 +1320,6 @@ t7              opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
 
 	OUT_PKT4(ring, REG_A6XX_VPC_SO_BUF_CNTL, 1);
 	OUT_RING(ring, 0x00000000);   /* VPC_SO_BUF_CNTL */
-
-	OUT_PKT4(ring, REG_A6XX_SP_HS_CTRL_REG0, 1);
-	OUT_RING(ring, 0x00000000);
-
-	OUT_PKT4(ring, REG_A6XX_SP_GS_CTRL_REG0, 1);
-	OUT_RING(ring, 0x00000000);
 
 	OUT_PKT4(ring, REG_A6XX_GRAS_LRZ_CNTL, 1);
 	OUT_RING(ring, 0x00000000);

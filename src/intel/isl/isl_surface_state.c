@@ -72,7 +72,9 @@ static const uint8_t isl_to_gen_tiling[] = {
    [ISL_TILING_Y0]      = YMAJOR,
    [ISL_TILING_Yf]      = YMAJOR,
    [ISL_TILING_Ys]      = YMAJOR,
+#if GEN_GEN <= 11
    [ISL_TILING_W]       = WMAJOR,
+#endif
 };
 #endif
 
@@ -84,7 +86,13 @@ static const uint32_t isl_to_gen_multisample_layout[] = {
 };
 #endif
 
-#if GEN_GEN >= 9
+#if GEN_GEN >= 12
+static const uint32_t isl_to_gen_aux_mode[] = {
+   [ISL_AUX_USAGE_NONE] = AUX_NONE,
+   [ISL_AUX_USAGE_MCS] = AUX_CCS_E,
+   [ISL_AUX_USAGE_CCS_E] = AUX_CCS_E,
+};
+#elif GEN_GEN >= 9
 static const uint32_t isl_to_gen_aux_mode[] = {
    [ISL_AUX_USAGE_NONE] = AUX_NONE,
    [ISL_AUX_USAGE_HIZ] = AUX_HIZ,
@@ -441,6 +449,7 @@ isl_genX(surf_fill_state_s)(const struct isl_device *dev, void *state,
 #endif
 
 #if GEN_GEN >= 8
+   assert(GEN_GEN < 12 || info->surf->tiling != ISL_TILING_W);
    s.TileMode = isl_to_gen_tiling[info->surf->tiling];
 #else
    s.TiledSurface = info->surf->tiling != ISL_TILING_LINEAR,
@@ -648,7 +657,9 @@ isl_genX(surf_fill_state_s)(const struct isl_device *dev, void *state,
       }
 #endif
 
-#if GEN_GEN >= 9
+#if GEN_GEN >= 12
+      assert(info->use_clear_address);
+#elif GEN_GEN >= 9
       if (!info->use_clear_address) {
          s.RedClearColor = info->clear_color.u32[0];
          s.GreenClearColor = info->clear_color.u32[1];
