@@ -120,6 +120,8 @@ struct ac_llvm_context {
 	unsigned wave_size;
 	unsigned ballot_mask_bits;
 
+	unsigned float_mode;
+
 	LLVMValueRef lds;
 };
 
@@ -714,6 +716,10 @@ ac_build_frexp_exp(struct ac_llvm_context *ctx, LLVMValueRef src0,
 LLVMValueRef
 ac_build_frexp_mant(struct ac_llvm_context *ctx, LLVMValueRef src0,
 		    unsigned bitsize);
+
+LLVMValueRef
+ac_build_canonicalize(struct ac_llvm_context *ctx, LLVMValueRef src0,
+		      unsigned bitsize);
 
 LLVMValueRef
 ac_build_ddxy_interp(struct ac_llvm_context *ctx, LLVMValueRef interp_ij);

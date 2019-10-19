@@ -212,7 +212,7 @@ nir_const_value_as_int(nir_const_value value, unsigned bit_size)
    }
 }
 
-static inline int64_t
+static inline uint64_t
 nir_const_value_as_uint(nir_const_value value, unsigned bit_size)
 {
    switch (bit_size) {
@@ -1736,6 +1736,7 @@ typedef enum {
    nir_texop_samples_identical,  /**< Query whether all samples are definitely
                                   * identical.
                                   */
+   nir_texop_tex_prefetch,       /**< Regular texture look-up, eligible for pre-dispatch */
 } nir_texop;
 
 typedef struct {
@@ -2757,6 +2758,14 @@ typedef struct nir_shader_compiler_options {
    bool lower_rotate;
 
    /**
+    * Backend supports imul24, and would like to use it (when possible)
+    * for address/offset calculation.  If true, driver should call
+    * nir_lower_amul().  (If not set, amul will automatically be lowered
+    * to imul.)
+    */
+   bool has_imul24;
+
+   /**
     * Is this the Intel vec4 backend?
     *
     * Used to inhibit algebraic optimizations that are known to be harmful on
@@ -3539,6 +3548,8 @@ void nir_compact_varyings(nir_shader *producer, nir_shader *consumer,
 void nir_link_xfb_varyings(nir_shader *producer, nir_shader *consumer);
 bool nir_link_opt_varyings(nir_shader *producer, nir_shader *consumer);
 
+bool nir_lower_amul(nir_shader *shader,
+                    int (*type_size)(const struct glsl_type *, bool));
 
 void nir_assign_io_var_locations(struct exec_list *var_list,
                                  unsigned *size,

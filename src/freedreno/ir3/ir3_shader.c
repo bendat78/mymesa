@@ -107,6 +107,20 @@ fixup_regfootprint(struct ir3_shader_variant *v, uint32_t gpu_id)
 			v->info.max_reg = MAX2(v->info.max_reg, regid >> 2);
 		}
 	}
+
+	for (i = 0; i < v->num_sampler_prefetch; i++) {
+		unsigned n = util_last_bit(v->sampler_prefetch[i].wrmask) - 1;
+		int32_t regid = v->sampler_prefetch[i].dst + n;
+		if (v->sampler_prefetch[i].half_precision) {
+			if (gpu_id < 500) {
+				v->info.max_half_reg = MAX2(v->info.max_half_reg, regid >> 2);
+			} else {
+				v->info.max_reg = MAX2(v->info.max_reg, regid >> 3);
+			}
+		} else {
+			v->info.max_reg = MAX2(v->info.max_reg, regid);
+		}
+	}
 }
 
 /* wrapper for ir3_assemble() which does some info fixup based on
@@ -303,6 +317,8 @@ ir3_shader_from_nir(struct ir3_compiler *compiler, nir_shader *nir)
 
 	NIR_PASS_V(nir, nir_lower_io_arrays_to_elements_no_indirects, false);
 
+	NIR_PASS_V(nir, nir_lower_amul, ir3_glsl_type_size);
+
 	/* do first pass optimization, ignoring the key: */
 	ir3_optimize_nir(shader, nir, NULL);
 
@@ -380,6 +396,16 @@ ir3_shader_disasm(struct ir3_shader_variant *so, uint32_t *bin, FILE *out)
 		fprintf(out, "@in(%sr%d.%c)\tin%d\n",
 				(reg->flags & IR3_REG_HALF) ? "h" : "",
 				(regid >> 2), "xyzw"[regid & 0x3], i);
+	}
+
+	/* print pre-dispatch texture fetches: */
+	for (i = 0; i < so->num_sampler_prefetch; i++) {
+		const struct ir3_sampler_prefetch *fetch = &so->sampler_prefetch[i];
+		fprintf(out, "@tex(%sr%d.%c)\tsrc=%u, samp=%u, tex=%u, wrmask=%x, cmd=%u\n",
+				fetch->half_precision ? "h" : "",
+				fetch->dst >> 2, "xyzw"[fetch->dst & 0x3],
+				fetch->src, fetch->samp_id, fetch->tex_id,
+				fetch->wrmask, fetch->cmd);
 	}
 
 	for (i = 0; i < ir->noutputs; i++) {

@@ -84,9 +84,6 @@ etna_screen_destroy(struct pipe_screen *pscreen)
 {
    struct etna_screen *screen = etna_screen(pscreen);
 
-   _mesa_set_destroy(screen->used_resources, NULL);
-   mtx_destroy(&screen->lock);
-
    if (screen->perfmon)
       etna_perfmon_del(screen->perfmon);
 
@@ -755,7 +752,8 @@ etna_get_specs(struct etna_screen *screen)
    if (screen->specs.single_buffer)
       DBG("etnaviv: Single buffer mode enabled with %d pixel pipes", screen->specs.pixel_pipes);
 
-   screen->specs.tex_astc = VIV_FEATURE(screen, chipMinorFeatures4, TEXTURE_ASTC);
+   screen->specs.tex_astc = VIV_FEATURE(screen, chipMinorFeatures4, TEXTURE_ASTC) &&
+                            !VIV_FEATURE(screen, chipMinorFeatures6, NO_ASTC);
 
    screen->specs.use_blt = VIV_FEATURE(screen, chipMinorFeatures5, BLT_ENGINE);
 
@@ -900,6 +898,11 @@ etna_screen_create(struct etna_device *dev, struct etna_gpu *gpu,
    if (!etna_get_specs(screen))
       goto fail;
 
+   if (screen->specs.halti >= 5 && !etnaviv_device_softpin_capable(dev)) {
+      DBG("halti5 requires softpin");
+      goto fail;
+   }
+
    screen->options = (nir_shader_compiler_options) {
       .lower_fpow = true,
       .lower_sub = true,
@@ -957,16 +960,8 @@ etna_screen_create(struct etna_device *dev, struct etna_gpu *gpu,
    if (screen->drm_version >= ETNA_DRM_VERSION_PERFMON)
       etna_pm_query_setup(screen);
 
-   mtx_init(&screen->lock, mtx_recursive);
-   screen->used_resources = _mesa_set_create(NULL, _mesa_hash_pointer,
-                                             _mesa_key_pointer_equal);
-   if (!screen->used_resources)
-      goto fail2;
-
    return pscreen;
 
-fail2:
-   mtx_destroy(&screen->lock);
 fail:
    etna_screen_destroy(pscreen);
    return NULL;

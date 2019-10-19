@@ -268,8 +268,16 @@ struct ir3_instruction {
 			int off;              /* component/offset */
 		} fo;
 		struct {
-			struct ir3_block *block;
-		} inout;
+			unsigned samp, tex;
+			unsigned input_offset;
+		} prefetch;
+		struct {
+			/* for sysvals, identifies the sysval type.  Mostly so we can
+			 * identify the special cases where a sysval should not be DCE'd
+			 * (currently, just pre-fs texture fetch)
+			 */
+			gl_system_value sysval;
+		} input;
 	};
 
 	/* transient values used during various algorithms: */
@@ -852,8 +860,8 @@ static inline bool ir3_cat2_int(opc_t opc)
 	case OPC_MAX_S:
 	case OPC_CMPV_U:
 	case OPC_CMPV_S:
-	case OPC_MUL_U:
-	case OPC_MUL_S:
+	case OPC_MUL_U24:
+	case OPC_MUL_S24:
 	case OPC_MULL_U:
 	case OPC_CLZ_S:
 	case OPC_ABSNEG_S:
@@ -945,8 +953,8 @@ static inline unsigned ir3_cat2_absneg(opc_t opc)
 	case OPC_MAX_S:
 	case OPC_CMPV_U:
 	case OPC_CMPV_S:
-	case OPC_MUL_U:
-	case OPC_MUL_S:
+	case OPC_MUL_U24:
+	case OPC_MUL_S24:
 	case OPC_MULL_U:
 	case OPC_CLZ_S:
 		return 0;
@@ -1058,13 +1066,13 @@ void ir3_print(struct ir3 *ir);
 void ir3_print_instr(struct ir3_instruction *instr);
 
 /* depth calculation: */
+struct ir3_shader_variant;
 int ir3_delayslots(struct ir3_instruction *assigner,
 		struct ir3_instruction *consumer, unsigned n);
 void ir3_insert_by_depth(struct ir3_instruction *instr, struct list_head *list);
-void ir3_depth(struct ir3 *ir);
+void ir3_depth(struct ir3 *ir, struct ir3_shader_variant *so);
 
 /* copy-propagate: */
-struct ir3_shader_variant;
 void ir3_cp(struct ir3 *ir, struct ir3_shader_variant *so);
 
 /* group neighbors and insert mov's to resolve conflicts: */
@@ -1327,8 +1335,8 @@ INSTR1(NOT_B)
 INSTR2(XOR_B)
 INSTR2(CMPV_U)
 INSTR2(CMPV_S)
-INSTR2(MUL_U)
-INSTR2(MUL_S)
+INSTR2(MUL_U24)
+INSTR2(MUL_S24)
 INSTR2(MULL_U)
 INSTR1(BFREV_B)
 INSTR1(CLZ_S)
@@ -1460,6 +1468,9 @@ INSTR4F(G, ATOMIC_XOR)
 /* cat7 instructions: */
 INSTR0(BAR)
 INSTR0(FENCE)
+
+/* meta instructions: */
+INSTR0(META_TEX_PREFETCH);
 
 /* ************************************************************************* */
 /* split this out or find some helper to use.. like main/bitset.h.. */

@@ -1112,6 +1112,27 @@ optimizations.extend([
 
    (('isign', a), ('imin', ('imax', a, -1), 1), 'options->lower_isign'),
    (('fsign', a), ('fsub', ('b2f', ('flt', 0.0, a)), ('b2f', ('flt', a, 0.0))), 'options->lower_fsign'),
+
+   # Address/offset calculations:
+   # Drivers supporting imul24 should use the nir_lower_amul() pass, this
+   # rule converts everyone else to imul:
+   (('amul', a, b), ('imul', a, b), '!options->has_imul24'),
+
+   (('imad24_ir3', a, b, 0), ('imul24', a, b)),
+   (('imad24_ir3', a, 0, c), (c)),
+   (('imad24_ir3', a, 1, c), ('iadd', a, c)),
+
+   # if first two srcs are const, crack apart the imad so constant folding
+   # can clean up the imul:
+   # TODO ffma should probably get a similar rule:
+   (('imad24_ir3', '#a', '#b', c), ('iadd', ('imul', a, b), c)),
+
+   # These will turn 24b address/offset calc back into 32b shifts, but
+   # it should be safe to get back some of the bits of precision that we
+   # already decided were no necessary:
+   (('imul24', a, '#b@32(is_pos_power_of_two)'), ('ishl', a, ('find_lsb', b)), '!options->lower_bitops'),
+   (('imul24', a, '#b@32(is_neg_power_of_two)'), ('ineg', ('ishl', a, ('find_lsb', ('iabs', b)))), '!options->lower_bitops'),
+   (('imul24', a, 0), (0)),
 ])
 
 # bit_size dependent lowerings
