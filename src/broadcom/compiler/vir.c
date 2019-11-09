@@ -749,9 +749,9 @@ v3d_nir_lower_vs_early(struct v3d_compile *c)
         NIR_PASS_V(c->s, nir_lower_io_to_scalar_early,
                    nir_var_shader_in | nir_var_shader_out);
         uint64_t used_outputs[4] = {0};
-        for (int i = 0; i < c->vs_key->num_fs_inputs; i++) {
-                int slot = v3d_slot_get_slot(c->vs_key->fs_inputs[i]);
-                int comp = v3d_slot_get_component(c->vs_key->fs_inputs[i]);
+        for (int i = 0; i < c->vs_key->num_used_outputs; i++) {
+                int slot = v3d_slot_get_slot(c->vs_key->used_outputs[i]);
+                int comp = v3d_slot_get_component(c->vs_key->used_outputs[i]);
                 used_outputs[comp] |= 1ull << slot;
         }
         NIR_PASS_V(c->s, nir_remove_unused_io_vars,
@@ -844,6 +844,12 @@ v3d_nir_lower_fs_late(struct v3d_compile *c)
         if (c->fs_key->clamp_color)
                 NIR_PASS_V(c->s, nir_lower_clamp_color_outputs);
 
+        if (c->fs_key->alpha_test) {
+                NIR_PASS_V(c->s, nir_lower_alpha_test,
+                           c->fs_key->alpha_test_func,
+                           false, NULL);
+        }
+
         if (c->key->ucp_enables)
                 NIR_PASS_V(c->s, nir_lower_clip_fs, c->key->ucp_enables,
                            false);
@@ -932,7 +938,7 @@ uint64_t *v3d_compile(const struct v3d_compiler *compiler,
         NIR_PASS_V(c->s, v3d_nir_lower_io, c);
         NIR_PASS_V(c->s, v3d_nir_lower_txf_ms, c);
         NIR_PASS_V(c->s, v3d_nir_lower_image_load_store);
-        NIR_PASS_V(c->s, nir_lower_idiv);
+        NIR_PASS_V(c->s, nir_lower_idiv, nir_lower_idiv_fast);
 
         v3d_optimize_nir(c->s);
 
@@ -1028,7 +1034,7 @@ vir_compile_destroy(struct v3d_compile *c)
         c->cursor.link = NULL;
 
         vir_for_each_block(block, c) {
-                while (!list_empty(&block->instructions)) {
+                while (!list_is_empty(&block->instructions)) {
                         struct qinst *qinst =
                                 list_first_entry(&block->instructions,
                                                  struct qinst, link);

@@ -98,6 +98,7 @@
 #include "drm-uapi/i915_drm.h"
 #include "nir.h"
 #include "intel/compiler/brw_compiler.h"
+#include "intel/common/gen_aux_map.h"
 #include "intel/common/gen_l3_config.h"
 #include "intel/common/gen_sample_positions.h"
 #include "iris_batch.h"
@@ -109,12 +110,16 @@
 #include "iris_genx_macros.h"
 #include "intel/common/gen_guardband.h"
 
-#if GEN_GEN == 8
-#define MOCS_PTE 0x18
-#define MOCS_WB 0x78
-#else
+#if GEN_GEN >= 12
+/* TODO: Set PTE to MOCS 61 when the kernel is ready */
+#define MOCS_PTE (3 << 1)
+#define MOCS_WB (2 << 1)
+#elif GEN_GEN >= 9
 #define MOCS_PTE (1 << 1)
 #define MOCS_WB  (2 << 1)
+#elif GEN_GEN == 8
+#define MOCS_PTE 0x18
+#define MOCS_WB 0x78
 #endif
 
 static uint32_t
@@ -1277,6 +1282,10 @@ struct iris_depth_stencil_alpha_state {
    /** Partial 3DSTATE_WM_DEPTH_STENCIL. */
    uint32_t wmds[GENX(3DSTATE_WM_DEPTH_STENCIL_length)];
 
+#if GEN_GEN >= 12
+   uint32_t depth_bounds[GENX(3DSTATE_DEPTH_BOUNDS_length)];
+#endif
+
    /** Outbound to BLEND_STATE, 3DSTATE_PS_BLEND, COLOR_CALC_STATE. */
    struct pipe_alpha_state alpha;
 
@@ -1339,6 +1348,16 @@ iris_create_zsa_state(struct pipe_context *ctx,
       /* wmds.[Backface]StencilReferenceValue are merged later */
    }
 
+#if GEN_GEN >= 12
+   iris_pack_command(GENX(3DSTATE_DEPTH_BOUNDS), cso->depth_bounds, depth_bounds) {
+      depth_bounds.DepthBoundsTestValueModifyDisable = false;
+      depth_bounds.DepthBoundsTestEnableModifyDisable = false;
+      depth_bounds.DepthBoundsTestEnable = state->depth.bounds_test;
+      depth_bounds.DepthBoundsTestMinValue = state->depth.bounds_min;
+      depth_bounds.DepthBoundsTestMaxValue = state->depth.bounds_max;
+   }
+#endif
+
    return cso;
 }
 
@@ -1369,6 +1388,11 @@ iris_bind_zsa_state(struct pipe_context *ctx, void *state)
 
       ice->state.depth_writes_enabled = new_cso->depth_writes_enabled;
       ice->state.stencil_writes_enabled = new_cso->stencil_writes_enabled;
+
+#if GEN_GEN >= 12
+      if (cso_changed(depth_bounds))
+         ice->state.dirty |= IRIS_DIRTY_DEPTH_BOUNDS;
+#endif
    }
 
    ice->state.cso_zsa = new_cso;
@@ -2965,7 +2989,7 @@ iris_set_framebuffer_state(struct pipe_context *ctx,
          view.format = zres->surf.format;
 
          if (iris_resource_level_has_hiz(zres, view.base_level)) {
-            info.hiz_usage = ISL_AUX_USAGE_HIZ;
+            info.hiz_usage = zres->aux.usage;
             info.hiz_surf = &zres->aux.surf;
             info.hiz_address = zres->aux.bo->gtt_offset + zres->aux.offset;
          }
@@ -2973,6 +2997,7 @@ iris_set_framebuffer_state(struct pipe_context *ctx,
 
       if (stencil_res) {
          view.usage |= ISL_SURF_USAGE_STENCIL_BIT;
+         info.stencil_aux_usage = stencil_res->aux.usage;
          info.stencil_surf = &stencil_res->surf;
          info.stencil_address = stencil_res->bo->gtt_offset + stencil_res->offset;
          if (!zres) {
@@ -2998,31 +3023,14 @@ iris_set_framebuffer_state(struct pipe_context *ctx,
    /* Render target change */
    ice->state.dirty |= IRIS_DIRTY_BINDINGS_FS;
 
+   ice->state.dirty |= IRIS_DIRTY_RENDER_BUFFER;
+
    ice->state.dirty |= IRIS_DIRTY_RENDER_RESOLVES_AND_FLUSHES;
 
    ice->state.dirty |= ice->state.dirty_for_nos[IRIS_NOS_FRAMEBUFFER];
 
    if (GEN_GEN == 8)
       ice->state.dirty |= IRIS_DIRTY_PMA_FIX;
-
-#if GEN_GEN == 11
-   // XXX: we may want to flag IRIS_DIRTY_MULTISAMPLE (or SAMPLE_MASK?)
-   // XXX: see commit 979fc1bc9bcc64027ff2cfafd285676f31b930a6
-
-   /* The PIPE_CONTROL command description says:
-    *
-    *   "Whenever a Binding Table Index (BTI) used by a Render Target Message
-    *    points to a different RENDER_SURFACE_STATE, SW must issue a Render
-    *    Target Cache Flush by enabling this bit. When render target flush
-    *    is set due to new association of BTI, PS Scoreboard Stall bit must
-    *    be set in this packet."
-    */
-   // XXX: does this need to happen at 3DSTATE_BTP_PS time?
-   iris_emit_pipe_control_flush(&ice->batches[IRIS_BATCH_RENDER],
-                                "workaround: RT BTI change [draw]",
-                                PIPE_CONTROL_RENDER_TARGET_FLUSH |
-                                PIPE_CONTROL_STALL_AT_SCOREBOARD);
-#endif
 }
 
 /**
@@ -3525,8 +3533,14 @@ iris_set_stream_output_targets(struct pipe_context *ctx,
       unsigned offset = offsets[i];
 
       if (!tgt) {
-         iris_pack_command(GENX(3DSTATE_SO_BUFFER), so_buffers, sob)
+         iris_pack_command(GENX(3DSTATE_SO_BUFFER), so_buffers, sob) {
+#if GEN_GEN < 12
             sob.SOBufferIndex = i;
+#else
+            sob._3DCommandOpcode = 0;
+            sob._3DCommandSubOpcode = SO_BUFFER_INDEX_0_CMD + i;
+#endif
+         }
          continue;
       }
 
@@ -3547,6 +3561,12 @@ iris_set_stream_output_targets(struct pipe_context *ctx,
          offset = 0;
 
       iris_pack_command(GENX(3DSTATE_SO_BUFFER), so_buffers, sob) {
+#if GEN_GEN < 12
+         sob.SOBufferIndex = i;
+#else
+         sob._3DCommandOpcode = 0;
+         sob._3DCommandSubOpcode = SO_BUFFER_INDEX_0_CMD + i;
+#endif
          sob.SurfaceBaseAddress =
             rw_bo(NULL, res->bo->gtt_offset + tgt->base.buffer_offset);
          sob.SOBufferEnable = true;
@@ -3555,8 +3575,6 @@ iris_set_stream_output_targets(struct pipe_context *ctx,
          sob.MOCS = mocs(res->bo);
 
          sob.SurfaceSize = MAX2(tgt->base.buffer_size / 4, 1) - 1;
-
-         sob.SOBufferIndex = i;
          sob.StreamOffset = offset;
          sob.StreamOutputBufferOffsetAddress =
             rw_bo(NULL, iris_resource_bo(tgt->offset.res)->gtt_offset +
@@ -4989,6 +5007,30 @@ iris_viewport_zmin_zmax(const struct pipe_viewport_state *vp, bool halfz,
    util_viewport_zmin_zmax(vp, halfz, zmin, zmax);
 }
 
+#if GEN_GEN >= 12
+void
+genX(emit_aux_map_state)(struct iris_batch *batch)
+{
+   struct iris_screen *screen = batch->screen;
+   void *aux_map_ctx = iris_bufmgr_get_aux_map_context(screen->bufmgr);
+   if (!aux_map_ctx)
+      return;
+   uint32_t aux_map_state_num = gen_aux_map_get_state_num(aux_map_ctx);
+   if (batch->last_aux_map_state != aux_map_state_num) {
+      /* If the aux-map state number increased, then we need to rewrite the
+       * register. Rewriting the register is used to both set the aux-map
+       * translation table address, and also to invalidate any previously
+       * cached translations.
+       */
+      uint64_t base_addr = gen_aux_map_get_base(aux_map_ctx);
+      assert(base_addr != 0 && ALIGN(base_addr, 32 * 1024) == base_addr);
+      iris_load_register_imm64(batch, GENX(GFX_AUX_TABLE_BASE_ADDR_num),
+                               base_addr);
+      batch->last_aux_map_state = aux_map_state_num;
+   }
+}
+#endif
+
 static void
 iris_upload_dirty_render_state(struct iris_context *ice,
                                struct iris_batch *batch,
@@ -5238,6 +5280,24 @@ iris_upload_dirty_render_state(struct iris_context *ice,
       }
    }
 
+   if (GEN_GEN >= 11 && (dirty & IRIS_DIRTY_RENDER_BUFFER)) {
+      // XXX: we may want to flag IRIS_DIRTY_MULTISAMPLE (or SAMPLE_MASK?)
+      // XXX: see commit 979fc1bc9bcc64027ff2cfafd285676f31b930a6
+
+      /* The PIPE_CONTROL command description says:
+       *
+       *   "Whenever a Binding Table Index (BTI) used by a Render Target
+       *    Message points to a different RENDER_SURFACE_STATE, SW must issue a
+       *    Render Target Cache Flush by enabling this bit. When render target
+       *    flush is set due to new association of BTI, PS Scoreboard Stall bit
+       *    must be set in this packet."
+       */
+      // XXX: does this need to happen at 3DSTATE_BTP_PS time?
+      iris_emit_pipe_control_flush(batch, "workaround: RT BTI change [draw]",
+                                   PIPE_CONTROL_RENDER_TARGET_FLUSH |
+                                   PIPE_CONTROL_STALL_AT_SCOREBOARD);
+   }
+
    for (int stage = 0; stage <= MESA_SHADER_FRAGMENT; stage++) {
       if (dirty & (IRIS_DIRTY_BINDINGS_VS << stage)) {
          iris_populate_binding_table(ice, batch, stage, false);
@@ -5449,7 +5509,7 @@ iris_upload_dirty_render_state(struct iris_context *ice,
              BRW_BARYCENTRIC_NONPERSPECTIVE_BITS)
             cl.NonPerspectiveBarycentricEnable = true;
 
-         cl.ForceZeroRTAIndexEnable = cso_fb->layers == 0;
+         cl.ForceZeroRTAIndexEnable = cso_fb->layers <= 1;
          cl.MaximumVPIndex = ice->state.num_viewports - 1;
       }
       iris_emit_merge(batch, cso_rast->clip, dynamic_clip,
@@ -5530,6 +5590,10 @@ iris_upload_dirty_render_state(struct iris_context *ice,
       iris_emit_merge(batch, cso->wmds, stencil_refs, ARRAY_SIZE(cso->wmds));
 #else
       iris_batch_emit(batch, cso->wmds, sizeof(cso->wmds));
+#endif
+
+#if GEN_GEN >= 12
+      iris_batch_emit(batch, cso->depth_bounds, sizeof(cso->depth_bounds));
 #endif
    }
 
@@ -5840,6 +5904,10 @@ iris_upload_dirty_render_state(struct iris_context *ice,
 
    if (ice->state.current_hash_scale != 1)
       genX(emit_hashing_mode)(ice, batch, UINT_MAX, UINT_MAX, 1);
+
+#if GEN_GEN >= 12
+   genX(emit_aux_map_state)(batch);
+#endif
 }
 
 static void
@@ -6091,6 +6159,10 @@ iris_upload_compute_state(struct iris_context *ice,
 
    if (ice->state.need_border_colors)
       iris_use_pinned_bo(batch, ice->state.border_color_pool.bo, false);
+
+#if GEN_GEN >= 12
+   genX(emit_aux_map_state)(batch);
+#endif
 
    if (dirty & IRIS_DIRTY_CS) {
       /* The MEDIA_VFE_STATE documentation for Gen8+ says:
@@ -6717,6 +6789,23 @@ iris_emit_raw_pipe_control(struct iris_batch *batch,
       flags |= PIPE_CONTROL_CS_STALL;
    }
 
+   if (GEN_GEN >= 12 && ((flags & PIPE_CONTROL_RENDER_TARGET_FLUSH) ||
+                         (flags & PIPE_CONTROL_DEPTH_CACHE_FLUSH))) {
+      /* From the PIPE_CONTROL instruction table, bit 28 (Tile Cache Flush
+       * Enable):
+       *
+       *    Unified Cache (Tile Cache Disabled):
+       *
+       *    When the Color and Depth (Z) streams are enabled to be cached in
+       *    the DC space of L2, Software must use "Render Target Cache Flush
+       *    Enable" and "Depth Cache Flush Enable" along with "Tile Cache
+       *    Flush" for getting the color and depth (Z) write data to be
+       *    globally observable.  In this mode of operation it is not required
+       *    to set "CS Stall" upon setting "Tile Cache Flush" bit.
+       */
+      flags |= PIPE_CONTROL_TILE_CACHE_FLUSH;
+   }
+
    if (GEN_GEN == 9 && devinfo->gt == 4) {
       /* TODO: The big Skylake GT4 post sync op workaround */
    }
@@ -6839,6 +6928,9 @@ iris_emit_raw_pipe_control(struct iris_batch *batch,
    }
 
    iris_emit_cmd(batch, GENX(PIPE_CONTROL), pc) {
+#if GEN_GEN >= 12
+      pc.TileCacheFlushEnable = flags & PIPE_CONTROL_TILE_CACHE_FLUSH;
+#endif
       pc.LRIPostSyncOperation = NoLRIOperation;
       pc.PipeControlFlushEnable = flags & PIPE_CONTROL_FLUSH_ENABLE;
       pc.DCFlushEnable = flags & PIPE_CONTROL_DATA_CACHE_FLUSH;

@@ -115,10 +115,8 @@ public:
 
    Program *program;
    bool use_iterator;
-   union {
-   bool forwards; //when use_iterator == true
-   bool start; //when use_iterator == false
-   };
+   bool start; // only when use_iterator == false
+
    std::vector<aco_ptr<Instruction>> *instructions;
    std::vector<aco_ptr<Instruction>>::iterator it;
 
@@ -148,13 +146,19 @@ public:
       instructions = instrs;
    }
 
+   void reset(std::vector<aco_ptr<Instruction>> *instrs, std::vector<aco_ptr<Instruction>>::iterator instr_it) {
+      use_iterator = true;
+      start = false;
+      instructions = instrs;
+      it = instr_it;
+   }
+
    Result insert(aco_ptr<Instruction> instr) {
       Instruction *instr_ptr = instr.get();
       if (instructions) {
          if (use_iterator) {
             it = instructions->emplace(it, std::move(instr));
-            if (forwards)
-               it = std::next(it);
+            it = std::next(it);
          } else if (!start) {
             instructions->emplace_back(std::move(instr));
          } else {
@@ -168,8 +172,7 @@ public:
       if (instructions) {
          if (use_iterator) {
             it = instructions->emplace(it, aco_ptr<Instruction>(instr));
-            if (forwards)
-               it = std::next(it);
+            it = std::next(it);
          } else if (!start) {
             instructions->emplace_back(aco_ptr<Instruction>(instr));
          } else {
@@ -358,7 +361,7 @@ formats = [("pseudo", [Format.PSEUDO], 'Pseudo_instruction', list(itertools.prod
            ("exp", [Format.EXP], 'Export_instruction', [(0, 4)]),
            ("branch", [Format.PSEUDO_BRANCH], 'Pseudo_branch_instruction', itertools.product([0], [0, 1])),
            ("barrier", [Format.PSEUDO_BARRIER], 'Pseudo_barrier_instruction', [(0, 0)]),
-           ("reduction", [Format.PSEUDO_REDUCTION], 'Pseudo_reduction_instruction', [(3, 2)]),
+           ("reduction", [Format.PSEUDO_REDUCTION], 'Pseudo_reduction_instruction', [(3, 2), (3, 4)]),
            ("vop1", [Format.VOP1], 'VOP1_instruction', [(1, 1), (2, 2)]),
            ("vop2", [Format.VOP2], 'VOP2_instruction', itertools.product([1, 2], [2, 3])),
            ("vopc", [Format.VOPC], 'VOPC_instruction', itertools.product([1, 2], [2])),

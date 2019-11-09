@@ -315,7 +315,6 @@ vtn_cfg_handle_prepass_instruction(struct vtn_builder *b, SpvOp opcode,
             vtn_push_value(b, w[2], vtn_value_type_sampled_image);
 
          val->sampled_image = ralloc(b, struct vtn_sampled_image);
-         val->sampled_image->type = type;
 
          struct vtn_type *sampler_type = rzalloc(b, struct vtn_type);
          sampler_type->base_type = vtn_base_type_sampler;
@@ -1002,7 +1001,7 @@ vtn_emit_cf_list(struct vtn_builder *b, struct list_head *cf_list,
 
          vtn_emit_cf_list(b, &vtn_loop->body, NULL, NULL, handler);
 
-         if (!list_empty(&vtn_loop->cont_body)) {
+         if (!list_is_empty(&vtn_loop->cont_body)) {
             /* If we have a non-trivial continue body then we need to put
              * it at the beginning of the loop with a flag to ensure that
              * it doesn't get executed in the first iteration.

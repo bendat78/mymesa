@@ -157,7 +157,7 @@ lima_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_capf param)
    case PIPE_CAPF_MAX_LINE_WIDTH_AA:
    case PIPE_CAPF_MAX_POINT_WIDTH:
    case PIPE_CAPF_MAX_POINT_WIDTH_AA:
-      return 255.0f;
+      return 100.0f;
    case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
       return 16.0f;
    case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
@@ -273,6 +273,7 @@ lima_screen_is_format_supported(struct pipe_screen *pscreen,
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_RECT:
+   case PIPE_TEXTURE_CUBE:
       break;
    default:
       return false;
@@ -430,6 +431,8 @@ static const struct debug_named_value debug_options[] = {
           "print shader information for shaderdb" },
         { "nobocache", LIMA_DEBUG_NO_BO_CACHE,
           "disable BO cache" },
+        { "bocache", LIMA_DEBUG_BO_CACHE,
+          "print debug info for BO cache" },
         { NULL }
 };
 

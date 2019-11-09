@@ -300,6 +300,7 @@ etna_resource_alloc(struct pipe_screen *pscreen, unsigned layout,
    rsc->halign = halign;
 
    pipe_reference_init(&rsc->base.reference, 1);
+   util_range_init(&rsc->valid_buffer_range);
 
    size = setup_miptree(rsc, paddingX, paddingY, msaa_xscale, msaa_yscale);
 
@@ -477,6 +478,8 @@ etna_resource_destroy(struct pipe_screen *pscreen, struct pipe_resource *prsc)
    if (rsc->scanout)
       renderonly_scanout_destroy(rsc->scanout, etna_screen(pscreen)->ro);
 
+   util_range_destroy(&rsc->valid_buffer_range);
+
    pipe_resource_reference(&rsc->texture, NULL);
    pipe_resource_reference(&rsc->render, NULL);
 
@@ -513,6 +516,7 @@ etna_resource_from_handle(struct pipe_screen *pscreen,
    *prsc = *tmpl;
 
    pipe_reference_init(&prsc->reference, 1);
+   util_range_init(&rsc->valid_buffer_range);
    prsc->screen = pscreen;
 
    rsc->bo = etna_screen_bo_from_handle(pscreen, handle, &level->stride);
@@ -612,7 +616,6 @@ etna_resource_get_status(struct etna_context *ctx, struct etna_resource *rsc)
 
    set_foreach(rsc->pending_ctx, entry) {
       struct etna_context *extctx = (struct etna_context *)entry->key;
-      struct pipe_context *pctx = &extctx->base;
 
       set_foreach(extctx->used_resources_read, entry2) {
          struct etna_resource *rsc2 = (struct etna_resource *)entry2->key;
@@ -638,7 +641,6 @@ void
 etna_resource_used(struct etna_context *ctx, struct pipe_resource *prsc,
                    enum etna_resource_status status)
 {
-   struct etna_screen *screen = ctx->screen;
    struct pipe_resource *referenced = NULL;
    struct etna_resource *rsc;
 
@@ -648,8 +650,6 @@ etna_resource_used(struct etna_context *ctx, struct pipe_resource *prsc,
    mtx_lock(&ctx->lock);
 
    rsc = etna_resource(prsc);
-
-   enum etna_resource_status newstatus = 0;
 
    set_foreach(rsc->pending_ctx, entry) {
       struct etna_context *extctx = (struct etna_context *)entry->key;

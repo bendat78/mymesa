@@ -1,6 +1,6 @@
 variables:
     LAVA_DEBIAN_VERSION: testing-slim
-    LAVA_IMAGE_TAG: "lava-2019-10-10-1"
+    LAVA_IMAGE_TAG: "lava-2019-10-23-1"
 
 include:
   - project: 'wayland/ci-templates'
@@ -8,11 +8,11 @@ include:
     file: '/templates/debian.yml'
 
 # When to automatically run the CI
-.ci-run-policy:
+.lava-ci-run-policy:
   only:
     - branches@mesa/mesa
     - merge_requests
-    - /^ci([-/].*)?$/
+    - /^lava-ci([-/].*)?$/
   retry:
     max: 2
     when:
@@ -23,6 +23,7 @@ include:
   extends:
     - .debian@container-ifnot-exists
     - .container
+    - .lava-ci-run-policy
   variables:
     DEBIAN_TAG: '${DEBIAN_ARCH}-${LAVA_IMAGE_TAG}'
     DEBIAN_EXEC: 'DEBIAN_ARCH=${DEBIAN_ARCH}
@@ -60,19 +61,12 @@ lava-container:arm64:
 .lava-build:
   image: $CI_REGISTRY_IMAGE/debian/$LAVA_DEBIAN_VERSION:$DEBIAN_ARCH-$LAVA_IMAGE_TAG
   extends:
-    - .build
-  # Use ccache transparently, and print stats before/after
-  before_script:
-    - mkdir -p results mesa-build
-    - mkdir -p ccache
-    - export PATH="/usr/lib/ccache:$PATH"
-    - export CCACHE_BASEDIR="$PWD"
-    - export CCACHE_DIR="$PWD/ccache"
-    - ccache --max-size=1500M
-    - ccache --zero-stats || true
-    - ccache --show-stats || true
+    - .build-linux
+    - .lava-ci-run-policy
   script:
     # Build Mesa
+    - mkdir -p results mesa-build
+    - mkdir -p ccache
     - /usr/share/meson/debcrossgen --arch ${DEBIAN_ARCH} -o /tmp/cross_file.txt
     - meson . mesa-build
         --cross-file /tmp/cross_file.txt
@@ -120,9 +114,6 @@ lava-container:arm64:
         --base-artifacts-url $CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/results
         --device-types ${DEVICE_TYPES}
         --kernel-image-name ${KERNEL_IMAGE_NAME}
-  after_script:
-    - export CCACHE_DIR="$PWD/ccache"
-    - ccache --show-stats
   artifacts:
     when: always
     paths:
@@ -149,6 +140,7 @@ lava-build:arm64:
 .lava-test:
   extends:
     - .test
+    - .lava-ci-run-policy
   script:
     - lava_job_id=`lavacli jobs submit $CI_PROJECT_DIR/results/lava-deqp-$DEVICE_TYPE.yml`
     - echo $lava_job_id
@@ -194,14 +186,14 @@ panfrost-t860-test:arm64:
   tags:
     - lava-rk3399-gru-kevin
 
-lima-test:armhf:
+.lima-test:armhf:
   extends: .lava-test:armhf
   variables:
     DEVICE_TYPE: sun8i-h3-libretech-all-h3-cc
   tags:
     - lava-sun8i-h3-libretech-all-h3-cc
 
-lima-test:arm64:
+.lima-test:arm64:
   extends: .lava-test:arm64
   variables:
     DEVICE_TYPE: meson-gxl-s905x-libretech-cc

@@ -330,7 +330,7 @@ panfrost_get_shader_param(struct pipe_screen *screen,
                 return PIPE_SHADER_IR_NIR;
 
         case PIPE_SHADER_CAP_SUPPORTED_IRS:
-                return (1 << PIPE_SHADER_IR_NIR);
+                return (1 << PIPE_SHADER_IR_NIR) | (1 << PIPE_SHADER_IR_NIR_SERIALIZED);
 
         case PIPE_SHADER_CAP_MAX_UNROLL_ITERATIONS_HINT:
                 return 32;
@@ -547,7 +547,7 @@ panfrost_destroy_screen(struct pipe_screen *pscreen)
 {
         struct panfrost_screen *screen = pan_screen(pscreen);
         panfrost_bo_cache_evict_all(screen);
-        pthread_mutex_destroy(&screen->bo_cache_lock);
+        pthread_mutex_destroy(&screen->bo_cache.lock);
         pthread_mutex_destroy(&screen->active_bos_lock);
         drmFreeVersion(screen->kernel_version);
         ralloc_free(screen);
@@ -754,9 +754,10 @@ panfrost_create_screen(int fd, struct renderonly *ro)
         screen->active_bos = _mesa_set_create(screen, panfrost_active_bos_hash,
                                               panfrost_active_bos_cmp);
 
-        pthread_mutex_init(&screen->bo_cache_lock, NULL);
-        for (unsigned i = 0; i < ARRAY_SIZE(screen->bo_cache); ++i)
-                list_inithead(&screen->bo_cache[i]);
+        pthread_mutex_init(&screen->bo_cache.lock, NULL);
+        list_inithead(&screen->bo_cache.lru);
+        for (unsigned i = 0; i < ARRAY_SIZE(screen->bo_cache.buckets); ++i)
+                list_inithead(&screen->bo_cache.buckets[i]);
 
         if (pan_debug & PAN_DBG_TRACE)
                 pandecode_initialize();

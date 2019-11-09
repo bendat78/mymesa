@@ -85,6 +85,13 @@ _mesa_get_format_info(mesa_format format)
 {
    const struct mesa_format_info *info = &format_info[format];
    STATIC_ASSERT(ARRAY_SIZE(format_info) == MESA_FORMAT_COUNT);
+
+   /* The MESA_FORMAT_* enums are sparse, don't return a format info
+    * for empty entries.
+    */
+   if (info->Name == MESA_FORMAT_NONE && format != MESA_FORMAT_NONE)
+      return NULL;
+
    assert(info->Name == format);
    return info;
 }
@@ -95,6 +102,8 @@ const char *
 _mesa_get_format_name(mesa_format format)
 {
    const struct mesa_format_info *info = _mesa_get_format_info(format);
+   if (!info)
+      return NULL;
    return info->StrName;
 }
 
@@ -425,10 +434,11 @@ uint32_t
 _mesa_format_to_array_format(mesa_format format)
 {
    const struct mesa_format_info *info = _mesa_get_format_info(format);
-   if (info->ArrayFormat && !_mesa_little_endian() &&
-       info->Layout == MESA_FORMAT_LAYOUT_PACKED)
+#if UTIL_ARCH_BIG_ENDIAN
+   if (info->ArrayFormat && info->Layout == MESA_FORMAT_LAYOUT_PACKED)
       return _mesa_array_format_flip_channels(info->ArrayFormat);
    else
+#endif
       return info->ArrayFormat;
 }
 
@@ -464,14 +474,14 @@ format_array_format_table_init(void)
 
    for (f = 1; f < MESA_FORMAT_COUNT; ++f) {
       info = _mesa_get_format_info(f);
-      if (!info->ArrayFormat)
+      if (!info || !info->ArrayFormat)
          continue;
 
-      if (_mesa_little_endian()) {
+#if UTIL_ARCH_LITTLE_ENDIAN
          array_format = info->ArrayFormat;
-      } else {
+#else
          array_format = _mesa_array_format_flip_channels(info->ArrayFormat);
-      }
+#endif
 
       /* This can happen and does for some of the BGR formats.  Let's take
        * the first one in the list.
@@ -710,17 +720,17 @@ _mesa_get_uncompressed_format(mesa_format format)
    case MESA_FORMAT_R_RGTC1_SNORM:
       return MESA_FORMAT_R_SNORM8;
    case MESA_FORMAT_RG_RGTC2_UNORM:
-      return MESA_FORMAT_R8G8_UNORM;
+      return MESA_FORMAT_RG_UNORM8;
    case MESA_FORMAT_RG_RGTC2_SNORM:
-      return MESA_FORMAT_R8G8_SNORM;
+      return MESA_FORMAT_RG_SNORM8;
    case MESA_FORMAT_L_LATC1_UNORM:
       return MESA_FORMAT_L_UNORM8;
    case MESA_FORMAT_L_LATC1_SNORM:
       return MESA_FORMAT_L_SNORM8;
    case MESA_FORMAT_LA_LATC2_UNORM:
-      return MESA_FORMAT_L8A8_UNORM;
+      return MESA_FORMAT_LA_UNORM8;
    case MESA_FORMAT_LA_LATC2_SNORM:
-      return MESA_FORMAT_L8A8_SNORM;
+      return MESA_FORMAT_LA_SNORM8;
    case MESA_FORMAT_ETC1_RGB8:
    case MESA_FORMAT_ETC2_RGB8:
    case MESA_FORMAT_ETC2_SRGB8:
@@ -738,7 +748,7 @@ _mesa_get_uncompressed_format(mesa_format format)
       return MESA_FORMAT_R_UNORM16;
    case MESA_FORMAT_ETC2_RG11_EAC:
    case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
-      return MESA_FORMAT_R16G16_UNORM;
+      return MESA_FORMAT_RG_UNORM16;
    case MESA_FORMAT_BPTC_RGBA_UNORM:
    case MESA_FORMAT_BPTC_SRGB_ALPHA_UNORM:
       return MESA_FORMAT_A8B8G8R8_UNORM;
@@ -946,18 +956,14 @@ _mesa_uncompressed_format_to_type_and_comps(mesa_format format,
       *comps = 2;
       return;
 
-   case MESA_FORMAT_L8A8_UNORM:
-   case MESA_FORMAT_A8L8_UNORM:
-   case MESA_FORMAT_R8G8_UNORM:
-   case MESA_FORMAT_G8R8_UNORM:
+   case MESA_FORMAT_LA_UNORM8:
+   case MESA_FORMAT_RG_UNORM8:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 2;
       return;
 
-   case MESA_FORMAT_L16A16_UNORM:
-   case MESA_FORMAT_A16L16_UNORM:
-   case MESA_FORMAT_R16G16_UNORM:
-   case MESA_FORMAT_G16R16_UNORM:
+   case MESA_FORMAT_LA_UNORM16:
+   case MESA_FORMAT_RG_UNORM16:
       *datatype = GL_UNSIGNED_SHORT;
       *comps = 2;
       return;
@@ -1070,9 +1076,8 @@ _mesa_uncompressed_format_to_type_and_comps(mesa_format format,
       *datatype = GL_BYTE;
       *comps = 1;
       return;
-   case MESA_FORMAT_R8G8_SNORM:
-   case MESA_FORMAT_L8A8_SNORM:
-   case MESA_FORMAT_A8L8_SNORM:
+   case MESA_FORMAT_RG_SNORM8:
+   case MESA_FORMAT_LA_SNORM8:
       *datatype = GL_BYTE;
       *comps = 2;
       return;
@@ -1095,7 +1100,7 @@ _mesa_uncompressed_format_to_type_and_comps(mesa_format format,
       *datatype = GL_SHORT;
       *comps = 1;
       return;
-   case MESA_FORMAT_R16G16_SNORM:
+   case MESA_FORMAT_RG_SNORM16:
    case MESA_FORMAT_LA_SNORM16:
       *datatype = GL_SHORT;
       *comps = 2;
@@ -1125,8 +1130,7 @@ _mesa_uncompressed_format_to_type_and_comps(mesa_format format,
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 1;
       return;
-   case MESA_FORMAT_L8A8_SRGB:
-   case MESA_FORMAT_A8L8_SRGB:
+   case MESA_FORMAT_LA_SRGB8:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 2;
       return;
@@ -1300,10 +1304,6 @@ _mesa_uncompressed_format_to_type_and_comps(mesa_format format,
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 3;
       return;
-   case MESA_FORMAT_RGBA_UINT8:
-      *datatype = GL_UNSIGNED_BYTE;
-      *comps = 4;
-      return;
    case MESA_FORMAT_R_UINT16:
       *datatype = GL_UNSIGNED_SHORT;
       *comps = 1;
@@ -1409,16 +1409,6 @@ _mesa_uncompressed_format_to_type_and_comps(mesa_format format,
       *comps = 4;
       return;
 
-   case MESA_FORMAT_G8R8_SNORM:
-      *datatype = GL_BYTE;
-      *comps = 2;
-      return;
-
-   case MESA_FORMAT_G16R16_SNORM:
-      *datatype = GL_SHORT;
-      *comps = 2;
-      return;
-
    case MESA_FORMAT_B8G8R8X8_SRGB:
    case MESA_FORMAT_X8R8G8B8_SRGB:
       *datatype = GL_UNSIGNED_BYTE;
@@ -1428,14 +1418,16 @@ _mesa_uncompressed_format_to_type_and_comps(mesa_format format,
    case MESA_FORMAT_COUNT:
       assert(0);
       return;
-   default:
+   default: {
+      const char *name = _mesa_get_format_name(format);
       /* Warn if any formats are not handled */
       _mesa_problem(NULL, "bad format %s in _mesa_uncompressed_format_to_type_and_comps",
-                    _mesa_get_format_name(format));
+                    name ? name : "???");
       assert(format == MESA_FORMAT_NONE ||
              _mesa_is_format_compressed(format));
       *datatype = 0;
       *comps = 1;
+   }
    }
 }
 

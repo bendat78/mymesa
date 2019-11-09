@@ -8,6 +8,9 @@ BLORP_FILES = \
 	blorp/blorp_priv.h
 
 COMMON_FILES = \
+	common/gen_aux_map.c \
+	common/gen_aux_map.h \
+	common/gen_buffer_alloc.h \
 	common/gen_clflush.h \
 	common/gen_batch_decoder.c \
 	common/gen_decoder.c \
@@ -82,6 +85,7 @@ COMPILER_FILES = \
 	compiler/brw_nir_analyze_boolean_resolves.c \
 	compiler/brw_nir_analyze_ubo_ranges.c \
 	compiler/brw_nir_attribute_workarounds.c \
+	compiler/brw_nir_lower_alpha_to_coverage.c \
 	compiler/brw_nir_lower_conversions.c \
 	compiler/brw_nir_lower_cs_intrinsics.c \
 	compiler/brw_nir_lower_image_load_store.c \
@@ -258,6 +262,7 @@ VULKAN_FILES := \
 	vulkan/anv_nir_lower_push_constants.c \
 	vulkan/anv_nir_lower_ycbcr_textures.c \
 	vulkan/anv_pass.c \
+	vulkan/anv_perf.c \
 	vulkan/anv_pipeline.c \
 	vulkan/anv_pipeline_cache.c \
 	vulkan/anv_private.h \
@@ -343,7 +348,8 @@ GEN_PERF_XML_FILES = \
 	perf/oa-cflgt2.xml \
 	perf/oa-cflgt3.xml \
 	perf/oa-cnl.xml \
-	perf/oa-icl.xml
+	perf/oa-icl.xml \
+	perf/oa-tgl.xml
 
 GEN_PERF_FILES = \
 	perf/gen_perf.c \

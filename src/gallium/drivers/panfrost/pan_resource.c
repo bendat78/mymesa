@@ -394,9 +394,7 @@ panfrost_resource_create_bo(struct panfrost_screen *screen, struct panfrost_reso
         bool is_2d = res->depth0 == 1 && res->array_size == 1;
         bool is_streaming = (res->usage != PIPE_USAGE_STREAM);
 
-        /* TODO: Reenable tiling on SFBD systems when we support rendering to
-         * tiled formats with SFBD */
-        bool should_tile = is_streaming && is_texture && is_2d && !screen->require_sfbd;
+        bool should_tile = is_streaming && is_texture && is_2d;
 
         /* Depth/stencil can't be tiled, only linear or AFBC */
         should_tile &= !(res->bind & PIPE_BIND_DEPTH_STENCIL);
@@ -587,8 +585,41 @@ panfrost_transfer_map(struct pipe_context *pctx,
         /* TODO: Respect usage flags */
 
         if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
-                /* TODO: reallocate */
-                //printf("debug: Missed reallocate\n");
+                /* If the BO is used by one of the pending batches or if it's
+                 * not ready yet (still accessed by one of the already flushed
+                 * batches), we try to allocate a new one to avoid waiting.
+                 */
+                if (panfrost_pending_batches_access_bo(ctx, bo) ||
+                    !panfrost_bo_wait(bo, 0, PAN_BO_ACCESS_RW)) {
+                        struct panfrost_screen *screen = pan_screen(pctx->screen);
+                        /* We want the BO to be MMAPed. */
+                        uint32_t flags = bo->flags & ~PAN_BO_DELAY_MMAP;
+                        struct panfrost_bo *newbo = NULL;
+
+                        /* When the BO has been imported/exported, we can't
+                         * replace it by another one, otherwise the
+                         * importer/exporter wouldn't see the change we're
+                         * doing to it.
+                         */
+                        if (!(bo->flags & (PAN_BO_IMPORTED | PAN_BO_EXPORTED)))
+                                newbo = panfrost_bo_create(screen, bo->size,
+                                                           flags);
+
+                        if (newbo) {
+                                panfrost_bo_unreference(bo);
+                                rsrc->bo = newbo;
+                                bo = newbo;
+                        } else {
+                                uint32_t access = PAN_BO_ACCESS_RW;
+
+                                /* Allocation failed or was impossible, let's
+                                 * fall back on a flush+wait.
+                                 */
+                                panfrost_flush_batches_accessing_bo(ctx, bo,
+                                                                    access);
+                                panfrost_bo_wait(bo, INT64_MAX, access);
+                        }
+                }
         } else if ((usage & PIPE_TRANSFER_WRITE)
                    && resource->target == PIPE_BUFFER
                    && !util_ranges_intersect(&rsrc->valid_buffer_range, box->x, box->x + box->width)) {

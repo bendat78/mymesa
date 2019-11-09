@@ -307,7 +307,7 @@ st_save_zombie_sampler_view(struct st_context *st,
     * while free_zombie_resource_views() is called from another.
     */
    simple_mtx_lock(&st->zombie_sampler_views.mutex);
-   LIST_ADDTAIL(&entry->node, &st->zombie_sampler_views.list.node);
+   list_addtail(&entry->node, &st->zombie_sampler_views.list.node);
    simple_mtx_unlock(&st->zombie_sampler_views.mutex);
 }
 
@@ -340,7 +340,7 @@ st_save_zombie_shader(struct st_context *st,
     * while free_zombie_shaders() is called from another.
     */
    simple_mtx_lock(&st->zombie_shaders.mutex);
-   LIST_ADDTAIL(&entry->node, &st->zombie_shaders.list.node);
+   list_addtail(&entry->node, &st->zombie_shaders.list.node);
    simple_mtx_unlock(&st->zombie_shaders.mutex);
 }
 
@@ -353,7 +353,7 @@ free_zombie_sampler_views(struct st_context *st)
 {
    struct st_zombie_sampler_view_node *entry, *next;
 
-   if (LIST_IS_EMPTY(&st->zombie_sampler_views.list.node)) {
+   if (list_is_empty(&st->zombie_sampler_views.list.node)) {
       return;
    }
 
@@ -361,7 +361,7 @@ free_zombie_sampler_views(struct st_context *st)
 
    LIST_FOR_EACH_ENTRY_SAFE(entry, next,
                             &st->zombie_sampler_views.list.node, node) {
-      LIST_DEL(&entry->node);  // remove this entry from the list
+      list_del(&entry->node);  // remove this entry from the list
 
       assert(entry->view->context == st->pipe);
       pipe_sampler_view_reference(&entry->view, NULL);
@@ -369,7 +369,7 @@ free_zombie_sampler_views(struct st_context *st)
       free(entry);
    }
 
-   assert(LIST_IS_EMPTY(&st->zombie_sampler_views.list.node));
+   assert(list_is_empty(&st->zombie_sampler_views.list.node));
 
    simple_mtx_unlock(&st->zombie_sampler_views.mutex);
 }
@@ -383,7 +383,7 @@ free_zombie_shaders(struct st_context *st)
 {
    struct st_zombie_shader_node *entry, *next;
 
-   if (LIST_IS_EMPTY(&st->zombie_shaders.list.node)) {
+   if (list_is_empty(&st->zombie_shaders.list.node)) {
       return;
    }
 
@@ -391,7 +391,7 @@ free_zombie_shaders(struct st_context *st)
 
    LIST_FOR_EACH_ENTRY_SAFE(entry, next,
                             &st->zombie_shaders.list.node, node) {
-      LIST_DEL(&entry->node);  // remove this entry from the list
+      list_del(&entry->node);  // remove this entry from the list
 
       switch (entry->type) {
       case PIPE_SHADER_VERTEX:
@@ -418,7 +418,7 @@ free_zombie_shaders(struct st_context *st)
       free(entry);
    }
 
-   assert(LIST_IS_EMPTY(&st->zombie_shaders.list.node));
+   assert(list_is_empty(&st->zombie_shaders.list.node));
 
    simple_mtx_unlock(&st->zombie_shaders.mutex);
 }
@@ -687,6 +687,7 @@ st_create_context_priv(struct gl_context *ctx, struct pipe_context *pipe,
       !screen->get_param(screen, PIPE_CAP_TWO_SIDED_COLOR);
    st->lower_ucp =
       !screen->get_param(screen, PIPE_CAP_CLIP_PLANES);
+   st->allow_st_finalize_nir_twice = screen->finalize_nir != NULL;
 
    st->has_hw_atomics =
       screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
@@ -701,6 +702,18 @@ st_create_context_priv(struct gl_context *ctx, struct pipe_context *pipe,
    st_init_limits(pipe->screen, &ctx->Const, &ctx->Extensions);
    st_init_extensions(pipe->screen, &ctx->Const,
                       &ctx->Extensions, &st->options, ctx->API);
+
+   /* FIXME: add support for geometry and tessellation shaders for
+    * lower_point_size
+    */
+   assert(!ctx->Extensions.OES_geometry_shader || !st->lower_point_size);
+   assert(!ctx->Extensions.ARB_tessellation_shader || !st->lower_point_size);
+
+   /* FIXME: add support for geometry and tessellation shaders for
+    * lower_ucp
+    */
+   assert(!ctx->Extensions.OES_geometry_shader || !st->lower_ucp);
+   assert(!ctx->Extensions.ARB_tessellation_shader || !st->lower_ucp);
 
    if (st_have_perfmon(st)) {
       ctx->Extensions.AMD_performance_monitor = GL_TRUE;
@@ -792,11 +805,11 @@ st_create_context_priv(struct gl_context *ctx, struct pipe_context *pipe,
    st_init_driver_flags(st);
 
    /* Initialize context's winsys buffers list */
-   LIST_INITHEAD(&st->winsys_buffers);
+   list_inithead(&st->winsys_buffers);
 
-   LIST_INITHEAD(&st->zombie_sampler_views.list.node);
+   list_inithead(&st->zombie_sampler_views.list.node);
    simple_mtx_init(&st->zombie_sampler_views.mutex, mtx_plain);
-   LIST_INITHEAD(&st->zombie_shaders.list.node);
+   list_inithead(&st->zombie_shaders.list.node);
    simple_mtx_init(&st->zombie_shaders.mutex, mtx_plain);
 
    return st;

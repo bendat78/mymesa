@@ -496,6 +496,9 @@ bool parse_base_offset(opt_ctx &ctx, Instruction* instr, unsigned op_index, Temp
       return false;
    }
 
+   if (add_instr->usesModifiers())
+      return false;
+
    for (unsigned i = 0; i < 2; i++) {
       if (add_instr->operands[i].isConstant()) {
          *offset = add_instr->operands[i].constantValue();
@@ -657,7 +660,8 @@ void label_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
          Temp base;
          uint32_t offset;
          if (i == 0 && parse_base_offset(ctx, instr.get(), i, &base, &offset) && base.regClass() == instr->operands[i].regClass()) {
-            if (instr->opcode == aco_opcode::ds_write2_b32 || instr->opcode == aco_opcode::ds_read2_b32) {
+            if (instr->opcode == aco_opcode::ds_write2_b32 || instr->opcode == aco_opcode::ds_read2_b32 ||
+                instr->opcode == aco_opcode::ds_write2_b64 || instr->opcode == aco_opcode::ds_read2_b64) {
                if (offset % 4 == 0 &&
                    ds->offset0 + (offset >> 2) <= 255 &&
                    ds->offset1 + (offset >> 2) <= 255) {
@@ -702,6 +706,8 @@ void label_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
                new_instr->operands.back() = Operand(base);
                if (!smem->definitions.empty())
                   new_instr->definitions[0] = smem->definitions[0];
+               new_instr->can_reorder = smem->can_reorder;
+               new_instr->barrier = smem->barrier;
                instr.reset(new_instr);
                smem = static_cast<SMEM_instruction *>(instr.get());
             }
@@ -765,7 +771,8 @@ void label_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
       if (!ctx.info[instr->operands[0].tempId()].is_vec())
          break;
       Instruction* vec = ctx.info[instr->operands[0].tempId()].instr;
-      if (vec->definitions[0].getTemp().size() == vec->operands.size()) { /* TODO: what about 64bit or other combinations? */
+      if (vec->definitions[0].getTemp().size() == vec->operands.size() && /* TODO: what about 64bit or other combinations? */
+          vec->operands[0].size() == instr->definitions[0].size()) {
 
          /* convert this extract into a mov instruction */
          Operand vec_op = vec->operands[instr->operands[1].constantValue()];
@@ -795,13 +802,13 @@ void label_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
    case aco_opcode::p_as_uniform:
       if (instr->definitions[0].isFixed()) {
          /* don't copy-propagate copies into fixed registers */
+      } else if (instr->usesModifiers()) {
+         // TODO
       } else if (instr->operands[0].isConstant()) {
          if (instr->operands[0].isLiteral())
             ctx.info[instr->definitions[0].tempId()].set_literal(instr->operands[0].constantValue());
          else
             ctx.info[instr->definitions[0].tempId()].set_constant(instr->operands[0].constantValue());
-      } else if (instr->isDPP()) {
-         // TODO
       } else if (instr->operands[0].isTemp()) {
          ctx.info[instr->definitions[0].tempId()].set_temp(instr->operands[0].getTemp());
       } else {
@@ -845,11 +852,8 @@ void label_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
    }
    case aco_opcode::v_mul_f32: { /* omod */
       /* TODO: try to move the negate/abs modifier to the consumer instead */
-      if (instr->isVOP3()) {
-         VOP3A_instruction *vop3 = static_cast<VOP3A_instruction*>(instr.get());
-         if (vop3->abs[0] || vop3->abs[1] || vop3->neg[0] || vop3->neg[1] || vop3->omod || vop3->clamp)
-            break;
-      }
+      if (instr->usesModifiers())
+         break;
 
       for (unsigned i = 0; i < 2; i++) {
          if (instr->operands[!i].isConstant() && instr->operands[i].isTemp()) {

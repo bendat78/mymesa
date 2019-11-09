@@ -104,7 +104,7 @@ ir3_key_lowers_nir(const struct ir3_shader_key *key)
 			key->vsaturate_s | key->vsaturate_t | key->vsaturate_r |
 			key->ucp_enables | key->color_two_side |
 			key->fclamp_color | key->vclamp_color |
-			key->has_gs;
+			key->tessellation | key->has_gs;
 }
 
 #define OPT(nir, pass, ...) ({                             \
@@ -189,10 +189,18 @@ ir3_optimize_nir(struct ir3_shader *shader, nir_shader *s,
 			.lower_tg4_offsets = true,
 	};
 
-	if (key && key->has_gs) {
+	if (key && (key->has_gs || key->tessellation)) {
 		switch (shader->type) {
 		case MESA_SHADER_VERTEX:
-			NIR_PASS_V(s, ir3_nir_lower_vs_to_explicit_io, shader);
+			NIR_PASS_V(s, ir3_nir_lower_to_explicit_io, shader, key->tessellation);
+			break;
+		case MESA_SHADER_TESS_CTRL:
+			NIR_PASS_V(s, ir3_nir_lower_tess_ctrl, shader, key->tessellation);
+			break;
+		case MESA_SHADER_TESS_EVAL:
+			NIR_PASS_V(s, ir3_nir_lower_tess_eval, key->tessellation);
+			if (key->has_gs)
+				NIR_PASS_V(s, ir3_nir_lower_to_explicit_io, shader, key->tessellation);
 			break;
 		case MESA_SHADER_GEOMETRY:
 			NIR_PASS_V(s, ir3_nir_lower_gs, shader);
@@ -277,7 +285,7 @@ ir3_optimize_nir(struct ir3_shader *shader, nir_shader *s,
 	 * NOTE that UBO analysis pass should only be done once, before variants
 	 */
 	const bool ubo_progress = !key && OPT(s, ir3_nir_analyze_ubo_ranges, shader);
-	const bool idiv_progress = OPT(s, nir_lower_idiv);
+	const bool idiv_progress = OPT(s, nir_lower_idiv, nir_lower_idiv_fast);
 	if (ubo_progress || idiv_progress)
 		ir3_optimize_loop(s);
 
@@ -451,6 +459,13 @@ ir3_setup_const_state(struct ir3_shader *shader, nir_shader *nir)
 	case MESA_SHADER_VERTEX:
 		const_state->offsets.primitive_param = constoff;
 		constoff += 1;
+		break;
+	case MESA_SHADER_TESS_CTRL:
+	case MESA_SHADER_TESS_EVAL:
+		constoff = align(constoff - 1, 4) + 3;
+		const_state->offsets.primitive_param = constoff;
+		const_state->offsets.primitive_map = constoff + 5;
+		constoff += 5 + DIV_ROUND_UP(nir->num_inputs, 4);
 		break;
 	case MESA_SHADER_GEOMETRY:
 		const_state->offsets.primitive_param = constoff;

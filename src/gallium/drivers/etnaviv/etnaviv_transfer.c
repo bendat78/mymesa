@@ -174,6 +174,14 @@ etna_transfer_unmap(struct pipe_context *pctx, struct pipe_transfer *ptrans)
    if (!trans->rsc && !(ptrans->usage & PIPE_TRANSFER_UNSYNCHRONIZED))
       etna_bo_cpu_fini(rsc->bo);
 
+   if ((ptrans->resource->target == PIPE_BUFFER) &&
+       (ptrans->usage & PIPE_TRANSFER_WRITE)) {
+      util_range_add(&rsc->base,
+                     &rsc->valid_buffer_range,
+                     ptrans->box.x,
+                     ptrans->box.x + ptrans->box.width);
+      }
+
    pipe_resource_reference(&trans->rsc, NULL);
    pipe_resource_reference(&ptrans->resource, NULL);
    slab_free(&ctx->transfer_pool, trans);
@@ -199,13 +207,16 @@ etna_transfer_map(struct pipe_context *pctx, struct pipe_resource *prsc,
    /* slab_alloc() doesn't zero */
    memset(trans, 0, sizeof(*trans));
 
-   ptrans = &trans->base;
-   pipe_resource_reference(&ptrans->resource, prsc);
-   ptrans->level = level;
-   ptrans->usage = usage;
-   ptrans->box = *box;
-
-   assert(level <= prsc->last_level);
+   /*
+    * Upgrade to UNSYNCHRONIZED if target is PIPE_BUFFER and range is uninitialized.
+    */
+   if ((usage & PIPE_TRANSFER_WRITE) &&
+       (prsc->target == PIPE_BUFFER) &&
+       !util_ranges_intersect(&rsc->valid_buffer_range,
+                              box->x,
+                              box->x + box->width)) {
+      usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
+   }
 
    /* Upgrade DISCARD_RANGE to WHOLE_RESOURCE if the whole resource is
     * being mapped. If we add buffer reallocation to avoid CPU/GPU sync this
@@ -220,6 +231,14 @@ etna_transfer_map(struct pipe_context *pctx, struct pipe_resource *prsc,
        prsc->array_size == 1) {
       usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
    }
+
+   ptrans = &trans->base;
+   pipe_resource_reference(&ptrans->resource, prsc);
+   ptrans->level = level;
+   ptrans->usage = usage;
+   ptrans->box = *box;
+
+   assert(level <= prsc->last_level);
 
    if (rsc->texture && !etna_resource_newer(rsc, etna_resource(rsc->texture))) {
       /* We have a texture resource which is the same age or newer than the
@@ -346,7 +365,6 @@ etna_transfer_map(struct pipe_context *pctx, struct pipe_resource *prsc,
     * transfers without a temporary resource.
     */
    if (trans->rsc || !(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
-      struct etna_screen *screen = ctx->screen;
       uint32_t prep_flags = 0;
 
       /*
@@ -461,10 +479,16 @@ fail_prep:
 
 static void
 etna_transfer_flush_region(struct pipe_context *pctx,
-                           struct pipe_transfer *transfer,
+                           struct pipe_transfer *ptrans,
                            const struct pipe_box *box)
 {
-   /* NOOP for now */
+   struct etna_resource *rsc = etna_resource(ptrans->resource);
+
+   if (ptrans->resource->target == PIPE_BUFFER)
+      util_range_add(&rsc->base,
+                     &rsc->valid_buffer_range,
+                     ptrans->box.x + box->x,
+                     ptrans->box.x + box->x + box->width);
 }
 
 void

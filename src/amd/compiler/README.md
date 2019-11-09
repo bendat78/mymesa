@@ -131,3 +131,81 @@ finish and then write to vcc (for example, `s_mov_b64 vcc, vcc`) to correct vccz
 
 Currently, we don't do this.
 
+## RDNA / GFX10 hazards
+
+### SMEM store followed by a load with the same address
+
+We found that an `s_buffer_load` will produce incorrect results if it is preceded
+by an `s_buffer_store` with the same address. Inserting an `s_nop` between them
+does not mitigate the issue, so an `s_waitcnt lgkmcnt(0)` must be inserted.
+This is not mentioned by LLVM among the other GFX10 bugs, but LLVM doesn't use
+SMEM stores, so it's not surprising that they didn't notice it.
+
+### VMEMtoScalarWriteHazard
+
+Triggered by:
+VMEM/FLAT/GLOBAL/SCRATCH/DS instruction reads an SGPR (or EXEC, or M0).
+Then, a SALU/SMEM instruction writes the same SGPR.
+
+Mitigated by:
+A VALU instruction or an `s_waitcnt vmcnt(0)` between the two instructions.
+
+### SMEMtoVectorWriteHazard
+
+Triggered by:
+An SMEM instruction reads an SGPR. Then, a VALU instruction writes that same SGPR.
+Despite LLVM
+
+Mitigated by:
+Any non-SOPP SALU instruction (except `s_setvskip`, `s_version`, and any non-lgkmcnt `s_waitcnt`).
+
+### Offset3fBug
+
+Any branch that is located at offset 0x3f will be buggy. Just insert some NOPs to make sure no branch
+is located at this offset.
+
+### InstFwdPrefetchBug
+
+According to LLVM, the `s_inst_prefetch` instruction can cause a hang.
+There are no further details.
+
+### LdsMisalignedBug
+
+When there is a misaligned multi-dword FLAT load/store instruction in WGP mode,
+it needs to be split into multiple single-dword FLAT instructions.
+
+ACO doesn't use FLAT load/store on GFX10, so is unaffected.
+
+### FlatSegmentOffsetBug
+
+The 12-bit immediate OFFSET field of FLAT instructions must always be 0.
+GLOBAL and SCRATCH are unaffected.
+
+ACO doesn't use FLAT load/store on GFX10, so is unaffected.
+
+### VcmpxPermlaneHazard
+
+Triggered by:
+Any permlane instruction that follows any VOPC instruction.
+Confirmed by AMD devs that despite the name, this doesn't only affect v_cmpx.
+
+Mitigated by: any VALU instruction except `v_nop`.
+
+### VcmpxExecWARHazard
+
+Triggered by:
+Any non-VALU instruction reads the EXEC mask. Then, any VALU instruction writes the EXEC mask.
+
+Mitigated by:
+A VALU instruction that writes an SGPR (or has a valid SDST operand), or `s_waitcnt_depctr 0xfffe`.
+Note: `s_waitcnt_depctr` is an internal instruction, so there is no further information
+about what it does or what its operand means.
+
+### LdsBranchVmemWARHazard
+
+Triggered by:
+VMEM/GLOBAL/SCRATCH instruction, then a branch, then a DS instruction,
+or vice versa: DS instruction, then a branch, then a VMEM/GLOBAL/SCRATCH instruction.
+
+Mitigated by:
+Only `s_waitcnt_vscnt null, 0`. Needed even if the first instruction is a load.

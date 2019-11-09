@@ -244,7 +244,8 @@ delete_vp_variant(struct st_context *st, struct st_vp_variant *vpv)
    if (vpv->draw_shader)
       draw_delete_vertex_shader( st->draw, vpv->draw_shader );
 
-   delete_ir(&vpv->state);
+   if (vpv->tokens)
+      ureg_free_tokens(vpv->tokens);
 
    free( vpv );
 }
@@ -386,6 +387,24 @@ st_release_common_variants(struct st_context *st, struct st_common_program *p)
    delete_ir(&p->state);
 }
 
+void
+st_finalize_nir_before_variants(struct nir_shader *nir)
+{
+   NIR_PASS_V(nir, nir_opt_access);
+
+   NIR_PASS_V(nir, nir_split_var_copies);
+   NIR_PASS_V(nir, nir_lower_var_copies);
+   if (nir->options->lower_all_io_to_temps ||
+       nir->options->lower_all_io_to_elements ||
+       nir->info.stage == MESA_SHADER_VERTEX ||
+       nir->info.stage == MESA_SHADER_GEOMETRY) {
+      NIR_PASS_V(nir, nir_lower_io_arrays_to_elements_no_indirects, false);
+   } else if (nir->info.stage == MESA_SHADER_FRAGMENT) {
+      NIR_PASS_V(nir, nir_lower_io_arrays_to_elements_no_indirects, true);
+   }
+
+   st_nir_assign_vs_in_locations(nir);
+}
 
 /**
  * Translate ARB (asm) program to NIR
@@ -394,6 +413,7 @@ static nir_shader *
 st_translate_prog_to_nir(struct st_context *st, struct gl_program *prog,
                          gl_shader_stage stage)
 {
+   struct pipe_screen *screen = st->pipe->screen;
    const struct gl_shader_compiler_options *options =
       &st->ctx->Const.ShaderCompilerOptions[stage];
 
@@ -402,13 +422,18 @@ st_translate_prog_to_nir(struct st_context *st, struct gl_program *prog,
    NIR_PASS_V(nir, nir_lower_regs_to_ssa); /* turn registers into SSA */
    nir_validate_shader(nir, "after st/ptn lower_regs_to_ssa");
 
-   NIR_PASS_V(nir, st_nir_lower_wpos_ytransform, prog, st->pipe->screen);
+   NIR_PASS_V(nir, st_nir_lower_wpos_ytransform, prog, screen);
    NIR_PASS_V(nir, nir_lower_system_values);
 
    /* Optimise NIR */
    NIR_PASS_V(nir, nir_opt_constant_folding);
    st_nir_opts(nir);
-   nir_validate_shader(nir, "after st/ptn NIR opts");
+   st_finalize_nir_before_variants(nir);
+
+   if (st->allow_st_finalize_nir_twice)
+      st_finalize_nir(st, prog, NULL, nir, true);
+
+   nir_validate_shader(nir, "after st/glsl finalize_nir");
 
    return nir;
 }
@@ -647,41 +672,41 @@ st_create_vp_variant(struct st_context *st,
 {
    struct st_vp_variant *vpv = CALLOC_STRUCT(st_vp_variant);
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_shader_state state = {0};
 
    static const gl_state_index16 point_size_state[STATE_LENGTH] =
       { STATE_INTERNAL, STATE_POINT_SIZE_CLAMPED, 0 };
    struct gl_program_parameter_list *params = stvp->Base.Parameters;
 
    vpv->key = *key;
-   vpv->state.stream_output = stvp->state.stream_output;
    vpv->num_inputs = stvp->num_inputs;
 
-   /* When generating a NIR program, we usually don't have TGSI tokens.
-    * However, we do create them for ARB_vertex_program / fixed-function VS
-    * programs which we may need to use with the draw module for legacy
-    * feedback/select emulation.  If they exist, copy them.
-    */
-   if (stvp->state.tokens)
-      vpv->state.tokens = tgsi_dup_tokens(stvp->state.tokens);
+   state.stream_output = stvp->state.stream_output;
 
    if (stvp->state.type == PIPE_SHADER_IR_NIR) {
-      vpv->state.type = PIPE_SHADER_IR_NIR;
-      vpv->state.ir.nir = nir_shader_clone(NULL, stvp->state.ir.nir);
-      if (key->clamp_color)
-         NIR_PASS_V(vpv->state.ir.nir, nir_lower_clamp_color_outputs);
+      bool finalize = false;
+
+      state.type = PIPE_SHADER_IR_NIR;
+      state.ir.nir = nir_shader_clone(NULL, stvp->state.ir.nir);
+      if (key->clamp_color) {
+         NIR_PASS_V(state.ir.nir, nir_lower_clamp_color_outputs);
+         finalize = true;
+      }
       if (key->passthrough_edgeflags) {
-         NIR_PASS_V(vpv->state.ir.nir, nir_lower_passthrough_edgeflags);
+         NIR_PASS_V(state.ir.nir, nir_lower_passthrough_edgeflags);
          vpv->num_inputs++;
+         finalize = true;
       }
 
       if (key->lower_point_size) {
          _mesa_add_state_reference(params, point_size_state);
-         NIR_PASS_V(vpv->state.ir.nir, nir_lower_point_size_mov,
+         NIR_PASS_V(state.ir.nir, nir_lower_point_size_mov,
                     point_size_state);
+         finalize = true;
       }
 
       if (key->lower_ucp) {
-         struct pipe_screen *screen = pipe->screen;
          bool can_compact = screen->get_param(screen,
                                               PIPE_CAP_NIR_COMPACT_ARRAYS);
 
@@ -699,20 +724,41 @@ st_create_vp_variant(struct st_context *st,
             _mesa_add_state_reference(params, clipplane_state[i]);
          }
 
-         NIR_PASS_V(vpv->state.ir.nir, nir_lower_clip_vs, key->lower_ucp,
+         NIR_PASS_V(state.ir.nir, nir_lower_clip_vs, key->lower_ucp,
                     true, can_compact, clipplane_state);
-         NIR_PASS_V(vpv->state.ir.nir, nir_lower_io_to_temporaries,
-                    nir_shader_get_entrypoint(vpv->state.ir.nir), true, false);
+         NIR_PASS_V(state.ir.nir, nir_lower_io_to_temporaries,
+                    nir_shader_get_entrypoint(state.ir.nir), true, false);
+         NIR_PASS_V(state.ir.nir, nir_lower_global_vars_to_local);
+         finalize = true;
       }
 
-      st_finalize_nir(st, &stvp->Base, stvp->shader_program,
-                      vpv->state.ir.nir);
+      if (finalize || !st->allow_st_finalize_nir_twice) {
+         st_finalize_nir(st, &stvp->Base, stvp->shader_program, state.ir.nir,
+                         true);
 
-      vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->state);
-      /* driver takes ownership of IR: */
-      vpv->state.ir.nir = NULL;
+         /* Some of the lowering above may have introduced new varyings */
+         nir_shader_gather_info(state.ir.nir,
+                                nir_shader_get_entrypoint(state.ir.nir));
+      }
+
+      vpv->driver_shader = pipe->create_vs_state(pipe, &state);
+
+      /* When generating a NIR program, we usually don't have TGSI tokens.
+       * However, we do create them for ARB_vertex_program / fixed-function VS
+       * programs which we may need to use with the draw module for legacy
+       * feedback/select emulation.  If they exist, copy them.
+       *
+       * TODO: Lowering for shader variants is not applied to TGSI when
+       * generating a NIR shader.
+       */
+      if (stvp->state.tokens)
+         vpv->tokens = tgsi_dup_tokens(stvp->state.tokens);
+
       return vpv;
    }
+
+   state.type = PIPE_SHADER_IR_TGSI;
+   state.tokens = tgsi_dup_tokens(stvp->state.tokens);
 
    /* Emulate features. */
    if (key->clamp_color || key->passthrough_edgeflags) {
@@ -721,11 +767,11 @@ st_create_vp_variant(struct st_context *st,
          (key->clamp_color ? TGSI_EMU_CLAMP_COLOR_OUTPUTS : 0) |
          (key->passthrough_edgeflags ? TGSI_EMU_PASSTHROUGH_EDGEFLAG : 0);
 
-      tokens = tgsi_emulate(vpv->state.tokens, flags);
+      tokens = tgsi_emulate(state.tokens, flags);
 
       if (tokens) {
-         tgsi_free_tokens(vpv->state.tokens);
-         vpv->state.tokens = tokens;
+         tgsi_free_tokens(state.tokens);
+         state.tokens = tokens;
 
          if (key->passthrough_edgeflags)
             vpv->num_inputs++;
@@ -738,19 +784,21 @@ st_create_vp_variant(struct st_context *st,
             _mesa_add_state_reference(params, depth_range_state);
 
       const struct tgsi_token *tokens;
-      tokens = st_tgsi_lower_depth_clamp(vpv->state.tokens, depth_range_const,
+      tokens = st_tgsi_lower_depth_clamp(state.tokens, depth_range_const,
                                          key->clip_negative_one_to_one);
-      if (tokens != vpv->state.tokens)
-         tgsi_free_tokens(vpv->state.tokens);
-      vpv->state.tokens = tokens;
+      if (tokens != state.tokens)
+         tgsi_free_tokens(state.tokens);
+      state.tokens = tokens;
    }
 
    if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump(vpv->state.tokens, 0);
+      tgsi_dump(state.tokens, 0);
       debug_printf("\n");
    }
 
-   vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->state);
+   vpv->driver_shader = pipe->create_vs_state(pipe, &state);
+   /* Save this for selection/feedback/rasterpos. */
+   vpv->tokens = state.tokens;
    return vpv;
 }
 
@@ -1191,28 +1239,38 @@ st_create_fp_variant(struct st_context *st,
       return NULL;
 
    if (stfp->state.type == PIPE_SHADER_IR_NIR) {
+      bool finalize = false;
+
       state.type = PIPE_SHADER_IR_NIR;
       state.ir.nir = nir_shader_clone(NULL, stfp->state.ir.nir);
 
-      if (key->clamp_color)
+      if (key->clamp_color) {
          NIR_PASS_V(state.ir.nir, nir_lower_clamp_color_outputs);
+         finalize = true;
+      }
 
-      if (key->lower_flatshade)
+      if (key->lower_flatshade) {
          NIR_PASS_V(state.ir.nir, nir_lower_flatshade);
+         finalize = true;
+      }
 
       if (key->lower_alpha_func != COMPARE_FUNC_NEVER) {
          _mesa_add_state_reference(params, alpha_ref_state);
          NIR_PASS_V(state.ir.nir, nir_lower_alpha_test, key->lower_alpha_func,
                     false, alpha_ref_state);
+         finalize = true;
       }
 
-      if (key->lower_two_sided_color)
+      if (key->lower_two_sided_color) {
          NIR_PASS_V(state.ir.nir, nir_lower_two_sided_color);
+         finalize = true;
+      }
 
       if (key->persample_shading) {
           nir_shader *shader = state.ir.nir;
           nir_foreach_variable(var, &shader->inputs)
              var->data.sample = true;
+          finalize = true;
       }
 
       assert(!(key->bitmap && key->drawpixels));
@@ -1226,6 +1284,7 @@ st_create_fp_variant(struct st_context *st,
          options.swizzle_xxxx = st->bitmap.tex_format == PIPE_FORMAT_R8_UNORM;
 
          NIR_PASS_V(state.ir.nir, nir_lower_bitmap, &options);
+         finalize = true;
       }
 
       /* glDrawPixels (color only) */
@@ -1259,6 +1318,7 @@ st_create_fp_variant(struct st_context *st,
                 sizeof(options.texcoord_state_tokens));
 
          NIR_PASS_V(state.ir.nir, nir_lower_drawpixels, &options);
+         finalize = true;
       }
 
       if (unlikely(key->external.lower_nv12 || key->external.lower_iyuv ||
@@ -1272,23 +1332,34 @@ st_create_fp_variant(struct st_context *st,
          options.lower_ayuv_external = key->external.lower_ayuv;
          options.lower_xyuv_external = key->external.lower_xyuv;
          NIR_PASS_V(state.ir.nir, nir_lower_tex, &options);
+         finalize = true;
       }
 
-      st_finalize_nir(st, &stfp->Base, stfp->shader_program, state.ir.nir);
+      if (finalize || !st->allow_st_finalize_nir_twice) {
+         st_finalize_nir(st, &stfp->Base, stfp->shader_program, state.ir.nir,
+                         false);
+      }
 
+      /* This pass needs to happen *after* nir_lower_sampler */
       if (unlikely(key->external.lower_nv12 || key->external.lower_iyuv ||
                    key->external.lower_xy_uxvx || key->external.lower_yx_xuxv)) {
-         /* This pass needs to happen *after* nir_lower_sampler */
          NIR_PASS_V(state.ir.nir, st_nir_lower_tex_src_plane,
                     ~stfp->Base.SamplersUsed,
                     key->external.lower_nv12 || key->external.lower_xy_uxvx ||
                        key->external.lower_yx_xuxv,
                     key->external.lower_iyuv);
+         finalize = true;
       }
 
-      /* Some of the lowering above may have introduced new varyings */
-      nir_shader_gather_info(state.ir.nir,
-                             nir_shader_get_entrypoint(state.ir.nir));
+      if (finalize || !st->allow_st_finalize_nir_twice) {
+         /* Some of the lowering above may have introduced new varyings */
+         nir_shader_gather_info(state.ir.nir,
+                                nir_shader_get_entrypoint(state.ir.nir));
+
+         struct pipe_screen *screen = pipe->screen;
+         if (screen->finalize_nir)
+            screen->finalize_nir(screen, state.ir.nir, false);
+      }
 
       variant->driver_shader = pipe->create_fs_state(pipe, &state);
       variant->key = *key;
@@ -1697,18 +1768,23 @@ st_get_common_variant(struct st_context *st,
       /* create new */
       v = CALLOC_STRUCT(st_common_variant);
       if (v) {
-
 	 if (prog->state.type == PIPE_SHADER_IR_NIR) {
+            bool finalize = false;
+
 	    state.type = PIPE_SHADER_IR_NIR;
 	    state.ir.nir = nir_shader_clone(NULL, prog->state.ir.nir);
 
-            if (key->clamp_color)
+            if (key->clamp_color) {
                NIR_PASS_V(state.ir.nir, nir_lower_clamp_color_outputs);
+               finalize = true;
+            }
 
             state.stream_output = prog->state.stream_output;
 
-            st_finalize_nir(st, &prog->Base, prog->shader_program,
-                            state.ir.nir);
+            if (finalize || !st->allow_st_finalize_nir_twice) {
+               st_finalize_nir(st, &prog->Base, prog->shader_program,
+                               state.ir.nir, true);
+            }
 	 } else {
             if (key->lower_depth_clamp) {
                struct gl_program_parameter_list *params = prog->Base.Parameters;
@@ -1942,7 +2018,7 @@ st_print_current_vertex_program(void)
 
       for (stv = stvp->variants; stv; stv = stv->next) {
          debug_printf("variant %p\n", stv);
-         tgsi_dump(stv->state.tokens, 0);
+         tgsi_dump(stv->tokens, 0);
       }
    }
 }

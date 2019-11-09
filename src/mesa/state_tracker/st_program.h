@@ -93,7 +93,8 @@ st_get_external_sampler_key(struct st_context *st, struct gl_program *prog)
          key.lower_xyuv |= (1 << unit);
          break;
       default:
-         printf("unhandled %u\n", st_get_view_format(stObj));
+         printf("mesa: st_get_external_sampler_key: unhandled pipe format %u\n",
+               st_get_view_format(stObj));
          break;
       }
    }
@@ -198,7 +199,7 @@ struct st_vp_variant
     * The shader variant saved for the draw module to later emulate
     * selection/feedback/rasterpos.
     */
-   struct pipe_shader_state state;
+   const struct tgsi_token *tokens;
 
    /** Driver's compiled shader */
    void *driver_shader;
@@ -354,6 +355,9 @@ st_release_common_variants(struct st_context *st, struct st_common_program *p);
 
 extern void
 st_destroy_program_variants(struct st_context *st);
+
+extern void
+st_finalize_nir_before_variants(struct nir_shader *nir);
 
 extern void
 st_prepare_vertex_program(struct st_vertex_program *stvp);

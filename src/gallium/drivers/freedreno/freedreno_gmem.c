@@ -446,6 +446,9 @@ fd_gmem_render_tiles(struct fd_batch *batch)
 		}
 	}
 
+	if (fd_mesa_debug & FD_DBG_NOGMEM)
+		sysmem = true;
+
 	/* Layered rendering always needs bypass. */
 	for (unsigned i = 0; i < pfb->nr_cbufs; i++) {
 		struct pipe_surface *psurf = pfb->cbufs[i];
@@ -453,6 +456,14 @@ fd_gmem_render_tiles(struct fd_batch *batch)
 			continue;
 		if (psurf->u.tex.first_layer < psurf->u.tex.last_layer)
 			sysmem = true;
+	}
+
+	/* Tessellation doesn't seem to support tiled rendering so fall back to
+	 * bypass.
+	 */
+	if (batch->tessellation) {
+		debug_assert(ctx->emit_sysmem_prep);
+		sysmem = true;
 	}
 
 	fd_reset_wfi(batch);

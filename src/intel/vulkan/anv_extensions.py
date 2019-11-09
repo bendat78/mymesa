@@ -106,6 +106,7 @@ EXTENSIONS = [
     Extension('VK_KHR_relaxed_block_layout',              1, True),
     Extension('VK_KHR_sampler_mirror_clamp_to_edge',      1, True),
     Extension('VK_KHR_sampler_ycbcr_conversion',          1, True),
+    Extension('VK_KHR_separate_depth_stencil_layouts',    1, True),
     Extension('VK_KHR_shader_atomic_int64',               1,
               'device->info.gen >= 9 && device->use_softpin'),
     Extension('VK_KHR_shader_clock',                      1, True),
@@ -120,6 +121,7 @@ EXTENSIONS = [
     Extension('VK_KHR_swapchain',                        70, 'ANV_HAS_SURFACE'),
     Extension('VK_KHR_uniform_buffer_standard_layout',    1, True),
     Extension('VK_KHR_variable_pointers',                 1, True),
+    Extension('VK_KHR_vulkan_memory_model',               3, True),
     Extension('VK_KHR_wayland_surface',                   6, 'VK_USE_PLATFORM_WAYLAND_KHR'),
     Extension('VK_KHR_xcb_surface',                       6, 'VK_USE_PLATFORM_XCB_KHR'),
     Extension('VK_KHR_xlib_surface',                      6, 'VK_USE_PLATFORM_XLIB_KHR'),
@@ -165,6 +167,7 @@ EXTENSIONS = [
     Extension('VK_ANDROID_native_buffer',                 7, 'ANDROID'),
     Extension('VK_GOOGLE_decorate_string',                1, True),
     Extension('VK_GOOGLE_hlsl_functionality1',            1, True),
+    Extension('VK_INTEL_performance_query',               1, 'device->perf'),
     Extension('VK_NV_compute_shader_derivatives',         1, True),
 ]
 

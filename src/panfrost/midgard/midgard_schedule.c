@@ -55,18 +55,18 @@
  *
  */
 
-/* We create the dependency graph with per-component granularity */
+/* We create the dependency graph with per-byte granularity */
 
-#define COMPONENT_COUNT 8
+#define BYTE_COUNT 16
 
 static void
-add_dependency(struct util_dynarray *table, unsigned index, unsigned mask, midgard_instruction **instructions, unsigned child)
+add_dependency(struct util_dynarray *table, unsigned index, uint16_t mask, midgard_instruction **instructions, unsigned child)
 {
-        for (unsigned i = 0; i < COMPONENT_COUNT; ++i) {
+        for (unsigned i = 0; i < BYTE_COUNT; ++i) {
                 if (!(mask & (1 << i)))
                         continue;
 
-                struct util_dynarray *parents = &table[(COMPONENT_COUNT * index) + i];
+                struct util_dynarray *parents = &table[(BYTE_COUNT * index) + i];
 
                 util_dynarray_foreach(parents, unsigned, parent) {
                         BITSET_WORD *dependents = instructions[*parent]->dependents;
@@ -82,20 +82,20 @@ add_dependency(struct util_dynarray *table, unsigned index, unsigned mask, midga
 }
 
 static void
-mark_access(struct util_dynarray *table, unsigned index, unsigned mask, unsigned parent)
+mark_access(struct util_dynarray *table, unsigned index, uint16_t mask, unsigned parent)
 {
-        for (unsigned i = 0; i < COMPONENT_COUNT; ++i) {
+        for (unsigned i = 0; i < BYTE_COUNT; ++i) {
                 if (!(mask & (1 << i)))
                         continue;
 
-                util_dynarray_append(&table[(COMPONENT_COUNT * index) + i], unsigned, parent);
+                util_dynarray_append(&table[(BYTE_COUNT * index) + i], unsigned, parent);
         }
 }
 
 static void
 mir_create_dependency_graph(midgard_instruction **instructions, unsigned count, unsigned node_count)
 {
-        size_t sz = node_count * COMPONENT_COUNT;
+        size_t sz = node_count * BYTE_COUNT;
 
         struct util_dynarray *last_read = calloc(sizeof(struct util_dynarray), sz);
         struct util_dynarray *last_write = calloc(sizeof(struct util_dynarray), sz);
@@ -119,13 +119,13 @@ mir_create_dependency_graph(midgard_instruction **instructions, unsigned count, 
                         continue;
 
                 unsigned dest = instructions[i]->dest;
-                unsigned mask = instructions[i]->mask;
+                unsigned mask = mir_bytemask(instructions[i]);
 
                 mir_foreach_src((*instructions), s) {
                         unsigned src = instructions[i]->src[s];
 
                         if (src < node_count) {
-                                unsigned readmask = mir_mask_of_read_components(instructions[i], src);
+                                unsigned readmask = mir_bytemask_of_read_components(instructions[i], src);
                                 add_dependency(last_write, src, readmask, instructions, i);
                         }
                 }
@@ -140,7 +140,7 @@ mir_create_dependency_graph(midgard_instruction **instructions, unsigned count, 
                         unsigned src = instructions[i]->src[s];
 
                         if (src < node_count) {
-                                unsigned readmask = mir_mask_of_read_components(instructions[i], src);
+                                unsigned readmask = mir_bytemask_of_read_components(instructions[i], src);
                                 mark_access(last_read, src, readmask, i);
                         }
                 }
@@ -388,7 +388,7 @@ mir_adjust_constants(midgard_instruction *ins,
                 uint32_t *bundles = (uint32_t *) pred->constants;
                 uint32_t *constants = (uint32_t *) ins->constants;
                 unsigned r_constant = SSA_FIXED_REGISTER(REGISTER_CONSTANT);
-                unsigned mask = mir_mask_of_read_components(ins, r_constant);
+                unsigned mask = mir_from_bytemask(mir_bytemask_of_read_components(ins, r_constant), midgard_reg_mode_32);
 
                 /* First, check if it fits */
                 unsigned count = DIV_ROUND_UP(pred->constant_count, sizeof(uint32_t));
@@ -437,7 +437,7 @@ mir_adjust_constants(midgard_instruction *ins,
                 /* If destructive, let's copy in the new constants and adjust
                  * swizzles to pack it in. */
 
-                uint32_t indices[4] = { 0 };
+                unsigned indices[16] = { 0 };
 
                 /* Reset count */
                 count = existing_count;
@@ -473,17 +473,12 @@ mir_adjust_constants(midgard_instruction *ins,
 
                 pred->constant_count = count * sizeof(uint32_t);
 
-                /* Cool, we have it in. So use indices as a
-                 * swizzle */
+                /* Use indices as a swizzle */
 
-                unsigned swizzle = SWIZZLE_FROM_ARRAY(indices);
-
-                if (ins->src[0] == r_constant)
-                        ins->alu.src1 = vector_alu_apply_swizzle(ins->alu.src1, swizzle);
-
-                if (ins->src[1] == r_constant)
-                        ins->alu.src2 = vector_alu_apply_swizzle(ins->alu.src2, swizzle);
-
+                mir_foreach_src(ins, s) {
+                        if (ins->src[s] == r_constant)
+                                mir_compose_swizzle(ins->swizzle[s], indices, ins->swizzle[s]);
+                }
         }
 
         return true;
@@ -707,12 +702,12 @@ mir_schedule_comparison(
                 midgard_instruction **instructions,
                 struct midgard_predicate *predicate,
                 BITSET_WORD *worklist, unsigned count,
-                unsigned cond, bool vector, unsigned swizzle,
+                unsigned cond, bool vector, unsigned *swizzle,
                 midgard_instruction *user)
 {
         /* TODO: swizzle when scheduling */
         unsigned comp_i =
-                (!vector && (swizzle == 0)) ?
+                (!vector && (swizzle[0] == 0)) ?
                 mir_comparison_mobile(ctx, instructions, predicate, count, cond) : ~0;
 
         /* If we can, schedule the condition immediately */
@@ -723,12 +718,10 @@ mir_schedule_comparison(
         }
 
         /* Otherwise, we insert a move */
-        midgard_vector_alu_src csel = {
-                .swizzle = swizzle
-        };
 
-        midgard_instruction mov = v_mov(cond, csel, cond);
+        midgard_instruction mov = v_mov(cond, cond);
         mov.mask = vector ? 0xF : 0x1;
+        memcpy(mov.swizzle[1], swizzle, sizeof(mov.swizzle[1]));
 
         return mir_insert_instruction_before(ctx, user, mov);
 }
@@ -754,7 +747,7 @@ mir_schedule_condition(compiler_context *ctx,
 
         midgard_instruction *cond = mir_schedule_comparison(
                         ctx, instructions, predicate, worklist, count, last->src[condition_index],
-                        vector, last->cond_swizzle, last);
+                        vector, last->swizzle[2], last);
 
         /* We have exclusive reign over this (possibly move) conditional
          * instruction. We can rewrite into a pipeline conditional register */
@@ -769,7 +762,8 @@ mir_schedule_condition(compiler_context *ctx,
                         if (cond->src[s] == ~0)
                                 continue;
 
-                        mir_set_swizzle(cond, s, (mir_get_swizzle(cond, s) << (2*3)) & 0xFF);
+                        for (unsigned q = 0; q < 4; ++q)
+                                cond->swizzle[s][q + COMPONENT_W] = cond->swizzle[s][q];
                 }
         }
 
@@ -962,7 +956,7 @@ mir_schedule_alu(
                 /* Finally, add a move if necessary */
                 if (bad_writeout || writeout_mask != 0xF) {
                         unsigned temp = (branch->src[0] == ~0) ? SSA_FIXED_REGISTER(0) : make_compiler_temp(ctx);
-                        midgard_instruction mov = v_mov(src, blank_alu_src, temp);
+                        midgard_instruction mov = v_mov(src, temp);
                         vmul = mem_dup(&mov, sizeof(midgard_instruction));
                         vmul->unit = UNIT_VMUL;
                         vmul->mask = 0xF ^ writeout_mask;
@@ -1078,7 +1072,9 @@ schedule_block(compiler_context *ctx, midgard_block *block)
 
         /* Blend constant was backwards as well. blend_offset if set is
          * strictly positive, as an offset of zero would imply constants before
-         * any instructions which is invalid in Midgard */
+         * any instructions which is invalid in Midgard. TODO: blend constants
+         * are broken if you spill since then quadword_count becomes invalid
+         * XXX */
 
         if (blend_offset)
                 ctx->blend_constant_offset = ((ctx->quadword_count + block->quadword_count) - blend_offset - 1) * 0x10;
@@ -1156,9 +1152,9 @@ v_load_store_scratch(
                 .mask = mask,
                 .dest = ~0,
                 .src = { ~0, ~0, ~0 },
+                .swizzle = SWIZZLE_IDENTITY_4,
                 .load_store = {
                         .op = is_store ? midgard_op_st_int4 : midgard_op_ld_int4,
-                        .swizzle = SWIZZLE_XYZW,
 
                         /* For register spilling - to thread local storage */
                         .arg_1 = 0xEA,
@@ -1271,7 +1267,7 @@ static void mir_spill_register(
                         midgard_instruction st;
 
                         if (is_special_w) {
-                                st = v_mov(spill_node, blank_alu_src, spill_slot);
+                                st = v_mov(spill_node, spill_slot);
                                 st.no_spill = true;
                         } else {
                                 ins->dest = SSA_FIXED_REGISTER(26);
@@ -1290,11 +1286,11 @@ static void mir_spill_register(
                 }
         }
 
-        /* For special reads, figure out how many components we need */
-        unsigned read_mask = 0;
+        /* For special reads, figure out how many bytes we need */
+        unsigned read_bytemask = 0;
 
         mir_foreach_instr_global_safe(ctx, ins) {
-                read_mask |= mir_mask_of_read_components(ins, spill_node);
+                read_bytemask |= mir_bytemask_of_read_components(ins, spill_node);
         }
 
         /* Insert a load from TLS before the first consecutive
@@ -1331,7 +1327,7 @@ static void mir_spill_register(
 
                                 midgard_instruction *before = ins;
 
-                                /* For a csel, go back one more not to break up the bundle */
+                                /* TODO: Remove me I'm a fossil */
                                 if (ins->type == TAG_ALU_4 && OP_IS_CSEL(ins->alu.op))
                                         before = mir_prev_op(before);
 
@@ -1339,7 +1335,7 @@ static void mir_spill_register(
 
                                 if (is_special) {
                                         /* Move */
-                                        st = v_mov(spill_node, blank_alu_src, consecutive_index);
+                                        st = v_mov(spill_node, consecutive_index);
                                         st.no_spill = true;
                                 } else {
                                         /* TLS load */
@@ -1347,9 +1343,9 @@ static void mir_spill_register(
                                 }
 
                                 /* Mask the load based on the component count
-                                 * actually needed to prvent RA loops */
+                                 * actually needed to prevent RA loops */
 
-                                st.mask = read_mask;
+                                st.mask = mir_from_bytemask(read_bytemask, midgard_reg_mode_32);
 
                                 mir_insert_instruction_before_scheduled(ctx, block, before, st);
                                // consecutive_skip = true;

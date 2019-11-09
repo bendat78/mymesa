@@ -51,12 +51,13 @@ dump_shader_info(struct ir3_shader_variant *v, bool binning_pass,
 		return;
 
 	pipe_debug_message(debug, SHADER_INFO,
-			"%s%s shader: %u inst, %u dwords, "
+			"%s shader: %u inst, %u nops, %u non-nops, %u dwords, "
 			"%u half, %u full, %u constlen, "
 			"%u (ss), %u (sy), %d max_sun, %d loops\n",
-			binning_pass ? "B" : "",
-			ir3_shader_stage(v->shader),
+			ir3_shader_stage(v),
 			v->info.instrs_count,
+			v->info.nops_count,
+			v->info.instrs_count - v->info.nops_count,
 			v->info.sizedwords,
 			v->info.max_half_reg + 1,
 			v->info.max_reg + 1,
@@ -401,13 +402,27 @@ link_geometry_stages(const struct ir3_shader_variant *producer,
 		const struct ir3_shader_variant *consumer,
 		uint32_t *locs)
 {
-	uint32_t num_loc = 0;
+	uint32_t num_loc = 0, factor;
+
+	switch (consumer->type) {
+	case MESA_SHADER_TESS_CTRL:
+	case MESA_SHADER_GEOMETRY:
+		/* These stages load with ldlw, which expects byte offsets. */
+		factor = 4;
+		break;
+	case MESA_SHADER_TESS_EVAL:
+		/* The tess eval shader uses ldg, which takes dword offsets. */
+		factor = 1;
+		break;
+	default:
+		unreachable("bad shader stage");
+	}
 
 	nir_foreach_variable(in_var, &consumer->shader->nir->inputs) {
 		nir_foreach_variable(out_var, &producer->shader->nir->outputs) {
 			if (in_var->data.location == out_var->data.location) {
 				locs[in_var->data.driver_location] =
-					producer->shader->output_loc[out_var->data.driver_location] * 4;
+					producer->shader->output_loc[out_var->data.driver_location] * factor;
 
 				debug_assert(num_loc <= in_var->data.driver_location + 1);
 				num_loc = in_var->data.driver_location + 1;

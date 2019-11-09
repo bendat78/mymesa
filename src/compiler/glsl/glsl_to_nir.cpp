@@ -445,6 +445,8 @@ nir_visitor::visit(ir_variable *ir)
    var->data.invariant = ir->data.invariant;
    var->data.location = ir->data.location;
    var->data.stream = ir->data.stream;
+   if (ir->data.stream & (1u << 31))
+      var->data.stream |= NIR_STREAM_PACKED;
    var->data.compact = false;
 
    switch(ir->data.mode) {
@@ -598,14 +600,17 @@ nir_visitor::visit(ir_variable *ir)
    var->data.bindless = ir->data.bindless;
    var->data.offset = ir->data.offset;
 
-   var->data.image.access = (gl_access_qualifier)image_access;
-   var->data.image.format = ir->data.image_format;
+   if (var->type->without_array()->is_image()) {
+      var->data.image.access = (gl_access_qualifier)image_access;
+      var->data.image.format = ir->data.image_format;
+   } else {
+      var->data.xfb.buffer = ir->data.xfb_buffer;
+      var->data.xfb.stride = ir->data.xfb_stride;
+   }
 
    var->data.fb_fetch_output = ir->data.fb_fetch_output;
    var->data.explicit_xfb_buffer = ir->data.explicit_xfb_buffer;
    var->data.explicit_xfb_stride = ir->data.explicit_xfb_stride;
-   var->data.xfb_buffer = ir->data.xfb_buffer;
-   var->data.xfb_stride = ir->data.xfb_stride;
 
    var->num_state_slots = ir->get_num_state_slots();
    if (var->num_state_slots > 0) {

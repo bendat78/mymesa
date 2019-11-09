@@ -80,16 +80,14 @@ struct panfrost_query {
         unsigned type;
         unsigned index;
 
-        union {
-                /* For computed queries. 64-bit to prevent overflow */
-                struct {
-                        uint64_t start;
-                        uint64_t end;
-                };
-
-                /* Memory for the GPU to writeback the value of the query */
-                struct panfrost_transfer transfer;
+        /* For computed queries. 64-bit to prevent overflow */
+        struct {
+                uint64_t start;
+                uint64_t end;
         };
+
+        /* Memory for the GPU to writeback the value of the query */
+        struct panfrost_bo *bo;
 };
 
 struct panfrost_fence {
@@ -190,9 +188,6 @@ struct panfrost_context {
         struct pipe_blend_color blend_color;
         struct pipe_depth_stencil_alpha_state *depth_stencil;
         struct pipe_stencil_ref stencil_ref;
-
-        /* True for t6XX, false for t8xx. */
-        bool is_t6xx;
 };
 
 /* Corresponds to the CSO */

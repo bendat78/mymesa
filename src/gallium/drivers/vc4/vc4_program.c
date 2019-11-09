@@ -185,7 +185,7 @@ ntq_store_dest(struct vc4_compile *c, nir_dest *dest, int chan,
                struct qreg result)
 {
         struct qinst *last_inst = NULL;
-        if (!list_empty(&c->cur_block->instructions))
+        if (!list_is_empty(&c->cur_block->instructions))
                 last_inst = (struct qinst *)c->cur_block->instructions.prev;
 
         assert(result.file == QFILE_UNIF ||
@@ -832,7 +832,7 @@ ntq_src_is_only_ssa_def_user(nir_src *src)
         if (!src->is_ssa)
                 return false;
 
-        if (!list_empty(&src->ssa->if_uses))
+        if (!list_is_empty(&src->ssa->if_uses))
                 return false;
 
         return (src->ssa->uses.next == &src->use_link &&
@@ -1806,6 +1806,11 @@ ntq_emit_intrinsic(struct vc4_compile *c, nir_intrinsic_instr *instr)
                                            0));
                 break;
 
+        case nir_intrinsic_load_alpha_ref_float:
+                ntq_store_dest(c, &instr->dest, 0,
+                               qir_uniform(c, QUNIFORM_ALPHA_REF, 0));
+                break;
+
         case nir_intrinsic_load_sample_mask_in:
                 ntq_store_dest(c, &instr->dest, 0,
                                qir_uniform(c, QUNIFORM_SAMPLE_MASK, 0));
@@ -2248,8 +2253,16 @@ vc4_shader_ntq(struct vc4_context *vc4, enum qstage stage,
 
         c->s = nir_shader_clone(c, key->shader_state->base.ir.nir);
 
-        if (stage == QSTAGE_FRAG)
+        if (stage == QSTAGE_FRAG) {
+                if (c->fs_key->alpha_test_func != COMPARE_FUNC_ALWAYS) {
+                        NIR_PASS_V(c->s, nir_lower_alpha_test,
+                                   c->fs_key->alpha_test_func,
+                                   c->fs_key->sample_alpha_to_one &&
+                                   c->fs_key->msaa,
+                                   NULL);
+                }
                 NIR_PASS_V(c->s, vc4_nir_lower_blend, c);
+        }
 
         struct nir_lower_tex_options tex_options = {
                 /* We would need to implement txs, but we don't want the
@@ -2321,7 +2334,7 @@ vc4_shader_ntq(struct vc4_context *vc4, enum qstage stage,
 
         NIR_PASS_V(c->s, vc4_nir_lower_io, c);
         NIR_PASS_V(c->s, vc4_nir_lower_txf_ms, c);
-        NIR_PASS_V(c->s, nir_lower_idiv);
+        NIR_PASS_V(c->s, nir_lower_idiv, nir_lower_idiv_fast);
 
         vc4_optimize_nir(c->s);
 

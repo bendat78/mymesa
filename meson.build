@@ -201,13 +201,10 @@ with_gallium_svga = gallium_drivers.contains('svga')
 with_gallium_virgl = gallium_drivers.contains('virgl')
 with_gallium_swr = gallium_drivers.contains('swr')
 with_gallium_lima = gallium_drivers.contains('lima')
+with_gallium_zink = gallium_drivers.contains('zink')
 
-if cc.get_id() == 'intel'
-  if meson.version().version_compare('< 0.49.0')
-    error('Meson does not have sufficient support of ICC before 0.49.0 to compile mesa')
-  elif with_gallium_swr and meson.version().version_compare('== 0.49.0')
-    warning('Meson as of 0.49.0 is sufficient for compiling mesa with ICC, but there are some caveats with SWR. 0.49.1 should resolve all of these')
-  endif
+if cc.get_id().startswith('intel') and meson.version().version_compare('< 0.49.1')
+  error('Meson does not have sufficient support of ICC before 0.49.1 to compile mesa')
 endif
 
 with_gallium = gallium_drivers.length() != 0 and gallium_drivers != ['']
@@ -496,6 +493,10 @@ endif
 vdpau_drivers_path = get_option('vdpau-libs-path')
 if vdpau_drivers_path == ''
   vdpau_drivers_path = join_paths(get_option('libdir'), 'vdpau')
+endif
+
+if with_gallium_zink
+  dep_vulkan = dependency('vulkan')
 endif
 
 _xvmc = get_option('gallium-xvmc')
@@ -887,7 +888,7 @@ if cc.compiles('__uint128_t foo(void) { return 0; }',
 endif
 
 # TODO: this is very incomplete
-if ['linux', 'cygwin', 'gnu', 'gnu/kfreebsd'].contains(host_machine.system())
+if ['linux', 'cygwin', 'gnu', 'freebsd', 'gnu/kfreebsd'].contains(host_machine.system())
   pre_args += '-D_GNU_SOURCE'
 elif host_machine.system() == 'sunos'
   pre_args += '-D__EXTENSIONS__'
@@ -947,6 +948,7 @@ else
     '-Werror=implicit-function-declaration',
     '-Werror=missing-prototypes',
     '-Werror=return-type',
+    '-Werror=empty-body',
     '-Werror=incompatible-pointer-types',
     '-Wno-missing-field-initializers',
     '-Wno-format-truncation',
@@ -966,6 +968,7 @@ else
 
   _trial = [
     '-Werror=return-type',
+    '-Werror=empty-body',
     '-Wno-non-virtual-dtor',
     '-Wno-missing-field-initializers',
     '-Wno-format-truncation',
@@ -1150,7 +1153,7 @@ foreach h : ['xlocale.h', 'sys/sysctl.h', 'linux/futex.h', 'endian.h', 'dlfcn.h'
   endif
 endforeach
 
-foreach f : ['strtof', 'mkostemp', 'timespec_get', 'memfd_create', 'random_r', 'flock']
+foreach f : ['strtof', 'mkostemp', 'timespec_get', 'memfd_create', 'random_r', 'flock', 'strtok_r']
   if cc.has_function(f)
     pre_args += '-DHAVE_@0@'.format(f.to_upper())
   endif
@@ -1287,7 +1290,7 @@ dep_libdrm_radeon = null_dep
 dep_libdrm_nouveau = null_dep
 dep_libdrm_intel = null_dep
 
-_drm_amdgpu_ver = '2.4.99'
+_drm_amdgpu_ver = '2.4.100'
 _drm_radeon_ver = '2.4.71'
 _drm_nouveau_ver = '2.4.66'
 _drm_intel_ver = '2.4.75'
@@ -1448,12 +1451,8 @@ else
 endif
 
 dep_glvnd = null_dep
-glvnd_has_headers_and_pc_files = false
 if with_glvnd
-  dep_glvnd = dependency('libglvnd', version : '>= 0.2.0')
-  # GLVND before 1.2 was missing its pkg-config and header files, forcing every
-  # vendor to provide them and the distro maintainers to resolve the conflict.
-  glvnd_has_headers_and_pc_files = dep_glvnd.version().version_compare('>= 1.2.0')
+  dep_glvnd = dependency('libglvnd', version : '>= 1.2.0')
   pre_args += '-DUSE_LIBGLVND=1'
 endif
 
@@ -1685,7 +1684,15 @@ endif
 
 pkg = import('pkgconfig')
 
-prog_nm = find_program('nm', required : false)
+if host_machine.system() == 'windows'
+  prog_dumpbin = find_program('dumpbin', required : false)
+  with_symbols_check = prog_dumpbin.found() and with_tests
+  symbols_check_args = ['--dumpbin', prog_dumpbin.path()]
+else
+  prog_nm = find_program('nm')
+  with_symbols_check = with_tests
+  symbols_check_args = ['--nm', prog_nm.path()]
+endif
 
 # This quirk needs to be applied to sources with functions defined in assembly
 # as GCC LTO drops them. See: https://bugs.freedesktop.org/show_bug.cgi?id=109391

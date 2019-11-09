@@ -77,6 +77,9 @@ typedef struct midgard_branch {
  * emitted before the register allocation pass.
  */
 
+#define MIR_SRC_COUNT 3
+#define MIR_VEC_COMPONENTS 16
+
 typedef struct midgard_instruction {
         /* Must be first for casting */
         struct list_head link;
@@ -88,8 +91,8 @@ typedef struct midgard_instruction {
         unsigned src[3];
         unsigned dest;
 
-        /* Swizzle for the conditional for a csel/branch */
-        unsigned cond_swizzle;
+        /* vec16 swizzle, unpacked, per source */
+        unsigned swizzle[MIR_SRC_COUNT][MIR_VEC_COMPONENTS];
 
         /* Special fields for an ALU instruction */
         midgard_reg_info registers;
@@ -289,6 +292,8 @@ typedef struct compiler_context {
 
         /* Bitmask of valid metadata */
         unsigned metadata;
+
+        unsigned gpu_id;
 } compiler_context;
 
 /* Per-block live_in/live_out */
@@ -500,20 +505,25 @@ nir_dest_index(compiler_context *ctx, nir_dest *dst)
 
 /* MIR manipulation */
 
-unsigned mir_get_swizzle(midgard_instruction *ins, unsigned idx);
-void mir_set_swizzle(midgard_instruction *ins, unsigned idx, unsigned new);
 void mir_rewrite_index(compiler_context *ctx, unsigned old, unsigned new);
 void mir_rewrite_index_src(compiler_context *ctx, unsigned old, unsigned new);
 void mir_rewrite_index_dst(compiler_context *ctx, unsigned old, unsigned new);
 void mir_rewrite_index_dst_single(midgard_instruction *ins, unsigned old, unsigned new);
 void mir_rewrite_index_src_single(midgard_instruction *ins, unsigned old, unsigned new);
-void mir_rewrite_index_src_swizzle(compiler_context *ctx, unsigned old, unsigned new, unsigned swizzle);
+void mir_rewrite_index_src_swizzle(compiler_context *ctx, unsigned old, unsigned new, unsigned *swizzle);
 bool mir_single_use(compiler_context *ctx, unsigned value);
 bool mir_special_index(compiler_context *ctx, unsigned idx);
 unsigned mir_use_count(compiler_context *ctx, unsigned value);
 bool mir_is_written_before(compiler_context *ctx, midgard_instruction *ins, unsigned node);
-unsigned mir_mask_of_read_components(midgard_instruction *ins, unsigned node);
+uint16_t mir_bytemask_of_read_components(midgard_instruction *ins, unsigned node);
 unsigned mir_ubo_shift(midgard_load_store_op op);
+midgard_reg_mode mir_typesize(midgard_instruction *ins);
+midgard_reg_mode mir_srcsize(midgard_instruction *ins, unsigned i);
+unsigned mir_bytes_for_mode(midgard_reg_mode mode);
+uint16_t mir_from_bytemask(uint16_t bytemask, midgard_reg_mode mode);
+uint16_t mir_bytemask(midgard_instruction *ins);
+uint16_t mir_round_bytemask_down(uint16_t mask, midgard_reg_mode mode);
+void mir_set_bytemask(midgard_instruction *ins, uint16_t bytemask);
 
 /* MIR printing */
 
@@ -523,7 +533,6 @@ void mir_print_block(midgard_block *block);
 void mir_print_shader(compiler_context *ctx);
 bool mir_nontrivial_source2_mod(midgard_instruction *ins);
 bool mir_nontrivial_source2_mod_simple(midgard_instruction *ins);
-bool mir_nontrivial_mod(midgard_vector_alu_src src, bool is_int, unsigned mask);
 bool mir_nontrivial_outmod(midgard_instruction *ins);
 
 void mir_insert_instruction_before_scheduled(compiler_context *ctx, midgard_block *block, midgard_instruction *tag, midgard_instruction ins);
@@ -531,40 +540,22 @@ void mir_insert_instruction_after_scheduled(compiler_context *ctx, midgard_block
 void mir_flip(midgard_instruction *ins);
 void mir_compute_temp_count(compiler_context *ctx);
 
-/* MIR goodies */
-
-static const midgard_vector_alu_src blank_alu_src = {
-        .swizzle = SWIZZLE(COMPONENT_X, COMPONENT_Y, COMPONENT_Z, COMPONENT_W),
-};
-
-static const midgard_vector_alu_src blank_alu_src_xxxx = {
-        .swizzle = SWIZZLE(COMPONENT_X, COMPONENT_X, COMPONENT_X, COMPONENT_X),
-};
-
-static const midgard_scalar_alu_src blank_scalar_alu_src = {
-        .full = true
-};
-
-/* Used for encoding the unused source of 1-op instructions */
-static const midgard_vector_alu_src zero_alu_src = { 0 };
-
 /* 'Intrinsic' move for aliasing */
 
 static inline midgard_instruction
-v_mov(unsigned src, midgard_vector_alu_src mod, unsigned dest)
+v_mov(unsigned src, unsigned dest)
 {
         midgard_instruction ins = {
                 .type = TAG_ALU_4,
                 .mask = 0xF,
                 .src = { SSA_UNUSED, src, SSA_UNUSED },
+                .swizzle = SWIZZLE_IDENTITY,
                 .dest = dest,
                 .alu = {
                         .op = midgard_alu_op_imov,
                         .reg_mode = midgard_reg_mode_32,
                         .dest_override = midgard_dest_override_none,
-                        .outmod = midgard_outmod_int_wrap,
-                        .src1 = vector_alu_srco_unsigned(zero_alu_src),
-                        .src2 = vector_alu_srco_unsigned(mod)
+                        .outmod = midgard_outmod_int_wrap
                 },
         };
 

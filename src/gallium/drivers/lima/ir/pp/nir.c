@@ -121,6 +121,7 @@ static void ppir_node_add_src(ppir_compiler *comp, ppir_node *node,
          /* Fallthrough */
       case ppir_op_load_uniform:
       case ppir_op_load_coords:
+      case ppir_op_load_coords_reg:
          /* Clone uniform and texture coord loads for each block.
           * Also ensure that each load has a single successor.
           * Let's do a fetch each time and hope for a cache hit instead
@@ -460,6 +461,7 @@ static ppir_node *ppir_emit_tex(ppir_block *block, nir_instr *ni)
 
    switch (instr->sampler_dim) {
    case GLSL_SAMPLER_DIM_2D:
+   case GLSL_SAMPLER_DIM_CUBE:
    case GLSL_SAMPLER_DIM_RECT:
    case GLSL_SAMPLER_DIM_EXTERNAL:
       break;

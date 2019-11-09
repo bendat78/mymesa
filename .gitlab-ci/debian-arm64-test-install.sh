@@ -4,44 +4,31 @@ set -e
 set -o xtrace
 
 ############### Install packages for building
-apt-get update
 apt-get -y install ca-certificates
-apt-get -y install --no-install-recommends \
-	g++ \
-	git \
-	pkg-config \
-	python \
-	python3-pip \
-	python3-setuptools \
-	bison \
-	flex \
-	gettext \
-	cmake \
-	ninja-build \
-	bc \
+sed -i -e 's/http:\/\/deb/https:\/\/deb/g' /etc/apt/sources.list
+echo 'deb https://deb.debian.org/debian buster-backports main' >/etc/apt/sources.list.d/backports.list
+apt-get update
+apt-get -y install \
 	bzip2 \
-	libssl-dev \
-	curl \
-	unzip \
-	wget \
-	procps \
+	cmake \
+	g++ \
+	gcc \
+	git \
+	libc6-dev \
+	libdrm-nouveau2 \
 	libexpat1 \
-	libelf1 \
-	zlib1g-dev \
-	libpng-dev \
 	libgbm-dev \
-	libgles2-mesa-dev
-
-export             LIBDRM_VERSION=libdrm-2.4.99
-
-pip3 install meson
-
-############### Build libdrm
-
-wget https://dri.freedesktop.org/libdrm/$LIBDRM_VERSION.tar.bz2
-tar -xvf $LIBDRM_VERSION.tar.bz2 && rm $LIBDRM_VERSION.tar.bz2
-cd $LIBDRM_VERSION; meson build/ -Detnaviv=true; ninja -C build/ install; cd ..
-rm -rf $LIBDRM_VERSION
+	libgbm-dev \
+	libgles2-mesa-dev \
+	libllvm8 \
+	libpng16-16 \
+	libpng-dev \
+	meson \
+	pkg-config \
+	procps \
+	python \
+	wget \
+	zlib1g
 
 ############### Build dEQP
 
@@ -89,16 +76,26 @@ rm -rf /deqp/executor
 rm -rf /deqp/execserver
 rm -rf /deqp/modules/egl
 rm -rf /deqp/framework
+find -iname '*cmake*' -o -name '*ninja*' -o -name '*.o' -o -name '*.a' | xargs rm -rf
+strip modules/*/deqp-*
 du -sh *
 rm -rf /VK-GL-CTS
 
 ############### Uninstall the build software
 
 apt-get purge -y \
+        bzip2 \
         cmake \
-        git \
-        gcc \
         g++ \
-        bison \
-        flex \
-        ninja-build
+        gcc \
+        git \
+        libc6-dev \
+        libgbm-dev \
+        libgles2-mesa-dev \
+        libpng-dev \
+        meson \
+        pkg-config \
+        python \
+        wget
+
+apt-get autoremove -y --purge
