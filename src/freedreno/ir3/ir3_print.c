@@ -73,6 +73,7 @@ static void print_instr_name(struct ir3_instruction *instr, bool flags)
 	printf("%04u:", instr->name);
 	printf("%04u:", instr->ip);
 	printf("%03d:", instr->depth);
+	printf("%03u: ", instr->use_count);
 
 	if (flags) {
 		printf("\t");
@@ -95,8 +96,8 @@ static void print_instr_name(struct ir3_instruction *instr, bool flags)
 	if (is_meta(instr)) {
 		switch (instr->opc) {
 		case OPC_META_INPUT:  printf("_meta:in");   break;
-		case OPC_META_FO:     printf("_meta:fo");   break;
-		case OPC_META_FI:     printf("_meta:fi");   break;
+		case OPC_META_SPLIT:        printf("_meta:split");        break;
+		case OPC_META_COLLECT:      printf("_meta:collect");      break;
 		case OPC_META_TEX_PREFETCH: printf("_meta:tex_prefetch"); break;
 
 		/* shouldn't hit here.. just for debugging: */
@@ -237,8 +238,8 @@ print_instr(struct ir3_instruction *instr, int lvl)
 		printf("]");
 	}
 
-	if (instr->opc == OPC_META_FO) {
-		printf(", off=%d", instr->fo.off);
+	if (instr->opc == OPC_META_SPLIT) {
+		printf(", off=%d", instr->split.off);
 	} else if (instr->opc == OPC_META_TEX_PREFETCH) {
 		printf(", tex=%d, samp=%d, input_offset=%d", instr->prefetch.tex,
 				instr->prefetch.samp, instr->prefetch.input_offset);
@@ -289,7 +290,7 @@ print_block(struct ir3_block *block, int lvl)
 		printf("\n");
 	}
 
-	list_for_each_entry (struct ir3_instruction, instr, &block->instr_list, node) {
+	foreach_instr (instr, &block->instr_list) {
 		print_instr(instr, lvl+1);
 	}
 
@@ -318,13 +319,12 @@ print_block(struct ir3_block *block, int lvl)
 void
 ir3_print(struct ir3 *ir)
 {
-	list_for_each_entry (struct ir3_block, block, &ir->block_list, node)
+	foreach_block (block, &ir->block_list)
 		print_block(block, 0);
 
-	for (unsigned i = 0; i < ir->noutputs; i++) {
-		if (!ir->outputs[i])
-			continue;
+	struct ir3_instruction *out;
+	foreach_output_n(out, i, ir) {
 		printf("out%d: ", i);
-		print_instr(ir->outputs[i], 0);
+		print_instr(out, 0);
 	}
 }

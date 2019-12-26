@@ -69,6 +69,19 @@
                 op == TEXTURE_OP_DFDY \
         )
 
+#define OP_IS_UNSIGNED_CMP(op) ( \
+                op == midgard_alu_op_ult || \
+                op == midgard_alu_op_ule \
+        )
+
+#define OP_IS_INTEGER_CMP(op) ( \
+                op == midgard_alu_op_ieq || \
+                op == midgard_alu_op_ine || \
+                op == midgard_alu_op_ilt || \
+                op == midgard_alu_op_ile || \
+                OP_IS_UNSIGNED_CMP(op) \
+        )
+
 /* ALU control words are single bit fields with a lot of space */
 
 #define ALU_ENAB_VEC_MUL  (1 << 17)
@@ -161,7 +174,6 @@ quadword_size(int tag)
 
 /* SSA helper aliases to mimic the registers. */
 
-#define SSA_UNUSED ~0
 #define SSA_FIXED_SHIFT 24
 #define SSA_FIXED_REGISTER(reg) (((1 + (reg)) << SSA_FIXED_SHIFT) | 1)
 #define SSA_REG_FROM_FIXED(reg) ((((reg) & ~1) >> SSA_FIXED_SHIFT) - 1)
@@ -175,10 +187,12 @@ quadword_size(int tag)
 #define SWIZZLE_IDENTITY { \
         { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, \
         { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, \
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }, \
         { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } \
 }
 
 #define SWIZZLE_IDENTITY_4 { \
+        { 0, 1, 2, 3, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0 }, \
         { 0, 1, 2, 3, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0 }, \
         { 0, 1, 2, 3, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0 }, \
         { 0, 1, 2, 3, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0 }, \
@@ -244,17 +258,19 @@ struct mir_ldst_op_props {
 /* This file is common, so don't define the tables themselves. #include
  * midgard_op.h if you need that, or edit midgard_ops.c directly */
 
-/* Duplicate bits to convert a 4-bit writemask to duplicated 8-bit format,
- * which is used for 32-bit vector units */
+/* Duplicate bits to convert a per-component to duplicated 8-bit format,
+ * which is used for vector units */
 
 static inline unsigned
-expand_writemask_32(unsigned mask)
+expand_writemask(unsigned mask, unsigned channels)
 {
         unsigned o = 0;
+        unsigned factor = 8 / channels;
+        unsigned expanded = (1 << factor) - 1;
 
-        for (int i = 0; i < 4; ++i)
+        for (unsigned i = 0; i < channels; ++i)
                 if (mask & (1 << i))
-                        o |= (3 << (2 * i));
+                        o |= (expanded << (factor * i));
 
         return o;
 }
@@ -318,24 +334,6 @@ midgard_ldst_reg(unsigned reg, unsigned component)
         uint8_t packed;
         memcpy(&packed, &sel, sizeof(packed));
 
-        return packed;
-}
-
-/* Unpacks a load/store argument */
-
-static inline midgard_ldst_register_select
-midgard_ldst_select(uint8_t u)
-{
-        midgard_ldst_register_select sel;
-        memcpy(&sel, &u, sizeof(u));
-        return sel;
-}
-
-static inline uint8_t
-midgard_ldst_pack(midgard_ldst_register_select sel)
-{
-        uint8_t packed;
-        memcpy(&packed, &sel, sizeof(packed));
         return packed;
 }
 

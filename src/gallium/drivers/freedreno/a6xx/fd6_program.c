@@ -29,7 +29,7 @@
 #include "util/u_string.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/bitset.h"
 
 #include "freedreno_program.h"
@@ -255,9 +255,6 @@ setup_config_stateobj(struct fd_ringbuffer *ring, struct fd6_program_state *stat
 	OUT_PKT4(ring, REG_A6XX_SP_IBO_COUNT, 1);
 	OUT_RING(ring, state->fs->image_mapping.num_ibo);
 }
-
-#define VALIDREG(r)      ((r) != regid(63,0))
-#define CONDREG(r, val)  COND(VALIDREG(r), (val))
 
 static inline uint32_t
 next_regid(uint32_t reg, uint32_t increment)

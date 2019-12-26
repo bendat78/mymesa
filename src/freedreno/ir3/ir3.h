@@ -58,6 +58,8 @@ struct ir3_info {
 
 	/* number of sync bits: */
 	uint16_t ss, sy;
+
+	uint16_t last_baryf;     /* instruction # of last varying fetch */
 };
 
 struct ir3_register {
@@ -267,12 +269,20 @@ struct ir3_instruction {
 		 */
 		struct {
 			int off;              /* component/offset */
-		} fo;
+		} split;
+		struct {
+			/* for output collects, this maps back to the entry in the
+			 * ir3_shader_variant::outputs table.
+			 */
+			int outidx;
+		} collect;
 		struct {
 			unsigned samp, tex;
 			unsigned input_offset;
 		} prefetch;
 		struct {
+			/* maps back to entry in ir3_shader_variant::inputs table: */
+			int inidx;
 			/* for sysvals, identifies the sysval type.  Mostly so we can
 			 * identify the special cases where a sysval should not be DCE'd
 			 * (currently, just pre-fs texture fetch)
@@ -313,7 +323,7 @@ struct ir3_instruction {
 	int sun;            /* Sethi–Ullman number, used by sched */
 	int use_count;      /* currently just updated/used by cp */
 
-	/* Used during CP and RA stages.  For fanin and shader inputs/
+	/* Used during CP and RA stages.  For collect and shader inputs/
 	 * outputs where we need a sequence of consecutive registers,
 	 * keep track of each src instructions left (ie 'n-1') and right
 	 * (ie 'n+1') neighbor.  The front-end must insert enough mov's
@@ -333,7 +343,7 @@ struct ir3_instruction {
 	 * it should be overkill..  the problem is if, potentially after
 	 * already eliminating some mov's, if you have a single mov that
 	 * needs to be grouped with it's neighbors in two different
-	 * places (ex. shader output and a fanin).
+	 * places (ex. shader output and a collect).
 	 */
 	struct {
 		struct ir3_instruction *left, *right;
@@ -425,9 +435,8 @@ struct ir3 {
 	struct ir3_compiler *compiler;
 	gl_shader_stage type;
 
-	unsigned ninputs, noutputs;
-	struct ir3_instruction **inputs;
-	struct ir3_instruction **outputs;
+	DECLARE_ARRAY(struct ir3_instruction *, inputs);
+	DECLARE_ARRAY(struct ir3_instruction *, outputs);
 
 	/* Track bary.f (and ldlv) instructions.. this is needed in
 	 * scheduling to ensure that all varying fetches happen before
@@ -537,8 +546,7 @@ block_id(struct ir3_block *block)
 #endif
 }
 
-struct ir3 * ir3_create(struct ir3_compiler *compiler,
-		gl_shader_stage type, unsigned nin, unsigned nout);
+struct ir3 * ir3_create(struct ir3_compiler *compiler, gl_shader_stage type);
 void ir3_destroy(struct ir3 *shader);
 void * ir3_assemble(struct ir3 *shader,
 		struct ir3_info *info, uint32_t gpu_id);
@@ -607,6 +615,10 @@ static inline uint32_t reg_comp(struct ir3_register *reg)
 {
 	return reg->num & 0x3;
 }
+
+#define INVALID_REG      regid(63, 0)
+#define VALIDREG(r)      ((r) != INVALID_REG)
+#define CONDREG(r, val)  COND(VALIDREG(r), (val))
 
 static inline bool is_flow(struct ir3_instruction *instr)
 {
@@ -1063,6 +1075,37 @@ static inline bool __is_false_dep(struct ir3_instruction *instr, unsigned n)
 #define foreach_ssa_src(__srcinst, __instr) \
 	foreach_ssa_src_n(__srcinst, __i, __instr)
 
+/* iterators for shader inputs: */
+#define foreach_input_n(__ininstr, __cnt, __ir) \
+	for (unsigned __cnt = 0; __cnt < (__ir)->inputs_count; __cnt++) \
+		if ((__ininstr = (__ir)->inputs[__cnt]))
+#define foreach_input(__ininstr, __ir) \
+	foreach_input_n(__ininstr, __i, __ir)
+
+/* iterators for shader outputs: */
+#define foreach_output_n(__outinstr, __cnt, __ir) \
+	for (unsigned __cnt = 0; __cnt < (__ir)->outputs_count; __cnt++) \
+		if ((__outinstr = (__ir)->outputs[__cnt]))
+#define foreach_output(__outinstr, __ir) \
+	foreach_output_n(__outinstr, __i, __ir)
+
+/* iterators for instructions: */
+#define foreach_instr(__instr, __list) \
+	list_for_each_entry(struct ir3_instruction, __instr, __list, node)
+#define foreach_instr_rev(__instr, __list) \
+	list_for_each_entry_rev(struct ir3_instruction, __instr, __list, node)
+#define foreach_instr_safe(__instr, __list) \
+	list_for_each_entry_safe(struct ir3_instruction, __instr, __list, node)
+
+/* iterators for blocks: */
+#define foreach_block(__block, __list) \
+	list_for_each_entry(struct ir3_block, __block, __list, node)
+#define foreach_block_safe(__block, __list) \
+	list_for_each_entry_safe(struct ir3_block, __block, __list, node)
+
+/* iterators for arrays: */
+#define foreach_array(__array, __list) \
+	list_for_each_entry(struct ir3_array, __array, __list, node)
 
 /* dump: */
 void ir3_print(struct ir3 *ir);

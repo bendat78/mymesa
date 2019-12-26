@@ -72,12 +72,19 @@ mir_derivative_op(nir_op op)
  * implicitly */
 
 bool
-mir_op_computes_derivatives(unsigned op)
+mir_op_computes_derivatives(gl_shader_stage stage, unsigned op)
 {
+        /* Only fragment shaders may compute derivatives, but the sense of
+         * "normal" changes in vertex shaders on certain GPUs */
+
+        if (op == TEXTURE_OP_NORMAL && stage != MESA_SHADER_FRAGMENT)
+                return false;
+
         switch (op) {
         case TEXTURE_OP_NORMAL:
         case TEXTURE_OP_DFDX:
         case TEXTURE_OP_DFDY:
+                assert(stage == MESA_SHADER_FRAGMENT);
                 return true;
         default:
                 return false;
@@ -95,7 +102,7 @@ midgard_emit_derivatives(compiler_context *ctx, nir_alu_instr *instr)
                 .type = TAG_TEXTURE_4,
                 .mask = mask_of(nr_components),
                 .dest = nir_dest_index(ctx, &instr->dest.dest),
-                .src = { nir_alu_src_index(ctx, &instr->src[0]), ~0, ~0 },
+                .src = { nir_alu_src_index(ctx, &instr->src[0]), ~0, ~0, ~0 },
                 .texture = {
                         .op = mir_derivative_op(instr->op),
                         .format = MALI_TEX_2D,

@@ -34,6 +34,7 @@
 #include "midgard.h"
 #include "midgard-parse.h"
 #include "midgard_ops.h"
+#include "midgard_quirks.h"
 #include "disassemble.h"
 #include "helpers.h"
 #include "util/half_float.h"
@@ -486,10 +487,8 @@ print_mask(uint8_t mask, unsigned bits, midgard_dest_override override)
 
         const char *alphabet = components;
 
-        if (override == midgard_dest_override_upper) {
-                unsigned components = 128 / bits;
-                alphabet += components;
-        }
+        if (override == midgard_dest_override_upper)
+                alphabet += (128 / bits);
 
         for (unsigned i = 0; i < 8; i += skip) {
                 bool a = (mask & (1 << i)) != 0;
@@ -1309,7 +1308,7 @@ print_texture_word(uint32_t *word, unsigned tabs, unsigned in_reg_base, unsigned
         /* Output modifiers are always interpreted floatly */
         print_outmod(texture->outmod, false);
 
-        printf(" %sr%d", texture->out_full ? "" : "h",
+        printf(" %sr%u", texture->out_full ? "" : "h",
                         out_reg_base + texture->out_reg_select);
         print_mask_4(texture->mask, texture->out_upper);
         assert(!(texture->out_full && texture->out_upper));
@@ -1345,7 +1344,7 @@ print_texture_word(uint32_t *word, unsigned tabs, unsigned in_reg_base, unsigned
         }
 
         print_swizzle_vec4(texture->swizzle, false, false);
-        printf(", %sr%d", texture->in_reg_full ? "" : "h", in_reg_base + texture->in_reg_select);
+        printf(", %sr%u", texture->in_reg_full ? "" : "h", in_reg_base + texture->in_reg_select);
         assert(!(texture->in_reg_full && texture->in_reg_upper));
 
         /* TODO: integrate with swizzle */
@@ -1367,41 +1366,30 @@ print_texture_word(uint32_t *word, unsigned tabs, unsigned in_reg_base, unsigned
         if (texture->offset_register) {
                 printf(" + ");
 
-                bool full = texture->offset_x & 1;
-                bool select = texture->offset_x & 2;
-                bool upper = texture->offset_x & 4;
+                bool full = texture->offset & 1;
+                bool select = texture->offset & 2;
+                bool upper = texture->offset & 4;
 
-                printf("%sr%d", full ? "" : "h", in_reg_base + select);
+                printf("%sr%u", full ? "" : "h", in_reg_base + select);
                 assert(!(texture->out_full && texture->out_upper));
 
                 /* TODO: integrate with swizzle */
                 if (upper)
                         printf("'");
 
-                /* The less questions you ask, the better. */
-
-                unsigned swizzle_lo, swizzle_hi;
-                unsigned orig_y = texture->offset_y;
-                unsigned orig_z = texture->offset_z;
-
-                memcpy(&swizzle_lo, &orig_y, sizeof(unsigned));
-                memcpy(&swizzle_hi, &orig_z, sizeof(unsigned));
-
-                /* Duplicate hi swizzle over */
-                assert(swizzle_hi < 4);
-                swizzle_hi = (swizzle_hi << 2) | swizzle_hi;
-
-                unsigned swiz = (swizzle_lo << 4) | swizzle_hi;
-                unsigned reversed = util_bitreverse(swiz) >> 24;
-                print_swizzle_vec4(reversed, false, false);
+                print_swizzle_vec4(texture->offset >> 3, false, false);
 
                 printf(", ");
-        } else if (texture->offset_x || texture->offset_y || texture->offset_z) {
+        } else if (texture->offset) {
                 /* Only select ops allow negative immediate offsets, verify */
 
-                bool neg_x = texture->offset_x < 0;
-                bool neg_y = texture->offset_y < 0;
-                bool neg_z = texture->offset_z < 0;
+                signed offset_x = (texture->offset & 0xF);
+                signed offset_y = ((texture->offset >> 4) & 0xF);
+                signed offset_z = ((texture->offset >> 8) & 0xF);
+
+                bool neg_x = offset_x < 0;
+                bool neg_y = offset_y < 0;
+                bool neg_z = offset_z < 0;
                 bool any_neg = neg_x || neg_y || neg_z;
 
                 if (any_neg && texture->op != TEXTURE_OP_TEXEL_FETCH)
@@ -1409,10 +1397,7 @@ print_texture_word(uint32_t *word, unsigned tabs, unsigned in_reg_base, unsigned
 
                 /* Regardless, just print the immediate offset */
 
-                printf(" + <%d, %d, %d>, ",
-                       texture->offset_x,
-                       texture->offset_y,
-                       texture->offset_z);
+                printf(" + <%d, %d, %d>, ", offset_x, offset_y, offset_z);
         } else {
                 printf(", ");
         }
@@ -1514,11 +1499,12 @@ disassemble_midgard(uint8_t *code, size_t size, unsigned gpu_id, gl_shader_stage
 
                 switch (midgard_word_types[tag]) {
                 case midgard_word_type_texture: {
-                        /* Vertex texturing uses ldst/work space on older Midgard */
-                        bool has_texture_pipeline = (stage == MESA_SHADER_FRAGMENT) && gpu_id >= 0x750;
+                        bool interpipe_aliasing =
+                                midgard_get_quirks(gpu_id) & MIDGARD_INTERPIPE_REG_ALIASING;
+
                         print_texture_word(&words[i], tabs,
-                                        has_texture_pipeline ? REG_TEX_BASE : 0,
-                                        has_texture_pipeline ? REG_TEX_BASE : REGISTER_LDST_BASE);
+                                        interpipe_aliasing ? 0 : REG_TEX_BASE,
+                                        interpipe_aliasing ? REGISTER_LDST_BASE : REG_TEX_BASE);
                         break;
                 }
 
@@ -1543,16 +1529,18 @@ disassemble_midgard(uint8_t *code, size_t size, unsigned gpu_id, gl_shader_stage
                         break;
                 }
 
+                /* We are parsing per bundle anyway. Add before we start
+                 * breaking out so we don't miss the final bundle. */
+
+                midg_stats.bundle_count++;
+                midg_stats.quadword_count += num_quad_words;
+
                 if (prefetch_flag && midgard_word_types[tag] == midgard_word_type_alu)
                         break;
 
                 printf("\n");
 
                 unsigned next = (words[i] & 0xF0) >> 4;
-
-                /* We are parsing per bundle anyway */
-                midg_stats.bundle_count++;
-                midg_stats.quadword_count += num_quad_words;
 
                 /* Break based on instruction prefetch flag */
 

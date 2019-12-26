@@ -29,7 +29,7 @@
 #include "util/u_string.h"
 #include "util/u_memory.h"
 #include "util/u_prim.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_helpers.h"
 
 #include "freedreno_blitter.h"
@@ -101,7 +101,7 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	struct pipe_draw_info new_info;
 	if (info->index_size) {
 		if (info->has_user_indices) {
-			if (!util_upload_index_buffer(pctx, info, &indexbuf, &index_offset))
+			if (!util_upload_index_buffer(pctx, info, &indexbuf, &index_offset, 4))
 				return;
 			new_info = *info;
 			new_info.index.resource = indexbuf;

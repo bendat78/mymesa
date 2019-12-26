@@ -265,7 +265,6 @@ mir_srcsize(midgard_instruction *ins, unsigned i)
 
         if (i >= 2) {
                 /* TODO: 16-bit conditions, ffma */
-                assert(i == 2);
                 return midgard_reg_mode_32;
         }
 
@@ -283,9 +282,27 @@ mir_srcsize(midgard_instruction *ins, unsigned i)
         return mode;
 }
 
+midgard_reg_mode
+mir_mode_for_destsize(unsigned size)
+{
+        switch (size) {
+        case 8:
+                return midgard_reg_mode_8;
+        case 16:
+                return midgard_reg_mode_16;
+        case 32:
+                return midgard_reg_mode_32;
+        case 64:
+                return midgard_reg_mode_64;
+        default:
+                unreachable("Unknown destination size");
+        }
+}
+
+
 /* Converts per-component mask to a byte mask */
 
-static uint16_t
+uint16_t
 mir_to_bytemask(midgard_reg_mode mode, unsigned mask)
 {
         switch (mode) {
@@ -294,7 +311,7 @@ mir_to_bytemask(midgard_reg_mode mode, unsigned mask)
 
         case midgard_reg_mode_16: {
                 unsigned space =
-                        ((mask & 0x1) << (0 - 0)) |
+                        (mask & 0x1) |
                         ((mask & 0x2) << (2 - 1)) |
                         ((mask & 0x4) << (4 - 2)) |
                         ((mask & 0x8) << (6 - 3)) |
@@ -308,7 +325,7 @@ mir_to_bytemask(midgard_reg_mode mode, unsigned mask)
 
         case midgard_reg_mode_32: {
                 unsigned space =
-                        ((mask & 0x1) << (0 - 0)) |
+                        (mask & 0x1) |
                         ((mask & 0x2) << (4 - 1)) |
                         ((mask & 0x4) << (8 - 2)) |
                         ((mask & 0x8) << (12 - 3));
@@ -376,10 +393,10 @@ mir_round_bytemask_down(uint16_t mask, midgard_reg_mode mode)
 
         for (unsigned c = 0; c < channels; ++c) {
                 /* Get bytes in component */
-                unsigned submask = (mask >> c * channels) & maxmask;
+                unsigned submask = (mask >> (c * bytes)) & maxmask;
 
                 if (submask != maxmask)
-                        mask &= ~(maxmask << (c * channels));
+                        mask &= ~(maxmask << (c * bytes));
         }
 
         return mask;
@@ -397,6 +414,35 @@ void
 mir_set_bytemask(midgard_instruction *ins, uint16_t bytemask)
 {
         ins->mask = mir_from_bytemask(bytemask, mir_typesize(ins));
+}
+
+/* Checks if we should use an upper destination override, rather than the lower
+ * one in the IR. Returns zero if no, returns the bytes to shift otherwise */
+
+unsigned
+mir_upper_override(midgard_instruction *ins)
+{
+        /* If there is no override, there is no upper override, tautology */
+        if (ins->alu.dest_override == midgard_dest_override_none)
+                return 0;
+
+        /* Make sure we didn't already lower somehow */
+        assert(ins->alu.dest_override == midgard_dest_override_lower);
+
+        /* What is the mask in terms of currently? */
+        midgard_reg_mode type = mir_typesize(ins);
+
+        /* There are 16 bytes per vector, so there are (16/bytes)
+         * components per vector. So the magic half is half of
+         * (16/bytes), which simplifies to 8/bytes */
+
+        unsigned threshold = 8 / mir_bytes_for_mode(type);
+
+        /* How many components did we shift over? */
+        unsigned zeroes = __builtin_ctz(ins->mask);
+
+        /* Did we hit the threshold? */
+        return (zeroes >= threshold) ? threshold : 0;
 }
 
 /* Creates a mask of the components of a node read by an instruction, by
@@ -458,25 +504,6 @@ mir_bytemask_of_read_components(midgard_instruction *ins, unsigned node)
         }
 
         return mask;
-}
-
-unsigned
-mir_ubo_shift(midgard_load_store_op op)
-{
-        switch (op) {
-        case midgard_op_ld_ubo_char:
-                return 0;
-        case midgard_op_ld_ubo_char2:
-                return 1;
-        case midgard_op_ld_ubo_char4:
-                return 2;
-        case midgard_op_ld_ubo_short4:
-                return 3;
-        case midgard_op_ld_ubo_int4:
-                return 4;
-        default:
-                unreachable("Invalid op");
-        }
 }
 
 /* Register allocation occurs after instruction scheduling, which is fine until

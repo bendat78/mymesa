@@ -309,7 +309,7 @@ pandecode_job_type(enum mali_job_type type)
 
         switch (type) {
                 DEFINE_CASE(NULL);
-                DEFINE_CASE(SET_VALUE);
+                DEFINE_CASE(WRITE_VALUE);
                 DEFINE_CASE(CACHE_FLUSH);
                 DEFINE_CASE(COMPUTE);
                 DEFINE_CASE(VERTEX);
@@ -441,9 +441,15 @@ static char *pandecode_attr_mode_short(enum mali_attr_mode mode)
 }
 
 static const char *
-pandecode_special_varying(uint64_t v)
+pandecode_special_record(uint64_t v, bool* attribute)
 {
         switch(v) {
+        case MALI_ATTR_VERTEXID:
+                *attribute = true;
+                return "gl_VertexID";
+        case MALI_ATTR_INSTANCEID:
+                *attribute = true;
+                return "gl_InstanceID";
         case MALI_VARYING_FRAG_COORD:
                 return "gl_FragCoord";
         case MALI_VARYING_FRONT_FACING:
@@ -451,7 +457,7 @@ pandecode_special_varying(uint64_t v)
         case MALI_VARYING_POINT_COORD:
                 return "gl_PointCoord";
         default:
-                pandecode_msg("XXX: invalid special varying %" PRIx64 "\n", v);
+                pandecode_msg("XXX: invalid special record %" PRIx64 "\n", v);
                 return "";
         }
 }
@@ -490,7 +496,7 @@ pandecode_block_format(enum mali_block_format fmt)
 #undef DEFINE_CASE
 
 #define DEFINE_CASE(name) case MALI_EXCEPTION_ACCESS_## name: return ""#name
-static char *
+char *
 pandecode_exception_access(enum mali_exception_access access)
 {
         switch (access) {
@@ -513,7 +519,8 @@ pandecode_midgard_tiler_descriptor(
                 const struct midgard_tiler_descriptor *t,
                 unsigned width,
                 unsigned height,
-                bool is_fragment)
+                bool is_fragment,
+                bool has_hierarchy)
 {
         pandecode_log(".tiler = {\n");
         pandecode_indent++;
@@ -546,8 +553,8 @@ pandecode_midgard_tiler_descriptor(
         /* Now that we've sanity checked, we'll try to calculate the sizes
          * ourselves for comparison */
 
-        unsigned ref_header = panfrost_tiler_header_size(width, height, t->hierarchy_mask);
-        unsigned ref_size = panfrost_tiler_full_size(width, height, t->hierarchy_mask);
+        unsigned ref_header = panfrost_tiler_header_size(width, height, t->hierarchy_mask, has_hierarchy);
+        unsigned ref_size = panfrost_tiler_full_size(width, height, t->hierarchy_mask, has_hierarchy);
 
         if (!((ref_header == body_offset) && (ref_size == t->polygon_list_size))) {
                 pandecode_msg("XXX: bad polygon list size (expected %d / 0x%x)\n",
@@ -671,7 +678,7 @@ pandecode_sfbd_format(struct mali_sfbd_format format)
 }
 
 static struct pandecode_fbd
-pandecode_sfbd(uint64_t gpu_va, int job_no, bool is_fragment)
+pandecode_sfbd(uint64_t gpu_va, int job_no, bool is_fragment, unsigned gpu_id)
 {
         struct pandecode_mapped_memory *mem = pandecode_find_mapped_gpu_mem_containing(gpu_va);
         const struct mali_single_framebuffer *PANDECODE_PTR_VAR(s, mem, (mali_ptr) gpu_va);
@@ -752,9 +759,11 @@ pandecode_sfbd(uint64_t gpu_va, int job_no, bool is_fragment)
                 pandecode_prop("clear_stencil = 0x%x", s->clear_stencil);
         }
 
-        MEMORY_PROP(s, unknown_address_0);
+        MEMORY_PROP(s, scratchpad);
         const struct midgard_tiler_descriptor t = s->tiler;
-        pandecode_midgard_tiler_descriptor(&t, s->width + 1, s->height + 1, is_fragment);
+
+        bool has_hierarchy = !(gpu_id == 0x0720 || gpu_id == 0x0820 || gpu_id == 0x0830);
+        pandecode_midgard_tiler_descriptor(&t, s->width + 1, s->height + 1, is_fragment, has_hierarchy);
 
         pandecode_indent--;
         pandecode_log("};\n");
@@ -1075,6 +1084,7 @@ pandecode_mfbd_bfr(uint64_t gpu_va, int job_no, bool is_fragment)
         pandecode_log("struct bifrost_framebuffer framebuffer_%"PRIx64"_%d = {\n", gpu_va, job_no);
         pandecode_indent++;
 
+        pandecode_prop("stack_shift = 0x%x", fb->stack_shift);
         pandecode_prop("unk0 = 0x%x", fb->unk0);
 
         if (fb->sample_locations)
@@ -1115,7 +1125,7 @@ pandecode_mfbd_bfr(uint64_t gpu_va, int job_no, bool is_fragment)
         pandecode_prop("unknown2 = 0x%x", fb->unknown2);
         MEMORY_PROP(fb, scratchpad);
         const struct midgard_tiler_descriptor t = fb->tiler;
-        pandecode_midgard_tiler_descriptor(&t, fb->width1 + 1, fb->height1 + 1, is_fragment);
+        pandecode_midgard_tiler_descriptor(&t, fb->width1 + 1, fb->height1 + 1, is_fragment, true);
 
         if (fb->zero3 || fb->zero4) {
                 pandecode_msg("XXX: framebuffer zeros tripped\n");
@@ -1330,27 +1340,44 @@ pandecode_attributes(const struct pandecode_mapped_memory *mem,
 
         for (int i = 0; i < count; ++i) {
                 /* First, check for special records */
-                if (attr[i].elements < MALI_VARYING_SPECIAL) {
-                        /* Special records are always varyings */
+                if (attr[i].elements < MALI_RECORD_SPECIAL) {
+                        if (attr[i].size)
+                                pandecode_msg("XXX: tripped size=%d\n", attr[i].size);
 
-                        if (!varying)
-                                pandecode_msg("XXX: Special varying in attribute field\n");
+                        if (attr[i].stride) {
+                                /* gl_InstanceID passes a magic divisor in the
+                                 * stride field to divide by the padded vertex
+                                 * count. No other records should do so, so
+                                 * stride should otherwise be zero. Note that
+                                 * stride in the usual attribute sense doesn't
+                                 * apply to special records. */
 
-                        if (job_type != JOB_TYPE_TILER)
-                                pandecode_msg("XXX: Special varying in non-FS\n");
+                                bool has_divisor = attr[i].elements == MALI_ATTR_INSTANCEID;
 
-                        /* We're special, so all fields should be zero */
-                        unsigned zero = attr[i].stride | attr[i].size;
-                        zero |= attr[i].shift | attr[i].extra_flags;
-
-                        if (zero)
-                                pandecode_msg("XXX: Special varying has non-zero fields\n");
-                        else {
-                                /* Print the special varying name */
-                                pandecode_log("varying_%d = %s;", i, pandecode_special_varying(attr[i].elements));
-                                continue;
+                                pandecode_log_cont("/* %smagic divisor = %X */ ",
+                                                has_divisor ? "" : "XXX: ", attr[i].stride);
                         }
-                }
+
+                        if (attr[i].shift || attr[i].extra_flags) {
+                                /* Attributes use these fields for
+                                 * instancing/padding/etc type issues, but
+                                 * varyings don't */
+
+                                pandecode_log_cont("/* %sshift=%d, extra=%d */ ",
+                                                varying ? "XXX: " : "",
+                                                attr[i].shift, attr[i].extra_flags);
+                        }
+
+                        /* Print the special record name */
+                        bool attribute = false;
+                        pandecode_log("%s_%d = %s;\n", prefix, i, pandecode_special_record(attr[i].elements, &attribute));
+
+                        /* Sanity check */
+                        if (attribute == varying)
+                                pandecode_msg("XXX: mismatched special record\n");
+
+                        continue;
+        }
 
                 enum mali_attr_mode mode = attr[i].elements & 7;
 
@@ -1661,7 +1688,7 @@ bits(u32 word, u32 lo, u32 hi)
 }
 
 static void
-pandecode_vertex_tiler_prefix(struct mali_vertex_tiler_prefix *p, int job_no, bool noninstanced)
+pandecode_vertex_tiler_prefix(struct mali_vertex_tiler_prefix *p, int job_no, bool graphics)
 {
         pandecode_log_cont("{\n");
         pandecode_indent++;
@@ -1670,13 +1697,20 @@ pandecode_vertex_tiler_prefix(struct mali_vertex_tiler_prefix *p, int job_no, bo
          * invocation_count for an explanation.
          */
 
-        unsigned size_x = bits(p->invocation_count, 0, p->size_y_shift) + 1;
-        unsigned size_y = bits(p->invocation_count, p->size_y_shift, p->size_z_shift) + 1;
-        unsigned size_z = bits(p->invocation_count, p->size_z_shift, p->workgroups_x_shift) + 1;
+        unsigned size_y_shift = bits(p->invocation_shifts, 0, 5);
+        unsigned size_z_shift = bits(p->invocation_shifts, 5, 10);
+        unsigned workgroups_x_shift = bits(p->invocation_shifts, 10, 16);
+        unsigned workgroups_y_shift = bits(p->invocation_shifts, 16, 22);
+        unsigned workgroups_z_shift = bits(p->invocation_shifts, 22, 28);
+        unsigned workgroups_x_shift_2 = bits(p->invocation_shifts, 28, 32);
 
-        unsigned groups_x = bits(p->invocation_count, p->workgroups_x_shift, p->workgroups_y_shift) + 1;
-        unsigned groups_y = bits(p->invocation_count, p->workgroups_y_shift, p->workgroups_z_shift) + 1;
-        unsigned groups_z = bits(p->invocation_count, p->workgroups_z_shift, 32) + 1;
+        unsigned size_x = bits(p->invocation_count, 0, size_y_shift) + 1;
+        unsigned size_y = bits(p->invocation_count, size_y_shift, size_z_shift) + 1;
+        unsigned size_z = bits(p->invocation_count, size_z_shift, workgroups_x_shift) + 1;
+
+        unsigned groups_x = bits(p->invocation_count, workgroups_x_shift, workgroups_y_shift) + 1;
+        unsigned groups_y = bits(p->invocation_count, workgroups_y_shift, workgroups_z_shift) + 1;
+        unsigned groups_z = bits(p->invocation_count, workgroups_z_shift, 32) + 1;
 
         /* Even though we have this decoded, we want to ensure that the
          * representation is "unique" so we don't lose anything by printing only
@@ -1687,35 +1721,25 @@ pandecode_vertex_tiler_prefix(struct mali_vertex_tiler_prefix *p, int job_no, bo
          * decoded, we're good to go. */
 
         struct mali_vertex_tiler_prefix ref;
-        panfrost_pack_work_groups_compute(&ref, groups_x, groups_y, groups_z, size_x, size_y, size_z, noninstanced);
+        panfrost_pack_work_groups_compute(&ref, groups_x, groups_y, groups_z, size_x, size_y, size_z, graphics);
 
         bool canonical =
                 (p->invocation_count == ref.invocation_count) &&
-                (p->size_y_shift == ref.size_y_shift) &&
-                (p->size_z_shift == ref.size_z_shift) &&
-                (p->workgroups_x_shift == ref.workgroups_x_shift) &&
-                (p->workgroups_y_shift == ref.workgroups_y_shift) &&
-                (p->workgroups_z_shift == ref.workgroups_z_shift) &&
-                (p->workgroups_x_shift_2 == ref.workgroups_x_shift_2);
+                (p->invocation_shifts == ref.invocation_shifts);
 
         if (!canonical) {
                 pandecode_msg("XXX: non-canonical workgroups packing\n");
-                pandecode_msg("expected: %X, %d, %d, %d, %d, %d, %d\n",
+                pandecode_msg("expected: %X, %X",
                                 ref.invocation_count,
-                                ref.size_y_shift,
-                                ref.size_z_shift,
-                                ref.workgroups_x_shift,
-                                ref.workgroups_y_shift,
-                                ref.workgroups_z_shift,
-                                ref.workgroups_x_shift_2);
+                                ref.invocation_shifts);
 
                 pandecode_prop("invocation_count = 0x%" PRIx32, p->invocation_count);
-                pandecode_prop("size_y_shift = %d", p->size_y_shift);
-                pandecode_prop("size_z_shift = %d", p->size_z_shift);
-                pandecode_prop("workgroups_x_shift = %d", p->workgroups_x_shift);
-                pandecode_prop("workgroups_y_shift = %d", p->workgroups_y_shift);
-                pandecode_prop("workgroups_z_shift = %d", p->workgroups_z_shift);
-                pandecode_prop("workgroups_x_shift_2 = %d", p->workgroups_x_shift_2);
+                pandecode_prop("size_y_shift = %d", size_y_shift);
+                pandecode_prop("size_z_shift = %d", size_z_shift);
+                pandecode_prop("workgroups_x_shift = %d", workgroups_x_shift);
+                pandecode_prop("workgroups_y_shift = %d", workgroups_y_shift);
+                pandecode_prop("workgroups_z_shift = %d", workgroups_z_shift);
+                pandecode_prop("workgroups_x_shift_2 = %d", workgroups_x_shift_2);
         }
 
         /* Regardless, print the decode */
@@ -1824,6 +1848,18 @@ pandecode_scratchpad(uintptr_t pscratchpad, int job_no, char *suffix)
         pandecode_log("};\n");
 }
 
+static const char *
+shader_type_for_job(unsigned type)
+{
+        switch (type) {
+        case JOB_TYPE_VERTEX:  return "VERTEX";
+        case JOB_TYPE_TILER:   return "FRAGMENT";
+        case JOB_TYPE_COMPUTE: return "COMPUTE";
+        default:
+                               return "UNKNOWN";
+        }
+}
+
 static unsigned shader_id = 0;
 
 static struct midgard_disasm_stats
@@ -1865,20 +1901,25 @@ pandecode_shader_disassemble(mali_ptr shader_ptr, int shader_no, int type,
                                 MESA_SHADER_FRAGMENT : MESA_SHADER_VERTEX);
         }
 
-        /* Print shader-db stats */
+        /* Print shader-db stats. Skip COMPUTE jobs since they are used for
+         * driver-internal purposes with the blob and interfere */
 
-        unsigned nr_threads =
-                (stats.work_count <= 4) ? 4 :
-                (stats.work_count <= 8) ? 2 :
-                1;
+        bool should_shaderdb = type != JOB_TYPE_COMPUTE;
 
-        printf("shader%d - %s shader: "
-                "%u inst, %u bundles, %u quadwords, "
-                "%u registers, %u threads, 0 loops\n\n\n",
-                shader_id++,
-                (type == JOB_TYPE_TILER) ? "FRAGMENT" : "VERTEX",
-                stats.instruction_count, stats.bundle_count, stats.quadword_count,
-                stats.work_count, nr_threads);
+        if (should_shaderdb) {
+                unsigned nr_threads =
+                        (stats.work_count <= 4) ? 4 :
+                        (stats.work_count <= 8) ? 2 :
+                        1;
+
+                printf("shader%d - MESA_SHADER_%s shader: "
+                        "%u inst, %u bundles, %u quadwords, "
+                        "%u registers, %u threads, 0 loops, 0:0 spills:fills\n\n\n",
+                        shader_id++,
+                        shader_type_for_job(type),
+                        stats.instruction_count, stats.bundle_count, stats.quadword_count,
+                        stats.work_count, nr_threads);
+        }
 
 
         return stats;
@@ -2112,13 +2153,13 @@ pandecode_vertex_tiler_postfix_pre(
         };
 
         if (is_bifrost)
-                pandecode_scratchpad(p->framebuffer & ~FBD_TYPE, job_no, suffix);
+                pandecode_scratchpad(p->framebuffer & ~1, job_no, suffix);
         else if (p->framebuffer & MALI_MFBD)
                 fbd_info = pandecode_mfbd_bfr((u64) ((uintptr_t) p->framebuffer) & FBD_MASK, job_no, false);
         else if (job_type == JOB_TYPE_COMPUTE)
                 pandecode_compute_fbd((u64) (uintptr_t) p->framebuffer, job_no);
         else
-                fbd_info = pandecode_sfbd((u64) (uintptr_t) p->framebuffer, job_no, false);
+                fbd_info = pandecode_sfbd((u64) (uintptr_t) p->framebuffer, job_no, false, gpu_id);
 
         int varying_count = 0, attribute_count = 0, uniform_count = 0, uniform_buffer_count = 0;
         int texture_count = 0, sampler_count = 0;
@@ -2281,7 +2322,7 @@ pandecode_vertex_tiler_postfix_pre(
                 /* MRT blend fields are used whenever MFBD is used, with
                  * per-RT descriptors */
 
-                if (job_type == JOB_TYPE_TILER) {
+                if (job_type == JOB_TYPE_TILER && p->framebuffer & MALI_MFBD) {
                         void* blend_base = (void *) (s + 1);
 
                         for (unsigned i = 0; i < fbd_info.rt_count; i++) {
@@ -2422,6 +2463,9 @@ pandecode_vertex_tiler_postfix_pre(
                                 pandecode_prop("min_lod = FIXED_16(%f)", DECODE_FIXED_16(s->min_lod));
                                 pandecode_prop("max_lod = FIXED_16(%f)", DECODE_FIXED_16(s->max_lod));
 
+                                if (s->lod_bias)
+                                        pandecode_prop("lod_bias = FIXED_16(%f)", DECODE_FIXED_16(s->lod_bias));
+
                                 pandecode_prop("wrap_s = %s", pandecode_wrap_mode(s->wrap_s));
                                 pandecode_prop("wrap_t = %s", pandecode_wrap_mode(s->wrap_t));
                                 pandecode_prop("wrap_r = %s", pandecode_wrap_mode(s->wrap_r));
@@ -2452,7 +2496,7 @@ static void
 pandecode_vertex_tiler_postfix(const struct mali_vertex_tiler_postfix *p, int job_no, bool is_bifrost)
 {
         if (p->shader & 0xF)
-                pandecode_msg("warn: shader tagged %X\n", p->shader & 0xF);
+                pandecode_msg("warn: shader tagged %X\n", (unsigned) (p->shader & 0xF));
 
         if (!(p->position_varying || p->occlusion_counter))
                 return;
@@ -2687,11 +2731,10 @@ pandecode_vertex_or_tiler_job_mdg(const struct mali_job_descriptor_header *h,
         bool has_primitive_pointer = v->prefix.unknown_draw & MALI_DRAW_VARYING_SIZE;
         pandecode_primitive_size(v->primitive_size, !has_primitive_pointer);
 
-        bool instanced = v->instance_shift || v->instance_odd;
         bool is_graphics = (h->job_type == JOB_TYPE_VERTEX) || (h->job_type == JOB_TYPE_TILER);
 
         pandecode_log(".prefix = ");
-        pandecode_vertex_tiler_prefix(&v->prefix, job_no, !instanced && is_graphics);
+        pandecode_vertex_tiler_prefix(&v->prefix, job_no, is_graphics);
 
         pandecode_gl_enables(v->gl_enables, h->job_type);
 
@@ -2723,11 +2766,11 @@ pandecode_vertex_or_tiler_job_mdg(const struct mali_job_descriptor_header *h,
 static int
 pandecode_fragment_job(const struct pandecode_mapped_memory *mem,
                               mali_ptr payload, int job_no,
-                              bool is_bifrost)
+                              bool is_bifrost, unsigned gpu_id)
 {
         const struct mali_payload_fragment *PANDECODE_PTR_VAR(s, mem, payload);
 
-        bool is_mfbd = (s->framebuffer & FBD_TYPE) == MALI_MFBD;
+        bool is_mfbd = s->framebuffer & MALI_MFBD;
 
         /* Bifrost theoretically may retain support for SFBD on compute jobs,
          * but for graphics workloads with a FRAGMENT payload, use MFBD */
@@ -2740,14 +2783,14 @@ pandecode_fragment_job(const struct pandecode_mapped_memory *mem,
         if (is_mfbd)
                 info = pandecode_mfbd_bfr(s->framebuffer & FBD_MASK, job_no, true);
         else
-                info = pandecode_sfbd(s->framebuffer & FBD_MASK, job_no, true);
+                info = pandecode_sfbd(s->framebuffer & FBD_MASK, job_no, true, gpu_id);
 
         /* Compute the tag for the tagged pointer. This contains the type of
          * FBD (MFBD/SFBD), and in the case of an MFBD, information about which
          * additional structures follow the MFBD header (an extra payload or
          * not, as well as a count of render targets) */
 
-        unsigned expected_tag = is_mfbd ? MALI_MFBD : MALI_SFBD;
+        unsigned expected_tag = is_mfbd ? MALI_MFBD : 0;
 
         if (is_mfbd) {
                 if (info.has_extra)
@@ -2895,12 +2938,23 @@ pandecode_jc(mali_ptr jc_gpu_va, bool bifrost, unsigned gpu_id)
                  * reason. */
 
                 switch (h->job_type) {
-                case JOB_TYPE_SET_VALUE: {
-                        struct mali_payload_set_value *s = payload;
-                        pandecode_log("struct mali_payload_set_value payload_%"PRIx64"_%d = {\n", payload_ptr, job_no);
+                case JOB_TYPE_WRITE_VALUE: {
+                        struct mali_payload_write_value *s = payload;
+                        pandecode_log("struct mali_payload_write_value payload_%"PRIx64"_%d = {\n", payload_ptr, job_no);
                         pandecode_indent++;
-                        MEMORY_PROP(s, out);
-                        pandecode_prop("unknown = 0x%" PRIX64, s->unknown);
+                        MEMORY_PROP(s, address);
+
+                        if (s->value_descriptor != MALI_WRITE_VALUE_ZERO) {
+                                pandecode_msg("XXX: unknown value descriptor\n");
+                                pandecode_prop("value_descriptor = 0x%" PRIX32, s->value_descriptor);
+                        }
+
+                        if (s->reserved) {
+                                pandecode_msg("XXX: set value tripped\n");
+                                pandecode_prop("reserved = 0x%" PRIX32, s->reserved);
+                        }
+
+                        pandecode_prop("immediate = 0x%" PRIX64, s->immediate);
                         pandecode_indent--;
                         pandecode_log("};\n");
 
@@ -2921,7 +2975,7 @@ pandecode_jc(mali_ptr jc_gpu_va, bool bifrost, unsigned gpu_id)
                         break;
 
                 case JOB_TYPE_FRAGMENT:
-                        pandecode_fragment_job(mem, payload_ptr, job_no, bifrost);
+                        pandecode_fragment_job(mem, payload_ptr, job_no, bifrost, gpu_id);
                         break;
 
                 default:

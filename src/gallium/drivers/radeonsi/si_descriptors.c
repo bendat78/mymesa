@@ -58,7 +58,7 @@
 
 #include "util/hash_table.h"
 #include "util/u_idalloc.h"
-#include "util/u_format.h"
+#include "util/format/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_upload_mgr.h"
 
@@ -1177,7 +1177,7 @@ bool si_upload_vertex_buffer_descriptors(struct si_context *sctx)
 		 *  - 3: offset >= NUM_RECORDS (Raw)
 		 */
 		if (sctx->chip_class >= GFX10)
-			rsrc_word3 |= S_008F0C_OOB_SELECT(vb->stride ? 1 : 3);
+			rsrc_word3 |= S_008F0C_OOB_SELECT(vb->stride ? V_008F0C_OOB_SELECT_STRUCTURED : V_008F0C_OOB_SELECT_RAW);
 
 		desc[0] = va;
 		desc[1] = S_008F04_BASE_ADDRESS_HI(va >> 32) |
@@ -1275,7 +1275,7 @@ static void si_set_constant_buffer(struct si_context *sctx,
 
 		if (sctx->chip_class >= GFX10) {
 			desc[3] |= S_008F0C_FORMAT(V_008F0C_IMG_FORMAT_32_FLOAT) |
-				   S_008F0C_OOB_SELECT(3) |
+				   S_008F0C_OOB_SELECT(V_008F0C_OOB_SELECT_RAW) |
 				   S_008F0C_RESOURCE_LEVEL(1);
 		} else {
 			desc[3] |= S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |
@@ -1367,7 +1367,7 @@ static void si_set_shader_buffer(struct si_context *sctx,
 
 	if (sctx->chip_class >= GFX10) {
 		desc[3] |= S_008F0C_FORMAT(V_008F0C_IMG_FORMAT_32_FLOAT) |
-			   S_008F0C_OOB_SELECT(3) |
+			   S_008F0C_OOB_SELECT(V_008F0C_OOB_SELECT_RAW) |
 			   S_008F0C_RESOURCE_LEVEL(1);
 	} else {
 		desc[3] |= S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |
@@ -1531,7 +1531,7 @@ void si_set_ring_buffer(struct si_context *sctx, uint slot,
 
 		if (sctx->chip_class >= GFX10) {
 			desc[3] |= S_008F0C_FORMAT(V_008F0C_IMG_FORMAT_32_FLOAT) |
-				   S_008F0C_OOB_SELECT(2) |
+				   S_008F0C_OOB_SELECT(V_008F0C_OOB_SELECT_DISABLED) |
 				   S_008F0C_RESOURCE_LEVEL(1);
 		} else {
 			desc[3] |= S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |

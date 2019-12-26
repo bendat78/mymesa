@@ -711,6 +711,15 @@ emit_builtin_binop(struct ntv_context *ctx, enum GLSLstd450 op, SpvId type,
 }
 
 static SpvId
+emit_builtin_triop(struct ntv_context *ctx, enum GLSLstd450 op, SpvId type,
+                   SpvId src0, SpvId src1, SpvId src2)
+{
+   SpvId args[] = { src0, src1, src2 };
+   return spirv_builder_emit_ext_inst(&ctx->builder, type, ctx->GLSL_std_450,
+                                      op, args, ARRAY_SIZE(args));
+}
+
+static SpvId
 get_fvec_constant(struct ntv_context *ctx, unsigned bit_size,
                   unsigned num_components, float value)
 {
@@ -1013,6 +1022,12 @@ emit_alu(struct ntv_context *ctx, nir_alu_instr *alu)
       }
       break;
 
+   case nir_op_flrp:
+      assert(nir_op_infos[alu->op].num_inputs == 3);
+      result = emit_builtin_triop(ctx, GLSLstd450FMix, dest_type,
+                                  src[0], src[1], src[2]);
+      break;
+
    case nir_op_fcsel:
       result = emit_binop(ctx, SpvOpFOrdGreaterThan,
                           get_bvec_type(ctx, num_components),
@@ -1309,12 +1324,13 @@ emit_tex(struct ntv_context *ctx, nir_tex_instr *tex)
 {
    assert(tex->op == nir_texop_tex ||
           tex->op == nir_texop_txb ||
-          tex->op == nir_texop_txl);
+          tex->op == nir_texop_txl ||
+          tex->op == nir_texop_txd);
    assert(nir_alu_type_get_base_type(tex->dest_type) == nir_type_float);
    assert(tex->texture_index == tex->sampler_index);
 
-   SpvId coord = 0, proj = 0, bias = 0, lod = 0, dref = 0;
-   unsigned coord_components;
+   SpvId coord = 0, proj = 0, bias = 0, lod = 0, dref = 0, dx = 0, dy = 0;
+   unsigned coord_components = 0;
    for (unsigned i = 0; i < tex->num_srcs; i++) {
       switch (tex->src[i].src_type) {
       case nir_tex_src_coord:
@@ -1344,6 +1360,16 @@ emit_tex(struct ntv_context *ctx, nir_tex_instr *tex)
          assert(nir_src_num_components(tex->src[i].src) == 1);
          dref = get_src_float(ctx, &tex->src[i].src);
          assert(dref != 0);
+         break;
+
+      case nir_tex_src_ddx:
+         dx = get_src_float(ctx, &tex->src[i].src);
+         assert(dx != 0);
+         break;
+
+      case nir_tex_src_ddy:
+         dy = get_src_float(ctx, &tex->src[i].src);
+         assert(dy != 0);
          break;
 
       default:
@@ -1403,7 +1429,7 @@ emit_tex(struct ntv_context *ctx, nir_tex_instr *tex)
                                                   actual_dest_type, load,
                                                   coord,
                                                   proj != 0,
-                                                  lod, bias, dref);
+                                                  lod, bias, dref, dx, dy);
    spirv_builder_emit_decoration(&ctx->builder, result,
                                  SpvDecorationRelaxedPrecision);
 

@@ -50,7 +50,7 @@ static struct vtn_pointer*
 vtn_decorate_pointer(struct vtn_builder *b, struct vtn_value *val,
                      struct vtn_pointer *ptr)
 {
-   struct vtn_pointer dummy = { };
+   struct vtn_pointer dummy = { .access = 0 };
    vtn_foreach_decoration(b, val, ptr_decoration_cb, &dummy);
 
    /* If we're adding access flags, make a copy of the pointer.  We could
@@ -1543,20 +1543,20 @@ apply_var_decoration(struct vtn_builder *b,
       var_data->read_only = true;
       break;
    case SpvDecorationNonReadable:
-      var_data->image.access |= ACCESS_NON_READABLE;
+      var_data->access |= ACCESS_NON_READABLE;
       break;
    case SpvDecorationNonWritable:
       var_data->read_only = true;
-      var_data->image.access |= ACCESS_NON_WRITEABLE;
+      var_data->access |= ACCESS_NON_WRITEABLE;
       break;
    case SpvDecorationRestrict:
-      var_data->image.access |= ACCESS_RESTRICT;
+      var_data->access |= ACCESS_RESTRICT;
       break;
    case SpvDecorationVolatile:
-      var_data->image.access |= ACCESS_VOLATILE;
+      var_data->access |= ACCESS_VOLATILE;
       break;
    case SpvDecorationCoherent:
-      var_data->image.access |= ACCESS_COHERENT;
+      var_data->access |= ACCESS_COHERENT;
       break;
    case SpvDecorationComponent:
       var_data->location_frac = dec->operands[0];
@@ -1816,8 +1816,18 @@ vtn_storage_class_to_mode(struct vtn_builder *b,
       nir_mode = nir_var_mem_global;
       break;
    case SpvStorageClassUniformConstant:
-      mode = vtn_variable_mode_uniform;
-      nir_mode = nir_var_uniform;
+      if (b->shader->info.stage == MESA_SHADER_KERNEL) {
+         if (b->options->constant_as_global) {
+            mode = vtn_variable_mode_cross_workgroup;
+            nir_mode = nir_var_mem_global;
+         } else {
+            mode = vtn_variable_mode_ubo;
+            nir_mode = nir_var_mem_ubo;
+         }
+      } else {
+         mode = vtn_variable_mode_uniform;
+         nir_mode = nir_var_uniform;
+      }
       break;
    case SpvStorageClassPushConstant:
       mode = vtn_variable_mode_push_constant;
@@ -2609,8 +2619,13 @@ vtn_handle_variables(struct vtn_builder *b, SpvOp opcode,
             vtn_warn("OpStore of a sampler detected.  Doing on-the-fly copy "
                      "propagation to workaround the problem.");
             vtn_assert(dest->var->copy_prop_sampler == NULL);
-            dest->var->copy_prop_sampler =
-               vtn_value(b, w[2], vtn_value_type_pointer)->pointer;
+            struct vtn_value *v = vtn_untyped_value(b, w[2]);
+            if (v->value_type == vtn_value_type_sampled_image) {
+               dest->var->copy_prop_sampler = v->sampled_image->sampler;
+            } else {
+               vtn_assert(v->value_type == vtn_value_type_pointer);
+               dest->var->copy_prop_sampler = v->pointer;
+            }
          } else {
             vtn_fail("Vulkan does not allow OpStore of a sampler or image.");
          }
