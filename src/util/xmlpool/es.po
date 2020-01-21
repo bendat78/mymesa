@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-09 21:49+0100\n"
+"POT-Creation-Date: 2019-12-26 15:04+0100\n"
 "PO-Revision-Date: 2015-02-23 14:54-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -45,94 +45,94 @@ msgstr ""
 msgid "Disable dual source blending"
 msgstr "Deshabilitar mezcla de fuente dual"
 
-#: src/util/xmlpool/t_options.h:85
+#: src/util/xmlpool/t_options.h:90
 msgid "Identify dual color blending sources by location rather than index"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:90
+#: src/util/xmlpool/t_options.h:95
 msgid "Disable backslash-based line continuations in GLSL source"
 msgstr ""
 "Deshabilitar continuaciones de línea basadas en barra inversa en el código "
 "GLSL"
 
-#: src/util/xmlpool/t_options.h:95
+#: src/util/xmlpool/t_options.h:100
 msgid ""
 "Force a default GLSL version for shaders that lack an explicit #version line"
 msgstr ""
 "Forzar una versión de GLSL por defecto en los shaders a los cuales les falta "
 "una línea #version explícita"
 
-#: src/util/xmlpool/t_options.h:100
+#: src/util/xmlpool/t_options.h:105
 msgid "Allow GLSL #extension directives in the middle of shaders"
 msgstr "Permite directivas #extension GLSL en medio de los shaders"
 
-#: src/util/xmlpool/t_options.h:105
+#: src/util/xmlpool/t_options.h:110
 msgid "Allow builtins as part of constant expressions"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:110
+#: src/util/xmlpool/t_options.h:115
 msgid "Allow some relaxation of GLSL ES shader restrictions"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:115
+#: src/util/xmlpool/t_options.h:120
 msgid "Allow GLSL built-in variables to be redeclared verbatim"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:120
+#: src/util/xmlpool/t_options.h:125
 msgid "Allow a higher compat profile (version 3.1+) for apps that request it"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:125
+#: src/util/xmlpool/t_options.h:130
 msgid "Force computing the absolute value for sqrt() and inversesqrt()"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:130
+#: src/util/xmlpool/t_options.h:135
 msgid ""
 "Implicit and explicit derivatives after a discard behave as if the discard "
 "didn't happen"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:135
+#: src/util/xmlpool/t_options.h:140
 msgid "Allow interpolation qualifier mismatch across shader stages"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:140
+#: src/util/xmlpool/t_options.h:145
 msgid "Allow layout qualifiers on function parameters."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:145
+#: src/util/xmlpool/t_options.h:150
 msgid "Allow GPU vendor to be overridden."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:150
+#: src/util/xmlpool/t_options.h:155
 msgid "Force an OpenGL compatibility context"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:158
+#: src/util/xmlpool/t_options.h:163
 msgid "Image Quality"
 msgstr "Calidad de imagen"
 
-#: src/util/xmlpool/t_options.h:162
+#: src/util/xmlpool/t_options.h:167
 msgid "Prefer accuracy over performance in trig functions"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:167
+#: src/util/xmlpool/t_options.h:172
 msgid "A post-processing filter to cel-shade the output"
 msgstr "Un filtro de postprocesamiento para aplicar cel shading a la salida"
 
-#: src/util/xmlpool/t_options.h:172
+#: src/util/xmlpool/t_options.h:177
 msgid "A post-processing filter to remove the red channel"
 msgstr "Un filtro de postprocesamiento para eliminar el canal rojo"
 
-#: src/util/xmlpool/t_options.h:177
+#: src/util/xmlpool/t_options.h:182
 msgid "A post-processing filter to remove the green channel"
 msgstr "Un filtro de postprocesamiento para eliminar el canal verde"
 
-#: src/util/xmlpool/t_options.h:182
+#: src/util/xmlpool/t_options.h:187
 msgid "A post-processing filter to remove the blue channel"
 msgstr "Un filtro de postprocesamiento para eliminar el canal azul"
 
-#: src/util/xmlpool/t_options.h:187
+#: src/util/xmlpool/t_options.h:192
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality"
@@ -140,7 +140,7 @@ msgstr ""
 "Antialiasing morfológico basado en el MLAA de Jimenez. 0 para deshabilitar, "
 "8 para calidad por defecto"
 
-#: src/util/xmlpool/t_options.h:192
+#: src/util/xmlpool/t_options.h:197
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality. Color version, usable with 2d GL apps"
@@ -148,31 +148,31 @@ msgstr ""
 "Antialiasing morfológico basado en el MLAA de Jimenez. 0 para deshabilitar, "
 "8 para calidad por defecto. Versión en color, usable con aplicaciones GL 2D"
 
-#: src/util/xmlpool/t_options.h:202
+#: src/util/xmlpool/t_options.h:207
 msgid "Performance"
 msgstr "Rendimiento"
 
-#: src/util/xmlpool/t_options.h:210
+#: src/util/xmlpool/t_options.h:215
 msgid "Synchronization with vertical refresh (swap intervals)"
 msgstr "Sincronización con el refresco vertical (intervalos de intercambio)"
 
-#: src/util/xmlpool/t_options.h:211
+#: src/util/xmlpool/t_options.h:216
 msgid "Never synchronize with vertical refresh, ignore application's choice"
 msgstr ""
 "No sincronizar nunca con el refresco vertical, ignorar la elección de la "
 "aplicación"
 
-#: src/util/xmlpool/t_options.h:212
+#: src/util/xmlpool/t_options.h:217
 msgid "Initial swap interval 0, obey application's choice"
 msgstr ""
 "Intervalo de intercambio inicial 0, obedecer la elección de la aplicación"
 
-#: src/util/xmlpool/t_options.h:213
+#: src/util/xmlpool/t_options.h:218
 msgid "Initial swap interval 1, obey application's choice"
 msgstr ""
 "Intervalo de intercambio inicial 1, obedecer la elección de la aplicación"
 
-#: src/util/xmlpool/t_options.h:214
+#: src/util/xmlpool/t_options.h:219
 msgid ""
 "Always synchronize with vertical refresh, application chooses the minimum "
 "swap interval"
@@ -180,81 +180,86 @@ msgstr ""
 "Sincronizar siempre con el refresco vertical, la aplicación elige el "
 "intervalo de intercambio mínimo"
 
-#: src/util/xmlpool/t_options.h:220
+#: src/util/xmlpool/t_options.h:225
 msgid "Adapt the monitor sync to the application performance (when possible)"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:225
+#: src/util/xmlpool/t_options.h:230
 msgid "Override the VkSurfaceCapabilitiesKHR::minImageCount (0 = no override)"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:230
+#: src/util/xmlpool/t_options.h:235
 msgid ""
 "Force the X11 WSI to create exactly the number of image specified by the "
 "application in VkSwapchainCreateInfoKHR::minImageCount"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:235
+#: src/util/xmlpool/t_options.h:240
 msgid "Enable offloading GL driver work to a separate thread"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:240
+#: src/util/xmlpool/t_options.h:245
 msgid "Disable GL driver error checking"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:245
+#: src/util/xmlpool/t_options.h:250
 msgid "Disable the GLX_EXT_buffer_age extension"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:250
+#: src/util/xmlpool/t_options.h:255
 msgid "Disable the GLX_OML_sync_control extension"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:255
+#: src/util/xmlpool/t_options.h:260
 msgid "Disable the GLX_SGI_video_sync extension"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:265
+#: src/util/xmlpool/t_options.h:270
 msgid "Miscellaneous"
 msgstr "Misceláneos"
 
-#: src/util/xmlpool/t_options.h:269
+#: src/util/xmlpool/t_options.h:274
 msgid "Create all visuals with a depth buffer"
 msgstr "Crear todos los visuales con búfer de profundidad"
 
-#: src/util/xmlpool/t_options.h:274
+#: src/util/xmlpool/t_options.h:279
 msgid "Force uninitialized variables to default to zero"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:279
-msgid "Allow exposure of visuals and fbconfigs with rgb10a2 formats"
-msgstr ""
-
 #: src/util/xmlpool/t_options.h:284
-msgid "Allow exposure of visuals and fbconfigs with rgb565 formats"
+msgid ""
+"Force the vertex shader's gl_Position output to be considered 'invariant'"
 msgstr ""
 
 #: src/util/xmlpool/t_options.h:289
+msgid "Allow exposure of visuals and fbconfigs with rgb10a2 formats"
+msgstr ""
+
+#: src/util/xmlpool/t_options.h:294
+msgid "Allow exposure of visuals and fbconfigs with rgb565 formats"
+msgstr ""
+
+#: src/util/xmlpool/t_options.h:299
 msgid "Allow exposure of visuals and fbconfigs with fp16 formats"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:297
+#: src/util/xmlpool/t_options.h:307
 msgid "Initialization"
 msgstr "Inicialización"
 
-#: src/util/xmlpool/t_options.h:301
+#: src/util/xmlpool/t_options.h:311
 msgid "Define the graphic device to use if possible"
 msgstr "Define el dispositivo de gráficos que usar si es posible"
 
-#: src/util/xmlpool/t_options.h:306
+#: src/util/xmlpool/t_options.h:316
 msgid "Override the DRI driver to load"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:315
+#: src/util/xmlpool/t_options.h:325
 msgid "Gallium Nine"
 msgstr "Gallium Nine"
 
-#: src/util/xmlpool/t_options.h:319
+#: src/util/xmlpool/t_options.h:329
 msgid ""
 "Define the throttling value. -1 for no throttling, -2 for default (usually "
 "2), 0 for glfinish behaviour"
@@ -262,73 +267,73 @@ msgstr ""
 "Define el valor de regulación. -1 para no regular, -2 para el por defecto "
 "(generalmente 2), 0 para el comportamiento de glfinish"
 
-#: src/util/xmlpool/t_options.h:324
+#: src/util/xmlpool/t_options.h:334
 msgid "Use an additional thread to submit buffers."
 msgstr "Usar un hilo adicional para entregar los búfer."
 
-#: src/util/xmlpool/t_options.h:329
+#: src/util/xmlpool/t_options.h:339
 msgid ""
 "Define the vendor_id to report. This allows faking another hardware vendor."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:334
+#: src/util/xmlpool/t_options.h:344
 msgid ""
 "Whether to allow the display server to release buffers with a delay when "
 "using d3d's presentation mode DISCARD. Default to true. Set to false if "
 "suffering from lag (thread_submit=true can also help in this situation)."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:339
+#: src/util/xmlpool/t_options.h:349
 msgid ""
 "Whether to make d3d's presentation mode DISCARD (games usually use that "
 "mode) Tear Free. If rendering above screen refresh, some frames will get "
 "skipped. false by default."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:344
+#: src/util/xmlpool/t_options.h:354
 msgid ""
 "If set to 1, force gallium nine CSMT. If set to 0, disable it. By default "
 "(-1) CSMT is enabled on known thread-safe drivers."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:349
+#: src/util/xmlpool/t_options.h:359
 msgid ""
 "If set to true, use a ram intermediate buffer for dynamic textures. "
 "Increases ram usage, which can cause out of memory issues, but can fix "
 "glitches for some games."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:354
+#: src/util/xmlpool/t_options.h:364
 msgid ""
 "If set to true, recompile shaders with integer or boolean constants when the "
 "values are known. Can cause stutter, but can increase slightly performance."
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:363
+#: src/util/xmlpool/t_options.h:373
 msgid "Use the LLVM sisched option for shader compiles"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:368
+#: src/util/xmlpool/t_options.h:378
 msgid ""
 "Assume no Z fights (enables aggressive out-of-order rasterization to improve "
 "performance; may cause rendering errors)"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:373
+#: src/util/xmlpool/t_options.h:383
 msgid ""
 "Commutative additive blending optimizations (may cause rendering errors)"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:392
+#: src/util/xmlpool/t_options.h:402
 msgid "On GLES emulate BGRA formats by using a swizzled RGBA format"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:397
+#: src/util/xmlpool/t_options.h:407
 msgid ""
 "When the BGRA formats are emulated by using swizzled RGBA formats on GLES "
 "apply the swizzle when writing"
 msgstr ""
 
-#: src/util/xmlpool/t_options.h:402
+#: src/util/xmlpool/t_options.h:412
 msgid "GL_SAMPLES_PASSED value when emulated by GL_ANY_SAMPLES_PASSED"
 msgstr ""
