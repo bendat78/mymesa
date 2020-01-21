@@ -144,6 +144,7 @@ struct radeon_bo_metadata {
 		struct {
 			/* surface flags */
 			unsigned swizzle_mode:5;
+			bool scanout;
 		} gfx9;
 	} u;
 
@@ -155,7 +156,6 @@ struct radeon_bo_metadata {
 	uint32_t                metadata[64];
 };
 
-uint32_t syncobj_handle;
 struct radeon_winsys_fence;
 
 struct radeon_winsys_bo {

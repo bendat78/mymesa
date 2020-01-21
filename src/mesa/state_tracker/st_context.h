@@ -137,6 +137,7 @@ struct st_context
    boolean has_etc1;
    boolean has_etc2;
    boolean has_astc_2d_ldr;
+   boolean has_astc_5x5_ldr;
    boolean prefer_blit_based_texture_transfer;
    boolean force_persample_in_shader;
    boolean has_shareable_shaders;
@@ -335,6 +336,9 @@ struct st_context
 
    /* The number of vertex buffers from the last call of validate_arrays. */
    unsigned last_num_vbuffers;
+
+   unsigned last_used_atomic_bindings[PIPE_SHADER_TYPES];
+   unsigned last_num_ssbos[PIPE_SHADER_TYPES];
 
    int32_t draw_stamp;
    int32_t read_stamp;

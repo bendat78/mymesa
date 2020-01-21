@@ -178,7 +178,7 @@ _lima_resource_create_with_modifiers(struct pipe_screen *pscreen,
                                      int count)
 {
    struct lima_screen *screen = lima_screen(pscreen);
-   bool should_tile = true;
+   bool should_tile = lima_debug & LIMA_DEBUG_NO_TILING ? false : true;
    unsigned width, height;
    bool should_align_dimensions;
    bool has_user_modifiers = true;
@@ -191,6 +191,10 @@ _lima_resource_create_with_modifiers(struct pipe_screen *pscreen,
       should_tile = false;
 
    if (templat->bind & (PIPE_BIND_LINEAR | PIPE_BIND_SCANOUT))
+      should_tile = false;
+
+   /* If there's no user modifiers and buffer is shared we use linear */
+   if (!has_user_modifiers && (templat->bind & PIPE_BIND_SHARED))
       should_tile = false;
 
    if (drm_find_modifier(DRM_FORMAT_MOD_LINEAR, modifiers, count))
@@ -330,7 +334,10 @@ lima_resource_from_handle(struct pipe_screen *pscreen,
       res->tiled = true;
       break;
    case DRM_FORMAT_MOD_INVALID:
-      res->tiled = screen->ro == NULL;
+      /* Modifier wasn't specified and it's shared buffer. We create these
+       * as linear, so disable tiling.
+       */
+      res->tiled = false;
       break;
    default:
       fprintf(stderr, "Attempted to import unsupported modifier 0x%llx\n",
@@ -625,10 +632,11 @@ lima_transfer_map(struct pipe_context *pctx,
             panfrost_load_tiled_image(
                trans->staging + i * ptrans->stride * ptrans->box.height,
                bo->map + res->levels[level].offset + (i + box->z) * res->levels[level].layer_stride,
-               &ptrans->box,
+               ptrans->box.x, ptrans->box.y,
+               ptrans->box.width, ptrans->box.height,
                ptrans->stride,
                res->levels[level].stride,
-               util_format_get_blocksize(pres->format));
+               pres->format);
       }
 
       return trans->staging;
@@ -670,10 +678,11 @@ lima_transfer_unmap(struct pipe_context *pctx,
             panfrost_store_tiled_image(
                bo->map + res->levels[ptrans->level].offset + (i + ptrans->box.z) * res->levels[ptrans->level].layer_stride,
                trans->staging + i * ptrans->stride * ptrans->box.height,
-               &ptrans->box,
+               ptrans->box.x, ptrans->box.y,
+               ptrans->box.width, ptrans->box.height,
                res->levels[ptrans->level].stride,
                ptrans->stride,
-               util_format_get_blocksize(pres->format));
+               pres->format);
       }
       free(trans->staging);
    }

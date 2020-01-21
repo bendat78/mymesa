@@ -27,6 +27,7 @@
 #ifndef __PAN_ENCODER_H
 #define __PAN_ENCODER_H
 
+#include <stdbool.h>
 #include "panfrost-job.h"
 
 /* Invocation packing */
@@ -100,5 +101,10 @@ panfrost_vertex_instanced(
 
 void panfrost_vertex_id(unsigned padded_count, union mali_attr *attr);
 void panfrost_instance_id(unsigned padded_count, union mali_attr *attr);
+
+/* Samplers */
+
+enum mali_func
+panfrost_flip_compare_func(enum mali_func f);
 
 #endif

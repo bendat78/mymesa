@@ -107,6 +107,8 @@ static void anv_spirv_nir_debug(void *private_data,
                                 const char *message)
 {
    struct anv_spirv_debug_data *debug_data = private_data;
+   struct anv_instance *instance = debug_data->device->physical->instance;
+
    static const VkDebugReportFlagsEXT vk_flags[] = {
       [NIR_SPIRV_DEBUG_LEVEL_INFO] = VK_DEBUG_REPORT_INFORMATION_BIT_EXT,
       [NIR_SPIRV_DEBUG_LEVEL_WARNING] = VK_DEBUG_REPORT_WARNING_BIT_EXT,
@@ -116,7 +118,7 @@ static void anv_spirv_nir_debug(void *private_data,
 
    snprintf(buffer, sizeof(buffer), "SPIR-V offset %lu: %s", (unsigned long) spirv_offset, message);
 
-   vk_debug_report(&debug_data->device->instance->debug_report_callbacks,
+   vk_debug_report(&instance->debug_report_callbacks,
                    vk_flags[level],
                    VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT,
                    (uint64_t) (uintptr_t) debug_data->module,
@@ -134,8 +136,7 @@ anv_shader_compile_to_nir(struct anv_device *device,
                           gl_shader_stage stage,
                           const VkSpecializationInfo *spec_info)
 {
-   const struct anv_physical_device *pdevice =
-      &device->instance->physicalDevice;
+   const struct anv_physical_device *pdevice = device->physical;
    const struct brw_compiler *compiler = pdevice->compiler;
    const nir_shader_compiler_options *nir_options =
       compiler->glsl_compiler_options[stage].NirOptions;
@@ -624,7 +625,7 @@ anv_pipeline_stage_get_nir(struct anv_pipeline *pipeline,
                            struct anv_pipeline_stage *stage)
 {
    const struct brw_compiler *compiler =
-      pipeline->device->instance->physicalDevice.compiler;
+      pipeline->device->physical->compiler;
    const nir_shader_compiler_options *nir_options =
       compiler->glsl_compiler_options[stage->stage].NirOptions;
    nir_shader *nir;
@@ -658,8 +659,7 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
                        struct anv_pipeline_stage *stage,
                        struct anv_pipeline_layout *layout)
 {
-   const struct anv_physical_device *pdevice =
-      &pipeline->device->instance->physicalDevice;
+   const struct anv_physical_device *pdevice = pipeline->device->physical;
    const struct brw_compiler *compiler = pdevice->compiler;
 
    struct brw_stage_prog_data *prog_data = &stage->prog_data.base;
@@ -1114,8 +1114,7 @@ anv_pipeline_compile_graphics(struct anv_pipeline *pipeline,
    };
    int64_t pipeline_start = os_time_get_nano();
 
-   const struct brw_compiler *compiler =
-      pipeline->device->instance->physicalDevice.compiler;
+   const struct brw_compiler *compiler = pipeline->device->physical->compiler;
    struct anv_pipeline_stage stages[MESA_SHADER_STAGES] = {};
 
    pipeline->active_stages = 0;
@@ -1155,12 +1154,15 @@ anv_pipeline_compile_graphics(struct anv_pipeline *pipeline,
       case MESA_SHADER_GEOMETRY:
          populate_gs_prog_key(devinfo, sinfo->flags, &stages[stage].key.gs);
          break;
-      case MESA_SHADER_FRAGMENT:
+      case MESA_SHADER_FRAGMENT: {
+         const bool raster_enabled =
+            !info->pRasterizationState->rasterizerDiscardEnable;
          populate_wm_prog_key(devinfo, sinfo->flags,
                               pipeline->subpass,
-                              info->pMultisampleState,
+                              raster_enabled ? info->pMultisampleState : NULL,
                               &stages[stage].key.wm);
          break;
+      }
       default:
          unreachable("Invalid graphics shader stage");
       }
@@ -1238,7 +1240,7 @@ anv_pipeline_compile_graphics(struct anv_pipeline *pipeline,
           */
          assert(found < __builtin_popcount(pipeline->active_stages));
 
-         vk_debug_report(&pipeline->device->instance->debug_report_callbacks,
+         vk_debug_report(&pipeline->device->physical->instance->debug_report_callbacks,
                          VK_DEBUG_REPORT_WARNING_BIT_EXT |
                          VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
                          VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT,
@@ -1463,8 +1465,7 @@ anv_pipeline_compile_cs(struct anv_pipeline *pipeline,
    };
    int64_t pipeline_start = os_time_get_nano();
 
-   const struct brw_compiler *compiler =
-      pipeline->device->instance->physicalDevice.compiler;
+   const struct brw_compiler *compiler = pipeline->device->physical->compiler;
 
    struct anv_pipeline_stage stage = {
       .stage = MESA_SHADER_COMPUTE,
@@ -1861,9 +1862,10 @@ anv_pipeline_init(struct anv_pipeline *pipeline,
    pipeline->mem_ctx = ralloc_context(NULL);
    pipeline->flags = pCreateInfo->flags;
 
+   assert(pCreateInfo->pRasterizationState);
+
    copy_non_dynamic_state(pipeline, pCreateInfo);
-   pipeline->depth_clamp_enable = pCreateInfo->pRasterizationState &&
-                                  pCreateInfo->pRasterizationState->depthClampEnable;
+   pipeline->depth_clamp_enable = pCreateInfo->pRasterizationState->depthClampEnable;
 
    /* Previously we enabled depth clipping when !depthClampEnable.
     * DepthClipStateCreateInfo now makes depth clipping explicit so if the
@@ -1875,8 +1877,10 @@ anv_pipeline_init(struct anv_pipeline *pipeline,
                            PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT);
    pipeline->depth_clip_enable = clip_info ? clip_info->depthClipEnable : !pipeline->depth_clamp_enable;
 
-   pipeline->sample_shading_enable = pCreateInfo->pMultisampleState &&
-                                     pCreateInfo->pMultisampleState->sampleShadingEnable;
+   pipeline->sample_shading_enable =
+      !pCreateInfo->pRasterizationState->rasterizerDiscardEnable &&
+      pCreateInfo->pMultisampleState &&
+      pCreateInfo->pMultisampleState->sampleShadingEnable;
 
    pipeline->needs_data_cache = false;
 

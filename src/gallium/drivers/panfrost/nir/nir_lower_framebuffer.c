@@ -338,6 +338,22 @@ nir_lower_framebuffer(nir_shader *shader, enum pipe_format format,
                /* Grab the input color */
                nir_ssa_def *c_nir = nir_ssa_for_src(&b, intr->src[1], 4);
 
+               /* Apply sRGB transform */
+
+               if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+                  nir_ssa_def *rgb = nir_channels(&b, c_nir, 0x7);
+                  nir_ssa_def *trans = nir_format_linear_to_srgb(&b, rgb);
+
+                  nir_ssa_def *comp[4] = {
+                     nir_channel(&b, trans, 0),
+                     nir_channel(&b, trans, 1),
+                     nir_channel(&b, trans, 2),
+                     nir_channel(&b, c_nir, 3),
+                  };
+
+                  c_nir = nir_vec(&b, comp, 4);
+               }
+
                /* Format convert */
                nir_ssa_def *converted = nir_shader_to_native(&b, c_nir, format_desc, bits, homogenous_bits);
 
@@ -383,6 +399,11 @@ nir_lower_framebuffer(nir_shader *shader, enum pipe_format format,
                /* Convert the raw value */
                nir_ssa_def *raw = &new->dest.ssa;
                nir_ssa_def *converted = nir_native_to_shader(&b, raw, op, format_desc, bits, homogenous_bits);
+
+               if (util_format_is_float(format))
+                  converted = nir_f2f32(&b, converted);
+               else
+                  converted = nir_i2i32(&b, converted);
 
                /* Rewrite to use the converted value */
                nir_src rewritten = nir_src_for_ssa(converted);

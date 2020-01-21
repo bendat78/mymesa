@@ -325,7 +325,7 @@ emit_alu_bundle(compiler_context *ctx,
                 midgard_instruction *ins = bundle->instructions[i];
 
                 /* Check if this instruction has registers */
-                if (ins->compact_branch || ins->prepacked_branch) continue;
+                if (ins->compact_branch) continue;
 
                 /* Otherwise, just emit the registers */
                 uint16_t reg_word = 0;
@@ -405,6 +405,10 @@ emit_binary_bundle(compiler_context *ctx,
         case TAG_ALU_8:
         case TAG_ALU_12:
         case TAG_ALU_16:
+        case TAG_ALU_4 + 4:
+        case TAG_ALU_8 + 4:
+        case TAG_ALU_12 + 4:
+        case TAG_ALU_16 + 4:
                 emit_alu_bundle(ctx, bundle, emission, lookahead);
                 break;
 

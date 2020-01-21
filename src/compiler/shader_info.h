@@ -81,6 +81,7 @@ struct spirv_supported_capabilities {
    bool amd_gcn_shader;
    bool amd_shader_ballot;
    bool amd_trinary_minmax;
+   bool amd_image_read_write_lod;
 };
 
 typedef struct shader_info {
@@ -103,7 +104,11 @@ typedef struct shader_info {
    uint8_t num_ubos;
    /* Number of atomic buffers used by this shader */
    uint8_t num_abos;
-   /* Number of shader storage buffers used by this shader */
+   /* Number of shader storage buffers (max .driver_location + 1) used by this
+    * shader.  In the case of nir_lower_atomics_to_ssbo being used, this will
+    * be the number of actual SSBOs in gl_program->info, and the lowered SSBOs
+    * and atomic counters in nir_shader->info.
+    */
    uint8_t num_ssbos;
    /* Number of images used by this shader */
    uint8_t num_images;
