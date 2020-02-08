@@ -4,6 +4,7 @@ dEQP-GLES2.functional.clipping.triangle_vertex.clip_two.clip_neg_x_neg_y_pos_z_a
 dEQP-GLES2.functional.clipping.triangle_vertex.clip_two.clip_neg_x_pos_y_pos_z_and_pos_x_neg_y_neg_z
 dEQP-GLES2.functional.clipping.triangle_vertex.clip_two.clip_pos_x_neg_y_pos_z_and_neg_x_pos_y_neg_z
 dEQP-GLES2.functional.clipping.triangle_vertex.clip_two.clip_pos_x_pos_y_pos_z_and_neg_x_neg_y_neg_z
+dEQP-GLES2.functional.default_vertex_attrib.float.vertex_attrib_1f
 dEQP-GLES2.functional.depth_stencil_clear.depth_stencil_masked
 dEQP-GLES2.functional.fbo.render.recreate_colorbuffer.no_rebind_rbo_rgb565_depth_component16
 dEQP-GLES2.functional.fbo.render.recreate_colorbuffer.no_rebind_rbo_rgb565_stencil_index8
@@ -62,6 +63,7 @@ dEQP-GLES2.functional.fragment_ops.depth_stencil.random.8
 dEQP-GLES2.functional.fragment_ops.depth_stencil.random.9
 dEQP-GLES2.functional.fragment_ops.depth_stencil.write_mask.stencil
 dEQP-GLES2.functional.shaders.algorithm.hsl_to_rgb_vertex
+dEQP-GLES2.functional.shaders.builtin_variable.frontfacing
 dEQP-GLES2.functional.shaders.functions.array_arguments.global_in_int_vertex
 dEQP-GLES2.functional.shaders.functions.array_arguments.local_in_int_vertex
 dEQP-GLES2.functional.shaders.functions.datatypes.int_int_vertex
@@ -77,11 +79,6 @@ dEQP-GLES2.functional.shaders.functions.qualifiers.out_lowp_int_vertex
 dEQP-GLES2.functional.shaders.indexing.matrix_subscript.mat3_dynamic_loop_write_static_loop_read_vertex
 dEQP-GLES2.functional.shaders.indexing.matrix_subscript.mat3_dynamic_loop_write_static_read_vertex
 dEQP-GLES2.functional.shaders.indexing.matrix_subscript.mat3_dynamic_write_dynamic_loop_read_vertex
-dEQP-GLES2.functional.shaders.indexing.vector_subscript.vec2_dynamic_subscript_write_component_read_fragment
-dEQP-GLES2.functional.shaders.indexing.vector_subscript.vec2_dynamic_subscript_write_direct_read_fragment
-dEQP-GLES2.functional.shaders.indexing.vector_subscript.vec2_dynamic_subscript_write_dynamic_loop_subscript_read_fragment
-dEQP-GLES2.functional.shaders.indexing.vector_subscript.vec2_dynamic_subscript_write_static_loop_subscript_read_fragment
-dEQP-GLES2.functional.shaders.indexing.vector_subscript.vec2_dynamic_subscript_write_static_subscript_read_fragment
 dEQP-GLES2.functional.shaders.loops.do_while_constant_iterations.conditional_body_vertex
 dEQP-GLES2.functional.shaders.loops.do_while_dynamic_iterations.vector_counter_fragment
 dEQP-GLES2.functional.shaders.loops.do_while_uniform_iterations.conditional_body_vertex
@@ -184,7 +181,6 @@ dEQP-GLES2.functional.shaders.random.exponential.fragment.37
 dEQP-GLES2.functional.shaders.random.exponential.fragment.5
 dEQP-GLES2.functional.shaders.random.exponential.fragment.74
 dEQP-GLES2.functional.shaders.random.texture.fragment.28
-dEQP-GLES2.functional.shaders.random.texture.fragment.106
 dEQP-GLES2.functional.shaders.random.trigonometric.fragment.1
 dEQP-GLES2.functional.shaders.random.trigonometric.fragment.65
 dEQP-GLES2.functional.shaders.random.trigonometric.fragment.69

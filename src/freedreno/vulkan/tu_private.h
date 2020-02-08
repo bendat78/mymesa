@@ -453,6 +453,14 @@ struct tu_queue
    struct tu_fence submit_fence;
 };
 
+struct tu_bo
+{
+   uint32_t gem_handle;
+   uint64_t size;
+   uint64_t iova;
+   void *map;
+};
+
 struct tu_device
 {
    VK_LOADER_DATA _loader_data;
@@ -473,18 +481,15 @@ struct tu_device
    /* Backup in-memory cache to be used if the app doesn't provide one */
    struct tu_pipeline_cache *mem_cache;
 
+   struct tu_bo vsc_data;
+   struct tu_bo vsc_data2;
+   uint32_t vsc_data_pitch;
+   uint32_t vsc_data2_pitch;
+
    struct list_head shader_slabs;
    mtx_t shader_slab_mutex;
 
    struct tu_device_extension_table enabled_extensions;
-};
-
-struct tu_bo
-{
-   uint32_t gem_handle;
-   uint64_t size;
-   uint64_t iova;
-   void *map;
 };
 
 VkResult
@@ -778,7 +783,6 @@ tu_get_perftest_option_name(int id);
 struct tu_descriptor_state
 {
    struct tu_descriptor_set *sets[MAX_SETS];
-   uint32_t dirty;
    uint32_t valid;
    struct tu_push_descriptor_set push_set;
    bool push_dirty;
@@ -936,6 +940,7 @@ struct tu_cmd_buffer
    struct tu_bo_list bo_list;
    struct tu_cs cs;
    struct tu_cs draw_cs;
+   struct tu_cs draw_epilogue_cs;
    struct tu_cs sub_cs;
 
    uint16_t marker_reg;
@@ -953,6 +958,19 @@ struct tu_cmd_buffer
    bool use_vsc_data;
 
    bool wait_for_idle;
+};
+
+/* Temporary struct for tracking a register state to be written, used by
+ * a6xx-pack.h and tu_cs_emit_regs()
+ */
+struct tu_reg_value {
+   uint32_t reg;
+   uint64_t value;
+   bool is_address;
+   struct tu_bo *bo;
+   bool bo_write;
+   uint32_t bo_offset;
+   uint32_t bo_shift;
 };
 
 unsigned
@@ -1338,10 +1356,18 @@ tu_image_base(struct tu_image *image, int level, int layer)
       fdl_surface_offset(&image->layout, level, layer);
 }
 
+#define tu_image_base_ref(image, level, layer)                          \
+   .bo = image->bo,                                                     \
+   .bo_offset = (image->bo_offset + fdl_surface_offset(&image->layout,  \
+                                                       level, layer))
+
+#define tu_image_view_base_ref(iview)                                   \
+   tu_image_base_ref(iview->image, iview->base_mip, iview->base_layer)
+
 static inline VkDeviceSize
 tu_image_ubwc_size(struct tu_image *image, int level)
 {
-   return image->layout.ubwc_size;
+   return image->layout.ubwc_layer_size;
 }
 
 static inline uint32_t
@@ -1351,12 +1377,26 @@ tu_image_ubwc_pitch(struct tu_image *image, int level)
 }
 
 static inline uint64_t
+tu_image_ubwc_surface_offset(struct tu_image *image, int level, int layer)
+{
+   return image->layout.ubwc_slices[level].offset +
+      layer * tu_image_ubwc_size(image, level);
+}
+
+static inline uint64_t
 tu_image_ubwc_base(struct tu_image *image, int level, int layer)
 {
    return image->bo->iova + image->bo_offset +
-          image->layout.ubwc_slices[level].offset +
-          layer * tu_image_ubwc_size(image, level);
+      tu_image_ubwc_surface_offset(image, level, layer);
 }
+
+#define tu_image_ubwc_base_ref(image, level, layer)                     \
+   .bo = image->bo,                                                     \
+   .bo_offset = (image->bo_offset + tu_image_ubwc_surface_offset(image, \
+                                                                 level, layer))
+
+#define tu_image_view_ubwc_base_ref(iview) \
+   tu_image_ubwc_base_ref(iview->image, iview->base_mip, iview->base_layer)
 
 enum a6xx_tile_mode
 tu6_get_image_tile_mode(struct tu_image *image, int level);
@@ -1413,9 +1453,9 @@ tu_image_view_init(struct tu_image_view *view,
 
 struct tu_buffer_view
 {
-   VkFormat vk_format;
-   uint64_t range; /**< VkBufferViewCreateInfo::range */
-   uint32_t state[4];
+   uint32_t descriptor[A6XX_TEX_CONST_DWORDS];
+
+   struct tu_buffer *buffer;
 };
 void
 tu_buffer_view_init(struct tu_buffer_view *view,
@@ -1514,12 +1554,11 @@ tu_device_finish_meta(struct tu_device *device);
 
 struct tu_query_pool
 {
-   uint32_t stride;
-   uint32_t availability_offset;
-   uint64_t size;
-   char *ptr;
    VkQueryType type;
-   uint32_t pipeline_stats_mask;
+   uint32_t stride;
+   uint64_t size;
+   uint32_t pipeline_statistics;
+   struct tu_bo bo;
 };
 
 struct tu_semaphore

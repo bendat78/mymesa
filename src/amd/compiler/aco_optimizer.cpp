@@ -85,6 +85,8 @@ enum Label {
    label_constant_64bit = 1 << 22,
    label_uniform_bitwise = 1 << 23,
    label_scc_invert = 1 << 24,
+   label_vcc_hint = 1 << 25,
+   label_scc_needed = 1 << 26,
 };
 
 static constexpr uint32_t instr_labels = label_vec | label_mul | label_mad | label_omod_success | label_clamp_success |
@@ -383,6 +385,16 @@ struct ssa_info {
       return label & label_fcmp;
    }
 
+   void set_scc_needed()
+   {
+      add_label(label_scc_needed);
+   }
+
+   bool is_scc_needed()
+   {
+      return label & label_scc_needed;
+   }
+
    void set_scc_invert(Temp scc_inv)
    {
       add_label(label_scc_invert);
@@ -405,6 +417,15 @@ struct ssa_info {
       return label & label_uniform_bool;
    }
 
+   void set_vcc_hint()
+   {
+      add_label(label_vcc_hint);
+   }
+
+   bool is_vcc_hint()
+   {
+      return label & label_vcc_hint;
+   }
 };
 
 struct opt_ctx {
@@ -507,9 +528,9 @@ void to_VOP3(opt_ctx& ctx, aco_ptr<Instruction>& instr)
 }
 
 /* only covers special cases */
-bool can_accept_constant(aco_ptr<Instruction>& instr, unsigned operand)
+bool alu_can_accept_constant(aco_opcode opcode, unsigned operand)
 {
-   switch (instr->opcode) {
+   switch (opcode) {
    case aco_opcode::v_interp_p2_f32:
    case aco_opcode::v_mac_f32:
    case aco_opcode::v_writelane_b32:
@@ -526,12 +547,6 @@ bool can_accept_constant(aco_ptr<Instruction>& instr, unsigned operand)
    case aco_opcode::v_readfirstlane_b32:
       return operand != 0;
    default:
-      if ((instr->format == Format::MUBUF ||
-           instr->format == Format::MIMG) &&
-          instr->definitions.size() == 1 &&
-          instr->operands.size() == 4) {
-         return operand != 3;
-      }
       return true;
    }
 }
@@ -698,7 +713,8 @@ void label_instruction(opt_ctx &ctx, Block& block, aco_ptr<Instruction>& instr)
                break;
             }
          }
-         if ((info.is_constant() || info.is_constant_64bit() || (info.is_literal() && instr->format == Format::PSEUDO)) && !instr->operands[i].isFixed() && can_accept_constant(instr, i)) {
+         if ((info.is_constant() || info.is_constant_64bit() || (info.is_literal() && instr->format == Format::PSEUDO)) &&
+             !instr->operands[i].isFixed() && alu_can_accept_constant(instr->opcode, i)) {
             instr->operands[i] = get_constant_op(ctx, info.val, info.is_constant_64bit());
             continue;
          }
@@ -733,7 +749,7 @@ void label_instruction(opt_ctx &ctx, Block& block, aco_ptr<Instruction>& instr)
                static_cast<VOP3A_instruction*>(instr.get())->neg[i] = true;
             continue;
          }
-         if ((info.is_constant() || info.is_constant_64bit()) && can_accept_constant(instr, i)) {
+         if ((info.is_constant() || info.is_constant_64bit()) && alu_can_accept_constant(instr->opcode, i)) {
             Operand op = get_constant_op(ctx, info.val, info.is_constant_64bit());
             perfwarn(instr->opcode == aco_opcode::v_cndmask_b32 && i == 2, "v_cndmask_b32 with a constant selector", instr.get());
             if (i == 0 || instr->opcode == aco_opcode::v_readlane_b32 || instr->opcode == aco_opcode::v_writelane_b32) {
@@ -759,9 +775,9 @@ void label_instruction(opt_ctx &ctx, Block& block, aco_ptr<Instruction>& instr)
          while (info.is_temp())
             info = ctx.info[info.temp.id()];
 
-         if (mubuf->offen && i == 0 && info.is_constant_or_literal() && mubuf->offset + info.val < 4096) {
+         if (mubuf->offen && i == 1 && info.is_constant_or_literal() && mubuf->offset + info.val < 4096) {
             assert(!mubuf->idxen);
-            instr->operands[i] = Operand(v1);
+            instr->operands[1] = Operand(v1);
             mubuf->offset += info.val;
             mubuf->offen = false;
             continue;
@@ -769,9 +785,9 @@ void label_instruction(opt_ctx &ctx, Block& block, aco_ptr<Instruction>& instr)
             instr->operands[2] = Operand((uint32_t) 0);
             mubuf->offset += info.val;
             continue;
-         } else if (mubuf->offen && i == 0 && parse_base_offset(ctx, instr.get(), i, &base, &offset) && base.regClass() == v1 && mubuf->offset + offset < 4096) {
+         } else if (mubuf->offen && i == 1 && parse_base_offset(ctx, instr.get(), i, &base, &offset) && base.regClass() == v1 && mubuf->offset + offset < 4096) {
             assert(!mubuf->idxen);
-            instr->operands[i].setTemp(base);
+            instr->operands[1].setTemp(base);
             mubuf->offset += offset;
             continue;
          } else if (i == 2 && parse_base_offset(ctx, instr.get(), i, &base, &offset) && base.regClass() == s1 && mubuf->offset + offset < 4096) {
@@ -1087,6 +1103,8 @@ void label_instruction(opt_ctx &ctx, Block& block, aco_ptr<Instruction>& instr)
                instr->operands[1].constantEquals(0x3f800000u) &&
                instr->operands[2].isTemp())
          ctx.info[instr->definitions[0].tempId()].set_b2f(instr->operands[2].getTemp());
+
+      ctx.info[instr->operands[2].tempId()].set_vcc_hint();
       break;
    case aco_opcode::v_cmp_lg_u32:
       if (instr->format == Format::VOPC && /* don't optimize VOP3 / SDWA / DPP */
@@ -1787,6 +1805,7 @@ bool combine_salu_not_bitwise(opt_ctx& ctx, aco_ptr<Instruction>& instr)
 
    /* create instruction */
    std::swap(instr->definitions[0], op2_instr->definitions[0]);
+   std::swap(instr->definitions[1], op2_instr->definitions[1]);
    ctx.uses[instr->operands[0].tempId()]--;
    ctx.info[op2_instr->definitions[0].tempId()].label = 0;
 
@@ -1823,6 +1842,9 @@ bool combine_salu_not_bitwise(opt_ctx& ctx, aco_ptr<Instruction>& instr)
 bool combine_salu_n2(opt_ctx& ctx, aco_ptr<Instruction>& instr)
 {
    if (instr->definitions[1].isTemp() && ctx.uses[instr->definitions[1].tempId()])
+      return false;
+
+   if (instr->definitions[0].isTemp() && ctx.info[instr->definitions[0].tempId()].is_uniform_bool())
       return false;
 
    for (unsigned i = 0; i < 2; i++) {
@@ -2235,6 +2257,10 @@ void combine_instruction(opt_ctx &ctx, Block& block, aco_ptr<Instruction>& instr
          return;
    }
 
+   if (ctx.info[instr->definitions[0].tempId()].is_vcc_hint()) {
+      instr->definitions[0].setHint(vcc);
+   }
+
    /* TODO: There are still some peephole optimizations that could be done:
     * - abs(a - b) -> s_absdiff_i32
     * - various patterns for s_bitcmp{0,1}_b32 and s_bitset{0,1}_b32
@@ -2442,6 +2468,53 @@ void combine_instruction(opt_ctx &ctx, Block& block, aco_ptr<Instruction>& instr
    }
 }
 
+bool to_uniform_bool_instr(opt_ctx &ctx, aco_ptr<Instruction> &instr)
+{
+   switch (instr->opcode) {
+      case aco_opcode::s_and_b32:
+      case aco_opcode::s_and_b64:
+         instr->opcode = aco_opcode::s_and_b32;
+         break;
+      case aco_opcode::s_or_b32:
+      case aco_opcode::s_or_b64:
+         instr->opcode = aco_opcode::s_or_b32;
+         break;
+      case aco_opcode::s_xor_b32:
+      case aco_opcode::s_xor_b64:
+         instr->opcode = aco_opcode::s_absdiff_i32;
+         break;
+      default:
+         /* Don't transform other instructions. They are very unlikely to appear here. */
+         return false;
+   }
+
+   for (Operand &op : instr->operands) {
+      ctx.uses[op.tempId()]--;
+
+      if (ctx.info[op.tempId()].is_uniform_bool()) {
+         /* Just use the uniform boolean temp. */
+         op.setTemp(ctx.info[op.tempId()].temp);
+      } else if (ctx.info[op.tempId()].is_uniform_bitwise()) {
+         /* Use the SCC definition of the predecessor instruction.
+          * This allows the predecessor to get picked up by the same optimization (if it has no divergent users),
+          * and it also makes sure that the current instruction will keep working even if the predecessor won't be transformed.
+          */
+         Instruction *pred_instr = ctx.info[op.tempId()].instr;
+         assert(pred_instr->definitions.size() >= 2);
+         assert(pred_instr->definitions[1].isFixed() && pred_instr->definitions[1].physReg() == scc);
+         op.setTemp(pred_instr->definitions[1].getTemp());
+      } else {
+         unreachable("Invalid operand on uniform bitwise instruction.");
+      }
+
+      ctx.uses[op.tempId()]++;
+   }
+
+   instr->definitions[0].setTemp(Temp(instr->definitions[0].tempId(), s1));
+   assert(instr->operands[0].regClass() == s1);
+   assert(instr->operands[1].regClass() == s1);
+   return true;
+}
 
 void select_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
 {
@@ -2555,9 +2628,38 @@ void select_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
       }
    }
 
+   /* Mark SCC needed, so the uniform boolean transformation won't swap the definitions when it isn't beneficial */
+   if (instr->format == Format::PSEUDO_BRANCH &&
+       instr->operands.size() &&
+       instr->operands[0].isTemp()) {
+      ctx.info[instr->operands[0].tempId()].set_scc_needed();
+      return;
+   } else if ((instr->opcode == aco_opcode::s_cselect_b64 ||
+               instr->opcode == aco_opcode::s_cselect_b32) &&
+              instr->operands[2].isTemp()) {
+      ctx.info[instr->operands[2].tempId()].set_scc_needed();
+   }
+
    /* check for literals */
    if (!instr->isSALU() && !instr->isVALU())
       return;
+
+   /* Transform uniform bitwise boolean operations to 32-bit when there are no divergent uses. */
+   if (instr->definitions.size() &&
+       ctx.uses[instr->definitions[0].tempId()] == 0 &&
+       ctx.info[instr->definitions[0].tempId()].is_uniform_bitwise()) {
+      bool transform_done = to_uniform_bool_instr(ctx, instr);
+
+      if (transform_done && !ctx.info[instr->definitions[1].tempId()].is_scc_needed()) {
+         /* Swap the two definition IDs in order to avoid overusing the SCC. This reduces extra moves generated by RA. */
+         uint32_t def0_id = instr->definitions[0].getTemp().id();
+         uint32_t def1_id = instr->definitions[1].getTemp().id();
+         instr->definitions[0].setTemp(Temp(def1_id, s1));
+         instr->definitions[1].setTemp(Temp(def0_id, s1));
+      }
+
+      return;
+   }
 
    if (instr->isSDWA() || instr->isDPP() || (instr->isVOP3() && ctx.program->chip_class < GFX10))
       return; /* some encodings can't ever take literals */
@@ -2571,6 +2673,9 @@ void select_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
    unsigned num_operands = 1;
    if (instr->isSALU() || (ctx.program->chip_class >= GFX10 && can_use_VOP3(ctx, instr)))
       num_operands = instr->operands.size();
+   /* catch VOP2 with a 3rd SGPR operand (e.g. v_cndmask_b32, v_addc_co_u32) */
+   else if (instr->isVALU() && instr->operands.size() >= 3)
+      return;
 
    unsigned sgpr_ids[2] = {0, 0};
    bool is_literal_sgpr = false;
@@ -2579,17 +2684,19 @@ void select_instruction(opt_ctx &ctx, aco_ptr<Instruction>& instr)
    /* choose a literal to apply */
    for (unsigned i = 0; i < num_operands; i++) {
       Operand op = instr->operands[i];
+
+      if (instr->isVALU() && op.isTemp() && op.getTemp().type() == RegType::sgpr &&
+          op.tempId() != sgpr_ids[0])
+         sgpr_ids[!!sgpr_ids[0]] = op.tempId();
+
       if (op.isLiteral()) {
          current_literal = op;
          continue;
       } else if (!op.isTemp() || !ctx.info[op.tempId()].is_literal()) {
-         if (instr->isVALU() && op.isTemp() && op.getTemp().type() == RegType::sgpr &&
-             op.tempId() != sgpr_ids[0])
-            sgpr_ids[!!sgpr_ids[0]] = op.tempId();
          continue;
       }
 
-      if (!can_accept_constant(instr, i))
+      if (!alu_can_accept_constant(instr->opcode, i))
          continue;
 
       if (ctx.uses[op.tempId()] < literal_uses) {

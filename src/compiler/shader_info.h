@@ -53,6 +53,7 @@ struct spirv_supported_capabilities {
    bool int16;
    bool int64;
    bool int64_atomics;
+   bool integer_functions2;
    bool kernel;
    bool min_lod;
    bool multiview;
@@ -78,10 +79,12 @@ struct spirv_supported_capabilities {
    bool vk_memory_model;
    bool vk_memory_model_device_scope;
    bool float16;
+   bool amd_fragment_mask;
    bool amd_gcn_shader;
    bool amd_shader_ballot;
    bool amd_trinary_minmax;
    bool amd_image_read_write_lod;
+   bool amd_shader_explicit_vertex_parameter;
 };
 
 typedef struct shader_info {

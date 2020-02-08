@@ -80,34 +80,6 @@ tu_spirv_to_nir(struct ir3_compiler *compiler,
    return nir;
 }
 
-static void
-tu_sort_variables_by_location(struct exec_list *variables)
-{
-   struct exec_list sorted;
-   exec_list_make_empty(&sorted);
-
-   nir_foreach_variable_safe(var, variables)
-   {
-      exec_node_remove(&var->node);
-
-      /* insert the variable into the sorted list */
-      nir_variable *next = NULL;
-      nir_foreach_variable(tmp, &sorted)
-      {
-         if (var->data.location < tmp->data.location) {
-            next = tmp;
-            break;
-         }
-      }
-      if (next)
-         exec_node_insert_node_before(&next->node, &var->node);
-      else
-         exec_list_push_tail(&sorted, &var->node);
-   }
-
-   exec_list_move_nodes_to(&sorted, variables);
-}
-
 static unsigned
 map_add(struct tu_descriptor_map *map, int set, int binding, int value,
         int array_size)
@@ -271,11 +243,12 @@ lower_vulkan_resource_index(nir_builder *b, nir_intrinsic_instr *instr,
    switch (nir_intrinsic_desc_type(instr)) {
    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
-      if (!const_val || const_val->u32 != 0)
-         tu_finishme("non-zero vulkan_resource_index array index");
+      if (!const_val)
+         tu_finishme("non-constant vulkan_resource_index array index");
       /* skip index 0 which is used for push constants */
       index = map_add(&shader->ubo_map, set, binding, 0,
                       binding_layout->array_size) + 1;
+      index += const_val->u32;
       break;
    case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
    case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
@@ -475,25 +448,7 @@ tu_shader_create(struct tu_device *dev,
    /* ir3 doesn't support indirect input/output */
    NIR_PASS_V(nir, nir_lower_indirect_derefs, nir_var_shader_in | nir_var_shader_out);
 
-   switch (stage) {
-   case MESA_SHADER_VERTEX:
-      tu_sort_variables_by_location(&nir->outputs);
-      break;
-   case MESA_SHADER_TESS_CTRL:
-   case MESA_SHADER_TESS_EVAL:
-   case MESA_SHADER_GEOMETRY:
-      tu_sort_variables_by_location(&nir->inputs);
-      tu_sort_variables_by_location(&nir->outputs);
-      break;
-   case MESA_SHADER_FRAGMENT:
-      tu_sort_variables_by_location(&nir->inputs);
-      break;
-   case MESA_SHADER_COMPUTE:
-      break;
-   default:
-      unreachable("invalid gl_shader_stage");
-      break;
-   }
+   NIR_PASS_V(nir, nir_lower_io_arrays_to_elements_no_indirects, false);
 
    nir_assign_io_var_locations(&nir->inputs, &nir->num_inputs, stage);
    nir_assign_io_var_locations(&nir->outputs, &nir->num_outputs, stage);
@@ -517,8 +472,6 @@ tu_shader_create(struct tu_device *dev,
 
       NIR_PASS_V(nir, ir3_nir_move_varying_inputs);
    }
-
-   NIR_PASS_V(nir, nir_lower_io_arrays_to_elements_no_indirects, false);
 
    nir_shader_gather_info(nir, nir_shader_get_entrypoint(nir));
 

@@ -29,6 +29,7 @@
 
 #include "util/debug.h"
 #include "util/u_atomic.h"
+#include "util/format/u_format.h"
 #include "vk_format.h"
 #include "vk_util.h"
 #include "drm-uapi/drm_fourcc.h"
@@ -44,7 +45,7 @@ image_level_linear(struct tu_image *image, int level, bool ubwc)
 enum a6xx_tile_mode
 tu6_get_image_tile_mode(struct tu_image *image, int level)
 {
-   if (image_level_linear(image, level, !!image->layout.ubwc_size))
+   if (image_level_linear(image, level, !!image->layout.ubwc_layer_size))
       return TILE6_LINEAR;
    else
       return image->layout.tile_mode;
@@ -149,6 +150,8 @@ tu_image_create(VkDevice _device,
    /* expect UBWC enabled if we asked for it */
    assert(modifier != DRM_FORMAT_MOD_QCOM_COMPRESSED || ubwc_enabled);
 
+   image->layout.ubwc = ubwc_enabled;
+
    fdl6_layout(&image->layout, vk_format_to_pipe_format(image->vk_format),
                image->samples,
                pCreateInfo->extent.width,
@@ -156,8 +159,7 @@ tu_image_create(VkDevice _device,
                pCreateInfo->extent.depth,
                pCreateInfo->mipLevels,
                pCreateInfo->arrayLayers,
-               pCreateInfo->imageType == VK_IMAGE_TYPE_3D,
-               ubwc_enabled);
+               pCreateInfo->imageType == VK_IMAGE_TYPE_3D);
 
    *pImage = tu_image_to_handle(image);
 
@@ -306,7 +308,7 @@ tu_image_view_init(struct tu_image_view *iview,
    iview->descriptor[4] = base_addr;
    iview->descriptor[5] = (base_addr >> 32) | A6XX_TEX_CONST_5_DEPTH(depth);
 
-   if (image->layout.ubwc_size) {
+   if (image->layout.ubwc_layer_size) {
       uint32_t block_width, block_height;
       fdl6_get_ubwc_blockwidth(&image->layout,
                                &block_width, &block_height);
@@ -343,7 +345,7 @@ tu_image_view_init(struct tu_image_view *iview,
       iview->storage_descriptor[4] = base_addr;
       iview->storage_descriptor[5] = (base_addr >> 32) | A6XX_IBO_5_DEPTH(depth);
 
-      if (image->layout.ubwc_size) {
+      if (image->layout.ubwc_layer_size) {
          iview->storage_descriptor[3] |= A6XX_IBO_3_FLAG | A6XX_IBO_3_UNK27;
          iview->storage_descriptor[7] |= ubwc_addr;
          iview->storage_descriptor[8] |= ubwc_addr >> 32;
@@ -394,6 +396,11 @@ tu_CreateImage(VkDevice device,
          if (mod_info->pDrmFormatModifiers[i] == DRM_FORMAT_MOD_QCOM_COMPRESSED)
             modifier = DRM_FORMAT_MOD_QCOM_COMPRESSED;
       }
+   } else {
+      const struct wsi_image_create_info *wsi_info =
+         vk_find_struct_const(pCreateInfo->pNext, WSI_IMAGE_CREATE_INFO_MESA);
+      if (wsi_info && wsi_info->scanout)
+         modifier = DRM_FORMAT_MOD_LINEAR;
    }
 
    return tu_image_create(device, pCreateInfo, pAllocator, pImage, modifier);
@@ -435,13 +442,36 @@ tu_GetImageSubresourceLayout(VkDevice _device,
    pLayout->arrayPitch = image->layout.layer_size;
    pLayout->depthPitch = slice->size0;
 
-   if (image->layout.ubwc_size) {
+   if (image->layout.ubwc_layer_size) {
       /* UBWC starts at offset 0 */
       pLayout->offset = 0;
       /* UBWC scanout won't match what the kernel wants if we have levels/layers */
       assert(image->level_count == 1 && image->layer_count == 1);
    }
 }
+
+VkResult tu_GetImageDrmFormatModifierPropertiesEXT(
+    VkDevice                                    device,
+    VkImage                                     _image,
+    VkImageDrmFormatModifierPropertiesEXT*      pProperties)
+{
+   TU_FROM_HANDLE(tu_image, image, _image);
+
+   assert(pProperties->sType ==
+          VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_PROPERTIES_EXT);
+
+   /* TODO invent a modifier for tiled but not UBWC buffers */
+
+   if (!image->layout.tile_mode)
+      pProperties->drmFormatModifier = DRM_FORMAT_MOD_LINEAR;
+   else if (image->layout.ubwc_layer_size)
+      pProperties->drmFormatModifier = DRM_FORMAT_MOD_QCOM_COMPRESSED;
+   else
+      pProperties->drmFormatModifier = DRM_FORMAT_MOD_INVALID;
+
+   return VK_SUCCESS;
+}
+
 
 VkResult
 tu_CreateImageView(VkDevice _device,
@@ -484,10 +514,45 @@ tu_buffer_view_init(struct tu_buffer_view *view,
 {
    TU_FROM_HANDLE(tu_buffer, buffer, pCreateInfo->buffer);
 
-   view->range = pCreateInfo->range == VK_WHOLE_SIZE
-                    ? buffer->size - pCreateInfo->offset
-                    : pCreateInfo->range;
-   view->vk_format = pCreateInfo->format;
+   view->buffer = buffer;
+
+   enum VkFormat vfmt = pCreateInfo->format;
+   enum pipe_format pfmt = vk_format_to_pipe_format(vfmt);
+   const struct tu_native_format *fmt = tu6_get_native_format(vfmt);
+
+   uint32_t range;
+   if (pCreateInfo->range == VK_WHOLE_SIZE)
+      range = buffer->size - pCreateInfo->offset;
+   else
+      range = pCreateInfo->range;
+   uint32_t elements = range / util_format_get_blocksize(pfmt);
+
+   static const VkComponentMapping components = {
+      .r = VK_COMPONENT_SWIZZLE_R,
+      .g = VK_COMPONENT_SWIZZLE_G,
+      .b = VK_COMPONENT_SWIZZLE_B,
+      .a = VK_COMPONENT_SWIZZLE_A,
+   };
+
+   uint64_t iova = tu_buffer_iova(buffer) + pCreateInfo->offset;
+
+   memset(&view->descriptor, 0, sizeof(view->descriptor));
+
+   view->descriptor[0] =
+      A6XX_TEX_CONST_0_TILE_MODE(TILE6_LINEAR) |
+      A6XX_TEX_CONST_0_SWAP(fmt->swap) |
+      A6XX_TEX_CONST_0_FMT(fmt->tex) |
+      A6XX_TEX_CONST_0_MIPLVLS(0) |
+      tu6_texswiz(&components, vfmt, VK_IMAGE_ASPECT_COLOR_BIT);
+      COND(vk_format_is_srgb(vfmt), A6XX_TEX_CONST_0_SRGB);
+   view->descriptor[1] =
+      A6XX_TEX_CONST_1_WIDTH(elements & MASK(15)) |
+      A6XX_TEX_CONST_1_HEIGHT(elements >> 15);
+   view->descriptor[2] =
+      A6XX_TEX_CONST_2_UNK4 |
+      A6XX_TEX_CONST_2_UNK31;
+   view->descriptor[4] = iova;
+   view->descriptor[5] = iova >> 32;
 }
 
 VkResult

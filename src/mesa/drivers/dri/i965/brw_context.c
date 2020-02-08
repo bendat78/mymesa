@@ -411,6 +411,7 @@ brw_initialize_spirv_supported_capabilities(struct brw_context *brw)
    ctx->Const.SpirVCapabilities.tessellation = true;
    ctx->Const.SpirVCapabilities.transform_feedback = devinfo->gen >= 7;
    ctx->Const.SpirVCapabilities.variable_pointers = true;
+   ctx->Const.SpirVCapabilities.integer_functions2 = devinfo->gen >= 8;
 }
 
 static void
@@ -1522,8 +1523,10 @@ intel_prepare_render(struct brw_context *brw)
     * that will happen next will probably dirty the front buffer.  So
     * mark it as dirty here.
     */
-   if (_mesa_is_front_buffer_drawing(ctx->DrawBuffer))
+   if (_mesa_is_front_buffer_drawing(ctx->DrawBuffer) &&
+       ctx->DrawBuffer != _mesa_get_incomplete_framebuffer()) {
       brw->front_buffer_dirty = true;
+   }
 
    if (brw->is_shared_buffer_bound) {
       /* Subsequent rendering will probably dirty the shared buffer. */

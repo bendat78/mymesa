@@ -170,6 +170,7 @@ enum {
 	DBG_TEX,
 	DBG_COMPUTE,
 	DBG_VM,
+	DBG_CACHE_STATS,
 
 	/* Driver options: */
 	DBG_FORCE_SDMA,
@@ -205,6 +206,10 @@ enum {
 	DBG_NO_DCC_MSAA,
 	DBG_NO_FMASK,
 
+	DBG_COUNT
+};
+
+enum {
 	/* Tests: */
 	DBG_TEST_DMA,
 	DBG_TEST_VMFAULT_CP,
@@ -541,7 +546,10 @@ struct si_screen {
 	 * are loading shaders on demand. This is a monotonic counter.
 	 */
 	unsigned			num_shaders_created;
-	unsigned			num_shader_cache_hits;
+	unsigned			num_memory_shader_cache_hits;
+	unsigned			num_memory_shader_cache_misses;
+	unsigned			num_disk_shader_cache_hits;
+	unsigned			num_disk_shader_cache_misses;
 
 	/* GPU load thread. */
 	simple_mtx_t			gpu_load_mutex;
@@ -601,6 +609,9 @@ struct si_screen {
 	 */
 	simple_mtx_t			shader_cache_mutex;
 	struct hash_table		*shader_cache;
+
+	/* Shader cache of live shaders. */
+	struct util_live_shader_cache	live_shader_cache;
 
 	/* Shader compiler queue for multithreaded compilation. */
 	struct util_queue		shader_compiler_queue;
@@ -1586,6 +1597,19 @@ static inline void
 si_texture_reference(struct si_texture **ptr, struct si_texture *res)
 {
 	pipe_resource_reference((struct pipe_resource **)ptr, &res->buffer.b.b);
+}
+
+static inline void
+si_shader_selector_reference(struct si_context *sctx, /* sctx can optionally be NULL */
+			     struct si_shader_selector **dst,
+			     struct si_shader_selector *src)
+{
+	if (*dst == src)
+		return;
+
+	struct si_screen *sscreen = src ? src->screen : (*dst)->screen;
+	util_shader_reference(&sctx->b, &sscreen->live_shader_cache,
+			      (void**)dst, src);
 }
 
 static inline bool

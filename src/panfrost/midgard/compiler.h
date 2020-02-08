@@ -103,13 +103,15 @@ typedef struct midgard_instruction {
         int unit;
 
         bool has_constants;
-        uint32_t constants[4];
+        midgard_constants constants;
         uint16_t inline_constant;
         bool has_blend_constant;
         bool has_inline_constant;
 
         bool compact_branch;
         bool writeout;
+        bool writeout_depth;
+        bool writeout_stencil;
         bool last_writeout;
 
         /* Kind of a hack, but hint against aggressive DCE */
@@ -217,10 +219,19 @@ typedef struct midgard_bundle {
         int padding;
         int control;
         bool has_embedded_constants;
-        float constants[4];
+        midgard_constants constants;
         bool has_blend_constant;
         bool last_writeout;
 } midgard_bundle;
+
+enum midgard_rt_id {
+        MIDGARD_COLOR_RT0,
+        MIDGARD_COLOR_RT1,
+        MIDGARD_COLOR_RT2,
+        MIDGARD_COLOR_RT3,
+        MIDGARD_ZS_RT,
+        MIDGARD_NUM_RTS,
+};
 
 typedef struct compiler_context {
         nir_shader *nir;
@@ -307,7 +318,7 @@ typedef struct compiler_context {
         uint32_t quirks;
 
         /* Writeout instructions for each render target */
-        midgard_instruction *writeout_branch[4];
+        midgard_instruction *writeout_branch[MIDGARD_NUM_RTS];
 } compiler_context;
 
 /* Per-block live_in/live_out */
@@ -530,6 +541,7 @@ bool mir_special_index(compiler_context *ctx, unsigned idx);
 unsigned mir_use_count(compiler_context *ctx, unsigned value);
 bool mir_is_written_before(compiler_context *ctx, midgard_instruction *ins, unsigned node);
 uint16_t mir_bytemask_of_read_components(midgard_instruction *ins, unsigned node);
+uint16_t mir_bytemask_of_read_components_index(midgard_instruction *ins, unsigned i);
 midgard_reg_mode mir_typesize(midgard_instruction *ins);
 midgard_reg_mode mir_srcsize(midgard_instruction *ins, unsigned i);
 unsigned mir_bytes_for_mode(midgard_reg_mode mode);
@@ -616,7 +628,7 @@ v_load_store_scratch(
                 .no_spill = (1 << REG_CLASS_WORK)
         };
 
-        ins.constants[0] = byte;
+        ins.constants.u32[0] = byte;
 
         if (is_store) {
                 ins.src[0] = srcdest;

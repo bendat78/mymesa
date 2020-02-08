@@ -733,8 +733,8 @@ init_state_base_address(struct iris_batch *batch)
 }
 
 static void
-iris_emit_l3_config(struct iris_batch *batch, const struct gen_l3_config *cfg,
-                    bool has_slm, bool wants_dc_cache)
+iris_emit_l3_config(struct iris_batch *batch,
+                    const struct gen_l3_config *cfg)
 {
    uint32_t reg_val;
 
@@ -747,8 +747,8 @@ iris_emit_l3_config(struct iris_batch *batch, const struct gen_l3_config *cfg,
 #endif
 
    iris_pack_state(L3_ALLOCATION_REG, &reg_val, reg) {
-#if GEN_GEN < 12
-      reg.SLMEnable = has_slm;
+#if GEN_GEN < 11
+      reg.SLMEnable = cfg->n[GEN_L3P_SLM] > 0;
 #endif
 #if GEN_GEN == 11
       /* WA_1406697149: Bit 9 "Error Detection Behavior Control" must be set
@@ -764,19 +764,6 @@ iris_emit_l3_config(struct iris_batch *batch, const struct gen_l3_config *cfg,
       reg.AllAllocation = cfg->n[GEN_L3P_ALL];
    }
    _iris_emit_lri(batch, L3_ALLOCATION_REG_num, reg_val);
-}
-
-static void
-iris_emit_default_l3_config(struct iris_batch *batch,
-                            const struct gen_device_info *devinfo,
-                            bool compute)
-{
-   bool wants_dc_cache = true;
-   bool has_slm = compute;
-   const struct gen_l3_weights w =
-      gen_get_default_l3_weights(devinfo, wants_dc_cache, has_slm);
-   const struct gen_l3_config *cfg = gen_get_l3_config(devinfo, w);
-   iris_emit_l3_config(batch, cfg, has_slm, wants_dc_cache);
 }
 
 #if GEN_GEN == 9
@@ -913,7 +900,7 @@ iris_init_render_context(struct iris_batch *batch)
 
    emit_pipeline_select(batch, _3D);
 
-   iris_emit_default_l3_config(batch, devinfo, false);
+   iris_emit_l3_config(batch, batch->screen->l3_config_3d);
 
    init_state_base_address(batch);
 
@@ -1032,7 +1019,7 @@ iris_init_compute_context(struct iris_batch *batch)
    emit_pipeline_select(batch, GPGPU);
 #endif
 
-   iris_emit_default_l3_config(batch, devinfo, true);
+   iris_emit_l3_config(batch, batch->screen->l3_config_cs);
 
    init_state_base_address(batch);
 
@@ -4187,6 +4174,16 @@ iris_store_tcs_state(struct iris_context *ice,
    iris_pack_command(GENX(3DSTATE_HS), shader->derived_data, hs) {
       INIT_THREAD_DISPATCH_FIELDS(hs, Vertex, MESA_SHADER_TESS_CTRL);
 
+#if GEN_GEN >= 12
+      /* GEN:BUG:1604578095:
+       *
+       *    Hang occurs when the number of max threads is less than 2 times
+       *    the number of instance count. The number of max threads must be
+       *    more than 2 times the number of instance count.
+       */
+      assert((devinfo->max_tcs_threads / 2) > tcs_prog_data->instances);
+#endif
+
       hs.InstanceCount = tcs_prog_data->instances - 1;
       hs.MaximumNumberofThreads = devinfo->max_tcs_threads - 1;
       hs.IncludeVertexHandles = true;
@@ -5128,7 +5125,7 @@ genX(emit_aux_map_state)(struct iris_batch *batch)
        * cached translations.
        */
       uint64_t base_addr = gen_aux_map_get_base(aux_map_ctx);
-      assert(base_addr != 0 && ALIGN(base_addr, 32 * 1024) == base_addr);
+      assert(base_addr != 0 && align64(base_addr, 32 * 1024) == base_addr);
       iris_load_register_imm64(batch, GENX(GFX_AUX_TABLE_BASE_ADDR_num),
                                base_addr);
       batch->last_aux_map_state = aux_map_state_num;
@@ -5380,9 +5377,22 @@ iris_upload_dirty_render_state(struct iris_context *ice,
          assert(size[i] != 0);
       }
 
-      genX(emit_urb_setup)(ice, batch, size,
-                           ice->shaders.prog[MESA_SHADER_TESS_EVAL] != NULL,
-                           ice->shaders.prog[MESA_SHADER_GEOMETRY] != NULL);
+      unsigned entries[4], start[4];
+      gen_get_urb_config(&batch->screen->devinfo,
+                         batch->screen->l3_config_3d,
+                         ice->shaders.prog[MESA_SHADER_TESS_EVAL] != NULL,
+                         ice->shaders.prog[MESA_SHADER_GEOMETRY] != NULL,
+                         size, entries, start,
+                         &ice->state.urb_deref_block_size);
+
+      for (int i = MESA_SHADER_VERTEX; i <= MESA_SHADER_GEOMETRY; i++) {
+         iris_emit_cmd(batch, GENX(3DSTATE_URB_VS), urb) {
+            urb._3DCommandSubOpcode += i;
+            urb.VSURBStartingAddress     = start[i];
+            urb.VSURBEntryAllocationSize = size[i] - 1;
+            urb.VSNumberofURBEntries     = entries[i];
+         }
+      }
    }
 
    if (dirty & IRIS_DIRTY_BLEND_STATE) {
@@ -5755,13 +5765,17 @@ iris_upload_dirty_render_state(struct iris_context *ice,
                       ARRAY_SIZE(cso_rast->clip));
    }
 
-   if (dirty & IRIS_DIRTY_RASTER) {
+   if (dirty & (IRIS_DIRTY_RASTER | IRIS_DIRTY_URB)) {
       struct iris_rasterizer_state *cso = ice->state.cso_rast;
       iris_batch_emit(batch, cso->raster, sizeof(cso->raster));
 
       uint32_t dynamic_sf[GENX(3DSTATE_SF_length)];
       iris_pack_command(GENX(3DSTATE_SF), &dynamic_sf, sf) {
          sf.ViewportTransformEnable = !ice->state.window_space_position;
+
+#if GEN_GEN >= 12
+         sf.DerefBlockSize = ice->state.urb_deref_block_size;
+#endif
       }
       iris_emit_merge(batch, cso->sf, dynamic_sf,
                       ARRAY_SIZE(dynamic_sf));
@@ -6838,7 +6852,20 @@ iris_emit_raw_pipe_control(struct iris_batch *batch,
                                  0, NULL, 0, 0);
    }
 
-   if (GEN_GEN == 9 && IS_COMPUTE_PIPELINE(batch) && post_sync_flags) {
+   /* GEN:BUG:1409226450, Wait for EU to be idle before pipe control which
+    * invalidates the instruction cache
+    */
+   if (GEN_GEN == 12 && (flags & PIPE_CONTROL_INSTRUCTION_INVALIDATE)) {
+      iris_emit_raw_pipe_control(batch,
+                                 "workaround: CS stall before instruction "
+                                 "cache invalidate",
+                                 PIPE_CONTROL_CS_STALL |
+                                 PIPE_CONTROL_STALL_AT_SCOREBOARD, bo, offset,
+                                 imm);
+   }
+
+   if ((GEN_GEN == 9 || (GEN_GEN == 12 && devinfo->revision == 0 /* A0*/)) &&
+        IS_COMPUTE_PIPELINE(batch) && post_sync_flags) {
       /* Project: SKL / Argument: LRI Post Sync Operation [23]
        *
        * "PIPECONTROL command with “Command Streamer Stall Enable” must be
@@ -6847,6 +6874,8 @@ iris_emit_raw_pipe_control(struct iris_batch *batch,
        *  PIPELINE_SELECT command is set to GPGPU mode of operation)."
        *
        * The same text exists a few rows below for Post Sync Op.
+       *
+       * On Gen12 this is GEN:BUG:1607156449.
        */
       iris_emit_raw_pipe_control(batch,
                                  "workaround: CS stall before gpgpu post-sync",
@@ -7202,34 +7231,6 @@ iris_emit_raw_pipe_control(struct iris_batch *batch,
          flags & PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE;
       pc.Address = rw_bo(bo, offset);
       pc.ImmediateData = imm;
-   }
-}
-
-void
-genX(emit_urb_setup)(struct iris_context *ice,
-                     struct iris_batch *batch,
-                     const unsigned size[4],
-                     bool tess_present, bool gs_present)
-{
-   const struct gen_device_info *devinfo = &batch->screen->devinfo;
-   const unsigned push_size_kB = 32;
-   unsigned entries[4];
-   unsigned start[4];
-
-   ice->shaders.last_vs_entry_size = size[MESA_SHADER_VERTEX];
-
-   gen_get_urb_config(devinfo, 1024 * push_size_kB,
-                      1024 * ice->shaders.urb_size,
-                      tess_present, gs_present,
-                      size, entries, start);
-
-   for (int i = MESA_SHADER_VERTEX; i <= MESA_SHADER_GEOMETRY; i++) {
-      iris_emit_cmd(batch, GENX(3DSTATE_URB_VS), urb) {
-         urb._3DCommandSubOpcode += i;
-         urb.VSURBStartingAddress     = start[i];
-         urb.VSURBEntryAllocationSize = size[i] - 1;
-         urb.VSNumberofURBEntries     = entries[i];
-      }
    }
 }
 

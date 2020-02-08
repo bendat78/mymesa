@@ -48,6 +48,10 @@
 #define FW_52_8_3 ((52 << 24) | (8 << 16) | (3 << 8))
 #define FW_53 (53 << 24)
 
+/* version specific function for getting parameters */
+static void (*si_get_pic_param)(struct rvce_encoder *enc,
+                                struct pipe_h264_enc_picture_desc *pic) = NULL;
+
 /**
  * flush commands to the hardware
  */
@@ -268,7 +272,8 @@ static void rvce_begin_frame(struct pipe_video_codec *encoder,
 		enc->pic.rate_ctrl.rate_ctrl_method != pic->rate_ctrl.rate_ctrl_method ||
 		enc->pic.quant_i_frames != pic->quant_i_frames ||
 		enc->pic.quant_p_frames != pic->quant_p_frames ||
-		enc->pic.quant_b_frames != pic->quant_b_frames;
+		enc->pic.quant_b_frames != pic->quant_b_frames ||
+		enc->pic.rate_ctrl.target_bitrate != pic->rate_ctrl.target_bitrate;
 
 	enc->pic = *pic;
 	si_get_pic_param(enc, pic);

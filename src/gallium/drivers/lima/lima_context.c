@@ -105,6 +105,19 @@ lima_context_free_drm_ctx(struct lima_screen *screen, int id)
 }
 
 static void
+lima_invalidate_resource(struct pipe_context *pctx, struct pipe_resource *prsc)
+{
+   struct lima_context *ctx = lima_context(pctx);
+
+   if (ctx->framebuffer.base.zsbuf && (ctx->framebuffer.base.zsbuf->texture == prsc))
+      ctx->resolve &= ~(PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL);
+
+   if (ctx->framebuffer.base.nr_cbufs &&
+       (ctx->framebuffer.base.cbufs[0]->texture == prsc))
+      ctx->resolve &= ~PIPE_CLEAR_COLOR0;
+}
+
+static void
 lima_context_destroy(struct pipe_context *pctx)
 {
    struct lima_context *ctx = lima_context(pctx);
@@ -192,6 +205,7 @@ lima_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    ctx->base.screen = pscreen;
    ctx->base.destroy = lima_context_destroy;
    ctx->base.set_debug_callback = lima_set_debug_callback;
+   ctx->base.invalidate_resource = lima_invalidate_resource;
 
    lima_resource_context_init(ctx);
    lima_fence_context_init(ctx);
@@ -221,11 +235,25 @@ lima_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
    ctx->plb_size = screen->plb_max_blk * LIMA_CTX_PLB_BLK_SIZE;
    ctx->plb_gp_size = screen->plb_max_blk * 4;
 
+   uint32_t heap_flags;
+   if (screen->has_growable_heap_buffer) {
+      /* growable size buffer, initially will allocate 32K (by default)
+       * backup memory in kernel driver, and will allocate more when GP
+       * get out of memory interrupt. Max to 16M set here.
+       */
+      ctx->gp_tile_heap_size = 0x1000000;
+      heap_flags = LIMA_BO_FLAG_HEAP;
+   } else {
+      /* fix size buffer */
+      ctx->gp_tile_heap_size = 0x100000;
+      heap_flags = 0;
+   }
+
    for (int i = 0; i < lima_ctx_num_plb; i++) {
       ctx->plb[i] = lima_bo_create(screen, ctx->plb_size, 0);
       if (!ctx->plb[i])
          goto err_out;
-      ctx->gp_tile_heap[i] = lima_bo_create(screen, gp_tile_heap_size, 0);
+      ctx->gp_tile_heap[i] = lima_bo_create(screen, ctx->gp_tile_heap_size, heap_flags);
       if (!ctx->gp_tile_heap[i])
          goto err_out;
    }
@@ -272,16 +300,4 @@ lima_need_flush(struct lima_context *ctx, struct lima_bo *bo, bool write)
 {
    return lima_submit_has_bo(ctx->gp_submit, bo, write) ||
       lima_submit_has_bo(ctx->pp_submit, bo, write);
-}
-
-bool
-lima_is_scanout(struct lima_context *ctx)
-{
-        /* If there is no color buffer, it's an FBO */
-        if (!ctx->framebuffer.base.nr_cbufs)
-                return false;
-
-        return ctx->framebuffer.base.cbufs[0]->texture->bind & PIPE_BIND_DISPLAY_TARGET ||
-               ctx->framebuffer.base.cbufs[0]->texture->bind & PIPE_BIND_SCANOUT ||
-               ctx->framebuffer.base.cbufs[0]->texture->bind & PIPE_BIND_SHARED;
 }

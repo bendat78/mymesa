@@ -378,6 +378,8 @@ tu6_emit_vs_config(struct tu_cs *cs, struct tu_shader *shader,
       A6XX_SP_VS_CTRL_REG0_BRANCHSTACK(vs->branchstack);
    if (vs->need_pixlod)
       sp_vs_ctrl |= A6XX_SP_VS_CTRL_REG0_PIXLODENABLE;
+   if (vs->need_fine_derivatives)
+      sp_vs_ctrl |= A6XX_SP_VS_CTRL_REG0_DIFF_FINE;
 
    uint32_t sp_vs_config = A6XX_SP_VS_CONFIG_NTEX(shader->texture_map.num_desc) |
                            A6XX_SP_VS_CONFIG_NSAMP(shader->sampler_map.num_desc);
@@ -463,6 +465,8 @@ tu6_emit_fs_config(struct tu_cs *cs, struct tu_shader *shader,
       sp_fs_ctrl |= A6XX_SP_FS_CTRL_REG0_VARYING;
    if (fs->need_pixlod)
       sp_fs_ctrl |= A6XX_SP_FS_CTRL_REG0_PIXLODENABLE;
+   if (fs->need_fine_derivatives)
+      sp_fs_ctrl |= A6XX_SP_FS_CTRL_REG0_DIFF_FINE;
 
    uint32_t sp_fs_config = A6XX_SP_FS_CONFIG_NTEX(shader->texture_map.num_desc) |
                            A6XX_SP_FS_CONFIG_NSAMP(shader->sampler_map.num_desc) |
@@ -515,7 +519,8 @@ tu6_emit_cs_config(struct tu_cs *cs, const struct tu_shader *shader,
               A6XX_SP_CS_CTRL_REG0_FULLREGFOOTPRINT(v->info.max_reg + 1) |
               A6XX_SP_CS_CTRL_REG0_MERGEDREGS |
               A6XX_SP_CS_CTRL_REG0_BRANCHSTACK(v->branchstack) |
-              COND(v->need_pixlod, A6XX_SP_CS_CTRL_REG0_PIXLODENABLE));
+              COND(v->need_pixlod, A6XX_SP_CS_CTRL_REG0_PIXLODENABLE) |
+              COND(v->need_fine_derivatives, A6XX_SP_CS_CTRL_REG0_DIFF_FINE));
 
    tu_cs_emit_pkt4(cs, REG_A6XX_SP_CS_UNKNOWN_A9B1, 1);
    tu_cs_emit(cs, 0x41);
@@ -755,10 +760,10 @@ tu6_emit_fs_inputs(struct tu_cs *cs, const struct ir3_shader_variant *fs)
    face_regid      = ir3_find_sysval_regid(fs, SYSTEM_VALUE_FRONT_FACE);
    coord_regid     = ir3_find_sysval_regid(fs, SYSTEM_VALUE_FRAG_COORD);
    zwcoord_regid   = VALIDREG(coord_regid) ? coord_regid + 2 : regid(63, 0);
-   ij_pix_regid    = ir3_find_sysval_regid(fs, SYSTEM_VALUE_BARYCENTRIC_PIXEL);
-   ij_samp_regid   = ir3_find_sysval_regid(fs, SYSTEM_VALUE_BARYCENTRIC_SAMPLE);
-   ij_cent_regid   = ir3_find_sysval_regid(fs, SYSTEM_VALUE_BARYCENTRIC_CENTROID);
-   ij_size_regid   = ir3_find_sysval_regid(fs, SYSTEM_VALUE_BARYCENTRIC_SIZE);
+   ij_pix_regid    = ir3_find_sysval_regid(fs, SYSTEM_VALUE_BARYCENTRIC_PERSP_PIXEL);
+   ij_samp_regid   = ir3_find_sysval_regid(fs, SYSTEM_VALUE_BARYCENTRIC_PERSP_SAMPLE);
+   ij_cent_regid   = ir3_find_sysval_regid(fs, SYSTEM_VALUE_BARYCENTRIC_PERSP_CENTROID);
+   ij_size_regid   = ir3_find_sysval_regid(fs, SYSTEM_VALUE_BARYCENTRIC_PERSP_SIZE);
 
    if (fs->num_sampler_prefetch > 0) {
       assert(VALIDREG(ij_pix_regid));
@@ -1180,12 +1185,12 @@ tu6_emit_viewport(struct tu_cs *cs, const VkViewport *viewport)
    guardband_adj.height = tu6_guardband_adj(max.y - min.y);
 
    tu_cs_emit_pkt4(cs, REG_A6XX_GRAS_CL_VPORT_XOFFSET_0, 6);
-   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_XOFFSET_0(offsets[0]));
-   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_XSCALE_0(scales[0]));
-   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_YOFFSET_0(offsets[1]));
-   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_YSCALE_0(scales[1]));
-   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_ZOFFSET_0(offsets[2]));
-   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_ZSCALE_0(scales[2]));
+   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_XOFFSET_0(offsets[0]).value);
+   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_XSCALE_0(scales[0]).value);
+   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_YOFFSET_0(offsets[1]).value);
+   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_YSCALE_0(scales[1]).value);
+   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_ZOFFSET_0(offsets[2]).value);
+   tu_cs_emit(cs, A6XX_GRAS_CL_VPORT_ZSCALE_0(scales[2]).value);
 
    tu_cs_emit_pkt4(cs, REG_A6XX_GRAS_SC_VIEWPORT_SCISSOR_TL_0, 2);
    tu_cs_emit(cs, A6XX_GRAS_SC_VIEWPORT_SCISSOR_TL_0_X(min.x) |
@@ -1232,7 +1237,7 @@ tu6_emit_point_size(struct tu_cs *cs)
    tu_cs_emit_pkt4(cs, REG_A6XX_GRAS_SU_POINT_MINMAX, 2);
    tu_cs_emit(cs, A6XX_GRAS_SU_POINT_MINMAX_MIN(1.0f / 16.0f) |
                      A6XX_GRAS_SU_POINT_MINMAX_MAX(4092.0f));
-   tu_cs_emit(cs, A6XX_GRAS_SU_POINT_SIZE(1.0f));
+   tu_cs_emit(cs, A6XX_GRAS_SU_POINT_SIZE(1.0f).value);
 }
 
 static uint32_t
@@ -1279,9 +1284,9 @@ tu6_emit_depth_bias(struct tu_cs *cs,
                     float slope_factor)
 {
    tu_cs_emit_pkt4(cs, REG_A6XX_GRAS_SU_POLY_OFFSET_SCALE, 3);
-   tu_cs_emit(cs, A6XX_GRAS_SU_POLY_OFFSET_SCALE(slope_factor));
-   tu_cs_emit(cs, A6XX_GRAS_SU_POLY_OFFSET_OFFSET(constant_factor));
-   tu_cs_emit(cs, A6XX_GRAS_SU_POLY_OFFSET_OFFSET_CLAMP(clamp));
+   tu_cs_emit(cs, A6XX_GRAS_SU_POLY_OFFSET_SCALE(slope_factor).value);
+   tu_cs_emit(cs, A6XX_GRAS_SU_POLY_OFFSET_OFFSET(constant_factor).value);
+   tu_cs_emit(cs, A6XX_GRAS_SU_POLY_OFFSET_OFFSET_CLAMP(clamp).value);
 }
 
 static void
@@ -2077,6 +2082,8 @@ tu_compute_pipeline_create(VkDevice device,
 
    struct tu_pipeline *pipeline;
 
+   *pPipeline = VK_NULL_HANDLE;
+
    result = tu_pipeline_create(dev, pAllocator, &pipeline);
    if (result != VK_SUCCESS)
       return result;
@@ -2095,7 +2102,7 @@ tu_compute_pipeline_create(VkDevice device,
 
    result = tu_shader_compile(dev, shader, NULL, &options, pAllocator);
    if (result != VK_SUCCESS)
-      return result;
+      goto fail;
 
    struct ir3_shader_variant *v = &shader->variants[0];
 
@@ -2104,7 +2111,7 @@ tu_compute_pipeline_create(VkDevice device,
 
    result = tu_compute_upload_shader(device, pipeline, shader);
    if (result != VK_SUCCESS)
-      return result;
+      goto fail;
 
    for (int i = 0; i < 3; i++)
       pipeline->compute.local_size[i] = v->shader->nir->info.cs.local_size[i];
@@ -2118,11 +2125,11 @@ tu_compute_pipeline_create(VkDevice device,
    return VK_SUCCESS;
 
 fail:
-   tu_shader_destroy(dev, shader, pAllocator);
-   if (result != VK_SUCCESS) {
-      tu_pipeline_finish(pipeline, dev, pAllocator);
-      vk_free2(&dev->alloc, pAllocator, pipeline);
-   }
+   if (shader)
+      tu_shader_destroy(dev, shader, pAllocator);
+
+   tu_pipeline_finish(pipeline, dev, pAllocator);
+   vk_free2(&dev->alloc, pAllocator, pipeline);
 
    return result;
 }

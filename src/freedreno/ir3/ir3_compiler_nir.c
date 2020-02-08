@@ -467,11 +467,19 @@ emit_alu(struct ir3_context *ctx, nir_alu_instr *alu)
 		dst[0] = ir3_DSX(b, src[0], 0);
 		dst[0]->cat5.type = TYPE_F32;
 		break;
+	case nir_op_fddx_fine:
+		dst[0] = ir3_DSXPP_1(b, src[0], 0);
+		dst[0]->cat5.type = TYPE_F32;
+		break;
 	case nir_op_fddy:
 	case nir_op_fddy_coarse:
 		dst[0] = ir3_DSY(b, src[0], 0);
 		dst[0]->cat5.type = TYPE_F32;
 		break;
+		break;
+	case nir_op_fddy_fine:
+		dst[0] = ir3_DSYPP_1(b, src[0], 0);
+		dst[0]->cat5.type = TYPE_F32;
 		break;
 	case nir_op_flt16:
 	case nir_op_flt32:
@@ -1260,7 +1268,7 @@ get_barycentric_centroid(struct ir3_context *ctx)
 		struct ir3_instruction *xy[2];
 		struct ir3_instruction *ij;
 
-		ij = create_sysval_input(ctx, SYSTEM_VALUE_BARYCENTRIC_CENTROID, 0x3);
+		ij = create_sysval_input(ctx, SYSTEM_VALUE_BARYCENTRIC_PERSP_CENTROID, 0x3);
 		ir3_split_dest(ctx->block, xy, ij, 0, 2);
 
 		ctx->ij_centroid = ir3_create_collect(ctx, xy, 2);
@@ -1276,7 +1284,7 @@ get_barycentric_sample(struct ir3_context *ctx)
 		struct ir3_instruction *xy[2];
 		struct ir3_instruction *ij;
 
-		ij = create_sysval_input(ctx, SYSTEM_VALUE_BARYCENTRIC_SAMPLE, 0x3);
+		ij = create_sysval_input(ctx, SYSTEM_VALUE_BARYCENTRIC_PERSP_SAMPLE, 0x3);
 		ir3_split_dest(ctx->block, xy, ij, 0, 2);
 
 		ctx->ij_sample = ir3_create_collect(ctx, xy, 2);
@@ -1298,12 +1306,12 @@ static struct ir3_instruction *
 get_frag_coord(struct ir3_context *ctx)
 {
 	if (!ctx->frag_coord) {
-		struct ir3_block *b = ctx->block;
+		struct ir3_block *b = ctx->in_block;
 		struct ir3_instruction *xyzw[4];
 		struct ir3_instruction *hw_frag_coord;
 
 		hw_frag_coord = create_sysval_input(ctx, SYSTEM_VALUE_FRAG_COORD, 0xf);
-		ir3_split_dest(ctx->block, xyzw, hw_frag_coord, 0, 4);
+		ir3_split_dest(b, xyzw, hw_frag_coord, 0, 4);
 
 		/* for frag_coord.xy, we get unsigned values.. we need
 		 * to subtract (integer) 8 and divide by 16 (right-
@@ -1501,7 +1509,7 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 	case nir_intrinsic_load_size_ir3:
 		if (!ctx->ij_size) {
 			ctx->ij_size =
-				create_sysval_input(ctx, SYSTEM_VALUE_BARYCENTRIC_SIZE, 0x1);
+				create_sysval_input(ctx, SYSTEM_VALUE_BARYCENTRIC_PERSP_SIZE, 0x1);
 		}
 		dst[0] = ctx->ij_size;
 		break;
@@ -1772,6 +1780,7 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 		cond->regs[0]->flags &= ~IR3_REG_SSA;
 
 		kill = ir3_KILL(b, cond, 0);
+		kill->regs[1]->num = regid(REG_P0, 0);
 		array_insert(ctx->ir, ctx->ir->predicates, kill);
 
 		array_insert(b, b->keeps, kill);
@@ -2704,7 +2713,7 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 		return;
 
 	so->inputs[n].slot = slot;
-	so->inputs[n].compmask = (1 << (ncomp + frac)) - 1;
+	so->inputs[n].compmask |= (1 << (ncomp + frac)) - 1;
 	so->inputs_count = MAX2(so->inputs_count, n + 1);
 	so->inputs[n].interpolate = in->data.interpolation;
 
@@ -2767,17 +2776,25 @@ setup_input(struct ir3_context *ctx, nir_variable *in)
 			ctx->inputs[idx] = instr;
 		}
 	} else if (ctx->so->type == MESA_SHADER_VERTEX) {
-		/* We shouldn't have fractional input for VS input.. that only shows
-		 * up with varying packing
-		 */
-		assert(frac == 0);
+		struct ir3_instruction *input = NULL, *in;
+		struct ir3_instruction *components[4];
+		unsigned mask = (1 << (ncomp + frac)) - 1;
 
-		struct ir3_instruction *input = create_input(ctx, (1 << ncomp) - 1);
-		struct ir3_instruction *components[ncomp];
+		foreach_input(in, ctx->ir) {
+			if (in->input.inidx == n) {
+				input = in;
+				break;
+			}
+		}
 
-		input->input.inidx = n;
+		if (!input) {
+			input = create_input(ctx, mask);
+			input->input.inidx = n;
+		} else {
+			input->regs[0]->wrmask |= mask;
+		}
 
-		ir3_split_dest(ctx->block, components, input, 0, ncomp);
+		ir3_split_dest(ctx->block, components, input, frac, ncomp);
 
 		for (int i = 0; i < ncomp; i++) {
 			unsigned idx = (n * 4) + i + frac;
@@ -3043,7 +3060,7 @@ emit_instructions(struct ir3_context *ctx)
 	 * because sysvals need to be appended after varyings:
 	 */
 	if (vcoord) {
-		add_sysval_input_compmask(ctx, SYSTEM_VALUE_BARYCENTRIC_PIXEL,
+		add_sysval_input_compmask(ctx, SYSTEM_VALUE_BARYCENTRIC_PERSP_PIXEL,
 				0x3, vcoord);
 	}
 
@@ -3390,10 +3407,6 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 		goto out;
 	}
 
-	if (compiler->gpu_id >= 600) {
-		ir3_a6xx_fixup_atomic_dests(ir, so);
-	}
-
 	ir3_debug_print(ir, "AFTER SCHED");
 
 	/* Pre-assign VS inputs on a6xx+ binning pass shader, to align
@@ -3446,7 +3459,7 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 		int idx = 0;
 
 		foreach_input(instr, ir) {
-			if (instr->input.sysval != SYSTEM_VALUE_BARYCENTRIC_PIXEL)
+			if (instr->input.sysval != SYSTEM_VALUE_BARYCENTRIC_PERSP_PIXEL)
 				continue;
 
 			assert(idx < ARRAY_SIZE(precolor));
@@ -3466,7 +3479,14 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 		goto out;
 	}
 
-	ir3_debug_print(ir, "AFTER RA");
+	ir3_postsched(ctx);
+	ir3_debug_print(ir, "AFTER POSTSCHED");
+
+	if (compiler->gpu_id >= 600) {
+		if (ir3_a6xx_fixup_atomic_dests(ir, so)) {
+			ir3_debug_print(ir, "AFTER ATOMIC FIXUP");
+		}
+	}
 
 	if (so->type == MESA_SHADER_FRAGMENT)
 		pack_inlocs(ctx);
@@ -3520,7 +3540,7 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
 	/* We need to do legalize after (for frag shader's) the "bary.f"
 	 * offsets (inloc) have been assigned.
 	 */
-	ir3_legalize(ir, &so->has_ssbo, &so->need_pixlod, &max_bary);
+	ir3_legalize(ir, so, &max_bary);
 
 	ir3_debug_print(ir, "AFTER LEGALIZE");
 
