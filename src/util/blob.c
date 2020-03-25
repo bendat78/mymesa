@@ -162,7 +162,7 @@ blob_write_bytes(struct blob *blob, const void *bytes, size_t to_write)
 
    VG(VALGRIND_CHECK_MEM_IS_DEFINED(bytes, to_write));
 
-   if (blob->data)
+   if (blob->data && to_write > 0)
       memcpy(blob->data + blob->size, bytes, to_write);
    blob->size += to_write;
 
@@ -213,6 +213,15 @@ BLOB_WRITE_TYPE(blob_write_intptr, intptr_t)
 
 #define ASSERT_ALIGNED(_offset, _align) \
    assert(ALIGN((_offset), (_align)) == (_offset))
+
+bool
+blob_overwrite_uint8 (struct blob *blob,
+                      size_t offset,
+                      uint8_t value)
+{
+   ASSERT_ALIGNED(offset, sizeof(value));
+   return blob_overwrite_bytes(blob, offset, &value, sizeof(value));
+}
 
 bool
 blob_overwrite_uint32 (struct blob *blob,
@@ -286,7 +295,7 @@ blob_copy_bytes(struct blob_reader *blob, void *dest, size_t size)
    const void *bytes;
 
    bytes = blob_read_bytes(blob, size);
-   if (bytes == NULL)
+   if (bytes == NULL || size == 0)
       return;
 
    memcpy(dest, bytes, size);

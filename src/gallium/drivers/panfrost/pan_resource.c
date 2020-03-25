@@ -85,6 +85,7 @@ panfrost_resource_from_handle(struct pipe_screen *pscreen,
 
         rsc->bo = panfrost_bo_import(screen, whandle->handle);
         rsc->internal_format = templat->format;
+        rsc->layout = MALI_TEXTURE_LINEAR;
         rsc->slices[0].stride = whandle->stride;
         rsc->slices[0].offset = whandle->offset;
         rsc->slices[0].initialized = true;
@@ -234,29 +235,6 @@ panfrost_create_scanout_res(struct pipe_screen *screen,
         return res;
 }
 
-/* Computes sizes for checksumming, which is 8 bytes per 16x16 tile */
-
-#define CHECKSUM_TILE_WIDTH 16
-#define CHECKSUM_TILE_HEIGHT 16
-#define CHECKSUM_BYTES_PER_TILE 8
-
-static unsigned
-panfrost_compute_checksum_sizes(
-        struct panfrost_slice *slice,
-        unsigned width,
-        unsigned height)
-{
-        unsigned aligned_width = ALIGN_POT(width, CHECKSUM_TILE_WIDTH);
-        unsigned aligned_height = ALIGN_POT(height, CHECKSUM_TILE_HEIGHT);
-
-        unsigned tile_count_x = aligned_width / CHECKSUM_TILE_WIDTH;
-        unsigned tile_count_y = aligned_height / CHECKSUM_TILE_HEIGHT;
-
-        slice->checksum_stride = tile_count_x * CHECKSUM_BYTES_PER_TILE;
-
-        return slice->checksum_stride * tile_count_y;
-}
-
 /* Setup the mip tree given a particular layout, possibly with checksumming */
 
 static void
@@ -277,8 +255,8 @@ panfrost_setup_slices(struct panfrost_resource *pres, size_t *bo_size)
 
         bool renderable = res->bind &
                           (PIPE_BIND_RENDER_TARGET | PIPE_BIND_DEPTH_STENCIL);
-        bool afbc = pres->layout == PAN_AFBC;
-        bool tiled = pres->layout == PAN_TILED;
+        bool afbc = pres->layout == MALI_TEXTURE_AFBC;
+        bool tiled = pres->layout == MALI_TEXTURE_TILED;
         bool should_align = renderable || tiled;
 
         /* We don't know how to specify a 2D stride for 3D textures */
@@ -319,7 +297,7 @@ panfrost_setup_slices(struct panfrost_resource *pres, size_t *bo_size)
                         stride /= 4;
 
                 /* ..but cache-line align it for performance */
-                if (can_align_stride && pres->layout == PAN_LINEAR)
+                if (can_align_stride && pres->layout == MALI_TEXTURE_LINEAR)
                         stride = ALIGN_POT(stride, 64);
 
                 slice->stride = stride;
@@ -348,7 +326,7 @@ panfrost_setup_slices(struct panfrost_resource *pres, size_t *bo_size)
                 if (pres->checksummed) {
                         slice->checksum_offset = offset;
 
-                        unsigned size = panfrost_compute_checksum_sizes(
+                        unsigned size = panfrost_compute_checksum_size(
                                                 slice, width, height);
 
                         offset += size;
@@ -420,7 +398,7 @@ panfrost_resource_create_bo(struct panfrost_screen *screen, struct panfrost_reso
 
         /* Set the layout appropriately */
         assert(!(must_tile && !can_tile)); /* must_tile => can_tile */
-        pres->layout = ((can_tile && should_tile) || must_tile) ? PAN_TILED : PAN_LINEAR;
+        pres->layout = ((can_tile && should_tile) || must_tile) ? MALI_TEXTURE_TILED : MALI_TEXTURE_LINEAR;
 
         size_t bo_size;
 
@@ -535,6 +513,9 @@ panfrost_resource_create(struct pipe_screen *screen,
         panfrost_resource_create_bo(pscreen, so);
         panfrost_resource_reset_damage(so);
 
+        if (template->bind & PIPE_BIND_INDEX_BUFFER)
+                so->index_cache = rzalloc(so, struct panfrost_minmax_cache);
+
         return (struct pipe_resource *)so;
 }
 
@@ -555,14 +536,6 @@ panfrost_resource_destroy(struct pipe_screen *screen,
         ralloc_free(rsrc);
 }
 
-static unsigned
-panfrost_get_layer_stride(struct panfrost_resource *rsrc, unsigned level)
-{
-        if (rsrc->base.target == PIPE_TEXTURE_3D)
-                return rsrc->slices[level].size0;
-        else
-                return rsrc->cubemap_stride;
-}
 
 static void *
 panfrost_transfer_map(struct pipe_context *pctx,
@@ -572,6 +545,7 @@ panfrost_transfer_map(struct pipe_context *pctx,
                       const struct pipe_box *box,
                       struct pipe_transfer **out_transfer)
 {
+        struct panfrost_context *ctx = pan_context(pctx);
         int bytes_per_pixel = util_format_get_blocksize(resource->format);
         struct panfrost_resource *rsrc = pan_resource(resource);
         struct panfrost_bo *bo = rsrc->bo;
@@ -587,26 +561,6 @@ panfrost_transfer_map(struct pipe_context *pctx,
 
         /* If we haven't already mmaped, now's the time */
         panfrost_bo_mmap(bo);
-
-        /* Check if we're bound for rendering and this is a read pixels. If so,
-         * we need to flush */
-
-        struct panfrost_context *ctx = pan_context(pctx);
-        struct pipe_framebuffer_state *fb = &ctx->pipe_framebuffer;
-
-        bool is_bound = false;
-
-        for (unsigned c = 0; c < fb->nr_cbufs; ++c) {
-                /* If cbufs is NULL, we're definitely not bound here */
-
-                if (fb->cbufs[c])
-                        is_bound |= fb->cbufs[c]->texture == resource;
-        }
-
-        if (is_bound && (usage & PIPE_TRANSFER_READ))
-                 assert(level == 0);
-
-        /* TODO: Respect usage flags */
 
         if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
                 /* If the BO is used by one of the pending batches or if it's
@@ -655,12 +609,10 @@ panfrost_transfer_map(struct pipe_context *pctx,
                 } else if (usage & PIPE_TRANSFER_READ) {
                         panfrost_flush_batches_accessing_bo(ctx, bo, PAN_BO_ACCESS_WRITE);
                         panfrost_bo_wait(bo, INT64_MAX, PAN_BO_ACCESS_WRITE);
-                } else {
-                        /* Why are you even mapping?! */
                 }
         }
 
-        if (rsrc->layout != PAN_LINEAR) {
+        if (rsrc->layout != MALI_TEXTURE_LINEAR) {
                 /* Non-linear resources need to be indirectly mapped */
 
                 if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
@@ -672,9 +624,9 @@ panfrost_transfer_map(struct pipe_context *pctx,
                 assert(box->depth == 1);
 
                 if ((usage & PIPE_TRANSFER_READ) && rsrc->slices[level].initialized) {
-                        if (rsrc->layout == PAN_AFBC) {
+                        if (rsrc->layout == MALI_TEXTURE_AFBC) {
                                 DBG("Unimplemented: reads from AFBC");
-                        } else if (rsrc->layout == PAN_TILED) {
+                        } else if (rsrc->layout == MALI_TEXTURE_TILED) {
                                 panfrost_load_tiled_image(
                                         transfer->map,
                                         bo->cpu + rsrc->slices[level].offset,
@@ -687,14 +639,27 @@ panfrost_transfer_map(struct pipe_context *pctx,
 
                 return transfer->map;
         } else {
+                /* Direct, persistent writes create holes in time for
+                 * caching... I don't know if this is actually possible but we
+                 * should still get it right */
+
+                unsigned dpw = PIPE_TRANSFER_MAP_DIRECTLY | PIPE_TRANSFER_WRITE | PIPE_TRANSFER_PERSISTENT;
+
+                if ((usage & dpw) == dpw && rsrc->index_cache)
+                        return NULL;
+
                 transfer->base.stride = rsrc->slices[level].stride;
-                transfer->base.layer_stride = panfrost_get_layer_stride(rsrc, level);
+                transfer->base.layer_stride = panfrost_get_layer_stride(
+                                rsrc->slices, rsrc->base.target == PIPE_TEXTURE_3D,
+                                rsrc->cubemap_stride, level);
 
                 /* By mapping direct-write, we're implicitly already
                  * initialized (maybe), so be conservative */
 
-                if ((usage & PIPE_TRANSFER_WRITE) && (usage & PIPE_TRANSFER_MAP_DIRECTLY))
+                if ((usage & PIPE_TRANSFER_WRITE) && (usage & PIPE_TRANSFER_MAP_DIRECTLY)) {
                         rsrc->slices[level].initialized = true;
+                        panfrost_minmax_cache_invalidate(rsrc->index_cache, &transfer->base);
+                }
 
                 return bo->cpu
                        + rsrc->slices[level].offset
@@ -721,9 +686,9 @@ panfrost_transfer_unmap(struct pipe_context *pctx,
                 struct panfrost_bo *bo = prsrc->bo;
 
                 if (transfer->usage & PIPE_TRANSFER_WRITE) {
-                        if (prsrc->layout == PAN_AFBC) {
+                        if (prsrc->layout == MALI_TEXTURE_AFBC) {
                                 DBG("Unimplemented: writes to AFBC\n");
-                        } else if (prsrc->layout == PAN_TILED) {
+                        } else if (prsrc->layout == MALI_TEXTURE_TILED) {
                                 assert(transfer->box.depth == 1);
 
                                 panfrost_store_tiled_image(
@@ -742,6 +707,8 @@ panfrost_transfer_unmap(struct pipe_context *pctx,
         util_range_add(&prsrc->base, &prsrc->valid_buffer_range,
                        transfer->box.x,
                        transfer->box.x + transfer->box.width);
+
+        panfrost_minmax_cache_invalidate(prsrc->index_cache, transfer);
 
         /* Derefence the resource */
         pipe_resource_reference(&transfer->resource, NULL);
@@ -835,10 +802,8 @@ panfrost_get_texture_address(
         struct panfrost_resource *rsrc,
         unsigned level, unsigned face)
 {
-        unsigned level_offset = rsrc->slices[level].offset;
-        unsigned face_offset = face * panfrost_get_layer_stride(rsrc, level);
-
-        return rsrc->bo->gpu + level_offset + face_offset;
+        bool is_3d = rsrc->base.target == PIPE_TEXTURE_3D;
+        return rsrc->bo->gpu + panfrost_texture_offset(rsrc->slices, is_3d, rsrc->cubemap_stride, level, face);
 }
 
 /* Given a resource that has already been allocated, hint that it should use a
@@ -849,7 +814,7 @@ void
 panfrost_resource_hint_layout(
                 struct panfrost_screen *screen,
                 struct panfrost_resource *rsrc,
-                enum panfrost_memory_layout layout,
+                enum mali_texture_layout layout,
                 signed weight)
 {
         /* Nothing to do, although a sophisticated implementation might store
@@ -866,7 +831,7 @@ panfrost_resource_hint_layout(
 
         /* Check if the preferred layout is legal for this buffer */
 
-        if (layout == PAN_AFBC) {
+        if (layout == MALI_TEXTURE_AFBC) {
                 bool can_afbc = panfrost_format_supports_afbc(rsrc->base.format);
                 bool is_scanout = rsrc->base.bind &
                         (PIPE_BIND_DISPLAY_TARGET | PIPE_BIND_SCANOUT | PIPE_BIND_SHARED);
@@ -899,6 +864,8 @@ panfrost_resource_hint_layout(
                 panfrost_bo_unreference(rsrc->bo);
                 rsrc->bo = panfrost_bo_create(screen, new_size, PAN_BO_DELAY_MMAP);
         }
+
+        /* TODO: If there are textures bound, regenerate their descriptors */
 }
 
 static void

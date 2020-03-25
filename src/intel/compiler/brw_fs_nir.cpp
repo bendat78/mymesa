@@ -881,6 +881,16 @@ fs_visitor::emit_fsign(const fs_builder &bld, const nir_alu_instr *instr,
       }
 
       op[0] = offset(op[0], bld, fsign_instr->src[0].swizzle[channel]);
+
+      /* Resolve any source modifiers.  We could do slightly better on Gen8+
+       * if the only source modifier is negation, but *shrug*.
+       */
+      if (op[1].negate || op[1].abs) {
+         fs_reg tmp = bld.vgrf(op[1].type);
+
+         bld.MOV(tmp, op[1]);
+         op[1] = tmp;
+      }
    } else {
       assert(!instr->dest.saturate);
    }
@@ -3435,7 +3445,7 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
       fs_inst *mov = bld.MOV(dest, brw_imm_ud(~0));
       mov->predicate = BRW_PREDICATE_NORMAL;
       mov->predicate_inverse = true;
-      mov->flag_subreg = 1;
+      mov->flag_subreg = sample_mask_flag_subreg(this);
       break;
    }
 
@@ -3490,9 +3500,9 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
    case nir_intrinsic_discard:
    case nir_intrinsic_demote_if:
    case nir_intrinsic_discard_if: {
-      /* We track our discarded pixels in f0.1.  By predicating on it, we can
-       * update just the flag bits that aren't yet discarded.  If there's no
-       * condition, we emit a CMP of g0 != g0, so all currently executing
+      /* We track our discarded pixels in f0.1/f1.0.  By predicating on it, we
+       * can update just the flag bits that aren't yet discarded.  If there's
+       * no condition, we emit a CMP of g0 != g0, so all currently executing
        * channels will get turned off.
        */
       fs_inst *cmp = NULL;
@@ -3502,7 +3512,6 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
 
          if (alu != NULL &&
              alu->op != nir_op_bcsel &&
-             alu->op != nir_op_inot &&
              (devinfo->gen > 5 ||
               (alu->instr.pass_flags & BRW_NIR_BOOLEAN_MASK) != BRW_NIR_BOOLEAN_NEEDS_RESOLVE ||
               alu->op == nir_op_fne32 || alu->op == nir_op_feq32 ||
@@ -3552,7 +3561,7 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
       }
 
       cmp->predicate = BRW_PREDICATE_NORMAL;
-      cmp->flag_subreg = 1;
+      cmp->flag_subreg = sample_mask_flag_subreg(this);
 
       if (devinfo->gen >= 6) {
          /* Due to the way we implement discard, the jump will only happen
@@ -3562,7 +3571,9 @@ fs_visitor::nir_emit_fs_intrinsic(const fs_builder &bld,
          emit_discard_jump();
       }
 
-      limit_dispatch_width(16, "Fragment discard/demote not implemented in SIMD32 mode.\n");
+      if (devinfo->gen < 7)
+         limit_dispatch_width(
+            16, "Fragment discard/demote not implemented in SIMD32 mode.\n");
       break;
    }
 
@@ -4054,27 +4065,6 @@ fs_visitor::get_nir_ssbo_intrinsic_index(const brw::fs_builder &bld,
    return bld.emit_uniformize(surf_index);
 }
 
-static unsigned
-image_intrinsic_coord_components(nir_intrinsic_instr *instr)
-{
-   switch (nir_intrinsic_image_dim(instr)) {
-   case GLSL_SAMPLER_DIM_1D:
-      return 1 + nir_intrinsic_image_array(instr);
-   case GLSL_SAMPLER_DIM_2D:
-   case GLSL_SAMPLER_DIM_RECT:
-      return 2 + nir_intrinsic_image_array(instr);
-   case GLSL_SAMPLER_DIM_3D:
-   case GLSL_SAMPLER_DIM_CUBE:
-      return 3;
-   case GLSL_SAMPLER_DIM_BUF:
-      return 1;
-   case GLSL_SAMPLER_DIM_MS:
-      return 2 + nir_intrinsic_image_array(instr);
-   default:
-      unreachable("Invalid image dimension");
-   }
-}
-
 /**
  * The offsets we get from NIR act as if each SIMD channel has it's own blob
  * of contiguous space.  However, if we actually place each SIMD channel in
@@ -4197,7 +4187,7 @@ fs_visitor::nir_emit_intrinsic(const fs_builder &bld, nir_intrinsic_instr *instr
 
       srcs[SURFACE_LOGICAL_SRC_ADDRESS] = get_nir_src(instr->src[1]);
       srcs[SURFACE_LOGICAL_SRC_IMM_DIMS] =
-         brw_imm_ud(image_intrinsic_coord_components(instr));
+         brw_imm_ud(nir_image_intrinsic_coord_components(instr));
 
       /* Emit an image load, store or atomic op. */
       if (instr->intrinsic == nir_intrinsic_image_load ||

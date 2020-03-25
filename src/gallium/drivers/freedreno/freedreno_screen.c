@@ -92,6 +92,7 @@ static const struct debug_named_value debug_options[] = {
 		{"nolrz",     FD_DBG_NOLRZ,  "Disable LRZ (a6xx)"},
 		{"notile",    FD_DBG_NOTILE, "Disable tiling for all internal buffers"},
 		{"layout",    FD_DBG_LAYOUT, "Dump resource layouts"},
+		{"nofp16",    FD_DBG_NOFP16, "Disable mediump precision lowering"},
 		DEBUG_NAMED_VALUE_END
 };
 
@@ -187,7 +188,6 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_SWIZZLE:
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
-	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 	case PIPE_CAP_SEAMLESS_CUBE_MAP:
 	case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
 	case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
@@ -201,6 +201,11 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_INVALIDATE_BUFFER:
 	case PIPE_CAP_RGB_OVERRIDE_DST_ALPHA_BLEND:
 		return 1;
+
+	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+		return is_a2xx(screen);
+	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+		return !is_a2xx(screen);
 
 	case PIPE_CAP_PACKED_UNIFORMS:
 		return !is_a2xx(screen);
@@ -344,6 +349,9 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		/* name is confusing, but this turns on std430 packing */
 		if (is_ir3(screen))
 			return 1;
+		return 0;
+
+	case PIPE_CAP_NIR_IMAGES_AS_DEREF:
 		return 0;
 
 	case PIPE_CAP_MAX_VIEWPORTS:
@@ -561,7 +569,8 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen,
 	case PIPE_SHADER_CAP_INT64_ATOMICS:
 		return 0;
 	case PIPE_SHADER_CAP_FP16:
-		return 0;
+		return ((is_a5xx(screen) || is_a6xx(screen)) &&
+				!(fd_mesa_debug & FD_DBG_NOFP16));
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
 	case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
 		return 16;

@@ -110,7 +110,7 @@ DispatchSanity_test::SetUpCtx(gl_api api, unsigned int version)
                             &visual,
                             NULL, // share_list
                             &driver_functions);
-   _vbo_CreateContext(&ctx);
+   _vbo_CreateContext(&ctx, false);
 
    _mesa_override_extensions(&ctx);
    ctx.Version = version;
@@ -563,6 +563,9 @@ const struct function common_desktop_functions_possible[] = {
    /* EXT_EGL_image_storage */
    { "glEGLImageTargetTexStorageEXT", 31, -1 },
    { "glEGLImageTargetTextureStorageEXT", 31, -1 },
+
+   /* GL_NV_copy_image */
+   { "glCopyImageSubDataNV", 31, -1 },
 
    /* GL 3.2 */
    { "glGetInteger64i_v", 32, -1 },

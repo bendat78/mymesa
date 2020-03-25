@@ -61,7 +61,6 @@ static const struct debug_named_value debug_options[] = {
 	{ "preoptir", DBG(PREOPT_IR), "Print the LLVM IR before initial optimizations" },
 
 	/* Shader compiler options the shader cache should be aware of: */
-	{ "sisched", DBG(SI_SCHED), "Enable LLVM SI Machine Instruction Scheduler." },
 	{ "gisel", DBG(GISEL), "Enable LLVM global instruction selector." },
 	{ "w32ge", DBG(W32_GE), "Use Wave32 for vertex, tessellation, and geometry shaders." },
 	{ "w32ps", DBG(W32_PS), "Use Wave32 for pixel shaders." },
@@ -142,7 +141,6 @@ void si_init_compiler(struct si_screen *sscreen, struct ac_llvm_compiler *compil
 				       sscreen->info.chip_class <= GFX8;
 
 	enum ac_target_machine_options tm_options =
-		(sscreen->debug_flags & DBG(SI_SCHED) ? AC_TM_SISCHED : 0) |
 		(sscreen->debug_flags & DBG(GISEL) ? AC_TM_ENABLE_GLOBAL_ISEL : 0) |
 		(sscreen->info.chip_class >= GFX9 ? AC_TM_FORCE_ENABLE_XNACK : 0) |
 		(sscreen->info.chip_class < GFX9 ? AC_TM_FORCE_DISABLE_XNACK : 0) |
@@ -172,9 +170,6 @@ static void si_destroy_context(struct pipe_context *context)
 {
 	struct si_context *sctx = (struct si_context *)context;
 	int i;
-
-	util_queue_finish(&sctx->screen->shader_compiler_queue);
-	util_queue_finish(&sctx->screen->shader_compiler_queue_low_priority);
 
 	/* Unreference the framebuffer normally to disable related logic
 	 * properly.
@@ -933,7 +928,7 @@ static void si_disk_cache_create(struct si_screen *sscreen)
 	disk_cache_format_hex_id(cache_id, sha1, 20 * 2);
 
 	/* These flags affect shader compilation. */
-	#define ALL_FLAGS (DBG(SI_SCHED) | DBG(GISEL))
+	#define ALL_FLAGS (DBG(GISEL))
 	uint64_t shader_debug_flags = sscreen->debug_flags & ALL_FLAGS;
 
 	/* Add the high bits of 32-bit addresses, which affects
@@ -1033,8 +1028,6 @@ radeonsi_screen_create_impl(struct radeon_winsys *ws,
 	if (driQueryOptionb(config->options,
 			    "glsl_correct_derivatives_after_discard"))
 		sscreen->debug_flags |= DBG(FS_CORRECT_DERIVS_AFTER_KILL);
-	if (driQueryOptionb(config->options, "radeonsi_enable_sisched"))
-		sscreen->debug_flags |= DBG(SI_SCHED);
 
 	if (sscreen->debug_flags & DBG(INFO))
 		ac_print_gpu_info(&sscreen->info);

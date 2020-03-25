@@ -102,8 +102,10 @@ client_state(struct gl_context *ctx, struct gl_vertex_array_object* vao,
          break;
 
       case GL_POINT_SIZE_ARRAY_OES:
-         FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-         ctx->VertexProgram.PointSizeEnabled = state;
+         if (ctx->VertexProgram.PointSizeEnabled != state) {
+            FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+            ctx->VertexProgram.PointSizeEnabled = state;
+         }
          vao_state(ctx, vao, VERT_ATTRIB_POINT_SIZE, state);
          break;
 
@@ -1266,6 +1268,15 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Color.BlendCoherent = state;
          break;
 
+      case GL_BLACKHOLE_RENDER_INTEL:
+         if (!_mesa_has_INTEL_blackhole_render(ctx))
+            goto invalid_enum_error;
+         if (ctx->IntelBlackholeRender == state)
+            return;
+         FLUSH_VERTICES(ctx, 0);
+         ctx->IntelBlackholeRender = state;
+         break;
+
       default:
          goto invalid_enum_error;
    }
@@ -1951,6 +1962,10 @@ _mesa_IsEnabled( GLenum cap )
          if (!_mesa_has_MESA_tile_raster_order(ctx))
             goto invalid_enum_error;
          return ctx->TileRasterOrderIncreasingY;
+
+      case GL_BLACKHOLE_RENDER_INTEL:
+         CHECK_EXTENSION(INTEL_blackhole_render);
+         return ctx->IntelBlackholeRender;
 
       default:
          goto invalid_enum_error;

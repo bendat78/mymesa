@@ -78,7 +78,7 @@ ir3_context_init(struct ir3_compiler *compiler,
 	/* this needs to be the last pass run, so do this here instead of
 	 * in ir3_optimize_nir():
 	 */
-	NIR_PASS_V(ctx->s, nir_lower_bool_to_int32);
+	NIR_PASS_V(ctx->s, nir_lower_bool_to_bitsize);
 	bool progress = false;
 	NIR_PASS(progress, ctx->s, nir_lower_locals_to_regs);
 
@@ -525,6 +525,7 @@ ir3_create_array_load(struct ir3_context *ctx, struct ir3_array *arr, int n,
 		mov->cat1.src_type = TYPE_U16;
 		mov->cat1.dst_type = TYPE_U16;
 		flags |= IR3_REG_HALF;
+		arr->half = true;
 	} else {
 		mov->cat1.src_type = TYPE_U32;
 		mov->cat1.dst_type = TYPE_U32;

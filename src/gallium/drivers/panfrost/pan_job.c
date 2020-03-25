@@ -114,9 +114,6 @@ panfrost_create_batch(struct panfrost_context *ctx,
         batch->maxx = batch->maxy = 0;
         batch->transient_offset = 0;
 
-        util_dynarray_init(&batch->headers, batch);
-        util_dynarray_init(&batch->gpu_headers, batch);
-        util_dynarray_init(&batch->dependencies, batch);
         batch->out_sync = panfrost_create_batch_fence(batch);
         util_copy_framebuffer_state(&batch->key, key);
 
@@ -180,9 +177,6 @@ panfrost_free_batch(struct panfrost_batch *batch)
                               struct panfrost_batch_fence *, dep) {
                 panfrost_batch_fence_unreference(*dep);
         }
-
-        util_dynarray_fini(&batch->headers);
-        util_dynarray_fini(&batch->gpu_headers);
 
         /* The out_sync fence lifetime is different from the the batch one
          * since other batches might want to wait on a fence of already
@@ -308,7 +302,7 @@ panfrost_get_fresh_batch_for_fbo(struct panfrost_context *ctx)
          * Note that it's perfectly fine to re-use a batch with an
          * existing clear, we'll just update it with the new clear request.
          */
-        if (!batch->last_job.gpu)
+        if (!batch->first_job)
                 return batch;
 
         /* Otherwise, we need to freeze the existing one and instantiate a new
@@ -671,6 +665,24 @@ panfrost_batch_get_scratchpad(struct panfrost_batch *batch,
 }
 
 struct panfrost_bo *
+panfrost_batch_get_shared_memory(struct panfrost_batch *batch,
+                unsigned size,
+                unsigned workgroup_count)
+{
+        if (batch->shared_memory) {
+                assert(batch->shared_memory->size >= size);
+        } else {
+                batch->shared_memory = panfrost_batch_create_bo(batch, size,
+                                             PAN_BO_INVISIBLE,
+                                             PAN_BO_ACCESS_PRIVATE |
+                                             PAN_BO_ACCESS_RW |
+                                             PAN_BO_ACCESS_VERTEX_TILER);
+        }
+
+        return batch->shared_memory;
+}
+
+struct panfrost_bo *
 panfrost_batch_get_tiler_heap(struct panfrost_batch *batch)
 {
         if (batch->tiler_heap)
@@ -726,7 +738,7 @@ panfrost_batch_draw_wallpaper(struct panfrost_batch *batch)
         /* No draw calls, and no clear on the depth/stencil bufs.
          * Drawing the wallpaper would be useless.
          */
-        if (!batch->last_tiler.gpu &&
+        if (!batch->tiler_dep &&
             !(batch->clear & PIPE_CLEAR_DEPTHSTENCIL))
                 return;
 
@@ -828,8 +840,7 @@ panfrost_batch_draw_wallpaper(struct panfrost_batch *batch)
 static int
 panfrost_batch_submit_ioctl(struct panfrost_batch *batch,
                             mali_ptr first_job_desc,
-                            uint32_t reqs,
-                            struct mali_job_descriptor_header *header)
+                            uint32_t reqs)
 {
         struct panfrost_context *ctx = batch->ctx;
         struct pipe_context *gallium = (struct pipe_context *) ctx;
@@ -839,7 +850,7 @@ panfrost_batch_submit_ioctl(struct panfrost_batch *batch,
         bool is_fragment_shader;
         int ret;
 
-        is_fragment_shader = (reqs & PANFROST_JD_REQ_FS) && batch->first_job.gpu;
+        is_fragment_shader = (reqs & PANFROST_JD_REQ_FS) && batch->first_job;
         if (is_fragment_shader)
                 submit.in_sync_count = 1;
         else
@@ -899,32 +910,15 @@ panfrost_batch_submit_ioctl(struct panfrost_batch *batch,
                 return errno;
         }
 
-        if (pan_debug & PAN_DBG_SYNC) {
-                u32 status;
-
-                /* Wait so we can get errors reported back */
-                drmSyncobjWait(screen->fd, &batch->out_sync->syncobj, 1,
-                               INT64_MAX, 0, NULL);
-
-                status = header->exception_status;
-
-                if (status && status != 0x1) {
-                        DBG("Job %" PRIx64 " failed: source ID: 0x%x access: %s exception: 0x%x (exception_status 0x%x) fault_pointer 0x%" PRIx64 " \n",
-                               first_job_desc,
-                               (status >> 16) & 0xFFFF,
-                               pandecode_exception_access((status >> 8) & 0x3),
-                               status  & 0xFF,
-                               status,
-                               header->fault_pointer);
-                }
-        }
-
         /* Trace the job if we're doing that */
-        if (pan_debug & PAN_DBG_TRACE) {
+        if (pan_debug & (PAN_DBG_TRACE | PAN_DBG_SYNC)) {
                 /* Wait so we can get errors reported back */
                 drmSyncobjWait(screen->fd, &batch->out_sync->syncobj, 1,
                                INT64_MAX, 0, NULL);
-                pandecode_jc(submit.jc, FALSE, screen->gpu_id);
+
+                /* Trace gets priority over sync */
+                bool minimal = !(pan_debug & PAN_DBG_TRACE);
+                pandecode_jc(submit.jc, FALSE, screen->gpu_id, minimal);
         }
 
         return 0;
@@ -933,20 +927,17 @@ panfrost_batch_submit_ioctl(struct panfrost_batch *batch,
 static int
 panfrost_batch_submit_jobs(struct panfrost_batch *batch)
 {
-        bool has_draws = batch->first_job.gpu;
-        struct mali_job_descriptor_header *header;
+        bool has_draws = batch->first_job;
         int ret = 0;
 
         if (has_draws) {
-                header = (struct mali_job_descriptor_header *)batch->first_job.cpu;
-                ret = panfrost_batch_submit_ioctl(batch, batch->first_job.gpu, 0, header);
+                ret = panfrost_batch_submit_ioctl(batch, batch->first_job, 0);
                 assert(!ret);
         }
 
-        if (batch->first_tiler.gpu || batch->clear) {
-                mali_ptr fragjob = panfrost_fragment_job(batch, has_draws, &header);
-
-                ret = panfrost_batch_submit_ioctl(batch, fragjob, PANFROST_JD_REQ_FS, header);
+        if (batch->tiler_dep || batch->clear) {
+                mali_ptr fragjob = panfrost_fragment_job(batch, has_draws);
+                ret = panfrost_batch_submit_ioctl(batch, fragjob, PANFROST_JD_REQ_FS);
                 assert(!ret);
         }
 
@@ -968,7 +959,7 @@ panfrost_batch_submit(struct panfrost_batch *batch)
         int ret;
 
         /* Nothing to do! */
-        if (!batch->last_job.gpu && !batch->clear) {
+        if (!batch->first_job && !batch->clear) {
                 /* Mark the fence as signaled so the fence logic does not try
                  * to wait on it.
                  */
@@ -981,7 +972,7 @@ panfrost_batch_submit(struct panfrost_batch *batch)
         /* Now that all draws are in, we can finally prepare the
          * FBD for the batch */
 
-        if (batch->framebuffer.gpu && batch->first_job.gpu) {
+        if (batch->framebuffer.gpu && batch->first_job) {
                 struct panfrost_context *ctx = batch->ctx;
                 struct pipe_context *gallium = (struct pipe_context *) ctx;
                 struct panfrost_screen *screen = pan_screen(gallium->screen);
@@ -992,7 +983,7 @@ panfrost_batch_submit(struct panfrost_batch *batch)
                         panfrost_attach_mfbd(batch, ~0);
         }
 
-        panfrost_scoreboard_link_batch(batch);
+        panfrost_scoreboard_initialize_tiler(batch);
 
         ret = panfrost_batch_submit_jobs(batch);
 
@@ -1134,6 +1125,22 @@ panfrost_batch_set_requirements(struct panfrost_batch *batch)
 
         if (ctx->depth_stencil && ctx->depth_stencil->depth.writemask)
                 batch->requirements |= PAN_REQ_DEPTH_WRITE;
+}
+
+void
+panfrost_batch_adjust_stack_size(struct panfrost_batch *batch)
+{
+        struct panfrost_context *ctx = batch->ctx;
+
+        for (unsigned i = 0; i < PIPE_SHADER_TYPES; ++i) {
+                struct panfrost_shader_state *ss;
+
+                ss = panfrost_get_shader_state(ctx, i);
+                if (!ss)
+                        continue;
+
+                batch->stack_size = MAX2(batch->stack_size, ss->stack_size);
+        }
 }
 
 /* Helper to smear a 32-bit color across 128-bit components */

@@ -296,6 +296,7 @@ msgid ""
 "(-1) CSMT is enabled on known thread-safe drivers."
 msgstr ""
 
+<<<<<<< HEAD
 #: src/util/xmlpool/t_options.h:359
 msgid ""
 "If set to true, use a ram intermediate buffer for dynamic textures. "
@@ -314,6 +315,9 @@ msgid "Use the LLVM sisched option for shader compiles"
 msgstr ""
 
 #: src/util/xmlpool/t_options.h:378
+=======
+#: src/util/xmlpool/t_options.h:328
+>>>>>>> 5533c41541f57774314517d893045eedfc5b2da1
 msgid ""
 "Assume no Z fights (enables aggressive out-of-order rasterization to improve "
 "performance; may cause rendering errors)"

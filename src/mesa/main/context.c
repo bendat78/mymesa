@@ -181,7 +181,7 @@ _mesa_notifySwapBuffers(struct gl_context *ctx)
 {
    if (MESA_VERBOSE & VERBOSE_SWAPBUFFERS)
       _mesa_debug(ctx, "SwapBuffers\n");
-   FLUSH_CURRENT( ctx, 0 );
+   FLUSH_VERTICES(ctx, 0);
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
    }
@@ -754,6 +754,8 @@ _mesa_init_constants(struct gl_constants *consts, gl_api api)
    consts->ConservativeRasterDilateRange[0] = 0.0;
    consts->ConservativeRasterDilateRange[1] = 0.0;
    consts->ConservativeRasterDilateGranularity = 0.0;
+
+   consts->glBeginEndBufferSize = 512 * 1024;
 }
 
 
@@ -1874,7 +1876,6 @@ void
 _mesa_flush(struct gl_context *ctx)
 {
    FLUSH_VERTICES( ctx, 0 );
-   FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
    }
@@ -1895,7 +1896,6 @@ _mesa_Finish(void)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, 0);
-   FLUSH_CURRENT(ctx, 0);
 
    if (ctx->Driver.Finish) {
       ctx->Driver.Finish(ctx);

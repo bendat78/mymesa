@@ -219,7 +219,7 @@ glsl_to_nir(struct gl_context *ctx,
     * inline functions.  That way they get properly initialized at the top
     * of the function and not at the top of its caller.
     */
-   nir_lower_constant_initializers(shader, (nir_variable_mode)~0);
+   nir_lower_variable_initializers(shader, (nir_variable_mode)~0);
    nir_lower_returns(shader);
    nir_inline_functions(shader);
    nir_opt_deref(shader);
@@ -316,6 +316,7 @@ nir_visitor::constant_copy(ir_constant *ir, void *mem_ctx)
       break;
 
    case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_FLOAT16:
    case GLSL_TYPE_DOUBLE:
       if (cols > 1) {
          ret->elements = ralloc_array(mem_ctx, nir_constant *, cols);
@@ -327,6 +328,11 @@ nir_visitor::constant_copy(ir_constant *ir, void *mem_ctx)
             case GLSL_TYPE_FLOAT:
                for (unsigned r = 0; r < rows; r++)
                   col_const->values[r].f32 = ir->value.f[c * rows + r];
+               break;
+
+            case GLSL_TYPE_FLOAT16:
+               for (unsigned r = 0; r < rows; r++)
+                  col_const->values[r].u16 = ir->value.f16[c * rows + r];
                break;
 
             case GLSL_TYPE_DOUBLE:
@@ -344,6 +350,11 @@ nir_visitor::constant_copy(ir_constant *ir, void *mem_ctx)
          case GLSL_TYPE_FLOAT:
             for (unsigned r = 0; r < rows; r++)
                ret->values[r].f32 = ir->value.f[r];
+            break;
+
+         case GLSL_TYPE_FLOAT16:
+            for (unsigned r = 0; r < rows; r++)
+               ret->values[r].u16 = ir->value.f16[r];
             break;
 
          case GLSL_TYPE_DOUBLE:
@@ -2026,6 +2037,10 @@ nir_visitor::visit(ir_expression *ir)
    case ir_unop_b2i64:
    case ir_unop_d2f:
    case ir_unop_f2d:
+   case ir_unop_f162f:
+   case ir_unop_f2f16:
+   case ir_unop_f162b:
+   case ir_unop_b2f16:
    case ir_unop_d2i:
    case ir_unop_d2u:
    case ir_unop_d2b:
@@ -2061,6 +2076,11 @@ nir_visitor::visit(ir_expression *ir)
        * just assume 32 and we have to fix it up here.
        */
       result->bit_size = nir_alu_type_get_type_size(dst_type);
+      break;
+   }
+
+   case ir_unop_f2fmp: {
+      result = nir_build_alu(&b, nir_op_f2fmp, srcs[0], NULL, NULL, NULL);
       break;
    }
 
@@ -2539,6 +2559,9 @@ nir_visitor::visit(ir_texture *ir)
    case GLSL_TYPE_FLOAT:
       instr->dest_type = nir_type_float;
       break;
+   case GLSL_TYPE_FLOAT16:
+      instr->dest_type = nir_type_float16;
+      break;
    case GLSL_TYPE_INT:
       instr->dest_type = nir_type_int;
       break;
@@ -2784,7 +2807,7 @@ glsl_float64_funcs_to_nir(struct gl_context *ctx,
 
    nir_validate_shader(nir, "float64_funcs_to_nir");
 
-   NIR_PASS_V(nir, nir_lower_constant_initializers, nir_var_function_temp);
+   NIR_PASS_V(nir, nir_lower_variable_initializers, nir_var_function_temp);
    NIR_PASS_V(nir, nir_lower_returns);
    NIR_PASS_V(nir, nir_inline_functions);
    NIR_PASS_V(nir, nir_opt_deref);
